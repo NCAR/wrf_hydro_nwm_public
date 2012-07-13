@@ -1,0 +1,38 @@
+# Makefile 
+#
+#INCLUDES=
+.SUFFIXES:
+.SUFFIXES: .o .f
+
+include ../macros
+
+OBJS = \
+	../Noah_code/module_Noahlsm.o \
+	../Noah_code/module_Noahlsm_param_init.o \
+	../Noah_code/module_Noahlsm_utility.o \
+	../Noah_code/module_date_utilities.o
+
+WRFCODE_OBJS = \
+	../IO_code/module_Noahlsm_wrfcode_input.o \
+	../IO_code/module_Noah_distr_routing.o \
+	../IO_code/module_Noah_channel_routing.o \
+	../WRF_code/module_sf_noahlsm.o \
+	../Noah_code/module_Noahlsm_utility.o \
+	../Noah_code/module_date_utilities.o
+
+
+CMD = Noah_wrfdriver_beta
+all:	rtlandlib.a	
+
+rtlandlib.a: $(WRFCODE_OBJS)
+	@echo ""
+	ar  $(@) $(MODFLAG)../IO_code $(WRFCODE_OBJS)
+	@echo ""
+
+#$(MODFLAG)../Noah_code 
+#
+
+# This command cleans up
+clean:
+	rm -f *~ $(CMD)
+

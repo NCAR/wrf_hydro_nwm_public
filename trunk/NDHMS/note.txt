@@ -1,0 +1,24 @@
+soltyp
+
+in variable:
+SOILTYP,SLOPETYP,SLDPTH, &
+ GREENFRAC, ALBEDO12M, acrain
+
+tmp two array variable:
+FPAR,SFCSPDX, QFX, 
+
+tmp one way variable:
+ALBBRD, SHDFAC, albbrd, alb, albedo, snofac, ch, cm, 
+
+one way input variable:
+Z0BRD, zlvl, z0, zsoil
+
+3 d tmp array
+ZSOILX
+
+output  varialbe:
+LH_yw, soilW_yw, soilm_yw, etpk, etakin, etpx, snowc, znt, qsfc
+
+
+
+

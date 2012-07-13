@@ -1,0 +1,70 @@
+# Makefile 
+#
+#INCLUDES=
+.SUFFIXES:
+.SUFFIXES: .o .f
+
+include ../macros
+
+NOAHBETA_OBJS = ../IO_code/Noah_driver.o \
+		../IO_code/read_IHOP.o \
+		../IO_code/module_Noah_grads_output.o 
+
+#MAINOBJ2 = ../IO_code/Noah_driver_rtfdda.o
+MAINOBJ3 = ../IO_code/Noah_driver_hrldas.o ../IO_code/module_Noahlsm_hrldas_input.o
+
+OBJS = \
+	../Noah_code/module_Noahlsm.o \
+	../Noah_code/module_Noahlsm_param_init_rt.o \
+	../Noah_code/module_Noahlsm_utility_rt.o \
+	../Noah_code/module_date_utilities_rt.o
+
+WRFCODE_OBJS = \
+	../IO_code/Noah_driver_wrfcode.o \
+	../IO_code/module_Noahlsm_wrf_input_rt.o \
+	../IO_code/module_Noah_distr_routing.o \
+	../IO_code/module_Noah_channel_routing.o \
+	../IO_code/module_Noah_chan_param_init_rt.o \
+	../WRF_code/module_sf_noahlsm_rt.o \
+	../Noah_code/module_model_constants_rt.o \
+	../Noah_code/module_Noahlsm_utility_rt.o \
+	../Noah_code/module_date_utilities_rt.o \
+	../IO_code/module_Noah_gw_baseflow.o
+# 	../Noah_code/module_Noahlsm_param_init.o \
+
+#	../IO_code/module_Noahlsm_rtfdda_input.o \
+#	../IO_code/module_Noahlsm_gridded_input.o \
+
+#CMD = Noah_beta Noah_rtfdda_beta Noah_wrfdriver_beta_mpp
+#CMD =  Noah_beta Noah_wrfdriver_beta_mpp Noah_hrldas_beta 
+CMD = Noah_wrfdriver_beta_mpp 
+all:	$(CMD)
+
+Noah_beta: $(OBJS) $(NOAHBETA_OBJS)
+	@echo ""
+#	$(COMPILER90) -o $(@) $(MODFLAG)../Noah_code $(MODFLAG)../IO_code $(OBJS) $(NOAHBETA_OBJS) ../MPP/mpp_land.o ../MPP/CPL_WRF.o
+	@echo ""
+
+Noah_rtfdda_beta: $(OBJS) $(MAINOBJ2)
+	@echo ""
+#	$(COMPILER90) -o $(@) $(MODFLAG)../Noah_code $(MODFLAG)../IO_code $(OBJS) $(MAINOBJ2) 
+	@echo ""
+
+Noah_hrldas_beta: $(OBJS) $(MAINOBJ3)
+	@echo ""
+#	$(COMPILER90) -o $(@) $(MODFLAG)../Noah_code $(MODFLAG)../IO_code $(OBJS) $(MAINOBJ3) $(NETCDFLIB)
+	@echo ""
+
+Noah_wrfdriver_beta_mpp: $(WRFCODE_OBJS)
+	@echo ""
+	$(COMPILER90) -o $(@) $(LDFLAGS) $(MODFLAG) -I../IO_code $(WRFCODE_OBJS) ../MPP/mpp_land.o ../MPP/CPL_WRF.o  ../IO_code/module_RTLAND.o $(NETCDFLIB)
+#	mpif90 -o $(@) -w -byteswapio -Mfree $(MODFLAG)../IO_code $(WRFCODE_OBJS) ../MPP/mpp_land.o ../MPP/CPL_WRF.o $(NETCDFLIB) ../IO_code/module_RTLAND.o
+	@echo ""
+
+#$(MODFLAG)../Noah_code 
+#
+
+# This command cleans up
+clean:
+	rm -f *~ $(CMD)
+

@@ -1,0 +1,12 @@
+.IGNORE:
+RM		=	rm -f
+COMPILER90=	mpif90
+F90FLAGS  =      -Mfree -Mfptrap -c -byteswapio -O2 -Ktrap=fp
+LDFLAGS  =      -Mfree -Mfptrap  -byteswapio -O2 -Ktrap=fp
+MODFLAG	=	-I./ -I ../MPP
+LDFLAGS	=	
+CPP	=       cpp
+CPPFLAGS	=       -C -P -traditional -DMPP_LAND
+LIBS 	=	
+NETCDFINC	=	$(HOME)/netcdf/include 
+NETCDFLIB	=	-L$(HOME)/netcdf/lib -lnetcdf

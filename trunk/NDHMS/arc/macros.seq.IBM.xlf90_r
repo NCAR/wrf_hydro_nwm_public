@@ -1,0 +1,11 @@
+.IGNORE:
+RM		=	rm -f
+COMPILER90=	xlf90_r
+F90FLAGS  =       -c -O2 -qfree=f90 -qmaxmem=819200
+MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod
+LDFLAGS	=	
+CPP	=       cpp -C -P
+CPPFLAGS	=       -I../Data_Rec
+LIBS 	=	
+NETCDFINC	=	$(HOME)/netcdf/include 
+NETCDFLIB	=	-L$(HOME)/netcdf/lib -lnetcdf

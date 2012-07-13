@@ -1,0 +1,11 @@
+.IGNORE:
+RM		=	rm -f
+COMPILER90=	xlf90_r
+F90FLAGS  =       -c -O2 -qfree=f90
+MODFLAG	=	-I./ -I ../MPP
+LDFLAGS	=	
+CPP	=       cpp -C -P
+CPPFLAGS	=       
+LIBS 	=	
+NETCDFINC	=	$(HOME)/netcdf/include 
+NETCDFLIB	=	-L$(HOME)/netcdf/lib -lnetcdf

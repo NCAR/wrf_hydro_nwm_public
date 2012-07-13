@@ -1,0 +1,100 @@
+**************************************************
+* Noah-distributed land-surface-hydrology model
+* version:  4.0
+*
+* Archived: Oct. 6, 2006
+* Updated: Feb. 27, 2009
+* Developed: D. Gochis, D. Yates, W. Yu  NCAR/RAL
+**************************************************
+
+1. Introduction:
+The Noah-distributed land-surface-hydrology model
+is a physically based 1-dimensional land surface 
+model that that has been enhanced to include dynamical
+routing processes of overland and subsurface saturated
+flow responsible for moving water laterally across 
+and through topographically-varying landscapes. Noah-
+distributed is based on the 'Unified' Noah model which
+is decribed in detail by Ek et al. (2003, JGR).  The
+hydrological enhancements to Noah are decribed in 
+an NCAR Technical Note by Gochis and Chen (2003). In
+the absence of forthcoming articles describing Noah
+and Noah-distributed in more detail please refer to
+these two works as the primary citations.
+
+This README file provides the basic steps required to
+set up and execute Noah-distributed as it is configured
+in an offline, or 'uncoupled' mode.  This configuration
+has been commonly referred to as the 'land data
+assimilation system (LDAS)' mode.  The LDAS under which
+Noah-distributed is provided is called the NCAR High
+Resolution Land Data Assimilation System (HRLDAS).
+
+
+2. Contents:
+After unpacking the tarfile you will find the 
+following under the version directory:
+/v4.2/
+IO_code/  - directory where much of the model code resides
+MPP/      - directory relevant to setting up in parallel mode
+Noah_code/ - more model code (mostly utilities and globals)
+WRF_code/  - more model code (notably the Noah lsm 'module_sf_noahlsm.F')
+Run/       - directory where input tables, primary makefiles,
+             namelist and /terrain/ directory reside
+Makefiles and macros used for compiling
+
+
+3. Setting up simple executions:
+There are 4 main steps to executing the model (not including
+data preparation and pre-processing)
+
+i) Compiling the model.  
+new method:  Type 'csh batch.csh' in the v4.2/ directory and 
+select from the listed compile options.
+
+old method:  This is done by typing 'make' from
+the /Run/ directory.  Executing the makefile will search
+all subdirectories for new code and compile code that has
+not yet been compiled. Successful completion of compilation
+will produce a new exectuable entitled 'Noah_wrfdriver_beta'.
+Be sure to check the date on this executable to make sure
+that you have compiled successfully.  If you experience
+problems compiling or if it is your first time compiling 
+you might try typing 'make clean' to remove old object files.
+So far the Noah-distributed has been successfully compiled 
+only on LINUX platforms.
+
+
+ii) Edit the namelist.  Open and edit 'noah_wrfcode.namelist'
+to set up a simulation to your specifications.  The namelist
+is fairly well commented.  The directory for input forcing data
+must be specified (INDIR), as must the pathway and filename
+to the WRFSTATIC file (WRFSI_STATIC_FLNM) and type 
+of forcing data (FORC_TYP). Be sure to activate only those
+routing switches for which you have the required data. The
+subsurface and overland flow routing options require input
+of a terrain file'route_topo_f', a stream network 'route_chan_f'
+and a land/water mask 'route_lake_f'. Routing timestep 'DTRT'
+must be set in accordance with the routing grid spacing in order
+to satisfy Courant constraints. Be sure to include the full path
+and directory when specifying Routing Input Files.
+
+
+iii) Create/place terrain and forcing files in terrain/ and forcing/
+directories.  The Noah-lsm surface data are generated using the 
+WRF pre-processor and are contained in the 'geogrid' output from the 
+'geogrid' pre-processors  The routing code requires additional
+datasets not required for execution of the 1-d Noah model.
+Routing terrain files are created offline, typically in a GIS, and
+are placed into the /terrain/ directory.  
+This second file contains all data for the routing processes 
+(e.g. high resolution terrain, channel network, lakes, etc).
+Create/place forcing data files in a /forcing/ directory
+and be sure that this matches the pathway specified for 'INDIR'
+in the namelist file.
+
+v) Execute the model.  Type './Noah_wrfdriver_beta' at the
+command line to execute the model.  If run successfully, 
+output will be generated as a series of netcdf files with
+associated time and date information in the filenames.
+

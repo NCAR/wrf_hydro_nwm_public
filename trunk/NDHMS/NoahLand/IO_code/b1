@@ -1,0 +1,423 @@
+!------------------------------------------------------------------------
+!DJG Routing Processing
+!------------------------------------------------------------------------
+!DJG IF/then to get routing terrain fields if either routing module is 
+!DJG   activated
+
+
+  IF (SUBRTSWCRT.EQ.1.OR.OVRTSWCRT.EQ.1) THEN
+  print *, "Terrain routing initialization..."
+
+  
+
+#ifdef MPP_LAND
+    CALL MPP_READ_ROUTING(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,trim(route_topo_f),&
+          route_chan_f,wrfsi_finegrid_flnm,g_IXRT,g_JXRT)
+
+
+#else
+    CALL READ_ROUTING_old(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,route_topo_f,route_chan_f, &
+                         wrfsi_finegrid_flnm)
+#endif
+
+
+    IF (CHANRTSWCRT.EQ.1 .or. CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
+#ifdef MPP_LAND
+
+          CALL MPP_READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+               FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
+               NLAKES, MUSK, MUSX, QLINK,CHANLEN, MannN, So, ChSSlp, Bw, &
+               HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
+              ORIFICEA, ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
+               route_link_f,route_lake_f, &
+               route_direction_f, route_order_f, &
+               CHANRTSWCRT,DXRT, ZELEV, LAKENODE, CH_NETLNK, CHANXI, CHANYJ, &
+               CHLAT, CHLON, channel_option, FORC_TYP,latval,lonval,&
+               STRMFRXSTPTS,wrfsi_finegrid_flnm, g_IXRT,g_JXRT)
+
+          call MPP_CHROUTING_CONF(g_ixrt,g_jxrt,ixrt,jxrt, NLAKES,NLINKS,&
+               lake_mskrt, lake_index,link_location,HRZAREA,LAKEMAXH,WEIRC,WEIRL,&
+               ORIFICEC,ORIFICEA,ORIFICEE,LATLAKE,LONLAKE,ELEVLAKE, &
+               FROM_NODE,TO_NODE,ZELEV,CHLAT,CHLON,TYPEL, ORDER,CHANLEN, &
+               CHANXI,CHANYJ, lakenode,mpp_nlinks, nlinks_index, maxorder, &
+               yw_mpp_nlinks)
+!!!!!   lake_index,Link_Location)
+#else
+          CALL READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+               FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
+               NLAKES, MUSK, MUSX, QLINK,CHANLEN, MannN, So, ChSSlp, Bw, &
+               HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
+               ORIFICEA, ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
+               route_link_f,route_lake_f, &
+               route_direction_f, route_order_f, &
+               CHANRTSWCRT,DXRT, ZELEV, LAKENODE, CH_NETLNK, CHANXI, CHANYJ, &
+               CHLAT, CHLON, channel_option, FORC_TYP,LATVAL,LONVAL, &
+               STRMFRXSTPTS,wrfsi_finegrid_flnm)
+#endif
+    endif
+  END IF
+
+!   write(my_id+20,*) "step 1"
+!DJG Temporary hardwire of RETDEPRT,RETDEP_CHAN
+!DJG    will later make this a function of SOLTYP and VEGTYP
+!            OVROUGHRT(i,j) = 0.01
+!            OVROUGHRT = OVROUGHRT*REFMANN
+
+              RETDEPRT = 0.1   ! units (mm)
+              RETDEP_CHAN = 0.001
+
+
+!DJG Need to insert call for acquiring routing fields here...
+!DJG     include as a subroutine in module module_Noahlsm_wrfcode_input.F
+!DJG  Calculate terrain slopes 'SOXRT,SOYRT' from subgrid elevation 'ELRT'
+
+        Vmax = 0.0
+        do j=2,JXRT-1
+          do i=2,IXRT-1
+              SOXRT(i,j)=(ELRT(i,j)-ELRT(i+1,j))/DXRT
+              SOYRT(i,j)=(ELRT(i,j)-ELRT(i,j+1))/DXRT
+!DJG Introduce reduction in retention depth as a linear function of terrain slope
+              IF (RT_OPTION.eq.2) then
+                IF (SOXRT(i,j).gt.SOYRT(i,j)) then
+                  Vmax=SOXRT(i,j)
+                ELSE
+                  Vmax=SOYRT(i,j)
+                END IF
+
+                IF (Vmax.gt.0.1) then
+                  RETDEPRT(i,j)=0.
+                ELSE
+                  RETDEPFRAC=Vmax/0.1
+                  RETDEPRT(i,j)=RETDEPRT(i,j)*(1.-RETDEPFRAC)
+                  IF (RETDEPRT(i,j).lt.0.) RETDEPRT(i,j)=0.
+                END IF
+              END IF
+
+               SO8RT(i,j,1) = (ELRT(i,j)-ELRT(i,j+1))/DXRT
+               SO8RT_D(i,j,1) = i
+               SO8RT_D(i,j,2) = j + 1 
+               SO8RT_D(i,j,3) = 1 
+               Vmax = SO8RT(i,j,1)
+               
+               SO8RT(i,j,2) = (ELRT(i,j)-ELRT(i+1,j+1))/DXRT/sqrt(2.)
+               if(SO8RT(i,j,2) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i + 1
+                 SO8RT_D(i,j,2) = j + 1 
+                 SO8RT_D(i,j,3) = 2
+                 Vmax = SO8RT(i,j,2)
+               end if
+
+               SO8RT(i,j,3) = (ELRT(i,j)-ELRT(i+1,j))/DXRT
+               if(SO8RT(i,j,3) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i + 1
+                 SO8RT_D(i,j,2) = j  
+                 SO8RT_D(i,j,3) = 3
+                 Vmax = SO8RT(i,j,3)
+               end if
+               SO8RT(i,j,4) = (ELRT(i,j)-ELRT(i+1,j-1))/DXRT/sqrt(2.)
+               if(SO8RT(i,j,4) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i + 1
+                 SO8RT_D(i,j,2) = j - 1 
+                 SO8RT_D(i,j,3) = 4
+                 Vmax = SO8RT(i,j,4)
+               end if
+               SO8RT(i,j,5) = (ELRT(i,j)-ELRT(i,j-1))/DXRT
+               if(SO8RT(i,j,5) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i 
+                 SO8RT_D(i,j,2) = j - 1 
+                 SO8RT_D(i,j,3) = 5
+                 Vmax = SO8RT(i,j,5)
+               end if
+               SO8RT(i,j,6) = (ELRT(i,j)-ELRT(i-1,j-1))/DXRT/sqrt(2.)
+               if(SO8RT(i,j,6) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i - 1 
+                 SO8RT_D(i,j,2) = j - 1 
+                 SO8RT_D(i,j,3) = 6
+                 Vmax = SO8RT(i,j,6)
+               end if
+               SO8RT(i,j,7) = (ELRT(i,j)-ELRT(i-1,j))/DXRT
+               if(SO8RT(i,j,7) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i - 1 
+                 SO8RT_D(i,j,2) = j  
+                 SO8RT_D(i,j,3) = 7
+                 Vmax = SO8RT(i,j,7)
+               end if
+               SO8RT(i,j,8) = (ELRT(i,j)-ELRT(i-1,j+1))/DXRT/sqrt(2.)
+               if(SO8RT(i,j,8) .gt. Vmax ) then
+                 SO8RT_D(i,j,1) = i - 1 
+                 SO8RT_D(i,j,2) = j + 1 
+                 SO8RT_D(i,j,3) = 8
+                 Vmax = SO8RT(i,j,8)
+               end if
+
+!DJG Introduce reduction in retention depth as a linear function of terrain slope
+              IF (RT_OPTION.eq.1) then
+!default as of 5/31/2011                IF (Vmax.gt.0.1) then
+                IF (Vmax.gt.0.75) then
+                  RETDEPRT(i,j)=0.
+                ELSE
+                  RETDEPFRAC=Vmax/0.75
+                  RETDEPRT(i,j)=RETDEPRT(i,j)*(1.-RETDEPFRAC)
+                  IF (RETDEPRT(i,j).lt.0.) RETDEPRT(i,j)=0.
+                END IF
+              END IF
+
+          end do
+        end do
+
+! calculate the slope for boundary        
+#ifdef MPP_LAND
+       if(right_id .lt. 0) SOXRT(IXRT,:)=SOXRT(IXRT-1,:)
+       if(left_id  .lt. 0) SOXRT(1,:)=SOXRT(2,:)
+       if(up_id    .lt. 0) SOYRT(:,JXRT)=SOYRT(:,JXRT-1)
+       if(down_id  .lt. 0) SOYRT(:,1)=SOYRT(:,2)
+#else
+              SOXRT(IXRT,:)=SOXRT(IXRT-1,:)
+              SOXRT(1,:)=SOXRT(2,:)
+              SOYRT(:,JXRT)=SOYRT(:,JXRT-1)
+              SOYRT(:,1)=SOYRT(:,2)
+#endif
+
+#ifdef MPP_LAND
+! communicate the value to 
+       call MPP_LAND_COM_REAL(RETDEPRT,IXRT,JXRT,99)
+       call MPP_LAND_COM_REAL(SOXRT,IXRT,JXRT,99)
+       call MPP_LAND_COM_REAL(SOYRT,IXRT,JXRT,99)
+       do i = 1, 8
+          call MPP_LAND_COM_REAL(SO8RT(:,:,i),IXRT,JXRT,99)
+       end do
+       do i = 1, 3
+          call MPP_LAND_COM_INTEGER(SO8RT_D(:,:,i),IXRT,JXRT,99)
+       end do
+#endif
+     IF (TERADJ_SOLAR.EQ.1 .and. CHANRTSWCRT.NE.2) THEN   ! Perform terrain adjustment of incoming solar
+          DX = DXRT * AGGFACTRT
+#ifdef MPP_LAND
+          call MPP_seq_land_SO8(SO8LD_D,SO8LD_Vmax,TERRAIN,dx,ix,jx,global_nx,global_ny)
+#else
+          call seq_land_SO8(SO8LD_D,SO8LD_Vmax,TERRAIN,dx,ix,jx)
+#endif
+     endif
+
+!---------------------------------------------------------------------
+!DJG  If GW/Baseflow activated...Read in req'd fields...
+!----------------------------------------------------------------------
+  IF (GWBASESWCRT.GE.1) THEN
+
+
+    If (GWBASESWCRT.EQ.1.OR.GWBASESWCRT.EQ.2) THEN
+      print *, "Simple GW-Bucket Scheme selected, retrieving files..."
+#ifdef MPP_LAND
+      CALL MPP_READ_SIMP_GW(IX,JX,IXRT,JXRT,GWSUBBASMSK,gwbasmskfil,&
+              gw_strm_msk,numbasns,ch_netrt,AGGFACTRT)
+#else
+      CALL READ_SIMP_GW(IX,JX,IXRT,JXRT,GWSUBBASMSK,gwbasmskfil,&
+              gw_strm_msk,numbasns,ch_netrt,AGGFACTRT)
+#endif
+       allocate (qout_gwsubbas (numbasns))
+       allocate (qin_gwsubbas (numbasns))
+       allocate (z_gwsubbas (numbasns))
+       allocate (gwbas_pix_ct (numbasns))
+       allocate (ct2_bas (numbasns))
+       allocate (bas_pcp (numbasns))
+       allocate (gw_buck_coeff (numbasns))
+       allocate (gw_buck_exp(numbasns))
+       allocate (z_max (numbasns))
+
+!Temporary hardwire...
+      z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+
+#ifdef MPP_LAND
+   if(my_id .eq. IO_id) then
+#endif
+!Read in GW bucket params and Zinit from input file in Run directory...
+#ifdef COUPLED
+     OPEN(81, FILE='RT/GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
+#else
+     OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
+#endif
+     read(81,811) header
+811   FORMAT(A19)
+     do bas = 1,numbasns
+       read(81,812) bas_id,jnk,gw_buck_coeff(bas),jnk,gw_buck_exp(bas),jnk,z_max(bas),&
+             jnk,z_gwsubbas(bas)
+812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+     end do
+     close(81)
+#ifdef MPP_LAND
+   endif
+   call mpp_land_bcast_real(numbasns,gw_buck_coeff)
+   call mpp_land_bcast_real(numbasns,gw_buck_exp  )
+   call mpp_land_bcast_real(numbasns,z_max   )
+   call mpp_land_bcast_real(numbasns,z_gwsubbas   )
+#endif
+
+!!! Determine number of stream pixels per GW basin for distribution...
+
+#ifdef MPP_LAND
+         call pix_ct_1(gw_strm_msk,ixrt,jxrt,gwbas_pix_ct,numbasns)
+#else
+         gwbas_pix_ct = 0.
+         do bas = 1, numbasns
+         do i=1,ixrt
+           do j=1,jxrt
+             if (gw_strm_msk(i,j).eq.bas) then
+                 gwbas_pix_ct(gw_strm_msk(i,j)) = gwbas_pix_ct(gw_strm_msk(i,j)) &
+                     + 1.0
+             endif
+           end do
+         end do
+         end do
+#endif
+
+    print *, "Starting GW basin levels...",z_gwsubbas
+
+    End if
+
+    If (GWBASESWCRT.EQ.3) Then   ! Call wedge aquifer scheme
+    End if
+
+
+    If (GWBASESWCRT.EQ.4) Then   ! Call TOPLATS GW/baseflow scheme
+    End if
+
+  END IF
+!---------------------------------------------------------------------
+!DJG  End if GW/Baseflow activated...
+!----------------------------------------------------------------------
+
+
+
+!---------------------------------------------------------------------
+!DJG,DNY  If channel routing activated...
+!----------------------------------------------------------------------
+!   write(my_id+20,*) "step 3", my_id
+
+  IF (CHANRTSWCRT.EQ.1 .or. CHANRTSWCRT .eq. 2) THEN
+
+!---------------------------------------------------------------------
+!DJG,DNY  Initalize lake and channel heights, this may be overwritten by RESTART
+!--------------------------------------------------------------------
+
+       if (channel_option .eq. 3) then
+#ifdef MPP_LAND
+        CALL mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+#else
+        CALL CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+#endif
+       end if
+
+        do j=1,NLINKS
+           if (channel_option .ne. 3) then
+            if (TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
+              RESHT(j) = LAKEMAXH(j) * 0.935  !-- assumes lake is ~90%
+            endif
+           else !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
+                !--  put condition within the if/then structure, which will assign a value if something is missing in hi res
+
+             if (ORDER(j) .eq. 1) then    !-- smallest stream reach
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             elseif (ORDER(j) .eq. 2) then
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             elseif (ORDER(j) .eq. 3) then
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             elseif (ORDER(j) .eq. 4) then
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             elseif (ORDER(j) .eq. 5) then
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             elseif (ORDER(j) .eq. 6) then
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             elseif (ORDER(j) .ge. 7) then
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(ORDER(j))
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(ORDER(j))
+               endif
+               if(MannN(j) .eq. 0.0) then 
+                MannN(j) = CHMann(ORDER(j))
+               endif
+               HLINK(j) = HLINK_INIT(ORDER(j))
+             else   !-- the outlets won't have orders since there's no nodes, so
+                    !-- assign the order 5 values
+
+               if(Bw(j) .eq. 0.0) then 
+                Bw(j) = BOTWID(5)
+               endif
+               if(ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+                ChSSlp(j) = CHAN_SS(5)
+               endif
+              if(MannN(j) .eq. 0.0) then 
+               MannN(j) = CHMann(5)
+               endif
+               HLINK(j) = HLINK_INIT(5)
+             endif
+                
+            CVOL(j) = (Bw(j)+ 1/ChSSLP(j)*HLINK(j))*HLINK(j)*CHANLEN(j) !-- initalize channel volume
+           endif  !Endif channel option eq 3
+        end do
+
+        if (channel_option .eq. 3) then
+           do j=1,NLAKES
+             RESHT(j) = LAKEMAXH(j) * 0.99   !-- lake is 99% full at start
+           end do
+        endif
+
+!--------------------------------------------------------------------
+  END IF     ! Endif for channel routing setup
+!-----------------------------------------------------------------------
+
