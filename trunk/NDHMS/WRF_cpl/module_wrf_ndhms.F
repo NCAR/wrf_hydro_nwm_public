@@ -89,14 +89,18 @@ CONTAINS
 
         ! get the data from WRF 
 ! need input for RT_DOMAIN(did)%SOLDRAIN(ix,jx)             
-            call to8layer(grid%TSLB(its:ite,1:4,jts:jte),RT_DOMAIN(did)%STC,ix,jx)
-            call to8layer(grid%smois(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SMC,ix,jx)
-            call to8layer(grid%sh2o(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SH2OX,ix,jx)
+!           call to8layer(grid%TSLB(its:ite,1:4,jts:jte),RT_DOMAIN(did)%STC,ix,jx)
+!           call to8layer(grid%smois(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SMC,ix,jx)
+!           call to8layer(grid%sh2o(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SH2OX,ix,jx)
+            call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%STC,ix,jx,8)
+            call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SMC,ix,jx,8)
+            call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SH2OX,ix,jx,8)
 
 ! output variable for routing model.
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
-            rt_domain(did)%sfcheadrt = grid%sfcheadrt(its:ite,jts:jte)
+!           rt_domain(did)%sfcheadrt = grid%sfcheadrt(its:ite,jts:jte)
 
+             
 
             write(6,*) "before call NDHMS_exe" 
             call flush(6)     
@@ -105,13 +109,19 @@ CONTAINS
             call NDHMS_exe(did,ntime,kstart)
 
 ! add for update the WRF state variable.
-    call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
-    call to4layer(RT_DOMAIN(did)%SMC,grid%SMOIS(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
-    call to4layer(RT_DOMAIN(did)%SH2OX,grid%SH2O(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
+!   call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
+!   call to4layer(RT_DOMAIN(did)%SMC,grid%SMOIS(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
+!   call to4layer(RT_DOMAIN(did)%SH2OX,grid%SH2O(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%STC,8,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SMC,8,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SH2OX,8,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
 
 ! update WRF variable after running routing model.
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
-            grid%infxsrt(its:ite,jts:jte) = rt_domain(did)%infxsrt
+!           grid%infxsrt(its:ite,jts:jte) = rt_domain(did)%infxsrt
+
+!? not sure for the following
+!           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
      return 
      end subroutine wrf_cpl_ndhms
@@ -206,5 +216,92 @@ CONTAINS
 !          SH2O(its:ite,:,jts:jte) &
 !       )
 
+      subroutine wrf2lsm (z1,v1,kk1,z,vout,ix,jx,kk)
+!  input: z1,v1,kk1,z,ix,jx,kk
+!  output: vout
+!  interpolate based on soil layer: z1 and z 
+!  z :  soil layer of output variable.
+!  z1: array of soil layers of input variable.
+         implicit none
+         integer:: i,j,k
+         integer:: kk1, ix,jx,kk
+         real :: z1(kk1), z(kk), v1(ix,kk1,jx),vout(ix,jx,kk)
+
+       
+         do j = 1, jx
+            do i = 1, ix
+              do k = 1, kk
+                call interpLayer(Z1,v1(i,1:kk1,j),kk1,Z(k),vout(i,j,k)) 
+              end do
+            end do
+         end do
+      end subroutine wrf2lsm
+
+      subroutine lsm2wrf (z1,v1,kk1,z,vout,ix,jx,kk)
+!  input: z1,v1,kk1,z,ix,jx,kk
+!  output: vout
+!  interpolate based on soil layer: z1 and z 
+!  z :  soil layer of output variable.
+!  z1: array of soil layers of input variable.
+         implicit none
+         integer:: i,j,k
+         integer:: kk1, ix,jx,kk
+         real :: z1(kk1), z(kk), v1(ix,jx,kk1),vout(ix,kk,jx)
+
+       
+         do j = 1, jx
+            do i = 1, ix
+              do k = 1, kk
+                call interpLayer(Z1,v1(i,j,1:kk1),kk1,Z(k),vout(i,k,j)) 
+              end do
+            end do
+         end do
+      end subroutine lsm2wrf
+
+      subroutine interpLayer(inZ,inV,inK,outZ,outV)
+         implicit none
+         integer:: k, k1, k2
+         integer :: inK
+         real:: inV(inK),inZ(inK)
+         real:: outV, outZ, w1, w2
+
+         if(outZ .le. inZ(1)) then
+             if(inZ(2) .eq. inZ(1)) then 
+                write(6,*) "Error: inZ(2)=inZ(1) ", inZ(2),inZ(1)
+                call flush(6)
+                stop 99
+             end if
+             w1 = (inZ(2)-outZ)/(inZ(2)-inZ(1))
+             w2 = (inZ(1)-outZ)/(inZ(2)-inZ(1))
+             outV = inV(1)*w1-inV(2)*w2
+             return
+         elseif(outZ .ge. inZ(inK)) then
+             if(inZ(inK-1) .eq. inZ(inK)) then 
+                write(6,*) "Error: inZ(inK-1)=inZ(inK) ", inZ(inK-1),inZ(inK)
+                call flush(6)
+                stop 99
+             end if
+             w1 = (outZ-inZ(inK-1))/(inZ(inK)-inZ(inK-1)) 
+             w2 = (outZ-inZ(inK))  /(inZ(inK)-inZ(inK-1))
+             outV = inV(inK)*w1 -inV(inK-1)* w2
+             return
+         else  
+            do k = 2, inK
+             if((inZ(k) .ge. outZ).and.(inZ(k-1) .le. outZ) ) then
+                k1  = k-1
+                k2 = k
+             if(inZ(k1) .eq. inZ(k2)) then 
+                write(6,*) "Error: inZ(k1)=inZ(k2) ", inZ(k1),inZ(k2)
+                call flush(6)
+                stop 99
+             end if
+                w1 = (outZ-inZ(k1))/(inZ(k2)-inZ(k1))
+                w2 = (inZ(k2)-outZ)/(inZ(k2)-inZ(k1))
+                outV = inV(k2)*w1 + inV(k1)*w2
+                return 
+             end if 
+            end do
+         endif
+      end subroutine interpLayer
 
 end module module_wrf_ndhms
