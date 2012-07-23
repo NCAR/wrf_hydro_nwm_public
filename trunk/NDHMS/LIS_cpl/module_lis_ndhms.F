@@ -65,12 +65,6 @@ module module_lis_NDHMS
 
 
 
-            ! get the initial data from LIS 
-            do k = 1 , nlst_lsm(did)%nsoil
-                call lis2ndhms_2d(RT_DOMAIN(did)%SMC,noah32_struc(n)%noah(:)%smc(k),n,ix,jx)
-                call lis2ndhms_2d(RT_DOMAIN(did)%stc,noah32_struc(n)%noah(:)%stc(k),n,ix,jx)
-                call lis2ndhms_2d(RT_DOMAIN(did)%SH2OX,noah32_struc(n)%noah(:)%sh2o(k),n,ix,jx)
-            enddo
             call lis2ndhms_2d(lsm(did)%CMC,noah32_struc(n)%noah(:)%cmc,n,ix,jx)
             call lis2ndhms_2d(lsm(did)%T1,noah32_struc(n)%noah(:)%t1,n,ix,jx)
             call lis2ndhms_2d(lsm(did)%weasd,noah32_struc(n)%noah(:)%sneqv,n,ix,jx)
@@ -78,6 +72,13 @@ module module_lis_NDHMS
 
             RT_DOMAIN(did)%initialized = .true.
         endif
+
+            ! get the initial data from LIS 
+            do k = 1 , nlst_lsm(did)%nsoil
+                call lis2ndhms_2d(RT_DOMAIN(did)%SMC,noah32_struc(n)%noah(:)%smc(k),n,ix,jx)
+                call lis2ndhms_2d(RT_DOMAIN(did)%stc,noah32_struc(n)%noah(:)%stc(k),n,ix,jx)
+                call lis2ndhms_2d(RT_DOMAIN(did)%SH2OX,noah32_struc(n)%noah(:)%sh2o(k),n,ix,jx)
+            enddo
 
     
         call NDHMS_exe(did,ntime,kstart)
