@@ -70,3 +70,5 @@
      else   {print "no selection $response\n"; last} 
   }
   system "csh link.csh";
+  if(! (-e lib)) {mkdir lib;}
+  if(! (-e mod)) {mkdir mod;}
