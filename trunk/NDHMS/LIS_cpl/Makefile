@@ -2,9 +2,9 @@
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
-ESMF_MOD = -I ../../../../esmf/mod/modO/Linux.pgi.64.mpiuni.default
 LIS_MOD = -I ../mod -I../../../make
 
+include ../../../make/configure.lis
 include ../macros
 
 OBJS = \
@@ -15,7 +15,7 @@ all:	$(OBJS)
 .F.o:
 	@echo ""
 	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I../mod $(LIS_MOD) $(ESMF_MOD) $(*).f
+	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I../mod $(LIS_MOD) -I$(MOD_ESMF) $(*).f
 	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libNDHMS.a $(@)
