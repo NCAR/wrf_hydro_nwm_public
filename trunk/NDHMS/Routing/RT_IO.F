@@ -1616,7 +1616,7 @@ end subroutine get_albedo12m_netcdf
              CHANYJ(cnt) = j
              Link_Location(i,j) = cnt
           else 
-             print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1,CH_NETRT(i+1,j-1) !south east
+             print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1  !south east
           End If
 
          End If !CH_NETRT check for this node
