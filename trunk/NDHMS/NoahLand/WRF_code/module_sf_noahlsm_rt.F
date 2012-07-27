@@ -2020,7 +2020,8 @@ CONTAINS
 !DJG 2.9.07 Correction to NROOT (=3 or 4) for 8-layer soils in Noah-d
 
     IF(NROOT.eq.3) NROOT = 4
-    IF(NROOT.eq.4) NROOT = 8
+!yw    IF(NROOT.eq.4) NROOT = 8
+    NROOT = size(SLDPTH)
 
 !DJG - End correction
 

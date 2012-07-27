@@ -1616,7 +1616,7 @@ end subroutine get_albedo12m_netcdf
              CHANYJ(cnt) = j
              Link_Location(i,j) = cnt
           else 
-             print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1,CH_NETRT(i+1,j-1) !south east
+             print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
           End If
 
          End If !CH_NETRT check for this node
@@ -2310,9 +2310,9 @@ end subroutine get_albedo12m_netcdf
             if (vegtyp(i,j).ne.16) then
 !             tot_pcp=tot_pcp+acrain(i,j)/1000.0*(1000.*1000.) !(units m^3)
 !             tot_ET=tot_ET+sfcevp(i,j)/1000.0*(1000.*1000.) !(units m^3)
-              smc_tot=smc_tot+(SMC(I,J,1)*0.1+SMC(I,J,2)*0.3   &
-                +SMC(I,J,3)*0.3+SMC(I,J,4)*0.3+SMC(I,J,5)*0.3 &
-                +SMC(I,J,6)*0.3+SMC(I,J,7)*0.3+SMC(I,J,8)*0.1)*1000.*1000.
+!             smc_tot=smc_tot+(SMC(I,J,1)*0.1+SMC(I,J,2)*0.3   &
+!               +SMC(I,J,3)*0.3+SMC(I,J,4)*0.3+SMC(I,J,5)*0.3 &
+!               +SMC(I,J,6)*0.3+SMC(I,J,7)*0.3+SMC(I,J,8)*0.1)*1000.*1000.
             end if
           enddo
         enddo

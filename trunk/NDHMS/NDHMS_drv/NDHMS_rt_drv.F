@@ -891,7 +891,7 @@
          call MPP_LAND_PAR_INI(1,rt_domain(did)%ix,rt_domain(did)%jx,&
               nlst_rt(did)%AGGFACTRT)
    else  
-!  coupled with WRF
+!  coupled with WRF, LIS
          numprocs = node_info(1,1)
          call wrf_LAND_set_INIT(node_info,numprocs,nlst_rt(did)%AGGFACTRT)
 

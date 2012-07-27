@@ -2,8 +2,8 @@
 RM		=	rm -f
 RMD		=	rm -f
 COMPILER90=	mpif90
-F90FLAGS  =      -Mfree -Mfptrap -c -byteswapio -O2 -Ktrap=fp 
-LDFLAGS  =      -Mfree -Mfptrap  -byteswapio -O2 -Ktrap=fp 
+F90FLAGS  =      -Mfree -Mfptrap -c -byteswapio -O2 -Ktrap=fp -g -Mbounds
+LDFLAGS  =      -Mfree -Mfptrap  -byteswapio -O2 -Ktrap=fp -g -Mbounds
 MODFLAG	=	-I./ -I ../../MPP -I ../MPP  -I ../mod
 LDFLAGS	=	
 CPP	=       cpp
