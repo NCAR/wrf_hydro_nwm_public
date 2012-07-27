@@ -1,0 +1,16 @@
+*.o
+*.f
+*.mod
+*~
+trunk/NDHMS/LandModel/*
+*Noah_wrfdriver_beta
+trunk/NDHMS/Makefile
+trunk/NDHMS/NoahLand/Run/librtland.a
+trunk/NDHMS/NoahLand/rRott/*
+trunk/NDHMS/NoahLand/macros
+trunk/NDHMS/NoahLand/mod
+trunk/NDHMS/NoahLand/*
+trunk/NDHMS/lib/*
+trunk/NDHMS/macros
+trunk/NDHMS/LandModel
+
