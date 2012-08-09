@@ -5475,7 +5475,6 @@ end subroutine mpp_output_chrt
 !       print *, "returned from READFORC_RUC..."
         PRCP1=(PRCPnew-ACRAIN)/dt   !Adjustment to convert accum to rate...(mm/s)
 !       print *, T2,Q2X,U,PRES,XLONG,SHORT,PRCP1
-        print *, ACRAIN(232,319),PRCPnew(232,319),PRCP1(232,319)
      end if
 
 
