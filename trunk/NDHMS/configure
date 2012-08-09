@@ -15,7 +15,9 @@
   printf "\nEnter selection [%d-%d] : ",1,5 ;
   $response = <STDIN> ;
   chop($response);
-  
+#  if(-e macros) {system (rm -f macros);}
+#  if(-e Makefile) {system "rm -f Makefile" ;}
+    
   use Switch;
   switch (chop($response)) {
      case 1 { 
