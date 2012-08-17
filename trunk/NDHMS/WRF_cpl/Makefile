@@ -7,7 +7,7 @@
 
 include ../macros
 
-WRF_ROOT = ../..
+WRF_ROOT = /raid/weiyu/MM_R/code_20120718/CVS_reference/cvs/apps/4dwx/RTFDDA/src/RT_WRF/WRF_V3.3.1_8layer
 OBJS = \
 	module_wrf_ndhms.o \
 	wrf_drv_ndhms.o    

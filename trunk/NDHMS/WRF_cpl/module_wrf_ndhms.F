@@ -14,6 +14,7 @@ module module_WRF_NDHMS
     integer ::  begl, endl, begc, endc, begp, endp
 
     real, allocatable, dimension(:,:) :: vg_test
+    integer :: nn
 
 
 
@@ -48,7 +49,7 @@ CONTAINS
         did = 1
         cpl_land_dt = grid%dt
 
-        write(6,*) "cpl_land_dt = ",cpl_land_dt
+        write(6,*) "yyww cpl_land_dt = ",cpl_land_dt
 
 ! kstart = 2 for continue run.
         kstart = 2
@@ -82,19 +83,26 @@ CONTAINS
             write(6,*) "yyyywww step 4 finish NDHMS_ini= "
             call flush(6)
         endif
+            nlst_lsm(did)%dt = cpl_land_dt
+            CALL domain_clock_get( grid, current_timestr=cpl_outdate)
+            nlst_lsm(did)%olddate(1:19) = cpl_outdate(1:19)
+            nlst_rt(did)%DTRT = cpl_land_dt
 
+        write(6,*) "yyww cpl_outdate = ", cpl_outdate(1:19)
+        write(6,*) "yyww nlst_lsm(did)%olddate(1:19)=", nlst_lsm(did)%olddate(1:19)
 
         ix = rt_domain(did)%ix
         jx = rt_domain(did)%jx
+        nn = nlst_lsm(did)%nsoil
 
         ! get the data from WRF 
 ! need input for RT_DOMAIN(did)%SOLDRAIN(ix,jx)             
 !           call to8layer(grid%TSLB(its:ite,1:4,jts:jte),RT_DOMAIN(did)%STC,ix,jx)
 !           call to8layer(grid%smois(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SMC,ix,jx)
 !           call to8layer(grid%sh2o(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SH2OX,ix,jx)
-            call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%STC,ix,jx,8)
-            call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SMC,ix,jx,8)
-            call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SH2OX,ix,jx,8)
+            call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,ix,jx,nn)
+            call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,ix,jx,nn)
+            call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,ix,jx,nn)
 
 ! output variable for routing model.
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
@@ -112,9 +120,9 @@ CONTAINS
 !   call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
 !   call to4layer(RT_DOMAIN(did)%SMC,grid%SMOIS(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
 !   call to4layer(RT_DOMAIN(did)%SH2OX,grid%SH2O(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%STC,8,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4)
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SMC,8,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4)
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:8)),RT_DOMAIN(did)%SH2OX,8,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,nn,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,nn,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
 
 ! update WRF variable after running routing model.
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
