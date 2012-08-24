@@ -1923,7 +1923,7 @@
             ELSE
 !              OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J)) 
 !              OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*0.5    ! DESWAT ELK calibrate...
-!yyyy                OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*REFMANN    ! Front Range calibrate...Now working 12/28/2010
+!yyyyy               OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*REFMANN    ! Front Range calibrate...Now working 12/28/2010
                OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*OVROUGHRTFAC(IXXRT,JYYRT)  ! Distributed calibration...1/17/2012
 !              print *, OV_ROUGH(VEGTYP(I,J)), OVROUGHRT(IXXRT,JYYRT), REFMANN
             END IF

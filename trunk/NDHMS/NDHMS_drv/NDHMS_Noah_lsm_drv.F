@@ -844,7 +844,7 @@
         USE module_mpp_land
 #endif
         implicit none
-        integer :: did, i,j, nsoil
+        integer :: did, i,j, nsoil, k
         real:: l3moist, l4moist,l3temp,l4temp
 
         nsoil = nlst_lsm(did)%nsoil
@@ -908,26 +908,30 @@
           DO I=1,RT_DOMAIN(did)%IX
             l3moist=RT_DOMAIN(did)%SMC(I,J,3)
             l4moist=RT_DOMAIN(did)%SMC(I,J,4)
-            RT_DOMAIN(did)%SMC(I,J,8)=l4moist
-            RT_DOMAIN(did)%SMC(I,J,7)=l4moist
-            RT_DOMAIN(did)%SMC(I,J,6)=l4moist
-            RT_DOMAIN(did)%SMC(I,J,5)=l4moist
+
+            do k = 5, nsoil
+               RT_DOMAIN(did)%SMC(I,J,k)=l4moist
+            end do
+
             RT_DOMAIN(did)%SMC(I,J,4)=0.5*(l3moist+l4moist)
             RT_DOMAIN(did)%SMC(I,J,3)=0.5*(l3moist+RT_DOMAIN(did)%SMC(I,J,2))
             l3moist=RT_DOMAIN(did)%SH2OX(I,J,3)
             l4moist=RT_DOMAIN(did)%SH2OX(I,J,4)
-            RT_DOMAIN(did)%SH2OX(I,J,8)=l4moist
-            RT_DOMAIN(did)%SH2OX(I,J,7)=l4moist
-            RT_DOMAIN(did)%SH2OX(I,J,6)=l4moist
-            RT_DOMAIN(did)%SH2OX(I,J,5)=l4moist
+
+            do k = 5, nsoil
+              RT_DOMAIN(did)%SH2OX(I,J,k)=l4moist
+            end do
+
             RT_DOMAIN(did)%SH2OX(I,J,4)=0.5*(l3moist+l4moist)
             RT_DOMAIN(did)%SH2OX(I,J,3)=0.5*(l3moist+RT_DOMAIN(did)%SH2OX(I,J,2))
             l3temp=RT_DOMAIN(did)%STC(I,J,3)
             l4temp=RT_DOMAIN(did)%STC(I,J,4)
-            RT_DOMAIN(did)%STC(I,J,8)=0.5*(nlst_lsm(did)%TBOT+l4temp)
-            RT_DOMAIN(did)%STC(I,J,7)=l4temp
-            RT_DOMAIN(did)%STC(I,J,6)=l4temp
-            RT_DOMAIN(did)%STC(I,J,5)=l4temp
+
+            RT_DOMAIN(did)%STC(I,J,nsoil)=0.5*(nlst_lsm(did)%TBOT+l4temp)
+            do k = 1, nsoil-1
+            RT_DOMAIN(did)%STC(I,J,k)=l4temp
+            end do
+
             RT_DOMAIN(did)%STC(I,J,4)=0.5*(l3temp+l4temp)
             RT_DOMAIN(did)%STC(I,J,3)=0.5*(l3temp+RT_DOMAIN(did)%STC(I,J,2))
           ENDDO

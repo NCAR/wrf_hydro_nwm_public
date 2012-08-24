@@ -244,6 +244,7 @@
 #endif
          call geth_newdate(newdate, nlst_lsm(did)%olddate, nint( nlst_lsm(did)%dt))
          nlst_lsm(did)%olddate = newdate
+         write(6,*) "current time is ",newdate
 #ifdef MPP_LAND
    endif
 #endif

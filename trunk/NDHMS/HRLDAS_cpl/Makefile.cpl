@@ -1,0 +1,28 @@
+# Makefile 
+#
+.SUFFIXES:
+.SUFFIXES: .o .F
+
+
+
+include ../macros
+
+OBJS = \
+	module_hrldas_ndhms.o \
+	hrldas_drv_ndhms.o    
+all:	$(OBJS) 
+
+.F.o:
+	@echo ""
+	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
+	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../mod $(*).f
+	$(RMD) $(*).f
+	@echo ""
+	ar -r ../lib/libNDHMS.a $(@)
+
+#
+# Dependencies:
+#
+
+clean:
+	rm -f *.o *.mod *.stb *~ *.f Noah_hrldas_beta
