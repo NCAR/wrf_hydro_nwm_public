@@ -3,6 +3,7 @@ module module_HRLDAS_NDHMS
 ! NDHMS  module   
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
+    use module_ndhms_rt_drv, only: ndhms_ini, ndhms_exe
 
     implicit none
     integer begg, endg
@@ -20,7 +21,7 @@ module module_HRLDAS_NDHMS
 
 CONTAINS
 
-    subroutine hrldas_cpl_ndhms(STC,SMC,SH2OX,infxsrt,sfcheadrt,ii,jj,kk)
+    subroutine hrldas_cpl_ndhms(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
 
        use module_rt_data, only:  rt_domain
        use module_mpp_land
@@ -31,7 +32,7 @@ CONTAINS
        integer ii,jj,kk
        integer k
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-       real,dimension(ii,jj) ::infxsrt,sfcheadrt
+       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
 
         integer ::  did
 
@@ -63,6 +64,7 @@ CONTAINS
            call decompose_data_real(SH2OX(:,:,k),RT_DOMAIN(did)%SH2OX(:,:,k))
         end do
         call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
+        call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
 
         ntime = 1
         call NDHMS_exe(did,ntime,kstart)
@@ -74,6 +76,7 @@ CONTAINS
            call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
         end do
            call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
+!           call write_io_real(rt_domain(did)%soldrain,soldrain)
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice

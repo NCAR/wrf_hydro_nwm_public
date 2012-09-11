@@ -157,8 +157,7 @@
       REAL,    allocatable, DIMENSION(:)   :: SLDPTH
 
 !!! define constant/parameter
-    real ::  REFMANN, WATHOLDCAP, ov_rough(50), ZSOIL(100)
-    real :: SMCREF
+    real ::   ov_rough(50), ZSOIL(100)
     integer :: out_counts, rst_counts
     
     REAL,    allocatable, DIMENSION(:,:)   :: lat_lsm, lon_lsm

@@ -2,13 +2,10 @@
 
 all:
 	(make -f Makefile BASIC)
-	(cd Main ;   make -f Makefile)
 
 BASIC:
 	(cd MPP     ; make -f Makefile)
 	(cd Data_Rec     ; make -f Makefile)
-	(cd NoahLand; make -f Makefile)
-	(cp NoahLand/*/*.mod mod; cp NoahLand/Run/librtland.a lib/libland.a)
 	(cd Routing; make -f Makefile)
 	(cd NDHMS_drv;   make -f Makefile)
 
@@ -26,15 +23,12 @@ WRF:
 
 NDHMS:
 	(make -f Makefile BASIC)
-	(cd Main ;   make -f Makefile)
 
 clean:
 	(cd Data_Rec; make -f Makefile clean)
 	(cd NDHMS_drv; make -f Makefile clean)
 	(cd MPP; make -f Makefile clean)
 	(cd Routing;    make -f Makefile clean)
-	(cd NoahLand; make -f Makefile clean)
-	(cd Main   ; make -f Makefile clean)
 	(rm -f lib/*.a mod/*.mod)
 	(cd CLM_cpl; rm -f *.o *.mod       )
 	(cd WRF_cpl; rm -f *.o *.mod       )

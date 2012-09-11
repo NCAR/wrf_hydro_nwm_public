@@ -1,6 +1,7 @@
 # Makefile 
 
 all:
+	(rm -f ../HRLDAS/Run/Noah_hrldas_beta)
 	(cd ../; make -f Makefile)
 	(make -f Makefile.cpl)
 	(cd ../HRLDAS; make; cp Run/Noah_hrldas_beta ../HRLDAS_cpl  )

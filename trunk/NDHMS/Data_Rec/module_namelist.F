@@ -13,7 +13,7 @@ Module module_namelist
     save nlst_lsm, nlst_rt 
 
 CONTAINS 
-    subroutine read_lsm(nlst)     
+    subroutine read_lsm_nlst(nlst)     
        implicit none
        TYPE(namelist_lsm_field) nlst
               CHARACTER(len=256) :: indir
@@ -144,10 +144,10 @@ CONTAINS
   write(6,*) " nlst%HIRES_OUT ", HIRES_OUT
   write(6,*) " nlst%DEEPGWSPIN ", DEEPGWSPIN 
   write(6,*) " nlst%SOLVEG_INITSWC ", SOLVEG_INITSWC
-    end subroutine read_lsm
+    end subroutine read_lsm_nlst
 
 
-    subroutine read_rt(nlst)     
+    subroutine read_rt_nlst(nlst)     
           implicit none
 
           TYPE(namelist_rt_field) nlst
@@ -249,7 +249,7 @@ CONTAINS
     write(6,*) " nlst%wrfsi_finegrid_flnm ",  wrfsi_finegrid_flnm
 
       return
-    end subroutine read_rt
+    end subroutine read_rt_nlst
 
 
 end module module_namelist

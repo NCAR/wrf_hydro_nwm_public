@@ -6,7 +6,7 @@
 include ../macros
 
 OBJS = \
-	NDHMS_Noah_lsm_drv.o NDHMS_rt_drv.o
+	module_NDHMS_rt_drv.o
 all:	$(OBJS) 
 
 .F.o:
@@ -16,6 +16,7 @@ all:	$(OBJS)
 	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libNDHMS.a $(@)
+	cp *.mod ../mod
 
 #
 # Dependencies:

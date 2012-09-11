@@ -4,7 +4,6 @@
          use module_GW_baseflow, only: simp_gw_buck, gwstep
          use module_channel_routing, only: drive_channel
          use module_namelist, only: nlst_rt, nlst_lsm
-         use module_LSM_WRF_data, only: lsm
 
 #ifdef MPP_LAND  
          use module_mpp_land 
@@ -72,12 +71,11 @@
              RT_DOMAIN(did)%LAKE_CT, RT_DOMAIN(did)%STRM_CT,    &
              nlst_rt(did)%RT_OPTION,RT_DOMAIN(did)%OV_ROUGH, &
              RT_DOMAIN(did)%INFXSAGG1RT,RT_DOMAIN(did)%SFCHEADAGG1RT,&
-             RT_DOMAIN(did)%SFCHEADAGGRT,&
-             RT_DOMAIN(did)%WATHOLDCAP,nlst_rt(did)%DTRT, &
+             RT_DOMAIN(did)%SFCHEADAGGRT,nlst_rt(did)%DTRT, &
              nlst_lsm(did)%DT,RT_DOMAIN(did)%LAKE_INFLOTRT,&
              RT_DOMAIN(did)%QBDRYTRT,RT_DOMAIN(did)%QSUBBDRYTRT,&
              RT_DOMAIN(did)%QSTRMVOLTRT,RT_DOMAIN(did)%q_sfcflx_x,&
-             RT_DOMAIN(did)%q_sfcflx_y,RT_DOMAIN(did)%LKSATFAC,RT_DOMAIN(did)%REFMANN,&
+             RT_DOMAIN(did)%q_sfcflx_y,RT_DOMAIN(did)%LKSATFAC,&
              RT_DOMAIN(did)%OVROUGHRTFAC,rt_domain(did)%dist_lsm(:,:,9) )
 
             QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-QSTRMVOLRT_DUM

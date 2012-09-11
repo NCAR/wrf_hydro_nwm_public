@@ -107,6 +107,7 @@ CONTAINS
 ! output variable for routing model.
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
 !           rt_domain(did)%sfcheadrt = grid%sfcheadrt(its:ite,jts:jte)
+            rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
 
              
 
@@ -125,6 +126,7 @@ CONTAINS
             call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
 
 ! update WRF variable after running routing model.
+            grid%soldrain(its:ite,jts:jte) = rt_domain(did)%soldrain
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
 !           grid%infxsrt(its:ite,jts:jte) = rt_domain(did)%infxsrt
 

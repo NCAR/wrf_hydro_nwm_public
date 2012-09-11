@@ -1,7 +1,10 @@
 MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
+   use module_ndhms_io, only: mpp_read_routedim, mpp_read_routing, mpp_read_chrouting, &
+                              mpp_chrouting_conf, mpp_read_simp_gw
 #endif
+   use module_ndhms_io, only: readgw2d
    use module_NDHMS_utils 
    IMPLICIT NONE
 
@@ -440,7 +443,6 @@ CONTAINS
 !DJG Temporary hardwire of RETDEPRT,RETDEP_CHAN
 !DJG    will later make this a function of SOLTYP and VEGTYP
 !            OVROUGHRT(i,j) = 0.01
-!            OVROUGHRT = OVROUGHRT*REFMANN
 
               rt_domain(did)%RETDEPRT = 0.001   ! units (mm)
               rt_domain(did)%RETDEP_CHAN = 0.001
@@ -625,11 +627,7 @@ CONTAINS
    if(my_id .eq. IO_id) then
 #endif
 !Read in GW bucket params and Zinit from input file in Run directory...
-#ifdef COUPLED
-     OPEN(81, FILE='RT/GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
-#else
      OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
-#endif
      read(81,811) header
 811   FORMAT(A19)
 

@@ -7,12 +7,12 @@ include ../macros
 
 OBJS = \
 	module_NDHMS_utils.o \
-	module_diag_field.o \
 	module_noah_chan_param_init_rt.o \
 	module_GW_baseflow.o \
+	module_ndhms_io.o \
  	module_RT.o Noah_distr_routing.o \
 	module_channel_routing.o \
-	rtFunction.o restart_io.o RT_IO.o module_ndhms_io.o
+	rtFunction.o 
 
 all:	$(OBJS)
 

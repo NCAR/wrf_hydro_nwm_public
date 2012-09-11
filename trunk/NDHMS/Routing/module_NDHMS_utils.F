@@ -1,6 +1,5 @@
 module module_NDHMS_utils
   use module_RT_data, only: rt_domain
-  use module_LSM_WRF_data, only: lsm
   use module_namelist, only: nlst_lsm, nlst_rt
 #ifdef MPP_LAND
      use module_mpp_land, only: global_nx, global_ny, my_id, IO_id, &
@@ -14,6 +13,36 @@ module module_NDHMS_utils
   logical lr_dist_flag    !land routing distance calculated or not. 
   
 contains
+
+        integer function get2d_real(var_name,out_buff,ix,jx,fileName)
+          implicit none
+#         include "netcdf.inc"
+          integer :: ivar, iret,varid,ncid,ix,jx
+          real out_buff(ix,jx)
+          character(len=*), intent(in) :: var_name
+          character(len=*), intent(in) :: fileName
+          get2d_real = -1
+
+          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+          if (iret .ne. 0) then
+            print*,"failed to open the netcdf file: ",trim(fileName)
+            out_buff = -9999.
+            return
+          endif
+          ivar = nf_inq_varid(ncid,trim(var_name),  varid)
+          if(ivar .ne. 0) then
+            ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
+            if(ivar .ne. 0) then
+               write(6,*) "Read Error: could not find ",var_name
+                 return
+            endif
+          end if
+          iret = nf_get_var_real(ncid, varid, out_buff)
+          iret = nf_close(ncid)
+          get2d_real =  ivar
+      end function get2d_real
+
+ 
 ! this module create the distance dx, dy and diagnoal for routing
 ! 8 direction as the slop:
 ! 1: i,j+1  
@@ -95,7 +124,7 @@ contains
       implicit none
       integer:: did, k
       integer iret
-      external get2d_real
+!     external get2d_real
       real get2d_real
 #ifdef MPP_LAND
       real, dimension(global_rt_nx,global_rt_ny):: latrt, lonrt

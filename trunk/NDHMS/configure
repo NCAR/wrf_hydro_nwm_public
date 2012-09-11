@@ -30,6 +30,7 @@
               # mpp linux 
               system "ln -sf arc/macros.mpp.linux macros"; 
               system "ln -sf arc/Makefile.mpp Makefile"; 
+              system "ln -sf HRLDAS_cpl Main";
             }
 
      case 3 {
