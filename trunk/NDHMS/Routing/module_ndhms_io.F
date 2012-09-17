@@ -4871,4 +4871,103 @@ end subroutine mpp_output_chrt
       subroutine hrldas_out()
       end subroutine hrldas_out
 
+      SUBROUTINE READ_ROUTING_old(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,route_topo_f,    &
+            route_chan_f, wrfsi_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC)
+
+
+#include <netcdf.inc>
+        INTEGER, INTENT(IN) :: IXRT,JXRT
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
+        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
+!Dummy inverted grids
+        REAL, DIMENSION(IXRT,JXRT) :: ELRT_inv,LKSATFAC_inv
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
+        REAL, DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC_inv
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
+        REAL, DIMENSION(IXRT,JXRT) :: RETDEPRTFAC_inv
+        INTEGER, DIMENSION(IXRT,JXRT) :: CH_NETRT_inv
+
+        INTEGER         :: I,J, iret, jj
+        CHARACTER(len=256)        :: var_name
+        CHARACTER(len=256)       :: route_topo_f
+        CHARACTER(len=256)       :: route_chan_f
+        CHARACTER(len=256)       :: wrfsi_finegrid_flnm
+
+        var_name = "TOPOGRAPHY"
+        iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
+                     trim(wrfsi_finegrid_flnm))
+        write(6,*) "read ",var_name
+        call flush(6)
+
+!!!DY to be fixed ... 6/27/08
+!        var_name = "BED_ELEVATION"
+!        iret = get2d_real(var_name,ELRT,ixrt,jxrt,&
+!                     trim(wrfsi_finegrid_flnm))
+
+        var_name = "CHANNELGRID"
+        call get2d_int(var_name,CH_NETRT_inv,ixrt,jxrt,&
+               trim(wrfsi_finegrid_flnm))
+
+        write(6,*) "read ",var_name
+        call flush(6)
+
+        var_name = "LKSATFAC"
+        LKSATFAC_inv = -9999.9
+        iret = get2d_real(var_name,LKSATFAC_inv,ixrt,jxrt,&
+               trim(wrfsi_finegrid_flnm))
+
+        write(6,*) "read ",var_name
+        call flush(6)
+
+           where (LKSATFAC_inv == -9999.9) LKSATFAC_inv = 1000.0  !specify LKSAFAC if no term avail...
+
+
+!1.12.2012...Read in routing calibration factors...
+        var_name = "RETDEPRTFAC"
+        iret = get2d_real(var_name,RETDEPRTFAC_inv,ixrt,jxrt,&
+                     trim(wrfsi_finegrid_flnm))
+        write(6,*) "read ",var_name, RETDEPRTFAC_inv(100,100)
+        where (RETDEPRTFAC_inv < 0.) RETDEPRTFAC_inv = 1.0  ! reset grid to = 1.0 if non-valid value exists
+        write(6,*) "read ",var_name, RETDEPRTFAC_inv(100,100)
+        call flush(6)
+
+        var_name = "OVROUGHRTFAC"
+        iret = get2d_real(var_name,OVROUGHRTFAC_inv,ixrt,jxrt,&
+                     trim(wrfsi_finegrid_flnm))
+        write(6,*) "read ",var_name, OVROUGHRTFAC_inv(100,100)
+        where (OVROUGHRTFAC_inv <= 0.) OVROUGHRTFAC_inv = 1.0 ! reset grid to = 1.0 if non-valid value exists
+        write(6,*) "read ",var_name, OVROUGHRTFAC_inv(100,100)
+        call flush(6)
+
+
+
+!!!Flip y-dimension of highres grids from exported Arc files...
+
+        do i=1,ixrt
+        jj=jxrt
+         do j=1,jxrt
+           ELRT(i,j)=ELRT_inv(i,jj)
+           CH_NETRT(i,j)=CH_NETRT_inv(i,jj)
+           LKSATFAC(i,j)=LKSATFAC_inv(i,jj)
+           RETDEPRTFAC(i,j)=RETDEPRTFAC_inv(i,jj)
+           OVROUGHRTFAC(i,j)=OVROUGHRTFAC_inv(i,jj)
+           jj=jxrt-j
+         end do
+        end do
+
+        write(6,*) "after flip ",var_name, OVROUGHRTFAC(100,100)
+        call flush(6)
+        write(6,*) "after flip ",var_name, RETDEPRTFAC(100,100)
+        call flush(6)
+
+          
+        write(6,*) "finish READ_ROUTING_old"
+        call flush(6)
+
+        return
+
+!DJG -----------------------------------------------------
+   END SUBROUTINE READ_ROUTING_old
+!DJG _____________________________
+
 end module module_ndhms_io

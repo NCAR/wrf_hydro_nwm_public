@@ -2,6 +2,8 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND 
    use module_ndhms_io, only:  mpp_output_rt, mpp_output_chrt, mpp_output_lakes
    USE module_mpp_land
+#else
+   use module_ndhms_io, only:  output_rt, output_chrt, output_lakes
 #endif
    use module_ndhms_io, only: output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &

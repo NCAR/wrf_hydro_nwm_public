@@ -1,11 +1,11 @@
 .IGNORE:
-RM		=	rm -f
+RMD		=	rm -f
 COMPILER90=	gfortran
 F90FLAGS  =       -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 
-MODFLAG	=	
+MODFLAG	=	-I./ -I../mod
 LDFLAGS	=	
 CPP	=       /lib/cpp
-CPPFLAGS	=       -C -P -traditional
+CPPFLAGS	=       -C -P -traditional -I ../Data_Rec
 LIBS 	=	
-NETCDFINC       =       /raid/weiyu/netcdf/netcdf-4.1.2/include
-NETCDFLIB       =       -L/raid/weiyu/netcdf/netcdf-4.1.2/lib -lnetcdff -lnetcdf
+NETCDFINC       =       $(HOME)/netcdf/include
+NETCDFLIB       =       -L($HOME)/netcdf/lib -lnetcdff -lnetcdf
