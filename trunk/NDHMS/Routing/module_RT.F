@@ -366,13 +366,7 @@ CONTAINS
   IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) THEN
   print *, "Terrain routing initialization..."
 
-  
-!  if(nlst_rt(did)%dxrt0 .gt. 0) then
-!      call get_dist_lrt(did)
-! end if
-
 #ifdef MPP_LAND
-
     CALL MPP_READ_ROUTING(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%wrfsi_finegrid_flnm,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &

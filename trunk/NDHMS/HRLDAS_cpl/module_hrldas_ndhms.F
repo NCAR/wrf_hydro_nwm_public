@@ -75,8 +75,7 @@ CONTAINS
            call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
            call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
         end do
-           call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
-!           call write_io_real(rt_domain(did)%soldrain,soldrain)
+         call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice

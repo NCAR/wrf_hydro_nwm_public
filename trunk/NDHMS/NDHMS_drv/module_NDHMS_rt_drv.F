@@ -769,19 +769,15 @@ module module_NDHMS_rt_drv
 ! the lsm namelist will be read by rtland sequentially again.
      call read_lsm_nlst(nlst_lsm(did) )
      call read_rt_nlst(nlst_rt(did) )
-!   pass the namelist to rtland model.
-!     call NLST_2LAND(did)
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! get the dimension 
-       call get_file_dimension(trim(nlst_lsm(did)%wrfsi_static_flnm), ix,jx)
-    
+     call get_file_dimension(trim(nlst_lsm(did)%wrfsi_static_flnm), ix,jx)
+   
        
 #ifdef MPP_LAND
-
-
 
   if (nlst_rt(did)%sys_cpl .eq. 0 .or. nlst_rt(did)%sys_cpl .eq. 4) then
 !sys_cpl: 0--offline run; 
@@ -951,6 +947,7 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) then
 #endif
+
        open(71,file="NDHMS.TBL", form="formatted") 
 !read OV_ROUGH first
           read(71,*) nn
@@ -965,6 +962,7 @@ module module_NDHMS_rt_drv
              read(71,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
           end do 
        close(71)
+
 #ifdef MPP_LAND
        endif
        call mpp_land_bcast_real(leng,RT_DOMAIN(did)%OV_ROUGH)
@@ -973,12 +971,13 @@ module module_NDHMS_rt_drv
        call mpp_land_bcast_real(leng,refsmc)
        call mpp_land_bcast_real(leng,wltsmc)
 #endif
+
        xdum = 0
        call get2d_lsm_soltyp(xdum,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_lsm(did)%wrfsi_static_flnm))
        rt_domain(did)%lksat = 0.0
        do j = 1, RT_DOMAIN(did)%jx
              do i = 1, RT_DOMAIN(did)%ix
-                rt_domain(did)%lksat = xdum1(xdum(i,j) ) * 1000.0
+                rt_domain(did)%lksat(i,j) = xdum1(xdum(i,j) ) * 1000.0
                 IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
                     rt_domain(did)%SMCMAX1(i,j) = 0.45
                     rt_domain(did)%SMCREF1(i,j) = 0.42
