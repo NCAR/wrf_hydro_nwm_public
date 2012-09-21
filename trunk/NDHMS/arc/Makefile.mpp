@@ -33,3 +33,4 @@ clean:
 	(cd CLM_cpl; rm -f *.o *.mod       )
 	(cd WRF_cpl; rm -f *.o *.mod       )
 	(cd LIS_cpl; rm -f *.o *.mod       )
+	(cd HRLDAS; make -f Makefile clean)

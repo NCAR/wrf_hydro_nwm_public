@@ -19,32 +19,19 @@ module module_NDHMS_rt_drv
    implicit none
 
    contains
-
-   subroutine NDHMS_out(did,kt)
+   subroutine NDHMS_rst_out(did,kt)
       implicit none
       integer:: rst_out  
       integer did, outflag
       character(len=19) out_date
       integer :: Kt, ounit
-
-!    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
-!           runoff1x_tmp, runoff2x_tmp, runoff3x_tmp,etax_tmp, &
-!           EDIRX_tmp,ECX_tmp,ETTX_tmp,RCX_tmp,HX_tmp,acrain_tmp, &
-!           ACSNOM_tmp, esnow2d_tmp, drip2d_tmp,dewfall_tmp, fpar_tmp, &
-!           qfx_tmp, prcp_out_tmp, etpndx_tmp
-
-   rst_out = -99
-   outflag = -99
-
-
+      rst_out = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-      !yw if(nlst_lsm(did)%olddate(1:16) == nlst_lsm(did)%startdate(1:16) ) then
       if(nlst_lsm(did)%olddate(1:19) == nlst_lsm(did)%startdate(1:19) ) then
-         outflag = 99
-!for testing purpose         
-         rst_out = -99
+!for testing purpose
+          rst_out = -99
 !         write(6,*) "output the restart file : "
 !         write(6,*)  "RESTART."//nlst_lsm(did)%olddate(1:16)//   &
 !                 "_DOMAIN"//trim(nlst_lsm(did)%hgrid)
@@ -55,6 +42,50 @@ module module_NDHMS_rt_drv
              rst_out = 99
              rt_domain(did)%rst_counts = rt_domain(did)%rst_counts + 1
          endif
+      endif
+#ifdef MPP_LAND
+   endif
+     call mpp_land_bcast_int1(rst_out)
+#endif
+    if(rst_out .gt. 0) &
+             call   RESTART_OUT_nc(trim("RESTART."//nlst_lsm(did)%olddate(1:16)   &
+                 //"_DOMAIN"//trim(nlst_lsm(did)%hgrid)),  did)
+
+#ifdef MPP_LAND
+   if(IO_id .eq. my_id) then
+#endif
+      write(6,*) "yyww =",  "RESTART."//nlst_lsm(did)%olddate(1:16)   &
+                 //"_DOMAIN"//trim(nlst_lsm(did)%hgrid)
+#ifdef MPP_LAND
+   endif
+#endif
+
+
+   end subroutine NDHMS_rst_out
+
+   subroutine NDHMS_out(did,kt)
+      implicit none
+      integer did, outflag
+      character(len=19) out_date
+      integer :: Kt, ounit
+
+!    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
+!           runoff1x_tmp, runoff2x_tmp, runoff3x_tmp,etax_tmp, &
+!           EDIRX_tmp,ECX_tmp,ETTX_tmp,RCX_tmp,HX_tmp,acrain_tmp, &
+!           ACSNOM_tmp, esnow2d_tmp, drip2d_tmp,dewfall_tmp, fpar_tmp, &
+!           qfx_tmp, prcp_out_tmp, etpndx_tmp
+
+   outflag = -99
+
+
+#ifdef MPP_LAND
+   if(IO_id .eq. my_id) then
+#endif
+!     write(6,*) "nlst_lsm(did)%olddate(1:16), nlst_lsm(did)%startdate(1:16) ",  nlst_lsm(did)%olddate(1:16), nlst_lsm(did)%startdate(1:16)
+      !yw if(nlst_lsm(did)%olddate(1:16) == nlst_lsm(did)%startdate(1:16) ) then
+      if(nlst_lsm(did)%olddate(1:19) == nlst_lsm(did)%startdate(1:19) ) then
+         outflag = 99
+      else
          call geth_newdate(out_date, nlst_lsm(did)%startdate, nint(nlst_lsm(did)%out_dt*60*rt_domain(did)%out_counts))
          if ( out_date(1:19) == nlst_lsm(did)%olddate(1:19) ) then
              outflag = 99
@@ -63,18 +94,9 @@ module module_NDHMS_rt_drv
       endif
 #ifdef MPP_LAND
    endif
-     call mpp_land_bcast_int1(rst_out)
      call mpp_land_bcast_int1(outflag)
 #endif
     
-!    rst_out = 99
-
-         if(rst_out .gt. 0) &
-             call   RESTART_OUT_nc("RESTART."//nlst_lsm(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_lsm(did)%hgrid),  did)
-
-      write(6,*) "yyww =",  "RESTART."//nlst_lsm(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_lsm(did)%hgrid)
 
      if (outflag .lt. 0) return
 
@@ -169,8 +191,8 @@ module module_NDHMS_rt_drv
       end subroutine NDHMS_out
 
 
-      subroutine NDHMS_rst_in(did, kstart)
-        integer :: did, kstart
+      subroutine NDHMS_rst_in(did)
+        integer :: did
         integer:: flag 
 
 
@@ -188,13 +210,18 @@ module module_NDHMS_rt_drv
 
       
    if (flag.eq.99) then
-      kstart = 2
       nlst_lsm(did)%olddate = nlst_lsm(did)%restart_hdate(1:19)
 
+#ifdef MPP_LAND
+   if(my_id.eq.IO_id) then
+#endif
       write(6,*) "*** read restart data "
       write(6,*) "RESTART."//nlst_lsm(did)%olddate(1:16)//"_DOMAIN"//trim(nlst_lsm(did)%hgrid)
-
       call flush(6)
+
+#ifdef MPP_LAND
+   endif 
+#endif
 
 
       call   RESTART_IN_nc("RESTART."//nlst_lsm(did)%olddate(1:16)//  &
@@ -685,26 +712,24 @@ module module_NDHMS_rt_drv
 
   end subroutine geth_newdate
   
-     subroutine NDHMS_exe(did, ntime,kstart)
+     subroutine NDHMS_exe(did, ntime)
 
 
         implicit none
         integer:: ntime, did
-        integer:: kt, rst_out, kstart
+        integer:: kt, rst_out
 
   
 
 !         if(RT_DOMAIN(did)%rst_flag .ne. -99) then
-!             call NDHMS_rst_in(did,kstart)
+!             call NDHMS_rst_in(did)
 !             call NDHMS_out(did,0)
 !             RT_DOMAIN(did)%rst_flag =  -99 
 !         endif
 !output at NDHMS_ini        
         
 
-! kstart = 1: cold start. 2: continue run
-
-        do kt = kstart, ntime + kstart - 1
+        do kt = 1+1, ntime +1
 
           write(6,*) "yyww = ", kt, "ntime=",ntime
 
@@ -740,10 +765,10 @@ module module_NDHMS_rt_drv
 
 ! advance to next time step
            call NDHMS_time_adv(did)
-      ! output for history or restart files    
 
-
+      ! output for history 
            call NDHMS_out(did,kt)
+
 
             
            RT_DOMAIN(did)%SOLDRAIN = 0
@@ -755,9 +780,9 @@ module module_NDHMS_rt_drv
       end subroutine NDHMS_exe
 
 
-      subroutine NDHMS_ini(ntime, did,kstart)
+      subroutine NDHMS_ini(ntime, did)
         implicit none
-        integer ntime, did, kstart
+        integer ntime, did
         integer rst_out, ix,jx
 
 
@@ -772,6 +797,10 @@ module module_NDHMS_rt_drv
      call read_lsm_nlst(nlst_lsm(did) )
      call read_rt_nlst(nlst_rt(did) )
 
+
+             IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
+               .or. nlst_rt(did)%SUBRTSWCRT .eq.0  &
+               .or. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -905,10 +934,10 @@ module module_NDHMS_rt_drv
 
 
 ! restart the file
-       call NDHMS_rst_in(did,kstart)
+       call NDHMS_rst_in(did)
 
 ! output at the initial time
-      call NDHMS_out(did,0)
+       call NDHMS_out(did,0)
 
 
       end subroutine NDHMS_ini

@@ -8,6 +8,7 @@
 #ifdef MPP_LAND  
          use module_mpp_land 
 #endif
+
        
          implicit none
          integer did, kt, i
@@ -71,7 +72,8 @@
              RT_DOMAIN(did)%LAKE_CT, RT_DOMAIN(did)%STRM_CT,    &
              nlst_rt(did)%RT_OPTION,RT_DOMAIN(did)%OV_ROUGH, &
              RT_DOMAIN(did)%INFXSAGG1RT,RT_DOMAIN(did)%SFCHEADAGG1RT,&
-             RT_DOMAIN(did)%SFCHEADAGGRT,nlst_rt(did)%DTRT, &
+             RT_DOMAIN(did)%SFCHEADAGGRT,&
+             nlst_rt(did)%DTRT, &
              nlst_lsm(did)%DT,RT_DOMAIN(did)%LAKE_INFLOTRT,&
              RT_DOMAIN(did)%QBDRYTRT,RT_DOMAIN(did)%QSUBBDRYTRT,&
              RT_DOMAIN(did)%QSTRMVOLTRT,RT_DOMAIN(did)%q_sfcflx_x,&

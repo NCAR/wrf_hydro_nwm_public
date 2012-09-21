@@ -160,7 +160,7 @@ contains
       real, dimension(ix,jx,9):: dist
       real, dimension(ix,jx):: lat, lon
       integer:: i,j 
-      real get_ll_d, x,y 
+      real x,y 
       dist = -1
       do j = 1, jx
         do i = 1, ix

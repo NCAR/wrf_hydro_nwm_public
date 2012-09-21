@@ -44,6 +44,7 @@ CONTAINS
             HIRES_OUT, & 
             DEEPGWSPIN, SOLVEG_INITSWC
 
+        
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
@@ -110,6 +111,7 @@ CONTAINS
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
 
   write(nlst%hgrid,'(I1)') igrid
+  nlst%olddate = "1234567890123456789123456789012345678901234"
   write(nlst%olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
        start_year, start_month, start_day, start_hour, start_min, 0
   nlst%startdate = nlst%olddate

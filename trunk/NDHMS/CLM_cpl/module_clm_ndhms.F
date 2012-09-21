@@ -16,7 +16,6 @@ module module_CLM_NDHMS
     integer :: numg, numl, numc, nump
     INTEGER, PARAMETER :: double=8
     real(kind=double), pointer :: r2p(:,:) , r1p(:)
-    integer :: kstart
      
     integer ::  begl, endl, begc, endc, begp, endp
     real(kind=double), allocatable, dimension(:) :: clm_g1d
@@ -55,16 +54,12 @@ CONTAINS
 
         write(6,*) "cpl_land_dt = ",cpl_land_dt
 
-! kstart = 2 for continue run.
-        kstart = 2
         ntime = 1
 
         if(.not. RT_DOMAIN(did)%initialized) then
 
 
             write(6,*) "yyyywww step 4 before NDHMS_ini= "
-            kstart = 1
-! kstart = 1 for cold start. It will be 2 if we read the restart file from NDHMS_exe.
 
 
             call NDHMS_ini(ntime,did)
@@ -154,7 +149,7 @@ CONTAINS
 
 
 
-            call NDHMS_exe(did,ntime,kstart)
+            call NDHMS_exe(did,ntime)
 
             write(6,*) "after call NDHMS_exe" 
             call flush(6)     

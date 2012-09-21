@@ -975,6 +975,11 @@ end subroutine get_albedo12m_netcdf
       end if   !end if for NLAKES >0 check
 
        cnt = 0 
+
+!yw  add temperary to initialize the following two variables.
+     BwG = 0.0
+     ChSSlpG = 0.0
+
 !DJG inv       DO j = JXRT,1,-1  !rows
        DO j = 1,JXRT  !rows
         DO i = 1 ,IXRT   !colsumns
@@ -3137,7 +3142,6 @@ end subroutine output_chrt
 !    write(22,*) qlink
 !    write(23,*) dtrt, K
 !    write(24,*) STRMFRXSTPTS
-!    call land_finish()
 
 
 
@@ -3737,7 +3741,6 @@ end subroutine mpp_output_chrt
 !   yyywwww  ! temp test
 !   if(my_id.eq. IO_id  ) write(14,*) dist(:,:,9)
 !   if(my_id.eq. IO_id  ) write(12,*) dist_g(:,:,9)
-!   call land_finish()
 
 
 
@@ -4276,6 +4279,7 @@ end subroutine mpp_output_chrt
     integer :: iret
 
 
+
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
 #endif
@@ -4286,9 +4290,12 @@ end subroutine mpp_output_chrt
 
        if (iret /= 0) stop "Problem nf_create"
 
+
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
 #endif
+         write(6,*) "output file ", outFile
+         call flush(6)
 ! define dimension for variables 
           iret = nf_def_dim(ncid, "depth", nlst_lsm(did)%nsoil, dimid_soil)  !-- 3-d soils
    
@@ -4324,7 +4331,16 @@ end subroutine mpp_output_chrt
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SFCHEADRT,"sfcheadrt" )
 
+#ifdef MPP_LAND
+     if(IO_id.eq.my_id) then
+#endif
+
         iret = nf_close(ncid)
+        write(6,*) "finish writing outFile : ", outFile
+
+#ifdef MPP_LAND
+    endif
+#endif
 
         return
         end subroutine output_lsm
@@ -4375,52 +4391,27 @@ end subroutine mpp_output_chrt
 
           iret = nf_def_dim(ncid, "links", rt_domain(did)%nlinks, dimid_links)
           iret = nf_def_dim(ncid, "basns", rt_domain(did)%numbasns, dimid_basns)
-    
+
 !define variables
           iret = nf_def_var(ncid,"stc",NF_FLOAT,3,(/dimid_ix,dimid_jx,dimid_soil/),varid)
           iret = nf_def_var(ncid,"smc",NF_FLOAT,3,(/dimid_ix,dimid_jx,dimid_soil/),varid)
           iret = nf_def_var(ncid,"sh2ox",NF_FLOAT,3,(/dimid_ix,dimid_jx,dimid_soil/),varid)
-          iret = nf_def_var(ncid,"snodep",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"weasd",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"t1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"cmc",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+    
           iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"smcwlt1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-!          iret = nf_def_var(ncid,"fpar",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"infxsrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-
-! diagnostic variable
-       if(nlst_lsm(did)%rst_diag .eq. 1) then
-          iret = nf_def_var(ncid,"soilmx",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"runoff1x",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"runoff2x",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"runoff3x",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"etax",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"ecx",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"edirx",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"ettx",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"acrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"acsnom",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"esnow2d",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"drip2d",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"dewfall",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"fpar",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"qfx",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"prcp_out",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"etpndx",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-       endif
+          iret = nf_def_var(ncid,"soldrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+          iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-            iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
             iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"sh2owgt",NF_FLOAT,3,(/dimid_ixrt,dimid_jxrt,dimid_soil/),varid)
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_links/),varid)
-                 iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_links/),varid)
-              iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
+              iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"lake_inflort",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
               iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             end if
@@ -4434,19 +4425,21 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
     endif
 #endif
-        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
+       call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%smc,"smc")
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
-        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
-        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
-        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
-!        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%FPAR,"fpar"  ) 
-        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
+
+
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt"  ) 
 
 ! output diagnostic variables
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-            call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SFCHEADRT,"sfcheadrt" )
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
             call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_lsm(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
@@ -4627,6 +4620,7 @@ end subroutine mpp_output_chrt
 
     integer :: i, j
 
+
 #ifdef MPP_LAND
      if(IO_id .eq. my_id) then
 #endif
@@ -4642,20 +4636,22 @@ end subroutine mpp_output_chrt
        call land_finish()
     endif
 
+     write(6,*) "nlst_lsm(did)%nsoil=",nlst_lsm(did)%nsoil
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%smc,"smc")
+
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+ 
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1")
-!        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SHORT,"short")
-!       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%FPAR,"fpar")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
+        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
+        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
+
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-            call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SFCHEADRT,"sfcheadrt")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
             call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_lsm(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
-!            call read_rst_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%ETPNDX,"etpndx")
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call read_rst_crt_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink")
               call read_rst_crt_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol")

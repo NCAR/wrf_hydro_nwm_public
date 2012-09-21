@@ -1730,6 +1730,7 @@
               up_id,mpp_land_com_real, my_id, &
              mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1
 #endif
+!       use  module_ndhms_rt_drv, only: ndhms_out
      implicit none
 ! Define the variables
        integer IX,JX,NSOIL,IXRT,JXRT
@@ -1811,6 +1812,8 @@
 !DJG Weighting alg. alteration...(prescribe wghts if time = 1)
 !yw       DX=DXRT*AGGFACTRT
 
+!       call ndhms_out(1,0)
+!       call land_finish()
 
         do J=1,JX
           do I=1,IX
@@ -1900,17 +1903,17 @@
 
 
 
-            do KRT=1,NSOIL  !debug loop
-               IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-                   print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
-                           SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                   stop
-               ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
-                   print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
-                           SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
-                   stop
-               END IF
-            end do !debug loop
+               do KRT=1,NSOIL  !debug loop
+                  IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+                      print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
+                              SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
+                      stop
+                  ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
+                      print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
+                              SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
+                      stop
+                  END IF
+               end do !debug loop
 
 !	print *, "After soil moisture adjustment..."
 

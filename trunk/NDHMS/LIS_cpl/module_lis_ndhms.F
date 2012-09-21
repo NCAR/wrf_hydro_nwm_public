@@ -28,10 +28,8 @@ module module_lis_NDHMS
 !output flux and state variable
 
         integer :: i,j
-        integer :: kstart
 
 
-        kstart = 2 
         did = 1
 
             write(6,*) "yyyywww step 2, n =", n
@@ -67,7 +65,6 @@ module module_lis_NDHMS
             write(6,*) "yyyywww step 3"
             write(6,*) "ix,jx, cpl_land_dt",ix,jx, cpl_land_dt
             call flush(6)
-            kstart = 1 ! change to 2 if read restart file.
 
             write(6,*) "yyyywww step 4 before NDHMS_ini= "
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
@@ -128,7 +125,7 @@ module module_lis_NDHMS
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
     
-        call NDHMS_exe(did,ntime,kstart)
+        call NDHMS_exe(did,ntime)
 
 ! add for update the lsm state variable.
      ! 3 d variable
