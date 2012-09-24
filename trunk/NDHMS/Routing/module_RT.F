@@ -281,7 +281,8 @@ CONTAINS
    rt_domain(did)%LKSAT    = 0.0            
    rt_domain(did)%SOLDRAIN    = 0.0            
 
-   rt_domain(did)%out_counts = 1
+   rt_domain(did)%out_counts = 0
+   rt_domain(did)%his_out_counts = 0
    rt_domain(did)%rst_counts = 1
 
   write(6,*) "***** finish rt_allocate "

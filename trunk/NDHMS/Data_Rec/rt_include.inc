@@ -158,7 +158,10 @@
 
 !!! define constant/parameter
     real ::   ov_rough(50), ZSOIL(100)
-    integer :: out_counts, rst_counts
+!  out_counts: couput counts for current run.
+!  his_out_counts: used for channel routing output and  special for restart. 
+!  his_out_counts = previous run + out_counts
+    integer :: out_counts, rst_counts, his_out_counts
     
     REAL,    allocatable, DIMENSION(:,:)   :: lat_lsm, lon_lsm
     REAL,    allocatable, DIMENSION(:,:,:) :: dist_lsm

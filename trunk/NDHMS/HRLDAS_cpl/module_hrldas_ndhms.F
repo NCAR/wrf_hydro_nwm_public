@@ -152,7 +152,7 @@ CONTAINS
 #endif
         endif
 
-        call NDHMS_rst_out(did,kt)
+!       call NDHMS_rst_out(did,kt)
 
      return 
      end subroutine hrldas_cpl_ndhms_ini

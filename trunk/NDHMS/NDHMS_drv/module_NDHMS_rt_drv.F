@@ -19,12 +19,11 @@ module module_NDHMS_rt_drv
    implicit none
 
    contains
-   subroutine NDHMS_rst_out(did,kt)
+   subroutine NDHMS_rst_out(did)
       implicit none
       integer:: rst_out  
       integer did, outflag
       character(len=19) out_date
-      integer :: Kt, ounit
       rst_out = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
@@ -63,7 +62,7 @@ module module_NDHMS_rt_drv
 
    end subroutine NDHMS_rst_out
 
-   subroutine NDHMS_out(did,kt)
+   subroutine NDHMS_out(did)
       implicit none
       integer did, outflag
       character(len=19) out_date
@@ -77,7 +76,6 @@ module module_NDHMS_rt_drv
 
    outflag = -99
 
-
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
@@ -89,16 +87,21 @@ module module_NDHMS_rt_drv
          call geth_newdate(out_date, nlst_lsm(did)%startdate, nint(nlst_lsm(did)%out_dt*60*rt_domain(did)%out_counts))
          if ( out_date(1:19) == nlst_lsm(did)%olddate(1:19) ) then
              outflag = 99
-             rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
          endif
       endif
 #ifdef MPP_LAND
    endif
      call mpp_land_bcast_int1(outflag)
 #endif
-    
+
+     call NDHMS_rst_out(did) 
 
      if (outflag .lt. 0) return
+     rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
+     rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
+
+     kt = rt_domain(did)%his_out_counts*nlst_lsm(did)%out_dt/nlst_lsm(did)%DT
+
 
 
      call output_lsm(trim(nlst_lsm(did)%olddate(1:4)//nlst_lsm(did)%olddate(6:7)//nlst_lsm(did)%olddate(9:10)  &
@@ -187,6 +190,7 @@ module module_NDHMS_rt_drv
            call flush(6)
 
         endif  ! end of routing switch
+
 
       end subroutine NDHMS_out
 
@@ -723,13 +727,13 @@ module module_NDHMS_rt_drv
 
 !         if(RT_DOMAIN(did)%rst_flag .ne. -99) then
 !             call NDHMS_rst_in(did)
-!             call NDHMS_out(did,0)
+!             call NDHMS_out(did)
 !             RT_DOMAIN(did)%rst_flag =  -99 
 !         endif
 !output at NDHMS_ini        
         
 
-        do kt = 1+1, ntime +1
+        do kt = 1, ntime 
 
           write(6,*) "yyww = ", kt, "ntime=",ntime
 
@@ -767,7 +771,7 @@ module module_NDHMS_rt_drv
            call NDHMS_time_adv(did)
 
       ! output for history 
-           call NDHMS_out(did,kt)
+           call NDHMS_out(did)
 
 
             
@@ -937,7 +941,7 @@ module module_NDHMS_rt_drv
        call NDHMS_rst_in(did)
 
 ! output at the initial time
-       call NDHMS_out(did,0)
+       call NDHMS_out(did)
 
 
       end subroutine NDHMS_ini

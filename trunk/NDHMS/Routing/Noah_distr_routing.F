@@ -1730,7 +1730,6 @@
               up_id,mpp_land_com_real, my_id, &
              mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1
 #endif
-!       use  module_ndhms_rt_drv, only: ndhms_out
      implicit none
 ! Define the variables
        integer IX,JX,NSOIL,IXRT,JXRT
@@ -1812,8 +1811,6 @@
 !DJG Weighting alg. alteration...(prescribe wghts if time = 1)
 !yw       DX=DXRT*AGGFACTRT
 
-!       call ndhms_out(1,0)
-!       call land_finish()
 
         do J=1,JX
           do I=1,IX

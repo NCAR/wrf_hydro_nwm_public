@@ -4420,6 +4420,9 @@ end subroutine mpp_output_chrt
             end if
           end if  
 
+!         put global attribute
+          iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
+
           iret = nf_enddef(ncid)
 
 #ifdef MPP_LAND
@@ -4635,6 +4638,15 @@ end subroutine mpp_output_chrt
             trim(inFile)
        call land_finish()
     endif
+
+#ifdef MPP_LAND
+     if(IO_id .eq. my_id) then
+#endif
+        iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+#ifdef MPP_LAND
+    endif
+    call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+#endif
 
      write(6,*) "nlst_lsm(did)%nsoil=",nlst_lsm(did)%nsoil
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
