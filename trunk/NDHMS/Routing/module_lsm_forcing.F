@@ -1,8 +1,64 @@
+module module_lsm_forcing
+
+#ifdef MPP_LAND
+    use module_mpp_land
+#endif
+    use module_ndhms_io, only: get_2d_netcdf, get_soilcat_netcdf, get2d_int
+
+implicit none
+#include <netcdf.inc>
+
+Contains
+
+  subroutine READFORC_WRF(flnm,ix,jx,target_date,t,q,u,v,p,lw,sw,pcp)
+    
+    implicit none
+    character(len=*),                   intent(in)  :: flnm
+    integer,                            intent(in)  :: ix
+    integer,                            intent(in)  :: jx
+    character(len=*),                   intent(in)  :: target_date
+    real,             dimension(ix,jx) :: t,q,u,v,p,lw,sw,pcp,pcpc
+    integer   tlevel
+
+    character(len=256) :: units
+    integer :: ierr
+    integer :: ncid
+
+    tlevel = 1
+
+    ! Open the NetCDF file.
+    ierr = nf_open(flnm, NF_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("READFORC_WRF Problem opening netcdf file: ''", A, "''")') trim(flnm)
+       stop
+    endif
+
+    call get_2d_netcdf_ruc("T2",     ncid, t,     ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("Q2",     ncid, q,     ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("U10",    ncid, u,     ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("V10",    ncid, v,     ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("PSFC",   ncid, p,     ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("GLW",    ncid, lw,    ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("SWDOWN", ncid, sw,    ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("RAINC",  ncid, pcpc,  ix, jx,tlevel, .true., ierr)
+    call get_2d_netcdf_ruc("RAINNC", ncid, pcp,   ix, jx,tlevel, .true., ierr)
+
+    ierr = nf_close(ncid)
+    
+
+!DJG  Add the convective and non-convective rain components (note: conv. comp=0
+!for cloud resolving runs...) 
+!DJG  Note that for WRF these are accumulated values to be adjusted to rates in
+!driver...
+
+    pcp=pcp+pcpc   ! assumes pcpc=0 for resolved convection...
+!    print *, pcp
+
+  end subroutine READFORC_WRF
 
   subroutine read_hrldas_hdrinfo(wrfsi_static_flnm, ix, jx, land_cat, soil_cat)
     ! Simply return the dimensions of the grid.
     implicit none
-#include <netcdf.inc>
     character(len=*),          intent(in)  :: wrfsi_static_flnm
     integer, intent(out) :: ix, jx, land_cat, soil_cat ! dimensions
 
@@ -68,7 +124,6 @@
   subroutine readland_hrldas(wrfsi_static_flnm,ix,jx,land_cat,soil_cat,vegtyp,soltyp, &
                   terrain,latitude,longitude,SOLVEG_INITSWC)
     implicit none
-#include <netcdf.inc>
     character(len=*),          intent(in)  :: wrfsi_static_flnm
     integer,                   intent(in)  :: ix, jx, land_cat, soil_cat,SOLVEG_INITSWC
     integer, dimension(ix,jx), intent(out) :: vegtyp, soltyp
@@ -184,7 +239,6 @@
 
       subroutine get_2d_netcdf_ruc(var_name,ncid,var, &
             ix,jx,tlevel,fatal_if_error,ierr)
-#include <netcdf.inc>
           character(len=*), intent(in) :: var_name
           integer,intent(in) ::  ncid,ix,jx,tlevel
           real, intent(out):: var(ix,jx)
@@ -217,7 +271,6 @@
 
       subroutine get_2d_netcdf_cows(var_name,ncid,var, &
             ix,jx,tlevel,fatal_if_error,ierr)
-#include <netcdf.inc>
           character(len=*), intent(in) :: var_name
           integer,intent(in) ::  ncid,ix,jx,tlevel
           real, intent(out):: var(ix,jx)
@@ -252,7 +305,6 @@
   subroutine readinit_hrldas(netcdf_flnm, ix, jx, nsoil, target_date, &
        smc, stc, sh2o, cmc, t1, weasd, snodep)
     implicit none
-#include <netcdf.inc>
     character(len=*),                intent(in)  :: netcdf_flnm
     integer,                         intent(in)  :: ix
     integer,                         intent(in)  :: jx
@@ -334,7 +386,6 @@
 
   subroutine READFORC_HRLDAS(flnm,ix,jx,target_date, t,q,u,v,p,lw,sw,pcp,lai,fpar)
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -385,7 +436,6 @@
 
   subroutine READFORC_DMIP(flnm,ix,jx,var)
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -426,7 +476,6 @@
 
   subroutine READFORC_MDV(flnm,ix,jx,pcp,mmflag,ierr_flg)
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -476,7 +525,6 @@
 
   subroutine READFORC_NAMPCP(flnm,ix,jx,pcp,k,product)
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -535,7 +583,6 @@
 
   subroutine READFORC_COWS(flnm,ix,jx,target_date, t,q,u,p,lw,sw,pcp,tlevel)
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -582,7 +629,6 @@
   subroutine READFORC_RUC(flnm,ix,jx,target_date,t,q,u,v,p,lw,sw,pcp)
     
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -632,7 +678,6 @@
 
   subroutine READSNOW_HRLDAS(flnm,ix,jx,target_date,weasd,snodep)
     implicit none
-#include <netcdf.inc>
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
@@ -691,11 +736,7 @@
   end subroutine READSNOW_HRLDAS
 
     subroutine get2d_hrldas(inflnm,ix,jx,nsoil,smc,stc,sh2ox,cmc,t1,weasd,snodep)
-#ifdef MPP_LAND
-   USE module_mpp_land
-#endif
           implicit none
-#include <netcdf.inc>
           integer :: iret,varid,ncid,ix,jx,nsoil,ierr
           real,dimension(ix,jx):: weasd,snodep,cmc,t1
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
@@ -750,7 +791,6 @@
 
       subroutine get2d_hrldas_real(var_name,ncid,out_buff,ix,jx)
           implicit none
-#include <netcdf.inc>
           integer ::iret,varid,ncid,ix,jx
           real out_buff(ix,jx)
           character(len=*), intent(in) :: var_name
@@ -760,9 +800,6 @@
       end subroutine get2d_hrldas_real
 
     subroutine read_stage4(flnm,IX,JX,pcp)
-#ifdef MPP_LAND
-   USE module_mpp_land
-#endif
         integer IX,JX,ierr,ncid,i,j
         real pcp(IX,JX),buf(ix,jx)
         character(len=*),  intent(in)  :: flnm
@@ -791,16 +828,16 @@
 
 
 
+
  subroutine read_seq_forcing( &
-       indir,range,olddate,startdate,hgrid,DOY, &
+       indir,range,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
-       weasd,snodep,dt,k,igrid,acrain )
+       weasd,snodep,dt,k,acrain )
 ! This subrouting is going to read different forcing.
    implicit none
-#include <netcdf.inc>
    ! in variable
-   character(len=*) :: range,olddate,hgrid,indir,startdate, DOY
+   character(len=*) :: range,olddate,hgrid,indir
    character(len=256) :: filename
    integer :: ix,jx,forc_typ,k,snow_assim  ! k is time loop
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
@@ -823,14 +860,12 @@
      endif
 
 !!!DJG... Call READFORC_(variable) Subroutine for forcing data...
-
-!!!DJG HRLDAS Forcing...
+!!!DJG HRLDAS Format Forcing with hour format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.1) then
 !!Create forcing data filename...
       if (len_trim(range) == 0) then
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-!minute forcing             olddate(15:16)//".LDASIN_DOMAIN"//hgrid
              ".LDASIN_DOMAIN"//hgrid
       else
         inflnm = trim(indir)//"/"//&
@@ -842,389 +877,10 @@
    end if
 
 
-!!!DJG RUC (1-KM) Forcing...
-     if(FORC_TYP.eq.2) then
-!!Create forcing data filename...
-        inflnm = trim(indir)//"/"//&
-             "wrfout_d0"//hgrid//"_"//&
-             olddate(1:4)//"-"//olddate(6:7)//"-"//olddate(9:10)//&
-             "_"//olddate(12:13)//":00:00"
-        print *, "WRF/RUC forcing data...",inflnm
-       CALL READFORC_RUC(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCPnew)
-!       print *, "returned from READFORC_RUC..."
-        PRCP1=(PRCPnew-ACRAIN)/dt   !Adjustment to convert accum to rate...(mm/s)
-!       print *, T2,Q2X,U,PRES,XLONG,SHORT,PRCP1
-     end if
 
 
-
-!!!DJG COWS Forcing...
-     if(FORC_TYP.eq.3) then
-!!Create forcing data filename...
-     if (len_trim(range) == 0) then
-      inflnm = trim(indir)//"/"//&
-             startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid
-!        "MET_LIS_CRO_2D_SANTEE_LU_1KM."//&
-!        startdate(1:4)//DOY//startdate(12:13)//&
-!        ".156hrfcst.radar"
-     else
-     endif
-!     print *, "Reading forcing data..."
-     CALL READFORC_COWS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,   &
-          PRES,XLONG,SHORT,PRCP1,K)
-!          print *, T2,Q2X,U,PRES,XLONG,SHORT,PRCP1
-
-!       IF (K.GT.0.AND.K.LT.10) THEN
-!         PRCP1 = 10.0/3600.0            ! units mm/s
-!          PRCP1 = 0.254/3600.0
-!       ELSE
-!         PRCP1 = 0.
-!       END IF
-
-      endif
-
-
-
-!!!DJG CONSTant, idealized forcing...
-     if(FORC_TYP.eq.4) then
-! Impose a fixed diurnal cycle...
-! assumes K=1 is 12z (Ks or ~ sunrise)
-! First Precip...
-!       IF (K.GE.5 .and. K.LE. 10) THEN
-!        PRCP1 =40./3600.0      !units mm/s
-!       ELSEIF (K.GE.50 .and. K.LE. 60) THEN
-!        PRCP1 =0./3600.0      !units mm/s
-!       ELSE
-!         PRCP1 = 0.
-!       END IF
-         PRCP1 = 0.
-!       PRCP1 =10./3600.0      !units mm/s
-
-! Other Met. Vars...
-       T2=290.0 + 3.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
-       Q2X = 0.01
-       U = 1.0
-       V = 1.0
-       PRES = 100000.0
-       XLONG=400.0 + 25.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
-       SHORT=450.0 + 450.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
-    end if
-
-
-
-!!!DJG  Idealized Met. w/ Specified Precip. Forcing Data...
-    if(FORC_TYP.eq.5) then
-
-       T2=3000.0 + 3.0*(cos((2*3.1416*K/8.0)-12.0*2*3.1416/8.0))
-       Q2X = 0.01
-       U = 1.0
-       PRES = 100000.0
-       XLONG=400.0 + 25.0*(cos((2*3.1416*K/8.0)-12.0*2*3.1416/8.0))
-       SHORT=500.0 + 450.0*(cos((2*3.1416*K/8.0)-12.0*2*3.1416/8.0))
-
-!Get spec. precip....
-!!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
-       product = "trmm"
-       inflnm = trim(indir)//"/"//"sat_domain1.nc"
-       PRCP1 = 0.
-       CALL READFORC_NAMPCP(inflnm,IX,JX,   &
-          PRCP1,K,product)
-!Convert pcp grid to units of mm/s...
-       PRCP1=PRCP1/(3.0*3600.0)     !3hrly precip product
-
-    end if
-
-
-
-!!!DJG  NARR Met. w/ Specified Precip. Forcing Data...
-    if(FORC_TYP.eq.6) then !NARR Met. w/ Specified Precip.
-
-!Check to make sure if Noah time step is 3 hrs as is NARR...
-
-        print *, MOD(K*INT(DT),10800)
-        PRCP_old = PRCP1
-
-     if(K.eq.1.OR.(MOD((K-1)*INT(DT),10800)).eq.0) then   !if/then 3 hr check
-!!Create forcing data filename...
-      if (len_trim(range) == 0) then
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid
-!        startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-!        ".48hrfcst.ncf"
-      else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-      endif
-        print *, "Reading NARR data...",inflnm
-      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
-!       PRCP1=PRCP1/(3.0*3600.0)     !NARR 3hrly precip product in mm
-       PRCP1=PRCP1     !NAM model data in mm/s
-    end if    !3 hr check
-
-
-!Get spec. precip....
-! NAM Remote sensing...
-!!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
-!       product = "trmm"
-!        print *, "Reading in Nesbitt R.S. data...reading from  nc file...",product !Use for NAME Nesbitt...
-!       inflnm = trim(indir)//"/"//"sat_domain1.nc"
-!!       inflnm = trim(indir)//"/"//"sat_domain2.nc"
-!       PRCP1 = 0.
-!       CALL READFORC_NAMPCP(inflnm,IX,JX,   &
-!          PRCP2,K,product)
-!       ierr_flg = 0
-!       mmflag = 0
-!!Convert pcp grid to units of mm/s...
-!       PRCP1=PRCP1/(3.0*3600.0)     !3hrly precip product
-
-!Read from filelist (NAME HE...,others)...
-!        print *, "Reading in precip data...reading from filelist..." !Use for NAME HE...
-!        if (K.eq.1) then
-!          open(unit=93,file="filelist.txt",form="formatted",status="old")
-!        end if
-!        read (93,*) filename
-!        inflnm = trim(indir)//"/"//trim(filename)
-
-
-!Front Range MDV Radar...
-        print *, "Reading in MDV radar data......"
-
-!         inflnm = "/ptmp/weiyu/rt_2008/radar_obs/"//&
-!             inflnm = "/d3/hydrolab/HRLDAS_forcing/FRNG_research/20080809/"//&
-!              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-!              olddate(15:16)//"_radar.nc"
-!              olddate(15:16)//"_chill.nc"
-
-!        inflnm = "/d2/hydrolab/HRLDAS/forcing/FRNG/Big_Thomp_04/"//&
-!       inflnm = "/d2/hydrolab/HRLDAS/forcing/FRNG/RT_2008/radar_obs/"//&
-!             inflnm = "/d3/hydrolab/HRLDAS_forcing/FRNG_research/20080809/"//&
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
-!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-!             olddate(15:16)//"00_Pcp60min.nc"
-!             olddate(15:16)//"00_Pcp30min.nc"
-!             olddate(15:16)//"00_30min.nc"
-             olddate(15:16)//"00_Pcp5min.nc"
-!              olddate(15:16)//"_chill.nc"
-
-!         inflnm = "/d2/hydrolab/HRLDAS/forcing/COWS/"//&
-!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
-!             olddate(15:16)//"00_Pcp5min.nc"
-!              olddate(15:16)//"00_5.nc"
-
-!         inflnm = ""     ! use this for NAM frxst runs with 30 min time-step
-!
-
-
-!        if (K.le.6) then   ! use for 30min nowcast...
-!          if (K.eq.1) then
-!             open(unit=94,file="start_file.txt",form="formatted",status="replace")
-!!             inflnm2 = "/d2/hydrolab/HRLDAS/forcing/FRNG/RT_2008/radar_obs/"//&
-!             inflnm2 = "/d3/hydrolab/HRLDAS_forcing/FRNG_research/"//&
-!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
-!             olddate(15:16)//"00_"
-!             write (94,*) inflnm  !fix part of input filename...
-!             close(94)
-!             nwxst_t = "5"! calc minutes from timestep and convert to char...
-!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
-!          end if
-!          if (K.eq.2) then
-!             nwxst_t = "10" ! calc minutes from timestep and convert to char...
-!             open(unit=94,file="start_file.txt",form="formatted",status="old")
-!             read (94,*) inflnm2
-!             close(94)
-!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
-!          end if
-!          if (K.eq.3) then
-!             nwxst_t = "15" ! calc minutes from timestep and convert to char...
-!             open(unit=94,file="start_file.txt",form="formatted",status="old")
-!             read (94,*) inflnm
-!             close(94)
-!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
-!          end if
-!          if (K.eq.4) then
-!             nwxst_t = "20" ! calc minutes from timestep and convert to char...
-!             open(unit=94,file="start_file.txt",form="formatted",status="old")
-!             read (94,*) inflnm
-!             close(94)
-!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
-!          end if
-!          if (K.eq.5) then
-!             nwxst_t = "25" ! calc minutes from timestep and convert to char...
-!             open(unit=94,file="start_file.txt",form="formatted",status="old")
-!             read (94,*) inflnm
-!             close(94)
-!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
-!          end if
-!          if (K.eq.6) then
-!             nwxst_t = "30" ! calc minutes from timestep and convert to char...
-!             open(unit=94,file="start_file.txt",form="formatted",status="old")
-!             read (94,*) inflnm
-!             close(94)
-!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
-!          end if
-!        else
-!          print *, "END OF 30min NOWCAST...STOPPING!"
-!          stop
-!          inflnm = ""     ! use this for NAM frxst runs with 30 min time-step
-!        end if
-
-!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
-!             olddate(15:16)//"00_Pcp30minMerge.nc"
-        
-        print *, "Opening MDV file...",inflnm
-       CALL READFORC_MDV(inflnm,IX,JX,   &
-          PRCP2,mmflag,ierr_flg)
-
-!If radar or spec. data is ok use if not, skip to original NARR data...
-      IF (ierr_flg.eq.0) then   ! use spec. precip
-         PRCP1=PRCP2   !assumes PRCP2 is in mm/s
-!Convert units if necessary
-        IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
-          PRCP1=PRCP2/DT     !convert from mm to mm/s 
-        END IF  ! Endif mmflag
-      ELSE   ! either stop or default to original forcing data...
-        print *,"Current RADAR precip data not found !!! Using previous available file..."
-        PRCP1 = PRCP_old
-!        stop
-      END IF  ! Endif ierr_flg
-
-! Loop through data to screen for plausible values
-       do i=1,ix
-         do j=1,jx
-           if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
-           if (PRCP1(i,j).gt.0.0555) PRCP1(i,j)=0.0555  !set max pcp intens = 200 mm/h
-!          PRCP1(i,j) = 0.
-!          PRCP1(i,j) = 0.02   !override w/ const. precip for gw testing only...
-         end do
-       end do
-
-!        if (K.eq.1) then  ! quick dump for site specific precip...
-!          open(unit=94,file="Christman_accumpcp.txt",form="formatted",status="new")
-!        end if
-!        print *, "Christman Pcp...",PRCP1(130,223)
-!        write (94,*) PRCP1(130,223)
-!        call flush(94)
-
-        
-    end if  !NARR Met. w/ Specified Precip.
-
-
-
-!!!DJG  NARR Met. w/ NARR Precip. Forcing Data...
-    if(FORC_TYP.eq.7) then  !NARR Met. w/ NARR Precip.
-!      write (*,*) "Reading NARR Forcing..."
-
-!!Create forcing data filename...
-      if (len_trim(range) == 0) then
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid
-      else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-      endif
-      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
-!      write (*,*) "NARR Forcing read..."
-      PRCP1=PRCP1/(3.0*3600.0)  ! convert to mm/s which is what HRLDAS expects?    
-!      PRCP1=PRCP1  !Cedrics data already in mm/s (kg m^2/s)
-
-    end if  !NARR Met. w/ NARR Precip.
-
-
-
-
-
-
-!!!DJG  NLDAS Met. w/ NLDAS Precip. Forcing Data...
-    if(FORC_TYP.eq.8) then  !NLDAS Met. w/ NLDAS Precip.
-!      write (*,*) "Reading NLDAS Forcing..."
-
-!!Create forcing data filename...
-      if (len_trim(range) == 0) then
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-!Use this for minute forcing...             olddate(15:16)//".LDASIN_DOMAIN"//hgrid
-             ".LDASIN_DOMAIN"//hgrid
-      else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-      endif
-      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
-!      write (*,*) "NLDAS Forcing read..."
-      PRCP1=PRCP1/(1.0*3600.0)  ! convert hourly NLDAS total pcp to mm/s which is what HRLDAS expects
-
-    end if  !NLDAS Met. w/ NLDAS Precip.
-
-
-
-
-
-
-
-!!!DJG  NARR Met. w/ DMIP Precip. & Temp. Forcing Data...
-    if(FORC_TYP.eq.9) then  ! If/Then for DMIP forcing data...
-
-!Check to make sure if Noah time step is 3 hrs as is NARR...
-!        print *, MOD(K*INT(DT),10800)
-
-     if(K.eq.1.OR.(MOD((K-1)*INT(DT),10800)).eq.0) then   !if/then 3 hr check
-        print *, "Reading NARR data..."
-!!Create forcing data filename...
-      if (len_trim(range) == 0) then
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid
-!        startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-!        ".48hrfcst.ncf"
-      else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-      endif
-      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
-          PRCP1=PRCP1/(3.0*3600.0)  ! convert to mm/s which is what HRLDAS expects    
-    end if    !3 hr check
-
-!Get DMIP Precip...
-!       inflnm = "/d3/gochis/HRLDAS/forcing/DMIP_II/PRECIP_HRAP/precip_finished"//"/"//&
-       inflnm = "/d2/hydrolab/HRLDAS/forcing/DMIP_II_AmerR/PRECIP_HRAP"//"/"//&
-           "proj.xmrg"//&
-           olddate(6:7)//olddate(9:10)//olddate(1:4)//olddate(12:13)//&
-           "z.asc"
-        PRCP1 = 0.
-        CALL READFORC_DMIP(inflnm,IX,JX,PRCP1)
-          PRCP1 = PRCP1 / 100.0    ! Convert from native hundreths of mm to mm
-!       IF (K.LT.34) THEN
-!        PRCP1 = 5.0/3600.0            ! units mm/s
-!!       ELSE
-!!         PRCP1 = 0.
-!       END IF
-
-!Get DMIP Temp...
-!       inflnm = "/d3/gochis/HRLDAS/forcing/DMIP_II/TEMP_HRAP/tair_finished"//"/"//&
-       inflnm = "/d2/hydrolab/HRLDAS/forcing/DMIP_II_AmerR/TEMP_HRAP"//"/"//&
-           "proj.tair"//&
-           olddate(6:7)//olddate(9:10)//olddate(1:4)//olddate(12:13)//&
-           "z.asc"
-        CALL READFORC_DMIP(inflnm,IX,JX,T2)
-          T2 = (5./9.)*(T2-32.0) + 273.15         !Convert from deg F to deg K
-
-    end if  !End if for DMIP forcing data...
-
-
-!!!DJG HRLDAS Forcing with minute resolution...(NOTE: precip must be in mm/s!!!)
-   if(FORC_TYP.eq.11) then
+!!!DJG HRLDAS Forcing with minute format filename (NOTE: precip must be in mm/s!!!)
+   if(FORC_TYP.eq.2) then
 !!Create forcing data filename...
       if (len_trim(range) == 0) then
         inflnm = trim(indir)//"/"//&
@@ -1241,14 +897,504 @@
 
 
 
-! : add reading forcing precipitation data
-!       ywinflnm = "/ptmp/weiyu/hrldas/v2/st4"//"/"//&
-!            olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-!            ".LDASIN_DOMAIN2"
-!       call read_stage4(ywinflnm,IX,JX,PRCP1)
-!end yw
 
-!!!DJG Check for snow data assimilation...
+
+!!!DJG WRF Output File Direct Ingest Forcing...
+     if(FORC_TYP.eq.3) then
+!!Create forcing data filename...
+        inflnm = trim(indir)//"/"//&
+             "wrfout_d0"//hgrid//"_"//&
+             olddate(1:4)//"-"//olddate(6:7)//"-"//olddate(9:10)//&
+             "_"//olddate(12:13)//":00:00"
+        print *, "WRF/RUC forcing data...",inflnm
+       CALL READFORC_WRF(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+          PRES,XLONG,SHORT,PRCPnew)
+!       print *, "returned from READFORC_WRF..."
+        PRCP1=(PRCPnew-ACRAIN)/dt   !Adjustment to convert accum to rate...(mm/s)
+
+!added by Wei Yu
+        if(k.eq. 1) PRCP1 = 0
+!end added
+
+!       print *, T2,Q2X,U,PRES,XLONG,SHORT,PRCP1
+     end if
+
+
+
+
+
+!!!DJG CONSTant, idealized forcing...
+     if(FORC_TYP.eq.4) then
+! Impose a fixed diurnal cycle...
+! assumes K=1 is 12z (Ks or ~ sunrise)
+! First Precip...
+!       IF (K.GE.1 .and. K.LE.2) THEN
+       IF (K.EQ.1) THEN
+        PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
+       ELSEIF (K.GT.1) THEN
+!        PRCP1 =0./3600.0      !units mm/s
+!       ELSE
+         PRCP1 = 0.
+       END IF
+!       PRCP1 = 0.
+!       PRCP1 =10./3600.0      !units mm/s
+! Other Met. Vars...
+       T2=290.0 + 3.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+       Q2X = 0.01
+       U = 1.0
+       V = 1.0
+       PRES = 100000.0
+       XLONG=400.0 + 25.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+       SHORT=450.0 + 450.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+    end if
+
+
+
+
+
+!!!DJG  Idealized Met. w/ Specified Precip. Forcing Data...(Note: input precip units here are in 'mm/hr')
+!   This option uses hard-wired met forcing EXCEPT precipitation which is read in
+!   from a single, separate input file called 'YYYYMMDDHHMM.LDASIN_PRECIP_DOMAIN'
+!
+    if(FORC_TYP.eq.5) then
+! Standard Met. Vars...
+       T2=290.0 + 3.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+       Q2X = 0.01
+       U = 1.0
+       V = 1.0
+       PRES = 100000.0
+       XLONG=400.0 + 25.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+       SHORT=450.0 + 450.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+
+!Get specified precip....
+!!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
+!       product = "trmm"
+!       inflnm = trim(indir)//"/"//"sat_domain1.nc"
+!!Create forcing data filename...
+        inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
+
+       PRCP1 = 0.
+       PRCP_old = PRCP1
+
+      print *, "Opening supplemental precipitation forcing file...",inflnm
+       CALL READFORC_MDV(inflnm,IX,JX,   &
+          PRCP2,mmflag,ierr_flg)
+!      print *, "Opened supplemental precipitation forcing file...",inflnm,ierr_flg,mmflag
+
+!If radar or spec. data is ok use if not, skip to original NARR data...
+      IF (ierr_flg.eq.0) then   ! use spec. precip
+         PRCP1=PRCP2   !assumes PRCP2 is in mm/s
+!Convert units if necessary
+        IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
+          PRCP1=PRCP2/DT     !convert from mm to mm/s
+        END IF  ! Endif mmflag
+      ELSE   ! either stop or default to original forcing data...
+        print *,"Current RADAR precip data not found !!! Using previous available file..."
+        PRCP1 = PRCP_old
+      END IF  ! Endif ierr_flg
+
+! Loop through data to screen for plausible values
+       do i=1,ix
+         do j=1,jx
+           if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
+           if (PRCP1(i,j).gt.0.138889) PRCP1(i,j)=0.138889  !set max pcp intens = 500 mm/h
+         end do
+       end do
+
+    end if
+
+
+
+
+
+!!!DJG HRLDAS Forcing with hourly format filename with specified precipitation forcing...
+!   This option uses HRLDAS-formatted met forcing EXCEPT precipitation which is read in
+!   from a single, separate input file called 'YYYYMMDDHHMM.LDASIN_PRECIP_DOMAIN'
+
+   if(FORC_TYP.eq.6) then
+
+!       if(K.eq.1.OR.(MOD((K-1)*INT(DT),3600)).eq.0) then   !if/then 1 hr check
+!!Create forcing data filename...
+         if (len_trim(range) == 0) then
+           inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             ".LDASIN_DOMAIN"//hgrid
+         else
+           inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
+         endif
+         CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+             PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+!       endif
+
+
+!Get specified precip....
+!!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
+!       product = "trmm"
+!       inflnm = trim(indir)//"/"//"sat_domain1.nc"
+!!Create forcing data filename...
+        inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
+
+      PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
+
+      print *, "Opening supplemental precipitation forcing file...",inflnm
+       CALL READFORC_MDV(inflnm,IX,JX,   &
+          PRCP2,mmflag,ierr_flg)
+
+!If radar or spec. data is ok use if not, skip to original NARR data...
+      IF (ierr_flg.eq.0) then   ! use spec. precip
+         PRCP1=PRCP2   !assumes PRCP2 is in mm/s
+!Convert units if necessary
+        IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
+          PRCP1=PRCP2/DT     !convert from mm to mm/s
+        END IF  ! Endif mmflag
+      ELSE   ! either stop or default to original forcing data...
+        print *,"Current RADAR precip data not found !!! Using previous available file..."
+        PRCP1 = PRCP_old
+      END IF  ! Endif ierr_flg
+
+! Loop through data to screen for plausible values
+       do i=1,ix
+         do j=1,jx
+           if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
+           if (PRCP1(i,j).gt.0.138889) PRCP1(i,j)=0.138889  !set max pcp intens = 500 mm/h
+         end do
+       end do
+
+   end if
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!The other forcing data types below here are obsolete and left for reference...
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!DJG HRLDAS Single Input with Multiple Input Times File Forcing...
+!     if(FORC_TYP.eq.6) then
+!!Create forcing data filename...
+!     if (len_trim(range) == 0) then
+!      inflnm = trim(indir)//"/"//&
+!             startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!             olddate(15:16)//".LDASIN_DOMAIN"//hgrid//"_multiple"
+!!        "MET_LIS_CRO_2D_SANTEE_LU_1KM."//&
+!!        startdate(1:4)//DOY//startdate(12:13)//&
+!!        ".156hrfcst.radar"
+!     else
+!     endif
+!     print *, "Reading forcing data...",inflnm
+!     CALL READFORC_HRLDAS_mult(inflnm,IX,JX,OLDDATE,T2,Q2X,U,   &
+!          PRES,XLONG,SHORT,PRCP1,K)
+!          print *, T2,Q2X,U,PRES,XLONG,SHORT,PRCP1
+!
+!!       IF (K.GT.0.AND.K.LT.10) THEN
+!!         PRCP1 = 10.0/3600.0            ! units mm/s
+!!          PRCP1 = 0.254/3600.0
+!!       ELSE
+!!         PRCP1 = 0.
+!!       END IF
+!      endif
+
+
+
+!!!!!DJG  NARR Met. w/ NARR Precip. Forcing Data...
+!! Assumes standard 3-hrly NARR data has been resampled to NDHMS grid...
+!! Assumes one 3hrly time-step per forcing data file 
+!! Input precip units here are in 'mm' accumulated over 3 hrs...
+!    if(FORC_TYP.eq.7) then  !NARR Met. w/ NARR Precip.
+!!      write (*,*) "Reading NARR Forcing..."
+!!!Create forcing data filename...
+!      if (len_trim(range) == 0) then
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid
+!      else
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
+!      endif
+!      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+!          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+!!      write (*,*) "NARR Forcing read..."
+!      PRCP1=PRCP1/(3.0*3600.0)  ! convert from 3hr accum to mm/s which is what NDHMS expects    
+!    end if  !NARR Met. w/ NARR Precip.
+
+
+
+
+
+
+!!!!DJG  NARR Met. w/ Specified Precip. Forcing Data...
+!    if(FORC_TYP.eq.8) then !NARR Met. w/ Specified Precip.
+!
+!!Check to make sure if Noah time step is 3 hrs as is NARR...
+!
+!        print *, MOD(K*INT(DT),10800)
+!        PRCP_old = PRCP1
+!
+!     if(K.eq.1.OR.(MOD((K-1)*INT(DT),10800)).eq.0) then   !if/then 3 hr check
+!!!Create forcing data filename...
+!      if (len_trim(range) == 0) then
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid
+!!        startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!!        ".48hrfcst.ncf"
+!      else
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
+!      endif
+!        print *, "Reading NARR data...",inflnm
+!      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+!          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+!!       PRCP1=PRCP1/(3.0*3600.0)     !NARR 3hrly precip product in mm
+!       PRCP1=PRCP1     !NAM model data in mm/s
+!    end if    !3 hr check
+!
+!
+!!Get spec. precip....
+!! NAM Remote sensing...
+!!!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
+!!       product = "trmm"
+!!        print *, "Reading in Nesbitt R.S. data...reading from  nc file...",product !Use for NAME Nesbitt...
+!!       inflnm = trim(indir)//"/"//"sat_domain1.nc"
+!!!       inflnm = trim(indir)//"/"//"sat_domain2.nc"
+!!       PRCP1 = 0.
+!!       CALL READFORC_NAMPCP(inflnm,IX,JX,   &
+!!          PRCP2,K,product)
+!!       ierr_flg = 0
+!!       mmflag = 0
+!!!Convert pcp grid to units of mm/s...
+!!       PRCP1=PRCP1/(3.0*3600.0)     !3hrly precip product
+!
+!!Read from filelist (NAME HE...,others)...
+!!        print *, "Reading in precip data...reading from filelist..." !Use for NAME HE...
+!!        if (K.eq.1) then
+!!          open(unit=93,file="filelist.txt",form="formatted",status="old")
+!!        end if
+!!        read (93,*) filename
+!!        inflnm = trim(indir)//"/"//trim(filename)
+!!
+!!
+!!Front Range MDV Radar...
+!        print *, "Reading in MDV radar data......"
+!
+!!         inflnm = "/ptmp/weiyu/rt_2008/radar_obs/"//&
+!!             inflnm = "/d3/hydrolab/HRLDAS_forcing/FRNG_research/20080809/"//&
+!!              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!!              olddate(15:16)//"_radar.nc"
+!!              olddate(15:16)//"_chill.nc"
+!
+!!        inflnm = "/d2/hydrolab/HRLDAS/forcing/FRNG/Big_Thomp_04/"//&
+!!       inflnm = "/d2/hydrolab/HRLDAS/forcing/FRNG/RT_2008/radar_obs/"//&
+!!             inflnm = "/d3/hydrolab/HRLDAS_forcing/FRNG_research/20080809/"//&
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
+!!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!!             olddate(15:16)//"00_Pcp60min.nc"
+!!             olddate(15:16)//"00_Pcp30min.nc"
+!!             olddate(15:16)//"00_30min.nc"
+!             olddate(15:16)//"00_Pcp5min.nc"
+!!              olddate(15:16)//"_chill.nc"
+!
+!!         inflnm = "/d2/hydrolab/HRLDAS/forcing/COWS/"//&
+!!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
+!!             olddate(15:16)//"00_Pcp5min.nc"
+!!              olddate(15:16)//"00_5.nc"
+!
+!!         inflnm = ""     ! use this for NAM frxst runs with 30 min time-step
+!!
+!
+!
+!!        if (K.le.6) then   ! use for 30min nowcast...
+!!          if (K.eq.1) then
+!!             open(unit=94,file="start_file.txt",form="formatted",status="replace")
+!!!             inflnm2 = "/d2/hydrolab/HRLDAS/forcing/FRNG/RT_2008/radar_obs/"//&
+!!             inflnm2 = "/d3/hydrolab/HRLDAS_forcing/FRNG_research/"//&
+!!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
+!!             olddate(15:16)//"00_"
+!!             write (94,*) inflnm  !fix part of input filename...
+!!             close(94)
+!!             nwxst_t = "5"! calc minutes from timestep and convert to char...
+!!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
+!!          end if
+!!          if (K.eq.2) then
+!!             nwxst_t = "10" ! calc minutes from timestep and convert to char...
+!!             open(unit=94,file="start_file.txt",form="formatted",status="old")
+!!             read (94,*) inflnm2
+!!             close(94)
+!!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
+!!          end if
+!!          if (K.eq.3) then
+!!             nwxst_t = "15" ! calc minutes from timestep and convert to char...
+!!             open(unit=94,file="start_file.txt",form="formatted",status="old")
+!!             read (94,*) inflnm
+!!             close(94)
+!!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
+!!          end if
+!!          if (K.eq.4) then
+!!             nwxst_t = "20" ! calc minutes from timestep and convert to char...
+!!             open(unit=94,file="start_file.txt",form="formatted",status="old")
+!!             read (94,*) inflnm
+!!             close(94)
+!!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
+!!          end if
+!!          if (K.eq.5) then
+!!             nwxst_t = "25" ! calc minutes from timestep and convert to char...
+!!             open(unit=94,file="start_file.txt",form="formatted",status="old")
+!!             read (94,*) inflnm
+!!             close(94)
+!!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
+!!          end if
+!!          if (K.eq.6) then
+!!             nwxst_t = "30" ! calc minutes from timestep and convert to char...
+!!             open(unit=94,file="start_file.txt",form="formatted",status="old")
+!!             read (94,*) inflnm
+!!             close(94)
+!!             inflnm = trim(inflnm2)//trim(nwxst_t)//".nc"
+!!          end if
+!!        else
+!!          print *, "END OF 30min NOWCAST...STOPPING!"
+!!          stop
+!!          inflnm = ""     ! use this for NAM frxst runs with 30 min time-step
+!!        end if
+!
+!!             olddate(1:4)//olddate(6:7)//olddate(9:10)//"_"//olddate(12:13)//&
+!!             olddate(15:16)//"00_Pcp30minMerge.nc"
+!        
+!        print *, "Opening MDV file...",inflnm
+!       CALL READFORC_MDV(inflnm,IX,JX,   &
+!          PRCP2,mmflag,ierr_flg)
+!
+!!If radar or spec. data is ok use if not, skip to original NARR data...
+!      IF (ierr_flg.eq.0) then   ! use spec. precip
+!         PRCP1=PRCP2   !assumes PRCP2 is in mm/s
+!!Convert units if necessary
+!        IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
+!          PRCP1=PRCP2/DT     !convert from mm to mm/s 
+!        END IF  ! Endif mmflag
+!      ELSE   ! either stop or default to original forcing data...
+!        print *,"Current RADAR precip data not found !!! Using previous available file..."
+!        PRCP1 = PRCP_old
+!!        stop
+!      END IF  ! Endif ierr_flg
+!
+!! Loop through data to screen for plausible values
+!       do i=1,ix
+!         do j=1,jx
+!           if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
+!           if (PRCP1(i,j).gt.0.0555) PRCP1(i,j)=0.0555  !set max pcp intens = 200 mm/h
+!!          PRCP1(i,j) = 0.
+!!          PRCP1(i,j) = 0.02   !override w/ const. precip for gw testing only...
+!         end do
+!       end do
+!
+!!        if (K.eq.1) then  ! quick dump for site specific precip...
+!          open(unit=94,file="Christman_accumpcp.txt",form="formatted",status="new")
+!        end if
+!        print *, "Christman Pcp...",PRCP1(130,223)
+!        write (94,*) PRCP1(130,223)
+!        call flush(94)
+!
+!        
+!    end if  !NARR Met. w/ Specified Precip.
+
+
+
+
+
+!!!!DJG  NLDAS Met. w/ NLDAS Precip. Forcing Data...
+!! Assumes standard hrly NLDAS data has been resampled to NDHMS grid...
+!! Assumes one 1-hrly time-step per forcing data file
+!! Input precip units here are in 'mm' accumulated over 1 hr...
+!    if(FORC_TYP.eq.9) then  !NLDAS Met. w/ NLDAS Precip.
+!!      write (*,*) "Reading NLDAS Forcing..."
+!!!Create forcing data filename...
+!      if (len_trim(range) == 0) then
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!!Use this for minute forcing...             olddate(15:16)//".LDASIN_DOMAIN"//hgrid
+!             ".LDASIN_DOMAIN"//hgrid
+!      else
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
+!      endif
+!      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+!          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+!!      write (*,*) "NLDAS Forcing read..."
+!      PRCP1=PRCP1/(1.0*3600.0)  ! convert hourly NLDAS hourly accum pcp to mm/s which is what NDHMS expects
+!    end if  !NLDAS Met. w/ NLDAS Precip.
+
+
+
+
+
+!!!!DJG  NARR Met. w/ DMIP Precip. & Temp. Forcing Data...
+!    if(FORC_TYP.eq.10) then  ! If/Then for DMIP forcing data...
+!!Check to make sure if Noah time step is 3 hrs as is NARR...
+!!        print *, MOD(K*INT(DT),10800)
+!
+!     if(K.eq.1.OR.(MOD((K-1)*INT(DT),10800)).eq.0) then   !if/then 3 hr check
+!        print *, "Reading NARR data..."
+!!!Create forcing data filename...
+!      if (len_trim(range) == 0) then
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid
+!!        startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!!        ".48hrfcst.ncf"
+!      else
+!        inflnm = trim(indir)//"/"//&
+!             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
+!      endif
+!      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+!          PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+!          PRCP1=PRCP1/(3.0*3600.0)  ! convert to mm/s which is what HRLDAS expects    
+!    end if    !3 hr check
+!
+!!Get DMIP Precip...
+!!       inflnm = "/d3/gochis/HRLDAS/forcing/DMIP_II/PRECIP_HRAP/precip_finished"//"/"//&
+!       inflnm = "/d2/hydrolab/HRLDAS/forcing/DMIP_II_AmerR/PRECIP_HRAP"//"/"//&
+!           "proj.xmrg"//&
+!           olddate(6:7)//olddate(9:10)//olddate(1:4)//olddate(12:13)//&
+!           "z.asc"
+!        PRCP1 = 0.
+!        CALL READFORC_DMIP(inflnm,IX,JX,PRCP1)
+!          PRCP1 = PRCP1 / 100.0    ! Convert from native hundreths of mm to mm
+!!       IF (K.LT.34) THEN
+!!        PRCP1 = 5.0/3600.0            ! units mm/s
+!!!       ELSE
+!!!         PRCP1 = 0.
+!!       END IF
+!
+!!Get DMIP Temp...
+!!       inflnm = "/d3/gochis/HRLDAS/forcing/DMIP_II/TEMP_HRAP/tair_finished"//"/"//&
+!       inflnm = "/d2/hydrolab/HRLDAS/forcing/DMIP_II_AmerR/TEMP_HRAP"//"/"//&
+!           "proj.tair"//&
+!           olddate(6:7)//olddate(9:10)//olddate(1:4)//olddate(12:13)//&
+!           "z.asc"
+!        CALL READFORC_DMIP(inflnm,IX,JX,T2)
+!          T2 = (5./9.)*(T2-32.0) + 273.15         !Convert from deg F to deg K
+!
+!    end if  !End if for DMIP forcing data...
+!
+!
+!
+!! : add reading forcing precipitation data
+!!       ywinflnm = "/ptmp/weiyu/hrldas/v2/st4"//"/"//&
+!!            olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+!!            ".LDASIN_DOMAIN2"
+!!       call read_stage4(ywinflnm,IX,JX,PRCP1)
+!!end yw
+!
+!
+!!!!DJG Check for snow data assimilation...
     if (SNOW_ASSIM.eq.1) then
 ! Every 24 hours, update the snow field from analyses.
      if ( OLDDATE(12:13) == "00") then
@@ -1261,16 +1407,12 @@
  end subroutine read_seq_forcing
 
 
-
+#ifdef MPP_LAND
     subroutine mpp_readland_hrldas(wrfsi_static_flnm,&
           ix,jx,land_cat,soil_cat,& 
           vegtyp,soltyp,terrain,latitude,longitude,&
           global_nx,global_ny,SOLVEG_INITSWC)
-#ifdef MPP_LAND
-       use module_mpp_land
-#endif
     implicit none
-#include <netcdf.inc>
     character(len=*),          intent(in)  :: wrfsi_static_flnm
     integer,                   intent(in)  :: ix, jx, land_cat, soil_cat, &
               global_nx,global_ny,SOLVEG_INITSWC
@@ -1303,11 +1445,7 @@
 
       subroutine MPP_READSNOW_HRLDAS(flnm,ix,jx,OLDDATE,weasd,snodep,&
                  global_nX, global_ny)
-#ifdef MPP_LAND
-       use module_mpp_land
-#endif
         implicit none
-#include <netcdf.inc>
 
         character(len=*),                   intent(in)  :: flnm,OLDDATE
         integer,  intent(in)  :: ix, global_nx,global_ny
@@ -1332,11 +1470,7 @@
 
       subroutine MPP_DEEPGW_HRLDAS(ix,jx,in_SMCMAX,&
                  global_nX, global_ny,nsoil,out_SMC,out_SH2OX)
-#ifdef MPP_LAND
-       use module_mpp_land
-#endif
         implicit none
-#include <netcdf.inc>
 
         integer,  intent(in)  :: ix,global_nx,global_ny
         integer,  intent(in)  :: jx,nsoil
@@ -1376,13 +1510,9 @@
        T2,q2x,u,v,pres,xlong,short,prcp1,&
        weasd,snodep,dt,k,g_ix,g_jx,igrid,acrain)
 ! This subrouting is going to read different forcing.
-#ifdef MPP_LAND
-       use module_mpp_land
-#endif
 
 
    implicit none
-#include <netcdf.inc>
    ! in variable
    character(len=*) :: range,olddate,hgrid,indir,startdate, DOY
    character(len=256) :: filename
@@ -1417,11 +1547,16 @@
    end if
 
    if(my_id .eq. IO_id) then
+!yw     call read_seq_forcing( &
+!yw        indir,range,olddate,startdate,hgrid,DOY, &
+!yw        global_nx,global_ny,forc_typ,snow_assim,  &
+!yw        g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
+!yw        g_weasd,g_snodep,dt,k,igrid,g_acrain )
       call read_seq_forcing( &
-        indir,range,olddate,startdate,hgrid,DOY, &
+        indir,range,olddate,hgrid,&
         global_nx,global_ny,forc_typ,snow_assim,  &
         g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
-        g_weasd,g_snodep,dt,k,igrid,g_acrain )
+        g_weasd,g_snodep,dt,k,g_acrain )
      write(6,*) "finish read forcing,startdate,olddate ",startdate,olddate
    end if
 !yw    call mpp_land_bcast_int1(SLPCATS)
@@ -1447,3 +1582,4 @@
    end subroutine mpp_read_forcing
 #endif
 
+end module module_lsm_forcing

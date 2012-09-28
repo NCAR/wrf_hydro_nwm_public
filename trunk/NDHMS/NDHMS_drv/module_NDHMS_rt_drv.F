@@ -47,7 +47,7 @@ module module_NDHMS_rt_drv
      call mpp_land_bcast_int1(rst_out)
 #endif
     if(rst_out .gt. 0) &
-             call   RESTART_OUT_nc(trim("RESTART."//nlst_lsm(did)%olddate(1:16)   &
+             call   RESTART_OUT_nc(trim("NDHMS_RST."//nlst_lsm(did)%olddate(1:16)   &
                  //"_DOMAIN"//trim(nlst_lsm(did)%hgrid)),  did)
 
 #ifdef MPP_LAND
@@ -228,7 +228,7 @@ module module_NDHMS_rt_drv
 #endif
 
 
-      call   RESTART_IN_nc("RESTART."//nlst_lsm(did)%olddate(1:16)//  &
+      call   RESTART_IN_nc("NDHMS_RST."//nlst_lsm(did)%olddate(1:16)//  &
              "_DOMAIN"//trim(nlst_lsm(did)%hgrid), did)
 
 

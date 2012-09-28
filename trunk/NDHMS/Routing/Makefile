@@ -12,7 +12,7 @@ OBJS = \
 	module_ndhms_io.o \
  	module_RT.o Noah_distr_routing.o \
 	module_channel_routing.o \
-	rtFunction.o 
+	rtFunction.o module_lsm_forcing.o
 
 all:	$(OBJS)
 
