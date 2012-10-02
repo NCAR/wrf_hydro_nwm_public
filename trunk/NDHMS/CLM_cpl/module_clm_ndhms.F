@@ -30,10 +30,9 @@ CONTAINS
     subroutine clm_cpl_ndhms()
 
        use module_rt_data, only:  rt_domain
-!       use module_LSM_WRF_data, only:  lsm
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       use module_namelist, only: nlst_lsm
+       use module_namelist, only: nlst_rt 
 
         implicit none
         integer k, ix,jx, nn
@@ -64,9 +63,9 @@ CONTAINS
 
             call NDHMS_ini(ntime,did)
             RT_DOMAIN(did)%initialized = .true.
-            nlst_lsm(did)%dt = cpl_land_dt
-            nlst_lsm(did)%startdate(1:19) = cpl_outdate(1:19)
-            nlst_lsm(did)%olddate(1:19) = cpl_outdate(1:19)
+            nlst_rt(did)%dt = cpl_land_dt
+            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
             write(6,*) "yyyywww step 4 finish NDHMS_ini= "
             call flush(6)
         endif
@@ -116,7 +115,7 @@ CONTAINS
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                      ix,jx, nlst_lsm(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_lsm(did)%nsoil)),&
+                      ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
                       RT_DOMAIN(did)%STC)
 
             write(6,*) "finish t_soisno   "
@@ -127,7 +126,7 @@ CONTAINS
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                     ix,jx, nlst_lsm(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_lsm(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%SMC)
             
             write(6,*) "finish h2osoi_vol "
@@ -138,7 +137,7 @@ CONTAINS
             call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d, nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                     ix,jx, nlst_lsm(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_lsm(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX)
             RT_DOMAIN(did)%SH2OX =  RT_DOMAIN(did)%SH2OX /1000.
    
@@ -160,7 +159,7 @@ CONTAINS
 
             r2p =>clm3%g%l%c%ces%t_soisno 
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_lsm(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_lsm(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%STC)
             call g2c_2d(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity')
@@ -170,7 +169,7 @@ CONTAINS
 
             r2p => clm3%g%l%c%cws%h2osoi_vol  
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_lsm(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_lsm(did)%nsoil)), &
+                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)), &
                      RT_DOMAIN(did)%SMC)
             call g2c_2d_tmp(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity', 0.01, 10.)
@@ -179,7 +178,7 @@ CONTAINS
 
             r2p => clm3%g%l%c%cws%h2osoi_liq  
             call Toclm3d(clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_lsm(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_lsm(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX*1000)
             call g2c_2d_tmp(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity',0.01, 10.)

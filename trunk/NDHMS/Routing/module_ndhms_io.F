@@ -3,7 +3,7 @@ module module_ndhms_io
      use module_mpp_land
 #endif
    use module_NDHMS_utils, only: get_dist_ll
-   use module_namelist, only: nlst_rt, nlst_lsm
+   use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
 
    implicit none
@@ -760,7 +760,7 @@ end subroutine get_albedo12m_netcdf
             route_lake_f, route_direction_f, route_order_f, &
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
-            channel_option,forctyp,LATVAL,LONVAL, &
+            channel_option,LATVAL,LONVAL, &
             STRMFRXSTPTS,wrfsi_finegrid_flnm)
 #include <netcdf.inc>
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
@@ -773,7 +773,6 @@ end subroutine get_albedo12m_netcdf
         INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
         INTEGER                                      :: I,J,channel_option
-        INTEGER                                      :: forctyp
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
         CHARACTER(len=28)                            :: dir
 !Dummy inverted grids from arc
@@ -3865,7 +3864,7 @@ end subroutine mpp_output_chrt
 ! BF end mpp gw output section
 
  subroutine read_chan_forcing( &
-       indir,range,olddate,startdate,hgrid,DOY, &
+       indir,olddate,startdate,hgrid,&
        ixrt,jxrt,QSTRMVOLRT_ACC,QINFLOWBASE,QSUBRT)
 ! This subrouting is going to read channel forcing for
 !  channel only simulations (ie when CHANRTSWCRT = 2)
@@ -3873,7 +3872,7 @@ end subroutine mpp_output_chrt
    implicit none
 #include <netcdf.inc>
    ! in variable
-   character(len=*) :: range,olddate,hgrid,indir,startdate, DOY
+   character(len=*) :: olddate,hgrid,indir,startdate
    character(len=256) :: filename
    integer :: ixrt,jxrt
    real,dimension(ixrt,jxrt):: QSTRMVOLRT_ACC,QINFLOWBASE,QSUBRT
@@ -3886,17 +3885,11 @@ end subroutine mpp_output_chrt
 
 
 !DJG Create filename...
-     if (len_trim(range) == 0) then
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//".RTOUT_DOMAIN"//hgrid
         print *, "Channel forcing file...",inflnm
 
-     else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".RTOUT_DOMAIN"//hgrid//"."//trim(range)
-     end if
 
 !DJG Open NetCDF file...
     ierr = nf_open(inflnm, NF_NOWRITE, ncid)
@@ -4066,7 +4059,7 @@ end subroutine mpp_output_chrt
             route_lake_f, route_direction_f, route_order_f, &
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
-            channel_option,FORC_TYP,LATVAL,&
+            channel_option,LATVAL,&
             LONVAL,STRMFRXSTPTS,wrfsi_finegrid_flnm,g_ixrt,g_jxrt)
         implicit none
 #include <netcdf.inc>
@@ -4074,7 +4067,6 @@ end subroutine mpp_output_chrt
 !yw        INTEGER, INTENT(IN)                       :: CHANRTSWCRT, NLINKS, NLAKES
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
         INTEGER                                      :: I,J,channel_option
-        INTEGER                                      :: FORC_TYP
         REAL, DIMENSION(g_IXRT,g_JXRT) :: g1_LATVAL, g1_LONVAL
         CHARACTER(len=28)                            :: dir
 
@@ -4150,7 +4142,7 @@ end subroutine mpp_output_chrt
                route_link_f,route_lake_f, &
                route_direction_f, route_order_f, &
                CHANRTSWCRT,g_dist, ZELEV, LAKENODE, g1_CH_NETLNK, CHANXI, CHANYJ, &
-               CHLAT, CHLON, channel_option, FORC_TYP,g1_latval,g1_lonval,&
+               CHLAT, CHLON, channel_option, g1_latval,g1_lonval,&
                STRMFRXSTPTS,wrfsi_finegrid_flnm)
         endif
 
@@ -4297,7 +4289,7 @@ end subroutine mpp_output_chrt
          write(6,*) "output file ", outFile
          call flush(6)
 ! define dimension for variables 
-          iret = nf_def_dim(ncid, "depth", nlst_lsm(did)%nsoil, dimid_soil)  !-- 3-d soils
+          iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
    
 #ifdef MPP_LAND
           iret = nf_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
@@ -4322,9 +4314,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
     endif
 #endif
-        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
-        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%smc,"smc")
-        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
+        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
+        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
@@ -4375,7 +4367,7 @@ end subroutine mpp_output_chrt
      if(IO_id.eq.my_id) then
 #endif
 ! define dimension for variables 
-          iret = nf_def_dim(ncid, "depth", nlst_lsm(did)%nsoil, dimid_soil)  !-- 3-d soils
+          iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
    
 #ifdef MPP_LAND
           iret = nf_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
@@ -4428,9 +4420,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
     endif
 #endif
-       call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
-        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%smc,"smc")
-        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+       call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
+        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
+        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
 
 
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
@@ -4444,7 +4436,7 @@ end subroutine mpp_output_chrt
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
-            call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_lsm(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
+            call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
 #ifdef MPP_LAND
@@ -4648,11 +4640,11 @@ end subroutine mpp_output_chrt
     call mpp_land_bcast_int1(rt_domain(did)%out_counts)
 #endif
 
-     write(6,*) "nlst_lsm(did)%nsoil=",nlst_lsm(did)%nsoil
-        call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%stc,"stc")
-        call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%smc,"smc")
+     write(6,*) "nlst_rt(did)%nsoil=",nlst_rt(did)%nsoil
+        call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
+        call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
 
-        call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_lsm(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+        call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
  
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1")
@@ -4663,7 +4655,7 @@ end subroutine mpp_output_chrt
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
-            call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_lsm(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
+            call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call read_rst_crt_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink")
               call read_rst_crt_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol")

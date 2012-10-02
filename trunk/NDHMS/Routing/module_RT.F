@@ -293,7 +293,7 @@ CONTAINS
    subroutine getChanDim(did)
 
   
-      use module_namelist, only:  nlst_rt , nlst_lsm
+      use module_namelist, only:  nlst_rt 
       use module_RT_data, only: rt_domain
       implicit none
       
@@ -327,7 +327,7 @@ CONTAINS
       end if
 
         call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
-                   rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_lsm(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+                   rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
 
       IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
         rt_domain(did)%CH_NETLNK = CH_NETLNK
@@ -340,7 +340,7 @@ CONTAINS
    subroutine LandRT_ini(did)
 
       use module_noah_chan_param_init_rt
-      use module_namelist, only:  nlst_rt , nlst_lsm
+      use module_namelist, only:  nlst_rt , nlst_rt
       use module_RT_data, only: rt_domain
       use module_gw_baseflow_data, only: gw2d
 
@@ -403,7 +403,7 @@ CONTAINS
                nlst_rt(did)%route_direction_f, nlst_rt(did)%route_order_f, &
                nlst_rt(did)%CHANRTSWCRT,rt_domain(did)%dist, rt_domain(did)%ZELEV, rt_domain(did)%LAKENODE, rt_domain(did)%CH_NETLNK, &
                rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
-               rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,nlst_lsm(did)%FORC_TYP, &
+               rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
                rt_domain(did)%latval, rt_domain(did)%lonval,&
                rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%wrfsi_finegrid_flnm, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT)
 
@@ -429,7 +429,7 @@ CONTAINS
                nlst_rt(did)%route_direction_f, nlst_rt(did)%route_order_f, &
                nlst_rt(did)%CHANRTSWCRT,rt_domain(did)%dist, rt_domain(did)%ZELEV, rt_domain(did)%LAKENODE, rt_domain(did)%CH_NETLNK, &
                rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
-               rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option, nlst_lsm(did)%FORC_TYP, &
+               rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option, &
                rt_domain(did)%LATVAL,rt_domain(did)%LONVAL, &
                rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%wrfsi_finegrid_flnm)
 #endif
@@ -817,7 +817,7 @@ CONTAINS
 
        rt_domain(did)%INFXSWGT = 1./FLOAT(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
        rt_domain(did)%SH2OWGT = 1.
-  rt_domain(did)%SOLDEPRT = -1.0 * nlst_lsm(did)%ZSOIL8(nlst_lsm(did)%NSOIL)
+  rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
   rt_domain(did)%QSUBRT = 0.0
   rt_domain(did)%ZWATTABLRT = 0.0
   rt_domain(did)%QSUBBDRYRT = 0.0

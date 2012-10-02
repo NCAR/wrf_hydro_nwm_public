@@ -14,7 +14,7 @@ module module_lis_NDHMS
        use module_LSM_WRF_data, only:  lsm
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       use module_namelist, only: nlst_lsm
+       use module_namelist, only: nlst_rt
 
         implicit none
         integer n, k, ix,jx
@@ -85,7 +85,7 @@ module module_lis_NDHMS
             call flush(6)
 
             RT_DOMAIN(did)%initialized = .true.
-            nlst_lsm(did)%dt = cpl_land_dt
+            nlst_rt(did)%dt = cpl_land_dt
 
           write(6,*) "LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)", &
                  LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)
@@ -108,11 +108,11 @@ module module_lis_NDHMS
 
         write(6,*) "before call lis2ndhms_2d"
         write(6,*) "size(noah271_struc(n)%noah%smc(1)),n,ix,jx" , size(noah271_struc(n)%noah%smc(1)),n,ix,jx
-        write(6,*) "nlst_lsm(did)%nsoil = ", nlst_lsm(did)%nsoil
+        write(6,*) "nlst_rt(did)%nsoil = ", nlst_rt(did)%nsoil
 
         call flush(6)
             ! get the initial data from LIS 
-            do k = 1 , nlst_lsm(did)%nsoil
+            do k = 1 , nlst_rt(did)%nsoil
                 call lis2ndhms_2d(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
                 call lis2ndhms_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)), n,ix,jx)
                 call lis2ndhms_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
@@ -129,7 +129,7 @@ module module_lis_NDHMS
 
 ! add for update the lsm state variable.
      ! 3 d variable
-        do k = 1 , nlst_lsm(did)%nsoil
+        do k = 1 , nlst_rt(did)%nsoil
              call ndhms2lis_2d(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
              call ndhms2lis_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)),n,ix,jx)
              call ndhms2lis_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)

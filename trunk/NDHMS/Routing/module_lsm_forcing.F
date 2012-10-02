@@ -830,14 +830,14 @@ Contains
 
 
  subroutine read_seq_forcing( &
-       indir,range,olddate,hgrid, &
+       indir,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
        weasd,snodep,dt,k,acrain )
 ! This subrouting is going to read different forcing.
    implicit none
    ! in variable
-   character(len=*) :: range,olddate,hgrid,indir
+   character(len=*) :: olddate,hgrid,indir
    character(len=256) :: filename
    integer :: ix,jx,forc_typ,k,snow_assim  ! k is time loop
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
@@ -849,29 +849,17 @@ Contains
    real,dimension(ix,jx):: lai,fpar
    character(len=4) nwxst_t
 
-     if (len_trim(range) == 0) then
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
-     else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-     endif
 
 !!!DJG... Call READFORC_(variable) Subroutine for forcing data...
 !!!DJG HRLDAS Format Forcing with hour format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.1) then
 !!Create forcing data filename...
-      if (len_trim(range) == 0) then
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
-      else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-      endif
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
    end if
@@ -882,15 +870,9 @@ Contains
 !!!DJG HRLDAS Forcing with minute format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.2) then
 !!Create forcing data filename...
-      if (len_trim(range) == 0) then
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//".LDASIN_DOMAIN"//hgrid
-      else
-        inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-      endif
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
    end if
@@ -1017,15 +999,9 @@ Contains
 
 !       if(K.eq.1.OR.(MOD((K-1)*INT(DT),3600)).eq.0) then   !if/then 1 hr check
 !!Create forcing data filename...
-         if (len_trim(range) == 0) then
            inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
-         else
-           inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             ".LDASIN_DOMAIN"//hgrid//"."//trim(range)
-         endif
          CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
              PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
 !       endif
@@ -1081,7 +1057,6 @@ Contains
 !             startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
 !             olddate(15:16)//".LDASIN_DOMAIN"//hgrid//"_multiple"
 !!        "MET_LIS_CRO_2D_SANTEE_LU_1KM."//&
-!!        startdate(1:4)//DOY//startdate(12:13)//&
 !!        ".156hrfcst.radar"
 !     else
 !     endif
@@ -1505,7 +1480,7 @@ Contains
 
 
  subroutine mpp_read_forcing( &
-       indir,range,olddate,startdate,hgrid,DOY, &
+       indir,olddate,startdate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
        weasd,snodep,dt,k,g_ix,g_jx,igrid,acrain)
@@ -1514,7 +1489,7 @@ Contains
 
    implicit none
    ! in variable
-   character(len=*) :: range,olddate,hgrid,indir,startdate, DOY
+   character(len=*) :: olddate,hgrid,indir,startdate
    character(len=256) :: filename
    integer :: ix,jx,forc_typ,k,snow_assim,igrid  ! k is time loop
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
@@ -1547,13 +1522,8 @@ Contains
    end if
 
    if(my_id .eq. IO_id) then
-!yw     call read_seq_forcing( &
-!yw        indir,range,olddate,startdate,hgrid,DOY, &
-!yw        global_nx,global_ny,forc_typ,snow_assim,  &
-!yw        g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
-!yw        g_weasd,g_snodep,dt,k,igrid,g_acrain )
       call read_seq_forcing( &
-        indir,range,olddate,hgrid,&
+        indir,olddate,hgrid,&
         global_nx,global_ny,forc_typ,snow_assim,  &
         g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
         g_weasd,g_snodep,dt,k,g_acrain )

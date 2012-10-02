@@ -3,7 +3,7 @@
          use module_GW_baseflow_data, only: gw2d
          use module_GW_baseflow, only: simp_gw_buck, gwstep
          use module_channel_routing, only: drive_channel
-         use module_namelist, only: nlst_rt, nlst_lsm
+         use module_namelist, only: nlst_rt
 
 #ifdef MPP_LAND  
          use module_mpp_land 
@@ -42,7 +42,7 @@
 !           
 
 
-         call drive_RT( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_lsm(did)%NSOIL,&
+         call drive_RT( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
              RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
              RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%STC,RT_DOMAIN(did)%SH2OX, &
              RT_DOMAIN(did)%INFXSRT,RT_DOMAIN(did)%SFCHEADRT,RT_DOMAIN(did)%SMCMAX1,&
@@ -74,7 +74,7 @@
              RT_DOMAIN(did)%INFXSAGG1RT,RT_DOMAIN(did)%SFCHEADAGG1RT,&
              RT_DOMAIN(did)%SFCHEADAGGRT,&
              nlst_rt(did)%DTRT, &
-             nlst_lsm(did)%DT,RT_DOMAIN(did)%LAKE_INFLOTRT,&
+             nlst_rt(did)%DT,RT_DOMAIN(did)%LAKE_INFLOTRT,&
              RT_DOMAIN(did)%QBDRYTRT,RT_DOMAIN(did)%QSUBBDRYTRT,&
              RT_DOMAIN(did)%QSTRMVOLTRT,RT_DOMAIN(did)%q_sfcflx_x,&
              RT_DOMAIN(did)%q_sfcflx_y,RT_DOMAIN(did)%LKSATFAC,&
@@ -111,7 +111,7 @@
              RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
              RT_DOMAIN(did)%qinflowbase,&
              RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
-             RT_DOMAIN(did)%dist,nlst_lsm(did)%DT,&
+             RT_DOMAIN(did)%dist,nlst_rt(did)%DT,&
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
              nlst_rt(did)%GWBASESWCRT)
@@ -127,10 +127,10 @@
        open (unit=53,file='GW_zlev.txt',form='formatted',&
              status='unknown',position='append')
        do i=1,RT_DOMAIN(did)%numbasns
-          write (51,951) i,nlst_lsm(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
+          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
 951        FORMAT(I3,1X,A19,1X,F11.3)
-          write (52,951) i,nlst_lsm(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
-          write (53,951) i,nlst_lsm(did)%olddate,rt_domain(did)%z_gwsubbas(i)
+          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
+          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
        end do
        close(51)
        close(52)
@@ -197,7 +197,7 @@
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
        RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT, &
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_lsm(did)%DT, nlst_rt(did)%DTRT, &
+       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTRT, &
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &

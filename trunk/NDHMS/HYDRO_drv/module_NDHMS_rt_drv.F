@@ -11,7 +11,7 @@ module module_NDHMS_rt_drv
    use module_rt_data, only: rt_domain
    use module_GW_baseflow_data, only: gw2d
    use module_GW_baseflow, only: gw2d_allocate, gw2d_ini
-   use module_namelist, only: nlst_lsm, nlst_rt
+   use module_namelist, only: nlst_rt
    use module_routing, only: getChanDim, landrt_ini
    use module_NDHMS_utils
    use module_namelist
@@ -28,16 +28,13 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-      if(nlst_lsm(did)%olddate(1:19) == nlst_lsm(did)%startdate(1:19) ) then
+      if(nlst_rt(did)%olddate(1:19) == nlst_rt(did)%startdate(1:19) ) then
 !for testing purpose
           rst_out = -99
-!         write(6,*) "output the restart file : "
-!         write(6,*)  "RESTART."//nlst_lsm(did)%olddate(1:16)//   &
-!                 "_DOMAIN"//trim(nlst_lsm(did)%hgrid)
-!         write(6,*)  " "
+          write(6,*) "output the restart file at time : ", nlst_rt(did)%olddate(1:19)
       else
-         call geth_newdate(out_date, nlst_lsm(did)%startdate, nint(nlst_lsm(did)%rst_dt*60*rt_domain(did)%rst_counts))
-         if ( out_date(1:19) == nlst_lsm(did)%olddate(1:19) ) then
+         call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%rst_dt*60*rt_domain(did)%rst_counts))
+         if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
              rst_out = 99
              rt_domain(did)%rst_counts = rt_domain(did)%rst_counts + 1
          endif
@@ -47,14 +44,14 @@ module module_NDHMS_rt_drv
      call mpp_land_bcast_int1(rst_out)
 #endif
     if(rst_out .gt. 0) &
-             call   RESTART_OUT_nc(trim("NDHMS_RST."//nlst_lsm(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_lsm(did)%hgrid)),  did)
+             call   RESTART_OUT_nc(trim("HYDRO_RST."//nlst_rt(did)%olddate(1:16)   &
+                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)),  did)
 
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-      write(6,*) "yyww =",  "RESTART."//nlst_lsm(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_lsm(did)%hgrid)
+      write(6,*) "yyww =",  "RESTART."//nlst_rt(did)%olddate(1:16)   &
+                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)
 #ifdef MPP_LAND
    endif
 #endif
@@ -79,13 +76,15 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-!     write(6,*) "nlst_lsm(did)%olddate(1:16), nlst_lsm(did)%startdate(1:16) ",  nlst_lsm(did)%olddate(1:16), nlst_lsm(did)%startdate(1:16)
-      !yw if(nlst_lsm(did)%olddate(1:16) == nlst_lsm(did)%startdate(1:16) ) then
-      if(nlst_lsm(did)%olddate(1:19) == nlst_lsm(did)%startdate(1:19) ) then
+!     write(6,*) "nlst_rt(did)%olddate(1:16), nlst_rt(did)%startdate(1:16) ",  nlst_rt(did)%olddate(1:16), nlst_rt(did)%startdate(1:16)
+      !yw if(nlst_rt(did)%olddate(1:16) == nlst_rt(did)%startdate(1:16) ) then
+      if(nlst_rt(did)%olddate(1:19) == nlst_rt(did)%startdate(1:19) ) then
+         write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
          outflag = 99
       else
-         call geth_newdate(out_date, nlst_lsm(did)%startdate, nint(nlst_lsm(did)%out_dt*60*rt_domain(did)%out_counts))
-         if ( out_date(1:19) == nlst_lsm(did)%olddate(1:19) ) then
+         call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%out_dt*60*rt_domain(did)%out_counts))
+         if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
+             write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
              outflag = 99
          endif
       endif
@@ -97,16 +96,17 @@ module module_NDHMS_rt_drv
      call NDHMS_rst_out(did) 
 
      if (outflag .lt. 0) return
+
      rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
      rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
 
-     kt = rt_domain(did)%his_out_counts*nlst_lsm(did)%out_dt/nlst_lsm(did)%DT
+     kt = rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt/nlst_rt(did)%DT
 
 
 
-     call output_lsm(trim(nlst_lsm(did)%olddate(1:4)//nlst_lsm(did)%olddate(6:7)//nlst_lsm(did)%olddate(9:10)  &
-                 //nlst_lsm(did)%olddate(12:13)//nlst_lsm(did)%olddate(15:16)//  &
-                 ".LSMOUT_DOMAIN"//trim(nlst_lsm(did)%hgrid)),     &
+     call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
+                 //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
+                 ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
                  did)
 
     
@@ -114,7 +114,7 @@ module module_NDHMS_rt_drv
         if(nlst_rt(did)%SUBRTSWCRT .gt. 0 &
              .or. nlst_rt(did)%OVRTSWCRT .gt. 0 &
              .or. nlst_rt(did)%GWBASESWCRT .gt. 0 ) then
-           if (nlst_lsm(did)%HIRES_OUT.ge.1) then
+           if (nlst_rt(did)%HIRES_OUT.ge.1) then
 
 
 #ifdef MPP_LAND
@@ -122,32 +122,32 @@ module module_NDHMS_rt_drv
 #else
               call output_rt(    &
 #endif
-                nlst_lsm(did)%igrid, nlst_lsm(did)%split_output_count, &
+                nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                 RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
-                nlst_lsm(did)%nsoil, &
-                nlst_lsm(did)%startdate, nlst_lsm(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
+                nlst_rt(did)%nsoil, &
+                nlst_rt(did)%startdate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
                 RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
                 RT_DOMAIN(did)%SUB_RESID,       &
                    RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
                 RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
                 RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
-                nlst_rt(did)%wrfsi_finegrid_flnm,nlst_lsm(did)%DT,&
+                nlst_rt(did)%wrfsi_finegrid_flnm,nlst_rt(did)%DT,&
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_lsm(did)%HIRES_OUT)
+                RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%HIRES_OUT)
 
            if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
 	     
               call output_gw(    &
-                nlst_lsm(did)%igrid, nlst_lsm(did)%split_output_count, &
+                nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                 RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt,          &
-                nlst_lsm(did)%nsoil,                               &
-                nlst_lsm(did)%startdate, nlst_lsm(did)%olddate,    &
+                nlst_rt(did)%nsoil,                               &
+                nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
                 gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                 &
                 gw2d(did)%convgw, RT_DOMAIN(did)%SFCHEADSUBRT,     &
-                nlst_rt(did)%wrfsi_finegrid_flnm,nlst_lsm(did)%DT, &
+                nlst_rt(did)%wrfsi_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
                 RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
-                nlst_lsm(did)%HIRES_OUT)
+                nlst_rt(did)%HIRES_OUT)
 
 	  endif
 ! BF end gw2d output section
@@ -164,12 +164,12 @@ module module_NDHMS_rt_drv
 #else
              call output_chrt(  &
 #endif
-               nlst_lsm(did)%igrid, nlst_lsm(did)%split_output_count, &
+               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-               nlst_lsm(did)%startdate,nlst_lsm(did)%olddate,RT_DOMAIN(did)%CHLON,&
+               nlst_rt(did)%startdate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
                RT_DOMAIN(did)%CHLAT, &
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
-               RT_DOMAIN(did)%QLINK,nlst_lsm(did)%DT,Kt, &
+               RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
                RT_DOMAIN(did)%STRMFRXSTPTS)
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  &
@@ -178,13 +178,13 @@ module module_NDHMS_rt_drv
 #else
                 call output_lakes(  &
 #endif
-                   nlst_lsm(did)%igrid, nlst_lsm(did)%split_output_count, &
+                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                    RT_DOMAIN(did)%NLAKES, &
-                   trim(nlst_lsm(did)%startdate), trim(nlst_lsm(did)%olddate), &
+                   trim(nlst_rt(did)%startdate), trim(nlst_rt(did)%olddate), &
                    RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
                    RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
                    RT_DOMAIN(did)%QLAKEO, &
-                   RT_DOMAIN(did)%RESHT,nlst_lsm(did)%DT,Kt)
+                   RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
            endif
            write(6,*) "end calling otuput functions"
            call flush(6)
@@ -206,7 +206,7 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND
    if(my_id.eq.IO_id) then
 #endif
-      if (nlst_lsm(did)%restart_hdate(1:16) == nlst_lsm(did)%startdate(1:16) ) flag = 99
+      if (trim(nlst_rt(did)%restart_file) /= "") flag = 99
 #ifdef MPP_LAND
    endif 
    call mpp_land_bcast_int1(flag)
@@ -214,22 +214,18 @@ module module_NDHMS_rt_drv
 
       
    if (flag.eq.99) then
-      nlst_lsm(did)%olddate = nlst_lsm(did)%restart_hdate(1:19)
 
 #ifdef MPP_LAND
    if(my_id.eq.IO_id) then
 #endif
-      write(6,*) "*** read restart data "
-      write(6,*) "RESTART."//nlst_lsm(did)%olddate(1:16)//"_DOMAIN"//trim(nlst_lsm(did)%hgrid)
+      write(6,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
       call flush(6)
-
 #ifdef MPP_LAND
    endif 
 #endif
 
 
-      call   RESTART_IN_nc("NDHMS_RST."//nlst_lsm(did)%olddate(1:16)//  &
-             "_DOMAIN"//trim(nlst_lsm(did)%hgrid), did)
+      call   RESTART_IN_nc(trim(nlst_rt(did)%restart_file), did)
 
 
      endif
@@ -249,8 +245,8 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND
    if(IO_id.eq.my_id) then
 #endif
-         call geth_newdate(newdate, nlst_lsm(did)%olddate, nint( nlst_lsm(did)%dt))
-         nlst_lsm(did)%olddate = newdate
+         call geth_newdate(newdate, nlst_rt(did)%olddate, nint( nlst_rt(did)%dt))
+         nlst_rt(did)%olddate = newdate
          write(6,*) "current time is ",newdate
 #ifdef MPP_LAND
    endif
@@ -798,7 +794,6 @@ module module_NDHMS_rt_drv
 
 ! read the namelist
 ! the lsm namelist will be read by rtland sequentially again.
-     call read_lsm_nlst(nlst_lsm(did) )
      call read_rt_nlst(nlst_rt(did) )
 
 
@@ -809,7 +804,7 @@ module module_NDHMS_rt_drv
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! get the dimension 
-     call get_file_dimension(trim(nlst_lsm(did)%wrfsi_static_flnm), ix,jx)
+     call get_file_dimension(trim(nlst_rt(did)%wrfsi_static_flnm), ix,jx)
    
        
 #ifdef MPP_LAND
@@ -878,7 +873,7 @@ module module_NDHMS_rt_drv
           call gw2d_allocate(did,&
                              rt_domain(did)%ixrt,&
                              rt_domain(did)%jxrt,&
-                             nlst_lsm(did)%nsoil)
+                             nlst_rt(did)%nsoil)
        write(6,*) "finish gw2d_allocate"
        call flush(6)
       endif
@@ -906,7 +901,7 @@ module module_NDHMS_rt_drv
       if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
 	
           call gw2d_ini(did,&
-                        nlst_lsm(did)%dt,&
+                        nlst_rt(did)%dt,&
                         nlst_rt(did)%dxrt0)
                         
           write(6,*) "finish gw2d_ini"      
@@ -958,11 +953,11 @@ module module_NDHMS_rt_drv
 
          allocate(xdum(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx) )
 
-         call get2d_lsm_real("HGT",RT_DOMAIN(did)%TERRAIN,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_lsm(did)%wrfsi_static_flnm))
+         call get2d_lsm_real("HGT",RT_DOMAIN(did)%TERRAIN,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
 
-         call get2d_lsm_real("XLAT",RT_DOMAIN(did)%lat_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_lsm(did)%wrfsi_static_flnm))
-         call get2d_lsm_real("XLONG",RT_DOMAIN(did)%lon_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_lsm(did)%wrfsi_static_flnm))
-         call get2d_lsm_vegtyp(RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_lsm(did)%wrfsi_static_flnm))
+         call get2d_lsm_real("XLAT",RT_DOMAIN(did)%lat_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
+         call get2d_lsm_real("XLONG",RT_DOMAIN(did)%lon_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
+         call get2d_lsm_vegtyp(RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
 
 ! LKSAT, 
 ! temporary set
@@ -972,11 +967,11 @@ module module_NDHMS_rt_drv
        RT_DOMAIN(did)%SH2OAGGRT = 0
      
 
-       RT_DOMAIN(did)%zsoil(1:nlst_lsm(did)%nsoil) = nlst_lsm(did)%zsoil8(1:nlst_lsm(did)%nsoil)
-       do i = 2, nlst_lsm(did)%nsoil
+       RT_DOMAIN(did)%zsoil(1:nlst_rt(did)%nsoil) = nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil)
+       do i = 2, nlst_rt(did)%nsoil
           RT_DOMAIN(did)%sldpth(i) = RT_DOMAIN(did)%zsoil(i-1)-RT_DOMAIN(did)%zsoil(i)
        enddo
-       RT_DOMAIN(did)%SOLDEPRT = -1.0*RT_DOMAIN(did)%ZSOIL(nlst_lsm(did)%NSOIL)
+       RT_DOMAIN(did)%SOLDEPRT = -1.0*RT_DOMAIN(did)%ZSOIL(nlst_rt(did)%NSOIL)
 
 !      input OV_ROUGH from OVROUGH.TBL
 #ifdef MPP_LAND
@@ -1008,7 +1003,7 @@ module module_NDHMS_rt_drv
 #endif
 
        xdum = 0
-       call get2d_lsm_soltyp(xdum,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_lsm(did)%wrfsi_static_flnm))
+       call get2d_lsm_soltyp(xdum,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
        rt_domain(did)%lksat = 0.0
        do j = 1, RT_DOMAIN(did)%jx
              do i = 1, RT_DOMAIN(did)%ix

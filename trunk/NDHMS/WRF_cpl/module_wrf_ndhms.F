@@ -25,7 +25,7 @@ CONTAINS
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       use module_namelist, only: nlst_lsm, nlst_rt
+       use module_namelist, only: nlst_rt
 
        USE module_domain, ONLY : domain, domain_clock_get
        implicit none
@@ -70,25 +70,24 @@ CONTAINS
             call NDHMS_ini(ntime,did)
 
             RT_DOMAIN(did)%initialized = .true.
-            nlst_lsm(did)%dt = cpl_land_dt
+            nlst_rt(did)%dt = cpl_land_dt
 
             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
-            nlst_lsm(did)%startdate(1:19) = cpl_outdate(1:19)
-            nlst_lsm(did)%olddate(1:19) = cpl_outdate(1:19)
+            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
             write(6,*) "yyyywww step 4 finish NDHMS_ini= "
             call flush(6)
         endif
-            nlst_lsm(did)%dt = cpl_land_dt
+            nlst_rt(did)%dt = cpl_land_dt
             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
-            nlst_lsm(did)%olddate(1:19) = cpl_outdate(1:19)
-            nlst_rt(did)%DTRT = cpl_land_dt
+            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
         write(6,*) "yyww cpl_outdate = ", cpl_outdate(1:19)
-        write(6,*) "yyww nlst_lsm(did)%olddate(1:19)=", nlst_lsm(did)%olddate(1:19)
+        write(6,*) "yyww nlst_rt(did)%olddate(1:19)=", nlst_rt(did)%olddate(1:19)
 
         ix = rt_domain(did)%ix
         jx = rt_domain(did)%jx
-        nn = nlst_lsm(did)%nsoil
+        nn = nlst_rt(did)%nsoil
 
         ! get the data from WRF 
 ! need input for RT_DOMAIN(did)%SOLDRAIN(ix,jx)             

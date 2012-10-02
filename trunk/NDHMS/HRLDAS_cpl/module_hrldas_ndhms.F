@@ -3,11 +3,11 @@ module module_HRLDAS_NDHMS
 ! NDHMS  module   
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
-                 write_io_real, my_id
+                 write_io_real, my_id, mpp_land_bcast_real1, IO_id
 #endif
     use module_ndhms_rt_drv, only: ndhms_ini, ndhms_exe, ndhms_rst_out
     use module_rt_data, only:  rt_domain
-    use module_namelist, only: nlst_lsm, nlst_rt
+    use module_namelist, only: nlst_rt
 
     implicit none
     integer begg, endg
@@ -102,15 +102,17 @@ CONTAINS
      return 
      end subroutine hrldas_cpl_ndhms
 
-    subroutine hrldas_cpl_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt)
+    subroutine hrldas_cpl_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate)
 
 
        implicit none
 
        integer ii,jj,kk
        integer k, kt
+       real :: dt
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+       character(len = *) :: olddate
 
         integer ::  did
 
@@ -124,8 +126,12 @@ CONTAINS
         did = 1
 
         if(.not. RT_DOMAIN(did)%initialized) then  
+           nlst_rt(did)%dt = dt
+           nlst_rt(did)%olddate(1:19) = olddate(1:19)
+           nlst_rt(did)%startdate(1:19) = olddate(1:19)
 
            write(6,*) "yyyywww step 4 before NDHMS_ini= "
+           
            call NDHMS_ini(ntime,did)
            RT_DOMAIN(did)%initialized = .true.
    
@@ -134,6 +140,7 @@ CONTAINS
                .or. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 #ifdef MPP_LAND
+           call mpp_land_bcast_real1(nlst_rt(did)%dt)
            call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
            call write_io_real(rt_domain(did)%infxsrt, infxsrt)
            call write_io_real(rt_domain(did)%soldrain,soldrain)
@@ -142,6 +149,8 @@ CONTAINS
               call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
               call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
            end do
+           if(my_id .eq. IO_id) write(6,*) "olddate = ",nlst_rt(did)%olddate
+           call flush(6)   
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt

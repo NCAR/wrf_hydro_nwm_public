@@ -8,42 +8,46 @@
              call hrldas_cpl_ndhms(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
        end subroutine hrldas_drv_ndhms
 
-       subroutine hrldas_drv_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt)
+       subroutine hrldas_drv_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)
           use module_hrldas_ndhms, only: hrldas_cpl_ndhms_ini
           implicit none
           integer:: ii,jj,kk, kt
+          character(len=*) :: olddate
+          real :: dt
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-             call hrldas_cpl_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt)  
+             call hrldas_cpl_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)  
        end subroutine hrldas_drv_ndhms_ini
 
-       subroutine NDHMS_seq_frocing (olddate,     &
+       subroutine NDHMS_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,acrain)
 
          use module_lsm_forcing, only: read_seq_forcing
-         use module_namelist, only:nlst_lsm
+         use module_namelist, only:nlst_rt
          implicit none
          integer did, ixs,ixe,jxs,jxe
          integer ix,jx, kt
          character(len=19) :: olddate
+         character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
                  weasd, snodep, acrain   
+         integer :: forc_typ, snow_assim
 
          ix = ixe-ixs+1
          jx = jxe-jxs+1
          did = 1
          call read_seq_forcing( &
-            nlst_lsm(did)%indir,nlst_lsm(did)%range,olddate, &
-            nlst_lsm(did)%hgrid,&
-            ix,jx,nlst_lsm(did)%forc_typ,nlst_lsm(did)%snow_assim,  &
+            indir, olddate, &
+            nlst_rt(did)%hgrid,&
+            ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
-            weasd,snodep,nlst_lsm(did)%dt,kt, &
+            weasd,snodep,nlst_rt(did)%dt,kt, &
             acrain )
        end subroutine NDHMS_seq_frocing
 
        subroutine get_greenfrac(greenfrac, idim, jdim, olddate)
-          use module_namelist, only:nlst_lsm
+          use module_namelist, only:nlst_rt
           implicit none
           character(len=*) :: olddate
           integer :: idim, jdim 
@@ -54,7 +58,7 @@
           did = 1
           read(olddate(6:7),*) mm
           read(olddate(9:10),*) dd
-          call get_greenfrac_netcdf(trim(nlst_lsm(did)%WRFSI_STATIC_FLNM),greenfrac,idim, jdim, months,mm,dd) 
+          call get_greenfrac_netcdf(trim(nlst_rt(did)%WRFSI_STATIC_FLNM),greenfrac,idim, jdim, months,mm,dd) 
        end subroutine get_greenfrac
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)

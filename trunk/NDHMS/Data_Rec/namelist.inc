@@ -1,33 +1,24 @@
-   TYPE namelist_lsm_field
+   TYPE namelist_rt_field  
       
-       CHARACTER(len=256) :: indir= ''
-       integer :: forc_typ 
-       integer :: nsoil, slopetyp, SNOW_ASSIM, SOLVEG_INITSWC
+       integer :: nsoil, slopetyp, SOLVEG_INITSWC
        real ZSOIL8(8)
-       real out_dt, rst_dt, dt, tbot
+       real out_dt, rst_dt, dt
        integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
-       CHARACTER(len=3)         :: DOY   !COWS Julian day for filename...
-       character(len=19)  :: restart_hdate = ""
+       character(len=256)  :: restart_file = ""
        logical            :: history_output
        integer            :: split_output_count
        integer :: igrid
-       character(len=256) :: range = ""
-       integer            :: KHOUR, KDAY
-       REAL    :: ZLVL, Z
        character(len=256) :: wrfsi_static_flnm = ""
        integer  :: DEEPGWSPIN
        integer :: HIRES_OUT
-       integer :: rst_diag  ! 0: no output for restart. 1: output diag for restart. 
        
 !      additional character
        character :: hgrid
-       character(len=19) :: olddate, startdate
-
-   END TYPE namelist_lsm_field
-
+       character(len=19) :: olddate="123456"
+       character(len=19) :: startdate="123456"
 
 
-   TYPE namelist_rt_field  
+
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                   GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &

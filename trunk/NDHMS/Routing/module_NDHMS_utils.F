@@ -1,6 +1,6 @@
 module module_NDHMS_utils
   use module_RT_data, only: rt_domain
-  use module_namelist, only: nlst_lsm, nlst_rt
+  use module_namelist, only: nlst_rt
 #ifdef MPP_LAND
      use module_mpp_land, only: global_nx, global_ny, my_id, IO_id, &
            decompose_data_real, write_io_real, MPP_LAND_COM_REAL, &
