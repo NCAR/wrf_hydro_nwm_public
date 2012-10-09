@@ -38,15 +38,15 @@ CONTAINS
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
        logical            :: history_output
-       integer            :: split_output_count
+       integer            :: split_output_count, order_to_write
        integer :: igrid
        character(len=256) :: wrfsi_static_flnm = ""
        integer  :: DEEPGWSPIN
 
        integer :: HIRES_OUT
-       integer :: ierr, i
+       integer :: i
 
-       namelist /NDHMS_nlist/NSOIL, ZSOIL8,  &
+       namelist /HYDRO_nlist/NSOIL, ZSOIL8,  &
             RESTART_FILE,HISTORY_OUTPUT,SPLIT_OUTPUT_COUNT,IGRID,&
             wrfsi_static_flnm, &
             out_dt, rst_dt, &
@@ -57,12 +57,12 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
                     GWBASESWCRT,route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, wrfsi_finegrid_flnm,&
-                    gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl
+                    gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, order_to_write
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
-          open(30, file="wrfhydro.namelist", form="FORMATTED")
-          read(30, NDHMS_nlist, iostat=ierr)
+          open(30, file="hydro.namelist", form="FORMATTED")
+          read(30, HYDRO_nlist, iostat=ierr)
           close(30)
 #ifdef MPP_LAND
        endif
@@ -141,6 +141,7 @@ CONTAINS
   call mpp_land_bcast_int1(RSTRT_SWC  )
   call mpp_land_bcast_int1(TERADJ_SOLAR)
   call mpp_land_bcast_int1(sys_cpl)
+  call mpp_land_bcast_int1(order_to_write)
 #endif
     nlst%RT_OPTION = RT_OPTION
     nlst%CHANRTSWCRT = CHANRTSWCRT
@@ -155,6 +156,7 @@ CONTAINS
     nlst%GWBASESWCRT = GWBASESWCRT
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
     nlst%sys_cpl = sys_cpl
+    nlst%order_to_write = sys_cpl
 ! files
     nlst%route_topo_f   =  route_topo_f
     nlst%route_chan_f = route_chan_f 

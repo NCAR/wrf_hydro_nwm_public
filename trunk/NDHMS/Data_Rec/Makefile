@@ -18,7 +18,7 @@ all:	$(OBJS)
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I../mod $(*).f
 	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libNDHMS.a $(@)
+	ar -r ../lib/libHYDRO.a $(@)
 	cp *.mod ../mod
 
 # Dependencies:

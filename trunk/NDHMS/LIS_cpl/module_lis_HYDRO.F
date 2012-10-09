@@ -1,4 +1,4 @@
-module module_lis_NDHMS
+module module_lis_HYDRO
     use noah271_lsmMod, only : noah271_struc 
 !   use LIS_coreMod, only : LIS_rc, LIS_domain, LIS_masterproc, &
 !         LIS_ews_ind, LIS_ewe_ind, LIS_nss_ind, LIS_nse_ind
@@ -7,7 +7,7 @@ module module_lis_NDHMS
 
     contains
 
-    subroutine lis_cpl_ndhms(n)
+    subroutine lis_cpl_HYDRO(n)
        
 
        use module_rt_data, only:  rt_domain
@@ -66,7 +66,7 @@ module module_lis_NDHMS
             write(6,*) "ix,jx, cpl_land_dt",ix,jx, cpl_land_dt
             call flush(6)
 
-            write(6,*) "yyyywww step 4 before NDHMS_ini= "
+            write(6,*) "yyyywww step 4 before HYDRO_ini= "
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
             write(6,*) "noah271_struc(n)%nslay=", noah271_struc(n)%nslay
             write(6,*) "noah271_struc(n)%lyrthk=", noah271_struc(n)%lyrthk
@@ -75,11 +75,11 @@ module module_lis_NDHMS
             call CPL_LAND_INIT(its,ite,jts,jte)
 
 
-            write(6,*) "yyyywww step 4 before NDHMS_ini= "
+            write(6,*) "yyyywww step 4 before HYDRO_ini= "
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
 
 
-            call NDHMS_ini(ntime,did)
+            call HYDRO_ini(ntime,did)
 
             write(6,*) "yyyywww step 5 my_id= ", my_id
             call flush(6)
@@ -97,25 +97,25 @@ module module_lis_NDHMS
           write(6,*) "LIS_ews_halo_ind,LIS_ewe_halo_ind",LIS_ews_halo_ind,LIS_ewe_halo_ind
 
 
-!         call lis2ndhms_2d(lsm(did)%CMC,noah271_struc(n)%noah%cmc,size(noah271_struc(n)%noah%cmc), n,ix,jx)
-!         call lis2ndhms_2d(lsm(did)%T1,noah271_struc(n)%noah%t1,size(noah271_struc(n)%noah%t1),n,ix,jx)
-!         call lis2ndhms_2d(lsm(did)%weasd,noah271_struc(n)%noah%sneqv,size(noah271_struc(n)%noah%sneqv), n,ix,jx)
-!         call lis2ndhms_2d(lsm(did)%snodep,noah271_struc(n)%noah%snowh,size(noah271_struc(n)%noah%snowh),n,ix,jx)
+!         call lis2HYDRO(lsm(did)%CMC,noah271_struc(n)%noah%cmc,size(noah271_struc(n)%noah%cmc), n,ix,jx)
+!         call lis2HYDRO(lsm(did)%T1,noah271_struc(n)%noah%t1,size(noah271_struc(n)%noah%t1),n,ix,jx)
+!         call lis2HYDRO(lsm(did)%weasd,noah271_struc(n)%noah%sneqv,size(noah271_struc(n)%noah%sneqv), n,ix,jx)
+!         call lis2HYDRO(lsm(did)%snodep,noah271_struc(n)%noah%snowh,size(noah271_struc(n)%noah%snowh),n,ix,jx)
 
             RT_DOMAIN(did)%initialized = .true.
         endif
 
 
-        write(6,*) "before call lis2ndhms_2d"
+        write(6,*) "before call lis2HYDRO"
         write(6,*) "size(noah271_struc(n)%noah%smc(1)),n,ix,jx" , size(noah271_struc(n)%noah%smc(1)),n,ix,jx
         write(6,*) "nlst_rt(did)%nsoil = ", nlst_rt(did)%nsoil
 
         call flush(6)
             ! get the initial data from LIS 
             do k = 1 , nlst_rt(did)%nsoil
-                call lis2ndhms_2d(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
-                call lis2ndhms_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)), n,ix,jx)
-                call lis2ndhms_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
+                call lis2HYDRO(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
+                call lis2HYDRO(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)), n,ix,jx)
+                call lis2HYDRO(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
             enddo
        
        
@@ -125,20 +125,20 @@ module module_lis_NDHMS
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
     
-        call NDHMS_exe(did,ntime)
+        call HYDRO_exe(did,ntime)
 
 ! add for update the lsm state variable.
      ! 3 d variable
         do k = 1 , nlst_rt(did)%nsoil
-             call ndhms2lis_2d(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
-             call ndhms2lis_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)),n,ix,jx)
-             call ndhms2lis_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
+             call HYDRO2lis_2d(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
+             call HYDRO2lis_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)),n,ix,jx)
+             call HYDRO2lis_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
         end do
 
      return 
-     end subroutine lis_cpl_ndhms
+     end subroutine lis_cpl_HYDRO
 
-     subroutine ndhms2lis_2d(var,v1d,size1,n,ix,jx)
+     subroutine HYDRO2lis_2d(var,v1d,size1,n,ix,jx)
         implicit none
         integer :: n, ix, jx, i, r,c, size1
         real, dimension(ix,jx) :: var
@@ -154,9 +154,9 @@ module module_lis_NDHMS
              enddo
           enddo
 
-     end subroutine ndhms2lis_2d        
+     end subroutine HYDRO2lis_2d        
 
-     subroutine lis2ndhms_2d(var,v1d,size1,n,ix,jx)
+     subroutine lis2HYDRO(var,v1d,size1,n,ix,jx)
         implicit none
         integer  n, ix,jx, r,c, size1
         real, dimension(ix,jx) :: var
@@ -177,6 +177,6 @@ module module_lis_NDHMS
              enddo
           enddo
          
-      end subroutine  lis2ndhms_2d
+      end subroutine  lis2HYDRO
 
-end module module_lis_ndhms
+end module module_lis_HYDRO

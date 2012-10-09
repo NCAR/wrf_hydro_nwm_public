@@ -1,8 +1,8 @@
-module module_ndhms_io
+module module_HYDRO_io
 #ifdef MPP_LAND
      use module_mpp_land
 #endif
-   use module_NDHMS_utils, only: get_dist_ll
+   use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
 
@@ -2572,7 +2572,8 @@ end subroutine get_albedo12m_netcdf
 
 !-- output the channel route in an IDV 'station' compatible format
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
-        startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt,K,STRMFRXSTPTS)
+        startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt,K,   &
+        STRMFRXSTPTS,order_to_write)
      
      implicit none
 #include <netcdf.inc>
@@ -2646,7 +2647,7 @@ end subroutine get_albedo12m_netcdf
    
      seconds_since = int(dtrt)*K
 
-     order_to_write = 3  !-- 1 all; 6 feweest
+!    order_to_write = 2  !-- 1 all; 6 feweest
 !    print *, "Subroutine Output_chrt,K, secs links", K, seconds_since, NLINKS
 
       nstations = 0  ! total number of channel points to display
@@ -3110,7 +3111,7 @@ end subroutine output_chrt
    subroutine mpp_output_chrt(mpp_nlinks,nlinks_index,igrid, &
         split_output_count, NLINKS, ORDER, &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt, &
-        K,STRMFRXSTPTS)
+        K,STRMFRXSTPTS,order_to_write)
 
        USE module_mpp_land
 
@@ -3129,7 +3130,7 @@ end subroutine output_chrt
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
-     integer  :: mpp_nlinks, nlinks_index(nlinks)
+     integer  :: mpp_nlinks, nlinks_index(nlinks), order_to_write
 
 !    write(16,*) mpp_nlinks,nlinks_index,igrid, &
 !       split_output_count, NLINKS
@@ -3155,7 +3156,7 @@ end subroutine output_chrt
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, NLINKS, ORDER, &
           startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt,K,&
-          STRMFRXSTPTS)
+          STRMFRXSTPTS,order_to_write)
     end if
 
 end subroutine mpp_output_chrt
@@ -4970,4 +4971,4 @@ end subroutine mpp_output_chrt
    END SUBROUTINE READ_ROUTING_old
 !DJG _____________________________
 
-end module module_ndhms_io
+end module module_HYDRO_io

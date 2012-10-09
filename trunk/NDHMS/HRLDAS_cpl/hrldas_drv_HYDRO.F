@@ -1,25 +1,25 @@
 !2345678
-       subroutine hrldas_drv_ndhms(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
-          use module_hrldas_ndhms, only: hrldas_cpl_ndhms
+       subroutine hrldas_drv_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+          use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
           integer:: ii,jj,kk
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-             call hrldas_cpl_ndhms(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
-       end subroutine hrldas_drv_ndhms
+             call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
+       end subroutine hrldas_drv_HYDRO
 
-       subroutine hrldas_drv_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)
-          use module_hrldas_ndhms, only: hrldas_cpl_ndhms_ini
+       subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)
+          use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO_ini
           implicit none
           integer:: ii,jj,kk, kt
           character(len=*) :: olddate
           real :: dt
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-             call hrldas_cpl_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)  
-       end subroutine hrldas_drv_ndhms_ini
+             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)  
+       end subroutine hrldas_drv_HYDRO_ini
 
-       subroutine NDHMS_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
+       subroutine HYDRO_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,acrain)
 
@@ -44,12 +44,12 @@
             T2,q2x,u,v,pres,xlong,short,prcp1,&
             weasd,snodep,nlst_rt(did)%dt,kt, &
             acrain )
-       end subroutine NDHMS_seq_frocing
+       end subroutine HYDRO_seq_frocing
 
-       subroutine get_greenfrac(greenfrac, idim, jdim, olddate)
+       subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
           use module_namelist, only:nlst_rt
           implicit none
-          character(len=*) :: olddate
+          character(len=*) :: olddate, inFile
           integer :: idim, jdim 
           real, dimension(idim,jdim):: greenfrac
           integer:: mm, dd, did
@@ -58,7 +58,7 @@
           did = 1
           read(olddate(6:7),*) mm
           read(olddate(9:10),*) dd
-          call get_greenfrac_netcdf(trim(nlst_rt(did)%WRFSI_STATIC_FLNM),greenfrac,idim, jdim, months,mm,dd) 
+          call get_greenfrac_netcdf(inFile,greenfrac,idim, jdim, months,mm,dd) 
        end subroutine get_greenfrac
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
@@ -82,7 +82,7 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
-              write(6,*) "Error: failed to open file: ", trim(fileName)
+              write(6,*) "Error: failed to open file in get_greenfrac: ", trim(fileName)
               call land_finish()
           endif 
             
@@ -130,23 +130,40 @@
       end subroutine get_greenfrac_netcdf
 
 
-      subroutine NDHMS_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, snodep,lai, fpar)
+      subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, &
+            snodep,lai, fpar, vegtyp)
       ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
           character(len=*) fileName
-          integer :: ix,jx , nsoil
+          integer :: ix,jx , nsoil, i, j
           integer :: iret, ncid, ierr, varid
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
-          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar
+          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
+          integer, dimension(ix,jx) ::    vegtyp
+!yw          real, dimension(50) :: shdtbl
+!yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
+!yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
+!yw              0.6,0.6,0.6,0.3,0,0.5,0,0,           &
+!yw              0,0,0,0,0,0,0,0,0,0,0,0,0,          & 
+!yw              0,0,0,0,0,0,0,0,0,0/
+
+
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
-              write(6,*) "Error: failed to open file: ", trim(fileName)
+              write(6,*) "Error: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
               call land_finish()
           endif 
 
-          iret = nf_inq_varid(ncid,"VEGFRA",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, fpar)
+           iret = nf_inq_varid(ncid,"VEGFRA",  varid)
+           if (iret == 0) iret = nf_get_var_real(ncid, varid, fpar)
+           fpar = fpar/100.
+
+!yw           do j = 1, jx
+!yw              do i = 1, ix
+!yw                  fpar(i,j) = shdtbl(vegtyp(i,j))
+!yw              end do
+!yw           end do
 
           iret = nf_inq_varid(ncid,"LAI",  varid)
           if (iret == 0) iret = nf_get_var_real(ncid, varid, lai)
@@ -174,4 +191,4 @@
 
           iret=nf_close(ncid)
  
-       end subroutine NDHMS_HRLDAS_ini
+       end subroutine HYDRO_HRLDAS_ini

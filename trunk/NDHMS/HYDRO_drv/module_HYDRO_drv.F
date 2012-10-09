@@ -1,11 +1,11 @@
-module module_NDHMS_rt_drv
+module module_HYDRO_drv
 #ifdef MPP_LAND 
-   use module_ndhms_io, only:  mpp_output_rt, mpp_output_chrt, mpp_output_lakes
+   use module_HYDRO_io, only:  mpp_output_rt, mpp_output_chrt, mpp_output_lakes
    USE module_mpp_land
 #else
-   use module_ndhms_io, only:  output_rt, output_chrt, output_lakes
+   use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes
 #endif
-   use module_ndhms_io, only: output_gw, restart_out_nc, restart_in_nc,  &
+   use module_HYDRO_io, only: output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm
    use module_rt_data, only: rt_domain
@@ -13,13 +13,13 @@ module module_NDHMS_rt_drv
    use module_GW_baseflow, only: gw2d_allocate, gw2d_ini
    use module_namelist, only: nlst_rt
    use module_routing, only: getChanDim, landrt_ini
-   use module_NDHMS_utils
+   use module_HYDRO_utils
    use module_namelist
    
    implicit none
 
    contains
-   subroutine NDHMS_rst_out(did)
+   subroutine HYDRO_rst_out(did)
       implicit none
       integer:: rst_out  
       integer did, outflag
@@ -57,9 +57,9 @@ module module_NDHMS_rt_drv
 #endif
 
 
-   end subroutine NDHMS_rst_out
+   end subroutine HYDRO_rst_out
 
-   subroutine NDHMS_out(did)
+   subroutine HYDRO_out(did)
       implicit none
       integer did, outflag
       character(len=19) out_date
@@ -93,7 +93,7 @@ module module_NDHMS_rt_drv
      call mpp_land_bcast_int1(outflag)
 #endif
 
-     call NDHMS_rst_out(did) 
+     call HYDRO_rst_out(did) 
 
      if (outflag .lt. 0) return
 
@@ -170,7 +170,7 @@ module module_NDHMS_rt_drv
                RT_DOMAIN(did)%CHLAT, &
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
-               RT_DOMAIN(did)%STRMFRXSTPTS)
+               RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  &
 #ifdef MPP_LAND
@@ -192,10 +192,10 @@ module module_NDHMS_rt_drv
         endif  ! end of routing switch
 
 
-      end subroutine NDHMS_out
+      end subroutine HYDRO_out
 
 
-      subroutine NDHMS_rst_in(did)
+      subroutine HYDRO_rst_in(did)
         integer :: did
         integer:: flag 
 
@@ -235,9 +235,9 @@ module module_NDHMS_rt_drv
 !            write(21,*) RT_DOMAIN(did)%GW_RESTART
 !            write(22,*) RT_DOMAIN(did)%z_gwsubbas
 !            stop 990
-      end subroutine NDHMS_rst_in
+      end subroutine HYDRO_rst_in
 
-     subroutine NDHMS_time_adv(did)
+     subroutine HYDRO_time_adv(did)
         implicit none
         character(len = 19) :: newdate 
         integer did
@@ -251,7 +251,7 @@ module module_NDHMS_rt_drv
 #ifdef MPP_LAND
    endif
 #endif
-     end subroutine NDHMS_time_adv
+     end subroutine HYDRO_time_adv
 
   integer function nfeb_yw(year)
     !
@@ -712,7 +712,7 @@ module module_NDHMS_rt_drv
 
   end subroutine geth_newdate
   
-     subroutine NDHMS_exe(did, ntime)
+     subroutine HYDRO_exe(did, ntime)
 
 
         implicit none
@@ -722,11 +722,11 @@ module module_NDHMS_rt_drv
   
 
 !         if(RT_DOMAIN(did)%rst_flag .ne. -99) then
-!             call NDHMS_rst_in(did)
-!             call NDHMS_out(did)
+!             call HYDRO_rst_in(did)
+!             call HYDRO_out(did)
 !             RT_DOMAIN(did)%rst_flag =  -99 
 !         endif
-!output at NDHMS_ini        
+!output at HYDRO_ini        
         
 
         do kt = 1, ntime 
@@ -764,10 +764,10 @@ module module_NDHMS_rt_drv
 
 
 ! advance to next time step
-           call NDHMS_time_adv(did)
+           call HYDRO_time_adv(did)
 
       ! output for history 
-           call NDHMS_out(did)
+           call HYDRO_out(did)
 
 
             
@@ -777,10 +777,10 @@ module module_NDHMS_rt_drv
        enddo  ! end of time loop  
 
 
-      end subroutine NDHMS_exe
+      end subroutine HYDRO_exe
 
 
-      subroutine NDHMS_ini(ntime, did)
+      subroutine HYDRO_ini(ntime, did)
         implicit none
         integer ntime, did
         integer rst_out, ix,jx
@@ -933,13 +933,13 @@ module module_NDHMS_rt_drv
 
 
 ! restart the file
-       call NDHMS_rst_in(did)
+       call HYDRO_rst_in(did)
 
 ! output at the initial time
-       call NDHMS_out(did)
+       call HYDRO_out(did)
 
 
-      end subroutine NDHMS_ini
+      end subroutine HYDRO_ini
 
       subroutine lsm_input(did)
          implicit none
@@ -978,7 +978,7 @@ module module_NDHMS_rt_drv
        if(my_id .eq. IO_id) then
 #endif
 
-       open(71,file="NDHMS.TBL", form="formatted") 
+       open(71,file="HYDRO.TBL", form="formatted") 
 !read OV_ROUGH first
           read(71,*) nn
           read(71,*)    
@@ -1026,7 +1026,7 @@ module module_NDHMS_rt_drv
       end subroutine lsm_input
 
 
-end module module_ndhms_rt_drv
+end module module_HYDRO_drv
       subroutine land_finish()
 #ifdef MPP_LAND
          call mpp_land_finish()

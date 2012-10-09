@@ -58,6 +58,11 @@
 !Switch for snow data assimilation: 0=no, 1=yes
 SNOW_ASSIM = 0
 
+! for extract greenfrac
+WRFSI_STATIC_FLNM = "RT/geo_em.d03.nc"
+
+!HRLDAS_ini_typ 1: initial and parameters from frocing else from wrfinput.
+HRLDAS_ini_typ = 1
 
 /
 

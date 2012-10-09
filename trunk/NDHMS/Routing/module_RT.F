@@ -1,13 +1,13 @@
 MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
-   use module_ndhms_io, only: mpp_read_routedim, mpp_read_routing, mpp_read_chrouting, &
+   use module_HYDRO_io, only: mpp_read_routedim, mpp_read_routing, mpp_read_chrouting, &
                               mpp_chrouting_conf, mpp_read_simp_gw
 #else
-   use module_ndhms_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
+   use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
 #endif
-   use module_ndhms_io, only: readgw2d
-   use module_NDHMS_utils 
+   use module_HYDRO_io, only: readgw2d
+   use module_HYDRO_utils 
    IMPLICIT NONE
 
 #include "rt_include.inc"

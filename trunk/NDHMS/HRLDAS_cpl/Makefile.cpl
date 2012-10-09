@@ -8,8 +8,8 @@
 include ../macros
 
 OBJS = \
-	module_hrldas_ndhms.o \
-	hrldas_drv_ndhms.o    
+	module_hrldas_HYDRO.o \
+	hrldas_drv_HYDRO.o    
 all:	$(OBJS) 
 
 .F.o:
@@ -18,7 +18,7 @@ all:	$(OBJS)
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../mod $(*).f
 	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libNDHMS.a $(@)
+	ar -r ../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:

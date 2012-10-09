@@ -6,10 +6,10 @@
 include ../macros
 
 OBJS = \
-	module_NDHMS_utils.o \
+	module_HYDRO_utils.o \
 	module_noah_chan_param_init_rt.o \
 	module_GW_baseflow.o \
-	module_ndhms_io.o \
+	module_HYDRO_io.o \
  	module_RT.o Noah_distr_routing.o \
 	module_channel_routing.o \
 	rtFunction.o module_lsm_forcing.o
@@ -30,7 +30,7 @@ all:	$(OBJS)
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
 	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libNDHMS.a $(@)
+	ar -r ../lib/libHYDRO.a $(@)
 	cp *.mod ../mod
 
 #

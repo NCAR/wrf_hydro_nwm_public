@@ -1,6 +1,5 @@
-module module_WRF_NDHMS
+module module_WRF_HYDRO
 
-! NDHMS  module   
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
 
@@ -19,8 +18,8 @@ module module_WRF_NDHMS
 
 CONTAINS
 
-!wrf_cpl_ndhms will not call the off-line lsm 
-    subroutine wrf_cpl_ndhms(grid,its,ite,jts,jte)
+!wrf_cpl_HYDRO will not call the off-line lsm 
+    subroutine wrf_cpl_HYDRO(grid,its,ite,jts,jte)
 
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
@@ -64,10 +63,10 @@ CONTAINS
 
         if(.not. RT_DOMAIN(did)%initialized) then
 
-            write(6,*) "yyyywww step 4 before NDHMS_ini= "
+            write(6,*) "yyyywww step 4 before HYDRO_ini= "
             call CPL_LAND_INIT(its,ite,jts,jte)
 
-            call NDHMS_ini(ntime,did)
+            call HYDRO_ini(ntime,did)
 
             RT_DOMAIN(did)%initialized = .true.
             nlst_rt(did)%dt = cpl_land_dt
@@ -75,7 +74,7 @@ CONTAINS
             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
-            write(6,*) "yyyywww step 4 finish NDHMS_ini= "
+            write(6,*) "yyyywww step 4 finish HYDRO_ini= "
             call flush(6)
         endif
             nlst_rt(did)%dt = cpl_land_dt
@@ -105,11 +104,11 @@ CONTAINS
 
              
 
-            write(6,*) "before call NDHMS_exe" 
+            write(6,*) "before call HYDRO_exe" 
             call flush(6)     
 
 
-            call NDHMS_exe(did,ntime)
+            call HYDRO_exe(did,ntime)
 
 ! add for update the WRF state variable.
 !   call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
@@ -128,9 +127,8 @@ CONTAINS
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
      return 
-     end subroutine wrf_cpl_ndhms
+     end subroutine wrf_cpl_HYDRO
 
-!wrf_lsm_ndhms will call the off-line lsm model
 
 
      subroutine to4layer(in,out,ix,jx,soltyp)
@@ -308,4 +306,4 @@ CONTAINS
          endif
       end subroutine interpLayer
 
-end module module_wrf_ndhms
+end module module_wrf_HYDRO

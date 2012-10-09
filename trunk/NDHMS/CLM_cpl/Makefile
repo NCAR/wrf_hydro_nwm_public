@@ -3,15 +3,15 @@
 .SUFFIXES:
 .SUFFIXES: .o .F
 
-CLMOBJPATH = /raid/weiyu/scratch/clm4_ndhms
+CLMOBJPATH = /raid/weiyu/scratch/clm4_HYDRO
 
 CLM_MOD = -I $(CLMOBJPATH)/lnd/obj -I $(CLMOBJPATH)/lib/include
 
 include ../macros
 
 OBJS = \
-	module_clm_ndhms.o \
-	clm_drv_ndhms.o    
+	module_clm_HYDRO.o \
+	clm_drv_HYDRO.o    
 all:	$(OBJS) 
 
 .F.o:
@@ -20,7 +20,7 @@ all:	$(OBJS)
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../mod $(CLM_MOD) $(*).f
 	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libNDHMS.a $(@)
+	ar -r ../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:

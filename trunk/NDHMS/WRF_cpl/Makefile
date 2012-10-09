@@ -9,8 +9,8 @@ include ../macros
 
 WRF_ROOT = /raid/weiyu/MM_R/code_20120718/CVS_reference/cvs/apps/4dwx/RTFDDA/src/RT_WRF/WRF_V3.3.1_8layer
 OBJS = \
-	module_wrf_ndhms.o \
-	wrf_drv_ndhms.o    
+	module_wrf_HYDRO.o \
+	wrf_drv_HYDRO.o    
 all:	$(OBJS) 
 
 .F.o:
@@ -19,7 +19,7 @@ all:	$(OBJS)
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../mod -I$(WRF_ROOT)/main -I$(WRF_ROOT)/external/esmf_time_f90 $(*).f
 	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libNDHMS.a $(@)
+	ar -r ../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:

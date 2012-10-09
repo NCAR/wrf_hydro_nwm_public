@@ -9,8 +9,8 @@ include ../../../make/configure.lis
 include ../macros
 
 OBJS = \
-	module_lis_ndhms.o\
-	lis_drv_ndhms.o
+	module_lis_HYDRO.o\
+	lis_drv_HYDRO.o
 all:	$(OBJS) 
 
 .F.o:
@@ -19,7 +19,7 @@ all:	$(OBJS)
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I../mod $(LIS_MOD) -I$(MOD_ESMF) $(*).f
 	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libNDHMS.a $(@)
+	ar -r ../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:

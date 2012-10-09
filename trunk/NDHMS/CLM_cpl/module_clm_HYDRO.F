@@ -1,4 +1,4 @@
-module module_CLM_NDHMS
+module module_CLM_HYDRO
     use domainMod        , only : ldomain
     use clmtype   , only : clm3
     use clm_varpar   , only : nlevgrnd
@@ -27,7 +27,7 @@ module module_CLM_NDHMS
 
 CONTAINS
 
-    subroutine clm_cpl_ndhms()
+    subroutine clm_cpl_HYDRO()
 
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
@@ -58,15 +58,15 @@ CONTAINS
         if(.not. RT_DOMAIN(did)%initialized) then
 
 
-            write(6,*) "yyyywww step 4 before NDHMS_ini= "
+            write(6,*) "yyyywww step 4 before HYDRO_ini= "
 
 
-            call NDHMS_ini(ntime,did)
+            call HYDRO_ini(ntime,did)
             RT_DOMAIN(did)%initialized = .true.
             nlst_rt(did)%dt = cpl_land_dt
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
-            write(6,*) "yyyywww step 4 finish NDHMS_ini= "
+            write(6,*) "yyyywww step 4 finish HYDRO_ini= "
             call flush(6)
         endif
 
@@ -143,14 +143,14 @@ CONTAINS
    
             write(6,*) "finish h2osoi_liq "
 
-            write(6,*) "before call NDHMS_exe" 
+            write(6,*) "before call HYDRO_exe" 
             call flush(6)     
 
 
 
-            call NDHMS_exe(did,ntime)
+            call HYDRO_exe(did,ntime)
 
-            write(6,*) "after call NDHMS_exe" 
+            write(6,*) "after call HYDRO_exe" 
             call flush(6)     
 
 ! add for update the CLM state variable.
@@ -195,7 +195,7 @@ CONTAINS
             call flush(6) 
 
      return 
-     end subroutine clm_cpl_ndhms
+     end subroutine clm_cpl_HYDRO
 
       subroutine Toclm3d (v1d_out,nn,kk1,z1_in,ix,jx,kk2,z2,v2_in)
         implicit none
@@ -987,4 +987,4 @@ CONTAINS
     end do
 
   end subroutine g2c_2d_tmp
-end module module_clm_ndhms
+end module module_clm_HYDRO

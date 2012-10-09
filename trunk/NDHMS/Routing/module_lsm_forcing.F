@@ -3,7 +3,7 @@ module module_lsm_forcing
 #ifdef MPP_LAND
     use module_mpp_land
 #endif
-    use module_ndhms_io, only: get_2d_netcdf, get_soilcat_netcdf, get2d_int
+    use module_HYDRO_io, only: get_2d_netcdf, get_soilcat_netcdf, get2d_int
 
 implicit none
 #include <netcdf.inc>

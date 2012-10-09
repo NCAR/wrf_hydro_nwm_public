@@ -1,11 +1,11 @@
-module module_HRLDAS_NDHMS
+module module_HRLDAS_HYDRO
 
 ! NDHMS  module   
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id
 #endif
-    use module_ndhms_rt_drv, only: ndhms_ini, ndhms_exe, ndhms_rst_out
+    use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
     use module_namelist, only: nlst_rt
 
@@ -24,7 +24,7 @@ module module_HRLDAS_NDHMS
 
 CONTAINS
 
-    subroutine hrldas_cpl_ndhms(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
 
 
        implicit none
@@ -41,6 +41,7 @@ CONTAINS
         integer :: i,j
         integer clm_lev
 
+
 !output flux and state variable
 
         did = 1
@@ -55,8 +56,8 @@ CONTAINS
 
 
 !       if(.not. RT_DOMAIN(did)%initialized) then
-!           write(6,*) "yyyywww step 4 before NDHMS_ini= "
-!           call NDHMS_ini(ntime,did)
+!           write(6,*) "yyyywww step 4 before HYDRO_ini= "
+!           call HYDRO_ini(ntime,did)
 !           RT_DOMAIN(did)%initialized = .true.
 !       endif
 
@@ -76,10 +77,10 @@ CONTAINS
         RT_DOMAIN(did)%infxsrt = infxsrt
         RT_DOMAIN(did)%soldrain = soldrain
 #endif
-
+  
 
         ntime = 1
-        call NDHMS_exe(did,ntime)
+        call HYDRO_exe(did,ntime)
 
 ! add for update the HRLDAS state variable.
 #ifdef MPP_LAND
@@ -99,10 +100,11 @@ CONTAINS
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
-     return 
-     end subroutine hrldas_cpl_ndhms
 
-    subroutine hrldas_cpl_ndhms_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate)
+     return 
+     end subroutine hrldas_cpl_HYDRO
+
+    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate)
 
 
        implicit none
@@ -130,9 +132,9 @@ CONTAINS
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
            nlst_rt(did)%startdate(1:19) = olddate(1:19)
 
-           write(6,*) "yyyywww step 4 before NDHMS_ini= "
+           write(6,*) "yyyywww step 4 before HYDRO_ini= "
            
-           call NDHMS_ini(ntime,did)
+           call HYDRO_ini(ntime,did)
            RT_DOMAIN(did)%initialized = .true.
    
            IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
@@ -161,8 +163,7 @@ CONTAINS
 #endif
         endif
 
-!       call NDHMS_rst_out(did,kt)
 
      return 
-     end subroutine hrldas_cpl_ndhms_ini
-end module module_HRLDAS_ndhms
+     end subroutine hrldas_cpl_HYDRO_ini
+end module module_HRLDAS_HYDRO
