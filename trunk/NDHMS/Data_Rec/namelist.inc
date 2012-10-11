@@ -10,7 +10,7 @@
        integer :: igrid
        character(len=256) :: wrfsi_static_flnm = ""
        integer  :: DEEPGWSPIN
-       integer :: HIRES_OUT, order_to_write
+       integer :: HIRES_OUT, order_to_write, rst_typ
        
 !      additional character
        character :: hgrid

@@ -2,16 +2,16 @@ module module_WRF_HYDRO
 
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
+    use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
+
+    use module_rt_data, only:  rt_domain
+    use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
+    use module_namelist, only: nlst_rt
+    USE module_domain, ONLY : domain, domain_clock_get
 
     implicit none
-    integer begg, endg
-    integer :: numg, numl, numc, nump
-    INTEGER, PARAMETER :: double=8
-    real(kind=double), pointer :: r2p(:,:) , r1p(:)
      
-    integer ::  begl, endl, begc, endc, begp, endp
 
-    real, allocatable, dimension(:,:) :: vg_test
     integer :: nn
 
 
@@ -21,12 +21,6 @@ CONTAINS
 !wrf_cpl_HYDRO will not call the off-line lsm 
     subroutine wrf_cpl_HYDRO(grid,its,ite,jts,jte)
 
-       use module_rt_data, only:  rt_domain
-       use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
-       use module_mpp_land
-       use module_namelist, only: nlst_rt
-
-       USE module_domain, ONLY : domain, domain_clock_get
        implicit none
        TYPE ( domain ), INTENT(INOUT) :: grid
        integer its, ite, jts, jte, ij
@@ -37,17 +31,13 @@ CONTAINS
         integer ::  did
 
         integer ntime
-        real cpl_land_dt
 
         integer :: i,j
-        integer clm_lev
 
 !output flux and state variable
 
         did = 1
-        cpl_land_dt = grid%dt
 
-        write(6,*) "yyww cpl_land_dt = ",cpl_land_dt
 
         ntime = 1
 
@@ -56,7 +46,7 @@ CONTAINS
 !            ite = min(grid%i_end(ij), ide-1)
 !            jts =  grid%j_start(ij)
 !            jte = min(grid%j_end(ij), jde)
-             write(6,*) "its,ite,jts,jte ",its,ite,jts,jte
+!            write(6,*) "its,ite,jts,jte ",its,ite,jts,jte
 !         end do
     
 
@@ -64,22 +54,29 @@ CONTAINS
         if(.not. RT_DOMAIN(did)%initialized) then
 
             write(6,*) "yyyywww step 4 before HYDRO_ini= "
-            call CPL_LAND_INIT(its,ite,jts,jte)
-
-            call HYDRO_ini(ntime,did)
 
             RT_DOMAIN(did)%initialized = .true.
-            nlst_rt(did)%dt = cpl_land_dt
+            nlst_rt(did)%dt = grid%dt
 
             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
-            write(6,*) "yyyywww step 4 finish HYDRO_ini= "
-            call flush(6)
-        endif
-            nlst_rt(did)%dt = cpl_land_dt
-            CALL domain_clock_get( grid, current_timestr=cpl_outdate)
+
+            call CPL_LAND_INIT(its,ite,jts,jte)
+            call HYDRO_ini(ntime,did)
+
+            nlst_rt(did)%dt = grid%dt
+            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
+        endif
+
+        if(nlst_rt(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+
+
+!            nlst_rt(did)%dt = grid%dt
+!            CALL domain_clock_get( grid, current_timestr=cpl_outdate)
+!            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
         write(6,*) "yyww cpl_outdate = ", cpl_outdate(1:19)
         write(6,*) "yyww nlst_rt(did)%olddate(1:19)=", nlst_rt(did)%olddate(1:19)
@@ -119,7 +116,7 @@ CONTAINS
             call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
 
 ! update WRF variable after running routing model.
-            grid%soldrain(its:ite,jts:jte) = rt_domain(did)%soldrain
+!           grid%soldrain(its:ite,jts:jte) = rt_domain(did)%soldrain
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
 !           grid%infxsrt(its:ite,jts:jte) = rt_domain(did)%infxsrt
 

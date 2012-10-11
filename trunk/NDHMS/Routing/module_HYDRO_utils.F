@@ -125,7 +125,7 @@ contains
       integer:: did, k
       integer iret
 !     external get2d_real
-      real get2d_real
+!     real get2d_real
 #ifdef MPP_LAND
       real, dimension(global_rt_nx,global_rt_ny):: latrt, lonrt
       real, dimension(global_rt_nx,global_rt_ny,9):: dist

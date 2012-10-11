@@ -17,6 +17,8 @@
   chop($response);
 #  if(-e macros) {system (rm -f macros);}
 #  if(-e Makefile) {system "rm -f Makefile" ;}
+
+  if(! (-d "Main") ) {system "ln -sf HRLDAS_cpl Main";}
     
   use Switch;
   switch (chop($response)) {
@@ -30,7 +32,6 @@
               # mpp linux 
               system "ln -sf arc/macros.mpp.linux macros"; 
               system "ln -sf arc/Makefile.mpp Makefile"; 
-              if(! (-d "Main") ) {system "ln -sf HRLDAS_cpl Main";}
             }
 
      case 3 {

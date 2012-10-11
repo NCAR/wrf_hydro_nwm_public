@@ -329,8 +329,7 @@ module module_HYDRO_drv
     integer :: hrstart, hrend, mistart, miend, scstart, scend, frstart
     integer :: units
     integer, dimension(12) :: mday = (/31,28,31,30,31,30,31,31,30,31,30,31/)
-    integer nfeb_yw
-!    external nfeb_yw
+!yw    integer nfeb_yw   
 
     ! Determine if odate is "YYYY-MM-DD_HH ... " or "YYYYMMDDHH...."
     if (odate(5:5) == "-") then
@@ -726,7 +725,6 @@ module module_HYDRO_drv
 !             call HYDRO_out(did)
 !             RT_DOMAIN(did)%rst_flag =  -99 
 !         endif
-!output at HYDRO_ini        
         
 
         do kt = 1, ntime 

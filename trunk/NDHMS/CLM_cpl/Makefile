@@ -28,3 +28,4 @@ all:	$(OBJS)
 
 clean:
 	rm -f *.o *.mod *.stb *~ *.f
+	cd ..; make clean

@@ -39,7 +39,6 @@ CONTAINS
         integer ntime
 
         integer :: i,j
-        integer clm_lev
 
 
 !output flux and state variable
@@ -121,7 +120,6 @@ CONTAINS
         integer ntime
 
         integer :: i,j
-        integer clm_lev
 
 !output flux and state variable
 

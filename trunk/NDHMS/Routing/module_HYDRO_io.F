@@ -539,7 +539,7 @@ end subroutine get_albedo12m_netcdf
         CHARACTER(len=256)       :: wrfsi_finegrid_flnm
         CHARACTER(len=256)       :: var_name
 !        external get2d_real
-        integer ::  get2d_real
+!       integer ::  get2d_real
      
         NLINKS = 0
         NLAKES = 0
@@ -1631,7 +1631,8 @@ end subroutine get_albedo12m_netcdf
   integer, dimension(:,:), allocatable ::  gLtype
   real, dimension(:,:), allocatable    ::  gHC, gIHEAD, gBOTELV, gPOR
 #endif
-  integer :: i, get2d_real
+  integer :: i
+!, get2d_real
   
 #ifdef MPP_LAND
   allocate(gHC(global_rt_nx, global_rt_ny))
@@ -4642,17 +4643,19 @@ end subroutine mpp_output_chrt
 #endif
 
      write(6,*) "nlst_rt(did)%nsoil=",nlst_rt(did)%nsoil
+     if(nlst_rt(did)%rst_typ .eq. 1 ) then 
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
-
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
+        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
+        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
+     endif
  
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1")
-        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
-        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
-        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
+
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")

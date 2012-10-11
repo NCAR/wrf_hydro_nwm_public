@@ -8,7 +8,8 @@
  rst_dt = 60 
  out_dt = 60 ! minutes
 
-! RESTART_FILE  = '2012-08-07_12:00'
+
+ RESTART_FILE  = 'HYDRO_RST.2010-10-01_02:00_DOMAIN2'
 
 
 HISTORY_OUTPUT = .TRUE.
@@ -18,7 +19,6 @@ HISTORY_OUTPUT = .TRUE.
  !   SET = 1 WHEN RUNNING CHANNEL ROUTING ONLY/CALIBRATION SIMS!!!
  !   SET = 1 WHEN RUNNING COUPLED TO WRF!!!
  SPLIT_OUTPUT_COUNT = 1
-
 
 
  NSOIL=4
@@ -44,7 +44,11 @@ SOLVEG_INITSWC = 0
 
  HIRES_OUT = 2
 
+! for channel routing output
+ order_to_write = 2
 
+! rst_typ = 1 : overwrite the soil variables from routing restart file.
+ rst_typ = 1
 
 
 !Switch for terrain adjustment of incoming solar radiation: 0=no, 1=yes

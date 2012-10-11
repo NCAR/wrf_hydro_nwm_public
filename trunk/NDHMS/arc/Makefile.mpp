@@ -7,7 +7,7 @@ BASIC:
 	(cd MPP     ; make -f Makefile)
 	(cd Data_Rec     ; make -f Makefile)
 	(cd Routing; make -f Makefile)
-	(cd NDHMS_drv;   make -f Makefile)
+	(cd HYDRO_drv;   make -f Makefile)
 
 LIS:
 	(make -f Makefile BASIC)
@@ -21,16 +21,12 @@ WRF:
 	(make -f Makefile BASIC)
 	(cd WRF_cpl  ;   make -f Makefile)
 
-NDHMS:
+HYDRO:
 	(make -f Makefile BASIC)
 
 clean:
 	(cd Data_Rec; make -f Makefile clean)
-	(cd NDHMS_drv; make -f Makefile clean)
+	(cd HYDRO_drv; make -f Makefile clean)
 	(cd MPP; make -f Makefile clean)
 	(cd Routing;    make -f Makefile clean)
 	(rm -f lib/*.a mod/*.mod)
-	(cd CLM_cpl; rm -f *.o *.mod       )
-	(cd WRF_cpl; rm -f *.o *.mod       )
-	(cd LIS_cpl; rm -f *.o *.mod       )
-	(cd HRLDAS; make -f Makefile clean)

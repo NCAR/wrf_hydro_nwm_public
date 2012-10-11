@@ -8,4 +8,4 @@ CPP	=       /lib/cpp
 CPPFLAGS	=       -C -P -traditional -I ../Data_Rec
 LIBS 	=	
 NETCDFINC       =       $(HOME)/netcdf/include
-NETCDFLIB       =       -L($HOME)/netcdf/lib -lnetcdff -lnetcdf
+NETCDFLIB       =       -L$(HOME)/netcdf/lib -lnetcdff -lnetcdf
