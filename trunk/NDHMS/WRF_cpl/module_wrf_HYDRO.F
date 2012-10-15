@@ -1,7 +1,7 @@
 module module_WRF_HYDRO
 
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
-                 write_io_real, my_id
+                 write_io_real, my_id, mpp_land_bcast_real1
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
@@ -65,18 +65,15 @@ CONTAINS
             call CPL_LAND_INIT(its,ite,jts,jte)
             call HYDRO_ini(ntime,did)
 
-            nlst_rt(did)%dt = grid%dt
-            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
-            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
         endif
 
         if(nlst_rt(did)%SUBRTSWCRT .eq.0  &
                .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 
-!            nlst_rt(did)%dt = grid%dt
-!            CALL domain_clock_get( grid, current_timestr=cpl_outdate)
-!            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
+             nlst_rt(did)%dt = grid%dt
+             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
+             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
         write(6,*) "yyww cpl_outdate = ", cpl_outdate(1:19)
         write(6,*) "yyww nlst_rt(did)%olddate(1:19)=", nlst_rt(did)%olddate(1:19)
@@ -116,7 +113,7 @@ CONTAINS
             call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
 
 ! update WRF variable after running routing model.
-!           grid%soldrain(its:ite,jts:jte) = rt_domain(did)%soldrain
+            grid%soldrain(its:ite,jts:jte) = rt_domain(did)%soldrain
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
 !           grid%infxsrt(its:ite,jts:jte) = rt_domain(did)%infxsrt
 

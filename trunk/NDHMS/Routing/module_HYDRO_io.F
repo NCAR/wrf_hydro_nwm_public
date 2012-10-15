@@ -4215,18 +4215,12 @@ end subroutine mpp_output_chrt
         var_name = "RETDEPRTFAC"
         iret = get2d_real(var_name,RETDEPRTFAC_inv,ixrt,jxrt,&
                      trim(wrfsi_finegrid_flnm))
-        write(6,*) "read ",var_name, RETDEPRTFAC_inv(100,100)
         where (RETDEPRTFAC_inv < 0.) RETDEPRTFAC_inv = 1.0  ! reset grid to = 1.0 if non-valid value exists
-        write(6,*) "read ",var_name, RETDEPRTFAC_inv(100,100)
-        call flush(6)
 
         var_name = "OVROUGHRTFAC"
         iret = get2d_real(var_name,OVROUGHRTFAC_inv,ixrt,jxrt,&
                      trim(wrfsi_finegrid_flnm))
-        write(6,*) "read ",var_name, OVROUGHRTFAC_inv(100,100)
         where (OVROUGHRTFAC_inv <= 0.) OVROUGHRTFAC_inv = 1.0 ! reset grid to = 1.0 if non-valid value exists
-        write(6,*) "read ",var_name, OVROUGHRTFAC_inv(100,100)
-        call flush(6)
 
 
 
@@ -4244,12 +4238,6 @@ end subroutine mpp_output_chrt
          end do
         end do
 
-        write(6,*) "after flip ",var_name, OVROUGHRTFAC(100,100)
-        call flush(6)
-        write(6,*) "after flip ",var_name, RETDEPRTFAC(100,100)
-        call flush(6)
-
-          
         write(6,*) "finish READ_ROUTING_seq"
         call flush(6)
 
@@ -4930,18 +4918,12 @@ end subroutine mpp_output_chrt
         var_name = "RETDEPRTFAC"
         iret = get2d_real(var_name,RETDEPRTFAC_inv,ixrt,jxrt,&
                      trim(wrfsi_finegrid_flnm))
-        write(6,*) "read ",var_name, RETDEPRTFAC_inv(100,100)
         where (RETDEPRTFAC_inv < 0.) RETDEPRTFAC_inv = 1.0  ! reset grid to = 1.0 if non-valid value exists
-        write(6,*) "read ",var_name, RETDEPRTFAC_inv(100,100)
-        call flush(6)
 
         var_name = "OVROUGHRTFAC"
         iret = get2d_real(var_name,OVROUGHRTFAC_inv,ixrt,jxrt,&
                      trim(wrfsi_finegrid_flnm))
-        write(6,*) "read ",var_name, OVROUGHRTFAC_inv(100,100)
         where (OVROUGHRTFAC_inv <= 0.) OVROUGHRTFAC_inv = 1.0 ! reset grid to = 1.0 if non-valid value exists
-        write(6,*) "read ",var_name, OVROUGHRTFAC_inv(100,100)
-        call flush(6)
 
 
 
@@ -4958,11 +4940,6 @@ end subroutine mpp_output_chrt
            jj=jxrt-j
          end do
         end do
-
-        write(6,*) "after flip ",var_name, OVROUGHRTFAC(100,100)
-        call flush(6)
-        write(6,*) "after flip ",var_name, RETDEPRTFAC(100,100)
-        call flush(6)
 
           
         write(6,*) "finish READ_ROUTING_old"

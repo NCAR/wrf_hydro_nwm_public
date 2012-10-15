@@ -8,7 +8,27 @@
 !         return
 
           if(grid%num_nests .lt. 1) then
-             call wrf_cpl_HYDRO(grid,its,ite,jts,jte)  ! do not run the off-line lsm
+             write(6,*) "before calling WRF-HYDRO"
+             call flush(6)
+
+             call wrf_cpl_HYDRO(grid,its,ite,jts,jte)  
+
+             write(6,*) "after calling WRF-HYDRO"
+             call flush(6)
           endif
        end subroutine wrf_drv_HYDRO
+
+
+       subroutine wrf_drv_HYDRO_ini(grid,its,ite,jts,jte)
+          use module_wrf_HYDRO, only: wrf_cpl_HYDRO
+          USE module_domain, ONLY : domain
+          implicit none
+           integer:: its,ite,jts,jte
+          TYPE ( domain ), INTENT(INOUT) :: grid
+
+          if(grid%num_nests .lt. 1) then
+!            call wrf_cpl_HYDRO_ini(grid,its,ite,jts,jte)  
+          endif
+
+       end subroutine wrf_drv_HYDRO_ini
 

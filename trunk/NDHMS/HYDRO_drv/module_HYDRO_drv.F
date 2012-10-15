@@ -725,12 +725,13 @@ module module_HYDRO_drv
 !             call HYDRO_out(did)
 !             RT_DOMAIN(did)%rst_flag =  -99 
 !         endif
-        
 
+          call HYDRO_out(did)
+
+        
         do kt = 1, ntime 
 
           write(6,*) "yyww = ", kt, "ntime=",ntime
-
 
 
 ! running land surface model
@@ -762,6 +763,7 @@ module module_HYDRO_drv
 
 
 ! advance to next time step
+!      if(
            call HYDRO_time_adv(did)
 
       ! output for history 
@@ -807,15 +809,14 @@ module module_HYDRO_drv
        
 #ifdef MPP_LAND
 
-  if (nlst_rt(did)%sys_cpl .eq. 0 .or. nlst_rt(did)%sys_cpl .eq. 4) then
-!sys_cpl: 0--offline run; 
-!         1-- coupling with WRF but running offline lsm; 
+  if (nlst_rt(did)%sys_cpl .eq. 1 .or. nlst_rt(did)%sys_cpl .eq. 4) then
+!sys_cpl: 1-- coupling with HRLDAS but running offline lsm; 
 !         2-- coupling with WRF but do not run offline lsm  
 !         3-- coupling with LIS and do not run offline lsm  
 !         4:  coupling with CLM
 
-! create 2 dimensiaon logical mapping of the CPUs for coupling with CLM.
-    if(nlst_rt(did)%sys_cpl .eq. 4) call log_map2d()
+! create 2 dimensiaon logical mapping of the CPUs for coupling with CLM or HRLDAS.
+         call log_map2d()
 
          global_nx = ix  ! get from land model
          global_ny = jx  ! get from land model
@@ -930,11 +931,12 @@ module module_HYDRO_drv
      
 
 
+       if(rt_domain(did)%rst_flag .eq. -99 ) return
 ! restart the file
        call HYDRO_rst_in(did)
 
 ! output at the initial time
-       call HYDRO_out(did)
+!      call HYDRO_out(did)
 
 
       end subroutine HYDRO_ini

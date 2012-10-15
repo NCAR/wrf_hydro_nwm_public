@@ -144,20 +144,30 @@ CONTAINS
            call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
            call write_io_real(rt_domain(did)%infxsrt, infxsrt)
            call write_io_real(rt_domain(did)%soldrain,soldrain)
-           do k = 1, kk
-              call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))
-              call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
-              call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
-           end do
+           if(nlst_rt(did)%rst_typ .eq. 1) then
+              do k = 1, kk
+                 call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))
+                 call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
+                 call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
+              end do
+           else
+              if(nlst_rt(did)%sys_cpl .eq. 1) then
+                 where( abs(STC) .gt. 500) stc = 282
+                 where( abs(SMC) .gt. 500) SMC = 0.25
+                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+              endif
+           endif 
            if(my_id .eq. IO_id) write(6,*) "olddate = ",nlst_rt(did)%olddate
            call flush(6)   
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt
            soldrain = rt_domain(did)%soldrain
-           STC = rt_domain(did)%STC
-           SMC = rt_domain(did)%SMC
-           SH2OX = rt_domain(did)%SH2OX
+           if(nlst_rt(did)%rst_typ .eq. 1) then
+              STC = rt_domain(did)%STC
+              SMC = rt_domain(did)%SMC
+              SH2OX = rt_domain(did)%SH2OX
+           endif
 #endif
         endif
 

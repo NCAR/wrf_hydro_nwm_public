@@ -553,9 +553,6 @@ CONTAINS
 !Apply calibration scaling factors to sfc roughness and retention depth here...
                 rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
 		rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
-                write(6,*) "OVROUGH, Factor...",rt_domain(did)%OVROUGHRT(100,100),&
-                       rt_domain(did)%OVROUGHRTFAC(100,100)
-                call flush(6)
 
 
 
