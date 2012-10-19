@@ -112,17 +112,21 @@ contains
 ! Assuming and exponential relation between z and Q...
        qout_gwsubbas(bas) = C(bas)*EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas)) !Exp.model. q_out (m^3/s)
 
+!Adjust level of GW depth...
+       z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT &
+                       / (ct_bas(bas)*basns_area(bas))   !units(m)
+
+
 
      elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
 
 ! Assuming a steady-state (inflow=outflow) model...
        qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3)
 
+
+
      end if
 
-!Adjust level of GW depth...
-     z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT &
-                       / (ct_bas(bas)*basns_area(bas))   !units(m)
 
 !        print *, "GW_Debug...", bas,net_perc(bas),qin_gwsubbas(bas),zbastmp,&
 !                 qout_gwsubbas(bas),z_gwsubbas(bas),gwbas_pix_ct(bas)
@@ -136,7 +140,7 @@ contains
 
 
 
-!!!Distribute basin integrated baseflow to stream pixels...
+!!!Distribute basin integrated baseflow to stream pixels as stream 'inflow'...
 
       qinflowbase = 0.
 
@@ -148,8 +152,17 @@ contains
         do j=1,jxrt
 !!!    -simple uniform disaggregation (8.31.06)
            if (gw_strm_msk(i,j).gt.0) then
+
+            if(GWBASESWCRT.eq.1) then  !calc stream inflow from exponential bucket... (m^3/s to mm)
              qinflowbase(i,j) = qout_gwsubbas(gw_strm_msk(i,j))*1000.*DT/ &
                 gwbas_pix_ct(gw_strm_msk(i,j))/dist(i,j,9) !(mm)
+
+            elseif (GWBASESWCRT.eq.2) then  !calc stream inflow from passthrough/steady-state bucket (m^3 to mm)
+             qinflowbase(i,j) = qout_gwsubbas(gw_strm_msk(i,j))*1000./ &
+                gwbas_pix_ct(gw_strm_msk(i,j))/dist(i,j,9) !(mm)
+
+            end if
+
            end if
         end do
       end do
