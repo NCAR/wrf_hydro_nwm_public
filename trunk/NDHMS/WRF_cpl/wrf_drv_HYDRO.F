@@ -1,9 +1,10 @@
 !2345678
-       subroutine wrf_drv_HYDRO(grid,its,ite,jts,jte)
+       subroutine wrf_drv_HYDRO(HYDRO_dt,grid,its,ite,jts,jte)
           use module_wrf_HYDRO, only: wrf_cpl_HYDRO
           USE module_domain, ONLY : domain 
           implicit none
            integer:: its,ite,jts,jte
+          real :: HYDRO_dt
           TYPE ( domain ), INTENT(INOUT) :: grid
 !         return
 
@@ -11,7 +12,7 @@
              write(6,*) "before calling WRF-HYDRO"
              call flush(6)
 
-             call wrf_cpl_HYDRO(grid,its,ite,jts,jte)  
+             call wrf_cpl_HYDRO(HYDRO_dt, grid,its,ite,jts,jte)  
 
              write(6,*) "after calling WRF-HYDRO"
              call flush(6)

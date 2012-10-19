@@ -50,8 +50,8 @@ CONTAINS
         call flush(6) 
 
         IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
-               .or. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .or. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 
 !       if(.not. RT_DOMAIN(did)%initialized) then
@@ -136,8 +136,8 @@ CONTAINS
            RT_DOMAIN(did)%initialized = .true.
    
            IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
-               .or. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .or. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 #ifdef MPP_LAND
            call mpp_land_bcast_real1(nlst_rt(did)%dt)

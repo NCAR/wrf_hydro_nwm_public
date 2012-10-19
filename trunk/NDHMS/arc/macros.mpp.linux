@@ -2,7 +2,7 @@
 RM		=	rm -f  
 RMD		=	rm -f    
 COMPILER90=	mpif90
-F90FLAGS  =     -Mfree -Mfptrap -c -byteswapio -Ktrap=fp -O2 -g -Mbounds
+F90FLAGS  =     -Mfree -Mfptrap -c -byteswapio -Ktrap=fp -O2 
 LDFLAGS  =      $(F90FLAGS)
 MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod
 LDFLAGS	=	

@@ -780,10 +780,12 @@ module module_HYDRO_drv
       end subroutine HYDRO_exe
 
 
-      subroutine HYDRO_ini(ntime, did)
+      subroutine HYDRO_ini(ntime, did, ix0,jx0,vegtyp,soltyp)
         implicit none
         integer ntime, did
         integer rst_out, ix,jx
+        integer, OPTIONAL:: ix0,jx0
+        integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
 
 
 
@@ -798,8 +800,8 @@ module module_HYDRO_drv
 
 
              IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
-               .or. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .or. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -882,7 +884,7 @@ module module_HYDRO_drv
 
 
 !yw      call land_2rt_ini(did)
-      call lsm_input(did)
+      call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
 
        write(6,*) "finish decomposion"
 
@@ -941,23 +943,44 @@ module module_HYDRO_drv
 
       end subroutine HYDRO_ini
 
-      subroutine lsm_input(did)
+      subroutine lsm_input(did,ix0,jx0,vegtyp0,soltyp0)
          implicit none
          integer did, leng
          parameter(leng=100)
          integer :: i,j, nn
-         integer, allocatable, dimension(:,:) :: xdum
+         integer, allocatable, dimension(:,:) :: soltyp
          real, dimension(leng) :: xdum1, MAXSMC,refsmc,wltsmc
+
+        integer, OPTIONAL:: ix0,jx0
+        integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
 
          write(6,*) RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx
 
-         allocate(xdum(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx) )
+         allocate(soltyp(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx) )
+
+         soltyp = 0
+         call get2d_lsm_soltyp(soltyp,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
 
          call get2d_lsm_real("HGT",RT_DOMAIN(did)%TERRAIN,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
 
          call get2d_lsm_real("XLAT",RT_DOMAIN(did)%lat_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
          call get2d_lsm_real("XLONG",RT_DOMAIN(did)%lon_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
          call get2d_lsm_vegtyp(RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
+
+
+!        write(6,*) "ix0=",ix0, "jx0=",jx0
+!        call land_finish()
+
+         if(nlst_rt(did)%sys_cpl .eq. 2) then
+           ! coupling with WRF
+             where(soltyp0 == 14) VEGTYP0 = 16
+             where(VEGTYP0 == 16 ) soltyp0 = 14
+             soltyp = soltyp0
+             RT_DOMAIN(did)%VEGTYP = VEGTYP0
+         endif
+
+         where(soltyp == 14) RT_DOMAIN(did)%VEGTYP = 16
+         where(RT_DOMAIN(did)%VEGTYP == 16 ) soltyp = 14
 
 ! LKSAT, 
 ! temporary set
@@ -1002,25 +1025,23 @@ module module_HYDRO_drv
        call mpp_land_bcast_real(leng,wltsmc)
 #endif
 
-       xdum = 0
-       call get2d_lsm_soltyp(xdum,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
        rt_domain(did)%lksat = 0.0
        do j = 1, RT_DOMAIN(did)%jx
              do i = 1, RT_DOMAIN(did)%ix
-                rt_domain(did)%lksat(i,j) = xdum1(xdum(i,j) ) * 1000.0
+                rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
                 IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
                     rt_domain(did)%SMCMAX1(i,j) = 0.45
                     rt_domain(did)%SMCREF1(i,j) = 0.42
                     rt_domain(did)%SMCWLT1(i,j) = 0.40
                 else
-                    rt_domain(did)%SMCMAX1(i,j) = MAXSMC(xdum(I,J))
-                    rt_domain(did)%SMCREF1(i,j) = refsmc(xdum(I,J))
-                    rt_domain(did)%SMCWLT1(i,j) = wltsmc(xdum(I,J))
+                    rt_domain(did)%SMCMAX1(i,j) = MAXSMC(soltyp(I,J))
+                    rt_domain(did)%SMCREF1(i,j) = refsmc(soltyp(I,J))
+                    rt_domain(did)%SMCWLT1(i,j) = wltsmc(soltyp(I,J))
                 ENDIF
              end do
        end do
 
-       deallocate(xdum)
+       deallocate(soltyp)
 
 
       end subroutine lsm_input

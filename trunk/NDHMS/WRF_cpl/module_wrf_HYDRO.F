@@ -1,7 +1,8 @@
 module module_WRF_HYDRO
 
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
-                 write_io_real, my_id, mpp_land_bcast_real1
+                 write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
+                mpp_land_bcast_real
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
@@ -19,14 +20,15 @@ module module_WRF_HYDRO
 CONTAINS
 
 !wrf_cpl_HYDRO will not call the off-line lsm 
-    subroutine wrf_cpl_HYDRO(grid,its,ite,jts,jte)
+    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid,its,ite,jts,jte)
 
        implicit none
        TYPE ( domain ), INTENT(INOUT) :: grid
        integer its, ite, jts, jte, ij
+       real :: HYDRO_dt
 
 
-        integer k, ix,jx, nn
+        integer k, ix,jx, nn, mm
 
         integer ::  did
 
@@ -37,6 +39,8 @@ CONTAINS
 !output flux and state variable
 
         did = 1
+        ix = ite - its + 1
+        jx = jte - jts + 1
 
 
         ntime = 1
@@ -49,37 +53,39 @@ CONTAINS
 !            write(6,*) "its,ite,jts,jte ",its,ite,jts,jte
 !         end do
     
+            nlst_rt(did)%dt = HYDRO_dt
 
-
+  
         if(.not. RT_DOMAIN(did)%initialized) then
 
             write(6,*) "yyyywww step 4 before HYDRO_ini= "
 
-            RT_DOMAIN(did)%initialized = .true.
-            nlst_rt(did)%dt = grid%dt
 
             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
             call CPL_LAND_INIT(its,ite,jts,jte)
-            call HYDRO_ini(ntime,did)
+            call HYDRO_ini(ntime,did,ix0=ix,jx0=jx,vegtyp=grid%IVGTYP(its:ite,jts:jte),soltyp=grid%isltyp(its:ite,jts:jte))
+
+!            call lsm_wrf_input(did,grid%IVGTYP(its:ite,jts:jte),grid%isltyp(its:ite,jts:jte),ite-its+1,jte-jts+1)
 
         endif
+            nlst_rt(did)%dt = HYDRO_dt
+            write(6,*) "HYDRO_dt = ", HYDRO_dt
+            mm = HYDRO_dt/nlst_rt(did)%dtrt
+            if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
 
         if(nlst_rt(did)%SUBRTSWCRT .eq.0  &
                .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
 
-             nlst_rt(did)%dt = grid%dt
-             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
-             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
+!            CALL domain_clock_get( grid, current_timestr=cpl_outdate)
+!            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
         write(6,*) "yyww cpl_outdate = ", cpl_outdate(1:19)
         write(6,*) "yyww nlst_rt(did)%olddate(1:19)=", nlst_rt(did)%olddate(1:19)
 
-        ix = rt_domain(did)%ix
-        jx = rt_domain(did)%jx
         nn = nlst_rt(did)%nsoil
 
         ! get the data from WRF 
@@ -87,13 +93,17 @@ CONTAINS
 !           call to8layer(grid%TSLB(its:ite,1:4,jts:jte),RT_DOMAIN(did)%STC,ix,jx)
 !           call to8layer(grid%smois(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SMC,ix,jx)
 !           call to8layer(grid%sh2o(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SH2OX,ix,jx)
-            call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,ix,jx,nn)
-            call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,ix,jx,nn)
-            call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,ix,jx,nn)
+
+        if(RT_DOMAIN(did)%initialized .or. (nlst_rt(did)%rst_typ .eq. 0) ) then
+            call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+            call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+            call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+        endif  
 
 ! output variable for routing model.
+!           where(RT_DOMAIN(did)%vegtyp .ne. 16)  rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
+!           where(RT_DOMAIN(did)%vegtyp .ne. 16) rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
-!           rt_domain(did)%sfcheadrt = grid%sfcheadrt(its:ite,jts:jte)
             rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
 
              
@@ -108,18 +118,18 @@ CONTAINS
 !   call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
 !   call to4layer(RT_DOMAIN(did)%SMC,grid%SMOIS(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
 !   call to4layer(RT_DOMAIN(did)%SH2OX,grid%SH2O(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,nn,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4)
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,nn,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4)
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,nn,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,nn,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
+            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
 
 ! update WRF variable after running routing model.
-            grid%soldrain(its:ite,jts:jte) = rt_domain(did)%soldrain
+!            where(RT_DOMAIN(did)%vegtyp .ne. 16) grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
-!           grid%infxsrt(its:ite,jts:jte) = rt_domain(did)%infxsrt
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
+            RT_DOMAIN(did)%initialized = .true.
      return 
      end subroutine wrf_cpl_HYDRO
 
@@ -212,7 +222,7 @@ CONTAINS
 !          SH2O(its:ite,:,jts:jte) &
 !       )
 
-      subroutine wrf2lsm (z1,v1,kk1,z,vout,ix,jx,kk)
+      subroutine wrf2lsm (z1,v1,kk1,z,vout,ix,jx,kk,vegtyp)
 !  input: z1,v1,kk1,z,ix,jx,kk
 !  output: vout
 !  interpolate based on soil layer: z1 and z 
@@ -220,20 +230,22 @@ CONTAINS
 !  z1: array of soil layers of input variable.
          implicit none
          integer:: i,j,k
-         integer:: kk1, ix,jx,kk
+         integer:: kk1, ix,jx,kk, vegtyp(ix,jx)
          real :: z1(kk1), z(kk), v1(ix,kk1,jx),vout(ix,jx,kk)
 
        
          do j = 1, jx
             do i = 1, ix
-              do k = 1, kk
-                call interpLayer(Z1,v1(i,1:kk1,j),kk1,Z(k),vout(i,j,k)) 
-              end do
+!             if(vegtyp(i,j) .ne. 16)  then
+                do k = 1, kk
+                  call interpLayer(Z1,v1(i,1:kk1,j),kk1,Z(k),vout(i,j,k)) 
+                end do
+!             endif 
             end do
          end do
       end subroutine wrf2lsm
 
-      subroutine lsm2wrf (z1,v1,kk1,z,vout,ix,jx,kk)
+      subroutine lsm2wrf (z1,v1,kk1,z,vout,ix,jx,kk,vegtyp)
 !  input: z1,v1,kk1,z,ix,jx,kk
 !  output: vout
 !  interpolate based on soil layer: z1 and z 
@@ -241,15 +253,17 @@ CONTAINS
 !  z1: array of soil layers of input variable.
          implicit none
          integer:: i,j,k
-         integer:: kk1, ix,jx,kk
+         integer:: kk1, ix,jx,kk, vegtyp(ix,jx)
          real :: z1(kk1), z(kk), v1(ix,jx,kk1),vout(ix,kk,jx)
 
        
          do j = 1, jx
             do i = 1, ix
-              do k = 1, kk
-                call interpLayer(Z1,v1(i,j,1:kk1),kk1,Z(k),vout(i,k,j)) 
-              end do
+!             if(vegtyp(i,j) .ne. 16) then
+                 do k = 1, kk
+                    call interpLayer(Z1,v1(i,j,1:kk1),kk1,Z(k),vout(i,k,j)) 
+                 end do
+!             endif
             end do
          end do
       end subroutine lsm2wrf
@@ -299,5 +313,67 @@ CONTAINS
             end do
          endif
       end subroutine interpLayer
+
+      subroutine lsm_wrf_input(did,vegtyp,soltyp,ix,jx)
+         implicit none
+         integer did, leng
+         parameter(leng=100)
+         integer :: i,j, nn, ix,jx
+         integer, dimension(ix,jx) :: soltyp, vegtyp
+         real, dimension(leng) :: xdum1, MAXSMC,refsmc,wltsmc
+
+
+         where(soltyp == 14) VEGTYP = 16
+         where(VEGTYP == 16 ) soltyp = 14
+
+         RT_DOMAIN(did)%VEGTYP = vegtyp
+
+!      input OV_ROUGH from OVROUGH.TBL
+#ifdef MPP_LAND
+       if(my_id .eq. IO_id) then
+#endif
+
+       open(71,file="HYDRO.TBL", form="formatted")
+!read OV_ROUGH first
+          read(71,*) nn
+          read(71,*)
+          do i = 1, nn
+             read(71,*) RT_DOMAIN(did)%OV_ROUGH(i)
+          end do
+!read parameter for LKSAT
+          read(71,*) nn
+          read(71,*)
+          do i = 1, nn
+             read(71,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
+          end do
+       close(71)
+
+#ifdef MPP_LAND
+       endif
+       call mpp_land_bcast_real(leng,RT_DOMAIN(did)%OV_ROUGH)
+       call mpp_land_bcast_real(leng,xdum1)
+       call mpp_land_bcast_real(leng,MAXSMC)
+       call mpp_land_bcast_real(leng,refsmc)
+       call mpp_land_bcast_real(leng,wltsmc)
+#endif
+
+       rt_domain(did)%lksat = 0.0
+       do j = 1, RT_DOMAIN(did)%jx
+             do i = 1, RT_DOMAIN(did)%ix
+                rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
+                IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
+                    rt_domain(did)%SMCMAX1(i,j) = 0.45
+                    rt_domain(did)%SMCREF1(i,j) = 0.42
+                    rt_domain(did)%SMCWLT1(i,j) = 0.40
+                else
+                    rt_domain(did)%SMCMAX1(i,j) = MAXSMC(soltyp(I,J))
+                    rt_domain(did)%SMCREF1(i,j) = refsmc(soltyp(I,J))
+                    rt_domain(did)%SMCWLT1(i,j) = wltsmc(soltyp(I,J))
+                ENDIF
+             end do
+       end do
+
+
+      end subroutine lsm_wrf_input
 
 end module module_wrf_HYDRO
