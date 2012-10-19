@@ -102,28 +102,6 @@ CONTAINS
 
   write(nlst%hgrid,'(I1)') igrid
 
-#ifdef MPP_LAND
-  if(my_id .eq. IO_id) then
-#endif
-  write(6,*) "output of the namelist file "
-  write(6,*) " nlst%NSOIL ", NSOIL
-  write(6,*) " nlst%ZSOIL8 ", ZSOIL8
-!  write(6,*) " nlst%DT ", DT
-  write(6,*) " nlst%RESTART_FILE ", RESTART_FILE
-  write(6,*) " nlst%HISTORY_OUTPUT ", HISTORY_OUTPUT
-  write(6,*) "  nlst%SPLIT_OUTPUT_COUNT ", SPLIT_OUTPUT_COUNT
-  write(6,*) " nlst%IGRID ", IGRID
-  write(6,*) "  nlst%wrfsi_static_flnm ", wrfsi_static_flnm
-  write(6,*) " nlst%out_dt ", out_dt
-  write(6,*) " nlst%rst_dt ", rst_dt
-  write(6,*) " nlst%SLOPETYP ", SLOPETYP
-  write(6,*) " nlst%HIRES_OUT ", HIRES_OUT
-  write(6,*) " nlst%DEEPGWSPIN ", DEEPGWSPIN
-  write(6,*) " nlst%SOLVEG_INITSWC ", SOLVEG_INITSWC
-
-#ifdef MPP_LAND
-  endif
-#endif
 
 
 
@@ -171,6 +149,11 @@ CONTAINS
     nlst%gwstrmfil =  gwstrmfil
     nlst%wrfsi_finegrid_flnm =  wrfsi_finegrid_flnm
 
+#ifdef MPP_LAND
+  if(my_id .eq. IO_id) then
+#endif
+     write(6,*) "output of the namelist file "
+
     write(6,*) " nlst%RT_OPTION ", RT_OPTION
     write(6,*) " nlst%CHANRTSWCRT ", CHANRTSWCRT
     write(6,*) " nlst%GW_RESTART  ", GW_RESTART 
@@ -195,6 +178,9 @@ CONTAINS
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%wrfsi_finegrid_flnm ",  wrfsi_finegrid_flnm
+#ifdef MPP_LAND
+  endif
+#endif
 
       return
     end subroutine read_rt_nlst
