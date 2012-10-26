@@ -15,9 +15,9 @@ contains
 !------------------------------------------------------------------------------
 
    subroutine simp_gw_buck(ix,jx,ixrt,jxrt,numbasns,basns_area,&
-                            gwsubbasmsk, runoff2x, z_gwsubbas, qin_gwsubbas,&
+                            gwsubbasmsk, runoff1x, runoff2x, z_gwsubbas, qin_gwsubbas,&
                             qout_gwsubbas,qinflowbase,gw_strm_msk,gwbas_pix_ct,dist,DT,&
-                            C,ex,z_mx,GWBASESWCRT)
+                            C,ex,z_mx,GWBASESWCRT,OVRTSWCRT)
    implicit none
    
 !!!Declarations...
@@ -25,6 +25,7 @@ contains
    integer, intent(in)                               :: numbasns
    integer, intent(in), dimension(ix,jx)             :: gwsubbasmsk
    real, intent(in), dimension(ix,jx)                :: runoff2x 
+   real, intent(in), dimension(ix,jx)                :: runoff1x 
    real, intent(in)                                  :: basns_area(numbasns),dist(ixrt,jxrt,9),DT
    real, intent(in),dimension(numbasns)              :: C,ex,z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
@@ -33,6 +34,7 @@ contains
    real, intent(out),dimension(ixrt,jxrt)            :: qinflowbase
    integer, intent(in),dimension(ixrt,jxrt)          :: gw_strm_msk
    integer, intent(in)                               :: GWBASESWCRT
+   integer, intent(in)                               :: OVRTSWCRT
 
    real*8, dimension(numbasns)                      :: sum_perc8,ct_bas8
    real, dimension(numbasns)                        :: sum_perc
@@ -71,7 +73,11 @@ contains
      do j=1,jx
        do bas=1,numbasns
          if(gwsubbasmsk(i,j).eq.bas) then
-           sum_perc8(bas) = sum_perc8(bas)+runoff2x(i,j)  !runoff2x in (mm)
+           if(OVRTSWCRT.ne.0) then
+             sum_perc8(bas) = sum_perc8(bas)+runoff2x(i,j)  !Add only drainage to bucket...runoff2x in (mm)
+           else
+             sum_perc8(bas) = sum_perc8(bas)+runoff1x(i,j)+runoff2x(i,j)  !Add sfc water & drainage to bucket...runoff1x and runoff2x in (mm)
+           end if
            ct_bas8(bas) = ct_bas8(bas) + 1
          end if
        end do

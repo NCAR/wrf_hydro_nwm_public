@@ -366,7 +366,7 @@ CONTAINS
 !DJG   activated
 
 
-  IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) THEN
+  IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) THEN
   print *, "Terrain routing initialization..."
 
 #ifdef MPP_LAND

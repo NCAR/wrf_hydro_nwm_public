@@ -20,7 +20,7 @@
          integer ii,jj,kk
 
 
-           IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) THEN
+           IF (nlst_rt(did)%SUBRTSWCRT.EQ.1 .or. nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) THEN
 
               QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
               LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
@@ -106,7 +106,8 @@
 
        call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
              RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%basns_area,&
-             RT_DOMAIN(did)%gwsubbasmsk, RT_DOMAIN(did)%SOLDRAIN, &
+             RT_DOMAIN(did)%gwsubbasmsk, RT_DOMAIN(did)%INFXSRT, &
+             RT_DOMAIN(did)%SOLDRAIN, &
              RT_DOMAIN(did)%z_gwsubbas,&
              RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
              RT_DOMAIN(did)%qinflowbase,&
@@ -114,7 +115,7 @@
              RT_DOMAIN(did)%dist,nlst_rt(did)%DT,&
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
-             nlst_rt(did)%GWBASESWCRT)
+             nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
 
 #ifdef MPP_LAND
       if(my_id .eq. IO_id) then

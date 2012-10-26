@@ -100,7 +100,7 @@ module module_HYDRO_drv
      rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
      rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
 
-     kt = rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt/nlst_rt(did)%DT
+     kt = rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt*60/nlst_rt(did)%DT
 
 
 
@@ -751,7 +751,7 @@ module module_HYDRO_drv
 
 
 
-           IF (nlst_rt(did)%CHANRTSWCRT.NE.0   &
+           IF (nlst_rt(did)%GWBASESWCRT .ne. 0     &
                .or. nlst_rt(did)%SUBRTSWCRT .NE.0  &
                .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
 
@@ -799,7 +799,7 @@ module module_HYDRO_drv
      call read_rt_nlst(nlst_rt(did) )
 
 
-             IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
+             IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
                .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
@@ -926,8 +926,12 @@ module module_HYDRO_drv
     endif
 
 
-     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
-        call get_basn_area(did)
+     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 .or. nlst_rt(did)%GWBASESWCRT .gt. 0) then
+       call get_basn_area(did)
+     endif
+
+     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 ) then
+!       call get_basn_area(did)
         call get_node_area(did)
      endif
      
