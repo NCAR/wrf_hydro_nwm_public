@@ -49,7 +49,7 @@ CONTAINS
                   nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
         call flush(6) 
 
-        IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
+        IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
                .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
@@ -130,7 +130,7 @@ CONTAINS
            call HYDRO_ini(ntime,did)
            RT_DOMAIN(did)%initialized = .true.
    
-           IF (nlst_rt(did)%CHANRTSWCRT.eq.0   &
+           IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
                .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
 
