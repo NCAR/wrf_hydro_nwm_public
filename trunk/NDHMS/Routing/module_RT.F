@@ -134,6 +134,7 @@ CONTAINS
     rt_domain(did)%LONVAL = 0.0
 
 
+    rt_domain(did)%timestep_flag = 1    ! default is cold start
 
    IF (CHANRTSWCRT.EQ.1 .or. CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
   allocate( rt_domain(did)%CH_NETLNK (IXRT,JXRT) )

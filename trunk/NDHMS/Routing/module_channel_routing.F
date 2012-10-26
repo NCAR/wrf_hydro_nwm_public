@@ -420,7 +420,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 ! -------- DECLARATIONS ------------------------
 
         INTEGER, INTENT(IN) :: IXRT,JXRT,channel_option
-        INTEGER, INTENT(IN) :: NLINKS,NLAKES, KT  !-- kt is current timestep 
+        INTEGER, INTENT(IN) :: NLINKS,NLAKES  
+        integer, INTENT(INOUT) :: KT   ! flag of cold start (1) or continue run.
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: QSUBRT
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: QSTRMVOLRT
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: LAKEINFLORT
@@ -624,6 +625,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
                if (KT .eq. 1) then  !-- initial slug of water in unpstream cells
                  qd = QLINK(k,1)
+                 KT = KT + 1
                else
                  qd = QLINK(k,2)        !-- downstream outflow, previous timestep
                  QLINK(k,1) = 0
@@ -999,6 +1001,7 @@ crnt:    DO                      !-- loop on the courant condition
 
          write(6,*) "finished call drive_CHANNEL"
 
+        if (KT .eq. 1) KT = KT + 1
          
 
  END SUBROUTINE drive_CHANNEL

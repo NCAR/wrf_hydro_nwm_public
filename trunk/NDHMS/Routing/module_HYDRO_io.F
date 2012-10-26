@@ -4383,14 +4383,17 @@ end subroutine mpp_output_chrt
           iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"smcwlt1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"infxsrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"soldrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+!         iret = nf_def_var(ncid,"soldrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
             iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"sh2owgt",NF_FLOAT,3,(/dimid_ixrt,dimid_jxrt,dimid_soil/),varid)
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
+              iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
+              iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_links/),varid)
@@ -4419,13 +4422,13 @@ end subroutine mpp_output_chrt
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
-       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
+!      call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt"  ) 
 
-! output diagnostic variables
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
+            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT, "QBDRYRT" )
             call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
@@ -4434,6 +4437,18 @@ end subroutine mpp_output_chrt
 #endif
                   )
 
+              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,1),"qlink1" &
+#ifdef MPP_LAND
+                 ,rt_domain(did)%nlinks_index, rt_domain(did)%mpp_nlinks  &
+#endif
+                  )
+
+
+              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,2),"qlink2" &
+#ifdef MPP_LAND
+                 ,rt_domain(did)%nlinks_index, rt_domain(did)%mpp_nlinks  &
+#endif
+                  )
 
 
               call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%cvol,"cvol" &
@@ -4636,7 +4651,7 @@ end subroutine mpp_output_chrt
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
-        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
+!       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
      endif
  
@@ -4647,9 +4662,12 @@ end subroutine mpp_output_chrt
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
             call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call read_rst_crt_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink")
+              call read_rst_crt_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1")
+              call read_rst_crt_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2")
               call read_rst_crt_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol")
               call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%nlinks,"resht")
               call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%nlinks,"qlakeo")

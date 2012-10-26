@@ -1,4 +1,4 @@
-      subroutine exeRouting (did,kt)
+      subroutine exeRouting (did)
          use module_RT_data, only: rt_domain
          use module_GW_baseflow_data, only: gw2d
          use module_GW_baseflow, only: simp_gw_buck, gwstep
@@ -11,7 +11,7 @@
 
        
          implicit none
-         integer did, kt, i
+         integer did, i
          real, dimension(RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT):: &
                    QSTRMVOLRT_DUM,LAKE_INFLORT_DUM, &
                    QSTRMVOLRT_TS, LAKE_INFLORT_TS
@@ -67,7 +67,7 @@
              RT_DOMAIN(did)%SMCTOT1,&
              RT_DOMAIN(did)%SMCTOT2,RT_DOMAIN(did)%suminfxs1, &
              RT_DOMAIN(did)%suminfxsrt,RT_DOMAIN(did)%SO8RT, &
-             RT_DOMAIN(did)%SO8RT_D,kt,nlst_rt(did)%AGGFACTRT,  &
+             RT_DOMAIN(did)%SO8RT_D,nlst_rt(did)%AGGFACTRT,  &
              nlst_rt(did)%SUBRTSWCRT,nlst_rt(did)%OVRTSWCRT, &
              RT_DOMAIN(did)%LAKE_CT, RT_DOMAIN(did)%STRM_CT,    &
              nlst_rt(did)%RT_OPTION,RT_DOMAIN(did)%OV_ROUGH, &
@@ -189,9 +189,7 @@
 !      write(27,*) RT_DOMAIN(did)%QINFLOWBASE
 !      stop 999
  
-           write(6,*) "**yyww*start drive_CHANNEL, kt,dtrt ", kt, nlst_rt(did)%DTRT
-           call flush(6)
-    call drive_CHANNEL(Kt,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
+    call drive_CHANNEL(RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
        LAKE_INFLORT_TS, QSTRMVOLRT_TS,&
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&

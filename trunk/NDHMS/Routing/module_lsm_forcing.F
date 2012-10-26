@@ -848,6 +848,7 @@ Contains
    integer  :: i,j,mmflag,igrid,ierr_flg
    real,dimension(ix,jx):: lai,fpar
    character(len=4) nwxst_t
+   logical :: fexist
 
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
@@ -860,6 +861,12 @@ Contains
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
+
+        inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+           stop "no forcing data found"
+        endif
+
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
    end if
@@ -873,6 +880,10 @@ Contains
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//".LDASIN_DOMAIN"//hgrid
+        inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+           stop "no forcing data found"
+        endif
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
    end if
@@ -889,6 +900,12 @@ Contains
              olddate(1:4)//"-"//olddate(6:7)//"-"//olddate(9:10)//&
              "_"//olddate(12:13)//":00:00"
         print *, "WRF/RUC forcing data...",inflnm
+
+        inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+           stop "no forcing data found"
+        endif
+
        CALL READFORC_WRF(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCPnew)
 !       print *, "returned from READFORC_WRF..."
@@ -956,6 +973,10 @@ Contains
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
+        inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+           stop "no forcing data found"
+        endif
 
        PRCP1 = 0.
        PRCP_old = PRCP1
@@ -1002,6 +1023,10 @@ Contains
            inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
+        inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+           stop "no forcing data found"
+        endif
          CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
              PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
 !       endif
@@ -1015,6 +1040,10 @@ Contains
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
+        inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+           stop "no forcing data found"
+        endif
 
       PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
 

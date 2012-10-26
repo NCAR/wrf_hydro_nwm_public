@@ -13,7 +13,7 @@
   INTEGER :: NLINKS  !maximum number of unique links in channel
   INTEGER :: NLAKES  !number of lakes
   INTEGER :: MAXORDER !maximum stream order
-  integer :: rst_flag    ! restart flag
+  integer :: timestep_flag    ! 1 cold start run else continue run
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

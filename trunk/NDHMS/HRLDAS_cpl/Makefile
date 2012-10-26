@@ -1,12 +1,28 @@
 # Makefile 
+#
+.SUFFIXES:
+.SUFFIXES: .o .F
 
-all:
-	(rm -f ../HRLDAS/Run/Noah_hrldas_beta)
-	(cd ../; make -f Makefile)
-	(make -f Makefile.cpl)
-	(cd ../HRLDAS; make; cp Run/Noah_hrldas_beta ../HRLDAS_cpl  )
+
+
+include ../macros
+
+OBJS = \
+	module_hrldas_HYDRO.o \
+	hrldas_drv_HYDRO.o    
+all:	$(OBJS) 
+
+.F.o:
+	@echo ""
+	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
+	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../mod $(*).f
+	$(RMD) $(*).f
+	@echo ""
+	ar -r ../lib/libHYDRO.a $(@)
+
+#
+# Dependencies:
+#
 
 clean:
-	(make -f Makefile.cpl clean)
-	(cd ../; make -f Makefile clean)
-	(cd ../HRLDAS; make clean)
+	rm -f *.o *.mod *.stb *~ *.f Noah_hrldas_beta

@@ -125,7 +125,7 @@ module module_lis_HYDRO
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
     
-        call HYDRO_exe(did,ntime)
+        call HYDRO_exe(did)
 
 ! add for update the lsm state variable.
      ! 3 d variable

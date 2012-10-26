@@ -148,7 +148,7 @@ CONTAINS
 
 
 
-            call HYDRO_exe(did,ntime)
+            call HYDRO_exe(did)
 
             write(6,*) "after call HYDRO_exe" 
             call flush(6)     

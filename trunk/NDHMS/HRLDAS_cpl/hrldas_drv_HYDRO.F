@@ -21,7 +21,7 @@
 
        subroutine HYDRO_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,acrain)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,acrain, FORCING_TIMESTEP)
 
          use module_lsm_forcing, only: read_seq_forcing
          use module_namelist, only:nlst_rt
@@ -32,7 +32,7 @@
          character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
                  weasd, snodep, acrain   
-         integer :: forc_typ, snow_assim
+         integer :: forc_typ, snow_assim, FORCING_TIMESTEP
 
          ix = ixe-ixs+1
          jx = jxe-jxs+1
@@ -42,7 +42,7 @@
             nlst_rt(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
-            weasd,snodep,nlst_rt(did)%dt,kt, &
+            weasd,snodep,FORCING_TIMESTEP*1.0,kt, &
             acrain )
        end subroutine HYDRO_seq_frocing
 

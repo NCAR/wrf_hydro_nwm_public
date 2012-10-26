@@ -100,7 +100,7 @@ module module_HYDRO_drv
      rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
      rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
 
-     kt = rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt/nlst_rt(did)%DT
+     kt = rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt*60/nlst_rt(did)%DT
 
 
 
@@ -200,13 +200,15 @@ module module_HYDRO_drv
         integer:: flag 
 
 
-        if(rt_domain(did)%rst_flag .eq. -99) return
 
    flag = -1
 #ifdef MPP_LAND
    if(my_id.eq.IO_id) then
 #endif
-      if (trim(nlst_rt(did)%restart_file) /= "") flag = 99
+      if (trim(nlst_rt(did)%restart_file) /= "") then
+          flag = 99
+          rt_domain(did)%timestep_flag = 99   ! continue run
+      endif 
 #ifdef MPP_LAND
    endif 
    call mpp_land_bcast_int1(flag)
@@ -216,26 +218,20 @@ module module_HYDRO_drv
    if (flag.eq.99) then
 
 #ifdef MPP_LAND
-   if(my_id.eq.IO_id) then
+     if(my_id.eq.IO_id) then
 #endif
-      write(6,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
-      call flush(6)
+        write(6,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
+        call flush(6)
 #ifdef MPP_LAND
-   endif 
+     endif 
 #endif
-
-
       call   RESTART_IN_nc(trim(nlst_rt(did)%restart_file), did)
 
-
-     endif
-
-!            acrain = 0.0
-!            acrain_0 = acrain
-!            write(21,*) RT_DOMAIN(did)%GW_RESTART
-!            write(22,*) RT_DOMAIN(did)%z_gwsubbas
-!            stop 990
-      end subroutine HYDRO_rst_in
+  if (trim(nlst_rt(did)%restart_file) /= "") then 
+          nlst_rt(did)%restart_file = ""
+  endif
+  endif
+ end subroutine HYDRO_rst_in
 
      subroutine HYDRO_time_adv(did)
         implicit none
@@ -711,27 +707,15 @@ module module_HYDRO_drv
 
   end subroutine geth_newdate
   
-     subroutine HYDRO_exe(did, ntime)
+     subroutine HYDRO_exe(did)
 
 
         implicit none
-        integer:: ntime, did
-        integer:: kt, rst_out
+        integer:: did
+        integer:: rst_out
 
-  
 
-!         if(RT_DOMAIN(did)%rst_flag .ne. -99) then
-!             call HYDRO_rst_in(did)
-!             call HYDRO_out(did)
-!             RT_DOMAIN(did)%rst_flag =  -99 
-!         endif
-
-          call HYDRO_out(did)
-
-        
-        do kt = 1, ntime 
-
-          write(6,*) "yyww = ", kt, "ntime=",ntime
+        call HYDRO_out(did)
 
 
 ! running land surface model
@@ -757,7 +741,7 @@ module module_HYDRO_drv
 
 
 ! running routing model
-                call exeRouting(did,kt)
+                call exeRouting(did)
 
     END IF    ! End if for channel routing option
 
@@ -774,7 +758,6 @@ module module_HYDRO_drv
            RT_DOMAIN(did)%SOLDRAIN = 0
            RT_DOMAIN(did)%QSUBRT = 0
 
-       enddo  ! end of time loop  
 
 
       end subroutine HYDRO_exe
@@ -933,12 +916,12 @@ module module_HYDRO_drv
      
 
 
-       if(rt_domain(did)%rst_flag .eq. -99 ) return
+!      if(rt_domain(did)%rst_flag .eq. -99 ) return
 ! restart the file
        call HYDRO_rst_in(did)
 
 ! output at the initial time
-!      call HYDRO_out(did)
+       call HYDRO_out(did)
 
 
       end subroutine HYDRO_ini

@@ -68,7 +68,10 @@ CONTAINS
             call CPL_LAND_INIT(its,ite,jts,jte)
             call HYDRO_ini(ntime,did,ix0=ix,jx0=jx,vegtyp=grid%IVGTYP(its:ite,jts:jte),soltyp=grid%isltyp(its:ite,jts:jte))
 
-!            call lsm_wrf_input(did,grid%IVGTYP(its:ite,jts:jte),grid%isltyp(its:ite,jts:jte),ite-its+1,jte-jts+1)
+!           call lsm_wrf_input(did,grid%IVGTYP(its:ite,jts:jte),grid%isltyp(its:ite,jts:jte),ite-its+1,jte-jts+1)
+
+            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
         endif
             nlst_rt(did)%dt = HYDRO_dt
@@ -77,7 +80,7 @@ CONTAINS
             if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
 
         if(nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 .and. nlst_rt(did)%GWBASESWCRT .eq. 0) return
 
 
 !            CALL domain_clock_get( grid, current_timestr=cpl_outdate)
@@ -98,13 +101,13 @@ CONTAINS
             call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
             call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
             call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+            rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
+            rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
         endif  
 
 ! output variable for routing model.
 !           where(RT_DOMAIN(did)%vegtyp .ne. 16)  rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
 !           where(RT_DOMAIN(did)%vegtyp .ne. 16) rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
-            rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
-            rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
 
              
 
@@ -112,7 +115,7 @@ CONTAINS
             call flush(6)     
 
 
-            call HYDRO_exe(did,ntime)
+            call HYDRO_exe(did)
 
 ! add for update the WRF state variable.
 !   call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
