@@ -1,6 +1,6 @@
    TYPE namelist_rt_field  
       
-       integer :: nsoil, slopetyp, SOLVEG_INITSWC
+       integer :: nsoil, SOLVEG_INITSWC
        real ZSOIL8(8)
        real out_dt, rst_dt, dt
        integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN

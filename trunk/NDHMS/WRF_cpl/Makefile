@@ -7,7 +7,7 @@
 
 include ../macros
 
-WRF_ROOT = /raid/weiyu/MM_R/code_20120718/CVS_reference/cvs/apps/4dwx/RTFDDA/src/RT_WRF/WRF_V3.3.1_8layer
+WRF_ROOT = /raid/weiyu/WRF_RELEASE/r6019/mod
 OBJS = \
 	module_wrf_HYDRO.o \
 	wrf_drv_HYDRO.o    

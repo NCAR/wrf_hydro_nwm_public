@@ -33,7 +33,7 @@ CONTAINS
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: wrfsi_finegrid_flnm =""
-       integer :: nsoil, slopetyp, SOLVEG_INITSWC
+       integer :: nsoil, SOLVEG_INITSWC
        real ZSOIL8(8)
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
@@ -50,7 +50,6 @@ CONTAINS
             RESTART_FILE,HISTORY_OUTPUT,SPLIT_OUTPUT_COUNT,IGRID,&
             wrfsi_static_flnm, &
             out_dt, rst_dt, &
-            SLOPETYP,&
             HIRES_OUT, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
@@ -80,7 +79,6 @@ CONTAINS
   call mpp_land_bcast_int1(IGRID)
   call mpp_land_bcast_real1(out_dt)
   call mpp_land_bcast_real1(rst_dt)
-  call mpp_land_bcast_int1(SLOPETYP)
   call mpp_land_bcast_int1(HIRES_OUT)
   call mpp_land_bcast_int1(DEEPGWSPIN)
   call mpp_land_bcast_int1(SOLVEG_INITSWC)
@@ -95,7 +93,6 @@ CONTAINS
   nlst%wrfsi_static_flnm = wrfsi_static_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt
-  nlst%SLOPETYP = SLOPETYP
   nlst%HIRES_OUT = HIRES_OUT
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC

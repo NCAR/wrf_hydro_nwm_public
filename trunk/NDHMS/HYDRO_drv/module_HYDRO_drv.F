@@ -28,17 +28,14 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-      if(nlst_rt(did)%olddate(1:19) == nlst_rt(did)%startdate(1:19) ) then
-!for testing purpose
-          rst_out = -99
-          write(6,*) "output the restart file at time : ", nlst_rt(did)%olddate(1:19)
-      else
-         call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%rst_dt*60*rt_domain(did)%rst_counts))
-         if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
-             rst_out = 99
-             rt_domain(did)%rst_counts = rt_domain(did)%rst_counts + 1
-         endif
-      endif
+     call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%rst_dt*60*rt_domain(did)%rst_counts))
+     if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
+           rst_out = 99
+           rt_domain(did)%rst_counts = rt_domain(did)%rst_counts + 1
+     endif
+! restart every month automatically.
+     if ((nlst_rt(did)%olddate(9:10) == "01") .and. (nlst_rt(did)%olddate(12:13) == "00") .and. &
+          (nlst_rt(did)%olddate(15:16) == "00").and. (nlst_rt(did)%olddate(18:19) == "00")) rst_out = 99
 #ifdef MPP_LAND
    endif
      call mpp_land_bcast_int1(rst_out)

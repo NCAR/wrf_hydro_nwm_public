@@ -9,7 +9,7 @@
  out_dt = 60 ! minutes
 
 
- RESTART_FILE  = 'HYDRO_RST.2010-10-01_02:00_DOMAIN2'
+ RESTART_FILE  = 'HYDRO_RST.2010-10-01_04:00_DOMAIN2'
 
 
 HISTORY_OUTPUT = .TRUE.
@@ -26,10 +26,6 @@ HISTORY_OUTPUT = .TRUE.
  ZSOIL8(2) = -0.25
  ZSOIL8(3) = -0.70
  ZSOIL8(4) = -1.50
-
-
-!Slopetyp for drainage scaling 8=no flow, 1-7 see GENPARM.TBL
-SLOPETYP = 3
 
 
 !Switch for specifying source of land cover and soils data: 0=default geogrid, 1=custom geogrid
@@ -68,7 +64,7 @@ TERADJ_SOLAR = 0
  rt_option    = 1
  CHANRTSWCRT = 1
 !coupling with WRF. 0: no coupling, 1: cpl with off-line lsm, 2: cpl with no off-line lsm
- sys_cpl = 4
+ sys_cpl = 1
 ! Channel Routing Option: 1=Muskingam, 2=Musk.-Cunge,3=Diff.Wave
  channel_option =3
  SUBRTSWCRT = 1
