@@ -7,5 +7,5 @@ LDFLAGS	=
 CPP	=       /lib/cpp
 CPPFLAGS	=       -C -P -traditional -I ../Data_Rec
 LIBS 	=	
-NETCDFINC       =       $(HOME)/netcdf/include
-NETCDFLIB       =       -L$(HOME)/netcdf/lib -lnetcdff -lnetcdf
+NETCDFINC       =       $(NETCDF_INC)
+NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf

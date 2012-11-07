@@ -13,7 +13,6 @@ module module_WRF_HYDRO
     implicit none
      
 
-    integer :: nn
 
 
 
@@ -28,7 +27,7 @@ CONTAINS
        real :: HYDRO_dt
 
 
-        integer k, ix,jx, nn, mm
+        integer k, ix,jx, mm, nn
 
         integer ::  did
 
@@ -92,15 +91,16 @@ CONTAINS
         nn = nlst_rt(did)%nsoil
 
         ! get the data from WRF 
-! need input for RT_DOMAIN(did)%SOLDRAIN(ix,jx)             
-!           call to8layer(grid%TSLB(its:ite,1:4,jts:jte),RT_DOMAIN(did)%STC,ix,jx)
-!           call to8layer(grid%smois(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SMC,ix,jx)
-!           call to8layer(grid%sh2o(its:ite,1:4,jts:jte),RT_DOMAIN(did)%SH2OX,ix,jx)
 
         if(RT_DOMAIN(did)%initialized .or. (nlst_rt(did)%rst_typ .eq. 0) ) then
-            call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
-            call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
-            call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+!           call wrf2lsm (grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+!           call wrf2lsm (grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+!           call wrf2lsm (grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),4,abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,ix,jx,nn,RT_DOMAIN(did)%vegtyp)
+            do k = 1, nlst_rt(did)%nsoil
+                RT_DOMAIN(did)%STC(:,:,k) = grid%TSLB(its:ite,k,jts:jte) 
+                RT_DOMAIN(did)%smc(:,:,k) = grid%smois(its:ite,k,jts:jte) 
+                RT_DOMAIN(did)%sh2ox(:,:,k) = grid%sh2o(its:ite,k,jts:jte) 
+            end do 
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
             rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
         endif  
@@ -121,9 +121,15 @@ CONTAINS
 !   call to4layer(RT_DOMAIN(did)%STC,grid%TSLB(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
 !   call to4layer(RT_DOMAIN(did)%SMC,grid%SMOIS(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
 !   call to4layer(RT_DOMAIN(did)%SH2OX,grid%SH2O(its:ite,1:4,jts:jte),ix,jx,grid%ISLTYP(its:ite,jts:jte))
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,nn,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,nn,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
-            call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
+!           call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%STC,nn,grid%zs(1:4),grid%TSLB(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
+!           call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SMC,nn,grid%zs(1:4),grid%smois(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
+!           call lsm2wrf (abs(rt_domain(did)%ZSOIL(1:nn)),RT_DOMAIN(did)%SH2OX,nn,grid%zs(1:4),grid%sh2o(its:ite,1:4,jts:jte),ix,jx,4, RT_DOMAIN(did)%vegtyp)
+
+            do k = 1, nlst_rt(did)%nsoil
+                ! grid%TSLB(its:ite,k,jts:jte) = RT_DOMAIN(did)%STC(:,:,k)
+                grid%smois(its:ite,k,jts:jte) = RT_DOMAIN(did)%smc(:,:,k)
+                grid%sh2o(its:ite,k,jts:jte) = RT_DOMAIN(did)%sh2ox(:,:,k)
+            end do 
 
 ! update WRF variable after running routing model.
 !            where(RT_DOMAIN(did)%vegtyp .ne. 16) grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
