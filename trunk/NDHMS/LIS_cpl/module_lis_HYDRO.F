@@ -79,7 +79,7 @@ module module_lis_HYDRO
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
 
 
-            call HYDRO_ini(ntime,did)
+            call HYDRO_ini(ntime,did,1,1)
 
             write(6,*) "yyyywww step 5 my_id= ", my_id
             call flush(6)

@@ -130,7 +130,7 @@ CONTAINS
 
 !           write(6,*) "yyyywww step 4 before HYDRO_ini= "
            
-           call HYDRO_ini(ntime,did)
+           call HYDRO_ini(ntime,did,1,1)
            RT_DOMAIN(did)%initialized = .true.
    
            IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &

@@ -10,10 +10,10 @@
   print "   0. exit only \n";
 
   printf "\nEnter selection [%d-%d] : ",1,5 ;
-#  if(-e macros) {system (rm -f macros);}
-#  if(-e Makefile) {system "rm -f Makefile" ;}
+  if(-e macros) {system (rm -f macros);}
+  if(-e Makefile) {system "rm -f Makefile" ;}
 
-  if(! (-e "Makefile")) { system("ln -s arc/Makefile ."); }
+  system("ln -s arc/Makefile ."); 
 
   if((! (-d "Main")) && (-d "HRLDAS") ) {system "ln -sf HRLDAS_cpl Main";}
 

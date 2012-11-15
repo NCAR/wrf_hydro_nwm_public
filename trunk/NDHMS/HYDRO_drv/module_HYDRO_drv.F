@@ -780,13 +780,13 @@ module module_HYDRO_drv
       end subroutine HYDRO_exe
 
 
-      subroutine HYDRO_ini(ntime, did, vegtyp,soltyp)
+      subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
         implicit none
         integer ntime, did
         integer rst_out, ix,jx
 !        integer, OPTIONAL:: ix0,jx0
         integer:: ix0,jx0
-        integer, dimension(:,:),OPTIONAL :: vegtyp, soltyp
+        integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
 
 
 
