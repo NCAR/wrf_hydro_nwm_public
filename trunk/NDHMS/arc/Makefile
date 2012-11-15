@@ -1,5 +1,4 @@
 # Makefile 
-
 all:
 	(make -f Makefile.comm BASIC)
 	(cd Main; make)

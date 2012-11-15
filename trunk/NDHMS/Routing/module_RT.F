@@ -35,7 +35,9 @@ CONTAINS
       NLINKS = rt_domain(did)%NLINKS
 !DJG Allocate routing and disaggregation arrays
 
+#if(HYDRO_D == 1)
   write(6,*) "  rt_allocate ***** ixrt,jxrt, nsoil", ixrt,jxrt, nsoil
+#endif
 
 
   allocate( rt_domain(did)%DSMC   	(NSOIL) )
@@ -286,8 +288,9 @@ CONTAINS
    rt_domain(did)%his_out_counts = 0
    rt_domain(did)%rst_counts = 1
 
+#if(HYDRO_D == 1)
   write(6,*) "***** finish rt_allocate "
-   call flush(6)
+#endif
 
    end subroutine rt_allocate
 
@@ -321,8 +324,9 @@ CONTAINS
               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_lake_f, rt_domain(did)%NLINKS, rt_domain(did)%NLAKES, &
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%wrfsi_finegrid_flnm)
 
+#if(HYDRO_D == 1)
         write(6,*) "before rt_allocate after READ_ROUTEDIM"
-        call flush(6)
+#endif
 
 
       end if
@@ -368,7 +372,9 @@ CONTAINS
 
 
   IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) THEN
+#if(HYDRO_D == 1)
   print *, "Terrain routing initialization..."
+#endif
 
 #ifdef MPP_LAND
     CALL MPP_READ_ROUTING(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
@@ -377,11 +383,12 @@ CONTAINS
            rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
 
 #else
+#if(HYDRO_D == 1)
     write(6,*) "ixrt, jxrt=",rt_domain(did)%ixrt, rt_domain(did)%jxrt
     write(6,*) "route_topo_f", nlst_rt(did)%route_topo_f
     write(6,*) "route_chan_f", nlst_rt(did)%route_chan_f
     write(6,*) "wrfsi_finegrid_flnm", nlst_rt(did)%wrfsi_finegrid_flnm
-    call flush(6)
+#endif
     
     CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
           rt_domain(did)%LKSATFAC,nlst_rt(did)%route_topo_f,nlst_rt(did)%route_chan_f, &
@@ -589,7 +596,9 @@ CONTAINS
 !----------------------------------------------------------------------
   IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN
       If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) THEN
+#if(HYDRO_D == 1)
            print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
+#endif
 #ifdef MPP_LAND
            CALL MPP_READ_SIMP_GW(rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
               rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
@@ -610,10 +619,10 @@ CONTAINS
             allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
 
+#if(HYDRO_D == 1)
             write(6,*)  "end Simple GW-Bucket ..."
-            call flush(6)
-
-      print *, "Simple GW-Bucket Scheme selected, retrieving files..."
+            print *, "Simple GW-Bucket Scheme selected, retrieving files..."
+#endif
 
 !Temporary hardwire...
       rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
@@ -659,7 +668,9 @@ CONTAINS
          end do
 #endif
 
+#if(HYDRO_D == 1)
     print *, "Starting GW basin levels...",rt_domain(did)%z_gwsubbas
+#endif
            
 
   ! BF gw2d model

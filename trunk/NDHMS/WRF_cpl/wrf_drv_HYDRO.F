@@ -9,13 +9,9 @@
 !         return
 
           if(grid%num_nests .lt. 1) then
-             write(6,*) "before calling WRF-HYDRO"
-             call flush(6)
 
              call wrf_cpl_HYDRO(HYDRO_dt, grid,its,ite,jts,jte)  
 
-             write(6,*) "after calling WRF-HYDRO"
-             call flush(6)
           endif
        end subroutine wrf_drv_HYDRO
 

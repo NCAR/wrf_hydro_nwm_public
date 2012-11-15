@@ -25,7 +25,9 @@ contains
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
+#if(HYDRO_D == 1)
             print*,"failed to open the netcdf file: ",trim(fileName)
+#endif
             out_buff = -9999.
             return
           endif
@@ -33,7 +35,9 @@ contains
           if(ivar .ne. 0) then
             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
             if(ivar .ne. 0) then
+#if(HYDRO_D == 1)
                write(6,*) "Read Error: could not find ",var_name
+#endif
                  return
             endif
           end if
@@ -202,8 +206,9 @@ contains
             dist(i,j,9) = x * y 
         end do
       end do
-
+#if(HYDRO_D == 1)
       write(6,*) "finished get_dist_ll"
+#endif
    end subroutine get_dist_ll
 
 !  get dx and dy of map projected
@@ -230,7 +235,9 @@ contains
           dist(i,j,9) = dx * dy
         end do
       end do
+#if(HYDRO_D == 1)
       write(6,*) "finished get_dxdy_mp "
+#endif
    end subroutine get_dxdy_mp
 
    subroutine get_dist_lsm(did)
@@ -293,11 +300,6 @@ contains
 #endif
      endif
 
-!       do k = 1, 9
-!          call write_IO_rt_real(rt_domain(did)%dist(:,:,k),tmp_dist(:,:,k))
-!       end do
-!       if(my_id .eq. IO_id) write(11,*) tmp_dist(:,:,9)
-!       call land_finish()
 
    end subroutine get_dist_lrt
 

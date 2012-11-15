@@ -82,20 +82,29 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
+#if(HYDRO_D == 1)
               write(6,*) "Error: failed to open file in get_greenfrac: ", trim(fileName)
-              call land_finish()
+              call hydro_stop() 
+#endif
           endif 
             
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
+#if(HYDRO_D == 1)
              print*, 'name = "', trim(name)//'"'
-             stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+             call hydro_stop()
+#endif
           endif
       
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
+
+#if(HYDRO_D == 1)
              print*, 'name = "', trim(name)//'"'
-             stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+             call hydro_stop()
+#endif
           endif
       
       
@@ -116,7 +125,9 @@
                 ddfrac = float(dd)/float(daytot)
                 if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
       
-                print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
+#if(HYDRO_D == 1)
+               print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
+#endif
       
           do i = 1, idim
              do j = 1, jdim
@@ -151,8 +162,11 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
+#if(HYDRO_D == 1)
               write(6,*) "Error: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
-              call land_finish()
+              call hydro_stop() 
+#endif
+
           endif 
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)

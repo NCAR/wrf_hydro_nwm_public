@@ -1,5 +1,6 @@
 .IGNORE:
 RM		=	rm -f
+RMD		=	rm -f
 COMPILER90=	xlf90_r
 F90FLAGS  =       -c -O2 -qfree=f90 -qmaxmem=819200
 MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod
@@ -8,4 +9,4 @@ CPP	=       cpp -C -P
 CPPFLAGS	=       -I../Data_Rec
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)
-NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
+NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdf

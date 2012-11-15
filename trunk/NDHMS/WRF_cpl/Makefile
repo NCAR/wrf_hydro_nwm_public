@@ -7,7 +7,7 @@
 
 include ../macros
 
-WRF_ROOT = /raid/weiyu/WRF_RELEASE/r6019/mod
+WRF_ROOT = /raid/weiyu/WRF_RELEASE/r6019/mod_test
 OBJS = \
 	module_wrf_HYDRO.o \
 	wrf_drv_HYDRO.o    

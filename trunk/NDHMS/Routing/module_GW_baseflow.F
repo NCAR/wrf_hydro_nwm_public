@@ -55,18 +55,7 @@ contains
    qout_gwsubbas = 0.
    qin_gwsubbas = 0.
 
-!  write(11,*) z_gwsubbas 
-!  stop 999
 
-!   C(1) = 1.6976
-!   C(2) = 2.2581
-!   C(3) = 0.9342
-!   C(4) = 1.3884
-
-!   ex(1) = 0.0806
-!   ex(2) = 0.0856
-!   ex(3) = 0.0585
-!   ex(4) = 0.0773
 
 !!!Calculate aggregated percolation from deep runoff into GW basins...
    do i=1,ix
@@ -85,9 +74,6 @@ contains
    end do
 
 #ifdef MPP_LAND
-!  print*, "step 1 "
-!  write(20+my_id,*) sum_perc8
-!  write(20+my_id,*) ct_bas8   
    call sum_real8(sum_perc8,numbasns)
    call sum_real8(ct_bas8,numbasns)
 #endif
@@ -108,7 +94,6 @@ contains
      qin_gwsubbas(bas) = net_perc(bas)/1000. * ct_bas(bas) * basns_area(bas) !units (m^3)
 
 !Adjust level of GW depth...(conceptual GW bucket units (m))
-!     print *, "GW_Debug...Input GW basin levels...",z_gwsubbas
      z_gwsubbas(bas) = z_gwsubbas(bas) + net_perc(bas) / 1000.0   ! (m)
      zbastmp = z_gwsubbas(bas)
 
@@ -134,10 +119,6 @@ contains
      end if
 
 
-!        print *, "GW_Debug...", bas,net_perc(bas),qin_gwsubbas(bas),zbastmp,&
-!                 qout_gwsubbas(bas),z_gwsubbas(bas),gwbas_pix_ct(bas)
-!        print *, "Estimated per pixel inflow value (mm)...", &
-!           qout_gwsubbas(bas)*1000.*DT/ gwbas_pix_ct(bas)/DXRT/DXRT
 
 #ifdef MPP_LAND
      endif
@@ -150,9 +131,6 @@ contains
 
       qinflowbase = 0.
 
-!     write(14,*) z_gwsubbas
-
-!     write(11,*) qout_gwsubbas
 
       do i=1,ixrt
         do j=1,jxrt
@@ -388,11 +366,6 @@ contains
       dy = dx
       darea = dx*dy
       
-!       print*, "GW2D"
-!       print*, "dx:",dx
-!       print*, "dy:",dy
-!       print*, "darea:", darea
-!       print*, "dt:",dt
       
       call scopy (ix*jx, ho, 1, h, 1)
 
@@ -742,11 +715,8 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
 
       if ( (delcur.gt.delskip*dt/86400. .and. iter.lt.itermax)      &
            .or. iter.lt.itermin ) then
-!         print '(f8.4,\$)',  delcur
-!         ier = flush(6)
         goto 80
       else
-!         write (*,'(f8.4)') delcur
       endif
 
       
@@ -803,9 +773,11 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
       ebot = (ebot/tareal)/dt
 
       zz = 1.e3 * 86400.                    ! convert printout to mm/day
+#if(HYDRO_D == 1)
         write (*,900)                         &
           dtot*zz, dtoa*zz, -eocn*zz, ebot*zz,     &
           (dtot-(-eocn+ebot))*zz
+#endif
   900 format                                       &
         (3x,'    dh/dt       |dh/dt|        ocnflx        botfix',&
             '                  ','      ghmerror'  &
