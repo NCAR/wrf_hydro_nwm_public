@@ -7,7 +7,11 @@
 
 include ../macros
 
+<<<<<<< HEAD
 WRF_ROOT = ../..
+=======
+WRF_ROOT = /raid/weiyu/WRF_RELEASE/r6019/mod_test
+>>>>>>> 87ce796d24e5f8cc8e737ff7140f809f18fc31b2
 OBJS = \
 	module_wrf_HYDRO.o \
 	wrf_drv_HYDRO.o    

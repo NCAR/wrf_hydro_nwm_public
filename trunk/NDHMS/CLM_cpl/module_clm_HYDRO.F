@@ -61,7 +61,7 @@ CONTAINS
             write(6,*) "yyyywww step 4 before HYDRO_ini= "
 
 
-            call HYDRO_ini(ntime,did)
+            call HYDRO_ini(ntime,did,1,1)
             RT_DOMAIN(did)%initialized = .true.
             nlst_rt(did)%dt = cpl_land_dt
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)

@@ -156,8 +156,6 @@ CONTAINS
                  where( abs(SH2OX) .gt. 500) SH2OX = 0.25
               endif
            endif 
-!          if(my_id .eq. IO_id) write(6,*) "olddate = ",nlst_rt(did)%olddate
-!          call flush(6)   
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt

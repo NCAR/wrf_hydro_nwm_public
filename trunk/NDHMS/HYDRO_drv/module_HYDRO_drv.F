@@ -787,11 +787,12 @@ module module_HYDRO_drv
       end subroutine HYDRO_exe
 
 
-      subroutine HYDRO_ini(ntime, did, ix0,jx0,vegtyp,soltyp)
+      subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
         implicit none
         integer ntime, did
         integer rst_out, ix,jx
-        integer, OPTIONAL:: ix0,jx0
+!        integer, OPTIONAL:: ix0,jx0
+        integer:: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
 
 
@@ -893,6 +894,8 @@ module module_HYDRO_drv
 ! decompose the land parameter/data 
 
 
+      ix0= rt_domain(did)%ix
+      jx0= rt_domain(did)%jx
       call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
 
 #if(HYDRO_D == 1)
@@ -969,7 +972,7 @@ module module_HYDRO_drv
          integer, allocatable, dimension(:,:) :: soltyp
          real, dimension(leng) :: xdum1, MAXSMC,refsmc,wltsmc
 
-        integer, OPTIONAL:: ix0,jx0
+        integer :: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
 
 #if(HYDRO_D == 1)
