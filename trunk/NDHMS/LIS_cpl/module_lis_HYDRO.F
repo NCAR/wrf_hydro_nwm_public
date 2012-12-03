@@ -23,7 +23,6 @@ module module_lis_HYDRO
 
         integer ntime, wrf_ix,wrf_jx
         logical mpi_inited
-        real cpl_land_dt
 
 !output flux and state variable
 
@@ -31,6 +30,7 @@ module module_lis_HYDRO
 
 
         did = 1
+        ntime = 1
 
             write(6,*) "yyyywww step 2, n =", n
             write(6,*) "npesx, npesy",LIS_rc%npesx, LIS_rc%npesy
@@ -48,9 +48,9 @@ module module_lis_HYDRO
 
             write(cpl_outdate,'(I4,"-",I2,"-",I2,"_",I2,":",I2,":",I2)' )     &
                 LIS_rc%yr, LIS_rc%mo, LIS_rc%da, LIS_rc%hr, LIS_rc%mn, LIS_rc%ss 
+            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
             jx = LIS_rc%lnr(n)
             ix = LIS_rc%lnc(n)
-            cpl_land_dt = LIS_rc%ts
             its = LIS_ews_ind(LIS_rc%nnest,my_id+1)
             ite = LIS_ewe_ind(LIS_rc%nnest,my_id+1)
             jts = LIS_nss_ind(LIS_rc%nnest,my_id+1)
@@ -61,9 +61,11 @@ module module_lis_HYDRO
             write(6,*) "LIS_nss_ind",LIS_nss_ind 
             write(6,*) "LIS_nse_ind",LIS_nse_ind 
         if(.not. RT_DOMAIN(did)%initialized) then
+
+            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             
             write(6,*) "yyyywww step 3"
-            write(6,*) "ix,jx, cpl_land_dt",ix,jx, cpl_land_dt
+            write(6,*) "ix,jx, cpl_land_dt",ix,jx, LIS_rc%ts  
             call flush(6)
 
             write(6,*) "yyyywww step 4 before HYDRO_ini= "
@@ -79,13 +81,13 @@ module module_lis_HYDRO
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
 
 
-            call HYDRO_ini(ntime,did)
+            call HYDRO_ini(ntime,did,ix0=ix,jx0=jx)
 
             write(6,*) "yyyywww step 5 my_id= ", my_id
             call flush(6)
 
             RT_DOMAIN(did)%initialized = .true.
-            nlst_rt(did)%dt = cpl_land_dt
+            nlst_rt(did)%dt = LIS_rc%ts   
 
           write(6,*) "LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)", &
                  LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)

@@ -25,21 +25,9 @@
               QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
               LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
+#if(HYDRO_D == 1)
                write(6,*) "*****yw******start drive_RT "
-               call flush(6)
-
-!           do kk = 1, 8
-!           do jj = 1, RT_DOMAIN(did)%JX
-!           do ii = 1, RT_DOMAIN(did)%IX
-!             if(RT_DOMAIN(did)%SH2OX(ii,jj,kk) .le. 0) then
-!                write(10+my_id, *) "ii,jj,kk",ii,jj,kk, &
-!                   RT_DOMAIN(did)%SH2OX(ii,jj,kk), RT_DOMAIN(did)%SH2OX
-!                stop 
-!             endif
-!           end do
-!           end do
-!           end do
-!           
+#endif
 
 
          call drive_RT( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
@@ -83,8 +71,9 @@
             QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-QSTRMVOLRT_DUM
             LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-LAKE_INFLORT_DUM
 
+#if(HYDRO_D == 1)
            write(6,*) "*****yw******end drive_RT "
-           call flush(6)
+#endif
         end if
 
 
@@ -99,10 +88,9 @@
 
     If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) Then   ! Call simple bucket baseflow scheme
 
+#if(HYDRO_D == 1)
            write(6,*) "*****yw******start simp_gw_buck "
-           call flush(6)
-        write(6,*) "did = ", did
-        write(6,*) "ixrt,jxrt = ",RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt
+#endif
 
        call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
              RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%basns_area,&
@@ -116,6 +104,7 @@
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
+
 
 #ifdef MPP_LAND
       if(my_id .eq. IO_id) then
@@ -140,23 +129,20 @@
      endif
 #endif
 
-
+#if(HYDRO_D == 1) 
            write(6,*) "*****yw******end simp_gw_buck "
-           call flush(6)
+#endif
 
 !!!For parameter setup runs output the percolation for each basin,
 !!!otherwise comment out this output...
     else if (nlst_rt(did)%GWBASESWCRT .eq. 3) then
-       print *, "calling 2d_gw_model..."
 
+#if(HYDRO_D == 1)
            write(6,*) "*****bf******start 2d_gw_model "
-           call flush(6)
+#endif
 
            DX = abs(nlst_rt(did)%DXRT0 * nlst_rt(did)%AGGFACTRT)
-          
-           print *, "calling simp_gw_buck...",DX
            
-           print*, gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dt
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
 			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
 			gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
@@ -167,12 +153,11 @@
            
 ! bftodo head postprocessing block 
 ! GW-SOIL-CHANNEL interaction section
-
 	  gw2d(did)%ho = gw2d(did)%h
-! end do
-! bfend
+
+#if(HYDRO_D == 1)
            write(6,*) "*****bf******end 2d_gw_model "
-           call flush(6)
+#endif
       
     End if
 
@@ -186,9 +171,6 @@
 !DJG,DNY  Begin Channel and Lake Routing Routines
 !-------------------------------------------------------------------
   IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT.EQ.2) THEN
-
-!      write(27,*) RT_DOMAIN(did)%QINFLOWBASE
-!      stop 999
  
     call drive_CHANNEL(RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
@@ -219,8 +201,9 @@
        )
   endif
 
+#if(HYDRO_D == 1)
            write(6,*) "*****yw******end drive_CHANNEL "
-           call flush(6)
+#endif
 
       end subroutine  exeRouting
 

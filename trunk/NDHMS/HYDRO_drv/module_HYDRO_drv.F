@@ -47,8 +47,10 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
+#if(HYDRO_D == 1)
       write(6,*) "yyww =",  "RESTART."//nlst_rt(did)%olddate(1:16)   &
                  //"_DOMAIN"//trim(nlst_rt(did)%hgrid)
+#endif
 #ifdef MPP_LAND
    endif
 #endif
@@ -59,7 +61,7 @@ module module_HYDRO_drv
    subroutine HYDRO_out(did)
       implicit none
       integer did, outflag
-      character(len=19) out_date
+      character(len=19) out_date, rt_out_date
       integer :: Kt, ounit
 
 !    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
@@ -73,22 +75,27 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-!     write(6,*) "nlst_rt(did)%olddate(1:16), nlst_rt(did)%startdate(1:16) ",  nlst_rt(did)%olddate(1:16), nlst_rt(did)%startdate(1:16)
-      !yw if(nlst_rt(did)%olddate(1:16) == nlst_rt(did)%startdate(1:16) ) then
       if(nlst_rt(did)%olddate(1:19) == nlst_rt(did)%startdate(1:19) ) then
+#if(HYDRO_D == 1)
          write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
+#endif
+         call geth_newdate(rt_out_date, nlst_rt(did)%olddate, -1*nint(rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt*60))
          outflag = 99
       else
          call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%out_dt*60*rt_domain(did)%out_counts))
          if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
+#if(HYDRO_D == 1)
              write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
+#endif
              outflag = 99
+             call geth_newdate(rt_out_date, nlst_rt(did)%olddate, -1*nint(rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt*60))
          endif
       endif
 #ifdef MPP_LAND
    endif
      call mpp_land_bcast_int1(outflag)
 #endif
+
 
      call HYDRO_rst_out(did) 
 
@@ -122,7 +129,8 @@ module module_HYDRO_drv
                 nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                 RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
                 nlst_rt(did)%nsoil, &
-                nlst_rt(did)%startdate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
+!               nlst_rt(did)%startdate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
+                rt_out_date, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
                 RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
                 RT_DOMAIN(did)%SUB_RESID,       &
                    RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
@@ -138,7 +146,8 @@ module module_HYDRO_drv
                 nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                 RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt,          &
                 nlst_rt(did)%nsoil,                               &
-                nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
+!               nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
+                rt_out_date, nlst_rt(did)%olddate,    &
                 gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                 &
                 gw2d(did)%convgw, RT_DOMAIN(did)%SFCHEADSUBRT,     &
                 nlst_rt(did)%wrfsi_finegrid_flnm,nlst_rt(did)%DT, &
@@ -150,9 +159,9 @@ module module_HYDRO_drv
 ! BF end gw2d output section
 
            end if
-
+#if(HYDRO_D == 1)
           write(6,*) "before call output_chrt"
-          call flush(6)
+#endif
      
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
 
@@ -163,7 +172,8 @@ module module_HYDRO_drv
 #endif
                nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-               nlst_rt(did)%startdate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
+!              nlst_rt(did)%startdate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
+               rt_out_date,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
                RT_DOMAIN(did)%CHLAT, &
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
@@ -177,14 +187,16 @@ module module_HYDRO_drv
 #endif
                    nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                    RT_DOMAIN(did)%NLAKES, &
-                   trim(nlst_rt(did)%startdate), trim(nlst_rt(did)%olddate), &
+!                  trim(nlst_rt(did)%startdate), trim(nlst_rt(did)%olddate), &
+                   trim(rt_out_date), trim(nlst_rt(did)%olddate), &
                    RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
                    RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
                    RT_DOMAIN(did)%QLAKEO, &
                    RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
            endif
+#if(HYDRO_D == 1)
            write(6,*) "end calling otuput functions"
-           call flush(6)
+#endif
 
         endif  ! end of routing switch
 
@@ -217,8 +229,9 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
      if(my_id.eq.IO_id) then
 #endif
+#if(HYDRO_D == 1)
         write(6,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
-        call flush(6)
+#endif
 #ifdef MPP_LAND
      endif 
 #endif
@@ -240,7 +253,9 @@ module module_HYDRO_drv
 #endif
          call geth_newdate(newdate, nlst_rt(did)%olddate, nint( nlst_rt(did)%dt))
          nlst_rt(did)%olddate = newdate
+#if(HYDRO_D == 1)
          write(6,*) "current time is ",newdate
+#endif
 #ifdef MPP_LAND
    endif
 #endif
@@ -378,8 +393,10 @@ module module_HYDRO_drv
           ! Ten thousandths
           units = 8
        case default
+#if(HYDRO_D == 1)
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
           stop
+#endif
        end select
 
        if (oldlen.ge.11) then
@@ -430,8 +447,10 @@ module module_HYDRO_drv
           ! Ten thousandths
           units = 8
        case default
+#if(HYDRO_D == 1)
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
           stop
+#endif
        end select
     endif
 
@@ -465,48 +484,54 @@ module module_HYDRO_drv
     !  Check that the month of ODATE makes sense.
 
     if ((moold.gt.12).or.(moold.lt.1)) then
+#if(HYDRO_D == 1)
        write(*,*) 'GETH_NEWDATE:  Month of ODATE = ', moold
+#endif
        opass = .FALSE.
     end if
 
     !  Check that the day of ODATE makes sense.
 
     if ((dyold.gt.mday(moold)).or.(dyold.lt.1)) then
+#if(HYDRO_D == 1)
        write(*,*) 'GETH_NEWDATE:  Day of ODATE = ', dyold
+#endif
        opass = .FALSE.
     end if
 
     !  Check that the hour of ODATE makes sense.
 
     if ((hrold.gt.23).or.(hrold.lt.0)) then
+#if(HYDRO_D == 1)
        write(*,*) 'GETH_NEWDATE:  Hour of ODATE = ', hrold
+#endif
        opass = .FALSE.
     end if
 
     !  Check that the minute of ODATE makes sense.
 
     if ((miold.gt.59).or.(miold.lt.0)) then
+#if(HYDRO_D == 1)
        write(*,*) 'GETH_NEWDATE:  Minute of ODATE = ', miold
+#endif
        opass = .FALSE.
     end if
 
     !  Check that the second of ODATE makes sense.
 
     if ((scold.gt.59).or.(scold.lt.0)) then
+#if(HYDRO_D == 1)
        write(*,*) 'GETH_NEWDATE:  Second of ODATE = ', scold
+#endif
        opass = .FALSE.
     end if
 
     !  Check that the fractional part  of ODATE makes sense.
-
-!KWM      IF ((scold.GT.59).or.(scold.LT.0)) THEN
-!KWM         WRITE(*,*) 'GETH_NEWDATE:  Second of ODATE = ', scold
-!KWM         opass = .FALSE.
-!KWM      END IF
-
     if (.not.opass) then
+#if(HYDRO_D == 1)
        write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
        stop
+#endif
     end if
 
     !  Date Checks are completed.  Continue.
@@ -551,10 +576,12 @@ module module_HYDRO_drv
        nsec   = 0
        nfrac  = 0
     else
+#if(HYDRO_D == 1)
        write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             oldlen
        write(*,*) '#'//odate(1:oldlen)//'#'
        stop
+#endif
     end if
 
     if (idt.ge.0) then
@@ -748,7 +775,7 @@ module module_HYDRO_drv
            call HYDRO_time_adv(did)
 
       ! output for history 
-           call HYDRO_out(did)
+!          call HYDRO_out(did)
 
 
             
@@ -827,12 +854,14 @@ module module_HYDRO_drv
       rt_domain(did)%ixrt = local_rt_nx
       rt_domain(did)%jxrt = local_rt_ny
 
+#if(HYDRO_D == 1)
       write(6,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
       write(6,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
       write(6,*) "rt_domain(did)%ix, rt_domain(did)%jx "
       write(6,*) rt_domain(did)%ix, rt_domain(did)%jx 
       write(6,*) "global_nx, global_ny, local_nx, local_ny"
       write(6,*) global_nx, global_ny, local_nx, local_ny
+#endif
 #else
 ! sequential
       rt_domain(did)%ix = ix
@@ -846,27 +875,29 @@ module module_HYDRO_drv
 
 
        call getChanDim(did)
+#if(HYDRO_D == 1)
        write(6,*) "finish getChanDim "
-       call flush(6)
-
+#endif
 
       if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
           call gw2d_allocate(did,&
                              rt_domain(did)%ixrt,&
                              rt_domain(did)%jxrt,&
                              nlst_rt(did)%nsoil)
+#if(HYDRO_D == 1)
        write(6,*) "finish gw2d_allocate"
-       call flush(6)
+#endif
       endif
 
 ! calculate the distance between grids for routing.
 ! decompose the land parameter/data 
 
 
-!yw      call land_2rt_ini(did)
       call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
 
+#if(HYDRO_D == 1)
        write(6,*) "finish decomposion"
+#endif
 
 
      call get_dist_lsm(did) 
@@ -875,8 +906,10 @@ module module_HYDRO_drv
 
 ! rt model initilization
       call LandRT_ini(did)
+
+#if(HYDRO_D == 1)
       write(6,*) "finish LandRT_ini"    
-      call flush(6)
+#endif
 
        
       if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
@@ -884,12 +917,13 @@ module module_HYDRO_drv
           call gw2d_ini(did,&
                         nlst_rt(did)%dt,&
                         nlst_rt(did)%dxrt0)
-                        
+#if(HYDRO_D == 1)                        
           write(6,*) "finish gw2d_ini"      
-          call flush(6)
+#endif
       endif
+#if(HYDRO_D == 1)
        write(6,*) "finish LandRT_ini"
-       call flush(6)
+#endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -938,7 +972,9 @@ module module_HYDRO_drv
         integer, OPTIONAL:: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
 
+#if(HYDRO_D == 1)
          write(6,*) RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx
+#endif
 
          allocate(soltyp(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx) )
 
@@ -952,16 +988,14 @@ module module_HYDRO_drv
          call get2d_lsm_vegtyp(RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%wrfsi_static_flnm))
 
 
-!        write(6,*) "ix0=",ix0, "jx0=",jx0
-!        call land_finish()
 
-         if(nlst_rt(did)%sys_cpl .eq. 2) then
-           ! coupling with WRF
-             where(soltyp0 == 14) VEGTYP0 = 16
-             where(VEGTYP0 == 16 ) soltyp0 = 14
-             soltyp = soltyp0
-             RT_DOMAIN(did)%VEGTYP = VEGTYP0
-         endif
+            if(nlst_rt(did)%sys_cpl .eq. 2) then
+              ! coupling with WRF
+                where(soltyp0 == 14) VEGTYP0 = 16
+                where(VEGTYP0 == 16 ) soltyp0 = 14
+                soltyp = soltyp0
+                RT_DOMAIN(did)%VEGTYP = VEGTYP0
+            endif
 
          where(soltyp == 14) RT_DOMAIN(did)%VEGTYP = 16
          where(RT_DOMAIN(did)%VEGTYP == 16 ) soltyp = 14
@@ -1033,11 +1067,29 @@ module module_HYDRO_drv
 
 end module module_HYDRO_drv
       subroutine land_finish()
+#if(HYDRO_D == 1)
 #ifdef MPP_LAND
          call mpp_land_finish()
 #else
          stop
 #endif
+#endif
      return
      end  subroutine land_finish
+
+! stop the job due to the fatal error.
+      subroutine HYDRO_stop()
+        integer :: ierr
+#if(HYDRO_D == 1)
+      write(6,*) "The job is stoped due to the fatal error."
+#ifdef MPP_LAND
+         call mpp_land_abort()
+         call MPI_finalize(ierr)
+#else
+         stop "Fatal Error"
+#endif
+
+#endif
+     return
+     end  subroutine HYDRO_stop  
 

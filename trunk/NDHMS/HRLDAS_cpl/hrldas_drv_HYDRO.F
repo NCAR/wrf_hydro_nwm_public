@@ -5,6 +5,7 @@
           integer:: ii,jj,kk
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+
              call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
        end subroutine hrldas_drv_HYDRO
 
@@ -21,7 +22,7 @@
 
        subroutine HYDRO_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,acrain, FORCING_TIMESTEP)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,prcp0, FORCING_TIMESTEP)
 
          use module_lsm_forcing, only: read_seq_forcing
          use module_namelist, only:nlst_rt
@@ -31,7 +32,7 @@
          character(len=19) :: olddate
          character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
-                 weasd, snodep, acrain   
+                 weasd, snodep, prcp0    
          integer :: forc_typ, snow_assim, FORCING_TIMESTEP
 
          ix = ixe-ixs+1
@@ -43,7 +44,7 @@
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
             weasd,snodep,FORCING_TIMESTEP*1.0,kt, &
-            acrain )
+            prcp0  )
        end subroutine HYDRO_seq_frocing
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
@@ -82,20 +83,29 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
+#if(HYDRO_D == 1)
               write(6,*) "Error: failed to open file in get_greenfrac: ", trim(fileName)
-              call land_finish()
+              call hydro_stop() 
+#endif
           endif 
             
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
+#if(HYDRO_D == 1)
              print*, 'name = "', trim(name)//'"'
-             stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+             call hydro_stop()
+#endif
           endif
       
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
+
+#if(HYDRO_D == 1)
              print*, 'name = "', trim(name)//'"'
-             stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+             call hydro_stop()
+#endif
           endif
       
       
@@ -116,7 +126,9 @@
                 ddfrac = float(dd)/float(daytot)
                 if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
       
-                print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
+#if(HYDRO_D == 1)
+               print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
+#endif
       
           do i = 1, idim
              do j = 1, jdim
@@ -151,8 +163,11 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
+#if(HYDRO_D == 1)
               write(6,*) "Error: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
-              call land_finish()
+              call hydro_stop() 
+#endif
+
           endif 
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)

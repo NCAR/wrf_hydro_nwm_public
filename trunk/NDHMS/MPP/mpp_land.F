@@ -31,10 +31,12 @@ MODULE MODULE_MPP_LAND
 
       call getNX_NY(numprocs, left_right_np,up_down_np)
       if(my_id.eq.IO_id) then 
+#if(HYDRO_D == 1)
             write(6,*) ""
             write(6,*) "total process:",numprocs
             write(6,*) "left_right_np =", left_right_np,&
                  "up_down_np=",up_down_np
+#endif
       end if
 
 !   ### get the row and column of the current process in the logical topography.
@@ -123,10 +125,12 @@ MODULE MODULE_MPP_LAND
         
         in_global_nx = local_nx
         in_global_ny = local_ny
+#if(HYDRO_D == 1)
         write(6,*) "my_id=",my_id,"global_rt_nx=",global_rt_nx
         write(6,*) "my_id=",my_id,"global_rt_nx=",global_rt_ny
         write(6,*) "my_id=",my_id,"global_nx=",global_nx
         write(6,*) "my_id=",my_id,"global_nx=",global_ny
+#endif
         return 
         end  subroutine MPP_LAND_PAR_INI
 
@@ -1017,16 +1021,6 @@ MODULE MODULE_MPP_LAND
   return 
   end subroutine getNX_NY
 
-!    subroutine pack_global_2(in1)
-!       integer ix,jx,i
-!       real out(global_nx,global_ny)
-!       real,dimension(local_nx,local_ny)::    &
-!          in1
-!       call write_IO_real(in1,out)
-!       if(my_id .eq. IO_id) call land_send_flux1(out)
-!    return 
-!    end !pack_global_2
-
      subroutine pack_global_22(in,   &
         out,k)
         integer ix,jx,k,i
@@ -1449,7 +1443,6 @@ MODULE MODULE_MPP_LAND
                call mpi_recv(recv,nsize,MPI_DOUBLE_PRECISION,i,  &
                     tag,MPI_COMM_WORLD,mpp_status,ierr)
                vin(:) = vin(:) + recv(:)
-!              write(26,*) recv
              endif
           end do
           v = vin
@@ -1540,12 +1533,16 @@ END MODULE MODULE_MPP_LAND
       implicit none
       include "mpif.h"
       integer ierr
+#if(HYDRO_D == 1)
       write(6,*) "mpp_land_finish called "
+#endif
       call MPI_barrier( MPI_COMM_WORLD ,ierr)
       if(ierr .ne. 0) call mpp_land_abort()
       call MPI_finalize(ierr)
       if(ierr .ne. 0) call mpp_land_abort()
+#if(HYDRO_D == 1)
       stop 999
+#endif
       return
   end ! mpp_land_finish 
 

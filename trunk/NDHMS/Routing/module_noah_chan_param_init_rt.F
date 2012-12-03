@@ -27,15 +27,19 @@ CONTAINS
     OPEN(19, FILE='CHANPARM.TBL',FORM='FORMATTED',STATUS='OLD')
     READ (19,*)
     READ (19,2000,END=2002) DATATYPE
+#if(HYDRO_D == 1)
     PRINT *, DATATYPE
+#endif
     READ (19,*)CHANCATS,IINDEX
 2000 FORMAT (A11)
 
 !-----Read in Channel Parameters as functions of stream order...
 
     IF(DATATYPE.EQ.'StreamOrder')THEN
+#if(HYDRO_D == 1)
        PRINT *, 'CHANNEL DATA SOURCE TYPE = ',DATATYPE,' FOUND',           &
             CHANCATS,' CATEGORIES'
+#endif
        DO ORDER=1,CHANCATS
           READ (19,*)IINDEX,BOTWID(ORDER),HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
                &     CHMann(ORDER)

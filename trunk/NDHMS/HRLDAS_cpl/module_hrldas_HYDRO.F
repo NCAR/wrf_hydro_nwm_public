@@ -45,9 +45,11 @@ CONTAINS
 
         did = 1
 
-        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
-                  nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
-        call flush(6) 
+
+
+!        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
+!                 nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
+!       call flush(6) 
 
         IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
@@ -120,14 +122,16 @@ CONTAINS
 
         did = 1
 
+        if(my_id .eq. IO_id) write(6,*) "yyww before HYDRO ini"
+
         if(.not. RT_DOMAIN(did)%initialized) then  
            nlst_rt(did)%dt = dt
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
            nlst_rt(did)%startdate(1:19) = olddate(1:19)
 
-           write(6,*) "yyyywww step 4 before HYDRO_ini= "
+!           write(6,*) "yyyywww step 4 before HYDRO_ini= "
            
-           call HYDRO_ini(ntime,did)
+           call HYDRO_ini(ntime,did,ix0=1,jx0=1)
            RT_DOMAIN(did)%initialized = .true.
    
            IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
@@ -152,8 +156,8 @@ CONTAINS
                  where( abs(SH2OX) .gt. 500) SH2OX = 0.25
               endif
            endif 
-           if(my_id .eq. IO_id) write(6,*) "olddate = ",nlst_rt(did)%olddate
-           call flush(6)   
+!          if(my_id .eq. IO_id) write(6,*) "olddate = ",nlst_rt(did)%olddate
+!          call flush(6)   
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt
@@ -167,6 +171,7 @@ CONTAINS
         endif
 
 
+        if(my_id .eq. IO_id) write(6,*) "yyww end HYDRO ini"
      return 
      end subroutine hrldas_cpl_HYDRO_ini
 end module module_HRLDAS_HYDRO

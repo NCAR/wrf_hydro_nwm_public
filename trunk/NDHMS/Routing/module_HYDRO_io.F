@@ -20,7 +20,9 @@ module module_HYDRO_io
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
+#if(HYDRO_D == 1) 
             print*,"failed to open the netcdf file: ",trim(fileName)
+#endif
             out_buff = -9999.
             return 
           endif
@@ -28,7 +30,9 @@ module module_HYDRO_io
           if(ivar .ne. 0) then
             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
             if(ivar .ne. 0) then
+#if(HYDRO_D == 1)
                write(6,*) "Read Error: could not find ",var_name
+#endif
                  return 
             endif
           end if
@@ -45,8 +49,9 @@ module module_HYDRO_io
 #ifdef MPP_LAND
          real,allocatable, dimension(:,:) :: buff_g
 
+#if(HYDRO_D == 1)
          write(6,*) "start to read variable ", var_name
-         call flush(6)
+#endif
          allocate(buff_g (global_nx,global_ny) )
 
          if(my_id .eq. IO_id) then
@@ -57,8 +62,9 @@ module module_HYDRO_io
 #else         
          status = get2d_real(var_name,out_buff,ix,jx,fileName)
 #endif
+#if(HYDRO_D == 1)
          write(6,*) "finish reading variable ", var_name
-         call flush(6)
+#endif
      end subroutine get2d_lsm_real
 
      subroutine get2d_lsm_vegtyp(out_buff,ix,jx,fileName)
@@ -76,22 +82,29 @@ module module_HYDRO_io
          if(my_id .eq. IO_id) then
 #endif
                 ! Open the NetCDF file.
-              write(*,'("fileName: ''", A, "''")') trim(fileName)
               iret = nf_open(fileName, NF_NOWRITE, ncid)
               if (iret /= 0) then
+#if(HYDRO_D == 1)
                  write(*,'("Problem opening wrfsi_static file: ''", A, "''")') &
                       trim(fileName)
-                 stop
+                 call hydro_stop()
+#endif
               endif
 
             iret = nf_inq_dimid(ncid, "land_cat", dimid)
             if (iret /= 0) then
-              stop "nf_inq_dimid:  land_cat"
+#if(HYDRO_D == 1)
+              print*, "nf_inq_dimid:  land_cat"
+              call hydro_stop()
+#endif
              endif
 
             iret = nf_inq_dimlen(ncid, dimid, land_cat)
             if (iret /= 0) then
-               stop "nf_inq_dimlen:  land_cat"
+#if(HYDRO_D == 1)
+               print*, "nf_inq_dimlen:  land_cat"
+               call hydro_stop()
+#endif
             endif
 
 #ifdef MPP_LAND
@@ -117,30 +130,44 @@ module module_HYDRO_io
 #endif
             iret = nf_open(fileName, NF_NOWRITE, ncid)
             if (iret /= 0) then
+#if(HYDRO_D == 1)
                write(*,'("Problem opening wrfsi_static file: ''", A, "''")') &
                     trim(fileName)
-               stop
+               call hydro_stop()
+#endif
             endif
         
             iret = nf_inq_dimid(ncid, "west_east", dimid)
         
             if (iret /= 0) then
-               stop "nf_inq_dimid:  west_east"
-                    endif
+#if(HYDRO_D == 1)
+               print*, "nf_inq_dimid:  west_east"
+               call hydro_stop()
+#endif
+            endif
         
             iret = nf_inq_dimlen(ncid, dimid, ix)
             if (iret /= 0) then
-               stop "nf_inq_dimlen:  west_east"
+#if(HYDRO_D == 1)
+               print*, "nf_inq_dimlen:  west_east"
+               call hydro_stop()
+#endif
             endif
         
             iret = nf_inq_dimid(ncid, "south_north", dimid)
             if (iret /= 0) then
-                       stop "nf_inq_dimid:  south_north"
+#if(HYDRO_D == 1)
+                       print*, "nf_inq_dimid:  south_north"
+                       call hydro_stop()
+#endif
             endif
         
             iret = nf_inq_dimlen(ncid, dimid, jx)
             if (iret /= 0) then
-               stop "nf_inq_dimlen:  south_north"
+#if(HYDRO_D == 1)
+               print*, "nf_inq_dimlen:  south_north"
+               call hydro_stop()
+#endif
             endif
             iret = nf_close(ncid)
 #ifdef MPP_LAND
@@ -166,22 +193,29 @@ module module_HYDRO_io
          if(my_id .eq. IO_id) then
 #endif
                 ! Open the NetCDF file.
-              write(*,'("fileName: ''", A, "''")') trim(fileName)
               iret = nf_open(fileName, NF_NOWRITE, ncid)
               if (iret /= 0) then
+#if(HYDRO_D == 1)
                  write(*,'("Problem opening wrfsi_static file: ''", A, "''")') &
                       trim(fileName)
-                 stop
+                 call hydro_stop()
+#endif
               endif
 
             iret = nf_inq_dimid(ncid, "soil_cat", dimid)
             if (iret /= 0) then
-              stop "nf_inq_dimid:  soil_cat"
+#if(HYDRO_D == 1)
+              print*, "nf_inq_dimid:  soil_cat"
+              call hydro_stop()
+#endif
              endif
 
             iret = nf_inq_dimlen(ncid, dimid, land_cat)
             if (iret /= 0) then
-               stop "nf_inq_dimlen:  soil_cat"
+#if(HYDRO_D == 1)
+               print*, "nf_inq_dimlen:  soil_cat"
+               call hydro_stop()
+#endif
             endif
 
 #ifdef MPP_LAND
@@ -220,14 +254,20 @@ module module_HYDRO_io
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_inq_varid"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_inq_varid"
+       call hydro_stop()
+#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_get_var_real"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_get_var_real"
+       call hydro_stop()
+#endif
     endif
 
     do i = 1, idim
@@ -261,14 +301,20 @@ module module_HYDRO_io
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_inq_varid"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_inq_varid"
+       call hydro_stop()
+#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_get_var_real"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_get_var_real"
+       call hydro_stop()
+#endif
     endif
 
     do i = 1, idim
@@ -304,14 +350,20 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+       call hydro_stop()
+#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+       call hydro_stop()
+#endif
     endif
 
 
@@ -332,7 +384,9 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
           ddfrac = float(dd)/float(daytot)
           if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
 
+#if(HYDRO_D == 1)
     print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
+#endif
 
     do i = 1, idim
        do j = 1, jdim
@@ -369,14 +423,20 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_inq_varid"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_inq_varid"
+       call hydro_stop()
+#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_get_var_real"
+       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_get_var_real"
+       call hydro_stop()
+#endif
     endif
 
     if (mm.lt.12) then 
@@ -396,7 +456,9 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
           ddfrac = float(dd)/float(daytot)
           if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
 
+#if(HYDRO_D == 1)
     print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
+#endif
 
     do i = 1, idim
        do j = 1, jdim
@@ -433,37 +495,31 @@ end subroutine get_albedo12m_netcdf
 
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
+#if(HYDRO_D == 1)
           print*, 'name = "', trim(name)//'"'
-          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_inq_varid"
+          print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_inq_varid"
+          call hydro_stop()
+#endif
        else
           ierr = iret
           return
        endif
     endif
 
-!DJG    iret = nf_get_att_text(ncid, varid, "units", units)
-!DJG   if (iret /= 0) then
-!DJG      if (.TRUE._IF_ERROR) then
-!DJG          print*, 'name = "', trim(name)//'"'
-!DJG          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_get_att_text"
-!DJG       else
-!DJG          ierr = iret
-!DJG          return
-!DJG       endif
-!DJG    endif
 
     iret = nf_get_var_real(ncid, varid, array)
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
+#if(HYDRO_D == 1)
           print*, 'name = "', trim(name)//'"'
-          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_get_var_real"
+          print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_get_var_real"
+          call hydro_stop()
+#endif
        else
           ierr = iret
           return
        endif
     endif
-!   print *, name//' = ', idim,jdim
-!   print*, name//' = ', array(1,1), array(1,jdim), array(idim,jdim), array(idim,1)
 
     ierr = 0;
   end subroutine get_2d_netcdf
@@ -487,7 +543,10 @@ end subroutine get_albedo12m_netcdf
 
       if (iret /= 0) then
         if (fatal_IF_ERROR) then
-           stop "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_cows:nf_inq_varid"
+#if(HYDRO_D == 1)
+           print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_cows:nf_inq_varid"
+           call hydro_stop()
+#endif
         else
           ierr = iret
           return
@@ -548,8 +607,9 @@ end subroutine get_albedo12m_netcdf
 
 
         cnt = 0 
+#if(HYDRO_D == 1)
        print *, "Channel Option in Routedim is ", channel_option
-       write(6,*) "ixrt,jxrt ",ixrt,jxrt
+#endif
 
        IF(channel_option.eq.3) then  !get maxnodes and links from grid
 
@@ -575,7 +635,6 @@ end subroutine get_albedo12m_netcdf
 
 !!!Flip y-dimension of highres grids from exported Arc files...
 
-        write(6,*) "ixrt,jxrt=",ixrt,jxrt
 
         do i=1,ixrt
         jj=jxrt
@@ -600,13 +659,14 @@ end subroutine get_albedo12m_netcdf
 !DJG inv         do j=jxrt,1,-1
          do j=1,jxrt
              do i = 1, ixrt
-!                print *, CH_NETRT(i,j),i,j
                if (CH_NETRT(i,j) .ge.0.AND.CH_NETRT(i,j).lt.100) then 
                  NLINKS = NLINKS + 1
                endif
             end do 
          end do 
+#if(HYDRO_D == 1)
          print *, "NLINKS IS ", NLINKS 
+#endif
 
 
 !DJG inv         DO j = JXRT,1,-1  !rows
@@ -642,18 +702,23 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              CH_NETLNK(i,j) = cnt 
            else 
+#if(HYDRO_D == 1)
              write(*,135) "PrPt/LkIn", CH_NETRT(i,j), DIRECTION(i,j), LON(i,j), LAT(i,j),i,j 
 135             FORMAT(A9,1X,I3,1X,I3,1X,F10.5,1X,F9.5,1X,I4,1X,I4)
-!             print *, "Pr Pt or Lk Inflow", CH_NETRT(i,j), DIRECTION(i,j), i,j 
+#endif
              if (DIRECTION(i,j) .eq. 0) then
+#if(HYDRO_D == 1)
                print *, "Direction i,j ",i,j," of point ", cnt, "is invalid"
+#endif
              endif
 
            End If
          End If !CH_NETRT check for this node
         END DO
        END DO 
+#if(HYDRO_D == 1)
        print *, "found type 0 nodes", cnt
+#endif
       
 !Find out if the boundaries are on an edge or flow into a lake
 !DJG inv       DO j = JXRT,1,-1
@@ -665,61 +730,80 @@ end subroutine get_albedo12m_netcdf
                .OR. ((DIRECTION(i, j) .EQ. 64).and. (j<jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point N", cnt,CH_NETRT(i,j), i,j
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge     
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point NE", cnt, CH_NETRT(i,j),i,j
+#endif
            else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT))     & !-- 1's can only flow due east
                .OR. ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point E", cnt,CH_NETRT(i,j), i,j
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point SE", cnt,CH_NETRT(i,j), i,j
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0))       &      !-- 4's can only flow due south
                 .OR. ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point S", cnt,CH_NETRT(i,j), i,j
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
                .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
                .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point SW", cnt,CH_NETRT(i,j), i,j
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE. 0))       &      !-- 16's can only flow due west 
                .OR.  ((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt              
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point W", cnt,CH_NETRT(i,j), i,j
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
                .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
                .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
               cnt = cnt + 1
               CH_NETLNK(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Boundary Pour Point NW", cnt,CH_NETRT(i,j), i,j
+#endif
            endif
           endif !CH_NETRT check for this node
          END DO
        END DO 
 
+#if(HYDRO_D == 1)
        print *, "total number of channel elements", cnt
        print *, "total number of NLINKS          ", NLINKS
-       write(*,*) " " 
+#endif
 
 
 
       !-- get the number of lakes
        if (cnt .ne. NLINKS) then 
+#if(HYDRO_D == 1)
          print *, "Apparent error in network topology", cnt, NLINKS
-         stop
+         call hydro_stop()
+#endif
        endif
 !DJG inv       do j=jxrt,1,-1
        do j=1,jxrt
@@ -729,22 +813,27 @@ end subroutine get_albedo12m_netcdf
            endif
         end do
        end do
+#if(HYDRO_D == 1)
        write(6,*) "finish read_red ..  nlakes = ", nlakes
-       call flush(6)
+#endif
 
        return
 
      else  ! get nlinks from the ascii file of links
         open(unit=79,file=trim(route_link_f),          & !link
                    form='formatted',status='old')
+#if(HYDRO_D == 1)
                    write(6,*) "read file ",route_link_f
+#endif
 1011    read(79,*,end= 1999) InputLine
         NLINKS = NLINKS + 1
         goto 1011
 1999   continue
         NLINKS = NLINKS - 1 !-- first line is a comment 
         close(79)
+#if(HYDRO_D == 1)
         print *, "Number of Links on sparse network", NLINKS
+#endif
         return
      end if
 
@@ -840,11 +929,13 @@ end subroutine get_albedo12m_netcdf
         to_node =   MAXORDER
         from_node = MAXORDER
 
+#if(HYDRO_D == 1)
         print *, "reading routing initialization files..."
         print *, "route direction", route_direction_f
         print *, "route order", route_order_f
         print *, "route linke",route_link_f
         print *, "route lake",route_lake_f
+#endif
 
 !DJG Edited code here to retrieve data from hires netcdf file....
 
@@ -924,8 +1015,9 @@ end subroutine get_albedo12m_netcdf
 !        end if
 
         
-
+#if(HYDRO_D == 1)
 	print *, "Number of frxst pts: ",ct
+#endif
           
      
 ! temp fix for buggy Arc export...
@@ -960,8 +1052,10 @@ end subroutine get_albedo12m_netcdf
       elseif ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then  !-- handle setting up topology on the grid for diffusion scheme
 
        read(79,*)  header  !-- read the lake file
+#if(HYDRO_D == 1)
        write(*,*) "reading lake file ", header
        write(6,*) "error check read file ",route_link_f
+#endif
 
 
       if (NLAKES.gt.0) then !read in only if there are lakes
@@ -969,7 +1063,9 @@ end subroutine get_albedo12m_netcdf
         read (79,*) tmp, HRZAREA(i),LAKEMAXH(i), &
           WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
            LATLAKE(i), LONLAKE(i),ELEVLAKE(i)
+#if(HYDRO_D == 1)
         write (*,*) tmp, HRZAREA(i),LAKEMAXH(i), LATLAKE(i), LONLAKE(i),ELEVLAKE(i),NLAKES
+#endif
        enddo
       end if   !end if for NLAKES >0 check
 
@@ -1118,7 +1214,9 @@ end subroutine get_albedo12m_netcdf
              CHANYJ(cnt) = j
              Link_Location(i,j) = cnt
           else 
+#if(HYDRO_D == 1)
              print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
+#endif
           End If
 
          End If !CH_NETRT check for this node
@@ -1126,8 +1224,10 @@ end subroutine get_albedo12m_netcdf
         END DO
        END DO 
 
+#if(HYDRO_D == 1)
        print *, "after exiting the channel, this many nodes", cnt
        write(*,*) " " 
+#endif
 
 !Find out if the boundaries are on an edge
 !DJG inv       DO j = JXRT,1,-1
@@ -1159,7 +1259,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point N", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
@@ -1186,7 +1288,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point NE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT)) .OR. &    !-- 1's can only flow due east
                ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
               cnt = cnt + 1
@@ -1211,7 +1315,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point E", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
@@ -1237,7 +1343,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point SE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            else if (((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0)) .OR. &       !-- 4's can only flow due south
                ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
               cnt = cnt + 1
@@ -1262,7 +1370,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point S", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
           else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
                .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
                .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
@@ -1288,7 +1398,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point SW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            else if (((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE.0) ) &                  !16's can only flow due west
                .OR.((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
               cnt = cnt + 1
@@ -1313,7 +1425,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point W", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
                .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
                .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
@@ -1339,7 +1453,9 @@ end subroutine get_albedo12m_netcdf
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
               Link_Location(i,j) = cnt
+#if(HYDRO_D == 1)
               print *, "Pour Point NW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+#endif
            endif
           endif !CH_NETRT check for this node
          END DO
@@ -1348,12 +1464,16 @@ end subroutine get_albedo12m_netcdf
 
      close(79)
        if (cnt .ne. NLINKS) then 
+#if(HYDRO_D == 1)
          print *, "Apparent error in network topology", cnt, NLINKS
-         stop
+         call hydro_stop()
+#endif
        endif
 
      do i=1,NLINKS
+#if(HYDRO_D == 1)
       if (STRMFRXSTPTS(i).ne.-9999) print *,"Frxst_pt: ",STRMFRXSTPTS(i)
+#endif
      end do
      return
 
@@ -1509,18 +1629,6 @@ end subroutine get_albedo12m_netcdf
       call mpp_land_bcast_real(NLAKES,LONLAKE)
       call mpp_land_bcast_real(NLAKES,ELEVLAKE)
 
-!yw this is for test  the function
-     
-!     ywtest = node_table 
-!     call write_chanel_real(ywtest,nlinks_index,mpp_nlinks,nlinks)   
-!     if(my_id .eq. IO_id) then
-!         do i = 1, nlinks
-!           write(91,*) ywtest(i), i
-!        end do
-!        call flush(91)
-!     endif
-!YW 
-
    end subroutine MPP_CHROUTING_CONF
 #endif
 
@@ -1642,7 +1750,9 @@ end subroutine get_albedo12m_netcdf
   allocate(gLtype(global_rt_nx, global_rt_ny))
   
   if(my_id .eq. IO_id) then
+#if(HYDRO_D == 1)
   print*, "2D GW-Scheme selected, retrieving files from gwhires.nc ..."
+#endif
 #endif
 
 
@@ -1797,15 +1907,18 @@ end subroutine get_albedo12m_netcdf
     if (output_count == 0) then
 
    !-- Open the  finemesh static files to obtain projection information
+#if(HYDRO_D == 1)
       write(*,'("wrfsi_finegrid_flnm: ''", A, "''")') trim(wrfsi_finegrid_flnm)
+#endif
       iret = nf_open(trim(wrfsi_finegrid_flnm), NF_NOWRITE, ncstatic)
 
       if (iret /= 0) then
+#if(HYDRO_D == 1)
          write(*,'("Problem opening wrfsi_finegrid file: ''", A, "''")') &
          trim(wrfsi_finegrid_flnm)
          write(*,*) "HIRES_OUTPUT will not be georeferenced..."
+#endif
          
-!DJG       stop
         hires_flag = 0
       else
         hires_flag = 1
@@ -1852,10 +1965,17 @@ end subroutine get_albedo12m_netcdf
 
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+#if(HYDRO_D == 1)
        print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
 
        iret = nf_create(trim(output_flnm), 0, ncid)
-       if (iret /= 0) stop "Problem nf_create"
+#if(HYDRO_D == 1)
+       if (iret /= 0) then
+         print*, "Problem nf_create"
+         call hydro_stop()
+       endif
+#endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
@@ -2007,9 +2127,10 @@ end subroutine get_albedo12m_netcdf
         iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
 
 
-
+#if(HYDRO_D == 1) 
         write (*,*) "TEST....",LONVAL (1,1),(1,2)
         write (*,*) "TEST....",LATVAL (1,1),(1,2)
+#endif
 
 
 
@@ -2202,9 +2323,10 @@ end subroutine get_albedo12m_netcdf
      deallocate(xcoord)
      deallocate(ycoord_d)
      deallocate(ycoord)
-     
+    
+#if(HYDRO_D == 1) 
      write(6,*) "end of output_rt" 
-     call flush(6)
+#endif
 
   end subroutine output_rt
 
@@ -2304,13 +2426,18 @@ end subroutine get_albedo12m_netcdf
     if (output_count == 0) then
 
    !-- Open the  finemesh static files to obtain projection information
+#if(HYDRO_D == 1)
       write(*,'("wrfsi_finegrid_flnm: ''", A, "''")') trim(wrfsi_finegrid_flnm)
+
+#endif
       iret = nf_open(trim(wrfsi_finegrid_flnm), NF_NOWRITE, ncstatic)
 
       if (iret /= 0) then
+#if(HYDRO_D == 1)
          write(*,'("Problem opening wrfsi_finegrid file: ''", A, "''")') &
          trim(wrfsi_finegrid_flnm)
          write(*,*) "HIRES_OUTPUT will not be georeferenced..."
+#endif
         hires_flag = 0
       else
         hires_flag = 1
@@ -2357,10 +2484,17 @@ end subroutine get_albedo12m_netcdf
 
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".GW_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+#if(HYDRO_D == 1)
        print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
 
        iret = nf_create(trim(output_flnm), 0, ncid)
-       if (iret /= 0) stop "Problem nf_create"
+#if(HYDRO_D == 1)
+       if (iret /= 0) then
+         print*, "Problem nf_create"
+         call hydro_stop()
+       endif
+#endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
@@ -2562,9 +2696,10 @@ end subroutine get_albedo12m_netcdf
      deallocate(xcoord)
      deallocate(ycoord_d)
      deallocate(ycoord)
-     
+    
+#if(HYDRO_D == 1) 
      write(6,*) "end of output_ge" 
-     call flush(6)
+#endif
 #ifdef MPP_LAND
     endif
 #endif
@@ -2644,12 +2779,13 @@ end subroutine get_albedo12m_netcdf
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
 
+#if(HYDRO_D == 1)
      write(6,*) "yyww dtrt =", dtrt , "k =", k
+#endif
    
      seconds_since = int(dtrt)*K
 
 !    order_to_write = 2  !-- 1 all; 6 feweest
-!    print *, "Subroutine Output_chrt,K, secs links", K, seconds_since, NLINKS
 
       nstations = 0  ! total number of channel points to display
       nobs      = 0  ! number of observation points
@@ -2699,13 +2835,25 @@ end subroutine get_albedo12m_netcdf
         write(output_flnm, '(A12,".CHRTOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
         write(output_flnm2,'(A12,".CHANOBS_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
 
+#if(HYDRO_D == 1)
         print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
 
         iret = nf_create(trim(output_flnm), 0, ncid)
-        if (iret /= 0) stop "Problem nf_create points"
+#if(HYDRO_D == 1)
+        if (iret /= 0) then
+           print*,  "Problem nf_create points"
+           call hydro_stop()
+        endif
+#endif
 
         iret = nf_create(trim(output_flnm2), 0, ncid2)
-        if (iret /= 0) stop "Problem nf_create observation"
+#if(HYDRO_D == 1)
+        if (iret /= 0) then
+            print*, "Problem nf_create observation"
+            call hydro_stop()
+        endif
+#endif
 
        do i=1,NLINKS
         if(ORDER(i) .ge. order_to_write) then 
@@ -2734,7 +2882,9 @@ end subroutine get_albedo12m_netcdf
          lOrderO(nobs) = ORDER(i)
          station_idO(nobs) = i
          write(stnameO(nobs),'(I6,"_",I1)') nobs,lOrderO(nobs)
+#if(HYDRO_D == 1)
          print *,"stationobservation name",  stnameO(nobs)
+#endif
         endif
        enddo 
 
@@ -2751,11 +2901,17 @@ end subroutine get_albedo12m_netcdf
 
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
+#if(HYDRO_D == 1)
        write(6,*) "iret 2.1,  ", iret, stationdim
+#endif
         iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
+#if(HYDRO_D == 1)
        write(6,*) "iret 2.2", iret
+#endif
         iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+#if(HYDRO_D == 1)
        write(6,*) "iret 2.3", iret
+#endif
 
 
       !- station location definition obs,  lat
@@ -2982,21 +3138,11 @@ end subroutine get_albedo12m_netcdf
          if(output_count.ne.1) then !-- only write next set of records
            iret = nf_inq_varid(ncid,"prevChild", varid)
            iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
-!IF block to add -1 to last element of prevChild array to designate end of list...
-!           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
-!             iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), -1)
-!           else
-!             iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
-!           endif 
          endif
 
          cnt=cnt+1  !--indices are 0 based
          rec_num_of_station(cnt) = start_pos-1  !-- save position for last child, 0-based!!
 
-!         if(STRMFRXSTPTS(i) .ne. -9999) then 
-!           write(999,117) seconds_since,cnt,chanlonO(i),chanlatO(i),abs(qlink(i,1)),hlink(i)
-!117 FORMAT(I8,1X,I7,1X,F10.5,1X,F8.5,1X,F7.3,1x,F6.3)
-!         endif !end if for FRXSTPTS
 
        endif
     enddo
@@ -3007,7 +3153,9 @@ end subroutine get_albedo12m_netcdf
     do i=1,NLINKS
 
       if(STRMFRXSTPTS(i) .ne. -9999) then 
+#if(HYDRO_D == 1)
          print *, "Outputting frxst pt. :",STRMFRXSTPTS(i)
+#endif
          start_posO = (cnt+1)+(nobs * (output_count-1))
 
 !Write frxst_pts to text file...
@@ -3099,8 +3247,9 @@ end subroutine get_albedo12m_netcdf
      deallocate(lOrderO)
      deallocate(rec_num_of_stationO)
      deallocate(stnameO)
-
+#if(HYDRO_D == 1)
      print *, "Exited Subroutine output_chrt"
+#endif
      close(16)
 
 20 format(i8,',',f12.7,',',f10.7,',',f6.2,',',i3)
@@ -3132,18 +3281,6 @@ end subroutine output_chrt
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
      integer  :: mpp_nlinks, nlinks_index(nlinks), order_to_write
-
-!    write(16,*) mpp_nlinks,nlinks_index,igrid, &
-!       split_output_count, NLINKS
-!    write(17,*) ORDER
-!    write(18,*)   startdate, date
-!    write(19,*) chlon, chlat
-!    write(20,*) hlink
-!    write(21,*) zelev
-!    write(22,*) qlink
-!    write(23,*) dtrt, K
-!    write(24,*) STRMFRXSTPTS
-
 
 
      call write_chanel_int(order,nlinks_index,mpp_nlinks,nlinks)
@@ -3259,10 +3396,17 @@ end subroutine mpp_output_chrt
                   //startdate(12:13)//':'//startdate(15:16)//':00'
 
       write(output_flnm, '(A12,".LAKEOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+#if(HYDRO_D == 1)
       print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
 
       iret = nf_create(trim(output_flnm), 0, ncid)
-      if (iret /= 0) stop "Problem nf_create"
+#if(HYDRO_D == 1)
+      if (iret /= 0) then
+          print*, "Problem nf_create"
+          call hydro_stop()
+      endif
+#endif
 
       do i=1,NLAKES
          station_id(i) = i
@@ -3432,7 +3576,9 @@ end subroutine mpp_output_chrt
      deallocate(station_id)
      deallocate(rec_num_of_lake)
      deallocate(stname)
+#if(HYDRO_D == 1)
      print *, "Exited Subroutine output_lakes"
+#endif
      close(16)
 
  end subroutine output_lakes
@@ -3515,13 +3661,17 @@ end subroutine mpp_output_chrt
     seconds_since = dt*output_count
 
     !-- Open the  finemesh static files to obtain projection information
+#if(HYDRO_D == 1)
       write(*,'("wrfsi_finegrid_flnm: ''", A, "''")') trim(wrfsi_finegrid_flnm)
+#endif
       iret = nf_open(wrfsi_finegrid_flnm, NF_NOWRITE, ncstatic)
 
       if (iret /= 0) then
+#if(HYDRO_D == 1)
          write(*,'("Problem opening wrfsi_finegrid file: ''", A, "''")') &
          trim(wrfsi_finegrid_flnm)
-       stop
+         call hydro_stop()
+#endif
       endif
 
       ! Get Latitude (X)
@@ -3544,11 +3694,18 @@ end subroutine mpp_output_chrt
       if (output_count == 0) then
  
         write(output_flnm, '(A12,".CHRTOUT_GRID",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+#if(HYDRO_D == 1)
         print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
  
 !--- define dimension
         iret = nf_create(trim(output_flnm), 0, ncid)
-        if (iret /= 0) stop "Problem nf_create"
+#if(HYDRO_D == 1)
+        if (iret /= 0) then
+            print*, "Problem nf_create"
+            call hydro_stop()
+        endif
+#endif
 
         iret = nf_def_dim(ncid, "time", NF_UNLIMITED, timedim)
         iret = nf_def_dim(ncid, "x", ixrt, ixlondim)
@@ -3618,10 +3775,8 @@ end subroutine mpp_output_chrt
     do j=1,jxrt
      do i=1,ixrt
        if(CH_NETRT(i,j).GE.0) then
-!        print *, CH_NETLNK(i,j),CH_NETRT(i,j),i,j
          tmpflow(i,j) = qlink(CH_NETLNK(i,j),1) 
        else
-!       print *, CH_NETLNK(i,j),CH_NETRT(i,j),i,j
          tmpflow(i,j) = -9E15
        endif
      enddo
@@ -3632,7 +3787,6 @@ end subroutine mpp_output_chrt
     iret = nf_put_vara_int(ncid, varid, (/output_count/), (/1/), seconds_since)
 
     iret = nf_inq_varid(ncid,"flow", varid)
-!      print*, 'flow varid = ', varid
     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrt,jxrt,1/),tmpflow)
 
      iret = nf_redef(ncid)
@@ -3700,9 +3854,9 @@ end subroutine mpp_output_chrt
     integer i
 
 
-
+#if(HYDRO_D == 1)
     write(6,*) "mpp_output_RT output file: ",trim(wrfsi_finegrid_flnm)
-    call flush(6)
+#endif
 
     call write_IO_rt_real(LATVAL_in,LATVAL)
     call write_IO_rt_real(LONVAL_in,LONVAL)
@@ -3753,8 +3907,9 @@ end subroutine mpp_output_chrt
           wrfsi_finegrid_flnm,DT,SLDPTH,latval,lonval,dist_g,HIRES_OUT)
     end if
 
+#if(HYDRO_D == 1)
     write(6,*) "return from mpp_output_RT"
-    call flush(6)
+#endif
   end subroutine mpp_output_rt
 
 #endif
@@ -3809,9 +3964,9 @@ end subroutine mpp_output_chrt
     integer i
 
 
-
+#if(HYDRO_D == 1)
     write(6,*) "mpp_output_GW output file: ",trim(wrfsi_finegrid_flnm)
-    call flush(6)
+#endif 
 
     call write_IO_rt_real(LATVAL_in,LATVAL)
     call write_IO_rt_real(LONVAL_in,LONVAL)
@@ -3859,8 +4014,9 @@ end subroutine mpp_output_chrt
           wrfsi_finegrid_flnm,DT,SLDPTH,latval,lonval,dist_g,HIRES_OUT)
     end if
 
+#if(HYDRO_D == 1)
     write(6,*) "return from mpp_output_GW"
-    call flush(6)
+#endif
   end subroutine mpp_output_gw
 #endif
 ! BF end mpp gw output section
@@ -3890,14 +4046,18 @@ end subroutine mpp_output_chrt
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//".RTOUT_DOMAIN"//hgrid
+#if(HYDRO_D == 1)
         print *, "Channel forcing file...",inflnm
+#endif
 
 
 !DJG Open NetCDF file...
     ierr = nf_open(inflnm, NF_NOWRITE, ncid)
     if (ierr /= 0) then
+#if(HYDRO_D == 1)
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
-       stop
+       call hydro_stop()
+#endif
     endif
 
 !DJG read data...
@@ -3921,13 +4081,17 @@ end subroutine mpp_output_chrt
           character(len=*), intent(in) :: fileName
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
+#if(HYDRO_D == 1)
             print*,"aaa failed to open the netcdf file: ",trim(fileName)
-            stop 9999
+            call hydro_stop()
+#endif
           endif
           iret = nf_inq_varid(ncid,trim(var_name),  varid)
           if(iret .ne. 0) then
+#if(HYDRO_D == 1)
             print*,"failed to read the variabe: ",trim(var_name)
             print*,"failed to read the netcdf file: ",trim(fileName)
+#endif
           endif
           iret = nf_get_var_int(ncid, varid, out_buff)
           iret = nf_close(ncid)
@@ -4185,8 +4349,9 @@ end subroutine mpp_output_chrt
         var_name = "TOPOGRAPHY"
         iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
                      trim(wrfsi_finegrid_flnm))
+#if(HYDRO_D == 1)
         write(6,*) "read ",var_name
-        call flush(6)
+#endif
 
 !!!DY to be fixed ... 6/27/08
 !        var_name = "BED_ELEVATION"
@@ -4197,16 +4362,18 @@ end subroutine mpp_output_chrt
         call get2d_int(var_name,CH_NETRT_inv,ixrt,jxrt,&
                trim(wrfsi_finegrid_flnm))
 
+#if(HYDRO_D == 1)
         write(6,*) "read ",var_name
-        call flush(6)
+#endif
 
         var_name = "LKSATFAC"
         LKSATFAC_inv = -9999.9
         iret = get2d_real(var_name,LKSATFAC_inv,ixrt,jxrt,&
                trim(wrfsi_finegrid_flnm))
 
+#if(HYDRO_D == 1)
         write(6,*) "read ",var_name
-        call flush(6)
+#endif
 
            where (LKSATFAC_inv == -9999.9) LKSATFAC_inv = 1000.0  !specify LKSAFAC if no term avail...
 
@@ -4238,8 +4405,9 @@ end subroutine mpp_output_chrt
          end do
         end do
 
+#if(HYDRO_D == 1)
         write(6,*) "finish READ_ROUTING_seq"
-        call flush(6)
+#endif
 
         return
 
@@ -4270,14 +4438,20 @@ end subroutine mpp_output_chrt
        call mpp_land_bcast_int1(iret)
 #endif
 
-       if (iret /= 0) stop "Problem nf_create"
+#if(HYDRO_D == 1)
+       if (iret /= 0) then
+          print*, "Problem nf_create"
+          call hydro_stop()
+       endif
+#endif
 
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
 #endif
+#if(HYDRO_D == 1)
          write(6,*) "output file ", outFile
-         call flush(6)
+#endif
 ! define dimension for variables 
           iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
    
@@ -4318,7 +4492,9 @@ end subroutine mpp_output_chrt
 #endif
 
         iret = nf_close(ncid)
+#if(HYDRO_D == 1)
         write(6,*) "finish writing outFile : ", outFile
+#endif
 
 #ifdef MPP_LAND
     endif
@@ -4351,7 +4527,12 @@ end subroutine mpp_output_chrt
        call mpp_land_bcast_int1(iret)
 #endif
 
-       if (iret /= 0) stop "Problem nf_create"
+#if(HYDRO_D == 1)
+       if (iret /= 0) then
+          print*, "Problem nf_create"
+          call hydro_stop()
+       endif
+#endif
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
@@ -4631,9 +4812,11 @@ end subroutine mpp_output_chrt
     call mpp_land_bcast_int1(iret)
 #endif
     if (iret /= 0) then
+#if(HYDRO_D == 1)
        write(*,'("Problem opening file: ''", A, "''")') &
             trim(inFile)
-       call land_finish()
+       call hydro_stop() 
+#endif
     endif
 
 #ifdef MPP_LAND
@@ -4645,7 +4828,9 @@ end subroutine mpp_output_chrt
     call mpp_land_bcast_int1(rt_domain(did)%out_counts)
 #endif
 
+#if(HYDRO_D == 1)
      write(6,*) "nlst_rt(did)%nsoil=",nlst_rt(did)%nsoil
+#endif
      if(nlst_rt(did)%rst_typ .eq. 1 ) then 
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
@@ -4680,7 +4865,9 @@ end subroutine mpp_output_chrt
         end if
 
           if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+#if(HYDRO_D == 1)
             print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
+#endif
             rt_domain(did)%INFXSRT=0.
             rt_domain(did)%LAKE_INFLORT=0.
             rt_domain(did)%QSTRMVOLRT=0.
@@ -4691,8 +4878,9 @@ end subroutine mpp_output_chrt
         if(my_id .eq. IO_id) &
 #endif
         iret =  nf_close(ncid) 
+#if(HYDRO_D == 1)
         write(6,*) "end of RESTART_IN"
-        call flush(6)
+#endif
  
         return
         end subroutine RESTART_IN_nc
@@ -4714,10 +4902,14 @@ end subroutine mpp_output_chrt
 #endif
 
          if (iret /= 0) then
+#if(HYDRO_D == 1)
             print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
             return
          endif
+#if(HYDRO_D == 1)
          print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -4748,10 +4940,14 @@ end subroutine mpp_output_chrt
 #endif
 
          if (iret /= 0) then
+#if(HYDRO_D == 1)
             print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
             return
          endif
+#if(HYDRO_D == 1)
          print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -4778,10 +4974,14 @@ end subroutine mpp_output_chrt
          call mpp_land_bcast_int1(iret)
 #endif
          if (iret /= 0) then
+#if(HYDRO_D == 1)
             print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
             return
          endif
+#if(HYDRO_D == 1)
          print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          iret = nf_get_var_real(ncid, varid, xtmp)
          do i = 1, nsoil
@@ -4806,10 +5006,14 @@ end subroutine mpp_output_chrt
          call mpp_land_bcast_int1(iret)
 #endif
          if (iret /= 0) then
+#if(HYDRO_D == 1)
             print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
             return
          endif
+#if(HYDRO_D == 1)
          print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) &   
              iret = nf_get_var_real(ncid, varid, xtmp)
@@ -4834,10 +5038,14 @@ end subroutine mpp_output_chrt
          call mpp_land_bcast_int1(iret)
 #endif
             if (iret /= 0) then
+#if(HYDRO_D == 1)
                print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
                return
             endif
+#if(HYDRO_D == 1)
          print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -4863,10 +5071,14 @@ end subroutine mpp_output_chrt
          call mpp_land_bcast_int1(iret)
 #endif
             if (iret /= 0) then
+#if(HYDRO_D == 1)
                print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
                return
             endif
+#if(HYDRO_D == 1)
          print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
 #endif
@@ -4906,8 +5118,9 @@ end subroutine mpp_output_chrt
         var_name = "TOPOGRAPHY"
         iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
                      trim(wrfsi_finegrid_flnm))
+#if(HYDRO_D == 1)
         write(6,*) "read ",var_name
-        call flush(6)
+#endif
 
 !!!DY to be fixed ... 6/27/08
 !        var_name = "BED_ELEVATION"
@@ -4918,16 +5131,17 @@ end subroutine mpp_output_chrt
         call get2d_int(var_name,CH_NETRT_inv,ixrt,jxrt,&
                trim(wrfsi_finegrid_flnm))
 
+#if(HYDRO_D == 1)
         write(6,*) "read ",var_name
-        call flush(6)
+#endif
 
         var_name = "LKSATFAC"
         LKSATFAC_inv = -9999.9
         iret = get2d_real(var_name,LKSATFAC_inv,ixrt,jxrt,&
                trim(wrfsi_finegrid_flnm))
-
+#if(HYDRO_D == 1)
         write(6,*) "read ",var_name
-        call flush(6)
+#endif
 
            where (LKSATFAC_inv == -9999.9) LKSATFAC_inv = 1000.0  !specify LKSAFAC if no term avail...
 
@@ -4959,9 +5173,9 @@ end subroutine mpp_output_chrt
          end do
         end do
 
-          
+#if(HYDRO_D == 1)  
         write(6,*) "finish READ_ROUTING_old"
-        call flush(6)
+#endif
 
         return
 

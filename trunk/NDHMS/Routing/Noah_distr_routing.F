@@ -166,17 +166,6 @@
 
 !DJG debug subsfc...
          subflo = 0.0
-!        smctot1a=0.
-!        count=0
-!         do i=1,IXRT
-!           do j=1,JXRT
-!             junk7=0.
-!             do kx=1,nsoil
-!               smctot1a=smctot1a+SMCRT(I,J,KX)*SLDPTH(kx)
-!             end do
-!           end do
-!         end do
-!        print *, "Before subsfc driver...smctot1(m):",smctot1a
 
 !DJG Set up mass balance checks...
 !         CWATAVAIL = 0.            !-- initialize subsurface watavail
@@ -190,7 +179,6 @@
 !         CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
 !                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
 !                             CWATAVAIL,SLDPTH)
-!         print *, "Returned from FINDZWAT...",ZWATTABLRT(200,200),CWATAVAIL(200,200)
          
 
 
@@ -204,7 +192,9 @@
 
 
 !!!! Call subsurface routing subroutine...
+#if(HYDRO_D == 1)
      print *, "calling subsurface routing subroutine...Opt. ",rt_option
+#endif
 
 
      if(rt_option .eq. 1) then
@@ -217,8 +207,9 @@
                CWATAVAIL,SUBDT)
      end if
 
+#if(HYDRO_D == 1)
      write(6,*) "finish calling ROUTE_SUBSURFACE ", rt_option
-     call flush(6)
+#endif
 
 
 !!!! Update soil moisture fields with subsurface flow...
@@ -253,9 +244,11 @@
 ! Check for saturated layers
                 IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK)) THEN
                   IF (SMCRT(I,J,KK).GT.SMCMAXRT(I,J,KK)) THEN
+#if(HYDRO_D == 1)
                    print *, "Subsfc acct. SMCMAX exceeded...", &
                        SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
-                   stop
+                   call hydro_stop()
+#endif
                   ELSE
                   END IF
                 ELSE
@@ -284,9 +277,11 @@
 
 !DJG Error trap...
 	       if (subflo.ne.0.) then
+#if(HYDRO_D == 1)
                   print *, "Subflo (+) not expired...:",subflo,i,j,kk,SMCRT(i,j,1), &
                            SMCRT(i,j,2),SMCRT(i,j,3),SMCRT(i,j,4),SMCRT(i,j,5),  &
                            SMCRT(i,j,6),SMCRT(i,j,7),SMCRT(i,j,8),"SMCMAX",SMCMAXRT(i,j,1)
+#endif
                end if
 
  
@@ -317,11 +312,13 @@
               if(abs(subflo) .le. 1.E-7 )  subflo = 0.0  !truncate residual to 1E-7 prec.
 
 	       if (subflo.ne.0.) then
+#if(HYDRO_D == 1)
                   print *, "Subflo (-) not expired:",i,j,subflo,CWATAVAIL(i,j)
                   print *, "zwatabl = ", ZWATTABLRT(I,J)
                   print *, "QSUBRT(I,J)=",QSUBRT(I,J)
                   print *, "WATAVAIL = ",WATAVAIL, "kk=",kk
                   print *
+#endif
                end if
 
 
@@ -416,17 +413,12 @@
                                      SMCREFRT(I,J,KK))*SLDPTH(KK)
                   END DO
 
-!                  IF(I.eq.200.AND.J.eq.200) then
-!                      print *, SMCRT(I,J,SATLYRCHK(I,J)),SMCREFRT(I,J,SATLYRCHK(I,J)),&
-!                               ZSOIL(SATLYRCHK(I,J)-1.),ZSOIL(NSOIL),CWATAVAIL(I,J)
-!                  END IF
 
                 ELSE  ! soil column is fully saturated to sfc.
                   ZWATTABLRT(I,J) = 0.
                   DO KK=SATLYRCHK(I,J),NSOIL
                     CWATAVAIL(I,J) = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
                   END DO
-!                  print *, "Sat. Col CWATAVAIL...",CWATAVAIL(I,J),ZSOIL(NSOIL)
                 END IF
               ELSE  ! no saturated layers...
                 ZWATTABLRT(I,J) = -ZSOIL(NSOIL)
@@ -537,10 +529,11 @@
           end if
 
           if (hh .lt. 0.) then
+#if(HYDRO_D == 1)
             print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j),nexp
-            call land_finish()
-            GOTO 998
+            call hydro_stop()
+#endif
           end if
 
 !Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
@@ -550,10 +543,6 @@
           qsub(i,j) = qsub(i,j) + qqsub
           qsub(i+1,j) = qsub(i+1,j) - qqsub
 
-! Debug Line
-!          IF(I.eq.476.AND.J.EQ.916.) print *, sox(i,j),dzdx,"xBeta =", beta, &
-!                 gamma,hh,"qsubx=",qsub(i-1,j),qsub(I,J),qqsub,soldep(i,j), &
-!                 z(i,j),nexp,gsize,ksat
 ! Boundary adjustments
 #ifdef MPP_LAND
           if ((i.eq.1).AND.(beta.lt.0.).and.(left_id.lt.0)) then
@@ -605,11 +594,7 @@
             ksat=latksat(i,j)
           end if
 
-          if (hh .lt. 0.) then
-!yw            print *, "hsub<0 at gridcell...", i,j,hh,z(i,j+1),z(i,j), &
-!yw                      soldep(i,j)
-            GOTO 999
-          end if
+          if (hh .lt. 0.) GOTO 999
 
 !Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
           gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
@@ -618,10 +603,6 @@
           qsub(i,j) = qsub(i,j) + qqsub
           qsub(i,j+1) = qsub(i,j+1) - qqsub
 
-!debug line
-!          IF(I.eq.476.AND.J.EQ.916.) print *, soy(i,j),dzdy,"yBeta =", beta, &
-!                 gamma,hh,"qsuby=",qsub(i,j),qsub(i,j-1),qqsub,soldep(i,j), &
-!                 z(i,j),nexp,gsize,ksat
 ! Boundary adjustments
 
 #ifdef MPP_LAND
@@ -721,10 +702,12 @@
 !DJG  Loop over 'routing time step'
 !DJG  Compute the number of time steps based on NOAH DT and routing DTRT
 
-        DT_FRAC=INT(DT/DTRT)
+       DT_FRAC=INT(DT/DTRT)
+
+#if(HYDRO_D == 1)
        write(6,*) "OV_RTNG  DT_FRAC, DT, DTRT",DT_FRAC, DT, DTRT
        write(6,*) "IXRT, JXRT = ",ixrt,jxrt
-       call flush(6)
+#endif
 
 !DJG NOTE: Applying all infiltration excess water at once then routing
 !DJG       Pre-existing SFHEAD gets combined with Precip. in the
@@ -760,11 +743,13 @@
 !DJG ERROR Check...
 
 	   IF (SFCHEADSUBRT(I,J).lt.0.) THEN 
+#if(HYDRO_D == 1)
 		print *, "ywcheck 2 ERROR!!!: Neg. Surface Head Value at (i,j):",    &
                     i,j,SFCHEADSUBRT(I,J)
                 print *, "RETDEPRT(I,J) = ",RETDEPRT(I,J), "KRT=",KRT
                 print *, "INFXSUBRT(i,j)=",INFXSUBRT(i,j)
                 print *, "jxrt=",jxrt," ixrt=",ixrt
+#endif
            END IF
 
 !DJG Remove surface water from channel cells
@@ -806,21 +791,6 @@
 
          END DO
         END DO
-!   call write_restart_rt_2(83,SFCHEADSUBRT)
-!   call write_restart_rt_2(81,QSTRMVOLRT)
-!   call write_restart_rt_2(85,RETDEPRT)
-!   call MPP_LAND_COM_REAL(QSTRMVOLRT  ,IXRT,JXRT,99)
-!   call MPP_LAND_COM_REAL(SFCHEADSUBRT,IXRT,JXRT,99)
-!   call MPP_LAND_COM_REAL(RETDEPRT    ,IXRT,JXRT,99)
-!   call write_restart_rt_2(86,SFCHEADSUBRT)
-!   call write_restart_rt_2(82,QSTRMVOLRT)
-!   call write_restart_rt_2(88,RETDEPRT)
-!   call flush(83)
-!   call flush(84)
-!   call flush(85)
-!   call flush(86)
-!   call flush(87)
-!   call flush(88)
 
 !DJG----------------------------------------------------------------------
 !DJG CALL OVERLAND FLOW ROUTING SUBROUTINE
@@ -829,8 +799,6 @@
 !DJG Debug...
 
 
-!      print *, "overland routing subroutine...  ",rt_option,QSTRMVOLTRT, &
-!                LAKE_INFLOTRT,ct
            if(rt_option .eq. 1) then
               CALL ROUTE_OVERLAND1(DTRT,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
 		SOYRT,RETDEPRT,OVROUGHRT,IXRT,JXRT,QBDRYRT,QBDRYTRT,    & 
@@ -840,37 +808,17 @@
                   SOYRT,RETDEPRT,OVROUGHRT,IXRT,JXRT,QBDRYRT,QBDRYTRT,  &
                   q_sfcflx_x,q_sfcflx_y)    
             end if
-
-!	sum_head = 0.
-!        DO J=1,JXRT
-!          DO I=1,IXRT
-!             sum_head = sum_head + SFCHEADSUBRT(I,J)
-!          END DO
-!        END DO
              
-!      print *, "overland routing subroutine returned...  ",rt_option,sum_head
         END DO          ! END routing time steps
 
-!        print *, OVROUGHRT
-
+#if(HYDRO_D == 1)
  	print *, "End of OV_routing call..."
+#endif
 
 !----------------------------------------------------------------------
 ! END OVERLAND FLOW ROUTING LOOP
 !     CHANNEL ROUTING TO FOLLOW 
 !----------------------------------------------------------------------
-!   call write_restart_rt_2(85,RETDEPRT)
-!   call write_restart_rt_2(83,SFCHEADSUBRT)
-!   call write_restart_rt_2(84,QSTRMVOLRT)
-!   call MPP_LAND_COM_REAL(QSTRMVOLRT  ,IXRT,JXRT,99)
-!   call write_restart_rt_2(85,QSTRMVOLRT)
-!   call write_restart_rt_2(86,SFCHEADSUBRT)
-!   call flush(83)
-!   call flush(84)
-!   call flush(85)
-!   call flush(86)
-
-!   call MPP_LAND_COM_REAL(SFCHEADSUBRT,IXRT,JXRT,99)
 
 !DJG ----------------------------------------------------------------
   END SUBROUTINE OV_RTNG 
@@ -944,7 +892,6 @@
 !!! Initialize variables
 
 
-!	    print *, "X-Head check. before..",h(444,218)
 
 !!! Begin Routing of Excess Rainfall over the Watershed
 
@@ -967,10 +914,12 @@
              end if
              if(IXX0 > 0) then  ! do the rest if the lowest grid can be found.
                  if(sfx .lt. 1E-20) then
+#if(HYDRO_D == 1)
                       print*, "Message: sfx reset to 1E-20. sfx =",sfx
                       print*, "i,j,index,IXX0,JYY0",i,j,index,IXX0,JYY0
                       print*, "so8RT(i,j,index), h(IXX0,JYY0), h(i,j), gsize(i,j,index) ", &
                          so8RT(i,j,index), h(IXX0,JYY0), h(i,j), gsize(i,j,index)
+#endif
                       sfx = 1E-20
                  end if
                  alfax = sqrt(sfx) / dist_rough(i,j) 
@@ -982,7 +931,6 @@
 
 !Courant check (simple mass limit on overland flow)...
                  if (qqsfc.ge.(hmax*dt*tmp_gsize)) qqsfc = hmax*dt*tmp_gsize
-!                 print *,qqsfc,alfax,hh53*dt,tmp_gsize
 
 ! Accumulate directional fluxes on routing subgrid...
                  if (IXX0.gt.i) then
@@ -1010,11 +958,12 @@
 !yw changed as following:
                  tmp_adjust=qqsfc*1000
                  if((h(i,j) - tmp_adjust) <0 )  then
+#if(HYDRO_D == 1)
                    print*, "Error Warning: surface head is negative:  ",i,j,ixx0,jyy0, &
                        h(i,j) - tmp_adjust
+#endif
                      tmp_adjust = h(i,j)
                  end if
-                 !yw print*, "i=",i,"i=",j,"adjust=",tmp_adjust
  	         DH(i,j) = DH(i,j)-tmp_adjust
                  DH_tmp(ixx0,jyy0) = DH_tmp(ixx0,jyy0) + tmp_adjust
       !yw end change
@@ -1203,8 +1152,9 @@
         qsub_tmp = 0.
         QSUBDRY_tmp = 0.
 
+#if(HYDRO_D == 1)
         write(6,*) "call subsurface routing xx= , yy =", yy, xx
-        call flush(6)
+#endif
 
         do j=2,YY-1
           do i=2,XX-1
@@ -1218,14 +1168,16 @@
           index = SO8RT_D(i,j,3)
 
             if(dist(i,j,index) .le. 0) then
+#if(HYDRO_D == 1)
                write(6,*) "Error: dist(i,j,index) is <= zero "   
-               call flush(6)
-               call land_finish()
+               call hydro_stop()
+#endif
             endif
             if(soldep(i,j) .eq. 0) then
+#if(HYDRO_D == 1)
                write(6,*) "Error: soldep          is = zero "   
-               call flush(6)
-               call land_finish()
+               call hydro_stop()
+#endif
             endif
 
           tmp_gsize = 1.0/dist(i,j,index)
@@ -1239,7 +1191,9 @@
           end if
           if(beta .gt. 0) then            !if-then for flux calc 
               if(beta .lt. 1E-20 ) then
+#if(HYDRO_D == 1)
                    print*, "Message: beta need to be reset to 1E-20. beta = ",beta
+#endif
                    beta = 1E-20
               end if
 
@@ -1248,9 +1202,11 @@
               ksat=latksat(i,j)
 
               if (hh .lt. 0.) then
+#if(HYDRO_D == 1)
                  print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j)
-                 call land_finish()
+                 call hydro_stop() 
+#endif
               end if
 
 !err. tan slope     gamma=-1.0*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
@@ -1262,11 +1218,13 @@
 
 !!DJG Error Checks...
               if(qqsub .gt. 0) then
+#if(HYDRO_D == 1)
                     print*, "Error: qqsub should be negative, qqsub =",qqsub,&
                        "gamma=",gamma,"hh=",hh,"beta=",beta,"dzdx=",dzdx,&
                        "so8RT=",so8RT(i,j,index),"latksat=",ksat, &
                        "tan(beta)=",tan(beta),i,j,z(i,j),z(IXX0,JYY0)
-                 call land_finish()
+                 call hydro_stop() 
+#endif
               end if
 
 
@@ -1311,9 +1269,10 @@
         do j=2,YY-1
           do i=2,XX-1
             if(dist(i,j,9) .le. 0) then
+#if(HYDRO_D == 1)
                write(6,*) "Error: dist(i,j,9) is <= zero "   
-               call flush(6)
-               call land_finish()
+               call hydro_stop()
+#endif
             endif
             if(CWATAVAIL(i,j).lt.ABS(qsub(i,j))/dist(i,j,9)*SUBDT) THEN
               qsub(i,j) = -1.0*CWATAVAIL(i,j)
@@ -1462,18 +1421,6 @@
 
 
 
-!      call write_restart_rt_2(70,h)
-!      call write_restart_rt_2(71,sox)
-!      call write_restart_rt_2(72,soy)
-!      call write_restart_rt_2(73,retent_dep)
-!      call write_restart_rt_2(74,dist_rough)
-!      call write_restart_rt_2(75,q_sfcflx_x)
-!      call write_restart_rt_2(76,q_sfcflx_y)
-!      call write_restart_rt_2(77,qbdry)
-!      do i = 70, 77
-!          call flush(i)
-!      end do
-!	    print *, "X-Head check. before..",h(444,218)
 
 !!! Begin Routing of Excess Rainfall over the Watershed
 
@@ -1483,19 +1430,11 @@
         do j=1,YY
           do i=1,XX
 
-!DJG Debug...
-!          if (i.eq.444.AND.j.eq.218) then
-!	    print *, "X-Head check...",h(i,j),i,j
-!          end if
 
 ! check for boundary gridpoint?
           if (i.eq.XX) GOTO 998
            gsize = dist(i,j,3)
 
-!DJG Debug...
-!          if (i.eq.444.AND.j.eq.218) then
-!	    print *, "X-Head check...",h(i,j),i,j,h(i+1,j)
-!          end if
 
 ! check for detention storage?
           if (h(i,j).lt.retent_dep(i,j).AND.     &
@@ -1514,7 +1453,6 @@
 
           if ((retent_dep(i,j).gt.0.).AND.(hh.le.0.)) GOTO 998
           if (hh.lt.0.) then
-!yw            print *, "h<0 at gridcell(xloop).", i,j,hh
           GOTO 998
           end if
 
@@ -1527,29 +1465,26 @@
 
 !DJG put adjustment in for (h) due to qqsfc
 
-!yw 	   h(i,j) = h(i,j)-qqsfc*1000.
-!yw            h(i+1,j) = h(i+1,j) + qqsfc*1000.
 !yw changed as following:
            tmp_adjust=qqsfc*1000
           if(tmp_adjust .le. 0 ) GOTO 998
            if((h(i,j) - tmp_adjust) <0 )  then
+#if(HYDRO_D == 1)
                print*, "Error Warning: surface head is negative:  ",i,j
+#endif
                tmp_adjust = h(i,j)
            end if
            if((h(i+1,j) + tmp_adjust) <0) then 
+#if(HYDRO_D == 1)
                print*, "Error Warning: surface head is negative: ",i+1,j
+#endif
                tmp_adjust = -1*h(i+1,j)
            end if
  	   Dh(i,j) = Dh(i,j)-tmp_adjust
            Dh(i+1,j) = Dh(i+1,j) + tmp_adjust
 !yw end change
 
-!          if (i.eq.443.AND.j.eq.218) then
-!	    print *, "X-Head check.step 1..",h(i+1,j),i+1,j
-!          end if
 
-!          qsfc(i,j) = qsfc(i,j)-qqsfc
-!          qsfc(i+1,j) = qsfc(i+1,j) + qqsfc
 
 !DG Boundary adjustments here
 !DG Constant Flux Condition
@@ -1576,14 +1511,6 @@
             QBDRYT=QBDRYT - tmp_adjust
           end if
 
-!DJG Debug...
-!       if(i.eq.444.AND.j.eq.218) then
-!        print *, "X-direction..."
-!          print *,"sox,sox(x-1),dhdx,h(x),h(x+1),sfx,alfax,dist_rough,hh,hh53, &
-!             qqsfc,qsfc"
-!          print *,sox(i,j),sox(i-1,j),dhdx,h(i,j),h(i+1,j),sfx,alfax, &
-!             dist_rough(i,j),hh,hh53,qqsfc,qsfc(i,j)
-!       end if
 
 998     continue
 
@@ -1607,11 +1534,6 @@
           if (j.eq.YY) GOTO 999
            gsize = dist(i,j,1)
 
-!DJG Debug
-!          if (i.eq.444.AND.j.eq.218) then
-!	    print *, "Y-Head check...",h(i,j),i,j,h(i,j+1)
-!          end if
-
 
 !! check for detention storage?
           if (h(i,j).lt.retent_dep(i,j).AND.     & 
@@ -1630,7 +1552,6 @@
 
           if ((retent_dep(i,j).gt.0.).AND.(hh.le.0.)) GOTO 999
           if (hh.lt.0.) then
-!yw            print *, "h<0 at gridcell (yloop).", i,j,hh
             GOTO 999
           end if
 
@@ -1649,11 +1570,15 @@
           if(tmp_adjust .le. 0 ) GOTO 999
 
            if((h(i,j) - tmp_adjust) <0 )  then
+#if(HYDRO_D == 1)
                print*, "Error Warning: surface head is negative:  ",i,j
+#endif
                tmp_adjust = h(i,j)
            end if
            if((h(i,j+1) + tmp_adjust) <0) then
+#if(HYDRO_D == 1)
                print*, "Error Warning: surface head is negative: ",i,j+1
+#endif
                tmp_adjust = -1*h(i,j+1)
            end if
 	  Dh(i,j) = Dh(i,j)-tmp_adjust
@@ -1785,38 +1710,20 @@
 
 !DJG First, Disaggregate a few key fields for routing...
 !DJG Debug...
+#if(HYDRO_D == 1)
 	print *, "Beginning Disaggregation..."
+#endif
 	
 !DJG Mass balance check for disagg...
-!	print *, "Domain Averaged Mass Balance Information (DISAGG):"
-!        print *, IX,JX,IXRT,JXRT
-!        dsmc=0.
-!        suminfxs1=0.
-!        do i=1,IX
-!          do j=1,JX
-!            do kx=1,nsoil
-!             IF (VEGTYP(I,J).ne.16.or.SMCMAX1(I,J).le.0.) then
-!              dsmc(kx)=dsmc(kx)+sh2ox(i,j,kx)
-!             end if
-!            end do
-!            suminfxs1=suminfxs1+INFXSRT(I,J)/float(IX*JX)
-!          end do
-!        end do
-!           smctot1=(dsmc(1)*100+dsmc(2)*300+dsmc(3)*300   &
-!                   +dsmc(4)*300+dsmc(5)*300+dsmc(6)*300 &
-!                   + dsmc(7)*300+dsmc(8)*100)/float(IX*JX)
-!	print *, "Before Disaggreg...",smctot1,suminfxs1,smctot1+suminfxsrt
 
 
 !DJG Weighting alg. alteration...(prescribe wghts if time = 1)
-!yw       DX=DXRT*AGGFACTRT
 
 
         do J=1,JX
           do I=1,IX
 
 !DJG Weighting alg. alteration...
-!yw             LSMVOL=INFXSRT(I,J)*DX*DX
               LSMVOL=INFXSRT(I,J)*area_lsm(I,J)
 
 
@@ -1838,7 +1745,6 @@
 
             do KRT=1,NSOIL  !Do for soil profile loop
                IF(SICE(I,J,KRT).gt.0) then  !...adjust for soil ice
-!yw              print *, "Soil Ice found ...adjusting soil values..."
 !DJG Adjust SMCMAX for SICE when subsfc routing...make 3d variable
                  SMCMAXRT(IXXRT,JYYRT,KRT)=SMCMAX1(I,J)-SICE(I,J,KRT)
                  SMCREFRT(IXXRT,JYYRT,KRT)=SMCREF1(I,J)-SICE(I,J,KRT)
@@ -1858,7 +1764,6 @@
                  SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J) 
                END IF   !endif adjust for soil ice...
 
-!	print *, "Before soil moisture adjustment..."
 
 !Now Adjust soil moisture
 !DJG Use SH2O instead of SMC for 'liquid' water...
@@ -1873,13 +1778,9 @@
                  IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
                    SMCEXCS = (SMCRT(IXXRT,JYYRT,KRT) - SMCMAXRT(IXXRT,JYYRT,KRT)) &
                              * SLDPTH(KRT)*1000.  !Excess soil water in units of (mm)
-!                   print *, "SMCMAX exceeded upon disaggregation1...", ixxrt,jyyrt,krt,&
-!                           SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT),SLDPTH(KRT)*1000.,SMCEXCS
                    SMCRT(IXXRT,JYYRT,KRT) = SMCMAXRT(IXXRT,JYYRT,KRT)
                    DO KF = KRT-1,1, -1  !loop back upward to redistribute excess water from disagg.
                      SMCRT(IXXRT,JYYRT,KF) = SMCRT(IXXRT,JYYRT,KF) + SMCEXCS/(SLDPTH(KF)*1000.) 
-!                     print *, "SMCMAX exceeded upon disaggregation loop...", ixxrt,jyyrt,kf,&
-!                         SMCRT(IXXRT,JYYRT,KF),SMCMAXRT(IXXRT,JYYRT,KF),SLDPTH(KF)*1000.,SMCEXCS
                      IF (SMCRT(IXXRT,JYYRT,KF).GT.SMCMAXRT(IXXRT,JYYRT,KF)) THEN  !Recheck new lyr sat.
                        SMCEXCS = (SMCRT(IXXRT,JYYRT,KF) - SMCMAXRT(IXXRT,JYYRT,KF)) &
                            * SLDPTH(KF)  !Excess soil water in units of (mm)
@@ -1902,17 +1803,20 @@
 
                do KRT=1,NSOIL  !debug loop
                   IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+#if(HYDRO_D == 1)
                       print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                      stop
+                      call hydro_stop()
+#endif
                   ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
+#if(HYDRO_D == 1)
                       print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
-                      stop
+                      call hydro_stop()
+#endif
                   END IF
                end do !debug loop
 
-!	print *, "After soil moisture adjustment..."
 
 
 !DJG map ov roughness as function of land use provided in VEGPARM.TBL...
@@ -1921,11 +1825,7 @@
             IF (VEGTYP(I,J).LE.0) then
               OVROUGHRT(IXXRT,JYYRT) = 0.1     !COWS mask test
             ELSE
-!              OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J)) 
-!              OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*0.5    ! DESWAT ELK calibrate...
-!yyyyy               OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*REFMANN    ! Front Range calibrate...Now working 12/28/2010
                OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*OVROUGHRTFAC(IXXRT,JYYRT)  ! Distributed calibration...1/17/2012
-!              print *, OV_ROUGH(VEGTYP(I,J)), OVROUGHRT(IXXRT,JYYRT), REFMANN
             END IF
 
 
@@ -1967,42 +1867,12 @@
          CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
                              SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
                              CWATAVAIL,SLDPTH)
-!         print *, "Returned from FINDZWAT...",ZWATTABLRT(200,200),CWATAVAIL(200,200)
-
-!   call write_restart_rt_2(81,ZWATTABLRT)
-!   call write_restart_rt_2(83,CWATAVAIL)
-!   call MPP_LAND_COM_REAL(ZWATTABLRT,IXRT,JXRT,99)
-!   call MPP_LAND_COM_REAL(CWATAVAIL,IXRT,JXRT,99)
-!   call write_restart_rt_2(82,ZWATTABLRT)
-!   call write_restart_rt_2(84,CWATAVAIL)
-!   call flush(81)
-!   call flush(82)
-!   call flush(83)
-!   call flush(84)
 
 
-!DJG Mass balance Check for disagg...
-!        smcrtchk=0.
-!	dsmc=0.
-!	suminfxsrt=0.
-!        do i=1,IXRT
-!          do j=1,JXRT
-!            do kx=1,nsoil
-!	      smcrtchk(kx)=smcrtchk(kx)+SMCRT(I,J,KX)
-!           end do
-!            suminfxsrt=suminfxsrt+INFXSUBRT(I,J)/float(IXRT*JXRT)
-!          end do
-!        end do
-!            smctot2=(smcrtchk(1)*100+smcrtchk(2)*300+smcrtchk(3)*300  &
-!                    +smcrtchk(4)*300+smcrtchk(5)*300+smcrtchk(6)*300 &
-!                    +smcrtchk(7)*300+smcrtchk(8)*100)/float(IXRT*JXRT)
-!
-!       dsmctot = smctot2-smctot1
-!       print *, "Change in Soil Moist:, ",dsmctot,smctot2,smctot1
-!       print *, "Change in INFXS: ",suminfxsrt-suminfxs1,suminfxsrt,suminfxs1
-!       print *, "Agg Resid:",dsmctot-suminfxs1+suminfxsrt
 
+#if(HYDRO_D == 1)
 	print *, "After Disaggregation..."
+#endif
 
 
 #ifdef MPP_LAND
@@ -2023,28 +1893,19 @@
 
 !DJG Second, Call subsurface routing routine...
   IF (SUBRTSWCRT.EQ.1) THEN
+#if(HYDRO_D == 1)
 	print *, "Beginning SUB_routing..."
         print *, "Routing method is ",rt_option, " direction."
-
-   !yw set temporary
-!   SOLDEPRT = 2
-
-  
+#endif
 
     CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
           LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
           INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
           SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
 
-!  write(33) QSUBRT
-!  write(34) SOXRT,SOYRT
-
-!  write(43)        QSUBBDRYRT
-!  write(46)   SMCRT
-
-!   call land_finish()
-
+#if(HYDRO_D == 1)
     print *, "SUBROUTE routing called and returned..."
+#endif
 
 
 
@@ -2053,9 +1914,11 @@
 
 !DJG Third, Call Overland Flow Routing Routine...
   IF (OVRTSWCRT.EQ.1) THEN
+#if(HYDRO_D == 1)
 	print *, "Beginning OV_routing..."
         print *, "Routing method is ",rt_option, " direction."
         print *, "ixrt, jxrt =", ixrt, jxrt
+#endif
 
 !DJG debug...OV Routing...
 	suminfxs1=0.
@@ -2070,13 +1933,6 @@
             qbdry1=qbdry1+QBDRYRT(I,J)/float(IXRT*JXRT)
          end do
         end do
-!       print *, "Before ovroute...(INFXSRUBRT):",suminfxs1
-
-!   call write_restart_rt_2(81,SFCHEADSUBRT)
-!   call MPP_LAND_COM_REAL(SFCHEADSUBRT,IXRT,JXRT,99)
-!   call write_restart_rt_2(82,SFCHEADSUBRT)
-!   call flush(81)
-!   call flush(82)
 
 
 !DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(set sfcrt_flag)
@@ -2100,25 +1956,26 @@
 !DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(IF)
 
     if (sfcrt_flag.eq.1) then  !If/then for sfc_rt check...
-
+#if(HYDRO_D == 1)
       write(6,*) "calling OV_RTNG "
-      call flush(6)
-!      print *, "Water to route...Calling overland router..."
+#endif
       CALL OV_RTNG(DT,DTRT,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
         CH_NETRT,RETDEPRT,OVROUGHRT,QSTRMVOLRT,QBDRYRT,              &
         QSTRMVOLTRT,QBDRYTRT,SOXRT,SOYRT,dist,                       &
         LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,SO8RT,SO8RT_D,rt_option,&
         q_sfcflx_x,q_sfcflx_y) 
     else
+#if(HYDRO_D == 1)
       print *, "No water to route overland..."
+#endif
     end if  !Endif for sfc_rt check...
 
 !DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(ENDIF)
 
-!   call write_restart_rt_2(88,SFCHEADSUBRT)
-!   call write_restart_rt_2(89,QSTRMVOLRT)
-
+#if(HYDRO_D == 1)
     print *, "OV routing called and returned..."
+#endif
+
 !DJG Debug...OV Routing...
 	suminfxsrt=0.
         chan_in2=0.
@@ -2133,6 +1990,7 @@
          end do
         end do
 
+#if(HYDRO_D == 1)
 	print *, "OV Routing Mass Bal: "
         print *, "Infil. Excess/Sfc Head: ", suminfxsrt-suminfxs1,      &
                    suminfxsrt,suminfxs1
@@ -2141,6 +1999,7 @@
         print *, "Qbdry = ",qbdry2-qbdry1
 	print *, "Residual : ", suminfxs1-suminfxsrt-(chan_in2-chan_in1) &
                      -(lake_in2-lake_in1)-(qbdry2-qbdry1)
+#endif
 
   ENDIF      ! ENDIF for OVRTSWCRT
 
@@ -2148,27 +2007,9 @@
 
 
 !DJG Fourth(last), Aggregate a few fields from routing.
+#if(HYDRO_D == 1)
  	print *, "Beginning Aggregation..."
-
-!DJG Mass balance Check for agg...
-!        smcrtchk=0.
-!	dsmc=0.
-!	suminfxsrt=0.
-!	suminfxs1=0.
-!        do i=1,IXRT
-!         do j=1,JXRT
-!           do kx=1,nsoil
-!	      smcrtchk(kx)=smcrtchk(kx)+SMCRT(I,J,KX)/float(IXRT*JXRT)
-!           end do
-!            suminfxsrt=suminfxsrt+SFCHEADSUBRT(I,J)/float(IXRT*JXRT)
-!          end do
-!        end do
-!            smctot1=(smcrtchk(1)*100+smcrtchk(2)*300+smcrtchk(3)*300  &
-!                    +smcrtchk(4)*300+smcrtchk(5)*300+smcrtchk(6)*300 &
-!                    +smcrtchk(7)*300+smcrtchk(8)*100)
-!
-!	print *, "Before Aggreg...",smctot1,suminfxsrt,smctot1+suminfxsrt
-
+#endif
 
 
         do J=1,JX
@@ -2220,7 +2061,6 @@
 
 
 !DJG Calculate subgrid weighting array...
-!            print *,'Calculating subgrid weighting array...'
 
               do AGGFACYRT=AGGFACTRT-1,0,-1
                 do AGGFACXRT=AGGFACTRT-1,0,-1
@@ -2239,13 +2079,17 @@
 
                   do KRT=1,NSOIL
                     IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+#if(HYDRO_D == 1)
                       print *, "SMCMAX exceeded upon aggregation...", &
                            SMCRT(IXXRT,JYYRT,KRT), SMCMAXRT(IXXRT,JYYRT,KRT)
-                       stop
+                      call hydro_stop()
+#endif
                     END IF
                     IF(SH2OX(I,J,KRT).LE.0.) THEN
+#if(HYDRO_D == 1)
                       print *, "Erroneous value of SH2O...",SH2OX(I,J,KRT),I,J,KRT
-                      stop
+                      call hydro_stop()
+#endif
                     END IF
                     SH2OWGT(IXXRT,JYYRT,KRT)=SMCRT(IXXRT,JYYRT,KRT)/SH2OX(I,J,KRT)
                   end do
@@ -2265,28 +2109,13 @@
 
 
 
-!DJG Mass balance check...
-!        do i=1,IX
-!          do j=1,JX
-!            do kx=1,nsoil
-!              dsmc(kx)=dsmc(kx)+smc(i,j,kx)/float(IX*JX)
-!            end do
-!            suminfxs1=suminfxs1+SFCHEADRT(I,J)/float(IX*JX)
-!          end do
-!        end do
-!           smctot2=(dsmc(1)*100+dsmc(2)*300+dsmc(3)*300   &
-!                   +dsmc(4)*300+dsmc(5)*300+dsmc(6)*300 &
-!                   +dsmc(7)*300+dsmc(8)*100)
-!
-!       dsmctot = smctot2-smctot1
-!       print *, "Change in Soil Moist:, ",dsmctot,smctot2,smctot1
-!       print *, "Change in INFXS: ",suminfxs1-suminfxsrt,suminfxsrt,suminfxs1
-!       print *, "Agg Resid:",dsmctot-suminfxs1+suminfxsrt
 
 
 !DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
 	SMC=SH2OX+SICE
+#if(HYDRO_D == 1)
  	print *, "Finished Aggregation..."
+#endif
         return
       end Subroutine drive_RT ! drive_RT
 
@@ -2325,7 +2154,6 @@
 !  SPECIFY PARAMETERS and VARIABLES
 !----------------------------------------------------------------------
 
-!       print *, "Performing terrain adjustment to incoming solar radiation..."
        JULDAY = 0	
        SOLDN = SHORT
        DGRD = 3.14159/180.
@@ -2348,19 +2176,9 @@
        call mpp_land_bcast_int1(MMTIME0) 
 #endif
 
-! Adjust time from GMT to local solar time...
-!       print *, "Before GMT2LOCAL...",YYYY,MM,DD,HHTIME,MMTIME,JULDAY
-!yw  	call GMT2LOCAL(IX,JX,XLONG,YYYY,MM,DD,HHTIME,MMTIME,DT)
-
-! Calculate Julain Day (here only used for reference...)
-!yw          call JULDAY_CALC(YYYY,MM,DD,JULDAY)
 
 ! Set up terrain variables...(returns TSLP&TAZI in radians) 
 	call SLOPE_ASPECT(IX,JX,SO8LD_D,TAZI)
-!        print *, TSLP(65,51)/DGRD,TAZI(65,51)/DGRD  !flat point
-!        print *, TSLP(17,7)/DGRD,TAZI(17,7)/DGRD  !north facing
-!        print *, TSLP(17,3)/DGRD,TAZI(17,3)/DGRD    !south facing
-!        print *, TSLP(19,3)/DGRD,TAZI(19,3)/DGRD    !east facing
 
 !----------------------------------------------------------------------
 !  BEGIN LOOP THROUGH GRID
@@ -2380,13 +2198,6 @@
            LONR = XLONG(I,J)   !send solsub local lon in deg
            TSLPR = TSLP(I,J)/DGRD !send solsub local slp in deg
            TAZIR = TAZI(I,J)/DGRD !send solsub local azim in deg
-!        IF (I.eq.65.AND.J.eq.51) then  !flat point
-!        IF (I.eq.17.AND.J.eq.7) then  !north facing point
-!        IF (I.eq.17.AND.J.eq.3) then    !south facing point
-!        IF (I.eq.19.AND.J.eq.3) then    !east facing point
-!	   print *, "Lat,Lon,Tslp,Tazi,MM,DD,HH",LATR,LONR,TSLPR, &
-!                     TAZIR,MM,DD,HHTIME
-!	END IF   
 
 !Call SOLSUB to return terrain adjusted incoming solar radiation...
 ! SOLSUB taken from Whiteman and Allwine, 1986, Environ. Software.
@@ -2396,23 +2207,6 @@
 
          SOLDN(I,J)=SOLDNADJ
 
-!!!Debugging...
-!	IF(SHORT(I,J).gt.1300.) THEN
-!          PRINT *, JULDAY, INCADJ,SOLZANG/DGRD,SOLAZI/DGRD,HRANGLE,   &
-!                 TSLPR/DGRD,TAZIR/DGRD,SOLDN(I,J),SHORT(I,J)
-!          stop
-!        END IF
-!!        PRINT *, 'TERR. RAD.:',SOLDN,SOLDNADJ,SOLDNADJ-SOLDN,
-!!     &          JULDAY
-!        IF (I.eq.65.AND.J.eq.51) then !flat point
-!        IF (I.eq.17.AND.J.eq.7) then !north facing point
-!        IF (I.eq.17.AND.J.eq.3) then    !south facing point
-!        IF (I.eq.19.AND.J.eq.3) then    !east facing point
-!          PRINT *, JULDAY, INCADJ,SOLZANG,SOLAZI,   &
-!                 TSLPR,TAZIR,SOLDN(I,J),SHORT(I,J)
-!        END IF
-!!
-!!!!!!!  END TERRAIN ADJUSTMENT CALCS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           ENDDO
         ENDDO
 
@@ -2478,8 +2272,6 @@
        tmp = TDIFF(I,J)
        lst_adj_hh = INT(tmp)
        lst_adj_min = NINT(MOD(int(tmp),1)*60.) + int(DT/2./60.)  ! w/ 1/2 timestep adjustment...
-!yw       lst_adj_min = NINT((tmp-int(tmp))*60.) + int(DT/2./60.)  ! w/ 1/2 timestep adjustment...
-!       print *, "before adj...",tmp,lst_adj_hh,lst_adj_min,TDIFF(I,J),XLONG(I,J)
 
 !!! Process Minutes...
         adj_min = min+lst_adj_min
@@ -2505,7 +2297,6 @@
           ddflag = 2
         end if
 
-!	print *, tmp,yy,mm,dd,adj_hh,hh,adj_min,min,ddflag
 
 
 !!! Process Days, Months, Years
@@ -2584,11 +2375,9 @@
 
         end if
 
-!	print *, tmp,yy,mm,dd,hh,min
        end do   !i-loop
       end do   !j-loop
 
-!	print *, TDIFF(30,30),XLONG(30,30)
         return
         end subroutine
 
@@ -2727,7 +2516,6 @@
 ! Calculate Julian Day...
        D = 0
        call JULDAY_CALC(YY,MO,IDA,D)
-!       print *, "After JULDAY...",YY,MO,IDA,HHTIME,MMTIME,D
 
 ! Ratio of radius vectors squared...
        OMD=OMEGA*D
