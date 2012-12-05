@@ -109,7 +109,7 @@ contains
           ! Ten thousandths
           units = 8
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
           call hydro_stop()
 #endif
@@ -163,7 +163,7 @@ contains
           ! Ten thousandths
           units = 8
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
           call hydro_stop()
 #endif
@@ -200,7 +200,7 @@ contains
     !  Check that the month of ODATE makes sense.
 
     if ((moold.gt.12).or.(moold.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Month of ODATE = ', moold
 #endif
        opass = .FALSE.
@@ -209,7 +209,7 @@ contains
     !  Check that the day of ODATE makes sense.
 
     if ((dyold.gt.mday(moold)).or.(dyold.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Day of ODATE = ', dyold
 #endif
        opass = .FALSE.
@@ -218,7 +218,7 @@ contains
     !  Check that the hour of ODATE makes sense.
 
     if ((hrold.gt.23).or.(hrold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Hour of ODATE = ', hrold
 #endif
        opass = .FALSE.
@@ -227,7 +227,7 @@ contains
     !  Check that the minute of ODATE makes sense.
 
     if ((miold.gt.59).or.(miold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Minute of ODATE = ', miold
 #endif
        opass = .FALSE.
@@ -236,7 +236,7 @@ contains
     !  Check that the second of ODATE makes sense.
 
     if ((scold.gt.59).or.(scold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Second of ODATE = ', scold
 #endif
        opass = .FALSE.
@@ -246,7 +246,7 @@ contains
 
 
     if (.not.opass) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
        stop
 #endif
@@ -294,7 +294,7 @@ contains
        nsec   = 0
        nfrac  = 0
     else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             oldlen
        write(*,*) '#'//odate(1:oldlen)//'#'
@@ -502,7 +502,7 @@ contains
     oldlen = len(olddate)
     newlen = len(newdate)
     if (newlen.ne.oldlen) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,'("GETH_IDTS: NEWLEN /= OLDLEN: ", A, 3x, A)') newdate(1:newlen), olddate(1:oldlen)
        call hydro_stop()
 #endif
@@ -529,7 +529,7 @@ contains
     if (odate(5:5) == "-") then
        punct = .TRUE.
        if (ndate(5:5) /= "-") then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
                ndate(1:newlen), odate(1:oldlen)
           call hydro_stop()
@@ -538,7 +538,7 @@ contains
     else
        punct = .FALSE.
        if (ndate(5:5) == "-") then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
                ndate(1:newlen), odate(1:oldlen)
           call hydro_stop()
@@ -586,7 +586,7 @@ contains
           ! Ten thousandths
           units = 8
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
           call hydro_stop()
 #endif
@@ -633,7 +633,7 @@ contains
           ! Ten thousandths
           units = 8
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
           call hydro_stop()
 #endif
@@ -693,7 +693,7 @@ contains
     !  Check that the month of NDATE makes sense.
     
     if ((monew.gt.12).or.(monew.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_IDTS:  Month of NDATE = ', monew
 #endif
        npass = .false.
@@ -702,7 +702,7 @@ contains
     !  Check that the month of ODATE makes sense.
 
     if ((moold.gt.12).or.(moold.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  Month of ODATE = ', moold
 #endif
        opass = .false.
@@ -713,7 +713,7 @@ contains
     if (monew.ne.2) then
        ! ...... For all months but February
        if ((dynew.gt.mday(monew)).or.(dynew.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           print*, 'GETH_IDTS:  Day of NDATE = ', dynew
 #endif
           npass = .false.
@@ -721,7 +721,7 @@ contains
     else if (monew.eq.2) then
        ! ...... For February
        if ((dynew > nfeb(yrnew)).or.(dynew < 1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           print*, 'GETH_IDTS:  Day of NDATE = ', dynew
 #endif
           npass = .false.
@@ -733,7 +733,7 @@ contains
     if (moold.ne.2) then
        ! ...... For all months but February
        if ((dyold.gt.mday(moold)).or.(dyold.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           print*, 'GETH_IDTS:  Day of ODATE = ', dyold
 #endif
           opass = .false.
@@ -741,7 +741,7 @@ contains
     else if (moold.eq.2) then
        ! ....... For February
        if ((dyold > nfeb(yrold)).or.(dyold < 1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           print*, 'GETH_IDTS:  Day of ODATE = ', dyold
 #endif
           opass = .false.
@@ -751,7 +751,7 @@ contains
     !  Check that the hour of NDATE makes sense.
 
     if ((hrnew.gt.23).or.(hrnew.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  Hour of NDATE = ', hrnew
 #endif
        npass = .false.
@@ -760,7 +760,7 @@ contains
     !  Check that the hour of ODATE makes sense.
 
     if ((hrold.gt.23).or.(hrold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  Hour of ODATE = ', hrold
 #endif
        opass = .false.
@@ -769,7 +769,7 @@ contains
     !  Check that the minute of NDATE makes sense.
 
     if ((minew.gt.59).or.(minew.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  Minute of NDATE = ', minew
 #endif
        npass = .false.
@@ -778,7 +778,7 @@ contains
     !  Check that the minute of ODATE makes sense.
 
     if ((miold.gt.59).or.(miold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  Minute of ODATE = ', miold
 #endif
        opass = .false.
@@ -787,7 +787,7 @@ contains
     !  Check that the second of NDATE makes sense.
 
     if ((scnew.gt.59).or.(scnew.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  SECOND of NDATE = ', scnew
 #endif
        npass = .false.
@@ -796,21 +796,21 @@ contains
     !  Check that the second of ODATE makes sense.
 
     if ((scold.gt.59).or.(scold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'GETH_IDTS:  Second of ODATE = ', scold
 #endif
        opass = .false.
     end if
 
     if (.not. npass) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'Screwy NDATE: ', ndate(1:newlen)
        call hydro_stop()
 #endif
     end if
 
     if (.not. opass) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, 'Screwy ODATE: ', odate(1:oldlen)
        call hydro_stop()
 #endif
@@ -950,7 +950,7 @@ contains
     elseif (mon == "Dec") then
        mm = 12
     else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*, '("Function monthabbr_to_mm:  mon = <",A,">")') mon
        print*,  "Function monthabbr_to_mm:  Unrecognized mon"
        call hydro_stop()
@@ -985,7 +985,7 @@ contains
           outdate = indate(1:4)//indate(6:7)//indate(9:10)//indate(12:13)//indate(15:16)//&
                indate(18:19)//indate(21:inlen)
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,'("Unrecognized length: <", A,">")') indate
          call hydro_stop()
 #endif
@@ -1012,7 +1012,7 @@ contains
           outdate = indate(1:4)//"-"//indate(5:6)//"-"//indate(7:8)//"_"//&
                indate(9:10)//":"//indate(11:12)//":"//indate(13:14)//"."//indate(15:inlen)
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,'("Unrecognized length: <", A,">")') indate
           call hydro_stop()
 #endif
@@ -1030,7 +1030,7 @@ contains
     if (ii > 0 .and. ii < 13 ) then
        mon = month(ii)
     else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        print*, "mm_to_monthabbr"
        call hydro_stop()
 #endif

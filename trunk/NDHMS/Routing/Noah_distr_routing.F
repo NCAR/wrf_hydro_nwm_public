@@ -192,7 +192,7 @@
 
 
 !!!! Call subsurface routing subroutine...
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
      print *, "calling subsurface routing subroutine...Opt. ",rt_option
 #endif
 
@@ -207,7 +207,7 @@
                CWATAVAIL,SUBDT)
      end if
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
      write(6,*) "finish calling ROUTE_SUBSURFACE ", rt_option
 #endif
 
@@ -244,7 +244,7 @@
 ! Check for saturated layers
                 IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK)) THEN
                   IF (SMCRT(I,J,KK).GT.SMCMAXRT(I,J,KK)) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                    print *, "Subsfc acct. SMCMAX exceeded...", &
                        SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
                    call hydro_stop()
@@ -277,7 +277,7 @@
 
 !DJG Error trap...
 	       if (subflo.ne.0.) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                   print *, "Subflo (+) not expired...:",subflo,i,j,kk,SMCRT(i,j,1), &
                            SMCRT(i,j,2),SMCRT(i,j,3),SMCRT(i,j,4),SMCRT(i,j,5),  &
                            SMCRT(i,j,6),SMCRT(i,j,7),SMCRT(i,j,8),"SMCMAX",SMCMAXRT(i,j,1)
@@ -312,7 +312,7 @@
               if(abs(subflo) .le. 1.E-7 )  subflo = 0.0  !truncate residual to 1E-7 prec.
 
 	       if (subflo.ne.0.) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                   print *, "Subflo (-) not expired:",i,j,subflo,CWATAVAIL(i,j)
                   print *, "zwatabl = ", ZWATTABLRT(I,J)
                   print *, "QSUBRT(I,J)=",QSUBRT(I,J)
@@ -529,7 +529,7 @@
           end if
 
           if (hh .lt. 0.) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
             print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j),nexp
             call hydro_stop()
@@ -704,7 +704,7 @@
 
        DT_FRAC=INT(DT/DTRT)
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(6,*) "OV_RTNG  DT_FRAC, DT, DTRT",DT_FRAC, DT, DTRT
        write(6,*) "IXRT, JXRT = ",ixrt,jxrt
 #endif
@@ -743,7 +743,7 @@
 !DJG ERROR Check...
 
 	   IF (SFCHEADSUBRT(I,J).lt.0.) THEN 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 		print *, "ywcheck 2 ERROR!!!: Neg. Surface Head Value at (i,j):",    &
                     i,j,SFCHEADSUBRT(I,J)
                 print *, "RETDEPRT(I,J) = ",RETDEPRT(I,J), "KRT=",KRT
@@ -811,7 +811,7 @@
              
         END DO          ! END routing time steps
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
  	print *, "End of OV_routing call..."
 #endif
 
@@ -914,7 +914,7 @@
              end if
              if(IXX0 > 0) then  ! do the rest if the lowest grid can be found.
                  if(sfx .lt. 1E-20) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                       print*, "Message: sfx reset to 1E-20. sfx =",sfx
                       print*, "i,j,index,IXX0,JYY0",i,j,index,IXX0,JYY0
                       print*, "so8RT(i,j,index), h(IXX0,JYY0), h(i,j), gsize(i,j,index) ", &
@@ -958,7 +958,7 @@
 !yw changed as following:
                  tmp_adjust=qqsfc*1000
                  if((h(i,j) - tmp_adjust) <0 )  then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                    print*, "Error Warning: surface head is negative:  ",i,j,ixx0,jyy0, &
                        h(i,j) - tmp_adjust
 #endif
@@ -1152,7 +1152,7 @@
         qsub_tmp = 0.
         QSUBDRY_tmp = 0.
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
         write(6,*) "call subsurface routing xx= , yy =", yy, xx
 #endif
 
@@ -1168,13 +1168,13 @@
           index = SO8RT_D(i,j,3)
 
             if(dist(i,j,index) .le. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                write(6,*) "Error: dist(i,j,index) is <= zero "   
                call hydro_stop()
 #endif
             endif
             if(soldep(i,j) .eq. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                write(6,*) "Error: soldep          is = zero "   
                call hydro_stop()
 #endif
@@ -1191,7 +1191,7 @@
           end if
           if(beta .gt. 0) then            !if-then for flux calc 
               if(beta .lt. 1E-20 ) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                    print*, "Message: beta need to be reset to 1E-20. beta = ",beta
 #endif
                    beta = 1E-20
@@ -1202,7 +1202,7 @@
               ksat=latksat(i,j)
 
               if (hh .lt. 0.) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                  print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j)
                  call hydro_stop() 
@@ -1218,7 +1218,7 @@
 
 !!DJG Error Checks...
               if(qqsub .gt. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                     print*, "Error: qqsub should be negative, qqsub =",qqsub,&
                        "gamma=",gamma,"hh=",hh,"beta=",beta,"dzdx=",dzdx,&
                        "so8RT=",so8RT(i,j,index),"latksat=",ksat, &
@@ -1269,7 +1269,7 @@
         do j=2,YY-1
           do i=2,XX-1
             if(dist(i,j,9) .le. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                write(6,*) "Error: dist(i,j,9) is <= zero "   
                call hydro_stop()
 #endif
@@ -1469,13 +1469,13 @@
            tmp_adjust=qqsfc*1000
           if(tmp_adjust .le. 0 ) GOTO 998
            if((h(i,j) - tmp_adjust) <0 )  then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                print*, "Error Warning: surface head is negative:  ",i,j
 #endif
                tmp_adjust = h(i,j)
            end if
            if((h(i+1,j) + tmp_adjust) <0) then 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                print*, "Error Warning: surface head is negative: ",i+1,j
 #endif
                tmp_adjust = -1*h(i+1,j)
@@ -1570,13 +1570,13 @@
           if(tmp_adjust .le. 0 ) GOTO 999
 
            if((h(i,j) - tmp_adjust) <0 )  then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                print*, "Error Warning: surface head is negative:  ",i,j
 #endif
                tmp_adjust = h(i,j)
            end if
            if((h(i,j+1) + tmp_adjust) <0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                print*, "Error Warning: surface head is negative: ",i,j+1
 #endif
                tmp_adjust = -1*h(i,j+1)
@@ -1710,7 +1710,7 @@
 
 !DJG First, Disaggregate a few key fields for routing...
 !DJG Debug...
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 	print *, "Beginning Disaggregation..."
 #endif
 	
@@ -1803,13 +1803,13 @@
 
                do KRT=1,NSOIL  !debug loop
                   IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                       print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
                       call hydro_stop()
 #endif
                   ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                       print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
                       call hydro_stop()
@@ -1870,7 +1870,7 @@
 
 
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 	print *, "After Disaggregation..."
 #endif
 
@@ -1893,7 +1893,7 @@
 
 !DJG Second, Call subsurface routing routine...
   IF (SUBRTSWCRT.EQ.1) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 	print *, "Beginning SUB_routing..."
         print *, "Routing method is ",rt_option, " direction."
 #endif
@@ -1903,7 +1903,7 @@
           INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
           SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
     print *, "SUBROUTE routing called and returned..."
 #endif
 
@@ -1914,7 +1914,7 @@
 
 !DJG Third, Call Overland Flow Routing Routine...
   IF (OVRTSWCRT.EQ.1) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 	print *, "Beginning OV_routing..."
         print *, "Routing method is ",rt_option, " direction."
         print *, "ixrt, jxrt =", ixrt, jxrt
@@ -1956,7 +1956,7 @@
 !DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(IF)
 
     if (sfcrt_flag.eq.1) then  !If/then for sfc_rt check...
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "calling OV_RTNG "
 #endif
       CALL OV_RTNG(DT,DTRT,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
@@ -1965,14 +1965,14 @@
         LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,SO8RT,SO8RT_D,rt_option,&
         q_sfcflx_x,q_sfcflx_y) 
     else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       print *, "No water to route overland..."
 #endif
     end if  !Endif for sfc_rt check...
 
 !DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(ENDIF)
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
     print *, "OV routing called and returned..."
 #endif
 
@@ -1990,7 +1990,7 @@
          end do
         end do
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 	print *, "OV Routing Mass Bal: "
         print *, "Infil. Excess/Sfc Head: ", suminfxsrt-suminfxs1,      &
                    suminfxsrt,suminfxs1
@@ -2007,7 +2007,7 @@
 
 
 !DJG Fourth(last), Aggregate a few fields from routing.
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
  	print *, "Beginning Aggregation..."
 #endif
 
@@ -2079,14 +2079,14 @@
 
                   do KRT=1,NSOIL
                     IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                       print *, "SMCMAX exceeded upon aggregation...", &
                            SMCRT(IXXRT,JYYRT,KRT), SMCMAXRT(IXXRT,JYYRT,KRT)
                       call hydro_stop()
 #endif
                     END IF
                     IF(SH2OX(I,J,KRT).LE.0.) THEN
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                       print *, "Erroneous value of SH2O...",SH2OX(I,J,KRT),I,J,KRT
                       call hydro_stop()
 #endif
@@ -2113,7 +2113,7 @@
 
 !DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
 	SMC=SH2OX+SICE
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
  	print *, "Finished Aggregation..."
 #endif
         return

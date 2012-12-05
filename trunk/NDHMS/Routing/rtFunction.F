@@ -25,7 +25,7 @@
               QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
               LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                write(6,*) "*****yw******start drive_RT "
 #endif
 
@@ -71,7 +71,7 @@
             QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-QSTRMVOLRT_DUM
             LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-LAKE_INFLORT_DUM
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(6,*) "*****yw******end drive_RT "
 #endif
         end if
@@ -88,7 +88,7 @@
 
     If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) Then   ! Call simple bucket baseflow scheme
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(6,*) "*****yw******start simp_gw_buck "
 #endif
 
@@ -129,7 +129,7 @@
      endif
 #endif
 
-#if(HYDRO_D == 1) 
+#ifdef HYDRO_D 
            write(6,*) "*****yw******end simp_gw_buck "
 #endif
 
@@ -137,7 +137,7 @@
 !!!otherwise comment out this output...
     else if (nlst_rt(did)%GWBASESWCRT .eq. 3) then
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(6,*) "*****bf******start 2d_gw_model "
 #endif
 
@@ -155,7 +155,7 @@
 ! GW-SOIL-CHANNEL interaction section
 	  gw2d(did)%ho = gw2d(did)%h
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(6,*) "*****bf******end 2d_gw_model "
 #endif
       
@@ -201,7 +201,7 @@
        )
   endif
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(6,*) "*****yw******end drive_CHANNEL "
 #endif
 

@@ -21,6 +21,8 @@ all:	$(OBJS)
 #
 # Dependencies:
 #
+module_HYDRO_drv.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o ../Data_Rec/module_GW_baseflow_data.o \
+        ../Routing/module_GW_baseflow.o ../Routing/module_HYDRO_utils.o ../Routing/module_HYDRO_io.o ../Routing/module_RT.o
 
 clean:
 	rm -f *.o *.mod *.stb *~ *.f

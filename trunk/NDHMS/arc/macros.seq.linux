@@ -1,4 +1,11 @@
 .IGNORE:
+ifeq ($(HYDRO_D),1)
+HYDRO_D = "-DHYDRO_D"
+else
+HYDRO_D =    
+endif
+
+
 RMD		=	ls 
 RM		=	rm -f
 COMPILER90=	pgf90 
@@ -7,7 +14,7 @@ LDFLAGS  =      $(F90FLAGS)
 MODFLAG	=	-I./ -I ../mod
 LDFLAGS	=	
 CPP	=       cpp
-CPPFLAGS	=       -C -P -traditional -I ../Data_Rec
+CPPFLAGS	=       -C -P -traditional -I ../Data_Rec $(HYDRO_D)
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)
 NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf

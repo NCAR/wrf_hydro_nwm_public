@@ -25,7 +25,7 @@ contains
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
             print*,"failed to open the netcdf file: ",trim(fileName)
 #endif
             out_buff = -9999.
@@ -35,7 +35,7 @@ contains
           if(ivar .ne. 0) then
             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
             if(ivar .ne. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                write(6,*) "Read Error: could not find ",var_name
 #endif
                  return
@@ -206,7 +206,7 @@ contains
             dist(i,j,9) = x * y 
         end do
       end do
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "finished get_dist_ll"
 #endif
    end subroutine get_dist_ll
@@ -235,7 +235,7 @@ contains
           dist(i,j,9) = dx * dy
         end do
       end do
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "finished get_dxdy_mp "
 #endif
    end subroutine get_dxdy_mp

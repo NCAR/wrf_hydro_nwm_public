@@ -149,7 +149,7 @@ CONTAINS
 #ifdef MPP_LAND
   if(my_id .eq. IO_id) then
 #endif
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
      write(6,*) "output of the namelist file "
 
     write(6,*) " nlst%RT_OPTION ", RT_OPTION

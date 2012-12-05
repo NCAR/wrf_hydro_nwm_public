@@ -1,7 +1,8 @@
 .IGNORE:
 ifeq ($(HYDRO_D),1)
+HYDRO_D = "-DHYDRO_D"
 else
-HYDRO_D = 0
+HYDRO_D =   
 endif
 
 RM		=	rm -f 
@@ -13,7 +14,7 @@ MODFLAG	=	-I./ -I ../MPP -I../../MPP -I ../mod
 LDFLAGS	=	
 CPP	=       cpp
 LIBS 	=	
-CPPFLAGS	=	-C -P -traditional -DMPP_LAND -I../Data_Rec -DHYDRO_D=$(HYDRO_D)
+CPPFLAGS	=	-C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D)
 NETCDFINC	=	$(NETCDF_INC) 
 NETCDFLIB	=	-L$(NETCDF_LIB) -lnetcdff -lnetcdf
 

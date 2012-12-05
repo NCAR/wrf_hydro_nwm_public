@@ -7,11 +7,7 @@
 
 include ../macros
 
-<<<<<<< HEAD
 WRF_ROOT = ../..
-=======
-WRF_ROOT = /raid/weiyu/WRF_RELEASE/r6019/mod_test
->>>>>>> 87ce796d24e5f8cc8e737ff7140f809f18fc31b2
 OBJS = \
 	module_wrf_HYDRO.o \
 	wrf_drv_HYDRO.o    
@@ -20,7 +16,7 @@ all:	$(OBJS)
 .F.o:
 	@echo ""
 	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(WRF_ROOT)/frame -I$(WRF_ROOT)/external/esmf_time_f90 $(*).f
+	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(WRF_ROOT)/frame -I$(WRF_ROOT)/main -I$(WRF_ROOT)/external/esmf_time_f90 $(*).f
 	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
@@ -28,6 +24,9 @@ all:	$(OBJS)
 #
 # Dependencies:
 #
+module_wrf_HYDRO.o: ../Data_Rec/module_RT_data.o ../Data_Rec/module_namelist.o ../HYDRO_drv/module_HYDRO_drv.o
+
+wrf_drv_HYDRO.o: module_wrf_HYDRO.o
 
 clean:
 	rm -f *.o *.mod *.stb *~ *.f

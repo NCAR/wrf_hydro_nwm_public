@@ -47,7 +47,7 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "yyww =",  "RESTART."//nlst_rt(did)%olddate(1:16)   &
                  //"_DOMAIN"//trim(nlst_rt(did)%hgrid)
 #endif
@@ -76,7 +76,7 @@ module module_HYDRO_drv
    if(IO_id .eq. my_id) then
 #endif
       if(nlst_rt(did)%olddate(1:19) == nlst_rt(did)%startdate(1:19) ) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
 #endif
          call geth_newdate(rt_out_date, nlst_rt(did)%olddate, -1*nint(rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt*60))
@@ -84,7 +84,7 @@ module module_HYDRO_drv
       else
          call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%out_dt*60*rt_domain(did)%out_counts))
          if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
              write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
 #endif
              outflag = 99
@@ -159,7 +159,7 @@ module module_HYDRO_drv
 ! BF end gw2d output section
 
            end if
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(6,*) "before call output_chrt"
 #endif
      
@@ -194,7 +194,7 @@ module module_HYDRO_drv
                    RT_DOMAIN(did)%QLAKEO, &
                    RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
            endif
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(6,*) "end calling otuput functions"
 #endif
 
@@ -229,7 +229,7 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
      if(my_id.eq.IO_id) then
 #endif
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
         write(6,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
 #endif
 #ifdef MPP_LAND
@@ -253,7 +253,7 @@ module module_HYDRO_drv
 #endif
          call geth_newdate(newdate, nlst_rt(did)%olddate, nint( nlst_rt(did)%dt))
          nlst_rt(did)%olddate = newdate
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          write(6,*) "current time is ",newdate
 #endif
 #ifdef MPP_LAND
@@ -393,7 +393,7 @@ module module_HYDRO_drv
           ! Ten thousandths
           units = 8
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
           stop
 #endif
@@ -447,7 +447,7 @@ module module_HYDRO_drv
           ! Ten thousandths
           units = 8
        case default
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
           stop
 #endif
@@ -484,7 +484,7 @@ module module_HYDRO_drv
     !  Check that the month of ODATE makes sense.
 
     if ((moold.gt.12).or.(moold.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Month of ODATE = ', moold
 #endif
        opass = .FALSE.
@@ -493,7 +493,7 @@ module module_HYDRO_drv
     !  Check that the day of ODATE makes sense.
 
     if ((dyold.gt.mday(moold)).or.(dyold.lt.1)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Day of ODATE = ', dyold
 #endif
        opass = .FALSE.
@@ -502,7 +502,7 @@ module module_HYDRO_drv
     !  Check that the hour of ODATE makes sense.
 
     if ((hrold.gt.23).or.(hrold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Hour of ODATE = ', hrold
 #endif
        opass = .FALSE.
@@ -511,7 +511,7 @@ module module_HYDRO_drv
     !  Check that the minute of ODATE makes sense.
 
     if ((miold.gt.59).or.(miold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Minute of ODATE = ', miold
 #endif
        opass = .FALSE.
@@ -520,7 +520,7 @@ module module_HYDRO_drv
     !  Check that the second of ODATE makes sense.
 
     if ((scold.gt.59).or.(scold.lt.0)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'GETH_NEWDATE:  Second of ODATE = ', scold
 #endif
        opass = .FALSE.
@@ -528,7 +528,7 @@ module module_HYDRO_drv
 
     !  Check that the fractional part  of ODATE makes sense.
     if (.not.opass) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
        stop
 #endif
@@ -576,7 +576,7 @@ module module_HYDRO_drv
        nsec   = 0
        nfrac  = 0
     else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             oldlen
        write(*,*) '#'//odate(1:oldlen)//'#'
@@ -775,7 +775,7 @@ module module_HYDRO_drv
            call HYDRO_time_adv(did)
 
       ! output for history 
-!          call HYDRO_out(did)
+           call HYDRO_out(did)
 
 
             
@@ -855,7 +855,7 @@ module module_HYDRO_drv
       rt_domain(did)%ixrt = local_rt_nx
       rt_domain(did)%jxrt = local_rt_ny
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
       write(6,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
       write(6,*) "rt_domain(did)%ix, rt_domain(did)%jx "
@@ -876,7 +876,7 @@ module module_HYDRO_drv
 
 
        call getChanDim(did)
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(6,*) "finish getChanDim "
 #endif
 
@@ -885,7 +885,7 @@ module module_HYDRO_drv
                              rt_domain(did)%ixrt,&
                              rt_domain(did)%jxrt,&
                              nlst_rt(did)%nsoil)
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(6,*) "finish gw2d_allocate"
 #endif
       endif
@@ -898,7 +898,7 @@ module module_HYDRO_drv
       jx0= rt_domain(did)%jx
       call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(6,*) "finish decomposion"
 #endif
 
@@ -910,7 +910,7 @@ module module_HYDRO_drv
 ! rt model initilization
       call LandRT_ini(did)
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "finish LandRT_ini"    
 #endif
 
@@ -920,11 +920,11 @@ module module_HYDRO_drv
           call gw2d_ini(did,&
                         nlst_rt(did)%dt,&
                         nlst_rt(did)%dxrt0)
-#if(HYDRO_D == 1)                        
+#ifdef HYDRO_D                        
           write(6,*) "finish gw2d_ini"      
 #endif
       endif
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
        write(6,*) "finish LandRT_ini"
 #endif
 
@@ -975,7 +975,7 @@ module module_HYDRO_drv
         integer :: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          write(6,*) RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx
 #endif
 
@@ -1070,7 +1070,7 @@ module module_HYDRO_drv
 
 end module module_HYDRO_drv
       subroutine land_finish()
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
 #ifdef MPP_LAND
          call mpp_land_finish()
 #else
@@ -1083,7 +1083,7 @@ end module module_HYDRO_drv
 ! stop the job due to the fatal error.
       subroutine HYDRO_stop()
         integer :: ierr
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "The job is stoped due to the fatal error."
 #ifdef MPP_LAND
          call mpp_land_abort()

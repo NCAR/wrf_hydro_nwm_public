@@ -179,7 +179,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         INTEGER :: nod         !- node
 
         if (n.le.0.0.or.Cs.le.0.or.Bw.le.0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          print *, "error in Diffusion function ->channel coefficients"
          print *, "nod, n, Cs, Bw", nod, n, Cs, Bw 
          call hydro_stop()
@@ -267,7 +267,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         qp = quc + ql
 
         if (n.le.0.or.So.le.0.or.z.le.0.or.Bw.le.0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           print*, "error in channel coefficients -> Muskingum cunge"
           call hydro_stop()
 #endif
@@ -297,7 +297,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
           Ck = (sqrt(So)/n)*(5/3)*h**0.667  !-- pg 287 Chow, Mdt, Mays
           X = 0.5-(qp/(2*Tw*So*Ck*dx))
           if (X.le.0) then 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            print *, "Muskingum weighting factor is less than 0"
 #endif
           endif
@@ -322,7 +322,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          do while (error .gt. 0.01 .and. maxiter < 500)
 
            if (qp.gt.2*(2*Tw*So*Ck*dxlocal)) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
             print *, "ERROR IN Musking Cunge,X <0 ", X
             print *, "X,Qp,Tw,So,Ck,Dxlocal",X,Qp,Tw,So,Ck,Dxlocal
 #endif
@@ -338,7 +338,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
            MUSKINGCUNGE = (C1*qup)+(C2*quc)+(C3*qdp)+C4 !-- pg 295 Bedient huber assume flows from previous
                                                         !--previous values same in each segment,a good assumption?
            if (MUSKINGCUNGE .lt. 0) then !-- only outflow
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
             print *, "ERROR: musking cunge is negative"
             print *, "D, C1+C2+C3,C4, MsCng",D,C1+C2+C3,C4,Muskingcunge
             print *, "qup, quc, qdp, ql",qup,quc,qdp,ql,i,ChnSegments
@@ -366,7 +366,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
        MUSKINGCUNGE = Qj
 
          if(index .eq. 1 .or. index .eq. 2 .or. index .eq. 6) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            write(*,13) index, ql,quc,qup,Qj,qdp
 #endif
          endif
@@ -506,7 +506,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
         IF(channel_option .ne. 3) then   !--muskingum methods ROUTE ON DT timestep, not DTRT!!
 #ifdef MPP_LAND
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
    write(6,*) "Error: not parallelized"
    call hydro_stop() 
 #endif
@@ -563,7 +563,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                                   MannN(k), ChSSLP(k), Bw(k))
 
                 else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                  print *, "No channel option selected"
                  call hydro_stop() 
 #endif
@@ -598,7 +598,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                                     QLateral(k), DT, So(k),  CHANLEN(k), &
                                     MannN(k), ChSSlp(k), Bw(k) )
                    else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                     print *, " no channel option selected"
                     call hydro_stop() 
 #endif
@@ -610,7 +610,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              end do       !--k links
           end do          !--kk order
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
           print *, "END OF ALL REACHES...",KRT,DT_STEPS
 #endif
 
@@ -648,7 +648,7 @@ crnt:    DO                      !-- loop on the courant condition
          DO i = 1,NLINKS
 #endif
            if(node_area(i) .eq. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                write(6,*) "Error: node_area(i) is zero. i=", i
                call hydro_stop() 
 #endif
@@ -662,7 +662,7 @@ crnt:    DO                      !-- loop on the courant condition
                  QINFLOWBASE(CHANXI(i),CHANYJ(i))) &
                    /DT_STEPS*node_area(i)/1000/DTCT)
 	if(Qlateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                print*, "i, CHANXI(i),CHANYJ(i) = ", i, CHANXI(i),CHANYJ(i)
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
@@ -772,7 +772,7 @@ crnt:    DO                      !-- loop on the courant condition
               CVOLTMP = CVOL
               CYCLE crnt                               !-- start cycle over with smaller timestep
              else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
               write(6,*) "Error ..... with small DTCT",DTCT
 #endif
               DTCT = 0.1
@@ -795,7 +795,7 @@ crnt:    DO                      !-- loop on the courant condition
             if(TYPEL(i) .eq. 0) then                   !--  regular channel grid point, compute volume
               CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) )* DTCT
               if(CVOLTMP(i) .lt. 0) then 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                 print *, "warning! channel volume less than 0:i,CVOL,QSUM,QLat", &
                                i, CVOLTMP(i),QSUM(i),QLateral(i),HLINK(i)
 #endif
@@ -818,7 +818,7 @@ crnt:    DO                      !-- loop on the courant condition
 
             elseif (TYPEL(i) .eq. 2) then              !--- into a reservoir, assume critical depth
               if (QSUM(i)+QLateral(i) .lt. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
                print *, i, 'CrtDpth Qsum+QLat into lake< 0',QSUM(i), QLateral(i)
 #endif
               else
@@ -834,7 +834,7 @@ crnt:    DO                      !-- loop on the courant condition
               QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
 
             else
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
               print *, "this node does not have a type.. error"
               call hydro_stop() 
 #endif
@@ -907,13 +907,13 @@ crnt:    DO                      !-- loop on the courant condition
            HLINK = HLINKTMP                 !-- update head based on final solution in timestep
            CVOL  = CVOLTMP                  !-- update volume
         else                                            !-- no channel option apparently selected
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          print *, "no channel option selected"
          call hydro_stop() 
 #endif
         endif
 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          write(6,*) "finished call drive_CHANNEL"
 #endif
 
@@ -944,7 +944,7 @@ crnt:    DO                      !-- loop on the courant condition
           WP = Bw + 2*h*sqrt(1+h**2)             !-- wetted perimeter
           AREA = (Bw+z*h)*h                      !-- Flow area
           if (WP .le.0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
            print *, "Wetter perimeter is zero, will get divide by zero error"
            call hydro_stop() 
 #endif
@@ -963,7 +963,7 @@ crnt:    DO                      !-- loop on the courant condition
      REAL FUNCTION CDf(Q,Bw,h,z)
      REAL :: Q, Bw, z, h
        if(h .le. 0) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
          print *, "head is zero, will get division by zero error"
          call hydro_stop() 
 #endif
@@ -1036,7 +1036,7 @@ crnt:    DO                      !-- loop on the courant condition
      R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z**2)) !-- Hyd Radius
      AREA = (Bw+z*h1)*h1        !-- Flow area
      Kd = (1/n)*(R**(2./3.))*AREA     !-- convenyance
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
      print *,"head, kd",  h1,Kd
 #endif
      MANNING = Kd
@@ -1059,7 +1059,7 @@ crnt:    DO                      !-- loop on the courant condition
 
      if(CDf(Q,BW,hl,z)*CDf(Q,BW,hu,z) .gt. 0) then
       if(Q .gt. 0.001) then
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
         print *, "interval won't work to find CD of lnk ", lnk
         print *, "Q, hl, hu", Q, hl, hu
         print *, "cd lwr, upr", CDf(Q,BW,hl,z), CDf(Q,BW,hu,z)

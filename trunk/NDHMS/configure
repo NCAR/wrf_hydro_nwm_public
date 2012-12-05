@@ -13,9 +13,9 @@
   if(-e macros) {system (rm -f macros);}
   if(-e Makefile) {system "rm -f Makefile" ;}
 
-  system("ln -s arc/Makefile ."); 
+  system("cp arc/Makefile ."); 
 
-  if((! (-d "Main")) && (-d "HRLDAS") ) {system "ln -sf HRLDAS_cpl Main";}
+  if((! (-d "Main")) && (-d "HRLDAS") ) {system "cp -r HRLDAS_cpl Main";}
 
   if($#ARGV == 0) {
      $response = shift(@ARGV) ;
@@ -28,32 +28,32 @@
   switch ($response) {
      case 1 { 
               # sequential linux 
-              system "ln -sf arc/macros.seq.linux macros"; 
-              system "ln -sf arc/Makefile.seq Makefile.comm"; 
+              system "cp arc/macros.seq.linux macros"; 
+              system "cp arc/Makefile.seq Makefile.comm"; 
             }
 
      case 2 {
               # mpp linux 
-              system "ln -sf arc/macros.mpp.linux macros"; 
-              system "ln -sf arc/Makefile.mpp Makefile.comm"; 
+              system "cp arc/macros.mpp.linux macros"; 
+              system "cp arc/Makefile.mpp Makefile.comm"; 
             }
 
      case 3 {
               # sequential IBM AIX
-              system "ln -sf arc/macros.seq.IBM.xlf90_r macros"; 
-              system "ln -sf arc/Makefile.seq Makefile.comm"; 
+              system "cp arc/macros.seq.IBM.xlf90_r macros"; 
+              system "cp arc/Makefile.seq Makefile.comm"; 
             }
 
      case 4 {
               # mpp IBM AIX
-              system "ln -sf arc/macros.mpp.IBM.xlf90_r macros"; 
-              system "ln -sf arc/Makefile.mpp Makefile.comm"; 
+              system "cp arc/macros.mpp.IBM.xlf90_r macros"; 
+              system "cp arc/Makefile.mpp Makefile.comm"; 
             }
 
      case 5 {
               # GFORTRAN only                         
-              system "ln -sf arc/macros.seq.gfort.f90 macros"; 
-              system "ln -sf arc/Makefile.seq Makefile.comm"; 
+              system "cp arc/macros.seq.gfort.f90 macros"; 
+              system "cp arc/Makefile.seq Makefile.comm"; 
             }
 
      else   {print "no selection $response\n"; last} 

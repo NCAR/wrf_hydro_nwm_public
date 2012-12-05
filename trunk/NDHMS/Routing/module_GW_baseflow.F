@@ -773,7 +773,7 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
       ebot = (ebot/tareal)/dt
 
       zz = 1.e3 * 86400.                    ! convert printout to mm/day
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
         write (*,900)                         &
           dtot*zz, dtoa*zz, -eocn*zz, ebot*zz,     &
           (dtot-(-eocn+ebot))*zz

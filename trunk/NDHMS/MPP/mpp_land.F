@@ -31,7 +31,7 @@ MODULE MODULE_MPP_LAND
 
       call getNX_NY(numprocs, left_right_np,up_down_np)
       if(my_id.eq.IO_id) then 
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
             write(6,*) ""
             write(6,*) "total process:",numprocs
             write(6,*) "left_right_np =", left_right_np,&
@@ -125,7 +125,7 @@ MODULE MODULE_MPP_LAND
         
         in_global_nx = local_nx
         in_global_ny = local_ny
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
         write(6,*) "my_id=",my_id,"global_rt_nx=",global_rt_nx
         write(6,*) "my_id=",my_id,"global_rt_nx=",global_rt_ny
         write(6,*) "my_id=",my_id,"global_nx=",global_nx
@@ -1533,14 +1533,14 @@ END MODULE MODULE_MPP_LAND
       implicit none
       include "mpif.h"
       integer ierr
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       write(6,*) "mpp_land_finish called "
 #endif
       call MPI_barrier( MPI_COMM_WORLD ,ierr)
       if(ierr .ne. 0) call mpp_land_abort()
       call MPI_finalize(ierr)
       if(ierr .ne. 0) call mpp_land_abort()
-#if(HYDRO_D == 1)
+#ifdef HYDRO_D
       stop 999
 #endif
       return
