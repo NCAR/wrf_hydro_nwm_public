@@ -15,7 +15,7 @@
 
   system("cp arc/Makefile ."); 
 
-  if((! (-d "Main")) && (-d "HRLDAS") ) {system "cp -r HRLDAS_cpl Main";}
+#  if((! (-d "Main")) && (-d "HRLDAS") ) {system "cp -r HRLDAS_cpl Main";}
 
   if($#ARGV == 0) {
      $response = shift(@ARGV) ;
