@@ -1,6 +1,6 @@
 .IGNORE:
 ifeq ($(HYDRO_D),1)
-HYDRO_D = "-DHYDRO_D"
+HYDRO_D = -DHYDRO_D
 else
 HYDRO_D =   
 endif
