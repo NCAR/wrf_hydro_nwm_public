@@ -10,6 +10,7 @@ module module_CLM_HYDRO
 ! NDHMS  module   
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
+    use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     implicit none
     integer begg, endg
@@ -62,6 +63,12 @@ CONTAINS
 
 
             call HYDRO_ini(ntime,did,1,1)
+
+            if(nlst_rt(did)%sys_cpl .ne. 4) then
+               write(6,*) "Error: sys_cpl should be 4."
+               call hydro_stop()
+            endif
+
             RT_DOMAIN(did)%initialized = .true.
             nlst_rt(did)%dt = cpl_land_dt
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)

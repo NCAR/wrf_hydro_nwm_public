@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .o .F
 
-CLMOBJPATH = /raid/weiyu/scratch/clm4_HYDRO
+CLMOBJPATH = /raid/weiyu/scratch/clm4_ndhms
 
 CLM_MOD = -I $(CLMOBJPATH)/lnd/obj -I $(CLMOBJPATH)/lib/include
 
