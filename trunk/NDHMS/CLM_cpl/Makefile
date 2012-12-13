@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .o .F
 
-CLMOBJPATH = /raid/weiyu/scratch/clm4_ndhms
+CLMOBJPATH = /d1/weiyu/scratch/merra_boulder
 
 CLM_MOD = -I $(CLMOBJPATH)/lnd/obj -I $(CLMOBJPATH)/lib/include
 
@@ -28,4 +28,4 @@ all:	$(OBJS)
 
 clean:
 	rm -f *.o *.mod *.stb *~ *.f
-	cd ..; make clean
+	cd ..; make -f Makefile.comm clean

@@ -5,5 +5,4 @@ all:
 	(make)
 
 clean:
-	(make clean)
 	(cd ../; make -f Makefile.comm clean)
