@@ -132,6 +132,12 @@ CONTAINS
 !           write(6,*) "yyyywww step 4 before HYDRO_ini= "
            
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
+
+            if(nlst_rt(did)%sys_cpl .ne. 1) then
+               write(6,*) "Error: sys_cpl should be 1."
+               call hydro_stop()
+            endif
+
            RT_DOMAIN(did)%initialized = .true.
    
            IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
