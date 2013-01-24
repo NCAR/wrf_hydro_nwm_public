@@ -40,6 +40,9 @@ CONTAINS
 
         integer :: i,j
 
+        real*8 :: t1, t2, dact
+        save dact
+
 
 !output flux and state variable
 
@@ -74,9 +77,21 @@ CONTAINS
         RT_DOMAIN(did)%soldrain = soldrain
 #endif
   
+#ifdef MPP_LAND
+        if(my_id .eq. IO_id) then
+           call  time_seconds(t1)
+        endif
+#endif
 
         ntime = 1
         call HYDRO_exe(did)
+#ifdef MPP_LAND
+        if(my_id .eq. IO_id) then
+           call  time_seconds(t2)
+           dact = dact + t2 - t1
+           write(6,*) "yyww accumulated time (s): ",dact
+        endif
+#endif
 
 ! add for update the HRLDAS state variable.
 #ifdef MPP_LAND
