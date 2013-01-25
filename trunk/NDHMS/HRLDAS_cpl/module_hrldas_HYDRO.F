@@ -52,7 +52,6 @@ CONTAINS
 
 !        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
 !                 nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
-!       call flush(6) 
 
         IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &

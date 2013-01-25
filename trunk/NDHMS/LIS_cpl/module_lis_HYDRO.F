@@ -36,7 +36,6 @@ module module_lis_HYDRO
 
 !           write(6,*) "yyyywww step 2, n =", n
 !           write(6,*) "npesx, npesy",LIS_rc%npesx, LIS_rc%npesy
-!           call flush(6)
 
       if(.not. RT_DOMAIN(did)%initialized) then
         CALL mpi_initialized( mpi_inited, ierr )
@@ -99,7 +98,6 @@ module module_lis_HYDRO
         if(.not. RT_DOMAIN(did)%initialized) then
 !           write(6,*) "yyyywww step 3"
             write(6,*) "ix,jx, cpl_land_dt",ix,jx, LIS_rc%ts  
-            call flush(6)
 
 !           write(6,*) "yyyywww step 4 before HYDRO_ini= "
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
@@ -120,7 +118,6 @@ module module_lis_HYDRO
                call hydro_stop()
             endif
 !           write(6,*) "yyyywww step 5 my_id= ", my_id
-!           call flush(6)
 
             nlst_rt(did)%dt = LIS_rc%ts   
 
@@ -142,7 +139,6 @@ module module_lis_HYDRO
 !       write(6,*) "size(noah271_struc(n)%noah%smc(1)),n,ix,jx" , size(noah271_struc(n)%noah%smc(1)),n,ix,jx
 !       write(6,*) "nlst_rt(did)%nsoil = ", nlst_rt(did)%nsoil
 
-!       call flush(6)
             ! get the initial data from LIS 
             do k = 1 , nlst_rt(did)%nsoil
                 call lis2HYDRO(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
@@ -152,7 +148,6 @@ module module_lis_HYDRO
        
        
         write(6,*) "NDHMS lis date ", LIS_rc%yr, LIS_rc%mo, LIS_rc%da, LIS_rc%hr, LIS_rc%mn, LIS_rc%ss 
-        call flush(6)
 !       write(11,*) "RT_DOMAIN(did)%stc",RT_DOMAIN(did)%stc(:,:,1)
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
