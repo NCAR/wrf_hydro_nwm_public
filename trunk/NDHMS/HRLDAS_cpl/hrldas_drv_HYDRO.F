@@ -6,7 +6,7 @@
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
 
-             call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
+          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
        end subroutine hrldas_drv_HYDRO
 
        subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)

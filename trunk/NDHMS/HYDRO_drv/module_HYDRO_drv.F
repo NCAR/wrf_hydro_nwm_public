@@ -28,7 +28,11 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-     call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%rst_dt*60*rt_domain(did)%rst_counts))
+     if(nlst_rt(did)%dt .gt. nlst_rt(did)%rst_dt*60) then
+        call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%dt*rt_domain(did)%rst_counts))
+     else
+        call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%rst_dt*60*rt_domain(did)%rst_counts))
+     endif
      if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
            rst_out = 99
            rt_domain(did)%rst_counts = rt_domain(did)%rst_counts + 1
@@ -77,7 +81,7 @@ module module_HYDRO_drv
 #endif
       if(nlst_rt(did)%olddate(1:19) .eq. nlst_rt(did)%startdate(1:19) .and. rt_domain(did)%his_out_counts .eq. 0) then
 #ifdef HYDRO_D
-         write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
+         write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19), rt_domain(did)%his_out_counts
 #endif
          call geth_newdate(rt_out_date, nlst_rt(did)%olddate, -1*nint(rt_domain(did)%his_out_counts*nlst_rt(did)%out_dt*60))
          outflag = 99
