@@ -916,7 +916,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found"
+           print*, "no forcing data found", inflnm
            call hydro_stop()
 #endif
         endif
@@ -937,7 +937,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found"
+           print*, "no forcing data found", inflnm
            call hydro_stop()
 #endif
         endif
@@ -960,7 +960,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
 #ifdef HYDRO_D
         if ( .not. fexist ) then
-           print*, "no forcing data found"
+           print*, "no forcing data found", inflnm
            call hydro_stop()
         endif
 #endif
@@ -985,11 +985,13 @@ Contains
 !!!DJG CONSTant, idealized forcing...
      if(FORC_TYP.eq.4) then
 ! Impose a fixed diurnal cycle...
+! assumes model timestep is 1 hr
 ! assumes K=1 is 12z (Ks or ~ sunrise)
 ! First Precip...
 !       IF (K.GE.1 .and. K.LE.2) THEN
        IF (K.EQ.1) THEN
         PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
+!        PRCP1 =0./3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
        ELSEIF (K.GT.1) THEN
 !        PRCP1 =0./3600.0      !units mm/s
 !       ELSE
@@ -1036,7 +1038,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found"
+           print*, "no forcing data found", inflnm
            call hydro_stop()
 #endif
         endif
@@ -1092,7 +1094,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found"
+           print*, "no forcing data found", inflnm
            call hydro_stop()
 #endif
         endif
@@ -1112,7 +1114,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found"
+           print*, "no forcing data found", inflnm
            call hydro_stop()
 #endif
         endif

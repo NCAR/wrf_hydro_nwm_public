@@ -10,6 +10,7 @@ module module_CLM_HYDRO
 ! NDHMS  module   
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
+    use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     implicit none
     integer begg, endg
@@ -58,16 +59,19 @@ CONTAINS
         if(.not. RT_DOMAIN(did)%initialized) then
 
 
-            write(6,*) "yyyywww step 4 before HYDRO_ini= "
 
 
             call HYDRO_ini(ntime,did,1,1)
+
+            if(nlst_rt(did)%sys_cpl .ne. 4) then
+               write(6,*) "Error: sys_cpl should be 4."
+               call hydro_stop()
+            endif
+
             RT_DOMAIN(did)%initialized = .true.
             nlst_rt(did)%dt = cpl_land_dt
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
-            write(6,*) "yyyywww step 4 finish HYDRO_ini= "
-            call flush(6)
         endif
 
         ix = rt_domain(did)%ix
@@ -98,7 +102,6 @@ CONTAINS
             call clm2ND2d(clm_g1d,nn,RT_DOMAIN(did)%INFXSRT,ix,jx)
 
             write(6,*) "finish qflx_surf"
-            call flush(6)
 
 
             r1p => clm3%g%l%c%cwf%qflx_drain  
@@ -108,7 +111,6 @@ CONTAINS
 
 
             write(6,*) "finish qflx_drain "
-            call flush(6)
              
  
             r2p =>clm3%g%l%c%ces%t_soisno 
@@ -119,7 +121,6 @@ CONTAINS
                       RT_DOMAIN(did)%STC)
 
             write(6,*) "finish t_soisno   "
-            call flush(6)
 
 
             r2p => clm3%g%l%c%cws%h2osoi_vol  
@@ -130,7 +131,6 @@ CONTAINS
                      RT_DOMAIN(did)%SMC)
             
             write(6,*) "finish h2osoi_vol "
-            call flush(6)
 
 
             r2p => clm3%g%l%c%cws%h2osoi_liq  
@@ -144,14 +144,12 @@ CONTAINS
             write(6,*) "finish h2osoi_liq "
 
             write(6,*) "before call HYDRO_exe" 
-            call flush(6)     
 
 
 
             call HYDRO_exe(did)
 
             write(6,*) "after call HYDRO_exe" 
-            call flush(6)     
 
 ! add for update the CLM state variable.
 
@@ -192,7 +190,6 @@ CONTAINS
      deallocate(clm_g1d)
      deallocate(clm_g2d)
             write(6,*) "end of drive ndhms"
-            call flush(6) 
 
      return 
      end subroutine clm_cpl_HYDRO
@@ -240,13 +237,11 @@ CONTAINS
             end if
 
             write(6,*) "before scatter_1d_r"
-            call flush(6) 
 
 
             call scatter_1d_r(v1d_out,nn,vg,global_nx*global_ny)
 
             write(6,*) "after scatter_1d_r"
-            call flush(6) 
 
          return
       end subroutine Toclm2d
@@ -344,7 +339,6 @@ CONTAINS
 
 !        write(6,*) "k, kk1 ", k, kk1
 !        write(6,*) "z1(kk1), z(k) ", z1(kk1), z(k)
-!        call flush(6)
        
          do j = 1, jx
             do i = 1, ix
@@ -366,7 +360,6 @@ CONTAINS
          if(outZ .le. inZ(1)) then
              if(inZ(2) .eq. inZ(1)) then 
                 write(6,*) "Error: inZ(2)=inZ(1) ", inZ(2),inZ(1)
-                call flush(6)
                 stop 99
              end if
              w1 = (inZ(2)-outZ)/(inZ(2)-inZ(1))
@@ -376,7 +369,6 @@ CONTAINS
          elseif(outZ .ge. inZ(inK)) then
              if(inZ(inK-1) .eq. inZ(inK)) then 
                 write(6,*) "Error: inZ(inK-1)=inZ(inK) ", inZ(inK-1),inZ(inK)
-                call flush(6)
                 stop 99
              end if
              w1 = (outZ-inZ(inK-1))/(inZ(inK)-inZ(inK-1)) 
@@ -390,7 +382,6 @@ CONTAINS
                 k2 = k
              if(inZ(k1) .eq. inZ(k2)) then 
                 write(6,*) "Error: inZ(k1)=inZ(k2) ", inZ(k1),inZ(k2)
-                call flush(6)
                 stop 99
              end if
                 w1 = (outZ-inZ(k1))/(inZ(k2)-inZ(k1))
@@ -462,7 +453,6 @@ CONTAINS
 
       write(6,*) "cpl_outdate = ",cpl_outdate
 
-      call flush(6) 
     end subroutine get_cpl_date
 
 !    transfer the grid column to gridcell.

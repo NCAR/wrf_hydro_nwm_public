@@ -3,9 +3,10 @@
 
 .SUFFIXES:
 .SUFFIXES: .o .F
-LIS_MOD = -I ../mod -I../../../make
+LIS_ROOT = /raid/weiyu/LIS_trunk2/p61_NDHMS
 
-include ../../../make/configure.lis
+LIS_MOD = -I ../mod -I$(LIS_ROOT)/make
+include $(LIS_ROOT)/make/configure.lis
 include ../macros
 
 OBJS = \
@@ -27,4 +28,3 @@ all:	$(OBJS)
 
 clean:
 	rm -f *.o *.mod *.stb *~ *.f
-	cd ..; make clean

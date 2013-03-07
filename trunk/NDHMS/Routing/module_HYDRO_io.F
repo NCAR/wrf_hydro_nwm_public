@@ -1895,9 +1895,10 @@ end subroutine get_albedo12m_netcdf
         chan_in=chan_in+QSTRMVOLRT(I,J)/1000.0*(dist(i,j,9))  !(units m^3)
       enddo
     enddo
-    open (unit=46,file='chan_inflow.txt',form='formatted',&
+    open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
              status='unknown',position='append')
-    write (46,*) chan_in
+    write (46,713) chan_in
+713 FORMAT (F20.7)
     close (46)
 !    return
 !DJG end dump of channel inflow for calibration....
@@ -3001,6 +3002,17 @@ end subroutine get_albedo12m_netcdf
         iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
 
+
+!     !- order definition, var
+        iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
+        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+
+        iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
+        iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
+        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+
+
      !-- station  id
      ! define character-position dimension for strings of max length 11
          iret = NF_DEF_DIM(ncid, "id_len", 11, charid)
@@ -3128,6 +3140,9 @@ end subroutine get_albedo12m_netcdf
          iret = nf_inq_varid(ncid,"head", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), hlink(i))
 
+         iret = nf_inq_varid(ncid,"order", varid)
+         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), ORDER(i))
+
          !-- station index.. will repeat for every timesstep
          iret = nf_inq_varid(ncid,"parent_index", varid)
          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
@@ -3172,6 +3187,9 @@ end subroutine get_albedo12m_netcdf
 
          iret = nf_inq_varid(ncid2,"head", varid)
          iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
+
+         iret = nf_inq_varid(ncid,"order", varid)
+         iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
 
          !-- station index.. will repeat for every timesstep
          iret = nf_inq_varid(ncid2,"parent_index", varid)
