@@ -88,7 +88,7 @@ CONTAINS
         if(my_id .eq. IO_id) then
            call  time_seconds(t2)
            dact = dact + t2 - t1
-           write(6,*) "yyww accumulated time (s): ",dact
+           write(6,*) "accumulated time (s): ",dact
         endif
 #endif
 
@@ -136,9 +136,9 @@ CONTAINS
 
         did = 1
 
-        if(my_id .eq. IO_id) write(6,*) "yyww before HYDRO ini"
 
         if(.not. RT_DOMAIN(did)%initialized) then  
+           if(my_id .eq. IO_id) write(6,*) "before HYDRO ini"
            nlst_rt(did)%dt = dt
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
            nlst_rt(did)%startdate(1:19) = olddate(1:19)
@@ -185,10 +185,10 @@ CONTAINS
               SH2OX = rt_domain(did)%SH2OX
            endif
 #endif
+            if(my_id .eq. IO_id) write(6,*) "end HYDRO ini"
         endif
 
 
-        if(my_id .eq. IO_id) write(6,*) "yyww end HYDRO ini"
      return 
      end subroutine hrldas_cpl_HYDRO_ini
 end module module_HRLDAS_HYDRO

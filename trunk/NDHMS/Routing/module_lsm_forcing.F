@@ -57,20 +57,20 @@ Contains
 
   end subroutine READFORC_WRF
 
-  subroutine read_hrldas_hdrinfo(wrfsi_static_flnm, ix, jx, land_cat, soil_cat)
+  subroutine read_hrldas_hdrinfo(geo_static_flnm, ix, jx, land_cat, soil_cat)
     ! Simply return the dimensions of the grid.
     implicit none
-    character(len=*),          intent(in)  :: wrfsi_static_flnm
+    character(len=*),          intent(in)  :: geo_static_flnm
     integer, intent(out) :: ix, jx, land_cat, soil_cat ! dimensions
 
     integer :: iret, ncid, dimid
 
     ! Open the NetCDF file.
-    iret = nf_open(wrfsi_static_flnm, NF_NOWRITE, ncid)
+    iret = nf_open(geo_static_flnm, NF_NOWRITE, ncid)
     if (iret /= 0) then
 #ifdef HYDRO_D
-       write(*,'("Problem opening wrfsi_static file: ''", A, "''")') &
-            trim(wrfsi_static_flnm)
+       write(*,'("Problem opening geo_static file: ''", A, "''")') &
+            trim(geo_static_flnm)
        call hydro_stop()
 #endif
     endif
@@ -146,10 +146,10 @@ Contains
 
 
 
-  subroutine readland_hrldas(wrfsi_static_flnm,ix,jx,land_cat,soil_cat,vegtyp,soltyp, &
+  subroutine readland_hrldas(geo_static_flnm,ix,jx,land_cat,soil_cat,vegtyp,soltyp, &
                   terrain,latitude,longitude,SOLVEG_INITSWC)
     implicit none
-    character(len=*),          intent(in)  :: wrfsi_static_flnm
+    character(len=*),          intent(in)  :: geo_static_flnm
     integer,                   intent(in)  :: ix, jx, land_cat, soil_cat,SOLVEG_INITSWC
     integer, dimension(ix,jx), intent(out) :: vegtyp, soltyp
     real,    dimension(ix,jx), intent(out) :: terrain, latitude, longitude
@@ -164,11 +164,11 @@ Contains
 
 
     ! Open the NetCDF file.
-    ierr = nf_open(wrfsi_static_flnm, NF_NOWRITE, ncid)
+    ierr = nf_open(geo_static_flnm, NF_NOWRITE, ncid)
 
     if (ierr /= 0) then
 #ifdef HYDRO_D
-       write(*,'("Problem opening wrfsi_static file: ''", A, "''")') trim(wrfsi_static_flnm)
+       write(*,'("Problem opening geo_static file: ''", A, "''")') trim(geo_static_flnm)
        call hydro_stop() 
 #endif
     endif
@@ -216,7 +216,7 @@ Contains
 
      var_name = "LU_INDEX"
          call get2d_int(var_name,xdum_int,ix,jx,&
-               trim(wrfsi_static_flnm))
+               trim(geo_static_flnm))
          vegtyp = xdum_int
 
       ! Get Dominant Soil Type categories in the top layer (stl)
@@ -226,11 +226,11 @@ Contains
     else if (SOLVEG_INITSWC.eq.1) then
        var_name = "VEGTYP"
        call get2d_int(var_name,VEGTYP_inv,ix,jx,&
-              trim(wrfsi_static_flnm))
+              trim(geo_static_flnm))
 
        var_name = "SOILTYP"
        call get2d_int(var_name,SOILTYP_inv,ix,jx,&
-              trim(wrfsi_static_flnm))
+              trim(geo_static_flnm))
        do i=1,ix
          jj=jx
          do j=1,jx
@@ -1468,12 +1468,12 @@ Contains
 
 
 #ifdef MPP_LAND
-    subroutine mpp_readland_hrldas(wrfsi_static_flnm,&
+    subroutine mpp_readland_hrldas(geo_static_flnm,&
           ix,jx,land_cat,soil_cat,& 
           vegtyp,soltyp,terrain,latitude,longitude,&
           global_nx,global_ny,SOLVEG_INITSWC)
     implicit none
-    character(len=*),          intent(in)  :: wrfsi_static_flnm
+    character(len=*),          intent(in)  :: geo_static_flnm
     integer,                   intent(in)  :: ix, jx, land_cat, soil_cat, &
               global_nx,global_ny,SOLVEG_INITSWC
     integer, dimension(ix,jx), intent(out) :: vegtyp, soltyp
@@ -1487,7 +1487,7 @@ Contains
     real, dimension(ix,jx) :: xdum
     integer flag ! flag = 1 from wrfsi, flag =2 from WPS.
      if(my_id.eq.IO_id) then
-        CALL READLAND_HRLDAS(wrfsi_static_flnm,global_nx,  &
+        CALL READLAND_HRLDAS(geo_static_flnm,global_nx,  &
                global_ny,LAND_CAT,SOIL_CAT,      &
                g_VEGTYP,g_SOLTYP,g_TERRAIN,g_LATITUDE,g_LONGITUDE, SOLVEG_INITSWC)
      end if
