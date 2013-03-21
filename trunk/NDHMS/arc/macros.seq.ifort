@@ -8,10 +8,12 @@ endif
 
 RMD		=	rm -f
 COMPILER90=	ifort 
-F90FLAGS  =       -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 
-MODFLAG	=	-I./ -I -I -I ../mod
+##F90FLAGS  =       -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 
+F90FLAGS  =       -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian
+
+MODFLAG	=	-I./  -I ../mod
 LDFLAGS	=	
-CPP	=       /lib/cpp
+CPP	=       cpp
 CPPFLAGS	=       -C -P -traditional -I ../Data_Rec $(HYDRO_D)
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)

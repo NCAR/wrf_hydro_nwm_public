@@ -86,8 +86,8 @@
              }
       case 7 {
                # ifort sequential                            
-               system "cp arc/macros.mpp.ifort macros"; 
-               system "cp arc/Makefile.mpp Makefile.comm"; 
+               system "cp arc/macros.seq.ifort macros"; 
+               system "cp arc/Makefile.seq Makefile.comm"; 
              }
       case 8 {
                # ifort    dmpar only                         
