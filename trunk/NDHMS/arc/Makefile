@@ -8,4 +8,4 @@ clean:
 	(cd HRLDAS_cpl; make clean)
 	(make -f Makefile.comm clean)
 	(cd HRLDAS; make clean)
-	(rm -f */*.mod */*.o lib/*.a)
+	(rm -f */*.mod */*.o lib/*.a Run/Noah_hrldas_beta)
