@@ -2058,7 +2058,7 @@ end subroutine get_albedo12m_netcdf
 
        iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',12,'channel inflow')
+       iret = nf_put_att_text(ncid,varid,'long_name',14,'channel inflow')
        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
