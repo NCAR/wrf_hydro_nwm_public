@@ -1099,14 +1099,19 @@ end module module_HYDRO_drv
         integer :: ierr
 #ifdef HYDRO_D
       write(6,*) "The job is stoped due to the fatal error."
+#endif
 #ifdef MPP_LAND
+#ifndef HYDRO_D
+      print*, "---"
+      print*, "ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
+      print*, ""
+#endif
          call mpp_land_abort()
          call MPI_finalize(ierr)
 #else
          stop "Fatal Error"
 #endif
 
-#endif
      return
      end  subroutine HYDRO_stop  
 
