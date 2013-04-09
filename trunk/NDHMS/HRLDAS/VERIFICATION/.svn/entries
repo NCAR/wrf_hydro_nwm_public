@@ -1,0 +1,34 @@
+9
+
+dir
+1041
+svn://lacus.rap.ucar.edu/noahsvn/hrldas/release/hrldas-v3.3/VERIFICATION
+svn://lacus.rap.ucar.edu/noahsvn
+
+
+
+2010-10-18T19:28:54.821923Z
+840
+kmanning
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+b9767c5e-4036-0410-b146-fdae64f3ec7e
+
+Fluxes_statistics
+dir
+
+OKMeso_statistics
+dir
+

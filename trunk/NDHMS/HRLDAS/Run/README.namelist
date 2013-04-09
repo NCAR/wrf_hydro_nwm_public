@@ -1,0 +1,316 @@
+&NOAHLSM_OFFLINE
+
+HRLDAS_CONSTANTS_FILE
+    This should generally be set to the wrfinput file that was used when
+    you ran consolidate_grib.exe.
+
+    Type:     character string
+    Default:  No valid default value
+    Example:  HRLDAS_CONSTANTS_FILE = "/d1/user/HRLDAS/datasets/wrfinput_d01"
+
+INDIR
+    This should be set to the pathname of the directory where the LDASIN
+    files (created by the consolidate_grib.exe step) are located.  Those
+    LDASIN files are assumed to be named according to the pattern 
+   <YYYYMMDDHH>.LDASIN_DOMAIN<domain_number>
+
+    Type:     character string
+    Default:  No valid default value
+    Example:  INDIR = "../HRLDAS_COLLECT_DATA/run"
+
+OUTDIR
+    This optional variable should be set to the pathname of the directory to
+    which the output from the hrldas executable should be written.  Files get
+    created in that directory, named according to the pattern
+    <OUTDIR>/<YYYYMMDDHH>.LDASOUT_DOMAIN<domain_number>
+
+    This variable is new in hrldas-v3.2.
+
+    Type:     character string
+    Default:  "./"
+    Example:  OUTDIR = "./OUTPUT_RUN1/"
+
+RESTART_FILENAME_REQUESTED
+    This variable replaces the RESTART_HDATE variable from older versions of HRLDAS.
+    Activate RESTART_FILENAME_REQUESTED if you are doing a restart run.  Should be 
+    set to the file name of a restart file created by an earlier execution of HRLDAS.
+
+    The character string "<LATEST>" may be used in place of a date in the restart
+    file name.  In this case the string "<LATEST>" will be replaced by the 
+    date of the latest restart file (i.e., the file with the newest ddate in its
+    file name.
+
+    This variable is new in hrldas-v3.2.
+
+    Type:      character string
+    Default:   " "; i.e., a blank string; meaning not to execute as a restart run
+    Examples:  RESTART_HDATE = "./OLD_RUN/RESTART.2001050118_DOMAIN1"
+               RESTART_HDATE = "./OLD_RUN/RESTART.<LATEST>_DOMAIN1"
+
+START_YEAR
+    This should be set to the starting year (UTC) of your HRLDAS integration.
+    In the case of a restart run, this should be kept to the starting year of
+    the initial segment of the HRLDAS integration.
+
+    Type:     integer
+    Default:  No valid default value
+    Example:  START_YEAR = 2001
+
+START_MONTH
+    This should be set to the starting month (UTC) of your HRLDAS integration.
+    In the case of a restart run, this should be kept to the starting month of
+    the initial segment of the HRLDAS integration.
+
+    Type:     integer
+    Default:  No valid default value
+    Example:  START_MONTH = 01
+
+START_DAY
+    This should be set to the starting day (UTC) of your HRLDAS integration.  In
+    the case of a restart run, this should be kept to the starting day of the 
+    initial segment of the HRLDAS integration.
+
+    Type:     integer
+    Default:  No valid default value
+    Example:  START_DAY = 01
+
+START_HOUR
+    This should be set to the starting hour (UTC) of your HRLDAS integration.
+    In case of a restart run, this should be kept to the starting hour of the
+    initial segment of the Noah LSM integration.
+
+    You should probably start on a 00 UTC hour.
+
+    Type:     integer
+    Default:  No valid default value
+    Example:  START_HOUR = 00
+
+START_MIN
+    This should be set to the starting minute of your HRLDAS integration.  In
+    case of a restart run, this should be kept to the starting minute of the
+    initial segment of the Noah LSM integration.
+
+    You should probably start on a 00:00 UTC hour/minute.
+
+    Type:     integer
+    Default:  00
+    Example:  START_MIN = 00
+
+KHOUR
+    The number of hours to run the Noah LSM integration.  Either KHOUR or KDAY
+    should be set, but not both.
+
+    Type:     integer
+    Default:  -999; meaning that KDAY is to be used instead of KHOUR
+    Example:  KHOUR = 120
+
+KDAY
+    The number of days to run the Noah LSM integration.  Either KHOUR or KDAY
+    should be set, but not both.
+
+    Type:     integer
+    Default:  -999; meaning that KHOUR is to be used instead of KDAY
+    Example:  KDAY = 365
+
+FORCING_TIMESTEP
+    The time increment in seconds between available forcing files.  The 
+    forcing files are the LDASIN files in directory INDIR.
+
+    Type:     integer
+    Default:  No valid default value
+    Example:  FORCING_TIMESTEP = 3600
+
+NOAH_TIMESTEP
+    The timestep (seconds) to use for the Noah integration.  If this is
+    different from the FORCING_TIMESTEP set above, temporal interpolation
+    will be performed between the available LDASIN files (at FORCING_TIMESTEP
+    frequency).
+
+    Type:     integer 
+    Default:  No valid default value
+    Example:  NOAH_TIMESTEP = 900
+
+OUTPUT_TIMESTEP
+    The time increment (seconds) at which history output will be created.
+    This must be an integer multiple of the NOAH_TIMESTEP set above.
+
+    Type:     integer
+    Default:  0, meaning that no history output will be created
+    Example:  OUTPUT_TIMESTEP = 3600
+
+SPLIT_OUTPUT_COUNT
+    The number of consecutive output times to put in a single output
+    file.
+
+    Type:     integer
+    Default:  1; meaning to put a single history output time in an output file.
+    Example:  SPLIT_OUTPUT_COUNT = 1
+
+RESTART_FREQUENCY_HOURS
+    How frequently (in hours) to make a restart file.  This value (converted to 
+    seconds) must be in integer multiple of the NOAH_TIMESTEP set above.
+
+    Type: integer
+    Default:  0; meaning that no restart files will be created
+    Example:  RESTART_FREQUENCY_HOURS = 240
+
+SUBWINDOW_XSTART
+    HRLDAS can integrate the Noah LSM over a subdomain of the prepared LDASIN 
+    dataset. SUBWINDOW_XSTART defines the starting index of a subwindow in 
+    the X direction.
+
+    Type:     integer
+    Default:  1;
+    Example:  SUBWINDOW_XSTART = 150
+
+SUBWINDOW_XEND
+    HRLDAS can integrate the Noah LSM over a subdomain of the prepared LDASIN 
+    dataset.  SUBWINDOW_XEND defines the ending index of a subwindow in the X 
+    direction.
+
+    Type:     integer
+    Deafult:  0; meaning to take the full X dimension as the SUBWINDOW_XEND
+    Example:  SUBWINDOW_XEND = 600
+
+SUBWINDOW_YSTART
+    HRLDAS can integrate the Noah LSM over a subdomain of the prepared LDASIN
+    dataset.  SUBWINDOW_YSTART defines the starting index of a subwindow in the
+    Y direction.
+
+    Type:     integer
+    Default:  1;
+    Example:  SUBWINDOW_YSTART = 250
+
+SUBWINDOW_YEND
+    HRLDAS can integrate the Noah LSM over a subdomain of the prepared LDASIN
+    dataset.  SUBWINDOW_YEND defines the ending index of a subwindow in the Y
+    direction.
+
+    Type: integer
+    Deafult:  0; meaning to take the full Y dimension as the SUBWINDOW_YEND
+    Example:  SUBWINDOW_YEND = 700
+
+NSOIL
+    The number of soil levels to use for the Noah LSM integration.  
+
+    NOTE: If this is changed from the default value of 4, much care needs to be
+    taken in setting up the tables.  The NROOT parameter in the tables is
+    defined in terms of the number levels, not an absolute depth, so if NSOIL
+    or ZSOIL (below) is changed, the NROOT table will probably have to be
+    modified accordingly.
+
+    Type:     integer
+    Default:  4
+    Example:  NSOIL = 4
+
+ZSOIL
+    The depths (from the surface) of the bottom of each soil layer.  There
+    should be an NSOIL number of terms set.  ZSOIL terms have negative values,
+    indicating depths below the surface.
+
+    NOTE: If ZSOIL is changed from the default values, much care needs to be
+    taken in setting up the tables.  The NROOT parameter in the tables is
+    defined in terms of the number levels, not an absolute depth, so if ZSOIL
+    or NSOIL (above) is changed, the NROOT table will probably have to be
+    modified accordingly.
+
+    Type:     integer array of size NSOIL
+    Default:  -0.10, -0.40, -1.00, -2.00
+    Example:  ZSOIL = -0.10, -0.40, -1.00, -2.00
+
+ZLVL
+    The level (m AGL) at which the thermodynamic atmospheric forcing 
+    variables are taken to be valid.
+
+    Type:     real
+    Default:  2.0
+    Example:  ZLVL = 2.0
+
+ZLVL_WIND
+    The level (m AGL) at which the wind atmospheric forcing variables are 
+    taken to be valid.
+
+    This variable is new in hrldas-v3.3.
+
+    Type:     real
+    Default:  2.0
+    Example:  ZLVL_WIND = 2.0
+
+IZ0TLND
+    Controls the setting of the infamous CZIL term in the SFCDIF_MYJ routine.
+    IZ0TLND=0 uses the traditional value of CZIL=0.1.  IZ0TLND=1 computes 
+    CZIL as a function of roughness length (used as a proxy for vegetation
+    height).  The function is CZIL(Z0) = 10.0 ** ( -0.40 * ( Z0 / 0.07 ) )
+
+    This variable is new in hrldas-v3.2.
+
+    Type:     integer
+    Default:  0 (use a value of 0.1 for CZIL)
+    Example:  IZ0TLND = 0
+
+SFCDIF_OPTION
+    Controls the choice of two possible SFCDIF routines, the routines that
+    compute the surface exchange coefficients.  SFCDIF_OPTION=0 uses the 
+    older routine (SFCDIF_OFF) that has been part of HRLDAS for a long time.
+    SFCDIF_OPTION=1 uses a new routine (SFCDIF_MYJ), based off the latest
+    WRF MYJSFC code.
+
+    This variable is new in hrldas-v3.2.
+
+    Type:     integer
+    Default:  0 (for the 'old' SFCDIF routine).
+    Example:  SFCDIF_OPTION = 0
+
+UPDATE_SNOW_FROM_FORCING
+    This variable turns on or off the update of the snow field from data
+    in the forcing file.  If set to .TRUE., then every 24 hours, at 00Z, 
+    a new snow field will be read from the forcing file, and the snow
+    cover and snow depth as evolved by the Noah LSM integration will be lost.
+    If set to .FALSE., the snow fields will evolve according to the Noah LSM
+    physics and the precipitation forcing.
+
+    This variable is new in hrldas-v3.2.
+
+    Type:     logical
+    Default:  .TRUE. (Original HRLDAS behavior:  snow fields updated by new
+              snow fields in the forcing data)
+    Example:  UPDATE_SNOW_FROM_FORCING = .TRUE.
+
+EXTERNAL_FPAR_FILENAME_TEMPLATE
+    For experimental use only, in importing additional datasets during the
+    Noah LSM integration.  If you do not know what this is about, do not use
+    this variable.
+
+    Type:     character string
+    Default:  " ", i.e., a blank string
+    Example:  If you need an example, DON'T USE THIS!
+     
+EXTERNAL_LAI_FILENAME_TEMPLATE
+    For experimental use only, in importing additional datasets during the
+    Noah LSM integration.  If you do not know what this is about, do not use
+    this variable.
+
+    Type:     character string
+    Default:  " ", i.e., a blank string
+    Example:  If you need an example, DON'T USE THIS!
+
+/
+
+&URBAN_OFFLINE
+
+SF_URBAN_PHYSICS
+    Flag to turn on or off the urban canopy model.  This variable used to be
+    called UCMCALL, but was changed to be consistent with the namelist option
+    in the WRF 3.2 release.
+
+    Type:     integer.
+    Default:  0; meaning that the urban canopy model is disabled.
+    Example:  SF_URBAN_PHYSICS = 0
+
+ZLVL_URBAN
+    Height (m) of atmospheric fields for Urban Canopy Model.
+
+    Type:     integer
+    Default:  15.0
+    Example:  ZLVL_URBAN = 15.0
+/

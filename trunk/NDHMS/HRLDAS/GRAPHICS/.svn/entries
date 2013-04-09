@@ -1,0 +1,34 @@
+9
+
+dir
+1041
+svn://lacus.rap.ucar.edu/noahsvn/hrldas/release/hrldas-v3.3/GRAPHICS
+svn://lacus.rap.ucar.edu/noahsvn
+
+
+
+2010-10-18T19:25:21.390009Z
+837
+kmanning
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+b9767c5e-4036-0410-b146-fdae64f3ec7e
+
+TIME_SERIES
+dir
+
+HORIZ
+dir
+

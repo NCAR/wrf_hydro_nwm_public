@@ -2,7 +2,7 @@
 
 !!!! SYSTEM COUPLING !!!!
 !Specify what is being coupled:  1=HRLDAS (offline Noah-LSM), 2=WRF, 3=NASA/LIS, 4=CLM
- sys_cpl = 1
+ sys_cpl = 2
 
 
 

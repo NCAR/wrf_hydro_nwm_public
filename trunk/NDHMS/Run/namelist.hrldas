@@ -63,8 +63,8 @@ SNOW_ASSIM = 0
 ! for extract greenfrac
 GEO_STATIC_FLNM = "RT/geo_em.d03.nc"
 
-!HRLDAS_ini_typ 1: initial and parameters from frocing else from wrfinput.
-HRLDAS_ini_typ = 1
+!HRLDAS_ini_typ 1: initial and parameters from frocing; 0: from wrfinput.
+HRLDAS_ini_typ = 0
 
 /
 
