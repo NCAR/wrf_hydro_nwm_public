@@ -4,7 +4,7 @@ all: user_build_options
 	(cd Noah;			make)
 	(cd IO_code;			make)
 	(cd Run;			make -f Makefile)
-	(cd HRLDAS_COLLECT_DATA;	make)
+#	(cd HRLDAS_COLLECT_DATA;	make)
 
 clean:
 	(cd Utility_routines;		make clean)
