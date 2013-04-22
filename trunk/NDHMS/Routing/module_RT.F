@@ -10,9 +10,6 @@ MODULE module_Routing
    use module_HYDRO_utils 
    IMPLICIT NONE
 
-#include "rt_include.inc"
-#include "namelist.inc"
-
 
 CONTAINS
 
