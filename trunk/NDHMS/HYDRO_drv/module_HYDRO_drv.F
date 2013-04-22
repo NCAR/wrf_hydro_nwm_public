@@ -908,9 +908,13 @@ module module_HYDRO_drv
 ! decompose the land parameter/data 
 
 
-      ix0= rt_domain(did)%ix
-      jx0= rt_domain(did)%jx
-      call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
+!      ix0= rt_domain(did)%ix
+!      jx0= rt_domain(did)%jx
+      if(present(vegtyp)) then
+           call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
+      else
+           call lsm_input(did,ix0=ix0,jx0=jx0)
+      endif
 
 #ifdef HYDRO_D
        write(6,*) "finish decomposion"
