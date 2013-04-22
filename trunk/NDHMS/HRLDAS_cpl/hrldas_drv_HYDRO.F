@@ -205,5 +205,9 @@
           if (iret == 0) iret = nf_get_var_real(ncid, varid, sh2ox)
 
           iret=nf_close(ncid)
+
+!yw    added for 
+          where(sh2ox == 0) sh2ox = smc
+
  
        end subroutine HYDRO_HRLDAS_ini

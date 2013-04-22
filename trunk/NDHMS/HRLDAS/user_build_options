@@ -1,4 +1,5 @@
 .IGNORE:
+
 ifeq ($(HYDRO_D),1)
 HYDRO_D = -DHYDRO_D
 else
@@ -6,18 +7,18 @@ HYDRO_D =
 endif
 
 
-RMD		=	ls 
-RM		=	rm -f
-COMPILER90=	pgf90 
-F90FLAGS  =     -Mfree -Mfptrap -c -byteswapio -Ktrap=fp -O2
+RM		=	rm -f  
+RMD		=	rm -f    
+COMPILER90=	mpif90
+F90FLAGS  =     -Mfree -c -byteswapio -O2 
 LDFLAGS  =      $(F90FLAGS)
-MODFLAG	=	-I./ -I ../mod
+MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod 
 LDFLAGS	=	
 CPP	=       cpp
-CPPFLAGS	=       -C -P -traditional -I ../Data_Rec $(HYDRO_D)
+CPPFLAGS	=       -C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D)
 LIBS 	=	
-NETCDFINC       =       $(NETCDF_INC)
-NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
+NETCDFINC	=	$(NETCDF_INC) 
+NETCDFLIB	=	-L$(NETCDF_LIB) -lnetcdff -lnetcdf
 
 # flag from HRLDAS
 COMPILERF90 = $(COMPILER90)
