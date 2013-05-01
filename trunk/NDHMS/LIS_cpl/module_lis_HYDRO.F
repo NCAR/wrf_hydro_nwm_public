@@ -79,8 +79,8 @@ module module_lis_HYDRO
            write(cpl_outdate(18:19),'(I2)') LIS_rc%ss
         endif
 
+
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
-            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
 
 
             jx = LIS_rc%lnr(n)
@@ -104,6 +104,7 @@ module module_lis_HYDRO
             write(6,*) "noah271_struc(n)%nslay=", noah271_struc(n)%nslay
             write(6,*) "noah271_struc(n)%lyrthk=", noah271_struc(n)%lyrthk
 
+            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
 
             call CPL_LAND_INIT(its,ite,jts,jte)
 
@@ -111,7 +112,7 @@ module module_lis_HYDRO
 !           write(6,*) "yyyywww step 4 before HYDRO_ini= "
 !           write(6,*) "its,ite,jts,jte", its,ite,jts,jte
 
-            call HYDRO_ini(ntime,did,1,1)
+            call HYDRO_ini(ntime,did=did,ix0=1,jx0=1)
 
             if(nlst_rt(did)%sys_cpl .ne. 3) then
                write(6,*) "Error: sys_cpl should be 3."
@@ -129,6 +130,8 @@ module module_lis_HYDRO
 
 !         write(6,*) "LIS_nss_halo_ind,LIS_nse_halo_ind", LIS_nss_halo_ind,LIS_nse_halo_ind
 !         write(6,*) "LIS_ews_halo_ind,LIS_ewe_halo_ind",LIS_ews_halo_ind,LIS_ewe_halo_ind
+
+!            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
 
           RT_DOMAIN(did)%initialized = .true.
         endif

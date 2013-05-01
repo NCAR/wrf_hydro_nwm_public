@@ -104,7 +104,6 @@ module module_HYDRO_drv
      call mpp_land_bcast_int1(outflag)
 #endif
 
-
      call HYDRO_rst_out(did) 
 
      if (outflag .lt. 0) return
