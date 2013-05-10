@@ -1970,8 +1970,11 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
        print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
-
-       iret = nf_create(trim(output_flnm), 0, ncid)
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
 #ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
@@ -2514,7 +2517,13 @@ end subroutine get_albedo12m_netcdf
        print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-       iret = nf_create(trim(output_flnm), 0, ncid)
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+
 #ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
@@ -2865,7 +2874,11 @@ end subroutine get_albedo12m_netcdf
         print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-        iret = nf_create(trim(output_flnm), 0, ncid)
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
 #ifdef HYDRO_D
         if (iret /= 0) then
            print*,  "Problem nf_create points"
@@ -2873,7 +2886,11 @@ end subroutine get_albedo12m_netcdf
         endif
 #endif
 
-        iret = nf_create(trim(output_flnm2), 0, ncid2)
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm2), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid2)
+#else
+       iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
+#endif
 #ifdef HYDRO_D
         if (iret /= 0) then
             print*, "Problem nf_create observation"
@@ -3445,7 +3462,12 @@ end subroutine mpp_output_chrt
       print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-      iret = nf_create(trim(output_flnm), 0, ncid)
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+
 #ifdef HYDRO_D
       if (iret /= 0) then
           print*, "Problem nf_create"
@@ -3744,7 +3766,12 @@ end subroutine mpp_output_chrt
 #endif
  
 !--- define dimension
-        iret = nf_create(trim(output_flnm), 0, ncid)
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+
 #ifdef HYDRO_D
         if (iret /= 0) then
             print*, "Problem nf_create"
@@ -4374,7 +4401,13 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
 #endif
-       iret = nf_create(trim(outFile), 0, ncid)
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(outFile), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
+#endif
+
 #ifdef MPP_LAND
        call mpp_land_bcast_int1(iret)
 #endif
@@ -4463,7 +4496,14 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
 #endif
-       iret = nf_create(trim(outFile), 0, ncid)
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(outFile), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
+#endif
+
+
 #ifdef MPP_LAND
        call mpp_land_bcast_int1(iret)
 #endif

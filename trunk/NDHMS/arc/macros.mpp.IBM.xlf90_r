@@ -5,6 +5,13 @@ else
 HYDRO_D =   
 endif
 
+ifeq ($(WRFIO_NCD_LARGE_FILE_SUPPORT),1)
+WRFIO_NCD_LARGE_FILE_SUPPORT = -DWRFIO_NCD_LARGE_FILE_SUPPORT
+else
+WRFIO_NCD_LARGE_FILE_SUPPORT = 
+endif
+
+
 RM		=	rm -f 
 RMD		=	rm -f 
 COMPILER90=	mpxlf90_r
@@ -14,7 +21,7 @@ MODFLAG	=	-I./ -I ../MPP -I../../MPP -I ../mod
 LDFLAGS	=	
 CPP	=       cpp
 LIBS 	=	
-CPPFLAGS	=	-C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D)
+CPPFLAGS	=	-C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D) $(WRFIO_NCD_LARGE_FILE_SUPPORT)
 NETCDFINC	=	$(NETCDF_INC) 
 NETCDFLIB	=	-L$(NETCDF_LIB) -lnetcdff -lnetcdf
 

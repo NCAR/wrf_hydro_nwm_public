@@ -12,6 +12,8 @@ module module_lis_HYDRO
        use module_namelist, only: nlst_rt
        use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
+!!! temp use 
+       use module_yw, only: SFHEAD1RT,INFXS1RT, soldrain
     contains
 
     subroutine lis_cpl_HYDRO(n)
@@ -154,6 +156,10 @@ module module_lis_HYDRO
 !       write(11,*) "RT_DOMAIN(did)%stc",RT_DOMAIN(did)%stc(:,:,1)
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
+
+        call lis2HYDRO(RT_DOMAIN(did)%infxsrt(:,:),INFXS1RT,size(INFXS1RT),n,ix,jx)
+        call lis2HYDRO(RT_DOMAIN(did)%soldrain(:,:),SOLDRAIN,size(SOLDRAIN),n,ix,jx)
+        
     
         call HYDRO_exe(did)
 
@@ -164,6 +170,8 @@ module module_lis_HYDRO
              call HYDRO2lis_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)),n,ix,jx)
              call HYDRO2lis_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
         end do
+
+        call HYDRO2lis_2d(RT_DOMAIN(did)%sfcheadrt(:,:),SFHEAD1RT,size(SFHEAD1RT),n,ix,jx)
 
      return 
      end subroutine lis_cpl_HYDRO
