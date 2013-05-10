@@ -19,6 +19,7 @@ module module_HRLDAS_HYDRO
 
     real, allocatable, dimension(:,:) :: vg_test
     integer :: nn
+    integer :: open_unit_status
 
 
 
@@ -189,4 +190,20 @@ CONTAINS
 
      return 
      end subroutine hrldas_cpl_HYDRO_ini
+
+     subroutine open_print_mpp(iunit)
+       implicit none
+       integer iunit
+       character(len=16) fileout
+
+       if(open_unit_status == 999) return
+       open_unit_status = 999 
+
+#ifdef MPP_LAND  
+       write(fileout,'(a11,i0.5)') "diag_hydro.",my_id    
+#else
+       write(fileout,'(a11,i0.5)') "diag_hydro.",0    
+#endif
+       open(iunit,file=fileout,form="formatted")
+     endsubroutine open_print_mpp
 end module module_HRLDAS_HYDRO

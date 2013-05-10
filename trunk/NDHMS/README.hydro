@@ -36,6 +36,13 @@ libnetcdff and ibnetcdf. If the user's netcdf library combined them together (on
 the user will need to manually change this part in order to successfully compile WRF-Hydro. 
 See the section below on porting about how to change this.
 
+Notes:  If you are going to create model output file that is more than 2Gb,
+      you should consider using netCDF large file support function. To activate
+      this, one must set the environment variable WRFIO_NCD_LARGE_FILE_SUPPORT.
+      In c-shell environment, do
+
+      setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
+
 3) Configuring and compiling
 On the following platforms, the configuring and compiling commands are the same as WRF model 
 after the user has set up the above four environment variables. The default supported platform 
