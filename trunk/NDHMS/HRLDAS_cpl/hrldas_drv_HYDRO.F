@@ -10,7 +10,7 @@
        end subroutine hrldas_drv_HYDRO
 
        subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)
-          use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO_ini
+          use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO_ini, open_print_mpp
           implicit none
           integer:: ii,jj,kk, kt
           character(len=*) :: olddate
@@ -18,6 +18,7 @@
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
              call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)  
+             call open_print_mpp(6)
        end subroutine hrldas_drv_HYDRO_ini
 
        subroutine HYDRO_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
