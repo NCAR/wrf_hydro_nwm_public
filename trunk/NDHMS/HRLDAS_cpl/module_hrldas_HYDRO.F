@@ -3,7 +3,8 @@ module module_HRLDAS_HYDRO
 ! NDHMS  module   
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
-                 write_io_real, my_id, mpp_land_bcast_real1, IO_id
+                 write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
+                 mpp_land_bcast_int1
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
@@ -115,7 +116,7 @@ CONTAINS
      return 
      end subroutine hrldas_cpl_HYDRO
 
-    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate)
+    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
 
 
        implicit none
@@ -125,6 +126,7 @@ CONTAINS
        real :: dt
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+       real, dimension(kk) :: zsoil
        character(len = *) :: olddate
 
         integer ::  did
@@ -143,6 +145,14 @@ CONTAINS
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
            nlst_rt(did)%startdate(1:19) = olddate(1:19)
 
+           nlst_rt(did)%nsoil = kk
+#ifdef MPP_LAND
+           call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+#endif
+           allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
+           nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
+           
+           write(6,*) "in hrldas_cpl_HYDRO_ini zsoil = ",zsoil
            
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 

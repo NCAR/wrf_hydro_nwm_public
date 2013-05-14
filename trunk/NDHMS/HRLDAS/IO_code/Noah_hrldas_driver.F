@@ -1207,7 +1207,7 @@ program Noah_hrldas_driver
 ! so that upon restart, we're ready to go on this time step.
 !--------------------------------------------------------------------------------
 
-  call hrldas_drv_HYDRO_ini(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, k, dt, olddate)
+  call hrldas_drv_HYDRO_ini(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, k, dt, olddate,zsoil(1:NSOIL))
 
   if(rank .eq. 0) then
 !yw      call get_greenfrac(greenfrac, ix, jx, olddate)

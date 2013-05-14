@@ -33,8 +33,7 @@ CONTAINS
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
-       integer :: nsoil, SOLVEG_INITSWC
-       real ZSOIL8(8)
+       integer :: SOLVEG_INITSWC
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
        logical            :: history_output
@@ -46,7 +45,7 @@ CONTAINS
        integer :: HIRES_OUT
        integer :: i
 
-       namelist /HYDRO_nlist/NSOIL, ZSOIL8,  &
+       namelist /HYDRO_nlist/ &
             RESTART_FILE,HISTORY_OUTPUT,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
             out_dt, rst_dt, &
@@ -70,10 +69,6 @@ CONTAINS
 
 
 #ifdef MPP_LAND
-  call mpp_land_bcast_int1(NSOIL)
-  do i = 1, NSOIL
-    call mpp_land_bcast_real1(ZSOIL8(i))
-  end do
 !  call mpp_land_bcast_real1(DT)
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
@@ -83,8 +78,15 @@ CONTAINS
   call mpp_land_bcast_int1(DEEPGWSPIN)
   call mpp_land_bcast_int1(SOLVEG_INITSWC)
 #endif
-  nlst%NSOIL = NSOIL
-  nlst%ZSOIL8 = ZSOIL8
+
+
+#ifdef MPP_LAND
+      call mpp_land_bcast_int1(nlst%NSOIL)
+      do i = 1, nlst%NSOIL
+        call mpp_land_bcast_real1(nlst%ZSOIL8(i))
+      end do
+#endif
+
 !  nlst%DT = DT
   nlst%RESTART_FILE = RESTART_FILE
   nlst%HISTORY_OUTPUT = HISTORY_OUTPUT

@@ -28,7 +28,7 @@ module module_lis_HYDRO
 
 !output flux and state variable
 
-        integer :: i,j
+        integer :: i,j, kz
 
 
         did = 1
@@ -38,6 +38,26 @@ module module_lis_HYDRO
 !           write(6,*) "npesx, npesy",LIS_rc%npesx, LIS_rc%npesy
 
       if(.not. RT_DOMAIN(did)%initialized) then
+
+!!! get soil layers from lis
+!!! ++++++++++++++
+        nlst_rt(did)%nsoil = noah271_struc(n)%nslay
+#ifdef MPP_LAND
+        call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+#endif
+        if(nlst_rt(did)%nsoil < 1) then
+           write(6,*) "Error: nsoil is less than 1"
+           call hydro_stop 
+        endif
+        allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
+        nlst_rt(did)%zsoil8(1) = -noah271_struc(n)%lyrthk(1)
+        DO KZ = 2,nlst_rt(did)%nsoil
+           nlst_rt(did)%zsoil8(KZ) = -noah271_struc(n)%lyrthk(KZ)+nlst_rt(did)%zsoil8(KZ-1)
+        END DO
+!!! ----------
+        write(6,*) "zsoil8 = ",nlst_rt(did)%zsoil8
+
+
         CALL mpi_initialized( mpi_inited, ierr )
         if ( .NOT. mpi_inited ) then
            call MPI_INIT( ierr )  ! stand alone land model.

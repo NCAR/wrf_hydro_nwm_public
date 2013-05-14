@@ -9,7 +9,7 @@
           call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
        end subroutine hrldas_drv_HYDRO
 
-       subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)
+       subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO_ini, open_print_mpp
           implicit none
           integer:: ii,jj,kk, kt
@@ -17,7 +17,8 @@
           real :: dt
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate)  
+          real, dimension(kk) :: zsoil
+             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)  
              call open_print_mpp(6)
        end subroutine hrldas_drv_HYDRO_ini
 

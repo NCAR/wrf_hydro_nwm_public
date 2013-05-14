@@ -2,13 +2,14 @@ module module_WRF_HYDRO
 
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
-                mpp_land_bcast_real
+                mpp_land_bcast_real, mpp_land_bcast_int1
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
     use module_namelist, only: nlst_rt
     USE module_domain, ONLY : domain, domain_clock_get
+    USE module_configure, only : config_flags
 
     implicit none
      
@@ -34,6 +35,7 @@ CONTAINS
         integer ntime
 
         integer :: i,j
+        
 
 !output flux and state variable
 
@@ -51,6 +53,16 @@ CONTAINS
         if(.not. RT_DOMAIN(did)%initialized) then
 
 
+           nlst_rt(did)%nsoil = config_flags%num_soil_layers
+#ifdef MPP_LAND
+           call mpp_land_bcast_int1 (nlst_rt(did)%nsoil)
+#endif
+           allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
+           if(grid%zs(1) <  0) then
+              nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = grid%zs(1:nlst_rt(did)%nsoil)
+           else
+              nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = -1*grid%zs(1:nlst_rt(did)%nsoil)
+           endif
 
             CALL domain_clock_get( grid, current_timestr=cpl_outdate)
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
