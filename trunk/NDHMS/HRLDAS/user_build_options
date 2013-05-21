@@ -1,5 +1,3 @@
-NETCDF_INC = /opt/netcdf/include
-NETCDF_LIB = /opt/netcdf/lib
 .IGNORE:
 
 ifeq ($(HYDRO_D),1)

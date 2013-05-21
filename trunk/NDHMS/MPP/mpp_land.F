@@ -1043,6 +1043,12 @@ MODULE MODULE_MPP_LAND
       call MPI_COMM_RANK( MPI_COMM_WORLD, my_id, ierr ) 
       call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr ) 
 
+      if(numprocs .ne. total_pe) then
+         write(6,*) "Error: numprocs .ne. total_pe ",numprocs, total_pe 
+         call hydro_stop()
+      endif
+
+
 !   ### get the neighbors.  -1 means no neighbor.
       left_id = info(2,my_id+1)
       right_id = info(3,my_id+1)

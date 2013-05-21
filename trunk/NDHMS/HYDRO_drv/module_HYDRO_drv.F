@@ -813,7 +813,7 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
     call  MPP_LAND_INIT()
 #endif
- 
+
 
 ! read the namelist
 ! the lsm namelist will be read by rtland sequentially again.
@@ -857,11 +857,15 @@ module module_HYDRO_drv
    else  
 !  coupled with WRF, LIS
          numprocs = node_info(1,1)
+
          call wrf_LAND_set_INIT(node_info,numprocs,nlst_rt(did)%AGGFACTRT)
+
 
          rt_domain(did)%ix = local_nx
          rt_domain(did)%jx = local_ny
    endif
+
+     
 
       rt_domain(did)%g_IXRT=global_rt_nx
       rt_domain(did)%g_JXRT=global_rt_ny
@@ -889,6 +893,8 @@ module module_HYDRO_drv
 
 
        call getChanDim(did)
+
+
 #ifdef HYDRO_D
        write(6,*) "finish getChanDim "
 #endif
@@ -914,6 +920,7 @@ module module_HYDRO_drv
       else
            call lsm_input(did,ix0=ix0,jx0=jx0)
       endif
+
 
 #ifdef HYDRO_D
        write(6,*) "finish decomposion"
@@ -1001,6 +1008,7 @@ module module_HYDRO_drv
          soltyp = 0
          call get2d_lsm_soltyp(soltyp,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%geo_static_flnm))
 
+
          call get2d_lsm_real("HGT",RT_DOMAIN(did)%TERRAIN,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%geo_static_flnm))
 
          call get2d_lsm_real("XLAT",RT_DOMAIN(did)%lat_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%geo_static_flnm))
@@ -1009,12 +1017,14 @@ module module_HYDRO_drv
 
 
 
-            if(nlst_rt(did)%sys_cpl .eq. 2) then
+            if(nlst_rt(did)%sys_cpl .eq. 2 ) then
               ! coupling with WRF
-                where(soltyp0 == 14) VEGTYP0 = 16
-                where(VEGTYP0 == 16 ) soltyp0 = 14
-                soltyp = soltyp0
-                RT_DOMAIN(did)%VEGTYP = VEGTYP0
+                if(present(soltyp0) ) then
+                   where(soltyp0 == 14) VEGTYP0 = 16
+                   where(VEGTYP0 == 16 ) soltyp0 = 14
+                   soltyp = soltyp0
+                   RT_DOMAIN(did)%VEGTYP = VEGTYP0
+                endif
             endif
 
          where(soltyp == 14) RT_DOMAIN(did)%VEGTYP = 16

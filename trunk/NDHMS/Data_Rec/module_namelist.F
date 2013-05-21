@@ -45,7 +45,11 @@ CONTAINS
        integer :: HIRES_OUT
        integer :: i
 
-       namelist /HYDRO_nlist/ &
+!!! add the following two dummy variables 
+       integer  :: NSOIL
+       real :: ZSOIL8(8)
+
+       namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
             RESTART_FILE,HISTORY_OUTPUT,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
             out_dt, rst_dt, &
@@ -85,6 +89,10 @@ CONTAINS
       do i = 1, nlst%NSOIL
         call mpp_land_bcast_real1(nlst%ZSOIL8(i))
       end do
+#ifdef HYDRO_D
+      write(6,*) "nlst%NSOIL = ", nlst%NSOIL
+      write(6,*) "nlst%ZSOIL8 = ",nlst%ZSOIL8
+#endif
 #endif
 
 !  nlst%DT = DT

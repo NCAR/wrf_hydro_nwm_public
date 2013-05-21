@@ -1814,6 +1814,8 @@
 #ifdef HYDRO_D
                       print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
+                      print *, "VEGTYP = ", VEGTYP(I,J)
+                      print *, "i,j,krt, nsoil",i,j,krt,nsoil
                       call hydro_stop()
 #endif
                   END IF
