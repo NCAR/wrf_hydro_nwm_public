@@ -152,7 +152,6 @@ CONTAINS
            allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
            nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
            
-           write(6,*) "in hrldas_cpl_HYDRO_ini zsoil = ",zsoil
            
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
@@ -196,7 +195,6 @@ CONTAINS
            endif
 #endif
         endif
-
 
      return 
      end subroutine hrldas_cpl_HYDRO_ini

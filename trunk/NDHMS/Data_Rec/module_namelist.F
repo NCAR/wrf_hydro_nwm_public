@@ -191,6 +191,10 @@ CONTAINS
   endif
 #endif
 
+#ifdef MPP_LAND
+  !bcast other  variable.
+      call mpp_land_bcast_real1(nlst%dt)
+#endif
       return
     end subroutine read_rt_nlst
 
