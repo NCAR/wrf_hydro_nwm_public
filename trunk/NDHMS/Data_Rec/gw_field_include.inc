@@ -18,9 +18,11 @@
         h,              &  ! head, after ghmcompute (m)
         convgw             ! convergence due to gw flow (m/s)
 
+      real,    allocatable, dimension(:,:) ::  &
+	qsgwrt            ! flux between soil and groundwater for coupled simulations
+
       real  :: ebot, eocn
       integer ::istep = 0
-
 
   end type gw_field
 
