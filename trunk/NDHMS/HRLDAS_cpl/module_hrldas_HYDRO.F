@@ -113,6 +113,8 @@ CONTAINS
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
 
+! TODO aggregate qsgwrt (udrunoff?) -> qsgw for use with LSM
+
      return 
      end subroutine hrldas_cpl_HYDRO
 
