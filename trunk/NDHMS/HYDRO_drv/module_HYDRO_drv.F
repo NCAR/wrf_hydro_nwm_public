@@ -1099,6 +1099,7 @@ end module module_HYDRO_drv
       subroutine land_finish()
 #ifdef HYDRO_D
 #ifdef MPP_LAND
+         close(6)
          call mpp_land_finish()
 #else
          stop
