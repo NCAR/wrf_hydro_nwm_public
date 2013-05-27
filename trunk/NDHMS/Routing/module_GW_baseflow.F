@@ -246,6 +246,9 @@ contains
       allocate(gw2d(did)%ho     (ix,jx))
       allocate(gw2d(did)%h      (ix,jx))
       allocate(gw2d(did)%convgw (ix,jx))
+      
+      ! TODO allocate only if gwSoilCoupling is active
+      allocate(gw2d(did)%qsgwrt (ix,jx))
 !       allocate(gw2d(did)% (ix,jx))
 
     end subroutine gw2d_allocate
@@ -805,5 +808,107 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
 !
       RETURN
       END SUBROUTINE SCOPY
+
+subroutine gwSoilFlux(did)
+
+  use module_namelist, only: nlst_rt
+  use module_RT_data, only: rt_domain  
+  use module_GW_baseflow_data, only: gw2d
+  
+  implicit none
+  
+  integer, intent(in)	:: did
+  
+  
+  real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans
+  integer :: nsoil, i, j
+  
+  
+  
+! Step 1, collect data
+
+! relative soil moisture content of lowest soil layer (1 = saturated)
+  nsoil = nlst_rt(did)%nsoil
+  smcrel = RT_DOMAIN(did)%SMCRT(:,:,nsoil) / RT_DOMAIN(did)%SMCMAXRT(:,:,nsoil)
+
+! depth of transition zone from lowest soil layer to groundwater head (in cm)
+  ztrans = (rt_domain(did)%elrt + nlst_rt(did)%zsoil8(nsoil)) - gw2d(did)%ho
+  ztrans = ztrans * 100
+  
+! Step 2, compute flux  TODO: deal with cases where gwhead > soil model layers
+
+  do j=1,rt_domain(did)%jxrt
+    do i=1,rt_domain(did)%ixrt
+        if(ztrans(i,j) > 0) then
+	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), 6, gw2d(did)%qsgwrt(i,j))        
+	end if
+    end do
+  end do
+
+! TODO Step 3, adapt groundwater head
+
+! gw2d(did)%ho = ho + gw2d(did)%qsgwrt * dt / poros
+  
+end subroutine gwSoilFlux
+      
+subroutine darcyGwSoil(Z, s, soil, q_darcy)
+
+implicit none
+
+INTEGER, INTENT (IN)  :: soil ! soiltype
+
+REAL :: sig_a, sig_b, sig_c
+
+REAL, DIMENSION(9)    :: k_para
+REAL, INTENT (IN)     :: Z, s
+REAL, INTENT (OUT)    :: q_darcy
+real                  :: beta,alpha,q_cap,b,ks,aep,c,q_grav,y,fac
+
+real, dimension(9,12) :: &
+      k_soil = reshape((/&
+0.0778, 3.9939, 0.2913, 4.0801, 0.1386, 4.0500, -12.10, 0.3950, 1.0560,&
+0.0924, 4.8822, 0.2674, 3.8915, 0.1365, 4.3800, -09.00, 0.4100, 0.9380,&
+0.0367, 4.5259, 0.2446, 4.2849, 0.1208, 4.9000, -21.80, 0.4350, 0.2080,&
+0.0101, 3.6896, 0.2153, 4.2765, 0.0887, 5.3000, -78.60, 0.4850, 0.0432,&
+0.0101, 3.6896, 0.2153, 4.2765, 0.0887, 5.3000, -78.60, 0.4850, 0.0432,&
+0.0169, 2.9936, 0.2858, 4.3738, 0.1026, 5.3900, -47.80, 0.4510, 0.0417,&
+0.0271, 4.4743, 0.2587, 3.9055, 0.0920, 7.1200, -29.90, 0.4200, 0.0378,&
+0.0227, 4.3768, 0.2658, 3.8234, 0.0843, 7.7500, -35.60, 0.4770, 0.0102,&
+0.0127, 6.6836, 0.1725, 3.7512, 0.0703, 8.5200, -63.00, 0.4760, 0.0147,&
+0.0530, 9.2423, 0.1859, 3.3688, 0.0728, 10.400, -15.30, 0.4260, 0.0130,&
+0.0165, 5.3972, 0.2479, 3.5549, 0.0641, 10.400, -49.00, 0.4920, 0.0062,&
+0.0200, 6.0106, 0.2474, 3.4788, 0.0622, 11.400, -40.50, 0.4820, 0.0077/&
+),(/9,12/))
+
+
+
+ k_para  = k_soil(:,soil)
+ sig_a   = 1 - exp( -1 * k_para(1) * Z)
+ sig_b   = k_para(2) * Z**k_para(3)
+ sig_c   = k_para(4) * exp( -1 * Z**k_para(5))
+ y       = sig_a/(1  + exp(sig_b * (s - sig_c))) !solving equation (20) in Boogart et al.
+
+ b   =   k_para(6)
+ ks  =   k_para(9)
+ aep =  -k_para(7)
+
+ c      =  2 * b  + 3
+ q_grav = -1 * ks * s**c
+
+! alp is constant from equation (13) of paper
+beta  = 2 + 3 / b
+alpha = 1 + 1.5 /  (beta - 1)
+q_cap = ks * alpha * (aep / Z)**beta
+
+q_darcy = y * q_cap + q_grav ![cm/min]
+
+fac     = 1./6000.
+q_darcy = q_darcy * fac
+q_cap   = q_cap   * fac
+q_grav  = q_grav  * fac
+
+!returns q_darcy in [m/s]
+
+end subroutine darcyGwSoil
 
 end module module_GW_baseflow   

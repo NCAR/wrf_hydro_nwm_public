@@ -21,7 +21,7 @@
 
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                  GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                  GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                   sys_cpl
           real:: DTRT,dxrt0
           character(len=256) :: route_topo_f=""
