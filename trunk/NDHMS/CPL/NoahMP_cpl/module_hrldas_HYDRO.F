@@ -113,7 +113,10 @@ CONTAINS
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
 
-     end subroutine hrldas_cpl_HYDRO
+! TODO aggregate qsgwrt (udrunoff?) -> qsgw for use with LSM
+
+    return 
+    end subroutine hrldas_cpl_HYDRO
 
     subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
 

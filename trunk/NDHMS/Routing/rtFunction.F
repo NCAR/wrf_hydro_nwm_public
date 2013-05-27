@@ -143,9 +143,16 @@
 #ifdef HYDRO_D
            write(6,*) "*****bf******start 2d_gw_model "
 #endif
-
+!  TODO 
+! 	   compute qsgwrt  between lsm and gw with namelist selected coupling method
+! 	   qsgwrt is defined on the routing grid  and needs to be aggregated for SFLX
+	   
            DX = abs(nlst_rt(did)%DXRT0 * nlst_rt(did)%AGGFACTRT)
            
+! TODO	   
+! 	   modify gw-head before gwstep call with respect to specific yield of the 
+! 	   aquifer and the computed flux (qsgwrt)
+	   
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
 			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
 			gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
@@ -154,8 +161,6 @@
 			gw2d(did)%istep)
            
            
-! bftodo head postprocessing block 
-! GW-SOIL-CHANNEL interaction section
 	  gw2d(did)%ho = gw2d(did)%h
 
 #ifdef HYDRO_D
