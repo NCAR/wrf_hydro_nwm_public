@@ -19,10 +19,12 @@
         convgw             ! convergence due to gw flow (m/s)
 
       real,    allocatable, dimension(:,:) ::  &
-	qsgwrt            ! flux between soil and groundwater for coupled simulations
+	qsgwrt,         &  ! flux between soil and groundwater for coupled simulations on routing grid
+	qsgw               ! flux between soil and groundwater for coupled simulations on lsm grid
 
       real  :: ebot, eocn
       integer ::istep = 0
+      
 
   end type gw_field
 

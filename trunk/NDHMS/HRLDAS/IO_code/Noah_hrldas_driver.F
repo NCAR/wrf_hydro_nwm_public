@@ -71,6 +71,9 @@ program Noah_hrldas_driver
   REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
   integer :: forc_typ, snow_assim, HRLDAS_ini_typ
 
+  real, allocatable, dimension(:,:) ::  qsgw
+  integer :: gwsoilcpl 
+  
   INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP,SOLTYP
   REAL,    allocatable, DIMENSION(:,:)   :: TERRAIN, LATITUDE, LONGITUDE
   REAL,    allocatable, DIMENSION(:,:)   :: T2,XLONG,U,V,PRES,SHORT,PRCP1
@@ -1182,6 +1185,8 @@ program Noah_hrldas_driver
   allocate( greenfrac   (ix,jx) )
   allocate( prcp0    (ix,jx) )
 
+  allocate ( qsgw (ix,jx))
+
   if(rank .ne. 0) then
     allocate(smc (ix,jx,nsoil))
     allocate(stc (ix,jx,nsoil))
@@ -1197,6 +1202,7 @@ program Noah_hrldas_driver
     infxsrt = 0.0
     etpnd = 0.0
     soldrain = 0.0
+    qsgw = 0.0
 
 
   KLOOP : DO K=1,NTIME
@@ -1950,7 +1956,8 @@ program Noah_hrldas_driver
                    SOILW,SOILM,Q1,SMAV,                             &    !D
                    RDLAI2D, USEMONALB, SNOTIME1, RIBB,              &
                    SMCWLT,SMCDRY,SMCREF,SMCMAX,NROOT,               &
-                   sfcheadrt(i,j),INFXSRT(i,j),ETPND1 )           !P  
+                   sfcheadrt(i,j),INFXSRT(i,j),ETPND1,              &
+		   gwsoilcpl, qsgw(i,j))           !P  
 
 #if _DEBUG_PRINT_
               ETPND(i,j) = ETPND(i,j) + etpnd1
@@ -2491,7 +2498,9 @@ program Noah_hrldas_driver
 
      endif
   endif   ! (rank if block)
-  call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+  call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL), &
+                        infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,               &
+			gwsoilcpl, qsgw)
 
   ENDDO KLOOP
 

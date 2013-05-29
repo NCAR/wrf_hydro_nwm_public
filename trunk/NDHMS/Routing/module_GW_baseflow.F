@@ -226,6 +226,7 @@ contains
 
    subroutine gw2d_allocate(did, ix, jx, nsoil)
       use module_GW_baseflow_data, only: gw2d
+      use module_rt_data, only: rt_domain
       implicit none
       integer ix, jx, nsoil
       integer istatus, did
@@ -247,9 +248,10 @@ contains
       allocate(gw2d(did)%h      (ix,jx))
       allocate(gw2d(did)%convgw (ix,jx))
       
+      
       ! TODO allocate only if gwSoilCoupling is active
       allocate(gw2d(did)%qsgwrt (ix,jx))
-!       allocate(gw2d(did)% (ix,jx))
+      allocate(gw2d(did)%qsgw   (rt_domain(did)%ix,rt_domain(did)%jx))
 
     end subroutine gw2d_allocate
 
