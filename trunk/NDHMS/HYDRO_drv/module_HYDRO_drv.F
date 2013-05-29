@@ -177,7 +177,7 @@ module module_HYDRO_drv
 !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
                 rt_out_date, nlst_rt(did)%olddate,    &
                 gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                 &
-                gw2d(did)%convgw, RT_DOMAIN(did)%SFCHEADSUBRT,     &
+                gw2d(did)%convgw, gw2d(did)%qsgwrt,     &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
                 RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
@@ -655,6 +655,9 @@ module module_HYDRO_drv
              end do
        end do
 
+
+       rt_domain(did)%soiltyp = soltyp
+       
        deallocate(soltyp)
 
 

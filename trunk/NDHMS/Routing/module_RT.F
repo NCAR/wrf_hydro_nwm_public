@@ -54,6 +54,7 @@ CONTAINS
 
 
   allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
+  allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
   allocate( rt_domain(did)%ELRT   	(IXRT,JXRT) )
   allocate( rt_domain(did)%SOXRT  	(IXRT,JXRT) )
   allocate( rt_domain(did)%SOYRT   	(IXRT,JXRT) )
@@ -249,6 +250,7 @@ CONTAINS
   allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
   allocate( rt_domain(did)%SMCREF1  (IX,JX) )
   allocate( rt_domain(did)%VEGTYP   (IX,JX) )
+  allocate( rt_domain(did)%SOILTYP   (IX,JX) )
   allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
   allocate( rt_domain(did)%SLDPTH(NSOIL) )
   allocate( rt_domain(did)%SO8LD_D   (IX,JX,3) )
