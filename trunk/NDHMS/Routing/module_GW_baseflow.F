@@ -913,4 +913,49 @@ q_grav  = q_grav  * fac
 
 end subroutine darcyGwSoil
 
+
+
+subroutine aggregateQsgw(did)
+
+  use module_namelist, only: nlst_rt
+  use module_RT_data, only: rt_domain  
+  use module_GW_baseflow_data, only: gw2d
+
+  implicit none
+
+   integer, intent(in) :: did
+   integer :: j,i, ixxRT, jyyRT, m,n
+   real :: agg
+
+
+    do j=1,rt_domain(did)%jx
+     do i=1,rt_domain(did)%ix
+
+       agg= 0.
+       
+       do m=nlst_rt(did)%aggfactRT-1,0,-1
+         do n=nlst_rt(did)%aggfactRT-1,0,-1
+
+
+	    ixxRT = i * nlst_rt(did)%aggfactRT-n
+	    jyyRT = j * nlst_rt(did)%aggfactRT-m
+
+           
+#ifdef MPP_LAND
+	    if(left_id.ge.0) ixxRT=ixxRT+1
+	    if(down_id.ge.0) jyyRT=jyyRT+1
+#endif
+             agg = agg + gw2d(did)%qsgwRT(ixxRT, jyyRT)
+           end do
+         end do
+	
+            gw2d(did)%qsgw(i,j) = agg/(nlst_rt(did)%aggfactRT**2)
+       end do
+     end do
+
+
+
+end subroutine aggregateQsgw
+
+
 end module module_GW_baseflow   
