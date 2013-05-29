@@ -67,7 +67,8 @@
              RT_DOMAIN(did)%QBDRYTRT,RT_DOMAIN(did)%QSUBBDRYTRT,&
              RT_DOMAIN(did)%QSTRMVOLTRT,RT_DOMAIN(did)%q_sfcflx_x,&
              RT_DOMAIN(did)%q_sfcflx_y,RT_DOMAIN(did)%LKSATFAC,&
-             RT_DOMAIN(did)%OVROUGHRTFAC,rt_domain(did)%dist_lsm(:,:,9) )
+             RT_DOMAIN(did)%OVROUGHRTFAC,rt_domain(did)%dist_lsm(:,:,9),&
+	     rt_domain(did)%soiltyp, rt_domain(did)%soiltypRT)
 
             QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-QSTRMVOLRT_DUM
             LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-LAKE_INFLORT_DUM

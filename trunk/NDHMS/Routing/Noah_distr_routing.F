@@ -1642,7 +1642,8 @@
        RT_OPTION,OV_ROUGH,INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT,&
        DTRT, DT,LAKE_INFLOTRT,QBDRYTRT,QSUBBDRYTRT,&
        QSTRMVOLTRT,q_sfcflx_x,q_sfcflx_y,LKSATFAC,&
-       OVROUGHRTFAC,area_lsm)
+       OVROUGHRTFAC,area_lsm, &
+       soiltyp, soiltypRT)
 
 
 
@@ -1677,6 +1678,9 @@
        real,DIMENSION(IXRT,JXRT,NSOIL)::SMCRT,SMCMAXRT,SMCREFRT,SMCWLTRT,SH2OWGT
        integer,INTENT(IN), DIMENSION(IXRT,JXRT)     ::CH_NETRT
        integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)  ::LAKE_MSKRT
+       
+       integer, intent(in), dimension(ix,jx)	  :: soiltyp
+       integer, intent(inout), dimension(ixrt, jxrt) :: soiltypRT
 
        REAL    :: INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT, WATHOLDCAP,DTRT,&
                   DT,LAKE_INFLOTRT,QBDRYTRT,QSUBBDRYTRT,QSTRMVOLTRT
@@ -1853,6 +1857,10 @@
                  LAKE_MSKRT(IXXRT,JYYRT) = 9999
 !yw                 LAKE_MSKRT(IXXRT,JYYRT) = -9999
                end if
+
+               ! BF disaggregate soiltype information for gw-soil-coupling
+	       ! TODO: move this disaggregation code line to lsm_init section because soiltype is time-invariant
+               soiltypRT(ixxrt,jyyrt) = soiltyp(i,j)
 
               end do
              end do

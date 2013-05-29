@@ -839,15 +839,15 @@ subroutine gwSoilFlux(did)
 
   do j=1,rt_domain(did)%jxrt
     do i=1,rt_domain(did)%ixrt
-        if(ztrans(i,j) > 0) then
-	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), 6, gw2d(did)%qsgwrt(i,j))        
+        if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
+	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))        
 	end if
     end do
   end do
 
-! TODO Step 3, adapt groundwater head
+! TOcheck Step 3, adapt groundwater head (assuming not time lag for percolation / capillary rise flow)
 
-! gw2d(did)%ho = ho + gw2d(did)%qsgwrt * dt / poros
+ gw2d(did)%ho = gw2d(did)%ho + gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
   
 end subroutine gwSoilFlux
       
