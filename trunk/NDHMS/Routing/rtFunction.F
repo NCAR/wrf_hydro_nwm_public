@@ -1,7 +1,7 @@
       subroutine exeRouting (did)
          use module_RT_data, only: rt_domain
          use module_GW_baseflow_data, only: gw2d
-         use module_GW_baseflow, only: simp_gw_buck, gwstep, gwSoilFlux
+         use module_GW_baseflow, only: simp_gw_buck, gwstep, gwSoilFlux, aggregateQsgw
          use module_channel_routing, only: drive_channel
          use module_namelist, only: nlst_rt
 
@@ -144,9 +144,9 @@
 #ifdef HYDRO_D
            write(6,*) "*****bf******start 2d_gw_model "
 #endif
-!  TODO 
-! 	   compute qsgwrt  between lsm and gw with namelist selected coupling method
-! 	   qsgwrt is defined on the routing grid  and needs to be aggregated for SFLX
+
+	   ! 	   compute qsgwrt  between lsm and gw with namelist selected coupling method
+	   ! 	   qsgwrt is defined on the routing grid  and needs to be aggregated for SFLX
 	   if (nlst_rt(did)%gwsoilcpl .GT. 0) THEN
 	     
 	     call gwSoilFlux(did)
@@ -154,7 +154,7 @@
 	   end if
            DX = abs(nlst_rt(did)%DXRT0 * nlst_rt(did)%AGGFACTRT)
            
-! TODO	   
+	   
 ! 	   modify gw-head before gwstep call with respect to specific yield of the 
 ! 	   aquifer and the computed flux (qsgwrt)
 	   
@@ -168,6 +168,10 @@
            
 	  gw2d(did)%ho = gw2d(did)%h
 
+	  
+	  ! aggregate  qsgw from routing to lsm grid
+	  call aggregateQsgw(did)
+	  
 #ifdef HYDRO_D
            write(6,*) "*****bf******end 2d_gw_model "
 #endif
