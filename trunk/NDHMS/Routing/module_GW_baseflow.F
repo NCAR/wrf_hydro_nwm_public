@@ -822,7 +822,7 @@ subroutine gwSoilFlux(did)
   integer, intent(in)	:: did
   
   
-  real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans
+  real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
   integer :: nsoil, i, j
   
   
@@ -849,7 +849,8 @@ subroutine gwSoilFlux(did)
 
 ! TOcheck Step 3, adapt groundwater head (assuming not time lag for percolation / capillary rise flow)
 
- gw2d(did)%ho = gw2d(did)%ho + gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
+ headChange = gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
+ gw2d(did)%ho = gw2d(did)%ho + headChange
   
 end subroutine gwSoilFlux
       
@@ -901,6 +902,11 @@ real, dimension(9,12) :: &
 beta  = 2 + 3 / b
 alpha = 1 + 1.5 /  (beta - 1)
 q_cap = ks * alpha * (aep / Z)**beta
+
+
+! limit for exteme gradients with q >> saturated hydraulic conductivity
+if(q_cap > ks) q_cap = ks
+if(q_grav < -ks) q_grav = -ks
 
 q_darcy = y * q_cap + q_grav ![cm/min]
 
