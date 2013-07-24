@@ -774,6 +774,7 @@ crnt:    DO                      !-- loop on the courant condition
              else
 #ifdef HYDRO_D
               write(6,*) "Error ..... with small DTCT",DTCT
+              call land_finish()
 #endif
               DTCT = 0.1
               HLINKTMP = HLINK                          !-- set head and volume to start values of timestep
