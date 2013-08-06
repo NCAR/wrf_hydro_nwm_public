@@ -71,6 +71,8 @@ CONTAINS
         end do
         call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
         call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
+	
+	if(nlst_rt(did)%GWBASESWCRT == 3)&
         call decompose_data_real(qsgw,gw2d(did)%qsgw)
 #else
         RT_DOMAIN(did)%STC = STC
@@ -78,7 +80,8 @@ CONTAINS
         RT_DOMAIN(did)%SH2OX = SH2OX
         RT_DOMAIN(did)%infxsrt = infxsrt
         RT_DOMAIN(did)%soldrain = soldrain
-        gw2d(did)%qsgw = qsgw
+        if(nlst_rt(did)%GWBASESWCRT == 3) &
+	  gw2d(did)%qsgw = qsgw
 #endif
   
 #ifdef MPP_LAND
@@ -105,12 +108,14 @@ CONTAINS
            call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
         end do
          call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
+	if(nlst_rt(did)%GWBASESWCRT == 3)&
          call write_io_real(gw2d(did)%qsgw,qsgw)
 #else
         STC = rt_domain(did)%STC
         SMC = rt_domain(did)%SMC
         SH2OX = rt_domain(did)%SH2OX
         sfcheadrt = rt_domain(did)%sfcheadrt
+	if(nlst_rt(did)%GWBASESWCRT == 3)&
         qsgw = gw2d(did)%qsgw
 #endif
 
