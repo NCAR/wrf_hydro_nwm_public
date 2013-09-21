@@ -445,7 +445,7 @@ Contains
     integer :: ncid
 
     ! Open the NetCDF file.
-    ierr = nf_open(flnm, NF_NOWRITE, ncid)
+    ierr = nf_open(trim(flnm), NF_NOWRITE, ncid)
     if (ierr /= 0) then
 #ifdef HYDRO_D
        write(*,'("READFORC Problem opening netcdf file: ''", A, "''")') trim(flnm)
@@ -542,6 +542,7 @@ Contains
         end if
 
         ierr = nf_inq_varid(ncid,  "precip",  varid)
+        if(ierr /= 0) ierr_flg = ierr
         if (ierr /= 0) then
           ierr = nf_inq_varid(ncid,  "pcp_daily",  varid)   !recheck variable name...
           if (ierr /= 0) then
@@ -549,6 +550,7 @@ Contains
             write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
                  trim(flnm)
 #endif
+            ierr_flg = ierr
           end if
           mmflag = 1
         end if
@@ -1086,27 +1088,35 @@ Contains
 
    if(FORC_TYP.eq.6) then
 
-!       if(K.eq.1.OR.(MOD((K-1)*INT(DT),3600)).eq.0) then   !if/then 1 hr check
 !!Create forcing data filename...
            inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
+
         inquire (file=trim(inflnm), exist=fexist)
+
+        if ( .not. fexist ) then
+           inflnm = trim(indir)//"/"//&
+              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+              olddate(15:16)//".LDASIN_DOMAIN"//hgrid
+           inquire (file=trim(inflnm), exist=fexist)
+        endif
+
+        inquire (file=trim(inflnm), exist=fexist)
+
         if ( .not. fexist ) then
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop()
+        else
+           CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+                PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+           PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
         endif
-         CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-             PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
-!       endif
 
 
 !Get specified precip....
 !!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
-!       product = "trmm"
-!       inflnm = trim(indir)//"/"//"sat_domain1.nc"
 !!Create forcing data filename...
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
@@ -1116,32 +1126,31 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop()
+           prcp1 = PRCP_old ! for missing pcp data use analysis/model input 
+        else
+#ifdef HYDRO_D
+           print *, "Opening supplemental precipitation forcing file...",inflnm
+#endif
+           CALL READFORC_MDV(inflnm,IX,JX,   &
+              PRCP2,mmflag,ierr_flg)
+!If radar or spec. data is ok use if not, skip to original NARR data...
+           if(ierr_flg .ne. 0) then
+#ifdef HYDRO_D
+               print*, "Warning: pcp reading problem: ", trim(inflnm)
+#endif
+               PRCP1=PRCP_old
+           else
+               PRCP1=PRCP2   !assumes PRCP2 is in mm/s
+               IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
+                PRCP1=PRCP2/DT     !convert from mm to mm/s
+               END IF  ! Endif mmflag
+               print*, "replace pcp successfully! ",trim(inflnm)
+           endif
         endif
 
-      PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
-
-#ifdef HYDRO_D
-      print *, "Opening supplemental precipitation forcing file...",inflnm
-#endif
-       CALL READFORC_MDV(inflnm,IX,JX,   &
-          PRCP2,mmflag,ierr_flg)
-
-!If radar or spec. data is ok use if not, skip to original NARR data...
-      IF (ierr_flg.eq.0) then   ! use spec. precip
-         PRCP1=PRCP2   !assumes PRCP2 is in mm/s
-!Convert units if necessary
-        IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
-          PRCP1=PRCP2/DT     !convert from mm to mm/s
-        END IF  ! Endif mmflag
-      ELSE   ! either stop or default to original forcing data...
-#ifdef HYDRO_D
-        print *,"Current RADAR precip data not found !!! Using previous available file..."
-#endif
-        PRCP1 = PRCP_old
-      END IF  ! Endif ierr_flg
 
 ! Loop through data to screen for plausible values
+       where(PRCP1 .lt. 0) PRCP1=PRCP_old
        do i=1,ix
          do j=1,jx
            if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
@@ -1149,6 +1158,7 @@ Contains
          end do
        end do
 
+     call flush(6)
    end if
 
 

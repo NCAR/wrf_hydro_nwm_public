@@ -1461,24 +1461,24 @@ MODULE MODULE_MPP_LAND
        return
     end subroutine sum_real8
 
-  subroutine get_globalDim(ix,g_ix)
-     implicit none
-     integer ix,g_ix, ierr
-     include "mpif.h"
-
-     if ( my_id .eq. IO_id ) then
-           g_ix = ix
-        call mpi_reduce( MPI_IN_PLACE, g_ix, 4, MPI_INTEGER, &
-             MPI_SUM, 0, MPI_COMM_WORLD, ierr )
-     else
-        call mpi_reduce( ix,       0,      4, MPI_INTEGER, &
-             MPI_SUM,  0, MPI_COMM_WORLD, ierr )
-     endif
-     call mpp_land_bcast_int1(g_ix)
-
-     return
-
-  end subroutine get_globalDim
+!  subroutine get_globalDim(ix,g_ix)
+!     implicit none
+!     integer ix,g_ix, ierr
+!     include "mpif.h"
+!
+!     if ( my_id .eq. IO_id ) then
+!           g_ix = ix
+!        call mpi_reduce( MPI_IN_PLACE, g_ix, 4, MPI_INTEGER, &
+!             MPI_SUM, 0, MPI_COMM_WORLD, ierr )
+!     else
+!        call mpi_reduce( ix,       0,      4, MPI_INTEGER, &
+!             MPI_SUM,  0, MPI_COMM_WORLD, ierr )
+!     endif
+!      call mpp_land_bcast_int1(g_ix)
+!
+!     return
+!
+!  end subroutine get_globalDim
 
   subroutine gather_1d_real_tmp(vl,s_in,e_in,vg,sg)
     integer sg, s,e, size, s_in, e_in
@@ -1531,7 +1531,8 @@ MODULE MODULE_MPP_LAND
       real*8:: inout, send
       integer :: ierr
       send = inout
-      CALL MPI_ALLREDUCE(send,inout,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD,ierr)
+      !yw CALL MPI_ALLREDUCE(send,inout,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD,ierr)
+      CALL MPI_ALLREDUCE(send,inout,1,MPI_DOUBLE_PRECISION,MPI_SUM,MPI_COMM_WORLD,ierr)
   end subroutine sum_double
 
 

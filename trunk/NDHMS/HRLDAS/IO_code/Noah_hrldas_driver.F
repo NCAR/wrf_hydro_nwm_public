@@ -1084,9 +1084,15 @@ program Noah_hrldas_driver
 
   if(HRLDAS_ini_typ .eq. 1) then
      ! read initial parameters and conditions from the HRLDAS forcing data
+     if(forc_typ .eq. 2) then
+          inflnm = trim(indir)//"/"//&
+          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
+     else 
           inflnm = trim(indir)//"/"//&
           startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
           ".LDASIN_DOMAIN"//hgrid
+     endif
      CALL READINIT_HRLDAS(inflnm, &
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,  &
           NSOIL, SLDPTH, OLDDATE, LDASIN_VERSION, SMC, STC, SH2OX, CMC, T1, &
