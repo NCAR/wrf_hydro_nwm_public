@@ -327,7 +327,7 @@ contains
       real, parameter    :: delskip = 0.005 ! av.|dhead| value for iter.skip out(m)
       integer, parameter :: itermax = 10    ! maximum number of iterations
       integer, parameter :: itermin = 3     ! minimum number of iterations
-      real, parameter    :: sealev = -1.     ! sea-level elevation (m)
+      real, parameter    :: sealev = 1000.     ! sea-level elevation (m)
 
 
 ! die müssen noch sortiert, geprüft und aufgeräumt werden
@@ -513,21 +513,43 @@ contains
           aa = 0.0
           cc = 0.0
 
-          if (j-1) 90,100,90 
+#ifdef MPP_LAND
+          if((j-1 /= 0) .and. (down_id /= -1)) then !  if not south border
+#else
+          if (j-1) 90,100,90  !deprecated
+#endif
    90     aa = -t(i,j-1,1)
           bb = bb + t(i,j-1,1)
-
+#ifdef MPP_LAND
+          end if
+          
+          if((j-jx /= 0) .and. (up_id /= -1)) then !if not north border
+#else
   100     if (j-jx) 110,120,110
+#endif
   110     cc = -t(i,j,1)
           bb = bb + t(i,j,1)
-
+#ifdef MPP_LAND
+          end if
+          
+          if((i-1 /= 0) .and. (left_id /= -1)) then !if not west border
+#else
   120     if (i-1) 130,140,130
+#endif
   130     bb = bb + t(i-1,j,2)
           dd = dd + h(i-1,j)*t(i-1,j,2)
-
+#ifdef MPP_LAND
+          end if
+          
+          if((i-ix /= 0) .and. (right_id /= -1)) then ! if not east border
+#else
   140     if (i-ix) 150,160,150
+#endif
   150     bb = bb + t(i,j,2)
           dd = dd + h(i+1,j)*t(i,j,2)
+#ifdef MPP_LAND
+          end if
+#endif
 
   160     w = bb - aa*b(j-1)
           b(j) = cc/w
@@ -693,7 +715,7 @@ contains
             eocn = eocn + (h(i,j)-sealev)*sf2(i,j)*darea
 !             eocn = eocn + (h(i,j)-sealev)*sf2(i,j)*darea(i,j)
 ! #endif
-            h(i,j) = sealev
+!             h(i,j) = sealev
           endif
         enddo
       enddo
