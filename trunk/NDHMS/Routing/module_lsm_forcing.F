@@ -544,7 +544,7 @@ Contains
         ierr = nf_inq_varid(ncid,  "precip",  varid)
         if(ierr /= 0) ierr_flg = ierr
         if (ierr /= 0) then
-          ierr = nf_inq_varid(ncid,  "pcp_daily",  varid)   !recheck variable name...
+          ierr = nf_inq_varid(ncid,  "precip_rate",  varid)   !recheck variable name...
           if (ierr /= 0) then
 #ifdef HYDRO_D
             write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
@@ -1056,10 +1056,17 @@ Contains
 
 !If radar or spec. data is ok use if not, skip to original NARR data...
       IF (ierr_flg.eq.0) then   ! use spec. precip
-         PRCP1=PRCP2   !assumes PRCP2 is in mm/s
 !Convert units if necessary
         IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
-          PRCP1=PRCP2/DT     !convert from mm to mm/s
+           PRCP1=PRCP2/DT     !convert from mm to mm/s
+#ifdef HYDRO_D
+           print*, "Supplemental pcp is accumulated pcp/dt. "  
+#endif
+        else
+           PRCP1=PRCP2   !assumes PRCP2 is in mm/s 
+#ifdef HYDRO_D
+           print*, "Supplemental pcp is rate. "  
+#endif
         END IF  ! Endif mmflag
       ELSE   ! either stop or default to original forcing data...
 #ifdef HYDRO_D
@@ -1089,7 +1096,7 @@ Contains
    if(FORC_TYP.eq.6) then
 
 !!Create forcing data filename...
-           inflnm = trim(indir)//"/"//&
+        inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
 
@@ -1102,11 +1109,10 @@ Contains
            inquire (file=trim(inflnm), exist=fexist)
         endif
 
-        inquire (file=trim(inflnm), exist=fexist)
 
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found", inflnm
+           print*, "no ATM forcing data found at this time", inflnm
 #endif
         else
            CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
@@ -1124,7 +1130,7 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found", inflnm
+           print*, "no supplemental forcing data found", inflnm
 #endif
            prcp1 = PRCP_old ! for missing pcp data use analysis/model input 
         else
