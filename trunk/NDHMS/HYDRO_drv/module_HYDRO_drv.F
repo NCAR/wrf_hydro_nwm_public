@@ -1,6 +1,6 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
-   use module_HYDRO_io, only:  mpp_output_rt, mpp_output_chrt, mpp_output_lakes
+   use module_HYDRO_io, only:  mpp_output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes
@@ -192,6 +192,16 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
 
+#ifdef MPP_LAND
+              call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                  RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
+                  RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
+                  nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+                  RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                  RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
+                  RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
+#endif
+
                if (RT_DOMAIN(did)%NLAKES.gt.0)  &
 #ifdef MPP_LAND
                 call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
@@ -208,7 +218,7 @@ module module_HYDRO_drv
                    RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
            endif
 #ifdef HYDRO_D
-           write(6,*) "end calling otuput functions"
+           write(6,*) "end calling output functions"
 #endif
 
         endif  ! end of routing switch
