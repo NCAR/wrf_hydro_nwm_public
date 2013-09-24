@@ -1045,6 +1045,12 @@ Contains
            inquire (file=trim(inflnm), exist=fexist)
         endif
         if ( .not. fexist ) then
+           inflnm = trim(indir)//"/"//&
+                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+                olddate(15:16)//"00.PRECIP_FORCING.nc"
+           inquire (file=trim(inflnm), exist=fexist)
+        endif
+        if ( .not. fexist ) then
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
@@ -1132,8 +1138,14 @@ Contains
 !!Create forcing data filename...
         inflnm = trim(indir)//"/"//&
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             olddate(15:16)//".PRECIP_FORCING"
+             olddate(15:16)//"00.PRECIP_FORCING.nc"
         inquire (file=trim(inflnm), exist=fexist)
+        if ( .not. fexist ) then
+            inflnm = trim(indir)//"/"//&
+                 olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+                 olddate(15:16)//"PRECIP_FORCING.nc"
+            inquire (file=trim(inflnm), exist=fexist)
+        endif
         if ( .not. fexist ) then
            inflnm = trim(indir)//"/"//&
                 olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
