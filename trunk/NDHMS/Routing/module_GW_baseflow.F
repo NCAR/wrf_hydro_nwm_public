@@ -236,7 +236,38 @@ contains
       
       gw2d(did)%ix = ix
       gw2d(did)%jx = jx
+      
+#ifdef MPP_LAND
+      if(down_id == -1)  then !  if south border
+       gw2d(did)%jts = 1 
+      else
+       gw2d(did)%jts = 2
+endif
 
+      if(up_id == -1)    then !if north border
+        gw2d(did)%jte = jx
+      else
+        gw2d(did)%jte = jx-1
+      endif
+
+      if(left_id == -1)  then !if west border
+        gw2d(did)%its = 1
+      else
+        gw2d(did)%its = 2
+      endif
+
+      if(right_id == -1) then ! if east border
+        gw2d(did)%ite = ix
+      else
+        gw2d(did)%ite = ix-1
+      endif
+
+#else
+      gw2d(did)%its = 1
+      gw2d(did)%ite = ix
+      gw2d(did)%jts = 1
+      gw2d(did)%jte = jx
+#endif
 
       allocate(gw2d(did)%ltype  (ix,jx))
       allocate(gw2d(did)%elev   (ix,jx))
@@ -886,8 +917,8 @@ subroutine gwSoilFlux(did)
   
 ! Step 2, compute flux  TODO: deal with cases where gwhead > soil model layers
 
-  do j=1,rt_domain(did)%jxrt
-    do i=1,rt_domain(did)%ixrt
+  do j=gw2d(did)%jts, gw2d(did)%jte
+    do i=gw2d(did)%its, gw2d(did)%ite
         if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
 	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))        
 	end if
