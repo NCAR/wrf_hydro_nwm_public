@@ -25,6 +25,7 @@
       real  :: ebot, eocn
       integer ::istep = 0
       
+      real :: its, ite, jts, jte
 
   end type gw_field
 
