@@ -1,12 +1,12 @@
 !2345678
-       subroutine hrldas_drv_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+       subroutine hrldas_drv_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk, gwsoilcpl, qsgw)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
-          integer:: ii,jj,kk
+          integer:: ii,jj,kk, gwsoilcpl
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
 
-          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
+          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk, gwsoilcpl, qsgw)  
        end subroutine hrldas_drv_HYDRO
 
        subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)

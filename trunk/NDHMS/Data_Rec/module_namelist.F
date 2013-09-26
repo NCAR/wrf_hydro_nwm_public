@@ -21,7 +21,7 @@ CONTAINS
           integer ierr
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                    GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                    GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ
           real:: DTRT,dxrt
           character(len=256) :: route_topo_f=""
@@ -57,7 +57,8 @@ CONTAINS
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
-                    GWBASESWCRT,route_topo_f,route_chan_f,route_link_f,route_lake_f, &
+                    GWBASESWCRT, GWSOILCPL, &
+                    route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ
@@ -123,6 +124,7 @@ CONTAINS
   call mpp_land_bcast_real1(DTRT)
   call mpp_land_bcast_real1(DXRT)
   call mpp_land_bcast_int1(GWBASESWCRT)
+  call mpp_land_bcast_int1(GWSOILCPL)
   call mpp_land_bcast_int1(GW_RESTART)
   call mpp_land_bcast_int1(RSTRT_SWC  )
   call mpp_land_bcast_int1(TERADJ_SOLAR)
@@ -141,6 +143,7 @@ CONTAINS
     nlst%dxrt0 = dxrt
     nlst%AGGFACTRT = AGGFACTRT
     nlst%GWBASESWCRT = GWBASESWCRT
+    nlst%GWSOILCPL= GWSOILCPL
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
     nlst%sys_cpl = sys_cpl
     nlst%rst_typ = rst_typ
@@ -173,6 +176,7 @@ CONTAINS
     write(6,*) " nlst%dxrt0 ", dxrt
     write(6,*) " nlst%AGGFACTRT ", AGGFACTRT
     write(6,*) " nlst%GWBASESWCRT ", GWBASESWCRT
+    write(6,*) " nlst%GWSOILCPL ", GWSOILCPL
     write(6,*) " nlst%TERADJ_SOLAR ", TERADJ_SOLAR
     write(6,*) " nlst%sys_cpl ", sys_cpl
     write(6,*) " nlst%rst_typ ", rst_typ

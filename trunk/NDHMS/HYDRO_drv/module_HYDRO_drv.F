@@ -10,7 +10,7 @@ module module_HYDRO_drv
         output_lsm
    use module_rt_data, only: rt_domain
    use module_GW_baseflow_data, only: gw2d
-   use module_GW_baseflow, only: gw2d_allocate, gw2d_ini
+   use module_GW_baseflow, only: gw2d_allocate, gw2d_ini, gwstep
    use module_namelist, only: nlst_rt
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
@@ -162,7 +162,7 @@ module module_HYDRO_drv
 !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
                 rt_out_date, nlst_rt(did)%olddate,    &
                 gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                 &
-                gw2d(did)%convgw, RT_DOMAIN(did)%SFCHEADSUBRT,     &
+                gw2d(did)%convgw, gw2d(did)%qsgwrt,     &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
                 RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
@@ -817,7 +817,7 @@ module module_HYDRO_drv
 !        integer, OPTIONAL:: ix0,jx0
         integer:: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
-
+        integer :: iter
 
 
 #ifdef MPP_LAND
@@ -957,6 +957,20 @@ module module_HYDRO_drv
 #ifdef HYDRO_D                        
           write(6,*) "finish gw2d_ini"      
 #endif
+	  do iter=1,10
+#ifdef HYDRO_D                        
+          write(6,*) "Spinup cycle", iter, "of 10"
+#endif
+           call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
+             gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
+             gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
+             gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
+             gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
+!              gw2d(did)%istep)
+             iter)
+	   
+	     gw2d(did)%ho = gw2d(did)%h
+          end do
       endif
 #ifdef HYDRO_D
        write(6,*) "finish LandRT_ini"
@@ -1099,6 +1113,9 @@ module module_HYDRO_drv
              end do
        end do
 
+
+       rt_domain(did)%soiltyp = soltyp
+       
        deallocate(soltyp)
 
 

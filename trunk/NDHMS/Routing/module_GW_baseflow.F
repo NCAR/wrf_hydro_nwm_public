@@ -226,6 +226,7 @@ contains
 
    subroutine gw2d_allocate(did, ix, jx, nsoil)
       use module_GW_baseflow_data, only: gw2d
+      use module_rt_data, only: rt_domain
       implicit none
       integer ix, jx, nsoil
       integer istatus, did
@@ -235,7 +236,38 @@ contains
       
       gw2d(did)%ix = ix
       gw2d(did)%jx = jx
+      
+#ifdef MPP_LAND
+      if(down_id == -1)  then !  if south border
+       gw2d(did)%jts = 1 
+      else
+       gw2d(did)%jts = 2
+endif
 
+      if(up_id == -1)    then !if north border
+        gw2d(did)%jte = jx
+      else
+        gw2d(did)%jte = jx-1
+      endif
+
+      if(left_id == -1)  then !if west border
+        gw2d(did)%its = 1
+      else
+        gw2d(did)%its = 2
+      endif
+
+      if(right_id == -1) then ! if east border
+        gw2d(did)%ite = ix
+      else
+        gw2d(did)%ite = ix-1
+      endif
+
+#else
+      gw2d(did)%its = 1
+      gw2d(did)%ite = ix
+      gw2d(did)%jts = 1
+      gw2d(did)%jte = jx
+#endif
 
       allocate(gw2d(did)%ltype  (ix,jx))
       allocate(gw2d(did)%elev   (ix,jx))
@@ -246,7 +278,11 @@ contains
       allocate(gw2d(did)%ho     (ix,jx))
       allocate(gw2d(did)%h      (ix,jx))
       allocate(gw2d(did)%convgw (ix,jx))
-!       allocate(gw2d(did)% (ix,jx))
+      
+      
+      ! TODO allocate only if gwSoilCoupling is active
+      allocate(gw2d(did)%qsgwrt (ix,jx))
+      allocate(gw2d(did)%qsgw   (rt_domain(did)%ix,rt_domain(did)%jx))
 
     end subroutine gw2d_allocate
 
@@ -257,11 +293,6 @@ contains
                       ho, h, convgw,           &
                       ebot, eocn,              &
 		      dt, istep)
-! #else
-!           dx, istep, dt,                          &        !supplied
-!           ims,ime,jms,jme,its,ite,jts,jte,           &        !supplied
-!           ids,ide,jds,jde,ifs,ife,jfs,jfe)                    !supplied
-! #endif
 
 ! New (volug): calling routines use change in head, convgw = d(h-ho)/dt.
 
@@ -322,9 +353,11 @@ contains
       real, parameter    :: delskip = 0.005 ! av.|dhead| value for iter.skip out(m)
       integer, parameter :: itermax = 10    ! maximum number of iterations
       integer, parameter :: itermin = 3     ! minimum number of iterations
-      real, parameter    :: sealev = -1.     ! sea-level elevation (m)
+      real, parameter    :: sealev = 1000.     ! sea-level elevation (m)
 
-
+      integer            :: its, ite, jts, jte, ifs, ife, jfs, jfe, &
+                            xdim, ydim, fxdim, fydim
+                          
 ! die müssen noch sortiert, geprüft und aufgeräumt werden
       integer ::                &
         iter,                   &
@@ -363,11 +396,60 @@ contains
       integer mpiSize
 #endif
 
-      dy = dx
-      darea = dx*dy
-      
-      
-      call scopy (ix*jx, ho, 1, h, 1)
+
+
+dy = dx
+darea = dx*dy
+
+! define indexes for parallel execution
+
+#ifdef MPP_LAND
+if(down_id == -1)  then !  if south border
+  jts = 1 
+else
+  jts = 2
+endif
+
+if(up_id == -1)    then !if north border
+  jte = jx
+else
+  jte = jx-1
+endif
+
+if(left_id == -1)  then !if west border
+  its = 1
+else
+  its = 2
+endif
+
+if(right_id == -1) then ! if east border
+  ite = ix
+else
+  ite = ix-1
+endif
+
+#else
+its = 1
+ite = ix
+jts = 1
+jte = jx
+#endif
+
+ifs = 1
+ife = ix
+jfs = 1
+jfe = jx
+
+
+fxdim = ife-ifs+1 
+fydim = jfe-jfs+1
+ xdim = ite-its+1 
+ ydim = jte-jts+1
+
+     
+      call scopy (fxdim*fydim, ho(ifs:ife,jfs:jfe), 1,    &
+                  h(ifs:ife,jfs:jfe), 1)
+
 
 !       Top of iterative loop for ADI solution
 
@@ -376,31 +458,29 @@ contains
    80 continue
 !~~~~~~~~~~~~~
       iter = iter+1
+
       
 #ifdef MPP_LAND
-       call MPP_LAND_COM_REAL(h, ix, jx, 99)
-#endif
 
+       call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
+
+#endif
       e    = 0.       ! absolute changes in head (for iteration control)
 !      eocn = 0.       ! accumulated fixes for h = 0 over ocean (diag)
 !      ebot = 0.       ! accumulated fixes for h < bot (diagnostic)
 
 !       Set storage coefficient (sf2)
-      
-! #ifdef HMSWRF
-! 
-       tareal = 0.
-! 
-!       do j=jfs,jfe
-!         do i=ifs,ife
-! 
-! 
-! #else
-      do j=1,jx
-        do i=1,ix
-         if(ltype(i,j) .ge. 1) tareal = tareal + darea
+   
+! print*,'h, ho at beginning of ghmcompute:',h(35,75), ho(35,75)  !modSW
+   
 
-! #endif
+    tareal = 0.
+      do j=jts,jte
+        do i=its,ite
+
+
+        if(ltype(i,j) .ge. 1) tareal = tareal + darea
+
 !         unconfined water table (h < e): V = poros*(h-b)
 !                                         dV/dh = poros
 !         saturated to surface (h >= e) : V = poros*(e-b) + (h-e)
@@ -425,13 +505,12 @@ contains
 
         enddo
       enddo
-      
+
 #ifdef MPP_LAND
        ! communicate storage coefficient
-       call MPP_LAND_COM_REAL(sf2, ix, jx, 99)
+       call MPP_LAND_COM_REAL(sf2, fxdim, fydim, 99)
 
 #endif
-
 
 !==========================
 !       Column calculations
@@ -441,102 +520,111 @@ contains
 !       since if h > elev, thickness of groundwater flow is just
 !       elev-bot.
 
-! #ifdef HMSWRF
-! 
-!       do j=jfs,jfe
-!         jp = min (j+1,jfe)
-!         do i=ifs,ife
-!           ip = min (i+1,ife)
-! 
-! #else
 
-      do j=1,jx
-        jp = min (j+1,jx)
-        do i=1,ix
-          ip = min (i+1,ix)
+      do j=jts,jte
+        jp = min (j+1,jfe)
+        do i=its,ite
+          ip = min (i+1,ife)
 
-! #endif
           t(i,j,2) = sqrt( abs(                                           &
                         hycond(i, j)*(min(h(i ,j),elev(i ,j))-bot(i ,j))  &
                        *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-bot(ip,j))  &
                          )    )                                           &
-! #ifdef HMSWRF
                    * (0.5*(dy+dy)) & ! in WRF the dx and dy are usually equal
                    / (0.5*(dx+dx))
-! #else
-!                    * (0.5*(dy(i,j)+dy(ip,j)))  &
-!                    / (0.5*(dx(i,j)+dx(ip,j)))
-! #endif
 
           t(i,j,1) = sqrt( abs(                                           &
                         hycond(i,j )*(min(h(i,j ),elev(i,j ))-bot(i,j ))  &
                        *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-bot(i,jp))  &
                          )    )                                           &
-! #ifdef HMSWRF
                    * (0.5*(dx+dx))  &
                    / (0.5*(dy+dy))
-! #else
-!                    * (0.5*(dx(i,j)+dx(i,jp))) &
-!                    / (0.5*(dy(i,j)+dy(i,jp)))
-! #endif
+
+!modSW use min bot of neighboring cells, hence  
+!          t(i,j,2) = sqrt( abs(                                           &
+!                        hycond(i, j)*(min(h(i ,j),elev(i ,j))-min(bot(i ,j),bot(ip,j)))  &
+!                       *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-min(bot(i ,j),bot(ip,j)))  &
+!                         )    )                                           &
+!                   * (0.5*(dy+dy)) & ! in WRF the dx and dy are usually equal
+!                   / (0.5*(dx+dx))
+
+!          t(i,j,1) = sqrt( abs(                                           &
+!                        hycond(i,j )*(min(h(i,j ),elev(i,j ))-min(bot(i,j ),bot(i,jp)))  &
+!                       *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-min(bot(i,j ),bot(i,jp)))  &
+!                         )    )                                           &
+!                   * (0.5*(dx+dx))  &
+!                   / (0.5*(dy+dy))
+
+
+
+
         enddo
       enddo
 
+
+
+
+
 #ifdef MPP_LAND
       ! communicate transmissivities in x and y direction
-       call MPP_LAND_COM_REAL(t(:,:,1), ix, jx, 99)
-       call MPP_LAND_COM_REAL(t(:,:,2), ix, jx, 99)
+       call MPP_LAND_COM_REAL(t(:,:,1), fxdim, fydim, 99)
+       call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
       b = 0.
       g = 0.
 
 !-------------------
-      do 190 ii=1,ix
+      do ii=ifs,ife
 !-------------------
         i=ii
-        if (mod(istep+iter,2).eq.1) i=ix-i+1
+        if (mod(istep+iter,2).eq.1) i=ife-i+ifs  ! backwards
 
 !          calculate b and g arrays
 
 !>>>>>>>>>>>>>>>>>>>>
-        do 170 j=1,jx
+        do j=jfs,jfe
 !>>>>>>>>>>>>>>>>>>>>
-!           bb = (sf2(i,j)/dt) * darea(i,j)
-!           dd = ( ho(i,j)*sf2(i,j)/dt ) * darea(i,j)
           bb = (sf2(i,j)/dt) * darea
           dd = ( ho(i,j)*sf2(i,j)/dt ) * darea
           aa = 0.0
           cc = 0.0
 
-          if (j-1) 90,100,90 
-   90     aa = -t(i,j-1,1)
-          bb = bb + t(i,j-1,1)
+          if ((j-jfs) /= 0) then 
+           aa = -t(i,j-1,1)
+           bb = bb + t(i,j-1,1)
+	  endif
 
-  100     if (j-jx) 110,120,110
-  110     cc = -t(i,j,1)
-          bb = bb + t(i,j,1)
+          if ((j-jfe) /= 0) then
+           cc = -t(i,j,1)
+           bb = bb + t(i,j,1)
+	  endif
 
-  120     if (i-1) 130,140,130
-  130     bb = bb + t(i-1,j,2)
-          dd = dd + h(i-1,j)*t(i-1,j,2)
+          if ((i-ifs) /= 0) then
+           bb = bb + t(i-1,j,2)
+           dd = dd + h(i-1,j)*t(i-1,j,2)
+	  endif
 
-  140     if (i-ix) 150,160,150
-  150     bb = bb + t(i,j,2)
-          dd = dd + h(i+1,j)*t(i,j,2)
+          if ((i-ife) /= 0) then
+           bb = bb + t(i,j,2)
+           dd = dd + h(i+1,j)*t(i,j,2)
+	  endif
 
-  160     w = bb - aa*b(j-1)
+          w = bb - aa*b(j-1)
           b(j) = cc/w
           g(j) = (dd-aa*g(j-1))/w
 !>>>>>>>>>>>>>>>
-  170   continue
+	end do
 !>>>>>>>>>>>>>>>
 
 !          re-estimate heads
 
-        e = e + abs(h(i,jx)-g(jx))
-        h(i,jx) = g(jx)
-        n = jx-1
-  180   if (n.eq.0) goto 185
+        e = e + abs(h(i,jfe)-g(jfe))
+        h(i,jfe) = g(jfe)
+#ifdef MPP_LAND
+       call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
+#endif
+        n = jfe-1
+  180   if (n-jfs.eq.0) goto 185
         ha = g(n) - b(n)*h(i,n+1)
         e = e + abs(ha-h(i,n))
         h(i,n) = ha
@@ -545,11 +633,13 @@ contains
   185   continue
 
 !-------------
-  190 continue
+  end do
 !-------------
 
 #ifdef MPP_LAND
-       call MPP_LAND_COM_REAL(h, ix, jx, 99)
+
+       call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
+
 #endif
 
 
@@ -559,83 +649,104 @@ contains
 
 !       set transmissivities (same as above)
 
-      do j=1,jx
-        jp = min (j+1,jx)
-        do i=1,ix
-          ip = min (i+1,ix)
-          t(i,j,2) = sqrt( abs(                                             &
-                        hycond(i, j)*(min(h(i ,j),elev(i ,j))-bot(i ,j))    &
-                       *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-bot(ip,j))    &
-                         )    )                                             &
-!                    * (0.5*(dy(i,j)+dy(ip,j)))                               &
-!                    / (0.5*(dx(i,j)+dx(ip,j)))
-                   * (0.5*(dy+dy))                               &
+
+      do j=jts,jte
+        jp = min (j+1,jfe)
+        do i=its,ite
+          ip = min (i+1,ife)
+          t(i,j,2) = sqrt( abs(                                            &
+                        hycond(i, j)*(min(h(i ,j),elev(i ,j))-bot(i ,j))   &
+                       *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-bot(ip,j))   &
+                         )    )                                            &
+                   * (0.5*(dy+dy))                                         &
                    / (0.5*(dx+dx))
 
-          t(i,j,1) = sqrt( abs(                                             &
-                        hycond(i,j )*(min(h(i,j ),elev(i,j ))-bot(i,j ))    &
-                       *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-bot(i,jp))    &
-                         )    )                                             &
-                   * (0.5*(dx+dx))                               &
+          t(i,j,1) = sqrt( abs(                                            &
+                        hycond(i,j )*(min(h(i,j ),elev(i,j ))-bot(i,j ))   &
+                       *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-bot(i,jp))   &
+                         )    )                                            &
+                   * (0.5*(dx+dx))                                         &
                    / (0.5*(dy+dy))
+
+!modSW use min bot of neighboring cells, hence  
+!          t(i,j,2) = sqrt( abs(                                            &
+!                        hycond(i, j)*(min(h(i ,j),elev(i ,j))-max(bot(i ,j),bot(ip,j)))   &
+!                       *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-max(bot(i ,j),bot(ip,j)))   &
+!                         )    )                                            &
+!                   * (0.5*(dy+dy))                                         &
+!                   / (0.5*(dx+dx))
+
+!          t(i,j,1) = sqrt( abs(                                            &
+!                        hycond(i,j )*(min(h(i,j ),elev(i,j ))-max(bot(i ,j),bot(i,jp)))   &
+!                       *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-max(bot(i ,j),bot(i,jp)))   &
+!                         )    )                                            &
+!                   * (0.5*(dx+dx))                                         &
+!                   / (0.5*(dy+dy))
+
         enddo
       enddo
-      
+
 #ifdef MPP_LAND
       ! communicate transmissivities in x and y direction
-       call MPP_LAND_COM_REAL(t(:,:,1), ix, jx, 99)
-       call MPP_LAND_COM_REAL(t(:,:,2), ix, jx, 99)
+       call MPP_LAND_COM_REAL(t(:,:,1), fxdim, fydim, 99)
+       call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
+
       b = 0.
       g = 0.
 
 !-------------------
-      do 300 jj=1,jx
+      do jj=jfs,jfe
 !-------------------
         j=jj
-        if (mod(istep+iter,2).eq.1) j = jx-j+1
+        if (mod(istep+iter,2).eq.1) then
+! 	  print*, 'mod reached: ', istep, iter, istep+iter 
+	  j = jfe-j+jfs
+	end if
 
 !         calculate b and g arrays
 
 !>>>>>>>>>>>>>>>>>>>>
-        do 280 i=1,ix
+        do i=ifs,ife
 !>>>>>>>>>>>>>>>>>>>>
-!           bb = (sf2(i,j)/dt) * darea(i,j)
-!           dd = ( ho(i,j)*sf2(i,j)/dt ) * darea(i,j)
           bb = (sf2(i,j)/dt) * darea
           dd = ( ho(i,j)*sf2(i,j)/dt ) * darea
           aa = 0.0
           cc = 0.0
 
-          if (j-1) 200,210,200
-  200     bb = bb + t(i,j-1,1)
-          dd = dd + h(i,j-1)*t(i,j-1,1)
+          if ((j-jfs) /= 0) then
+           bb = bb + t(i,j-1,1)
+           dd = dd + h(i,j-1)*t(i,j-1,1)
+	  endif
+ 
+          if ((j-jfe) /= 0) then
+           dd = dd + h(i,j+1)*t(i,j,1)
+           bb = bb + t(i,j,1)
+	  endif
 
-  210     if (j-jx) 220,230,220
-  220     dd = dd + h(i,j+1)*t(i,j,1)
-          bb = bb + t(i,j,1)
+          if ((i-ifs) /= 0) then
+           bb = bb + t(i-1,j,2)
+           aa = -t(i-1,j,2)
+	  endif
 
-  230     if (i-1) 240,250,240
-  240     bb = bb + t(i-1,j,2)
-          aa = -t(i-1,j,2)
+          if ((i-ife) /= 0) then
+           bb = bb + t(i,j,2)
+           cc = -t(i,j,2)
+	  endif
 
-  250     if (i-ix) 260,270,260
-  260     bb = bb + t(i,j,2)
-          cc = -t(i,j,2)
-
-  270     w = bb - aa*b(i-1)
+          w = bb - aa*b(i-1)
           b(i) = cc/w
           g(i) = (dd-aa*g(i-1))/w
 !>>>>>>>>>>>>>>>
-  280   continue
+	end do
 !>>>>>>>>>>>>>>>
 
 !          re-estimate heads
 
-        e = e + abs(h(ix,j)-g(ix))
-        h(ix,j) = g(ix)
-        n = ix-1
-  290   if (n.eq.0) goto 295
+        e = e + abs(h(ife,j)-g(ife))
+        h(ife,j) = g(ife)
+        n = ife-1
+  290   if (n-ifs.eq.0) goto 295
         ha = g(n)-b(n)*h(n+1,j)
         e = e + abs(h(n,j)-ha)
         h(n,j) = ha
@@ -644,28 +755,18 @@ contains
   295   continue
 
 !-------------
-  300 continue
+end do
 !-------------
 
-!         fix head < bottom of aquifer
-! #endif
-! 
-! #ifdef HMSWRF
-! 
-!       do j=jfs,jfe
-!         do i=ifs,ife
-! 
-! #else
-      do j=1,jx
-        do i=1,ix
-! #endif
+! fix head < bottom of aquifer
+ 
+      do j=jts,jte
+        do i=its,ite
           if (ltype(i,j).eq.1 .and. h(i,j).le.bot(i,j)+botinc) then
 
-! #ifndef HMSWRF
             e = e +  bot(i,j) + botinc - h(i,j)
 !             ebot = ebot + (bot(i,j)+botinc-h(i,j))*sf2(i,j)*darea(i,j)
             ebot = ebot + (bot(i,j)+botinc-h(i,j))*sf2(i,j)*darea
-! #endif
 
             h(i,j) = bot(i,j) + botinc
           endif
@@ -674,21 +775,14 @@ contains
 !        maintain head = sea level for ocean (only for adjacent ocean,
 !        rest has hycond=0)
 
-! #ifdef HMSWRF
-! 
-!       do j=jfs,jfe
-!         do i=its,ife
-! 
-! #else
-      do j=1,jx
-        do i=1,ix
-! #endif
+      do j=jts,jte
+        do i=its,ite
           if (ltype(i,j).eq.2) then
-! #ifndef HMSWRF
-            eocn = eocn + (h(i,j)-sealev)*sf2(i,j)*darea
+
+	    eocn = eocn + (h(i,j)-sealev)*sf2(i,j)*darea
 !             eocn = eocn + (h(i,j)-sealev)*sf2(i,j)*darea(i,j)
-! #endif
-            h(i,j) = sealev
+
+!             h(i,j) = sealev (no update of outer boundary cells)
           endif
         enddo
       enddo
@@ -696,43 +790,40 @@ contains
 !        Loop back for next ADI iteration
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-! #ifdef HMSWRF
-!       delcur = e/(xdim*ydim)
-! #else
-      delcur = e/(ix*jx)
-! #endif
+      delcur = e/(xdim*ydim)
+
+!       print*, 'delcur before mpi:', delcur
 
 #ifdef MPP_LAND
 
 call mpi_reduce(delcur, mpiDelcur, 1, MPI_REAL, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
 call MPI_COMM_SIZE( MPI_COMM_WORLD, mpiSize, ierr ) 
 
-mpiDelcur = mpiDelcur/mpiSize
+if(my_id .eq. IO_id) delcur = mpiDelcur/mpiSize
 
 call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
 
 #endif
 
-      if ( (delcur.gt.delskip*dt/86400. .and. iter.lt.itermax)      &
+!       if ( (delcur.gt.delskip*dt/86400. .and. iter.lt.itermax)      &
+      if ( (delcur.gt.delskip .and. iter.lt.itermax)      &
            .or. iter.lt.itermin ) then
-        goto 80
-      else
+           
+#ifdef HYDRO_D                        
+          write(6,*) "Iteration", iter, "of", itermax, "error:", delcur
+#endif
+
+      goto 80
       endif
+      
 
       
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 !        Compute convergence rate due to ground water flow (returned)
 
-! #ifdef HMSWRF
-! 
-!       do j=jfs,jfe
-!         do i=ifs,ife
-! 
-! #else
-      do j=1,jx
-        do i=1,ix
-! #endif
+      do j=jts,jte
+        do i=its,ite
           if (ltype(i,j).eq.1) then
             convgw(i,j) = sf2(i,j) * (h(i,j)-ho(i,j)) / dt
           else
@@ -746,23 +837,15 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
       dtot = 0.     ! total change in water storage (m3)
       dtoa = 0.
 
-! #ifdef HMSWRF
-! 
-!       do j=jts,jte
-!         do i=its,ite
-! 
-! #else
-      do j=1,jx
-        do i=1,ix
-! #endif
+      do j=jts,jte
+        do i=its,ite
           if (ltype(i,j).eq.1) then
-! #ifdef HMSWRF
-            dtot = dtot + sf2(i,j) *(h(i,j)-ho(i,j)) * darea
+
+	    dtot = dtot + sf2(i,j) *(h(i,j)-ho(i,j)) * darea
             dtoa = dtoa + sf2(i,j) * abs(h(i,j)-ho(i,j)) * darea
-! #else
+
 !             dtot = dtot + sf2(i,j) *(h(i,j)-ho(i,j)) * darea(i,j)
 !             dtoa = dtoa + sf2(i,j) * abs(h(i,j)-ho(i,j)) * darea(i,j)
-! #endif
           endif
         enddo
       enddo
@@ -805,5 +888,158 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
 !
       RETURN
       END SUBROUTINE SCOPY
+
+subroutine gwSoilFlux(did)
+
+  use module_namelist, only: nlst_rt
+  use module_RT_data, only: rt_domain  
+  use module_GW_baseflow_data, only: gw2d
+  
+  implicit none
+  
+  integer, intent(in)	:: did
+  
+  
+  real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
+  integer :: nsoil, i, j
+  
+  
+  
+! Step 1, collect data
+
+! relative soil moisture content of lowest soil layer (1 = saturated)
+  nsoil = nlst_rt(did)%nsoil
+  smcrel = RT_DOMAIN(did)%SMCRT(:,:,nsoil) / RT_DOMAIN(did)%SMCMAXRT(:,:,nsoil)
+
+! depth of transition zone from lowest soil layer to groundwater head (in cm)
+  ztrans = (rt_domain(did)%elrt + nlst_rt(did)%zsoil8(nsoil)) - gw2d(did)%ho
+  ztrans = ztrans * 100
+  
+! Step 2, compute flux  TODO: deal with cases where gwhead > soil model layers
+
+  do j=gw2d(did)%jts, gw2d(did)%jte
+    do i=gw2d(did)%its, gw2d(did)%ite
+        if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
+	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))        
+	end if
+    end do
+  end do
+
+! TOcheck Step 3, adapt groundwater head (assuming not time lag for percolation / capillary rise flow)
+
+ headChange = gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
+ gw2d(did)%ho = gw2d(did)%ho + headChange
+  
+end subroutine gwSoilFlux
+      
+subroutine darcyGwSoil(Z, s, soil, q_darcy)
+
+implicit none
+
+INTEGER, INTENT (IN)  :: soil ! soiltype
+
+REAL :: sig_a, sig_b, sig_c
+
+REAL, DIMENSION(9)    :: k_para
+REAL, INTENT (IN)     :: Z, s
+REAL, INTENT (OUT)    :: q_darcy
+real                  :: beta,alpha,q_cap,b,ks,aep,c,q_grav,y,fac
+
+real, dimension(9,12) :: &
+      k_soil = reshape((/&
+0.0778, 3.9939, 0.2913, 4.0801, 0.1386, 4.0500, -12.10, 0.3950, 1.0560,&
+0.0924, 4.8822, 0.2674, 3.8915, 0.1365, 4.3800, -09.00, 0.4100, 0.9380,&
+0.0367, 4.5259, 0.2446, 4.2849, 0.1208, 4.9000, -21.80, 0.4350, 0.2080,&
+0.0101, 3.6896, 0.2153, 4.2765, 0.0887, 5.3000, -78.60, 0.4850, 0.0432,&
+0.0101, 3.6896, 0.2153, 4.2765, 0.0887, 5.3000, -78.60, 0.4850, 0.0432,&
+0.0169, 2.9936, 0.2858, 4.3738, 0.1026, 5.3900, -47.80, 0.4510, 0.0417,&
+0.0271, 4.4743, 0.2587, 3.9055, 0.0920, 7.1200, -29.90, 0.4200, 0.0378,&
+0.0227, 4.3768, 0.2658, 3.8234, 0.0843, 7.7500, -35.60, 0.4770, 0.0102,&
+0.0127, 6.6836, 0.1725, 3.7512, 0.0703, 8.5200, -63.00, 0.4760, 0.0147,&
+0.0530, 9.2423, 0.1859, 3.3688, 0.0728, 10.400, -15.30, 0.4260, 0.0130,&
+0.0165, 5.3972, 0.2479, 3.5549, 0.0641, 10.400, -49.00, 0.4920, 0.0062,&
+0.0200, 6.0106, 0.2474, 3.4788, 0.0622, 11.400, -40.50, 0.4820, 0.0077/&
+),(/9,12/))
+
+
+
+ k_para  = k_soil(:,soil)
+ sig_a   = 1 - exp( -1 * k_para(1) * Z)
+ sig_b   = k_para(2) * Z**k_para(3)
+ sig_c   = k_para(4) * exp( -1 * Z**k_para(5))
+ y       = sig_a/(1  + exp(sig_b * (s - sig_c))) !solving equation (20) in Boogart et al.
+
+ b   =   k_para(6)
+ ks  =   k_para(9)
+ aep =  -k_para(7)
+
+ c      =  2 * b  + 3
+ q_grav = -1 * ks * s**c
+
+! alp is constant from equation (13) of paper
+beta  = 2 + 3 / b
+alpha = 1 + 1.5 /  (beta - 1)
+q_cap = ks * alpha * (aep / Z)**beta
+
+
+! limit for exteme gradients with q >> saturated hydraulic conductivity
+if(q_cap > ks) q_cap = ks
+if(q_grav < -ks) q_grav = -ks
+
+q_darcy = y * q_cap + q_grav ![cm/min]
+
+fac     = 1./6000.
+q_darcy = q_darcy * fac
+q_cap   = q_cap   * fac
+q_grav  = q_grav  * fac
+
+!returns q_darcy in [m/s]
+
+end subroutine darcyGwSoil
+
+
+
+subroutine aggregateQsgw(did)
+
+  use module_namelist, only: nlst_rt
+  use module_RT_data, only: rt_domain  
+  use module_GW_baseflow_data, only: gw2d
+
+  implicit none
+
+   integer, intent(in) :: did
+   integer :: j,i, ixxRT, jyyRT, m,n
+   real :: agg
+
+
+    do j=1,rt_domain(did)%jx
+     do i=1,rt_domain(did)%ix
+
+       agg= 0.
+       
+       do m=nlst_rt(did)%aggfactRT-1,0,-1
+         do n=nlst_rt(did)%aggfactRT-1,0,-1
+
+
+	    ixxRT = i * nlst_rt(did)%aggfactRT-n
+	    jyyRT = j * nlst_rt(did)%aggfactRT-m
+
+           
+#ifdef MPP_LAND
+	    if(left_id.ge.0) ixxRT=ixxRT+1
+	    if(down_id.ge.0) jyyRT=jyyRT+1
+#endif
+             agg = agg + gw2d(did)%qsgwRT(ixxRT, jyyRT)
+           end do
+         end do
+	
+            gw2d(did)%qsgw(i,j) = agg/(nlst_rt(did)%aggfactRT**2)
+       end do
+     end do
+
+
+
+end subroutine aggregateQsgw
+
 
 end module module_GW_baseflow   

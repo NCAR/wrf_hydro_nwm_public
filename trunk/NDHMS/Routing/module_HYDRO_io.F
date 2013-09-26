@@ -2362,7 +2362,7 @@ end subroutine get_albedo12m_netcdf
 !BF output section for gw2d model
 !bftodo: clean up an customize for GW usage
   subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
-       startdate, date, HEAD, SMCRT, convgw, SFCHEADSUBRT, &
+       startdate, date, HEAD, SMCRT, convgw, qsgwrt, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,HIRES_OUT)
 
 #ifdef MPP_LAND
@@ -2404,14 +2404,14 @@ end subroutine get_albedo12m_netcdf
     real, dimension(2)                  :: sp
 
     real, dimension(ixrt,jxrt) :: head, convgw
-    real, dimension(ixrt,jxrt) :: SFCHEADSUBRT
+    real, dimension(ixrt,jxrt) :: qsgwrt
     real, dimension(ixrt,jxrt) :: latval,lonval
     real, dimension(ixrt,jxrt,nsoil) :: SMCRT
 
     integer :: seconds_since, decimation, ixrtd,jxrtd, hires_flag
     
 #ifdef MPP_LAND
-    real, dimension(global_rt_nx,global_rt_ny) :: gHead, gConvgw, gSFCHEADSUBRT
+    real, dimension(global_rt_nx,global_rt_ny) :: gHead, gConvgw, gqsgwrt
     real, dimension(global_rt_nx,global_rt_ny) :: gLatval, gLonval
     real, dimension(global_rt_nx,global_rt_ny,nsoil) :: gSMCRT
 #endif
@@ -2419,7 +2419,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
     call write_IO_rt_real(latval,gLatval)
     call write_IO_rt_real(lonval,gLonval)
-    call write_IO_rt_real(SFCHEADSUBRT,gSFCHEADSUBRT)
+    call write_IO_rt_real(qsgwrt,gqsgwrt)
     call write_IO_rt_real(head,gHead)
     call write_IO_rt_real(convgw,gConvgw)
     
@@ -2592,7 +2592,7 @@ end subroutine get_albedo12m_netcdf
        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
-       iret = nf_def_var(ncid,"Platzhalter",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_def_var(ncid,"QSGWRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
        iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
@@ -2713,6 +2713,16 @@ end subroutine get_albedo12m_netcdf
      iret = nf_inq_varid(ncid,  "CONVGW", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
  
+#ifdef MPP_LAND
+        xdumd = gqsgwrt
+#else  
+        xdumd = qsgwrt
+#endif
+
+     iret = nf_inq_varid(ncid,  "QSGWRT", varid)
+     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     
+     
 !!time in seconds since startdate
 
        iret = nf_redef(ncid)
