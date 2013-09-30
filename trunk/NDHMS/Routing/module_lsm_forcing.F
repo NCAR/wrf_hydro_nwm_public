@@ -736,6 +736,7 @@ Contains
     character(len=*),                   intent(in)  :: target_date
     real,             dimension(ix,jx), intent(out) :: weasd
     real,             dimension(ix,jx), intent(out) :: snodep
+    real, dimension(ix,jx) :: tmp
 
     character(len=256) :: units
     integer :: ierr
@@ -751,55 +752,59 @@ Contains
        call hydro_stop()
     endif
 
-    call get_2d_netcdf("WEASD",  ncid, weasd,   units, ix, jx, .FALSE., ierr)
+    call get_2d_netcdf("WEASD",  ncid, tmp,   units, ix, jx, .FALSE., ierr)
     if (ierr /= 0) then
-         call get_2d_netcdf("SNOW",  ncid, weasd,   units, ix, jx, .FALSE., ierr)
-         units = "mm"
-         if(ierr .eq. 0) print *, "read WEASD from wrfoutput ...... "
+         call get_2d_netcdf("SNOW",  ncid, tmp,   units, ix, jx, .FALSE., ierr)
+         if (ierr == 0) then
+            units = "mm"
+            print *, "read WEASD from wrfoutput ...... "
+            weasd = tmp * 1.E-3
+         endif
+    else
+         weasd = tmp
+         if (trim(units) == "m") then
+            ! No conversion necessary
+         else if (trim(units) == "mm") then
+            ! convert WEASD from mm to m
+            weasd = weasd * 1.E-3
+         endif
     endif
 
     if (ierr /= 0) then
 #ifdef HYDRO_D
        print *, "!!!!! NO WEASD present in input file...initialize to 0."
 #endif
-       weasd = 0.
-       units = "mm"
     endif
 
-    if (trim(units) == "m") then
-       ! No conversion necessary
-    else if (trim(units) == "mm") then
-       ! convert WEASD from mm to m
-       weasd = weasd * 1.E-3
+
+    call get_2d_netcdf("SNODEP",     ncid, tmp,   units, ix, jx, .FALSE., ierr)
+    if (ierr /= 0) then
+       ! Quick assumption regarding snow depth.
+       call get_2d_netcdf("SNOWH",     ncid, tmp,   units, ix, jx, .FALSE., ierr)
+       if(ierr .eq. 0) then
+            print *, "read snow depth from wrfoutput ... " 
+            snodep = tmp
+       endif
     else
-#ifdef HYDRO_D
-       print*, 'units = "'//trim(units)//'"'
-       print*, "Unrecognized units on WEASD"
-#endif
-       call hydro_stop()
-    endif
-
-    call get_2d_netcdf("SNODEP",     ncid, snodep,   units, ix, jx, .FALSE., ierr)
-    if (ierr /= 0) then
-       ! Quick assumption regarding snow depth.
-       call get_2d_netcdf("SNOWH",     ncid, snodep,   units, ix, jx, .FALSE., ierr)
-       if(ierr .eq. 0) print *, "read snow depth from wrfoutput ... " 
+       snodep = tmp
     endif
 
     if (ierr /= 0) then
        ! Quick assumption regarding snow depth.
-       snodep = weasd * 10.
+!yw       snodep = weasd * 10.
+       where(snodep .lt. weasd) snodep = weasd*10  !set lower bound to correct bi-lin interp err...
     endif
 
 !DJG check for erroneous neg WEASD or SNOWD due to offline interpolation...
-       do i=1,ix
-         do j=1,jx
-           if (WEASD(i,j).lt.0.) WEASD(i,j)=0.0  !set lower bound to correct bi-lin interp err...
-           if (snodep(i,j).lt.0.) snodep(i,j)=0.0  !set lower bound to correct bi-lin interp err...
-         end do
-       end do
+       where(snodep .lt. 0) snodep = 0
+       where(weasd .lt. 0) weasd = 0
 
-!yw       where(snodep .lt. weasd) snodep = weasd*10  !set lower bound to correct bi-lin interp err...
+!yw      do i=1,ix
+!yw        do j=1,jx
+!yw           if (WEASD(i,j).lt.0.) WEASD(i,j)=0.0  !set lower bound to correct bi-lin interp err...
+!yw           if (snodep(i,j).lt.0.) snodep(i,j)=0.0  !set lower bound to correct bi-lin interp err...
+!yw         end do
+!yw       end do
 
     ierr = nf_close(ncid)
 
