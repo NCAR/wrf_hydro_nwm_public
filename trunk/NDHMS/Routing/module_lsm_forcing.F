@@ -550,8 +550,8 @@ Contains
             write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
                  trim(flnm)
 #endif
-            ierr_flg = ierr
           end if
+          ierr_flg = ierr
           mmflag = 1
         end if
         ierr = nf_get_var_real(ncid, varid, pcp)
@@ -752,6 +752,11 @@ Contains
     endif
 
     call get_2d_netcdf("WEASD",  ncid, weasd,   units, ix, jx, .FALSE., ierr)
+    if (ierr /= 0) then
+         call get_2d_netcdf("SNOW",  ncid, weasd,   units, ix, jx, .FALSE., ierr)
+         units = "mm"
+         if(ierr .eq. 0) print *, "read WEASD from wrfoutput ...... "
+    endif
 
     if (ierr /= 0) then
 #ifdef HYDRO_D
@@ -775,6 +780,11 @@ Contains
     endif
 
     call get_2d_netcdf("SNODEP",     ncid, snodep,   units, ix, jx, .FALSE., ierr)
+    if (ierr /= 0) then
+       ! Quick assumption regarding snow depth.
+       call get_2d_netcdf("SNOWH",     ncid, snodep,   units, ix, jx, .FALSE., ierr)
+       if(ierr .eq. 0) print *, "read snow depth from wrfoutput ... " 
+    endif
 
     if (ierr /= 0) then
        ! Quick assumption regarding snow depth.
@@ -788,6 +798,8 @@ Contains
            if (snodep(i,j).lt.0.) snodep(i,j)=0.0  !set lower bound to correct bi-lin interp err...
          end do
        end do
+
+!yw       where(snodep .lt. weasd) snodep = weasd*10  !set lower bound to correct bi-lin interp err...
 
     ierr = nf_close(ncid)
 
@@ -1495,12 +1507,16 @@ Contains
 !
 !
 !!!!DJG Check for snow data assimilation...
-    if (SNOW_ASSIM.eq.1) then
+
+    if (SNOW_ASSIM .eq. 1) then
 ! Every 24 hours, update the snow field from analyses.
-     if ( OLDDATE(12:13) == "00") then
+     if(forc_typ .ne. 3 .or. forc_typ .ne. 6) then
+         if ( OLDDATE(12:13) == "00") then
+            CALL READSNOW_HRLDAS(inflnm,IX,JX,OLDDATE,WEASD,SNODEP)
+         endif
+     else
         CALL READSNOW_HRLDAS(inflnm,IX,JX,OLDDATE,WEASD,SNODEP)
      endif
-!     close(iunit)
    end if
 
 
@@ -1667,14 +1683,19 @@ Contains
      call decompose_data_real(g_PRCP1,PRCP1)
      call decompose_data_real(g_PRES,PRES)
 
-     flag = -1
-     if( my_id.eq.IO_id) then
-       if(OLDDATE(12:16) == "00:00") flag = 99
-     end if
-     call mpp_land_bcast_int1(flag)
-     if(flag .eq. 99 .and. snow_assim .eq. 1) then
-        call decompose_data_real(g_weasd,weasd)
-        call decompose_data_real(g_snodep,snodep)
+     if(forc_typ .eq. 3 .or. forc_typ .eq. 6 .and. snow_assim .eq. 1) then
+         call decompose_data_real(g_weasd,weasd)
+         call decompose_data_real(g_snodep,snodep)
+     else
+        flag = -1
+        if( my_id.eq.IO_id) then
+          if(OLDDATE(12:16) == "00:00") flag = 99
+        end if
+        call mpp_land_bcast_int1(flag)
+        if(flag .eq. 99 .and. snow_assim .eq. 1) then
+           call decompose_data_real(g_weasd,weasd)
+           call decompose_data_real(g_snodep,snodep)
+        endif
      endif
    return
    end subroutine mpp_read_forcing
