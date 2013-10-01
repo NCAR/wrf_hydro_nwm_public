@@ -1933,6 +1933,10 @@ program Noah_hrldas_driver
               print*, 'NROOT = ', NROOT
 #endif
 
+!              print*, 'SNOWH = ', SNOWH, 'i=',i, 'j=',j
+!              print*, 'SNEQV = ', SNEQV,'i=',i, 'j=',j
+               
+
               CALL SFLX (FFROZP,ICE,ISURBAN,DT,ZLVL,NSOIL,SLDPTH,   &    !C
                    .FALSE., LLANDUSE, LSOIL,                        &    !C
                    LWDN,SOLDN,SOLNET,SFCPRS,PRCP,SFCTMP,Q2,SFCSPD,  &    !F

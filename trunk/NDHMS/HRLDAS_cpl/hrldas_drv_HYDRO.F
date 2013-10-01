@@ -164,33 +164,55 @@
 
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
-          if(iret /= 0) then
 #ifdef HYDRO_D
+          if(iret /= 0) then
               write(6,*) "Error: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
               call hydro_stop() 
-#endif
+          else
+        
+              write(6,*) "initialization from the file  : ", trim(fileName)
 
           endif 
+#endif
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
            if (iret == 0) iret = nf_get_var_real(ncid, varid, fpar)
            fpar = fpar/100.
 
+!yw
 !yw           do j = 1, jx
 !yw              do i = 1, ix
 !yw                  fpar(i,j) = shdtbl(vegtyp(i,j))
 !yw              end do
 !yw           end do
+!yw
+
 
           iret = nf_inq_varid(ncid,"LAI",  varid)
           if (iret == 0) iret = nf_get_var_real(ncid, varid, lai)
 
           iret = nf_inq_varid(ncid,"SNOWH",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, snodep)
+          if (iret == 0) then
+#ifdef HYDRO_D
+             print*, "read snowh for initialization ...."
+#endif
+             iret = nf_get_var_real(ncid, varid, snodep)
+          endif  
 
           iret = nf_inq_varid(ncid,"SNOW",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, weasd)
-
+          if (iret == 0) then
+#ifdef HYDRO_D
+             print*, "read snow for initialization ...."
+#endif
+             iret = nf_get_var_real(ncid, varid, weasd)
+             weasd = weasd * 1.0E-3    ! transfer the unit from mm to m
+          endif  
+         
+         
+!         where(snodep < weasd) snodep = weasd * 10
+!            write(6,*) "SNOW(20,1)=",weasd(20,1) 
+!            write(6,*) "SNOWH(20,1)=",snodep(20,1) 
+          
           iret = nf_inq_varid(ncid,"TSK",  varid)
           if (iret == 0) iret = nf_get_var_real(ncid, varid, t1)
 
@@ -209,7 +231,7 @@
           iret=nf_close(ncid)
 
 !yw    added for 
-          where(sh2ox == 0) sh2ox = smc
+!yw          where(sh2ox == 0) sh2ox = smc
 
  
        end subroutine HYDRO_HRLDAS_ini
