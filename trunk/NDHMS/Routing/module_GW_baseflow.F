@@ -344,8 +344,12 @@ endif
 
       real, dimension(ix,jx)   :: sf2    ! storage coefficient (m3 of h2o / bulk m3)
       real, dimension(ix,jx,2) ::   t    ! transmissivity (m2/s)..1 for N-S,..2 for E-W
-      real, dimension(0:ix+jx) :: b,g    ! work arrays
 
+      real, dimension(:), allocatable :: aa, &         ! tridiagonal matrix lower diagonal
+                                         bb, &         ! tridiagonal matrix main diagonal
+                                         cc, &         ! tridiagonal matrix upper diagonal
+                                         dd, &         ! right hand side
+                                         hh            ! solution vector
 
       real, parameter    :: botinc = 0.01  ! re-wetting increment to fix h < bot
 !     parameter (botinc = 0.  )  ! re-wetting increment to fix h < bot
@@ -365,9 +369,7 @@ endif
         i,                      &
         jp,                     &
         ip,                     &
-        ii,                     &
         n,                      &
-        jj,                     &
         ierr,                   &
         ier
         
@@ -378,10 +380,6 @@ endif
         su,                     &
         sc,                     &
         shp,                    &
-        bb,                     &
-        dd,                     &
-        aa,                     &
-        cc,                     &
         w,                      &
         ha,                     &
         delcur,                 &
@@ -451,7 +449,7 @@ fydim = jfe-jfs+1
                   h(ifs:ife,jfs:jfe), 1)
 
 
-!       Top of iterative loop for ADI solution
+!       Top of iterative loop for (not anymore ADI) solution
 
       iter = 0
 !~~~~~~~~~~~~~
@@ -471,7 +469,6 @@ fydim = jfe-jfs+1
 
 !       Set storage coefficient (sf2)
    
-! print*,'h, ho at beginning of ghmcompute:',h(35,75), ho(35,75)  !modSW
    
 
     tareal = 0.
@@ -540,23 +537,6 @@ fydim = jfe-jfs+1
                    * (0.5*(dx+dx))  &
                    / (0.5*(dy+dy))
 
-!modSW use min bot of neighboring cells, hence  
-!          t(i,j,2) = sqrt( abs(                                           &
-!                        hycond(i, j)*(min(h(i ,j),elev(i ,j))-min(bot(i ,j),bot(ip,j)))  &
-!                       *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-min(bot(i ,j),bot(ip,j)))  &
-!                         )    )                                           &
-!                   * (0.5*(dy+dy)) & ! in WRF the dx and dy are usually equal
-!                   / (0.5*(dx+dx))
-
-!          t(i,j,1) = sqrt( abs(                                           &
-!                        hycond(i,j )*(min(h(i,j ),elev(i,j ))-min(bot(i,j ),bot(i,jp)))  &
-!                       *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-min(bot(i,j ),bot(i,jp)))  &
-!                         )    )                                           &
-!                   * (0.5*(dx+dx))  &
-!                   / (0.5*(dy+dy))
-
-
-
 
         enddo
       enddo
@@ -570,71 +550,61 @@ fydim = jfe-jfs+1
        call MPP_LAND_COM_REAL(t(:,:,1), fxdim, fydim, 99)
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
-      b = 0.
-      g = 0.
+
+allocate(aa(jfs:jfe))
+allocate(bb(jfs:jfe))
+allocate(cc(jfs:jfe))
+allocate(dd(jfs:jfe))
+allocate(hh(jfs:jfe))
 
 !-------------------
-      do ii=ifs,ife
+      do i=ifs,ife
 !-------------------
-        i=ii
-        if (mod(istep+iter,2).eq.1) i=ife-i+ifs  ! backwards
-
-!          calculate b and g arrays
 
 !>>>>>>>>>>>>>>>>>>>>
         do j=jfs,jfe
 !>>>>>>>>>>>>>>>>>>>>
-          bb = (sf2(i,j)/dt) * darea
-          dd = ( ho(i,j)*sf2(i,j)/dt ) * darea
-          aa = 0.0
-          cc = 0.0
+          bb(j) = (sf2(i,j)/dt) * darea
+          dd(j) = ( ho(i,j)*sf2(i,j)/dt ) * darea
+          aa(j) = 0.0
+          cc(j) = 0.0
 
           if ((j-jfs) /= 0) then 
-           aa = -t(i,j-1,1)
-           bb = bb + t(i,j-1,1)
+           aa(j) = -t(i,j-1,1)
+           bb(j) = bb(j) + t(i,j-1,1)
 	  endif
 
           if ((j-jfe) /= 0) then
-           cc = -t(i,j,1)
-           bb = bb + t(i,j,1)
+           cc(j) = -t(i,j,1)
+           bb(j) = bb(j) + t(i,j,1)
 	  endif
 
           if ((i-ifs) /= 0) then
-           bb = bb + t(i-1,j,2)
-           dd = dd + h(i-1,j)*t(i-1,j,2)
+           bb(j) = bb(j) + t(i-1,j,2)
+           dd(j) = dd(j) + h(i-1,j)*t(i-1,j,2)
 	  endif
 
           if ((i-ife) /= 0) then
-           bb = bb + t(i,j,2)
-           dd = dd + h(i+1,j)*t(i,j,2)
+           bb(j) = bb(j) + t(i,j,2)
+           dd(j) = dd(j) + h(i+1,j)*t(i,j,2)
 	  endif
 
-          w = bb - aa*b(j-1)
-          b(j) = cc/w
-          g(j) = (dd-aa*g(j-1))/w
 !>>>>>>>>>>>>>>>
 	end do
 !>>>>>>>>>>>>>>>
 
-!          re-estimate heads
+  call trdiagSolve(aa, bb, cc, dd, hh, fydim)
 
-        e = e + abs(h(i,jfe)-g(jfe))
-        h(i,jfe) = g(jfe)
-#ifdef MPP_LAND
-       call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
-#endif
-        n = jfe-1
-  180   if (n-jfs.eq.0) goto 185
-        ha = g(n) - b(n)*h(i,n+1)
-        e = e + abs(ha-h(i,n))
-        h(i,n) = ha
-        n = n-1
-        goto 180
-  185   continue
-
+  h(i,:) = hh
 !-------------
   end do
 !-------------
+
+deallocate(aa)
+deallocate(bb)
+deallocate(cc)
+deallocate(dd)
+deallocate(hh)
 
 #ifdef MPP_LAND
 
@@ -668,20 +638,6 @@ fydim = jfe-jfs+1
                    * (0.5*(dx+dx))                                         &
                    / (0.5*(dy+dy))
 
-!modSW use min bot of neighboring cells, hence  
-!          t(i,j,2) = sqrt( abs(                                            &
-!                        hycond(i, j)*(min(h(i ,j),elev(i ,j))-max(bot(i ,j),bot(ip,j)))   &
-!                       *hycond(ip,j)*(min(h(ip,j),elev(ip,j))-max(bot(i ,j),bot(ip,j)))   &
-!                         )    )                                            &
-!                   * (0.5*(dy+dy))                                         &
-!                   / (0.5*(dx+dx))
-
-!          t(i,j,1) = sqrt( abs(                                            &
-!                        hycond(i,j )*(min(h(i,j ),elev(i,j ))-max(bot(i ,j),bot(i,jp)))   &
-!                       *hycond(i,jp)*(min(h(i,jp),elev(i,jp))-max(bot(i ,j),bot(i,jp)))   &
-!                         )    )                                            &
-!                   * (0.5*(dx+dx))                                         &
-!                   / (0.5*(dy+dy))
 
         enddo
       enddo
@@ -692,71 +648,62 @@ fydim = jfe-jfs+1
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
 
-      b = 0.
-      g = 0.
+     
+allocate(aa(ifs:ife))
+allocate(bb(ifs:ife))
+allocate(cc(ifs:ife))
+allocate(dd(ifs:ife))
+allocate(hh(ifs:ife))
 
 !-------------------
-      do jj=jfs,jfe
+      do j=jfs,jfe
 !-------------------
-        j=jj
-        if (mod(istep+iter,2).eq.1) then
-! 	  print*, 'mod reached: ', istep, iter, istep+iter 
-	  j = jfe-j+jfs
-	end if
 
-!         calculate b and g arrays
 
 !>>>>>>>>>>>>>>>>>>>>
         do i=ifs,ife
 !>>>>>>>>>>>>>>>>>>>>
-          bb = (sf2(i,j)/dt) * darea
-          dd = ( ho(i,j)*sf2(i,j)/dt ) * darea
-          aa = 0.0
-          cc = 0.0
+          bb(i) = (sf2(i,j)/dt) * darea
+          dd(i) = ( ho(i,j)*sf2(i,j)/dt ) * darea
+          aa(i) = 0.0
+          cc(i) = 0.0
 
           if ((j-jfs) /= 0) then
-           bb = bb + t(i,j-1,1)
-           dd = dd + h(i,j-1)*t(i,j-1,1)
+           bb(i) = bb(i) + t(i,j-1,1)
+           dd(i) = dd(i) + h(i,j-1)*t(i,j-1,1)
 	  endif
  
           if ((j-jfe) /= 0) then
-           dd = dd + h(i,j+1)*t(i,j,1)
-           bb = bb + t(i,j,1)
+           dd(i) = dd(i) + h(i,j+1)*t(i,j,1)
+           bb(i) = bb(i) + t(i,j,1)
 	  endif
 
           if ((i-ifs) /= 0) then
-           bb = bb + t(i-1,j,2)
-           aa = -t(i-1,j,2)
+           bb(i) = bb(i) + t(i-1,j,2)
+           aa(i) = -t(i-1,j,2)
 	  endif
 
           if ((i-ife) /= 0) then
-           bb = bb + t(i,j,2)
-           cc = -t(i,j,2)
+           bb(i) = bb(i) + t(i,j,2)
+           cc(i) = -t(i,j,2)
 	  endif
 
-          w = bb - aa*b(i-1)
-          b(i) = cc/w
-          g(i) = (dd-aa*g(i-1))/w
 !>>>>>>>>>>>>>>>
 	end do
 !>>>>>>>>>>>>>>>
 
-!          re-estimate heads
+  call trdiagSolve(aa, bb, cc, dd, hh, fxdim)
 
-        e = e + abs(h(ife,j)-g(ife))
-        h(ife,j) = g(ife)
-        n = ife-1
-  290   if (n-ifs.eq.0) goto 295
-        ha = g(n)-b(n)*h(n+1,j)
-        e = e + abs(h(n,j)-ha)
-        h(n,j) = ha
-        n = n-1
-        goto 290
-  295   continue
+  h(:,j) = hh
 
 !-------------
 end do
 !-------------
+deallocate(aa)
+deallocate(bb)
+deallocate(cc)
+deallocate(dd)
+deallocate(hh)
 
 ! fix head < bottom of aquifer
  
@@ -809,8 +756,14 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
       if ( (delcur.gt.delskip .and. iter.lt.itermax)      &
            .or. iter.lt.itermin ) then
            
-#ifdef HYDRO_D                        
-          write(6,*) "Iteration", iter, "of", itermax, "error:", delcur
+#ifdef HYDRO_D 
+
+#ifdef MPP_LAND
+if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", delcur
+#else
+                      write(6,*) "Iteration", iter, "of", itermax, "error:", delcur
+#endif
+
 #endif
 
       goto 80
@@ -889,6 +842,38 @@ call mpi_bcast(delcur, 1, mpi_real, 0, MPI_COMM_WORLD, ierr)
       RETURN
       END SUBROUTINE SCOPY
 
+      
+subroutine trdiagSolve(a,b,c,rhs,x,n)
+
+      implicit none
+      
+      integer,intent(in) :: n
+      real,dimension(n),intent(in) :: a, b, c, rhs
+      real,dimension(n),intent(out) :: x
+      real,dimension(n) :: cp, dp
+      real :: m
+      integer i
+
+! initialize c-prime and d-prime
+        cp(1) = c(1)/b(1)
+        dp(1) = rhs(1)/b(1)
+! solve for vectors c-prime and d-prime
+         do i = 2,n
+           m = b(i)-cp(i-1)*a(i)
+           cp(i) = c(i)/m
+           dp(i) = (rhs(i)-dp(i-1)*a(i))/m
+         enddo
+! initialize x
+         x(n) = dp(n)
+! solve for x from the vectors c-prime and d-prime
+        do i = n-1, 1, -1
+          x(i) = dp(i)-cp(i)*x(i+1)
+        end do
+      
+
+end subroutine trdiagSolve
+      
+      
 subroutine gwSoilFlux(did)
 
   use module_namelist, only: nlst_rt
