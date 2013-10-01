@@ -1349,14 +1349,14 @@ program Noah_hrldas_driver
         forcDate = newdate
      endif
 
-     if ( update_snow_from_forcing ) then
-        ! Every 24 hours, update the snow field from analyses.
-        if ( OLDDATE(12:13) == "00") then
+!yw     if ( update_snow_from_forcing ) then
+!yw        ! Every 24 hours, update the snow field from analyses.
+!yw        if ( OLDDATE(12:13) == "00") then
 !yw           CALL READSNOW_HRLDAS(inflnm,                                             &
 !yw                parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend, &
-!yw                OLDDATE,WEASD,SNODEP)
-        endif
-     endif
+!yw               OLDDATE,WEASD,SNODEP)
+!yw        endif
+!yw     endif
 
 !----------------------------------------------------------------------------------
 ! Read possible external maps.  There's got to be some good way to make this
@@ -2466,14 +2466,14 @@ program Noah_hrldas_driver
         endif
      endif
 
-     if ( rank == 0 ) then
-        if (vegtyp(parallel_xstart,subwindow_ystart)==ISWATER) then
-           write(*,'(" *** DATE = ", A19)', advance="NO") olddate
-        else
-           write(*,'(" *** DATE = ", A19, 6F10.5)', advance="NO") olddate, &
-                stc(parallel_xstart,subwindow_ystart,1), xlai2d(parallel_xstart,subwindow_ystart)
-        endif
-     endif
+!yw     if ( rank == 0 ) then
+!yw        if (vegtyp(parallel_xstart,subwindow_ystart)==ISWATER) then
+!yw           write(*,'(" *** DATE = ", A19)', advance="NO") olddate
+!yw        else
+!yw           write(*,'(" *** DATE = ", A19, 6F10.5)', advance="NO") olddate, &
+!yw                stc(parallel_xstart,subwindow_ystart,1), xlai2d(parallel_xstart,subwindow_ystart)
+!yw        endif
+!yw     endif
 
 !------------------------------------------------------------------------
 ! Update the time 
