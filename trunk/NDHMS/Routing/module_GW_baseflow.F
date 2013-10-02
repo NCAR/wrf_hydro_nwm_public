@@ -345,12 +345,24 @@ endif
       real, dimension(ix,jx)   :: sf2    ! storage coefficient (m3 of h2o / bulk m3)
       real, dimension(ix,jx,2) ::   t    ! transmissivity (m2/s)..1 for N-S,..2 for E-W
 
+#ifdef MPP_LAND
+      real, dimension(:,:), allocatable :: aa, &         ! tridiagonal matrix lower diagonal
+                                           bb, &         ! tridiagonal matrix main diagonal
+                                           cc, &         ! tridiagonal matrix upper diagonal
+                                           dd, &         ! right hand side
+                                           b2, &          
+                                           c2, &          
+                                           r2, &          
+                                           wk           
+      real, dimension(:), allocatable ::   xfac, &
+                                           zfac
+#else                                         
       real, dimension(:), allocatable :: aa, &         ! tridiagonal matrix lower diagonal
                                          bb, &         ! tridiagonal matrix main diagonal
                                          cc, &         ! tridiagonal matrix upper diagonal
                                          dd, &         ! right hand side
                                          hh            ! solution vector
-
+#endif
       real, parameter    :: botinc = 0.01  ! re-wetting increment to fix h < bot
 !     parameter (botinc = 0.  )  ! re-wetting increment to fix h < bot
                                  ! (m); else no flow into dry cells
@@ -551,6 +563,18 @@ fydim = jfe-jfs+1
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
 
+#ifdef MPP_LAND
+allocate(aa(jts:jte,its:ite))
+allocate(bb(jts:jte,its:ite))
+allocate(cc(jts:jte,its:ite))
+allocate(dd(jts:jte,its:ite))
+allocate(c2(jts:jte,its:ite))
+allocate(b2(jts:jte,its:ite))
+allocate(r2(jts:jte,its:ite))
+allocate(wk(jts:jte,its:ite))
+allocate(xfac(jts:jte))
+allocate(zfac(jts:jte))
+#else
 allocate(aa(jfs:jfe))
 allocate(bb(jfs:jfe))
 allocate(cc(jfs:jfe))
@@ -564,6 +588,8 @@ allocate(hh(jfs:jfe))
 !>>>>>>>>>>>>>>>>>>>>
         do j=jfs,jfe
 !>>>>>>>>>>>>>>>>>>>>
+#endif
+#ifndef MPP_LAND
           bb(j) = (sf2(i,j)/dt) * darea
           dd(j) = ( ho(i,j)*sf2(i,j)/dt ) * darea
           aa(j) = 0.0
@@ -596,15 +622,68 @@ allocate(hh(jfs:jfe))
   call trdiagSolve(aa, bb, cc, dd, hh, fydim)
 
   h(i,:) = hh
+  end do
+#else
+!-------------------
+      do i=its,ite
+!-------------------
+
+!>>>>>>>>>>>>>>>>>>>>
+        do j=jts,jte
+!>>>>>>>>>>>>>>>>>>>>
+          bb(j,i) = (sf2(i,j)/dt) * darea
+          dd(j,i) = ( ho(i,j)*sf2(i,j)/dt ) * darea
+          aa(j,i) = 0.0
+          cc(j,i) = 0.0
+
+          if ((j-jts) /= 0) then 
+           aa(j,i) = -t(i,j-1,1)
+           bb(j,i) = bb(j,i) + t(i,j-1,1)
+	  endif
+
+          if ((j-jte) /= 0) then
+           cc(j,i) = -t(i,j,1)
+           bb(j,i) = bb(j,i) + t(i,j,1)
+	  endif
+
+          if ((i-its) /= 0) then
+           bb(j,i) = bb(j,i) + t(i-1,j,2)
+           dd(j,i) = dd(j,i) + h(i-1,j)*t(i-1,j,2)
+	  endif
+
+          if ((i-ite) /= 0) then
+           bb(j,i) = bb(j,i) + t(i,j,2)
+           dd(j,i) = dd(j,i) + h(i+1,j)*t(i,j,2)
+	  endif
+
+!>>>>>>>>>>>>>>>
+	end do
+!>>>>>>>>>>>>>>>
+
 !-------------
   end do
 !-------------
 
+        call sub_n_form(xdim, ydim, aa, bb, cc, dd, &
+                        c2, b2, r2, wk, xfac, zfac, &
+                        up_down_p+1, up_down_np, 2)
+
+!         call dparzsolv1(c2,b2,u,c2h,b2h,uh,zct,pid,z_pid)
+
+deallocate(b2)
+deallocate(c2)
+deallocate(r2)
+deallocate(wk)
+deallocate(xfac)
+deallocate(zfac)
+#endif 
 deallocate(aa)
 deallocate(bb)
 deallocate(cc)
 deallocate(dd)
+#ifndef MPP_LAND
 deallocate(hh)
+#endif
 
 #ifdef MPP_LAND
 
@@ -648,12 +727,25 @@ deallocate(hh)
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
 
-     
+#ifdef MPP_LAND     
+allocate(aa(ifs:ife,jfs:jfe))
+allocate(bb(ifs:ife,jfs:jfe))
+allocate(cc(ifs:ife,jfs:jfe))
+allocate(dd(ifs:ife,jfs:jfe))
+allocate(b2(ifs:ife,jfs:jfe))
+allocate(c2(ifs:ife,jfs:jfe))
+allocate(r2(ifs:ife,jfs:jfe))
+allocate(wk(ifs:ife,jfs:jfe))
+allocate(xfac(ifs:ife))
+allocate(zfac(ifs:ife))
+#else
 allocate(aa(ifs:ife))
 allocate(bb(ifs:ife))
 allocate(cc(ifs:ife))
 allocate(dd(ifs:ife))
 allocate(hh(ifs:ife))
+allocate(hh(ifs:ife))
+#endif
 
 !-------------------
       do j=jfs,jfe
@@ -663,6 +755,7 @@ allocate(hh(ifs:ife))
 !>>>>>>>>>>>>>>>>>>>>
         do i=ifs,ife
 !>>>>>>>>>>>>>>>>>>>>
+#ifndef MPP_LAND     
           bb(i) = (sf2(i,j)/dt) * darea
           dd(i) = ( ho(i,j)*sf2(i,j)/dt ) * darea
           aa(i) = 0.0
@@ -695,15 +788,54 @@ allocate(hh(ifs:ife))
   call trdiagSolve(aa, bb, cc, dd, hh, fxdim)
 
   h(:,j) = hh
+  end do
+#else
+          bb(i,j) = (sf2(i,j)/dt) * darea
+          dd(i,j) = ( ho(i,j)*sf2(i,j)/dt ) * darea
+          aa(i,j) = 0.0
+          cc(i,j) = 0.0
+
+          if ((j-jfs) /= 0) then
+           bb(i,j) = bb(i,j) + t(i,j-1,1)
+           dd(i,j) = dd(i,j) + h(i,j-1)*t(i,j-1,1)
+	  endif
+ 
+          if ((j-jfe) /= 0) then
+           dd(i,j) = dd(i,j) + h(i,j+1)*t(i,j,1)
+           bb(i,j) = bb(i,j) + t(i,j,1)
+	  endif
+
+          if ((i-ifs) /= 0) then
+           bb(i,j) = bb(i,j) + t(i-1,j,2)
+           aa(i,j) = -t(i-1,j,2)
+	  endif
+
+          if ((i-ife) /= 0) then
+           bb(i,j) = bb(i,j) + t(i,j,2)
+           cc(i,j) = -t(i,j,2)
+	  endif
+	  
+!>>>>>>>>>>>>>>>
+	end do
+!>>>>>>>>>>>>>>>
 
 !-------------
 end do
 !-------------
+deallocate(b2)
+deallocate(c2)
+deallocate(r2)
+deallocate(wk)
+deallocate(xfac)
+deallocate(zfac)
+#endif 
 deallocate(aa)
 deallocate(bb)
 deallocate(cc)
 deallocate(dd)
+#ifndef MPP_LAND
 deallocate(hh)
+#endif
 
 ! fix head < bottom of aquifer
  
@@ -1026,5 +1158,915 @@ subroutine aggregateQsgw(did)
 
 end subroutine aggregateQsgw
 
+#ifdef MPP_LAND
+!23456789012345678901234567890123456789012345678901234567890123456789012
+! Parallel machine precision tridiagonal solver.
+! The send-receive fuse is lit from both ends in this subroutine.
+! The processors are self-synchronized by blocking receives,
+! and the load balance is so good that non-blocking receives
+! are not needed.
+
+      subroutine dparzsolv1(c,b,r,ch,bh,rh,ct,pid,z_pid, &
+	                    xsps, zsps, xdns, zdns)
+
+      implicit none
+
+! Header file for dadi.F
+
+! Parameters specifying the size of the problem
+! XSPS     XS Per Subdomain
+! ZSPS     ZS Per Subdomain
+! XDNS     X-Direction Number of Subdomains
+! ZDNS     Z-Direction Number of Subdomains
+! NSBS   Number of SUBdomainS
+! N_XS     Number of X-valueS across the whole grid
+! N_ZS     Number of Z-valueS across the whole grid
+! N_PTS    Number of PoinTS in the whole grid
+! Specify problem size by choosing XSPS, ZSPS, XDNS, and ZDNS
+
+      integer, intent(in) :: XSPS, &
+                             ZSPS, &
+                             XDNS, &
+                             ZDNS
+      
+      !local
+      integer             :: NSBS, &
+                             n_xs, &
+                             n_zs, &
+                             n_pts
+                 
+
+! Lengths of types in bytes
+      integer	LEN_INT
+      parameter	(LEN_INT = 8)
+      integer	LEN_SINGLE
+      parameter	(LEN_SINGLE = 8)
+
+! Parameters for integer logic
+!   XDIR    tells subroutines to operate for the X-DIRection
+!   ZDIR    tells subroutines to operate for the Z-DIRection
+      integer	ZERO
+      parameter (ZERO = 0)
+      integer	ONE
+      parameter (ONE = 1)
+      integer	XDIR
+      parameter	(XDIR = 1)
+      integer	ZDIR
+      parameter (ZDIR = 2)
+
+      integer	FALSE
+      parameter (FALSE = 0)
+      integer	TRUE
+      parameter	(TRUE = 1)
+
+! Communication acknowledgement switches
+      integer	NO_ACK
+      parameter	(NO_ACK = 0)
+      integer	ACK
+      parameter	(ACK = 1)
+
+! Message tags
+!   STAT_REC  message tag for all-to-all broadcast STATistics RECord
+!   INPUT_REC message tag for all-to-all bcast of INPUT RECord
+!   I_REC     message tag for all-to-all bcast of Integer RECord
+!   DP_REC    message tag for all-to-all bcast of Double Precision RECord
+!   XN_REC    message tag for comm. of X-face grid pts. btw.
+!             X-neighbor processors
+!   ZN_REC    message tag for comm. of Z-face grid pts. btw.
+!             Z-neighbor processors
+!   XN2_REC   message tag for comm. of two sets of X-face grid pts.
+!             between X-neighbor processors
+!   ZN2_REC   message tag for comm. of two sets of Z-face grid pts.
+!             between Z-neighbor processors
+!   START_IO  message tag for IO sequential synchronization
+      integer	STAT_REC
+      parameter (STAT_REC = 24)
+      integer	INPUT_REC
+      parameter	(INPUT_REC = 25)
+      integer	I_REC
+      parameter	(I_REC = 26)
+      integer	DP_REC
+      parameter	(DP_REC = 27)
+
+      integer	XN_REC
+      parameter	(XN_REC = 45)
+      integer	ZN_REC
+      parameter	(ZN_REC = 46)
+
+      integer	XN2_REC
+      parameter	(XN2_REC = 47)
+      integer	ZN2_REC
+      parameter	(ZN2_REC = 48)
+
+      integer	START_IO
+      parameter	(START_IO = 51)
+
+! Processor specifiers
+!   IO_PROC  Input/Output PROCessor
+      integer	IO_PROC
+      parameter (IO_PROC = 0)
+
+! Miscellaneous control parameters
+!   RSD_SKIP ReSiDual SKIP factor
+      integer	RSD_SKIP
+      parameter (RSD_SKIP = 1)
+
+! Communication control parameters
+!   SW1      SWitch parameter 1 for control of all-to-all broadcast
+!            method
+      integer	SW1
+      parameter	(SW1 = 89)
+
+! Time step control method parameters
+!   LAMBERT  specifies LAMBERT's method (experimental)
+!   STDADI   specifies STanDard ADI method (bad)
+!   DOSS     specifies DOSS's ADI method (good)
+      integer	LAMBERT
+      parameter	(LAMBERT = 21)
+      integer	STDADI
+      parameter (STDADI = 22)
+      integer	DOSS
+      parameter	(DOSS = 23)
+ 
+! Permittivity, source, and kappa mock-up parameters.
+!   MOS      MOSaic in space (rectangular tiles)
+!   RNDM     RaNDoM in space, pointwise
+!   DISK     DISK in space
+!   EXPON    EXPONential in space, from 1. to 1.e6, corner-to-corner
+      integer	MOS
+      parameter	(MOS = 92)
+      integer	RNDM
+      parameter	(RNDM = 93)
+      integer	DISK
+      parameter	(DISK = 94)
+      integer   EXPON
+      parameter (EXPON = 95)
+
+! Diagonal stacking control parameters
+      integer	NO_STCK
+      parameter	(NO_STCK = 26)
+      integer	HALF_PASS
+      parameter	(HALF_PASS = 27)
+      integer	FULL_PASS
+      parameter	(FULL_PASS = 28)
+      integer	SPATIAL
+      parameter	(SPATIAL = 29)
+
+! Exit control parameters
+!   REL_ERR_METH   RELative ERRor METHod
+!   RSD_NORM_METH  ReSiDual NORM METHod
+      integer	REL_ERR_METH
+      parameter (REL_ERR_METH = 31)
+      integer	RSD_NORM_METH
+      parameter (RSD_NORM_METH = 32)
+
+! External boundary condition specifiers
+!   DDDD   Dirichlet on all four sides
+!   DNNN   Dirichlet on one side, Neumann-zero on other three
+!   NNNN   Neumann on all sides, except Dirichlet at one corner
+      integer	DDDD
+      parameter (DDDD = 41)
+      integer	DNNN
+      parameter	(DNNN = 42)
+      integer	NNNN
+      parameter	(NNNN = 43)
+    
+! ! Lengths of messages (including data structures and arrays)
+!       integer	SZ_INPUT_REC
+!       parameter	(SZ_INPUT_REC = 8*LEN_SINGLE + 16*LEN_INT)
+! 
+!       integer   SZ_XN_REC
+!       parameter	(SZ_XN_REC = 2*ZSPS*LEN_SINGLE)
+!       integer   SZ_ZN_REC
+!       parameter	(SZ_ZN_REC = 2*XSPS*LEN_SINGLE)
+! 
+!       integer   SZ_XN2_REC
+!       parameter	(SZ_XN2_REC = 2*SZ_XN_REC)
+!       integer   SZ_ZN2_REC
+!       parameter	(SZ_ZN2_REC = 2*SZ_ZN_REC)
+! 
+!       integer	SZ_STAT_REC
+!       parameter	(SZ_STAT_REC = (8*LEN_SINGLE + 2*LEN_INT)*NSBS)
+! 
+!       integer	SZ_I_REC
+!       parameter	(SZ_I_REC = NSBS * LEN_INT)
+! 
+!       integer	SZ_DP_REC
+!       parameter	(SZ_DP_REC = NSBS * LEN_SINGLE)
+
+! Clock parameters
+!   CLK_PER   CLocK PERiod
+      real	CLK_PER
+      parameter	(CLK_PER = 6.66666667e-9)
+
+! Data structure for all-to-all broadcast of input data
+!   INREC   INput RECord
+
+
+      type inrec
+
+       real pow
+       real stck_fac
+       real mx_pt_re
+       real mx_rsd_nm
+       real dx
+       real dz
+       real mpf
+       real fof
+       integer comm_sw
+       integer omega_meth
+       integer dg_stck
+       integer exit_meth
+       integer bndry_cond
+       integer eps_type
+       integer src_type
+       integer kap_type
+       integer kmax
+       integer show
+!      logical event_log
+       integer dumpg
+       integer xskp
+       integer zskp
+       integer sb_xskp
+       integer sb_zskp
+       integer mp
+
+
+      end type inrec
+
+
+! Data structure for all-to-all broadcast of reduced matrix in the
+! X-direction
+!   X_RS_REC    X-Reduced System RECord
+!     structure /x_rs_rec/
+!     type x_rs_rec
+!      real c(XSPS,XRS_DIM)
+!      real b(XSPS,XRS_DIM)
+!      real r(XSPS,XRS_DIM)
+!     end type x_rs_rec
+!     end structure
+
+! Data structure for all-to-all broadcast of reduced matrix in the
+! Z-direction
+!   Z_RS_REC    Z-Reduced System RECord
+!     structure /z_rs_rec/
+!     type z_rs_rec
+!      real c(ZSPS,ZRS_DIM)
+!      real b(ZSPS,ZRS_DIM)
+!      real r(ZSPS,ZRS_DIM)
+!     end type z_rs_rec
+!     end structure
+
+! Data structure for all-to-all broadcast of stacked reduced matrices
+! in the X-direction
+!   DX_RS_REC    Double-X-Reduced System RECord
+!     structure /dx_rs_rec/
+!     type dx_rs_rec
+!      real c(XSPS,XRS_DIM)
+!      real b(XSPS,XRS_DIM)
+!      real r(XSPS,XRS_DIM)
+!      real ch(XSPS,XRS_DIM)
+!      real bh(XSPS,XRS_DIM)
+!      real rh(XSPS,XRS_DIM)
+!     end type dx_rs_rec
+!     end structure
+
+! Data structure for all-to-all broadcast of stacked reduced matrices
+! in the Z-direction
+!   DZ_RS_REC    Double-Z-Reduced System RECord
+!     structure /dz_rs_rec/
+!     type dz_rs_rec
+!      real c(ZSPS,ZRS_DIM)
+!      real b(ZSPS,ZRS_DIM)
+!      real r(ZSPS,ZRS_DIM)
+!      real ch(ZSPS,ZRS_DIM)
+!      real bh(ZSPS,ZRS_DIM)
+!      real rh(ZSPS,ZRS_DIM)
+!     end type dz_rs_rec
+!     end structure
+
+! Data structure for all-to-all broadcast of statistics data
+!   STREC      STatistice RECord
+
+
+!       type strec
+! 
+!        real nm_sq(0:NSBS-1)
+!        real dnm_sq(0:NSBS-1)
+!        real rsd_nm(0:NSBS-1)
+!        real mx_rsd_err(0:NSBS-1)
+!        real mn(0:NSBS-1)
+!        real mx(0:NSBS-1)
+!        real avg(0:NSBS-1)
+!        real avg_md(0:NSBS-1)
+!        integer xlmxre(0:NSBS-1)
+!        integer zlmxre(0:NSBS-1)
+! 
+! 
+!       end type strec
+
+
+      real, dimension(ZSPS, XSPS), intent(inout) ::  c, &
+                                                     b, &
+                                                     ch,&
+                                                     bh
+
+      real, dimension(0:ZSPS+1, 0:XSPS+1), intent(inout) ::  r, &
+                                                             rh
+
+      real, dimension(XSPS)   :: t1, t2, fac, t1h, t2h, fach
+      real, dimension(XSPS,4) :: zn
+      
+      real :: clockdt, click
+      real :: ct, ti, tf, dt
+
+      integer :: pid, z_pid
+      integer :: i, j, sndr_pid, msg_type, len, ackn
+      integer :: stat
+
+      NSBS = XDNS*ZDNS
+      N_XS = XSPS*XDNS
+      N_ZS = ZSPS*ZDNS
+      N_PTS = N_XS*N_ZS
+
+#ifdef TIMING
+      dt = clockdt()
+#endif
+
+      if (z_pid .eq. 1) then
+
+! Load (ZSPS,j)th equations into passing arrays.
+        do 10 j = 1, XSPS
+          zn(j,1) = b(ZSPS,j)
+          zn(j,2) = r(ZSPS,j)
+          zn(j,3) = bh(ZSPS,j)
+          zn(j,4) = rh(ZSPS,j)
+   10   continue
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (ZSPS,j)th equations.
+!       call SEND(pid+XDNS,ZN_REC,zn,len,ackn)
+!pvm        call PVMFINITSEND(PVMRAW, stat)
+!pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
+!pvm        call PVMFSEND(pid+XDNS,ZN_REC,stat)
+! Receive (ZSPS+1,j)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
+!pvm        call PVMFRECV(pid+XDNS,ZN_REC,stat)
+!pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 20 j = 1, XSPS
+! Backward elimination in (ZSPS,j)th equations to get
+! r(ZSPS,j).
+          fac(j) = 1./(1. - b(ZSPS,j)*zn(j,1))
+          r(ZSPS,j) = (r(ZSPS,j)-b(ZSPS,j)*zn(j,2))*fac(j)
+! Forward elimination in (ZSPS+1,j)th equations to get
+! r(ZSPS+1,j).
+          r(ZSPS+1,j) = zn(j,2) - zn(j,1)*r(ZSPS,j)
+
+! Backward elimination in (ZSPS,j)th equations to get
+! r(ZSPS,j).
+          fach(j) = 1./(1. - bh(ZSPS,j)*zn(j,3))
+          rh(ZSPS,j) = (rh(ZSPS,j)-bh(ZSPS,j)*zn(j,4))*fach(j)
+! Forward elimination in (ZSPS+1,j)th equations to get
+! r(ZSPS+1,j).
+          rh(ZSPS+1,j) = zn(j,4) - zn(j,3)*rh(ZSPS,j)
+! Completion of backward elimination to get remaining unknowns.
+          do 30 i = 1, ZSPS-1
+            r(i,j) = r(i,j) - b(i,j)*r(ZSPS,j)
+            rh(i,j) = rh(i,j) - bh(i,j)*rh(ZSPS,j)
+   30     continue
+   20   continue
+
+      else if (z_pid .le. ZDNS/2) then
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Receive (0,j)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
+!pvm        call PVMFRECV(pid-XDNS,ZN_REC,stat)
+!pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+! Forward elimination in (j,1)th equations.
+	do 40 j = 1, XSPS
+          fac(j) = 1./(1. - c(1,j)*zn(j,1))
+! Check for singular matrix (debugging only)
+          b(1,j) = b(1,j)*fac(j)
+          r(1,j) = (r(1,j) - c(1,j)*zn(j,2))*fac(j)
+! Forward elimination in (ZSPS,j)th equations.
+          fac(j) = 1./(1. - c(ZSPS,j)*b(1,j))
+! Check for singular matrix (debugging only)
+          b(ZSPS,j) = b(ZSPS,j)*fac(j)
+          r(ZSPS,j) = (r(ZSPS,j)-c(ZSPS,j)*r(1,j))*fac(j)
+! Store (0,j)th equations for later recovery of r(0,j).
+          t1(j) = zn(j,1)
+          t2(j) = zn(j,2)
+! Load (ZSPS,j)th equations into passing arrays.
+          zn(j,1) = b(ZSPS,j)
+          zn(j,2) = r(ZSPS,j)
+
+          fach(j) = 1./(1. - ch(1,j)*zn(j,3))
+! Check for singular matrix (debugging only)
+          bh(1,j) = bh(1,j)*fach(j)
+          rh(1,j) = (rh(1,j) - ch(1,j)*zn(j,4))*fach(j)
+! Forward elimination in (ZSPS,j)th equations.
+          fach(j) = 1./(1. - ch(ZSPS,j)*bh(1,j))
+! Check for singular matrix (debugging only)
+          bh(ZSPS,j) = bh(ZSPS,j)*fach(j)
+          rh(ZSPS,j) = (rh(ZSPS,j)-ch(ZSPS,j)*rh(1,j))*fach(j)
+! Store (0,j)th equations for later recovery of r(0,j).
+          t1h(j) = zn(j,3)
+          t2h(j) = zn(j,4)
+! Load (ZSPS,j)th equations into passing arrays.
+          zn(j,3) = bh(ZSPS,j)
+          zn(j,4) = rh(ZSPS,j)
+   40   continue
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (ZSPS,j)th equations.
+!       call SEND(pid+XDNS,ZN_REC,zn,len,ackn)
+!pvm        call PVMFINITSEND(PVMRAW, stat)
+!pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
+!pvm        call PVMFSEND(pid+XDNS,ZN_REC,stat)
+! Receive (ZSPS+1,j)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
+!pvm        call PVMFRECV(pid+XDNS,ZN_REC,stat)
+!pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 50 j = 1, XSPS
+! Backward elimination in (ZSPS,j)th equations.
+          fac(j) = 1./(1. - b(ZSPS,j)*zn(j,1))
+! Check for singular matrix (debugging only)
+          r(ZSPS,j) = (r(ZSPS,j) - b(ZSPS,j)*zn(j,2))*fac(j)
+! Backward elimination in (ZSPS+1,j)th equations.
+          r(ZSPS+1,j) = zn(j,2) - zn(j,1)*r(ZSPS,j)
+! Backward elimination in (ZSPS,j)th equations.
+          r(1,j) = r(1,j) - b(1,j)*r(ZSPS,j)
+! Load (1,j)th equations into passing arrays.
+          zn(j,1) = 0.
+          zn(j,2) = r(1,j)
+
+! Backward elimination in (ZSPS,j)th equations.
+          fach(j) = 1./(1. - bh(ZSPS,j)*zn(j,3))
+! Check for singular matrix (debugging only)
+          rh(ZSPS,j) = (rh(ZSPS,j) - bh(ZSPS,j)*zn(j,4))*fach(j)
+! Backward elimination in (ZSPS+1,j)th equations.
+          rh(ZSPS+1,j) = zn(j,4) - zn(j,3)*rh(ZSPS,j)
+! Backward elimination in (ZSPS,j)th equations.
+          rh(1,j) = rh(1,j) - bh(1,j)*rh(ZSPS,j)
+! Load (1,j)th equations into passing arrays.
+          zn(j,3) = 0.
+          zn(j,4) = rh(1,j)
+   50   continue
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (1,j)th equations.
+!       call SEND(pid-XDNS,ZN_REC,zn,len,ackn)
+!pvm        call PVMFINITSEND(PVMRAW, stat)
+!pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
+!pvm        call PVMFSEND(pid-XDNS,ZN_REC,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 60 j = 1, XSPS
+! Backward elimination in (0,j)th equations.
+          r(0,j) = t2(j) - t1(j)*r(1,j)
+          rh(0,j) = t2h(j) - t1h(j)*rh(1,j)
+          do 70 i = 2, ZSPS-1
+! Completion of forward and backward elimination to get remaining
+! unknowns.
+            r(i,j) = r(i,j) - b(i,j)*r(ZSPS,j) - c(i,j)*r(1,j)
+            rh(i,j) = rh(i,j)-bh(i,j)*rh(ZSPS,j)-ch(i,j)*rh(1,j)
+   70   continue
+   60   continue
+
+      else if (z_pid .lt. ZDNS) then
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Receive (ZSPS+1,j)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
+!pvm        call PVMFRECV(pid+XDNS,ZN_REC,stat)
+!pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+	do 80 j = 1, XSPS
+! Backward elimination in (ZSPS,j)th equations.
+          fac(j) = 1./(1. - b(ZSPS,j)*zn(j,1))
+! Check for singular matrix (debugging only)
+          c(ZSPS,j) = c(ZSPS,j)*fac(j)
+          r(ZSPS,j) = (r(ZSPS,j)-b(ZSPS,j)*zn(j,2))*fac(j)
+! Backward elimination in (1,j)th equations.
+          fac(j) = 1./(1. - b(1,j)*c(ZSPS,j))
+! Check for singular matrix (debugging only)
+          c(1,j) = c(1,j)*fac(j)
+          r(1,j) = (r(1,j) - b(1,j)*r(ZSPS,j))*fac(j)
+! Store (ZSPS+1,j)th equations for later recovery of
+! r(ZSPS+1,j).
+          t1(j) = zn(j,1)
+          t2(j) = zn(j,2)
+! Load passing arrays with (1,j)th equations.
+          zn(j,1) = c(1,j)
+          zn(j,2) = r(1,j)
+
+! Backward elimination in (ZSPS,j)th equations.
+          fach(j) = 1./(1. - bh(ZSPS,j)*zn(j,3))
+! Check for singular matrix (debugging only)
+          ch(ZSPS,j) = ch(ZSPS,j)*fach(j)
+          rh(ZSPS,j) = (rh(ZSPS,j)-bh(ZSPS,j)*zn(j,4))*fach(j)
+! Backward elimination in (1,j)th equations.
+          fach(j) = 1./(1. - bh(1,j)*ch(ZSPS,j))
+! Check for singular matrix (debugging only)
+          ch(1,j) = ch(1,j)*fach(j)
+          rh(1,j) = (rh(1,j) - bh(1,j)*rh(ZSPS,j))*fach(j)
+! Store (ZSPS+1,j)th equations for later recovery of
+! r(ZSPS+1,j).
+          t1h(j) = zn(j,3)
+          t2h(j) = zn(j,4)
+! Load passing arrays with (1,j)th equations.
+          zn(j,3) = ch(1,j)
+          zn(j,4) = rh(1,j)
+   80   continue
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (1,j)th equations.
+!       call SEND(pid-XDNS,ZN_REC,zn,len,ackn)
+!pvm        call PVMFINITSEND(PVMRAW, stat)
+!pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
+!pvm        call PVMFSEND(pid-XDNS,ZN_REC,stat)
+! Receive (0,j)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
+!pvm        call PVMFRECV(pid-XDNS,ZN_REC,stat)
+!pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+	do 90 j = 1, XSPS
+! Forward elimination in (1,j)th equations
+          fac(j) = 1./(1. - c(1,j)*zn(j,1))
+! Check for singular matrix (debugging only)
+          r(1,j) = (r(1,j) - c(1,j)*zn(j,2))*fac(j)
+! Backward elimination in (0,j)th equations.
+          r(0,j) = zn(j,2) - zn(j,1)*r(1,j)
+! Forward elimination in (ZSPS,j)th equations.
+          r(ZSPS,j) = r(ZSPS,j) - c(ZSPS,j)*r(1,j)
+! Load (ZSPS,j)th equations into passing arrays.
+          zn(j,1) = 0.
+          zn(j,2) = r(ZSPS,j)
+
+! Forward elimination in (1,j)th equations
+          fach(j) = 1./(1. - ch(1,j)*zn(j,3))
+! Check for singular matrix (debugging only)
+          rh(1,j) = (rh(1,j) - ch(1,j)*zn(j,4))*fach(j)
+! Backward elimination in (0,j)th equations.
+          rh(0,j) = zn(j,4) - zn(j,3)*rh(1,j)
+! Forward elimination in (ZSPS,j)th equations.
+          rh(ZSPS,j) = rh(ZSPS,j) - ch(ZSPS,j)*rh(1,j)
+! Load (ZSPS,j)th equations into passing arrays.
+          zn(j,3) = 0.
+          zn(j,4) = rh(ZSPS,j)
+   90   continue
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (ZSPS,j)th equations.
+!       call SEND(pid+XDNS,ZN_REC,zn,len,ackn)
+!pvm        call PVMFINITSEND(PVMRAW, stat)
+!pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
+!pvm        call PVMFSEND(pid+XDNS,ZN_REC,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 100 j = 1, XSPS
+! Forward elimination in (ZSPS+1,j)th equations to get
+! r(ZSPS+1,j).
+          r(ZSPS+1,j) = t2(j) - t1(j)*r(ZSPS,j)
+! Forward elimination in (ZSPS+1,j)th equations to get
+! r(ZSPS+1,j).
+          rh(ZSPS+1,j) = t2h(j) - t1h(j)*rh(ZSPS,j)
+          do 110 i = 2, ZSPS-1
+! Completion of forward and backward elimination to get remaining unknowns.
+            r(i,j) = r(i,j) - c(i,j)*r(1,j) - b(i,j)*r(ZSPS,j)
+            rh(i,j) = rh(i,j)-ch(i,j)*rh(1,j)-bh(i,j)*rh(ZSPS,j)
+  110     continue
+  100   continue
+
+      else
+
+! Load (1,j)th equations into passing arrays.
+	do 120 j = 1, XSPS
+          zn(j,1) = c(1,j)
+          zn(j,2) = r(1,j)
+          zn(j,3) = ch(1,j)
+          zn(j,4) = rh(1,j)
+  120   continue
+
+        len = 4*XSPS*LEN_SINGLE
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (1,j)th equations.
+!       call SEND(pid-XDNS,ZN_REC,zn,len,ackn)
+!pvm        call PVMFINITSEND(PVMRAW, stat)
+!pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
+!pvm        call PVMFSEND(pid-XDNS,ZN_REC,stat)
+! Receive (0,j)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
+!pvm        call PVMFRECV(pid-XDNS,ZN_REC,stat)
+!pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 130 j = 1, XSPS
+! Forward elimination in (1,j)th equations to get r(1,j).
+          fac(j) = 1./(1. - c(1,j)*zn(j,1))
+! Check for singular matrix (debugging only)
+          r(1,j) = (r(1,j) - c(1,j)*zn(j,2))*fac(j)
+! Backward elimination in (0,j)th equations to get remaining unknowns.
+          r(0,j) = zn(j,2) - zn(j,1)*r(1,j)
+
+! Forward elimination in (1,j)th equations to get r(1,j).
+          fach(j) = 1./(1. - ch(1,j)*zn(j,3))
+! Check for singular matrix (debugging only)
+          rh(1,j) = (rh(1,j) - ch(1,j)*zn(j,4))*fach(j)
+! Backward elimination in (0,j)th equations to get remaining unknowns.
+          rh(0,j) = zn(j,4) - zn(j,3)*rh(1,j)
+          do 140 i = 2, ZSPS
+! Completion of forward elimination to get remaining unknowns.
+            r(i,j) = r(i,j) - c(i,j)*r(1,j)
+            rh(i,j) = rh(i,j) - ch(i,j)*rh(1,j)
+  140     continue
+  130   continue
+
+      endif
+
+      return
+      end subroutine
+      
+!23456789012345678901234567890123456789012345678901234567890123456789012
+
+      subroutine sub_n_form(n_xs,n_zs,c,a,b,r,c2,b2,r2,wk,xfac,zfac, &
+                            dpid,dn_subs,dir)
+
+      implicit none
+
+      integer n_xs,n_zs
+
+!  c(,)  -- subdiagonal elements of tridiagonal systems
+!  a(,)  -- diagonal elements of tridiagonal systems
+!  b(,)  -- superdiagonal elements of tridiagonal systems
+!  r(,)  -- right-hand side elements of tridiagonal systems
+!  c2(,) -- front-leg elements of N-systems
+!  b2(,) -- back-leg elements of N-systems
+!  r2(,) -- right-hand side elements of N-systems
+!  wk(,) -- work array with same dimensions as a, b, c, etc.
+      real c(n_zs,n_xs)
+      real a(n_zs,n_xs)
+      real b(n_zs,n_xs)
+      real r(n_zs,n_xs)
+      real c2(n_zs,n_xs)
+      real b2(n_zs,n_xs)
+      real r2(0:n_zs+1,0:n_xs+1)
+      real wk(n_zs,n_xs)
+      real fac
+      real xfac(n_zs)
+      real zfac(n_xs)
+
+      integer dpid,dn_subs,dir
+      integer i, j, XDIR, ZDIR
+      parameter (XDIR = 1, ZDIR = 2)
+
+      if (dir .eq. XDIR) then
+
+! Forward elimination of subdiagonal elements
+	if (dpid .eq. 1) then
+
+          do 10 i = 1, n_zs
+            xfac(i) = 1./a(i,1)
+            c2(i,1) = 0.
+            r2(i,1) = r(i,1)*xfac(i)
+   10     continue
+
+          do 20 j = 2, n_xs
+	  do 20 i = 1, n_zs
+            wk(i,j-1) = b(i,j-1)*xfac(i)
+            xfac(i) = 1./(a(i,j) - c(i,j)*wk(i,j-1))
+            c2(i,j) = 0.
+            r2(i,j) = (r(i,j) - c(i,j)*r2(i,j-1))*xfac(i)
+   20     continue
+
+	  do 40 i = 1, n_zs
+            b2(i,n_xs) = b(i,n_xs)*xfac(i)
+   40     continue
+
+	else
+
+          do 50 i = 1, n_zs
+            xfac(i) = 1./a(i,1)
+            c2(i,1) = c(i,1)*xfac(i)
+	    wk(i,1) = b(i,1)*xfac(i)
+            r2(i,1) = r(i,1)*xfac(i)
+	    xfac(i) = 1./a(i,2)
+	    c2(i,2) = c(i,2)*xfac(i)
+	    r2(i,2) = r(i,2)*xfac(i)
+   50     continue
+
+          do 60 j = 3, n_xs
+	  do 60 i = 1, n_zs
+            wk(i,j-1) = b(i,j-1)*xfac(i)
+            xfac(i) = 1./(a(i,j) - c(i,j)*wk(i,j-1))
+            c2(i,j) = -c(i,j)*c2(i,j-1)*xfac(i)
+            r2(i,j) = (r(i,j) - c(i,j)*r2(i,j-1))*xfac(i)
+   60     continue
+
+	  do 80 i = 1, n_zs
+            b2(i,n_xs) = b(i,n_xs)*xfac(i)
+   80     continue
+
+	endif
+
+! Backward elimination of superdiagonal elements
+        if (dpid .eq. dn_subs) then
+
+          do 90 j = n_xs-1, 2, -1
+          do 90 i = 1, n_zs
+            c2(i,j) = c2(i,j) - wk(i,j)*c2(i,j+1)
+            b2(i,j) = 0.
+            r2(i,j) = r2(i,j) - wk(i,j)*r2(i,j+1)
+   90     continue
+
+	  do 100 i = 1, n_zs
+            fac = 1./(1. - wk(i,1)*c2(i,2))
+            c2(i,1) = c2(i,1)*fac
+            b2(i,1) = 0.
+            r2(i,1) = (r2(i,1) - wk(i,1)*r2(i,2))*fac
+  100     continue
+
+        else 
+
+          do 110 i = 1, n_zs
+            b2(i,n_xs-1) = wk(i,n_xs-1)
+  110     continue
+
+          do 120 j = n_xs-2, 2, -1
+	  do 120 i = 1, n_zs
+            c2(i,j) = c2(i,j) - wk(i,j)*c2(i,j+1)
+            b2(i,j) = -wk(i,j)*b2(i,j+1)
+            r2(i,j) = r2(i,j) - wk(i,j)*r2(i,j+1)
+  120     continue
+
+! If only 2 points in X-direction, do not execute these statements.
+          if (n_xs .gt. 2) then
+	    do 130 i = 1, n_zs
+              fac = 1./(1. - wk(i,1)*c2(i,2))
+              c2(i,1) = c2(i,1)*fac
+              r2(i,1) = (r2(i,1) - wk(i,1)*r2(i,2))*fac
+              b2(i,1) = -wk(i,1)*b2(i,2)*fac
+  130       continue
+	  endif
+
+        endif
+
+      else if (dir .eq. ZDIR) then
+
+! Forward elimination of subdiagonal elements
+	if (dpid .eq. 1) then
+
+          do 140 j = 1, n_xs
+            zfac(j) = 1./a(1,j)
+            c2(1,j) = 0.
+            r2(1,j) = r(1,j)*zfac(j)
+  140     continue
+
+          do 150 i = 2, n_zs
+          do 150 j = 1, n_xs
+            wk(i-1,j) = b(i-1,j)*zfac(j)
+            zfac(j) = 1./(a(i,j) - c(i,j)*wk(i-1,j))
+            c2(i,j) = 0.
+            r2(i,j) = (r(i,j) - c(i,j)*r2(i-1,j))*zfac(j)
+  150     continue
+
+          do 170 j = 1, n_xs
+            b2(n_zs,j) = b(n_zs,j)*zfac(j)
+  170     continue
+
+        else
+
+          do 180 j = 1, n_xs
+            zfac(j) = 1./a(1,j)
+            c2(1,j) = c(1,j)*zfac(j)
+            wk(1,j) = b(1,j)*zfac(j)
+            r2(1,j) = r(1,j)*zfac(j)
+            zfac(j) = 1./a(2,j)
+            c2(2,j) = c(2,j)*zfac(j)
+            r2(2,j) = r(2,j)*zfac(j)
+  180     continue
+
+          do 190 i = 3, n_zs
+          do 190 j = 1, n_xs
+            wk(i-1,j) = b(i-1,j)*zfac(j)
+            zfac(j) = 1./(a(i,j) - c(i,j)*wk(i-1,j))
+            c2(i,j) = -c(i,j)*c2(i-1,j)*zfac(j)
+            r2(i,j) = (r(i,j) - c(i,j)*r2(i-1,j))*zfac(j)
+  190     continue
+
+          do 210 j = 1, n_xs
+            b2(n_zs,j) = b(n_zs,j)*zfac(j)
+  210     continue
+
+        endif
+
+! Backward elimination of superdiagonal elements
+        if (dpid .eq. dn_subs) then
+
+          do 220 j = 1, n_xs
+          do 220 i = n_zs - 1, 2, -1
+            c2(i,j) = c2(i,j) - wk(i,j)*c2(i+1,j)
+            b2(i,j) = 0.
+            r2(i,j) = r2(i,j) - wk(i,j)*r2(i+1,j)
+  220     continue
+
+	  do 230 j = 1, n_xs
+            fac = 1./(1. - wk(1,j)*c2(2,j))
+            c2(1,j) = c2(1,j)*fac
+            b2(1,j) = 0.
+            r2(1,j) = (r2(1,j) - wk(1,j)*r2(2,j))*fac
+  230     continue
+
+        else
+
+          do 240 j = 1, n_xs
+            b2(n_zs-1,j) = wk(n_zs-1,j)
+  240     continue
+
+          do 250 j = 1, n_xs
+          do 250 i = n_zs - 2, 2, -1
+            c2(i,j) = c2(i,j) - wk(i,j)*c2(i+1,j)
+            b2(i,j) = -wk(i,j)*b2(i+1,j)
+            r2(i,j)  = r2(i,j) - wk(i,j)*r2(i+1,j)
+  250     continue
+
+! If only 2 points in Z-direction, do not execute these statements.
+          if (n_zs .gt. 2) then
+	    do 260 j = 1, n_xs
+	      fac = 1./(1. - wk(1,j)*c2(2,j))
+	      c2(1,j) = c2(1,j)*fac
+	      r2(1,j) = (r2(1,j) - wk(1,j)*r2(2,j))*fac
+              b2(1,j) = -wk(1,j)*b2(2,j)*fac
+  260       continue
+	  endif
+
+        endif
+
+! Announce bad direction specifier (debugging only)
+!     else
+!       write(*,*) 'sub_n_form:  What direction?'
+!       stop
+      endif
+
+      return
+      end subroutine
+
+#endif
 
 end module module_GW_baseflow   
