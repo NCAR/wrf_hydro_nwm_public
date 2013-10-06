@@ -352,8 +352,9 @@ endif
                                            dd, &         ! right hand side
                                            b2, &          
                                            c2, &          
-                                           r2, &          
-                                           wk           
+                                           rhs, &          
+                                           wk, &           
+                                           hh           
       real, dimension(:), allocatable ::   xfac, &
                                            zfac
 #else                                         
@@ -367,8 +368,8 @@ endif
 !     parameter (botinc = 0.  )  ! re-wetting increment to fix h < bot
                                  ! (m); else no flow into dry cells
       real, parameter    :: delskip = 0.005 ! av.|dhead| value for iter.skip out(m)
-      integer, parameter :: itermax = 10    ! maximum number of iterations
-      integer, parameter :: itermin = 3     ! minimum number of iterations
+      integer, parameter :: itermax = 1    ! maximum number of iterations
+      integer, parameter :: itermin = 1    ! minimum number of iterations
       real, parameter    :: sealev = 1000.     ! sea-level elevation (m)
 
       integer            :: its, ite, jts, jte, ifs, ife, jfs, jfe, &
@@ -568,12 +569,13 @@ allocate(aa(jts:jte,its:ite))
 allocate(bb(jts:jte,its:ite))
 allocate(cc(jts:jte,its:ite))
 allocate(dd(jts:jte,its:ite))
-allocate(c2(jts:jte,its:ite))
-allocate(b2(jts:jte,its:ite))
-allocate(r2(jts:jte,its:ite))
-allocate(wk(jts:jte,its:ite))
-allocate(xfac(jts:jte))
-allocate(zfac(jts:jte))
+allocate(c2(1:ydim,1:xdim))
+allocate(b2(1:ydim,1:xdim))
+allocate(rhs(0:ydim+1,0:xdim+1))
+allocate(wk(1:ydim,1:xdim))
+allocate(hh(0:ydim+1,0:xdim+1))
+allocate(xfac(1:ydim))
+allocate(zfac(1:ydim))
 #else
 allocate(aa(jfs:jfe))
 allocate(bb(jfs:jfe))
@@ -623,6 +625,13 @@ allocate(hh(jfs:jfe))
 
   h(i,:) = hh
   end do
+  
+deallocate(aa)
+deallocate(bb)
+deallocate(cc)
+deallocate(dd)
+deallocate(hh)
+
 #else
 !-------------------
       do i=its,ite
@@ -664,26 +673,43 @@ allocate(hh(jfs:jfe))
   end do
 !-------------
 
-        call sub_n_form(xdim, ydim, aa, bb, cc, dd, &
-                        c2, b2, r2, wk, xfac, zfac, &
+    if(up_down_np .gt. 1) then
+        call sub_n_form(xdim, ydim, aa, &
+                        bb, cc, &
+                        dd, &
+                        c2, b2, hh, wk, xfac, zfac, &
                         up_down_p+1, up_down_np, 2)
+        rhs = hh
+	call dparzsolv1(c2,b2, hh, c2, b2, rhs, 1., my_id+1, up_down_p+1, &
+	                xdim, ydim, left_right_np, up_down_np)
 
-!         call dparzsolv1(c2,b2,u,c2h,b2h,uh,zct,pid,z_pid)
+    else
+        call sub_tri_solv(xdim,ydim,aa(jts:jte,its:ite), &
+                          bb(jts:jte,its:ite), cc(jts:jte,its:ite), &
+                          dd(jts:jte,its:ite), &
+                          hh, wk,xfac,zfac,2)
+    endif
+    
+!-------------------
+      do i=its,ite
+!-------------------
 
-deallocate(b2)
-deallocate(c2)
-deallocate(r2)
-deallocate(wk)
-deallocate(xfac)
-deallocate(zfac)
+!>>>>>>>>>>>>>>>>>>>>
+        do j=jts,jte
+!>>>>>>>>>>>>>>>>>>>>
+
+              h(i,j) = hh(j,i)
+	      
+	 end do
+     end do
+	      
+! deallocate(b2)
+! deallocate(c2)
+! deallocate(rhs)
+! deallocate(wk)
+! deallocate(xfac)
+! deallocate(zfac)
 #endif 
-deallocate(aa)
-deallocate(bb)
-deallocate(cc)
-deallocate(dd)
-#ifndef MPP_LAND
-deallocate(hh)
-#endif
 
 #ifdef MPP_LAND
 
@@ -728,24 +754,26 @@ deallocate(hh)
 #endif
 
 #ifdef MPP_LAND     
-allocate(aa(ifs:ife,jfs:jfe))
-allocate(bb(ifs:ife,jfs:jfe))
-allocate(cc(ifs:ife,jfs:jfe))
-allocate(dd(ifs:ife,jfs:jfe))
-allocate(b2(ifs:ife,jfs:jfe))
-allocate(c2(ifs:ife,jfs:jfe))
-allocate(r2(ifs:ife,jfs:jfe))
-allocate(wk(ifs:ife,jfs:jfe))
-allocate(xfac(ifs:ife))
-allocate(zfac(ifs:ife))
+! allocate(aa(ifs:ife,jfs:jfe))
+! allocate(bb(ifs:ife,jfs:jfe))
+! allocate(cc(ifs:ife,jfs:jfe))
+! allocate(dd(ifs:ife,jfs:jfe))
+! allocate(b2(1:xdim,1:ydim))
+! allocate(c2(1:xdim,1:ydim))
+! allocate(rhs(0:xdim+1,0:ydim+1))
+! allocate(wk(1:xdim,1:ydim))
+! allocate(hh(0:xdim+1,0:ydim+1))
+! allocate(xfac(1:xdim))
+! allocate(zfac(1:xdim))
 #else
 allocate(aa(ifs:ife))
 allocate(bb(ifs:ife))
 allocate(cc(ifs:ife))
 allocate(dd(ifs:ife))
 allocate(hh(ifs:ife))
-allocate(hh(ifs:ife))
 #endif
+
+#ifndef MPP_LAND     
 
 !-------------------
       do j=jfs,jfe
@@ -755,7 +783,6 @@ allocate(hh(ifs:ife))
 !>>>>>>>>>>>>>>>>>>>>
         do i=ifs,ife
 !>>>>>>>>>>>>>>>>>>>>
-#ifndef MPP_LAND     
           bb(i) = (sf2(i,j)/dt) * darea
           dd(i) = ( ho(i,j)*sf2(i,j)/dt ) * darea
           aa(i) = 0.0
@@ -789,30 +816,38 @@ allocate(hh(ifs:ife))
 
   h(:,j) = hh
   end do
+  
 #else
-          bb(i,j) = (sf2(i,j)/dt) * darea
-          dd(i,j) = ( ho(i,j)*sf2(i,j)/dt ) * darea
-          aa(i,j) = 0.0
-          cc(i,j) = 0.0
+!-------------------
+      do i=its,ite
+!-------------------
+
+!>>>>>>>>>>>>>>>>>>>>
+        do j=jts,jte
+!>>>>>>>>>>>>>>>>>>>>
+          bb(j,i) = (sf2(i,j)/dt) * darea
+          dd(j,i) = ( ho(i,j)*sf2(i,j)/dt ) * darea
+          aa(j,i) = 0.0
+          cc(j,i) = 0.0
 
           if ((j-jfs) /= 0) then
-           bb(i,j) = bb(i,j) + t(i,j-1,1)
-           dd(i,j) = dd(i,j) + h(i,j-1)*t(i,j-1,1)
+           bb(j,i) = bb(j,i) + t(i,j-1,1)
+           dd(j,i) = dd(j,i) + h(i,j-1)*t(i,j-1,1)
 	  endif
  
           if ((j-jfe) /= 0) then
-           dd(i,j) = dd(i,j) + h(i,j+1)*t(i,j,1)
-           bb(i,j) = bb(i,j) + t(i,j,1)
+           dd(j,i) = dd(j,i) + h(i,j+1)*t(i,j,1)
+           bb(j,i) = bb(j,i) + t(i,j,1)
 	  endif
 
           if ((i-ifs) /= 0) then
-           bb(i,j) = bb(i,j) + t(i-1,j,2)
-           aa(i,j) = -t(i-1,j,2)
+           bb(j,i) = bb(j,i) + t(i-1,j,2)
+           aa(j,i) = -t(i-1,j,2)
 	  endif
 
           if ((i-ife) /= 0) then
-           bb(i,j) = bb(i,j) + t(i,j,2)
-           cc(i,j) = -t(i,j,2)
+           bb(j,i) = bb(j,i) + t(i,j,2)
+           cc(j,i) = -t(i,j,2)
 	  endif
 	  
 !>>>>>>>>>>>>>>>
@@ -822,9 +857,51 @@ allocate(hh(ifs:ife))
 !-------------
 end do
 !-------------
+
+    if(left_right_np .gt. 1) then
+
+! 3 c(,)  -- subdiagonal elements of tridiagonal systems
+! 4 a(,)  -- diagonal elements of tridiagonal systems
+! 5 b(,)  -- superdiagonal elements of tridiagonal systems
+! 6 r(,)  -- right-hand side elements of tridiagonal systems
+! 7 c2(,) -- front-leg elements of N-systems
+! 8 b2(,) -- back-leg elements of N-systems
+! 9 r2(,) -- right-hand side elements of N-systems (0:ydim+1,0:xdim+1)
+! 10 wk(,) -- work array with same dimensions as a, b, c, etc.
+
+        call sub_n_form(xdim, ydim, aa, &
+                        bb, cc, &
+                        dd, &
+                        c2, b2, hh, wk, xfac, zfac, &
+                        left_right_p+1, left_right_np, 1)
+	
+        rhs = hh
+        call dparxsolv1(c2, b2, hh, c2, b2, rhs, 1., my_id+1, left_right_p+1, &
+	                xdim, ydim, left_right_np, up_down_np)
+
+    else
+        call sub_tri_solv(xdim,ydim,aa, &
+                          bb, cc, &
+                          dd, &
+                          hh, wk,xfac,zfac,1)
+    endif
+
+!-------------------
+      do i=its,ite
+!-------------------
+
+!>>>>>>>>>>>>>>>>>>>>
+        do j=jts,jte
+!>>>>>>>>>>>>>>>>>>>>
+
+              h(i,j) = hh(j,i)
+
+      end do
+     end do
+	      
 deallocate(b2)
 deallocate(c2)
-deallocate(r2)
+deallocate(rhs)
 deallocate(wk)
 deallocate(xfac)
 deallocate(zfac)
@@ -833,9 +910,7 @@ deallocate(aa)
 deallocate(bb)
 deallocate(cc)
 deallocate(dd)
-#ifndef MPP_LAND
 deallocate(hh)
-#endif
 
 ! fix head < bottom of aquifer
  
@@ -1171,8 +1246,6 @@ end subroutine aggregateQsgw
 
       implicit none
 
-! Header file for dadi.F
-
 ! Parameters specifying the size of the problem
 ! XSPS     XS Per Subdomain
 ! ZSPS     ZS Per Subdomain
@@ -1196,11 +1269,6 @@ end subroutine aggregateQsgw
                              n_pts
                  
 
-! Lengths of types in bytes
-      integer	LEN_INT
-      parameter	(LEN_INT = 8)
-      integer	LEN_SINGLE
-      parameter	(LEN_SINGLE = 8)
 
 ! Parameters for integer logic
 !   XDIR    tells subroutines to operate for the X-DIRection
@@ -1219,11 +1287,6 @@ end subroutine aggregateQsgw
       integer	TRUE
       parameter	(TRUE = 1)
 
-! Communication acknowledgement switches
-      integer	NO_ACK
-      parameter	(NO_ACK = 0)
-      integer	ACK
-      parameter	(ACK = 1)
 
 ! Message tags
 !   STAT_REC  message tag for all-to-all broadcast STATistics RECord
@@ -1475,13 +1538,13 @@ end subroutine aggregateQsgw
                                                              rh
 
       real, dimension(XSPS)   :: t1, t2, fac, t1h, t2h, fach
-      real, dimension(XSPS,4) :: zn
+      real, dimension(XSPS,4) :: zn, zntmp
       
       real :: clockdt, click
       real :: ct, ti, tf, dt
 
       integer :: pid, z_pid
-      integer :: i, j, sndr_pid, msg_type, len, ackn
+      integer :: i, j, sndr_pid, msg_type, cnt, ackn
       integer :: stat
 
       NSBS = XDNS*ZDNS
@@ -1495,15 +1558,16 @@ end subroutine aggregateQsgw
 
       if (z_pid .eq. 1) then
 
+	print*, 'Node', my_id, "in mode 1"
 ! Load (ZSPS,j)th equations into passing arrays.
-        do 10 j = 1, XSPS
-          zn(j,1) = b(ZSPS,j)
-          zn(j,2) = r(ZSPS,j)
-          zn(j,3) = bh(ZSPS,j)
-          zn(j,4) = rh(ZSPS,j)
-   10   continue
-
-        len = 4*XSPS*LEN_SINGLE
+        do j = 1, XSPS
+          zntmp(j,1) = b(ZSPS,j)
+          zntmp(j,2) = r(ZSPS,j)
+          zntmp(j,3) = bh(ZSPS,j)
+          zntmp(j,4) = rh(ZSPS,j)
+        end do
+          zntmp = 1.
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1512,6 +1576,13 @@ end subroutine aggregateQsgw
 !pvm        call PVMFINITSEND(PVMRAW, stat)
 !pvm        call PVMFPACK(BYTE1,zn,len,1,stat)
 !pvm        call PVMFSEND(pid+XDNS,ZN_REC,stat)
+! call MPI_SENDRECV_REPLACE(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, &
+!                           pid+XDNS-1, ZN_REC, &
+!                           MPI_COMM_WORLD, stat)
+
+call MPI_SEND(zntmp, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
+call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status, stat)
+
 ! Receive (ZSPS+1,j)th equations.
 !       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
 !pvm        call PVMFRECV(pid+XDNS,ZN_REC,stat)
@@ -1521,7 +1592,7 @@ end subroutine aggregateQsgw
         call add_dt(ct,tf,ti,dt)
 #endif
 
-        do 20 j = 1, XSPS
+        do j = 1, XSPS
 ! Backward elimination in (ZSPS,j)th equations to get
 ! r(ZSPS,j).
           fac(j) = 1./(1. - b(ZSPS,j)*zn(j,1))
@@ -1538,15 +1609,16 @@ end subroutine aggregateQsgw
 ! r(ZSPS+1,j).
           rh(ZSPS+1,j) = zn(j,4) - zn(j,3)*rh(ZSPS,j)
 ! Completion of backward elimination to get remaining unknowns.
-          do 30 i = 1, ZSPS-1
+          do i = 1, ZSPS-1
             r(i,j) = r(i,j) - b(i,j)*r(ZSPS,j)
             rh(i,j) = rh(i,j) - bh(i,j)*rh(ZSPS,j)
-   30     continue
-   20   continue
+          end do
+         end do
 
       else if (z_pid .le. ZDNS/2) then
+	print*, 'Node', my_id, "in mode 2"
 
-        len = 4*XSPS*LEN_SINGLE
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1554,13 +1626,16 @@ end subroutine aggregateQsgw
 !       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
 !pvm        call PVMFRECV(pid-XDNS,ZN_REC,stat)
 !pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+! call MPI_SENDRECV_REPLACE(zn, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, &
+!                           pid-XDNS-1, ZN_REC, &
+!                           MPI_COMM_WORLD, stat)
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
 #endif
 
 ! Forward elimination in (j,1)th equations.
-	do 40 j = 1, XSPS
+	do j = 1, XSPS
           fac(j) = 1./(1. - c(1,j)*zn(j,1))
 ! Check for singular matrix (debugging only)
           b(1,j) = b(1,j)*fac(j)
@@ -1592,9 +1667,9 @@ end subroutine aggregateQsgw
 ! Load (ZSPS,j)th equations into passing arrays.
           zn(j,3) = bh(ZSPS,j)
           zn(j,4) = rh(ZSPS,j)
-   40   continue
+        end do
 
-        len = 4*XSPS*LEN_SINGLE
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1612,7 +1687,7 @@ end subroutine aggregateQsgw
         call add_dt(ct,tf,ti,dt)
 #endif
 
-        do 50 j = 1, XSPS
+        do j = 1, XSPS
 ! Backward elimination in (ZSPS,j)th equations.
           fac(j) = 1./(1. - b(ZSPS,j)*zn(j,1))
 ! Check for singular matrix (debugging only)
@@ -1636,9 +1711,9 @@ end subroutine aggregateQsgw
 ! Load (1,j)th equations into passing arrays.
           zn(j,3) = 0.
           zn(j,4) = rh(1,j)
-   50   continue
+        end do
 
-        len = 4*XSPS*LEN_SINGLE
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1652,21 +1727,22 @@ end subroutine aggregateQsgw
         call add_dt(ct,tf,ti,dt)
 #endif
 
-        do 60 j = 1, XSPS
+        do j = 1, XSPS
 ! Backward elimination in (0,j)th equations.
           r(0,j) = t2(j) - t1(j)*r(1,j)
           rh(0,j) = t2h(j) - t1h(j)*rh(1,j)
-          do 70 i = 2, ZSPS-1
+          do i = 2, ZSPS-1
 ! Completion of forward and backward elimination to get remaining
 ! unknowns.
             r(i,j) = r(i,j) - b(i,j)*r(ZSPS,j) - c(i,j)*r(1,j)
             rh(i,j) = rh(i,j)-bh(i,j)*rh(ZSPS,j)-ch(i,j)*rh(1,j)
-   70   continue
-   60   continue
+          end do
+         end do
 
       else if (z_pid .lt. ZDNS) then
+	print*, 'Node', my_id, "in mode 3"
 
-        len = 4*XSPS*LEN_SINGLE
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1679,7 +1755,7 @@ end subroutine aggregateQsgw
         call add_dt(ct,tf,ti,dt)
 #endif
 
-	do 80 j = 1, XSPS
+	do j = 1, XSPS
 ! Backward elimination in (ZSPS,j)th equations.
           fac(j) = 1./(1. - b(ZSPS,j)*zn(j,1))
 ! Check for singular matrix (debugging only)
@@ -1715,9 +1791,9 @@ end subroutine aggregateQsgw
 ! Load passing arrays with (1,j)th equations.
           zn(j,3) = ch(1,j)
           zn(j,4) = rh(1,j)
-   80   continue
+        end do
 
-        len = 4*XSPS*LEN_SINGLE
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1735,7 +1811,7 @@ end subroutine aggregateQsgw
         call add_dt(ct,tf,ti,dt)
 #endif
 
-	do 90 j = 1, XSPS
+	do j = 1, XSPS
 ! Forward elimination in (1,j)th equations
           fac(j) = 1./(1. - c(1,j)*zn(j,1))
 ! Check for singular matrix (debugging only)
@@ -1759,9 +1835,9 @@ end subroutine aggregateQsgw
 ! Load (ZSPS,j)th equations into passing arrays.
           zn(j,3) = 0.
           zn(j,4) = rh(ZSPS,j)
-   90   continue
+        end do
 
-        len = 4*XSPS*LEN_SINGLE
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1775,34 +1851,36 @@ end subroutine aggregateQsgw
         call add_dt(ct,tf,ti,dt)
 #endif
 
-        do 100 j = 1, XSPS
+        do j = 1, XSPS
 ! Forward elimination in (ZSPS+1,j)th equations to get
 ! r(ZSPS+1,j).
           r(ZSPS+1,j) = t2(j) - t1(j)*r(ZSPS,j)
 ! Forward elimination in (ZSPS+1,j)th equations to get
 ! r(ZSPS+1,j).
           rh(ZSPS+1,j) = t2h(j) - t1h(j)*rh(ZSPS,j)
-          do 110 i = 2, ZSPS-1
+          do i = 2, ZSPS-1
 ! Completion of forward and backward elimination to get remaining unknowns.
             r(i,j) = r(i,j) - c(i,j)*r(1,j) - b(i,j)*r(ZSPS,j)
             rh(i,j) = rh(i,j)-ch(i,j)*rh(1,j)-bh(i,j)*rh(ZSPS,j)
-  110     continue
-  100   continue
+          end do
+         end do
 
       else
+	print*, 'Node', my_id, "in mode 4"
 
 ! Load (1,j)th equations into passing arrays.
-	do 120 j = 1, XSPS
-          zn(j,1) = c(1,j)
-          zn(j,2) = r(1,j)
-          zn(j,3) = ch(1,j)
-          zn(j,4) = rh(1,j)
-  120   continue
-
-        len = 4*XSPS*LEN_SINGLE
+	do j = 1, XSPS
+          zntmp(j,1) = c(1,j)
+          zntmp(j,2) = r(1,j)
+          zntmp(j,3) = ch(1,j)
+          zntmp(j,4) = rh(1,j)
+        end do
+          
+        cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
 #endif
+	
 ! Send (1,j)th equations.
 !       call SEND(pid-XDNS,ZN_REC,zn,len,ackn)
 !pvm        call PVMFINITSEND(PVMRAW, stat)
@@ -1812,12 +1890,19 @@ end subroutine aggregateQsgw
 !       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
 !pvm        call PVMFRECV(pid-XDNS,ZN_REC,stat)
 !pvm        call PVMFUNPACK(BYTE1,zn,len,1,stat)
+! call MPI_SENDRECV_REPLACE(zn, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, &
+!                           pid-XDNS-1, ZN_REC, &
+!                           MPI_COMM_WORLD, stat)
+
+call MPI_RECV(zn, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status, stat)
+call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
 #endif
 
-        do 130 j = 1, XSPS
+        do j = 1, XSPS
 ! Forward elimination in (1,j)th equations to get r(1,j).
           fac(j) = 1./(1. - c(1,j)*zn(j,1))
 ! Check for singular matrix (debugging only)
@@ -1831,18 +1916,435 @@ end subroutine aggregateQsgw
           rh(1,j) = (rh(1,j) - ch(1,j)*zn(j,4))*fach(j)
 ! Backward elimination in (0,j)th equations to get remaining unknowns.
           rh(0,j) = zn(j,4) - zn(j,3)*rh(1,j)
-          do 140 i = 2, ZSPS
+          do i = 2, ZSPS
 ! Completion of forward elimination to get remaining unknowns.
             r(i,j) = r(i,j) - c(i,j)*r(1,j)
             rh(i,j) = rh(i,j) - ch(i,j)*rh(1,j)
-  140     continue
-  130   continue
+          end do
+         end do
 
       endif
 
       return
       end subroutine
+
       
+! Parallel machine precision tridiagonal solver.
+! The send-receive fuse is lit from both ends in this subroutine.
+! The processors are self-synchronized by blocking receives,
+! and the load balance is so good that non-blocking receives
+! are not needed.
+
+! 10/2013 Adaption for WRF-Hydro by Benjamin Fersch (KIT)
+! 
+! For the MPI calls all local pids are converted to MPI pids
+! First PVM rank was 1, first MPI rank is 0
+! No changes to the convention in the code, only MPI calls are affected
+
+      subroutine dparxsolv1(c,b,r,ch,bh,rh,ct,pid,x_pid, &
+	                    xsps, zsps, xdns, zdns)
+
+      implicit none
+
+! Parameters specifying the size of the problem
+! XSPS     XS Per Subdomain
+! ZSPS     ZS Per Subdomain
+! XDNS     X-Direction Number of Subdomains
+! ZDNS     Z-Direction Number of Subdomains
+! NSBS   Number of SUBdomainS
+! N_XS     Number of X-valueS across the whole grid
+! N_ZS     Number of Z-valueS across the whole grid
+! N_PTS    Number of PoinTS in the whole grid
+! Specify problem size by choosing XSPS, ZSPS, XDNS, and ZDNS
+
+      integer, intent(in) :: XSPS, &
+                             ZSPS, &
+                             XDNS, &
+                             ZDNS
+      
+      !local
+      integer             :: NSBS, &
+                             n_xs, &
+                             n_zs, &
+                             n_pts
+                 
+      integer	XN_REC
+      parameter	(XN_REC = 45)
+
+      real, dimension(ZSPS, XSPS), intent(inout) ::  c, &
+                                                     b, &
+                                                     ch,&
+                                                     bh
+
+      real, dimension(0:ZSPS+1, 0:XSPS+1), intent(inout) ::  r, &
+                                                             rh
+      real, dimension(ZSPS)   :: t1, t2, fac, t1h, t2h, fach
+      real, dimension(ZSPS,4) :: xn, xntmp
+      real :: clockdt, click
+      real :: ct, ti, tf, dt
+
+      integer :: pid, x_pid
+      integer :: i, j, sndr_pid, msg_type, cnt, ackn
+      integer :: stat
+
+#ifdef TIMING
+      dt = clockdt()
+#endif
+
+      if (x_pid .eq. 1) then
+
+! Load passing (i,XSPS)th equations into passing arrays.
+        do 10 i = 1, ZSPS
+          xntmp(i,1) = b(i,XSPS)
+          xntmp(i,2) = r(i,XSPS)
+          xntmp(i,3) = bh(i,XSPS)
+          xntmp(i,4) = rh(i,XSPS)
+   10   continue
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (i,XSPS)th equations.
+!       call SEND(pid+1,XN_REC,xn,len,ackn)
+!         call PVMFINITSEND(PVMRAW, stat)
+!         call PVMFPACK(BYTE1,xn,len,1,stat)
+!         call PVMFSEND(pid+1,XN_REC,stat)
+! Receive (i,(XSPS + 1))th equations.
+!       call SRECEIVE(sndr_pid,msg_type,xn,pid+1,XN_REC,len)
+!         call PVMFRECV(pid+1,XN_REC,stat)
+!         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+call MPI_SEND(xntmp, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, stat)
+call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
+
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 20 i = 1, ZSPS
+! Backward elimination in (i,XSPS)th equations to get
+! r(i,XSPS)
+          fac(i) = 1./(1. - b(i,XSPS)*xn(i,1))
+          r(i,XSPS) = (r(i,XSPS)-b(i,XSPS)*xn(i,2))*fac(i)
+! Forward elimination in (i,XSPS+1)th equations to get
+! r(i,XSPS+1)
+          r(i,XSPS+1) = xn(i,2) - xn(i,1)*r(i,XSPS)
+
+          fach(i) = 1./(1. - bh(i,XSPS)*xn(i,3))
+          rh(i,XSPS) = (rh(i,XSPS)-bh(i,XSPS)*xn(i,4))*fach(i)
+          rh(i,XSPS+1) = xn(i,4) - xn(i,3)*rh(i,XSPS)
+   20   continue
+
+! Completion of backward elimination to get remaining unknowns.
+        do 30 j = 1, XSPS-1
+        do 30 i = 1, ZSPS
+          r(i,j) = r(i,j) - b(i,j)*r(i,XSPS)
+          rh(i,j) = rh(i,j) - bh(i,j)*rh(i,XSPS)
+   30   continue
+
+      else if (x_pid .le. XDNS/2) then
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Receive (i,0)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,xn,pid-1,XN_REC,len)
+!         call PVMFRECV(pid-1,XN_REC,stat)
+!         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+! Forward elimination in (i,1)th equations of subdomain.
+	do 40 i = 1, ZSPS
+          fac(i) = 1./(1. - c(i,1)*xn(i,1))
+! Check for singular matrix (debugging only)
+          b(i,1) = b(i,1)*fac(i)
+          r(i,1) = (r(i,1) - c(i,1)*xn(i,2))*fac(i)
+! Forward elimination in (i,XSPS)th equations of subdomain.
+          fac(i) = 1./(1. - c(i,XSPS)*b(i,1))
+! Check for singular matrix (debugging only)
+          b(i,XSPS) = b(i,XSPS)*fac(i)
+          r(i,XSPS)=(r(i,XSPS)-c(i,XSPS)*r(i,1))*fac(i)
+! Store (i,0)th equations for later recovery of r(i,0).
+          t1(i) = xn(i,1)
+          t2(i) = xn(i,2)
+! Load (i,XSPS)th equations into passing arrays.
+          xn(i,1) = b(i,XSPS)
+          xn(i,2) = r(i,XSPS)
+
+          fach(i) = 1./(1. - ch(i,1)*xn(i,3))
+! Check for singular matrix (debugging only)
+          bh(i,1) = bh(i,1)*fach(i)
+          rh(i,1) = (rh(i,1) - ch(i,1)*xn(i,4))*fach(i)
+! Forward elimination in (i,XSPS)th equations of subdomain.
+          fach(i) = 1./(1. - ch(i,XSPS)*bh(i,1))
+! Check for singular matrix (debugging only)
+          bh(i,XSPS) = bh(i,XSPS)*fach(i)
+          rh(i,XSPS) = (rh(i,XSPS)-ch(i,XSPS)*rh(i,1))*fach(i)
+! Store (i,0)th equations for later recovery of r(i,0).
+          t1h(i) = xn(i,3)
+          t2h(i) = xn(i,4)
+! Load (i,XSPS)th equations into passing arrays.
+          xn(i,3) = bh(i,XSPS)
+          xn(i,4) = rh(i,XSPS)
+   40   continue
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (i,XSPS)th equations.
+!       call SEND(pid+1,XN_REC,xn,len,ackn)
+!         call PVMFINITSEND(PVMRAW, stat)
+!         call PVMFPACK(BYTE1,xn,len,1,stat)
+!         call PVMFSEND(pid+1,XN_REC,stat)
+! Receive (i,(XSPS + 1))th equations.
+!       call SRECEIVE(sndr_pid,msg_type,xn,pid+1,XN_REC,len)
+!         call PVMFRECV(pid+1,XN_REC,stat)
+!         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 50 i = 1, ZSPS
+! Backward elimination in (i,XSPS)th equations.
+          fac(i) = 1./(1. - b(i,XSPS)*xn(i,1))
+! Check for singular matrix (debugging only)
+          r(i,XSPS) = (r(i,XSPS) - b(i,XSPS)*xn(i,2))*fac(i)
+! Backward elimination in (i,XSPS+1)th equations.
+          r(i,XSPS+1) = xn(i,2) - xn(i,1)*r(i,XSPS)
+! Backward elimination in (i,1)th equations to get r(i,1).
+          r(i,1) = r(i,1) - b(i,1)*r(i,XSPS)
+! Load (i,1)th equations into passing array.
+          xn(i,1) = 0.
+          xn(i,2) = r(i,1)
+
+! Backward elimination in (i,XSPS)th equations.
+          fach(i) = 1./(1. - bh(i,XSPS)*xn(i,3))
+! Check for singular matrix (debugging only)
+          rh(i,XSPS) = (rh(i,XSPS) - bh(i,XSPS)*xn(i,4))*fach(i)
+! Backward elimination in (i,XSPS+1)th equations.
+          rh(i,XSPS+1) = xn(i,4) - xn(i,3)*rh(i,XSPS)
+! Backward elimination in (i,1)th equations to get r(i,1).
+          rh(i,1) = rh(i,1) - bh(i,1)*rh(i,XSPS)
+! Load (i,1)th equations into passing array.
+          xn(i,3) = 0.
+          xn(i,4) = rh(i,1)
+   50   continue
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (i,1)th equations.
+!       call SEND(pid-1,XN_REC,xn,len,ackn)
+!         call PVMFINITSEND(PVMRAW, stat)
+!         call PVMFPACK(BYTE1,xn,len,1,stat)
+!         call PVMFSEND(pid-1,XN_REC,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 60 i = 1, ZSPS
+! Backward elimination in (i,0)th equations.
+          r(i,0) = t2(i) - t1(i)*r(i,1)
+          rh(i,0) = t2h(i) - t1h(i)*rh(i,1)
+   60   continue
+
+! Completion of forward and backward elimination for solution of
+! unknowns.
+        do 70 j = 2, XSPS-1
+        do 70 i = 1, ZSPS
+          r(i,j) = r(i,j) - b(i,j)*r(i,XSPS) - c(i,j)*r(i,1)
+          rh(i,j) = rh(i,j)-bh(i,j)*rh(i,XSPS)-ch(i,j)*rh(i,1)
+   70   continue
+
+      else if (x_pid .lt. XDNS) then 
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Receive (i,XSPS+1)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,xn,pid+1,XN_REC,len)
+!         call PVMFRECV(pid+1,XN_REC,stat)
+!         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 80 i = 1, ZSPS
+! Backward elimination in (i,XSPS)th equations.
+          fac(i) = 1./(1. - b(i,XSPS)*xn(i,1))
+! Check for singular matrix (debugging only)
+          c(i,XSPS) = c(i,XSPS)*fac(i)
+          r(i,XSPS) = (r(i,XSPS) - b(i,XSPS)*xn(i,2))*fac(i)
+! Backward elimination in (i,1)th equations.
+          fac(i) = 1./(1. - b(i,1)*c(i,XSPS))
+! Check for singular matrix (debugging only)
+          c(i,1) = c(i,1)*fac(i)
+          r(i,1) = (r(i,1) - b(i,1)*r(i,XSPS))*fac(i)
+! Store (i,XSPS+1)th equations for later recovery of r(i,XSPS+1).
+          t1(i) = xn(i,1)
+          t2(i) = xn(i,2)
+! Load passing arrays with (i,1)th equations.
+          xn(i,1) = c(i,1)
+          xn(i,2) = r(i,1)
+
+! Backward elimination in (i,XSPS)th equations.
+          fach(i) = 1./(1. - bh(i,XSPS)*xn(i,3))
+! Check for singular matrix (debugging only)
+          ch(i,XSPS) = ch(i,XSPS)*fach(i)
+          rh(i,XSPS) = (rh(i,XSPS)-bh(i,XSPS)*xn(i,4))*fach(i)
+! Backward elimination in (i,1)th equations.
+          fach(i) = 1./(1. - bh(i,1)*ch(i,XSPS))
+! Check for singular matrix (debugging only)
+          ch(i,1) = ch(i,1)*fach(i)
+          rh(i,1) = (rh(i,1) - bh(i,1)*rh(i,XSPS))*fach(i)
+! Store (i,XSPS+1)th equations for later recovery of r(i,XSPS+1).
+          t1h(i) = xn(i,3)
+          t2h(i) = xn(i,4)
+! Load passing arrays with (i,1)th equations.
+          xn(i,3) = ch(i,1)
+          xn(i,4) = rh(i,1)
+   80   continue
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (i,1)th equations.
+!       call SEND(pid-1,XN_REC,xn,len,ackn)
+!         call PVMFINITSEND(PVMRAW, stat)
+!         call PVMFPACK(BYTE1,xn,len,1,stat)
+!         call PVMFSEND(pid-1,XN_REC,stat)
+! Receive (i,0)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,xn,pid-1,XN_REC,len)
+!         call PVMFRECV(pid-1,XN_REC,stat)
+!         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+        do 90 i = 1, ZSPS
+! Forward elimination in (i,1)th equations
+          fac(i) = 1./(1. - c(i,1)*xn(i,1))
+! Check for singular matrix (debugging only)
+          r(i,1) = (r(i,1) - c(i,1)*xn(i,2))*fac(i)
+! Backward elimination in (i,0)th equations.
+          r(i,0) = xn(i,2) - xn(i,1)*r(i,1)
+! Forward elimination in (i,XSPS)th equations.
+          r(i,XSPS) = r(i,XSPS) - c(i,XSPS)*r(i,1)
+! Load (i,XSPS)th equations into passing arrays.
+          xn(i,1) = 0.
+          xn(i,2) = r(i,XSPS)
+
+! Forward elimination in (i,1)th equations
+          fach(i) = 1./(1. - ch(i,1)*xn(i,3))
+! Check for singular matrix (debugging only)
+          rh(i,1) = (rh(i,1) - ch(i,1)*xn(i,4))*fach(i)
+! Backward elimination in (i,0)th equations.
+          rh(i,0) = xn(i,4) - xn(i,3)*rh(i,1)
+! Forward elimination in (i,XSPS)th equations.
+          rh(i,XSPS) = rh(i,XSPS) - ch(i,XSPS)*rh(i,1)
+! Load (i,XSPS)th equations into passing arrays.
+          xn(i,3) = 0.
+          xn(i,4) = rh(i,XSPS)
+   90   continue
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (i,XSPS)th equations.
+!       call SEND(pid+1,XN_REC,xn,len,ackn)
+!         call PVMFINITSEND(PVMRAW, stat)
+!         call PVMFPACK(BYTE1,xn,len,1,stat)
+!         call PVMFSEND(pid+1,XN_REC,stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+! Forward elimination in (i,XSPS)th equations to get r(i,XSPS+1).	
+        do 100 i = 1, ZSPS
+          r(i,XSPS+1) = t2(i) - t1(i)*r(i,XSPS)
+          rh(i,XSPS+1) = t2h(i) - t1h(i)*rh(i,XSPS)
+  100   continue
+
+! Completion of forward and backward elimination to get remaining unknowns.
+        do 110 j = 2, XSPS-1
+	do 110 i = 1, ZSPS
+          r(i,j) = r(i,j) - c(i,j)*r(i,1) - b(i,j)*r(i,XSPS)
+          rh(i,j) = rh(i,j)-ch(i,j)*rh(i,1)-bh(i,j)*rh(i,XSPS)
+  110   continue
+
+      else
+
+! Load (i,1)th equations into passing arrays.
+	do 120 i = 1, ZSPS
+          xntmp(i,1) = c(i,1)
+          xntmp(i,2) = r(i,1)
+          xntmp(i,3) = ch(i,1)
+          xntmp(i,4) = rh(i,1)
+  120   continue
+
+        cnt = 4*ZSPS
+#ifdef TIMING
+        ti = click()
+#endif
+! Send (i,1)th equations.
+!       call SEND(pid-1,XN_REC,xn,len,ackn)
+!         call PVMFINITSEND(PVMRAW, stat)
+!         call PVMFPACK(BYTE1,xn,len,1,stat)
+!         call PVMFSEND(pid-1,XN_REC,stat)
+! Receive (i,0)th equations.
+!       call SRECEIVE(sndr_pid,msg_type,xn,pid-1,XN_REC,len)
+!         call PVMFRECV(pid-1,XN_REC,stat)
+!         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+call MPI_RECV(xn, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
+call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
+#ifdef TIMING
+        tf = click()
+        call add_dt(ct,tf,ti,dt)
+#endif
+
+	do 130 i = 1, ZSPS
+! Forward elimination in (i,1)th equations to get r(i,1).
+          fac(i) = 1./(1. - c(i,1)*xn(i,1))
+! Check for singular matrix (debugging only)
+          r(i,1) = (r(i,1) - c(i,1)*xn(i,2))*fac(i)
+! Backward elimination in (i,0)th equations to get r(i,0).
+          r(i,0) = xn(i,2) - xn(i,1)*r(i,1)
+
+! Forward elimination in (i,1)th equations to get rh(i,1).
+          fach(i) = 1./(1. - ch(i,1)*xn(i,3))
+! Check for singular matrix (debugging only)
+          rh(i,1) = (rh(i,1) - ch(i,1)*xn(i,4))*fach(i)
+! Backward elimination in (i,0)th equations to get rh(i,0).
+          rh(i,0) = xn(i,4) - xn(i,3)*rh(i,1)
+  130   continue
+
+! Completion of forward elimination to get remaining unknowns.
+        do 140 j = 2, XSPS
+        do 140 i = 1, ZSPS
+          r(i,j) = r(i,j) - c(i,j)*r(i,1)
+          rh(i,j) = rh(i,j) - ch(i,j)*rh(i,1)
+  140   continue
+
+      endif
+
+      return
+      end subroutine
+     
 !23456789012345678901234567890123456789012345678901234567890123456789012
 
       subroutine sub_n_form(n_xs,n_zs,c,a,b,r,c2,b2,r2,wk,xfac,zfac, &
@@ -2066,6 +2568,89 @@ end subroutine aggregateQsgw
 
       return
       end subroutine
+      
+      
+      subroutine sub_tri_solv(n_xs,n_zs,c,a,b,r,x,wk,xfac,zfac,dir)
+
+      implicit none
+
+      integer n_xs,n_zs
+
+!  c(,)  -- subdiagonal elements of tridiagonal systems
+!  a(,)  -- diagonal elements of tridiagonal systems
+!  b(,)  -- superdiagonal elements of tridiagonal systems
+!  r(,)  -- right-hand side elements of tridiagonal systems
+!  x(,)  -- solutions
+!  wk(,) -- work array w/ same dimensions as c, a, b, etc.
+
+      real c(n_zs,n_xs)
+      real a(n_zs,n_xs)
+      real b(n_zs,n_xs)
+      real r(n_zs,n_xs)
+      real x(0:n_zs+1,0:n_xs+1)
+      real wk(n_zs,n_xs)
+      real xfac(n_zs)
+      real zfac(n_xs)
+
+      integer dir
+      integer i,j,XDIR,ZDIR
+
+      parameter (XDIR = 1, ZDIR = 2)
+
+      if (dir .eq. XDIR) then
+
+        do 10 i = 1, n_zs
+! Check for need to pivot (debugging only)
+        xfac(i) = 1./a(i,1)
+        x(i,1)  = r(i,1)*xfac(i)
+   10   continue
+
+! Forward subdiagonal elimination
+        do 20 j = 2, n_xs
+	do 20 i = 1, n_zs
+        wk(i,j-1) = b(i,j-1)*xfac(i)
+        xfac(i) = 1./(a(i,j) - c(i,j)*wk(i,j-1))
+! Check for need to pivot (debugging only)
+        x(i,j) = (r(i,j) - c(i,j)*x(i,j-1))*xfac(i)
+   20   continue
+
+! Backsubstitution
+        do 30 j = n_xs - 1, 1, -1
+	do 30 i = 1, n_zs
+        x(i,j)  = x(i,j) - wk(i,j)*x(i,j+1)
+   30   continue
+
+      else if (dir .eq. ZDIR) then
+
+        do 40 j = 1, n_xs
+! Check for need to pivot (debugging only)
+        zfac(j) = 1./a(1,j)
+        x(1,j)  = r(1,j)*zfac(j)
+   40   continue
+
+! Forward subdiagonal elimination
+	do 50 j = 1, n_xs
+        do 50 i = 2, n_zs
+        wk(i-1,j) = b(i-1,j)*zfac(j)
+        zfac(j) = 1./(a(i,j) - c(i,j)*wk(i-1,j))
+! Check for need to pivot (debugging only)
+        x(i,j) = (r(i,j) - c(i,j)*x(i-1,j))*zfac(j)
+   50   continue
+
+! Backsubstitution
+	do 60 j = 1, n_xs
+        do 60 i = n_zs - 1, 1, -1
+        x(i,j)  =  x(i,j) - wk(i,j)*x(i+1,j)
+   60   continue
+
+! Announce bad direction specifier (debugging only)
+!     else
+!       write(*,*) 'sub_tri_solv:  What direction?'
+!       stop
+      endif
+
+      return
+      end  subroutine
 
 #endif
 
