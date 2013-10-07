@@ -1275,263 +1275,16 @@ end subroutine aggregateQsgw
                  
 
 
-! Parameters for integer logic
-!   XDIR    tells subroutines to operate for the X-DIRection
-!   ZDIR    tells subroutines to operate for the Z-DIRection
-      integer	ZERO
-      parameter (ZERO = 0)
-      integer	ONE
-      parameter (ONE = 1)
-      integer	XDIR
-      parameter	(XDIR = 1)
-      integer	ZDIR
-      parameter (ZDIR = 2)
 
-      integer	FALSE
-      parameter (FALSE = 0)
-      integer	TRUE
-      parameter	(TRUE = 1)
-
-
-! Message tags
-!   STAT_REC  message tag for all-to-all broadcast STATistics RECord
-!   INPUT_REC message tag for all-to-all bcast of INPUT RECord
-!   I_REC     message tag for all-to-all bcast of Integer RECord
-!   DP_REC    message tag for all-to-all bcast of Double Precision RECord
-!   XN_REC    message tag for comm. of X-face grid pts. btw.
-!             X-neighbor processors
-!   ZN_REC    message tag for comm. of Z-face grid pts. btw.
-!             Z-neighbor processors
-!   XN2_REC   message tag for comm. of two sets of X-face grid pts.
-!             between X-neighbor processors
-!   ZN2_REC   message tag for comm. of two sets of Z-face grid pts.
-!             between Z-neighbor processors
-!   START_IO  message tag for IO sequential synchronization
-      integer	STAT_REC
-      parameter (STAT_REC = 24)
-      integer	INPUT_REC
-      parameter	(INPUT_REC = 25)
-      integer	I_REC
-      parameter	(I_REC = 26)
-      integer	DP_REC
-      parameter	(DP_REC = 27)
-
-      integer	XN_REC
-      parameter	(XN_REC = 45)
       integer	ZN_REC
       parameter	(ZN_REC = 46)
 
-      integer	XN2_REC
-      parameter	(XN2_REC = 47)
-      integer	ZN2_REC
-      parameter	(ZN2_REC = 48)
-
-      integer	START_IO
-      parameter	(START_IO = 51)
-
-! Processor specifiers
-!   IO_PROC  Input/Output PROCessor
-      integer	IO_PROC
-      parameter (IO_PROC = 0)
-
-! Miscellaneous control parameters
-!   RSD_SKIP ReSiDual SKIP factor
-      integer	RSD_SKIP
-      parameter (RSD_SKIP = 1)
-
-! Communication control parameters
-!   SW1      SWitch parameter 1 for control of all-to-all broadcast
-!            method
-      integer	SW1
-      parameter	(SW1 = 89)
-
-! Time step control method parameters
-!   LAMBERT  specifies LAMBERT's method (experimental)
-!   STDADI   specifies STanDard ADI method (bad)
-!   DOSS     specifies DOSS's ADI method (good)
-      integer	LAMBERT
-      parameter	(LAMBERT = 21)
-      integer	STDADI
-      parameter (STDADI = 22)
-      integer	DOSS
-      parameter	(DOSS = 23)
- 
-! Permittivity, source, and kappa mock-up parameters.
-!   MOS      MOSaic in space (rectangular tiles)
-!   RNDM     RaNDoM in space, pointwise
-!   DISK     DISK in space
-!   EXPON    EXPONential in space, from 1. to 1.e6, corner-to-corner
-      integer	MOS
-      parameter	(MOS = 92)
-      integer	RNDM
-      parameter	(RNDM = 93)
-      integer	DISK
-      parameter	(DISK = 94)
-      integer   EXPON
-      parameter (EXPON = 95)
-
-! Diagonal stacking control parameters
-      integer	NO_STCK
-      parameter	(NO_STCK = 26)
-      integer	HALF_PASS
-      parameter	(HALF_PASS = 27)
-      integer	FULL_PASS
-      parameter	(FULL_PASS = 28)
-      integer	SPATIAL
-      parameter	(SPATIAL = 29)
-
-! Exit control parameters
-!   REL_ERR_METH   RELative ERRor METHod
-!   RSD_NORM_METH  ReSiDual NORM METHod
-      integer	REL_ERR_METH
-      parameter (REL_ERR_METH = 31)
-      integer	RSD_NORM_METH
-      parameter (RSD_NORM_METH = 32)
-
-! External boundary condition specifiers
-!   DDDD   Dirichlet on all four sides
-!   DNNN   Dirichlet on one side, Neumann-zero on other three
-!   NNNN   Neumann on all sides, except Dirichlet at one corner
-      integer	DDDD
-      parameter (DDDD = 41)
-      integer	DNNN
-      parameter	(DNNN = 42)
-      integer	NNNN
-      parameter	(NNNN = 43)
-    
-! ! Lengths of messages (including data structures and arrays)
-!       integer	SZ_INPUT_REC
-!       parameter	(SZ_INPUT_REC = 8*LEN_SINGLE + 16*LEN_INT)
-! 
-!       integer   SZ_XN_REC
-!       parameter	(SZ_XN_REC = 2*ZSPS*LEN_SINGLE)
-!       integer   SZ_ZN_REC
-!       parameter	(SZ_ZN_REC = 2*XSPS*LEN_SINGLE)
-! 
-!       integer   SZ_XN2_REC
-!       parameter	(SZ_XN2_REC = 2*SZ_XN_REC)
-!       integer   SZ_ZN2_REC
-!       parameter	(SZ_ZN2_REC = 2*SZ_ZN_REC)
-! 
-!       integer	SZ_STAT_REC
-!       parameter	(SZ_STAT_REC = (8*LEN_SINGLE + 2*LEN_INT)*NSBS)
-! 
-!       integer	SZ_I_REC
-!       parameter	(SZ_I_REC = NSBS * LEN_INT)
-! 
-!       integer	SZ_DP_REC
-!       parameter	(SZ_DP_REC = NSBS * LEN_SINGLE)
 
 ! Clock parameters
 !   CLK_PER   CLocK PERiod
       real	CLK_PER
       parameter	(CLK_PER = 6.66666667e-9)
 
-! Data structure for all-to-all broadcast of input data
-!   INREC   INput RECord
-
-
-      type inrec
-
-       real pow
-       real stck_fac
-       real mx_pt_re
-       real mx_rsd_nm
-       real dx
-       real dz
-       real mpf
-       real fof
-       integer comm_sw
-       integer omega_meth
-       integer dg_stck
-       integer exit_meth
-       integer bndry_cond
-       integer eps_type
-       integer src_type
-       integer kap_type
-       integer kmax
-       integer show
-!      logical event_log
-       integer dumpg
-       integer xskp
-       integer zskp
-       integer sb_xskp
-       integer sb_zskp
-       integer mp
-
-
-      end type inrec
-
-
-! Data structure for all-to-all broadcast of reduced matrix in the
-! X-direction
-!   X_RS_REC    X-Reduced System RECord
-!     structure /x_rs_rec/
-!     type x_rs_rec
-!      real c(XSPS,XRS_DIM)
-!      real b(XSPS,XRS_DIM)
-!      real r(XSPS,XRS_DIM)
-!     end type x_rs_rec
-!     end structure
-
-! Data structure for all-to-all broadcast of reduced matrix in the
-! Z-direction
-!   Z_RS_REC    Z-Reduced System RECord
-!     structure /z_rs_rec/
-!     type z_rs_rec
-!      real c(ZSPS,ZRS_DIM)
-!      real b(ZSPS,ZRS_DIM)
-!      real r(ZSPS,ZRS_DIM)
-!     end type z_rs_rec
-!     end structure
-
-! Data structure for all-to-all broadcast of stacked reduced matrices
-! in the X-direction
-!   DX_RS_REC    Double-X-Reduced System RECord
-!     structure /dx_rs_rec/
-!     type dx_rs_rec
-!      real c(XSPS,XRS_DIM)
-!      real b(XSPS,XRS_DIM)
-!      real r(XSPS,XRS_DIM)
-!      real ch(XSPS,XRS_DIM)
-!      real bh(XSPS,XRS_DIM)
-!      real rh(XSPS,XRS_DIM)
-!     end type dx_rs_rec
-!     end structure
-
-! Data structure for all-to-all broadcast of stacked reduced matrices
-! in the Z-direction
-!   DZ_RS_REC    Double-Z-Reduced System RECord
-!     structure /dz_rs_rec/
-!     type dz_rs_rec
-!      real c(ZSPS,ZRS_DIM)
-!      real b(ZSPS,ZRS_DIM)
-!      real r(ZSPS,ZRS_DIM)
-!      real ch(ZSPS,ZRS_DIM)
-!      real bh(ZSPS,ZRS_DIM)
-!      real rh(ZSPS,ZRS_DIM)
-!     end type dz_rs_rec
-!     end structure
-
-! Data structure for all-to-all broadcast of statistics data
-!   STREC      STatistice RECord
-
-
-!       type strec
-! 
-!        real nm_sq(0:NSBS-1)
-!        real dnm_sq(0:NSBS-1)
-!        real rsd_nm(0:NSBS-1)
-!        real mx_rsd_err(0:NSBS-1)
-!        real mn(0:NSBS-1)
-!        real mx(0:NSBS-1)
-!        real avg(0:NSBS-1)
-!        real avg_md(0:NSBS-1)
-!        integer xlmxre(0:NSBS-1)
-!        integer zlmxre(0:NSBS-1)
-! 
-! 
-!       end type strec
 
 
       real, dimension(ZSPS, XSPS), intent(inout) ::  c, &
@@ -1552,10 +1305,6 @@ end subroutine aggregateQsgw
       integer :: i, j, sndr_pid, msg_type, cnt, ackn
       integer :: stat
 
-      NSBS = XDNS*ZDNS
-      N_XS = XSPS*XDNS
-      N_ZS = ZSPS*ZDNS
-      N_PTS = N_XS*N_ZS
 
 #ifdef TIMING
       dt = clockdt()
@@ -1571,7 +1320,7 @@ end subroutine aggregateQsgw
           zntmp(j,3) = bh(ZSPS,j)
           zntmp(j,4) = rh(ZSPS,j)
         end do
-          zntmp = 1.
+
         cnt = 4*XSPS
 #ifdef TIMING
         ti = click()
@@ -1621,6 +1370,7 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
          end do
 
       else if (z_pid .le. ZDNS/2) then
+	
 	print*, 'Node', my_id, "in mode 2"
 
         cnt = 4*XSPS
