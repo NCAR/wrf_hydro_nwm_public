@@ -368,7 +368,7 @@ endif
 !     parameter (botinc = 0.  )  ! re-wetting increment to fix h < bot
                                  ! (m); else no flow into dry cells
       real, parameter    :: delskip = 0.005 ! av.|dhead| value for iter.skip out(m)
-      integer, parameter :: itermax = 1    ! maximum number of iterations
+      integer, parameter :: itermax = 10    ! maximum number of iterations
       integer, parameter :: itermin = 1    ! minimum number of iterations
       real, parameter    :: sealev = 1000.     ! sea-level elevation (m)
 
@@ -384,7 +384,9 @@ endif
         ip,                     &
         n,                      &
         ierr,                   &
-        ier
+        ier,                    &
+        ioffs,                  &
+        joffs
         
 !       real :: su, sc, shp, bb, aa, cc, w, zz, tareal, dtoa, dtot
       real ::                   &
@@ -645,22 +647,22 @@ deallocate(hh)
           aa(j,i) = 0.0
           cc(j,i) = 0.0
 
-          if ((j-jts) /= 0) then 
+          if (((j-jfs) /= 0)) then 
            aa(j,i) = -t(i,j-1,1)
            bb(j,i) = bb(j,i) + t(i,j-1,1)
 	  endif
 
-          if ((j-jte) /= 0) then
+          if (((j-jfe) /= 0)) then
            cc(j,i) = -t(i,j,1)
            bb(j,i) = bb(j,i) + t(i,j,1)
 	  endif
 
-          if ((i-its) /= 0) then
+          if (((i-ifs) /= 0)) then
            bb(j,i) = bb(j,i) + t(i-1,j,2)
            dd(j,i) = dd(j,i) + h(i-1,j)*t(i-1,j,2)
 	  endif
 
-          if ((i-ite) /= 0) then
+          if (((i-ife) /= 0)) then
            bb(j,i) = bb(j,i) + t(i,j,2)
            dd(j,i) = dd(j,i) + h(i+1,j)*t(i,j,2)
 	  endif
@@ -689,7 +691,9 @@ deallocate(hh)
                           dd(jts:jte,its:ite), &
                           hh, wk,xfac,zfac,2)
     endif
-    
+
+ioffs = its-1
+joffs = jts-1
 !-------------------
       do i=its,ite
 !-------------------
@@ -698,7 +702,7 @@ deallocate(hh)
         do j=jts,jte
 !>>>>>>>>>>>>>>>>>>>>
 
-              h(i,j) = hh(j,i)
+              h(i,j) = hh(j-joffs,i-ioffs)
 	      
 	 end do
      end do
@@ -830,22 +834,22 @@ allocate(hh(ifs:ife))
           aa(j,i) = 0.0
           cc(j,i) = 0.0
 
-          if ((j-jfs) /= 0) then
+          if (((j-jfs) /= 0)) then
            bb(j,i) = bb(j,i) + t(i,j-1,1)
            dd(j,i) = dd(j,i) + h(i,j-1)*t(i,j-1,1)
 	  endif
  
-          if ((j-jfe) /= 0) then
+          if (((j-jfe) /= 0)) then
            dd(j,i) = dd(j,i) + h(i,j+1)*t(i,j,1)
            bb(j,i) = bb(j,i) + t(i,j,1)
 	  endif
 
-          if ((i-ifs) /= 0) then
+          if (((i-ifs) /= 0)) then
            bb(j,i) = bb(j,i) + t(i-1,j,2)
            aa(j,i) = -t(i-1,j,2)
 	  endif
 
-          if ((i-ife) /= 0) then
+          if (((i-ife) /= 0)) then
            bb(j,i) = bb(j,i) + t(i,j,2)
            cc(j,i) = -t(i,j,2)
 	  endif
@@ -885,7 +889,8 @@ end do
                           dd, &
                           hh, wk,xfac,zfac,1)
     endif
-
+ioffs = its-1
+joffs = jts-1
 !-------------------
       do i=its,ite
 !-------------------
@@ -894,7 +899,7 @@ end do
         do j=jts,jte
 !>>>>>>>>>>>>>>>>>>>>
 
-              h(i,j) = hh(j,i)
+               h(i,j) = hh(j-joffs,i-ioffs)
 
       end do
      end do
@@ -2620,28 +2625,31 @@ call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
         x(i,j)  = x(i,j) - wk(i,j)*x(i,j+1)
    30   continue
 
+   
       else if (dir .eq. ZDIR) then
 
-        do 40 j = 1, n_xs
+       do j = 1, n_xs
 ! Check for need to pivot (debugging only)
         zfac(j) = 1./a(1,j)
         x(1,j)  = r(1,j)*zfac(j)
-   40   continue
+       end do
 
 ! Forward subdiagonal elimination
-	do 50 j = 1, n_xs
-        do 50 i = 2, n_zs
+      do j = 1, n_xs
+       do i = 2, n_zs
         wk(i-1,j) = b(i-1,j)*zfac(j)
         zfac(j) = 1./(a(i,j) - c(i,j)*wk(i-1,j))
 ! Check for need to pivot (debugging only)
         x(i,j) = (r(i,j) - c(i,j)*x(i-1,j))*zfac(j)
-   50   continue
+       end do
+      end do
 
 ! Backsubstitution
-	do 60 j = 1, n_xs
-        do 60 i = n_zs - 1, 1, -1
+      do j = 1, n_xs
+       do i = n_zs - 1, 1, -1
         x(i,j)  =  x(i,j) - wk(i,j)*x(i+1,j)
-   60   continue
+       end do
+      end do
 
 ! Announce bad direction specifier (debugging only)
 !     else
