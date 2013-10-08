@@ -707,12 +707,6 @@ joffs = jts-1
 	 end do
      end do
 	      
-! deallocate(b2)
-! deallocate(c2)
-! deallocate(rhs)
-! deallocate(wk)
-! deallocate(xfac)
-! deallocate(zfac)
 #endif 
 
 #ifdef MPP_LAND
@@ -757,19 +751,7 @@ joffs = jts-1
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
 
-#ifdef MPP_LAND     
-! allocate(aa(ifs:ife,jfs:jfe))
-! allocate(bb(ifs:ife,jfs:jfe))
-! allocate(cc(ifs:ife,jfs:jfe))
-! allocate(dd(ifs:ife,jfs:jfe))
-! allocate(b2(1:xdim,1:ydim))
-! allocate(c2(1:xdim,1:ydim))
-! allocate(rhs(0:xdim+1,0:ydim+1))
-! allocate(wk(1:xdim,1:ydim))
-! allocate(hh(0:xdim+1,0:ydim+1))
-! allocate(xfac(1:xdim))
-! allocate(zfac(1:xdim))
-#else
+#ifndef MPP_LAND     
 allocate(aa(ifs:ife))
 allocate(bb(ifs:ife))
 allocate(cc(ifs:ife))
