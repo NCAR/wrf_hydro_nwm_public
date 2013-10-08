@@ -213,6 +213,7 @@
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
 #endif
+       ,gw2d(did)%h, gw2d(did)%qgw_chanrt&
        )
   endif
 

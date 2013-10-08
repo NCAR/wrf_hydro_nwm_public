@@ -412,6 +412,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND 
        ,lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks &
 #endif
+       ,gw_head, qgw_chanrt &
        )
 
        IMPLICIT NONE
@@ -449,6 +450,15 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL                                      :: RETDEP_CHAN
         INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
+
+!DJG GW-chan coupling variables...
+        REAL, DIMENSION(NLINKS)                   :: d_GW_CHAN_HEAD
+        REAL, DIMENSION(NLINKS)                   :: Q_GW_CHAN_FLUX     !DJG !!! Change 'INTENT' to 'OUT' when ready to update groundwater state...
+        REAL, DIMENSION(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)    :: gw_head            !DJG groundwater head from Fersch-2d gw implementation...units (m ASL)
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: qgw_chanrt         !DJG !!! Channel-gw flux as used in Fersch 2d gw implementation...units (m^3/s)...Change 'INTENT' to 'OUT' when ready to update groundwater state...
+         
+
 
         !-- lake params
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: HRZAREA  !-- horizontal area (km^2)
@@ -637,6 +647,11 @@ crnt:    DO                      !-- loop on the courant condition
          QLLAKE = 0              !-- initialize each lake's lateral inflow to zero  
          DT_STEPS=INT(DT/DTCT)   !-- fix the timestep
          QLateral = 0. 
+!DJG GW-chan coupling variables...
+         Q_GW_CHAN_FLUX = 0.
+         qgw_chanrt = 0.
+
+!         ZWATTBLRT=1.0   !--HARDWIRE, remove this and pass in from subsfc/gw routing routines...
 
 
 !-- vectorize
@@ -654,10 +669,27 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
            endif
 
+           
+
            if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .lt.0) ) then !--a reg. node
+
+!DJG Implement gw-channel coupling...idealized hardwire here using a generic 'bank conductivity' term = 0.0005 m/s...
+             d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
+             qgw_chanrt(CHANXI(i),CHANYJ(i))=0.0005*d_gw_chan_head(i)*CHANLEN(i)        !-- units in (m^3/s), + is flux into channel...
+             Q_GW_CHAN_FLUX(i) = qgw_chanrt(CHANXI(i),CHANYJ(i))
+!             if ( i .eq. 1001 ) then
+!                print *, Q_GW_CHAN_FLUX(i), d_GW_CHAN_HEAD(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)
+!             end if
+             if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
+                Q_GW_CHAN_FLUX(i) = 0.
+             end if
+
+
+
               QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
-! await subsfc exchg   ((QSUBRT(CHANXI(i),CHANYJ(i))+QSTRMVOLRT(CHANXI(i),CHANYJ(i))+&
+!DJG  awaiting gw-channel exchg...  Q_GW_CHAN_FLUX(i)+& ...obsolete-> ((QSUBRT(CHANXI(i),CHANYJ(i))+&
+                Q_GW_CHAN_FLUX(i)+&
                 ((QSTRMVOLRT(CHANXI(i),CHANYJ(i))+&
                  QINFLOWBASE(CHANXI(i),CHANYJ(i))) &
                    /DT_STEPS*node_area(i)/1000/DTCT)

@@ -20,7 +20,8 @@
 
       real,    allocatable, dimension(:,:) ::  &
 	qsgwrt,         &  ! flux between soil and groundwater for coupled simulations on routing grid
-	qsgw               ! flux between soil and groundwater for coupled simulations on lsm grid
+	qsgw,           &  ! flux between soil and groundwater for coupled simulations on lsm grid
+	qgw_chanrt         ! flux between groundwater and channel
 
       real  :: ebot, eocn
       integer ::istep = 0
