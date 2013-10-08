@@ -727,13 +727,12 @@ Contains
 
 
 
-  subroutine READSNOW_HRLDAS(flnm,ix,jx,target_date,weasd,snodep)
+  subroutine READSNOW_FORC(flnm,ix,jx,weasd,snodep)
     implicit none
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
     integer,                            intent(in)  :: jx
-    character(len=*),                   intent(in)  :: target_date
     real,             dimension(ix,jx), intent(out) :: weasd
     real,             dimension(ix,jx), intent(out) :: snodep
     real, dimension(ix,jx) :: tmp
@@ -808,7 +807,7 @@ Contains
 
     ierr = nf_close(ncid)
 
-  end subroutine READSNOW_HRLDAS
+  end subroutine READSNOW_FORC
 
     subroutine get2d_hrldas(inflnm,ix,jx,nsoil,smc,stc,sh2ox,cmc,t1,weasd,snodep)
           implicit none
@@ -1513,15 +1512,17 @@ Contains
 !
 !!!!DJG Check for snow data assimilation...
 
-    if (SNOW_ASSIM .eq. 1) then
+   if (SNOW_ASSIM .eq. 1) then
+
 ! Every 24 hours, update the snow field from analyses.
      if(forc_typ .ne. 3 .or. forc_typ .ne. 6) then
          if ( OLDDATE(12:13) == "00") then
-            CALL READSNOW_HRLDAS(inflnm,IX,JX,OLDDATE,WEASD,SNODEP)
+            CALL READSNOW_FORC(inflnm,IX,JX,WEASD,SNODEP)
          endif
      else
-        CALL READSNOW_HRLDAS(inflnm,IX,JX,OLDDATE,WEASD,SNODEP)
+        CALL READSNOW_FORC(inflnm,IX,JX,WEASD,SNODEP)
      endif
+
    end if
 
 
@@ -1564,7 +1565,7 @@ Contains
       end subroutine mpp_readland_hrldas
 
 
-      subroutine MPP_READSNOW_HRLDAS(flnm,ix,jx,OLDDATE,weasd,snodep,&
+      subroutine MPP_READSNOW_FORC(flnm,ix,jx,OLDDATE,weasd,snodep,&
                  global_nX, global_ny)
         implicit none
 
@@ -1581,13 +1582,13 @@ Contains
         integer :: ncid,i,j
 
         if(my_id .eq. IO_id) then
-          CALL READSNOW_HRLDAS(trim(flnm),global_nX, global_ny,OLDDATE,g_WEASD,g_SNODEP)
+          CALL READSNOW_FORC(trim(flnm),global_nX, global_ny,g_WEASD,g_SNODEP)
        endif
        call decompose_data_real(g_WEASD,WEASD)
        call decompose_data_real(g_SNODEP,SNODEP)
 
         return 
-        end  subroutine MPP_READSNOW_HRLDAS
+        end  subroutine MPP_READSNOW_FORC
 
       subroutine MPP_DEEPGW_HRLDAS(ix,jx,in_SMCMAX,&
                  global_nX, global_ny,nsoil,out_SMC,out_SH2OX)
