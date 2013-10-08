@@ -979,6 +979,8 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
         enddo
       enddo
 
+!      call MPP_LAND_COM_REAL(convgw, fxdim, fydim, 99)
+
 !        Diagnostic water conservation check for this timestep
 
       dtot = 0.     ! total change in water storage (m3)
