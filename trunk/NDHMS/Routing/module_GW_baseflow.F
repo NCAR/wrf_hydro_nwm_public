@@ -278,6 +278,8 @@ endif
       allocate(gw2d(did)%ho     (ix,jx))
       allocate(gw2d(did)%h      (ix,jx))
       allocate(gw2d(did)%convgw (ix,jx))
+
+      allocate(gw2d(did)%qgw_chanrt (ix,jx))
       
       
       ! TODO allocate only if gwSoilCoupling is active
@@ -963,6 +965,11 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
       goto 80
       endif
       
+#ifdef MPP_LAND
+
+       call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
+
+#endif
 
       
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

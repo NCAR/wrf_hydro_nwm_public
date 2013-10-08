@@ -865,6 +865,11 @@ end subroutine get_albedo12m_netcdf
         INTEGER                                      :: I,J,channel_option
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
         CHARACTER(len=28)                            :: dir
+
+!DJG Insert CHAN_DEPTH functionality... in_this version we read this in...
+        REAL, DIMENSION(IXRT,JXRT)                   :: CHAN_DEPTH
+        REAL, DIMENSION(IXRT,JXRT)                   :: CHAN_DEPTH_inv
+
 !Dummy inverted grids from arc
 	INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION_inv
         INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS_inv
@@ -972,6 +977,7 @@ end subroutine get_albedo12m_netcdf
        call get2d_int(var_name,GSTRMFRXSTPTS_inv,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
+
 !--1/13/2011 real hi res sfc calibrtion parameters (...)
 !       var_name = "LAKEGRID"
 !       call get2d_int(var_name,LAKE_MSKRT_inv,ixrt,jxrt,&
@@ -992,6 +998,12 @@ end subroutine get_albedo12m_netcdf
 !        iret = get2d_real(var_name,BwG,ixrt,jxrt,&
 !                     trim(geo_finegrid_flnm))
 
+!DJG Insert CHAN_DEPTH functionality...read-in/assign channel depth... 
+!       CHAN_DEPTH = 5.0
+        var_name = "CHAN_DEPTH"
+        iret = get2d_real(var_name,CHAN_DEPTH_inv,ixrt,jxrt,&
+                     trim(geo_finegrid_flnm))
+
 
 !!!Flip y-dimension of highres grids from exported Arc files...
 
@@ -1007,6 +1019,8 @@ end subroutine get_albedo12m_netcdf
            if(GSTRMFRXSTPTS(i,j).ne.-9999) ct = ct+1
            LATVAL(i,j)=LATVAL_inv(i,jj)
            LONVAL(i,j)=LONVAL_inv(i,jj)
+!DJG Insert CHAN_DEPTH functionality...flip input grid...assuming input comes from Arc
+           CHAN_DEPTH(i,j)=CHAN_DEPTH_inv(i,jj)
            jj=jxrt-j
          end do
         end do
@@ -1085,7 +1099,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1102,7 +1118,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1119,7 +1137,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1136,7 +1156,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1152,7 +1174,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1169,7 +1193,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1186,7 +1212,9 @@ end subroutine get_albedo12m_netcdf
              FROM_NODE(cnt) = CH_NETLNK(i, j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1202,7 +1230,9 @@ end subroutine get_albedo12m_netcdf
              cnt = cnt + 1
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
              MannN(cnt) = MannNG(i,j)
              ChSSlp(cnt) = ChSSlpG(i,j)
              Bw(cnt) = BwG(i,j)
@@ -1240,7 +1270,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1269,7 +1301,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1297,7 +1331,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1325,7 +1361,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1352,7 +1390,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1380,7 +1420,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1407,7 +1449,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -1435,7 +1479,9 @@ end subroutine get_albedo12m_netcdf
               cnt = cnt + 1
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
+!DJG Insert CHAN_DEPTH functionality... modify existing channel element elevation from surface elevation to surface minus chan depth...
+!             ZELEV(cnt) = ELRT(i,j) 
+             ZELEV(cnt) = ELRT(i,j) - CHAN_DEPTH(i,j)
               MannN(cnt) = MannNG(i,j)
               ChSSlp(cnt) = ChSSlpG(i,j)
               Bw(cnt) = BwG(i,j)
@@ -2416,8 +2462,8 @@ end subroutine get_albedo12m_netcdf
 #endif
     
 #ifdef MPP_LAND
-    call MPP_LAND_COM_REAL(qsgwrt, ixrt, jxrt, 99)
-    call MPP_LAND_COM_REAL(convgw, ixrt, jxrt, 99)
+    call MPP_LAND_COM_REAL(convgw, fxdim, fydim, 99)
+    call MPP_LAND_COM_REAL(qsgwrt, fxdim, fydim, 99)
     call write_IO_rt_real(latval,gLatval)
     call write_IO_rt_real(lonval,gLonval)
     call write_IO_rt_real(qsgwrt,gqsgwrt)
