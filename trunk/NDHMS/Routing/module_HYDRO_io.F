@@ -2416,6 +2416,8 @@ end subroutine get_albedo12m_netcdf
 #endif
     
 #ifdef MPP_LAND
+    call MPP_LAND_COM_REAL(qsgwrt, ixrt, jxrt, 99)
+    call MPP_LAND_COM_REAL(convgw, ixrt, jxrt, 99)
     call write_IO_rt_real(latval,gLatval)
     call write_IO_rt_real(lonval,gLonval)
     call write_IO_rt_real(qsgwrt,gqsgwrt)
