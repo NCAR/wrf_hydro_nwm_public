@@ -192,6 +192,12 @@ CONTAINS
               STC = rt_domain(did)%STC
               SMC = rt_domain(did)%SMC
               SH2OX = rt_domain(did)%SH2OX
+           else
+              if(nlst_rt(did)%sys_cpl .eq. 1) then
+                 where( abs(STC) .gt. 500) stc = 282
+                 where( abs(SMC) .gt. 500) SMC = 0.25
+                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+              endif
            endif
 #endif
         endif

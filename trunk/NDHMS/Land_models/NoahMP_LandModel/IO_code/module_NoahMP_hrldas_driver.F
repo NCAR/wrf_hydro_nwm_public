@@ -380,7 +380,7 @@ module module_NoahMP_hrldas_driver
 
 #ifdef MPP_LAND
    call MPI_INIT(ierr)
-   if (ierr /= MPI_SUCCESS) stop "MPI_INIT"
+   if (ierr /= MPI_SUCCESS) call hydro_stop()
    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
 #else
    rank = 0
