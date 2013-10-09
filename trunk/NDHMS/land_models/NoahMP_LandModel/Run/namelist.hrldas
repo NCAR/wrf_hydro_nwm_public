@@ -1,0 +1,80 @@
+&NOAHLSM_OFFLINE
+
+ HRLDAS_CONSTANTS_FILE = "/raid/weiyu/HRLDAS_V3.5_wrk/data/wrfinput_d01"
+ INDIR = "/raid/weiyu/HRLDAS_V3.5_wrk/data/"
+ MMF_RUNOFF_FILE = "/raid/weiyu/HRLDAS_V3.5_wrk/data/wrfleafxyz_d01.nc"
+
+ START_YEAR  = 2010
+ START_MONTH = 03
+ START_DAY   = 01
+ START_HOUR  = 00
+ START_MIN   = 00
+
+! START_YEAR  = 2007
+! START_MONTH = 11
+! START_DAY   = 01
+! START_HOUR  = 00
+! START_MIN   = 00
+
+
+! RESTART_FILENAME_REQUESTED = "RESTART.2010071900_DOMAIN1"
+
+! KDAY = 183
+ KDAY = 1
+! KDAY = 1
+
+ DYNAMIC_VEG_OPTION                = 4
+ CANOPY_STOMATAL_RESISTANCE_OPTION = 1
+ BTR_OPTION                        = 4
+ RUNOFF_OPTION                     = 3
+ SURFACE_DRAG_OPTION               = 1
+ FROZEN_SOIL_OPTION                = 1
+ SUPERCOOLED_WATER_OPTION          = 1
+ RADIATIVE_TRANSFER_OPTION         = 3
+ SNOW_ALBEDO_OPTION                = 2
+ PCP_PARTITION_OPTION              = 1
+ TBOT_OPTION                       = 1
+ TEMP_TIME_SCHEME_OPTION           = 1
+
+
+ FORCING_TIMESTEP = 3600
+ NOAH_TIMESTEP    = 3600
+ OUTPUT_TIMESTEP  = 3600
+! OUTPUT_TIMESTEP  = 176400
+
+ RESTART_FREQUENCY_HOURS = 0!240
+ ! Split output after split_output_count output times.
+ SPLIT_OUTPUT_COUNT = 0
+
+ ! XSTART = 20
+ ! XEND   = 20
+ ! YSTART = 203
+ ! YEND   = 203
+ ! XSTART = 904
+ ! XEND   = 924
+ ! YSTART = 533
+ ! YEND   = 553
+ ! XSTART = 1066
+ ! XEND   = 1106
+ ! YSTART = 532
+ ! YEND   = 572
+ ! XSTART = 104
+ ! XEND   = 104
+ ! YSTART = 98
+ ! YEND   = 98
+
+ NSOIL=4
+ soil_thick_input(1) = 0.10
+ soil_thick_input(2) = 0.30
+ soil_thick_input(3) = 0.60
+ soil_thick_input(4) = 1.00
+
+! ZLVL = 15.0
+ ZLVL = 30.0
+
+/
+
+&URBAN_OFFLINE
+ UCMCALL = 0
+ ZLVL_URBAN = 15.0
+/

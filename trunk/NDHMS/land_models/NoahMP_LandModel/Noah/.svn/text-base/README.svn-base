@@ -1,0 +1,41 @@
+Difference from HRLDAS_V3.5_gonzalo:
+
+module_sf_noahmp_glacier.F.current: none
+
+module_sf_noahmp_groundwater.F: none
+
+module_sf_noahmplsm.F.gonzalo: 
+
+- modify PONDING1 code to prevent excessive sublimation
+
+Diff in module_sf_noahmplsm.F.layer module_sf_noahmplsm.F.gonzalo:
+
+- add QDRAIN_SAVE  so that split timestep give the correct water balance
+
+***** .gonzalo is based on .layer *****
+
+module_sf_noahmplsm.F.gonzalo.1: before the change to prevent over sublimating in DIVIDE / PONDING1
+
+module_sf_noahmplsm.F.gonzalo.z0test:
+
+- modify limits on SAI/LAI
+
+- contains code for z0h test
+
+module_sf_noahmplsm.F.gonzalo.swap: 
+
+- modify limits on SAI/LAI
+
+- add calculation based on tanh(soil_moisture)
+
+- move TG calculation up into the iteration of vegetation
+
+module_sf_noahmplsm.F.gonzalo.swapz0h: from .swap
+
+- does not have tanh option
+
+- contains code for z0h test
+
+module_sf_noahmplsm.F.gonzalo.swap.avgwdf: from .swap
+
+- use interface soil moisture to calculate D,K

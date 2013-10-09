@@ -1223,6 +1223,8 @@
                        "gamma=",gamma,"hh=",hh,"beta=",beta,"dzdx=",dzdx,&
                        "so8RT=",so8RT(i,j,index),"latksat=",ksat, &
                        "tan(beta)=",tan(beta),i,j,z(i,j),z(IXX0,JYY0)
+                    print*, "ixx0=",ixx0, "jyy0=",jyy0
+                    print*, "soldep =", soldep(i,j), "nexp=",nexp
                  call hydro_stop() 
 #endif
               end if

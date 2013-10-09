@@ -1,0 +1,2433 @@
+program Noah_hrldas_driver
+
+  USE module_hrldas_netcdf_io
+  USE module_Noahlsm_utility
+  USE module_sf_noahmp_glacier
+!  USE module_sf_noahmplsm, ONLY : READ_MP_VEG_PARAMETERS, REDPRM, NOAHMP_OPTIONS, NOAHMP_SFLX, &
+!                                  LAITBL, SLCATS, LUCATS, CSOIL_DATA, BB, SATDK, SATDW, &
+!                                  F11, SATPSI, QTZ, DRYSMC, MAXSMC, REFSMC, WLTSMC, RSTBL, RGLTBL, HSTBL, NROTBL, &
+!				  TOPT_DATA, RSMAX_DATA, ZBOT_DATA, CZIL_DATA, FRZK_DATA, SLOPE_DATA, REFDK_DATA, &
+!				  REFKDT_DATA, LUTYPE,SNUPTBL, LAITBL,ALBTBL, SHDTBL, MAXALB,CMCMAX_DATA,CFACTR_DATA, &
+!				  SBETA_DATA, SALP_DATA  ,SMLOW_DATA ,SMHIGH_DATA, &
+!				  LAIMINTBL,LAIMAXTBL,EMISSMINTBL,EMISSMAXTBL, &
+!				  ALBEDOMINTBL,ALBEDOMAXTBL,Z0MINTBL,Z0MAXTBL
+  USE module_sf_noahmplsm
+  USE module_date_utilities
+!  USE veg_parameters, ONLY : READ_MP_VEG_PARAMETERS, ISURBAN, ISWATER
+
+  IMPLICIT NONE
+
+  character(len=9), parameter :: version = "v20130401"
+  integer :: LDASIN_VERSION
+
+!------------------------------------------------------------------------
+! Begin exact copy of declaration section from driver (substitute allocatable, remove intent)
+!------------------------------------------------------------------------
+
+! IN only (as defined in WRF)
+
+  INTEGER                                 ::  ITIMESTEP ! timestep number
+  INTEGER                                 ::  YR        ! 4-digit year
+  REAL                                    ::  JULIAN    ! Julian day
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  COSZIN    ! cosine zenith angle
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLATIN    ! latitude [rad]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  DZ8W      ! thickness of atmo layers [m]
+  REAL                                    ::  DT        ! timestep [s]
+  REAL,    ALLOCATABLE, DIMENSION(:)      ::  DZS       ! thickness of soil layers [m]
+  INTEGER                                 ::  NSOIL     ! number of soil layers
+  REAL                                    ::  DX        ! horizontal grid spacing [m]
+  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  IVGTYP    ! vegetation type
+  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISLTYP    ! soil type
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VEGFRA    ! vegetation fraction []
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VEGMAX    ! annual max vegetation fraction []
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TMN       ! deep soil temperature [K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAND     ! =2 ocean; =1 land/seaice
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XICE      ! fraction of grid that is seaice
+  REAL                                    ::  XICE_THRES! fraction of grid determining seaice
+  INTEGER                                 ::  ISICE     ! land cover category for ice
+  INTEGER                                 ::  ISURBAN   ! land cover category for urban
+  INTEGER                                 ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1   
+  INTEGER                                 ::  IOPT_CRS  ! canopy stomatal resistance (1-> Ball-Berry; 2->Jarvis)
+  INTEGER                                 ::  IOPT_BTR  ! soil moisture factor for stomatal resistance (1-> Noah; 2-> CLM; 3-> SSiB)
+  INTEGER                                 ::  IOPT_RUN  ! runoff and groundwater (1->SIMGM; 2->SIMTOP; 3->Schaake96; 4->BATS)
+  INTEGER                                 ::  IOPT_SFC  ! surface layer drag coeff (CH & CM) (1->M-O; 2->Chen97)
+  INTEGER                                 ::  IOPT_FRZ  ! supercooled liquid water (1-> NY06; 2->Koren99)
+  INTEGER                                 ::  IOPT_INF  ! frozen soil permeability (1-> NY06; 2->Koren99)
+  INTEGER                                 ::  IOPT_RAD  ! radiation transfer (1->gap=F(3D,cosz); 2->gap=0; 3->gap=1-Fveg)
+  INTEGER                                 ::  IOPT_ALB  ! snow surface albedo (1->BATS; 2->CLASS)
+  INTEGER                                 ::  IOPT_SNF  ! rainfall & snowfall (1-Jordan91; 2->BATS; 3->Noah)
+  INTEGER                                 ::  IOPT_TBOT ! lower boundary of soil temperature (1->zero-flux; 2->Noah)
+  INTEGER                                 ::  IOPT_STC  ! snow/soil temperature time scheme
+  INTEGER                                 ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T3D       ! 3D atmospheric temperature valid at mid-levels [K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV3D      ! 3D water vapor mixing ratio [kg/kg_dry]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  V_PHY     ! 3D V wind component [m/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SWDOWN    ! solar down at surface [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GLW       ! longwave down at surface [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  P8W3D     ! 3D pressure, valid at interface [Pa]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL    ! precipitation entering land model [mm]
+
+! INOUT (with generic LSM equivalent) (as defined in WRF)
+
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TSK       ! surface radiative temperature [K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  HFX       ! sensible heat flux [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QFX       ! latent heat flux [kg s-1 m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LH        ! latent heat flux [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GRDFLX    ! ground/snow heat flux [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SMSTAV    ! soil moisture avail. [not used]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SMSTOT    ! total soil water [mm][not used]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SFCRUNOFF ! accumulated surface runoff [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  UDRUNOFF  ! accumulated sub-surface runoff [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ALBEDO    ! total grid albedo []
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWC     ! snow cover fraction []
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS     ! volumetric soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O      ! volumetric liquid soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSLB      ! soil temperature [K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW      ! snow water equivalent [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH     ! physical snow depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANWAT    ! total canopy water + ice [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOM    ! accumulated snow melt leaving pack
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOW    ! accumulated snow on grid
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EMISS     ! surface bulk emissivity
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSFC      ! bulk surface specific humidity
+
+! INOUT (with no Noah LSM equivalent) (as defined in WRF)
+
+  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISNOWXY   ! actual no. of snow layers
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TVXY      ! vegetation leaf temperature
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGXY      ! bulk ground surface temperature
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANICEXY  ! canopy-intercepted ice (mm)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANLIQXY  ! canopy-intercepted liquid water (mm)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EAHXY     ! canopy air vapor pressure (pa)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TAHXY     ! canopy air temperature (k)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CMXY      ! bulk momentum drag coefficient
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHXY      ! bulk sensible heat exchange coefficient
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FWETXY    ! wetted or snowed fraction of the canopy (-)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNEQVOXY  ! snow mass at last time step(mm h2o)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ALBOLDXY  ! snow albedo at last time step (-)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSNOWXY   ! snowfall on the ground [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WSLAKEXY  ! lake water storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ZWTXY     ! water table depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WAXY      ! water in the "aquifer" [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WTXY      ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSNOXY    ! snow temperature [K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY   ! snow layer depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY   ! snow layer ice [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LFMASSXY  ! leaf mass [g/m2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RTMASSXY  ! mass of fine roots [g/m2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STMASSXY  ! stem mass [g/m2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WOODXY    ! mass of wood (incl. woody roots) [g/m2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STBLCPXY  ! stable carbon in deep soil [g/m2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FASTCPXY  ! short-lived carbon, shallow soil [g/m2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAIXY    ! leaf area index
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XSAIXY    ! stem area index
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TAUSSXY   ! snow age factor
+
+! OUT (with no Noah LSM equivalent) (as defined in WRF)
+   
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  T2MVXY    ! 2m temperature of vegetation part
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  T2MBXY    ! 2m temperature of bare ground part
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  Q2MVXY    ! 2m mixing ratio of vegetation part
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  Q2MBXY    ! 2m mixing ratio of bare ground part
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TRADXY    ! surface radiative temperature (k)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  NEEXY     ! net ecosys exchange (g/m2/s CO2)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GPPXY     ! gross primary assimilation [g/m2/s C]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  NPPXY     ! net primary productivity [g/m2/s C]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FVEGXY    ! Noah-MP vegetation fraction [-]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RUNSFXY   ! surface runoff [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RUNSBXY   ! subsurface runoff [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ECANXY    ! evaporation of intercepted water (mm/s)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EDIRXY    ! soil surface evaporation rate (mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ETRANXY   ! transpiration rate (mm/s)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FSAXY     ! total absorbed solar radiation (w/m2)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FIRAXY    ! total net longwave rad (w/m2) [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  APARXY    ! photosyn active energy by canopy (w/m2)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  PSNXY     ! total photosynthesis (umol co2/m2/s) [+]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SAVXY     ! solar rad absorbed by veg. (w/m2)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SAGXY     ! solar rad absorbed by ground (w/m2)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RSSUNXY   ! sunlit leaf stomatal resistance (s/m)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RSSHAXY   ! shaded leaf stomatal resistance (s/m)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  BGAPXY    ! between gap fraction
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WGAPXY    ! within gap fraction
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGVXY     ! under canopy ground temperature[K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGBXY     ! bare ground temperature [K]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHVXY     ! sensible heat exchange coefficient vegetated
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHBXY     ! sensible heat exchange coefficient bare-ground
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SHGXY     ! veg ground sen. heat [w/m2]   [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SHCXY     ! canopy sen. heat [w/m2]   [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SHBXY     ! bare sensible heat [w/m2]  [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EVGXY     ! veg ground evap. heat [w/m2]  [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EVBXY     ! bare soil evaporation [w/m2]  [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GHVXY     ! veg ground heat flux [w/m2]  [+ to soil]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GHBXY     ! bare ground heat flux [w/m2] [+ to soil]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  IRGXY     ! veg ground net LW rad. [w/m2] [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  IRCXY     ! canopy net LW rad. [w/m2] [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  IRBXY     ! bare net longwave rad. [w/m2] [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TRXY      ! transpiration [w/m2]  [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EVCXY     ! canopy evaporation heat [w/m2]  [+ to atm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHLEAFXY  ! leaf exchange coefficient 
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHUCXY    ! under canopy exchange coefficient 
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHV2XY    ! veg 2m exchange coefficient 
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHB2XY    ! bare 2m exchange coefficient 
+  INTEGER   ::  ids,ide, jds,jde, kds,kde,  &  ! d -> domain
+   &         ims,ime, jms,jme, kms,kme,  &  ! m -> memory
+   &         its,ite, jts,jte, kts,kte   ! t -> tile
+
+
+! 1D equivalent of 2D/3D fields
+
+! IN only
+
+    REAL                                :: COSZ         ! cosine zenith angle
+    REAL                                :: LAT          ! latitude [rad]
+    REAL                                :: Z_ML         ! model height [m]
+    INTEGER                             :: VEGTYP       ! vegetation type
+    INTEGER                             :: SOILTYP      ! soil type
+    REAL                                :: FVEG         ! vegetation fraction [-]
+    REAL                                :: FVGMAX       ! annual max vegetation fraction []
+    REAL                                :: TBOT         ! deep soil temperature [K]
+    REAL                                :: T_ML         ! temperature valid at mid-levels [K]
+    REAL                                :: Q_ML         ! water vapor mixing ratio [kg/kg_dry]
+    REAL                                :: U_ML         ! U wind component [m/s]
+    REAL                                :: V_ML         ! V wind component [m/s]
+    REAL                                :: SWDN         ! solar down at surface [W m-2]
+    REAL                                :: LWDN         ! longwave down at surface [W m-2]
+    REAL                                :: P_ML         ! pressure, valid at interface [Pa]
+    REAL                                :: PSFC         ! surface pressure [Pa]
+    REAL                                :: PRCP         ! precipitation entering land model [mm]
+
+! INOUT (with generic LSM equivalent)
+
+    REAL                                :: FSH          ! total sensible heat (w/m2) [+ to atm]
+    REAL                                :: SSOIL        ! soil heat heat (w/m2) 
+    REAL                                :: SALB         ! surface albedo (-)
+    REAL                                :: FSNO         ! snow cover fraction (-)
+    REAL, ALLOCATABLE, DIMENSION(:)     :: SMC          ! vol. soil moisture (m3/m3)
+    REAL, ALLOCATABLE, DIMENSION(:)     :: SMH2O        ! vol. soil liquid water (m3/m3)
+    REAL, ALLOCATABLE, DIMENSION(:)     :: STC          ! snow/soil tmperatures
+    REAL                                :: SWE          ! snow water equivalent (mm)
+    REAL                                :: SNDPTH       ! snow depth (m)
+    REAL                                :: EMISSI       ! net surface emissivity
+    REAL                                :: QSFC1D       ! bulk surface specific humidity
+
+! INOUT (with no Noah LSM equivalent)
+
+    INTEGER                             :: ISNOW        ! actual no. of snow layers
+    REAL                                :: TV           ! vegetation canopy temperature
+    REAL                                :: TG           ! ground surface temperature
+    REAL                                :: CANICE       ! canopy-intercepted ice (mm)
+    REAL                                :: CANLIQ       ! canopy-intercepted liquid water (mm)
+    REAL                                :: EAH          ! canopy air vapor pressure (pa)
+    REAL                                :: TAH          ! canopy air temperature (k)
+    REAL                                :: CM           ! momentum drag coefficient
+    REAL                                :: CH           ! sensible heat exchange coefficient
+    REAL                                :: FWET         ! wetted or snowed fraction of the canopy (-)
+    REAL                                :: SNEQVO       ! snow mass at last time step(mm h2o)
+    REAL                                :: ALBOLD       ! snow albedo at last time step (-)
+    REAL                                :: QSNOW        ! snowfall on the ground [mm/s]
+    REAL                                :: WSLAKE       ! lake water storage [mm]
+    REAL                                :: ZWT          ! water table depth [m]
+    REAL                                :: WA           ! water in the "aquifer" [mm]
+    REAL                                :: WT           ! groundwater storage [mm]
+    REAL, ALLOCATABLE, DIMENSION(:)     :: ZSNSO        ! snow layer depth [m]
+    REAL, ALLOCATABLE, DIMENSION(:)     :: SNICE        ! snow layer ice [mm]
+    REAL, ALLOCATABLE, DIMENSION(:)     :: SNLIQ        ! snow layer liquid water [mm]
+    REAL                                :: LFMASS       ! leaf mass [g/m2]
+    REAL                                :: RTMASS       ! mass of fine roots [g/m2]
+    REAL                                :: STMASS       ! stem mass [g/m2]
+    REAL                                :: WOOD         ! mass of wood (incl. woody roots) [g/m2]
+    REAL                                :: STBLCP       ! stable carbon in deep soil [g/m2]
+    REAL                                :: FASTCP       ! short-lived carbon, shallow soil [g/m2]
+    REAL                                :: PLAI         ! leaf area index
+    REAL                                :: PSAI         ! stem area index
+    REAL                                :: TAUSS        ! non-dimensional snow age
+
+! OUT (with no Noah LSM equivalent)
+
+    REAL                                :: T2MV         ! 2m temperature of vegetation part
+    REAL                                :: T2MB         ! 2m temperature of bare ground part
+    REAL                                :: Q2MV         ! 2m mixing ratio of vegetation part
+    REAL                                :: Q2MB         ! 2m mixing ratio of bare ground part
+    REAL                                :: TRAD         ! surface radiative temperature (k)
+    REAL                                :: NEE          ! net ecosys exchange (g/m2/s CO2)
+    REAL                                :: GPP          ! gross primary assimilation [g/m2/s C]
+    REAL                                :: NPP          ! net primary productivity [g/m2/s C]
+    REAL                                :: FVEGMP       ! greenness vegetation fraction [-]
+    REAL                                :: RUNSF        ! surface runoff [mm/s]
+    REAL                                :: RUNSB        ! subsurface runoff [mm/s]
+    REAL                                :: ECAN         ! evaporation of intercepted water (mm/s)
+    REAL                                :: ETRAN        ! transpiration rate (mm/s)
+    REAL                                :: ESOIL        ! soil surface evaporation rate (mm/s]
+    REAL                                :: FSA          ! total absorbed solar radiation (w/m2)
+    REAL                                :: FIRA         ! total net longwave rad (w/m2) [+ to atm]
+    REAL                                :: APAR         ! photosyn active energy by canopy (w/m2)
+    REAL                                :: PSN          ! total photosynthesis (umol co2/m2/s) [+]
+    REAL                                :: SAV          ! solar rad absorbed by veg. (w/m2)
+    REAL                                :: SAG          ! solar rad absorbed by ground (w/m2)
+    REAL                                :: RSSUN        ! sunlit leaf stomatal resistance (s/m)
+    REAL                                :: RSSHA        ! shaded leaf stomatal resistance (s/m)
+    REAL                                :: BGAP         ! between gap fraction
+    REAL                                :: WGAP         ! within gap fraction
+    REAL                                :: TGV          ! under canopy ground temperature[K]
+    REAL                                :: TGB          ! bare ground temperature [K]
+    REAL                                :: CHV          ! sensible heat exchange coefficient vegetated
+    REAL                                :: CHB          ! sensible heat exchange coefficient bare-ground
+    REAL                                :: IRC          ! canopy net LW rad. [w/m2] [+ to atm]
+    REAL                                :: IRG          ! veg ground net LW rad. [w/m2] [+ to atm]
+    REAL                                :: SHC          ! canopy sen. heat [w/m2]   [+ to atm]
+    REAL                                :: SHG          ! veg ground sen. heat [w/m2]   [+ to atm]
+    REAL                                :: EVG          ! veg ground evap. heat [w/m2]  [+ to atm]
+    REAL                                :: GHV          ! veg ground heat flux [w/m2]  [+ to soil]
+    REAL                                :: IRB          ! bare net longwave rad. [w/m2] [+ to atm]
+    REAL                                :: SHB          ! bare sensible heat [w/m2]     [+ to atm]
+    REAL                                :: EVB          ! bare evaporation heat [w/m2]  [+ to atm]
+    REAL                                :: GHB          ! bare ground heat flux [w/m2] [+ to soil]
+    REAL                                :: TR           ! transpiration [w/m2]  [+ to atm]
+    REAL                                :: EVC          ! canopy evaporation heat [w/m2]  [+ to atm]
+    REAL                                :: CHLEAF       ! leaf exchange coefficient 
+    REAL                                :: CHUC         ! under canopy exchange coefficient 
+    REAL                                :: CHV2         ! veg 2m exchange coefficient 
+    REAL                                :: CHB2         ! bare 2m exchange coefficient 
+
+! Intermediate terms
+
+    REAL                                :: FPICE        ! snow fraction of precip
+    REAL                                :: FCEV         ! canopy evaporation heat (w/m2) [+ to atm]
+    REAL                                :: FGEV         ! ground evaporation heat (w/m2) [+ to atm]
+    REAL                                :: FCTR         ! transpiration heat flux (w/m2) [+ to atm]
+    REAL                                :: QSNBOT       ! snowmelt out bottom of pack [mm/s]
+    REAL                                :: PONDING      ! snowmelt with no pack [mm]
+    REAL                                :: PONDING1     ! snowmelt with no pack [mm]
+    REAL                                :: PONDING2     ! snowmelt with no pack [mm]
+
+! Local terms
+
+    REAL                                :: FSR          ! total reflected solar radiation (w/m2)
+    REAL, ALLOCATABLE, DIMENSION(:)     :: FICEOLD      ! snow layer ice fraction []
+    REAL                                :: CO2PP        ! CO2 partial pressure [Pa]
+    REAL                                :: O2PP         ! O2 partial pressure [Pa]
+    REAL, ALLOCATABLE, DIMENSION(:)     :: ZSOIL        ! depth to soil interfaces [m]
+    REAL                                :: FOLN         ! nitrogen saturation [%]
+
+    REAL                                :: QC           ! cloud specific humidity for MYJ [not used]
+    REAL                                :: PBLH         ! PBL height for MYJ [not used]
+    REAL                                :: DZ8W1D       ! model level heights for MYJ [not used]
+
+    INTEGER                             :: I
+    INTEGER                             :: J
+    INTEGER                             :: K
+    INTEGER                             :: ICE
+    INTEGER                             :: SLOPETYP
+    LOGICAL                             :: IPRINT
+
+    INTEGER                             :: ISC          ! soil color index
+    INTEGER                             :: IST          ! surface type 1-soil; 2-lake
+    INTEGER                             :: YEARLEN
+
+    INTEGER, PARAMETER                  :: NSNOW = 3    ! number of snow layers fixed to 3
+    REAL, PARAMETER                     :: CO2 = 395.e-06
+    REAL, PARAMETER                     :: O2 = 0.209
+    REAL, PARAMETER                     :: undefined_value = -1.E36
+
+!------------------------------------------------------------------------
+! End exact copy of declaration section from driver
+!------------------------------------------------------------------------
+
+!    INTEGER                             :: ISWATER      ! land cover category for water
+!    REAL, ALLOCATABLE, DIMENSION(:)     :: SLDPTH       ! depth to soil interfaces [m]
+
+!------------------------------------------------------------------------
+! Needed for NoahMP init
+!------------------------------------------------------------------------
+
+  LOGICAL                                 ::  FNDSOILW    ! soil water present in input
+  LOGICAL                                 ::  FNDSNOWH    ! snow depth present in input
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHSTARXY    ! for consistency with MP_init; delete later
+
+!------------------------------------------------------------------------
+! 2D variables not used in WRF - should be removed?
+!------------------------------------------------------------------------
+
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLONIN      ! longitude
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TERRAIN     ! terrain height
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GVFMIN      ! annual minimum in vegetation fraction
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GVFMAX      ! annual maximum in vegetation fraction
+
+!------------------------------------------------------------------------
+! End 2D variables not used in WRF
+!------------------------------------------------------------------------
+
+  CHARACTER(LEN=256) :: MMINSL  = 'STAS'  ! soil classification
+  CHARACTER(LEN=256) :: LLANDUSE          ! (=USGS, using USGS landuse classification)
+
+!------------------------------------------------------------------------
+! Timing:
+!------------------------------------------------------------------------
+
+  INTEGER :: ITIME          ! timestep loop
+  INTEGER :: NTIME          ! timesteps
+  integer :: clock_count_1 = 0
+  integer :: clock_count_2 = 0
+  integer :: clock_rate    = 0
+  real    :: timing_sum    = 0.0
+
+  integer :: sflx_count_sum
+  integer :: count_before_sflx
+  integer :: count_after_sflx
+
+!---------------------------------------------------------------------
+!  DECLARE/Initialize constants
+!---------------------------------------------------------------------
+
+! barlage check if needed  REAL, PARAMETER :: R=287.04
+!  REAL, PARAMETER :: CPHEAT=1004.5
+!  INTEGER, PARAMETER :: LAND=1
+
+!---------------------------------------------------------------------
+!  File naming, parallel
+!---------------------------------------------------------------------
+
+  character(len=19)  :: olddate, newdate, startdate
+  character          :: hgrid
+  integer            :: igrid
+  logical            :: lexist
+  integer            :: imode
+  integer            :: ixfull
+  integer            :: jxfull
+  integer            :: ixpar
+  integer            :: jxpar
+  integer            :: xstartpar
+  integer            :: ystartpar
+  integer            :: rank = 0
+  CHARACTER(len=256) :: inflnm, outflnm, inflnm_template
+  logical            :: restart_flag
+  character(len=256) :: restart_flnm
+  integer            :: ierr
+
+!---------------------------------------------------------------------
+! Attributes from LDASIN input file (or HRLDAS_CONSTANTS_FILE, as the case may be)
+!---------------------------------------------------------------------
+
+  INTEGER           :: IX
+  INTEGER           :: JX
+  REAL              :: DY
+  REAL              :: TRUELAT1
+  REAL              :: TRUELAT2
+  REAL              :: CEN_LON
+  INTEGER           :: MAPPROJ
+  REAL              :: LAT1
+  REAL              :: LON1
+
+!---------------------------------------------------------------------
+!  NAMELIST start
+!---------------------------------------------------------------------
+
+  character(len=256) :: indir
+  ! nsoil defined above
+  ! zsoil defined above
+  integer            :: forcing_timestep
+  integer            :: noah_timestep
+  integer            :: start_year
+  integer            :: start_month
+  integer            :: start_day
+  integer            :: start_hour
+  integer            :: start_min
+  character(len=256) :: outdir = "."
+  character(len=256) :: restart_filename_requested = " "
+  integer            :: restart_frequency_hours
+  integer            :: output_timestep
+
+  integer            :: dynamic_veg_option
+  integer            :: canopy_stomatal_resistance_option
+  integer            :: btr_option
+  integer            :: runoff_option
+  integer            :: surface_drag_option
+  integer            :: supercooled_water_option
+  integer            :: frozen_soil_option
+  integer            :: radiative_transfer_option
+  integer            :: snow_albedo_option
+  integer            :: pcp_partition_option
+  integer            :: tbot_option
+  integer            :: temp_time_scheme_option
+
+  integer            :: split_output_count = 1
+  integer            :: khour
+  integer            :: kday
+  real               :: zlvl 
+  character(len=256) :: hrldas_constants_file = " "
+  character(len=256) :: external_fpar_filename_template = " "
+  character(len=256) :: external_lai_filename_template = " "
+  integer            :: xstart = 1
+  integer            :: ystart = 1
+  integer            ::   xend = 0
+  integer            ::   yend = 0
+  REAL, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
+  REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
+
+  namelist / NOAHLSM_OFFLINE / indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
+       start_year, start_month, start_day, start_hour, start_min, &
+       outdir, &
+       restart_filename_requested, restart_frequency_hours, output_timestep, &
+
+       dynamic_veg_option, canopy_stomatal_resistance_option, &
+       btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
+       frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
+       pcp_partition_option, tbot_option, temp_time_scheme_option, &
+
+       split_output_count, & 
+       khour, kday, zlvl, hrldas_constants_file, &
+       external_fpar_filename_template, external_lai_filename_template, &
+       xstart, xend, ystart, yend
+
+  ! Initialize namelist variables to dummy values, so we can tell
+  ! if they have not been set properly.
+
+  nsoil                   = undefined_value
+  soil_thick_input        = undefined_value
+  dt                      = undefined_value
+  start_year              = undefined_value
+  start_month             = undefined_value
+  start_day               = undefined_value
+  start_hour              = undefined_value
+  start_min               = undefined_value
+  khour                   = undefined_value
+  kday                    = undefined_value
+  zlvl                    = undefined_value
+  forcing_timestep        = undefined_value
+  noah_timestep           = undefined_value
+  output_timestep         = undefined_value
+  restart_frequency_hours = undefined_value
+
+  open(30, file="namelist.hrldas", form="FORMATTED")
+  read(30, NOAHLSM_OFFLINE, iostat=ierr)
+  if (ierr /= 0) then
+     write(*,'(/," ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE",/)')
+     rewind(30)
+     read(30, NOAHLSM_OFFLINE)
+     stop " ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE"
+  endif
+  close(30)
+
+  dt = real(noah_timestep)
+!---------------------------------------------------------------------
+!  NAMELIST end
+!---------------------------------------------------------------------
+
+!---------------------------------------------------------------------
+!  NAMELIST check begin
+!---------------------------------------------------------------------
+
+  if (nsoil < 0) then
+     stop " ***** ERROR: NSOIL must be set in the namelist."
+  endif
+
+  if ((khour < 0) .and. (kday < 0)) then
+     write(*, '(" ***** Namelist error: ************************************")')
+     write(*, '(" ***** ")')
+     write(*, '(" *****      Either KHOUR or KDAY must be defined.")')
+     write(*, '(" ***** ")')
+     stop
+  else if (( khour < 0 ) .and. (kday > 0)) then
+     khour = kday * 24
+  else if ((khour > 0) .and. (kday > 0)) then
+     write(*, '("Namelist warning:  KHOUR and KDAY both defined.")')
+  else
+     ! all is well.  KHOUR defined
+  endif
+
+  if (forcing_timestep < 0) then
+        write(*, *)
+        write(*, '(" ***** Namelist error: *****************************************")')
+        write(*, '(" ***** ")')
+        write(*, '(" *****       FORCING_TIMESTEP needs to be set greater than zero.")')
+        write(*, '(" ***** ")')
+        write(*, *)
+        stop
+  endif
+
+  if (noah_timestep < 0) then
+        write(*, *)
+        write(*, '(" ***** Namelist error: *****************************************")')
+        write(*, '(" ***** ")')
+        write(*, '(" *****       NOAH_TIMESTEP needs to be set greater than zero.")')
+        write(*, '(" *****                     900 seconds is recommended.       ")')
+        write(*, '(" ***** ")')
+        write(*, *)
+        stop
+  endif
+
+  !
+  ! Check that OUTPUT_TIMESTEP fits into NOAH_TIMESTEP:
+  !
+  if (output_timestep /= 0) then
+     if (mod(output_timestep, noah_timestep) > 0) then
+        write(*, *)
+        write(*, '(" ***** Namelist error: *********************************************************")')
+        write(*, '(" ***** ")')
+        write(*, '(" *****       OUTPUT_TIMESTEP should set to an integer multiple of NOAH_TIMESTEP.")')
+        write(*, '(" *****            OUTPUT_TIMESTEP = ", I12, " seconds")') output_timestep
+        write(*, '(" *****            NOAH_TIMESTEP   = ", I12, " seconds")') noah_timestep
+        write(*, '(" ***** ")')
+        write(*, *)
+        stop
+     endif
+  endif
+
+  !
+  ! Check that RESTART_FREQUENCY_HOURS fits into NOAH_TIMESTEP:
+  !
+  if (restart_frequency_hours /= 0) then
+     if (mod(restart_frequency_hours*3600, noah_timestep) > 0) then
+        write(*, *)
+        write(*, '(" ***** Namelist error: ******************************************************")')
+        write(*, '(" ***** ")')
+        write(*, '(" *****       RESTART_FREQUENCY_HOURS (converted to seconds) should set to an ")')
+        write(*, '(" *****       integer multiple of NOAH_TIMESTEP.")')
+        write(*, '(" *****            RESTART_FREQUENCY_HOURS = ", I12, " hours:  ", I12, " seconds")') &
+             restart_frequency_hours, restart_frequency_hours*3600
+        write(*, '(" *****            NOAH_TIMESTEP           = ", I12, " seconds")') noah_timestep
+        write(*, '(" ***** ")')
+        write(*, *)
+        stop
+     endif
+  endif
+
+  if (dynamic_veg_option == 2) then
+     if ( canopy_stomatal_resistance_option /= 1) then
+        write(*, *)
+        write(*, '(" ***** Namelist error: ******************************************************")')
+        write(*, '(" ***** ")')
+        write(*, '(" *****       CANOPY_STOMATAL_RESISTANCE_OPTION must be 1 when DYNAMIC_VEG_OPTION == 2")')
+        write(*, *)
+        stop
+     endif
+  endif
+
+!---------------------------------------------------------------------
+!  NAMELIST check end
+!---------------------------------------------------------------------
+
+!----------------------------------------------------------------------
+! Initialize gridded domain
+!----------------------------------------------------------------------
+
+  call read_hrldas_hdrinfo(hrldas_constants_file, ix, jx, &
+       xstart, xend, ystart, yend, &
+       iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
+       igrid, mapproj)
+  write(hgrid,'(I1)') igrid
+
+  write(olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
+       start_year, start_month, start_day, start_hour, start_min, 0
+
+  startdate = olddate
+  
+!---------------------------------------------------------------------
+!  Allocate multi-dimension fields for subwindow calculation
+!---------------------------------------------------------------------
+
+  ixfull = xend-xstart+1
+  jxfull = yend-ystart+1
+
+  ixpar = ixfull
+  jxpar = jxfull
+  xstartpar = 1
+  ystartpar = 1
+
+  ALLOCATE ( COSZIN    (XSTART:XEND,YSTART:YEND) )    ! cosine zenith angle
+  ALLOCATE ( XLATIN    (XSTART:XEND,YSTART:YEND) )    ! latitude [rad]
+  ALLOCATE ( DZ8W      (XSTART:XEND,1,YSTART:YEND) )  ! thickness of atmo layers [m]
+  ALLOCATE ( DZS       (1:NSOIL)                   )  ! thickness of soil layers [m]
+  ALLOCATE ( IVGTYP    (XSTART:XEND,YSTART:YEND) )    ! vegetation type
+  ALLOCATE ( ISLTYP    (XSTART:XEND,YSTART:YEND) )    ! soil type
+  ALLOCATE ( VEGFRA    (XSTART:XEND,YSTART:YEND) )    ! vegetation fraction []
+  ALLOCATE ( VEGMAX    (XSTART:XEND,YSTART:YEND) )    ! annual max vegetation fraction []
+  ALLOCATE ( TMN       (XSTART:XEND,YSTART:YEND) )    ! deep soil temperature [K]
+  ALLOCATE ( XLAND     (XSTART:XEND,YSTART:YEND) )    ! =2 ocean; =1 land/seaice
+  ALLOCATE ( XICE      (XSTART:XEND,YSTART:YEND) )    ! fraction of grid that is seaice
+  ALLOCATE ( T3D       (XSTART:XEND,1,YSTART:YEND) )  ! 3D atmospheric temperature valid at mid-levels [K]
+  ALLOCATE ( QV3D      (XSTART:XEND,1,YSTART:YEND) )  ! 3D water vapor mixing ratio [kg/kg_dry]
+  ALLOCATE ( U_PHY     (XSTART:XEND,1,YSTART:YEND) )  ! 3D U wind component [m/s]
+  ALLOCATE ( V_PHY     (XSTART:XEND,1,YSTART:YEND) )  ! 3D V wind component [m/s]
+  ALLOCATE ( SWDOWN    (XSTART:XEND,YSTART:YEND) )    ! solar down at surface [W m-2]
+  ALLOCATE ( GLW       (XSTART:XEND,YSTART:YEND) )    ! longwave down at surface [W m-2]
+  ALLOCATE ( P8W3D     (XSTART:XEND,2,YSTART:YEND) )  ! 3D pressure, valid at interface [Pa]
+  ALLOCATE ( RAINBL    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
+
+! INOUT (with generic LSM equivalent) (as defined in WRF)
+
+  ALLOCATE ( TSK       (XSTART:XEND,YSTART:YEND) )  ! surface radiative temperature [K]
+  ALLOCATE ( HFX       (XSTART:XEND,YSTART:YEND) )  ! sensible heat flux [W m-2]
+  ALLOCATE ( QFX       (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [kg s-1 m-2]
+  ALLOCATE ( LH        (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [W m-2]
+  ALLOCATE ( GRDFLX    (XSTART:XEND,YSTART:YEND) )  ! ground/snow heat flux [W m-2]
+  ALLOCATE ( SMSTAV    (XSTART:XEND,YSTART:YEND) )  ! soil moisture avail. [not used]
+  ALLOCATE ( SMSTOT    (XSTART:XEND,YSTART:YEND) )  ! total soil water [mm][not used]
+  ALLOCATE ( SFCRUNOFF (XSTART:XEND,YSTART:YEND) )  ! accumulated surface runoff [m]
+  ALLOCATE ( UDRUNOFF  (XSTART:XEND,YSTART:YEND) )  ! accumulated sub-surface runoff [m]
+  ALLOCATE ( ALBEDO    (XSTART:XEND,YSTART:YEND) )  ! total grid albedo []
+  ALLOCATE ( SNOWC     (XSTART:XEND,YSTART:YEND) )  ! snow cover fraction []
+  ALLOCATE ( SMOIS     (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! volumetric soil moisture [m3/m3]
+  ALLOCATE ( SH2O      (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! volumetric liquid soil moisture [m3/m3]
+  ALLOCATE ( TSLB      (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! soil temperature [K]
+  ALLOCATE ( SNOW      (XSTART:XEND,YSTART:YEND) )  ! snow water equivalent [mm]
+  ALLOCATE ( SNOWH     (XSTART:XEND,YSTART:YEND) )  ! physical snow depth [m]
+  ALLOCATE ( CANWAT    (XSTART:XEND,YSTART:YEND) )  ! total canopy water + ice [mm]
+  ALLOCATE ( ACSNOM    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow melt leaving pack
+  ALLOCATE ( ACSNOW    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow on grid
+  ALLOCATE ( EMISS     (XSTART:XEND,YSTART:YEND) )  ! surface bulk emissivity
+  ALLOCATE ( QSFC      (XSTART:XEND,YSTART:YEND) )  ! bulk surface specific humidity
+
+! INOUT (with no Noah LSM equivalent) (as defined in WRF)
+
+  ALLOCATE ( ISNOWXY   (XSTART:XEND,YSTART:YEND) )  ! actual no. of snow layers
+  ALLOCATE ( TVXY      (XSTART:XEND,YSTART:YEND) )  ! vegetation leaf temperature
+  ALLOCATE ( TGXY      (XSTART:XEND,YSTART:YEND) )  ! bulk ground surface temperature
+  ALLOCATE ( CANICEXY  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted ice (mm)
+  ALLOCATE ( CANLIQXY  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted liquid water (mm)
+  ALLOCATE ( EAHXY     (XSTART:XEND,YSTART:YEND) )  ! canopy air vapor pressure (pa)
+  ALLOCATE ( TAHXY     (XSTART:XEND,YSTART:YEND) )  ! canopy air temperature (k)
+  ALLOCATE ( CMXY      (XSTART:XEND,YSTART:YEND) )  ! bulk momentum drag coefficient
+  ALLOCATE ( CHXY      (XSTART:XEND,YSTART:YEND) )  ! bulk sensible heat exchange coefficient
+  ALLOCATE ( FWETXY    (XSTART:XEND,YSTART:YEND) )  ! wetted or snowed fraction of the canopy (-)
+  ALLOCATE ( SNEQVOXY  (XSTART:XEND,YSTART:YEND) )  ! snow mass at last time step(mm h2o)
+  ALLOCATE ( ALBOLDXY  (XSTART:XEND,YSTART:YEND) )  ! snow albedo at last time step (-)
+  ALLOCATE ( QSNOWXY   (XSTART:XEND,YSTART:YEND) )  ! snowfall on the ground [mm/s]
+  ALLOCATE ( WSLAKEXY  (XSTART:XEND,YSTART:YEND) )  ! lake water storage [mm]
+  ALLOCATE ( ZWTXY     (XSTART:XEND,YSTART:YEND) )  ! water table depth [m]
+  ALLOCATE ( WAXY      (XSTART:XEND,YSTART:YEND) )  ! water in the "aquifer" [mm]
+  ALLOCATE ( WTXY      (XSTART:XEND,YSTART:YEND) )  ! groundwater storage [mm]
+  ALLOCATE ( TSNOXY    (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow temperature [K]
+  ALLOCATE ( ZSNSOXY   (XSTART:XEND,-NSNOW+1:NSOIL,YSTART:YEND) )  ! snow layer depth [m]
+  ALLOCATE ( SNICEXY   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow layer ice [mm]
+  ALLOCATE ( SNLIQXY   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow layer liquid water [mm]
+  ALLOCATE ( LFMASSXY  (XSTART:XEND,YSTART:YEND) )  ! leaf mass [g/m2]
+  ALLOCATE ( RTMASSXY  (XSTART:XEND,YSTART:YEND) )  ! mass of fine roots [g/m2]
+  ALLOCATE ( STMASSXY  (XSTART:XEND,YSTART:YEND) )  ! stem mass [g/m2]
+  ALLOCATE ( WOODXY    (XSTART:XEND,YSTART:YEND) )  ! mass of wood (incl. woody roots) [g/m2]
+  ALLOCATE ( STBLCPXY  (XSTART:XEND,YSTART:YEND) )  ! stable carbon in deep soil [g/m2]
+  ALLOCATE ( FASTCPXY  (XSTART:XEND,YSTART:YEND) )  ! short-lived carbon, shallow soil [g/m2]
+  ALLOCATE ( XLAIXY    (XSTART:XEND,YSTART:YEND) )  ! leaf area index
+  ALLOCATE ( XSAIXY    (XSTART:XEND,YSTART:YEND) )  ! stem area index
+  ALLOCATE ( TAUSSXY   (XSTART:XEND,YSTART:YEND) )  ! snow age factor
+
+! OUT (with no Noah LSM equivalent) (as defined in WRF)
+   
+  ALLOCATE ( T2MVXY    (XSTART:XEND,YSTART:YEND) )  ! 2m temperature of vegetation part
+  ALLOCATE ( T2MBXY    (XSTART:XEND,YSTART:YEND) )  ! 2m temperature of bare ground part
+  ALLOCATE ( Q2MVXY    (XSTART:XEND,YSTART:YEND) )  ! 2m mixing ratio of vegetation part
+  ALLOCATE ( Q2MBXY    (XSTART:XEND,YSTART:YEND) )  ! 2m mixing ratio of bare ground part
+  ALLOCATE ( TRADXY    (XSTART:XEND,YSTART:YEND) )  ! surface radiative temperature (k)
+  ALLOCATE ( NEEXY     (XSTART:XEND,YSTART:YEND) )  ! net ecosys exchange (g/m2/s CO2)
+  ALLOCATE ( GPPXY     (XSTART:XEND,YSTART:YEND) )  ! gross primary assimilation [g/m2/s C]
+  ALLOCATE ( NPPXY     (XSTART:XEND,YSTART:YEND) )  ! net primary productivity [g/m2/s C]
+  ALLOCATE ( FVEGXY    (XSTART:XEND,YSTART:YEND) )  ! Noah-MP vegetation fraction [-]
+  ALLOCATE ( RUNSFXY   (XSTART:XEND,YSTART:YEND) )  ! surface runoff [mm/s]
+  ALLOCATE ( RUNSBXY   (XSTART:XEND,YSTART:YEND) )  ! subsurface runoff [mm/s]
+  ALLOCATE ( ECANXY    (XSTART:XEND,YSTART:YEND) )  ! evaporation of intercepted water (mm/s)
+  ALLOCATE ( EDIRXY    (XSTART:XEND,YSTART:YEND) )  ! soil surface evaporation rate (mm/s]
+  ALLOCATE ( ETRANXY   (XSTART:XEND,YSTART:YEND) )  ! transpiration rate (mm/s)
+  ALLOCATE ( FSAXY     (XSTART:XEND,YSTART:YEND) )  ! total absorbed solar radiation (w/m2)
+  ALLOCATE ( FIRAXY    (XSTART:XEND,YSTART:YEND) )  ! total net longwave rad (w/m2) [+ to atm]
+  ALLOCATE ( APARXY    (XSTART:XEND,YSTART:YEND) )  ! photosyn active energy by canopy (w/m2)
+  ALLOCATE ( PSNXY     (XSTART:XEND,YSTART:YEND) )  ! total photosynthesis (umol co2/m2/s) [+]
+  ALLOCATE ( SAVXY     (XSTART:XEND,YSTART:YEND) )  ! solar rad absorbed by veg. (w/m2)
+  ALLOCATE ( SAGXY     (XSTART:XEND,YSTART:YEND) )  ! solar rad absorbed by ground (w/m2)
+  ALLOCATE ( RSSUNXY   (XSTART:XEND,YSTART:YEND) )  ! sunlit leaf stomatal resistance (s/m)
+  ALLOCATE ( RSSHAXY   (XSTART:XEND,YSTART:YEND) )  ! shaded leaf stomatal resistance (s/m)
+  ALLOCATE ( BGAPXY    (XSTART:XEND,YSTART:YEND) )  ! between gap fraction
+  ALLOCATE ( WGAPXY    (XSTART:XEND,YSTART:YEND) )  ! within gap fraction
+  ALLOCATE ( TGVXY     (XSTART:XEND,YSTART:YEND) )  ! under canopy ground temperature[K]
+  ALLOCATE ( TGBXY     (XSTART:XEND,YSTART:YEND) )  ! bare ground temperature [K]
+  ALLOCATE ( CHVXY     (XSTART:XEND,YSTART:YEND) )  ! sensible heat exchange coefficient vegetated
+  ALLOCATE ( CHBXY     (XSTART:XEND,YSTART:YEND) )  ! sensible heat exchange coefficient bare-ground
+  ALLOCATE ( SHGXY     (XSTART:XEND,YSTART:YEND) )  ! veg ground sen. heat [w/m2]   [+ to atm]
+  ALLOCATE ( SHCXY     (XSTART:XEND,YSTART:YEND) )  ! canopy sen. heat [w/m2]   [+ to atm]
+  ALLOCATE ( SHBXY     (XSTART:XEND,YSTART:YEND) )  ! bare sensible heat [w/m2]  [+ to atm]
+  ALLOCATE ( EVGXY     (XSTART:XEND,YSTART:YEND) )  ! veg ground evap. heat [w/m2]  [+ to atm]
+  ALLOCATE ( EVBXY     (XSTART:XEND,YSTART:YEND) )  ! bare soil evaporation [w/m2]  [+ to atm]
+  ALLOCATE ( GHVXY     (XSTART:XEND,YSTART:YEND) )  ! veg ground heat flux [w/m2]  [+ to soil]
+  ALLOCATE ( GHBXY     (XSTART:XEND,YSTART:YEND) )  ! bare ground heat flux [w/m2] [+ to soil]
+  ALLOCATE ( IRGXY     (XSTART:XEND,YSTART:YEND) )  ! veg ground net LW rad. [w/m2] [+ to atm]
+  ALLOCATE ( IRCXY     (XSTART:XEND,YSTART:YEND) )  ! canopy net LW rad. [w/m2] [+ to atm]
+  ALLOCATE ( IRBXY     (XSTART:XEND,YSTART:YEND) )  ! bare net longwave rad. [w/m2] [+ to atm]
+  ALLOCATE ( TRXY      (XSTART:XEND,YSTART:YEND) )  ! transpiration [w/m2]  [+ to atm]
+  ALLOCATE ( EVCXY     (XSTART:XEND,YSTART:YEND) )  ! canopy evaporation heat [w/m2]  [+ to atm]
+  ALLOCATE ( CHLEAFXY  (XSTART:XEND,YSTART:YEND) )  ! leaf exchange coefficient 
+  ALLOCATE ( CHUCXY    (XSTART:XEND,YSTART:YEND) )  ! under canopy exchange coefficient 
+  ALLOCATE ( CHV2XY    (XSTART:XEND,YSTART:YEND) )  ! veg 2m exchange coefficient 
+  ALLOCATE ( CHB2XY    (XSTART:XEND,YSTART:YEND) )  ! bare 2m exchange coefficient 
+
+  ALLOCATE ( XLONIN    (XSTART:XEND,YSTART:YEND) )  ! longitude
+  ALLOCATE ( TERRAIN   (XSTART:XEND,YSTART:YEND) )  ! terrain height
+  ALLOCATE ( GVFMIN    (XSTART:XEND,YSTART:YEND) )  ! annual minimum in vegetation fraction
+  ALLOCATE ( GVFMAX    (XSTART:XEND,YSTART:YEND) )  ! annual maximum in vegetation fraction
+
+
+  ALLOCATE ( CHSTARXY  (XSTART:XEND,YSTART:YEND) )  ! for consistency with MP_init; delete later
+
+! Allocate 1D arrays
+
+  ALLOCATE ( SMC       (1:NSOIL)                 )  ! vol. soil moisture (m3/m3)
+  ALLOCATE ( SMH2O     (1:NSOIL)                 )  ! vol. soil water (m3/m3)
+  ALLOCATE ( STC       (-NSNOW+1:NSOIL)          )  ! snow/soil tmperatures
+  ALLOCATE ( ZSNSO     (-NSNOW+1:NSOIL)          )  ! snow layer depth [m]
+  ALLOCATE ( SNICE     (-NSNOW+1:0)              )  ! snow layer ice [mm]
+  ALLOCATE ( SNLIQ     (-NSNOW+1:0)              )  ! snow layer liquid water [mm]
+  ALLOCATE ( FICEOLD   (-NSNOW+1:0)              )  ! snow layer ice fraction []
+  ALLOCATE ( ZSOIL     (1:NSOIL)                 )  ! depth to soil interfaces [m]
+!  ALLOCATE ( SLDPTH    (1:NSOIL)                 )  ! thickness of soil layers [m]
+
+  XLAND      = 1.0   ! water = 2.0, land = 1.0
+  XICE       = 0.0   ! fraction of grid that is seaice
+  XICE_THRES = 0.5   ! fraction of grid determining seaice
+
+!----------------------------------------------------------------------
+! Read Landuse Type and Soil Texture and Other Information
+!----------------------------------------------------------------------
+
+  CALL READLAND_HRLDAS(HRLDAS_CONSTANTS_FILE, XSTART, XEND, YSTART, YEND,     &
+       ISWATER, IVGTYP, ISLTYP, TERRAIN, TMN, XLATIN, XLONIN)
+
+ivgtyp = 15
+
+!----------------------------------------------------------------------
+! Initialize Model State
+!----------------------------------------------------------------------
+
+  CALL SOIL_VEG_GEN_PARM( LLANDUSE, MMINSL )
+  CALL READ_MP_VEG_PARAMETERS(LLANDUSE)
+
+  SLOPETYP = 2
+
+  if (restart_filename_requested /= " ") then
+     restart_flag = .TRUE.
+
+     call find_restart_file(rank, trim(restart_filename_requested), startdate, khour, olddate, restart_flnm)
+
+     call read_restart(trim(restart_flnm), &
+          xstart, xend, xstart, ixfull, jxfull, nsoil, olddate)
+
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SOIL_T"  , TSLB     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOW_T"  , TSNOXY   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMC"     , SMOIS    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SH2O"    , SH2O     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ZSNSO"   , ZSNSOXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNICE"   , SNICEXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNLIQ"   , SNLIQXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSNOW"   , QSNOWXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FWET"    , FWETXY   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQVO"  , SNEQVOXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "EAH"     , EAHXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TAH"     , TAHXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ALBOLD"  , ALBOLDXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CM"      , CMXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CH"      , CHXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , ISNOWXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANLIQ"  , CANLIQXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANICE"  , CANICEXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , SNOW     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH"   , SNOWH    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TV"      , TVXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TG"      , TGXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ZWT"     , ZWTXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WA"      , WAXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WT"      , WTXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WSLAKE"  , WSLAKEXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "LFMASS"  , LFMASSXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "RTMASS"  , RTMASSXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "STMASS"  , STMASSXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WOOD"    , WOODXY   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "STBLCP"  , STBLCPXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FASTCP"  , FASTCPXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "LAI"     , XLAIXY   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SAI"     , XSAIXY   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FPAR"    , VEGFRA   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "EMISS"   , EMISS    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACMELT"  , ACSNOM   )
+
+  else
+
+     restart_flag = .FALSE.
+
+     DZS       =  SOIL_THICK_INPUT(1:NSOIL)
+
+     SMOIS     =  undefined_value
+     TSLB      =  undefined_value
+     SH2O      =  undefined_value
+     CANLIQXY  =  undefined_value
+     TSK       =  undefined_value
+     RAINBL    =  undefined_value
+     SNOW      =  undefined_value
+     SNOWH     =  undefined_value
+
+     inflnm = trim(indir)//"/"//&
+          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+          ".LDASIN_DOMAIN"//hgrid
+
+     CALL READINIT_HRLDAS(inflnm, xstart, xend, ystart, yend,  &
+          NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
+          TSLB, CANWAT, TSK, SNOW, SNOWH, FNDSNOWH)
+	  
+     VEGFRA    =  undefined_value
+     XLAIXY    =  undefined_value
+     GVFMIN    =  undefined_value
+     GVFMAX    =  undefined_value
+
+     CALL READVEG_HRLDAS(inflnm, xstart, xend, ystart, yend,  &
+          OLDDATE, IVGTYP, VEGFRA, XLAIXY, GVFMIN, GVFMAX)
+
+     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm.
+
+     FNDSOILW = .FALSE.
+     CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
+                    TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH,    ISICE, &
+                     TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
+                CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
+                  FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
+                    WTXY,   TSNOXY,  ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY, RTMASSXY, &
+                STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY,                     &
+                  T2MVXY,   T2MBXY, CHSTARXY,                                         &
+                   NSOIL,  .false.,                                                   &
+                  .true.,                                                             &
+                  xstart, xend+1, ystart, yend+1, 0,0,                &  ! domain
+                  xstart,   xend, ystart,   yend, 0,0,                &  ! memory
+                  xstart,   xend, ystart,   yend, 0,0                 )  ! tile
+
+      TAUSSXY = 0.0   ! Need to be added to _INIT later
+  endif
+
+!------------------------------------------------------------------------
+! Noah-MP initializations that can be done before the time loop.
+!------------------------------------------------------------------------
+
+  call noahmp_options(dynamic_veg_option, canopy_stomatal_resistance_option, &
+       btr_option, runoff_option, surface_drag_option, frozen_soil_option, &
+       supercooled_water_option, radiative_transfer_option, snow_albedo_option, &
+       pcp_partition_option, tbot_option, temp_time_scheme_option)
+
+!------------------------------------------------------------------------
+! Begin Time Loop
+!------------------------------------------------------------------------
+
+  NTIME=(KHOUR+1)*3600./nint(dt)
+  
+  call system_clock(count=clock_count_1)   ! Start a timer
+
+  TIMELOOP : DO ITIME=1,NTIME
+
+!--------------------------------------------------------------------------------
+! Output for restart BEFORE the processing for this particular time has begun, 
+! so that upon restart, we're ready to go on this time step.
+!--------------------------------------------------------------------------------
+
+     if (restart_frequency_hours > 0) then
+        if ((ITIME > 1) .and. (mod(ITIME-1, int(restart_frequency_hours*3600./nint(dt))) == 0)) then
+           if (rank == 0) print*, 'Write restart at '//olddate(1:13)
+           call prepare_restart_file(trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
+                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
+                nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
+                cen_lon, iswater, ivgtyp)
+
+           ! Since the restart files are not really for user consumption, the units and description are 
+           ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
+
+              call add_to_restart(TSLB      , "SOIL_T", layers="SOIL")
+              call add_to_restart(TSNOXY    , "SNOW_T", layers="SNOW")
+              call add_to_restart(SMOIS     , "SMC"   , layers="SOIL")
+              call add_to_restart(SH2O      , "SH2O"  , layers="SOIL")
+              call add_to_restart(ZSNSOXY   , "ZSNSO" , layers="SOSN")
+              call add_to_restart(SNICEXY   , "SNICE" , layers="SNOW")
+              call add_to_restart(SNLIQXY   , "SNLIQ" , layers="SNOW")
+              call add_to_restart(QSNOWXY   , "QSNOW" )
+              call add_to_restart(FWETXY    , "FWET"  )
+              call add_to_restart(SNEQVOXY  , "SNEQVO")
+              call add_to_restart(EAHXY     , "EAH"   )
+              call add_to_restart(TAHXY     , "TAH"   )
+              call add_to_restart(ALBOLDXY  , "ALBOLD")
+              call add_to_restart(CMXY      , "CM"    )
+              call add_to_restart(CHXY      , "CH"    )
+              call add_to_restart(ISNOWXY   , "ISNOW" )
+              call add_to_restart(CANLIQXY  , "CANLIQ")
+              call add_to_restart(CANICEXY  , "CANICE")
+              call add_to_restart(SNOW      , "SNEQV" )
+              call add_to_restart(SNOWH     , "SNOWH" )
+              call add_to_restart(TVXY      , "TV"    )
+              call add_to_restart(TGXY      , "TG"    )
+              call add_to_restart(ZWTXY     , "ZWT"   )
+              call add_to_restart(WAXY      , "WA"    )
+              call add_to_restart(WTXY      , "WT"    )
+              call add_to_restart(WSLAKEXY  , "WSLAKE")
+              call add_to_restart(LFMASSXY  , "LFMASS")
+              call add_to_restart(RTMASSXY  , "RTMASS")
+              call add_to_restart(STMASSXY  , "STMASS")
+              call add_to_restart(WOODXY    , "WOOD"  )
+              call add_to_restart(STBLCPXY  , "STBLCP")
+              call add_to_restart(FASTCPXY  , "FASTCP")
+              call add_to_restart(XLAIXY    , "LAI"   )
+              call add_to_restart(XSAIXY    , "SAI"   )
+              call add_to_restart(VEGFRA    , "FPAR"  )
+              call add_to_restart(EMISS     , "EMISS" )
+              call add_to_restart(ACSNOM    , "ACMELT")
+           call finalize_restart_file()
+        endif
+     endif
+
+!---------------------------------------------------------------------------------
+! Read the forcing data.
+!---------------------------------------------------------------------------------
+
+! For HRLDAS, we're assuming (for now) that each time period is in a 
+! separate file.  So we can open a new one right now.
+
+     inflnm = trim(indir)//"/"//&
+          olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+          ".LDASIN_DOMAIN"//hgrid
+
+     ! Build a filename template
+     inflnm_template = trim(indir)//"/<date>.LDASIN_DOMAIN"//hgrid
+
+     CALL READFORC_HRLDAS(INFLNM_TEMPLATE, FORCING_TIMESTEP, OLDDATE,  &
+          XSTART, XEND, YSTART, YEND,                                  &
+            T3D(:,1,:),QV3D(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
+	  P8W3D(:,1,:), GLW       ,SWDOWN      ,RAINBL, XLAIXY, VEGFRA)
+
+     P8W3D(:,2,:) = P8W3D(:,1,:)    ! WRF uses lowest two layers
+     KTS = 1
+     RAINBL = RAINBL * DT           ! RAINBL in WRF is [mm]
+     DZ8W = 2*ZLVL                  ! 2* to be consistent with WRF model level
+
+!------------------------------------------------------------------------
+! Noah-MP updates we can do before spatial loop.
+!------------------------------------------------------------------------
+
+   ! create a few fields that are IN in WRF - coszin, julian,yr
+
+    DO J = YSTART,YEND
+    DO I = XSTART,XEND
+      CALL CALC_DECLIN(OLDDATE(1:13),XLATIN(I,J), XLONIN(I,J),COSZIN(I,J),JULIAN)
+    END DO
+    END DO
+
+    READ(OLDDATE(1:4),*)  YR
+    YEARLEN = 365                            ! find length of year for phenology (also S Hemisphere)
+    if (mod(YR,4) == 0) then
+       YEARLEN = 366
+       if (mod(YR,100) == 0) then
+          YEARLEN = 365
+          if (mod(YR,400) == 0) then
+             YEARLEN = 366
+          endif
+       endif
+    endif
+
+    ZSOIL(1) = -DZS(1)                    ! depth to soil interfaces (<0) [m]
+    DO K = 2, NSOIL
+       ZSOIL(K) = -DZS(K) + ZSOIL(K-1)
+    END DO
+
+    IF (ITIME == 1 .AND. .NOT. RESTART_FLAG ) THEN
+      ! Initial guess only.  EAH gets updated in SFLX for later time steps.
+         EAHXY = (P8W3D(:,1,:)*QV3D(:,1,:))/(0.622+QV3D(:,1,:))
+
+      ! TAH:     Canopy air temperature (K)
+      ! Initial guess only.  TAH gets updated in SFLX for later time steps.
+         TAHXY = T3D(:,1,:)
+
+        DO J=YSTART,YEND
+        DO I=XSTART,XEND
+            XLAIXY(I,J) = LAITBL(IVGTYP(I,J))
+        ENDDO
+        ENDDO
+
+        CHXY = 0.1
+        CMXY = 0.1
+
+    endif
+
+!------------------------------------------------------------------------
+! Spatial Loop to Convert Gridded data to single point for 1-D SFLX call
+!------------------------------------------------------------------------
+    
+     sflx_count_sum = 0 ! Timing
+
+!------------------------------------------------------------------------
+! Begin exact copy from WRF driver
+!------------------------------------------------------------------------
+
+    JLOOP : DO J=YSTART,YEND
+
+       IF(ITIMESTEP == 1)THEN
+          DO I=XSTART,XEND
+             IF((XLAND(I,J)-1.5) >= 0.) THEN    ! Open water case
+                IF(XICE(I,J) == 1. .AND. IPRINT) PRINT *,' sea-ice at water point, I=',I,'J=',J
+                SMSTAV(I,J) = 1.0
+                SMSTOT(I,J) = 1.0
+                DO K = 1, NSOIL
+                   SMOIS(I,K,J) = 1.0
+                    TSLB(I,K,J) = 273.16
+                ENDDO
+             ELSE
+                IF(XICE(I,J) == 1.) THEN        ! Sea-ice case
+                   SMSTAV(I,J) = 1.0
+                   SMSTOT(I,J) = 1.0
+                   DO K = 1, NSOIL
+                      SMOIS(I,K,J) = 1.0
+                   ENDDO
+                ENDIF
+             ENDIF
+          ENDDO
+       ENDIF                                                               ! end of initialization over ocean
+
+
+!-----------------------------------------------------------------------
+   ILOOP : DO I = XSTART,XEND
+
+    IF (XICE(I,J) >= XICE_THRES) THEN
+       ICE = 1                            ! Sea-ice point
+    ELSE IF ( IVGTYP(I,J) == ISICE ) THEN
+       ICE = -1                           ! Land-ice point
+    ELSE
+       ICE=0                              ! Neither sea ice or land ice.
+    ENDIF
+    
+    IF((XLAND(I,J)-1.5) >= 0.) CYCLE ILOOP   ! Open water case
+
+    IF ( ICE == 1) THEN
+
+       SH2O  (i,1:NSOIL,j) = 1.0
+       XLAIXY(i,j)         = 0.01
+
+       CYCLE ILOOP ! Skip any processing at sea-ice points
+
+    ELSE
+
+!     2D to 1D       
+
+! IN only
+
+       COSZ   = COSZIN  (I,J)                         ! cos zenith angle []
+       LAT    = XLATIN  (I,J)                         ! latitude [rad]
+       Z_ML   = 0.5*DZ8W(I,1,J)                       ! DZ8W: thickness of full levels; ZLVL forcing height [m]
+       VEGTYP = IVGTYP(I,J)                           ! vegetation type
+       SOILTYP= ISLTYP(I,J)                           ! soil type
+       FVEG   = VEGFRA(I,J)/100.                      ! vegetation fraction [0-1]
+       FVGMAX = VEGMAX (I,J)/100.                     ! Vegetation fraction annual max [0-1]
+       TBOT = TMN(I,J)                                ! Fixed deep soil temperature for land
+       T_ML   = T3D(I,1,J)                            ! temperature defined at intermediate level [K]
+       Q_ML   = QV3D(I,1,J)/(1.0+QV3D(I,1,J))         ! convert from mixing ratio to specific humidity [kg/kg]
+       U_ML   = U_PHY(I,1,J)                          ! u-wind at interface [m/s]
+       V_ML   = V_PHY(I,1,J)                          ! v-wind at interface [m/s]
+       SWDN   = SWDOWN(I,J)                           ! shortwave down from SW scheme [W/m2]
+       LWDN   = GLW(I,J)                              ! total longwave down from LW scheme [W/m2]
+       P_ML   =(P8W3D(I,KTS+1,J)+P8W3D(I,KTS,J))*0.5  ! surface pressure defined at intermediate level [Pa]
+	                                              !    consistent with temperature, mixing ratio
+       PSFC   = P8W3D(I,1,J)                          ! surface pressure defined a full levels [Pa]
+       PRCP   = RAINBL(I,J)/DT                        ! timestep precipitation [mm/s]
+
+! IN/OUT fields
+
+       ISNOW                 = ISNOWXY (I,J)                ! snow layers []
+       SMC  (      1:NSOIL)  = SMOIS   (I,      1:NSOIL,J)  ! soil total moisture [m3/m3]
+       SMH2O(      1:NSOIL)  = SH2O    (I,      1:NSOIL,J)  ! soil liquid moisture [m3/m3]
+       STC  (-NSNOW+1:    0) = TSNOXY  (I,-NSNOW+1:    0,J) ! snow temperatures [K]
+       STC  (      1:NSOIL)  = TSLB    (I,      1:NSOIL,J)  ! soil temperatures [K]
+       SWE                   = SNOW    (I,J)                ! snow water equivalent [mm]
+       SNDPTH                = SNOWH   (I,J)                ! snow depth [m]
+       QSFC1D                = QSFC    (I,J)
+
+! INOUT (with no Noah LSM equivalent)
+
+       TV                    = TVXY    (I,J)                ! leaf temperature [K]
+       TG                    = TGXY    (I,J)                ! ground temperature [K]
+       CANLIQ                = CANLIQXY(I,J)                ! canopy liquid water [mm]
+       CANICE                = CANICEXY(I,J)                ! canopy frozen water [mm]
+       EAH                   = EAHXY   (I,J)                ! canopy vapor pressure [Pa]
+       TAH                   = TAHXY   (I,J)                ! canopy temperature [K]
+       CM                    = CMXY    (I,J)                ! avg. momentum exchange (MP only) [m/s]
+       CH                    = CHXY    (I,J)                ! avg. heat exchange (MP only) [m/s]
+       FWET                  = FWETXY  (I,J)                ! canopy fraction wet or snow
+       SNEQVO                = SNEQVOXY(I,J)                ! SWE previous timestep
+       ALBOLD                = ALBOLDXY(I,J)                ! albedo previous timestep, for snow aging
+       QSNOW                 = QSNOWXY (I,J)                ! snow falling on ground
+       WSLAKE                = WSLAKEXY(I,J)                ! lake water storage (can be neg.) (mm)
+       ZWT                   = ZWTXY   (I,J)                ! depth to water table [m]
+       WA                    = WAXY    (I,J)                ! water storage in aquifer [mm]
+       WT                    = WTXY    (I,J)                ! water in aquifer&saturated soil [mm]
+       ZSNSO(-NSNOW+1:NSOIL) = ZSNSOXY (I,-NSNOW+1:NSOIL,J) ! depth to layer interface
+       SNICE(-NSNOW+1:    0) = SNICEXY (I,-NSNOW+1:    0,J) ! snow layer ice content
+       SNLIQ(-NSNOW+1:    0) = SNLIQXY (I,-NSNOW+1:    0,J) ! snow layer water content
+       LFMASS                = LFMASSXY(I,J)                ! leaf mass
+       RTMASS                = RTMASSXY(I,J)                ! root mass
+       STMASS                = STMASSXY(I,J)                ! stem mass
+       WOOD                  = WOODXY  (I,J)                ! mass of wood (incl. woody roots) [g/m2]
+       STBLCP                = STBLCPXY(I,J)                ! stable carbon pool
+       FASTCP                = FASTCPXY(I,J)                ! fast carbon pool
+       PLAI                  = XLAIXY  (I,J)                ! leaf area index [-] (no snow effects)
+       PSAI                  = XSAIXY  (I,J)                ! stem area index [-] (no snow effects)
+       TAUSS                 = TAUSSXY (I,J)                ! non-dimensional snow age
+
+! Initialized local
+
+       FICEOLD = 0.0
+       FICEOLD(ISNOW+1:0) = SNICEXY(I,ISNOW+1:0,J) &  ! snow ice fraction  
+           /(SNICEXY(I,ISNOW+1:0,J)+SNLIQXY(I,ISNOW+1:0,J))
+       CO2PP  = CO2 * P_ML                            ! partial pressure co2 [Pa]
+       O2PP   = O2  * P_ML                            ! partial pressure  o2 [Pa]
+       FOLN   = 1.0                                   ! for now, set to nitrogen saturation
+       QC     = undefined_value                       ! test dummy value
+       PBLH   = undefined_value                       ! test dummy value ! PBL height
+       DZ8W1D = DZ8W (I,1,J)                          ! thickness of atmospheric layers
+       SLOPETYP  =  1                                 ! set underground runoff slope term
+       IST    = 1                                     ! MP surface type: 1 = land; 2 = lake
+       ISC    = 4                                     ! soil color: assuming a middle color category ?????????
+
+
+       IF(SOILTYP == 14 .AND. XICE(I,J) == 0.) THEN
+          IF(IPRINT) PRINT *, ' SOIL TYPE FOUND TO BE WATER AT A LAND-POINT'
+          IF(IPRINT) PRINT *, i,j,'RESET SOIL in surfce.F'
+          SOILTYP = 7
+       ENDIF
+
+       IF( IVGTYP(I,J) == ISURBAN .or. IVGTYP(I,J) == 31 .or. &
+            IVGTYP(I,J) == 32 .or. IVGTYP(I,J) == 33) THEN
+          VEGTYP = ISURBAN
+       ENDIF
+       IF(VEGTYP == 25) FVEG = 0.0                  ! Set playa, lava, sand to bare
+       IF(VEGTYP == 25) PLAI = 0.0 
+       IF(VEGTYP == 26) FVEG = 0.0                  ! hard coded for USGS
+       IF(VEGTYP == 26) PLAI = 0.0
+       IF(VEGTYP == 27) FVEG = 0.0
+       IF(VEGTYP == 27) PLAI = 0.0
+
+       CALL REDPRM (VEGTYP,SOILTYP,SLOPETYP,ZSOIL,NSOIL,ISURBAN)
+
+   ! Timing information for SFLX:
+    call system_clock(count=count_before_sflx, count_rate=clock_rate)
+
+    IF ( ICE == -1 ) THEN
+
+if(.false.) then
+print*, "Before glacier call"
+print*,       "I:", I
+print*,       "J:", J
+print*,    "COSZ:", COSZ
+print*,   "NSNOW:", NSNOW
+print*,   "NSOIL:", NSOIL
+print*,      "DT:", DT
+print*,    "T_ML:", T_ML
+print*,    "P_ML:", P_ML   
+print*,    "U_ML:", U_ML  
+print*,    "V_ML:", V_ML   
+print*,    "Q_ML:", Q_ML  
+print*,    "SWDN:", SWDN
+print*,    "PRCP:", PRCP  
+print*,    "LWDN:", LWDN   
+print*,    "TBOT:", TBOT   
+print*,    "Z_ML:", Z_ML
+print*, "FICEOLD:", FICEOLD  
+print*,   "ZSOIL:", ZSOIL
+print*,   "QSNOW:", QSNOW
+print*,  "SNEQVO:", SNEQVO
+print*,  "ALBOLD:", ALBOLD   
+print*,      "CM:", CM    
+print*,      "CH:", CH   
+print*,   "ISNOW:", ISNOW
+print*,     "SWE:", SWE
+print*,     "SMC:", SMC
+print*,   "ZSNSO:", ZSNSO
+print*,  "SNDPTH:", SNDPTH  
+print*,   "SNICE:", SNICE
+print*,   "SNLIQ:", SNLIQ
+print*,     "TGB:", TGB   
+print*,     "STC:", STC
+print*,   "SMH2O:", SMH2O  
+print*,   "TAUSS:", TAUSS
+print*,  "QSFC1D:", QSFC1D
+print*,     "FSA:", FSA  
+print*,     "FSR:", FSR 
+print*,    "FIRA:", FIRA 
+print*,     "FSH:", FSH
+print*,    "FGEV:", FGEV  
+print*,   "SSOIL:", SSOIL
+print*,    "TRAD:", TRAD   
+print*,   "ESOIL:", ESOIL  
+print*,   "RUNSF:", RUNSF  
+print*,   "RUNSB:", RUNSB    
+print*,     "SAG:", SAG  
+print*,    "SALB:", SALB
+print*,  "QSNBOT:", QSNBOT
+print*, "PONDING:", PONDING
+print*,"PONDING1:", PONDING1
+print*,"PONDING2:", PONDING2   
+print*,    "T2MB:", T2MB
+print*,    "Q2MB:", Q2MB
+print*,  "EMISSI:", EMISSI
+print*,   "FPICE:", FPICE  
+print*,    "CHB2:", CHB2
+end if
+
+  call noahmp_options_glacier(dynamic_veg_option, canopy_stomatal_resistance_option, &
+       btr_option, runoff_option, surface_drag_option, frozen_soil_option, &
+       supercooled_water_option, radiative_transfer_option, snow_albedo_option, &
+       pcp_partition_option, tbot_option, temp_time_scheme_option)
+
+       CALL NOAHMP_GLACIER(       I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
+                               T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
+                               PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
+                              QSNOW,  SNEQVO,  ALBOLD,      CM,      CH,   ISNOW, & ! IN/OUT :
+                                SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
+                                TGB,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
+                                FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
+                               TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
+                              QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
+			      EMISSI,  FPICE,    CHB2 )                             ! OUT :
+if(.false.) then
+print*, "After glacier call"
+print*,       "I:", I
+print*,       "J:", J
+print*,    "COSZ:", COSZ
+print*,   "NSNOW:", NSNOW
+print*,   "NSOIL:", NSOIL
+print*,      "DT:", DT
+print*,    "T_ML:", T_ML
+print*,    "P_ML:", P_ML   
+print*,    "U_ML:", U_ML  
+print*,    "V_ML:", V_ML   
+print*,    "Q_ML:", Q_ML  
+print*,    "SWDN:", SWDN
+print*,    "PRCP:", PRCP  
+print*,    "LWDN:", LWDN   
+print*,    "TBOT:", TBOT   
+print*,    "Z_ML:", Z_ML
+print*, "FICEOLD:", FICEOLD  
+print*,   "ZSOIL:", ZSOIL
+print*,   "QSNOW:", QSNOW
+print*,  "SNEQVO:", SNEQVO
+print*,  "ALBOLD:", ALBOLD   
+print*,      "CM:", CM    
+print*,      "CH:", CH   
+print*,   "ISNOW:", ISNOW
+print*,     "SWE:", SWE
+print*,     "SMC:", SMC
+print*,   "ZSNSO:", ZSNSO
+print*,  "SNDPTH:", SNDPTH  
+print*,   "SNICE:", SNICE
+print*,   "SNLIQ:", SNLIQ
+print*,     "TGB:", TGB   
+print*,     "STC:", STC
+print*,   "SMH2O:", SMH2O  
+print*,   "TAUSS:", TAUSS
+print*,  "QSFC1D:", QSFC1D
+print*,     "FSA:", FSA  
+print*,     "FSR:", FSR 
+print*,    "FIRA:", FIRA 
+print*,     "FSH:", FSH
+print*,    "FGEV:", FGEV  
+print*,   "SSOIL:", SSOIL
+print*,    "TRAD:", TRAD   
+print*,   "ESOIL:", ESOIL  
+print*,   "RUNSF:", RUNSF  
+print*,   "RUNSB:", RUNSB    
+print*,     "SAG:", SAG  
+print*,    "SALB:", SALB
+print*,  "QSNBOT:", QSNBOT
+print*, "PONDING:", PONDING
+print*,"PONDING1:", PONDING1
+print*,"PONDING2:", PONDING2   
+print*,    "T2MB:", T2MB
+print*,    "Q2MB:", Q2MB
+print*,  "EMISSI:", EMISSI
+print*,   "FPICE:", FPICE  
+print*,    "CHB2:", CHB2
+end if
+
+       FSNO   = 1.0       
+       TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
+       TG     = TGB 
+       CANICE = undefined_value 
+       CANLIQ = undefined_value 
+       EAH    = undefined_value 
+       TAH    = undefined_value
+       FWET   = undefined_value 
+       WSLAKE = undefined_value 
+       ZWT    = undefined_value 
+       WA     = undefined_value 
+       WT     = undefined_value 
+       LFMASS = undefined_value 
+       RTMASS = undefined_value 
+       STMASS = undefined_value 
+       WOOD   = undefined_value 
+       STBLCP = undefined_value 
+       FASTCP = undefined_value 
+       PLAI   = undefined_value 
+       PSAI   = undefined_value 
+       T2MV   = undefined_value 
+       Q2MV   = undefined_value 
+       NEE    = undefined_value 
+       GPP    = undefined_value 
+       NPP    = undefined_value 
+       FVEGMP = 0.0 
+       ECAN   = undefined_value 
+       ETRAN  = undefined_value 
+       APAR   = undefined_value 
+       PSN    = undefined_value 
+       SAV    = undefined_value 
+       RSSUN  = undefined_value 
+       RSSHA  = undefined_value 
+       BGAP   = undefined_value 
+       WGAP   = undefined_value 
+       TGV    = undefined_value
+       CHV    = undefined_value 
+       CHB    = CH 
+       IRC    = undefined_value 
+       IRG    = undefined_value 
+       SHC    = undefined_value 
+       SHG    = undefined_value 
+       EVG    = undefined_value 
+       GHV    = undefined_value 
+       IRB    = FIRA
+       SHB    = FSH
+       EVB    = FGEV
+       GHB    = SSOIL
+       TR     = undefined_value 
+       EVC    = undefined_value 
+       CHLEAF = undefined_value 
+       CHUC   = undefined_value 
+       CHV2   = undefined_value 
+       FCEV   = undefined_value 
+       FCTR   = undefined_value        
+       
+       QFX(I,J) = ESOIL
+
+    ELSE
+
+       CALL NOAHMP_SFLX (&
+            I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
+            DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
+            FVEG    , FVGMAX  , VEGTYP  , ISURBAN , ICE     , IST     , & ! IN : Vegetation/Soil characteristics
+            ISC     ,                                                   & ! IN : Vegetation/Soil characteristics
+            IZ0TLND ,                                                   & ! IN : User options
+            T_ML    , P_ML    , PSFC    , U_ML    , V_ML    , Q_ML    , & ! IN : Forcing
+            QC      , SWDN    , LWDN    , PRCP    , TBOT    , CO2PP   , & ! IN : Forcing
+            O2PP    , FOLN    , FICEOLD , PBLH    , Z_ML    ,           & ! IN : Forcing
+            ALBOLD  , SNEQVO  ,                                         & ! IN/OUT : 
+            STC     , SMH2O   , SMC     , TAH     , EAH     , FWET    , & ! IN/OUT : 
+            CANLIQ  , CANICE  , TV      , TG      , QSFC1D  , QSNOW   , & ! IN/OUT : 
+            ISNOW   , ZSNSO   , SNDPTH  , SWE     , SNICE   , SNLIQ   , & ! IN/OUT : 
+            ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT : 
+            STMASS  , WOOD    , STBLCP  , FASTCP  , PLAI    , PSAI    , & ! IN/OUT : 
+            CM      , CH      , TAUSS   ,                               & ! IN/OUT : 
+            FSA     , FSR     , FIRA    , FSH     , SSOIL   , FCEV    , & ! OUT : 
+            FGEV    , FCTR    , ECAN    , ETRAN   , ESOIL   , TRAD    , & ! OUT : 
+            TGB     , TGV     , T2MV    , T2MB    , Q2MV    , Q2MB    , & ! OUT : 
+            RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , & ! OUT : 
+            FSNO    , NEE     , GPP     , NPP     , FVEGMP  , SALB    , & ! OUT : 
+            QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT : 
+            BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT : 
+            SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
+	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
+	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE    )            ! OUT :
+
+            QFX(I,J) = ECAN + ESOIL + ETRAN
+
+   ENDIF ! glacial split ends 
+
+          call system_clock(count=count_after_sflx, count_rate=clock_rate)
+          sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
+
+! INPUT/OUTPUT
+
+             TSK      (I,J)                = TRAD
+             HFX      (I,J)                = FSH
+             LH       (I,J)                = FCEV + FGEV + FCTR
+             GRDFLX   (I,J)                = SSOIL
+	     SMSTAV   (I,J)                = 0.0  ! [maintained as Noah consistency]
+             SMSTOT   (I,J)                = 0.0  ! [maintained as Noah consistency]
+             SFCRUNOFF(I,J)                = SFCRUNOFF(I,J) + RUNSF * DT
+             UDRUNOFF (I,J)                = UDRUNOFF(I,J)  + RUNSB * DT
+             IF ( SALB > -999 ) THEN
+                ALBEDO(I,J)                = SALB
+             ENDIF
+             SNOWC    (I,J)                = FSNO
+             SMOIS    (I,      1:NSOIL,J)  = SMC   (      1:NSOIL)
+             SH2O     (I,      1:NSOIL,J)  = SMH2O (      1:NSOIL)
+             TSLB     (I,      1:NSOIL,J)  = STC   (      1:NSOIL)
+             SNOW     (I,J)                = SWE
+             SNOWH    (I,J)                = SNDPTH
+             CANWAT   (I,J)                = CANLIQ + CANICE
+             ACSNOW   (I,J)                = ACSNOW(I,J) + PRCP * FPICE
+             ACSNOM   (I,J)                = ACSNOM(I,J) + QSNBOT*DT + PONDING + PONDING1 + PONDING2
+             EMISS    (I,J)                = EMISSI
+             QSFC     (I,J)                = QSFC1D
+
+             ISNOWXY  (I,J)                = ISNOW
+             TVXY     (I,J)                = TV
+             TGXY     (I,J)                = TG
+             CANLIQXY (I,J)                = CANLIQ
+             CANICEXY (I,J)                = CANICE
+             EAHXY    (I,J)                = EAH
+             TAHXY    (I,J)                = TAH
+             CMXY     (I,J)                = CM
+             CHXY     (I,J)                = CH
+             FWETXY   (I,J)                = FWET
+             SNEQVOXY (I,J)                = SNEQVO
+             ALBOLDXY (I,J)                = ALBOLD
+             QSNOWXY  (I,J)                = QSNOW
+             WSLAKEXY (I,J)                = WSLAKE
+             ZWTXY    (I,J)                = ZWT
+             WAXY     (I,J)                = WA
+             WTXY     (I,J)                = WT
+             TSNOXY   (I,-NSNOW+1:    0,J) = STC   (-NSNOW+1:    0)
+             ZSNSOXY  (I,-NSNOW+1:NSOIL,J) = ZSNSO (-NSNOW+1:NSOIL)
+             SNICEXY  (I,-NSNOW+1:    0,J) = SNICE (-NSNOW+1:    0)
+             SNLIQXY  (I,-NSNOW+1:    0,J) = SNLIQ (-NSNOW+1:    0)
+             LFMASSXY (I,J)                = LFMASS
+             RTMASSXY (I,J)                = RTMASS
+             STMASSXY (I,J)                = STMASS
+             WOODXY   (I,J)                = WOOD
+             STBLCPXY (I,J)                = STBLCP
+             FASTCPXY (I,J)                = FASTCP
+             XLAIXY   (I,J)                = PLAI
+             XSAIXY   (I,J)                = PSAI
+             TAUSSXY  (I,J)                = TAUSS
+
+! OUTPUT
+
+             T2MVXY   (I,J)                = T2MV
+             T2MBXY   (I,J)                = T2MB
+             Q2MVXY   (I,J)                = Q2MV/(1.0 - Q2MV)  ! specific humidity to mixing ratio
+             Q2MBXY   (I,J)                = Q2MB/(1.0 - Q2MB)  ! consistent with registry def of Q2
+             TRADXY   (I,J)                = TRAD
+             NEEXY    (I,J)                = NEE
+             GPPXY    (I,J)                = GPP
+             NPPXY    (I,J)                = NPP
+             FVEGXY   (I,J)                = FVEGMP
+             RUNSFXY  (I,J)                = RUNSF
+             RUNSBXY  (I,J)                = RUNSB
+             ECANXY   (I,J)                = ECAN
+             EDIRXY   (I,J)                = ESOIL
+             ETRANXY  (I,J)                = ETRAN
+             FSAXY    (I,J)                = FSA
+             FIRAXY   (I,J)                = FIRA
+             APARXY   (I,J)                = APAR
+             PSNXY    (I,J)                = PSN
+             SAVXY    (I,J)                = SAV
+             SAGXY    (I,J)                = SAG
+             RSSUNXY  (I,J)                = RSSUN
+             RSSHAXY  (I,J)                = RSSHA
+             BGAPXY   (I,J)                = BGAP
+             WGAPXY   (I,J)                = WGAP
+             TGVXY    (I,J)                = TGV
+             TGBXY    (I,J)                = TGB
+             CHVXY    (I,J)                = CHV
+             CHBXY    (I,J)                = CHB
+             IRCXY    (I,J)                = IRC
+             IRGXY    (I,J)                = IRG
+             SHCXY    (I,J)                = SHC
+             SHGXY    (I,J)                = SHG
+             EVGXY    (I,J)                = EVG
+             GHVXY    (I,J)                = GHV
+             IRBXY    (I,J)                = IRB
+             SHBXY    (I,J)                = SHB
+             EVBXY    (I,J)                = EVB
+             GHBXY    (I,J)                = GHB
+             TRXY     (I,J)                = TR
+             EVCXY    (I,J)                = EVC
+             CHLEAFXY (I,J)                = CHLEAF
+             CHUCXY   (I,J)                = CHUC
+             CHV2XY   (I,J)                = CHV2
+             CHB2XY   (I,J)                = CHB2
+
+          ENDIF                                                         ! endif of land-sea test
+
+      ENDDO ILOOP
+   ENDDO JLOOP
+
+
+!------------------------------------------------------------------------
+! End exact copy from WRF driver (except timing additions)
+!------------------------------------------------------------------------
+
+!------------------------------------------------------------------------
+! END of 1-D NOAH processing
+!------------------------------------------------------------------------
+
+! Output for history
+     OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
+        if (mod((ITIME-1)*noah_timestep, output_timestep) == 0) then
+
+           call prepare_output_file(trim(outdir), version, &
+                igrid, output_timestep, llanduse, split_output_count, hgrid,                &
+                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
+                iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
+                nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
+
+           DEFINE_MODE_LOOP : do imode = 1, 2
+
+              call set_output_define_mode(imode)
+
+              ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
+
+        ! Properties - Assigned or predicted
+              call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
+              call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
+              call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
+              call add_to_output(XLAIXY     , "LAI"     , "Leaf area index"                      , "-"                     )
+              call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
+        ! Forcing
+              call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
+              call add_to_output(COSZIN     , "COSZ"    , "Cosine of zenith angle"                    , "W m{-2}"               )
+              call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"               )
+              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
+        ! Grid energy budget terms
+              call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
+              call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
+              call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
+              call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
+              call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
+              call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
+              call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
+              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
+              call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
+              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
+        ! Grid water budget terms - in addition to above
+              call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
+              call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
+              call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
+              call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
+              call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
+              call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
+              call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
+        ! Additional needed to close the canopy energy budget
+              call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
+              call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
+              call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat"                       , "W m{-2}"             )
+              call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad"                      , "W m{-2}"             )
+              call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat"                   , "W m{-2}"             )
+        ! Additional needed to close the under canopy ground energy budget
+              call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad"                      , "W m{-2}"             )
+              call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat"                   , "W m{-2}"             )
+              call add_to_output(EVGXY      , "EVG"     , "Ground evap heat"                       , "W m{-2}"             )
+              call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}"             )
+        ! Needed to close the bare ground energy budget
+              call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}"        )
+              call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}"             )
+              call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}"             )
+              call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
+              call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
+        ! Above-soil temperatures
+              call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
+              call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
+              call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
+              call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
+              call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"                   )
+              call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"                   )
+              call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"                   )
+              call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare"                       , "K"                   )
+        ! Above-soil moisture
+              call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"               )
+              call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare"                   , "kg/kg"               )
+              call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"                    )
+              call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"              )
+        ! Snow and soil - 3D terms
+              call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
+              call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
+              call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
+              call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
+              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
+              call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
+              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
+        ! Snow - 2D terms
+              call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
+              call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
+              call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
+              call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
+              call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
+              call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
+              call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
+        ! Exchange coefficients
+              call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
+              call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
+              call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"             )
+              call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"             )
+              call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"             )
+              call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"             )
+              call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"             )
+              call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"             )
+        ! Carbon allocation model
+              call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass"                            , "g m{-2}"               )
+              call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots"                   , "g m{-2}"               )
+              call add_to_output(STMASSXY   , "STMASS"  , "Stem mass"                            , "g m{-2}"               )
+              call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"               )
+              call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"               )
+              call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"               )
+              call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2"   )
+              call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"     )
+              call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"     )
+              call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis"                   , "umol CO@ m{-2} s{-1}")
+              call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"             )
+
+           enddo DEFINE_MODE_LOOP
+           call finalize_output_file(split_output_count)
+        endif
+     endif OUTPUT_FOR_HISTORY
+
+     if (IVGTYP(xstart,ystart)==ISWATER) then
+        write(*,'(" ***DATE=", A19)', advance="NO") olddate
+     else
+     write(*,'(" ***DATE=", A19, 6F10.5)', advance="NO") olddate, &
+          TSLB(xstart,1,ystart), XLAIXY(xstart,ystart)
+     endif
+
+
+!------------------------------------------------------------------------
+! Update the time 
+!------------------------------------------------------------------------
+
+     call geth_newdate(newdate, olddate, nint(dt))
+     olddate = newdate
+
+!------------------------------------------------------------------------
+! End of Time Loop  (do ITIME) 
+!------------------------------------------------------------------------
+
+     ! update the timer
+     call system_clock(count=clock_count_2, count_rate=clock_rate)
+     timing_sum = timing_sum + float(clock_count_2-clock_count_1)/float(clock_rate)
+     write(*,'("    Timing: ",f6.2," Cumulative:  ", f10.2, "  SFLX: ", f6.2 )') &
+          float(clock_count_2-clock_count_1)/float(clock_rate), &
+          timing_sum, real(sflx_count_sum) / real(clock_rate)
+     clock_count_1 = clock_count_2
+
+  ENDDO TIMELOOP
+
+END program Noah_hrldas_driver
+
+subroutine wrf_message(msg)
+  implicit none
+  character(len=*), intent(in) :: msg
+  print*, msg
+end subroutine wrf_message
+
+logical function wrf_dm_on_monitor() result(l)
+  l = .TRUE.
+  return
+end function wrf_dm_on_monitor
+
+!------------------------------------------------------------------------------------
+!------------------------------------------------------------------------------------
+
+SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN )
+
+  USE MODULE_DATE_UTILITIES
+!---------------------------------------------------------------------
+   IMPLICIT NONE
+!---------------------------------------------------------------------
+
+   REAL, PARAMETER :: DEGRAD = 3.14159265/180.
+   REAL, PARAMETER :: DPD    = 360./365.
+! !ARGUMENTS:
+   CHARACTER(LEN=19), INTENT(IN)  :: NOWDATE    ! YYYY-MM-DD_HH:MM:SS
+   REAL,              INTENT(IN)  :: LATITUDE
+   REAL,              INTENT(IN)  :: LONGITUDE
+   REAL,              INTENT(OUT) :: COSZ
+   REAL,              INTENT(OUT) :: JULIAN
+   REAL                           :: HRANG
+   REAL                           :: DECLIN
+   REAL                           :: OBECL
+   REAL                           :: SINOB
+   REAL                           :: SXLONG
+   REAL                           :: ARG
+   REAL                           :: TLOCTIM
+   INTEGER                        :: IDAY
+   INTEGER                        :: IHOUR
+   INTEGER                        :: IMINUTE
+   INTEGER                        :: ISECOND
+
+   CALL GETH_IDTS(NOWDATE(1:10), NOWDATE(1:4)//"-01-01", IDAY)
+   READ(NOWDATE(12:13), *) IHOUR
+   READ(NOWDATE(15:16), *) IMINUTE
+   READ(NOWDATE(18:19), *) ISECOND
+   JULIAN = REAL(IDAY) + REAL(IHOUR)/24.
+
+!
+! FOR SHORT WAVE RADIATION
+
+   DECLIN=0.
+
+!-----OBECL : OBLIQUITY = 23.5 DEGREE.
+
+   OBECL=23.5*DEGRAD
+   SINOB=SIN(OBECL)
+
+!-----CALCULATE LONGITUDE OF THE SUN FROM VERNAL EQUINOX:
+
+   IF(JULIAN.GE.80.)SXLONG=DPD*(JULIAN-80.)*DEGRAD
+   IF(JULIAN.LT.80.)SXLONG=DPD*(JULIAN+285.)*DEGRAD
+   ARG=SINOB*SIN(SXLONG)
+   DECLIN=ASIN(ARG)
+
+   TLOCTIM = REAL(IHOUR) + REAL(IMINUTE)/60.0 + REAL(ISECOND)/3600.0 + LONGITUDE/15.0 ! LOCAL TIME IN HOURS
+   TLOCTIM = AMOD(TLOCTIM+24.0, 24.0)
+   HRANG=15.*(TLOCTIM-12.)*DEGRAD
+   COSZ=SIN(LATITUDE*DEGRAD)*SIN(DECLIN)+COS(LATITUDE*DEGRAD)*COS(DECLIN)*COS(HRANG)
+
+ END SUBROUTINE CALC_DECLIN
+
+!-----------------------------------------------------------------
+        SUBROUTINE SOIL_VEG_GEN_PARM( MMINLU, MMINSL)
+!-----------------------------------------------------------------
+
+  USE module_sf_noahmplsm
+        IMPLICIT NONE
+
+        CHARACTER(LEN=*), INTENT(IN) :: MMINLU, MMINSL
+        integer :: LUMATCH, IINDEX, LC, NUM_SLOPE
+        integer :: ierr
+        INTEGER , PARAMETER :: OPEN_OK = 0
+
+        character*128 :: mess , message
+        logical, external :: wrf_dm_on_monitor
+
+
+!-----SPECIFY VEGETATION RELATED CHARACTERISTICS :
+!             ALBBCK: SFC albedo (in percentage)
+!                 Z0: Roughness length (m)
+!             SHDFAC: Green vegetation fraction (in percentage)
+!  Note: The ALBEDO, Z0, and SHDFAC values read from the following table
+!          ALBEDO, amd Z0 are specified in LAND-USE TABLE; and SHDFAC is
+!          the monthly green vegetation data
+!             CMXTBL: MAX CNPY Capacity (m)
+!             NROTBL: Rooting depth (layer)
+!              RSMIN: Mimimum stomatal resistance (s m-1)
+!              RSMAX: Max. stomatal resistance (s m-1)
+!                RGL: Parameters used in radiation stress function
+!                 HS: Parameter used in vapor pressure deficit functio
+!               TOPT: Optimum transpiration air temperature. (K)
+!             CMCMAX: Maximum canopy water capacity
+!             CFACTR: Parameter used in the canopy inteception calculati
+!               SNUP: Threshold snow depth (in water equivalent m) that
+!                     implies 100% snow cover
+!                LAI: Leaf area index (dimensionless)
+!             MAXALB: Upper bound on maximum albedo over deep snow
+!
+!-----READ IN VEGETAION PROPERTIES FROM VEGPARM.TBL
+!
+
+       IF ( wrf_dm_on_monitor() ) THEN
+
+        OPEN(19, FILE='VEGPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+        IF(ierr .NE. OPEN_OK ) THEN
+          WRITE(message,FMT='(A)') &
+          'module_sf_noahlsm.F: soil_veg_gen_parm: failure opening VEGPARM.TBL'
+          CALL wrf_error_fatal ( message )
+        END IF
+
+
+        LUMATCH=0
+
+        FIND_LUTYPE : DO WHILE (LUMATCH == 0)
+           READ (19,*,END=2002)
+           READ (19,*,END=2002)LUTYPE
+           READ (19,*)LUCATS,IINDEX
+
+           IF(LUTYPE.EQ.MMINLU)THEN
+              WRITE( mess , * ) 'LANDUSE TYPE = ' // TRIM ( LUTYPE ) // ' FOUND', LUCATS,' CATEGORIES'
+              CALL wrf_message( mess )
+              LUMATCH=1
+           ELSE
+              call wrf_message ( "Skipping over LUTYPE = " // TRIM ( LUTYPE ) )
+              DO LC = 1, LUCATS+12
+                 read(19,*)
+              ENDDO
+           ENDIF
+        ENDDO FIND_LUTYPE
+! prevent possible array overwrite, Bill Bovermann, IBM, May 6, 2008
+        IF ( SIZE(SHDTBL)       < LUCATS .OR. &
+             SIZE(NROTBL)       < LUCATS .OR. &
+             SIZE(RSTBL)        < LUCATS .OR. &
+             SIZE(RGLTBL)       < LUCATS .OR. &
+             SIZE(HSTBL)        < LUCATS .OR. &
+             SIZE(SNUPTBL)      < LUCATS .OR. &
+             SIZE(MAXALB)       < LUCATS .OR. &
+             SIZE(LAIMINTBL)    < LUCATS .OR. &
+             SIZE(LAIMAXTBL)    < LUCATS .OR. &
+             SIZE(Z0MINTBL)     < LUCATS .OR. &
+             SIZE(Z0MAXTBL)     < LUCATS .OR. &
+             SIZE(ALBEDOMINTBL) < LUCATS .OR. &
+             SIZE(ALBEDOMAXTBL) < LUCATS .OR. &
+             SIZE(EMISSMINTBL ) < LUCATS .OR. &
+             SIZE(EMISSMAXTBL ) < LUCATS ) THEN
+           CALL wrf_error_fatal('Table sizes too small for value of LUCATS in module_sf_noahdrv.F')
+        ENDIF
+
+        IF(LUTYPE.EQ.MMINLU)THEN
+          DO LC=1,LUCATS
+              READ (19,*)IINDEX,SHDTBL(LC),                        &
+                        NROTBL(LC),RSTBL(LC),RGLTBL(LC),HSTBL(LC), &
+                        SNUPTBL(LC),MAXALB(LC), LAIMINTBL(LC),     &
+                        LAIMAXTBL(LC),EMISSMINTBL(LC),             &
+                        EMISSMAXTBL(LC), ALBEDOMINTBL(LC),         &
+                        ALBEDOMAXTBL(LC), Z0MINTBL(LC), Z0MAXTBL(LC)
+          ENDDO
+!
+          READ (19,*)
+          READ (19,*)TOPT_DATA
+          READ (19,*)
+          READ (19,*)CMCMAX_DATA
+          READ (19,*)
+          READ (19,*)CFACTR_DATA
+          READ (19,*)
+          READ (19,*)RSMAX_DATA
+          READ (19,*)
+          READ (19,*)BARE
+          READ (19,*)
+          READ (19,*)NATURAL
+        ENDIF
+!
+ 2002   CONTINUE
+
+        CLOSE (19)
+        IF (LUMATCH == 0) then
+           CALL wrf_error_fatal ("Land Use Dataset '"//MMINLU//"' not found in VEGPARM.TBL.")
+        ENDIF
+      ENDIF
+
+      CALL wrf_dm_bcast_string  ( LUTYPE  , 4 )
+      CALL wrf_dm_bcast_integer ( LUCATS  , 1 )
+      CALL wrf_dm_bcast_integer ( IINDEX  , 1 )
+      CALL wrf_dm_bcast_integer ( LUMATCH , 1 )
+      CALL wrf_dm_bcast_real    ( SHDTBL  , NLUS )
+      CALL wrf_dm_bcast_real    ( NROTBL  , NLUS )
+      CALL wrf_dm_bcast_real    ( RSTBL   , NLUS )
+      CALL wrf_dm_bcast_real    ( RGLTBL  , NLUS )
+      CALL wrf_dm_bcast_real    ( HSTBL   , NLUS )
+      CALL wrf_dm_bcast_real    ( SNUPTBL , NLUS )
+      CALL wrf_dm_bcast_real    ( LAIMINTBL    , NLUS )
+      CALL wrf_dm_bcast_real    ( LAIMAXTBL    , NLUS )
+      CALL wrf_dm_bcast_real    ( Z0MINTBL     , NLUS )
+      CALL wrf_dm_bcast_real    ( Z0MAXTBL     , NLUS )
+      CALL wrf_dm_bcast_real    ( EMISSMINTBL  , NLUS )
+      CALL wrf_dm_bcast_real    ( EMISSMAXTBL  , NLUS )
+      CALL wrf_dm_bcast_real    ( ALBEDOMINTBL , NLUS )
+      CALL wrf_dm_bcast_real    ( ALBEDOMAXTBL , NLUS )
+      CALL wrf_dm_bcast_real    ( MAXALB  , NLUS )
+      CALL wrf_dm_bcast_real    ( TOPT_DATA    , 1 )
+      CALL wrf_dm_bcast_real    ( CMCMAX_DATA  , 1 )
+      CALL wrf_dm_bcast_real    ( CFACTR_DATA  , 1 )
+      CALL wrf_dm_bcast_real    ( RSMAX_DATA  , 1 )
+      CALL wrf_dm_bcast_integer ( BARE    , 1 )
+      CALL wrf_dm_bcast_integer ( NATURAL , 1 )
+
+!
+!-----READ IN SOIL PROPERTIES FROM SOILPARM.TBL
+!
+      IF ( wrf_dm_on_monitor() ) THEN
+        OPEN(19, FILE='SOILPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+        IF(ierr .NE. OPEN_OK ) THEN
+          WRITE(message,FMT='(A)') &
+          'module_sf_noahlsm.F: soil_veg_gen_parm: failure opening SOILPARM.TBL'
+          CALL wrf_error_fatal ( message )
+        END IF
+
+        WRITE(mess,*) 'INPUT SOIL TEXTURE CLASSIFICATION = ', TRIM ( MMINSL )
+        CALL wrf_message( mess )
+
+        LUMATCH=0
+
+        READ (19,*)
+        READ (19,2000,END=2003)SLTYPE
+ 2000   FORMAT (A4)
+        READ (19,*)SLCATS,IINDEX
+        IF(SLTYPE.EQ.MMINSL)THEN
+            WRITE( mess , * ) 'SOIL TEXTURE CLASSIFICATION = ', TRIM ( SLTYPE ) , ' FOUND', &
+                  SLCATS,' CATEGORIES'
+            CALL wrf_message ( mess )
+          LUMATCH=1
+        ENDIF
+! prevent possible array overwrite, Bill Bovermann, IBM, May 6, 2008
+        IF ( SIZE(BB    ) < SLCATS .OR. &
+             SIZE(DRYSMC) < SLCATS .OR. &
+             SIZE(F11   ) < SLCATS .OR. &
+             SIZE(MAXSMC) < SLCATS .OR. &
+             SIZE(REFSMC) < SLCATS .OR. &
+             SIZE(SATPSI) < SLCATS .OR. &
+             SIZE(SATDK ) < SLCATS .OR. &
+             SIZE(SATDW ) < SLCATS .OR. &
+             SIZE(WLTSMC) < SLCATS .OR. &
+             SIZE(QTZ   ) < SLCATS  ) THEN
+           CALL wrf_error_fatal('Table sizes too small for value of SLCATS in module_sf_noahdrv.F')
+        ENDIF
+        IF(SLTYPE.EQ.MMINSL)THEN
+          DO LC=1,SLCATS
+              READ (19,*) IINDEX,BB(LC),DRYSMC(LC),F11(LC),MAXSMC(LC),&
+                        REFSMC(LC),SATPSI(LC),SATDK(LC), SATDW(LC),   &
+                        WLTSMC(LC), QTZ(LC)
+          ENDDO
+        ENDIF
+
+ 2003   CONTINUE
+
+        CLOSE (19)
+      ENDIF
+
+      CALL wrf_dm_bcast_integer ( LUMATCH , 1 )
+      CALL wrf_dm_bcast_string  ( SLTYPE  , 4 )
+      CALL wrf_dm_bcast_string  ( MMINSL  , 4 )  ! since this is reset above, see oct2 ^
+      CALL wrf_dm_bcast_integer ( SLCATS  , 1 )
+      CALL wrf_dm_bcast_integer ( IINDEX  , 1 )
+      CALL wrf_dm_bcast_real    ( BB      , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( DRYSMC  , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( F11     , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( MAXSMC  , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( REFSMC  , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( SATPSI  , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( SATDK   , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( SATDW   , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( WLTSMC  , NSLTYPE )
+      CALL wrf_dm_bcast_real    ( QTZ     , NSLTYPE )
+
+      IF(LUMATCH.EQ.0)THEN
+          CALL wrf_message( 'SOIl TEXTURE IN INPUT FILE DOES NOT ' )
+          CALL wrf_message( 'MATCH SOILPARM TABLE'                 )
+          CALL wrf_error_fatal ( 'INCONSISTENT OR MISSING SOILPARM FILE' )
+      ENDIF
+
+!
+!-----READ IN GENERAL PARAMETERS FROM GENPARM.TBL
+!
+      IF ( wrf_dm_on_monitor() ) THEN
+        OPEN(19, FILE='GENPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+        IF(ierr .NE. OPEN_OK ) THEN
+          WRITE(message,FMT='(A)') &
+          'module_sf_noahlsm.F: soil_veg_gen_parm: failure opening GENPARM.TBL'
+          CALL wrf_error_fatal ( message )
+        END IF
+
+        READ (19,*)
+        READ (19,*)
+        READ (19,*) NUM_SLOPE
+
+          SLPCATS=NUM_SLOPE
+! prevent possible array overwrite, Bill Bovermann, IBM, May 6, 2008
+          IF ( SIZE(slope_data) < NUM_SLOPE ) THEN
+            CALL wrf_error_fatal('NUM_SLOPE too large for slope_data array in module_sf_noahdrv')
+          ENDIF
+
+          DO LC=1,SLPCATS
+              READ (19,*)SLOPE_DATA(LC)
+          ENDDO
+
+          READ (19,*)
+          READ (19,*)SBETA_DATA
+          READ (19,*)
+          READ (19,*)FXEXP_DATA
+          READ (19,*)
+          READ (19,*)CSOIL_DATA
+          READ (19,*)
+          READ (19,*)SALP_DATA
+          READ (19,*)
+          READ (19,*)REFDK_DATA
+          READ (19,*)
+          READ (19,*)REFKDT_DATA
+          READ (19,*)
+          READ (19,*)FRZK_DATA
+          READ (19,*)
+          READ (19,*)ZBOT_DATA
+          READ (19,*)
+          READ (19,*)CZIL_DATA
+          READ (19,*)
+          READ (19,*)SMLOW_DATA
+          READ (19,*)
+          READ (19,*)SMHIGH_DATA
+          READ (19,*)
+          READ (19,*)LVCOEF_DATA
+        CLOSE (19)
+      ENDIF
+
+      CALL wrf_dm_bcast_integer ( NUM_SLOPE    ,  1 )
+      CALL wrf_dm_bcast_integer ( SLPCATS      ,  1 )
+      CALL wrf_dm_bcast_real    ( SLOPE_DATA   ,  NSLOPE )
+      CALL wrf_dm_bcast_real    ( SBETA_DATA   ,  1 )
+      CALL wrf_dm_bcast_real    ( FXEXP_DATA   ,  1 )
+      CALL wrf_dm_bcast_real    ( CSOIL_DATA   ,  1 )
+      CALL wrf_dm_bcast_real    ( SALP_DATA    ,  1 )
+      CALL wrf_dm_bcast_real    ( REFDK_DATA   ,  1 )
+      CALL wrf_dm_bcast_real    ( REFKDT_DATA  ,  1 )
+      CALL wrf_dm_bcast_real    ( FRZK_DATA    ,  1 )
+      CALL wrf_dm_bcast_real    ( ZBOT_DATA    ,  1 )
+      CALL wrf_dm_bcast_real    ( CZIL_DATA    ,  1 )
+      CALL wrf_dm_bcast_real    ( SMLOW_DATA   ,  1 )
+      CALL wrf_dm_bcast_real    ( SMHIGH_DATA  ,  1 )
+      CALL wrf_dm_bcast_real    ( LVCOEF_DATA  ,  1 )
+
+
+!-----------------------------------------------------------------
+      END SUBROUTINE SOIL_VEG_GEN_PARM
+!-----------------------------------------------------------------
+
+!------------------------------------------------------------------------
+! Begin exact copy from WRF driver 
+!------------------------------------------------------------------------
+  SUBROUTINE NOAHMP_INIT ( MMINLU, SNOW , SNOWH , CANWAT , ISLTYP ,   IVGTYP,           &
+       TSLB , SMOIS , SH2O , DZS , FNDSOILW , FNDSNOWH ,   ISICE,                   &
+       TSK, isnowxy , tvxy     ,tgxy     ,canicexy ,         TMN,     XICE,            &
+       canliqxy ,eahxy    ,tahxy    ,cmxy     ,chxy     ,                     &
+       fwetxy   ,sneqvoxy ,alboldxy ,qsnowxy  ,wslakexy ,zwtxy    ,waxy     , &
+       wtxy     ,tsnoxy   ,zsnsoxy  ,snicexy  ,snliqxy  ,lfmassxy ,rtmassxy , &
+       stmassxy ,woodxy   ,stblcpxy ,fastcpxy ,xsaixy   , &
+!jref:start
+       t2mvxy   ,t2mbxy   ,chstarxy,            &
+!jref:end       
+       NSOIL, restart,                 &
+       allowed_to_read ,                         &
+       ids,ide, jds,jde, kds,kde,                &
+       ims,ime, jms,jme, kms,kme,                &
+       its,ite, jts,jte, kts,kte                 )
+
+  USE module_sf_noahmplsm, ONLY : BB, SATPSI, MAXSMC  ! Added to have access 
+
+! Initializing Canopy air temperature to 287 K seems dangerous to me [KWM].
+
+    INTEGER, INTENT(IN   )    ::     ids,ide, jds,jde, kds,kde,  &
+         &                           ims,ime, jms,jme, kms,kme,  &
+         &                           its,ite, jts,jte, kts,kte
+
+    INTEGER, INTENT(IN)       ::     NSOIL, ISICE
+
+    LOGICAL, INTENT(IN)       ::     restart,                    &
+         &                           allowed_to_read
+
+    REAL,    DIMENSION( NSOIL), INTENT(IN)    ::     DZS  ! Thickness of the soil layers [m]
+
+    REAL,    DIMENSION( ims:ime, NSOIL, jms:jme ) ,    &
+         &   INTENT(INOUT)    ::     SMOIS,                      &
+         &                           SH2O,                       &
+         &                           TSLB
+
+    REAL,    DIMENSION( ims:ime, jms:jme ) ,                     &
+         &   INTENT(INOUT)    ::     SNOW,                       &
+         &                           SNOWH,                      &
+         &                           CANWAT
+
+    INTEGER, DIMENSION( ims:ime, jms:jme ),                      &
+         &   INTENT(IN)       ::     ISLTYP,  &
+                                     IVGTYP,  &
+                                     XICE  
+
+    LOGICAL, INTENT(IN)       ::     FNDSOILW,                   &
+         &                           FNDSNOWH
+
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: TSK         !skin temperature (k)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: TMN         !deep soil temperature (k)
+    INTEGER, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: isnowxy     !actual no. of snow layers
+    REAL, DIMENSION(ims:ime,-2:NSOIL,jms:jme), INTENT(INOUT) :: zsnsoxy  !snow layer depth [m]
+    REAL, DIMENSION(ims:ime,-2:              0,jms:jme), INTENT(INOUT) :: tsnoxy   !snow temperature [K]
+    REAL, DIMENSION(ims:ime,-2:              0,jms:jme), INTENT(INOUT) :: snicexy  !snow layer ice [mm]
+    REAL, DIMENSION(ims:ime,-2:              0,jms:jme), INTENT(INOUT) :: snliqxy  !snow layer liquid water [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: tvxy        !vegetation canopy temperature
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: tgxy        !ground surface temperature
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: canicexy    !canopy-intercepted ice (mm)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: canliqxy    !canopy-intercepted liquid water (mm)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: eahxy       !canopy air vapor pressure (pa)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: tahxy       !canopy air temperature (k)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: cmxy        !momentum drag coefficient
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: chxy        !sensible heat exchange coefficient
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: fwetxy      !wetted or snowed fraction of the canopy (-)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: sneqvoxy    !snow mass at last time step(mm h2o)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: alboldxy    !snow albedo at last time step (-)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: qsnowxy     !snowfall on the ground [mm/s]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: wslakexy    !lake water storage [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: zwtxy       !water table depth [m]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: waxy        !water in the "aquifer" [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: wtxy        !groundwater storage [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: lfmassxy    !leaf mass [g/m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: rtmassxy    !mass of fine roots [g/m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: stmassxy    !stem mass [g/m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: woodxy      !mass of wood (incl. woody roots) [g/m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: stblcpxy    !stable carbon in deep soil [g/m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: fastcpxy    !short-lived carbon, shallow soil [g/m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: xsaixy      !stem area index
+
+!jref:start
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: t2mvxy        !2m temperature vegetation part (k)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: t2mbxy        !2m temperature bare ground part (k)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: chstarxy        !dummy
+!jref:end
+
+
+    REAL, DIMENSION(1:NSOIL)  :: ZSOIL      ! Depth of the soil layer bottom (m) from 
+    !                                                   the surface (negative)
+
+    REAL                      :: BX, SMCMAX, PSISAT
+
+    REAL, PARAMETER           :: BLIM  = 5.5
+    REAL, PARAMETER           :: HLICE = 3.335E5
+    REAL, PARAMETER           :: GRAV = 9.81
+    REAL, PARAMETER           :: T0 = 273.15
+
+    INTEGER                   :: errflag
+
+    character(len=80) :: err_message
+    character(len=4)  :: MMINSL
+    character(len=*), intent(in) :: MMINLU
+    MMINSL='STAS'
+
+! For now, commment this out since we read earlier in driver. This may change when we go to one table.
+!    call read_mp_veg_parameters(trim(MMINLU))
+
+    !
+    ! initialize three Noah LSM related tables
+    !
+
+! For now, commment this out since we read earlier in driver. This may change when we go to one table.
+!    IF ( allowed_to_read ) THEN
+!       CALL wrf_message( 'INITIALIZE THREE Noah LSM RELATED TABLES' )
+!       CALL  SOIL_VEG_GEN_PARM( MMINLU, MMINSL )
+!    ENDIF
+
+    IF( .NOT. restart ) THEN
+
+       itf=min0(ite,ide-1)
+       jtf=min0(jte,jde-1)
+
+       errflag = 0
+       DO j = jts,jtf
+          DO i = its,itf
+             IF ( ISLTYP( i,j ) .LT. 1 ) THEN
+                errflag = 1
+                WRITE(err_message,*)"module_sf_noahlsm.F: lsminit: out of range ISLTYP ",i,j,ISLTYP( i,j )
+                CALL wrf_message(err_message)
+             ENDIF
+          ENDDO
+       ENDDO
+       IF ( errflag .EQ. 1 ) THEN
+          CALL wrf_error_fatal( "module_sf_noahlsm.F: lsminit: out of range value "// &
+               "of ISLTYP. Is this field in the input?" )
+       ENDIF
+#ifdef WRF_CHEM
+       !
+       ! need this parameter for dust parameterization in wrf/chem
+       !
+       do I=1,NSLTYPE
+          porosity(i)=maxsmc(i)
+       enddo
+#endif
+
+! initialize soil liquid water content SH2O
+
+       DO J = jts , jtf
+          DO I = its , itf
+	    IF(IVGTYP(I,J)==ISICE .AND. XICE(I,J) <= 0.0) THEN
+              DO NS=1, NSOIL
+	        SMOIS(I,NS,J) = 1.0                     ! glacier starts all frozen
+	        SH2O(I,NS,J) = 0.0
+	        TSLB(I,NS,J) = MIN(TSLB(I,NS,J),263.15) ! set glacier temp to at most -10C
+              END DO
+	        TMN(I,J) = MIN(TMN(I,J),263.15)         ! set deep temp to at most -10C
+		SNOW(I,J) = MAX(SNOW(I,J), 10.0)        ! set SWE to at least 10mm
+	    ELSE
+	      
+              BX = BB(ISLTYP(I,J))
+              SMCMAX = MAXSMC(ISLTYP(I,J))
+              PSISAT = SATPSI(ISLTYP(I,J))
+              IF ( ( BX > 0.0 ) .AND. ( SMCMAX > 0.0 ) .AND. ( PSISAT > 0.0 ) ) THEN
+                DO NS=1, NSOIL
+                   IF ( TSLB(I,NS,J) < 273.149 ) THEN    ! Use explicit as initial soil ice
+                      FK=(( (HLICE/(GRAV*(-PSISAT))) *                              &
+                           ((TSLB(I,NS,J)-T0)/TSLB(I,NS,J)) )**(-1/BX) )*SMCMAX
+                      FK = MAX(FK, 0.02)
+                      SH2O(I,NS,J) = MIN( FK, SMOIS(I,NS,J) )
+                   ELSE
+                      SH2O(I,NS,J)=SMOIS(I,NS,J)
+                   ENDIF
+                END DO
+              ELSE
+                DO NS=1, NSOIL
+                   SH2O(I,NS,J)=SMOIS(I,NS,J)
+                END DO
+              ENDIF
+            ENDIF
+          ENDDO
+       ENDDO
+!  ENDIF
+
+
+       !
+       ! initialize physical snow height SNOWH
+       !
+       IF(.NOT.FNDSNOWH)THEN
+          ! If no SNOWH do the following
+          CALL wrf_message( 'SNOW HEIGHT NOT FOUND - VALUE DEFINED IN LSMINIT' )
+          DO J = jts,jtf
+             DO I = its,itf
+                SNOWH(I,J)=SNOW(I,J)*0.005               ! SNOW in mm and SNOWH in m
+             ENDDO
+          ENDDO
+       ENDIF
+
+       DO J = jts,jtf
+          DO I = its,itf
+             tvxy       (I,J) = TSK(I,J)
+             tgxy       (I,J) = TSK(I,J)
+             CANWAT     (I,J) = 0.0
+             canliqxy   (I,J) = CANWAT(I,J)
+             canicexy   (I,J) = 0.
+             eahxy      (I,J) = 2000. 
+             tahxy      (I,J) = TSK(I,J)
+!             tahxy      (I,J) = 287.
+!jref:start
+             t2mvxy     (I,J) = TSK(I,J)
+             t2mbxy     (I,J) = TSK(I,J)
+             chstarxy     (I,J) = 0.1
+!jref:end
+
+             cmxy       (I,J) = 0.0
+             chxy       (I,J) = 0.0
+             fwetxy     (I,J) = 0.0
+             sneqvoxy   (I,J) = 0.0
+             alboldxy   (I,J) = 0.65
+             qsnowxy    (I,J) = 0.0
+             wslakexy   (I,J) = 0.0
+
+             waxy       (I,J) = 4900.                                       !???
+             wtxy       (I,J) = waxy(i,j)                                   !???
+             zwtxy      (I,J) = (25. + 2.0) - waxy(i,j)/1000/0.2            !???
+
+             lfmassxy   (I,J) = 50.         !
+             stmassxy   (I,J) = 50.0        !
+             rtmassxy   (I,J) = 500.0       !
+             woodxy     (I,J) = 500.0       !
+             stblcpxy   (I,J) = 1000.0      !
+             fastcpxy   (I,J) = 1000.0      !
+             xsaixy     (I,J) = 0.1         !
+
+          enddo
+       enddo
+
+       ! Given the soil layer thicknesses (in DZS), initialize the soil layer
+       ! depths from the surface.
+       ZSOIL(1)         = -DZS(1)          ! negative
+       DO NS=2, NSOIL
+          ZSOIL(NS)       = ZSOIL(NS-1) - DZS(NS)
+       END DO
+
+       ! Initialize snow/soil layer arrays ZSNSOXY, TSNOXY, SNICEXY, SNLIQXY, 
+       ! and ISNOWXY
+       CALL snow_init ( ims , ime , jms , jme , its , itf , jts , jtf , 3 , &
+            &           NSOIL , zsoil , snow , tgxy , snowh ,     &
+            &           zsnsoxy , tsnoxy , snicexy , snliqxy , isnowxy )
+
+    ENDIF
+  END SUBROUTINE NOAHMP_INIT
+
+!------------------------------------------------------------------------------------------
+!------------------------------------------------------------------------------------------
+
+  SUBROUTINE SNOW_INIT ( ims , ime , jms , jme , its , itf , jts , jtf ,                  &
+       &                 NSNOW , NSOIL , ZSOIL , SWE , TGXY , SNODEP ,                    &
+       &                 ZSNSOXY , TSNOXY , SNICEXY ,SNLIQXY , ISNOWXY )
+!------------------------------------------------------------------------------------------
+!   Initialize snow arrays for Noah-MP LSM, based in input SNOWDEP, NSNOW
+!   ISNOWXY is an index array, indicating the index of the top snow layer.  Valid indices
+!           for snow layers range from 0 (no snow) and -1 (shallow snow) to (-NSNOW)+1 (deep snow).
+!   TSNOXY holds the temperature of the snow layer.  Snow layers are initialized with 
+!          temperature = ground temperature [?].  Snow-free levels in the array have value 0.0
+!   SNICEXY is the frozen content of a snow layer.  Initial estimate based on SNODEP and SWE
+!   SNLIQXY is the liquid content of a snow layer.  Initialized to 0.0
+!   ZNSNOXY is the layer depth from the surface.  
+!------------------------------------------------------------------------------------------
+    IMPLICIT NONE
+!------------------------------------------------------------------------------------------
+    INTEGER, INTENT(IN)                              :: ims, ime, jms, jme
+    INTEGER, INTENT(IN)                              :: its, itf, jts, jtf
+    INTEGER, INTENT(IN)                              :: NSNOW
+    INTEGER, INTENT(IN)                              :: NSOIL
+    REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: SWE 
+    REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: SNODEP
+    REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: TGXY
+    REAL,    INTENT(IN), DIMENSION(1:NSOIL)          :: ZSOIL
+
+    INTEGER, INTENT(OUT), DIMENSION(ims:ime, jms:jme)                :: ISNOWXY ! Top snow layer index
+    REAL,    INTENT(OUT), DIMENSION(ims:ime, -NSNOW+1:NSOIL,jms:jme) :: ZSNSOXY ! Snow/soil layer depth from surface [m]
+    REAL,    INTENT(OUT), DIMENSION(ims:ime, -NSNOW+1:    0,jms:jme) :: TSNOXY  ! Snow layer temperature [K]
+    REAL,    INTENT(OUT), DIMENSION(ims:ime, -NSNOW+1:    0,jms:jme) :: SNICEXY ! Snow layer ice content [mm]
+    REAL,    INTENT(OUT), DIMENSION(ims:ime, -NSNOW+1:    0,jms:jme) :: SNLIQXY ! snow layer liquid content [mm]
+
+! Local variables:
+!   DZSNO   holds the thicknesses of the various snow layers.
+!   DZSNOSO holds the thicknesses of the various soil/snow layers.
+    INTEGER                           :: I,J,IZ
+    REAL,   DIMENSION(-NSNOW+1:    0) :: DZSNO
+    REAL,   DIMENSION(-NSNOW+1:NSOIL) :: DZSNSO
+
+!------------------------------------------------------------------------------------------
+
+    DO J = jts , jtf
+       DO I = its , itf
+          IF ( SNODEP(I,J) < 0.025 ) THEN
+             ISNOWXY(I,J) = 0
+             DZSNO(-NSNOW+1:0) = 0.
+          ELSE
+             IF ( ( SNODEP(I,J) >= 0.025 ) .AND. ( SNODEP(I,J) <= 0.05 ) ) THEN
+                ISNOWXY(I,J)    = -1
+                DZSNO(0)  = SNODEP(I,J)
+             ELSE IF ( ( SNODEP(I,J) > 0.05 ) .AND. ( SNODEP(I,J) <= 0.10 ) ) THEN
+                ISNOWXY(I,J)    = -2
+                DZSNO(-1) = SNODEP(I,J)/2.
+                DZSNO( 0) = SNODEP(I,J)/2.
+             ELSE IF ( (SNODEP(I,J) > 0.10 ) .AND. ( SNODEP(I,J) <= 0.25 ) ) THEN
+                ISNOWXY(I,J)    = -2
+                DZSNO(-1) = 0.05
+                DZSNO( 0) = SNODEP(I,J) - DZSNO(-1)
+             ELSE IF ( ( SNODEP(I,J) > 0.25 ) .AND. ( SNODEP(I,J) <= 0.45 ) ) THEN
+                ISNOWXY(I,J)    = -3
+                DZSNO(-2) = 0.05
+                DZSNO(-1) = 0.5*(SNODEP(I,J)-DZSNO(-2))
+                DZSNO( 0) = 0.5*(SNODEP(I,J)-DZSNO(-2))
+             ELSE IF ( SNODEP(I,J) > 0.45 ) THEN
+                ISNOWXY(I,J)     = -3
+                DZSNO(-2) = 0.05
+                DZSNO(-1) = 0.20
+                DZSNO( 0) = SNODEP(I,J) - DZSNO(-1) - DZSNO(-2)
+             ELSE
+                CALL wrf_error_fatal("Problem with the logic assigning snow layers.")
+             END IF
+          END IF
+
+          TSNOXY (I,-NSNOW+1:0,J) = 0.
+          SNICEXY(I,-NSNOW+1:0,J) = 0.
+          SNLIQXY(I,-NSNOW+1:0,J) = 0.
+          DO IZ = ISNOWXY(I,J)+1 , 0
+             TSNOXY(I,IZ,J)  = TGXY(I,J)  ! [k]
+             SNLIQXY(I,IZ,J) = 0.00
+             SNICEXY(I,IZ,J) = 1.00 * DZSNO(IZ) * (SWE(I,J)/SNODEP(I,J))  ! [kg/m3]
+          END DO
+
+          ! Assign local variable DZSNSO, the soil/snow layer thicknesses, for snow layers
+          DO IZ = ISNOWXY(I,J)+1 , 0
+             DZSNSO(IZ) = -DZSNO(IZ)
+          END DO
+
+          ! Assign local variable DZSNSO, the soil/snow layer thicknesses, for soil layers
+          DZSNSO(1) = ZSOIL(1)
+          DO IZ = 2 , NSOIL
+             DZSNSO(IZ) = (ZSOIL(IZ) - ZSOIL(IZ-1))
+          END DO
+
+          ! Assign ZSNSOXY, the layer depths, for soil and snow layers
+          ZSNSOXY(I,ISNOWXY(I,J)+1,J) = DZSNSO(ISNOWXY(I,J)+1)
+          DO IZ = ISNOWXY(I,J)+2 , NSOIL
+             ZSNSOXY(I,IZ,J) = ZSNSOXY(I,IZ-1,J) + DZSNSO(IZ)
+          ENDDO
+
+       END DO
+    END DO
+
+  END SUBROUTINE SNOW_INIT
+!------------------------------------------------------------------------
+! End exact copy from WRF driver 
+!------------------------------------------------------------------------

@@ -1,0 +1,309 @@
+300,303d299
+<      IF(MAXVAL(SICE) < 0.0001) &
+<        WRITE(*,*) "GLACIER HAS MELTED AT:",ILOC,JLOC," ARE YOU SURE THIS SHOULD BE A GLACIER POINT?"
+<        
+<        
+513,514c509,510
+< 		       UR      ,GAMMA   ,RSURF   ,LWDN    ,RHSUR   ,SMC     , & !in
+< 		       EAIR    ,STC     ,SAG     ,SNOWH   ,LATHEA  ,SH2O    , & !in
+---
+> 		       UR      ,GAMMA   ,RSURF   ,LWDN    ,RHSUR   , & !in
+> 		       EAIR    ,STC     ,SAG     ,SNOWH   ,LATHEA  , & !in
+926,927c922,923
+< 			   UR      ,GAMMA   ,RSURF   ,LWDN    ,RHSUR   ,SMC     , & !in
+< 			   EAIR    ,STC     ,SAG     ,SNOWH   ,LATHEA  ,SH2O    , & !in
+---
+> 			   UR      ,GAMMA   ,RSURF   ,LWDN    ,RHSUR   , & !in
+> 			   EAIR    ,STC     ,SAG     ,SNOWH   ,LATHEA  , & !in
+964,965d959
+<   REAL, DIMENSION(       1:NSOIL), INTENT(IN) :: SMC    !soil moisture
+<   REAL, DIMENSION(       1:NSOIL), INTENT(IN) :: SH2O   !soil liquid water
+993,995d986
+<   REAL    :: FM2          !Monin-Obukhov momentum adjustment at 2m
+<   REAL    :: FH2          !Monin-Obukhov heat adjustment at 2m
+<   REAL    :: CH2          !Surface exchange at 2m
+1020d1010
+<   REAL, DIMENSION(       1:NSOIL) :: SICE   !soil ice
+1047,1048c1037,1038
+<        &             MOZ    ,MOZSGN ,FM     ,FH     ,FM2    ,FH2    , & !inout
+<        &             FV     ,CM     ,CH     ,CH2)                       !out
+---
+>        &             MOZ    ,MOZSGN ,FM     ,FH     ,                 & !inout
+>        &             FV     ,CM     ,CH     )                           !out
+1105d1094
+<      SICE = SMC - SH2O
+1107c1096
+<      IF ((MAXVAL(SICE) > 0.0 .OR. SNOWH > 0.0) .AND. TGB > TFRZ) THEN
+---
+>      IF (SNOWH > 0.05 .AND. TGB > TFRZ) THEN
+1117c1106
+<      EHB2  = FV*VKC/(LOG((2.+Z0H)/Z0H)-FH2)
+---
+>      EHB2  = FV*VKC/LOG((2.+Z0H)/Z0H)
+1123c1112
+<        T2MB  = TGB - SHB/(RHOAIR*CPAIR) * 1./EHB2
+---
+>        T2MB  = TGB - SHB/(RHOAIR*CPAIR*FV) * 1./VKC * LOG((2.+Z0H)/Z0H)
+1186,1187c1175,1176
+<        &             MOZ    ,MOZSGN ,FM     ,FH     ,FM2    ,FH2    , & !inout
+<        &             FV     ,CM     ,CH     ,CH2     )                  !out
+---
+>        &             MOZ    ,MOZSGN ,FM     ,FH     ,                 & !inout
+>        &             FV     ,CM     ,CH     )                           !out
+1211,1212d1199
+<     REAL,              INTENT(INOUT) :: FM2    !sen heat stability correction, weighted by prior iters
+<     REAL,              INTENT(INOUT) :: FH2    !sen heat stability correction, weighted by prior iters
+1218d1204
+<     REAL,                INTENT(OUT) :: CH2    !drag coefficient for heat
+1229,1236c1215
+<     REAL    :: MOZ2                     !2/L
+<     REAL    :: TMPCM2                   !temporary calculation for CM2
+<     REAL    :: TMPCH2                   !temporary calculation for CH2
+<     REAL    :: FM2NEW                   !stability correction factor, momentum, for current moz
+<     REAL    :: FH2NEW                   !stability correction factor, sen heat, for current moz
+<     REAL    :: TMP12,TMP22,TMP32        !temporary calculation
+< 
+<     REAL    :: CMFM, CHFH, CM2FM2, CH2FH2
+---
+>     REAL    :: CMFM, CHFH
+1251,1252d1229
+<     TMPCM2 = LOG((2.0 + Z0M) / Z0M)
+<     TMPCH2 = LOG((2.0 + Z0H) / Z0H)
+1258d1234
+<        MOZ2 = 0.0
+1265d1240
+<        MOZ2  = MIN( (2.0 + Z0H)/MOL, 1.)
+1275,1277d1249
+<        MOZ2 = 0.
+<        FM2 = 0.
+<        FH2 = 0.
+1287,1293d1258
+< 
+< ! 2-meter
+<        TMP12 = (1. - 16.*MOZ2)**0.25
+<        TMP22 = LOG((1.+TMP12*TMP12)/2.)
+<        TMP32 = LOG((1.+TMP12)/2.)
+<        FM2NEW = 2.*TMP32 + TMP22 - 2.*ATAN(TMP12) + 1.5707963
+<        FH2NEW = 2*TMP22
+1297,1298d1261
+<        FM2NEW = -5.*MOZ2
+<        FH2NEW = FM2NEW
+1307,1308d1269
+<        FM2 = FM2NEW
+<        FH2 = FH2NEW
+1312,1313d1272
+<        FM2 = 0.5 * (FM2+FM2NEW)
+<        FH2 = 0.5 * (FH2+FH2NEW)
+1318,1322d1276
+<     FH = MIN(FH,0.9*TMPCH)
+<     FM = MIN(FM,0.9*TMPCM)
+<     FH2 = MIN(FH2,0.9*TMPCH2)
+<     FM2 = MIN(FM2,0.9*TMPCM2)
+< 
+1325,1326d1278
+<     CM2FM2 = TMPCM2-FM2
+<     CH2FH2 = TMPCH2-FH2
+1329,1330d1280
+<     IF(ABS(CM2FM2) <= MPE) CM2FM2 = MPE
+<     IF(ABS(CH2FH2) <= MPE) CH2FH2 = MPE
+1333d1282
+<     CH2  = VKC*VKC/(CM2FM2*CH2FH2)
+1338d1286
+<     CH2  = VKC*FV/CH2FH2
+1665d1612
+<   LOGICAL :: MIXPHASE
+1693c1640,1641
+<     DO J = ISNOW+1,0
+---
+> 
+>     DO J = ISNOW+1,NSOIL
+1699a1648,1654
+> 
+>          ! If snow exists, but its thickness is not enough to create a layer
+>          IF (ISNOW == 0 .AND. SNEQV > 0. .AND. J == 1) THEN
+>              IF (STC(J) >= TFRZ) THEN
+>                 IMELT(J) = 1
+>              ENDIF
+>          ENDIF
+1704c1659
+<     DO J = ISNOW+1,0
+---
+>     DO J = ISNOW+1,NSOIL
+1721,1751d1675
+< ! The rate of melting and freezing for snow
+< 
+<     DO J = ISNOW+1,0
+<       IF (IMELT(J) > 0 .AND. ABS(HM(J)) > 0.) THEN
+< 
+<          HEATR = 0.
+<          IF (XM(J) > 0.) THEN                            
+<             MICE(J) = MAX(0., WICE0(J)-XM(J))
+<             HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+<          ELSE IF (XM(J) < 0.) THEN                      
+<             MICE(J) = MIN(WMASS0(J), WICE0(J)-XM(J))  
+<             HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+<          ENDIF
+< 
+<          MLIQ(J) = MAX(0.,WMASS0(J)-MICE(J))
+< 
+<          IF (ABS(HEATR) > 0.) THEN
+<             STC(J) = STC(J) + FACT(J)*HEATR
+<             IF (J <= 0) THEN                             ! snow
+<                IF (MLIQ(J)*MICE(J)>0.) STC(J) = TFRZ
+<             END IF
+<          ENDIF
+< 
+<          XMF = XMF + HFUS * (WICE0(J)-MICE(J))/DT
+< 
+<          IF (J < 1) THEN
+<             QMELT = QMELT + MAX(0.,(WICE0(J)-MICE(J)))/DT
+<          ENDIF
+<       ENDIF
+<     ENDDO
+< 
+1772c1696
+< ! Calculate the energy surplus and loss for melting and freezing
+---
+> ! The rate of melting and freezing for snow and soil
+1774,1780c1698,1699
+<     DO J = 1,NSOIL
+<        HM(J) = (STC(J)-TFRZ)/FACT(J)
+<        STC(J) = TFRZ
+<        XM(J) = HM(J)*DT/HFUS                           
+<     ENDDO
+< 
+< ! The rate of melting and freezing for soil
+---
+>     DO J = ISNOW+1,NSOIL
+>       IF (IMELT(J) > 0 .AND. ABS(HM(J)) > 0.) THEN
+1782,1790c1701,1708
+<     DO J = 1,NSOIL
+<        HEATR = 0.
+<        IF (XM(J) > 0.) THEN                      ! melting                    
+<           MICE(J) = MAX(0., WICE0(J)-XM(J))
+<           HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+<        ELSE IF (XM(J) < 0.) THEN                 ! freezing           
+<           MICE(J) = MIN(WMASS0(J), WICE0(J)-XM(J))  
+<           HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+<        ENDIF
+---
+>          HEATR = 0.
+>          IF (XM(J) > 0.) THEN                            
+>             MICE(J) = MAX(0., WICE0(J)-XM(J))
+>             HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+>          ELSE IF (XM(J) < 0.) THEN                      
+>             MICE(J) = MIN(WMASS0(J), WICE0(J)-XM(J))  
+>             HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+>          ENDIF
+1792c1710
+<        MLIQ(J) = MAX(0.,WMASS0(J)-MICE(J))
+---
+>          MLIQ(J) = MAX(0.,WMASS0(J)-MICE(J))
+1794,1804c1712
+<        IF (HEATR < 0.) THEN         ! soil and cooling
+< 	  IF (MAXVAL(MLIQ(1:NSOIL)) > 0.0 .AND. J .NE. NSOIL) THEN
+< 	    XM(J+1) = XM(J+1) + HEATR * DT / HFUS
+< 	  ELSE
+<             STC(J) = STC(J) + FACT(J)*HEATR
+< 	  END IF
+<        ENDIF
+<        IF (HEATR > 0.) THEN         ! soil and warming
+< 	  IF (MAXVAL(MICE(1:NSOIL)) > 0.0 .AND. J .NE. NSOIL) THEN
+< 	    XM(J+1) = XM(J+1) + HEATR * DT / HFUS
+< 	  ELSE
+---
+>          IF (ABS(HEATR) > 0.) THEN
+1806,1807c1714,1717
+< 	  END IF
+<        ENDIF
+---
+>             IF (J <= 0) THEN                             ! snow
+>                IF (MLIQ(J)*MICE(J)>0.) STC(J) = TFRZ
+>             END IF
+>          ENDIF
+1809c1719
+<        XMF = XMF + HFUS * (WICE0(J)-MICE(J))/DT
+---
+>          XMF = XMF + HFUS * (WICE0(J)-MICE(J))/DT
+1810a1721,1724
+>          IF (J < 1) THEN
+>             QMELT = QMELT + MAX(0.,(WICE0(J)-MICE(J)))/DT
+>          ENDIF
+>       ENDIF
+1820,1822c1734
+<        SH2O(J) =  MAX(0.0,MIN(1.0,SH2O(J)))
+< !       SMC(J)  = (MLIQ(J) + MICE(J)) / (1000. * DZSNSO(J))
+<        SMC(J)  = 1.0 
+---
+>        SMC(J)  = (MLIQ(J) + MICE(J)) / (1000. * DZSNSO(J))
+1881,1884d1792
+<   REAL                                           :: REPLACE !replacement water due to sublimation of glacier
+<   REAL, DIMENSION(       1:NSOIL)                :: SICE_SAVE  !soil ice content [m3/m3]
+<   REAL, DIMENSION(       1:NSOIL)                :: SH2O_SAVE  !soil liquid water content [m3/m3]
+<   INTEGER :: ILEV
+1892,1893d1799
+<    SICE_SAVE       = SICE
+<    SH2O_SAVE       = SH2O
+1943,1956c1849,1853
+< !     QSNSUB = 0.
+< !     IF (SNEQV > 0.) THEN
+< !       QSNSUB = MIN(QVAP, SNEQV/DT)
+< !     ENDIF
+< !     QSEVA = QVAP-QSNSUB
+< 
+< !     QSNFRO = 0.
+< !     IF (SNEQV > 0.) THEN
+< !        QSNFRO = QDEW
+< !     ENDIF
+< !     QSDEW = QDEW - QSNFRO
+< 
+<      QSNSUB = QVAP  ! send total sublimation/frost to SNOWWATER and deal with it there
+<      QSNFRO = QDEW
+---
+>      QSNSUB = 0.
+>      IF (SNEQV > 0.) THEN
+>        QSNSUB = MIN(QVAP, SNEQV/DT)
+>      ENDIF
+>      QSEVA = QVAP-QSNSUB
+1957a1855,1859
+>      QSNFRO = 0.
+>      IF (SNEQV > 0.) THEN
+>         QSNFRO = QDEW
+>      ENDIF
+>      QSDEW = QDEW - QSNFRO
+1963a1866
+> 
+1976c1879
+<       RUNSRF = RUNSRF + QSNBOT + QRAIN
+---
+>       RUNSRF = RUNSRF+(QSNBOT + QSDEW + QRAIN)
+1978c1881
+<       RUNSRF = RUNSRF + QSNBOT
+---
+>       RUNSRF = RUNSRF+(QSNBOT + QSDEW)
+1980,1991d1882
+<     
+<     REPLACE = 0.0
+<     DO ILEV = 1,NSOIL
+<        REPLACE = REPLACE + DZSNSO(ILEV)*(SICE(ILEV) - SICE_SAVE(ILEV) + SH2O(ILEV) - SH2O_SAVE(ILEV))
+<     END DO
+<     REPLACE = REPLACE * 1000.0 / DT     ! convert to [mm/s]
+<     
+<     SICE = MIN(1.0,SICE_SAVE)
+<     SH2O = 1.0 - SICE_SAVE
+<     
+<     ! use RUNSUB as a water balancer, SNOFLOW is snow that disappears, REPLACE is
+<     !   water from below that replaces glacier loss
+1993c1884
+<     RUNSUB       = SNOFLOW + REPLACE
+---
+>     RUNSUB       = SNOFLOW   !mm/s allow excess snow to disappear as runsub
+2324d2214
+< !    DATA DZMIN /0.025, 0.025, 0.1/  ! MB: change limit
+2370,2371d2259
+<        IF(ISNOW ==0) RETURN   ! MB: get out if no longer multi-layer
+< 
+2387d2274
+< !       IF (SNOWH < 0.025 .AND. ISNOW < 0 ) THEN ! MB: change limit
+2584d2470
+< !             IF (MSNO <= 2 .AND. DZ(2) > 0.20) THEN  ! MB: change limit

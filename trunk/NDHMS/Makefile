@@ -1,11 +1,19 @@
 # Makefile 
 all:
 	(make -f Makefile.comm BASIC)
-	(cd HRLDAS_cpl; make)
-	(cd HRLDAS; make; rm -f ../Run/Noah_hrldas_beta; cp Run/Noah_hrldas_beta ../Run/Noah_hrldas_beta  )
+	@if [ -d "LandModel_cpl" ]; then \
+	(cd LandModel_cpl; make) \
+	fi
+	@if [ -d "LandModel" ]; then \
+	(cd LandModel; make; rm -f ../../Run/wrf_hydro.exe; mv Run/Noah_hrldas_beta ../../Run/wrf_hydro.exe  ) \
+	fi
 
 clean:
-	(cd HRLDAS_cpl; make clean)
+	@if [ -d "LandModel_cpl" ]; then \
+	(cd LandModel_cpl; make clean) \
+	fi
 	(make -f Makefile.comm clean)
-	(cd HRLDAS; make clean)
-	(rm -f */*.mod */*.o lib/*.a Run/Noah_hrldas_beta)
+	@if [ -d "LandModel" ]; then \
+	(cd LandModel; make clean) \
+	fi
+	(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
