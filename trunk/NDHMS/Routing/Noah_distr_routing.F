@@ -40,6 +40,10 @@
 #ifdef MPP_LAND
        if(left_id.ge.0) IXXRT=IXXRT+1
        if(down_id.ge.0) JYYRT=JYYRT+1
+#else
+!yw ????
+       IXXRT=IXXRT+1
+       JYYRT=JYYRT+1
 #endif
 
 

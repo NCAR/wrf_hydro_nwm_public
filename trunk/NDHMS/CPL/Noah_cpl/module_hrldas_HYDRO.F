@@ -207,6 +207,8 @@ CONTAINS
        if(open_unit_status == 999) return
        open_unit_status = 999 
 
+       return
+
 #ifdef MPP_LAND  
        write(fileout,'(a11,i0.5)') "diag_hydro.",my_id    
 #else

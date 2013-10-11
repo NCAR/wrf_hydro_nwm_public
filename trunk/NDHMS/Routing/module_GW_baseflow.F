@@ -86,9 +86,9 @@ contains
 !!!Loop through GW basins to adjust for inflow/outflow
 
    DO bas=1,numbasns     ! Loop for GW bucket calcs...
-#ifdef MPP_LAND
+!yw #ifdef MPP_LAND
      if(ct_bas(bas) .gt. 0) then
-#endif
+!yw #endif
 
      net_perc(bas) = sum_perc(bas) / ct_bas(bas)   !units (mm)
      qin_gwsubbas(bas) = net_perc(bas)/1000. * ct_bas(bas) * basns_area(bas) !units (m^3)
@@ -120,9 +120,9 @@ contains
 
 
 
-#ifdef MPP_LAND
+!yw #ifdef MPP_LAND
      endif
-#endif
+!yw #endif
    END DO                 ! End loop for GW bucket calcs...
 
 

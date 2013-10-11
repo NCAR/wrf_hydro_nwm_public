@@ -4,7 +4,8 @@ MODULE module_Routing
    use module_HYDRO_io, only: mpp_read_routedim, mpp_read_routing, mpp_read_chrouting, &
                               mpp_chrouting_conf, mpp_read_simp_gw
 #else
-   use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
+   !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
+   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting,read_simp_gw
 #endif
    use module_HYDRO_io, only: readgw2d
    use module_HYDRO_utils 
@@ -380,14 +381,8 @@ CONTAINS
            rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
 
 #else
-#ifdef HYDRO_D
-    write(6,*) "ixrt, jxrt=",rt_domain(did)%ixrt, rt_domain(did)%jxrt
-    write(6,*) "route_topo_f", nlst_rt(did)%route_topo_f
-    write(6,*) "route_chan_f", nlst_rt(did)%route_chan_f
-    write(6,*) "geo_finegrid_flnm", nlst_rt(did)%geo_finegrid_flnm
-#endif
-    
-    CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+    !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+    CALL READ_ROUTING_seq(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
           rt_domain(did)%LKSATFAC,nlst_rt(did)%route_topo_f,nlst_rt(did)%route_chan_f, &
           nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC )
 #endif
@@ -597,14 +592,13 @@ CONTAINS
            print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
 #ifdef MPP_LAND
-           CALL MPP_READ_SIMP_GW(rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
+           CALL MPP_READ_SIMP_GW(              &
+#else
+           CALL READ_SIMP_GW(                  &
+#endif
+              rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
               rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
               rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%ch_netrt,nlst_rt(did)%AGGFACTRT)
-#else
-           CALL READ_SIMP_GW(rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,rt_domain(did)%JXRT, &
-              rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
-              rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%ch_netrt,nlst_rt(did)%AGGFACTRT)
-#endif
             allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))

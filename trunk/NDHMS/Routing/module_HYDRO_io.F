@@ -1488,9 +1488,8 @@ end subroutine get_albedo12m_netcdf
              ORIFICEC,ORIFICEA,ORIFICEE,LATLAKE,LONLAKE,ELEVLAKE, &
          FROM_NODE,TO_NODE,ZELEV,CHLAT,CHLON,TYPEL, ORDER,CHANLEN, &
          CHANXI,CHANYJ, lakenode,mpp_nlinks, nlinks_index,MAXORDER,yw_mpp_nlinks)
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
    implicit none 
 #include <netcdf.inc>
    integer :: i,j,ixrt,g_ixrt,jxrt,g_jxrt, nlakes, nlinks
@@ -1635,9 +1634,8 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
   subroutine MPP_READ_SIMP_GW(IX,JX,IXRT,JXRT,GWSUBBASMSK,gwbasmskfil,&
           gw_strm_msk,numbasns,ch_netrt,AGGFACTRT)
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
     
     integer, intent(in)                     :: IX,JX,IXRT,JXRT,AGGFACTRT
     integer, intent(out)                    :: numbasns
@@ -3212,6 +3210,7 @@ end subroutine get_albedo12m_netcdf
       if(STRMFRXSTPTS(i) .ne. -9999) then 
 #ifdef HYDRO_D
          print *, "Outputting frxst pt. :",STRMFRXSTPTS(i)
+         call flush(6)
 #endif
          start_posO = (cnt+1)+(nobs * (output_count-1))
 
@@ -3367,9 +3366,8 @@ end subroutine mpp_output_chrt
    subroutine mpp_output_lakes(lake_index,igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
         qlakei,qlakeo, resht,dtrt,K)
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid, K
@@ -3658,9 +3656,9 @@ end subroutine mpp_output_chrt
    subroutine mpp_output_chrtgrd(igrid, split_output_count, ixrt,jxrt, &
         NLINKS,CH_NETRT_in, CH_NETLNK_in, ORDER, startdate, date, &
         qlink, dt, geo_finegrid_flnm, mpp_nlinks,nlinks_index,g_ixrt,g_jxrt )
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
+
      implicit none
 #include <netcdf.inc>
      integer g_ixrt,g_jxrt
@@ -3832,9 +3830,8 @@ end subroutine mpp_output_chrt
        QBDRYRT_in)
 
 !output the routing variables over routing grid.
-#ifdef MPP_LAND
    USE module_mpp_land
-#endif
+
     implicit none
 #include <netcdf.inc>
 

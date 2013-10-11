@@ -16,8 +16,6 @@
 
           call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
 
-          return
-
           do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)
                SMC_io(:,k,:) = SMC(:,:,k) 

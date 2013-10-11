@@ -113,7 +113,6 @@ CONTAINS
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
 
-     return 
      end subroutine hrldas_cpl_HYDRO
 
     subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
@@ -170,7 +169,6 @@ CONTAINS
            call mpp_land_bcast_real1(nlst_rt(did)%dt)
            call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
            call write_io_real(rt_domain(did)%infxsrt, infxsrt)
-!          call write_io_real(rt_domain(did)%soldrain,soldrain)
            if(nlst_rt(did)%rst_typ .eq. 1) then
               do k = 1, kk
                  call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))
@@ -187,7 +185,6 @@ CONTAINS
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt
-!          soldrain = rt_domain(did)%soldrain
            if(nlst_rt(did)%rst_typ .eq. 1) then
               STC = rt_domain(did)%STC
               SMC = rt_domain(did)%SMC
@@ -202,7 +199,6 @@ CONTAINS
 #endif
         endif
 
-     return 
      end subroutine hrldas_cpl_HYDRO_ini
 
      subroutine open_print_mpp(iunit)
@@ -213,6 +209,7 @@ CONTAINS
        if(open_unit_status == 999) return
        open_unit_status = 999 
 
+       return
 #ifdef MPP_LAND  
        write(fileout,'(a11,i0.5)') "diag_hydro.",my_id    
 #else
