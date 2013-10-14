@@ -957,7 +957,7 @@ module module_HYDRO_drv
 #ifdef HYDRO_D                        
           write(6,*) "finish gw2d_ini"      
 #endif
-	  do iter=1,10
+	  do iter=1,1
 #ifdef HYDRO_D                        
           write(6,*) "Spinup cycle", iter, "of 10"
 #endif
