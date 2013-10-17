@@ -772,6 +772,7 @@ module module_NoahMP_hrldas_driver
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
+
      call find_restart_file(rank, trim(restart_filename_requested), startdate, khour, olddate, restart_flnm)
 
      call read_restart(trim(restart_flnm), &
@@ -813,6 +814,7 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SAI"     , XSAIXY   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FPAR"    , VEGFRA   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "GVFMIN"  , GVFMIN   )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SHDMAX"  , SHDMAX   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "GVFMAX"  , GVFMAX   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACMELT"  , ACSNOM   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACSNOW"  , ACSNOW   )
@@ -934,7 +936,9 @@ print *, 'after init',shdmax(97,1)
 ! Begin Time Loop
 !------------------------------------------------------------------------
 
+  
   NTIME=(KHOUR+1)*3600./nint(dtbl)
+  print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
   
   call system_clock(count=clock_count_1)   ! Start a timer
 
@@ -947,13 +951,13 @@ print *, 'after init',shdmax(97,1)
     call mpi_bcast(nsoil,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(ntime,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 #endif
+
    allocate( infxsrt   (ix,jx) )
    allocate( sfcheadrt   (ix,jx) )
    allocate( soldrain    (ix,jx) )
    allocate( etpnd   (ix,jx) )
    allocate( prcp0    (ix,jx) )
 
-  NTIME_out = NTIME 
  
    if(rank .ne. 0) then
      allocate(SMOIS (ix,NSOIL,jx))
@@ -979,8 +983,9 @@ print *, 'after init',shdmax(97,1)
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
  
- 
 #endif
+
+   NTIME_out = NTIME 
 
 end subroutine land_driver_ini
 
@@ -997,10 +1002,9 @@ end subroutine land_driver_ini
 
 #ifdef WRF_HYDRO
 if(rank == 0) then
-#endif
-
      if ((olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
             (olddate(15:16) == "00").and. (olddate(18:19) == "00")) yw_rst_out = 99
+#endif
  
 
      if (restart_frequency_hours > 0) then
@@ -1058,6 +1062,7 @@ if(rank == 0) then
               call add_to_restart(VEGFRA    , "FPAR"  )
               call add_to_restart(GVFMIN    , "GVFMIN")
               call add_to_restart(GVFMAX    , "GVFMAX")
+              call add_to_restart(SHDMAX    , "SHDMAX")
               call add_to_restart(ACSNOM    , "ACMELT")
               call add_to_restart(ACSNOW    , "ACSNOW")
               call add_to_restart(TAUSSXY   , "TAUSS" )

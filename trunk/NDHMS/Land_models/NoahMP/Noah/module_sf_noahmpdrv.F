@@ -834,7 +834,7 @@ end if
 	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
 	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE               &
 #ifdef WRF_HYDRO
-            , sfcheadrt(i,j),INFXSRT(i,j)                               &
+            , sfcheadrt(i,j)                               &
 #endif
             )            ! OUT :
                   

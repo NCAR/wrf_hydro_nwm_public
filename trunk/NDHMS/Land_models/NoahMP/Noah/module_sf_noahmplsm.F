@@ -541,7 +541,7 @@ contains
 		   GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
 		   CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE               &
 #ifdef WRF_HYDRO
-                   ,sfcheadrt,INFXSRT                                          &
+                   ,sfcheadrt                                          &
 #endif
                    )            ! OUT :
 
@@ -596,7 +596,7 @@ contains
 !jref:end
 
 #ifdef WRF_HYDRO
-  REAL                           , INTENT(INOUT)    :: sfcheadrt,INFXSRT
+  REAL                           , INTENT(INOUT)    :: sfcheadrt
 #endif
 
 ! input/output : need arbitary intial values
@@ -919,7 +919,7 @@ contains
                  QIN    ,QDIS   ,QSNOW  ,PONDING1       ,PONDING2,&
                  ISURBAN,QSNBOT,FPICE                             &
 #ifdef WRF_HYDRO
-                        ,sfcheadrt,INFXSRT                     &
+                        ,sfcheadrt                     &
 #endif
                  )  !out
 !print*, sum(1000.0*smc*dzsnso(1:4))
@@ -6322,7 +6322,7 @@ contains
                     QIN    ,QDIS   ,QSNOW  ,PONDING1       ,PONDING2,&
                     ISURBAN,QSNBOT,FPICE                             &
 #ifdef WRF_HYDRO
-                        ,sfcheadrt,INFXSRT                     &
+                        ,sfcheadrt                     &
 #endif
                     )  !out
 ! ----------------------------------------------------------------------  
@@ -6419,7 +6419,7 @@ contains
   REAL, PARAMETER ::  WSLMAX = 5000.      !maximum lake water storage (mm)
 
 #ifdef WRF_HYDRO
-  REAL                           , INTENT(INOUT)    :: sfcheadrt, INFXSRT
+  REAL                           , INTENT(INOUT)    :: sfcheadrt
 #endif
 
 ! ----------------------------------------------------------------------
@@ -6514,9 +6514,6 @@ contains
                             SH2O   ,SMC    ,ZWT    ,VEGTYP ,ISURBAN, & !inout
                            SMCWTD, DEEPRECH                       , & !inout
                             RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX  &
-#ifdef WRF_HYDRO
-                        ,INFXSRT                     &
-#endif
                             )   !out
 !if(iloc.eq.1086.and.jloc.eq.552) then
 !print*, 'after soilwater'
@@ -7706,9 +7703,6 @@ contains
                         SH2O   ,SMC    ,ZWT    ,ISURBAN,VEGTYP ,& !inout
                         SMCWTD, DEEPRECH                       ,& !inout
                         RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX &
-#ifdef WRF_HYDRO
-                        ,INFXSRT                     &
-#endif
                         )   !out
 
 ! ----------------------------------------------------------------------
@@ -7719,9 +7713,6 @@ contains
 ! ----------------------------------------------------------------------
 ! input
 
-#ifdef WRF_HYDRO
-  REAL                           , INTENT(INOUT)    :: INFXSRT
-#endif
 
   INTEGER,                     INTENT(IN) :: ILOC   !grid index
   INTEGER,                     INTENT(IN) :: JLOC   !grid index
