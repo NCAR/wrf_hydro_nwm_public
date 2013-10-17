@@ -1545,23 +1545,6 @@ END MODULE MODULE_MPP_LAND
             CALL MPI_ABORT(MPI_COMM_WORLD,1,IERR)
         end ! mpp_land_abort
 
-  subroutine mpp_land_finish()
-      implicit none
-      include "mpif.h"
-      integer ierr
-#ifdef HYDRO_D
-      write(6,*) "mpp_land_finish called "
-#endif
-      call MPI_barrier( MPI_COMM_WORLD ,ierr)
-      if(ierr .ne. 0) call mpp_land_abort()
-      call MPI_finalize(ierr)
-      if(ierr .ne. 0) call mpp_land_abort()
-#ifdef HYDRO_D
-      stop 999
-#endif
-      return
-  end ! mpp_land_finish 
-
   subroutine mpp_land_sync()
       implicit none
       include "mpif.h"

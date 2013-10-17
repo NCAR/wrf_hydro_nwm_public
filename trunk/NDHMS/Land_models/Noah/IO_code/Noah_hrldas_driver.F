@@ -2510,7 +2510,7 @@ program Noah_hrldas_driver
   if (ierr /= MPI_SUCCESS) stop "Problem with MPI_FINALIZE"
 #endif
 
-  call land_finish()
+  call hydro_finish()
 END program Noah_hrldas_driver
 
 !-------------------------------------------------------------------------------------------------------

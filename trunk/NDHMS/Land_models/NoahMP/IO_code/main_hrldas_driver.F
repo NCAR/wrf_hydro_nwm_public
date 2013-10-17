@@ -18,8 +18,7 @@ program Noah_hrldas_driver
        call land_driver_exe(ITIME)
    end do
 #ifdef WRF_HYDRO
-   print*, "The model finished successfully......."
-   call hydro_stop() 
+   call hydro_finish() 
 #endif
 
 END 

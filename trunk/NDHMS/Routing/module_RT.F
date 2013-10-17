@@ -375,23 +375,29 @@ CONTAINS
 #endif
 
 #ifdef MPP_LAND
-    CALL MPP_READ_ROUTING(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-          rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
-          nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
-           rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
-
+    CALL MPP_READ_ROUTING( &
 #else
-    !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-    CALL READ_ROUTING_seq(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-          rt_domain(did)%LKSATFAC,nlst_rt(did)%route_topo_f,nlst_rt(did)%route_chan_f, &
-          nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC )
+     CALL READ_ROUTING_seq  (  &
 #endif
+          rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+          rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
+          nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
+#ifdef MPP_LAND
+           rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
+#endif
+          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
+
+    !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+
 
 
     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
 #ifdef MPP_LAND
-
-          CALL MPP_READ_CHROUTING(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, & 
+          CALL MPP_READ_CHROUTING(    &
+#else
+          CALL READ_CHROUTING(    &
+#endif
+               rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, & 
                rt_domain(did)%LAKE_MSKRT, &
                rt_domain(did)%FROM_NODE, rt_domain(did)%TO_NODE, rt_domain(did)%TYPEL, rt_domain(did)%ORDER, &
                rt_domain(did)%MAXORDER,rt_domain(did)%NLINKS, &
@@ -405,8 +411,13 @@ CONTAINS
                rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
                rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
                rt_domain(did)%latval, rt_domain(did)%lonval,&
-               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT)
+               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm        &
+#ifdef MPP_LAND
+               ,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT   &
+#endif
+               )
 
+#ifdef MPP_LAND
           call MPP_CHROUTING_CONF(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt, rt_domain(did)%NLAKES,rt_domain(did)%NLINKS,&
                rt_domain(did)%lake_mskrt, rt_domain(did)%lake_index,rt_domain(did)%link_location,rt_domain(did)%HRZAREA,rt_domain(did)%LAKEMAXH,&
                rt_domain(did)%WEIRC,rt_domain(did)%WEIRL,&
@@ -416,22 +427,6 @@ CONTAINS
                rt_domain(did)%CHANXI,rt_domain(did)%CHANYJ, rt_domain(did)%lakenode,rt_domain(did)%mpp_nlinks, rt_domain(did)%nlinks_index, rt_domain(did)%maxorder, &
                rt_domain(did)%yw_mpp_nlinks)
 !!!!!   lake_index,Link_Location)
-#else
-          CALL READ_CHROUTING(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-               rt_domain(did)%LAKE_MSKRT, &
-               rt_domain(did)%FROM_NODE, rt_domain(did)%TO_NODE, rt_domain(did)%TYPEL, rt_domain(did)%ORDER, &
-               rt_domain(did)%MAXORDER, rt_domain(did)%NLINKS, &
-               rt_domain(did)%NLAKES, rt_domain(did)%MUSK, rt_domain(did)%MUSX, rt_domain(did)%QLINK,rt_domain(did)%CHANLEN, &
-               rt_domain(did)%MannN, rt_domain(did)%So, rt_domain(did)%ChSSlp, rt_domain(did)%Bw, &
-               rt_domain(did)%HRZAREA, rt_domain(did)%LAKEMAXH, rt_domain(did)%WEIRC, rt_domain(did)%WEIRL, rt_domain(did)%ORIFICEC, &
-               rt_domain(did)%ORIFICEA, rt_domain(did)%ORIFICEE, rt_domain(did)%LATLAKE, rt_domain(did)%LONLAKE, rt_domain(did)%ELEVLAKE, &
-               nlst_rt(did)%route_link_f,nlst_rt(did)%route_lake_f, &
-               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_order_f, &
-               nlst_rt(did)%CHANRTSWCRT,rt_domain(did)%dist, rt_domain(did)%ZELEV, rt_domain(did)%LAKENODE, rt_domain(did)%CH_NETLNK, &
-               rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
-               rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option, &
-               rt_domain(did)%LATVAL,rt_domain(did)%LONVAL, &
-               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm)
 #endif
     endif
   END IF
@@ -448,6 +443,7 @@ CONTAINS
 !DJG Need to insert call for acquiring routing fields here...
 !DJG     include as a subroutine in module module_Noahlsm_wrfcode_input.F
 !DJG  Calculate terrain slopes 'SOXRT,SOYRT' from subgrid elevation 'ELRT'
+
 
         rt_domain(did)%so8rt = -999
         Vmax = 0.0

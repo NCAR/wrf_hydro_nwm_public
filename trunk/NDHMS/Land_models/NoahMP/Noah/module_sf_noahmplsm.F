@@ -6493,7 +6493,7 @@ contains
     ENDDO
 
 #ifdef WRF_HYDRO
-       QINSUR = QINSUR+sfcheadrt/DT*0.001 
+       QINSUR = QINSUR+sfcheadrt/DT*0.001  !sfcheadrt units (m)
 #endif
 
 ! lake/soil water balances
@@ -7945,6 +7945,10 @@ contains
     QDRAIN = QDRAIN_SAVE/NITER
 
     RUNSRF = RUNSRF * 1000. + RSAT * 1000./DT  ! m/s -> mm/s
+
+!WRF_HYDRO_DJG...
+!yw    INFXSRT = RUNSRF * DT   !mm/s -> mm
+
     QDRAIN = QDRAIN * 1000.
 
 ! removal of soil water due to groundwater flow (option 2)

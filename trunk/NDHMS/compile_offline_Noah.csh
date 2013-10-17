@@ -2,7 +2,7 @@
 
 rm -f LandModel LandModel_cpl
 ln -sf CPL/Noah_cpl LandModel_cpl
-ln -sf Land_models/Noah_LandModel LandModel
+ln -sf Land_models/Noah LandModel
 make clean
 
 

@@ -31,7 +31,8 @@ module module_HYDRO_io
             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
             if(ivar .ne. 0) then
 #ifdef HYDRO_D
-               write(6,*) "Read Error: could not find ",var_name
+               write(6,*) "Read Variable Error file: ",trim(fileName)
+               write(6,*) "Read Error: could not find ",trim(var_name)
 #endif
                  return 
             endif
@@ -4256,9 +4257,14 @@ end subroutine mpp_output_chrt
         CHARACTER(len=256)       :: geo_finegrid_flnm
 
         var_name = "TOPOGRAPHY"
+
         iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
+        if(iret .ne. 0) then
+            write(6,*) "Error reading TOPOGRAPHY failed" 
+            call hydro_stop()
+        endif
         write(6,*) "read ",var_name
 #endif
 

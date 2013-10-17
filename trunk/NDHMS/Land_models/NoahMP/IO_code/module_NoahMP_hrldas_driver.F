@@ -969,9 +969,9 @@ print *, 'after init',shdmax(97,1)
      soldrain = 0.0
 
    allocate(zsoil (NSOIL))
-   zsoil(1) = -soil_thick_input(1)
+   zsoil(1) = -1*soil_thick_input(1)
    do kk = 2, NSOIL
-      zsoil(kk) = zsoil(kk)-soil_thick_input(kk)
+      zsoil(kk) = zsoil(kk-1)-soil_thick_input(kk)
    end do
    
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
