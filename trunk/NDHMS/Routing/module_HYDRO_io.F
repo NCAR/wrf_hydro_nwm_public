@@ -3763,16 +3763,16 @@ end subroutine mpp_output_chrt
          iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
 
        !- x-coordinate in cartesian system
-          iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/ixlondim/), varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
-          iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
-          iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+!yw         iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/ixlondim/), varid)
+!yw         iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
+!yw         iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
+!yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
 
        !- y-coordinate in cartesian ssystem
-          iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/jxlatdim/), varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
-          iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
-          iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+!yw         iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/jxlatdim/), varid)
+!yw         iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
+!yw         iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
+!yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
 
 !     !- flow definition, var
         iret = nf_def_var(ncid,"flow",NF_REAL, 3, (/ixlondim,jxlatdim,timedim/), varid)
