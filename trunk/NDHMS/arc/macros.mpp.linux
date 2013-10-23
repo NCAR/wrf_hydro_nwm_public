@@ -1,17 +1,21 @@
 .IGNORE:
+ifeq ($(WRF_HYDRO),1)
+WRF_HYDRO = -DWRF_HYDRO
+else
+WRF_HYDRO =
+endif
 
 ifeq ($(HYDRO_D),1)
-HYDRO_D = -DHYDRO_D
+HYDRO_D = -DHYDRO_D $(WRF_HYDRO)
 else
-HYDRO_D =    
+HYDRO_D =  $(WRF_HYDRO)
 endif
+
 ifeq ($(WRFIO_NCD_LARGE_FILE_SUPPORT),1)
 WRFIO_NCD_LARGE_FILE_SUPPORT = -DWRFIO_NCD_LARGE_FILE_SUPPORT
 else
 WRFIO_NCD_LARGE_FILE_SUPPORT = 
 endif
-
-
 
 RM		=	rm -f  
 RMD		=	rm -f    

@@ -1063,6 +1063,8 @@ module module_HYDRO_drv
      
 
        RT_DOMAIN(did)%zsoil(1:nlst_rt(did)%nsoil) = nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil)
+
+       RT_DOMAIN(did)%sldpth(1) = abs( RT_DOMAIN(did)%zsoil(1) )
        do i = 2, nlst_rt(did)%nsoil
           RT_DOMAIN(did)%sldpth(i) = RT_DOMAIN(did)%zsoil(i-1)-RT_DOMAIN(did)%zsoil(i)
        enddo
@@ -1123,17 +1125,6 @@ module module_HYDRO_drv
 
 
 end module module_HYDRO_drv
-      subroutine land_finish()
-#ifdef HYDRO_D
-#ifdef MPP_LAND
-         close(6)
-         call mpp_land_finish()
-#else
-         stop
-#endif
-#endif
-     return
-     end  subroutine land_finish
 
 ! stop the job due to the fatal error.
       subroutine HYDRO_stop()
@@ -1155,4 +1146,24 @@ end module module_HYDRO_drv
 
      return
      end  subroutine HYDRO_stop  
+
+! stop the job due to the fatal error.
+      subroutine HYDRO_finish()
+#ifdef MPP_LAND
+        USE module_mpp_land
+#endif
+        integer :: ierr
+
+        print*, "The model finished successfully......."
+#ifdef MPP_LAND
+!         call mpp_land_abort()
+         call mpp_land_sync()
+         call MPI_finalize(ierr)
+         stop 
+#else
+         stop 
+#endif
+
+     return
+     end  subroutine HYDRO_finish
 

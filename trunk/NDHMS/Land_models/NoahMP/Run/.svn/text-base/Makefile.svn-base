@@ -1,0 +1,41 @@
+.SUFFIXES:
+.SUFFIXES: .o .f
+
+include ../user_build_options
+OBJS_NoahMP = ../IO_code/module_NoahMP_hrldas_driver.o 
+
+OBJS = \
+	../IO_code/main_hrldas_driver.o \
+	../IO_code/module_hrldas_netcdf_io.o \
+	../Noah/module_sf_noahmpdrv.o \
+	../Noah/module_sf_noahmplsm.o \
+	../Noah/module_sf_urban.o \
+	../Noah/module_sf_noahmp_glacier.o \
+	../Noah/module_sf_noahmp_groundwater.o \
+	../Noah/module_sf_myjsfc.o \
+	../Noah/module_sf_sfclay.o \
+	../Utility_routines/module_Noahlsm_utility.o \
+	../Utility_routines/module_model_constants.o \
+	../Utility_routines/module_date_utilities.o \
+	../Utility_routines/kwm_string_utilities.o
+
+CMD = Noah_hrldas_beta
+all:	$(CMD)
+
+### default we create the exe based on NoahMP
+Noah_hrldas_beta: $(OBJS)
+	@echo ""
+# We have to include the modules built in ../IO_code 
+	$(COMPILERF90) -o $(@) $(MODFLAG)../IO_code $(MODFLAG)../Noah $(OBJS) $(OBJS_NoahMP) $(NETCDFLIB) $(HYDRO_LIB)
+	@echo ""
+
+# Template to create the exe file based on different land model. Such as NoahMP
+NoahMP: $(OBJS)
+	@echo ""
+	$(COMPILERF90) -o Noah_hrldas_beta $(MODFLAG)../IO_code $(MODFLAG)../Noah $(OBJS) $(OBJS_NoahMP) $(NETCDFLIB) $(HYDRO_LIB)
+	@echo ""
+
+# This command cleans up
+clean:
+	$(RM) *~ $(CMD)
+

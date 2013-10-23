@@ -31,7 +31,8 @@ module module_HYDRO_io
             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
             if(ivar .ne. 0) then
 #ifdef HYDRO_D
-               write(6,*) "Read Error: could not find ",var_name
+               write(6,*) "Read Variable Error file: ",trim(fileName)
+               write(6,*) "Read Error: could not find ",trim(var_name)
 #endif
                  return 
             endif
@@ -1534,9 +1535,8 @@ end subroutine get_albedo12m_netcdf
              ORIFICEC,ORIFICEA,ORIFICEE,LATLAKE,LONLAKE,ELEVLAKE, &
          FROM_NODE,TO_NODE,ZELEV,CHLAT,CHLON,TYPEL, ORDER,CHANLEN, &
          CHANXI,CHANYJ, lakenode,mpp_nlinks, nlinks_index,MAXORDER,yw_mpp_nlinks)
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
    implicit none 
 #include <netcdf.inc>
    integer :: i,j,ixrt,g_ixrt,jxrt,g_jxrt, nlakes, nlinks
@@ -1681,9 +1681,8 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
   subroutine MPP_READ_SIMP_GW(IX,JX,IXRT,JXRT,GWSUBBASMSK,gwbasmskfil,&
           gw_strm_msk,numbasns,ch_netrt,AGGFACTRT)
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
     
     integer, intent(in)                     :: IX,JX,IXRT,JXRT,AGGFACTRT
     integer, intent(out)                    :: numbasns
@@ -3270,6 +3269,7 @@ end subroutine get_albedo12m_netcdf
       if(STRMFRXSTPTS(i) .ne. -9999) then 
 #ifdef HYDRO_D
          print *, "Outputting frxst pt. :",STRMFRXSTPTS(i)
+         call flush(6)
 #endif
          start_posO = (cnt+1)+(nobs * (output_count-1))
 
@@ -3425,9 +3425,8 @@ end subroutine mpp_output_chrt
    subroutine mpp_output_lakes(lake_index,igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
         qlakei,qlakeo, resht,dtrt,K)
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid, K
@@ -3716,9 +3715,9 @@ end subroutine mpp_output_chrt
    subroutine mpp_output_chrtgrd(igrid, split_output_count, ixrt,jxrt, &
         NLINKS,CH_NETRT_in, CH_NETLNK_in, ORDER, startdate, date, &
         qlink, dt, geo_finegrid_flnm, mpp_nlinks,nlinks_index,g_ixrt,g_jxrt )
-#ifdef MPP_LAND
+
    USE module_mpp_land
-#endif
+
      implicit none
 #include <netcdf.inc>
      integer g_ixrt,g_jxrt
@@ -3822,16 +3821,16 @@ end subroutine mpp_output_chrt
          iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
 
        !- x-coordinate in cartesian system
-          iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/ixlondim/), varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
-          iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
-          iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+!yw         iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/ixlondim/), varid)
+!yw         iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
+!yw         iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
+!yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
 
        !- y-coordinate in cartesian ssystem
-          iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/jxlatdim/), varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
-          iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
-          iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+!yw         iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/jxlatdim/), varid)
+!yw         iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
+!yw         iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
+!yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
 
 !     !- flow definition, var
         iret = nf_def_var(ncid,"flow",NF_REAL, 3, (/ixlondim,jxlatdim,timedim/), varid)
@@ -3890,9 +3889,8 @@ end subroutine mpp_output_chrt
        QBDRYRT_in)
 
 !output the routing variables over routing grid.
-#ifdef MPP_LAND
    USE module_mpp_land
-#endif
+
     implicit none
 #include <netcdf.inc>
 
@@ -4317,9 +4315,14 @@ end subroutine mpp_output_chrt
         CHARACTER(len=256)       :: geo_finegrid_flnm
 
         var_name = "TOPOGRAPHY"
+
         iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
+        if(iret .ne. 0) then
+            write(6,*) "Error reading TOPOGRAPHY failed" 
+            call hydro_stop()
+        endif
         write(6,*) "read ",var_name
 #endif
 

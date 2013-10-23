@@ -1,0 +1,263 @@
+! ==================================================================================================
+  SUBROUTINE RAGRB(ITER   ,VAI    ,RHOAIR ,HG     ,TAH    , & !in
+                   ZPD    ,Z0MG   ,Z0HG   ,HCAN   ,UC     , & !in
+                   Z0H    ,FV     ,CWP    ,VEGTYP ,MPE    , & !in
+                   TV     ,MOZG   ,FHG    ,ILOC   ,JLOC   , & !inout
+                   RAMG   ,RAHG   ,RAWG   ,RB     )           !out
+! --------------------------------------------------------------------------------------------------
+! compute under-canopy aerodynamic resistance RAG and leaf boundary layer
+! resistance RB
+! --------------------------------------------------------------------------------------------------
+  USE NOAHMP_VEG_PARAMETERS
+! --------------------------------------------------------------------------------------------------
+  IMPLICIT NONE
+! --------------------------------------------------------------------------------------------------
+! inputs
+
+  INTEGER,              INTENT(IN) :: ILOC   !grid index
+  INTEGER,              INTENT(IN) :: JLOC   !grid index
+  INTEGER,              INTENT(IN) :: ITER   !iteration index
+  INTEGER,              INTENT(IN) :: VEGTYP !vegetation physiology type
+  REAL,                 INTENT(IN) :: VAI    !total LAI + stem area index, one sided
+  REAL,                 INTENT(IN) :: RHOAIR !density air (kg/m3)
+  REAL,                 INTENT(IN) :: HG     !ground sensible heat flux (w/m2)
+  REAL,                 INTENT(IN) :: TV     !vegetation temperature (k)
+  REAL,                 INTENT(IN) :: TAH    !air temperature at height z0h+zpd (k)
+  REAL,                 INTENT(IN) :: ZPD    !zero plane displacement (m)
+  REAL,                 INTENT(IN) :: Z0MG   !roughness length, momentum, ground (m)
+  REAL,                 INTENT(IN) :: HCAN   !canopy height (m) [note: hcan >= z0mg]
+  REAL,                 INTENT(IN) :: UC     !wind speed at top of canopy (m/s)
+  REAL,                 INTENT(IN) :: Z0H    !roughness length, sensible heat (m)
+  REAL,                 INTENT(IN) :: Z0HG   !roughness length, sensible heat, ground (m)
+  REAL,                 INTENT(IN) :: FV     !friction velocity (m/s)
+  REAL,                 INTENT(IN) :: CWP    !canopy wind parameter
+  REAL,                 INTENT(IN) :: MPE    !prevents overflow error if division by zero
+
+! in & out
+
+  REAL,              INTENT(INOUT) :: MOZG   !Monin-Obukhov stability parameter
+  REAL,              INTENT(INOUT) :: FHG    !stability correction
+
+! outputs
+  REAL                             :: RAMG   !aerodynamic resistance for momentum (s/m)
+  REAL                             :: RAHG   !aerodynamic resistance for sensible heat (s/m)
+  REAL                             :: RAWG   !aerodynamic resistance for water vapor (s/m)
+  REAL                             :: RB     !bulk leaf boundary layer resistance (s/m)
+
+
+  REAL :: KH           !turbulent transfer coefficient, sensible heat, (m2/s)
+  REAL :: TMP1         !temporary calculation
+  REAL :: TMP2         !temporary calculation
+  REAL :: TMPRAH2      !temporary calculation for aerodynamic resistances
+  REAL :: TMPRB        !temporary calculation for rb
+  real :: MOLG,FHGNEW,CWPC
+! --------------------------------------------------------------------------------------------------
+! stability correction to below canopy resistance
+
+       MOZG = 0.
+       MOLG = 0.
+
+       IF(ITER > 1) THEN
+        TMP1 = VKC * (GRAV/TAH) * HG/(RHOAIR*CPAIR)
+        IF (ABS(TMP1) .LE. MPE) TMP1 = MPE
+        MOLG = -1. * FV**3 / TMP1
+        MOZG = MIN( (ZPD-Z0MG)/MOLG, 1.)
+       END IF
+
+       IF (MOZG < 0.) THEN
+          FHGNEW  = (1. - 15.*MOZG)**(-0.25)
+       ELSE
+          FHGNEW  = 1.+ 4.7*MOZG
+       ENDIF
+
+       IF (ITER == 1) THEN
+          FHG = FHGNEW
+       ELSE
+          FHG = 0.5 * (FHG+FHGNEW)
+       ENDIF
+
+       CWPC = (CWP * VAI * HCAN * FHG)**0.5
+!       CWPC = (CWP*FHG)**0.5
+
+       TMP1 = EXP( -CWPC*Z0HG/HCAN )
+       TMP2 = EXP( -CWPC*(Z0H+ZPD)/HCAN )
+       TMPRAH2 = HCAN*EXP(CWPC) / CWPC * (TMP1-TMP2)
+
+! aerodynamic resistances raw and rah between heights zpd+z0h and z0hg.
+
+       KH  = MAX ( VKC*FV*(HCAN-ZPD), MPE )
+       RAMG = 0.
+       RAHG = TMPRAH2 / KH
+       RAWG = RAHG
+
+! leaf boundary layer resistance
+
+       TMPRB  = CWPC*50. / (1. - EXP(-CWPC/2.))
+       RB     = TMPRB * SQRT(DLEAF(VEGTYP)/UC)
+!       RB = 200
+
+  END SUBROUTINE RAGRB
+
+! ==================================================================================================
+
+  SUBROUTINE SFCDIF1(ITER   ,SFCTMP ,RHOAIR ,H      ,QAIR   , & !in
+       &             ZLVL   ,ZPD    ,Z0M    ,Z0H    ,UR     , & !in
+       &             MPE    ,ILOC   ,JLOC   ,                 & !in
+       &             MOZ    ,MOZSGN ,FM     ,FH     ,FM2,FH2, & !inout
+       &             CM     ,CH     ,FV     ,CH2     )          !out
+! -------------------------------------------------------------------------------------------------
+! computing surface drag coefficient CM for momentum and CH for heat
+! -------------------------------------------------------------------------------------------------
+    IMPLICIT NONE
+! -------------------------------------------------------------------------------------------------
+! inputs
+    
+    INTEGER,              INTENT(IN) :: ILOC   !grid index
+    INTEGER,              INTENT(IN) :: JLOC   !grid index
+    INTEGER,              INTENT(IN) :: ITER   !iteration index
+    REAL,                 INTENT(IN) :: SFCTMP !temperature at reference height (k)
+    REAL,                 INTENT(IN) :: RHOAIR !density air (kg/m**3)
+    REAL,                 INTENT(IN) :: H      !sensible heat flux (w/m2) [+ to atm]
+    REAL,                 INTENT(IN) :: QAIR   !specific humidity at reference height (kg/kg)
+    REAL,                 INTENT(IN) :: ZLVL   !reference height  (m)
+    REAL,                 INTENT(IN) :: ZPD    !zero plane displacement (m)
+    REAL,                 INTENT(IN) :: Z0H    !roughness length, sensible heat, ground (m)
+    REAL,                 INTENT(IN) :: Z0M    !roughness length, momentum, ground (m)
+    REAL,                 INTENT(IN) :: UR     !wind speed (m/s)
+    REAL,                 INTENT(IN) :: MPE    !prevents overflow error if division by zero
+! in & out
+
+    INTEGER,           INTENT(INOUT) :: MOZSGN !number of times moz changes sign
+    REAL,              INTENT(INOUT) :: MOZ    !Monin-Obukhov stability (z/L)
+    REAL,              INTENT(INOUT) :: FM     !momentum stability correction, weighted by prior iters
+    REAL,              INTENT(INOUT) :: FH     !sen heat stability correction, weighted by prior iters
+    REAL,              INTENT(INOUT) :: FM2    !sen heat stability correction, weighted by prior iters
+    REAL,              INTENT(INOUT) :: FH2    !sen heat stability correction, weighted by prior iters
+
+! outputs
+
+    REAL,                INTENT(OUT) :: CM     !drag coefficient for momentum
+    REAL,                INTENT(OUT) :: CH     !drag coefficient for heat
+    REAL,                INTENT(OUT) :: FV     !friction velocity (m/s)
+    REAL,                INTENT(OUT) :: CH2    !drag coefficient for heat
+
+! locals
+    REAL    :: MOL                      !Monin-Obukhov length (m)
+    REAL    :: TMPCM                    !temporary calculation for CM
+    REAL    :: TMPCH                    !temporary calculation for CH
+    REAL    :: FMNEW                    !stability correction factor, momentum, for current moz
+    REAL    :: FHNEW                    !stability correction factor, sen heat, for current moz
+    REAL    :: MOZOLD                   !Monin-Obukhov stability parameter from prior iteration
+    REAL    :: TMP1,TMP2,TMP3,TMP4,TMP5 !temporary calculation
+    REAL    :: TVIR                     !temporary virtual temperature (k)
+    REAL    :: MOZ2                     !2/L
+    REAL    :: TMPCM2                   !temporary calculation for CM2
+    REAL    :: TMPCH2                   !temporary calculation for CH2
+    REAL    :: FM2NEW                   !stability correction factor, momentum, for current moz
+    REAL    :: FH2NEW                   !stability correction factor, sen heat, for current moz
+    REAL    :: TMP12,TMP22,TMP32        !temporary calculation
+
+    REAL    :: CMFM, CHFH, CM2FM2, CH2FH2
+! -------------------------------------------------------------------------------------------------
+! Monin-Obukhov stability parameter moz for next iteration
+
+    MOZOLD = MOZ
+  
+    IF(ZLVL <= ZPD) THEN
+       write(*,*) 'critical problem: ZLVL <= ZPD; model stops'
+       call wrf_error_fatal("STOP in Noah-MP")
+    ENDIF
+
+    TMPCM = LOG((ZLVL-ZPD) / Z0M)
+    TMPCH = LOG((ZLVL-ZPD) / Z0H)
+    TMPCM2 = LOG((2.0 + Z0M) / Z0M)
+    TMPCH2 = LOG((2.0 + Z0H) / Z0H)
+
+    IF(ITER == 1) THEN
+       FV   = 0.0
+       MOZ  = 0.0
+       MOL  = 0.0
+       MOZ2 = 0.0
+    ELSE
+       TVIR = (1. + 0.61*QAIR) * SFCTMP
+       TMP1 = VKC * (GRAV/TVIR) * H/(RHOAIR*CPAIR)
+       IF (ABS(TMP1) .LE. MPE) TMP1 = MPE
+       MOL  = -1. * FV**3 / TMP1
+       MOZ  = MIN( (ZLVL-ZPD)/MOL, 1.)
+       MOZ2  = MIN( (2.0 + Z0H)/MOL, 1.)
+    ENDIF
+
+! accumulate number of times moz changes sign.
+
+    IF (MOZOLD*MOZ .LT. 0.) MOZSGN = MOZSGN+1
+    IF (MOZSGN .GE. 2) THEN
+       MOZ = 0.
+       FM = 0.
+       FH = 0.
+       MOZ2 = 0.
+       FM2 = 0.
+       FH2 = 0.
+    ENDIF
+
+! evaluate stability-dependent variables using moz from prior iteration
+    IF (MOZ .LT. 0.) THEN
+       TMP1 = (1. - 16.*MOZ)**0.25
+       TMP2 = LOG((1.+TMP1*TMP1)/2.)
+       TMP3 = LOG((1.+TMP1)/2.)
+       FMNEW = 2.*TMP3 + TMP2 - 2.*ATAN(TMP1) + 1.5707963
+       FHNEW = 2*TMP2
+
+! 2-meter
+       TMP12 = (1. - 16.*MOZ2)**0.25
+       TMP22 = LOG((1.+TMP12*TMP12)/2.)
+       TMP32 = LOG((1.+TMP12)/2.)
+       FM2NEW = 2.*TMP32 + TMP22 - 2.*ATAN(TMP12) + 1.5707963
+       FH2NEW = 2*TMP22
+    ELSE
+       FMNEW = -5.*MOZ
+       FHNEW = FMNEW
+       FM2NEW = -5.*MOZ2
+       FH2NEW = FM2NEW
+    ENDIF
+
+! except for first iteration, weight stability factors for previous
+! iteration to help avoid flip-flops from one iteration to the next
+
+    IF (ITER == 1) THEN
+       FM = FMNEW
+       FH = FHNEW
+       FM2 = FM2NEW
+       FH2 = FH2NEW
+    ELSE
+       FM = 0.5 * (FM+FMNEW)
+       FH = 0.5 * (FH+FHNEW)
+       FM2 = 0.5 * (FM2+FM2NEW)
+       FH2 = 0.5 * (FH2+FH2NEW)
+    ENDIF
+
+! exchange coefficients
+
+    FH = MIN(FH,0.9*TMPCH)
+    FM = MIN(FM,0.9*TMPCM)
+    FH2 = MIN(FH2,0.9*TMPCH2)
+    FM2 = MIN(FM2,0.9*TMPCM2)
+
+    CMFM = TMPCM-FM
+    CHFH = TMPCH-FH
+    CM2FM2 = TMPCM2-FM2
+    CH2FH2 = TMPCH2-FH2
+    IF(ABS(CMFM) <= MPE) CMFM = MPE
+    IF(ABS(CHFH) <= MPE) CHFH = MPE
+    IF(ABS(CM2FM2) <= MPE) CM2FM2 = MPE
+    IF(ABS(CH2FH2) <= MPE) CH2FH2 = MPE
+    CM  = VKC*VKC/(CMFM*CMFM)
+    CH  = VKC*VKC/(CMFM*CHFH)
+    CH2  = VKC*VKC/(CM2FM2*CH2FH2)
+        
+! friction velocity
+
+    FV = UR * SQRT(CM)
+    CH2  = VKC*FV/CH2FH2   ! has units of m/s
+
+  END SUBROUTINE SFCDIF1
+
