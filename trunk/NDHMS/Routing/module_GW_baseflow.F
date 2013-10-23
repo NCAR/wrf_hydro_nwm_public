@@ -1111,6 +1111,10 @@ subroutine gwSoilFlux(did)
     end do
   end do
 
+          ! sign convention
+          ! qsgwrt < 0 -> downward flux
+          ! qsgwrt > 0 -> upward flux
+
 ! TOcheck Step 3, adapt groundwater head (assuming not time lag for percolation / capillary rise flow)
 
  headChange = gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
