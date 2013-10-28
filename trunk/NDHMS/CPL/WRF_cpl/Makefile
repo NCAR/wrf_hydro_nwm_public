@@ -7,6 +7,8 @@
 
 include ../../macros
 
+MODFLAG =       -I./ -I ../../MPP -I ../../mod 
+
 WRF_ROOT = ../../..
 OBJS = \
 	module_wrf_HYDRO.o \

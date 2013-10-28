@@ -9,6 +9,8 @@ LIS_MOD = -I ../../mod -I$(LIS_ROOT)/make
 include $(LIS_ROOT)/make/configure.lis
 include ../../macros
 
+MODFLAG =       -I./ -I ../../MPP -I ../../mod
+
 OBJS = \
 	module_lis_HYDRO.o\
 	lis_drv_HYDRO.o
