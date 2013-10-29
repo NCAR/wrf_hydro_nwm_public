@@ -466,7 +466,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL, DIMENSION(NLINKS)                   :: d_GW_CHAN_HEAD
         REAL, DIMENSION(NLINKS)                   :: Q_GW_CHAN_FLUX     !DJG !!! Change 'INTENT' to 'OUT' when ready to update groundwater state...
         REAL, DIMENSION(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)    :: gw_head            !DJG groundwater head from Fersch-2d gw implementation...units (m ASL)
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: gw_head            !DJG !!! groundwater head from Fersch-2d gw implementation...units (m ASL)
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: qgw_chanrt         !DJG !!! Channel-gw flux as used in Fersch 2d gw implementation...units (m^3/s)...Change 'INTENT' to 'OUT' when ready to update groundwater state...
          
 
@@ -529,8 +529,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND
 #ifdef HYDRO_D
    write(6,*) "Error: not parallelized"
-   call hydro_stop() 
 #endif
+   call hydro_stop() 
 #endif
          DT_STEPS = 1
 
@@ -586,8 +586,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                 else
 #ifdef HYDRO_D
                  print *, "No channel option selected"
-                 call hydro_stop() 
 #endif
+                 call hydro_stop() 
                 endif
             endif
           end do
@@ -621,8 +621,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                    else
 #ifdef HYDRO_D
                     print *, " no channel option selected"
-                    call hydro_stop() 
 #endif
+                    call hydro_stop() 
                    endif
                    QLINK(k,1) = qu    !save inflow to reach at current timestep
                                       !to be used as inflow from previous timestep
@@ -652,7 +652,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
 
 !        call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,ZELEV,NLINKS,99)
-crnt:    DO                      !-- loop on the courant condition
+ crnt:   DO                      !-- loop on the courant condition
          QSUM   = 0              !-- initialize the total flow out of each cell to zero
          QLAKEI = 0              !-- set the lake inflow as zero
          QLLAKE = 0              !-- initialize each lake's lateral inflow to zero  
@@ -686,8 +686,12 @@ crnt:    DO                      !-- loop on the courant condition
               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .lt.0) ) then !--a reg. node
 
 !DJG Implement gw-channel coupling...idealized hardwire here using a generic 'bank conductivity' term = 0.0005 m/s...
-             d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
-             qgw_chanrt(CHANXI(i),CHANYJ(i))=0.0005*d_gw_chan_head(i)*CHANLEN(i)        !-- units in (m^3/s), + is flux into channel...
+!              d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
+
+             d_GW_CHAN_HEAD(i) = gw_head(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i))  !--units in (m)
+             
+             qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.0005 * d_gw_chan_head(i) * CHANLEN(i) * 2. ! channel bed interface
+                                                                                              !-- units in (m^3/s), + is flux into channel...
              Q_GW_CHAN_FLUX(i) = qgw_chanrt(CHANXI(i),CHANYJ(i))
 !             if ( i .eq. 1001 ) then
 !                print *, Q_GW_CHAN_FLUX(i), d_GW_CHAN_HEAD(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)
@@ -710,8 +714,8 @@ crnt:    DO                      !-- loop on the courant condition
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
-               call hydro_stop() 
 #endif
+               call hydro_stop() 
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. 9999)) then !--a lake node
@@ -804,7 +808,7 @@ crnt:    DO                      !-- loop on the courant condition
            if( TYPEL(i).eq.0 .and. CVOLTMP(i) .ge. 0.001 .and.(CVOLTMP(i)-QSUM(i)*DTCT)/CVOLTMP(i) .le. -0.01 ) then  
             flag = -99
 #ifdef HYDRO_D
-            write(6,*) "Unstatble at node ",i
+            write(6,*) "Unstable at node ",i
             write(6,*) "TYPEL, CVOLTMP, QSUM, QSUM*DTCT",TYPEL(i), CVOLTMP(i), QSUM(i), QSUM(i)*DTCT
             write(6,*) "qsubrt, qstrmvolrt,qlink",QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)),qlink(i,1),qlink(i,2)
 #endif
@@ -819,7 +823,7 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
 
 
-        if(flag < 0 )   then   
+	if(flag < 0 )   then   
              if(DTCT .gt. 0.001) then                  !-- timestep in seconds
               DTCT = DTCT/2                            !-- 1/2 timestep
               KRT = 0                                  !-- restart counter
@@ -829,8 +833,8 @@ crnt:    DO                      !-- loop on the courant condition
              else
 #ifdef HYDRO_D
               write(6,*) "Error ..... with small DTCT",DTCT
-              call hydro_stop()
 #endif
+              call hydro_stop()
               DTCT = 0.1
               HLINKTMP = HLINK                          !-- set head and volume to start values of timestep
               CVOLTMP  = CVOL
@@ -965,8 +969,8 @@ crnt:    DO                      !-- loop on the courant condition
         else                                            !-- no channel option apparently selected
 #ifdef HYDRO_D
          print *, "no channel option selected"
-         call hydro_stop() 
 #endif
+         call hydro_stop() 
         endif
 
 #ifdef HYDRO_D
