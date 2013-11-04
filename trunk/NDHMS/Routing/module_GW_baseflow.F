@@ -1117,6 +1117,9 @@ subroutine gwSoilFlux(did)
 
 ! TOcheck Step 3, adapt groundwater head (assuming not time lag for percolation / capillary rise flow)
 
+! 	   modify gw-head before gwstep call with respect to specific yield of the 
+! 	   aquifer and the computed flux (qsgwrt)
+
  headChange = gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
  gw2d(did)%ho = gw2d(did)%ho + headChange
   

@@ -154,9 +154,11 @@
 	   end if
            DX = abs(nlst_rt(did)%DXRT0 * nlst_rt(did)%AGGFACTRT)
            
-	   
-! 	   modify gw-head before gwstep call with respect to specific yield of the 
-! 	   aquifer and the computed flux (qsgwrt)
+           ! add/rm channel-aquifer exchange contribution
+           
+           gw2d(did)%ho =  gw2d(did)%ho  &
+                        +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
+                        /  gw2d(did)%poros)
 	   
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
 			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
