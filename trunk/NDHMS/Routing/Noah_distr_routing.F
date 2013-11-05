@@ -251,8 +251,8 @@
 #ifdef HYDRO_D
                    print *, "Subsfc acct. SMCMAX exceeded...", &
                        SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
-                   call hydro_stop()
 #endif
+                   call hydro_stop()
                   ELSE
                   END IF
                 ELSE
