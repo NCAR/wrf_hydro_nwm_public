@@ -362,7 +362,6 @@ module module_HYDRO_drv
 !        integer, OPTIONAL:: ix0,jx0
         integer:: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
-        integer :: iter
 
 
 #ifdef MPP_LAND
@@ -502,20 +501,6 @@ module module_HYDRO_drv
 #ifdef HYDRO_D                        
           write(6,*) "finish gw2d_ini"      
 #endif
-	  do iter=1,10
-#ifdef HYDRO_D                        
-          write(6,*) "Spinup cycle", iter, "of 10"
-#endif
-           call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
-             gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
-             gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
-             gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
-             gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
-!              gw2d(did)%istep)
-             iter)
-	   
-	     gw2d(did)%ho = gw2d(did)%h
-          end do
       endif
 #ifdef HYDRO_D
        write(6,*) "finish LandRT_ini"

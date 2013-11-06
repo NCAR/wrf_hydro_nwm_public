@@ -2474,6 +2474,7 @@ end subroutine get_albedo12m_netcdf
     call write_IO_rt_real(convgw,gConvgw)
     
     do i = 1, NSOIL
+     call MPP_LAND_COM_REAL(smcrt(:,:,i), ixrt, jxrt, 99)
      call write_IO_rt_real(SMCRT(:,:,i),gSMCRT(:,:,i))
     end do
 
