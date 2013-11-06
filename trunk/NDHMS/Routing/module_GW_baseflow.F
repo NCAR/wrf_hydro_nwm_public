@@ -211,15 +211,44 @@ contains
 !------------------------------------------------------------------------------
    subroutine gw2d_ini(did,dt,dx)
      use module_GW_baseflow_data, only: gw2d
+     use module_rt_data, only: rt_domain
      implicit none
      integer did
      real dt,dx
+     integer :: jj, ii, iter
 
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
            ! bftodo: develop proper landtype mask
            
            gw2d(did)%compres=0. ! currently not implemented
+
+           
+          do iter=1,100
+#ifdef HYDRO_D                        
+          write(6,*) "Spinup cycle", iter, "of 100"
+#endif
+           call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
+             gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
+             gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
+             gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
+             gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
+!              gw2d(did)%istep)
+             iter)
+	   
+	     gw2d(did)%ho = gw2d(did)%h
+	  
+	  ! remove surface excess groundwater for faster initialization
+     	  do jj=1,RT_DOMAIN(did)%JXRT
+	    do ii=1,RT_DOMAIN(did)%IXRT
+	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
+		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
+		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
+	      end if
+	    end do
+	  end do
+
+          end do
 
    return
    end subroutine gw2d_ini
@@ -1087,7 +1116,7 @@ subroutine gwSoilFlux(did)
   
   
   real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
-  integer :: nsoil, i, j
+  integer :: nsoil, i, j, k
   
   
   
@@ -1106,7 +1135,15 @@ subroutine gwSoilFlux(did)
   do j=gw2d(did)%jts, gw2d(did)%jte
     do i=gw2d(did)%its, gw2d(did)%ite
         if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
-	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))        
+	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))
+	else if(ztrans(i,j) < 0) then
+	  do k=nsoil,1,-1
+	     if(ztrans(i,j) .le. nlst_rt(did)%zsoil8(nsoil)*100) then
+	       RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
+	     else
+	       
+	     end if
+	  end do
 	end if
     end do
   end do
