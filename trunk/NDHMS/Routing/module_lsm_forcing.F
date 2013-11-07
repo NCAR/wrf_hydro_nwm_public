@@ -1067,6 +1067,12 @@ Contains
            inquire (file=trim(inflnm), exist=fexist)
         endif
         if ( .not. fexist ) then
+           inflnm = trim(indir)//"/"//&
+                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+                ".PRECIP_FORCING.nc"
+           inquire (file=trim(inflnm), exist=fexist)
+        endif
+        if ( .not. fexist ) then
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
@@ -1106,7 +1112,7 @@ Contains
 ! Loop through data to screen for plausible values
        do i=1,ix
          do j=1,jx
-           if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
+           if (PRCP1(i,j).lt.0.) PRCP1(i,j)= PRCP_old(i,j)
            if (PRCP1(i,j).gt.0.138889) PRCP1(i,j)=0.138889  !set max pcp intens = 500 mm/h
          end do
        end do
@@ -1156,27 +1162,33 @@ Contains
              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
              olddate(15:16)//"00.PRECIP_FORCING.nc"
         inquire (file=trim(inflnm), exist=fexist)
+#ifdef HYDRO_D
+       if(fexist) print*, "using pcp forcing: ",trim(inflnm)
+#endif
         if ( .not. fexist ) then
             inflnm = trim(indir)//"/"//&
                  olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-                 olddate(15:16)//"PRECIP_FORCING.nc"
+                 olddate(15:16)//".PRECIP_FORCING.nc"
             inquire (file=trim(inflnm), exist=fexist)
+#ifdef HYDRO_D
+            if(fexist) print*, "using pcp forcing: ",trim(inflnm)
+#endif
         endif
         if ( .not. fexist ) then
            inflnm = trim(indir)//"/"//&
                 olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
                 olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
            inquire (file=trim(inflnm), exist=fexist)
+#ifdef HYDRO_D
+           if(fexist) print*, "using pcp forcing: ",trim(inflnm)
+#endif
         endif
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no supplemental forcing data found", inflnm
+           print*, "no supplemental forcing data found ", trim(inflnm)
 #endif
            prcp1 = PRCP_old ! for missing pcp data use analysis/model input 
         else
-#ifdef HYDRO_D
-           print *, "Opening supplemental precipitation forcing file...",inflnm
-#endif
            CALL READFORC_MDV(inflnm,IX,JX,   &
               PRCP2,mmflag,ierr_flg)
 !If radar or spec. data is ok use if not, skip to original NARR data...
@@ -1204,7 +1216,6 @@ Contains
          end do
        end do
 
-     call flush(6)
    end if
 
 
