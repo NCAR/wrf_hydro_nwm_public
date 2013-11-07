@@ -13,6 +13,8 @@ MODULE MODULE_MPP_LAND
   integer, public :: global_rt_nx, global_rt_ny
   integer, public :: local_rt_nx,local_rt_ny,rt_AGGFACTRT
   integer, public :: numprocs   ! total process, get by mpi initialization.
+  
+  integer, public :: cartGridComm
 
   integer mpp_status(MPI_STATUS_SIZE)
 
@@ -25,7 +27,13 @@ MODULE MODULE_MPP_LAND
 
   subroutine LOG_MAP2d()
     implicit none
-    integer :: ierr
+    integer :: ndim, ierr
+    integer, dimension(0:1) :: dims
+    
+    logical cyclic(0:1), reorder
+    data cyclic/.false.,.false./  ! not cyclic
+    data reorder/.false./
+    
       call MPI_COMM_RANK( MPI_COMM_WORLD, my_id, ierr ) 
       call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr ) 
 
@@ -62,7 +70,17 @@ MODULE MODULE_MPP_LAND
 
 ! print the information for debug.
 
-        call mpp_land_sync()
+! BF  setup virtual cartesian grid topology
+      ndim = 2
+
+      dims(0) = up_down_np      ! rows
+      dims(1) = left_right_np   ! columns
+!
+     call MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, &
+                          cyclic, reorder, cartGridComm, ierr)
+
+     
+     call mpp_land_sync()
 
   return 
   end  subroutine log_map2d
