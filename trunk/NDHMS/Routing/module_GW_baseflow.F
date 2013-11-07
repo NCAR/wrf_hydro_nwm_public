@@ -232,7 +232,7 @@ contains
            gw2d(did)%compres=0. ! currently not implemented
 
            
-          do iter=1,itermax
+          do iter=1,100
 #ifdef HYDRO_D                        
           write(6,*) "Spinup cycle", iter, "of", itermax
 #endif
