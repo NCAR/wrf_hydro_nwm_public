@@ -8,6 +8,13 @@ module module_GW_baseflow
 #include "gw_field_include.inc"
 #include "rt_include.inc"
 #include "namelist.inc"
+
+#ifdef MPP_LAND
+ integer, private :: ierr
+ integer, parameter :: rowshift = 0
+ integer, parameter :: colshift = 1
+#endif
+
 contains
 
 !------------------------------------------------------------------------------
@@ -215,8 +222,9 @@ contains
      implicit none
      integer did
      real dt,dx
-     integer :: jj, ii, iter
+     integer :: jj, ii, iter, itermax
 
+      itermax = 1
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
            ! bftodo: develop proper landtype mask
@@ -224,9 +232,9 @@ contains
            gw2d(did)%compres=0. ! currently not implemented
 
            
-          do iter=1,100
+          do iter=1,itermax
 #ifdef HYDRO_D                        
-          write(6,*) "Spinup cycle", iter, "of 100"
+          write(6,*) "Spinup cycle", iter, "of", itermax
 #endif
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
              gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
@@ -713,7 +721,7 @@ deallocate(hh)
                         up_down_p+1, up_down_np, 2)
 
 	
-	call parzsolv1(c2, b2, hh, 1., my_id+1, up_down_p+1, &
+	call parysolv1(c2, b2, hh, 1., my_id+1, up_down_p+1, &
 	                xdim, ydim, left_right_np, up_down_np)
 
     else
@@ -1278,7 +1286,8 @@ end subroutine aggregateQsgw
 ! and the load balance is so good that non-blocking receives
 ! are not needed.
 
-      subroutine parzsolv1(c,b,r,ct,pid,z_pid, &
+#ifdef MPP_LAND
+      subroutine parysolv1(c,b,r,ct,pid,z_pid, &
 	                    xsps, zsps, xdns, zdns)
 
       implicit none
@@ -1304,15 +1313,17 @@ end subroutine aggregateQsgw
 
       integer :: pid, z_pid
       integer :: i, j, sndr_pid, msg_type, cnt, ackn
-      integer :: stat
+      integer :: sendReq, recvReq
       
       integer	ZN_REC
       parameter	(ZN_REC = 46)
 
+      integer :: source, dest
 #ifdef TIMING
       dt = clockdt()
 #endif
 
+ 
       if (z_pid .eq. 1) then
 
 ! Load (ZSPS,j)th equations into passing arrays.
@@ -1334,8 +1345,13 @@ end subroutine aggregateQsgw
 ! !       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
 !         call PVMFRECV(pid+XDNS,ZN_REC,stat)
 !         call PVMFUNPACK(BYTE1,zn,len,1,stat)
-call MPI_SEND(zntmp, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
-call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status, stat)
+
+ call mpi_cart_shift(cartGridComm, rowshift, 1, source, dest, ierr)
+ call MPI_ISEND(zntmp, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1365,6 +1381,10 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! !       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
 !         call PVMFRECV(pid-XDNS,ZN_REC,stat)
 !         call PVMFUNPACK(BYTE1,zn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, rowshift, -1, source, dest, ierr)
+ call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1385,8 +1405,8 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
           t1(j) = zn(j,1)
           t2(j) = zn(j,2)
 ! Load (ZSPS,j)th equations into passing arrays.
-          zn(j,1) = b(ZSPS,j)
-          zn(j,2) = r(ZSPS,j)
+          zntmp(j,1) = b(ZSPS,j)
+          zntmp(j,2) = r(ZSPS,j)
    40   continue
 
         cnt = 2*XSPS
@@ -1402,6 +1422,11 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! !       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
 !         call PVMFRECV(pid+XDNS,ZN_REC,stat)
 !         call PVMFUNPACK(BYTE1,zn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, rowshift, 1, source, dest, ierr)
+ call MPI_ISEND(zntmp, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1417,8 +1442,8 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! Backward elimination in (ZSPS,j)th equations.
           r(1,j) = r(1,j) - b(1,j)*r(ZSPS,j)
 ! Load (1,j)th equations into passing arrays.
-          zn(j,1) = 0.
-          zn(j,2) = r(1,j)
+          zntmp(j,1) = 0.
+          zntmp(j,2) = r(1,j)
    50   continue
 
         cnt = 2*XSPS
@@ -1435,6 +1460,9 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
         call add_dt(ct,tf,ti,dt)
 #endif
 
+ call mpi_cart_shift(cartGridComm, rowshift, -1, source, dest, ierr)
+ call MPI_ISEND(zntmp, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, sendReq, ierr)
+
         do 60 j = 1, XSPS
 ! Backward elimination in (0,j)th equations.
 	r(0,j) = t2(j) - t1(j)*r(1,j)
@@ -1444,7 +1472,10 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
           r(i,j) = r(i,j) - b(i,j)*r(ZSPS,j) - c(i,j)*r(1,j)
    70   continue
    60   continue
+ 
+ call mpi_wait(sendReq, mpp_status, ierr)
 
+ 
       else if (z_pid .lt. ZDNS) then
 
         cnt = 2*XSPS
@@ -1455,6 +1486,10 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! !       call SRECEIVE(sndr_pid,msg_type,zn,pid+XDNS,ZN_REC,len)
 !         call PVMFRECV(pid+XDNS,ZN_REC,stat)
 !         call PVMFUNPACK(BYTE1,zn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, rowshift, 1, source, dest, ierr)
+ call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1476,8 +1511,8 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
           t1(j) = zn(j,1)
           t2(j) = zn(j,2)
 ! Load passing arrays with (1,j)th equations.
-          zn(j,1) = c(1,j)
-          zn(j,2) = r(1,j)
+          zntmp(j,1) = c(1,j)
+          zntmp(j,2) = r(1,j)
    80   continue
 
         cnt = 2*XSPS
@@ -1493,6 +1528,12 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! !       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
 !         call PVMFRECV(pid-XDNS,ZN_REC,stat)
 !         call PVMFUNPACK(BYTE1,zn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, rowshift, -1, source, dest, ierr)
+ call MPI_ISEND(zntmp, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+ 
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1508,8 +1549,8 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! Forward elimination in (ZSPS,j)th equations.
           r(ZSPS,j) = r(ZSPS,j) - c(ZSPS,j)*r(1,j)
 ! Load (ZSPS,j)th equations into passing arrays.
-          zn(j,1) = 0.
-          zn(j,2) = r(ZSPS,j)
+          zntmp(j,1) = 0.
+          zntmp(j,2) = r(ZSPS,j)
    90   continue
 
         cnt = 2*XSPS
@@ -1521,6 +1562,9 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 !         call PVMFINITSEND(PVMRAW, stat)
 !         call PVMFPACK(BYTE1,zn,len,1,stat)
 !         call PVMFSEND(pid+XDNS,ZN_REC,stat)
+ call mpi_cart_shift(cartGridComm, rowshift, 1, source, dest, ierr)
+ call MPI_ISEND(zntmp, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, sendReq, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1535,6 +1579,8 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
           r(i,j) = r(i,j) - c(i,j)*r(1,j) - b(i,j)*r(ZSPS,j)
   110   continue
   100   continue
+  
+ call mpi_wait(sendReq, mpp_status, ierr)
 
       else
 
@@ -1557,8 +1603,12 @@ call MPI_RECV(zn, cnt, MPI_REAL, pid+XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status,
 ! !       call SRECEIVE(sndr_pid,msg_type,zn,pid-XDNS,ZN_REC,len)
 !         call PVMFRECV(pid-XDNS,ZN_REC,stat)
 !         call PVMFUNPACK(BYTE1,zn,len,1,stat)
-call MPI_RECV(zn, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, mpp_status, stat)
-call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
+ call mpi_cart_shift(cartGridComm, rowshift, -1, source, dest, ierr)
+ call MPI_ISEND(zntmp, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+ 
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1582,8 +1632,6 @@ call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
       return
       end subroutine
 
-
-#ifdef MPP_LAND
 !23456789012345678901234567890123456789012345678901234567890123456789012
 ! Parallel machine precision tridiagonal solver.
 ! The send-receive fuse is lit from both ends in this subroutine.
@@ -1591,7 +1639,7 @@ call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
 ! and the load balance is so good that non-blocking receives
 ! are not needed.
 
-      subroutine dparzsolv1(c,b,r,ch,bh,rh,ct,pid,z_pid, &
+      subroutine dparysolv1(c,b,r,ch,bh,rh,ct,pid,z_pid, &
 	                    xsps, zsps, xdns, zdns)
 
       implicit none
@@ -2061,8 +2109,11 @@ call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
 
       integer :: pid, x_pid
       integer :: i, j, sndr_pid, msg_type, cnt, ackn
-      integer :: stat
+      integer :: sendReq, recvReq, stat
 
+      integer :: source, dest
+
+      
 #ifdef TIMING
       dt = clockdt()
 #endif
@@ -2088,8 +2139,13 @@ call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
 ! !       call SRECEIVE(sndr_pid,msg_type,xn,pid+1,XN_REC,len)
 !         call PVMFRECV(pid+1,XN_REC,stat)
 !         call PVMFUNPACK(BYTE1,xn,len,1,stat)
-call MPI_SEND(xntmp, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, stat)
-call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
+
+ call mpi_cart_shift(cartGridComm, colshift, 1, source, dest, ierr)
+ call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   xn, cnt, MPI_REAL, dest, XN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2121,6 +2177,10 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! !       call SRECEIVE(sndr_pid,msg_type,xn,pid-1,XN_REC,len)
 !         call PVMFRECV(pid-1,XN_REC,stat)
 !         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, colshift, -1, source, dest, ierr)
+ call MPI_IRECV(   xn, cnt, MPI_REAL, dest, XN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2139,8 +2199,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
           t1(i) = xn(i,1)
           t2(i) = xn(i,2)
 ! Load (i,XSPS)th equations into passing arrays.
-          xn(i,1) = b(i,XSPS)
-          xn(i,2) = r(i,XSPS)
+          xntmp(i,1) = b(i,XSPS)
+          xntmp(i,2) = r(i,XSPS)
    40   continue
 
         cnt = 2*ZSPS
@@ -2156,6 +2216,11 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! !       call SRECEIVE(sndr_pid,msg_type,xn,pid+1,XN_REC,len)
 !         call PVMFRECV(pid+1,XN_REC,stat)
 !         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, colshift, 1, source, dest, ierr)
+ call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   xn, cnt, MPI_REAL, dest, XN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2170,8 +2235,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! Backward elimination in (i,1)th equations to get r(i,1).
           r(i,1) = r(i,1) - b(i,1)*r(i,XSPS)
 ! Load (i,1)th equations into passing array.
-          xn(i,1) = 0.
-          xn(i,2) = r(i,1)
+          xntmp(i,1) = 0.
+          xntmp(i,2) = r(i,1)
    50   continue
 
         cnt = 2*ZSPS
@@ -2187,7 +2252,9 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
         tf = click()
         call add_dt(ct,tf,ti,dt)
 #endif
-
+ call mpi_cart_shift(cartGridComm, colshift, -1, source, dest, ierr)
+ call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
+ 
         do 60 i = 1, ZSPS
 ! Backward elimination in (i,0)th equations.
           r(i,0) = t2(i) - t1(i)*r(i,1)
@@ -2200,6 +2267,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
           r(i,j) = r(i,j) - b(i,j)*r(i,XSPS) - c(i,j)*r(i,1)
    70   continue
 
+ call mpi_wait(sendReq, mpp_status, ierr)
+
       else if (x_pid .lt. XDNS) then 
 
         cnt = 2*ZSPS
@@ -2210,6 +2279,10 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! !       call SRECEIVE(sndr_pid,msg_type,xn,pid+1,XN_REC,len)
 !         call PVMFRECV(pid+1,XN_REC,stat)
 !         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, colshift, 1, source, dest, ierr)
+ call MPI_IRECV(   xn, cnt, MPI_REAL, dest, XN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2228,8 +2301,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
           t1(i) = xn(i,1)
           t2(i) = xn(i,2)
 ! Load passing arrays with (i,1)th equations.
-          xn(i,1) = c(i,1)
-          xn(i,2) = r(i,1)
+          xntmp(i,1) = c(i,1)
+          xntmp(i,2) = r(i,1)
    80   continue
 
         cnt = 2*ZSPS
@@ -2245,6 +2318,12 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! !       call SRECEIVE(sndr_pid,msg_type,xn,pid-1,XN_REC,len)
 !         call PVMFRECV(pid-1,XN_REC,stat)
 !         call PVMFUNPACK(BYTE1,xn,len,1,stat)
+ call mpi_cart_shift(cartGridComm, colshift, -1, source, dest, ierr)
+ call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   xn, cnt, MPI_REAL, dest, XN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2259,8 +2338,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! Forward elimination in (i,XSPS)th equations.
           r(i,XSPS) = r(i,XSPS) - c(i,XSPS)*r(i,1)
 ! Load (i,XSPS)th equations into passing arrays.
-          xn(i,1) = 0.
-          xn(i,2) = r(i,XSPS)
+          xntmp(i,1) = 0.
+          xntmp(i,2) = r(i,XSPS)
    90   continue
 
         cnt = 2*ZSPS
@@ -2272,6 +2351,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 !         call PVMFINITSEND(PVMRAW, stat)
 !         call PVMFPACK(BYTE1,xn,len,1,stat)
 !         call PVMFSEND(pid+1,XN_REC,stat)
+ call mpi_cart_shift(cartGridComm, colshift, 1, source, dest, ierr)
+ call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2288,6 +2369,8 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 	do 110 i = 1, ZSPS
           r(i,j) = r(i,j) - c(i,j)*r(i,1) - b(i,j)*r(i,XSPS)
   110   continue
+  
+ call mpi_wait(sendReq, mpp_status, ierr)
 
       else
 
@@ -2310,8 +2393,13 @@ call MPI_RECV(xn, cnt, MPI_REAL, pid, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
 ! !       call SRECEIVE(sndr_pid,msg_type,xn,pid-1,XN_REC,len)
 !         call PVMFRECV(pid-1,XN_REC,stat)
 !         call PVMFUNPACK(BYTE1,xn,len,1,stat)
-call MPI_RECV(xn, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, mpp_status, stat)
-call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
+
+ call mpi_cart_shift(cartGridComm, colshift, -1, source, dest, ierr)
+ call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
+ call MPI_IRECV(   xn, cnt, MPI_REAL, dest, XN_REC, cartGridComm, recvReq, ierr)
+ call mpi_wait(sendReq, mpp_status, ierr)
+ call mpi_wait(recvReq, mpp_status, ierr)
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -2333,6 +2421,8 @@ call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
 
       endif
 
+!       call mpi_buffer_detach(sendBuff, buffSize)
+!       deallocate(sendBuff)
       return
       end subroutine
 
@@ -2344,10 +2434,6 @@ call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
 ! are not needed.
 
 ! 10/2013 Adaption for WRF-Hydro by Benjamin Fersch (KIT)
-! 
-! For the MPI calls all local pids are converted to MPI pids
-! First PVM rank was 1, first MPI rank is 0
-! No changes to the convention in the code, only MPI calls are affected
 
       subroutine dparxsolv1(c,b,r,ch,bh,rh,ct,pid,x_pid, &
 	                    xsps, zsps, xdns, zdns)
@@ -2977,7 +3063,7 @@ call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
       return
       end subroutine
       
-      
+#endif      
       subroutine sub_tri_solv(n_xs,n_zs,c,a,b,r,x,wk,xfac,zfac,dir)
 
       implicit none
@@ -3063,6 +3149,6 @@ call MPI_SEND(xntmp, cnt, MPI_REAL, pid-2, XN_REC, MPI_COMM_WORLD, stat)
       return
       end  subroutine
 
-#endif
+
 
 end module module_GW_baseflow   
