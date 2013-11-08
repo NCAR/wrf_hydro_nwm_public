@@ -9,6 +9,8 @@ CLM_MOD = -I $(CLMOBJPATH)/lnd/obj -I $(CLMOBJPATH)/lib/include
 
 include ../../macros
 
+MODFLAG =       -I./ -I ../../MPP -I ../../mod
+
 OBJS = \
 	module_clm_HYDRO.o \
 	clm_drv_HYDRO.o    

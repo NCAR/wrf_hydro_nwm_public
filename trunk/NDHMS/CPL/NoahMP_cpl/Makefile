@@ -7,6 +7,8 @@
 
 include ../../macros
 
+MODFLAG =       -I./ -I ../../MPP -I ../../mod
+
 OBJS = \
 	module_hrldas_HYDRO.o \
 	hrldas_drv_HYDRO.o    
@@ -15,7 +17,7 @@ all:	$(OBJS)
 .F.o:
 	@echo ""
 	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../../mod $(*).f
+	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
 	$(RMD) $(*).f
 	@echo ""
 	ar -r ../../lib/libHYDRO.a $(@)
