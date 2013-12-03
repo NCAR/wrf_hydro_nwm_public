@@ -182,16 +182,29 @@ CONTAINS
                  where( abs(STC) .gt. 500) stc = 282
                  where( abs(SMC) .gt. 500) SMC = 0.25
                  where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+
+                 where( abs(SH2OX) .eq. 1) SH2OX = 0.25
+                 where( abs(SMC) .eq. 1) SMC = 0.25
+                 where( SH2OX .le. 0.0001) SH2OX = 0.25
+                 where( SMC .le. 0.0001) SMC = 0.25
               endif
            endif 
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt
-!          soldrain = rt_domain(did)%soldrain
            if(nlst_rt(did)%rst_typ .eq. 1) then
               STC = rt_domain(did)%STC
               SMC = rt_domain(did)%SMC
               SH2OX = rt_domain(did)%SH2OX
+           else
+              if(nlst_rt(did)%sys_cpl .eq. 1) then
+                 where( abs(STC) .gt. 500) stc = 282
+                 where( abs(SMC) .gt. 500) SMC = 0.25
+                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+
+                 where( abs(SH2OX) .eq. 1) SH2OX = 0.25
+                 where( abs(SMC) .eq. 1) SMC = 0.25
+              endif
            endif
 #endif
         endif

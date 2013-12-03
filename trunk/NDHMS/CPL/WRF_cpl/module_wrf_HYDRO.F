@@ -107,14 +107,15 @@ CONTAINS
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
+            nlst_rt(did)%dt = HYDRO_dt
+            if(nlst_rt(did)%dtrt .lt. HYDRO_dt) then
+               nlst_rt(did)%dtrt = HYDRO_dt
+            else
+               mm = HYDRO_dt/nlst_rt(did)%dtrt
+               if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+            endif
         endif
 
-            nlst_rt(did)%dt = HYDRO_dt
-
-
-
-            mm = HYDRO_dt/nlst_rt(did)%dtrt
-            if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
 
 #ifdef HYDRO_D 
         write(6,*) "mm, nlst_rt(did)%dt = ",mm, nlst_rt(did)%dt
@@ -128,7 +129,11 @@ CONTAINS
         ! get the data from WRF 
 
 
-        if(RT_DOMAIN(did)%initialized .or. (nlst_rt(did)%rst_typ .eq. 0) ) then
+       if((.not. RT_DOMAIN(did)%initialized) .and. (nlst_rt(did)%rst_typ .eq. 1) ) then
+#ifdef HYDRO_D
+           write(6,*) "restart initial data from offline file"
+#endif
+       else
             do k = 1, nlst_rt(did)%nsoil
                 RT_DOMAIN(did)%STC(:,:,k) = grid%TSLB(its:ite,k,jts:jte) 
                 RT_DOMAIN(did)%smc(:,:,k) = grid%smois(its:ite,k,jts:jte) 
@@ -136,7 +141,7 @@ CONTAINS
             end do 
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
             rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
-        endif  
+       endif  
 
 
 !yw       if(checkSOIL_flag .ne. 99) then
@@ -161,7 +166,6 @@ CONTAINS
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
             RT_DOMAIN(did)%initialized = .true.
-     return 
      end subroutine wrf_cpl_HYDRO
 
 

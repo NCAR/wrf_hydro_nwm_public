@@ -7,6 +7,7 @@ module module_lsm_forcing
 
 implicit none
 #include <netcdf.inc>
+    integer :: i_forcing = 0
 
 Contains
 
@@ -1219,6 +1220,100 @@ Contains
    end if
 
 
+!!!! FORC_TYP 7: uses WRF forcing data plus additional pcp forcing.
+
+   if(FORC_TYP.eq.7) then
+
+!!Create forcing data filename...
+        inflnm = trim(indir)//"/"//&
+             "wrfout_d0"//hgrid//"_"//&
+             olddate(1:4)//"-"//olddate(6:7)//"-"//olddate(9:10)//&
+             "_"//olddate(12:13)//":00:00"
+
+        inquire (file=trim(inflnm), exist=fexist)
+
+!       if(i_forcing .lt. 0) i_forcing = 0
+        i_forcing = i_forcing + 1
+
+        if ( .not. fexist ) then
+#ifdef HYDRO_D
+           print*, "no forcing data found", inflnm
+#endif
+        else
+#ifdef HYDRO_D
+           print*, "read WRF forcing data: ", trim(inflnm)
+#endif
+
+           CALL READFORC_WRF(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+           PRES,XLONG,SHORT,PRCPnew)
+           PRCP1=(PRCPnew-prcp0)/(dt*i_forcing)   !Adjustment to convert accum to rate...(mm/s)
+           if(k.eq. 1) then 
+               PRCP1 = 0
+           endif
+           i_forcing = 0
+           PRCP_old = PRCP1
+           prcp0 = PRCPnew
+        endif
+
+!Get specified precip....
+!!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
+!!Create forcing data filename...
+        inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             olddate(15:16)//"00.PRECIP_FORCING.nc"
+        inquire (file=trim(inflnm), exist=fexist)
+#ifdef HYDRO_D
+       if(fexist) print*, "using pcp forcing: ",trim(inflnm)
+#endif
+        if ( .not. fexist ) then
+            inflnm = trim(indir)//"/"//&
+                 olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+                 olddate(15:16)//".PRECIP_FORCING.nc"
+            inquire (file=trim(inflnm), exist=fexist)
+#ifdef HYDRO_D
+            if(fexist) print*, "using pcp forcing: ",trim(inflnm)
+#endif
+        endif
+        if ( .not. fexist ) then
+           inflnm = trim(indir)//"/"//&
+                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+                olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
+           inquire (file=trim(inflnm), exist=fexist)
+#ifdef HYDRO_D
+           if(fexist) print*, "using pcp forcing: ",trim(inflnm)
+#endif
+        endif
+        if ( .not. fexist ) then
+#ifdef HYDRO_D
+           print*, "no supplemental forcing data found ", trim(inflnm)
+#endif
+           prcp1 = PRCP_old ! for missing pcp data use analysis/model input 
+        else
+           CALL READFORC_MDV(inflnm,IX,JX,   &
+              PRCP2,mmflag,ierr_flg)
+!If radar or spec. data is ok use if not, skip to original NARR data...
+           if(ierr_flg .ne. 0) then
+#ifdef HYDRO_D
+               print*, "Warning: pcp reading problem: ", trim(inflnm)
+#endif
+               PRCP1=PRCP_old
+           else
+               PRCP1=PRCP2   !assumes PRCP2 is in mm/s
+               IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
+                PRCP1=PRCP2/DT     !convert from mm to mm/s
+               END IF  ! Endif mmflag
+#ifdef HYDRO_D
+               print*, "replace pcp successfully! ",trim(inflnm)
+#endif
+           endif
+        endif
+
+
+! Loop through data to screen for plausible values
+       where(PRCP1 .lt. 0) PRCP1=PRCP_old
+       where(PRCP1 .gt. 0.138889) PRCP1= 0.138889 ! set maximum to be 500 mm/h
+   end if
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!The other forcing data types below here are obsolete and left for reference...
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1699,6 +1794,7 @@ Contains
      call decompose_data_real(g_SHORT,SHORT)
      call decompose_data_real(g_PRCP1,PRCP1)
      call decompose_data_real(g_PRES,PRES)
+     call decompose_data_real(g_PRCP0,PRCP0)
 
      if(forc_typ .eq. 3 .or. forc_typ .eq. 6 .and. snow_assim .eq. 1) then
          call decompose_data_real(g_weasd,weasd)

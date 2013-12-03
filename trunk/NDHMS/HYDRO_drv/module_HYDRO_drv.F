@@ -418,7 +418,7 @@ module module_HYDRO_drv
        case default
 #ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
-          stop
+          call hydro_stop() 
 #endif
        end select
 
@@ -472,7 +472,7 @@ module module_HYDRO_drv
        case default
 #ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
-          stop
+           call hydro_stop()
 #endif
        end select
     endif
@@ -603,7 +603,7 @@ module module_HYDRO_drv
        write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             oldlen
        write(*,*) '#'//odate(1:oldlen)//'#'
-       stop
+       call hydro_stop()
 #endif
     end if
 

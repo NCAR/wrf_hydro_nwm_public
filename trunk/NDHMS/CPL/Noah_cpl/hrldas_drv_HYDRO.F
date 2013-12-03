@@ -231,7 +231,12 @@
           iret=nf_close(ncid)
 
 !yw    added for 
-!yw          where(sh2ox == 0) sh2ox = smc
+             where( abs(t1) .gt. 500) t1 = 282
+             where( abs(stc) .gt. 500) stc = 282
+             where( abs(SMC) .gt. 1) SMC = 0.25
+             where(sh2ox == 0) sh2ox = smc
+             where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+
 
  
        end subroutine HYDRO_HRLDAS_ini

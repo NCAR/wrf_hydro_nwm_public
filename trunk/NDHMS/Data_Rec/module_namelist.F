@@ -110,7 +110,7 @@ CONTAINS
   write(nlst%hgrid,'(I1)') igrid
 
 
-
+  if(RESTART_FILE .eq. "") rst_typ = 0
 
 #ifdef MPP_LAND
   !bcast namelist variable.
