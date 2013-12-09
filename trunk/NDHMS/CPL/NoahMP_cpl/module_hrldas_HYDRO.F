@@ -176,11 +176,11 @@ CONTAINS
                  call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
               end do
            else
-              if(nlst_rt(did)%sys_cpl .eq. 1) then
-                 where( abs(STC) .gt. 500) stc = 282
-                 where( abs(SMC) .gt. 500) SMC = 0.25
-                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
-              endif
+!             if(nlst_rt(did)%sys_cpl .eq. 1) then
+!                where( abs(STC) .gt. 500) stc = 282
+!                where( abs(SMC) .gt. 500) SMC = 0.25
+!                where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+!             endif
            endif 
 #else
            sfcheadrt = rt_domain(did)%sfcheadrt
@@ -190,11 +190,11 @@ CONTAINS
               SMC = rt_domain(did)%SMC
               SH2OX = rt_domain(did)%SH2OX
            else
-              if(nlst_rt(did)%sys_cpl .eq. 1) then
-                 where( abs(STC) .gt. 500) stc = 282
-                 where( abs(SMC) .gt. 500) SMC = 0.25
-                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
-              endif
+!             if(nlst_rt(did)%sys_cpl .eq. 1) then
+!                where( abs(STC) .gt. 500) stc = 282
+!                where( abs(SMC) .gt. 500) SMC = 0.25
+!                where( abs(SH2OX) .gt. 500) SH2OX = 0.25
+!             endif
            endif
 #endif
         endif

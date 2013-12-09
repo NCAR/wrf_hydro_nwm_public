@@ -26,6 +26,9 @@ Contains
     integer :: ncid
 
     tlevel = 1
+ 
+    pcp = 0
+    pcpc = 0
 
     ! Open the NetCDF file.
     ierr = nf_open(flnm, NF_NOWRITE, ncid)
