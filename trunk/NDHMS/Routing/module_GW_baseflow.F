@@ -224,7 +224,7 @@ contains
      real dt,dx
      integer :: jj, ii, iter, itermax
 
-      itermax = 1
+      itermax = 100
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
            ! bftodo: develop proper landtype mask
@@ -232,7 +232,7 @@ contains
            gw2d(did)%compres=0. ! currently not implemented
 
            
-          do iter=1,100
+          do iter=1,itermax
 #ifdef HYDRO_D                        
           write(6,*) "Spinup cycle", iter, "of", itermax
 #endif
