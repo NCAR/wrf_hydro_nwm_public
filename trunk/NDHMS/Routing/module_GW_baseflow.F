@@ -1323,6 +1323,7 @@ end subroutine aggregateQsgw
       dt = clockdt()
 #endif
 
+      cnt = 2*XSPS
  
       if (z_pid .eq. 1) then
 
@@ -1332,7 +1333,7 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(ZSPS,j)
    10   continue
 
-        cnt = 2*XSPS
+        
 #ifdef TIMING
         ti = click()
 #endif
@@ -1373,7 +1374,6 @@ end subroutine aggregateQsgw
 
       else if (z_pid .le. ZDNS/2) then
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1409,7 +1409,6 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(ZSPS,j)
    40   continue
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1446,7 +1445,6 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(1,j)
    50   continue
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1478,7 +1476,6 @@ end subroutine aggregateQsgw
  
       else if (z_pid .lt. ZDNS) then
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1515,7 +1512,6 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(1,j)
    80   continue
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1553,7 +1549,6 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(ZSPS,j)
    90   continue
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -1590,7 +1585,6 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(1,j)
   120   continue
 
-        cnt = 2*XSPS
 #ifdef TIMING
         ti = click()
 #endif
@@ -2109,7 +2103,7 @@ call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
 
       integer :: pid, x_pid
       integer :: i, j, sndr_pid, msg_type, cnt, ackn
-      integer :: sendReq, recvReq, stat
+      integer :: sendReq, recvReq
 
       integer :: source, dest
 
@@ -2421,8 +2415,6 @@ call MPI_SEND(zntmp, cnt, MPI_REAL, pid-XDNS-1, ZN_REC, MPI_COMM_WORLD, stat)
 
       endif
 
-!       call mpi_buffer_detach(sendBuff, buffSize)
-!       deallocate(sendBuff)
       return
       end subroutine
 

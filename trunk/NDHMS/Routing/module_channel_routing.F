@@ -423,7 +423,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND 
        ,lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks &
 #endif
-       ,gw_head, qgw_chanrt &
+       ,gwBaseSwCRT, gw_head, qgw_chanrt &
        )
 
        IMPLICIT NONE
@@ -459,7 +459,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL, INTENT(IN)                          :: DTRT  !-- routing timestep
         REAL                                      :: DTCT, dist(ixrt,jxrt,9)
         REAL                                      :: RETDEP_CHAN
-        INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT
+        INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, gwBaseSwCRT
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
 
 !DJG GW-chan coupling variables...
@@ -659,9 +659,11 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          DT_STEPS=INT(DT/DTCT)   !-- fix the timestep
          QLateral = 0. 
 !DJG GW-chan coupling variables...
-         Q_GW_CHAN_FLUX = 0.
-         qgw_chanrt = 0.
-
+         if(gwBaseSwCRT == 3) then
+	  Q_GW_CHAN_FLUX = 0.
+	  qgw_chanrt     = 0.
+         end if
+         
 !         ZWATTBLRT=1.0   !--HARDWIRE, remove this and pass in from subsfc/gw routing routines...
 
 
@@ -684,6 +686,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
            if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .lt.0) ) then !--a reg. node
+              
+	    if(gwBaseSwCRT == 3) then
 
 !DJG Implement gw-channel coupling...idealized hardwire here using a generic 'bank conductivity' term = 0.0005 m/s...
 !              d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
@@ -699,7 +703,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
                 Q_GW_CHAN_FLUX(i) = 0.
              end if
-
+            
+            else
+	      Q_GW_CHAN_FLUX(i) = 0.
+	    end if
 
 
               QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
