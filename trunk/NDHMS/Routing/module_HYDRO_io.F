@@ -88,7 +88,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
-                 call hydro_stop()
+                 call hydro_stop("get2d_lsm_vegtyp")
 #endif
               endif
 
@@ -96,7 +96,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
               print*, "nf_inq_dimid:  land_cat"
-              call hydro_stop()
+              call hydro_stop("get2d_lsm_vegtyp")
 #endif
              endif
 
@@ -104,7 +104,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
                print*, "nf_inq_dimlen:  land_cat"
-               call hydro_stop()
+               call hydro_stop("get2d_lsm_vegtyp")
 #endif
             endif
 
@@ -134,7 +134,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
                write(*,'("Problem opening geo_static file: ''", A, "''")') &
                     trim(fileName)
-               call hydro_stop()
+               call hydro_stop("get_file_dimension")
 #endif
             endif
         
@@ -143,7 +143,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
                print*, "nf_inq_dimid:  west_east"
-               call hydro_stop()
+               call hydro_stop("get_file_dimension")
 #endif
             endif
         
@@ -151,7 +151,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
                print*, "nf_inq_dimlen:  west_east"
-               call hydro_stop()
+               call hydro_stop("get_file_dimension")
 #endif
             endif
         
@@ -159,7 +159,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
                        print*, "nf_inq_dimid:  south_north"
-                       call hydro_stop()
+                       call hydro_stop("get_file_dimension")
 #endif
             endif
         
@@ -167,7 +167,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
                print*, "nf_inq_dimlen:  south_north"
-               call hydro_stop()
+               call hydro_stop("get_file_dimension")
 #endif
             endif
             iret = nf_close(ncid)
@@ -199,7 +199,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
-                 call hydro_stop()
+                 call hydro_stop("get2d_lsm_soltyp")
 #endif
               endif
 
@@ -207,7 +207,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
               print*, "nf_inq_dimid:  soil_cat"
-              call hydro_stop()
+              call hydro_stop("get2d_lsm_soltyp")
 #endif
              endif
 
@@ -215,7 +215,7 @@ module module_HYDRO_io
             if (iret /= 0) then
 #ifdef HYDRO_D
                print*, "nf_inq_dimlen:  soil_cat"
-               call hydro_stop()
+               call hydro_stop("get2d_lsm_soltyp")
 #endif
             endif
 
@@ -258,7 +258,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_inq_varid"
-       call hydro_stop()
+       call hydro_stop("get_landuse_netcdf")
 #endif
     endif
 
@@ -267,7 +267,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_get_var_real"
-       call hydro_stop()
+       call hydro_stop("get_landuse_netcdf")
 #endif
     endif
 
@@ -305,7 +305,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_inq_varid"
-       call hydro_stop()
+       call hydro_stop("get_soilcat_netcdf")
 #endif
     endif
 
@@ -314,7 +314,7 @@ module module_HYDRO_io
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_get_var_real"
-       call hydro_stop()
+       call hydro_stop("get_soilcat_netcdf")
 #endif
     endif
 
@@ -354,7 +354,7 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
-       call hydro_stop()
+       call hydro_stop("get_greenfrac_netcdf")
 #endif
     endif
 
@@ -363,7 +363,7 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
-       call hydro_stop()
+       call hydro_stop("get_greenfrac_netcdf")
 #endif
     endif
 
@@ -427,7 +427,7 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_inq_varid"
-       call hydro_stop()
+       call hydro_stop("get_albedo12m_netcdf")
 #endif
     endif
 
@@ -436,7 +436,7 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 #ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_get_var_real"
-       call hydro_stop()
+       call hydro_stop("get_albedo12m_netcdf")
 #endif
     endif
 
@@ -499,7 +499,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
           print*, 'name = "', trim(name)//'"'
           print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_inq_varid"
-          call hydro_stop()
+          call hydro_stop("get_2d_netcdf")
 #endif
        else
           ierr = iret
@@ -514,7 +514,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
           print*, 'name = "', trim(name)//'"'
           print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_get_var_real"
-          call hydro_stop()
+          call hydro_stop("get_2d_netcdf")
 #endif
        else
           ierr = iret
@@ -546,7 +546,7 @@ end subroutine get_albedo12m_netcdf
         if (fatal_IF_ERROR) then
 #ifdef HYDRO_D
            print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_cows:nf_inq_varid"
-           call hydro_stop()
+           call hydro_stop("get_2d_netcdf_cows")
 #endif
         else
           ierr = iret
@@ -803,7 +803,7 @@ end subroutine get_albedo12m_netcdf
        if (cnt .ne. NLINKS) then 
 #ifdef HYDRO_D
          print *, "Apparent error in network topology", cnt, NLINKS
-         call hydro_stop()
+         call hydro_stop("READ_ROUTEDIM")
 #endif
        endif
 !DJG inv       do j=jxrt,1,-1
@@ -1467,7 +1467,7 @@ end subroutine get_albedo12m_netcdf
        if (cnt .ne. NLINKS) then 
 #ifdef HYDRO_D
          print *, "Apparent error in network topology", cnt, NLINKS
-         call hydro_stop()
+         call hydro_stop("READ_CHROUTING")
 #endif
        endif
 
@@ -1977,7 +1977,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
-         call hydro_stop()
+         call hydro_stop("output_rt")
        endif
 #endif
 
@@ -2526,7 +2526,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
-         call hydro_stop()
+         call hydro_stop("output_rt")
        endif
 #endif
 
@@ -2881,7 +2881,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
         if (iret /= 0) then
            print*,  "Problem nf_create points"
-           call hydro_stop()
+           call hydro_stop("output_chrt")
         endif
 #endif
 
@@ -2893,7 +2893,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
         if (iret /= 0) then
             print*, "Problem nf_create observation"
-            call hydro_stop()
+            call hydro_stop("output_chrt")
         endif
 #endif
 
@@ -3471,7 +3471,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
       if (iret /= 0) then
           print*, "Problem nf_create"
-          call hydro_stop()
+          call hydro_stop("output_lakes")
       endif
 #endif
 
@@ -3749,7 +3749,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
         if (iret /= 0) then
             print*, "Problem nf_create"
-            call hydro_stop()
+            call hydro_stop("output_chrtgrd")
         endif
 #endif
 
@@ -3966,7 +3966,7 @@ end subroutine mpp_output_chrt
     if (ierr /= 0) then
 #ifdef HYDRO_D
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
-       call hydro_stop()
+       call hydro_stop("read_chan_forcing")
 #endif
     endif
 
@@ -3993,7 +3993,7 @@ end subroutine mpp_output_chrt
           if (iret .ne. 0) then
 #ifdef HYDRO_D
             print*,"aaa failed to open the netcdf file: ",trim(fileName)
-            call hydro_stop()
+            call hydro_stop("get2d_int")
 #endif
           endif
           iret = nf_inq_varid(ncid,trim(var_name),  varid)
@@ -4263,7 +4263,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
         if(iret .ne. 0) then
             write(6,*) "Error reading TOPOGRAPHY failed" 
-            call hydro_stop()
+            call hydro_stop("READ_ROUTING_seq")
         endif
         write(6,*) "read ",var_name
 #endif
@@ -4362,7 +4362,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
        if (iret /= 0) then
           print*, "Problem nf_create"
-          call hydro_stop()
+          call hydro_stop("output_lsm")
        endif
 #endif
 
@@ -4458,7 +4458,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
        if (iret /= 0) then
           print*, "Problem nf_create"
-          call hydro_stop()
+          call hydro_stop("RESTART_OUT_nc")
        endif
 #endif
 
@@ -4743,7 +4743,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
        write(*,'("Problem opening file: ''", A, "''")') &
             trim(inFile)
-       call hydro_stop() 
+       call hydro_stop("RESTART_IN_NC") 
 #endif
     endif
 

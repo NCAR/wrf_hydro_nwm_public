@@ -36,7 +36,7 @@ Contains
 #ifdef HYDRO_D
        write(*,'("READFORC_WRF Problem opening netcdf file: ''", A, "''")') trim(flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("READFORC_WRF")
     endif
 
     call get_2d_netcdf_ruc("T2",     ncid, t,     ix, jx,tlevel, .true., ierr)
@@ -76,7 +76,7 @@ Contains
        write(*,'("Problem opening geo_static file: ''", A, "''")') &
             trim(geo_static_flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimid(ncid, "west_east", dimid)
@@ -85,7 +85,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimid:  west_east"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimlen(ncid, dimid, ix)
@@ -93,7 +93,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimlen:  west_east"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimid(ncid, "south_north", dimid)
@@ -101,7 +101,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimid:  south_north"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimlen(ncid, dimid, jx)
@@ -109,7 +109,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimlen:  south_north"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimid(ncid, "land_cat", dimid)
@@ -117,7 +117,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimid:  land_cat"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimlen(ncid, dimid, land_cat)
@@ -125,7 +125,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimlen:  land_cat"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimid(ncid, "soil_cat", dimid)
@@ -133,7 +133,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimid:  soil_cat"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_inq_dimlen(ncid, dimid, soil_cat)
@@ -141,7 +141,7 @@ Contains
 #ifdef HYDRO_D
        print*, "nf_inq_dimlen:  soil_cat"
 #endif
-       call hydro_stop()
+       call hydro_stop("read_hrldas_hdrinfo")
     endif
 
     iret = nf_close(ncid)
@@ -174,7 +174,7 @@ Contains
 #ifdef HYDRO_D
        write(*,'("Problem opening geo_static file: ''", A, "''")') trim(geo_static_flnm)
 #endif
-       call hydro_stop() 
+       call hydro_stop("readland_hrldas") 
     endif
 
     flag = -99 
@@ -186,7 +186,7 @@ Contains
 #ifdef HYDRO_D
             write(6,*) "XLAT not found from wrfstatic file. "
 #endif
-            call hydro_stop() 
+            call hydro_stop("readland_hrldas") 
         endif
         flag = 2
     endif
@@ -254,7 +254,7 @@ Contains
 #ifdef HYDRO_D
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  READLAND_HRLDAS:  NF_CLOSE"
 #endif
-       call hydro_stop()
+       call hydro_stop("readland_hrldas")
     endif
 
     ! Make sure vegtyp and soltyp are consistent when it comes to water points,
@@ -291,7 +291,7 @@ Contains
 #ifdef HYDRO_D
            print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_ruc:nf_inq_varid"
 #endif
-           call hydro_stop()
+           call hydro_stop("get_2d_netcdf_ruc")
         else
           ierr = iret
           return
@@ -325,7 +325,7 @@ Contains
 #ifdef HYDRO_D
            print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_cows:nf_inq_varid"
 #endif
-           call hydro_stop()
+           call hydro_stop("get_2d_netcdf_cows")
         else
           ierr = iret
           return
@@ -372,7 +372,7 @@ Contains
        write(*,'("READINIT Problem opening netcdf file: ''", A, "''")') &
             trim(netcdf_flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("readinit_hrldas")
     endif
 
     call get_2d_netcdf("CANWAT",     ncid, cmc,     units, ix, jx, .TRUE., ierr)
@@ -389,7 +389,7 @@ Contains
        print*, 'units = "'//trim(units)//'"'
        print*, "Unrecognized units on WEASD"
 #endif
-       call hydro_stop()
+       call hydro_stop("readinit_hrldas")
     endif
 
     call get_2d_netcdf("SNODEP",     ncid, snodep,   units, ix, jx, .FALSE., ierr_snodep)
@@ -454,7 +454,7 @@ Contains
 #ifdef HYDRO_D
        write(*,'("READFORC Problem opening netcdf file: ''", A, "''")') trim(flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("READFORC_HRLDAS")
     endif
 
     call get_2d_netcdf("T2D",     ncid, t,     units, ix, jx, .TRUE., ierr)
@@ -600,7 +600,7 @@ Contains
           write(*,'("READFORC_NAMPCP1 Problem opening netcdf file: ''",A, "''")') &
               trim(flnm)
 #endif
-          call hydro_stop()
+          call hydro_stop("READFORC_NAMPCP")
         end if
 
         ierr = nf_inq_varid(ncid,  trim(product),  varid)
@@ -612,7 +612,7 @@ Contains
           write(*,'("READFORC_NAMPCP2 Problem reading netcdf file: ''", A,"''")') &
              trim(flnm)
 #endif
-          call hydro_stop()
+          call hydro_stop("READFORC_NAMPCP")
         end if
       endif
 #ifdef HYDRO_D
@@ -661,7 +661,7 @@ Contains
 #ifdef HYDRO_D
        write(*,'("READFORC_COWS Problem opening netcdf file: ''", A, "''")') trim(flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("READFORC_COWS")
     endif
 
     call get_2d_netcdf_cows("TA2",     ncid, t,     ix, jx,tlevel, .TRUE., ierr)
@@ -703,7 +703,7 @@ Contains
 #ifdef HYDRO_D
        write(*,'("READFORC_RUC Problem opening netcdf file: ''", A, "''")') trim(flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("READFORC_RUC")
     endif
 
     call get_2d_netcdf_ruc("T2",     ncid, t,     ix, jx,tlevel, .true., ierr)
@@ -752,7 +752,7 @@ Contains
 #ifdef HYDRO_D
        write(*,'("READSNOW Problem opening netcdf file: ''", A, "''")') trim(flnm)
 #endif
-       call hydro_stop()
+       call hydro_stop("READSNOW_FORC")
     endif
 
     call get_2d_netcdf("WEASD",  ncid, tmp,   units, ix, jx, .FALSE., ierr)
@@ -825,7 +825,7 @@ Contains
 #ifdef HYDRO_D
               write(6,*) "Error: failed to open file :",trim(inflnm)
 #endif
-             call hydro_stop()
+             call hydro_stop("get2d_hrldas")
           endif
 
           call get2d_hrldas_real("CMC",     ncid, cmc,     ix, jx)
@@ -883,7 +883,7 @@ Contains
         ierr = nf_open(flnm, NF_NOWRITE, ncid)
 
         if(ierr .ne. 0) then
-            call hydro_stop()
+            call hydro_stop("read_stage4")
         endif
 
         call get_2d_netcdf("RAINRATE",ncid, buf,   units, ix, jx, .TRUE., ierr)
@@ -940,7 +940,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop()
+           call hydro_stop("read_seq_forcing")
         endif
 
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
@@ -961,7 +961,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop()
+           call hydro_stop("read_seq_forcing")
         endif
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
@@ -984,7 +984,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop()
+           call hydro_stop("read_seq_forcing")
         endif
 
        CALL READFORC_WRF(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
@@ -1080,7 +1080,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop()
+           call hydro_stop("read_seq_forcing")
         endif
 
        PRCP1 = 0.

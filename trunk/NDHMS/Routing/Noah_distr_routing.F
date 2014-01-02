@@ -251,7 +251,7 @@
 #ifdef HYDRO_D
                    print *, "Subsfc acct. SMCMAX exceeded...", &
                        SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
-                   call hydro_stop()
+                   call hydro_stop("SUBSFC_RTNG")
 #endif
                   ELSE
                   END IF
@@ -529,7 +529,7 @@
 #ifdef HYDRO_D
             print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j),nexp
-            call hydro_stop()
+            call hydro_stop("ROUTE_SUBSURFACE2")
 #endif
           end if
 
@@ -1167,13 +1167,13 @@
             if(dist(i,j,index) .le. 0) then
 #ifdef HYDRO_D
                write(6,*) "Error: dist(i,j,index) is <= zero "   
-               call hydro_stop()
+               call hydro_stop("ROUTE_SUBSURFACE1")
 #endif
             endif
             if(soldep(i,j) .eq. 0) then
 #ifdef HYDRO_D
                write(6,*) "Error: soldep          is = zero "   
-               call hydro_stop()
+               call hydro_stop("ROUTE_SUBSURFACE1")
 #endif
             endif
 
@@ -1202,7 +1202,7 @@
 #ifdef HYDRO_D
                  print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j)
-                 call hydro_stop() 
+                 call hydro_stop("ROUTE_SUBSURFACE1") 
 #endif
               end if
 
@@ -1222,7 +1222,7 @@
                        "tan(beta)=",tan(beta),i,j,z(i,j),z(IXX0,JYY0)
                     print*, "ixx0=",ixx0, "jyy0=",jyy0
                     print*, "soldep =", soldep(i,j), "nexp=",nexp
-                 call hydro_stop() 
+                 call hydro_stop("ROUTE_SUBSURFACE1") 
 #endif
               end if
 
@@ -1270,7 +1270,7 @@
             if(dist(i,j,9) .le. 0) then
 #ifdef HYDRO_D
                write(6,*) "Error: dist(i,j,9) is <= zero "   
-               call hydro_stop()
+               call hydro_stop("ROUTE_SUBSURFACE1")
 #endif
             endif
             if(CWATAVAIL(i,j).lt.ABS(qsub(i,j))/dist(i,j,9)*SUBDT) THEN
@@ -1811,7 +1811,7 @@
 #ifdef HYDRO_D
                       print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop()
+                      call hydro_stop("drive_RT")
 #endif
                   ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
 #ifdef HYDRO_D
@@ -1819,7 +1819,7 @@
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
                       print *, "VEGTYP = ", VEGTYP(I,J)
                       print *, "i,j,krt, nsoil",i,j,krt,nsoil
-                      call hydro_stop()
+                      call hydro_stop("drive_RT")
 #endif
                   END IF
                end do !debug loop
@@ -2112,13 +2112,13 @@
 #ifdef HYDRO_D
                       print *, "SMCMAX exceeded upon aggregation...", &
                            SMCRT(IXXRT,JYYRT,KRT), SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop()
+                      call hydro_stop("drive_RT")
 #endif
                     END IF
                     IF(SH2OX(I,J,KRT).LE.0.) THEN
 #ifdef HYDRO_D
                       print *, "Erroneous value of SH2O...",SH2OX(I,J,KRT),I,J,KRT
-                      call hydro_stop()
+                      call hydro_stop("drive_RT")
 #endif
                     END IF
                     SH2OWGT(IXXRT,JYYRT,KRT)=SMCRT(IXXRT,JYYRT,KRT)/SH2OX(I,J,KRT)

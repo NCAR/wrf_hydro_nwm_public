@@ -1045,7 +1045,7 @@ MODULE MODULE_MPP_LAND
 
       if(numprocs .ne. total_pe) then
          write(6,*) "Error: numprocs .ne. total_pe ",numprocs, total_pe 
-         call hydro_stop()
+         call hydro_stop("wrf_LAND_set_INIT")
       endif
 
 

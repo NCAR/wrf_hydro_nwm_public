@@ -418,7 +418,7 @@ module module_HYDRO_drv
        case default
 #ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
-          call hydro_stop() 
+          call hydro_stop("in geth_newdate") 
 #endif
        end select
 
@@ -472,7 +472,7 @@ module module_HYDRO_drv
        case default
 #ifdef HYDRO_D
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
-           call hydro_stop()
+           call hydro_stop("in geth_newdate")
 #endif
        end select
     endif
@@ -553,7 +553,7 @@ module module_HYDRO_drv
     if (.not.opass) then
 #ifdef HYDRO_D
        write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
-       stop
+       call hydro_stop("in geth_newdate")
 #endif
     end if
 
@@ -603,7 +603,7 @@ module module_HYDRO_drv
        write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             oldlen
        write(*,*) '#'//odate(1:oldlen)//'#'
-       call hydro_stop()
+       call hydro_stop("in geth_newdate")
 #endif
     end if
 
@@ -1110,10 +1110,12 @@ module module_HYDRO_drv
 end module module_HYDRO_drv
 
 ! stop the job due to the fatal error.
-      subroutine HYDRO_stop()
+      subroutine HYDRO_stop(msg)
+        character(len=*) :: msg
         integer :: ierr
 #ifdef HYDRO_D
-      write(6,*) "The job is stoped due to the fatal error."
+      write(6,*) "The job is stoped due to the fatal error. ", trim(msg)
+      call flush(6)
 #endif
 #ifdef MPP_LAND
 #ifndef HYDRO_D
@@ -1129,6 +1131,7 @@ end module module_HYDRO_drv
 
      return
      end  subroutine HYDRO_stop  
+
 
 ! stop the job due to the fatal error.
       subroutine HYDRO_finish()

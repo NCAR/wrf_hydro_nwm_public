@@ -157,7 +157,7 @@ CONTAINS
 
             if(nlst_rt(did)%sys_cpl .ne. 1) then
                write(6,*) "Error: sys_cpl should be 1."
-               call hydro_stop()
+               call hydro_stop("hrldas_cpl_HYDRO_ini")
             endif
 
            RT_DOMAIN(did)%initialized = .true.

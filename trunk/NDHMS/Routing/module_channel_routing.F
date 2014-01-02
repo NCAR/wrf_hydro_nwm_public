@@ -182,7 +182,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef HYDRO_D
          print *, "error in Diffusion function ->channel coefficients"
          print *, "nod, n, Cs, Bw", nod, n, Cs, Bw 
-         call hydro_stop()
+         call hydro_stop("in DIFFUSION")
 #endif
         endif
 
@@ -280,7 +280,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         if (n.le.0.or.So.le.0.or.z.le.0.or.Bw.le.0) then
 #ifdef HYDRO_D
           print*, "error in channel coefficients -> Muskingum cunge"
-          call hydro_stop()
+          call hydro_stop("in MUSKINGCUNGE")
 #endif
         end if
 
@@ -519,7 +519,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND
 #ifdef HYDRO_D
    write(6,*) "Error: not parallelized"
-   call hydro_stop() 
+   call hydro_stop("in drive_CHANNEL") 
 #endif
 #endif
          DT_STEPS = 1
@@ -576,7 +576,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                 else
 #ifdef HYDRO_D
                  print *, "No channel option selected"
-                 call hydro_stop() 
+                 call hydro_stop("drive_CHANNEL") 
 #endif
                 endif
             endif
@@ -611,7 +611,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                    else
 #ifdef HYDRO_D
                     print *, " no channel option selected"
-                    call hydro_stop() 
+                    call hydro_stop("drive_CHANNEL") 
 #endif
                    endif
                    QLINK(k,1) = qu    !save inflow to reach at current timestep
@@ -661,7 +661,7 @@ crnt:    DO                      !-- loop on the courant condition
            if(node_area(i) .eq. 0) then
 #ifdef HYDRO_D
                write(6,*) "Error: node_area(i) is zero. i=", i
-               call hydro_stop() 
+               call hydro_stop("drive_CHANNEL") 
 #endif
            endif
 
@@ -678,7 +678,7 @@ crnt:    DO                      !-- loop on the courant condition
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
-               call hydro_stop() 
+               call hydro_stop("drive_CHANNEL") 
 #endif
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
@@ -797,7 +797,7 @@ crnt:    DO                      !-- loop on the courant condition
              else
 #ifdef HYDRO_D
               write(6,*) "Error ..... with small DTCT",DTCT
-              call hydro_stop()
+              call hydro_stop("drive_CHANNEL")
 #endif
               DTCT = 0.1
               HLINKTMP = HLINK                          !-- set head and volume to start values of timestep
@@ -860,7 +860,7 @@ crnt:    DO                      !-- loop on the courant condition
             else
 #ifdef HYDRO_D
               print *, "this node does not have a type.. error"
-              call hydro_stop() 
+              call hydro_stop("drive_CHANNEL") 
 #endif
             endif
            
@@ -933,7 +933,7 @@ crnt:    DO                      !-- loop on the courant condition
         else                                            !-- no channel option apparently selected
 #ifdef HYDRO_D
          print *, "no channel option selected"
-         call hydro_stop() 
+         call hydro_stop("drive_CHANNEL") 
 #endif
         endif
 
@@ -970,7 +970,7 @@ crnt:    DO                      !-- loop on the courant condition
           if (WP .le.0) then
 #ifdef HYDRO_D
            print *, "Wetter perimeter is zero, will get divide by zero error"
-           call hydro_stop() 
+           call hydro_stop("in SHAPE") 
 #endif
           else
            FLOW = (1/n)*sqrt(So)*(AREA**(5./3.)/(WP**(2./3.)))
@@ -989,7 +989,7 @@ crnt:    DO                      !-- loop on the courant condition
        if(h .le. 0) then
 #ifdef HYDRO_D
          print *, "head is zero, will get division by zero error"
-         call hydro_stop() 
+         call hydro_stop("in AREAf") 
 #endif
        else
        CDf = (Q/((Bw+z*h)*h))/(sqrt(9.81*(((Bw+z*h)*h)/(Bw+2*z*h))))-1  !--critical depth function
@@ -1087,7 +1087,7 @@ crnt:    DO                      !-- loop on the courant condition
         print *, "interval won't work to find CD of lnk ", lnk
         print *, "Q, hl, hu", Q, hl, hu
         print *, "cd lwr, upr", CDf(Q,BW,hl,z), CDf(Q,BW,hu,z)
-        call hydro_stop() 
+        call hydro_stop("in CRITICALDEPTH") 
 #endif
       else
         Q = 0.0
