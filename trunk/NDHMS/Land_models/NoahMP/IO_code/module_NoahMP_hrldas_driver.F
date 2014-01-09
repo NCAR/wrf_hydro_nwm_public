@@ -19,7 +19,7 @@ module module_NoahMP_hrldas_driver
    integer :: yw_rst_out
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
    integer :: forc_typ, snow_assim, HRLDAS_ini_typ
-   REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
+   REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac
    real :: etpnd1
    character(len=19) :: forcDate
    character(len = 256):: GEO_STATIC_FLNM
@@ -957,7 +957,6 @@ print *, 'after init',shdmax(97,1)
    allocate( sfcheadrt   (ix,jx) )
    allocate( soldrain    (ix,jx) )
    allocate( etpnd   (ix,jx) )
-   allocate( prcp0    (ix,jx) )
 
  
    if(rank .ne. 0) then
@@ -1115,7 +1114,7 @@ if(rank == 0) then
            CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
              xstart, xend, ystart, yend,    &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
-             GLW,SWDOWN,RAINBL_tmp,LAI,SNOWH,ITIME,prcp0,FORCING_TIMESTEP)
+             GLW,SWDOWN,RAINBL_tmp,LAI,SNOWH,ITIME,FORCING_TIMESTEP)
    
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate

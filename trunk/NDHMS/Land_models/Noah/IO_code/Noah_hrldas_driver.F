@@ -98,7 +98,7 @@ program Noah_hrldas_driver
   ! Min/Max values from the 12-monthly Green Vegetation Fraction:
   REAL,    allocatable, DIMENSION(:,:)   :: GVFMIN, GVFMAX
 
-  REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
+  REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac
   real :: etpnd1
 
 
@@ -1186,7 +1186,6 @@ program Noah_hrldas_driver
   allocate( soldrain    (ix,jx) )
   allocate( etpnd   (ix,jx) )
   allocate( greenfrac   (ix,jx) )
-  allocate( prcp0    (ix,jx) )
 
   if(rank .ne. 0) then
     allocate(smc (ix,jx,nsoil))
@@ -1340,7 +1339,7 @@ program Noah_hrldas_driver
      if(olddate == forcDate) then
         CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,    &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,prcp0,FORCING_TIMESTEP)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,FORCING_TIMESTEP)
 
         call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
         forcDate = newdate

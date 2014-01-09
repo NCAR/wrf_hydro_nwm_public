@@ -24,7 +24,7 @@
 
        subroutine HYDRO_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,prcp0, FORCING_TIMESTEP)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,FORCING_TIMESTEP)
 
          use module_lsm_forcing, only: read_seq_forcing
          use module_namelist, only:nlst_rt
@@ -34,7 +34,7 @@
          character(len=19) :: olddate
          character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
-                 weasd, snodep, prcp0    
+                 weasd, snodep  
          integer :: forc_typ, snow_assim, FORCING_TIMESTEP
 
          ix = ixe-ixs+1
@@ -45,8 +45,7 @@
             nlst_rt(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
-            weasd,snodep,FORCING_TIMESTEP*1.0,kt, &
-            prcp0  )
+            weasd,snodep,FORCING_TIMESTEP*1.0,kt )
        end subroutine HYDRO_seq_frocing
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
