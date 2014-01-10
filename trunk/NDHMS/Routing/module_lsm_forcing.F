@@ -290,7 +290,7 @@ Contains
       if (iret /= 0) then
         if (fatal_IF_ERROR) then
 #ifdef HYDRO_D
-           print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_ruc:nf_inq_varid"
+           print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_ruc:nf_inq_varid ", trim(var_name)
 #endif
            call hydro_stop("get_2d_netcdf_ruc")
         else
