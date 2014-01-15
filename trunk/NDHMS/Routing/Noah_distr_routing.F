@@ -789,6 +789,7 @@
          END DO
         END DO
 
+!        call MPP_LAND_COM_REAL(QSTRMVOLRT,IXRT,JXRT,99)
 !DJG----------------------------------------------------------------------
 !DJG CALL OVERLAND FLOW ROUTING SUBROUTINE
 !DJG----------------------------------------------------------------------
@@ -1706,6 +1707,8 @@
 
 
 !DJG Use New Var SICE to track diff between SMC and SH2O through routing...
+!       write(6,*) "SH2OX =", SH2OX
+
 	SICE=SMC-SH2OX
         SMCREFRT = 0
 

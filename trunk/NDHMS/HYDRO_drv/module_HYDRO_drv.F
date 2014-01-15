@@ -65,7 +65,7 @@ module module_HYDRO_drv
 
    subroutine HYDRO_out(did)
       implicit none
-      integer did, outflag
+      integer did, outflag, rtflag
       character(len=19) out_date, rt_out_date
       integer :: Kt, ounit
 
@@ -118,6 +118,20 @@ module module_HYDRO_drv
         kt = rt_domain(did)%his_out_counts
      endif
 
+
+!  jump the ouput for the initial time when it has restart file from routing.
+      rtflag = -99
+#ifdef MPP_LAND
+   if(IO_id .eq. my_id) then
+#endif
+      if ((trim(nlst_rt(did)%restart_file) == "") .and. (nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
+          rtflag = 1
+      endif
+#ifdef MPP_LAND
+   endif  
+     call mpp_land_bcast_int1(rtflag)
+#endif
+      if(rtflag == 1) return ! jump the initial time output for routing restart
 
 
 
@@ -194,13 +208,13 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
 
 #ifdef MPP_LAND
-              call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                  RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-                  RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
-                  nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                  RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-                  RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
-                  RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
+!             call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                 RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
+!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
+!                 nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+!                 RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+!                 RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
+!                 RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  &
@@ -518,13 +532,22 @@ module module_HYDRO_drv
      endif
      
 
+!    if (trim(nlst_rt(did)%restart_file) == "") then
+! output at the initial time
+!        call HYDRO_out(did)
+!        return
+!    endif
 
-!      if(rt_domain(did)%rst_flag .eq. -99 ) return
 ! restart the file
+
+        ! jummp the initial time output
+!        rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
+!        rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
+
        call HYDRO_rst_in(did)
 
-! output at the initial time
-       call HYDRO_out(did)
+!      call HYDRO_out(did)
+
 
 
       end subroutine HYDRO_ini

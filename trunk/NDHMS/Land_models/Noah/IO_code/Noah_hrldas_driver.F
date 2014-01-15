@@ -1227,7 +1227,8 @@ program Noah_hrldas_driver
      if (restart_frequency_hours > 0) then
 !yw        if ((k > 1) .and. (mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0)) then
 !yw        if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0).or. yw_rst_out .eq. 99) ) then
-        if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0)) .or. yw_rst_out .eq. 99 ) then
+        !yw if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0)) .or. yw_rst_out .eq. 99 ) then
+        if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0).or. yw_rst_out .eq. 99) ) then 
            yw_rst_out = -999
 
            if (rank == 0) print*, 'Write restart at '//olddate(1:13)
