@@ -22,8 +22,8 @@
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                   GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                  sys_cpl
-          real:: DTRT,dxrt0
+                  sys_cpl, gwChanCondSw
+          real:: DTRT,dxrt0, gwChanCondConst
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""

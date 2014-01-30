@@ -423,7 +423,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND 
        ,lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks &
 #endif
-       ,gwBaseSwCRT, gw_head, qgw_chanrt &
+       ,gwBaseSwCRT, gw_head, qgw_chanrt, gwChanCondSw, gwChanCondConst &
        )
 
        IMPLICIT NONE
@@ -459,7 +459,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL, INTENT(IN)                          :: DTRT  !-- routing timestep
         REAL                                      :: DTCT, dist(ixrt,jxrt,9)
         REAL                                      :: RETDEP_CHAN
-        INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, gwBaseSwCRT
+        INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, &
+                                                     gwBaseSwCRT, gwChanCondSw
+        real, intent(in)                          :: gwChanCondConst ! aquifer-channel conductivity constant from namelist                                             
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
 
 !DJG GW-chan coupling variables...
@@ -693,9 +695,19 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !              d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
 
              d_GW_CHAN_HEAD(i) = gw_head(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i))  !--units in (m)
+
+             if(gwChanCondSw .eq. 0) then
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+	        
+             else if(gwChanCondSw .eq. 1) then
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConst * d_gw_chan_head(i) &
+                                                * CHANLEN(i) * 2. ! channel bed interface, units in (m^3/s), + is flux into channel...
+
+             else
+	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+	        
+             end if
              
-             qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.0005 * d_gw_chan_head(i) * CHANLEN(i) * 2. ! channel bed interface
-                                                                                              !-- units in (m^3/s), + is flux into channel...
              Q_GW_CHAN_FLUX(i) = qgw_chanrt(CHANXI(i),CHANYJ(i))
 !             if ( i .eq. 1001 ) then
 !                print *, Q_GW_CHAN_FLUX(i), d_GW_CHAN_HEAD(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)

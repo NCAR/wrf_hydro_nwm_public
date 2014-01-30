@@ -230,7 +230,8 @@
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
 #endif
-       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%h, gw2d(did)%qgw_chanrt&
+       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%h, gw2d(did)%qgw_chanrt, &
+       nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConst &
        )
   endif
 
