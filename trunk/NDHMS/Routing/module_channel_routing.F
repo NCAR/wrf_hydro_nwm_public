@@ -586,12 +586,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                 else
 #ifdef HYDRO_D
                  print *, "No channel option selected"
-<<<<<<< HEAD
-                 call hydro_stop("drive_CHANNEL") 
-=======
->>>>>>> Channel GW interaction general implementation
 #endif
-                 call hydro_stop() 
+                 call hydro_stop("drive_CHANNEL") 
                 endif
             endif
           end do
@@ -625,12 +621,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                    else
 #ifdef HYDRO_D
                     print *, " no channel option selected"
-<<<<<<< HEAD
-                    call hydro_stop("drive_CHANNEL") 
-=======
->>>>>>> Channel GW interaction general implementation
 #endif
-                    call hydro_stop() 
+                    call hydro_stop("drive_CHANNEL") 
                    endif
                    QLINK(k,1) = qu    !save inflow to reach at current timestep
                                       !to be used as inflow from previous timestep
@@ -729,12 +721,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
-<<<<<<< HEAD
-               call hydro_stop("drive_CHANNEL") 
-=======
->>>>>>> Channel GW interaction general implementation
 #endif
-               call hydro_stop() 
+               call hydro_stop("drive_CHANNEL") 
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. 9999)) then !--a lake node
@@ -852,12 +840,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              else
 #ifdef HYDRO_D
               write(6,*) "Error ..... with small DTCT",DTCT
-<<<<<<< HEAD
-              call hydro_stop("drive_CHANNEL")
-=======
->>>>>>> Channel GW interaction general implementation
 #endif
-              call hydro_stop()
+              call hydro_stop("drive_CHANNEL")
               DTCT = 0.1
               HLINKTMP = HLINK                          !-- set head and volume to start values of timestep
               CVOLTMP  = CVOL
@@ -992,12 +976,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         else                                            !-- no channel option apparently selected
 #ifdef HYDRO_D
          print *, "no channel option selected"
-<<<<<<< HEAD
-         call hydro_stop("drive_CHANNEL") 
-=======
->>>>>>> Channel GW interaction general implementation
 #endif
-         call hydro_stop() 
+         call hydro_stop("drive_CHANNEL") 
         endif
 
 #ifdef HYDRO_D

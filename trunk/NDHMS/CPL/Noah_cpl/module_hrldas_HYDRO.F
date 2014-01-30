@@ -9,6 +9,7 @@ module module_HRLDAS_HYDRO
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
     use module_namelist, only: nlst_rt
+    use module_GW_baseflow_data, only: gw2d
 
     implicit none
     integer begg, endg
@@ -26,15 +27,15 @@ module module_HRLDAS_HYDRO
 
 CONTAINS
 
-    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk, gwsoilcpl, qsgw)
 
 
        implicit none
 
-       integer ii,jj,kk
+       integer ii,jj,kk, gwsoilcpl
        integer k
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
 
         integer ::  did
 
@@ -70,12 +71,17 @@ CONTAINS
         end do
         call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
         call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
+	
+	if(nlst_rt(did)%GWBASESWCRT == 3)&
+        call decompose_data_real(qsgw,gw2d(did)%qsgw)
 #else
         RT_DOMAIN(did)%STC = STC
         RT_DOMAIN(did)%SMC = SMC
         RT_DOMAIN(did)%SH2OX = SH2OX
         RT_DOMAIN(did)%infxsrt = infxsrt
         RT_DOMAIN(did)%soldrain = soldrain
+        if(nlst_rt(did)%GWBASESWCRT == 3) &
+	  gw2d(did)%qsgw = qsgw
 #endif
   
 #ifdef MPP_LAND
@@ -102,16 +108,21 @@ CONTAINS
            call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
         end do
          call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
+	if(nlst_rt(did)%GWBASESWCRT == 3)&
+         call write_io_real(gw2d(did)%qsgw,qsgw)
 #else
         STC = rt_domain(did)%STC
         SMC = rt_domain(did)%SMC
         SH2OX = rt_domain(did)%SH2OX
         sfcheadrt = rt_domain(did)%sfcheadrt
+	if(nlst_rt(did)%GWBASESWCRT == 3)&
+        qsgw = gw2d(did)%qsgw
 #endif
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
+        gwsoilcpl = nlst_rt(did)%gwsoilcpl  !TODO put this line in init section 
 
      return 
      end subroutine hrldas_cpl_HYDRO
