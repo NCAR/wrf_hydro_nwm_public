@@ -208,13 +208,13 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
 
 #ifdef MPP_LAND
-!             call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-!                 RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
-!                 nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-!                 RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-!                 RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
-!                 RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
+            call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
+                RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
+                nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+                RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
+                RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  &
