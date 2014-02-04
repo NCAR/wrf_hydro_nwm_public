@@ -803,8 +803,9 @@ end subroutine get_albedo12m_netcdf
        if (cnt .ne. NLINKS) then 
 #ifdef HYDRO_D
          print *, "Apparent error in network topology", cnt, NLINKS
-         call hydro_stop("READ_ROUTEDIM")
+         print* , "ixrt =", ixrt, "jxrt =", jxrt
 #endif
+         call hydro_stop("READ_ROUTEDIM")
        endif
 !DJG inv       do j=jxrt,1,-1
        do j=1,jxrt
@@ -1073,6 +1074,16 @@ end subroutine get_albedo12m_netcdf
        cnt = 0 
 
 !yw  add temperary to initialize the following two variables.
+
+!yw debug
+!    write(6,*) "ixrt =",ixrt, "jxrt=",jxrt
+!    write(18) CH_NETRT
+!    write(19) DIRECTION
+!    write(20) GORDER
+!    write(21) GSTRMFRXSTPTS
+!    write(22) ELRT
+!ywend debug
+      
      BwG = 0.0
      ChSSlpG = 0.0
 
@@ -1467,9 +1478,11 @@ end subroutine get_albedo12m_netcdf
        if (cnt .ne. NLINKS) then 
 #ifdef HYDRO_D
          print *, "Apparent error in network topology", cnt, NLINKS
-         call hydro_stop("READ_CHROUTING")
+         print* , "ixrt =", ixrt, "jxrt =", jxrt
 #endif
+         call hydro_stop("READ_CHROUTING")
        endif
+
 
      do i=1,NLINKS
 #ifdef HYDRO_D

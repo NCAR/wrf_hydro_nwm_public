@@ -96,23 +96,45 @@ MODULE MODULE_MPP_LAND
      subroutine MPP_LAND_PAR_INI(over_lap,in_global_nx,in_global_ny,AGGFACTRT)
         integer in_global_nx,in_global_ny, AGGFACTRT
         integer :: over_lap   ! the overlaped grid number. (default is 1)
+        integer :: i
+
         global_nx = in_global_nx
         global_ny = in_global_ny 
         rt_AGGFACTRT = AGGFACTRT
         global_rt_nx = in_global_nx*AGGFACTRT
         global_rt_ny = in_global_ny *AGGFACTRT
         !overlap_n = 1
-        local_nx = global_nx / left_right_np 
-        if(left_right_p .eq. (left_right_np-1) ) then
-              local_nx = global_nx   &
-                    -int(global_nx/left_right_np)*(left_right_np-1)
-        end if
-        local_ny = global_ny / up_down_np 
-        if(  up_down_p .eq. (up_down_np-1) ) then
-           local_ny = global_ny  &
-                 -int(global_ny/up_down_np)*(up_down_np -1)
+!ywold        local_nx = global_nx / left_right_np 
+!ywold        if(left_right_p .eq. (left_right_np-1) ) then
+!ywold              local_nx = global_nx   &
+!ywold                    -int(global_nx/left_right_np)*(left_right_np-1)
+!ywold        end if
+!ywold        local_ny = global_ny / up_down_np 
+!ywold        if(  up_down_p .eq. (up_down_np-1) ) then
+!ywold           local_ny = global_ny  &
+!ywold                 -int(global_ny/up_down_np)*(up_down_np -1)
+!ywold       end if
+
+        local_nx = int(global_nx / left_right_np)
+        !if(global_nx .ne. (local_nx*left_right_np) ) then
+        if(mod(global_nx, left_right_np) .ne. 0) then
+            do i = 1, mod(global_nx, left_right_np)
+               if(left_right_p .eq. i ) then
+                   local_nx = local_nx + 1
+               end if
+            end do
         end if
 
+        local_ny = int(global_ny / up_down_np)
+        !if(global_ny .ne. (local_ny * up_down_np) ) then
+        if(mod(global_ny,up_down_np) .ne. 0 ) then
+            do i = 1, mod(global_ny,up_down_np)
+                 if( up_down_p .eq. i) then
+                     local_ny = local_ny + 1
+                 end if
+            end do
+        end if
+        
         local_rt_nx=local_nx*AGGFACTRT+2
         local_rt_ny=local_ny*AGGFACTRT+2
         if(left_id.lt.0) local_rt_nx = local_rt_nx -1
@@ -480,14 +502,35 @@ MODULE MODULE_MPP_LAND
     integer :: local_startx, local_starty
     integer :: i,status, ierr, tag
     integer :: r_s(2)
+    integer ::  t_nx, t_ny
 
     allocate(starty(numprocs),stat = ierr) 
     allocate(startx(numprocs),stat = ierr)
 
     local_startx = int(global_nx/left_right_np) * left_right_p+1 
     local_starty = int(global_ny/up_down_np) * up_down_p+1 
+
+!ywold
+    t_nx = 0
+    do i = 1, mod(global_nx,left_right_np)
+       if(left_right_p .gt. i ) then
+           t_nx = t_nx + 1
+       end if
+    end do
+    local_startx = local_startx + t_nx
+
+    t_ny = 0
+    do i = 1, mod(global_ny,up_down_np)
+       if( up_down_p .gt. i) then
+           t_ny = t_ny + 1
+       end if
+    end do
+    local_starty = local_starty + t_ny
+
+
     if(left_id .lt. 0) local_startx = 1
     if(down_id .lt. 0) local_starty = 1
+
 
     if(my_id .eq. IO_id) then
          startx(my_id+1) = local_startx
