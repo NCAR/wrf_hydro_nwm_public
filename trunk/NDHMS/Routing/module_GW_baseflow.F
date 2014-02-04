@@ -231,6 +231,8 @@ contains
            
            gw2d(did)%compres=0. ! currently not implemented
 
+           ! reset cells with undefined hydraulic conductivity
+           where(gw2d(did)%hycond .eq. 100) gw2d(did)%hycond = 5E-4
            
           do iter=1,itermax
 #ifdef HYDRO_D                        
