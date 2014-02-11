@@ -686,10 +686,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
            
 
-           if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
+nodeType:if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .lt.0) ) then !--a reg. node
               
-	    if(gwBaseSwCRT == 3) then
+gwOption:   if(gwBaseSwCRT == 3) then
 
 !DJG Implement gw-channel coupling...idealized hardwire here using a generic 'bank conductivity' term = 0.0005 m/s...
 !              d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
@@ -714,11 +714,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !             end if
              if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
                 Q_GW_CHAN_FLUX(i) = 0.
+	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
              end if
             
             else
 	      Q_GW_CHAN_FLUX(i) = 0.
-	    end if
+	      qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+	    end if gwOption
 
 
               QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
@@ -746,7 +748,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
             elseif(CH_NETRT(CHANXI(i),CHANYJ(i)) .gt. 0) then  !pour out of lake
                  QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
                    QLAKEO(CH_NETRT(CHANXI(i),CHANYJ(i)))  !-- previous timestep
-          endif
+          endif nodeType
         ENDDO
 
 
