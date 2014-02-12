@@ -44,6 +44,7 @@ CONTAINS
         integer :: i,j
 
         real*8 :: t1, t2, dact
+        integer :: clock_count_1, clock_count_2, clock_rate 
         save dact
 
 
@@ -85,19 +86,26 @@ CONTAINS
 #endif
   
 #ifdef MPP_LAND
+#ifdef HYDRO_D
         if(my_id .eq. IO_id) then
-           call  time_seconds(t1)
+           call system_clock(count=clock_count_1, count_rate=clock_rate)
         endif
+#endif
 #endif
 
         ntime = 1
+
         call HYDRO_exe(did)
 #ifdef MPP_LAND
+#ifdef HYDRO_D
+           call mpp_land_sync()
         if(my_id .eq. IO_id) then
-           call  time_seconds(t2)
-           dact = dact + t2 - t1
-           write(6,*) "accumulated time (s): ",dact
+           call system_clock(count=clock_count_2, count_rate=clock_rate)
+           dact = dact + float(clock_count_2-clock_count_1)/float(clock_rate)
+           write(6,*) "timing: ", float(clock_count_2-clock_count_1)/float(clock_rate), &
+                 "accumulated time (s): ",dact
         endif
+#endif
 #endif
 
 ! add for update the HRLDAS state variable.
