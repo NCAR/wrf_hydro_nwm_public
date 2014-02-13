@@ -177,7 +177,7 @@
 	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
 	        RT_DOMAIN(did)%INFXSUBRT(ii,jj) = RT_DOMAIN(did)%INFXSUBRT(ii,jj) &
 		                                + (gw2d(did)%ho(ii,jj) &
-		                                  -gw2d(did)%elev(ii,jj))/1000 ! convert from m to mm
+		                                  -gw2d(did)%elev(ii,jj))*1000 ! convert from m to mm
 		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
 		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
 	      end if
