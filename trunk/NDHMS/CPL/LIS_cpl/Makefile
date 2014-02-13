@@ -3,7 +3,7 @@
 
 .SUFFIXES:
 .SUFFIXES: .o .F
-LIS_ROOT = /raid/weiyu/LIS_trunk2/p61_NDHMS
+LIS_ROOT = ../../../..
 
 LIS_MOD = -I ../../mod -I$(LIS_ROOT)/make
 include $(LIS_ROOT)/make/configure.lis

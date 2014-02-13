@@ -1795,7 +1795,7 @@
                      SMCRT(IXXRT,JYYRT,KF) = SMCRT(IXXRT,JYYRT,KF) + SMCEXCS/(SLDPTH(KF)*1000.) 
                      IF (SMCRT(IXXRT,JYYRT,KF).GT.SMCMAXRT(IXXRT,JYYRT,KF)) THEN  !Recheck new lyr sat.
                        SMCEXCS = (SMCRT(IXXRT,JYYRT,KF) - SMCMAXRT(IXXRT,JYYRT,KF)) &
-                           * SLDPTH(KF)*1000  !Excess soil water in units of (mm)
+                           * SLDPTH(KF)*1000.  !Excess soil water in units of (mm)
                        SMCRT(IXXRT,JYYRT,KF) = SMCMAXRT(IXXRT,JYYRT,KF)
                      ELSE  ! Excess soil water expired
                        SMCEXCS = 0.
