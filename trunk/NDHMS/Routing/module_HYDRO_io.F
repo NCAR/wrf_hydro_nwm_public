@@ -2419,7 +2419,338 @@ end subroutine get_albedo12m_netcdf
 
 !BF output section for gw2d model
 !bftodo: clean up an customize for GW usage
-  subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
+
+  subroutine output_gw_spinup(igrid, split_output_count, ixrt, jxrt, &
+       startdate, date, HEAD, convgw, excess, &
+       geo_finegrid_flnm,dt,LATVAL,LONVAL,dist,HIRES_OUT)
+
+#ifdef MPP_LAND
+       USE module_mpp_land
+#endif
+!output the routing variables over routing grid.
+    implicit none
+#include <netcdf.inc>
+
+    integer,                                  intent(in) :: igrid
+    integer,                                  intent(in) :: split_output_count
+    integer,                                  intent(in) :: ixrt,jxrt
+    real,                                     intent(in) :: dt
+    real,                                     intent(in) :: dist(ixrt,jxrt,9)
+    integer,                                  intent(in) :: HIRES_OUT 
+    character(len=*),                         intent(in) :: startdate
+    character(len=*),                         intent(in) :: date
+    character(len=*),          intent(in)                :: geo_finegrid_flnm
+    real, allocatable, DIMENSION(:,:)                   :: xdumd  !-- decimated variable
+    real*8, allocatable, DIMENSION(:)                   :: xcoord_d, xcoord
+    real*8, allocatable, DIMENSION(:)                   :: ycoord_d, ycoord
+
+    integer, save :: ncid,ncstatic
+    integer, save :: output_count
+
+    integer :: dimid_ix, dimid_jx, dimid_times, dimid_datelen, varid, n
+    integer :: iret, dimid_soil, i,j,ii,jj
+    character(len=256) :: output_flnm
+    character(len=19)  :: date19
+    character(len=32)  :: convention
+    character(len=34)  :: sec_since_date
+
+    character(len=30)  :: soilm
+
+    real                                :: long_cm,lat_po,fe,fn, chan_in
+    real, dimension(2)                  :: sp
+
+    real, dimension(ixrt,jxrt) :: head, convgw, excess, &
+                                  latval, lonval
+
+    integer :: seconds_since, decimation, ixrtd,jxrtd, hires_flag
+    
+#ifdef MPP_LAND
+    real, dimension(global_rt_nx,global_rt_ny) :: gHead, gConvgw, gExcess                                                  
+    real, dimension(global_rt_nx,global_rt_ny) :: gLatval, gLonval
+#endif
+    
+#ifdef MPP_LAND
+    call MPP_LAND_COM_REAL(convgw, ixrt, jxrt, 99)
+    call write_IO_rt_real(latval,gLatval)
+    call write_IO_rt_real(lonval,gLonval)
+    call write_IO_rt_real(head,gHead)
+    call write_IO_rt_real(convgw,gConvgw)
+    call write_IO_rt_real(excess,gExcess)
+    
+
+   if(my_id.eq.IO_id) then
+     
+
+#endif
+    sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
+    seconds_since = int(dt)*output_count
+
+    decimation = 1 !-- decimation factor
+#ifdef MPP_LAND
+    ixrtd = int(global_rt_nx/decimation)
+    jxrtd = int(global_rt_ny/decimation)
+#else
+    ixrtd = int(ixrt/decimation)
+    jxrtd = int(jxrt/decimation)
+#endif
+    allocate(xdumd(ixrtd,jxrtd))
+    allocate(xcoord_d(ixrtd))
+    allocate(ycoord_d(jxrtd))
+    allocate(xcoord(ixrtd))
+    allocate(ycoord(jxrtd))
+    ii = 0
+    jj = 0
+
+    if (hires_out.eq.1) return  ! return if hires flag eq 1, if =2 output full grid
+
+    if (output_count == 0) then
+
+   !-- Open the  finemesh static files to obtain projection information
+#ifdef HYDRO_D
+      write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(geo_finegrid_flnm)
+
+#endif
+      iret = nf_open(trim(geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+
+      if (iret /= 0) then
+#ifdef HYDRO_D
+         write(*,'("Problem opening geo_finegrid file: ''", A, "''")') &
+         trim(geo_finegrid_flnm)
+         write(*,*) "HIRES_OUTPUT will not be georeferenced..."
+#endif
+        hires_flag = 0
+      else
+        hires_flag = 1
+      endif
+
+     if(hires_flag.eq.1) then !if/then hires_georef
+      ! Get Latitude (X)
+      iret = NF_INQ_VARID(ncstatic,'x',varid)
+      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, xcoord)
+      ! Get Longitude (Y)
+      iret = NF_INQ_VARID(ncstatic,'y',varid)
+      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, ycoord)
+     else
+      xcoord_d = 0.
+      ycoord_d = 0.
+     end if  !endif hires_georef 
+
+     do j=jxrt,1,-1*decimation
+        jj = jj+1
+        if (jj<= jxrtd) then
+         ycoord_d(jj) = ycoord(j)
+        endif
+     enddo
+
+!yw     do i = 1,ixrt,decimation
+!yw        ii = ii + 1
+!yw        if (ii <= ixrtd) then 
+!yw         xcoord_d(ii) = xcoord(i)
+         xcoord_d = xcoord
+!yw        endif
+!yw     enddo
+       
+
+     if(hires_flag.eq.1) then !if/then hires_georef
+      ! Get projection information from finegrid netcdf file
+      iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
+      if(iret .eq. 0) iret = NF_GET_ATT_REAL(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
+      iret = NF_GET_ATT_REAL(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
+      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
+      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
+      iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
+     end if  !endif hires_georef 
+      iret = nf_close(ncstatic)
+
+!-- create the fine grid routing file
+       write(output_flnm, '(A12,".GW_SPINUP",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+#ifdef HYDRO_D
+       print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
+
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+
+#ifdef HYDRO_D
+       if (iret /= 0) then
+         print*, "Problem nf_create"
+         call hydro_stop("output_rt")
+       endif
+#endif
+
+       iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
+       iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
+       iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
+
+!--- define variables
+       !- time definition, timeObs
+       iret = nf_def_var(ncid,"time",NF_INT, 1, (/dimid_times/), varid)
+       iret = nf_put_att_text(ncid,varid,'units',34,sec_since_date)
+
+       !- x-coordinate in cartesian system
+       iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
+       iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
+       iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
+       iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+
+       !- y-coordinate in cartesian ssystem
+       iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/dimid_jx/), varid)
+       iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
+       iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
+       iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+
+       !- LATITUDE
+       iret = nf_def_var(ncid,"LATITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
+       iret = nf_put_att_text(ncid,varid,'long_name',8,'LATITUDE')
+       iret = nf_put_att_text(ncid,varid,'standard_name',8,'LATITUDE')
+       iret = nf_put_att_text(ncid,varid,'units',5,'deg North')
+
+       !- LONGITUDE
+       iret = nf_def_var(ncid,"LONGITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
+       iret = nf_put_att_text(ncid,varid,'long_name',9,'LONGITUDE')
+       iret = nf_put_att_text(ncid,varid,'standard_name',9,'LONGITUDE')
+       iret = nf_put_att_text(ncid,varid,'units',5,'deg east')
+
+
+       iret = nf_def_var(ncid,"GwHead",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_put_att_text(ncid,varid,'units',1,'m')
+       iret = nf_put_att_text(ncid,varid,'long_name',17,'groundwater head')
+       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+
+       iret = nf_def_var(ncid,"GwConv",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
+       iret = nf_put_att_text(ncid,varid,'long_name',12,'groundwater convergence')
+       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       
+       iret = nf_def_var(ncid,"GwExcess",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_put_att_text(ncid,varid,'units',1,'m')
+       iret = nf_put_att_text(ncid,varid,'long_name',17,'surface excess groundwater')
+       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+
+!-- place projection information
+     if(hires_flag.eq.1) then !if/then hires_georef
+      iret = nf_def_var(ncid,"lambert_conformal_conic",NF_INT,0, 0,varid)
+      iret = nf_put_att_text(ncid,varid,'grid_mapping_name',23,'lambert_conformal_conic')
+      iret = nf_put_att_real(ncid,varid,'longitude_of_central_meridian',NF_FLOAT,1,long_cm)
+      iret = nf_put_att_real(ncid,varid,'latitude_of_projection_origin',NF_FLOAT,1,lat_po)
+      iret = nf_put_att_real(ncid,varid,'false_easting',NF_FLOAT,1,fe)
+      iret = nf_put_att_real(ncid,varid,'false_northing',NF_FLOAT,1,fn)
+      iret = nf_put_att_real(ncid,varid,'standard_parallel',NF_FLOAT,2,sp)
+     end if   !endif hires_georef
+
+!      iret = nf_def_var(ncid,"Date",   NF_CHAR,  2, (/dimid_datelen,dimid_times/),     varid)
+
+      date19(1:19) = "0000-00-00_00:00:00"
+      date19(1:len_trim(startdate)) = startdate
+      convention(1:32) = "CF-1.0"
+      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
+      iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",6, convention)
+      iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coverage_start",19, date19)
+      iret = nf_put_att_int(ncid,NF_GLOBAL,"output_decimation_factor",NF_INT, 1,decimation)
+
+      iret = nf_enddef(ncid)
+
+!!-- write latitude and longitude locations
+!       xdumd = LATVAL
+        iret = nf_inq_varid(ncid,"x", varid)
+!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+	iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
+
+!       xdumd = LONVAL
+        iret = nf_inq_varid(ncid,"y", varid)
+!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
+
+#ifdef MPP_LAND
+        xdumd = gLATVAL
+#else  
+        xdumd = LATVAL
+#endif
+        iret = nf_inq_varid(ncid,"LATITUDE", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+
+#ifdef MPP_LAND
+        xdumd = gLONVAL
+#else  
+        xdumd = LONVAL
+#endif
+        iret = nf_inq_varid(ncid,"LONGITUDE", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+
+
+    endif
+
+    output_count = output_count + 1
+
+!!-- time
+        iret = nf_inq_varid(ncid,"time", varid)
+        iret = nf_put_vara_int(ncid, varid, (/output_count/), (/1/), seconds_since)
+
+
+#ifdef MPP_LAND
+        xdumd = gHead
+#else  
+        xdumd = head
+#endif
+
+     iret = nf_inq_varid(ncid,  "GwHead", varid)
+     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+
+#ifdef MPP_LAND
+        xdumd = gConvgw
+#else  
+        xdumd = convgw
+#endif
+     iret = nf_inq_varid(ncid,  "GwConv", varid)
+     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+
+     
+#ifdef MPP_LAND
+        xdumd = gExcess
+#else  
+        xdumd = excess
+#endif
+     iret = nf_inq_varid(ncid,  "GwExcess", varid)
+     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+ 
+     
+!!time in seconds since startdate
+
+       iret = nf_redef(ncid)
+       date19(1:len_trim(date)) = date
+       iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coverage_end", 19, date19)
+ 
+       iret = nf_enddef(ncid)
+      iret = nf_sync(ncid)
+      if (output_count == split_output_count) then
+        output_count = 0
+        iret = nf_close(ncid)
+      endif
+
+     deallocate(xdumd)
+     deallocate(xcoord_d)
+     deallocate(xcoord)
+     deallocate(ycoord_d)
+     deallocate(ycoord)
+    
+#ifdef MPP_LAND
+    endif
+#endif
+
+  end subroutine output_gw_spinup
+
+
+subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        startdate, date, HEAD, SMCRT, convgw, qsgwrt, qgw_chanrt, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,HIRES_OUT)
 

@@ -22,8 +22,9 @@
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                   GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                  sys_cpl, gwChanCondSw
+                  sys_cpl, gwChanCondSw, GwSpinCycles
           real:: DTRT,dxrt0, gwChanCondConst
+          logical:: GwSpinDiags
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""

@@ -797,6 +797,14 @@ MODULE MODULE_MPP_LAND
 
 !     return
 ! end subroutine mpp_land_sync
+  subroutine mpp_land_bcast_log1(inout)
+      logical inout
+      integer ierr
+        call mpi_bcast(inout,1,MPI_LOGICAL,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_log1
 
   subroutine mpp_land_bcast_int(size,inout)
       integer size

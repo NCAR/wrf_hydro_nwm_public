@@ -36,7 +36,7 @@ all:	$(OBJS)
 #
 # Dependencies:
 #
-module_GW_baseflow.o: ../Data_Rec/module_GW_baseflow_data.o 
+module_GW_baseflow.o: ../Data_Rec/module_GW_baseflow_data.o module_HYDRO_io.o
 
 module_HYDRO_io.o:  module_HYDRO_utils.o ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o 
 

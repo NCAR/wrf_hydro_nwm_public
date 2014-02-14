@@ -219,12 +219,15 @@ contains
    subroutine gw2d_ini(did,dt,dx)
      use module_GW_baseflow_data, only: gw2d
      use module_rt_data, only: rt_domain
+     use module_namelist
+     use module_HYDRO_io, only: output_gw_spinup
+     
      implicit none
      integer did
      real dt,dx
      integer :: jj, ii, iter, itermax
 
-      itermax = 100
+      itermax = nlst_rt(did)%GwSpinCycles
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
            ! bftodo: develop proper landtype mask
@@ -236,7 +239,10 @@ contains
            
           do iter=1,itermax
 #ifdef HYDRO_D                        
-          write(6,*) "Spinup cycle", iter, "of", itermax
+#ifdef MPP_LAND
+          if(my_id .eq. IO_id) &
+#endif
+          write(6,*) "       GW Spinup cycle", iter, "of", itermax
 #endif
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
              gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
@@ -247,6 +253,17 @@ contains
              iter)
 	   
 	     gw2d(did)%ho = gw2d(did)%h
+	     
+	  if(nlst_rt(did)%GwSpinDiags) then
+           call output_gw_spinup(nlst_rt(did)%igrid, 1000000,                &
+                            RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt,   &
+                            nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+                            gw2d(did)%ho, gw2d(did)%convgw, gw2d(did)%ho-gw2d(did)%elev,  &
+                            nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,     &
+                            RT_DOMAIN(did)%LATVAL,        &
+                            RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,          &
+                            nlst_rt(did)%HIRES_OUT)
+	   end if
 	  
 	  ! remove surface excess groundwater for faster initialization
      	  do jj=1,RT_DOMAIN(did)%JXRT
@@ -257,7 +274,7 @@ contains
 	      end if
 	    end do
 	  end do
-
+	  
           end do
 
    return
@@ -446,7 +463,11 @@ endif
         zz
 
 #ifdef MPP_LAND
-      real mpiDelcur
+      real ::        mpiDelcur, &
+                     gdtot,     &
+                     gdtoa,     &
+                     geocn,     &
+                     gebot
       integer mpiSize
 #endif
 
@@ -1050,13 +1071,29 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
 
       zz = 1.e3 * 86400.                    ! convert printout to mm/day
 #ifdef HYDRO_D
+#ifdef MPP_LAND
+
+      call MPI_REDUCE(dtot,gdtot,1, MPI_REAL, MPI_SUM, IO_id, MPI_COMM_WORLD, ierr)
+      call MPI_REDUCE(dtoa,gdtoa,1, MPI_REAL, MPI_SUM, IO_id, MPI_COMM_WORLD, ierr)
+      call MPI_REDUCE(eocn,geocn,1, MPI_REAL, MPI_SUM, IO_id, MPI_COMM_WORLD, ierr)
+      call MPI_REDUCE(ebot,gebot,1, MPI_REAL, MPI_SUM, IO_id, MPI_COMM_WORLD, ierr)
+      
+      if(my_id .eq. IO_id) then
+        write (*,900)                         &
+          gdtot*zz, gdtoa*zz, -geocn*zz, gebot*zz,     &
+          (gdtot-(-geocn+gebot))*zz
+       endif
+
+#else
+
         write (*,900)                         &
           dtot*zz, dtoa*zz, -eocn*zz, ebot*zz,     &
           (dtot-(-eocn+ebot))*zz
 #endif
+#endif
   900 format                                       &
         (3x,'    dh/dt       |dh/dt|        ocnflx        botfix',&
-            '                  ','      ghmerror'  &
+            '        ghmerror'  &
 !         /3x,4f9.4,2(9x),e14.4)
         /3x,5(e14.4))
       
