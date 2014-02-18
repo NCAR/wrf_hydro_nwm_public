@@ -8,19 +8,14 @@
 
        
          implicit none
-         integer did, i
-         real, dimension(RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT):: &
-                   QSTRMVOLRT_DUM,LAKE_INFLORT_DUM, &
-                   QSTRMVOLRT_TS, LAKE_INFLORT_TS
+         integer did
 
-         real :: dx
-         integer ii,jj,kk
 
 
            IF (nlst_rt(did)%SUBRTSWCRT.EQ.1 .or. nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) THEN
 
-              QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
-              LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
+              RT_DOMAIN(did)%QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
+              RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
 #ifdef HYDRO_D
                write(6,*) "*****yw******start drive_RT "
@@ -69,8 +64,8 @@
              RT_DOMAIN(did)%q_sfcflx_y,RT_DOMAIN(did)%LKSATFAC,&
              RT_DOMAIN(did)%OVROUGHRTFAC,rt_domain(did)%dist_lsm(:,:,9) )
 
-            QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-QSTRMVOLRT_DUM
-            LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-LAKE_INFLORT_DUM
+            RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
+            RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 
 #ifdef HYDRO_D
            write(6,*) "*****yw******end drive_RT "
