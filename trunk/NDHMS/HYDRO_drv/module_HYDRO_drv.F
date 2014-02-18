@@ -327,15 +327,29 @@ module module_HYDRO_drv
 
 
 
-           IF (nlst_rt(did)%GWBASESWCRT .ne. 0     &
+           if (nlst_rt(did)%GWBASESWCRT .ne. 0     &
                .or. nlst_rt(did)%SUBRTSWCRT .NE.0  &
                .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
 
+                ! step 1) disaggregate specific fields from LSM to Hydro grid
+                call disaggregateDomain(did)
 
-! running routing model
-                call exeRouting(did)
+		! step n) 
+                call driveSubsurfaceRouting(did)
+		
+		! step n)
+		call driveOverlandRouting(did)
+		
+		! step n) baseflow or groundwater physics
+		call driveGwBaseflow(did)
+		
+		! step n) river channel physics
+		call driveChannelRouting(did)
+		
+		! step n) aggregate specific fields from Hydro to LSM grid
+		call aggregateDomain(did)
 
-    END IF    ! End if for channel routing option
+           end if
 
 
 ! advance to next time step
@@ -354,6 +368,50 @@ module module_HYDRO_drv
 
       end subroutine HYDRO_exe
 
+      subroutine disaggregateDomain(did)
+       
+       implicit none
+       integer, intent(in) :: did
+
+      end subroutine disaggregateDomain
+      
+      subroutine driveSubsurfaceRouting(did)
+       
+       implicit none
+       integer, intent(in) :: did
+      
+      end subroutine driveSubsurfaceRouting
+      
+      subroutine driveOverlandRouting(did)
+       
+       implicit none
+       integer, intent(in) :: did
+      
+      end subroutine driveOverlandRouting
+      
+      subroutine driveGwBaseflow(did)
+       
+       implicit none
+       integer, intent(in) :: did
+      
+      
+      end subroutine driveGwBaseflow
+      
+      subroutine driveChannelRouting(did)
+       
+       implicit none
+       integer, intent(in) :: did
+      
+      end subroutine driveChannelRouting
+      
+      subroutine aggregateDomain(did)
+       
+       implicit none
+       integer, intent(in) :: did
+      
+      end subroutine aggregateDomain
+      
+      
 
       subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
         implicit none
