@@ -83,14 +83,14 @@ CONTAINS
   allocate( rt_domain(did)%QSTRMVOLRT  (IXRT,JXRT) )
 
 
-  ! allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
-!  allocate( rt_domain(did)%QSTRMVOLRT_DUM  (IXRT,JXRT) )
+  allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
+  allocate( rt_domain(did)%QSTRMVOLRT_DUM  (IXRT,JXRT) )
   allocate( rt_domain(did)%QBDRYRT   	(IXRT,JXRT) )
   allocate( rt_domain(did)%CH_NETRT   	(IXRT,JXRT) )
   allocate( rt_domain(did)%LAKE_MSKRT 	(IXRT,JXRT) )
   allocate( rt_domain(did)%LAKE_INFLORT(IXRT,JXRT) )
-!  allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
-!  allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
+  allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
+  allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
 
   allocate( rt_domain(did)%SUB_RESID (ixrt,jxrt) )
   allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
@@ -123,12 +123,12 @@ CONTAINS
     rt_domain(did)%INFXSAGGRT 	= 0.0                
     rt_domain(did)%DHRT   	= 0.0                
     rt_domain(did)%QSTRMVOLRT  = 0.0
-!    rt_domain(did)%QSTRMVOLRT_DUM  = 0.0                
+    rt_domain(did)%QSTRMVOLRT_DUM  = 0.0                
     rt_domain(did)%QBDRYRT   	= 0.0                
     rt_domain(did)%CH_NETRT   	= 0.0                
     rt_domain(did)%LAKE_MSKRT 	= -9999              
     rt_domain(did)%LAKE_INFLORT= 0.0                
-!    rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
+    rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
 
     rt_domain(did)%SUB_RESID = 0.0                
     rt_domain(did)%LATVAL = 0.0                
@@ -236,6 +236,7 @@ CONTAINS
 
 !!! allocate land surface grid variables
  allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
+ allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
 ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
 ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
 ! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
@@ -267,6 +268,7 @@ CONTAINS
   rt_domain(did)%qinflowbase = 0.0           
   rt_domain(did)%gw_strm_msk   = 0         
   rt_domain(did)%SMC   = 0.25           
+  rt_domain(did)%SICE  = 0.
 ! rt_domain(did)%SMCMAX1   = 0.434          
   rt_domain(did)%SMCMAX1   = 0.0
    rt_domain(did)%STC   = 282.0          

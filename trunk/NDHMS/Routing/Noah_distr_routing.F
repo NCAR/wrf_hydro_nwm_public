@@ -1630,7 +1630,7 @@
 
 
      Subroutine drive_RT( IX,JX,NSOIL,IXRT,JXRT,  &
-       SMC,STC,SH2OX,INFXSRT,SFCHEADRT,SMCMAX1,SMCREF1,LKSAT,  &
+       SMC,STC,SH2OX,SICE,INFXSRT,SFCHEADRT,SMCMAX1,SMCREF1,LKSAT,  &
        SMCWLT1, SMCRTCHK,DSMC,ZSOIL, SMCAGGRT,STCAGGRT,SH2OAGGRT, &
        SLDPTH,VEGTYP,SOLDEPRT,INFXSAGGRT,DHRT,QSTRMVOLRT, &
        QBDRYRT,LAKE_INFLORT,SFCHEADSUBRT,INFXSWGT,LKSATRT, &
@@ -2040,123 +2040,6 @@
 
 
 !DJG Fourth(last), Aggregate a few fields from routing.
-#ifdef HYDRO_D
- 	print *, "Beginning Aggregation..."
-#endif
-
-
-        do J=1,JX
-          do I=1,IX
-
-             SFCHEADAGGRT= 0.
-!DJG Subgrid weighting edit...
-             LSMVOL=0.
-             do KRT=1,NSOIL
-               SMCAGGRT(KRT) = 0.
-               SH2OAGGRT(KRT) = 0.
-             end do
-
-
-             do AGGFACYRT=AGGFACTRT-1,0,-1
-              do AGGFACXRT=AGGFACTRT-1,0,-1
-
-
-                IXXRT=I*AGGFACTRT-AGGFACXRT
-                JYYRT=J*AGGFACTRT-AGGFACYRT
-#ifdef MPP_LAND
-       if(left_id.ge.0) IXXRT=IXXRT+1
-       if(down_id.ge.0) JYYRT=JYYRT+1
-#else
-!yw ????
-!       IXXRT=IXXRT+1
-!       JYYRT=JYYRT+1
-#endif
-
-!State Variables
-                SFCHEADAGGRT=SFCHEADAGGRT+SFCHEADSUBRT(IXXRT,JYYRT)
-!DJG Subgrid weighting edit...
-                LSMVOL=LSMVOL+SFCHEADSUBRT(IXXRT,JYYRT)*dist(IXXRT,JYYRT,9)
-
-                do KRT=1,NSOIL
-!DJG               SMCAGGRT(KRT)=SMCAGGRT(KRT)+SMCRT(IXXRT,JYYRT,KRT)
-                   SH2OAGGRT(KRT)=SH2OAGGRT(KRT)+           &
-                         SMCRT(IXXRT,JYYRT,KRT)
-                end do
-
-              end do
-             end do
-
-
-
-            SFCHEADRT(I,J) = SFCHEADAGGRT/(AGGFACTRT**2)
-
-            do KRT=1,NSOIL
-!DJG              SMC(I,J,KRT)=SMCAGGRT(KRT)/(AGGFACTRT**2)
-               SH2OX(I,J,KRT)=SH2OAGGRT(KRT)/(AGGFACTRT**2)
-            end do
-
-
-
-!DJG Calculate subgrid weighting array...
-
-              do AGGFACYRT=AGGFACTRT-1,0,-1
-                do AGGFACXRT=AGGFACTRT-1,0,-1
-                  IXXRT=I*AGGFACTRT-AGGFACXRT
-                  JYYRT=J*AGGFACTRT-AGGFACYRT
-#ifdef MPP_LAND
-       if(left_id.ge.0) IXXRT=IXXRT+1
-       if(down_id.ge.0) JYYRT=JYYRT+1
-#else
-!yw ???
-!       IXXRT=IXXRT+1
-!       JYYRT=JYYRT+1
-#endif
-                  if (lsmvol.gt.0.) then
-                    INFXSWGT(IXXRT,JYYRT)=SFCHEADSUBRT(IXXRT,JYYRT)*  &
-                      dist(IXXRT,JYYRT,9)/LSMVOL
-                  else
-                    INFXSWGT(IXXRT,JYYRT)=1./FLOAT(AGGFACTRT*AGGFACTRT)
-                  end if
-
-                  do KRT=1,NSOIL
-                    IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-#ifdef HYDRO_D
-                      print *, "SMCMAX exceeded upon aggregation...", &
-                           SMCRT(IXXRT,JYYRT,KRT), SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop("drive_RT")
-#endif
-                    END IF
-                    IF(SH2OX(I,J,KRT).LE.0.) THEN
-#ifdef HYDRO_D
-                      print *, "Erroneous value of SH2O...",SH2OX(I,J,KRT),I,J,KRT
-                      call hydro_stop("drive_RT")
-#endif
-                    END IF
-                    SH2OWGT(IXXRT,JYYRT,KRT)=SMCRT(IXXRT,JYYRT,KRT)/SH2OX(I,J,KRT)
-                  end do
-
-                end do
-              end do
-
-         end do
-        end do
-
-#ifdef MPP_LAND
-        call MPP_LAND_COM_REAL(INFXSWGT,IXRT,JXRT,99)
-        do i = 1, NSOIL
-           call MPP_LAND_COM_REAL(SH2OWGT(:,:,i),IXRT,JXRT,99)
-        end do
-#endif
-
-
-
-
-
-!DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
-	SMC=SH2OX+SICE
-#ifdef HYDRO_D
- 	print *, "Finished Aggregation..."
-#endif
         return
       end Subroutine drive_RT ! drive_RT
 
