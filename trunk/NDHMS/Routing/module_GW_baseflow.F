@@ -1163,8 +1163,7 @@ subroutine gwSoilFlux(did)
   
   
   real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
-  integer :: nsoil, i, j, k
-  
+  integer :: nsoil, i, j, k  
   
   
 ! Step 1, collect data
@@ -1181,11 +1180,13 @@ subroutine gwSoilFlux(did)
 
   do j=gw2d(did)%jts, gw2d(did)%jte
     do i=gw2d(did)%its, gw2d(did)%ite
+      
         if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
 	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))
+	  
 	else if(ztrans(i,j) < 0) then
 	  do k=nsoil,1,-1
-	     if(ztrans(i,j) .le. nlst_rt(did)%zsoil8(nsoil)*100) then
+	     if(ztrans(i,j) .le. sum(rt_domain(did)%sldpth(k:nsoil))*100*(-1)) then
 	       RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
 	     else
 	       
