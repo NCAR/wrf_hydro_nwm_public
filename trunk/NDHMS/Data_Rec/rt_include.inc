@@ -110,8 +110,8 @@
   REAL,    allocatable, DIMENSION(:,:,:)   :: SMCRT,SMCMAXRT,SMCWLTRT,SH2OWGT
   REAL,    allocatable, DIMENSION(:,:)     :: INFXSAGGRT
   REAL,    allocatable, DIMENSION(:,:)     :: DHRT,QSTRMVOLRT,QBDRYRT,LAKE_INFLORT
-  !yw REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS
-!  REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_DUM,LAKE_INFLORT_DUM
+  REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS
+  REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_DUM,LAKE_INFLORT_DUM
   REAL,    allocatable, DIMENSION(:,:)       :: INFXSWGT, ywtmp
   REAL,    allocatable, DIMENSION(:)       :: SMCAGGRT,STCAGGRT,SH2OAGGRT
   REAL    :: INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT
