@@ -10,7 +10,7 @@ module module_HYDRO_drv
         output_lsm
    use module_rt_data, only: rt_domain
    use module_GW_baseflow_data, only: gw2d
-   use module_GW_baseflow, only: gw2d_allocate, gw2d_ini
+   use module_GW_baseflow
    use module_namelist, only: nlst_rt
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
@@ -393,7 +393,95 @@ module module_HYDRO_drv
        
        implicit none
        integer, intent(in) :: did
+       
+       integer :: i
+
+!------------------------------------------------------------------
+!DJG Begin GW/Baseflow Routines
+!-------------------------------------------------------------------
+
+  IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN     ! Switch to activate/specify GW/Baseflow
+
+!  IF (nlst_rt(did)%GWBASESWCRT.GE.1000) THEN     ! Switch to activate/specify GW/Baseflow
+
+    If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) Then   ! Call simple bucket baseflow scheme
+
+#ifdef HYDRO_D
+           write(6,*) "*****yw******start simp_gw_buck "
+#endif
+
+       call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
+             RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%basns_area,&
+             RT_DOMAIN(did)%gwsubbasmsk, RT_DOMAIN(did)%INFXSRT, &
+             RT_DOMAIN(did)%SOLDRAIN, &
+             RT_DOMAIN(did)%z_gwsubbas,&
+             RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
+             RT_DOMAIN(did)%qinflowbase,&
+             RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
+             RT_DOMAIN(did)%dist,nlst_rt(did)%DT,&
+             RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
+             RT_DOMAIN(did)%z_max,&
+             nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
+
+
+#ifdef MPP_LAND
+      if(my_id .eq. IO_id) then
+#endif
+
+       open (unit=51,file='GW_inflow.txt',form='formatted',&
+             status='unknown',position='append')
+       open (unit=52,file='GW_outflow.txt',form='formatted',&
+             status='unknown',position='append')
+       open (unit=53,file='GW_zlev.txt',form='formatted',&
+             status='unknown',position='append')
+       do i=1,RT_DOMAIN(did)%numbasns
+          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
+951        FORMAT(I3,1X,A19,1X,F11.3)
+          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
+          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
+       end do
+       close(51)
+       close(52)
+       close(53)
+#ifdef MPP_LAND
+     endif
+#endif
+
+#ifdef HYDRO_D 
+           write(6,*) "*****yw******end simp_gw_buck "
+#endif
+
+!!!For parameter setup runs output the percolation for each basin,
+!!!otherwise comment out this output...
+    else if (nlst_rt(did)%GWBASESWCRT .eq. 3) then
+
+#ifdef HYDRO_D
+           write(6,*) "*****bf******start 2d_gw_model "
+#endif
+
+           call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
+			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
+			gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
+			gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
+			gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
+			gw2d(did)%istep)
+           
+           
+! bftodo head postprocessing block 
+! GW-SOIL-CHANNEL interaction section
+	  gw2d(did)%ho = gw2d(did)%h
+
+#ifdef HYDRO_D
+           write(6,*) "*****bf******end 2d_gw_model "
+#endif
       
+    End if
+
+  END IF    !DJG (End if for RTE SWC activation)
+!------------------------------------------------------------------
+!DJG End GW/Baseflow Routines
+!-------------------------------------------------------------------
+       
       
       end subroutine driveGwBaseflow
       
