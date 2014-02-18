@@ -107,7 +107,7 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR AGGREGATION/DISAGGREGATION
-  REAL,    allocatable, DIMENSION(:,:,:)   :: SMCRT,SMCMAXRT,SMCWLTRT,SH2OWGT
+  REAL,    allocatable, DIMENSION(:,:,:)   :: SMCRT,SMCMAXRT,SMCWLTRT,SH2OWGT,SICE
   REAL,    allocatable, DIMENSION(:,:)     :: INFXSAGGRT
   REAL,    allocatable, DIMENSION(:,:)     :: DHRT,QSTRMVOLRT,QBDRYRT,LAKE_INFLORT
   REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS

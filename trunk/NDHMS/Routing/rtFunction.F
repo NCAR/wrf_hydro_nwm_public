@@ -33,6 +33,7 @@
          call drive_RT( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
              RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
              RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%STC,RT_DOMAIN(did)%SH2OX, &
+             RT_DOMAIN(did)%SICE, &
              RT_DOMAIN(did)%INFXSRT,RT_DOMAIN(did)%SFCHEADRT,RT_DOMAIN(did)%SMCMAX1,&
              RT_DOMAIN(did)%SMCREF1,RT_DOMAIN(did)%LKSAT,  &
              RT_DOMAIN(did)%SMCWLT1, RT_DOMAIN(did)%SMCRTCHK,RT_DOMAIN(did)%DSMC,&

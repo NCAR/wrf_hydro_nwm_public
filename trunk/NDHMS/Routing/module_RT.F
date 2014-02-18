@@ -235,6 +235,7 @@ CONTAINS
 
 !!! allocate land surface grid variables
  allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
+ allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
 ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
 ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
 ! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
@@ -265,6 +266,7 @@ CONTAINS
   rt_domain(did)%qinflowbase = 0.0           
   rt_domain(did)%gw_strm_msk   = 0         
   rt_domain(did)%SMC   = 0.25           
+  rt_domain(did)%SICE  = 0.
 ! rt_domain(did)%SMCMAX1   = 0.434          
   rt_domain(did)%SMCMAX1   = 0.0
    rt_domain(did)%STC   = 282.0          

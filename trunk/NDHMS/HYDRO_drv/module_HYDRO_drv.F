@@ -369,20 +369,29 @@ module module_HYDRO_drv
 
       end subroutine HYDRO_exe
 
+      
+      
+!--------------------------------------------------
       subroutine disaggregateDomain(did)
        
        implicit none
        integer, intent(in) :: did
 
       end subroutine disaggregateDomain
+
       
+      
+!---------------------------------------------------     
       subroutine driveSubsurfaceRouting(did)
        
        implicit none
        integer, intent(in) :: did
       
       end subroutine driveSubsurfaceRouting
+
       
+      
+!----------------------------------------------------      
       subroutine driveOverlandRouting(did)
        
        implicit none
@@ -390,6 +399,10 @@ module module_HYDRO_drv
       
       end subroutine driveOverlandRouting
       
+      
+      
+      
+!----------------------------------------------------      
       subroutine driveGwBaseflow(did)
        
        implicit none
@@ -486,6 +499,10 @@ module module_HYDRO_drv
       
       end subroutine driveGwBaseflow
       
+      
+      
+      
+!-------------------------------------------      
       subroutine driveChannelRouting(did)
        
        implicit none
@@ -531,12 +548,151 @@ module module_HYDRO_drv
 #endif
       
       end subroutine driveChannelRouting
-      
+ 
+ 
+ 
+!------------------------------------------------ 
       subroutine aggregateDomain(did)
        
        implicit none
        integer, intent(in) :: did
-      
+
+       integer :: i, j, krt, ixxrt, jyyrt, &
+                  AGGFACYRT, AGGFACXRT
+#ifdef HYDRO_D
+ 	print *, "Beginning Aggregation..."
+#endif
+
+
+        do J=1,RT_DOMAIN(did)%JX
+          do I=1,RT_DOMAIN(did)%IX
+
+             RT_DOMAIN(did)%SFCHEADAGGRT = 0.
+!DJG Subgrid weighting edit...
+             RT_DOMAIN(did)%LSMVOL=0.
+             do KRT=1,nlst_rt(did)%NSOIL
+!                SMCAGGRT(KRT) = 0.
+               RT_DOMAIN(did)%SH2OAGGRT(KRT) = 0.
+             end do
+
+
+             do AGGFACYRT=nlst_rt(did)%AGGFACTRT-1,0,-1
+              do AGGFACXRT=nlst_rt(did)%AGGFACTRT-1,0,-1
+
+
+                IXXRT=I*nlst_rt(did)%AGGFACTRT-AGGFACXRT
+                JYYRT=J*nlst_rt(did)%AGGFACTRT-AGGFACYRT
+#ifdef MPP_LAND
+       if(left_id.ge.0) IXXRT=IXXRT+1
+       if(down_id.ge.0) JYYRT=JYYRT+1
+#else
+!yw ????
+!       IXXRT=IXXRT+1
+!       JYYRT=JYYRT+1
+#endif
+
+!State Variables
+                RT_DOMAIN(did)%SFCHEADAGGRT = RT_DOMAIN(did)%SFCHEADAGGRT &
+                                            + RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT)
+!DJG Subgrid weighting edit...
+                RT_DOMAIN(did)%LSMVOL = RT_DOMAIN(did)%LSMVOL &
+                                      + RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
+                                      * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9)
+
+                do KRT=1,nlst_rt(did)%NSOIL
+!DJG               SMCAGGRT(KRT)=SMCAGGRT(KRT)+SMCRT(IXXRT,JYYRT,KRT)
+                   RT_DOMAIN(did)%SH2OAGGRT(KRT) = RT_DOMAIN(did)%SH2OAGGRT(KRT) &
+                                                 + RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)
+                end do
+
+              end do
+             end do
+
+
+
+            RT_DOMAIN(did)%SFCHEADRT(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
+                                          / (nlst_rt(did)%AGGFACTRT**2)
+
+            do KRT=1,nlst_rt(did)%NSOIL
+!DJG              SMC(I,J,KRT)=SMCAGGRT(KRT)/(AGGFACTRT**2)
+               RT_DOMAIN(did)%SH2OX(I,J,KRT) = RT_DOMAIN(did)%SH2OAGGRT(KRT) &
+                                             / (nlst_rt(did)%AGGFACTRT**2)
+            end do
+
+
+
+!DJG Calculate subgrid weighting array...
+
+              do AGGFACYRT=nlst_rt(did)%AGGFACTRT-1,0,-1
+                do AGGFACXRT=nlst_rt(did)%AGGFACTRT-1,0,-1
+                  IXXRT=I*nlst_rt(did)%AGGFACTRT-AGGFACXRT
+                  JYYRT=J*nlst_rt(did)%AGGFACTRT-AGGFACYRT
+#ifdef MPP_LAND
+       if(left_id.ge.0) IXXRT=IXXRT+1
+       if(down_id.ge.0) JYYRT=JYYRT+1
+#else
+!yw ???
+!       IXXRT=IXXRT+1
+!       JYYRT=JYYRT+1
+#endif
+                  if (RT_DOMAIN(did)%LSMVOL.gt.0.) then
+                    RT_DOMAIN(did)%INFXSRT(IXXRT,JYYRT) &
+                                          = RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
+                                          * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9) &
+					  / RT_DOMAIN(did)%LSMVOL
+                  else
+                    RT_DOMAIN(did)%INFXSRT(IXXRT,JYYRT) &
+                                          = 1./FLOAT(nlst_rt(did)%AGGFACTRT**2)
+                  end if
+
+                  do KRT=1,nlst_rt(did)%NSOIL
+                    IF (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .GT. &
+                        RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+#ifdef HYDRO_D
+                      print *, "SMCMAX exceeded upon aggregation...", &
+                           RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
+                           RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
+                      call hydro_stop("drive_RT")
+#endif
+                    END IF
+                    IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LE.0.) THEN
+#ifdef HYDRO_D
+                      print *, "Erroneous value of SH2O...", &
+                                RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
+                      call hydro_stop("drive_RT")
+#endif
+                    END IF
+                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
+                                 = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
+                                 / RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                  end do
+
+                end do
+              end do
+
+         end do
+        end do
+
+        
+#ifdef MPP_LAND
+        call MPP_LAND_COM_REAL(RT_DOMAIN(did)%INFXSRT, &
+                               RT_DOMAIN(did)%IXRT,    &
+                               RT_DOMAIN(did)%JXRT, 99)
+	
+        do i = 1, nlst_rt(did)%NSOIL
+           call MPP_LAND_COM_REAL(RT_DOMAIN(did)%SH2OWGT(:,:,i), &
+                                  RT_DOMAIN(did)%IXRT, &
+				  RT_DOMAIN(did)%JXRT, 99)
+        end do
+#endif
+
+!DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
+	RT_DOMAIN(did)%SMC = RT_DOMAIN(did)%SH2OX + RT_DOMAIN(did)%SICE
+#ifdef HYDRO_D
+ 	print *, "Finished Aggregation..."
+#endif
+
+	
       end subroutine aggregateDomain
       
       
