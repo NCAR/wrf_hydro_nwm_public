@@ -1704,43 +1704,6 @@
        real (KIND=double1)                     :: qbdry1,qbdry2
 
 
-         CWATAVAIL = 0.
-         CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
-                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
-                             CWATAVAIL,SLDPTH)
-#ifdef MPP_LAND
-        call MPP_LAND_COM_REAL(ZWATTABLRT,IXRT,JXRT,99)
-        call MPP_LAND_COM_REAL(CWATAVAIL,IXRT,JXRT,99)
-        call MPP_LAND_COM_INTEGER(SATLYRCHK,IXRT,JXRT,99)
-#endif
-
-
-!DJG Second, Call subsurface routing routine...
-  IF (SUBRTSWCRT.EQ.1) THEN
-#ifdef HYDRO_D
-	print *, "Beginning SUB_routing..."
-        print *, "Routing method is ",rt_option, " direction."
-#endif
-
-!!!! Find saturated layer depth...
-! Loop through domain to determine sat. layers and assign wat tbl depth...
-!    and water available for subsfc routing (CWATAVAIL)...
-! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
-
-
-    CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
-          LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
-          INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
-          SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
-
-#ifdef HYDRO_D
-    print *, "SUBROUTE routing called and returned..."
-#endif
-
-
-
-  ENDIF    ! ENDIF SUBRTSWCRT
-
 
 !DJG Third, Call Overland Flow Routing Routine...
   IF (OVRTSWCRT.EQ.1) THEN
@@ -2723,4 +2686,88 @@
 #endif
 
      end subroutine disaggregateDomain
+
+         subroutine SubsurfaceRouting_drv(did)
+
+             use module_RT_data, only: rt_domain
+             use module_namelist, only: nlst_rt
+             implicit none
+             integer :: did
+             IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
+                call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
+                     RT_DOMAIN(did)%SMCRT,RT_DOMAIN(did)%SMCMAXRT,RT_DOMAIN(did)%SMCREFRT,&
+                     RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
+                     nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SOXRT,       &
+                     RT_DOMAIN(did)%SOYRT,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
+                     RT_DOMAIN(did)%INFXSUBRT,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
+                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, RT_DOMAIN(did)%dist, &
+                     RT_DOMAIN(did)%sub_resid,RT_DOMAIN(did)%SO8RT_D, RT_DOMAIN(did)%SO8RT)
+             endif
+         end subroutine SubsurfaceRouting_drv
+     
+         subroutine subsurfaceRouting (ixrt, jxrt , nsoil, &
+                  SMCRT,SMCMAXRT,SMCREFRT,SMCWLTRT, &
+                  ZSOIL, SLDPTH, &
+                  DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
+                  SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
+                  QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT)
+#ifdef MPP_LAND
+        use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
+#endif
+         implicit none
+         integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
+         REAL, INTENT(IN)                          :: DT
+         real,INTENT(IN), DIMENSION(NSOIL)      :: ZSOIL, SLDPTH
+         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: SOXRT,SOYRT,LKSATRT, SOLDEPRT , sub_resid
+         real,INTENT(INOUT), DIMENSION(IXRT,JXRT)::INFXSUBRT, QSUBBDRYTRT
+         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
+         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT, SMCWLTRT, SMCMAXRT,SMCREFRT
+
+
+         INTEGER :: SO8RT_D(IXRT,JXRT,3)
+         REAL :: SO8RT(IXRT,JXRT,8)
+         REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+!  -----local array ----------
+         REAL, DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
+         REAL, DIMENSION(IXRT,JXRT)   :: CWATAVAIL
+         INTEGER, DIMENSION(IXRT,JXRT) :: SATLYRCHK
+ 
+
+
+
+         CWATAVAIL = 0.
+         CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
+                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
+                             CWATAVAIL,SLDPTH)
+#ifdef MPP_LAND
+        call MPP_LAND_COM_REAL(ZWATTABLRT,IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(CWATAVAIL,IXRT,JXRT,99)
+        call MPP_LAND_COM_INTEGER(SATLYRCHK,IXRT,JXRT,99)
+#endif
+
+
+!DJG Second, Call subsurface routing routine...
+#ifdef HYDRO_D
+	print *, "Beginning SUB_routing..."
+        print *, "Routing method is ",rt_option, " direction."
+#endif
+
+!!!! Find saturated layer depth...
+! Loop through domain to determine sat. layers and assign wat tbl depth...
+!    and water available for subsfc routing (CWATAVAIL)...
+! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
+
+
+    CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
+          LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
+          INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
+          SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
+
+#ifdef HYDRO_D
+    print *, "SUBROUTE routing called and returned..."
+#endif
+
+
+
+    end subroutine subsurfaceRouting 
 

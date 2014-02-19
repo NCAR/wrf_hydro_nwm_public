@@ -336,7 +336,7 @@ module module_HYDRO_drv
                   call disaggregateDomain_drv(did)
 
 		! step n) todo split
-!                 call driveSubsurfaceRouting(did)
+                  call SubsurfaceRouting_drv(did)
 		
 		! step n) todo split
 ! 		call driveOverlandRouting(did)
