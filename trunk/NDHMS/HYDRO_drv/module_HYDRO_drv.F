@@ -413,7 +413,7 @@ module module_HYDRO_drv
        implicit none
        integer, intent(in) :: did
        
-       integer :: i
+       integer :: i, jj, ii
 
 !------------------------------------------------------------------
 !DJG Begin GW/Baseflow Routines
@@ -478,6 +478,21 @@ module module_HYDRO_drv
            write(6,*) "*****bf******start 2d_gw_model "
 #endif
 
+	   ! 	   compute qsgwrt  between lsm and gw with namelist selected coupling method
+	   ! 	   qsgwrt is defined on the routing grid  and needs to be aggregated for SFLX
+	   if (nlst_rt(did)%gwsoilcpl .GT. 0) THEN
+	     
+	     call gwSoilFlux(did)
+	     
+	   end if
+           
+           ! add/rm channel-aquifer exchange contribution
+           
+           
+           gw2d(did)%ho =  gw2d(did)%ho  &
+                        +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
+                        /  gw2d(did)%poros)
+	   
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
 			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
 			gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
@@ -486,10 +501,24 @@ module module_HYDRO_drv
 			gw2d(did)%istep)
            
            
-! bftodo head postprocessing block 
-! GW-SOIL-CHANNEL interaction section
 	  gw2d(did)%ho = gw2d(did)%h
 
+	  ! put surface exceeding groundwater to surface routing inflow
+	  do jj=1,RT_DOMAIN(did)%JXRT
+	    do ii=1,RT_DOMAIN(did)%IXRT
+	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
+	        RT_DOMAIN(did)%INFXSUBRT(ii,jj) = RT_DOMAIN(did)%INFXSUBRT(ii,jj) &
+		                                + (gw2d(did)%ho(ii,jj) &
+		                                  -gw2d(did)%elev(ii,jj))*1000 ! convert from m to mm
+		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
+		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
+	      end if
+	    end do
+	  end do
+	  
+	  ! aggregate  qsgw from routing to lsm grid
+	  call aggregateQsgw(did)
+	  
 #ifdef HYDRO_D
            write(6,*) "*****bf******end 2d_gw_model "
 #endif
