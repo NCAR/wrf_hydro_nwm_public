@@ -1642,7 +1642,7 @@
        RT_OPTION,OV_ROUGH,INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT,&
        DTRT, DT,LAKE_INFLOTRT,QBDRYTRT,QSUBBDRYTRT,&
        QSTRMVOLTRT,q_sfcflx_x,q_sfcflx_y,LKSATFAC,&
-       OVROUGHRTFAC,area_lsm)
+       OVROUGHRTFAC,area_lsm, SMCREFRT)
 
 
 
@@ -1704,200 +1704,14 @@
        real (KIND=double1)                     :: qbdry1,qbdry2
 
 
-
-
-!DJG Use New Var SICE to track diff between SMC and SH2O through routing...
-!       write(6,*) "SH2OX =", SH2OX
-
-	SICE=SMC-SH2OX
-        SMCREFRT = 0
-
-!DJG First, Disaggregate a few key fields for routing...
-!DJG Debug...
-#ifdef HYDRO_D
-	print *, "Beginning Disaggregation..."
-#endif
-	
-!DJG Mass balance check for disagg...
-
-
-!DJG Weighting alg. alteration...(prescribe wghts if time = 1)
-
-
-        do J=1,JX
-          do I=1,IX
-
-!DJG Weighting alg. alteration...
-              LSMVOL=INFXSRT(I,J)*area_lsm(I,J)
-
-
-             do AGGFACYRT=AGGFACTRT-1,0,-1
-              do AGGFACXRT=AGGFACTRT-1,0,-1
-
-               IXXRT=I*AGGFACTRT-AGGFACXRT
-               JYYRT=J*AGGFACTRT-AGGFACYRT
-#ifdef MPP_LAND
-       if(left_id.ge.0) IXXRT=IXXRT+1
-       if(down_id.ge.0) JYYRT=JYYRT+1
-#else
-!yw ????
-!       IXXRT=IXXRT+1
-!       JYYRT=JYYRT+1
-#endif
-
-
-!DJG Implement subgrid weighting routine...
-               INFXSUBRT(IXXRT,JYYRT)=LSMVOL*     &
-                   INFXSWGT(IXXRT,JYYRT)/dist(IXXRT,JYYRT,9)
-  
-
-            do KRT=1,NSOIL  !Do for soil profile loop
-               IF(SICE(I,J,KRT).gt.0) then  !...adjust for soil ice
-!DJG Adjust SMCMAX for SICE when subsfc routing...make 3d variable
-                 SMCMAXRT(IXXRT,JYYRT,KRT)=SMCMAX1(I,J)-SICE(I,J,KRT)
-                 SMCREFRT(IXXRT,JYYRT,KRT)=SMCREF1(I,J)-SICE(I,J,KRT)
-                 WATHOLDCAP = SMCMAX1(I,J) - SMCWLT1(I,J)
-                 IF (SICE(I,J,KRT).le.WATHOLDCAP)    then
-                        SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J)      
-                 else
-                    if(SICE(I,J,KRT).lt.SMCMAX1(I,J)) &
-                          SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J) - &
-                          (SICE(I,J,KRT)-WATHOLDCAP)
-                    if(SICE(I,J,KRT).ge.SMCMAX1(I,J)) SMCWLTRT(IXXRT,JYYRT,KRT) = 0.
-                 end if
-               ELSE
-                 SMCMAXRT(IXXRT,JYYRT,KRT)=SMCMAX1(I,J)
-                 SMCREFRT(IXXRT,JYYRT,KRT)=SMCREF1(I,J)
-                 WATHOLDCAP = SMCMAX1(I,J) - SMCWLT1(I,J)
-                 SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J) 
-               END IF   !endif adjust for soil ice...
-
-
-!Now Adjust soil moisture
-!DJG Use SH2O instead of SMC for 'liquid' water...
-                 IF(SMCMAXRT(IXXRT,JYYRT,KRT).GT.0) THEN !Check for smcmax data (=0 over water)
-                   SMCRT(IXXRT,JYYRT,KRT)=SH2OX(I,J,KRT)*SH2OWGT(IXXRT,JYYRT,KRT)
-!old                   SMCRT(IXXRT,JYYRT,KRT)=SMC(I,J,KRT)
-                 ELSE
-                   SMCRT(IXXRT,JYYRT,KRT) = 0.001  !will be skipped w/ landmask
-                   SMCMAXRT(IXXRT,JYYRT,KRT) = 0.001
-                 END IF
-!DJG Check/Adjust so that subgrid cells do not exceed saturation...
-                 IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-                   SMCEXCS = (SMCRT(IXXRT,JYYRT,KRT) - SMCMAXRT(IXXRT,JYYRT,KRT)) &
-                             * SLDPTH(KRT)*1000.  !Excess soil water in units of (mm)
-                   SMCRT(IXXRT,JYYRT,KRT) = SMCMAXRT(IXXRT,JYYRT,KRT)
-                   DO KF = KRT-1,1, -1  !loop back upward to redistribute excess water from disagg.
-                     SMCRT(IXXRT,JYYRT,KF) = SMCRT(IXXRT,JYYRT,KF) + SMCEXCS/(SLDPTH(KF)*1000.) 
-                     IF (SMCRT(IXXRT,JYYRT,KF).GT.SMCMAXRT(IXXRT,JYYRT,KF)) THEN  !Recheck new lyr sat.
-                       SMCEXCS = (SMCRT(IXXRT,JYYRT,KF) - SMCMAXRT(IXXRT,JYYRT,KF)) &
-                           * SLDPTH(KF)*1000.  !Excess soil water in units of (mm)
-                       SMCRT(IXXRT,JYYRT,KF) = SMCMAXRT(IXXRT,JYYRT,KF)
-                     ELSE  ! Excess soil water expired
-                       SMCEXCS = 0.
-                       EXIT
-                     END IF
-                   END DO
-                   IF (SMCEXCS.GT.0) THEN  !If not expired by sfc then add to Infil. Excess
-                     INFXSUBRT(IXXRT,JYYRT) = INFXSUBRT(IXXRT,JYYRT) + SMCEXCS
-                     SMCEXCS = 0.
-                   END IF
-                 END IF  !End if for soil moisture saturation excess
-
-
-             end do !End do for soil profile loop
-
-
-
-               do KRT=1,NSOIL  !debug loop
-                  IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-#ifdef HYDRO_D
-                      print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
-                              SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop("drive_RT")
-#endif
-                  ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
-#ifdef HYDRO_D
-                      print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
-                              SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
-                      print *, "VEGTYP = ", VEGTYP(I,J)
-                      print *, "i,j,krt, nsoil",i,j,krt,nsoil
-                      call hydro_stop("drive_RT")
-#endif
-                  END IF
-               end do !debug loop
-
-
-
-!DJG map ov roughness as function of land use provided in VEGPARM.TBL...
-! --- added extra check for VEGTYP for 'masked-out' locations...
-! --- out of basin locations (VEGTYP=0) have OVROUGH hardwired to 0.1
-            IF (VEGTYP(I,J).LE.0) then
-              OVROUGHRT(IXXRT,JYYRT) = 0.1     !COWS mask test
-            ELSE
-               OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*OVROUGHRTFAC(IXXRT,JYYRT)  ! Distributed calibration...1/17/2012
-            END IF
-
-
-
-!DJG 6.12.08 Map lateral hydraulic conductivity and apply distributed scaling
-! ---        factor that will be read in from hires terrain file
-!              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) 
-              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
-! ...and scale from max to 0 when SMC decreases from SMCMAX to SMCREF...
-                                    ((SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL)) / &
-                                    (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
-
-
-
-!DJG set up lake mask...
-!--- modify to make lake mask large here, but not one of the routed lakes!!!
-!--            IF (VEGTYP(I,J).eq.16) then
-               IF (VEGTYP(I,J).eq.16 .and. &
-                        CH_NETRT(IXXRT,JYYRT).le.0) then
-                 !--LAKE_MSKRT(IXXRT,JYYRT) = 1
-                 LAKE_MSKRT(IXXRT,JYYRT) = 9999
-!yw                 LAKE_MSKRT(IXXRT,JYYRT) = -9999
-               end if
-
-              end do
-             end do
-
-          end do
-        end do
-
-
-!!!! Find saturated layer depth...
-! Loop through domain to determine sat. layers and assign wat tbl depth...
-!    and water available for subsfc routing (CWATAVAIL)...
-! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
-
          CWATAVAIL = 0.
-
          CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
                              SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
                              CWATAVAIL,SLDPTH)
-
-
-
-#ifdef HYDRO_D
-	print *, "After Disaggregation..."
-#endif
-
-
 #ifdef MPP_LAND
         call MPP_LAND_COM_REAL(ZWATTABLRT,IXRT,JXRT,99)
         call MPP_LAND_COM_REAL(CWATAVAIL,IXRT,JXRT,99)
         call MPP_LAND_COM_INTEGER(SATLYRCHK,IXRT,JXRT,99)
-        call MPP_LAND_COM_REAL(INFXSUBRT,IXRT,JXRT,99)
-        call MPP_LAND_COM_REAL(LKSATRT,IXRT,JXRT,99)
-        call MPP_LAND_COM_REAL(OVROUGHRT,IXRT,JXRT,99)
-        call MPP_LAND_COM_INTEGER(LAKE_MSKRT,IXRT,JXRT,99)
-     do i = 1, NSOIL
-        call MPP_LAND_COM_REAL(SMCMAXRT(:,:,i),IXRT,JXRT,99)
-        call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
-        call MPP_LAND_COM_REAL(SMCWLTRT(:,:,i),IXRT,JXRT,99)
-     end DO
 #endif
 
 
@@ -1907,6 +1721,12 @@
 	print *, "Beginning SUB_routing..."
         print *, "Routing method is ",rt_option, " direction."
 #endif
+
+!!!! Find saturated layer depth...
+! Loop through domain to determine sat. layers and assign wat tbl depth...
+!    and water available for subsfc routing (CWATAVAIL)...
+! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
+
 
     CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
           LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
@@ -2661,4 +2481,246 @@
          end subroutine MPP_seq_land_SO8
 
 #endif
+
+
+
+      subroutine disaggregateDomain_drv(did)
+           use module_RT_data, only: rt_domain
+           use module_namelist, only: nlst_rt
+           integer :: did
+           call disaggregateDomain( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
+             RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
+             RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%INFXSRT, &
+             rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
+             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,RT_DOMAIN(did)%dist, &
+             RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
+             RT_DOMAIN(did)%CH_NETRT,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
+             RT_DOMAIN(did)%INFXSUBRT,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
+             RT_DOMAIN(did)%SMCRT, &
+             RT_DOMAIN(did)%OVROUGHRT, RT_DOMAIN(did)%LAKE_MSKRT, &
+             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH,RT_DOMAIN(did)%SLDPTH )
+
+      end subroutine disaggregateDomain_drv
+
+      subroutine disaggregateDomain(IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, &
+                     SICE, SMC,SH2OX, INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
+               SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
+               LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
+               SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT,OV_ROUGH,  &
+               SLDPTH                                                    &
+            )
+#ifdef MPP_LAND
+        use module_mpp_land, only: left_id,down_id,right_id, &
+              up_id,mpp_land_com_real, my_id, &
+             mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1, &
+            sum_double
+#endif
+     implicit none
+        integer,INTENT(IN) :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT
+        real,INTENT(OUT),DIMENSION(IX,JX,NSOIL)::SICE
+        real,INTENT(IN),DIMENSION(IX,JX,NSOIL)::SMC,SH2OX
+        real,INTENT(IN),DIMENSION(IX,JX)::INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
+               SMCWLT1,  LKSAT
+       integer,INTENT(IN),DIMENSION(IX,JX)      ::VEGTYP
+
+        real,INTENT(IN),DIMENSION(IXRT,JXRT,9)::dist
+        real,INTENT(IN),DIMENSION(IXRT,JXRT)::INFXSWGT,OVROUGHRTFAC, &
+               LKSATFAC
+        integer,INTENT(IN), DIMENSION(IXRT,JXRT)     ::CH_NETRT
+        real,INTENT(IN),DIMENSION(IXRT,JXRT,NSOIL)::SH2OWGT
+        real,INTENT(OUT),DIMENSION(IXRT,JXRT,NSOIL)::SMCREFRT, SMCMAXRT, &
+               SMCWLTRT,SMCRT
+        real,INTENT(OUT),DIMENSION(IXRT,JXRT)::INFXSUBRT
+        real,INTENT(INOUT),DIMENSION(IXRT,JXRT)::OVROUGHRT, LKSATRT
+        integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)  ::LAKE_MSKRT
+                  
+
+        real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
+        REAL    OV_ROUGH(*)
+
+
+
+        integer :: i, j, AGGFACYRT, AGGFACXRT, IXXRT, JYYRT,KRT, KF
+        REAL  ::  LSMVOL,SMCEXCS, WATHOLDCAP
+!-------------------------------------
+
+
+
+	SICE=SMC-SH2OX
+        SMCREFRT = 0
+
+!DJG First, Disaggregate a few key fields for routing...
+!DJG Debug...
+#ifdef HYDRO_D
+	print *, "Beginning Disaggregation..."
+#endif
+	
+!DJG Mass balance check for disagg...
+
+
+!DJG Weighting alg. alteration...(prescribe wghts if time = 1)
+
+
+        do J=1,JX
+          do I=1,IX
+
+!DJG Weighting alg. alteration...
+              LSMVOL=INFXSRT(I,J)*area_lsm(I,J)
+
+
+             do AGGFACYRT=AGGFACTRT-1,0,-1
+              do AGGFACXRT=AGGFACTRT-1,0,-1
+
+               IXXRT=I*AGGFACTRT-AGGFACXRT
+               JYYRT=J*AGGFACTRT-AGGFACYRT
+#ifdef MPP_LAND
+       if(left_id.ge.0) IXXRT=IXXRT+1
+       if(down_id.ge.0) JYYRT=JYYRT+1
+#else
+!yw ????
+!       IXXRT=IXXRT+1
+!       JYYRT=JYYRT+1
+#endif
+
+
+!DJG Implement subgrid weighting routine...
+               INFXSUBRT(IXXRT,JYYRT)=LSMVOL*     &
+                   INFXSWGT(IXXRT,JYYRT)/dist(IXXRT,JYYRT,9)
+  
+
+            do KRT=1,NSOIL  !Do for soil profile loop
+               IF(SICE(I,J,KRT).gt.0) then  !...adjust for soil ice
+!DJG Adjust SMCMAX for SICE when subsfc routing...make 3d variable
+                 SMCMAXRT(IXXRT,JYYRT,KRT)=SMCMAX1(I,J)-SICE(I,J,KRT)
+                 SMCREFRT(IXXRT,JYYRT,KRT)=SMCREF1(I,J)-SICE(I,J,KRT)
+                 WATHOLDCAP = SMCMAX1(I,J) - SMCWLT1(I,J)
+                 IF (SICE(I,J,KRT).le.WATHOLDCAP)    then
+                        SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J)      
+                 else
+                    if(SICE(I,J,KRT).lt.SMCMAX1(I,J)) &
+                          SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J) - &
+                          (SICE(I,J,KRT)-WATHOLDCAP)
+                    if(SICE(I,J,KRT).ge.SMCMAX1(I,J)) SMCWLTRT(IXXRT,JYYRT,KRT) = 0.
+                 end if
+               ELSE
+                 SMCMAXRT(IXXRT,JYYRT,KRT)=SMCMAX1(I,J)
+                 SMCREFRT(IXXRT,JYYRT,KRT)=SMCREF1(I,J)
+                 WATHOLDCAP = SMCMAX1(I,J) - SMCWLT1(I,J)
+                 SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J) 
+               END IF   !endif adjust for soil ice...
+
+
+!Now Adjust soil moisture
+!DJG Use SH2O instead of SMC for 'liquid' water...
+                 IF(SMCMAXRT(IXXRT,JYYRT,KRT).GT.0) THEN !Check for smcmax data (=0 over water)
+                   SMCRT(IXXRT,JYYRT,KRT)=SH2OX(I,J,KRT)*SH2OWGT(IXXRT,JYYRT,KRT)
+!old                   SMCRT(IXXRT,JYYRT,KRT)=SMC(I,J,KRT)
+                 ELSE
+                   SMCRT(IXXRT,JYYRT,KRT) = 0.001  !will be skipped w/ landmask
+                   SMCMAXRT(IXXRT,JYYRT,KRT) = 0.001
+                 END IF
+!DJG Check/Adjust so that subgrid cells do not exceed saturation...
+                 IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+                   SMCEXCS = (SMCRT(IXXRT,JYYRT,KRT) - SMCMAXRT(IXXRT,JYYRT,KRT)) &
+                             * SLDPTH(KRT)*1000.  !Excess soil water in units of (mm)
+                   SMCRT(IXXRT,JYYRT,KRT) = SMCMAXRT(IXXRT,JYYRT,KRT)
+                   DO KF = KRT-1,1, -1  !loop back upward to redistribute excess water from disagg.
+                     SMCRT(IXXRT,JYYRT,KF) = SMCRT(IXXRT,JYYRT,KF) + SMCEXCS/(SLDPTH(KF)*1000.) 
+                     IF (SMCRT(IXXRT,JYYRT,KF).GT.SMCMAXRT(IXXRT,JYYRT,KF)) THEN  !Recheck new lyr sat.
+                       SMCEXCS = (SMCRT(IXXRT,JYYRT,KF) - SMCMAXRT(IXXRT,JYYRT,KF)) &
+                           * SLDPTH(KF)*1000.  !Excess soil water in units of (mm)
+                       SMCRT(IXXRT,JYYRT,KF) = SMCMAXRT(IXXRT,JYYRT,KF)
+                     ELSE  ! Excess soil water expired
+                       SMCEXCS = 0.
+                       EXIT
+                     END IF
+                   END DO
+                   IF (SMCEXCS.GT.0) THEN  !If not expired by sfc then add to Infil. Excess
+                     INFXSUBRT(IXXRT,JYYRT) = INFXSUBRT(IXXRT,JYYRT) + SMCEXCS
+                     SMCEXCS = 0.
+                   END IF
+                 END IF  !End if for soil moisture saturation excess
+
+
+             end do !End do for soil profile loop
+
+
+
+               do KRT=1,NSOIL  !debug loop
+                  IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+#ifdef HYDRO_D
+                      print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
+                              SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
+                      call hydro_stop("drive_RT")
+#endif
+                  ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
+#ifdef HYDRO_D
+                      print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
+                              SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
+                      print *, "VEGTYP = ", VEGTYP(I,J)
+                      print *, "i,j,krt, nsoil",i,j,krt,nsoil
+                      call hydro_stop("drive_RT")
+#endif
+                  END IF
+               end do !debug loop
+
+
+
+!DJG map ov roughness as function of land use provided in VEGPARM.TBL...
+! --- added extra check for VEGTYP for 'masked-out' locations...
+! --- out of basin locations (VEGTYP=0) have OVROUGH hardwired to 0.1
+            IF (VEGTYP(I,J).LE.0) then
+              OVROUGHRT(IXXRT,JYYRT) = 0.1     !COWS mask test
+            ELSE
+               OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*OVROUGHRTFAC(IXXRT,JYYRT)  ! Distributed calibration...1/17/2012
+            END IF
+
+
+
+!DJG 6.12.08 Map lateral hydraulic conductivity and apply distributed scaling
+! ---        factor that will be read in from hires terrain file
+!              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) 
+              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
+! ...and scale from max to 0 when SMC decreases from SMCMAX to SMCREF...
+                                    ((SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL)) / &
+                                    (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
+
+
+
+!DJG set up lake mask...
+!--- modify to make lake mask large here, but not one of the routed lakes!!!
+!--            IF (VEGTYP(I,J).eq.16) then
+               IF (VEGTYP(I,J).eq.16 .and. &
+                        CH_NETRT(IXXRT,JYYRT).le.0) then
+                 !--LAKE_MSKRT(IXXRT,JYYRT) = 1
+                 LAKE_MSKRT(IXXRT,JYYRT) = 9999
+!yw                 LAKE_MSKRT(IXXRT,JYYRT) = -9999
+               end if
+
+              end do
+             end do
+
+          end do
+        end do
+
+
+
+
+#ifdef HYDRO_D
+	print *, "After Disaggregation..."
+#endif
+
+#ifdef MPP_LAND
+        call MPP_LAND_COM_REAL(INFXSUBRT,IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(LKSATRT,IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(OVROUGHRT,IXRT,JXRT,99)
+        call MPP_LAND_COM_INTEGER(LAKE_MSKRT,IXRT,JXRT,99)
+     do i = 1, NSOIL
+        call MPP_LAND_COM_REAL(SMCMAXRT(:,:,i),IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(SMCWLTRT(:,:,i),IXRT,JXRT,99)
+     end DO
+#endif
+
+     end subroutine disaggregateDomain
 

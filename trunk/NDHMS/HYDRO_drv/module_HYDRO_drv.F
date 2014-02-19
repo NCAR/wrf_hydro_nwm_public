@@ -333,7 +333,7 @@ module module_HYDRO_drv
                .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
 
                 ! step 1) disaggregate specific fields from LSM to Hydro grid
-!                 call disaggregateDomain(did)
+                  call disaggregateDomain_drv(did)
 
 		! step n) todo split
 !                 call driveSubsurfaceRouting(did)

@@ -95,6 +95,9 @@ CONTAINS
   allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
   allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
   allocate( rt_domain(did)%dist (ixrt,jxrt,9) )
+
+! tmp array 
+  allocate( rt_domain(did)%SMCREFRT    	(IXRT,JXRT,NSOIL) )
 !!!! tmp
 
     rt_domain(did)%dist = -999  
