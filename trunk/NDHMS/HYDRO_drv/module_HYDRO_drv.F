@@ -641,12 +641,12 @@ module module_HYDRO_drv
 !       JYYRT=JYYRT+1
 #endif
                   if (RT_DOMAIN(did)%LSMVOL.gt.0.) then
-                    RT_DOMAIN(did)%INFXSRT(IXXRT,JYYRT) &
+                    RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
                                           = RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
                                           * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9) &
 					  / RT_DOMAIN(did)%LSMVOL
                   else
-                    RT_DOMAIN(did)%INFXSRT(IXXRT,JYYRT) &
+                    RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
                                           = 1./FLOAT(nlst_rt(did)%AGGFACTRT**2)
                   end if
 
@@ -657,14 +657,14 @@ module module_HYDRO_drv
                       print *, "SMCMAX exceeded upon aggregation...", &
                            RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop("drive_RT")
+                      call hydro_stop("aggregateDomain")
 #endif
                     END IF
                     IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LE.0.) THEN
 #ifdef HYDRO_D
                       print *, "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
-                      call hydro_stop("drive_RT")
+                      call hydro_stop("aggregateDomain")
 #endif
                     END IF
                     RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
@@ -680,7 +680,7 @@ module module_HYDRO_drv
 
         
 #ifdef MPP_LAND
-        call MPP_LAND_COM_REAL(RT_DOMAIN(did)%INFXSRT, &
+        call MPP_LAND_COM_REAL(RT_DOMAIN(did)%INFXSWGT, &
                                RT_DOMAIN(did)%IXRT,    &
                                RT_DOMAIN(did)%JXRT, 99)
 	
