@@ -2767,7 +2767,174 @@
     print *, "SUBROUTE routing called and returned..."
 #endif
 
-
-
     end subroutine subsurfaceRouting 
+
+   
+       subroutine OverlandRouting_drv(did)
+             use module_RT_data, only: rt_domain
+             use module_namelist, only: nlst_rt
+             implicit none
+             integer :: did
+             if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
+                 call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT, nlst_rt(did)%rt_option, &
+                          rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%LAKE_MSKRT, &
+                          rt_domain(did)%INFXSUBRT, rt_domain(did)%RETDEPRT,rt_domain(did)%OVROUGHRT, &
+                          rt_domain(did)%SOXRT, rt_domain(did)%SOYRT, rt_domain(did)%SFCHEADSUBRT,  &
+                          rt_domain(did)%DHRT, rt_domain(did)%CH_NETRT, rt_domain(did)%QSTRMVOLRT, &
+                          rt_domain(did)%LAKE_INFLORT,rt_domain(did)%QBDRYRT, &
+                          rt_domain(did)%QSTRMVOLTRT,rt_domain(did)%QBDRYTRT, rt_domain(did)%LAKE_INFLOTRT,&
+                          rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
+                          rt_domain(did)%dist, rt_domain(did)%SO8RT, rt_domain(did)%SO8RT_D , &
+                          rt_domain(did)%SMCTOT2,rt_domain(did)%suminfxs1,rt_domain(did)%suminfxsrt, &
+                          rt_domain(did)%smctot1,rt_domain(did)%dsmctot )
+             endif
+       end subroutine OverlandRouting_drv
+
+
+
+       subroutine OverlandRouting (DT, DTRT, rt_option, ixrt, jxrt,LAKE_MSKRT, &
+                  INFXSUBRT, RETDEPRT,OVROUGHRT,SOXRT, SOYRT, SFCHEADSUBRT,DHRT, &
+                  CH_NETRT, QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
+                  QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y, &
+                  dist, SO8RT, SO8RT_D, &
+                  SMCTOT2,suminfxs1,suminfxsrt,smctot1,dsmctot )
+#ifdef MPP_LAND
+        use module_mpp_land, only:  mpp_land_max_int1,  sum_double
+#endif
+       implicit none
+
+       REAL, INTENT(IN) :: DT, DTRT
+       integer, INTENT(IN) :: ixrt, jxrt, rt_option
+       INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
+
+       REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: INFXSUBRT,  &
+                 RETDEPRT,OVROUGHRT,SOXRT, SOYRT
+       REAL, INTENT(OUT), DIMENSION(IXRT,JXRT) :: SFCHEADSUBRT,DHRT
+       INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
+       REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
+                QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y
+
+       REAL, INTENT(IN), DIMENSION(IXRT,JXRT,9):: dist
+       REAL, INTENT(IN), DIMENSION(IXRT,JXRT,8)  :: SO8RT
+       INTEGER SO8RT_D(IXRT,JXRT,3)
+
+       integer  :: i,j
+      
+
+       INTEGER, PARAMETER :: double1=8
+       real (KIND=double1)                     :: smctot2,smctot1,dsmctot
+       real (KIND=double1)                     :: suminfxsrt,suminfxs1
+! local variable
+       real (KIND=double1)                     :: chan_in1,chan_in2
+       real (KIND=double1)                     :: lake_in1,lake_in2
+       real (KIND=double1)                     :: qbdry1,qbdry2
+       integer :: sfcrt_flag
+
+
+
+!DJG Third, Call Overland Flow Routing Routine...
+#ifdef HYDRO_D
+	print *, "Beginning OV_routing..."
+        print *, "Routing method is ",rt_option, " direction."
+#endif
+
+!DJG debug...OV Routing...
+	suminfxs1=0.
+        chan_in1=0.
+        lake_in1=0.
+        qbdry1=0.
+        do i=1,IXRT
+         do j=1,JXRT
+            suminfxs1=suminfxs1+INFXSUBRT(I,J)/float(IXRT*JXRT)
+            chan_in1=chan_in1+QSTRMVOLRT(I,J)/float(IXRT*JXRT)
+            lake_in1=lake_in1+LAKE_INFLORT(I,J)/float(IXRT*JXRT)
+            qbdry1=qbdry1+QBDRYRT(I,J)/float(IXRT*JXRT)
+         end do
+        end do
+
+#ifdef MPP_LAND
+! not tested
+        CALL sum_double(suminfxs1)
+        CALL sum_double(chan_in1)
+        CALL sum_double(lake_in1)
+        CALL sum_double(qbdry1)
+#endif
+
+
+!DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(set sfcrt_flag)
+!DJG.7.20.2007 - this check will skip ov rtng when no flow is present...
+        
+        sfcrt_flag = 0
+        
+        do j=1,jxrt
+          do i=1,ixrt
+            if(INFXSUBRT(i,j).gt.RETDEPRT(i,j)) then
+              sfcrt_flag = 1
+              exit
+            end if
+          end do
+          if(sfcrt_flag.eq.1) exit
+        end do   
+
+#ifdef MPP_LAND
+       call mpp_land_max_int1(sfcrt_flag)            
+#endif
+!DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(IF)
+
+    if (sfcrt_flag.eq.1) then  !If/then for sfc_rt check...
+#ifdef HYDRO_D
+      write(6,*) "calling OV_RTNG "
+#endif
+      CALL OV_RTNG(DT,DTRT,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
+        CH_NETRT,RETDEPRT,OVROUGHRT,QSTRMVOLRT,QBDRYRT,              &
+        QSTRMVOLTRT,QBDRYTRT,SOXRT,SOYRT,dist,                       &
+        LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,SO8RT,SO8RT_D,rt_option,&
+        q_sfcflx_x,q_sfcflx_y) 
+    else
+#ifdef HYDRO_D
+      print *, "No water to route overland..."
+#endif
+    end if  !Endif for sfc_rt check...
+
+!DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(ENDIF)
+
+#ifdef HYDRO_D
+    print *, "OV routing called and returned..."
+#endif
+
+!DJG Debug...OV Routing...
+	suminfxsrt=0.
+        chan_in2=0.
+        lake_in2=0.
+        qbdry2=0.
+        do i=1,IXRT
+         do j=1,JXRT
+            suminfxsrt=suminfxsrt+SFCHEADSUBRT(I,J)/float(IXRT*JXRT)
+            chan_in2=chan_in2+QSTRMVOLRT(I,J)/float(IXRT*JXRT)
+            lake_in2=lake_in2+LAKE_INFLORT(I,J)/float(IXRT*JXRT)
+            qbdry2=qbdry2+QBDRYRT(I,J)/float(IXRT*JXRT)
+         end do
+        end do
+#ifdef MPP_LAND
+! not tested
+        CALL sum_double(suminfxsrt)
+        CALL sum_double(chan_in2)
+        CALL sum_double(lake_in2)
+        CALL sum_double(qbdry2)
+#endif
+
+#ifdef HYDRO_D
+	print *, "OV Routing Mass Bal: "
+        print *, "Infil. Excess/Sfc Head: ", suminfxsrt-suminfxs1,      &
+                   suminfxsrt,suminfxs1
+        print *, "chan_in = ",chan_in2-chan_in1
+        print *, "lake_in = ",lake_in2-lake_in1
+        print *, "Qbdry = ",qbdry2-qbdry1
+	print *, "Residual : ", suminfxs1-suminfxsrt-(chan_in2-chan_in1) &
+                     -(lake_in2-lake_in1)-(qbdry2-qbdry1)
+#endif
+
+
+       end subroutine OverlandRouting
+
 

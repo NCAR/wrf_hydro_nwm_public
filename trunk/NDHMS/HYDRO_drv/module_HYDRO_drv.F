@@ -332,6 +332,12 @@ module module_HYDRO_drv
                .or. nlst_rt(did)%SUBRTSWCRT .NE.0  &
                .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
 
+
+              RT_DOMAIN(did)%QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
+              RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
+
+
+
                 ! step 1) disaggregate specific fields from LSM to Hydro grid
                   call disaggregateDomain_drv(did)
 
@@ -339,11 +345,17 @@ module module_HYDRO_drv
                   call SubsurfaceRouting_drv(did)
 		
 		! step n) todo split
-! 		call driveOverlandRouting(did)
+  		  call OverlandRouting_drv(did)
+
+
+            RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
+            RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+
+
 		
 		! still calling exeRouting since disaggregation,
 		! subsurface and overland routing routines are not yet split 
-		call exeRouting(did)
+		! call exeRouting(did)
 		
 		
 		! step n) baseflow or groundwater physics
