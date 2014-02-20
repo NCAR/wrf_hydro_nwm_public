@@ -1629,195 +1629,6 @@
         end subroutine ROUTE_OVERLAND2
 
 
-     Subroutine drive_RT( IX,JX,NSOIL,IXRT,JXRT,  &
-       SMC,STC,SH2OX,SICE,INFXSRT,SFCHEADRT,SMCMAX1,SMCREF1,LKSAT,  &
-       SMCWLT1, SMCRTCHK,DSMC,ZSOIL, SMCAGGRT,STCAGGRT,SH2OAGGRT, &
-       SLDPTH,VEGTYP,SOLDEPRT,INFXSAGGRT,DHRT,QSTRMVOLRT, &
-       QBDRYRT,LAKE_INFLORT,SFCHEADSUBRT,INFXSWGT,LKSATRT, &
-       INFXSUBRT,OVROUGHRT,QSUBRT,ZWATTABLRT,QSUBBDRYRT,   &
-       RETDEPRT,SOXRT,SOYRT,SUB_RESID,SMCRT,SMCMAXRT,SMCWLTRT, &
-       SH2OWGT,LAKE_MSKRT,CH_NETRT,dist,LSMVOL,DSMCTOT,SMCTOT1,&
-       SMCTOT2,suminfxs1,suminfxsrt,SO8RT,SO8RT_D,AGGFACTRT,  &
-       SUBRTSWCRT,OVRTSWCRT, LAKE_CT, STRM_CT,    &
-       RT_OPTION,OV_ROUGH,INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT,&
-       DTRT, DT,LAKE_INFLOTRT,QBDRYTRT,QSUBBDRYTRT,&
-       QSTRMVOLTRT,q_sfcflx_x,q_sfcflx_y,LKSATFAC,&
-       OVROUGHRTFAC,area_lsm, SMCREFRT)
-
-
-
-!DX,SICE,INFXSWGT,SH2OWGT,i,j,AGGFACYRT,AGGFACXRT,IXXRT,JYYRT,INFXSUBRT
-! LKSATRT,SMCRT,SMCMAXRT,WATHOLDCAP,SMCWLTRT,OVROUGHRT,LAKE_MSKRT
-
-!yyww 
-#ifdef MPP_LAND
-        use module_mpp_land, only: left_id,down_id,right_id, &
-              up_id,mpp_land_com_real, my_id, &
-             mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1, &
-            sum_double
-#endif
-     implicit none
-
-! Define the variables
-       integer IX,JX,NSOIL,IXRT,JXRT
-       real,DIMENSION(IX,JX,NSOIL)::SMC,STC,SH2OX,SICE
-       real,DIMENSION(IX,JX)      ::INFXSRT,SFCHEADRT,SMCMAX1,SMCREF1,LKSAT,  &
-                    SMCWLT1, area_lsm
-       real,DIMENSION(NSOIL)      :: ZSOIL,     &
-                     SMCAGGRT,STCAGGRT,SH2OAGGRT,SLDPTH
-       integer,DIMENSION(IX,JX)      ::VEGTYP
-
-       real,DIMENSION(IXRT,JXRT)  ::SOLDEPRT,INFXSAGGRT,DHRT,QSTRMVOLRT, &
-                    QBDRYRT,LAKE_INFLORT,SFCHEADSUBRT,INFXSWGT,LKSATRT, &
-                    INFXSUBRT,OVROUGHRT,QSUBRT,ZWATTABLRT,QSUBBDRYRT,   &
-                    RETDEPRT,SOXRT,SOYRT,SUB_RESID,q_sfcflx_x,q_sfcflx_y, &
-                    LKSATFAC,CWATAVAIL,OVROUGHRTFAC
-       integer,DIMENSION(IXRT,JXRT)      ::SATLYRCHK
-
-       real,DIMENSION(IXRT,JXRT,NSOIL)::SMCRT,SMCMAXRT,SMCREFRT,SMCWLTRT,SH2OWGT
-       integer,INTENT(IN), DIMENSION(IXRT,JXRT)     ::CH_NETRT
-       integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)  ::LAKE_MSKRT
-
-       REAL    :: INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT, WATHOLDCAP,DTRT,&
-                  DT,LAKE_INFLOTRT,QBDRYTRT,QSUBBDRYTRT,QSTRMVOLTRT
-       REAL    OV_ROUGH(*)
- 
-       REAL  ::  dx,LSMVOL,SMCEXCS
-       real, DIMENSION(IXRT,JXRT,9)  :: dist
-       
-       real, DIMENSION(IXRT,JXRT,8)  ::SO8RT
-       INTEGER, DIMENSION(IXRT,JXRT,3)  ::SO8RT_D
-                  
-       integer :: AGGFACTRT,SUBRTSWCRT,OVRTSWCRT
-       integer :: sfcrt_flag
-!end define variable.s
-       integer i,j,AGGFACYRT, AGGFACXRT, KRT, kx, KF,&
-            IXXRT, JYYRT, LAKE_CT, STRM_CT,RT_OPTION
-      
-!DJG Debug variables...
-       INTEGER, PARAMETER :: double1=8
-       real (KIND=double1), DIMENSION(NSOIL)   :: SMCRTCHK,DSMC
-       real (KIND=double1)                     :: smctot2,smctot1,dsmctot
-       real (KIND=double1)                     :: suminfxsrt,suminfxs1
-       real (KIND=double1)                     :: chan_in1,chan_in2
-       real (KIND=double1)                     :: lake_in1,lake_in2
-       real (KIND=double1)                     :: qbdry1,qbdry2
-
-
-
-!DJG Third, Call Overland Flow Routing Routine...
-  IF (OVRTSWCRT.EQ.1) THEN
-#ifdef HYDRO_D
-	print *, "Beginning OV_routing..."
-        print *, "Routing method is ",rt_option, " direction."
-        print *, "ixrt, jxrt =", ixrt, jxrt
-#endif
-
-!DJG debug...OV Routing...
-	suminfxs1=0.
-        chan_in1=0.
-        lake_in1=0.
-        qbdry1=0.
-        do i=1,IXRT
-         do j=1,JXRT
-            suminfxs1=suminfxs1+INFXSUBRT(I,J)/float(IXRT*JXRT)
-            chan_in1=chan_in1+QSTRMVOLRT(I,J)/float(IXRT*JXRT)
-            lake_in1=lake_in1+LAKE_INFLORT(I,J)/float(IXRT*JXRT)
-            qbdry1=qbdry1+QBDRYRT(I,J)/float(IXRT*JXRT)
-         end do
-        end do
-
-#ifdef MPP_LAND
-! not tested
-        CALL sum_double(suminfxs1)
-        CALL sum_double(chan_in1)
-        CALL sum_double(lake_in1)
-        CALL sum_double(qbdry1)
-#endif
-
-
-!DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(set sfcrt_flag)
-!DJG.7.20.2007 - this check will skip ov rtng when no flow is present...
-        
-        sfcrt_flag = 0
-        
-        do j=1,jxrt
-          do i=1,ixrt
-            if(INFXSUBRT(i,j).gt.RETDEPRT(i,j)) then
-              sfcrt_flag = 1
-              exit
-            end if
-          end do
-          if(sfcrt_flag.eq.1) exit
-        end do   
-
-#ifdef MPP_LAND
-       call mpp_land_max_int1(sfcrt_flag)            
-#endif
-!DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(IF)
-
-    if (sfcrt_flag.eq.1) then  !If/then for sfc_rt check...
-#ifdef HYDRO_D
-      write(6,*) "calling OV_RTNG "
-#endif
-      CALL OV_RTNG(DT,DTRT,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
-        CH_NETRT,RETDEPRT,OVROUGHRT,QSTRMVOLRT,QBDRYRT,              &
-        QSTRMVOLTRT,QBDRYTRT,SOXRT,SOYRT,dist,                       &
-        LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,SO8RT,SO8RT_D,rt_option,&
-        q_sfcflx_x,q_sfcflx_y) 
-    else
-#ifdef HYDRO_D
-      print *, "No water to route overland..."
-#endif
-    end if  !Endif for sfc_rt check...
-
-!DJG.7.20.2007 - Global check for infxs>retdep & skip if not...(ENDIF)
-
-#ifdef HYDRO_D
-    print *, "OV routing called and returned..."
-#endif
-
-!DJG Debug...OV Routing...
-	suminfxsrt=0.
-        chan_in2=0.
-        lake_in2=0.
-        qbdry2=0.
-        do i=1,IXRT
-         do j=1,JXRT
-            suminfxsrt=suminfxsrt+SFCHEADSUBRT(I,J)/float(IXRT*JXRT)
-            chan_in2=chan_in2+QSTRMVOLRT(I,J)/float(IXRT*JXRT)
-            lake_in2=lake_in2+LAKE_INFLORT(I,J)/float(IXRT*JXRT)
-            qbdry2=qbdry2+QBDRYRT(I,J)/float(IXRT*JXRT)
-         end do
-        end do
-#ifdef MPP_LAND
-! not tested
-        CALL sum_double(suminfxsrt)
-        CALL sum_double(chan_in2)
-        CALL sum_double(lake_in2)
-        CALL sum_double(qbdry2)
-#endif
-
-#ifdef HYDRO_D
-	print *, "OV Routing Mass Bal: "
-        print *, "Infil. Excess/Sfc Head: ", suminfxsrt-suminfxs1,      &
-                   suminfxsrt,suminfxs1
-        print *, "chan_in = ",chan_in2-chan_in1
-        print *, "lake_in = ",lake_in2-lake_in1
-        print *, "Qbdry = ",qbdry2-qbdry1
-	print *, "Residual : ", suminfxs1-suminfxsrt-(chan_in2-chan_in1) &
-                     -(lake_in2-lake_in1)-(qbdry2-qbdry1)
-#endif
-
-  ENDIF      ! ENDIF for OVRTSWCRT
-
-
-
-
-!DJG Fourth(last), Aggregate a few fields from routing.
-        return
-      end Subroutine drive_RT ! drive_RT
-
 !DJG ----------------------------------------------------------------------
 
 
@@ -2614,7 +2425,7 @@
 #ifdef HYDRO_D
                       print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop("drive_RT")
+                      call hydro_stop("disaggregateDomain")
 #endif
                   ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
 #ifdef HYDRO_D
@@ -2622,7 +2433,7 @@
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
                       print *, "VEGTYP = ", VEGTYP(I,J)
                       print *, "i,j,krt, nsoil",i,j,krt,nsoil
-                      call hydro_stop("drive_RT")
+                      call hydro_stop("disaggregateDomain")
 #endif
                   END IF
                end do !debug loop
@@ -2937,4 +2748,13 @@
 
        end subroutine OverlandRouting
 
+
+      subroutine time_seconds(i3)
+          integer time_array(8)
+          real*8 i3
+          call date_and_time(values=time_array)
+          i3 = time_array(4)*24*3600+time_array(5) * 3600 + time_array(6) * 60 + &
+                time_array(7) + 0.001 * time_array(8)
+          return
+      end subroutine time_seconds
 
