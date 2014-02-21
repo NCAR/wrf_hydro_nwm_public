@@ -2468,7 +2468,11 @@
                  !--LAKE_MSKRT(IXXRT,JYYRT) = 1
                  LAKE_MSKRT(IXXRT,JYYRT) = 9999
 !yw                 LAKE_MSKRT(IXXRT,JYYRT) = -9999
-               end if
+
+               ! BF disaggregate soiltype information for gw-soil-coupling
+	       ! TODO: move this disaggregation code line to lsm_init section because soiltype is time-invariant
+               soiltypRT(ixxrt,jyyrt) = soiltyp(i,j)
+
 
               end do
              end do
