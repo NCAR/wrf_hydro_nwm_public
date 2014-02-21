@@ -341,37 +341,28 @@ module module_HYDRO_drv
                 ! step 1) disaggregate specific fields from LSM to Hydro grid
                   call disaggregateDomain_drv(did)
 
-		! step n) todo split
+		! step 2) 
                   call SubsurfaceRouting_drv(did)
 		
-		! step n) todo split
+		! step 3) todo split
   		  call OverlandRouting_drv(did)
 
-
-            RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
-            RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
-
-
+              RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
+              RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+			
+		! step 4) baseflow or groundwater physics
+		  call driveGwBaseflow(did)
 		
-		! still calling exeRouting since disaggregation,
-		! subsurface and overland routing routines are not yet split 
-		! call exeRouting(did)
+		! step 5) river channel physics
+		  call driveChannelRouting(did)
 		
-		
-		! step n) baseflow or groundwater physics
-		call driveGwBaseflow(did)
-		
-		! step n) river channel physics
-		call driveChannelRouting(did)
-		
-		! step n) aggregate specific fields from Hydro to LSM grid
-		call aggregateDomain(did)
+		! step 6) aggregate specific fields from Hydro to LSM grid
+		  call aggregateDomain(did)
 
            end if
 
 
-! advance to next time step
-!      if(
+       ! advance to next time step
            call HYDRO_time_adv(did)
 
       ! output for history 
@@ -386,37 +377,6 @@ module module_HYDRO_drv
 
       end subroutine HYDRO_exe
 
-      
-      
-!--------------------------------------------------
-      subroutine disaggregateDomain(did)
-       
-       implicit none
-       integer, intent(in) :: did
-
-      end subroutine disaggregateDomain
-
-      
-      
-!---------------------------------------------------     
-      subroutine driveSubsurfaceRouting(did)
-       
-       implicit none
-       integer, intent(in) :: did
-      
-      end subroutine driveSubsurfaceRouting
-
-      
-      
-!----------------------------------------------------      
-      subroutine driveOverlandRouting(did)
-       
-       implicit none
-       integer, intent(in) :: did
-      
-      end subroutine driveOverlandRouting
-      
-      
       
       
 !----------------------------------------------------      
