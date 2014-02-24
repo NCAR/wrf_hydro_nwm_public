@@ -2535,7 +2535,7 @@ end subroutine get_albedo12m_netcdf
       ycoord_d = 0.
      end if  !endif hires_georef 
 
-     do j=jxrt,1,-1*decimation
+     do j=jxrtd,1,-1*decimation
         jj = jj+1
         if (jj<= jxrtd) then
          ycoord_d(jj) = ycoord(j)
@@ -2879,7 +2879,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
       ycoord_d = 0.
      end if  !endif hires_georef 
 
-     do j=jxrt,1,-1*decimation
+     do j=jxrtd,1,-1*decimation
         jj = jj+1
         if (jj<= jxrtd) then
          ycoord_d(jj) = ycoord(j)
