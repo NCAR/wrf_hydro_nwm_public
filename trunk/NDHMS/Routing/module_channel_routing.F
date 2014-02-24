@@ -719,7 +719,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
             
             else
 	      Q_GW_CHAN_FLUX(i) = 0.
-	      qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
 	    end if gwOption
 
 
