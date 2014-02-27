@@ -393,10 +393,10 @@
 !  (i.e. not 'frozen' or otherwise immobile)
 !                IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK).AND.SMCMAXRT(I,J,KK) &
 !                  .GT.SMCWLTRT(I,J,KK)) THEN
-                IF (SMCRT(I,J,KK).GE.SMCREFRT(I,J,KK).AND.SMCREFRT(I,J,KK) &
-                  .GT.SMCWLTRT(I,J,KK)) THEN
+                IF ( (SMCRT(I,J,KK).GE.SMCREFRT(I,J,KK)).AND.(SMCREFRT(I,J,KK) &
+                  .GT.SMCWLTRT(I,J,KK)) ) THEN
 ! Add additional check to ensure saturation from bottom up only...8/8/05
-                  IF(SATLYRCHK(I,J).EQ.KK+1.OR.KK.EQ.NSOIL) SATLYRCHK(I,J) = KK
+                  IF((SATLYRCHK(I,J).EQ.KK+1) .OR. (KK.EQ.NSOIL) ) SATLYRCHK(I,J) = KK
                 END IF
 
               END DO
