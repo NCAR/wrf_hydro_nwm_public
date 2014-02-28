@@ -927,6 +927,9 @@ program Noah_hrldas_driver
 !FC  ETPNDX=-999.9
   SNOEVPX=-999.9
   SNODEP=-999.9
+  SNODEP = 0 
+  WEASD = 0 
+
 
   STC=-999.9
   SH2OX=-999.9
