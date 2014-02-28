@@ -120,19 +120,20 @@ module module_HYDRO_drv
      endif
 
 
-!  jump the ouput for the initial time when it has restart file from routing.
-      rtflag = -99
+! jump the ouput for the initial time when it has restart file from routing.
+   rtflag = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-      if ((trim(nlst_rt(did)%restart_file) == "") .and. (nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
-          rtflag = 1
-      endif
+       if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
+             print*, "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+             rtflag = 1
+       endif
 #ifdef MPP_LAND
    endif  
-     call mpp_land_bcast_int1(rtflag)
+   call mpp_land_bcast_int1(rtflag)
 #endif
-      if(rtflag == 1) return ! jump the initial time output for routing restart
+   if(rtflag == 1) return ! jump the initial time output for routing restart
 
 
 
@@ -276,9 +277,10 @@ module module_HYDRO_drv
 #endif
       call   RESTART_IN_nc(trim(nlst_rt(did)%restart_file), did)
 
-  if (trim(nlst_rt(did)%restart_file) /= "") then 
-          nlst_rt(did)%restart_file = ""
-  endif
+!yw  if (trim(nlst_rt(did)%restart_file) /= "") then 
+!yw          nlst_rt(did)%restart_file = ""
+!yw  endif
+
   endif
  end subroutine HYDRO_rst_in
 
@@ -366,6 +368,7 @@ module module_HYDRO_drv
            call HYDRO_time_adv(did)
 
       ! output for history 
+           !if(nlst_rt(did)%sys_cpl .ne. 1 ) call HYDRO_out(did)
            call HYDRO_out(did)
 
 
