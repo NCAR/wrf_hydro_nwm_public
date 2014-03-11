@@ -368,7 +368,6 @@ module module_HYDRO_drv
            call HYDRO_time_adv(did)
 
       ! output for history 
-           !if(nlst_rt(did)%sys_cpl .ne. 1 ) call HYDRO_out(did)
            call HYDRO_out(did)
 
 
