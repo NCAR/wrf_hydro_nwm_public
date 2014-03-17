@@ -1053,7 +1053,7 @@ Contains
 
 !!!DJG  Idealized Met. w/ Specified Precip. Forcing Data...(Note: input precip units here are in 'mm/hr')
 !   This option uses hard-wired met forcing EXCEPT precipitation which is read in
-!   from a single, separate input file called 'YYYYMMDDHHMM.LDASIN_PRECIP_DOMAIN'
+!   from a single, separate input file called 'YYYYMMDDHHMM.PRECIP_FORCING.nc'
 !
     if(FORC_TYP.eq.5) then
 ! Standard Met. Vars...
@@ -1071,30 +1071,12 @@ Contains
 !       inflnm = trim(indir)//"/"//"sat_domain1.nc"
 !!Create forcing data filename...
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
-        inquire (file=trim(inflnm), exist=fexist)
-        if ( .not. fexist ) then
-           inflnm = trim(indir)//"/"//&
                 olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
                 olddate(15:16)//".PRECIP_FORCING.nc"
-           inquire (file=trim(inflnm), exist=fexist)
-        endif
-        if ( .not. fexist ) then
-           inflnm = trim(indir)//"/"//&
-                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-                olddate(15:16)//"00.PRECIP_FORCING.nc"
-           inquire (file=trim(inflnm), exist=fexist)
-        endif
-        if ( .not. fexist ) then
-           inflnm = trim(indir)//"/"//&
-                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-                ".PRECIP_FORCING.nc"
-           inquire (file=trim(inflnm), exist=fexist)
-        endif
+        inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
 #ifdef HYDRO_D
-           print*, "no forcing data found", inflnm
+           print*, "no specified precipitation data found", inflnm
 #endif
            call hydro_stop("read_seq_forcing")
         endif
@@ -1145,7 +1127,7 @@ Contains
 
 !!!DJG HRLDAS Forcing with hourly format filename with specified precipitation forcing...
 !   This option uses HRLDAS-formatted met forcing EXCEPT precipitation which is read in
-!   from a single, separate input file called 'YYYYMMDDHHMM.LDASIN_PRECIP_DOMAIN'
+!   from a single, separate input file called 'YYYYMMDDHHMM.PRECIP_FORCING.nc'
 
    if(FORC_TYP.eq.6) then
 
@@ -1179,34 +1161,17 @@ Contains
 !!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
 !!Create forcing data filename...
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             olddate(15:16)//"00.PRECIP_FORCING.nc"
-        inquire (file=trim(inflnm), exist=fexist)
-#ifdef HYDRO_D
-       if(fexist) print*, "using pcp forcing: ",trim(inflnm)
-#endif
-        if ( .not. fexist ) then
-            inflnm = trim(indir)//"/"//&
                  olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
                  olddate(15:16)//".PRECIP_FORCING.nc"
-            inquire (file=trim(inflnm), exist=fexist)
+        inquire (file=trim(inflnm), exist=fexist)
 #ifdef HYDRO_D
-            if(fexist) print*, "using pcp forcing: ",trim(inflnm)
-#endif
+        if(fexist) then 
+            print*, "using specified pcp forcing: ",trim(inflnm)
+        else
+            print*, "no specified pcp forcing: ",trim(inflnm)
         endif
-        if ( .not. fexist ) then
-           inflnm = trim(indir)//"/"//&
-                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-                olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
-           inquire (file=trim(inflnm), exist=fexist)
-#ifdef HYDRO_D
-           if(fexist) print*, "using pcp forcing: ",trim(inflnm)
 #endif
-        endif
         if ( .not. fexist ) then
-#ifdef HYDRO_D
-           print*, "no supplemental forcing data found ", trim(inflnm)
-#endif
            prcp1 = PRCP_old ! for missing pcp data use analysis/model input 
         else
            CALL READFORC_MDV(inflnm,IX,JX,   &
@@ -1222,7 +1187,9 @@ Contains
                IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
                 PRCP1=PRCP2/DT     !convert from mm to mm/s
                END IF  ! Endif mmflag
+#ifdef HYDRO_D
                print*, "replace pcp successfully! ",trim(inflnm)
+#endif
            endif
         endif
 
@@ -1285,34 +1252,17 @@ Contains
 !!!VIP, dimensions of grid are currently hardwired in input subroutine!!!
 !!Create forcing data filename...
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             olddate(15:16)//"00.PRECIP_FORCING.nc"
-        inquire (file=trim(inflnm), exist=fexist)
-#ifdef HYDRO_D
-       if(fexist) print*, "using pcp forcing: ",trim(inflnm)
-#endif
-        if ( .not. fexist ) then
-            inflnm = trim(indir)//"/"//&
                  olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
                  olddate(15:16)//".PRECIP_FORCING.nc"
-            inquire (file=trim(inflnm), exist=fexist)
+        inquire (file=trim(inflnm), exist=fexist)
 #ifdef HYDRO_D
-            if(fexist) print*, "using pcp forcing: ",trim(inflnm)
-#endif
+        if(fexist) then
+            print*, "using specified pcp forcing: ",trim(inflnm)
+        else
+            print*, "no specified pcp forcing: ",trim(inflnm)
         endif
-        if ( .not. fexist ) then
-           inflnm = trim(indir)//"/"//&
-                olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-                olddate(15:16)//".LDASIN_PRECIP_DOMAIN"//hgrid
-           inquire (file=trim(inflnm), exist=fexist)
-#ifdef HYDRO_D
-           if(fexist) print*, "using pcp forcing: ",trim(inflnm)
 #endif
-        endif
         if ( .not. fexist ) then
-#ifdef HYDRO_D
-           print*, "no supplemental forcing data found ", trim(inflnm)
-#endif
            prcp1 = PRCP_old ! for missing pcp data use analysis/model input 
         else
            CALL READFORC_MDV(inflnm,IX,JX,   &
@@ -1326,7 +1276,10 @@ Contains
            else
                PRCP1=PRCP2   !assumes PRCP2 is in mm/s
                IF (mmflag.eq.0) then    !Convert pcp grid to units of mm/s...
+                 write(6,*) "using supplemental pcp time interval ", DT
                 PRCP1=PRCP2/DT     !convert from mm to mm/s
+               else
+                 write(6,*) "using supplemental pcp rates "
                END IF  ! Endif mmflag
 #ifdef HYDRO_D
                print*, "replace pcp successfully! ",trim(inflnm)
