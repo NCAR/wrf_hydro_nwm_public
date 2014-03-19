@@ -571,6 +571,7 @@ end subroutine get_albedo12m_netcdf
 !DJG,DNY - Update this subroutine to read in channel and lake
 !           parameters if activated       11.20.2005
 !---------------------------------------------------------
+
        SUBROUTINE READ_ROUTEDIM(IXRT,JXRT,route_chan_f,route_link_f, &
             route_direction_f, route_lake_f, NLINKS, NLAKES, &
             CH_NETLNK, channel_option, geo_finegrid_flnm)
@@ -615,39 +616,24 @@ end subroutine get_albedo12m_netcdf
        IF(channel_option.eq.3) then  !get maxnodes and links from grid
 
          var_name = "CHANNELGRID"
-         call get2d_int(var_name,CH_NETRT_inv,ixrt,jxrt,&
+         call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
          
          var_name = "FLOWDIRECTION"
-         call get2d_int(var_name,DIRECTION_inv,ixrt,jxrt,&
+         call readRT2d_int(var_name,DIRECTION,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
 
          var_name = "LAKEGRID"
-         call get2d_int(var_name,LAKE_MSKRT_inv,ixrt,jxrt,&
+         call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
 
 
         var_name = "LATITUDE"
-        iret =  get2d_real(var_name,LAT_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,LAT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
         var_name = "LONGITUDE"
-        iret = get2d_real(var_name,LON_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,LON,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
-
-!!!Flip y-dimension of highres grids from exported Arc files...
-
-
-        do i=1,ixrt
-        jj=jxrt
-         do j=1,jxrt
-           CH_NETRT(i,j)=CH_NETRT_inv(i,jj)
-           DIRECTION(i,j)=DIRECTION_inv(i,jj)
-           LAKE_MSKRT(i,j)=LAKE_MSKRT_inv(i,jj)
-           LAT(i,j)=LAT_inv(i,jj)
-           LON(i,j)=LON_inv(i,jj)
-           jj=jxrt-j
-         end do
-        end do
           
 ! temp fix for buggy Arc export...
         do j=1,jxrt
@@ -655,7 +641,6 @@ end subroutine get_albedo12m_netcdf
             if(DIRECTION(i,j).eq.-128) DIRECTION(i,j)=128
           end do
         end do
-
 
 !DJG inv         do j=jxrt,1,-1
          do j=1,jxrt
@@ -841,6 +826,42 @@ end subroutine get_albedo12m_netcdf
 
      END SUBROUTINE READ_ROUTEDIM
 
+     SUBROUTINE readRT2d_real(var_name, inv, ixrt, jxrt, fileName) 
+         implicit none
+         INTEGER :: iret
+         INTEGER, INTENT(IN) :: ixrt,jxrt
+         INTEGER :: i, j, ii,jj
+         CHARACTER(len=*):: var_name,fileName
+         real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
+         real, dimension(ixrt,jxrt) :: inv_tmp
+         iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
+                     trim(fileName))
+         do i=1,ixrt
+            jj=jxrt
+         do j=1,jxrt
+           inv(i,j)=inv_tmp(i,jj)
+           jj=jxrt-j
+         end do
+        end do
+     end SUBROUTINE readRT2d_real
+
+     SUBROUTINE readRT2d_int(var_name, inv, ixrt, jxrt, fileName) 
+         implicit none
+         INTEGER, INTENT(IN) :: ixrt,jxrt
+         INTEGER :: i, j, ii,jj
+         CHARACTER(len=*):: var_name,fileName
+         integer, INTENT(OUT), dimension(ixrt,jxrt) :: inv
+         integer, dimension(ixrt,jxrt) :: inv_tmp
+         call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
+                     trim(fileName))
+         do i=1,ixrt
+            jj=jxrt
+         do j=1,jxrt
+           inv(i,j)=inv_tmp(i,jj)
+           jj=jxrt-j
+         end do
+        end do
+     end SUBROUTINE readRT2d_int
 !---------------------------------------------------------
        SUBROUTINE READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
