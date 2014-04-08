@@ -196,7 +196,7 @@ module module_HYDRO_drv
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
 
 #ifdef MPP_LAND
-             call mpp_output_chrt(rt_domain(did)%mpp_nlinks,rt_domain(did)%nlinks_index, &
+             call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%map_l2g, &
 #else
              call output_chrt(  &
 #endif
@@ -212,10 +212,10 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
 !             call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
 !                 RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
+!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%GCH_NETLNK, RT_DOMAIN(did)%ORDER, &
 !                 nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
 !                 RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-!                 RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
+!                 RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
 !                 RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
 
@@ -351,13 +351,14 @@ module module_HYDRO_drv
 
               RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
               RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+
 			
 		! step 4) baseflow or groundwater physics
 		  call driveGwBaseflow(did)
 		
 		! step 5) river channel physics
 		  call driveChannelRouting(did)
-		
+	
 		! step 6) aggregate specific fields from Hydro to LSM grid
 		  call aggregateDomain(did)
 
@@ -369,6 +370,11 @@ module module_HYDRO_drv
 
       ! output for history 
            call HYDRO_out(did)
+
+
+!           write(90 + my_id,*) "finish calling hydro_exe"
+!           call flush(90+my_id)
+!          call mpp_land_sync()
 
 
             
@@ -828,6 +834,7 @@ module module_HYDRO_drv
        write(6,*) "finish LandRT_ini"
 #endif
 
+    
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
      IF (nlst_rt(did)%TERADJ_SOLAR.EQ.1 .and. nlst_rt(did)%CHANRTSWCRT.NE.2) THEN   ! Perform ter rain adjustment of incoming solar
@@ -868,7 +875,6 @@ module module_HYDRO_drv
        call HYDRO_rst_in(did)
 
 !      call HYDRO_out(did)
-
 
 
       end subroutine HYDRO_ini
@@ -986,6 +992,7 @@ end module module_HYDRO_drv
 
 ! stop the job due to the fatal error.
       subroutine HYDRO_stop(msg)
+        use module_mpp_land
         character(len=*) :: msg
         integer :: ierr
 #ifdef HYDRO_D
@@ -998,8 +1005,13 @@ end module module_HYDRO_drv
       print*, "ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
       print*, ""
 #endif
-         call mpp_land_abort()
+
+         call mpp_land_sync()
+!        write(my_id+90,*) msg
+!        call flush(my_id+90)
+
          call MPI_finalize(ierr)
+!        call mpp_land_abort()
 #else
          stop "Fatal Error"
 #endif
@@ -1018,6 +1030,7 @@ end module module_HYDRO_drv
         print*, "The model finished successfully......."
 #ifdef MPP_LAND
 !         call mpp_land_abort()
+         call flush(6)
          call mpp_land_sync()
          call MPI_finalize(ierr)
          stop 

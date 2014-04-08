@@ -860,6 +860,7 @@ module module_NoahMP_hrldas_driver
      SNOWH     =  undefined_value
 
 #ifdef WRF_HYDRO
+
   if(forc_typ .gt. 2)  HRLDAS_ini_typ = 0
 
   if(HRLDAS_ini_typ .eq. 1) then
@@ -947,6 +948,7 @@ print *, 'after init',shdmax(97,1)
   endif !  end of rank if block
 
 #ifdef MPP_LAND
+
     call mpi_bcast(ix,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(jx,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(nsoil,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
@@ -979,6 +981,8 @@ print *, 'after init',shdmax(97,1)
    end do
    
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
+
+     
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))

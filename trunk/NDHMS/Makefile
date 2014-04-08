@@ -1,5 +1,6 @@
 # Makefile 
 all:
+	(rm -f Run/wrf_hydro.exe   )
 	(make -f Makefile.comm BASIC)
 	@if [ -d "LandModel_cpl" ]; then \
 	(cd LandModel_cpl; make) \

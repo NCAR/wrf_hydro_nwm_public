@@ -11,6 +11,7 @@
   INTEGER ::  LAKE_CT, STRM_CT
   REAL                                 :: RETDEP_CHAN  ! Channel retention depth
   INTEGER :: NLINKS  !maximum number of unique links in channel
+  INTEGER :: GNLINKS  !maximum number of unique links in channel for parallel computation
   INTEGER :: NLAKES  !number of lakes
   INTEGER :: MAXORDER !maximum stream order
   integer :: timestep_flag    ! 1 cold start run else continue run
@@ -19,7 +20,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETRT !-- keeps track of the 0-1 channel network
-  INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETLNK !-- assigns a unique value to each channel gridpoint, called links
+  INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETLNK, GCH_NETLNK !-- assigns a unique value to each channel gridpoint, called links
   REAL,    allocatable, DIMENSION(:,:)      :: LATVAL,LONVAL !-- lat lon
   REAL,    allocatable, DIMENSION(:,:)      :: TERRAIN
   REAL, allocatable,    DIMENSION(:)        :: CHLAT,CHLON   !  channel lat and lon
@@ -36,6 +37,7 @@
   REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT,ZWATTABLRT,QSUBBDRYRT,SOLDEPRT
   REAL,    allocatable, DIMENSION(:,:)      :: SUB_RESID
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x,q_sfcflx_y
+  INTEGER,    allocatable, DIMENSION(:)      :: map_l2g, map_g2l
 
 ! temp arrary cwatavail
   real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT 

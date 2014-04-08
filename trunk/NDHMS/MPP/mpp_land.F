@@ -1158,10 +1158,12 @@ MODULE MODULE_MPP_LAND
       integer i,j, flag
       real Link_V(size), tmp_inout(ix,jy)
 
-       if(size .eq. 0) return
+      if(size .eq. 0) then  
+           tmp_inout = -999
+      else
 
-!     map the Link_V data to tmp_inout(ix,jy)
-      do i = 1,ix 
+         !     map the Link_V data to tmp_inout(ix,jy)
+         do i = 1,ix 
             if(Link_location(i,1) .gt. 0) &
                tmp_inout(i,1) = Link_V(Link_location(i,1))
             if(Link_location(i,2) .gt. 0) &
@@ -1170,8 +1172,8 @@ MODULE MODULE_MPP_LAND
                tmp_inout(i,jy-1) = Link_V(Link_location(i,jy-1))
             if(Link_location(i,jy) .gt. 0) &
                tmp_inout(i,jy) = Link_V(Link_location(i,jy))
-        enddo
-      do j = 1,jy 
+          enddo
+         do j = 1,jy 
             if(Link_location(1,j) .gt. 0) &
                tmp_inout(1,j) = Link_V(Link_location(1,j))
             if(Link_location(2,j) .gt. 0) &
@@ -1180,34 +1182,97 @@ MODULE MODULE_MPP_LAND
                tmp_inout(ix-1,j) = Link_V(Link_location(ix-1,j))
             if(Link_location(ix,j) .gt. 0) &
                tmp_inout(ix,j) = Link_V(Link_location(ix,j))
-      enddo
+         enddo
+    endif
 
 !   commu nicate tmp_inout
     call MPP_LAND_COM_REAL(tmp_inout, ix,jy,flag)
 
 !map the data back to Link_V
+    if(size .eq. 0) return
       do j = 1,jy 
-            if(Link_location(1,j) .gt. 0) &
+            if( (Link_location(1,j) .gt. 0) .and. (tmp_inout(1,j) .ne. -999) ) &
                Link_V(Link_location(1,j)) = tmp_inout(1,j)
-            if(Link_location(2,j) .gt. 0) &
+            if((Link_location(2,j) .gt. 0) .and. (tmp_inout(2,j) .ne. -999) ) &
                Link_V(Link_location(2,j)) = tmp_inout(2,j)
-            if(Link_location(ix-1,j) .gt. 0) &
+            if((Link_location(ix-1,j) .gt. 0) .and. (tmp_inout(ix-1,j) .ne. -999)) &
                Link_V(Link_location(ix-1,j)) = tmp_inout(ix-1,j)
-            if(Link_location(ix,j) .gt. 0) &
+            if((Link_location(ix,j) .gt. 0) .and. (tmp_inout(ix,j) .ne. -999) )&
                Link_V(Link_location(ix,j)) = tmp_inout(ix,j)
       enddo
       do i = 1,ix 
-            if(Link_location(i,1) .gt. 0) &
+            if((Link_location(i,1) .gt. 0) .and. (tmp_inout(i,1) .ne. -999) )&
                Link_V(Link_location(i,1)) = tmp_inout(i,1)
-            if(Link_location(i,2) .gt. 0) &
+            if( (Link_location(i,2) .gt. 0) .and. (tmp_inout(i,2) .ne. -999) )&
                Link_V(Link_location(i,2)) = tmp_inout(i,2)
-            if(Link_location(i,jy-1) .gt. 0) &
+            if((Link_location(i,jy-1) .gt. 0) .and. (tmp_inout(i,jy-1) .ne. -999) ) &
                Link_V(Link_location(i,jy-1)) = tmp_inout(i,jy-1)
-            if(Link_location(i,jy) .gt. 0) &
+            if((Link_location(i,jy) .gt. 0) .and. (tmp_inout(i,jy) .ne. -999) ) &
                Link_V(Link_location(i,jy)) = tmp_inout(i,jy)
       enddo
   end subroutine MPP_CHANNEL_COM_REAL
 
+  subroutine MPP_CHANNEL_COM_INT(Link_location,ix,jy,Link_V,size,flag)
+  ! communicate the data for channel routine.
+      implicit none
+      integer ix,jy,size
+      integer Link_location(ix,jy)
+      integer i,j, flag
+      integer Link_V(size), tmp_inout(ix,jy)
+
+      if(size .eq. 0) then  
+           tmp_inout = -999
+      else
+
+         !     map the Link_V data to tmp_inout(ix,jy)
+         do i = 1,ix 
+            if(Link_location(i,1) .gt. 0) &
+               tmp_inout(i,1) = Link_V(Link_location(i,1))
+            if(Link_location(i,2) .gt. 0) &
+               tmp_inout(i,2) = Link_V(Link_location(i,2))
+            if(Link_location(i,jy-1) .gt. 0) &
+               tmp_inout(i,jy-1) = Link_V(Link_location(i,jy-1))
+            if(Link_location(i,jy) .gt. 0) &
+               tmp_inout(i,jy) = Link_V(Link_location(i,jy))
+          enddo
+         do j = 1,jy 
+            if(Link_location(1,j) .gt. 0) &
+               tmp_inout(1,j) = Link_V(Link_location(1,j))
+            if(Link_location(2,j) .gt. 0) &
+               tmp_inout(2,j) = Link_V(Link_location(2,j))
+            if(Link_location(ix-1,j) .gt. 0) &
+               tmp_inout(ix-1,j) = Link_V(Link_location(ix-1,j))
+            if(Link_location(ix,j) .gt. 0) &
+               tmp_inout(ix,j) = Link_V(Link_location(ix,j))
+         enddo
+    endif
+
+!   commu nicate tmp_inout
+    call MPP_LAND_COM_INTEGER(tmp_inout, ix,jy,flag)
+
+!map the data back to Link_V
+    if(size .eq. 0) return
+      do j = 1,jy 
+            if( (Link_location(1,j) .gt. 0) .and. (tmp_inout(1,j) .ne. -999) ) &
+               Link_V(Link_location(1,j)) = tmp_inout(1,j)
+            if((Link_location(2,j) .gt. 0) .and. (tmp_inout(2,j) .ne. -999) ) &
+               Link_V(Link_location(2,j)) = tmp_inout(2,j)
+            if((Link_location(ix-1,j) .gt. 0) .and. (tmp_inout(ix-1,j) .ne. -999)) &
+               Link_V(Link_location(ix-1,j)) = tmp_inout(ix-1,j)
+            if((Link_location(ix,j) .gt. 0) .and. (tmp_inout(ix,j) .ne. -999) )&
+               Link_V(Link_location(ix,j)) = tmp_inout(ix,j)
+      enddo
+      do i = 1,ix 
+            if((Link_location(i,1) .gt. 0) .and. (tmp_inout(i,1) .ne. -999) )&
+               Link_V(Link_location(i,1)) = tmp_inout(i,1)
+            if( (Link_location(i,2) .gt. 0) .and. (tmp_inout(i,2) .ne. -999) )&
+               Link_V(Link_location(i,2)) = tmp_inout(i,2)
+            if((Link_location(i,jy-1) .gt. 0) .and. (tmp_inout(i,jy-1) .ne. -999) ) &
+               Link_V(Link_location(i,jy-1)) = tmp_inout(i,jy-1)
+            if((Link_location(i,jy) .gt. 0) .and. (tmp_inout(i,jy) .ne. -999) ) &
+               Link_V(Link_location(i,jy)) = tmp_inout(i,jy)
+      enddo
+  end subroutine MPP_CHANNEL_COM_INT
      subroutine print_2(unit,in,fm)
         integer unit
         character(len=*) fm
@@ -1299,123 +1364,134 @@ MODULE MODULE_MPP_LAND
        call mpp_land_bcast_int1(v)
      end subroutine mpp_same_int1
 
-     subroutine write_chanel_real8(v,nodelist_in,mpp_nlinks,nlinks)   
+
+
+     subroutine write_chanel_real(v,map_l2g,gnlinks,nlinks,g_v)   
         implicit none
-        real*8 recv(nlinks), v(nlinks)
-        integer nodelist(nlinks), mpp_nlinks,nlinks, nodelist_in(nlinks)
-        integer i, ierr, tag, k
-        integer length, node
-
-        nodelist = nodelist_in
-        if(my_id .eq. IO_id) then
-           do i = 0, numprocs - 1
-              if(i .ne. my_id) then
-                 !block receive  from other node.
-                 tag = 109
-                 call mpi_recv(nodelist,nlinks,MPI_INTEGER,i, &
-                      tag,MPI_COMM_WORLD,mpp_status,ierr)
-                   tag = 119
-                 call mpi_recv(recv(:),nlinks,MPI_DOUBLE_PRECISION,i,  &
-                   tag,MPI_COMM_WORLD,mpp_status,ierr)
-
-                 do k = 1,nodelist(nlinks)
-                    if(nodelist(k) .gt. -99) then
-                      node = nodelist(k) 
-                      v(node) = recv(node)
-                    endif
-                 enddo
-              end if
-            
-           end do
-        else
-           tag =  109
-           nodelist(nlinks) = mpp_nlinks 
-           call mpi_send(nodelist,nlinks,MPI_INTEGER, IO_id,     &
-               tag,MPI_COMM_WORLD,ierr)
-           tag = 119
-           call mpi_send(v,nlinks,MPI_DOUBLE_PRECISION,IO_id,   &
-               tag,MPI_COMM_WORLD,ierr)
-        end if
-     end subroutine write_chanel_real8
-
-
-     subroutine write_chanel_real(v,nodelist_in,mpp_nlinks,nlinks)   
-        implicit none
+        integer  gnlinks,nlinks, map_l2g(nlinks),tmp_map(gnlinks)
         real recv(nlinks), v(nlinks)
-        integer nodelist(nlinks), mpp_nlinks,nlinks, nodelist_in(nlinks)
+        real g_v(gnlinks), tmp_v(gnlinks)
         integer i, ierr, tag, k
-        integer length, node
+        integer length, node, message_len
 
-        nodelist = nodelist_in
+        if(nlinks .le. 0) then
+            tmp_map = -999
+        else
+            tmp_map(1:nlinks) = map_l2g(1:nlinks)
+        endif
+
         if(my_id .eq. IO_id) then
            do i = 0, numprocs - 1
               if(i .ne. my_id) then
                  !block receive  from other node.
+                 tag = 108
+                 call mpi_recv(message_len,1,MPI_INTEGER,i, &
+                      tag,MPI_COMM_WORLD,mpp_status,ierr)
+
                  tag = 109
-                 call mpi_recv(nodelist,nlinks,MPI_INTEGER,i, &
+                 call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                       tag,MPI_COMM_WORLD,mpp_status,ierr)
                    tag = 119
-                 call mpi_recv(recv(:),nlinks,MPI_REAL,i,  &
+
+                 call mpi_recv(tmp_v(1:message_len),message_len,MPI_REAL,i,  &
                    tag,MPI_COMM_WORLD,mpp_status,ierr)
 
-                 do k = 1,nodelist(nlinks)
-                    if(nodelist(k) .gt. -99) then
-                      node = nodelist(k) 
-                      v(node) = recv(node)
+                 do k = 1,message_len
+                    node = tmp_map(k) 
+                    if(node .gt. 0) then
+                      g_v(node) = tmp_v(k)
+                    else
+                      write(6,*) "Maping infor k=",k," node=", node
+                    endif
+                 enddo
+              else
+                 do k = 1,nlinks
+                    node = map_l2g(k) 
+                    if(node .gt. 0) then
+                      g_v(node) = v(k)
+                    else
+                      write(6,*) "local Maping infor k=",k," node=",node 
                     endif
                  enddo
               end if
             
            end do
         else
+           tag =  108
+           call mpi_send(nlinks,1,MPI_INTEGER, IO_id,     &
+               tag,MPI_COMM_WORLD,ierr)
            tag =  109
-           nodelist(nlinks) = mpp_nlinks 
-           call mpi_send(nodelist,nlinks,MPI_INTEGER, IO_id,     &
+           call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
                tag,MPI_COMM_WORLD,ierr)
            tag = 119
            call mpi_send(v,nlinks,MPI_REAL,IO_id,   &
                tag,MPI_COMM_WORLD,ierr)
+
         end if
      end subroutine write_chanel_real
 
-     subroutine write_chanel_int(v,nodelist_in,mpp_nlinks,nlinks)   
+     subroutine write_chanel_int(v,map_l2g,gnlinks,nlinks,g_v)   
         implicit none
-        integer :: recv(nlinks), v(nlinks)
-        integer nodelist(nlinks), mpp_nlinks,nlinks, nodelist_in(nlinks)
+        integer gnlinks,nlinks, map_l2g(nlinks),tmp_map(gnlinks)
+        integer ::  recv(nlinks), v(nlinks)
+        integer ::  g_v(gnlinks), tmp_v(gnlinks)
         integer i, ierr, tag, k
-        integer length, node
+        integer length, node, message_len
 
-        nodelist = nodelist_in
+        if(nlinks .le. 0) then
+            tmp_map = -999
+        else
+            tmp_map(1:nlinks) = map_l2g(1:nlinks)
+        endif
         if(my_id .eq. IO_id) then
            do i = 0, numprocs - 1
               if(i .ne. my_id) then
                  !block receive  from other node.
+                 tag = 108
+                 call mpi_recv(message_len,1,MPI_INTEGER,i, &
+                      tag,MPI_COMM_WORLD,mpp_status,ierr)
+
                  tag = 109
-                 call mpi_recv(nodelist,nlinks,MPI_INTEGER,i, &
+                 call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                       tag,MPI_COMM_WORLD,mpp_status,ierr)
                    tag = 119
-                 call mpi_recv(recv(:),nlinks,MPI_INTEGER,i,  &
+
+                 call mpi_recv(tmp_v(1:message_len),message_len,MPI_INTEGER,i,  &
                    tag,MPI_COMM_WORLD,mpp_status,ierr)
 
-                 do k = 1,nodelist(nlinks)
-                    if(nodelist(k) .gt. -99) then
-                      node = nodelist(k) 
-                      v(node) = recv(node)
+                 do k = 1,message_len
+                    if(tmp_map(k) .gt. 0) then
+                      node = tmp_map(k) 
+                      g_v(node) = tmp_v(k)
+                    else 
+                      write(6,*) "Maping infor k=",k," node=",tmp_v(k)
+                    endif
+                 enddo
+              else
+                 do k = 1,nlinks
+                    if(map_l2g(k) .gt. 0) then
+                      node = map_l2g(k) 
+                      g_v(node) = v(k)
+                    else
+                      write(6,*) "Maping infor k=",k," node=",map_l2g(k)
                     endif
                  enddo
               end if
             
            end do
         else
+           tag =  108
+           call mpi_send(nlinks,1,MPI_INTEGER, IO_id,     &
+               tag,MPI_COMM_WORLD,ierr)
            tag =  109
-           nodelist(nlinks) = mpp_nlinks 
-           call mpi_send(nodelist,nlinks,MPI_INTEGER, IO_id,     &
+           call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
                tag,MPI_COMM_WORLD,ierr)
            tag = 119
            call mpi_send(v,nlinks,MPI_INTEGER,IO_id,   &
                tag,MPI_COMM_WORLD,ierr)
         end if
      end subroutine write_chanel_int
+
 
 
      subroutine write_lake_real(v,nodelist_in,nlakes)   
@@ -1472,11 +1548,12 @@ MODULE MODULE_MPP_LAND
      return
      end subroutine read_rst_crt_r  
 
-         subroutine write_rst_crt_r(unit,cd,nlinks_index,mpp_nlinks,nlinks)
-         integer :: unit,mpp_nlinks,nlinks,nlinks_index(nlinks)
+         subroutine write_rst_crt_r(unit,cd,map_l2g,gnlinks,nlinks)
+         integer :: unit,gnlinks,nlinks,map_l2g(nlinks)
          real cd(nlinks)
-         call write_chanel_real(cd,nlinks_index,mpp_nlinks,nlinks)
-         write(unit) cd
+         real g_cd (gnlinks)
+         call write_chanel_real(cd,map_l2g,gnlinks,nlinks, g_cd)
+         write(unit) g_cd
          return
          end subroutine write_rst_crt_r
 
