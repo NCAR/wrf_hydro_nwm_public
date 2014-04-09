@@ -388,6 +388,7 @@ module module_HYDRO_drv
        integer, intent(in) :: did
        
        integer :: i, jj, ii
+       real :: ffac  ! filter factor for groundwater fade in at model start
 
 !------------------------------------------------------------------
 !DJG Begin GW/Baseflow Routines
@@ -476,14 +477,20 @@ module module_HYDRO_drv
            
            
 	  gw2d(did)%ho = gw2d(did)%h
+ 
+          if(gw2d(did)%istep .lt. 48) then 
+            ffac = gw2d(did)%istep / 48
+          else 
+            ffac = 1
+          end if
 
 	  ! put surface exceeding groundwater to surface routing inflow
 	  do jj=1,RT_DOMAIN(did)%JXRT
 	    do ii=1,RT_DOMAIN(did)%IXRT
 	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
-	        RT_DOMAIN(did)%INFXSUBRT(ii,jj) = RT_DOMAIN(did)%INFXSUBRT(ii,jj) &
+	        RT_DOMAIN(did)%SFCHEADSUBRT(ii,jj) = RT_DOMAIN(did)%SFCHEADSUBRT(ii,jj) &
 		                                + (gw2d(did)%ho(ii,jj) &
-		                                  -gw2d(did)%elev(ii,jj))*1000 ! convert from m to mm
+		                                  -gw2d(did)%elev(ii,jj))*1000*ffac ! convert from m to mm
 		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
 		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
 	      end if
@@ -492,6 +499,8 @@ module module_HYDRO_drv
 	  
 	  ! aggregate  qsgw from routing to lsm grid
 	  call aggregateQsgw(did)
+
+          gw2d(did)%istep =  gw2d(did)%istep + 1
 	  
 #ifdef HYDRO_D
            write(6,*) "*****bf******end 2d_gw_model "

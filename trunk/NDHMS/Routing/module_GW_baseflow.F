@@ -233,7 +233,7 @@ contains
            ! bftodo: develop proper landtype mask
            
            gw2d(did)%compres=0. ! currently not implemented
-
+           gw2d(did)%istep=0 ! initialize time step
            ! reset cells with undefined hydraulic conductivity
            where(gw2d(did)%hycond .eq. 100) gw2d(did)%hycond = 5E-4
            
