@@ -20,6 +20,7 @@ MODULE MODULE_MPP_LAND
   integer, allocatable, DIMENSION(:), public :: local_nx_size,local_ny_size
   integer, allocatable, DIMENSION(:), public :: local_rt_nx_size,local_rt_ny_size
   integer, allocatable, DIMENSION(:), public :: startx,starty
+  integer, allocatable, DIMENSION(:), public :: mpp_nlinks
  
   contains
 
@@ -1382,11 +1383,9 @@ MODULE MODULE_MPP_LAND
 
         if(my_id .eq. IO_id) then
            do i = 0, numprocs - 1
+              message_len = mpp_nlinks(i+1)
               if(i .ne. my_id) then
                  !block receive  from other node.
-                 tag = 108
-                 call mpi_recv(message_len,1,MPI_INTEGER,i, &
-                      tag,MPI_COMM_WORLD,mpp_status,ierr)
 
                  tag = 109
                  call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
@@ -1417,9 +1416,6 @@ MODULE MODULE_MPP_LAND
             
            end do
         else
-           tag =  108
-           call mpi_send(nlinks,1,MPI_INTEGER, IO_id,     &
-               tag,MPI_COMM_WORLD,ierr)
            tag =  109
            call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
                tag,MPI_COMM_WORLD,ierr)
@@ -1445,11 +1441,9 @@ MODULE MODULE_MPP_LAND
         endif
         if(my_id .eq. IO_id) then
            do i = 0, numprocs - 1
+              message_len = mpp_nlinks(i+1)
               if(i .ne. my_id) then
                  !block receive  from other node.
-                 tag = 108
-                 call mpi_recv(message_len,1,MPI_INTEGER,i, &
-                      tag,MPI_COMM_WORLD,mpp_status,ierr)
 
                  tag = 109
                  call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
@@ -1480,9 +1474,6 @@ MODULE MODULE_MPP_LAND
             
            end do
         else
-           tag =  108
-           call mpi_send(nlinks,1,MPI_INTEGER, IO_id,     &
-               tag,MPI_COMM_WORLD,ierr)
            tag =  109
            call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
                tag,MPI_COMM_WORLD,ierr)
@@ -1655,6 +1646,29 @@ MODULE MODULE_MPP_LAND
       CALL MPI_ALLREDUCE(send,inout,1,MPI_DOUBLE_PRECISION,MPI_SUM,MPI_COMM_WORLD,ierr)
   end subroutine sum_double
 
+  subroutine mpp_chrt_nlinks_collect(nlinks)
+  ! collect the nlinks
+       implicit none
+       integer :: nlinks
+       integer :: i, ierr, status, tag
+       allocate(mpp_nlinks(numprocs),stat = status) 
+                 tag = 138
+       mpp_nlinks = 0
+       if(my_id .eq. IO_id) then
+          do i = 0,numprocs -1
+            if(i .ne. my_id) then
+               call mpi_recv(mpp_nlinks(i+1),1,MPI_INTEGER,i, &
+                      tag,MPI_COMM_WORLD,mpp_status,ierr)
+            else
+               mpp_nlinks(i+1) = 0
+            end if
+          end do
+       else
+           call mpi_send(nlinks,1,MPI_INTEGER, IO_id,     &
+               tag,MPI_COMM_WORLD,ierr)
+       endif
+
+  end subroutine mpp_chrt_nlinks_collect
 
 END MODULE MODULE_MPP_LAND
 

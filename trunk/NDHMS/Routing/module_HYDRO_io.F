@@ -3968,6 +3968,7 @@ end subroutine mpp_output_chrt
            end do       
         end do       
 
+        call mpp_chrt_nlinks_collect(NLINKS)
         return 
         end SUBROUTINE MPP_READ_ROUTEDIM
 
