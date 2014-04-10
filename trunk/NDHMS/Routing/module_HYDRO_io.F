@@ -1798,7 +1798,7 @@ end subroutine get_albedo12m_netcdf
   real, dimension(:,:), allocatable    ::  gHC, gIHEAD, gBOTELV, gPOR
 #endif
   integer :: i
-!, get2d_real
+
   
 #ifdef MPP_LAND
   allocate(gHC(global_rt_nx, global_rt_ny))
@@ -1850,20 +1850,26 @@ end subroutine get_albedo12m_netcdf
 #endif
                        trim("./gwhires.nc"))
 
-! bftodo: develop proper landtype mask
+	! groundwater model mask (0 no aquifer, aquifer > 0
+        call get2d_int("LTYPE", &
+#ifdef MPP_LAND
+                       gLtype, global_nx, global_ny, &
+#else
+                       ltype, ix, jx,  &
+#endif
+                       trim("./gwhires.nc"))
+
  
 #ifdef MPP_LAND
-       gLtype=1
        gLtype(1,:) = 2
        gLtype(:,1) = 2
        gLtype(global_rt_nx,:) = 2
        gLtype(:,global_rt_ny) = 2 
 #else
-       ltype=1
-       ltype(1,:) =2
-       ltype(:,1) =2
-       ltype(ix,:)=2
-       ltype(:,jx)=2
+       ltype(1,:) = 2
+       ltype(:,1) = 2
+       ltype(ix,:)= 2
+       ltype(:,jx)= 2
 #endif
 
 #ifdef MPP_LAND  
@@ -1875,6 +1881,12 @@ end subroutine get_albedo12m_netcdf
      call decompose_rt_real(gPOR,por,global_rt_nx, global_rt_ny, ix, jx)
      deallocate(gHC, gIHEAD, gBOTELV, gPOR)
 #endif
+     
+  where(ltype .eq. 0) 
+   hc = 0.
+   por = 0.001
+  end where
+  
   !bftodo: make filename accessible in namelist
   return
   end subroutine readGW2d

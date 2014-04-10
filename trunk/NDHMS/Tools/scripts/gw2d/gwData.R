@@ -98,7 +98,7 @@ ndem<-as.matrix(flip(t(rdem),"x"))
 rdem<-as.matrix(flip(t(raster(dem)),"x"))
 
 ncdfout<- function(spath, cm, long, lat, longname="NA", fact=1, varname="X", dim1="x", dim2="y", u1=" ", u2=" ", uvar=" ", datfm=NA, 
-                    xdim=as.double(0:(dim(cm)[1]-1)), ydim=as.double(0:(dim(cm)[2]-1)), time="", add=FALSE, flipY=FALSE){
+                    xdim=as.double(0:(dim(cm)[1]-1)), ydim=as.double(0:(dim(cm)[2]-1)), time="", add=FALSE, flipY=FALSE, dtype="double"){
 
     require(ncdf)
 
@@ -110,10 +110,12 @@ ncdfout<- function(spath, cm, long, lat, longname="NA", fact=1, varname="X", dim
         dimx <- nc$dim[[1]]
         dimy <- nc$dim[[2]]
         dimt <- nc$dim[[3]]
-        varz  <- var.def.ncdf(varname, uvar, list(dimx,dimy, dimt), -1, longname=longname,    prec="double")
+        
+        varz  <- var.def.ncdf(varname, uvar, list(dimx,dimy, dimt), -1, longname=longname,    prec=dtype)
 
         nc <- var.add.ncdf(nc, varz)
-        put.var.ncdf(nc, varz$name, as.double(cm*fact))
+        if(dtype=="double")  put.var.ncdf(nc, varz$name, as.double(cm*fact))
+        if(dtype=="integer") put.var.ncdf(nc, varz$name, as.integer(cm*fact))
         att.put.ncdf(nc, varz$name,   "coordinates",   "XLONG XLAT")
         close.ncdf(nc)
         }
