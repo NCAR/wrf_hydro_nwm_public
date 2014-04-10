@@ -1884,7 +1884,7 @@ end subroutine get_albedo12m_netcdf
      
   where(ltype .eq. 0) 
    hc = 0.
-   por = 0.001
+   por = 10**21
   end where
   
   !bftodo: make filename accessible in namelist
