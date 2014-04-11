@@ -23,7 +23,7 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                     GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, gwChanCondSw, GwSpinCycles
-          real:: DTRT,dxrt, gwChanCondConst
+          real:: DTRT,dxrt, gwChanCondConst, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
@@ -58,7 +58,7 @@ CONTAINS
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
                     GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConst, &
-                    GwSpinCycles, GwSpinDiags, &
+                    GwSpinCycles, GwSpinDiags, gwIhShift, &
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -125,6 +125,7 @@ CONTAINS
   call mpp_land_bcast_real1(DTRT)
   call mpp_land_bcast_real1(DXRT)
   call mpp_land_bcast_real1(gwChanCondConst)
+  call mpp_land_bcast_real1(gwIhShift)
   call mpp_land_bcast_int1(GWBASESWCRT)
   call mpp_land_bcast_int1(GWSOILCPL)
   call mpp_land_bcast_int1(gwChanCondSw)
@@ -151,6 +152,7 @@ CONTAINS
     nlst%GWSOILCPL= GWSOILCPL
     nlst%gwChanCondSw = gwChanCondSw
     nlst%gwChanCondConst = gwChanCondConst
+    nlst%gwIhShift = gwIhShift
     nlst%GwSpinCycles = GwSpinCycles
     nlst%GwSpinDiags = GwSpinDiags
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
@@ -188,6 +190,7 @@ CONTAINS
     write(6,*) " nlst%GWSOILCPL ", GWSOILCPL
     write(6,*) " nlst%gwChanCondSw ", gwChanCondSw
     write(6,*) " nlst%gwChanCondConst ", gwChanCondConst
+    write(6,*) " nlst%gwIhShift ", gwIhShift
     write(6,*) " nlst%GwSpinCycles ", GwSpinCycles
     write(6,*) " nlst%GwSpinDiags ", GwSpinDiags
     write(6,*) " nlst%TERADJ_SOLAR ", TERADJ_SOLAR

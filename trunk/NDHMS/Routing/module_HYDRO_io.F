@@ -1786,10 +1786,11 @@ end subroutine get_albedo12m_netcdf
 !DJG -----------------------------------------------------
 
   ! BF read the static input fields needed for the 2D GW scheme
-  subroutine readGW2d(ix, jx, hc, ihead, botelv, por, ltype)
+  subroutine readGW2d(ix, jx, hc, ihead, botelv, por, ltype, ihShift)
   implicit none
 #include <netcdf.inc>
   integer, intent(in) :: ix, jx
+  real, intent(in) :: ihShift
   integer, dimension(ix,jx), intent(inout)::   ltype
   real, dimension(ix,jx), intent(inout)   ::   hc, ihead, botelv, por
 
@@ -1881,7 +1882,9 @@ end subroutine get_albedo12m_netcdf
      call decompose_rt_real(gPOR,por,global_rt_nx, global_rt_ny, ix, jx)
      deallocate(gHC, gIHEAD, gBOTELV, gPOR)
 #endif
-     
+  
+  ihead = ihead + ihShift
+  
   where(ltype .eq. 0) 
    hc = 0.
    por = 10**21

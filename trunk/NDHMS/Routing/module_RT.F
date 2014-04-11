@@ -673,7 +673,7 @@ CONTAINS
         call readGW2d(gw2d(did)%ix, gw2d(did)%jx,     &
                       gw2d(did)%hycond, gw2d(did)%ho, &
 		      gw2d(did)%bot, gw2d(did)%poros, &
-		      gw2d(did)%ltype)
+		      gw2d(did)%ltype, nlst_rt(did)%gwIhShift)
 
         gw2d(did)%elev = rt_domain(did)%elrt
 
