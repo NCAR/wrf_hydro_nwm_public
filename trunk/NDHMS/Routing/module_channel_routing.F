@@ -701,9 +701,12 @@ crnt:    DO                      !-- loop on the courant condition
 
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLateral,NLINKS,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+    if(NLAKES .gt. 0) then
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+    endif
 #endif
 
+!     call check_channel(79,QLINK(:,1),1,nlinks)
 
 
           !-- compute conveyances, with known depths (just assign to QLINK(,1)
@@ -718,13 +721,6 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
            if (TYPEL(i) .eq. 0 .AND. HLINKTMP(FROM_NODE(i)) .gt. RETDEP_CHAN) then 
           
-          if( FROM_NODE(i) <0 .or. TO_NODE(i) <0) then
-             write(6,*) "Error: FROM_NODE(i) = ",FROM_NODE(i),"TO_NODE(i)=",TO_NODE(i), "i=",i
-             write(6,*) "CHANXI =", CHANXI(I), " CHANYJ = ", CHANYJ(i)
-             write(6,*) "ixrt =", ixrt, " jxrt =", jxrt
-             write(6,*) "left_id=",left_id," right_id=",right_id," down_id=", down_id, " up_id=",up_id
-             call flush(6)
-         endif 
                if(from_node(i) .ne. to_node(i) ) &  ! added by Wei Yu
                    QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
                          HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
@@ -749,6 +745,7 @@ crnt:    DO                      !-- loop on the courant condition
 !         call check_channel(86,ChSSlp,1,nlinks)
 !         call check_channel(87,TYPEL*1.0,1,nlinks)
  
+
           !-- compute total flow across face, into node
 #ifdef MPP_LAND
          DO iyw = 1,yw_mpp_nlinks
@@ -766,12 +763,12 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
 
 !    call check_channel(79,TYPEL*1.0,1,nlinks)
+
 !    call check_channel(80,QLINK(:,1),1,nlinks)
 
 !    call check_channel(89,qsum,1,nlinks)
 
 
-    write(6,*) "yw_mpp_nlinks = ", yw_mpp_nlinks
 
 #ifdef MPP_LAND
          DO iyw = 1,yw_mpp_nlinks
@@ -798,7 +795,7 @@ crnt:    DO                      !-- loop on the courant condition
            if( TYPEL(i).eq.0 .and. CVOLTMP(i) .ge. 0.001 .and.(CVOLTMP(i)-QSUM(i)*DTCT)/CVOLTMP(i) .le. -0.01 ) then  
             flag = -99
 #ifdef HYDRO_D
-            write(6,*) "Unstatble at node ",i
+            write(6,*) "Unstable at node ",i
             write(6,*) "TYPEL, CVOLTMP, QSUM, QSUM*DTCT",TYPEL(i), CVOLTMP(i), QSUM(i), QSUM(i)*DTCT
             write(6,*) "qsubrt, qstrmvolrt,qlink",QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)),qlink(i,1),qlink(i,2)
 #endif
@@ -901,7 +898,9 @@ crnt:    DO                      !-- loop on the courant condition
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOLTMP,NLINKS,99)
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CD,NLINKS,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+    if(NLAKES .gt. 0) then
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+    endif
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINKTMP,NLINKS,99)
 #endif 
 !   call check_channel(83,CVOLTMP,1,nlinks)
@@ -927,11 +926,13 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
            enddo
 #ifdef MPP_LAND
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,RESHT,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
+    if(NLAKES .gt. 0) then
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,RESHT,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
+    endif
 #endif
 
 
@@ -1230,7 +1231,9 @@ crnt:    DO                      !-- loop on the courant condition
          implicit none 
          integer :: unit,nlakes,i,lake_index(nlakes)
          real cd(nlakes)
+#ifdef MPP_LAND
          call write_lake_real(cd,lake_index,nlakes)
+#endif
          write(unit,*) cd
           call flush(unit)
          return

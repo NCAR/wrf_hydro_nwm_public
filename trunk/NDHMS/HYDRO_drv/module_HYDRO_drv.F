@@ -133,7 +133,10 @@ module module_HYDRO_drv
    endif  
    call mpp_land_bcast_int1(rtflag)
 #endif
-   if(rtflag == 1) return ! jump the initial time output for routing restart
+
+
+!yw keep the initial time otuput for debug
+      if(rtflag == 1) return ! jump the initial time output for routing restart
 
 
 
@@ -992,7 +995,9 @@ end module module_HYDRO_drv
 
 ! stop the job due to the fatal error.
       subroutine HYDRO_stop(msg)
+#ifdef MPP_LAND
         use module_mpp_land
+#endif
         character(len=*) :: msg
         integer :: ierr
 #ifdef HYDRO_D

@@ -4292,8 +4292,10 @@ end subroutine mpp_output_chrt
           iret = nf_def_dim(ncid, "iyrt", rt_domain(did)%jxrt, dimid_jxrt)
 #endif
 
-          iret = nf_def_dim(ncid, "links", rt_domain(did)%nlinks, dimid_links)
-          iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+          iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinks, dimid_links)
+          if(rt_domain(did)%nlakes .gt. 0) then
+              iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+          endif
           iret = nf_def_dim(ncid, "basns", rt_domain(did)%numbasns, dimid_basns)
 
 !define variables
@@ -4318,8 +4320,10 @@ end subroutine mpp_output_chrt
               iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
-              iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
-              iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
+              if(rt_domain(did)%nlakes .gt. 0) then
+                  iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
+                  iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
+              endif
               iret = nf_def_var(ncid,"lake_inflort",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
@@ -4512,6 +4516,8 @@ end subroutine mpp_output_chrt
            real inVar(n)
 #ifdef MPP_LAND
            integer:: nodelist(n)
+           if(n .eq. 0) return
+
            call write_lake_real(inVar,nodelist,n)          
            if(my_id .eq. IO_id) then
 #endif
@@ -4538,7 +4544,7 @@ end subroutine mpp_output_chrt
            call write_chanel_real(inVar,map_l2g,gnlinks,n,g_var)          
            if(my_id .eq. IO_id) then
               iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),g_var)
+              iret = nf_put_vara_real(ncid, varid, (/1/), (/gnlinks/),g_var)
 #else
               iret = nf_inq_varid(ncid,varName, varid)
               iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
@@ -4627,8 +4633,10 @@ end subroutine mpp_output_chrt
               call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
               call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
               call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
-              call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
-              call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+              if(rt_domain(did)%NLAKES .gt. 0) then
+                 call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
+                 call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+              endif
               call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%LAKE_INFLORT,"lake_inflort")
             end if
 
@@ -4906,7 +4914,8 @@ end subroutine mpp_output_chrt
          endif
          call mpp_land_bcast_real(gnlinks,var)
         
-!        if(n .le. 0) return
+!         if(n .le. 0) return
+         var_out = 0
 
          do l = 1, n
             g = map_l2g(l)
@@ -5010,6 +5019,8 @@ end subroutine mpp_output_chrt
 !DJG -----------------------------------------------------
    END SUBROUTINE READ_ROUTING_old
 !DJG _____________________________
+
+#ifdef MPP_LAND
 
        SUBROUTINE MPP_READ_CHROUTING(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
@@ -5779,7 +5790,6 @@ end subroutine mpp_output_chrt
 !DJG -----------------------------------------------------
    END SUBROUTINE MPP_READ_CHROUTING
 
-#ifdef MPP_LAND
      SUBROUTINE mpp_readRT2d_real(did,var_name, inv, ixrt, jxrt, fileName) 
          implicit none
          INTEGER :: iret, did

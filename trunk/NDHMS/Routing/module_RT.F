@@ -452,7 +452,7 @@ CONTAINS
        allocate(tmp_int(rt_domain(did)%GNLINKS))
        allocate(tmp_real(rt_domain(did)%GNLINKS))
 !      call write_chanel_int(rt_domain(did)%GCH_NETLNK,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,tmp_int)
-       call write_chanel_real(rt_domain(did)%chlon,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,tmp_real)
+!      call write_chanel_real(rt_domain(did)%chlon,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,tmp_real)
 !       if(my_id .eq. IO_id) write(50,*) tmp_int
 !      if(my_id .eq. IO_id) write(51,*) tmp_real
 !      call hydro_stop("88888888")
