@@ -230,7 +230,9 @@ contains
       itermax = nlst_rt(did)%GwSpinCycles
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
-           ! bftodo: develop proper landtype mask
+           
+           gw2d(did)%qgw_chanrt = 0.
+           gw2d(did)%qsgwrt = 0.
            
            gw2d(did)%compres=0. ! currently not implemented
            gw2d(did)%istep=0 ! initialize time step
