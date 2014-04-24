@@ -1165,6 +1165,7 @@ subroutine gwSoilFlux(did)
   real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
   integer :: nsoil, i, j, k  
   
+  gw2d(did)%qsgwrt = 0.
   
 ! Step 1, collect data
 
