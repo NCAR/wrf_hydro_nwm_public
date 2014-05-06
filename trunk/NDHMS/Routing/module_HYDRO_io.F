@@ -1517,10 +1517,9 @@ end subroutine get_albedo12m_netcdf
    REAL, INTENT(INOUT),  DIMENSION(NLINKS)   ::CHANLEN,  ZELEV
    REAL, INTENT(INOUT),  DIMENSION(NLINKS)   ::CHLAT, CHLON
    !yw REAL,  DIMENSION(NLINKS)   ::CHLAT4, CHLON4
-   integer,  DIMENSION(NLINKS)   :: node_table 
    integer , dimension(g_ixrt,g_jxrt):: g_tmp
    real ywtest(nlinks)
-   integer  maxorder
+   integer  maxorder, kk
   
 ! Lake information 
    REAL, INTENT(INOUT),  DIMENSION(*) :: HRZAREA,LAKEMAXH,WEIRC,WEIRL,&
@@ -1551,6 +1550,7 @@ end subroutine get_albedo12m_netcdf
        enddo
 
        link_location = 0
+
        if(my_id .eq. IO_id) then
           g_tmp = -1
           do i = 1, nlinks
@@ -1570,44 +1570,63 @@ end subroutine get_albedo12m_netcdf
           end do
       end do
 
-      node_table = 0
+      nlinks_index = -9999
+      yw_mpp_nlinks = 0
       do j = 1, jxrt
           do i = 1, ixrt
             if(link_location(i,j) .gt. 0) then 
-               if( i.eq.1 .and. left_id > 0) then
+               if( (i.eq.1) .and. (left_id .ge. 0) ) then
                     continue 
-               elseif ( i.eq. ixrt .and. right_id >0) then
+               elseif ( (i.eq. ixrt) .and. (right_id .ge. 0) ) then
                     continue
-               elseif ( j.eq. 1 .and. down_id >0 ) then
+               elseif ( (j.eq. 1) .and. (down_id .ge. 0)  ) then
                     continue
-               elseif ( j.eq. jxrt .and. up_id >0) then
+               elseif ( (j.eq. jxrt) .and. (up_id .ge. 0) ) then
                     continue
                else
-                  node_table(link_location(i,j)) = link_location(i,j) 
+                  yw_mpp_nlinks = yw_mpp_nlinks + 1
+                  nlinks_index(yw_mpp_nlinks) = link_location(i,j)
                endif
             endif 
           end do
       end do
-      mpp_nlinks = 0
-      do i = 1, nlinks
-          if(node_table(i) > 0 ) then
-                mpp_nlinks = mpp_nlinks + 1
-                nlinks_index(mpp_nlinks) = i
-          endif
-      enddo
 
-!     mpp_nlinks = 0
-!     do j = 1, jxrt
-!         do i = 1, ixrt
-!           if(link_location(i,j) .gt. 0) then 
+       mpp_nlinks = yw_mpp_nlinks
+
+      kk = yw_mpp_nlinks
+      do j = 1, jxrt
+          do i = 1, ixrt
+            if(link_location(i,j) .gt. 0) then 
+               if( (i.eq.1) .and. (left_id .ge. 0) ) then
+                  kk = kk + 1
+                  nlinks_index(kk) = link_location(i,j)
+               elseif ( (i.eq. ixrt) .and. (right_id .ge. 0) ) then
+                  kk = kk + 1
+                  nlinks_index(kk) = link_location(i,j)
+               elseif ( (j.eq. 1) .and. (down_id .ge. 0)  ) then
+                  kk = kk + 1
+                  nlinks_index(kk) = link_location(i,j)
+               elseif ( (j.eq. jxrt) .and. (up_id .ge. 0) ) then
+                  kk = kk + 1
+                  nlinks_index(kk) = link_location(i,j)
+               else
+                    continue
+               endif
+            endif 
+          end do
+      end do
+
+!      do i = 1, nlinks
+!          if(node_table(i) > 0 ) then
 !               mpp_nlinks = mpp_nlinks + 1
-!               nlinks_index(mpp_nlinks) = link_location(i,j)
-!           endif
-!         enddo
-!     enddo
+!          endif
+!      enddo
+
  
 ! add the boundary links
-      yw_mpp_nlinks = mpp_nlinks  
+  
+      goto 11111
+
       do j = 1, jxrt
           do i = 1, ixrt
             if(link_location(i,j) .gt. 0) then 
@@ -1629,7 +1648,7 @@ end subroutine get_albedo12m_netcdf
             endif 
           end do
       end do
-
+11111    continue
 
       call mpp_land_bcast_real(NLAKES,HRZAREA)
       call mpp_land_bcast_real(NLAKES,LAKEMAXH)
