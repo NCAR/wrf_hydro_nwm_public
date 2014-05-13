@@ -435,6 +435,8 @@ CONTAINS
                rt_domain(did)%yw_mpp_nlinks)
 !!!!!   lake_index,Link_Location)
 #endif
+
+        call deriveFromNode(did)
     endif
   END IF
    
@@ -856,6 +858,36 @@ CONTAINS
 
 
    end subroutine LandRT_ini
+
+       subroutine deriveFromNode(did)
+            implicit none
+            integer :: did
+            integer :: i,j, kk, maxv
+            integer :: tmp(rt_domain(did)%nlinks)
+            tmp = 0
+            maxv = 1
+            do i = 1, rt_domain(did)%nlinks
+                if(rt_domain(did)%to_node(i) .gt. 0) then
+                    kk = rt_domain(did)%to_node(i)
+                    tmp(kk) = tmp(kk) + 1
+                    if(maxv .lt. tmp(kk)) maxv = tmp(kk)
+                end if
+            end do
+            allocate(rt_domain(did)%pnode(rt_domain(did)%nlinks,maxv+1) )
+            rt_domain(did)%maxv_p = maxv+1
+            rt_domain(did)%pnode = -99
+            rt_domain(did)%pnode(:,1) = 1
+            do i = 1, rt_domain(did)%nlinks
+                if(rt_domain(did)%to_node(i) .gt. 0) then
+                    j = rt_domain(did)%to_node(i)
+                    rt_domain(did)%pnode(j,1) = rt_domain(did)%pnode(j,1) + 1
+                    kk = rt_domain(did)%pnode(j,1)
+                    rt_domain(did)%pnode(j,kk) = i
+                end if
+            end do
+
+       end subroutine deriveFromNode
+
 
 
 END MODULE module_Routing

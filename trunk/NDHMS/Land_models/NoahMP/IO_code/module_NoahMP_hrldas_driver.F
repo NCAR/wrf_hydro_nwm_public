@@ -346,7 +346,7 @@ module module_NoahMP_hrldas_driver
   integer            :: ystart = 1
   integer            ::   xend = 0
   integer            ::   yend = 0
-  REAL, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
+  integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
 
   namelist / NOAHLSM_OFFLINE /    &

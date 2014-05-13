@@ -80,6 +80,8 @@
   REAL, allocatable, DIMENSION(:)      :: QLAKEO      !lake outflow in difussion scheme
   INTEGER, allocatable, DIMENSION(:)   :: LAKENODE   !which nodes flow into which lakes
   REAL, allocatable, DIMENSION(:)      :: CVOL       ! channel volume
+  INTEGER, allocatable, DIMENSION(:,:)   :: pnode    !parent nodes : start from 2
+  integer :: maxv_p              ! array size for  second column of the pnode
 
 
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params
