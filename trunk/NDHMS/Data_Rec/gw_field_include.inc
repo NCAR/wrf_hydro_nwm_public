@@ -16,7 +16,8 @@
 
       real,    allocatable, dimension(:,:) ::  &
         h,              &  ! head, after ghmcompute (m)
-        convgw             ! convergence due to gw flow (m/s)
+        convgw,         &  ! convergence due to gw flow (m/s)
+        excess             ! surface exceeding groundwater (mm)
 
       real,    allocatable, dimension(:,:) ::  &
 	qsgwrt,         &  ! flux between soil and groundwater for coupled simulations on routing grid

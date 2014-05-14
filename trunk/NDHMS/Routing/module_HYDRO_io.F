@@ -325,7 +325,7 @@ module module_HYDRO_io
        enddo
     enddo
 
-    where (array == 14) array = 1   ! DJG remove all 'water' soils...
+!     where (array == 14) array = 1   ! DJG remove all 'water' soils...
 
   end subroutine get_soilcat_netcdf
 
@@ -2785,7 +2785,7 @@ end subroutine get_albedo12m_netcdf
 
 
 subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
-       startdate, date, HEAD, SMCRT, convgw, qsgwrt, qgw_chanrt, &
+       startdate, date, HEAD, SMCRT, convgw, excess, qsgwrt, qgw_chanrt, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,HIRES_OUT)
 
 #ifdef MPP_LAND
@@ -2826,7 +2826,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     real                                :: long_cm,lat_po,fe,fn, chan_in
     real, dimension(2)                  :: sp
 
-    real, dimension(ixrt,jxrt) :: head, convgw,       &
+    real, dimension(ixrt,jxrt) :: head, convgw, excess, &
                                   qsgwrt, qgw_chanrt, &
                                   latval, lonval
     real, dimension(ixrt,jxrt,nsoil) :: SMCRT
@@ -2834,7 +2834,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     integer :: seconds_since, decimation, ixrtd,jxrtd, hires_flag
     
 #ifdef MPP_LAND
-    real, dimension(global_rt_nx,global_rt_ny) :: gHead, gConvgw, gqsgwrt, &
+    real, dimension(global_rt_nx,global_rt_ny) :: gHead, gConvgw, gqsgwrt, gExcess, &
                                                   gQgw_chanrt
     real, dimension(global_rt_nx,global_rt_ny) :: gLatval, gLonval
     real, dimension(global_rt_nx,global_rt_ny,nsoil) :: gSMCRT
@@ -2850,6 +2850,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     call write_IO_rt_real(qgw_chanrt,gQgw_chanrt)
     call write_IO_rt_real(head,gHead)
     call write_IO_rt_real(convgw,gConvgw)
+    call write_IO_rt_real(excess,gExcess)
     
     do i = 1, NSOIL
      call MPP_LAND_COM_REAL(smcrt(:,:,i), ixrt, jxrt, 99)
@@ -3020,6 +3021,13 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       
+       iret = nf_def_var(ncid,"GwExcess",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_put_att_text(ncid,varid,'units',1,'mm')
+       iret = nf_put_att_text(ncid,varid,'long_name',17,'surface excess groundwater')
+       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
        iret = nf_def_var(ncid,"QSGWRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
@@ -3147,7 +3155,17 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
      iret = nf_inq_varid(ncid,  "CONVGW", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
- 
+
+     
+#ifdef MPP_LAND
+        xdumd = gExcess
+#else  
+        xdumd = excess
+#endif
+     iret = nf_inq_varid(ncid,  "GwExcess", varid)
+     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+
+     
 #ifdef MPP_LAND
         xdumd = gqsgwrt
 #else  

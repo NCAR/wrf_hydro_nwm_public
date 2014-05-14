@@ -178,8 +178,9 @@ module module_HYDRO_drv
                 nlst_rt(did)%nsoil,                               &
 !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
                 rt_out_date, nlst_rt(did)%olddate,    &
-                gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                 &
-                gw2d(did)%convgw, gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,    &
+                gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                   &
+                gw2d(did)%convgw, gw2d(did)%excess,                  &
+                gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,              &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
                 RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
@@ -467,29 +468,24 @@ module module_HYDRO_drv
                         +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
                         /  gw2d(did)%poros)
 	   
+	   gw2d(did)%excess = 0.
+	   
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
 			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
 			gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
 			gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
+			gw2d(did)%excess, &
 			gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
 			gw2d(did)%istep)
            
            
 	  gw2d(did)%ho = gw2d(did)%h
  
-
+          
+          
 	  ! put surface exceeding groundwater to surface routing inflow
-	  do jj=1,RT_DOMAIN(did)%JXRT
-	    do ii=1,RT_DOMAIN(did)%IXRT
-	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
-	        RT_DOMAIN(did)%SFCHEADSUBRT(ii,jj) = RT_DOMAIN(did)%SFCHEADSUBRT(ii,jj) &
-		                                + (gw2d(did)%ho(ii,jj) &
-		                                  -gw2d(did)%elev(ii,jj))*1000 ! convert from m to mm
-		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
-		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
-	      end if
-	    end do
-	  end do
+          RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%SFCHEADSUBRT &
+	                              + gw2d(did)%excess
 	  
 	  ! aggregate  qsgw from routing to lsm grid
 	  call aggregateQsgw(did)

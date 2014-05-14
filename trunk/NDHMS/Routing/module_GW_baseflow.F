@@ -233,6 +233,7 @@ contains
            
            gw2d(did)%qgw_chanrt = 0.
            gw2d(did)%qsgwrt = 0.
+           gw2d(did)%excess = 0.
            
            gw2d(did)%compres=0. ! currently not implemented
            gw2d(did)%istep=0 ! initialize time step
@@ -249,7 +250,7 @@ contains
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
              gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
              gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
-             gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
+             gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, gw2d(did)%excess, &
              gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
 !              gw2d(did)%istep)
              iter)
@@ -260,22 +261,22 @@ contains
            call output_gw_spinup(nlst_rt(did)%igrid, 1000000,                &
                             RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt,   &
                             nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                            gw2d(did)%ho, gw2d(did)%convgw, gw2d(did)%ho-gw2d(did)%elev,  &
+                            gw2d(did)%ho, gw2d(did)%convgw, gw2d(did)%excess,  &
                             nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,     &
                             RT_DOMAIN(did)%LATVAL,        &
                             RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,          &
                             nlst_rt(did)%HIRES_OUT)
 	   end if
 	  
-	  ! remove surface excess groundwater for faster initialization
-     	  do jj=1,RT_DOMAIN(did)%JXRT
-	    do ii=1,RT_DOMAIN(did)%IXRT
-	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
-		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
-		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
-	      end if
-	    end do
-	  end do
+! 	  ! remove surface excess groundwater for faster initialization
+!      	  do jj=1,RT_DOMAIN(did)%JXRT
+! 	    do ii=1,RT_DOMAIN(did)%IXRT
+! 	      if((gw2d(did)%elev(ii,jj) - gw2d(did)%ho(ii,jj)) .lt. 0.) then
+! 		gw2d(did)%ho(ii,jj) = gw2d(did)%ho(ii,jj) &
+! 		                    - (gw2d(did)%ho(ii,jj)-gw2d(did)%elev(ii,jj))
+! 	      end if
+! 	    end do
+! 	  end do
 	  
           end do
 
@@ -336,6 +337,7 @@ endif
       allocate(gw2d(did)%ho     (ix,jx))
       allocate(gw2d(did)%h      (ix,jx))
       allocate(gw2d(did)%convgw (ix,jx))
+      allocate(gw2d(did)%excess (ix,jx))
 
       allocate(gw2d(did)%qgw_chanrt (ix,jx))
       
@@ -350,7 +352,7 @@ endif
     subroutine gwstep(ix, jx, dx,              &
 		      ltype, elev, bot,        &
 		      hycond, poros, compres,  &
-                      ho, h, convgw,           &
+                      ho, h, convgw, excess,   &
                       ebot, eocn,              &
 		      dt, istep)
 
@@ -382,7 +384,8 @@ endif
 
       real,    intent(inout), dimension(ix,jx) ::  &
         h,              &  ! head, after ghmcompute (m)           (ret)
-        convgw             ! convergence due to gw flow (m/s)     (ret)
+        convgw,         &  ! convergence due to gw flow (m/s)     (ret)
+        excess            
 
       real, intent(inout) :: ebot, eocn
      
@@ -567,17 +570,17 @@ fydim = jfe-jfs+1
           su = poros(i,j)                    ! new (volug)
           sc = 1.
  
-          if      (ho(i,j).le.elev(i,j) .and. h(i,j).le.elev(i,j)) then
+!           if      (ho(i,j).le.elev(i,j) .and. h(i,j).le.elev(i,j)) then
             sf2(i,j) = su
-          else if (ho(i,j).ge.elev(i,j) .and. h(i,j).ge.elev(i,j)) then
-            sf2(i,j) = sc
-          else if (ho(i,j).le.elev(i,j) .and. h(i,j).ge.elev(i,j)) then
-            shp = sf2(i,j) * (h(i,j) - ho(i,j))
-            sf2(i,j) = shp * sc / (shp - (su-sc)*(elev(i,j)-ho(i,j)))
-          else if (ho(i,j).ge.elev(i,j) .and. h(i,j).le.elev(i,j)) then
-            shp = sf2(i,j) * (ho(i,j) - h(i,j))
-            sf2(i,j) = shp * su / (shp + (su-sc)*(ho(i,j)-elev(i,j)))
-          endif
+!           else if (ho(i,j).ge.elev(i,j) .and. h(i,j).ge.elev(i,j)) then
+!             sf2(i,j) = sc
+!           else if (ho(i,j).le.elev(i,j) .and. h(i,j).ge.elev(i,j)) then
+!             shp = sf2(i,j) * (h(i,j) - ho(i,j))
+!             sf2(i,j) = shp * sc / (shp - (su-sc)*(elev(i,j)-ho(i,j)))
+!           else if (ho(i,j).ge.elev(i,j) .and. h(i,j).le.elev(i,j)) then
+!             shp = sf2(i,j) * (ho(i,j) - h(i,j))
+!             sf2(i,j) = shp * su / (shp + (su-sc)*(ho(i,j)-elev(i,j)))
+!           endif
 
         enddo
       enddo
@@ -594,7 +597,7 @@ fydim = jfe-jfs+1
 
 !       Set transmissivities. Use min(h,elev)-bot instead of h-bot,
 !       since if h > elev, thickness of groundwater flow is just
-!       elev-bot.
+!       elev-bot. (uses geometric mean)
 
 
       do j=jts,jte
@@ -1032,13 +1035,22 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
 #endif
 
       
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-!        Compute convergence rate due to ground water flow (returned)
+!     Compute exfiltration amount and 
+!     convergence rate due to ground water 
+!     flow
 
       do j=jts,jte
         do i=its,ite
-          if (ltype(i,j).eq.1) then
+	  
+	  if((elev(i,j) - h(i,j)) .lt. 0.) then
+	    excess(i,j) = sf2(i,j)*(h(i,j) - elev(i,j))*1000 ! m to mm
+                 h(i,j) = elev(i,j)
+          else 
+	    excess(i,j) = 0.
+	  end if
+	  
+          if(ltype(i,j).eq.1) then
             convgw(i,j) = sf2(i,j) * (h(i,j)-ho(i,j)) / dt
           else
             convgw(i,j) = 0.
@@ -1187,7 +1199,7 @@ subroutine gwSoilFlux(did)
         if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
 	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))
 	  
-	else if(ztrans(i,j) < 0) then
+	else if(ztrans(i,j) < 0 .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
 	  do k=nsoil,1,-1
 	     if(ztrans(i,j) .le. sum(rt_domain(did)%sldpth(k:nsoil))*100*(-1)) then
 	       RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
