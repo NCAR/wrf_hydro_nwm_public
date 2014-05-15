@@ -2332,8 +2332,8 @@ end subroutine get_albedo12m_netcdf
      iret = nf_inq_varid(ncid,  "QSTRMVOLRT", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
  
-!    xdum = SFCHEADSUBRT 
-!!   where (vegtyp(:,:) == 16) xdum = -1.E33
+!     xdum = SFCHEADSUBRT 
+!     where (vegtyp(:,:) == 16) xdum = -1.E33
 !DJG inv       jj = int(jxrt/decimation)
        jj = 1
        ii = 0
@@ -4440,6 +4440,7 @@ end subroutine mpp_output_chrt
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SFCHEADRT,"sfcheadrt" )
 
+
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
 #endif
@@ -4532,6 +4533,11 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"sh2owgt",NF_FLOAT,3,(/dimid_ixrt,dimid_jxrt,dimid_soil/),varid)
             iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+!yw test
+!           iret = nf_def_var(ncid,"lksatrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf_def_var(ncid,"soldeprt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf_def_var(ncid,"sub_resid",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
@@ -4572,6 +4578,13 @@ end subroutine mpp_output_chrt
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT, "QBDRYRT" )
             call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT, "qstrmvolrt" )
+
+!yw test
+!           call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%lksatrt, "lksatrt" )
+            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%soldeprt, "soldeprt" )
+            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%sub_resid, "sub_resid" )
+
+
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
 #ifdef MPP_LAND
@@ -4791,6 +4804,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
      write(6,*) "nlst_rt(did)%nsoil=",nlst_rt(did)%nsoil
 #endif
+
      if(nlst_rt(did)%rst_typ .eq. 1 ) then 
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
@@ -4809,6 +4823,13 @@ end subroutine mpp_output_chrt
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
             call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT,"qstrmvolrt")
+
+!yw test
+!           call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%lksatrt,"lksatrt")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%soldeprt,"soldeprt")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%sub_resid,"sub_resid")
+
+
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call read_rst_crt_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink")
               call read_rst_crt_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1")
