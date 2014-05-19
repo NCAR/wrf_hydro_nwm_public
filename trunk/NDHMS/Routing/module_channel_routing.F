@@ -434,7 +434,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND 
        ,lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks &
 #endif
-       ,gwBaseSwCRT, gw_head, qgw_chanrt, gwChanCondSw, gwChanCondConst &
+       ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConst &
        )
 
        IMPLICIT NONE
@@ -477,10 +477,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
 
 !DJG GW-chan coupling variables...
-        REAL, DIMENSION(NLINKS)                   :: d_GW_CHAN_HEAD
+        REAL, DIMENSION(NLINKS)                   :: dzGwChanHead
         REAL, DIMENSION(NLINKS)                   :: Q_GW_CHAN_FLUX     !DJG !!! Change 'INTENT' to 'OUT' when ready to update groundwater state...
         REAL, DIMENSION(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: gw_head            !DJG !!! groundwater head from Fersch-2d gw implementation...units (m ASL)
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: gwHead            !DJG !!! groundwater head from Fersch-2d gw implementation...units (m ASL)
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: qgw_chanrt         !DJG !!! Channel-gw flux as used in Fersch 2d gw implementation...units (m^3/s)...Change 'INTENT' to 'OUT' when ready to update groundwater state...
          
 
@@ -538,7 +538,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         QLateral = 0
         QSUM     = 0
         QLLAKE   = 0
-        
+
+        dzGwChanHead = 0.
 
         IF(channel_option .ne. 3) then   !--muskingum methods ROUTE ON DT timestep, not DTRT!!
 #ifdef MPP_LAND
@@ -705,15 +706,15 @@ nodeType:if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
 gwOption:   if(gwBaseSwCRT == 3) then
 
 !DJG Implement gw-channel coupling...idealized hardwire here using a generic 'bank conductivity' term = 0.0005 m/s...
-!              d_GW_CHAN_HEAD(i)=(ELRT(CHANXI(i),CHANYJ(i))-gw_head(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
+!              dzGwChanHead(i)=(ELRT(CHANXI(i),CHANYJ(i))-gwHead(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
 
-             d_GW_CHAN_HEAD(i) = gw_head(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i))  !--units in (m)
+             dzGwChanHead(i) = gwHead(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i)) + 1 !--units in (m); assume 1 m deep channel
 
              if(gwChanCondSw .eq. 0) then
                 qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
 	        
              else if(gwChanCondSw .eq. 1) then
-                qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConst * d_gw_chan_head(i) &
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConst * dzGwChanHead(i) &
                                                 * CHANLEN(i) * 2. ! channel bed interface, units in (m^3/s), + is flux into channel...
 
              else
@@ -723,7 +724,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
              
              Q_GW_CHAN_FLUX(i) = qgw_chanrt(CHANXI(i),CHANYJ(i))
 !             if ( i .eq. 1001 ) then
-!                print *, Q_GW_CHAN_FLUX(i), d_GW_CHAN_HEAD(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)
+!                print *, Q_GW_CHAN_FLUX(i), dzGwChanHead(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)
 !             end if
              if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
                 Q_GW_CHAN_FLUX(i) = 0.

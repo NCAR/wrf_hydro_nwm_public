@@ -447,7 +447,7 @@ module module_HYDRO_drv
 
 !!!For parameter setup runs output the percolation for each basin,
 !!!otherwise comment out this output...
-    else if (nlst_rt(did)%GWBASESWCRT .eq. 3) then
+    else if (nlst_rt(did)%gwBaseSwCRT .eq. 3) then
 
 #ifdef HYDRO_D
            write(6,*) "*****bf******start 2d_gw_model "
@@ -461,12 +461,6 @@ module module_HYDRO_drv
 	     
 	   end if
            
-           ! add/rm channel-aquifer exchange contribution
-           
-           
-           gw2d(did)%ho =  gw2d(did)%ho  &
-                        +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
-                        /  gw2d(did)%poros)
 	   
 	   gw2d(did)%excess = 0.
 	   
@@ -548,9 +542,19 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
 #endif
-       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%h, gw2d(did)%qgw_chanrt, &
+       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConst &
        )
+    
+    if((nlst_rt(did)%gwBaseSwCRT == 3) .and. (nlst_rt(did)%gwChanCondSw .eq. 1)) then
+      
+           ! add/rm channel-aquifer exchange contribution
+           
+           gw2d(did)%ho =  gw2d(did)%ho  &
+                        +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
+                        /  gw2d(did)%poros)
+      
+    endif
   endif
 
 #ifdef HYDRO_D
