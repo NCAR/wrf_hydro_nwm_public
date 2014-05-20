@@ -30,7 +30,7 @@ contains
    real, intent(in),dimension(numbasns)              :: C,ex,z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
    real, intent(out),dimension(numbasns)             :: qin_gwsubbas
-   real, intent(out),dimension(numbasns)             :: z_gwsubbas
+   real, intent(inout),dimension(numbasns)             :: z_gwsubbas
    real, intent(out),dimension(ixrt,jxrt)            :: qinflowbase
    integer, intent(in),dimension(ixrt,jxrt)          :: gw_strm_msk
    integer, intent(in)                               :: GWBASESWCRT
@@ -54,6 +54,8 @@ contains
    net_perc = 0.
    qout_gwsubbas = 0.
    qin_gwsubbas = 0.
+
+
 
 
 
@@ -101,6 +103,10 @@ contains
 
      if(GWBASESWCRT.eq.1) then  !active exponential bucket...
 ! Assuming and exponential relation between z and Q...
+
+
+    write (6,*) "DJG",C(bas),ex(bas),z_gwsubbas(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas)
+
        qout_gwsubbas(bas) = C(bas)*EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas)) !Exp.model. q_out (m^3/s)
 
 !Adjust level of GW depth...
