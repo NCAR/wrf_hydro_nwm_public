@@ -60,6 +60,9 @@ CONTAINS
   allocate( rt_domain(did)%SO8RT   	(IXRT,JXRT,8) )
   allocate( rt_domain(did)%SO8RT_D   	(IXRT,JXRT,3) )
   allocate( rt_domain(did)%OVROUGHRT   (IXRT,JXRT) )
+!  allocate( rt_domain(did)%QSUBBDRYTRT   (IXRT,JXRT) )
+!  rt_domain(did)%QSUBBDRYTRT = 0.0
+
   allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
   allocate( rt_domain(did)%RETDEPRT    (IXRT,JXRT) )
   allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )

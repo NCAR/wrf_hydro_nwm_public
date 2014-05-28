@@ -15,7 +15,7 @@ contains
 !------------------------------------------------------------------------------
 
    subroutine simp_gw_buck(ix,jx,ixrt,jxrt,numbasns,basns_area,&
-                            gwsubbasmsk, runoff1x, runoff2x, z_gwsubbas, qin_gwsubbas,&
+                            gwsubbasmsk, runoff1x, runoff2x, z_gwsubbas_tmp, qin_gwsubbas,&
                             qout_gwsubbas,qinflowbase,gw_strm_msk,gwbas_pix_ct,dist,DT,&
                             C,ex,z_mx,GWBASESWCRT,OVRTSWCRT)
    implicit none
@@ -30,7 +30,8 @@ contains
    real, intent(in),dimension(numbasns)              :: C,ex,z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
    real, intent(out),dimension(numbasns)             :: qin_gwsubbas
-   real, intent(inout),dimension(numbasns)             :: z_gwsubbas
+   real, intent(inout),dimension(numbasns)             :: z_gwsubbas_tmp
+   real*8,dimension(numbasns)             :: z_gwsubbas
    real, intent(out),dimension(ixrt,jxrt)            :: qinflowbase
    integer, intent(in),dimension(ixrt,jxrt)          :: gw_strm_msk
    integer, intent(in)                               :: GWBASESWCRT
@@ -54,14 +55,26 @@ contains
    net_perc = 0.
    qout_gwsubbas = 0.
    qin_gwsubbas = 0.
-
+   
+   z_gwsubbas = z_gwsubbas_tmp
 
 
 
 
 !!!Calculate aggregated percolation from deep runoff into GW basins...
    do i=1,ix
+#ifdef MPP_LAND
+       if ((left_id .lt. 0) .and. (i .eq. ix) ) goto 991
+       if ((right_id .lt. 0) .and. (i .eq. 1) )  goto 991
+       if ((left_id .ge. 0) .and. (right_id .ge. 0) .and. ( (i.eq.1) .or. (i.eq.ix) ) ) goto 991
+#endif
+
      do j=1,jx
+#ifdef MPP_LAND
+       if ((up_id .lt. 0) .and. (j .eq. 1) )  goto 992
+       if ((down_id .lt. 0) .and. (j .eq. jx) )  goto 992
+       if ((left_id .ge. 0) .and. (right_id .ge. 0) .and. ( (j.eq.1) .or. (j.eq.jx) ) ) goto 992
+#endif
        do bas=1,numbasns
          if(gwsubbasmsk(i,j).eq.bas) then
            if(OVRTSWCRT.ne.0) then
@@ -72,7 +85,9 @@ contains
            ct_bas8(bas) = ct_bas8(bas) + 1
          end if
        end do
+992    continue
      end do
+991    continue
    end do
 
 #ifdef MPP_LAND
@@ -88,9 +103,9 @@ contains
 !!!Loop through GW basins to adjust for inflow/outflow
 
    DO bas=1,numbasns     ! Loop for GW bucket calcs...
-#ifdef MPP_LAND
-     if(ct_bas(bas) .gt. 0) then
-#endif
+! #ifdef MPP_LAND
+!      if(ct_bas(bas) .gt. 0) then
+! #endif
 
      net_perc(bas) = sum_perc(bas) / ct_bas(bas)   !units (mm)
      qin_gwsubbas(bas) = net_perc(bas)/1000. * ct_bas(bas) * basns_area(bas) !units (m^3)
@@ -105,7 +120,7 @@ contains
 ! Assuming and exponential relation between z and Q...
 
 
-    write (6,*) "DJG",C(bas),ex(bas),z_gwsubbas(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas)
+!   write (6,*) "DJG",C(bas),ex(bas),z_gwsubbas(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas)
 
        qout_gwsubbas(bas) = C(bas)*EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas)) !Exp.model. q_out (m^3/s)
 
@@ -126,9 +141,9 @@ contains
 
 
 
-#ifdef MPP_LAND
-     endif
-#endif
+! #ifdef MPP_LAND
+!      endif
+! #endif
    END DO                 ! End loop for GW bucket calcs...
 
 
@@ -165,6 +180,11 @@ contains
 !             qinflowbase(i,j) = k*slope
 !           end do
 !         end do
+
+#ifdef MPP_LAND
+           call MPP_LAND_COM_REAL(qinflowbase,IXRT,JXRT,99)
+#endif
+        z_gwsubbas = z_gwsubbas_tmp
 
    return
 
