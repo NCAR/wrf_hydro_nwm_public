@@ -499,6 +499,7 @@
         INTEGER :: i,j
 !!! Initialize variables
         REAL, PARAMETER :: nexp=1.0      ! local power law exponent
+        qsub = 0.                        ! initialize flux = 0. !DJG 5 May 2014
 
 !yw        soldep = 2.
         
@@ -534,7 +535,8 @@
           end if
 
 !Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
-          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
+          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
+!DJG lacks tan(beta) of original Wigmosta version          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
 
           qqsub = gamma * hh
           qsub(i,j) = qsub(i,j) + qqsub
@@ -2456,7 +2458,8 @@
 !              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) 
               LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
 ! ...and scale from max to 0 when SMC decreases from SMCMAX to SMCREF...
-                                    ((SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL)) / &
+!!DJG error found from KIT,improper scaling       ((SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL)) / &
+                                    (max(0.,(SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL))) / &
                                     (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
 
 
