@@ -59,6 +59,8 @@ contains
 
    z_gwsubbas = z_gwsubbas_tmp
 
+
+
 !!!Calculate aggregated percolation from deep runoff into GW basins...
    do i=1,ix
      do j=1,jx

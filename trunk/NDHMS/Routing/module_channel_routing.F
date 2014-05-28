@@ -158,7 +158,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 ! ------------------------------------------------
 !   FUNCTION Diffusive wave
 ! ------------------------------------------------
-        REAL FUNCTION DIFFUSION(nod,z1,z2,h1,h2,dx,n, &
+        REAL FUNCTION DIFFUSION(nod,z1,z20,h1,h2,dx,n, &
                                 Bw, Cs)
         IMPLICIT NONE
 !-- channel geometry and characteristics
@@ -177,6 +177,17 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL    :: Sf         !-friction slope
         REAL    :: sgn        !-0 or 1 
         INTEGER :: nod         !- node
+        REAL ::  z20, dzx
+
+! added by Wei Yu for bad data.
+
+        dzx = (z1 - z20)/dx
+        if(dzx .lt. 0.002) then
+           z2 = z1 - dx*0.002  
+        else
+           z2 = z20
+        endif
+!end 
 
         if (n.le.0.0.or.Cs.le.0.or.Bw.le.0) then
 #ifdef HYDRO_D
@@ -194,7 +205,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
        !endif
 
 !modifieed by Wei Yu for false geography data
-         if(abs(z1-z2) .gt. 1.0E4) then
+         if(abs(z1-z2) .gt. 1.0E5) then
 #ifdef HYDRO_D
              print*, "Warning: huge slope rest to 0 for channel grid.", z1,z2
 #endif
@@ -411,7 +422,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 ! ------------------------------------------------
 !   SUBROUTINE drive_CHANNEL
 ! ------------------------------------------------
-     Subroutine drive_CHANNEL(KT, IXRT,JXRT, SUBRTSWCRT, &
+     Subroutine drive_CHANNEL(latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
        QSUBRT, LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, &
        LAKE_MSKRT, DT, DTRT, MUSK, MUSX, QLINK, &
@@ -440,6 +451,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETLNK
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
 
+       real , dimension(ixrt,jxrt):: latval,lonval
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: ORDER, TYPEL !--link
@@ -500,13 +512,14 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
         integer flag
 
+        integer :: kk2  ! tmp 
+
         QLAKEIP = 0
         QLINKPREV = 0
         HLINKTMP = 0
         CVOLTMP = 0
         CD = 0  
 
-!yw        node = 3924
         node = 1
 
 
@@ -712,18 +725,9 @@ crnt:    DO                      !-- loop on the courant condition
            DO i = 1,NLINKS
 #endif
            if (TYPEL(i) .eq. 0 .AND. HLINKTMP(FROM_NODE(i)) .gt. RETDEP_CHAN) then 
-            
-           if(from_node(i) .ne. to_node(i) ) &  ! added by Wei Yu
-              QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
-                HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
-                CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
-
-#ifdef HYDRO_D
-            if(qlink(i,1)  .ge. 1.0E6) then
-               print*, "Warning: big Qlink",QLINK(i,1),i,TO_NODE(i),from_node(i)
-            endif
-#endif
-
+                   QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
+                     HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
+                     CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
             else !--  we are just computing critical depth for outflow points
                QLINK(i,1) =0.
             endif
@@ -746,7 +750,8 @@ crnt:    DO                      !-- loop on the courant condition
           END DO
 
 #ifdef MPP_LAND
-    call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,99)
+    !call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,99)
+    call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,0)
 #endif
 
 #ifdef MPP_LAND
@@ -762,6 +767,8 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
 
          flag = 99
+
+
 #ifdef MPP_LAND
          DO iyw = 1,yw_MPP_NLINKS
              i = nlinks_index(iyw)
@@ -772,9 +779,19 @@ crnt:    DO                      !-- loop on the courant condition
            if( TYPEL(i).eq.0 .and. CVOLTMP(i) .ge. 0.001 .and.(CVOLTMP(i)-QSUM(i)*DTCT)/CVOLTMP(i) .le. -0.01 ) then  
             flag = -99
 #ifdef HYDRO_D
-            write(6,*) "Unstatble at node ",i
+            write(6,*) "******* start diag ***************"
+            write(6,*) "Unstable at node ",i, "i=",CHANXI(i),"j=",CHANYJ(i)
+            write(6,*) "Unstatble at node ",i, "lat=",latval(CHANXI(i),CHANYJ(i)), "lon=",lonval(CHANXI(i),CHANYJ(i))
             write(6,*) "TYPEL, CVOLTMP, QSUM, QSUM*DTCT",TYPEL(i), CVOLTMP(i), QSUM(i), QSUM(i)*DTCT
             write(6,*) "qsubrt, qstrmvolrt,qlink",QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)),qlink(i,1),qlink(i,2)
+               write(6,*) "current nodes, z, h", ZELEV(FROM_NODE(i)),HLINKTMP(FROM_NODE(i))
+            if(TO_NODE(i) .gt. 0) then
+               write(6,*) "to nodes, z, h", ZELEV(TO_NODE(i)), HLINKTMP(TO_NODE(i))
+            else
+               write(6,*) "no to nodes   "
+            endif
+               write(6,*) "CHANLEN(i), MannN(i), Bw(i), ChSSlp(i) ", CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)
+            write(6,*) "*******end of  diag ***************"
 #endif
             
             goto 999  
@@ -788,8 +805,11 @@ crnt:    DO                      !-- loop on the courant condition
 
 
         if(flag < 0 )   then   
+             
+             ! call smoth121(HLINK,nlinks,maxv_p,pnode,to_node)
+
              if(DTCT .gt. 0.001) then                  !-- timestep in seconds
-              DTCT = DTCT/2                            !-- 1/2 timestep
+              DTCT = max(DTCT/2 ,0.1)                           !-- 1/2 timestep
               KRT = 0                                  !-- restart counter
               HLINKTMP = HLINK                         !-- set head and vol to start value of timestep
               CVOLTMP = CVOL
@@ -832,15 +852,14 @@ crnt:    DO                      !-- loop on the courant condition
               else
 
 !DJG remove to have const. flux b.c....   CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
-               CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
+                  CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
+               endif
 
-              endif
                ! change in volume is inflow, lateral flow, and outflow 
-               CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) - &
                !yw DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*DXRT),HLINKTMP(i), &
-               DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
-               CD(i),CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
-
+                   CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) - &
+                       DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
+                       CD(i),CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
             elseif (TYPEL(i) .eq. 2) then              !--- into a reservoir, assume critical depth
               if (QSUM(i)+QLateral(i) .lt. 0) then
 #ifdef HYDRO_D
@@ -852,10 +871,9 @@ crnt:    DO                      !-- loop on the courant condition
               endif
  
               !-- compute volume in reach (m^3)
-              CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) - &
-              DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
-              CD(i) ,CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
- 
+                   CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) - &
+                          DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
+                             CD(i) ,CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
               !-- compute flow rate into lake from all contributing nodes (cms)
               QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
 
@@ -915,9 +933,9 @@ crnt:    DO                      !-- loop on the courant condition
          DO i = 1, NLINKS                                                !--- compute volume and depth at each node
 #endif
             if(TYPEL(i) == 0) then !-- regular channel node, finalize head and flow
-               QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
-                  HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
-                  CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
+                   QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
+                      HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
+                      CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
             endif
          enddo
 
@@ -1089,7 +1107,9 @@ crnt:    DO                      !-- loop on the courant condition
         print *, "interval won't work to find CD of lnk ", lnk
         print *, "Q, hl, hu", Q, hl, hu
         print *, "cd lwr, upr", CDf(Q,BW,hl,z), CDf(Q,BW,hu,z)
-        call hydro_stop("in CRITICALDEPTH") 
+        ! call hydro_stop("in CRITICALDEPTH") 
+        CRITICALDEPTH = -9999
+        return
 #endif
       else
         Q = 0.0
@@ -1209,4 +1229,39 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
          return
     end subroutine check_channel
+
+    subroutine smoth121(var,nlinks,maxv_p,from_node,to_node)
+        implicit none
+        integer,intent(in) ::  nlinks, maxv_p
+        integer, intent(in), dimension(nlinks):: to_node
+        integer, intent(in), dimension(nlinks):: from_node(nlinks,maxv_p)
+        real, intent(inout), dimension(nlinks) :: var
+        real, dimension(nlinks) :: vartmp
+        integer :: i,j  , k, from,to
+        integer :: plen
+              vartmp = 0
+              do i = 1, nlinks
+                 to = to_node(i)
+                 plen = from_node(i,1)
+                 if(plen .gt. 1) then 
+                     do k = 1, plen-1 
+                         from = from_node(i,k+1)
+                         if(to .gt. 0) then
+                            vartmp(i) = vartmp(i)+0.25*(var(from)+2.*var(i)+var(to))
+                         else
+                            vartmp(i) = vartmp(i)+(2.*var(i)+var(from))/3.0
+                         endif
+                     end do
+                     vartmp(i) = vartmp(i) /(plen-1)
+                 else
+                         if(to .gt. 0) then
+                            vartmp(i) = vartmp(i)+(2.*var(i)+var(to)/3.0)
+                         else
+                            vartmp(i) = var(i)
+                         endif
+                 endif
+              end do
+              var = vartmp 
+        return
+    end subroutine smoth121
 END MODULE module_channel_routing
