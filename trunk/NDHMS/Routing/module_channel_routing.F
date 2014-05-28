@@ -695,7 +695,7 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
-               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. 9999)) then !--a lake node
+               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
               QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) = &
                  QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) + &
                  (LAKEINFLORT(CHANXI(i),CHANYJ(i))+ &
@@ -851,9 +851,8 @@ crnt:    DO                      !-- loop on the courant condition
               if (QSUM(i)+QLateral(i) .lt. 0) then
               else
 
-!yw               CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
-!yw                 if(cd(i) .le. -9999) cd(i) = HLINKTMP(i)
-                  cd(i) = HLINKTMP(i)
+!DJG remove to have const. flux b.c....   CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
+                  CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
                endif
 
                ! change in volume is inflow, lateral flow, and outflow 
@@ -867,8 +866,8 @@ crnt:    DO                      !-- loop on the courant condition
                print *, i, 'CrtDpth Qsum+QLat into lake< 0',QSUM(i), QLateral(i)
 #endif
               else
-               CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
-                 if(cd(i) .le. -9999) cd(i) = HLINKTMP(i)
+!DJG remove to have const. flux b.c....    CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
+               CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
               endif
  
               !-- compute volume in reach (m^3)

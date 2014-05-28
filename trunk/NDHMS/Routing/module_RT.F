@@ -636,7 +636,8 @@ CONTAINS
      do bas = 1,rt_domain(did)%numbasns
        read(81,812) bas_id,jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
              jnk,rt_domain(did)%z_gwsubbas(bas)
-812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+!DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
      end do
      close(81)
 #ifdef MPP_LAND
