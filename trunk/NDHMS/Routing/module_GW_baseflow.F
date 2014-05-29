@@ -62,18 +62,7 @@ contains
 
 !!!Calculate aggregated percolation from deep runoff into GW basins...
    do i=1,ix
-#ifdef MPP_LAND
-       if ((left_id .lt. 0) .and. (i .eq. ix) ) goto 991
-       if ((right_id .lt. 0) .and. (i .eq. 1) )  goto 991
-       if ((left_id .ge. 0) .and. (right_id .ge. 0) .and. ( (i.eq.1) .or. (i.eq.ix) ) ) goto 991
-#endif
-
      do j=1,jx
-#ifdef MPP_LAND
-       if ((up_id .lt. 0) .and. (j .eq. 1) )  goto 992
-       if ((down_id .lt. 0) .and. (j .eq. jx) )  goto 992
-       if ((left_id .ge. 0) .and. (right_id .ge. 0) .and. ( (j.eq.1) .or. (j.eq.jx) ) ) goto 992
-#endif
        do bas=1,numbasns
          if(gwsubbasmsk(i,j).eq.bas) then
            if(OVRTSWCRT.ne.0) then
@@ -84,9 +73,7 @@ contains
            ct_bas8(bas) = ct_bas8(bas) + 1
          end if
        end do
-992    continue
      end do
-991    continue
    end do
 
 #ifdef MPP_LAND
@@ -203,9 +190,6 @@ contains
 !           end do
 !         end do
 
-#ifdef MPP_LAND
-           call MPP_LAND_COM_REAL(qinflowbase,IXRT,JXRT,99)
-#endif
         z_gwsubbas = z_gwsubbas_tmp
 
    return
