@@ -425,7 +425,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
      Subroutine drive_CHANNEL(latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
        QSUBRT, LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, &
-       LAKE_MSKRT, DT, DTRT, MUSK, MUSX, QLINK, &
+       LAKE_MSKRT, DT, DTCT,DTRT, MUSK, MUSX, QLINK, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, &
        RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
        ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
@@ -468,7 +468,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL , INTENT(INOUT), DIMENSION(NLINKS)   :: HLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
         REAL, INTENT(IN)                          :: DTRT  !-- routing timestep
-        REAL                                      :: DTCT, dist(ixrt,jxrt,9)
+        REAL, INTENT(INOUT):: DTCT
+        REAL                                         :: dist(ixrt,jxrt,9)
         REAL                                      :: RETDEP_CHAN
         INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
@@ -648,7 +649,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
  
          KRT = 0                  !-- initialize the time counter
-         DTCT = DTRT              !-- initialize the routing timestep to the timestep in namelist (s)
+
+         DTCT = min(DTCT*2.0,DTRT)
+!yw         DTCT = DTRT              !-- initialize the routing timestep to the timestep in namelist (s)
+       
          HLINKTMP = HLINK         !-- temporary storage of the water elevations (m)
          CVOLTMP = CVOL           !-- temporary storage of the volume of water in channel (m^3)
          QLAKEIP = QLAKEI         !-- temporary lake inflow from previous timestep  (cms)

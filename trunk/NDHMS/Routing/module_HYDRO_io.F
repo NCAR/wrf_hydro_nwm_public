@@ -4563,7 +4563,8 @@ end subroutine mpp_output_chrt
 
 !         put global attribute
           iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
-
+          iret = nf_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,nlst_rt(did)%olddate(1:19))
+          iret = nf_put_att_real(ncid,NF_GLOBAL,"DTCT",NF_REAL, 1,nlst_rt(did)%DTCT)
           iret = nf_enddef(ncid)
 
 #ifdef MPP_LAND
@@ -4813,9 +4814,16 @@ end subroutine mpp_output_chrt
      if(IO_id .eq. my_id) then
 #endif
         iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+        iret = NF_GET_ATT_REAL(ncid, NF_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
+        if(nlst_rt(did)%DTCT .gt. 0) then
+           nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT)
+        else
+           nlst_rt(did)%DTCT = nlst_rt(did)%DTRT
+        endif
 #ifdef MPP_LAND
     endif
     call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+    call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 #endif
 
 #ifdef HYDRO_D
