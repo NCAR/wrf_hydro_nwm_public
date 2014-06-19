@@ -52,7 +52,7 @@
 ! ZLVL = 15.0
  ZLVL = 30.0
 
-!Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format, 3=WRF, 4=Idealized, 5=Ideal w/ Spec.Precip., 6=HRLDAS-hrl y format w/ Spec. Precip 
+!Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format, 3=WRF, 4=Idealized, 5=Ideal w/ Spec.Precip., 6=HRLDAS-hrl y format w/ Spec. Precip ,7=WRF w/Spec. Precip
  FORC_TYP = 3
 
 ! for extract greenfrac
