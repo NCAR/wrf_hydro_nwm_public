@@ -80,7 +80,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SWDOWN    ! solar down at surface [W m-2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GLW       ! longwave down at surface [W m-2]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  P8W       ! 3D pressure, valid at interface [Pa]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL, RAINBL_tmp    ! precipitation entering land model [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL, RAINBL_tmp,pcp_old    ! precipitation entering land model [mm]
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
 
@@ -600,6 +600,8 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( P8W       (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D pressure, valid at interface [Pa]
   ALLOCATE ( RAINBL    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
   ALLOCATE ( RAINBL_tmp    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
+  ALLOCATE ( pcp_old    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
+  pcp_old = 0.0
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
 
@@ -1114,7 +1116,7 @@ if(rank == 0) then
            CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
              xstart, xend, ystart, yend,    &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
-             GLW,SWDOWN,RAINBL_tmp,LAI,SNOWH,ITIME,FORCING_TIMESTEP)
+             GLW,SWDOWN,RAINBL_tmp,LAI,SNOWH,ITIME,FORCING_TIMESTEP,pcp_old)
    
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate
