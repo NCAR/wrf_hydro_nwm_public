@@ -847,11 +847,6 @@ end subroutine get_albedo12m_netcdf
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
         CHARACTER(len=28)                            :: dir
 !Dummy inverted grids from arc
-	INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION_inv
-        INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS_inv
-        INTEGER, DIMENSION(IXRT,JXRT) :: LAKE_MSKRT_inv
-        INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER_inv  !-- gridded stream orderk
-        REAL, DIMENSION(IXRT,JXRT)      :: LATVAL_inv, LONVAL_inv
 
 
 !----DJG,DNY New variables for channel and lake routing
@@ -924,10 +919,10 @@ end subroutine get_albedo12m_netcdf
    IF((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then
 
         var_name = "LATITUDE"
-        iret = get2d_real(var_name,LATVAL_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,LATVAL,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
         var_name = "LONGITUDE"
-        iret = get2d_real(var_name,LONVAL_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,LONVAL,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 
     END IF
@@ -941,24 +936,24 @@ end subroutine get_albedo12m_netcdf
 
 
        var_name = "LAKEGRID"
-       call get2d_int(var_name,LAKE_MSKRT_inv,ixrt,jxrt,&
+       call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
        var_name = "FLOWDIRECTION"
-       call get2d_int(var_name,DIRECTION_inv,ixrt,jxrt,&
+       call readRT2d_int(var_name,DIRECTION,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
        var_name = "STREAMORDER"
-       call get2d_int(var_name,GORDER_inv,ixrt,jxrt,&
+       call readRT2d_int(var_name,GORDER,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
        var_name = "frxst_pts"
-       call get2d_int(var_name,GSTRMFRXSTPTS_inv,ixrt,jxrt,&
+       call readRT2d_int(var_name,GSTRMFRXSTPTS,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 !--1/13/2011 real hi res sfc calibrtion parameters (...)
 !       var_name = "LAKEGRID"
-!       call get2d_int(var_name,LAKE_MSKRT_inv,ixrt,jxrt,&
+!       call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
 !               trim(geo_finegrid_flnm))
 !       var_name = "LAKEGRID"
-!       call get2d_int(var_name,LAKE_MSKRT_inv,ixrt,jxrt,&
+!       call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
 !               trim(geo_finegrid_flnm))
 
 
@@ -977,30 +972,8 @@ end subroutine get_albedo12m_netcdf
 !!!Flip y-dimension of highres grids from exported Arc files...
 
 
-        ct = 0
-        do i=1,ixrt
-        jj=jxrt
-         do j=1,jxrt
-           LAKE_MSKRT(i,j)=LAKE_MSKRT_inv(i,jj)
-           DIRECTION(i,j)=DIRECTION_inv(i,jj)
-           GORDER(i,j)=GORDER_inv(i,jj)
-           GSTRMFRXSTPTS(i,j)=GSTRMFRXSTPTS_inv(i,jj)
-           if(GSTRMFRXSTPTS(i,j).ne.-9999) ct = ct+1
-           LATVAL(i,j)=LATVAL_inv(i,jj)
-           LONVAL(i,j)=LONVAL_inv(i,jj)
-           jj=jxrt-j
-         end do
-        end do
        
-!        if(dist(1,1,1) .eq. -999) then 
-!           call get_dist_ll(dist,latval,lonval,ixrt,jxrt)
-!        end if
 
-        
-#ifdef HYDRO_D
-	print *, "Number of frxst pts: ",ct
-#endif
-          
      
 ! temp fix for buggy Arc export...
         do j=1,jxrt
@@ -1484,6 +1457,9 @@ end subroutine get_albedo12m_netcdf
          CHARACTER(len=*):: var_name,fileName
          real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
          real, dimension(ixrt,jxrt) :: inv_tmp
+
+         inv_tmp = -9999.9
+
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
                      trim(fileName))
          do i=1,ixrt
@@ -4055,12 +4031,8 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
 !Dummy inverted grids
-        REAL, DIMENSION(IXRT,JXRT) :: ELRT_inv,LKSATFAC_inv
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
-        REAL, DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC_inv
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
-        REAL, DIMENSION(IXRT,JXRT) :: RETDEPRTFAC_inv
-        INTEGER, DIMENSION(IXRT,JXRT) :: CH_NETRT_inv
 
         INTEGER         :: I,J, iret, jj
         CHARACTER(len=256)        :: var_name
@@ -4070,13 +4042,9 @@ end subroutine mpp_output_chrt
 
         var_name = "TOPOGRAPHY"
 
-        iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,ELRT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
-        if(iret .ne. 0) then
-            write(6,*) "Error reading TOPOGRAPHY failed" 
-            call hydro_stop("READ_ROUTING_seq")
-        endif
         write(6,*) "read ",var_name
 #endif
 
@@ -4086,7 +4054,7 @@ end subroutine mpp_output_chrt
 !                     trim(geo_finegrid_flnm))
 
         var_name = "CHANNELGRID"
-        call get2d_int(var_name,CH_NETRT_inv,ixrt,jxrt,&
+        call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 #ifdef HYDRO_D
@@ -4094,43 +4062,28 @@ end subroutine mpp_output_chrt
 #endif
 
         var_name = "LKSATFAC"
-        LKSATFAC_inv = -9999.9
-        iret = get2d_real(var_name,LKSATFAC_inv,ixrt,jxrt,&
+        LKSATFAC = -9999.9
+        call readRT2d_real(var_name,LKSATFAC,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 #ifdef HYDRO_D
         write(6,*) "read ",var_name
 #endif
 
-           where (LKSATFAC_inv == -9999.9) LKSATFAC_inv = 1000.0  !specify LKSAFAC if no term avail...
+           where (LKSATFAC == -9999.9) LKSATFAC = 1000.0  !specify LKSAFAC if no term avail...
 
 
 !1.12.2012...Read in routing calibration factors...
         var_name = "RETDEPRTFAC"
-        iret = get2d_real(var_name,RETDEPRTFAC_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,RETDEPRTFAC,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
-        where (RETDEPRTFAC_inv < 0.) RETDEPRTFAC_inv = 1.0  ! reset grid to = 1.0 if non-valid value exists
+        where (RETDEPRTFAC < 0.) RETDEPRTFAC = 1.0  ! reset grid to = 1.0 if non-valid value exists
 
         var_name = "OVROUGHRTFAC"
-        iret = get2d_real(var_name,OVROUGHRTFAC_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,OVROUGHRTFAC,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
-        where (OVROUGHRTFAC_inv <= 0.) OVROUGHRTFAC_inv = 1.0 ! reset grid to = 1.0 if non-valid value exists
+        where (OVROUGHRTFAC <= 0.) OVROUGHRTFAC = 1.0 ! reset grid to = 1.0 if non-valid value exists
 
-
-
-!!!Flip y-dimension of highres grids from exported Arc files...
-
-        do i=1,ixrt
-        jj=jxrt
-         do j=1,jxrt
-           ELRT(i,j)=ELRT_inv(i,jj)
-           CH_NETRT(i,j)=CH_NETRT_inv(i,jj)
-           LKSATFAC(i,j)=LKSATFAC_inv(i,jj)
-           RETDEPRTFAC(i,j)=RETDEPRTFAC_inv(i,jj)
-           OVROUGHRTFAC(i,j)=OVROUGHRTFAC_inv(i,jj)
-           jj=jxrt-j
-         end do
-        end do
 
 #ifdef HYDRO_D
         write(6,*) "finish READ_ROUTING_seq"
@@ -4939,12 +4892,8 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
 !Dummy inverted grids
-        REAL, DIMENSION(IXRT,JXRT) :: ELRT_inv,LKSATFAC_inv
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
-        REAL, DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC_inv
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
-        REAL, DIMENSION(IXRT,JXRT) :: RETDEPRTFAC_inv
-        INTEGER, DIMENSION(IXRT,JXRT) :: CH_NETRT_inv
 
         INTEGER         :: I,J, iret, jj
         CHARACTER(len=256)        :: var_name
@@ -4953,7 +4902,7 @@ end subroutine mpp_output_chrt
         CHARACTER(len=256)       :: geo_finegrid_flnm
 
         var_name = "TOPOGRAPHY"
-        iret = get2d_real(var_name,ELRT_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,ELRT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
         write(6,*) "read ",var_name
@@ -4965,7 +4914,7 @@ end subroutine mpp_output_chrt
 !                     trim(geo_finegrid_flnm))
 
         var_name = "CHANNELGRID"
-        call get2d_int(var_name,CH_NETRT_inv,ixrt,jxrt,&
+        call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 #ifdef HYDRO_D
@@ -4973,42 +4922,27 @@ end subroutine mpp_output_chrt
 #endif
 
         var_name = "LKSATFAC"
-        LKSATFAC_inv = -9999.9
-        iret = get2d_real(var_name,LKSATFAC_inv,ixrt,jxrt,&
+        LKSATFAC = -9999.9
+        call readRT2d_real(var_name,LKSATFAC,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
         write(6,*) "read ",var_name
 #endif
 
-           where (LKSATFAC_inv == -9999.9) LKSATFAC_inv = 1000.0  !specify LKSAFAC if no term avail...
+           where (LKSATFAC == -9999.9) LKSATFAC = 1000.0  !specify LKSAFAC if no term avail...
 
 
 !1.12.2012...Read in routing calibration factors...
         var_name = "RETDEPRTFAC"
-        iret = get2d_real(var_name,RETDEPRTFAC_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,RETDEPRTFAC,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
-        where (RETDEPRTFAC_inv < 0.) RETDEPRTFAC_inv = 1.0  ! reset grid to = 1.0 if non-valid value exists
+        where (RETDEPRTFAC < 0.) RETDEPRTFAC = 1.0  ! reset grid to = 1.0 if non-valid value exists
 
         var_name = "OVROUGHRTFAC"
-        iret = get2d_real(var_name,OVROUGHRTFAC_inv,ixrt,jxrt,&
+        call readRT2d_real(var_name,OVROUGHRTFAC,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
-        where (OVROUGHRTFAC_inv <= 0.) OVROUGHRTFAC_inv = 1.0 ! reset grid to = 1.0 if non-valid value exists
+        where (OVROUGHRTFAC <= 0.) OVROUGHRTFAC = 1.0 ! reset grid to = 1.0 if non-valid value exists
 
-
-
-!!!Flip y-dimension of highres grids from exported Arc files...
-
-        do i=1,ixrt
-        jj=jxrt
-         do j=1,jxrt
-           ELRT(i,j)=ELRT_inv(i,jj)
-           CH_NETRT(i,j)=CH_NETRT_inv(i,jj)
-           LKSATFAC(i,j)=LKSATFAC_inv(i,jj)
-           RETDEPRTFAC(i,j)=RETDEPRTFAC_inv(i,jj)
-           OVROUGHRTFAC(i,j)=OVROUGHRTFAC_inv(i,jj)
-           jj=jxrt-j
-         end do
-        end do
 
 #ifdef HYDRO_D  
         write(6,*) "finish READ_ROUTING_old"
@@ -5048,10 +4982,6 @@ end subroutine mpp_output_chrt
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
         CHARACTER(len=28)                            :: dir
 !Dummy inverted grids from arc
-	INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION_inv
-        INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS_inv
-        INTEGER, DIMENSION(IXRT,JXRT) :: LAKE_MSKRT_inv
-        INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER_inv  !-- gridded stream orderk
 
 
 !----DJG,DNY New variables for channel and lake routing
@@ -6334,57 +6264,11 @@ end subroutine mpp_output_chrt
                              l = CH_NETLNK(i,j)
                              yw_mpp_nlinks = yw_mpp_nlinks + 1
                              nlinks_index(yw_mpp_nlinks) = l
-                       !     if( (from_node(l) .lt. 0) .or. (to_node(l) .lt. 0)  ) then
-                       !        write(60+my_id,*) "to(l)=",to_node(l), "global l =",map_l2g(l), "TYPEL=",TYPEL(l)
-                       !        write(60+my_id,*) "i=",i,"ixrt=",ixrt,"j=",j,"jxrt=",jxrt
-                       !     endif
                endif
             endif
           end do
       end do
 
-!      call hydro_stop("8888888")
-
-!     do i = 1, nlinks
-!         if(node_table(i) > 0 ) then
-!              if( (from_node(i) .gt. 0) .and. (to_node(i) .gt. 0) .and. (typel(i) .ge. 0)  ) then
-!                 yw_mpp_nlinks = yw_mpp_nlinks + 1
-!                 nlinks_index(yw_mpp_nlinks) = i
-!              endif
-!         endif
-!     enddo
-
-
-
-! add the boundary links
-      goto 111
-
-      do j = 1, jxrt
-          do i = 1, ixrt
-            l = CH_NETLNK(i,j)
-            if(CH_NETLNK(i,j) .gt. 0) then
-               if( (from_node(l) .gt. 0) .and. (to_node(l) .gt. 0)  ) then
-                   if( i.eq.1 .and. left_id > 0) then
-                        yw_mpp_nlinks = yw_mpp_nlinks + 1
-                        nlinks_index(yw_mpp_nlinks) = l
-                   elseif ( i.eq. ixrt .and. right_id >0) then
-                        yw_mpp_nlinks = yw_mpp_nlinks + 1
-                        nlinks_index(yw_mpp_nlinks) = l
-                   elseif ( j.eq. 1 .and. down_id >0 ) then
-                        yw_mpp_nlinks = yw_mpp_nlinks + 1
-                        nlinks_index(yw_mpp_nlinks) = l
-                   elseif ( j.eq. jxrt .and. up_id >0) then
-                        yw_mpp_nlinks = yw_mpp_nlinks + 1
-                        nlinks_index(yw_mpp_nlinks) = l
-                   else
-                      continue
-                   endif
-                endif
-            endif
-          end do
-      end do
-
-111   continue
 
         call mpp_land_bcast_real(NLAKES,HRZAREA)
         call mpp_land_bcast_real(NLAKES,LAKEMAXH)

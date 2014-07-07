@@ -1011,12 +1011,12 @@ end module module_HYDRO_drv
       print*, ""
 #endif
 
-         call mpp_land_sync()
+!        call mpp_land_sync()
 !        write(my_id+90,*) msg
 !        call flush(my_id+90)
 
+         call mpp_land_abort()
          call MPI_finalize(ierr)
-!        call mpp_land_abort()
 #else
          stop "Fatal Error"
 #endif
