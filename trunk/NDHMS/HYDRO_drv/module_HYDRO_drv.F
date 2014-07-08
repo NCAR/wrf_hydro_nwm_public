@@ -152,6 +152,8 @@ module module_HYDRO_drv
              .or. nlst_rt(did)%GWBASESWCRT .gt. 0 ) then
            if (nlst_rt(did)%HIRES_OUT.ge.1) then
 
+           
+!              goto 9991
 
 #ifdef MPP_LAND
               call mpp_output_rt(rt_domain(did)%g_ixrt, rt_domain(did)%g_jxrt,    &
@@ -173,6 +175,11 @@ module module_HYDRO_drv
                 RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%HIRES_OUT,&
                 RT_DOMAIN(did)%QBDRYRT )
 
+! 9991            continue
+
+           end if
+
+
            if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
 	     
               call output_gw(    &
@@ -191,7 +198,6 @@ module module_HYDRO_drv
 	  endif
 ! BF end gw2d output section
 
-           end if
 #ifdef HYDRO_D
           write(6,*) "before call output_chrt"
 #endif
@@ -215,10 +221,10 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
 !             call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
 !                 RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%GCH_NETLNK, RT_DOMAIN(did)%ORDER, &
+!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
 !                 nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
 !                 RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-!                 RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
+!                 RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
 !                 RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
 
@@ -502,13 +508,14 @@ module module_HYDRO_drv
 !-------------------------------------------------------------------
   IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT.EQ.2) THEN
  
-    call drive_CHANNEL(RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
+    call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
+       RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
        RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT, &
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTRT, &
+       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT,nlst_rt(did)%DTRT,&
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &

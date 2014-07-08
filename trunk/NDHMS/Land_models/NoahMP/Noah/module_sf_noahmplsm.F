@@ -895,11 +895,8 @@ contains
     SNEQVO  = SNEQV
 
     QVAP = MAX( FGEV/LATHEA, 0.)       ! positive part of fgev
-
-
     QDEW = ABS( MIN(FGEV/LATHEA, 0.))  ! negative part of fgev
     EDIR = QVAP - QDEW
-
 
 ! compute water budgets (water storages, ET components, and runoff)
 !if(iloc.eq.1086.and.jloc.eq.552) then
@@ -1656,9 +1653,6 @@ contains
           IF(OPT_BTR == 3) then                  ! SSiB
             PSI   = MAX(PSIWLT,-PSISAT*(MAX(0.01,SH2O(IZ))/SMCMAX)**(-BEXP) )
             GX    = 1.-EXP(-5.8*(LOG(PSIWLT/PSI))) 
-          END IF
-          IF(OPT_BTR == 4) then                  ! Test tanh formulation
-            GX    = TANH(2.5*(SH2O(IZ)-SMCWLT) / (SMCMAX-SMCWLT))
           END IF
        
           GX = MIN(1.,MAX(0.,GX))
@@ -3331,6 +3325,10 @@ contains
           call wrf_error_fatal ( "CRITICAL PROBLEM IN MODULE_SF_NOAHMPLSM:VEGEFLUX" )
         END IF
 
+! prepare for longwave rad.
+
+        AIR = -EMV*(1.+(1.-EMV)*(1.-EMG))*LWDN - EMV*EMG*SB*TG**4  
+        CIR = (2.-EMV*(1.-EMG))*EMV*SB
 ! ---------------------------------------------------------------------------------------------
       loop1: DO ITER = 1, NITERC    !  begin stability iteration
 
@@ -3341,8 +3339,6 @@ contains
             Z0H  = Z0M    !* EXP(-CZIL*0.4*258.2*SQRT(FV*Z0M))
             Z0HG = Z0MG   !* EXP(-CZIL*0.4*258.2*SQRT(FV*Z0MG))
        END IF
-!       Z0H = 0.01*Z0M     ! Barlage: test code
-!       Z0HG = 0.01*Z0MG
 
 ! aerodyn resistances between heights zlvl and d+z0v
 
@@ -3412,39 +3408,6 @@ contains
                   TV     ,MOZG   ,FHG    ,ILOC   ,JLOC   , & !inout
                   RAMG   ,RAHG   ,RAWG   ,RB     )           !out
 
-! ground section in the main loop
-
-        AIR = - EMG*(1.-EMV)*LWDN - EMG*EMV*SB*TV**4
-        CIR = EMG*SB
-        CSH = RHOAIR*CPAIR/RAHG
-        CEV = RHOAIR*CPAIR / (GAMMA*(RAWG+RSURF))
-        CGH = 2.*DF(ISNOW+1)/DZSNSO(ISNOW+1)
-
-        T = TDC(TG)
-        CALL ESAT(T, ESATW, ESATI, DSATW, DSATI)
-        IF (T .GT. 0.) THEN
-            ESTG  = ESATW
-            DESTG = DSATW
-        ELSE
-            ESTG  = ESATI
-            DESTG = DSATI
-        END IF
-
-        IRG = CIR*TG**4 + AIR
-        SHG = CSH * (TG         - TAH         )
-        EVG = CEV * (ESTG*RHSUR - EAH         )
-        GH  = CGH * (TG         - STC(ISNOW+1))
-
-        B = SAG-IRG-SHG-EVG-GH
-        A = 4.*CIR*TG**3+CSH+CEV*DESTG+CGH
-        DTG = B/A
-
-        IRG = IRG + 4.*CIR*TG**3*DTG
-        SHG = SHG + CSH*DTG
-        EVG = EVG + CEV*DESTG*DTG
-        GH  = GH  + CGH*DTG
-        TG  = TG  + DTG
-
 ! es and d(es)/dt evaluated at tv
 
        T = TDC(TV)
@@ -3479,16 +3442,7 @@ contains
          CALL  CANRES (PARSHA,TV    ,BTRAN ,EAH    ,SFCPRS, & !in
                        RSSHA ,PSNSHA,ILOC  ,JLOC   )          !out
         END IF
-!	print*, 'rssun,rssha:',rssun,rssha
-!	print*, 'parsun,parsha:',parsun,parsha
-!	print*, 'btran:',btran
-!	print*, 'totrs:',1.0/(LAISUNE/(RB+RSSUN) + LAISHAE/(RB+RSSHA))
      END IF
-
-! prepare for longwave rad.
-
-        AIR = -EMV*(1.+(1.-EMV)*(1.-EMG))*LWDN - EMV*EMG*SB*TG**4  
-        CIR = (2.-EMV*(1.-EMG))*EMV*SB
 
 ! prepare for sensible heat flux above veg.
 
@@ -3511,16 +3465,7 @@ contains
         BEA  = (CEW+CTW)/COND
         CEV  = (1.-BEA)*CEW*RHOAIR*CPAIR/GAMMA
         CTR  = (1.-BEA)*CTW*RHOAIR*CPAIR/GAMMA
-	
-!	print*, 'caw:',caw
-!	print*, 'cew:',cew
-!	print*, 'ctw:',ctw
-!	print*, 'cgw:',cgw
-!	print*, 'rb:',rb
-! 	print*, 'rawg:',rawg
-!	print*, 'rsurf:',rsurf
-!	print*, 'dtv:',dtv
-!
+
 ! evaluate surface fluxes with current temperature and solve for dts
 
         TAH = ATA + BTA*TV               ! canopy air T.
@@ -3566,6 +3511,43 @@ contains
 
      END DO loop1 ! end stability iteration
 
+! under-canopy fluxes and tg
+
+        AIR = - EMG*(1.-EMV)*LWDN - EMG*EMV*SB*TV**4
+        CIR = EMG*SB
+        CSH = RHOAIR*CPAIR/RAHG
+        CEV = RHOAIR*CPAIR / (GAMMA*(RAWG+RSURF))
+        CGH = 2.*DF(ISNOW+1)/DZSNSO(ISNOW+1)
+
+     loop2: DO ITER = 1, NITERG
+
+        T = TDC(TG)
+        CALL ESAT(T, ESATW, ESATI, DSATW, DSATI)
+        IF (T .GT. 0.) THEN
+            ESTG  = ESATW
+            DESTG = DSATW
+        ELSE
+            ESTG  = ESATI
+            DESTG = DSATI
+        END IF
+
+        IRG = CIR*TG**4 + AIR
+        SHG = CSH * (TG         - TAH         )
+        EVG = CEV * (ESTG*RHSUR - EAH         )
+        GH  = CGH * (TG         - STC(ISNOW+1))
+
+        B = SAG-IRG-SHG-EVG-GH
+        A = 4.*CIR*TG**3+CSH+CEV*DESTG+CGH
+        DTG = B/A
+
+        IRG = IRG + 4.*CIR*TG**3*DTG
+        SHG = SHG + CSH*DTG
+        EVG = EVG + CEV*DESTG*DTG
+        GH  = GH  + CGH*DTG
+        TG  = TG  + DTG
+
+     END DO loop2
+     
 !     TAH = (CAH*SFCTMP + CVH*TV + CGH*TG)/(CAH + CVH + CGH)
 
 ! if snow on ground and TG > TFRZ: reset TG = TFRZ. reevaluate ground fluxes.
@@ -3608,18 +3590,6 @@ contains
          Q2V = QSFC - ((EVC+TR)/FVEG+EVG)/(LATHEA*RHOAIR) * 1./CQ2V
       ENDIF
    ENDIF
-!   print *, "After second loop"
-!   print *, "SHG = ",shg
-!   print *, "SHC = ",shc
-!   print *, "TV = ",tv
-!   print *, "TAH = ",tah
-!   print *, "TG = ",tg
-!   print *, "SFCTMP = ",sfctmp
-!   print *, "T2MV = ",t2mv
-!   print *, "CAH = ",cah
-!   print *, "CAH2 = ",cah2
-!   print *, "SH1 = ",SHG+SHC/FVEG
-!   print *, "SH2 = ",RHOAIR*CPAIR*CAH*(TAH - SFCTMP)
 
 ! myj/ysu consistent 2m temperature over vegetation (if CQ2V .lt. 1e-5? )
    IF (OPT_SFC == 3 .OR. OPT_SFC == 4 ) THEN
@@ -7712,8 +7682,6 @@ contains
   IMPLICIT NONE
 ! ----------------------------------------------------------------------
 ! input
-
-
   INTEGER,                     INTENT(IN) :: ILOC   !grid index
   INTEGER,                     INTENT(IN) :: JLOC   !grid index
   INTEGER,                     INTENT(IN) :: NSOIL  !no. of soil layers

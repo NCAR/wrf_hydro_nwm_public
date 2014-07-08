@@ -136,6 +136,7 @@ CONTAINS
     nlst%RSTRT_SWC   = RSTRT_SWC  
     nlst%channel_option = channel_option
     nlst%DTRT   = DTRT
+    nlst%DTCT   = DTRT
     nlst%SUBRTSWCRT = SUBRTSWCRT
     nlst%OVRTSWCRT = OVRTSWCRT
     nlst%dxrt0 = dxrt

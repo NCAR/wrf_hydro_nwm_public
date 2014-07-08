@@ -1,7 +1,7 @@
    TYPE RT_FIELD  
    INTEGER :: IX, JX
    logical initialized
-  REAL    :: DX,GRDAREART,SUBFLORT,WATAVAILRT,QSUBDRYRT,QSUBBDRYTRT
+  REAL    :: DX,GRDAREART,SUBFLORT,WATAVAILRT,QSUBDRYRT
   REAL    :: SFHEAD1RT,INFXS1RT,QSTRMVOLTRT,QBDRYTRT,SFHEADRT,ETPND1,INFXSRTOT
   REAL    :: LAKE_INFLOTRT,accsuminfxs,diffsuminfxs,RETDEPFRAC
   REAL    :: VERTKSAT,l3temp,l4temp,l3moist,l4moist,RNOF1TOT,RNOF2TOT,RNOF3TOT
@@ -27,6 +27,8 @@
   ! INTEGER, allocatable, DIMENSION(:,:)      :: LAKE_MSKRT, BASIN_MSK,LAK_1K
   INTEGER, allocatable, DIMENSION(:,:)      :: LAKE_MSKRT, LAK_1K
   INTEGER, allocatable, DIMENSION(:,:)      :: g_LAK_1K
+  ! REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT, QSUBBDRYTRT
+  REAL :: QSUBBDRYTRT
   REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT
   REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
   INTEGER,    allocatable, DIMENSION(:,:,:) :: SO8RT_D, SO8LD_D
@@ -80,6 +82,8 @@
   REAL, allocatable, DIMENSION(:)      :: QLAKEO      !lake outflow in difussion scheme
   INTEGER, allocatable, DIMENSION(:)   :: LAKENODE   !which nodes flow into which lakes
   REAL, allocatable, DIMENSION(:)      :: CVOL       ! channel volume
+  INTEGER, allocatable, DIMENSION(:,:)   :: pnode    !parent nodes : start from 2
+  integer :: maxv_p              ! array size for  second column of the pnode
 
 
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params

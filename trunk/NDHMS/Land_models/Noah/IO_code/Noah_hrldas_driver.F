@@ -73,7 +73,7 @@ program Noah_hrldas_driver
 
   INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP,SOLTYP
   REAL,    allocatable, DIMENSION(:,:)   :: TERRAIN, LATITUDE, LONGITUDE
-  REAL,    allocatable, DIMENSION(:,:)   :: T2,XLONG,U,V,PRES,SHORT,PRCP1
+  REAL,    allocatable, DIMENSION(:,:)   :: T2,XLONG,U,V,PRES,SHORT,PRCP1, prcp_old
   REAL,    allocatable, DIMENSION(:,:)   :: FPAR, ZNT, LAI, TBOT_2D, FPAR_SAVE, LAI_SAVE
   REAL,    allocatable, DIMENSION(:,:)   :: CMC,SNODEP,WEASD,T1
   REAL,    allocatable, DIMENSION(:,:)   :: ETPX,ETAX,GRDFLX,CHX,RUNOFF1X,RUNOFF2X
@@ -745,6 +745,7 @@ program Noah_hrldas_driver
   allocate( PRES     (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( SHORT    (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( PRCP1    (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
+  allocate( PRCP_old    (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( FPAR     (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( ZNT      (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( LAI      (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
@@ -915,6 +916,7 @@ program Noah_hrldas_driver
   T2=-999.9
   T1=-999.9
   PRCP1=0
+  PRCP_old=0
 
   RUNOFF1X=0.0 
   RUNOFF2X=0.0 
@@ -1343,11 +1345,12 @@ program Noah_hrldas_driver
      if(olddate == forcDate) then
         CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,    &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,FORCING_TIMESTEP)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,FORCING_TIMESTEP,prcp_old)
 
         call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
         forcDate = newdate
      endif
+
 
 !yw     if ( update_snow_from_forcing ) then
 !yw        ! Every 24 hours, update the snow field from analyses.
@@ -2118,6 +2121,7 @@ program Noah_hrldas_driver
               SMCWLT1(I,J)=SMCWLT
               ALBEDX(I,J)=ALBEDO
               ACRAIN(I,J)=ACRAIN(I,J)+PRCP*dt      ! (mm/s to mm)
+              
               ACSNOM(I,J)=ACSNOM(I,J)+snomlt*1.E3  ! Accumulated snow melt (convert m to mm).
               ! ESNOW2D:  Accumulated snow sublimation (converted from W m{-2} to kg m{-2} s{-2} to mm)
               ESNOW2D(I,J)=ESNOW2D(I,J)+(ESNOW/2.83E6)*dt

@@ -65,6 +65,9 @@ CONTAINS
   allocate( rt_domain(did)%SO8RT   	(IXRT,JXRT,8) )
   allocate( rt_domain(did)%SO8RT_D   	(IXRT,JXRT,3) )
   allocate( rt_domain(did)%OVROUGHRT   (IXRT,JXRT) )
+!  allocate( rt_domain(did)%QSUBBDRYTRT   (IXRT,JXRT) )
+!  rt_domain(did)%QSUBBDRYTRT = 0.0
+
   allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
   allocate( rt_domain(did)%RETDEPRT    (IXRT,JXRT) )
   allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
@@ -445,6 +448,18 @@ CONTAINS
                )
 
 
+!yw #ifdef MPP_LAND
+!yw          call MPP_CHROUTING_CONF(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt, rt_domain(did)%NLAKES,rt_domain(did)%NLINKS,&
+!yw               rt_domain(did)%lake_mskrt, rt_domain(did)%lake_index,rt_domain(did)%link_location,rt_domain(did)%HRZAREA,rt_domain(did)%LAKEMAXH,&
+!yw               rt_domain(did)%WEIRC,rt_domain(did)%WEIRL,&
+!yw               rt_domain(did)%ORIFICEC,rt_domain(did)%ORIFICEA,rt_domain(did)%ORIFICEE,rt_domain(did)%LATLAKE,rt_domain(did)%LONLAKE,rt_domain(did)%ELEVLAKE, &
+!yw               rt_domain(did)%FROM_NODE,rt_domain(did)%TO_NODE,rt_domain(did)%ZELEV,rt_domain(did)%CHLAT,rt_domain(did)%CHLON,rt_domain(did)%TYPEL, &
+!yw               rt_domain(did)%ORDER,rt_domain(did)%CHANLEN, &
+!yw               rt_domain(did)%CHANXI,rt_domain(did)%CHANYJ, rt_domain(did)%lakenode,rt_domain(did)%mpp_nlinks, rt_domain(did)%nlinks_index, rt_domain(did)%maxorder, &
+!yw               rt_domain(did)%yw_mpp_nlinks)
+!!!!!   lake_index,Link_Location)
+!yw#endif
+!        call deriveFromNode(did)
     endif
   END IF
 
@@ -653,7 +668,8 @@ CONTAINS
      do bas = 1,rt_domain(did)%numbasns
        read(81,812) bas_id,jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
              jnk,rt_domain(did)%z_gwsubbas(bas)
-812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+!DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
      end do
      close(81)
 #ifdef MPP_LAND
@@ -876,6 +892,36 @@ CONTAINS
 
 
    end subroutine LandRT_ini
+
+       subroutine deriveFromNode(did)
+            implicit none
+            integer :: did
+            integer :: i,j, kk, maxv
+            integer :: tmp(rt_domain(did)%nlinks)
+            tmp = 0
+            maxv = 1
+            do i = 1, rt_domain(did)%nlinks
+                if(rt_domain(did)%to_node(i) .gt. 0) then
+                    kk = rt_domain(did)%to_node(i)
+                    tmp(kk) = tmp(kk) + 1
+                    if(maxv .lt. tmp(kk)) maxv = tmp(kk)
+                end if
+            end do
+            allocate(rt_domain(did)%pnode(rt_domain(did)%nlinks,maxv+1) )
+            rt_domain(did)%maxv_p = maxv+1
+            rt_domain(did)%pnode = -99
+            rt_domain(did)%pnode(:,1) = 1
+            do i = 1, rt_domain(did)%nlinks
+                if(rt_domain(did)%to_node(i) .gt. 0) then
+                    j = rt_domain(did)%to_node(i)
+                    rt_domain(did)%pnode(j,1) = rt_domain(did)%pnode(j,1) + 1
+                    kk = rt_domain(did)%pnode(j,1)
+                    rt_domain(did)%pnode(j,kk) = i
+                end if
+            end do
+
+       end subroutine deriveFromNode
+
 
 
 END MODULE module_Routing
