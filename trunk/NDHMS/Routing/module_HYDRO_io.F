@@ -2117,7 +2117,7 @@ end subroutine get_albedo12m_netcdf
             iret = nf_put_att_text(ncid,varid,'units',7,'m^3/m^3')
             iret = nf_put_att_text(ncid,varid,'description',16,'moisture content')
             iret = nf_put_att_text(ncid,varid,'long_name',26,soilm)
-            iret = nf_put_att_text(ncid,varid,'coordinates',5,'x y z')
+!           iret = nf_put_att_text(ncid,varid,'coordinates',5,'x y z')
             iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
             iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
@@ -2393,8 +2393,8 @@ end subroutine get_albedo12m_netcdf
      iret = nf_inq_varid(ncid,  "QSTRMVOLRT", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
  
-!    xdum = SFCHEADSUBRT 
-!!   where (vegtyp(:,:) == 16) xdum = -1.E33
+!     xdum = SFCHEADSUBRT 
+!     where (vegtyp(:,:) == 16) xdum = -1.E33
 !DJG inv       jj = int(jxrt/decimation)
        jj = 1
        ii = 0
@@ -3004,7 +3004,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        iret = nf_put_att_text(ncid,varid,'units',6,'kg m-2')
        iret = nf_put_att_text(ncid,varid,'description',16,'moisture content')
        iret = nf_put_att_text(ncid,varid,'long_name',26,soilm)
-       iret = nf_put_att_text(ncid,varid,'coordinates',5,'x y z')
+!      iret = nf_put_att_text(ncid,varid,'coordinates',5,'x y z')
        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
@@ -4881,6 +4881,7 @@ end subroutine mpp_output_chrt
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SFCHEADRT,"sfcheadrt" )
 
+
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
 #endif
@@ -4965,7 +4966,7 @@ end subroutine mpp_output_chrt
           iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"smcwlt1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"infxsrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-!         iret = nf_def_var(ncid,"soldrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+          iret = nf_def_var(ncid,"soldrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
@@ -4973,6 +4974,12 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"sh2owgt",NF_FLOAT,3,(/dimid_ixrt,dimid_jxrt,dimid_soil/),varid)
             iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+
+
+
+
+
+
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
               iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
@@ -4984,12 +4991,21 @@ end subroutine mpp_output_chrt
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
               iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
+!yw test bucket model
+!             iret = nf_def_var(ncid,"gwbas_pix_ct",NF_FLOAT,1,(/dimid_basns/),varid)
+!             iret = nf_def_var(ncid,"gw_buck_exp",NF_FLOAT,1,(/dimid_basns/),varid)
+!             iret = nf_def_var(ncid,"z_max",NF_FLOAT,1,(/dimid_basns/),varid)
+!             iret = nf_def_var(ncid,"gw_buck_coeff",NF_FLOAT,1,(/dimid_basns/),varid)
+!             iret = nf_def_var(ncid,"qin_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
+!             iret = nf_def_var(ncid,"qinflowbase",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+!             iret = nf_def_var(ncid,"qout_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
             end if
           end if  
 
 !         put global attribute
           iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
-
+          iret = nf_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,nlst_rt(did)%olddate(1:19))
+          iret = nf_put_att_real(ncid,NF_GLOBAL,"DTCT",NF_REAL, 1,nlst_rt(did)%DTCT)
           iret = nf_enddef(ncid)
 
 #ifdef MPP_LAND
@@ -5004,7 +5020,7 @@ end subroutine mpp_output_chrt
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
-!      call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
+       call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt"  ) 
 
 
@@ -5013,6 +5029,13 @@ end subroutine mpp_output_chrt
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT, "QBDRYRT" )
             call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT, "qstrmvolrt" )
+
+!yw test
+
+
+!yw test
+
+
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
 #ifdef MPP_LAND
@@ -5059,6 +5082,14 @@ end subroutine mpp_output_chrt
 
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
               call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+!yw test bucket model
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gwbas_pix_ct,"gwbas_pix_ct" )
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp,"gw_buck_exp" )
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_max,"z_max" )
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_coeff,"gw_buck_coeff" )
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,"qin_gwsubbas" )
+!             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%qinflowbase,"qinflowbase")
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,"qout_gwsubbas" )
             end if
         end if  
 
@@ -5224,20 +5255,29 @@ end subroutine mpp_output_chrt
      if(IO_id .eq. my_id) then
 #endif
         iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+        iret = NF_GET_ATT_REAL(ncid, NF_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
+        if(nlst_rt(did)%DTCT .gt. 0) then
+           nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT)
+        else
+           nlst_rt(did)%DTCT = nlst_rt(did)%DTRT
+        endif
 #ifdef MPP_LAND
     endif
     call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+    call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 #endif
 
 #ifdef HYDRO_D
      write(6,*) "nlst_rt(did)%nsoil=",nlst_rt(did)%nsoil
 #endif
+
      if(nlst_rt(did)%rst_typ .eq. 1 ) then 
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
         call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
+        call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
      endif
  
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
@@ -5248,8 +5288,10 @@ end subroutine mpp_output_chrt
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
-            call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT,"qstrmvolrt")
+            call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
+
+
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
               call read_rst_crt_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink")
               call read_rst_crt_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1")
@@ -5258,9 +5300,10 @@ end subroutine mpp_output_chrt
               call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%nlinks,"resht")
               call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%nlinks,"qlakeo")
               call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%LAKE_INFLORT,"lake_inflort")
+
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0) then
-                 call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
+               call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
             end if
         end if
 

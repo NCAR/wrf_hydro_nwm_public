@@ -908,7 +908,7 @@ Contains
        indir,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
-       weasd,snodep,dt,k)
+       weasd,snodep,dt,k,prcp_old)
 ! This subrouting is going to read different forcing.
    implicit none
    ! in variable
@@ -1152,6 +1152,10 @@ Contains
            print*, "no ATM forcing data found at this time", inflnm
 #endif
         else
+#ifdef HYDRO_D
+           print*, "reading forcing data at this time", inflnm
+#endif
+           
            CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
                 PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
            PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
@@ -1197,12 +1201,15 @@ Contains
 
 ! Loop through data to screen for plausible values
        where(PRCP1 .lt. 0) PRCP1=PRCP_old
+       where(PRCP1 .gt. 10 ) PRCP1= PRCP_old 
        do i=1,ix
          do j=1,jx
            if (PRCP1(i,j).lt.0.) PRCP1(i,j)=0.0
            if (PRCP1(i,j).gt.0.138889) PRCP1(i,j)=0.138889  !set max pcp intens = 500 mm/h
          end do
        end do
+!       write(80,*) prcp1
+!       call hydro_stop("9999")
 
    end if
 
@@ -1291,6 +1298,7 @@ Contains
 
 ! Loop through data to screen for plausible values
        where(PRCP1 .lt. 0) PRCP1=PRCP_old
+       where(PRCP1 .gt. 10 ) PRCP1= PRCP_old ! set maximum to be 500 mm/h
        where(PRCP1 .gt. 0.138889) PRCP1= 0.138889 ! set maximum to be 500 mm/h
    end if
 
@@ -1718,7 +1726,7 @@ Contains
        indir,olddate,startdate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
-       weasd,snodep,dt,k,g_ix,g_jx,igrid)
+       weasd,snodep,dt,k,g_ix,g_jx,igrid,prcp_old)
 ! This subrouting is going to read different forcing.
 
 
@@ -1728,14 +1736,14 @@ Contains
    character(len=256) :: filename
    integer :: ix,jx,forc_typ,k,snow_assim,igrid  ! k is time loop
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
-          prcpnew,weasd,snodep
+          prcpnew,weasd,snodep,prcp_old
    real ::  dt
    ! tmp variable
    character(len=256) :: inflnm, product
    integer  :: i,j,mmflag, g_ix,g_jx
    real,dimension(ix,jx):: lai,fpar
    real,dimension(g_ix,g_jx):: g_T2,g_Q2X,g_U,g_V,g_XLONG, &
-             g_SHORT,g_PRCP1,g_PRES,g_weasd,g_snodep
+             g_SHORT,g_PRCP1,g_PRES,g_weasd,g_snodep,g_prcp_old
    integer flag 
    
 
@@ -1749,6 +1757,7 @@ Contains
      call write_io_real(SHORT,g_SHORT)
      call write_io_real(PRCP1,g_PRCP1)
      call write_io_real(PRES,g_PRES)
+     call write_io_real(prcp_old,g_PRCP_old)
 
 
    end if
@@ -1758,7 +1767,7 @@ Contains
         indir,olddate,hgrid,&
         global_nx,global_ny,forc_typ,snow_assim,  &
         g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
-        g_weasd,g_snodep,dt,k)
+        g_weasd,g_snodep,dt,k,g_prcp_old)
 #ifdef HYDRO_D
      write(6,*) "finish read forcing,startdate,olddate ",startdate,olddate
 #endif
@@ -1770,6 +1779,7 @@ Contains
      call decompose_data_real(g_XLONG,XLONG)
      call decompose_data_real(g_SHORT,SHORT)
      call decompose_data_real(g_PRCP1,PRCP1)
+     call decompose_data_real(g_prcp_old,prcp_old)
      call decompose_data_real(g_PRES,PRES)
 
      if(forc_typ .eq. 3 .or. forc_typ .eq. 6 .and. snow_assim .eq. 1) then

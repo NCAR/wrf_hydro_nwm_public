@@ -61,6 +61,9 @@ CONTAINS
   allocate( rt_domain(did)%SO8RT   	(IXRT,JXRT,8) )
   allocate( rt_domain(did)%SO8RT_D   	(IXRT,JXRT,3) )
   allocate( rt_domain(did)%OVROUGHRT   (IXRT,JXRT) )
+!  allocate( rt_domain(did)%QSUBBDRYTRT   (IXRT,JXRT) )
+!  rt_domain(did)%QSUBBDRYTRT = 0.0
+
   allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
   allocate( rt_domain(did)%RETDEPRT    (IXRT,JXRT) )
   allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
@@ -635,7 +638,8 @@ CONTAINS
      do bas = 1,rt_domain(did)%numbasns
        read(81,812) bas_id,jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
              jnk,rt_domain(did)%z_gwsubbas(bas)
-812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+!DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
      end do
      close(81)
 #ifdef MPP_LAND

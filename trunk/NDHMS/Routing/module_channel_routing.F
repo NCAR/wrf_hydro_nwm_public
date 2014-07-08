@@ -425,7 +425,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
      Subroutine drive_CHANNEL(latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
        QSUBRT, LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, &
-       LAKE_MSKRT, DT, DTRT, MUSK, MUSX, QLINK, &
+       LAKE_MSKRT, DT, DTCT,DTRT, MUSK, MUSX, QLINK, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, &
        RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
        ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
@@ -469,7 +469,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL , INTENT(INOUT), DIMENSION(NLINKS)   :: HLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
         REAL, INTENT(IN)                          :: DTRT  !-- routing timestep
-        REAL                                      :: DTCT, dist(ixrt,jxrt,9)
+        REAL, INTENT(INOUT):: DTCT
+        REAL                                         :: dist(ixrt,jxrt,9)
         REAL                                      :: RETDEP_CHAN
         INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, &
                                                      gwBaseSwCRT, gwChanCondSw
@@ -661,7 +662,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
  
          KRT = 0                  !-- initialize the time counter
-         DTCT = DTRT              !-- initialize the routing timestep to the timestep in namelist (s)
+
+         DTCT = min(DTCT*2.0,DTRT)
+!yw         DTCT = DTRT              !-- initialize the routing timestep to the timestep in namelist (s)
+       
          HLINKTMP = HLINK         !-- temporary storage of the water elevations (m)
          CVOLTMP = CVOL           !-- temporary storage of the volume of water in channel (m^3)
          QLAKEIP = QLAKEI         !-- temporary lake inflow from previous timestep  (cms)
@@ -752,7 +756,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                call hydro_stop("drive_CHANNEL") 
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
-               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. 9999)) then !--a lake node
+               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
               QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) = &
                  QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) + &
                  (LAKEINFLORT(CHANXI(i),CHANYJ(i))+ &
@@ -908,9 +912,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
               if (QSUM(i)+QLateral(i) .lt. 0) then
               else
 
-!yw               CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
-!yw                 if(cd(i) .le. -9999) cd(i) = HLINKTMP(i)
-                  cd(i) = HLINKTMP(i)
+!DJG remove to have const. flux b.c....   CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
+                  CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
                endif
 
                ! change in volume is inflow, lateral flow, and outflow 
@@ -924,8 +927,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
                print *, i, 'CrtDpth Qsum+QLat into lake< 0',QSUM(i), QLateral(i)
 #endif
               else
-               CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
-                 if(cd(i) .le. -9999) cd(i) = HLINKTMP(i)
+!DJG remove to have const. flux b.c....    CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
+               CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
               endif
  
               !-- compute volume in reach (m^3)
