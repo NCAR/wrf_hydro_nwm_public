@@ -76,6 +76,7 @@ program Noah_hrldas_driver
   
   INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP,SOLTYP
   REAL,    allocatable, DIMENSION(:,:)   :: TERRAIN, LATITUDE, LONGITUDE
+  REAL,    allocatable, DIMENSION(:,:)   :: refdk2d, refkdt2d
   REAL,    allocatable, DIMENSION(:,:)   :: T2,XLONG,U,V,PRES,SHORT,PRCP1, prcp_old
   REAL,    allocatable, DIMENSION(:,:)   :: FPAR, ZNT, LAI, TBOT_2D, FPAR_SAVE, LAI_SAVE
   REAL,    allocatable, DIMENSION(:,:)   :: CMC,SNODEP,WEASD,T1
@@ -741,6 +742,8 @@ program Noah_hrldas_driver
   allocate( TERRAIN  (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( LATITUDE (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( LONGITUDE(PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
+  allocate( refdk2d  (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
+  allocate( refkdt2d (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( T2       (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( XLONG    (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
   allocate( U        (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
@@ -983,7 +986,8 @@ program Noah_hrldas_driver
   CALL READLAND_HRLDAS(hrldas_constants_file,                           &
        parallel_xstart, parallel_xend,                                  &
        subwindow_ystart, subwindow_yend,                                &
-       ISWATER, VEGTYP, SOLTYP, TERRAIN, TBOT_2D, LATITUDE, LONGITUDE)
+       ISWATER, VEGTYP, SOLTYP, TERRAIN, TBOT_2D, LATITUDE, LONGITUDE,  &
+		      refdk2d, refkdt2d)
 
 !----------------------------------------------------------------------
 ! Initialize Model State
@@ -1952,7 +1956,9 @@ program Noah_hrldas_driver
 
 !              print*, 'SNOWH = ', SNOWH, 'i=',i, 'j=',j
 !              print*, 'SNEQV = ', SNEQV,'i=',i, 'j=',j
-               
+              
+              REFDK_DATA  = refdk2d(i,j)
+              REFKDT_DATA = refkdt2d(i,j)
 
               CALL SFLX (FFROZP,ICE,ISURBAN,DT,ZLVL,NSOIL,SLDPTH,   &    !C
                    .FALSE., LLANDUSE, LSOIL,                        &    !C
