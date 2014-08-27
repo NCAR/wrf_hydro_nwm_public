@@ -1,64 +1,36 @@
-Index: module_NoahMP_hrldas_driver.F
-===================================================================
---- module_NoahMP_hrldas_driver.F	(revision 122)
-+++ module_NoahMP_hrldas_driver.F	(working copy)
-@@ -890,8 +890,10 @@
-   else
-     call HYDRO_HRLDAS_ini(trim(hrldas_constants_file),&
-        xend-xstart+1,yend-ystart+1, &
--       nsoil,smc,stc,sh2ox, cmc, t1, lai, snodep,lai, fpar,vegtyp)
-+       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP)
- 
-+       SHDMAX = greenfrac
-+
-   endif
- #endif
- 
-@@ -948,12 +950,12 @@
-    allocate( prcp0    (ix,jx) )
-  
-    if(rank .ne. 0) then
--     allocate(smc (ix,jx,nsoil))
--     allocate(stc (ix,jx,nsoil))
--     allocate(sh2ox (ix,jx,nsoil))
--     smc = 0.0
--     stc = 0.0 
--     sh2ox = 0.0
-+     allocate(SMOIS (ix,NSOIL,jx))
-+     allocate(TSLB (ix,NSOIL,jx))
-+     allocate(SH2O (ix,NSOIL,jx))
-+     SMOIS = 0.0
-+     sh2o = 0.0
-+     TSLB  = 0.0
-    else
-      greenfrac = 0.0
-      call get_greenfrac(trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate)
-@@ -963,7 +965,9 @@
-      etpnd = 0.0
-      soldrain = 0.0
- 
--   call hrldas_drv_HYDRO_ini(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, k, dt, olddate,zsoil(1:NSOIL))
-+   call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
-+         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
-+         olddate,soil_thick_input(1:NSOIL))
-  
-  
- #endif
-@@ -1078,7 +1082,7 @@
-         CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
-           xstart, xend, ystart, yend,    &
-           T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
--          GLW,SWDOWN,RAINBL,LAI,snodep,k,prcp0,FORCING_TIMESTEP)
-+          GLW,SWDOWN,RAINBL,LAI,SNOWH,ITIME,prcp0,FORCING_TIMESTEP)
- 
-         call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
-         forcDate = newdate
-@@ -1367,7 +1371,7 @@
- #ifdef WRF_HYDRO
-   endif    ! rank if blook
- 
--    call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
-+    call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
- 
- #endif
- end subroutine land_driver_exe
+
+rm -f module_NoahMP_hrldas_driver.f
+cpp -C -P -traditional -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -D_HRLDAS_OFFLINE_  module_NoahMP_hrldas_driver.F > module_NoahMP_hrldas_driver.f
+mpif90 -o module_NoahMP_hrldas_driver.o -c -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I. \
+	-I../Noah -I../Utility_routines -I /opt/apps/intel11_1/netcdf/3.6.3/include module_NoahMP_hrldas_driver.f
+module_NoahMP_hrldas_driver.f(1342): error #6317: An ENDIF occurred without a corresponding IF THEN or ELSE statement.
+  endif   
+--^
+compilation aborted for module_NoahMP_hrldas_driver.f (code 1)
+make: [module_NoahMP_hrldas_driver.o] Error 1 (ignored)
+rm -f module_NoahMP_hrldas_driver.f
+
+
+rm -f main_hrldas_driver.f
+cpp -C -P -traditional -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -D_HRLDAS_OFFLINE_  main_hrldas_driver.F > main_hrldas_driver.f
+mpif90 -o main_hrldas_driver.o -c -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I. \
+	-I../Noah -I../Utility_routines -I /opt/apps/intel11_1/netcdf/3.6.3/include main_hrldas_driver.f
+main_hrldas_driver.f(11): error #7002: Error in opening the compiled module file.  Check INCLUDE paths.   [MODULE_NOAHMP_HRLDAS_DRIVER]
+   use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
+-------^
+main_hrldas_driver.f(17): error #6406: Conflicting attributes or multiple declaration of name.   [LAND_DRIVER_INI]
+   call land_driver_ini(NTIME)
+--------^
+main_hrldas_driver.f(20): error #6406: Conflicting attributes or multiple declaration of name.   [LAND_DRIVER_EXE]
+       call land_driver_exe(ITIME)
+------------^
+main_hrldas_driver.f(11): error #6580: Name in only-list does not exist.   [LAND_DRIVER_INI]
+   use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
+------------------------------------------^
+main_hrldas_driver.f(11): error #6580: Name in only-list does not exist.   [LAND_DRIVER_EXE]
+   use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
+-----------------------------------------------------------^
+compilation aborted for main_hrldas_driver.f (code 1)
+make: [main_hrldas_driver.o] Error 1 (ignored)
+rm -f main_hrldas_driver.f
+

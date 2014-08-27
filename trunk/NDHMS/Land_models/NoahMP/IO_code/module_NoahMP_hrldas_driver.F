@@ -941,7 +941,8 @@ print *, 'after init',shdmax(97,1)
 !------------------------------------------------------------------------
 
   
-  NTIME=(KHOUR+1)*3600./nint(dtbl)
+! jlm && NTIME=(KHOUR+1)*3600./nint(dtbl)  !!dont need to run for an extra hour! the whole point.
+  NTIME=(KHOUR)*3600./nint(dtbl)
   print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
   
   call system_clock(count=clock_count_1)   ! Start a timer
@@ -995,6 +996,7 @@ print *, 'after init',shdmax(97,1)
 
 end subroutine land_driver_ini
 
+!!===============================================================================jlm
   subroutine land_driver_exe(ITIME)
      implicit  none
      INTEGER :: ITIME          ! timestep loop
@@ -1002,98 +1004,6 @@ end subroutine land_driver_ini
 !  TIMELOOP : DO ITIME=1,NTIME
 
 !--------------------------------------------------------------------------------
-! Output for restart BEFORE the processing for this particular time has begun, 
-! so that upon restart, we're ready to go on this time step.
-!--------------------------------------------------------------------------------
-
-#ifdef WRF_HYDRO
-if(rank == 0) then
-     if ((olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
-            (olddate(15:16) == "00").and. (olddate(18:19) == "00")) yw_rst_out = 99
-#endif
- 
-
-     if (restart_frequency_hours > 0) then
-#ifdef WRF_HYDRO
-        if ((ITIME > 1) .and. ((mod(ITIME-1, int(restart_frequency_hours*3600./nint(dtbl))) == 0) .or. yw_rst_out .eq. 99) ) then
-            yw_rst_out = -9999
-#else
-        
-        if ((ITIME > 1) .and. (mod(ITIME-1, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
-#endif
-
-           if (rank == 0) print*, 'Write restart at '//olddate(1:13)
-           call prepare_restart_file(trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
-                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
-                nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
-                cen_lon, iswater, ivgtyp)
-
-           ! Since the restart files are not really for user consumption, the units and description are 
-           ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
-
-              call add_to_restart(TSLB      , "SOIL_T", layers="SOIL")
-              call add_to_restart(TSNOXY    , "SNOW_T", layers="SNOW")
-              call add_to_restart(SMOIS     , "SMC"   , layers="SOIL")
-              call add_to_restart(SH2O      , "SH2O"  , layers="SOIL")
-              call add_to_restart(ZSNSOXY   , "ZSNSO" , layers="SOSN")
-              call add_to_restart(SNICEXY   , "SNICE" , layers="SNOW")
-              call add_to_restart(SNLIQXY   , "SNLIQ" , layers="SNOW")
-              call add_to_restart(QSNOWXY   , "QSNOW" )
-              call add_to_restart(FWETXY    , "FWET"  )
-              call add_to_restart(SNEQVOXY  , "SNEQVO")
-              call add_to_restart(EAHXY     , "EAH"   )
-              call add_to_restart(TAHXY     , "TAH"   )
-              call add_to_restart(ALBOLDXY  , "ALBOLD")
-              call add_to_restart(CMXY      , "CM"    )
-              call add_to_restart(CHXY      , "CH"    )
-              call add_to_restart(ISNOWXY   , "ISNOW" )
-              call add_to_restart(CANLIQXY  , "CANLIQ")
-              call add_to_restart(CANICEXY  , "CANICE")
-              call add_to_restart(SNOW      , "SNEQV" )
-              call add_to_restart(SNOWH     , "SNOWH" )
-              call add_to_restart(TVXY      , "TV"    )
-              call add_to_restart(TGXY      , "TG"    )
-              call add_to_restart(ZWTXY     , "ZWT"   )
-              call add_to_restart(WAXY      , "WA"    )
-              call add_to_restart(WTXY      , "WT"    )
-              call add_to_restart(WSLAKEXY  , "WSLAKE")
-              call add_to_restart(LFMASSXY  , "LFMASS")
-              call add_to_restart(RTMASSXY  , "RTMASS")
-              call add_to_restart(STMASSXY  , "STMASS")
-              call add_to_restart(WOODXY    , "WOOD"  )
-              call add_to_restart(STBLCPXY  , "STBLCP")
-              call add_to_restart(FASTCPXY  , "FASTCP")
-              call add_to_restart(LAI       , "LAI"   )
-              call add_to_restart(XSAIXY    , "SAI"   )
-              call add_to_restart(VEGFRA    , "FPAR"  )
-              call add_to_restart(GVFMIN    , "GVFMIN")
-              call add_to_restart(GVFMAX    , "GVFMAX")
-              call add_to_restart(SHDMAX    , "SHDMAX")
-              call add_to_restart(ACSNOM    , "ACMELT")
-              call add_to_restart(ACSNOW    , "ACSNOW")
-              call add_to_restart(TAUSSXY   , "TAUSS" )
-              call add_to_restart(QSFC      , "QSFC"  )
-              call add_to_restart(SFCRUNOFF , "SFCRUNOFF")
-              call add_to_restart(UDRUNOFF  , "UDRUNOFF" )
-    ! below for opt_run = 5
-              call add_to_restart(SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
-              call add_to_restart(AREAXY    , "AREAXY"     )
-              call add_to_restart(SMCWTDXY  , "SMCWTDXY"   )
-              call add_to_restart(DEEPRECHXY, "DEEPRECHXY" )
-              call add_to_restart(QSLATXY   , "QSLATXY"    )
-              call add_to_restart(QRFSXY    , "QRFSXY"     )
-              call add_to_restart(QSPRINGSXY, "QSPRINGSXY" )
-              call add_to_restart(RECHXY    , "RECHXY"     )
-              call add_to_restart(QRFXY     , "QRFXY"      )
-              call add_to_restart(QSPRINGXY , "QSPRINGXY"  )
-              call add_to_restart(FDEPTHXY , "FDEPTHXY"  )
-              call add_to_restart(RIVERCONDXY , "RIVERCONDXY"  )
-              call add_to_restart(RIVERBEDXY , "RIVERBEDXY"  )
-              call add_to_restart(EQZWT , "EQZWT"  )
-              call add_to_restart(PEXPXY , "PEXPXY"  )
-          call finalize_restart_file()
-        endif
-     endif
 
 !---------------------------------------------------------------------------------
 ! Read the forcing data.
@@ -1101,6 +1011,10 @@ if(rank == 0) then
 
 ! For HRLDAS, we're assuming (for now) that each time period is in a 
 ! separate file.  So we can open a new one right now.
+
+#ifdef WRF_HYDRO
+if(rank == 0) then
+#endif
 
      inflnm = trim(indir)//"/"//&
           olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
@@ -1405,15 +1319,117 @@ if(rank == 0) then
      clock_count_1 = clock_count_2
 
 !yw  ENDDO TIMELOOP
+
+
+! jlm - this is the propsed, new code chunk essentially copied from above
 #ifdef WRF_HYDRO
-  endif    ! rank if blook
-
-  call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
-
+        if (( (olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
+              (olddate(15:16) == "00").and. (olddate(18:19) == "00")) .and. (restart_frequency_hours >0) ) yw_rst_out = 99
 #endif
+        if (restart_frequency_hours > 0) then
+#ifdef WRF_HYDRO
+            if ( ((mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0) .or. yw_rst_out .eq. 99) ) then
+                yw_rst_out = -9999
+#else
+        
+            if ( (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
+#endif
+
+                 call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
+
+            endif
+        endif
+
+#ifdef WRF_HYDRO
+  endif   
+  call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
+#endif
+
 end subroutine land_driver_exe
 
+!!===============================================================================
+subroutine lsm_restart()
+  implicit none 
+  if (rank == 0) print*, 'Write restart at '//olddate(1:13)
+  call prepare_restart_file(trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
+       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
+       nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
+       cen_lon, iswater, ivgtyp)
+  
+  ! Since the restart files are not really for user consumption, the units and description are 
+  ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
+  ! jlm - for data assimilation, the restarts are key (at least until we do the 
+  ! jlm - assimilation in memory). The restarts are also the main part of the DA 
+  ! jlm - diagnostics. Having units would be nice and having missing values for each
+  ! jlm - variable is also desirable.
+
+  call add_to_restart(TSLB      , "SOIL_T", layers="SOIL")
+  call add_to_restart(TSNOXY    , "SNOW_T", layers="SNOW")
+  call add_to_restart(SMOIS     , "SMC"   , layers="SOIL")
+  call add_to_restart(SH2O      , "SH2O"  , layers="SOIL")
+  call add_to_restart(ZSNSOXY   , "ZSNSO" , layers="SOSN")
+  call add_to_restart(SNICEXY   , "SNICE" , layers="SNOW")
+  call add_to_restart(SNLIQXY   , "SNLIQ" , layers="SNOW")
+  call add_to_restart(QSNOWXY   , "QSNOW" )
+  call add_to_restart(FWETXY    , "FWET"  )
+  call add_to_restart(SNEQVOXY  , "SNEQVO")
+  call add_to_restart(EAHXY     , "EAH"   )
+  call add_to_restart(TAHXY     , "TAH"   )
+  call add_to_restart(ALBOLDXY  , "ALBOLD")
+  call add_to_restart(CMXY      , "CM"    )
+  call add_to_restart(CHXY      , "CH"    )
+  call add_to_restart(ISNOWXY   , "ISNOW" )
+  call add_to_restart(CANLIQXY  , "CANLIQ")
+  call add_to_restart(CANICEXY  , "CANICE")
+  call add_to_restart(SNOW      , "SNEQV" )
+  call add_to_restart(SNOWH     , "SNOWH" )
+  call add_to_restart(TVXY      , "TV"    )
+  call add_to_restart(TGXY      , "TG"    )
+  call add_to_restart(ZWTXY     , "ZWT"   )
+  call add_to_restart(WAXY      , "WA"    )
+  call add_to_restart(WTXY      , "WT"    )
+  call add_to_restart(WSLAKEXY  , "WSLAKE")
+  call add_to_restart(LFMASSXY  , "LFMASS")
+  call add_to_restart(RTMASSXY  , "RTMASS")
+  call add_to_restart(STMASSXY  , "STMASS")
+  call add_to_restart(WOODXY    , "WOOD"  )
+  call add_to_restart(STBLCPXY  , "STBLCP")
+  call add_to_restart(FASTCPXY  , "FASTCP")
+  call add_to_restart(LAI       , "LAI"   )
+  call add_to_restart(XSAIXY    , "SAI"   )
+  call add_to_restart(VEGFRA    , "FPAR"  )
+  call add_to_restart(GVFMIN    , "GVFMIN")
+  call add_to_restart(GVFMAX    , "GVFMAX")
+  call add_to_restart(SHDMAX    , "SHDMAX")
+  call add_to_restart(ACSNOM    , "ACMELT")
+  call add_to_restart(ACSNOW    , "ACSNOW")
+  call add_to_restart(TAUSSXY   , "TAUSS" )
+  call add_to_restart(QSFC      , "QSFC"  )
+  call add_to_restart(SFCRUNOFF , "SFCRUNOFF")
+  call add_to_restart(UDRUNOFF  , "UDRUNOFF" )
+  ! below for opt_run = 5
+  call add_to_restart(SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
+  call add_to_restart(AREAXY    , "AREAXY"     )
+  call add_to_restart(SMCWTDXY  , "SMCWTDXY"   )
+  call add_to_restart(DEEPRECHXY, "DEEPRECHXY" )
+  call add_to_restart(QSLATXY   , "QSLATXY"    )
+  call add_to_restart(QRFSXY    , "QRFSXY"     )
+  call add_to_restart(QSPRINGSXY, "QSPRINGSXY" )
+  call add_to_restart(RECHXY    , "RECHXY"     )
+  call add_to_restart(QRFXY     , "QRFXY"      )
+  call add_to_restart(QSPRINGXY , "QSPRINGXY"  )
+  call add_to_restart(FDEPTHXY , "FDEPTHXY"  )
+  call add_to_restart(RIVERCONDXY , "RIVERCONDXY"  )
+  call add_to_restart(RIVERBEDXY , "RIVERBEDXY"  )
+  call add_to_restart(EQZWT , "EQZWT"  )
+  call add_to_restart(PEXPXY , "PEXPXY"  )
+  call finalize_restart_file()
+
+end subroutine lsm_restart
+
+
 end module module_NoahMP_hrldas_driver
+
 
 subroutine wrf_message(msg)
   implicit none
@@ -1425,6 +1441,7 @@ logical function wrf_dm_on_monitor() result(l)
   l = .TRUE.
   return
 end function wrf_dm_on_monitor
+
 
 !------------------------------------------------------------------------------------
 !------------------------------------------------------------------------------------

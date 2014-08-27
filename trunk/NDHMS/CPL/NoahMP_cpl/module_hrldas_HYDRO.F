@@ -35,7 +35,9 @@ CONTAINS
        integer k
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-
+!lpr add 2014-06-24
+        real, dimension(ii,jj) :: runoff
+!lpr add end
         integer ::  did
 
         integer ntime
@@ -49,6 +51,20 @@ CONTAINS
 !output flux and state variable
 
         did = 1
+
+!--------LPR add 2014-06-24---------------------------
+!    it is rapid model
+#ifdef WRF_HYDRO_RAPID
+        if(nlst_rt(did)%channel_option .eq. 4) then
+                runoff  = infxsrt + soldrain
+                call hrldas_RAPID_ini(ntime)    
+                call hrldas_RAPID_exe(runoff,ii,jj)     
+                sfcheadrt = 0.0
+                return
+        endif
+#endif
+!--------LPR add end----------------------------------
+
 
 
 
@@ -85,7 +101,9 @@ CONTAINS
 #endif
 
         ntime = 1
+
         call HYDRO_exe(did)
+
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
            call  time_seconds(t2)
@@ -160,6 +178,15 @@ CONTAINS
             endif
 
            RT_DOMAIN(did)%initialized = .true.
+
+#ifdef WRF_HYDRO_RAPID
+!--------LPR add 2014-06-24---------------------------
+         if(nlst_rt(did)%channel_option .eq. 4) then
+!  it  is rapid model.
+             return
+         endif
+!--------LPR add 2014-06-24---------------------------
+#endif
    
            IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
