@@ -1343,7 +1343,7 @@ program Noah_hrldas_driver
 !yw          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
 
      if(olddate == forcDate) then
-        CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
+        CALL HYDRO_forcing_drv(trim(indir), forc_typ,snow_assim,olddate,                      &
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,    &
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,FORCING_TIMESTEP,prcp_old)
 

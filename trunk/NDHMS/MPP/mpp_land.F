@@ -13,6 +13,7 @@ MODULE MODULE_MPP_LAND
   integer, public :: global_rt_nx, global_rt_ny
   integer, public :: local_rt_nx,local_rt_ny,rt_AGGFACTRT
   integer, public :: numprocs   ! total process, get by mpi initialization.
+  integer :: local_startx, local_starty
 
   integer mpp_status(MPI_STATUS_SIZE)
 
@@ -500,7 +501,6 @@ MODULE MODULE_MPP_LAND
   
   subroutine calculate_start_p()
 ! calculate startx and starty
-    integer :: local_startx, local_starty
     integer :: i,status, ierr, tag
     integer :: r_s(2)
     integer ::  t_nx, t_ny
@@ -563,6 +563,16 @@ MODULE MODULE_MPP_LAND
 
      return
   end subroutine calculate_start_p
+
+  subroutine decompose_data_real3d (in_buff,out_buff,klevel)
+      implicit none
+      integer, klevel, k
+      real in_buff(global_nx,1:klevel,global_ny),out_buff(local_nx,1:klevel,local_ny) 
+      do k = 1, klevel
+          call decompose_data_real(in_buff(:,k,:),out_buff(:,k,:))
+      end do
+  end subroutine decompose_data_real3d
+
 
   subroutine decompose_data_real (in_buff,out_buff)
 ! usage: all of the cpu call this subroutine.
@@ -656,6 +666,17 @@ MODULE MODULE_MPP_LAND
       end if
       return
   end subroutine write_IO_int
+
+  subroutine write_IO_real3d(in_buff,out_buff,klevel)
+     implicit none
+! the IO node will receive the data from the rest process.
+      integer klevel, k
+      real in_buff(1:local_nx,1:klevel,1:local_ny),    &
+          out_buff(global_nx,1:klevel,global_ny)
+      do k = 1, klevel
+         call write_IO_real(in_buff(:,k,:),out_buff(:,k,:))
+      end do
+  end subroutine write_IO_real3d
 
   subroutine write_IO_real(in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
@@ -1668,7 +1689,18 @@ MODULE MODULE_MPP_LAND
                tag,MPI_COMM_WORLD,ierr)
        endif
 
+     
   end subroutine mpp_chrt_nlinks_collect
+
+     subroutine  getLocalXY(ix,jx,startx,starty,endx,endy)
+!!! this is for NoahMP only
+        implicit none
+        integer:: ix,jx,startx,starty,endx,endy
+        startx = local_startx
+        starty = local_starty
+        endx = startx + ix -1
+        endy = starty + jx -1
+     end subroutine getLocalXY
 
 END MODULE MODULE_MPP_LAND
 

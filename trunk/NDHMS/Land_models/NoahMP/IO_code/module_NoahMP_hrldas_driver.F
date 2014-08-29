@@ -1,35 +1,35 @@
 module module_NoahMP_hrldas_driver
 
   USE module_hrldas_netcdf_io
-  USE module_Noahlsm_utility
   USE module_sf_noahmp_groundwater
   USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm,SOIL_VEG_GEN_PARM
   USE module_sf_noahmplsm, only: READ_MP_VEG_PARAMETERS
   USE module_date_utilities
-!  USE veg_parameters, ONLY : READ_MP_VEG_PARAMETERS, ISURBAN, ISWATER
+#ifdef MPP_LAND
+  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, my_id, io_id
+#endif
 
   IMPLICIT NONE
 
-#ifdef WRF_HYDRO
 
 #ifdef MPP_LAND
   include "mpif.h"
 #endif
 
+#ifdef WRF_HYDRO
    integer :: yw_rst_out
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
    integer :: forc_typ, snow_assim, HRLDAS_ini_typ
-   REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac
+   REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
    real :: etpnd1
    character(len=19) :: forcDate
    character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
-
 #endif
 
 
-  character(len=9), parameter :: version = "v20130401"
+  character(len=9), parameter :: version = "v20140513"
   integer :: LDASIN_VERSION
 
 !------------------------------------------------------------------------
@@ -80,7 +80,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SWDOWN    ! solar down at surface [W m-2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GLW       ! longwave down at surface [W m-2]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  P8W       ! 3D pressure, valid at interface [Pa]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL, RAINBL_tmp,pcp_old    ! precipitation entering land model [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL, RAINBL_tmp    ! precipitation entering land model [mm]
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
 
@@ -265,8 +265,7 @@ module module_NoahMP_hrldas_driver
     INTEGER                             :: YEARLEN
 
     INTEGER, PARAMETER                  :: NSNOW = 3    ! number of snow layers fixed to 3
-    !Wei Yu  REAL, PARAMETER                     :: undefined_value = -1.E36  ! not compile on Intel.
-    REAL, PARAMETER                     :: undefined_value = -99999.0
+    REAL, PARAMETER                     :: undefined_value = -1.E36
 
 !---------------------------------------------------------------------
 !  File naming, parallel
@@ -302,6 +301,10 @@ module module_NoahMP_hrldas_driver
   INTEGER           :: MAPPROJ
   REAL              :: LAT1
   REAL              :: LON1
+
+#ifdef MPP_LAND
+  integer ix_tmp, jx_tmp
+#endif
 
 !---------------------------------------------------------------------
 !  NAMELIST start
@@ -346,7 +349,7 @@ module module_NoahMP_hrldas_driver
   integer            :: ystart = 1
   integer            ::   xend = 0
   integer            ::   yend = 0
-  integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
+  REAL, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
 
   namelist / NOAHLSM_OFFLINE /    &
@@ -377,19 +380,13 @@ module module_NoahMP_hrldas_driver
      implicit  none
      integer:: NTIME_out
 
-#ifdef WRF_HYDRO
 
 #ifdef MPP_LAND
-   call MPI_INIT(ierr)
-   if (ierr /= MPI_SUCCESS) call hydro_stop()
-   call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-#else
-   rank = 0
+    ! initilization for stand alone parallel code.
+    call  MPP_LAND_INIT()
 #endif
 
-   if(rank == 0) then   ! single process / sequential run
 
-#endif
 
   nsoil                   = undefined_value
   soil_thick_input        = undefined_value
@@ -534,6 +531,12 @@ module module_NoahMP_hrldas_driver
 ! Initialize gridded domain
 !----------------------------------------------------------------------
 
+#ifdef MPP_LAND
+    call read_dim(hrldas_constants_file,ix_tmp,jx_tmp)
+    call MPP_LAND_PAR_INI(1,ix_tmp,jx_tmp,1)
+    call getLocalXY(ix_tmp,jx_tmp,xstart,ystart,xend,yend)
+#endif
+
   call read_hrldas_hdrinfo(hrldas_constants_file, ix, jx, &
        xstart, xend, ystart, yend, &
        iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
@@ -544,6 +547,12 @@ module module_NoahMP_hrldas_driver
        start_year, start_month, start_day, start_hour, start_min, 0
 
   startdate = olddate
+
+
+#ifdef MPP_LAND
+   ix = ix_tmp
+   jx = jx_tmp
+#endif
 
 #ifdef WRF_HYDRO
     forcdate = olddate
@@ -600,8 +609,6 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( P8W       (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D pressure, valid at interface [Pa]
   ALLOCATE ( RAINBL    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
   ALLOCATE ( RAINBL_tmp    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
-  ALLOCATE ( pcp_old    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
-  pcp_old = 0.0
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
 
@@ -627,6 +634,13 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( ACSNOW    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow on grid
   ALLOCATE ( EMISS     (XSTART:XEND,YSTART:YEND) )  ! surface bulk emissivity
   ALLOCATE ( QSFC      (XSTART:XEND,YSTART:YEND) )  ! bulk surface specific humidity
+!yw  added  to initialize
+    ACSNOM = 0.0
+    ACSNOW = 0.0
+    QSFC = 0.0
+    SFCRUNOFF = 0.0
+    UDRUNOFF = 0.0
+    SMOISEQ = 0.0
 
 ! INOUT (with no Noah LSM equivalent) (as defined in WRF)
 
@@ -663,6 +677,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( LAI       (XSTART:XEND,YSTART:YEND) )  ! leaf area index
   ALLOCATE ( XSAIXY    (XSTART:XEND,YSTART:YEND) )  ! stem area index
   ALLOCATE ( TAUSSXY   (XSTART:XEND,YSTART:YEND) )  ! snow age factor
+  
 
 ! OUT (with no Noah LSM equivalent) (as defined in WRF)
    
@@ -740,8 +755,14 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( SEAICE    (XSTART:XEND,YSTART:YEND) )  ! seaice fraction
 
 #ifdef WRF_HYDRO
-   allocate( greenfrac   (ix,jx) )
+   allocate( greenfrac   (XSTART:XEND,YSTART:YEND))
 #endif
+
+!yw added  initialize the value
+  ZSNSOXY = 0.0
+  DEEPRECHXY = 0.0
+  RECHXY = 0.0
+  SMCWTDXY = 0.0
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
@@ -751,8 +772,12 @@ module module_NoahMP_hrldas_driver
 ! Read Landuse Type and Soil Texture and Other Information
 !----------------------------------------------------------------------
 
+
+
+
   CALL READLAND_HRLDAS(HRLDAS_CONSTANTS_FILE, XSTART, XEND, YSTART, YEND,     &
        ISWATER, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND, SEAICE,MSFTX,MSFTY)
+
   
   WHERE(SEAICE > 0.0) XICE = 1.0
 
@@ -761,10 +786,11 @@ module module_NoahMP_hrldas_driver
 !------------------------------------------------------------------------
 
   if (runoff_option == 5) then
+!!yw not tested for this if block
     CALL READ_MMF_RUNOFF(MMF_RUNOFF_FILE, XSTART, XEND, YSTART, YEND,     &
                          ZWTXY,EQZWT,RIVERBEDXY,RIVERCONDXY,PEXPXY,FDEPTHXY)
   end if
-   
+
 !----------------------------------------------------------------------
 ! Initialize Model State
 !----------------------------------------------------------------------
@@ -772,14 +798,22 @@ module module_NoahMP_hrldas_driver
   SLOPETYP = 2
   DZS       =  SOIL_THICK_INPUT(1:NSOIL)
 
+
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
 
      call find_restart_file(rank, trim(restart_filename_requested), startdate, khour, olddate, restart_flnm)
 
      call read_restart(trim(restart_flnm), &
           xstart, xend, xstart, ixfull, jxfull, nsoil, olddate)
+
+#ifdef MPP_LAND
+    endif
+#endif
 
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SOIL_T"  , TSLB     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOW_T"  , TSNOXY   )
@@ -862,7 +896,6 @@ module module_NoahMP_hrldas_driver
      SNOWH     =  undefined_value
 
 #ifdef WRF_HYDRO
-
   if(forc_typ .gt. 2)  HRLDAS_ini_typ = 0
 
   if(HRLDAS_ini_typ .eq. 1) then
@@ -884,6 +917,7 @@ module module_NoahMP_hrldas_driver
           ".LDASIN_DOMAIN"//hgrid
 #endif
 
+
      CALL READINIT_HRLDAS(inflnm, xstart, xend, ystart, yend,  &
           NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
           TSLB, CANWAT, TSK, SNOW, SNOWH, FNDSNOWH)
@@ -898,14 +932,23 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
   else
-    call HYDRO_HRLDAS_ini(trim(hrldas_constants_file),&
-       xend-xstart+1,yend-ystart+1, &
+
+#ifdef MPP_LAND
+    call HYDRO_HRLDAS_ini_mpp   &
+#else
+    call HYDRO_HRLDAS_ini   &
+#endif
+       (trim(hrldas_constants_file), xend-xstart+1,yend-ystart+1, &
        nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP)
 
        greenfrac = 0.0
-       call get_greenfrac(trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate)
-       SHDMAX = maxval(greenfrac)
-
+#ifdef MPP_LAND
+       call get_greenfrac_mpp &
+#else
+       call get_greenfrac &
+#endif
+        (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, SHDMAX)
+       !yw SHDMAX = maxval(greenfrac)
   endif
 #endif
 
@@ -922,18 +965,18 @@ module module_NoahMP_hrldas_driver
                   FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   TSNOXY,  ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY, RTMASSXY, &
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY,                     &
-                 SMOISEQ, SMCWTDXY,   RECHXY,DEEPRECHXY,  AREAXY,DX, DY, MSFTX, MSFTY, &
-                   WTDDT,  STEPWTD,     DTBL,   QRFSXY,  QSPRINGSXY, QSLATXY,          &
-                FDEPTHXY,  TERRAIN,RIVERBEDXY,   EQZWT, RIVERCONDXY, PEXPXY,           &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .false.,                                                   &
                   .true.,runoff_option,                                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
-                  its,ite, jts,jte, kts,kte                 )  ! tile
+                  its,ite, jts,jte, kts,kte                 &  ! tile
+                     ,smoiseq  ,smcwtdxy ,rechxy   ,deeprechxy, areaxy ,dx, dy, msftx, msfty,&
+                     wtddt    ,stepwtd  ,dtbl  ,qrfsxy ,qspringsxy  ,qslatxy,                  &
+                     fdepthxy ,terrain ,riverbedxy ,eqzwt ,rivercondxy ,pexpxy              &
+                     )
 
       TAUSSXY = 0.0   ! Need to be added to _INIT later
-print *, 'after init',shdmax(97,1)
   endif
 
 !------------------------------------------------------------------------
@@ -947,30 +990,32 @@ print *, 'after init',shdmax(97,1)
   call system_clock(count=clock_count_1)   ! Start a timer
 
 #ifdef WRF_HYDRO
-  endif !  end of rank if block
-
+!  endif !  end of rank if block
 #ifdef MPP_LAND
-
-    call mpi_bcast(ix,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-    call mpi_bcast(jx,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-    call mpi_bcast(nsoil,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-    call mpi_bcast(ntime,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!    call mpi_bcast(ix,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!    call mpi_bcast(jx,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!    call mpi_bcast(nsoil,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!    call mpi_bcast(ntime,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 #endif
 
    allocate( infxsrt   (ix,jx) )
    allocate( sfcheadrt   (ix,jx) )
    allocate( soldrain    (ix,jx) )
    allocate( etpnd   (ix,jx) )
+   allocate( prcp0    (ix,jx) )
+   prcp0 = 0
 
  
-   if(rank .ne. 0) then
-     allocate(SMOIS (ix,NSOIL,jx))
-     allocate(TSLB (ix,NSOIL,jx))
-     allocate(SH2O (ix,NSOIL,jx))
-     SMOIS = 0.0
-     sh2o = 0.0
-     TSLB  = 0.0
-   endif 
+
+!   if(rank .ne. 0) then
+!     allocate(SMOIS (ix,NSOIL,jx))
+!     allocate(TSLB (ix,NSOIL,jx))
+!     allocate(SH2O (ix,NSOIL,jx))
+!     SMOIS = 0.0
+!     sh2o = 0.0
+!     TSLB  = 0.0
+!   endif 
+
      sfcheadrt =0.0
      infxsrt = 0.0
      etpnd = 0.0
@@ -984,7 +1029,7 @@ print *, 'after init',shdmax(97,1)
    
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
 
-     
+
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
@@ -992,6 +1037,7 @@ print *, 'after init',shdmax(97,1)
 #endif
 
    NTIME_out = NTIME 
+
 
 end subroutine land_driver_ini
 
@@ -1007,30 +1053,44 @@ end subroutine land_driver_ini
 !--------------------------------------------------------------------------------
 
 #ifdef WRF_HYDRO
-if(rank == 0) then
+! if(rank == 0) then
      if ((olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
             (olddate(15:16) == "00").and. (olddate(18:19) == "00")) yw_rst_out = 99
+#ifdef MPP_LAND
+   call mpp_land_bcast_int1(yw_rst_out)
 #endif
- 
+#endif
 
+ 
      if (restart_frequency_hours > 0) then
 #ifdef WRF_HYDRO
         if ((ITIME > 1) .and. ((mod(ITIME-1, int(restart_frequency_hours*3600./nint(dtbl))) == 0) .or. yw_rst_out .eq. 99) ) then
+!yw test        if ((ITIME > -1 )) then
             yw_rst_out = -9999
 #else
         
         if ((ITIME > 1) .and. (mod(ITIME-1, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
 #endif
 
-           if (rank == 0) print*, 'Write restart at '//olddate(1:13)
-           call prepare_restart_file(trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
+
+#ifdef MPP_LAND
+           if (my_id == 0)  &
+#endif
+           print*, 'Write restart at '//olddate(1:13)
+
+
+#ifdef MPP_LAND
+           call prepare_restart_file_mpp  &
+#else
+           call prepare_restart_file  &
+#endif
+               (trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
                 ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
                 nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
                 cen_lon, iswater, ivgtyp)
 
            ! Since the restart files are not really for user consumption, the units and description are 
            ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
-
               call add_to_restart(TSLB      , "SOIL_T", layers="SOIL")
               call add_to_restart(TSNOXY    , "SNOW_T", layers="SNOW")
               call add_to_restart(SMOIS     , "SMC"   , layers="SOIL")
@@ -1095,6 +1155,9 @@ if(rank == 0) then
         endif
      endif
 
+!yw continue
+      call hydro_finish()
+
 !---------------------------------------------------------------------------------
 ! Read the forcing data.
 !---------------------------------------------------------------------------------
@@ -1109,6 +1172,7 @@ if(rank == 0) then
      ! Build a filename template
      inflnm_template = trim(indir)//"/<date>.LDASIN_DOMAIN"//hgrid
 
+
 #ifdef WRF_HYDRO
      if(forc_typ .eq. 0) then
         CALL READFORC_HRLDAS(INFLNM_TEMPLATE, FORCING_TIMESTEP, OLDDATE,  &
@@ -1117,10 +1181,10 @@ if(rank == 0) then
 	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, LAI, VEGFRA)
      else
         if(olddate == forcDate) then
-           CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
+           CALL HYDRO_frocing_drv(trim(indir), forc_typ,snow_assim,olddate,                      &
              xstart, xend, ystart, yend,    &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
-             GLW,SWDOWN,RAINBL_tmp,LAI,SNOWH,ITIME,FORCING_TIMESTEP,pcp_old)
+             GLW,SWDOWN,RAINBL_tmp,LAI,SNOWH,ITIME,FORCING_TIMESTEP,prcp0)
    
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate
@@ -1140,17 +1204,20 @@ if(rank == 0) then
      QV_CURR(:,2,:) = QV_CURR(:,1,:)  ! 
      RAINBL = RAINBL_tmp * DTBL           ! RAINBL in WRF is [mm]
      DZ8W = 2*ZLVL                    ! 2* to be consistent with WRF model level
+     VEGFRA = VEGFRA * 100.
 !------------------------------------------------------------------------
 ! Noah-MP updates we can do before spatial loop.
 !------------------------------------------------------------------------
 
    ! create a few fields that are IN in WRF - coszen, julian_in,yr
 
+
     DO J = YSTART,YEND
     DO I = XSTART,XEND
       CALL CALC_DECLIN(OLDDATE(1:13),XLAT_URB2D(I,J), XLONIN(I,J),COSZEN(I,J),JULIAN_IN)
     END DO
     END DO
+
 
     READ(OLDDATE(1:4),*)  YR
     YEARLEN = 365                            ! find length of year for phenology (also S Hemisphere)
@@ -1226,6 +1293,8 @@ if(rank == 0) then
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
           sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
 
+
+
   IF(RUNOFF_OPTION.EQ.5.AND.MOD(ITIME,STEPWTD).EQ.0)THEN
            CALL wrf_message('calling WTABLE' )
 
@@ -1248,11 +1317,17 @@ if(rank == 0) then
 ! END of surface_driver consistent code
 !------------------------------------------------------------------------
 
+
 ! Output for history
      OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
         if (mod((ITIME-1)*noah_timestep, output_timestep) == 0) then
 
-           call prepare_output_file(trim(outdir), version, &
+#ifdef MPP_LAND
+           call prepare_output_file_mpp     &
+#else
+           call prepare_output_file     &
+#endif
+                (trim(outdir), version, &
                 igrid, output_timestep, llanduse, split_output_count, hgrid,                &
                 ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
                 iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
@@ -1260,7 +1335,13 @@ if(rank == 0) then
 
            DEFINE_MODE_LOOP : do imode = 1, 2
 
+#ifdef MPP_LAND
+           if (my_id == 0)  then
+#endif
               call set_output_define_mode(imode)
+#ifdef MPP_LAND
+           endif
+#endif
 
               ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
 
@@ -1373,6 +1454,9 @@ if(rank == 0) then
 	    ENDIF
 
            enddo DEFINE_MODE_LOOP
+#ifdef MPP_LAND
+     if(my_id .eq. IO_id) &   
+#endif
            call finalize_output_file(split_output_count)
         endif
      endif OUTPUT_FOR_HISTORY
@@ -1404,9 +1488,11 @@ if(rank == 0) then
           timing_sum, real(sflx_count_sum) / real(clock_rate)
      clock_count_1 = clock_count_2
 
+     write(6,*) "finish time step 1"
+     call flush(6)
+
 !yw  ENDDO TIMELOOP
 #ifdef WRF_HYDRO
-  endif    ! rank if blook
 
   call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
 
@@ -1414,12 +1500,6 @@ if(rank == 0) then
 end subroutine land_driver_exe
 
 end module module_NoahMP_hrldas_driver
-
-subroutine wrf_message(msg)
-  implicit none
-  character(len=*), intent(in) :: msg
-  print*, msg
-end subroutine wrf_message
 
 logical function wrf_dm_on_monitor() result(l)
   l = .TRUE.

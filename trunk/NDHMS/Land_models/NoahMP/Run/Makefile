@@ -9,12 +9,11 @@ OBJS = \
 	../IO_code/module_hrldas_netcdf_io.o \
 	../Noah/module_sf_noahmpdrv.o \
 	../Noah/module_sf_noahmplsm.o \
-	../Noah/module_sf_urban.o \
 	../Noah/module_sf_noahmp_glacier.o \
 	../Noah/module_sf_noahmp_groundwater.o \
 	../Noah/module_sf_myjsfc.o \
 	../Noah/module_sf_sfclay.o \
-	../Utility_routines/module_Noahlsm_utility.o \
+	../Utility_routines/module_wrf_utilities.o \
 	../Utility_routines/module_model_constants.o \
 	../Utility_routines/module_date_utilities.o \
 	../Utility_routines/kwm_string_utilities.o

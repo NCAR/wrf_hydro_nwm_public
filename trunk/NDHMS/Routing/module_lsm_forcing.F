@@ -10,6 +10,13 @@ implicit none
     integer :: i_forcing 
 character(len=19) out_date
 
+interface read_hydro_forcing
+#ifdef MPP_LAND
+   module procedure read_hydro_forcing_seq
+#else
+   module procedure read_hydro_forcing_mpp
+#endif
+end interface
 Contains
 
   subroutine READFORC_WRF(flnm,ix,jx,target_date,t,q,u,v,p,lw,sw,pcp)
@@ -903,7 +910,7 @@ Contains
 
 
 
- subroutine read_seq_forcing( &
+ subroutine read_hydro_forcing_seq( &
        indir,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
@@ -919,7 +926,7 @@ Contains
    real ::  dt, wrf_dt
    ! tmp variable
    character(len=256) :: inflnm, inflnm2, product
-   integer  :: i,j,mmflag,igrid,ierr_flg
+   integer  :: i,j,mmflag,ierr_flg
    real,dimension(ix,jx):: lai,fpar
    character(len=4) nwxst_t
    logical :: fexist
@@ -941,7 +948,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop("read_seq_forcing")
+           call hydro_stop("read_hydro_forcing_seq")
         endif
 
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
@@ -962,7 +969,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop("read_seq_forcing")
+           call hydro_stop("read_hydro_forcing_seq")
         endif
       CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
@@ -985,7 +992,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no forcing data found", inflnm
 #endif
-           call hydro_stop("read_seq_forcing")
+           call hydro_stop("read_hydro_forcing_seq")
         endif
 
         do i_forcing = 1, int(24*3600/dt)
@@ -1003,7 +1010,7 @@ Contains
 #ifdef HYDRO_D
         if(.not. fexist) then
            write(6,*) "Error: could not find file ",trim(inflnm2)
-           call hydro_stop("read_seq_forcing")
+           call hydro_stop("read_hydro_forcing_seq")
         endif
            print*, "read WRF forcing data: ", trim(inflnm)
            print*, "read WRF forcing data: ", trim(inflnm2)
@@ -1078,7 +1085,7 @@ Contains
 #ifdef HYDRO_D
            print*, "no specified precipitation data found", inflnm
 #endif
-           call hydro_stop("read_seq_forcing")
+           call hydro_stop("read_hydro_forcing_seq")
         endif
 
        PRCP1 = 0.
@@ -1619,7 +1626,7 @@ Contains
    end if
 
 
- end subroutine read_seq_forcing
+ end subroutine read_hydro_forcing_seq
 
 
 #ifdef MPP_LAND
@@ -1721,27 +1728,27 @@ Contains
         end  subroutine MPP_DEEPGW_HRLDAS
 
 
- subroutine mpp_read_forcing( &
-       indir,olddate,startdate,hgrid, &
+ subroutine read_hydro_forcing_mpp( &
+       indir,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  & 
        T2,q2x,u,v,pres,xlong,short,prcp1,&
-       weasd,snodep,dt,k,g_ix,g_jx,igrid,prcp_old)
+       weasd,snodep,dt,k,prcp_old)
 ! This subrouting is going to read different forcing.
 
 
    implicit none
    ! in variable
-   character(len=*) :: olddate,hgrid,indir,startdate
+   character(len=*) :: olddate,hgrid,indir
    character(len=256) :: filename
-   integer :: ix,jx,forc_typ,k,snow_assim,igrid  ! k is time loop
+   integer :: ix,jx,forc_typ,k,snow_assim  ! k is time loop
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
           prcpnew,weasd,snodep,prcp_old
    real ::  dt
    ! tmp variable
    character(len=256) :: inflnm, product
-   integer  :: i,j,mmflag, g_ix,g_jx
+   integer  :: i,j,mmflag, global_nx,global_ny
    real,dimension(ix,jx):: lai,fpar
-   real,dimension(g_ix,g_jx):: g_T2,g_Q2X,g_U,g_V,g_XLONG, &
+   real,dimension(global_nx,global_ny):: g_T2,g_Q2X,g_U,g_V,g_XLONG, &
              g_SHORT,g_PRCP1,g_PRES,g_weasd,g_snodep,g_prcp_old
    integer flag 
    
@@ -1762,13 +1769,13 @@ Contains
    end if
 
    if(my_id .eq. IO_id) then
-      call read_seq_forcing( &
+      call read_hydro_forcing_seq( &
         indir,olddate,hgrid,&
         global_nx,global_ny,forc_typ,snow_assim,  &
         g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
         g_weasd,g_snodep,dt,k,g_prcp_old)
 #ifdef HYDRO_D
-     write(6,*) "finish read forcing,startdate,olddate ",startdate,olddate
+     write(6,*) "finish read forcing,olddate ",olddate
 #endif
    end if
      call decompose_data_real(g_T2,T2)
@@ -1796,7 +1803,7 @@ Contains
         endif
      endif
    return
-   end subroutine mpp_read_forcing
+   end subroutine read_hydro_forcing_mpp
 #endif
 
   integer function nfeb_yw(year)
