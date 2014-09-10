@@ -5,7 +5,8 @@ module module_HYDRO_io
    use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
-
+   use module_GW_baseflow_data, only: gw2d   
+   
    implicit none
 #include <netcdf.inc>
 
@@ -5000,8 +5001,11 @@ end subroutine mpp_output_chrt
 !             iret = nf_def_var(ncid,"qinflowbase",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
 !             iret = nf_def_var(ncid,"qout_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
             end if
-          end if  
-
+            if(nlst_rt(did)%gwBaseSwCRT .eq. 3)then
+            iret = nf_def_var(ncid,"HEAD",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            end if  
+	  end if    
+	      
 !         put global attribute
           iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
           iret = nf_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,nlst_rt(did)%olddate(1:19))
@@ -5090,6 +5094,9 @@ end subroutine mpp_output_chrt
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,"qin_gwsubbas" )
 !             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%qinflowbase,"qinflowbase")
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,"qout_gwsubbas" )
+            end if
+            if(nlst_rt(did)%GWBASESWCRT.EQ.3) then
+	      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho, "HEAD" )
             end if
         end if  
 
@@ -5303,8 +5310,11 @@ end subroutine mpp_output_chrt
 
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0) then
-               call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
+              call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
             end if
+            if(nlst_rt(did)%GWBASESWCRT.EQ.3) then
+              call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho,"HEAD")
+	    end if
         end if
 
           if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
