@@ -8,9 +8,11 @@ module module_WRF_HYDRO
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
+    use module_GW_baseflow_data, only:  gw2d
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
     use module_namelist, only: nlst_rt
     USE module_domain, ONLY : domain, domain_clock_get
+    USE module_configure, ONLY : grid_config_rec_type
     !yw USE module_configure, only : config_flags
     USE module_configure, only: model_config_rec
  
@@ -31,10 +33,11 @@ module module_WRF_HYDRO
 CONTAINS
 
 !wrf_cpl_HYDRO will not call the off-line lsm 
-    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid,its,ite,jts,jte)
+    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid, config_flags, its,ite,jts,jte)
 
        implicit none
        TYPE ( domain ), INTENT(INOUT) :: grid
+       TYPE ( grid_config_rec_type ), INTENT(IN) :: config_flags
        integer its, ite, jts, jte, ij
        real :: HYDRO_dt
 
@@ -180,6 +183,12 @@ CONTAINS
 
 ! update WRF variable after running routing model.
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
+
+! provide groundwater soil flux to WRF for fully coupled simulations (FERSCH 09/2014)            
+            if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
+             grid%qsgw(its:ite,jts:jte) = gw2d(did)%qsgw
+             config_flags%gwsoilcpl = nlst_rt(did)%gwsoilcpl
+            end if
 
 !yw not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
