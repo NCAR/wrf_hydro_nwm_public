@@ -469,8 +469,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL , INTENT(INOUT), DIMENSION(NLINKS)   :: HLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
         REAL, INTENT(IN)                          :: DTRT  !-- routing timestep
-        REAL, INTENT(INOUT):: DTCT
-        REAL                                         :: dist(ixrt,jxrt,9)
+        REAL, INTENT(INOUT)                       :: DTCT
+        real                                      :: minDTCT !BF minimum routing timestep
+        REAL                                      :: dist(ixrt,jxrt,9)
         REAL                                      :: RETDEP_CHAN
         INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, &
                                                      gwBaseSwCRT, gwChanCondSw
@@ -662,8 +663,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
  
          KRT = 0                  !-- initialize the time counter
-
-         DTCT = min(DTCT*2.0,DTRT)
+         minDTCT = 0.01           ! define minimum routing sub-timestep (s), simulation will end with smaller timestep
+         DTCT = min(max(DTCT*2.0, minDTCT),DTRT)
 !yw         DTCT = DTRT              !-- initialize the routing timestep to the timestep in namelist (s)
        
          HLINKTMP = HLINK         !-- temporary storage of the water elevations (m)
@@ -869,15 +870,15 @@ gwOption:   if(gwBaseSwCRT == 3) then
              
              ! call smoth121(HLINK,nlinks,maxv_p,pnode,to_node)
 
-             if(DTCT .gt. 0.001) then                  !-- timestep in seconds
-              DTCT = max(DTCT/2 ,0.1)                           !-- 1/2 timestep
+             if(DTCT .gt. minDTCT) then                !-- timestep in seconds
+              DTCT = max(DTCT/2 , minDTCT)             !-- 1/2 timestep
               KRT = 0                                  !-- restart counter
               HLINKTMP = HLINK                         !-- set head and vol to start value of timestep
               CVOLTMP = CVOL
               CYCLE crnt                               !-- start cycle over with smaller timestep
              else
 #ifdef HYDRO_D
-              write(6,*) "Error ..... with small DTCT",DTCT
+              write(6,*) "Courant error with smallest routing timestep DTCT: ",DTCT
 #endif
               call hydro_stop("drive_CHANNEL")
               DTCT = 0.1
