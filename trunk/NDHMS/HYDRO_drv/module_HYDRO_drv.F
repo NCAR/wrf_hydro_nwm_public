@@ -10,7 +10,7 @@ module module_HYDRO_drv
         output_lsm
    use module_rt_data, only: rt_domain
    use module_GW_baseflow_data, only: gw2d
-   use module_GW_baseflow
+   use module_GW_baseflow, only:simp_gw_buck, gwstep, gw2d_allocate, gw2d_ini
    use module_channel_routing, only: drive_channel
    use module_namelist, only: nlst_rt
    use module_routing, only: getChanDim, landrt_ini
@@ -370,6 +370,7 @@ module module_HYDRO_drv
 	
 		! step 6) aggregate specific fields from Hydro to LSM grid
 		  call aggregateDomain(did)
+
 
            end if
 

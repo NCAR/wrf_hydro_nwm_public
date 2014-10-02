@@ -52,7 +52,7 @@
 
        subroutine HYDRO_frocing_drv (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt, FORCING_TIMESTEP,pcp_old)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing
          use module_namelist, only:nlst_rt
@@ -62,7 +62,7 @@
          character(len=19) :: olddate
          character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
-                 weasd, snodep, pcp_old
+                 lai, fpar,snodep, pcp_old
          integer :: forc_typ, snow_assim, FORCING_TIMESTEP
 
          ix = ixe-ixs+1
@@ -73,7 +73,7 @@
             nlst_rt(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
-            weasd,snodep,FORCING_TIMESTEP*1.0,kt, pcp_old)
+            lai,fpar,snodep,FORCING_TIMESTEP*1.0,kt, pcp_old)
        end subroutine HYDRO_frocing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate,SHDMAX)

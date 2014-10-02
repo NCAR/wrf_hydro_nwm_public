@@ -4,7 +4,8 @@ module module_hrldas_netcdf_io
 
 #ifdef MPP_LAND
   use module_mpp_land, only:mpp_land_bcast_int1, decompose_data_real, mpp_land_bcast_real1, decompose_data_int, &
-                  io_id, global_nx, global_ny, my_id, write_io_real, write_io_int, write_io_real3d,decompose_data_real3d
+                  io_id, global_nx, global_ny, my_id, write_io_real, write_io_int, write_io_real3d,decompose_data_real3d, &
+                   mpp_land_sync,mpp_land_bcast_char,mpp_land_bcast
 #endif
 
 #ifdef _PARALLEL_
@@ -42,6 +43,23 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
 
+  interface prepare_output_file
+#ifdef MPP_LAND
+     module procedure prepare_output_file_mpp
+#else
+     module procedure prepare_output_file_seq
+#endif
+  end interface
+
+  interface prepare_restart_file
+#ifdef MPP_LAND
+     module procedure prepare_restart_file_mpp
+#else
+     module procedure prepare_restart_file_seq
+#endif
+  end interface
+
+
   interface add_to_restart
 #ifdef MPP_LAND
      module procedure add_to_restart_2d_float_mpp, add_to_restart_2d_integer_mpp, add_to_restart_3d_mpp
@@ -52,9 +70,10 @@ module module_hrldas_netcdf_io
 
   interface get_from_restart
 #ifdef MPP_LAND
-     module procedure get_from_restart_2d_float_mpp, get_from_restart_2d_integer_mpp, get_from_restart_3d_mpp
+     module procedure get_from_restart_2d_float_mpp, get_from_restart_2d_integer_mpp, get_from_restart_3d_mpp, &
+              get_from_restart_att
 #else
-     module procedure get_from_restart_2d_float, get_from_restart_2d_integer, get_from_restart_3d
+     module procedure get_from_restart_2d_float, get_from_restart_2d_integer, get_from_restart_3d, get_from_restart_att
 #endif
   end interface
 
@@ -135,6 +154,9 @@ contains
     integer                           :: riend
     logical                           :: lexist
 
+#ifdef MPP_LAND
+     if(my_id .ne. IO_id) return
+#endif
 
     ribeg = index(restart_filename_requested, "<LATEST>")-1
 
@@ -606,7 +628,11 @@ contains
     character(len=*), intent(in) :: name
     integer, intent(in) :: ncid
     integer, intent(in) :: xstart, xend, ystart, yend
+#ifdef MPP_LAND
+    real, dimension(xstart:xend,ystart:yend), intent(inout) :: array
+#else
     real, dimension(xstart:xend,ystart:yend), intent(out) :: array
+#endif
     character(len=*), intent(out) :: units
     integer :: iret, varid
     ! FATAL_IF_ERROR:  an input code value:
@@ -655,14 +681,14 @@ contains
     iret = nf90_get_var(ncid, varid, values=array, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
 #endif
     if (iret /= 0) then
+#ifdef MPP_LAND
+          goto 9991
+#endif
        if (FATAL_IF_ERROR) then
           print*, 'ncid =', ncid
           call error_handler(iret, "MODULE_HRLDAS_NETCDF_IO:  Problem retrieving variable '"//trim(name)//"' from NetCDF file.")
        else
           ierr = iret
-#ifdef MPP_LAND
-          goto 9991
-#endif
           return
        endif
     endif
@@ -672,6 +698,8 @@ contains
 9991    continue
     endif
     call mpp_land_bcast_int1(ierr)
+    !yyww call mpp_land_bcast(units)
+    call mpp_land_bcast_char(256,units)
     if(ierr /= 0) return
     write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
     call decompose_data_real(g_array,array)
@@ -757,6 +785,9 @@ contains
 9992    continue
     endif
     call mpp_land_bcast_int1(ierr)
+    call mpp_land_bcast_char(256,units)
+    call mpp_land_bcast(layer_bottom)
+    call mpp_land_bcast(layer_top)
     if(ierr /= 0) return
     call decompose_data_real(g_array,array)
 #endif
@@ -1145,13 +1176,18 @@ contains
 !KWM    print*, 'lastread%read_date = ', lastread%read_date
 !KWM    print*, 'nextread%read_date = ', nextread%read_date
 
+
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,target_date(1:19))
+     call mpp_land_bcast_char(19,nextread%read_date(1:19))
+#endif
+
     if (target_date > nextread%read_date ) then
        !
        ! We've advanced beyond the date of the end-bracketing data in memory.
        ! Read the next (later) forcing data, and put the data into the nextread
        ! structure.
        !
-
        if (nextread%read_date /= "0000-00-00_00:00:00") then
           ! Clear the old lastread data
           call clear_inputstruct(lastread)
@@ -1167,7 +1203,10 @@ contains
        ! If there is no last date, assume we're at the beginning of our processing
        ! and take the target_date as the first timestep, for which forcing data
        ! must be available.
-
+     
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,lastread%read_date(1:19))
+#endif
        if (lastread%read_date == "0000-00-00_00:00:00") then
           nextread%read_date = target_date
        else
@@ -1176,11 +1215,13 @@ contains
 
        ! Build a file name
        flnm = flnm_template
+
+#ifdef MPP_LAND
+       if(my_id .eq. IO_id) then
+#endif
        call strrep(flnm, "<date>", nextread%read_date(1:4)//nextread%read_date(6:7)//nextread%read_date(9:10)//nextread%read_date(12:13))
 
-!KWM       print*, 'new nextread%read_date = ', nextread%read_date
        !print*, 'read file:  ', trim(flnm)
-
        ! Open the NetCDF file.
 #ifdef _PARALLEL_
        ierr = nf90_open_par(flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
@@ -1201,6 +1242,9 @@ contains
           stop
        endif
 
+#ifdef MPP_LAND
+      endif
+#endif
        ! Allocate space to hold data
        call allocate_inputstruct(nextread, xstart, xend, ystart, yend)
 
@@ -1232,10 +1276,19 @@ contains
           endif
        endif
 
+#ifdef MPP_LAND
+       if(my_id .eq. IO_id) &
+#endif
        ! Close the file
        ierr = nf90_close(ncid)
 
     endif
+
+
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,target_date(1:19))
+#endif
+
 
     if (target_date == nextread%read_date) then
        !
@@ -1325,6 +1378,9 @@ contains
 
     allocate(instruct%lai (xstart:xend,ystart:yend), stat=allostat )
     if (allostat/=0) stop "Problem allocating instruct%lai"
+#ifdef MPP_LAND
+    instruct%lai = 0.0
+#endif
   end subroutine allocate_inputstruct
 
 !---------------------------------------------------------------------------------------------------------
@@ -1561,7 +1617,7 @@ contains
     call write_io_int(soltyp, g_soltyp)
 
     if(my_id .eq. IO_id) then
-       call prepare_output_file(outdir, version, igrid, &
+       call prepare_output_file_seq(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
@@ -1572,7 +1628,7 @@ contains
     end subroutine prepare_output_file_mpp
 #endif
 
-  subroutine prepare_output_file(outdir, version, igrid, &
+  subroutine prepare_output_file_seq(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
@@ -1581,6 +1637,7 @@ contains
     ! To prepare the output file, we create the file, write dimensions and attributes, write the time variable.
     ! At the end of this routine, the output file is out of define mode.
     implicit none
+#include <netcdf.inc>
 
     character(len=*),                         intent(in) :: outdir
     character(len=*),                         intent(in) :: version
@@ -1637,7 +1694,11 @@ contains
        iret = nf90_create(trim(output_flnm), &
             OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
        iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
+#endif
 #endif
        call error_handler(iret, failure="Problem nf90_create for "//trim(output_flnm))
 
@@ -1710,7 +1771,7 @@ contains
     iret = nf90_put_var(ncid_remember, varid, date, (/1,output_count_remember+1/), (/19,1/))
     call error_handler(iret, "OUTPUT_HRLDAS:  Problem writing variable 'Times'")
 
-  end subroutine prepare_output_file
+  end subroutine prepare_output_file_seq
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
@@ -1719,6 +1780,10 @@ contains
     implicit none
     integer, intent(in) :: imode
     integer :: ierr
+
+#ifdef MPP_LAND
+    if(my_id .ne. IO_id) return
+#endif
 
     if (imode == 1) then
        ! We need to define things only with a new file, i.e., only when output_count_remember == 0
@@ -1743,6 +1808,10 @@ contains
     implicit none
     integer, intent(in)  :: split_output_count
     integer :: ierr
+
+#ifdef MPP_LAND
+    if(my_id .ne. IO_id) return
+#endif
 
     output_count_remember = output_count_remember + 1
     if (output_count_remember == split_output_count) then
@@ -2099,20 +2168,24 @@ contains
 
     call write_io_int(vegtyp, gvegtyp)
     if(my_id .eq. io_id) then
-      call prepare_restart_file(outdir, version, igrid, llanduse, olddate, startdate,  &
+      call prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar,               &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,         &
        iswater, gvegtyp)
     endif 
+
+    call mpp_land_sync()
+
     end subroutine prepare_restart_file_mpp
 #endif
 
-  subroutine prepare_restart_file(outdir, version, igrid, llanduse, olddate, startdate,  &
+  subroutine prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
        iswater, vegtyp)
 
     implicit none
+#include <netcdf.inc>
 
     character(len=*),                      intent(in) :: outdir
     character(len=*),                      intent(in) :: version
@@ -2170,7 +2243,11 @@ contains
     ierr = nf90_create(trim(output_flnm), &
          OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       ierr = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
     ierr = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
+#endif
 #endif
 
     if (ierr /= 0) stop "Problem nf_create"
@@ -2221,13 +2298,16 @@ contains
     ierr = nf90_inq_varid(ncid, "Times", varid)
     call error_handler(ierr, "WRITE_RESTART:  Problem inquiring varid for 'Times'")
 
+    write(6,*) "yywww olddate  = ", olddate
+    write(6,*) "yywww output_count_remember  = ", output_count_remember
+
     ierr = nf90_put_var(ncid, varid, olddate, (/1,1/), (/19,1/))
     call error_handler(ierr, "WRITE_RESTART:  problem putting 'Times' to restart file")
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "WRITE_RESTART:  nf90_close")
 
-  end subroutine prepare_restart_file
+  end subroutine prepare_restart_file_seq
 
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
@@ -2243,6 +2323,7 @@ contains
     if(my_id .eq. IO_id) then
          call add_to_restart_2d_float(garray, name, units, description)
     endif
+    call mpp_land_sync()
   end subroutine add_to_restart_2d_float_mpp
 
   subroutine add_to_restart_2d_integer_mpp(array, name, units, description)
@@ -2256,6 +2337,7 @@ contains
     if(my_id .eq. IO_id) then
          call add_to_restart_2d_integer(garray, name, units, description)
     endif
+    call mpp_land_sync()
   end subroutine add_to_restart_2d_integer_mpp
 
   subroutine add_to_restart_3d_mpp(array, name, units, description, layers)
@@ -2278,6 +2360,7 @@ contains
     endif
     deallocate(garray)
 
+    call mpp_land_sync()
   end subroutine add_to_restart_3d_mpp
 
 
@@ -2559,6 +2642,10 @@ contains
     integer :: rank
     integer :: read_sfcdif
 
+#ifdef MPP_LAND
+     if(my_id .ne. IO_id) return
+#endif
+
     restart_filename_remember = restart_flnm
 
 #ifdef _PARALLEL_
@@ -2680,12 +2767,29 @@ contains
       if(my_id .eq. IO_id) then
           call get_from_restart_3d(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
       endif
-      call decompose_data_real3d(garray,array,klevel)
+      do k = 1, klevel
+         call decompose_data_real(garray(:,k,:),array(:,k,:))
+      end do
       deallocate(garray)
 
   end subroutine get_from_restart_3d_mpp
 #endif
 
+  subroutine get_from_restart_att(itime)
+    implicit none
+    integer,intent(out) :: itime
+    integer  :: ncid, ierr
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
+        ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
+        ierr = nf90_get_att(ncid, NF90_GLOBAL, "ITIMESTEP", itime)
+        call error_handler(ierr, failure="restart info:  Problems finding global attribute 'ITIMESTEP'")
+         ierr = nf90_close(ncid)
+#ifdef MPP_LAND
+    endif
+#endif
+  end subroutine get_from_restart_att
 
   subroutine get_from_restart_2d_float(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, name, array, return_error)
     implicit none

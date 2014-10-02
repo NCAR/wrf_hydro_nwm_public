@@ -24,9 +24,9 @@
 
        subroutine HYDRO_forcing_drv (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,FORCING_TIMESTEP,prcp_old)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt,FORCING_TIMESTEP,prcp_old)
 
-         use module_lsm_forcing, only: read_hydro_forcing
+         use module_lsm_forcing, only: read_hydro_forcing, read_hydro_forcing_seq
          use module_namelist, only:nlst_rt
          implicit none
          integer did, ixs,ixe,jxs,jxe
@@ -34,18 +34,19 @@
          character(len=19) :: olddate
          character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
-                 weasd, snodep  ,prcp_old
+                 lai, fpar,snodep  ,prcp_old
          integer :: forc_typ, snow_assim, FORCING_TIMESTEP
 
          ix = ixe-ixs+1
          jx = jxe-jxs+1
          did = 1
-         call read_hydro_forcing( &
+!yw          call read_hydro_forcing( &
+         call read_hydro_forcing_seq( &
             indir, olddate, &
             nlst_rt(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
-            weasd,snodep,FORCING_TIMESTEP*1.0,kt ,prcp_old)
+            lai,fpar,snodep,FORCING_TIMESTEP*1.0,kt ,prcp_old)
        end subroutine HYDRO_forcing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)

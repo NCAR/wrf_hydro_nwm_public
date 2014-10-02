@@ -1040,6 +1040,8 @@ program Noah_hrldas_driver
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "Q12D"    , q12d     )
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "CHX"     , chx      )
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "CMX"     , cmx      )
+     call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "VEGFRA"   , fpar   )
+     call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "LAI"   , lai   )
 
      allocate(fpar_save(PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "FPAR_SAVE", fpar_save, ierr)
@@ -1287,6 +1289,8 @@ program Noah_hrldas_driver
            call add_to_restart ( smcmax1,  "SMCMAX"   )
            call add_to_restart ( hx,       "HFX"      )
            call add_to_restart ( rcx,      "RC"       )
+           call add_to_restart ( fpar,      "VEGFRA"       )
+           call add_to_restart ( lai,      "LAI"       )
 #ifdef _HRLDAS_URBAN_
            if (sf_urban_physics == 1) then
               call add_to_restart ( utype_urb2d, "UTYPE_URB2D" )
@@ -1345,7 +1349,7 @@ program Noah_hrldas_driver
      if(olddate == forcDate) then
         CALL HYDRO_forcing_drv(trim(indir), forc_typ,snow_assim,olddate,                      &
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,    &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,FORCING_TIMESTEP,prcp_old)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep,k,FORCING_TIMESTEP,prcp_old)
 
         call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
         forcDate = newdate

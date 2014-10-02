@@ -21,7 +21,7 @@ all:	$(OBJS)
 	@echo ""
 	$(RM) $(*).f
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(MODFLAG). $(MODFLAG)../Utility_routines $(F90FLAGS) $(FREESOURCE) $(*).f
+	$(COMPILERF90) -o $(@) -c -I../Utility_routines $(F90FLAGS) $(FREESOURCE) $(*).f
 	@echo ""
 
 #

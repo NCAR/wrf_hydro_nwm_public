@@ -6331,4 +6331,58 @@ end subroutine mpp_output_chrt
         end SUBROUTINE MPP_READ_CHROUTING_new
 #endif
 
+
+#ifdef MPP_LAND
+       subroutine out_day_crt(dayMean,outFile)
+           implicit none
+           integer :: did
+           real ::  dayMean(:)
+           character(len=*) :: outFile
+           integer:: ywflag
+           ywflag = -999
+           did = 1
+           if((nlst_rt(did)%olddate(12:13) .eq. "00") .and. (nlst_rt(did)%olddate(15:16) .eq. "00") ) ywflag = 99
+           call mpp_land_bcast_int1(ywflag)
+           if(ywflag <0) return
+           ! output daily
+           call out_obs_crt(did,dayMean,outFile)
+       end subroutine out_day_crt
+
+       subroutine out_obs_crt(did,dayMean,outFile)
+           implicit none
+           integer did, i, cnt
+           real ::  dayMean(:)
+           character(len=*) :: outFile
+           real,dimension(rt_domain(did)%gnlinks) :: g_dayMean, chlat, chlon
+           integer,dimension(rt_domain(did)%gnlinks) :: STRMFRXSTPTS
+           
+           g_dayMean = -999
+           chlat = -999
+           chlon = -999
+           STRMFRXSTPTS = 0
+
+           call write_chanel_int(RT_DOMAIN(did)%STRMFRXSTPTS,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,STRMFRXSTPTS)
+
+           call write_chanel_real(dayMean,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,g_dayMean)
+
+           call write_chanel_real(RT_DOMAIN(did)%CHLON,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,chlon)
+
+           call write_chanel_real(RT_DOMAIN(did)%CHLAT,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,chlat)
+
+
+           open (unit=95,file=outFile,status='unknown',position='append')
+           cnt = 0
+           do i = 1, rt_domain(did)%gnlinks
+              if(STRMFRXSTPTS(i) .gt. 0) then
+                   write(95,114) nlst_rt(did)%olddate(1:4),nlst_rt(did)%olddate(6:7),nlst_rt(did)%olddate(9:10), nlst_rt(did)%olddate(12:13), &
+                         cnt,chlon(i),chlat(i),g_dayMean(i) 
+                   cnt = cnt + 1
+              endif
+           end do
+           close(95)
+114 FORMAT(1x,A4,A2,A2,A2,",",I7,", ",F10.5,",",F10.5,",",F12.3)
+       end subroutine out_obs_crt
+#endif
+       
+
 end module module_HYDRO_io

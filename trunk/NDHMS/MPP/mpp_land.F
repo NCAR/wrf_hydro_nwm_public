@@ -22,6 +22,26 @@ MODULE MODULE_MPP_LAND
   integer, allocatable, DIMENSION(:), public :: local_rt_nx_size,local_rt_ny_size
   integer, allocatable, DIMENSION(:), public :: startx,starty
   integer, allocatable, DIMENSION(:), public :: mpp_nlinks
+
+  interface check_land
+     module procedure check_landreal1
+     module procedure check_landreal1d
+     module procedure check_landreal2d
+     module procedure check_landreal3d
+  end interface
+  interface write_io_land
+     module procedure write_io_real3d
+  end interface
+  interface mpp_land_bcast
+     module procedure mpp_land_bcast_real2
+     module procedure mpp_land_bcast_real_1d
+     module procedure mpp_land_bcast_real1
+     module procedure mpp_land_bcast_char1d 
+     module procedure mpp_land_bcast_char1
+     module procedure mpp_land_bcast_int1 
+     module procedure mpp_land_bcast_int1d 
+     module procedure mpp_land_bcast_int2d 
+  end interface
  
   contains
 
@@ -802,6 +822,7 @@ MODULE MODULE_MPP_LAND
 !     return
 ! end subroutine mpp_land_sync
 
+
   subroutine mpp_land_bcast_int(size,inout)
       integer size
       integer inout(size)
@@ -811,6 +832,17 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return 
   end subroutine mpp_land_bcast_int
+
+  subroutine mpp_land_bcast_int1d(inout)
+      integer len 
+      integer inout(:)
+      integer ierr
+      len = size(inout,1)
+        call mpi_bcast(inout,len,MPI_INTEGER,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_int1d
 
   subroutine mpp_land_bcast_int1(inout)
       integer inout
@@ -830,6 +862,17 @@ MODULE MODULE_MPP_LAND
     return 
   end subroutine mpp_land_bcast_real1
 
+  subroutine mpp_land_bcast_real_1d(inout)
+      integer len
+      real inout(:)
+      integer ierr
+      len = size(inout,1) 
+        call mpi_bcast(inout,len,MPI_real,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_real_1d
+
   subroutine mpp_land_bcast_real(size,inout)
       integer size
       real inout(size)
@@ -839,6 +882,34 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_real
+
+  subroutine mpp_land_bcast_int2d(inout)
+      integer length1, k,length2
+      integer inout(:,:)
+      integer ierr
+      length1 = size(inout,1)
+      length2 = size(inout,2)
+      do k = 1, length2
+        call mpi_bcast(inout(:,k),length1,MPI_INTEGER,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      end do
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_int2d
+
+  subroutine mpp_land_bcast_real2(inout)
+      integer length1, k,length2
+      real inout(:,:)
+      integer ierr
+      length1 = size(inout,1)
+      length2 = size(inout,2)
+      do k = 1, length2
+        call mpi_bcast(inout(:,k),length1,MPI_real,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      end do
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_real2
 
   subroutine mpp_land_bcast_rd(size,inout)
       integer size
@@ -859,6 +930,28 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_char
+
+  subroutine mpp_land_bcast_char1d(inout)
+      integer len
+      character inout(:)
+      integer ierr
+      len = size(inout,1)
+      call mpi_bcast(inout,len,MPI_CHARACTER,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_char1d
+
+  subroutine mpp_land_bcast_char1(inout)
+      integer len
+      character(len=*) inout
+      integer ierr
+      len = LEN_TRIM(inout)
+      call mpi_bcast(inout,len,MPI_CHARACTER,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_char1
 
  
   subroutine MPP_LAND_COM_REAL(in_out_data,NX,NY,flag)
@@ -1110,7 +1203,7 @@ MODULE MODULE_MPP_LAND
 
       if(numprocs .ne. total_pe) then
          write(6,*) "Error: numprocs .ne. total_pe ",numprocs, total_pe 
-         call hydro_stop("wrf_LAND_set_INIT")
+         call mpp_land_abort()
       endif
 
 
@@ -1701,6 +1794,52 @@ MODULE MODULE_MPP_LAND
         endx = startx + ix -1
         endy = starty + jx -1
      end subroutine getLocalXY
+
+     subroutine check_landreal1(unit, inVar)
+        implicit none
+        integer :: unit
+        real :: inVar
+        if(my_id .eq. IO_id) then
+           write(unit,*) inVar
+           call flush(unit)
+        endif
+     end subroutine check_landreal1
+
+     subroutine check_landreal1d(unit, inVar)
+        implicit none
+        integer :: unit
+        real :: inVar(:)
+        if(my_id .eq. IO_id) then
+           write(unit,*) inVar
+           call flush(unit)
+        endif
+     end subroutine check_landreal1d
+     subroutine check_landreal2d(unit, inVar)
+        implicit none
+        integer :: unit
+        real :: inVar(:,:)
+        real :: g_var(global_nx,global_ny)
+        call write_io_real(inVar,g_var) 
+        if(my_id .eq. IO_id) then
+           write(unit,*) g_var 
+           call flush(unit)
+        endif
+     end subroutine check_landreal2d
+
+     subroutine check_landreal3d(unit, inVar)
+        implicit none
+        integer :: unit, k, klevel
+        real :: inVar(:,:,:)
+        real :: g_var(global_nx,global_ny)
+        klevel = size(inVar,2)
+        do k = 1, klevel
+           call write_io_real(inVar(:,k,:),g_var) 
+           if(my_id .eq. IO_id) then
+              write(unit,*) g_var
+              call flush(unit)
+           endif
+        end do
+     end subroutine check_landreal3d
 
 END MODULE MODULE_MPP_LAND
 
