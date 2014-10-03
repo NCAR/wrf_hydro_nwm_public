@@ -222,8 +222,10 @@
 #endif
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
-           if (iret == 0) iret = nf_get_var_real(ncid, varid, fpar)
-           fpar = fpar/100.
+           if (iret == 0) then 
+              iret = nf_get_var_real(ncid, varid, fpar)
+              if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 1000) ) fpar = fpar/100.
+           endif
 
 
           iret = nf_inq_varid(ncid,"LAI",  varid)

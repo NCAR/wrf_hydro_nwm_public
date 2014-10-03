@@ -145,7 +145,7 @@
 
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, &
-            snodep,lai, fpar, vegtyp)
+            snodep,lai, fpar, vegtyp,SHDMIN,SHDMAX)
       ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
@@ -153,7 +153,7 @@
           integer :: ix,jx , nsoil, i, j
           integer :: iret, ncid, ierr, varid
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
-          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
+          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar ,SHDMIN,SHDMAX
           integer, dimension(ix,jx) ::    vegtyp
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
@@ -176,8 +176,23 @@
 #endif
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
-           if (iret == 0) iret = nf_get_var_real(ncid, varid, fpar)
-           fpar = fpar/100.
+           if (iret == 0) then 
+               iret = nf_get_var_real(ncid, varid, fpar)
+               if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 1000)) fpar = fpar/100.
+           endif
+
+           iret = nf_inq_varid(ncid,"SHDMIN",  varid)
+           if (iret == 0) then 
+               iret = nf_get_var_real(ncid, varid, SHDMIN)
+               if(maxval(SHDMIN) .gt. 10 .and. (maxval(SHDMIN) .lt. 1000)) SHDMIN = SHDMIN / 100.
+           endif
+             
+
+           iret = nf_inq_varid(ncid,"SHDMAX",  varid)
+           if (iret == 0) then 
+              iret = nf_get_var_real(ncid, varid, SHDMAX)
+               if(maxval(SHDMAX) .gt. 10 .and. (maxval(SHDMAX) .lt. 1000)) SHDMAX = SHDMAX / 100.
+           endif
 
 !yw
 !yw           do j = 1, jx
