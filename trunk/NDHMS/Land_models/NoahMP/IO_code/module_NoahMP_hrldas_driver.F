@@ -267,8 +267,8 @@ module module_NoahMP_hrldas_driver
     INTEGER                             :: YEARLEN
 
     INTEGER, PARAMETER                  :: NSNOW = 3    ! number of snow layers fixed to 3
-    REAL, PARAMETER                     :: undefined_value = -1.E36
-    !yw integer, PARAMETER                     :: undefined_value = 0
+    !yw REAL, PARAMETER                     :: undefined_value = -1.E36
+    REAL, PARAMETER                     :: undefined_value = 0.0
 
 !---------------------------------------------------------------------
 !  File naming, parallel
