@@ -586,7 +586,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine decompose_data_real3d (in_buff,out_buff,klevel)
       implicit none
-      integer, klevel, k
+      integer:: klevel, k
       real in_buff(global_nx,1:klevel,global_ny),out_buff(local_nx,1:klevel,local_ny) 
       do k = 1, klevel
           call decompose_data_real(in_buff(:,k,:),out_buff(:,k,:))

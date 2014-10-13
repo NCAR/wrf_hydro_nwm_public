@@ -1124,7 +1124,7 @@ module module_NoahMP_hrldas_driver
 
   
 ! jlm && NTIME=(KHOUR+1)*3600./nint(dtbl)  !!dont need to run for an extra hour! the whole point.
-  NTIME=(KHOUR)*3600./nint(dtbl)
+  NTIME=(KHOUR+1)*3600./nint(dtbl)
   print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
   
   call system_clock(count=clock_count_1)   ! Start a timer

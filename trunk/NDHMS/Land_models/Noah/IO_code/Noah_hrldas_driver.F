@@ -1170,7 +1170,7 @@ program Noah_hrldas_driver
 ! Begin Time Loop
 !------------------------------------------------------------------------
 
-  NTIME=(KHOUR)*3600./nint(dt)
+  NTIME=(KHOUR+1)*3600./nint(dt)
   if ( rank == 0 ) then
      ! Start a timer
      call system_clock(count=clock_count_1)

@@ -6273,7 +6273,10 @@ end subroutine mpp_output_chrt
               endif
            end do
         end do
-      
+     
+     if(my_id .eq. IO_id) then
+        call outPutChanInfo(gg_from_node,gg_to_node,gg_CHLAT,gg_CHLON)
+     endif
 
 !     if(my_id .eq. IO_id) then
 !        write(71,*) gg_TYPEL*1.0
@@ -6384,5 +6387,36 @@ end subroutine mpp_output_chrt
        end subroutine out_obs_crt
 #endif
        
+    subroutine outPutChanInfo(fromNode,toNode,chlon,chlat)
+        implicit none
+        integer, dimension(:) :: fromNode,toNode
+        real, dimension(:) :: chlat,chlon
+        integer :: iret, nodes, i, ncid, dimid_n, varid
 
+        nodes = size(chlon,1)         
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create("nodeInfor.nc", IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create("nodeInfor.nc", NF_CLOBBER, ncid)
+#endif
+       iret = nf_def_dim(ncid, "node", nodes, dimid_n)  !-- make a decimated grid
+!  define the varialbes
+       iret = nf_def_var(ncid,"fromNode",NF_INT,1,(/dimid_n/),varid)
+       iret = nf_def_var(ncid,"toNode",NF_INT,1,(/dimid_n/),varid)
+       iret = nf_def_var(ncid,"chlat",NF_FLOAT,1,(/dimid_n/),varid)
+          iret = nf_put_att_text(ncid,varid,'long_name',13,'node latitude')
+       iret = nf_def_var(ncid,"chlon",NF_FLOAT,1,(/dimid_n/),varid)
+          iret = nf_put_att_text(ncid,varid,'long_name',14,'node longitude')
+       iret = nf_enddef(ncid)
+!write to the file
+           iret = nf_inq_varid(ncid,"fromNode", varid)
+           iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), fromNode)
+           iret = nf_inq_varid(ncid,"toNode", varid)
+           iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), toNode)
+           iret = nf_inq_varid(ncid,"chlat", varid)
+           iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlat)
+           iret = nf_inq_varid(ncid,"chlon", varid)
+           iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlon)
+          iret = nf_close(ncid)
+    end subroutine outPutChanInfo
 end module module_HYDRO_io

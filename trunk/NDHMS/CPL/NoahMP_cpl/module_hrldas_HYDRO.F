@@ -36,7 +36,12 @@ CONTAINS
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
 !lpr add 2014-06-24
+#ifdef WRF_HYDRO_RAPID
+#ifdef MPP_LAND
+        real, dimension(ii,jj) :: g_runoff
+#endif
         real, dimension(ii,jj) :: runoff
+#endif
 !lpr add end
         integer ::  did
 
@@ -58,7 +63,13 @@ CONTAINS
         if(nlst_rt(did)%channel_option .eq. 4) then
                 runoff  = infxsrt + soldrain
                 call hrldas_RAPID_ini(ntime)    
+#ifdef MPP_LAND
+                call write_io_real(runoff,g_runoff)
+                if(my_id.eq.io_id) &
+                call hrldas_RAPID_exe(runoff,g_global_nx,global_ny)     
+#else
                 call hrldas_RAPID_exe(runoff,ii,jj)     
+#endif
                 sfcheadrt = 0.0
                 return
         endif
