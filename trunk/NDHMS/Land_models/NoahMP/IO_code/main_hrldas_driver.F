@@ -19,6 +19,7 @@ program Noah_hrldas_driver
        call land_driver_exe(ITIME)
    end do
 #ifdef WRF_HYDRO
+   write(6,*) "NTIME = ",NTIME, " ITIME =", ITIME
    call hydro_finish() 
 #endif
 

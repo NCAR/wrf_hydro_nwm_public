@@ -391,21 +391,21 @@ module module_NoahMP_hrldas_driver
 
 
 
-  nsoil                   = undefined_value
-  soil_thick_input        = undefined_value
-  dtbl                    = undefined_value
-  start_year              = undefined_value
-  start_month             = undefined_value
-  start_day               = undefined_value
-  start_hour              = undefined_value
-  start_min               = undefined_value
-  khour                   = undefined_value
-  kday                    = undefined_value
-  zlvl                    = undefined_value
-  forcing_timestep        = undefined_value
-  noah_timestep           = undefined_value
-  output_timestep         = undefined_value
-  restart_frequency_hours = undefined_value
+  nsoil                   = -999
+  soil_thick_input        = -999
+  dtbl                    = -999
+  start_year              = -999
+  start_month             = -999
+  start_day               = -999
+  start_hour              = -999
+  start_min               = -999
+  khour                   = -999
+  kday                    = -999
+  zlvl                    = -999
+  forcing_timestep        = -999
+  noah_timestep           = -999
+  output_timestep         = -999
+  restart_frequency_hours = -999
 
   open(30, file="namelist.hrldas", form="FORMATTED")
   read(30, NOAHLSM_OFFLINE, iostat=ierr)
