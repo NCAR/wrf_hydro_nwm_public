@@ -7,7 +7,7 @@ module module_NoahMP_hrldas_driver
   USE module_date_utilities
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char
-  use module_mpp_land, only: check_land
+  use module_mpp_land, only: check_land, my_id
 
 #endif
 
@@ -1033,7 +1033,7 @@ module module_NoahMP_hrldas_driver
      SNOWH     =  undefined_value
 
 #ifdef WRF_HYDRO
-  if(forc_typ .gt. 2)  HRLDAS_ini_typ = 0
+  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
 
   if(HRLDAS_ini_typ .eq. 1) then
      ! read initial parameters and conditions from the HRLDAS forcing data
@@ -1054,11 +1054,9 @@ module module_NoahMP_hrldas_driver
           ".LDASIN_DOMAIN"//hgrid
 #endif
 
-
      CALL READINIT_HRLDAS(inflnm, xstart, xend, ystart, yend,  &
           NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
           TSLB, CANWAT, TSK, SNOW, SNOWH, FNDSNOWH)
-
 	  
      VEGFRA    =  undefined_value
      LAI       =  undefined_value
@@ -1069,7 +1067,7 @@ module module_NoahMP_hrldas_driver
           OLDDATE, IVGTYP, VEGFRA, LAI, GVFMIN, SHDMAX)
 
 #ifdef WRF_HYDRO
-  else
+  else   !  HRLDAS_ini_typ        
 
 #ifdef MPP_LAND
     call HYDRO_HRLDAS_ini_mpp   &
@@ -1077,7 +1075,7 @@ module module_NoahMP_hrldas_driver
     call HYDRO_HRLDAS_ini   &
 #endif
        (trim(hrldas_constants_file), xend-xstart+1,yend-ystart+1, &
-       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP)
+       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
 
        greenfrac = 0.0
 #ifdef MPP_LAND
@@ -1218,7 +1216,6 @@ end subroutine land_driver_ini
                xstart, xend, ystart, yend,    &
                T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
                GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,SNOWH,ITIME,FORCING_TIMESTEP,prcp0)
-   
 
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate
@@ -1518,9 +1515,6 @@ end subroutine land_driver_ini
           float(clock_count_2-clock_count_1)/float(clock_rate), &
           timing_sum, real(sflx_count_sum) / real(clock_rate)
      clock_count_1 = clock_count_2
-
-     write(6,*) "finish time step 1"
-     call flush(6)
 
 !yw  ENDDO TIMELOOP
 

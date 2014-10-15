@@ -190,7 +190,7 @@
 
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, &
-            snodep,lai, fpar, vegtyp)
+            snodep,lai, fpar, vegtyp,FNDSNOWH)
       ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
@@ -201,6 +201,7 @@
           real,dimension(ix,nsoil,jx):: smc_io,stc_io,sh2ox_io
           real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
           integer, dimension(ix,jx) ::    vegtyp
+          logical :: FNDSNOWH
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
@@ -237,6 +238,9 @@
              print*, "read snowh for initialization ...."
 #endif
              iret = nf_get_var_real(ncid, varid, snodep)
+             FNDSNOWH = .true.
+          else
+             FNDSNOWH   = .false.
           endif  
 
           iret = nf_inq_varid(ncid,"SNOW",  varid)
@@ -277,9 +281,10 @@
        end subroutine HYDRO_HRLDAS_ini
 
 #ifdef MPP_LAND
-      subroutine HYDRO_HRLDAS_ini_mpp(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, &
-            snodep,lai, fpar, vegtyp)
-          use module_mpp_land, only:global_nx, global_ny, my_id, io_id, decompose_data_real,decompose_data_int
+      subroutine HYDRO_HRLDAS_ini_mpp(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, & 
+                                snodep,lai, fpar, vegtyp,FNDSNOWH)
+          use module_mpp_land, only:global_nx, global_ny, my_id, io_id, decompose_data_real, &
+                     decompose_data_int, mpp_land_bcast, write_io_real,write_io_int
           implicit none
           character(len=*) fileName
           integer :: ix,jx , nsoil, i, j, k
@@ -287,17 +292,27 @@
           real,dimension(ix,nsoil,jx):: smc_io,stc_io,sh2ox_io
           real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
           integer, dimension(ix,jx) ::    vegtyp
+          logical :: FNDSNOWH
 
           real,dimension(global_nx,nsoil,global_ny):: gsmc_io,gstc_io,gsh2ox_io
           real,dimension(global_nx,global_ny):: gcmc, gt1, gweasd, gsnodep, glai, gfpar 
           integer, dimension(global_nx,global_ny) ::    gvegtyp
-          
+         
+          call write_io_real(snodep,gsnodep) 
+          call write_io_real(lai,   glai   ) 
+          call write_io_real(fpar, gfpar  ) 
+          call write_io_int(vegtyp, gvegtyp)
+          call write_io_real(cmc, gcmc  ) 
+          call write_io_real(t1, gt1  ) 
+          call write_io_real(weasd, gweasd  ) 
+
           if(my_id .eq. io_id) then 
           call HYDRO_HRLDAS_ini(fileName,global_nx,global_ny, nsoil,gsmc_io,gstc_io,gsh2ox_io, gcmc, gt1, gweasd, &
-               gsnodep,glai, gfpar, gvegtyp)
+               gsnodep,glai, gfpar, gvegtyp,FNDSNOWH)
           endif
 
 
+          call mpp_land_bcast(FNDSNOWH)
           do k = 1, nsoil
               call decompose_data_real(gsmc_io(:,k,:),smc_io(:,k,:))
               call decompose_data_real(gstc_io(:,k,:),stc_io(:,k,:))
@@ -310,6 +325,7 @@
           call decompose_data_real(gsnodep, snodep)
           call decompose_data_real(glai, lai)
           call decompose_data_real(gfpar, fpar)
+          call decompose_data_int(gvegtyp,vegtyp)
            
       end subroutine HYDRO_HRLDAS_ini_mpp
 #endif

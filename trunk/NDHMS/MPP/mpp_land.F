@@ -41,6 +41,7 @@ MODULE MODULE_MPP_LAND
      module procedure mpp_land_bcast_int1 
      module procedure mpp_land_bcast_int1d 
      module procedure mpp_land_bcast_int2d 
+     module procedure mpp_land_bcast_logical
   end interface
  
   contains
@@ -852,6 +853,15 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return 
   end subroutine mpp_land_bcast_int1
+
+  subroutine mpp_land_bcast_logical(inout)
+      logical ::  inout
+      integer ierr
+        call mpi_bcast(inout,1,MPI_LOGICAL,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_logical
 
   subroutine mpp_land_bcast_real1(inout)
       real inout

@@ -145,7 +145,7 @@
 
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, &
-            snodep,lai, fpar, vegtyp,SHDMIN,SHDMAX)
+            snodep,lai, fpar, vegtyp,SHDMIN,SHDMAX,FNDSNOWH)
       ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
@@ -155,6 +155,7 @@
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
           real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar ,SHDMIN,SHDMAX
           integer, dimension(ix,jx) ::    vegtyp
+          logical :: FNDSNOWH
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
@@ -212,6 +213,9 @@
              print*, "read snowh for initialization ...."
 #endif
              iret = nf_get_var_real(ncid, varid, snodep)
+             FNDSNOWH = .true.
+          else
+             FNDSNOWH = .false.
           endif  
 
           iret = nf_inq_varid(ncid,"SNOW",  varid)

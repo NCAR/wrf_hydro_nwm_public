@@ -25,6 +25,7 @@ program Noah_hrldas_driver
   REAL, DIMENSION(NSOLDX) :: ZSOIL
 
   REAL :: T1V,TH2V
+  LOGICAL :: FNDSNOWH
 
 !-----------------------------------------------------------------
 !  Dimensions from the input file:
@@ -1110,7 +1111,7 @@ program Noah_hrldas_driver
   else
     call HYDRO_HRLDAS_ini(trim(hrldas_constants_file),&
        parallel_xend-parallel_xstart+1,subwindow_yend-subwindow_ystart+1, &
-       nsoil,smc,stc,sh2ox, cmc, t1, weasd, snodep,lai, fpar,vegtyp,GVFMIN,GVFMAX)
+       nsoil,smc,stc,sh2ox, cmc, t1, weasd, snodep,lai, fpar,vegtyp,GVFMIN,GVFMAX,FNDSNOWH)
   endif
 
      SOILMX = -1.0 * SMC (:,:,1)* ZSOIL (1)

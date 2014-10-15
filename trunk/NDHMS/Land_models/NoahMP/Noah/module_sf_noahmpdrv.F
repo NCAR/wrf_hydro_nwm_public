@@ -1226,6 +1226,7 @@ end if
                 DZSNO(-1) = 0.20
                 DZSNO( 0) = SNODEP(I,J) - DZSNO(-1) - DZSNO(-2)
              ELSE
+                write(6,*) "SNODEP(I,J) = ", SNODEP(I,J)
                 CALL wrf_error_fatal("Problem with the logic assigning snow layers.")
              END IF
           END IF
