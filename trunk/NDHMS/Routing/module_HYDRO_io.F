@@ -4882,7 +4882,11 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
          integer :: l, g
          real,intent(out) , dimension(n) ::  var_out
+#ifdef MPP_LAND
          real,dimension(gnlinks) ::  var
+#else
+         real,dimension(n) ::  var
+#endif
 
 
 #ifdef MPP_LAND
