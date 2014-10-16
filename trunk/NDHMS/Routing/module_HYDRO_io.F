@@ -4816,6 +4816,7 @@ end subroutine mpp_output_chrt
 
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp
+         xtmp = 0.0
 #endif
             iret = nf_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
