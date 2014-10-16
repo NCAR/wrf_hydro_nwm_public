@@ -854,7 +854,7 @@ CONTAINS
   END IF     ! Endif for channel routing setup
 !-----------------------------------------------------------------------
 
-       rt_domain(did)%INFXSWGT = 1./FLOAT(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+       rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
        rt_domain(did)%SH2OWGT = 1.
   rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
   rt_domain(did)%QSUBRT = 0.0

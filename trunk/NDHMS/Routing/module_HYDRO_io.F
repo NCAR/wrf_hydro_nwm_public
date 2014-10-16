@@ -4265,8 +4265,9 @@ end subroutine mpp_output_chrt
           iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
-            iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf_def_var(ncid,"SFCHEADSUBRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"sh2owgt",NF_FLOAT,3,(/dimid_ixrt,dimid_jxrt,dimid_soil/),varid)
             iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
 
@@ -4322,8 +4323,9 @@ end subroutine mpp_output_chrt
 
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
-            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT, "QBDRYRT" )
+            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
+            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT, "SFCHEADSUBRT" )
             call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT, "qstrmvolrt" )
 
@@ -4418,7 +4420,11 @@ end subroutine mpp_output_chrt
            endif
 #else
            iret = nf_inq_varid(ncid,varName, varid)
-           iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
+           if(iret .eq. 0) then
+              iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
+           else
+              write(6,*) "Error : variable not defined in rst file before write: ", varName
+           endif
 #endif
            
            return
@@ -4618,6 +4624,7 @@ end subroutine mpp_output_chrt
 
         if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT,"SFCHEADSUBRT")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT,"qstrmvolrt")
             call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
@@ -4738,6 +4745,7 @@ end subroutine mpp_output_chrt
 
          call decompose_data_real(xtmp, var)
 #else
+            var = 0.0
             iret = nf_get_var_real(ncid, varid, var)
 #endif
          return
