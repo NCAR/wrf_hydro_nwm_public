@@ -15,17 +15,23 @@ MODULE MODULE_CPL_LAND
            time_step_write_rstart, time_step_output
   character(len=19) cpl_outdate, cpl_rstdate
 
-
+  integer, public :: cartGridComm
 
   contains
 
   subroutine CPL_LAND_INIT(istart,iend,jstart,jend)
       implicit none
    include "mpif.h"
-      integer  ierr
+      integer ierr
       logical mpi_inited
       integer istart,iend,jstart,jend 
-
+      
+      integer :: xx, ndim
+      integer, dimension(0:1) :: dims
+      logical cyclic(0:1), reorder
+      data cyclic/.false.,.false./  ! not cyclic
+      data reorder/.false./   
+      
       CALL mpi_initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
           call mpi_init(ierr)
@@ -53,6 +59,26 @@ MODULE MODULE_CPL_LAND
       call find_down()
 
       call send_info()
+
+      ! initialize cartesian grid communicator
+      dims(0) = 0
+      dims(1) = 0
+      do xx=1,total_pe_num
+	if(node_info(4,xx) .eq. (-1)) then
+	  dims(0) = dims(0)+1
+	endif
+	if(node_info(2,xx) .eq. (-1)) then
+	  dims(1) = dims(1)+1
+	endif
+      enddo
+      
+      ndim = 2
+
+!       dims(0) = up_down_np      ! rows
+!       dims(1) = left_right_np   ! columns
+! !
+     call MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, &
+                          cyclic, reorder, cartGridComm, ierr)
 
       initialized = .false.  ! land model need to be initialized. 
       return

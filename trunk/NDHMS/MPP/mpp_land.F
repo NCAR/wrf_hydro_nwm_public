@@ -14,7 +14,7 @@ MODULE MODULE_MPP_LAND
   integer, public :: local_rt_nx,local_rt_ny,rt_AGGFACTRT
   integer, public :: numprocs   ! total process, get by mpi initialization.
   
-  integer, public :: cartGridComm
+  
 
   integer mpp_status(MPI_STATUS_SIZE)
 
