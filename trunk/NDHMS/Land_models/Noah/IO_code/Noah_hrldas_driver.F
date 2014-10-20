@@ -2411,8 +2411,13 @@ program Noah_hrldas_driver
 
      print *, "restart_frequency_hours = ",restart_frequency_hours
 
-     if (restart_frequency_hours > 0) then
-        if ((k >= 0) .and. ((mod(k, int(restart_frequency_hours*3600./nint(dt))) == 0).or. yw_rst_out .eq. 99) ) then 
+!!! restart every month
+     if( (olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
+                     (olddate(15:16) == "00").and. (olddate(18:19) == "00")    &
+             .and. (restart_frequency_hours <= 0) )  yw_rst_out = 99
+
+        if ((k >= 0) .and. ((restart_frequency_hours .gt. 0) .and. (mod(k, int(restart_frequency_hours*3600./nint(dt))) == 0) &
+               .or. yw_rst_out .eq. 99) ) then 
            yw_rst_out = -999
 
            if (rank == 0) print*, 'Write restart at '//olddate(1:13)
@@ -2501,7 +2506,6 @@ program Noah_hrldas_driver
 
            call finalize_restart_file()
         endif
-     endif
   endif !!! rank if block
 
   ENDDO KLOOP
