@@ -946,6 +946,8 @@ program Noah_hrldas_driver
   XLAI2D = 0.
   GVFMIN = -999.
   GVFMAX = -999.
+ 
+  LAI = 0.0
 
 !---------------------------------------------------------------------
 ! Initialize static surface data

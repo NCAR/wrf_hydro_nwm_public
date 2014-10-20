@@ -41,7 +41,8 @@ module module_HYDRO_drv
      endif
 ! restart every month automatically.
      if ((nlst_rt(did)%olddate(9:10) == "01") .and. (nlst_rt(did)%olddate(12:13) == "00") .and. &
-          (nlst_rt(did)%olddate(15:16) == "00").and. (nlst_rt(did)%olddate(18:19) == "00")) rst_out = 99
+          (nlst_rt(did)%olddate(15:16) == "00").and. (nlst_rt(did)%olddate(18:19) == "00") .and. &
+           (nlst_rt(did)%rst_dt .le. 0)  ) rst_out = 99
 #ifdef MPP_LAND
    endif
      call mpp_land_bcast_int1(rst_out)
