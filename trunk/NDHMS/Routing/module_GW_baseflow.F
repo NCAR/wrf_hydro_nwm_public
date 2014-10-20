@@ -13,6 +13,11 @@ module module_GW_baseflow
  integer, private :: ierr
  integer, parameter :: rowshift = 0
  integer, parameter :: colshift = 1
+ 
+ integer, dimension(0:1) :: dims, coords
+ logical, dimension(0:1) :: cyclic
+ integer :: np_up_down, np_left_right
+ integer :: p_up_down, p_left_right
 #endif
 
 contains
@@ -253,6 +258,21 @@ contains
      integer did
      real dt,dx
      integer :: jj, ii, iter, itermax
+
+     
+    
+#ifdef MPP_LAND
+     ! initialize cartesian topology variables for dimension and coordinates
+     call MPI_CART_GET(cartGridComm, 2, dims, cyclic, coords, ierr)
+
+     np_up_down=dims(0)
+     np_left_right=dims(1)
+     
+     p_up_down=coords(0)
+     p_left_right=coords(1)
+     
+#endif
+
 
       itermax = nlst_rt(did)%GwSpinCycles
 	   gw2d(did)%dx=dx
@@ -768,16 +788,16 @@ deallocate(hh)
   end do
 !-------------
 
-    if(up_down_np .gt. 1) then
+    if(np_up_down .gt. 1) then
         call sub_n_form(xdim, ydim, aa, &
                         bb, cc, &
                         dd, &
                         c2, b2, hh, wk, xfac, zfac, &
-                        up_down_p+1, up_down_np, 2)
+                        p_up_down+1, np_up_down, 2)
 
 	
-	call parysolv1(c2, b2, hh, 1., my_id+1, up_down_p+1, &
-	                xdim, ydim, left_right_np, up_down_np)
+	call parysolv1(c2, b2, hh, 1., my_id+1, p_up_down+1, &
+	                xdim, ydim, np_left_right, np_up_down)
 
     else
         call sub_tri_solv(xdim,ydim,aa(jts:jte,its:ite), &
@@ -938,7 +958,7 @@ allocate(hh(ifs:ife))
 end do
 !-------------
 
-    if(left_right_np .gt. 1) then
+    if(np_left_right .gt. 1) then
 
 ! 3 c(,)  -- subdiagonal elements of tridiagonal systems
 ! 4 a(,)  -- diagonal elements of tridiagonal systems
@@ -953,10 +973,10 @@ end do
                         bb, cc, &
                         dd, &
                         c2, b2, hh, wk, xfac, zfac, &
-                        left_right_p+1, left_right_np, 1)
+                        p_left_right+1, np_left_right, 1)
 	
-        call parxsolv1(c2, b2, hh, 1., my_id+1, left_right_p+1, &
-	                xdim, ydim, left_right_np, up_down_np)
+        call parxsolv1(c2, b2, hh, 1., my_id+1, p_left_right+1, &
+	                xdim, ydim, np_left_right, np_up_down)
 
     else
         call sub_tri_solv(xdim,ydim,aa, &
