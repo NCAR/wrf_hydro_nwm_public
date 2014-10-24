@@ -12,10 +12,10 @@ module module_HYDRO_drv
    use module_GW_baseflow_data, only: gw2d
    use module_GW_baseflow, only:simp_gw_buck, gwstep, gw2d_allocate, gw2d_ini
    use module_channel_routing, only: drive_channel
-   use module_namelist, only: nlst_rt
+   use module_namelist, only: nlst_rt, read_rt_nlst
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
-   use module_namelist
+!   use module_namelist
    use module_lsm_forcing, only: geth_newdate
    
    implicit none
