@@ -1122,7 +1122,11 @@ module module_NoahMP_hrldas_driver
 
   
 ! jlm && NTIME=(KHOUR+1)*3600./nint(dtbl)  !!dont need to run for an extra hour! the whole point.
+#ifdef WRF_HYDRO
+  NTIME=(KHOUR)*3600./nint(dtbl)
+#else
   NTIME=(KHOUR+1)*3600./nint(dtbl)
+#endif
   print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
   
   call system_clock(count=clock_count_1)   ! Start a timer

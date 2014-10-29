@@ -912,6 +912,15 @@ end subroutine get_albedo12m_netcdf
         print *, "route order", route_order_f
         print *, "route linke",route_link_f
         print *, "route lake",route_lake_f
+
+     BwG = 0.0
+     ChSSlpG = 0.0
+     MannNG = 0.0
+     TYPEL = 0
+     MannN = 0.0
+     Bw = 0.0
+     ChSSlp = 0.0 
+
 #endif
 
 !DJG Edited code here to retrieve data from hires netcdf file....
@@ -2129,6 +2138,8 @@ end subroutine get_albedo12m_netcdf
 !     iret = nf_inq_varid(ncid,  "Q_SFCFLX_Y", varid)
 !     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 
+! for compareing between sequential and parallel to initialized xdumd
+       xdumd = 0.0
        jj = 1
        ii = 0
        do j = 1,jxrt,decimation
@@ -5226,6 +5237,7 @@ end subroutine mpp_output_chrt
 
         end do
 #ifdef MPP_LAND
+       endif
         call mpp_land_bcast_int(NLINKS,FROM_NODE)
         call mpp_land_bcast_int(NLINKS,TO_NODE)
         call mpp_land_bcast_int(NLINKS,TYPEL  )
@@ -5247,7 +5259,6 @@ end subroutine mpp_output_chrt
         call mpp_land_bcast_real(NLINKS,ORIFICEE)
         call mpp_land_bcast_int1(MAXORDER)
         
-       endif
 #endif
 
       elseif ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then  !-- handle setting up topology on the grid for diffusion scheme
@@ -5281,6 +5292,7 @@ end subroutine mpp_output_chrt
        enddo
 
 #ifdef MPP_LAND
+       endif
           call mpp_land_bcast_real(NLAKES,HRZAREA)
           call mpp_land_bcast_real(NLAKES,LAKEMAXH)
           call mpp_land_bcast_real(NLAKES,WEIRC  )
@@ -5291,7 +5303,6 @@ end subroutine mpp_output_chrt
           call mpp_land_bcast_real(NLAKES,LATLAKE )
           call mpp_land_bcast_real(NLAKES,LONLAKE )
           call mpp_land_bcast_real(NLAKES,ELEVLAKE)
-       endif
 #endif
 
       end if   !end if for NLAKES >0 check

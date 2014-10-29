@@ -982,7 +982,8 @@ module module_HYDRO_drv
        rt_domain(did)%lksat = 0.0
        do j = 1, RT_DOMAIN(did)%jx
              do i = 1, RT_DOMAIN(did)%ix
-                rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
+                !yw rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
+                rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) 
                 IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
                     rt_domain(did)%SMCMAX1(i,j) = 0.45
                     rt_domain(did)%SMCREF1(i,j) = 0.42
