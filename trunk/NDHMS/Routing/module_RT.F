@@ -420,7 +420,7 @@ CONTAINS
     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
 
 #ifdef MPP_LAND
-          CALL MPP_READ_CHROUTING_new(    &
+          CALL MPP_READ_CHROUTING_new(did,    &
 #else
           CALL READ_CHROUTING(    &
 #endif

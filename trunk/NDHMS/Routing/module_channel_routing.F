@@ -737,7 +737,7 @@ crnt:    DO                      !-- loop on the courant condition
            DO i = 1,NLINKS
 #endif
            if (TYPEL(i) .eq. 0 .AND. HLINKTMP(FROM_NODE(i)) .gt. RETDEP_CHAN) then 
-               if(from_node(i) .ne. to_node(i) ) &  ! added by Wei Yu
+               if(from_node(i) .ne. to_node(i) .and. (to_node(i) .gt. 0) .and.(from_node(i) .gt. 0) ) &  ! added by Wei Yu
                    QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
                      HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
                      CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
@@ -816,12 +816,12 @@ crnt:    DO                      !-- loop on the courant condition
             write(6,*) "Unstatble at node ",i, "lat=",latval(CHANXI(i),CHANYJ(i)), "lon=",lonval(CHANXI(i),CHANYJ(i))
             write(6,*) "TYPEL, CVOLTMP, QSUM, QSUM*DTCT",TYPEL(i), CVOLTMP(i), QSUM(i), QSUM(i)*DTCT
             write(6,*) "qsubrt, qstrmvolrt,qlink",QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)),qlink(i,1),qlink(i,2)
-               write(6,*) "current nodes, z, h", ZELEV(FROM_NODE(i)),HLINKTMP(FROM_NODE(i))
-            if(TO_NODE(i) .gt. 0) then
-               write(6,*) "to nodes, z, h", ZELEV(TO_NODE(i)), HLINKTMP(TO_NODE(i))
-            else
-               write(6,*) "no to nodes   "
-            endif
+!              write(6,*) "current nodes, z, h", ZELEV(FROM_NODE(i)),HLINKTMP(FROM_NODE(i))
+!           if(TO_NODE(i) .gt. 0) then
+!              write(6,*) "to nodes, z, h", ZELEV(TO_NODE(i)), HLINKTMP(TO_NODE(i))
+!           else
+!              write(6,*) "no to nodes   "
+!           endif
                write(6,*) "CHANLEN(i), MannN(i), Bw(i), ChSSlp(i) ", CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)
             write(6,*) "*******end of  diag ***************"
 #endif

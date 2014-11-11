@@ -5021,6 +5021,7 @@ end subroutine mpp_output_chrt
    END SUBROUTINE READ_ROUTING_old
 !DJG _____________________________
 
+
 #ifdef MPP_LAND
 
        SUBROUTINE MPP_READ_CHROUTING(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
@@ -5041,7 +5042,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
         INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS
-        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
+        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
         INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
@@ -5107,6 +5108,7 @@ end subroutine mpp_output_chrt
 !yw initialize the array.
         to_node =   MAXORDER
         from_node = MAXORDER
+        Link_location = MAXORDER
 
 #ifdef HYDRO_D
         print *, "reading routing initialization files..."
@@ -5268,8 +5270,8 @@ end subroutine mpp_output_chrt
 #endif
        read(79,*)  header  !-- read the lake file
 #ifdef HYDRO_D
-       write(*,*) "reading lake file ", header
-       write(6,*) "error check read file ",route_link_f
+       write(*,*) "output message: reading lake file ", header
+       write(6,*) "output message: error check read file ",route_link_f
 #endif
 #ifdef MPP_LAND
        endif
@@ -5324,7 +5326,8 @@ end subroutine mpp_output_chrt
          If (CH_NETRT(i, j) .ge. 0) then !get its direction and assign its elevation and order
           If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT) .AND. &
                (CH_NETRT(i,j+1).ge.0) ) then !North
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5341,7 +5344,8 @@ end subroutine mpp_output_chrt
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
                     .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1).ge.0) ) then !North East
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5358,7 +5362,8 @@ end subroutine mpp_output_chrt
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT) &
                     .AND. (CH_NETRT(i+1,j).ge.0) ) then !East
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5375,7 +5380,8 @@ end subroutine mpp_output_chrt
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
                     .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i+1,j-1).ge.0) ) then !south east
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5391,7 +5397,8 @@ end subroutine mpp_output_chrt
              CHANYJ(cnt) = j
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0) ) then !due south
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5408,7 +5415,8 @@ end subroutine mpp_output_chrt
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
                .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i-1,j-1).ge.0)) then !south west
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5424,7 +5432,8 @@ end subroutine mpp_output_chrt
              CHANYJ(cnt) = j
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0) ) then !West
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              FROM_NODE(cnt) = CH_NETLNK(i, j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
@@ -5441,7 +5450,8 @@ end subroutine mpp_output_chrt
              Link_Location(i,j) = cnt
           else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
                     .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0) ) then !North West
-             cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5485,7 +5495,8 @@ end subroutine mpp_output_chrt
            If (((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT)) .OR. &        !-- 64's can only flow north
               ((DIRECTION(i, j) .EQ. 64) .and. (j < jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
 !#endif
-              cnt = cnt + 1
+             !yw  cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5521,7 +5532,8 @@ end subroutine mpp_output_chrt
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
 !#endif
-              cnt = cnt + 1
+             !yw  cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5555,7 +5567,8 @@ end subroutine mpp_output_chrt
            else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT)) .OR. &    !-- 1's can only flow due east
                ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
 !#endif
-              cnt = cnt + 1
+             !yw  cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5583,7 +5596,8 @@ end subroutine mpp_output_chrt
            else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
-              cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5616,7 +5630,8 @@ end subroutine mpp_output_chrt
            else if (((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0)) .OR. &       !-- 4's can only flow due south
                ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
 !#endif
-              cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5651,7 +5666,8 @@ end subroutine mpp_output_chrt
                .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
                .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
 !#endif
-              cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5682,7 +5698,8 @@ end subroutine mpp_output_chrt
            else if (((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE.0) ) &                  !16's can only flow due west
 !#endif
                .OR.((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
-              cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5716,7 +5733,8 @@ end subroutine mpp_output_chrt
                .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
 !#endif
                .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
-              cnt = cnt + 1
+             !yw cnt = cnt + 1
+             cnt = CH_NETLNK(i,j)
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5773,7 +5791,8 @@ end subroutine mpp_output_chrt
 #endif
      end do
  
- 
+
+     Link_location = CH_NETLNK
      call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,TYPEL,NLINKS,99) 
 !    call check_channel(71,MannN,1,nlinks)
 !    call check_channel(72,TYPEL*1.0,1,nlinks)
@@ -5786,7 +5805,6 @@ end subroutine mpp_output_chrt
 
 !DJG -----------------------------------------------------
    END SUBROUTINE MPP_READ_CHROUTING
-
      SUBROUTINE mpp_readRT2d_real(did,var_name, inv, ixrt, jxrt, fileName) 
          implicit none
          INTEGER :: iret, did
@@ -6053,7 +6071,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
 
 
-       SUBROUTINE MPP_READ_CHROUTING_new(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+       SUBROUTINE MPP_READ_CHROUTING_new(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
             NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
             HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
@@ -6069,8 +6087,7 @@ end subroutine mpp_output_chrt
         implicit none
         INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
-        INTEGER                                      :: I,J,channel_option
-        REAL, DIMENSION(g_IXRT,g_JXRT) :: g1_LATVAL, g1_LONVAL
+        INTEGER                                      :: I,J,channel_option, did
         CHARACTER(len=28)                            :: dir
 
 !----DJG,DNY New variables for channel and lake routing
@@ -6091,7 +6108,6 @@ end subroutine mpp_output_chrt
         INTEGER, INTENT(INOUT),  DIMENSION(NLINKS)   :: LAKENODE  ! identifies which nodes pour into which lakes
         REAL, INTENT(IN)                             :: dist(ixrt,jxrt,9)
         INTEGER, INTENT(INOUT),  DIMENSION(NLINKS)   :: map_l2g
-        INTEGER, DIMENSION(GNLINKS)   :: map_g2l
 
 
 !-- store the location x,y location of the channel element
@@ -6123,116 +6139,38 @@ end subroutine mpp_output_chrt
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
         INTEGER, INTENT(OUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT, link_location
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)    :: latval,lonval
-        real      g1_elrt(g_ixrt,g_jxrt), g_dist(g_ixrt,g_jxrt,9)
-        integer   g1_ch_netrt(g_ixrt,g_jxrt)
-        INTEGER, DIMENSION(g_IXRT,g_JXRT)            :: g1_LAKE_MSKRT, g_GCH_NETLNK
         integer :: k
         INTEGER, DIMENSION(nlinks)            :: node_table, nlinks_index
         INTEGER, DIMENSION(nlakes)            :: lake_index
         integer :: yw_mpp_nlinks , l, mpp_nlinks
 
 
-!define temp array
-
-        REAL,  DIMENSION(GNLINKS)       :: gg_ChSSlp, gg_Bw
-        INTEGER,   DIMENSION(GNLINKS)   :: gg_FROM_NODE
-        REAL,   DIMENSION(GNLINKS)      :: gg_ZELEV
-        REAL,   DIMENSION(GNLINKS)      :: gg_CHLAT,gg_CHLON
-
-        INTEGER,   DIMENSION(GNLINKS)   :: gg_TYPEL
-        INTEGER,   DIMENSION(GNLINKS)   :: gg_TO_NODE,gg_ORDER
-        INTEGER,   DIMENSION(GNLINKS)   :: gg_STRMFRXSTPTS
-
-        REAL,   DIMENSION(GNLINKS)      :: gg_MUSK, gg_MUSX !muskingum
-        REAL,   DIMENSION(GNLINKS,2)    :: gg_QLINK  !channel flow
-        REAL,   DIMENSION(GNLINKS)      :: gg_CHANLEN   !channel length
-        REAL,   DIMENSION(GNLINKS)      :: gg_MannN, gg_So !mannings N
-        INTEGER,   DIMENSION(GNLINKS)   :: gg_LAKENODE  ! identifies which nodes pour into which lakes
-        integer , dimension(g_ixrt,g_jxrt):: g_tmp
-        integer , dimension(gNLINKS):: gg_chanxi, gg_chanyj
+!        link_location = -999
 
 
-        map_g2l = -9999
+!          CALL READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+!               FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
+!               NLAKES, MUSK, MUSX, QLINK,CHANLEN, MannN, So, ChSSlp, Bw, &
+!               HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
+!               ORIFICEA, ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
+!               route_link_f,route_lake_f, &
+!               route_direction_f, route_order_f, &
+!               CHANRTSWCRT,dist, ZELEV, LAKENODE, GCH_NETLNK, CHANXI, CHANYJ, &
+!               CHLAT, CHLON, channel_option, latval,lonval,&
+!               STRMFRXSTPTS,geo_finegrid_flnm)
 
+          call MPP_READ_CHROUTING(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+            FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
+            NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
+            HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+            ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
+            route_link_f, &
+            route_lake_f, route_direction_f, route_order_f, &
+            CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
+            CHANXI, CHANYJ, CHLAT, CHLON,  &
+            channel_option,LATVAL,LONVAL, &
+            STRMFRXSTPTS,geo_finegrid_flnm,Link_Location)
 
-        call write_IO_rt_real(elrt,g1_elrt)
-        call write_IO_rt_int(ch_netrt,g1_ch_netrt)
-        call write_IO_rt_int(GCH_NETLNK,g_GCH_NETLNK)
-
-
-            do k = 1, 9
-                call write_IO_rt_real(dist(:,:,k),g_dist(:,:,k))
-            end do
-
-
-        gg_FROM_NODE = -999
-        gg_TO_NODE = -999
-        gg_TYPEL =  0
-        gg_ORDER = -999
-        gg_MUSK = -999
-        gg_MUSX = -999 
-        gg_QLINK = -999
-        gg_CHANLEN = -999
-        gg_MannN = -999
-        gg_So = -999
-        gg_ChSSlp = -999
-        gg_Bw = -999
-        gg_ZELEV = -999
-        gg_LAKENODE = -999
-        gg_CHANXI = -999
-        gg_CHANYJ = -999
-        gg_CHLAT = -999
-        gg_CHLON = -999
-!       g1_latval = -999
-!       g1_lonval = -999
-        gg_STRMFRXSTPTS = -999
-       
-!       write(6,*) " yyyy GNLINKS = ", GNLINKS, "NLAKES=", NLAKES
-!       write(6,*) " yyyy g_ixrt = ", g_ixrt, "g_jxrt=",g_jxrt
-
-        if(my_id .eq. IO_id) then
-
-!         write(61,*) gg_FROM_NODE, gg_TO_NODE, gg_TYPEL, gg_ORDER
-!         write(62,*) gg_MUSK, gg_MUSX, gg_QLINK,gg_CHANLEN, gg_MannN, gg_So, gg_ChSSlp, gg_Bw
-!         write(63,*) MAXORDER, GNLINKS, NLAKES
-!         write(64,*) CHANRTSWCRT,gg_ZELEV, gg_LAKENODE, gg_CHANXI, gg_CHANYJ
-!         write(65,*) gg_CHLAT, gg_CHLON, gg_STRMFRXSTPTS
-!         write(66,*) g_dist, g_GCH_NETLNK
-!         write(67,*) channel_option, g1_latval,g1_lonval,geo_finegrid_flnm
-
-          CALL READ_CHROUTING(g_IXRT,g_JXRT,g1_ELRT,g1_CH_NETRT, g1_LAKE_MSKRT, &
-               gg_FROM_NODE, gg_TO_NODE, gg_TYPEL, gg_ORDER, MAXORDER, GNLINKS, &
-               NLAKES, gg_MUSK, gg_MUSX, gg_QLINK,gg_CHANLEN, gg_MannN, gg_So, gg_ChSSlp, gg_Bw, &
-               HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
-              ORIFICEA, ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
-               route_link_f,route_lake_f, &
-               route_direction_f, route_order_f, &
-               CHANRTSWCRT,g_dist, gg_ZELEV, gg_LAKENODE, g_GCH_NETLNK, gg_CHANXI, gg_CHANYJ, &
-               gg_CHLAT, gg_CHLON, channel_option, g1_latval,g1_lonval,&
-               gg_STRMFRXSTPTS,geo_finegrid_flnm)
-
-
-        endif
-
-
-
-
-        call decompose_RT_int(g1_LAKE_MSKRT,LAKE_MSKRT,g_IXRT,G_JXRT,ixrt,jxrt)
-        call decompose_RT_real(g1_latval,latval,g_IXRT,G_JXRT,ixrt,jxrt)
-        call decompose_RT_real(g1_lonval,lonval,g_IXRT,G_JXRT,ixrt,jxrt)
-
-
-
-      call mpp_land_bcast_int(GNLINKS,gg_FROM_NODE)
-      call mpp_land_bcast_int(GNLINKS,gg_TO_NODE)
-      call mpp_land_bcast_int(GNLINKS,gg_TYPEL)
-      call mpp_land_bcast_int(GNLINKS,gg_ORDER)
-      call mpp_land_bcast_int(GNLINKS,gg_LAKENODE)
-      call mpp_land_bcast_real(GNLINKS,gg_CHANLEN)
-      call mpp_land_bcast_real(GNLINKS,gg_CHLAT)
-      call mpp_land_bcast_real(GNLINKS,gg_CHLON)
-      call mpp_land_bcast_real(GNLINKS,gg_ZELEV)
-      call mpp_land_bcast_int(GNLINKS,gg_STRMFRXSTPTS)
 
       call mpp_land_max_int1(MAXORDER)
 
@@ -6248,63 +6186,6 @@ end subroutine mpp_output_chrt
           enddo
        enddo
 
-!      link_location = 0
-!      if(my_id .eq. IO_id) then
-!         g_tmp = -1
-!         do i = 1, gnlinks
-!            g_tmp( gg_CHANXI(i),gg_CHANYJ(i) )  = i
-!         enddo
-!      endif
-!      call decompose_RT_int(g_tmp,link_location,g_ixrt, g_jxrt, ixrt, jxrt)
-
-!start new mapping
-        do j = 1, jxrt
-           do i = 1, ixrt
-              if(CH_NETLNK(i,j) .gt. 0) then
-                   map_g2l(GCH_NETLNK(i,j)) = CH_NETLNK(i,j)
-              endif
-           end do
-        end do
-
-        do j = 1, jxrt
-           do i = 1, ixrt
-              if(CH_NETLNK(i,j) .gt. 0) then
-                   l = CH_NETLNK(i,j)
-
-                   k = gg_from_node(map_l2g(l))
-                   if(k .gt. 0) then
-                      from_node(l) =  map_g2l(k)
-                   else
-                      from_node(l) =  k
-                   endif
-
-                   k = gg_to_node(map_l2g(l))
-                   if(k .gt. 0) then
-                      to_node(l) =  map_g2l(k)
-                   else
-                      to_node(l) =  k
-                   endif
-
-                   k = map_l2g(l)
-                   TYPEL(l) = gg_TYPEL(k)
-                   ORDER(l) = gg_ORDER(k)
-                   LAKENODE(l) = gg_LAKENODE(k)
-                   CHANLEN(l) = gg_CHANLEN(k)
-                   ZELEV(l) = gg_ZELEV(k)
-                   CHLAT(l) = gg_CHLAT(k)
-                   CHLON(l) = gg_CHLON(k)
-                   STRMFRXSTPTS(l) = gg_STRMFRXSTPTS(k)
-              endif
-           end do
-        end do
-     
-     if(my_id .eq. IO_id) then
-        call outPutChanInfo(gg_from_node,gg_to_node,gg_CHLAT,gg_CHLON)
-     endif
-
-!     if(my_id .eq. IO_id) then
-!        write(71,*) gg_TYPEL*1.0
-!     endif
 
       CHANXI = 0
       CHANYj = 0
@@ -6321,24 +6202,30 @@ end subroutine mpp_output_chrt
       yw_mpp_nlinks = 0
       do j = 1, jxrt
           do i = 1, ixrt
-            if(CH_NETLNK(i,j) .gt. 0) then
+            if(CH_NETLNK(i,j) .ge. 0) then
                if( (i.eq.1) .and. (left_id .ge. 0) ) then
                     continue
                elseif ( (i.eq. ixrt) .and. (right_id .ge. 0) ) then
                     continue
                elseif ( (j.eq. 1) .and. (down_id .ge. 0) ) then
-                          continue
+                    continue
                elseif ( (j.eq. jxrt) .and. (up_id .ge. 0) ) then
-                            continue
+                    continue
                else
-                             l = CH_NETLNK(i,j)
+                        l = CH_NETLNK(i,j)
+                        if(from_node(l) .lt. 0) write(6,*) "yyyy1 ",nlinks,ixrt,jxrt, i,j,l
+                        if(from_node(l) .gt. 1000) write(6,*) "yyyy2 ",nlinks,ixrt,jxrt, i,j,l,from_node(1)
+                        if(from_node(l) .gt. 0 .and. to_node(l) .gt. 0) then
                              yw_mpp_nlinks = yw_mpp_nlinks + 1
                              nlinks_index(yw_mpp_nlinks) = l
+                        endif
                endif
             endif
           end do
       end do
 
+       write(6,*) "nlinks = ", nlinks, " yw_mpp_nlinks = ", yw_mpp_nlinks
+       call flush(6)
 
         call mpp_land_bcast_real(NLAKES,HRZAREA)
         call mpp_land_bcast_real(NLAKES,LAKEMAXH)
