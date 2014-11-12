@@ -16,6 +16,8 @@ MODULE MODULE_CPL_LAND
   character(len=19) cpl_outdate, cpl_rstdate
 
   integer, public :: cartGridComm
+  integer, public :: np_up_down, np_left_right
+  integer, public :: p_up_down, p_left_right
 
   contains
 
@@ -27,7 +29,7 @@ MODULE MODULE_CPL_LAND
       integer istart,iend,jstart,jend 
       
       integer :: xx, ndim
-      integer, dimension(0:1) :: dims
+      integer, dimension(0:1) :: dims, coords
       logical cyclic(0:1), reorder
       data cyclic/.false.,.false./  ! not cyclic
       data reorder/.false./   
@@ -73,12 +75,16 @@ MODULE MODULE_CPL_LAND
       enddo
       
       ndim = 2
+      np_up_down = dims(0)
+      np_left_right = dims(1)
 
-!       dims(0) = up_down_np      ! rows
-!       dims(1) = left_right_np   ! columns
-! !
-     call MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, &
+      call MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, &
                           cyclic, reorder, cartGridComm, ierr)
+     
+      call MPI_CART_GET(cartGridComm, 2, dims, cyclic, coords, ierr)
+     
+      p_up_down = coords(0)
+      p_left_right = coords(1)
 
       initialized = .false.  ! land model need to be initialized. 
       return

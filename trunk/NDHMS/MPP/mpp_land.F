@@ -28,7 +28,7 @@ MODULE MODULE_MPP_LAND
   subroutine LOG_MAP2d()
     implicit none
     integer :: ndim, ierr
-    integer, dimension(0:1) :: dims
+    integer, dimension(0:1) :: dims, coords
     
     logical cyclic(0:1), reorder
     data cyclic/.false.,.false./  ! not cyclic
@@ -78,7 +78,14 @@ MODULE MODULE_MPP_LAND
 !
      call MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, &
                           cyclic, reorder, cartGridComm, ierr)
-
+     
+     call MPI_CART_GET(cartGridComm, 2, dims, cyclic, coords, ierr)
+     
+     p_up_down = coords(0)
+     p_left_right = coords(1)
+     np_up_down = up_down_np 
+     np_left_right = left_right_np
+ 
      
      call mpp_land_sync()
 
