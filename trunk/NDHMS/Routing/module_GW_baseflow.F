@@ -1247,7 +1247,7 @@ subroutine gwSoilFlux(did)
 ! 	   modify gw-head before gwstep call with respect to specific yield of the 
 ! 	   aquifer and the computed flux (qsgwrt)
 
- headChange = gw2d(did)%qsgwrt * gw2d(did)%dt / gw2d(did)%poros
+ headChange = (-gw2d(did)%qsgwrt) * gw2d(did)%dt / gw2d(did)%poros
  gw2d(did)%ho = gw2d(did)%ho + headChange
   
 end subroutine gwSoilFlux
