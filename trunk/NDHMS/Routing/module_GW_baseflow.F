@@ -1247,6 +1247,13 @@ subroutine gwSoilFlux(did)
 ! 	   modify gw-head before gwstep call with respect to specific yield of the 
 ! 	   aquifer and the computed flux (qsgwrt)
 
+ ! Mass balance check
+ where(((gw2d(did)%ho-gw2d(did)%bot)*gw2d(did)%poros) .lt. (gw2d(did)%qsgwrt*gw2d(did)%dt))
+ 
+    gw2d(did)%qsgwrt = 0.
+ 
+ end where 
+ 
  headChange = (-gw2d(did)%qsgwrt) * gw2d(did)%dt / gw2d(did)%poros
  gw2d(did)%ho = gw2d(did)%ho + headChange
   
@@ -1303,10 +1310,14 @@ q_cap = ks * alpha * (aep / Z)**beta
 
 
 ! limit for exteme gradients with q >> saturated hydraulic conductivity
-if(q_cap > ks) q_cap = ks
-if(q_grav < -ks) q_grav = -ks
+! if(q_cap > ks) q_cap = ks
+! if(q_grav < -ks) q_grav = -ks
 
 q_darcy = y * q_cap + q_grav ![cm/min]
+
+if(q_darcy > ks) q_darcy = ks
+if(q_darcy < ks) q_darcy = -ks
+
 
 fac     = 1./6000.
 q_darcy = q_darcy * fac
