@@ -1283,8 +1283,10 @@ MODULE MODULE_MPP_LAND
       integer i,j, flag
       real Link_V(size), tmp_inout(ix,jy)
 
+      tmp_inout = -999
+
       if(size .eq. 0) then  
-           tmp_inout = -999
+            tmp_inout = -999
       else
 
          !     map the Link_V data to tmp_inout(ix,jy)

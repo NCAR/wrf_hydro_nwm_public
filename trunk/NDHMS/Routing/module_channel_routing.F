@@ -649,7 +649,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINK,NLINKS,99)
          call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOL,NLINKS,99)
 #endif
- 
+
          KRT = 0                  !-- initialize the time counter
 
          DTCT = min(DTCT*2.0,DTRT)
@@ -836,7 +836,7 @@ crnt:    DO                      !-- loop on the courant condition
 #endif
 
 
-        if(flag < 0 )   then   
+        if(flag < 0  .and. DTCT >0.1)   then   
              
              ! call smoth121(HLINK,nlinks,maxv_p,pnode,to_node)
 

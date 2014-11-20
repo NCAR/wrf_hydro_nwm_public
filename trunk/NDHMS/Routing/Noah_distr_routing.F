@@ -299,6 +299,7 @@
 	      DO KK=SATLYRCHK(I,J),NSOIL
                  WATAVAIL = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
                  IF (WATAVAIL.GE.ABS(SUBFLO)) THEN
+!?yw mod                 IF (WATAVAIL.GE.(ABS(SUBFLO)+0.000001) ) THEN
                    SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
                    SUBFLO=0.
                  ELSE     ! Since subflo is small on a time-step following is unlikely...
@@ -2423,6 +2424,7 @@
 
 
                do KRT=1,NSOIL  !debug loop
+
                   IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
 #ifdef HYDRO_D
                       print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
@@ -2433,6 +2435,8 @@
 #ifdef HYDRO_D
                       print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
+
+                      print*, "SMC=", SMC(i,j,KRT), "SICE =", sice(i,j,KRT)
                       print *, "VEGTYP = ", VEGTYP(I,J)
                       print *, "i,j,krt, nsoil",i,j,krt,nsoil
                       call hydro_stop("disaggregateDomain")

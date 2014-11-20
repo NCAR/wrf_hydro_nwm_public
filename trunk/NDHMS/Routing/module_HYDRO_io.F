@@ -6213,8 +6213,8 @@ end subroutine mpp_output_chrt
                     continue
                else
                         l = CH_NETLNK(i,j)
-                        if(from_node(l) .lt. 0) write(6,*) "yyyy1 ",nlinks,ixrt,jxrt, i,j,l
-                        if(from_node(l) .gt. 1000) write(6,*) "yyyy2 ",nlinks,ixrt,jxrt, i,j,l,from_node(1)
+                  !      if(from_node(l) .lt. 0) write(6,*) "yyyy1 ",nlinks,ixrt,jxrt, i,j,l
+                  !      if(from_node(l) .gt. 1000) write(6,*) "yyyy2 ",nlinks,ixrt,jxrt, i,j,l,from_node(1)
                         if(from_node(l) .gt. 0 .and. to_node(l) .gt. 0) then
                              yw_mpp_nlinks = yw_mpp_nlinks + 1
                              nlinks_index(yw_mpp_nlinks) = l
