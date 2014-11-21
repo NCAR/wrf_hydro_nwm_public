@@ -20,6 +20,7 @@
         excess             ! surface exceeding groundwater (mm)
 
       real,    allocatable, dimension(:,:) ::  &
+	qdarcyRT,       &  ! approximated flux between soil and groundwater for coupled simulations on routing grid
 	qsgwrt,         &  ! flux between soil and groundwater for coupled simulations on routing grid
 	qsgw,           &  ! flux between soil and groundwater for coupled simulations on lsm grid
 	qgw_chanrt         ! flux between groundwater and channel

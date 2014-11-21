@@ -263,6 +263,7 @@ contains
            
            gw2d(did)%qgw_chanrt = 0.
            gw2d(did)%qsgwrt = 0.
+           gw2d(did)%qdarcyRT = 0.
            gw2d(did)%excess = 0.
            
            gw2d(did)%compres=0. ! currently not implemented
@@ -373,8 +374,9 @@ endif
       
       
       ! TODO allocate only if gwSoilCoupling is active
-      allocate(gw2d(did)%qsgwrt (ix,jx))
-      allocate(gw2d(did)%qsgw   (rt_domain(did)%ix,rt_domain(did)%jx))
+      allocate(gw2d(did)%qsgwrt   (ix,jx))
+      allocate(gw2d(did)%qsgw     (rt_domain(did)%ix,rt_domain(did)%jx))
+      allocate(gw2d(did)%qdarcyRT (ix,jx))
 
     end subroutine gw2d_allocate
 
@@ -1204,6 +1206,7 @@ subroutine gwSoilFlux(did)
   
   
   real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
+  real :: frac, zres
   integer :: nsoil, i, j, k  
   
   gw2d(did)%qsgwrt = 0.
@@ -1215,22 +1218,59 @@ subroutine gwSoilFlux(did)
   smcrel = RT_DOMAIN(did)%SMCRT(:,:,nsoil) / RT_DOMAIN(did)%SMCMAXRT(:,:,nsoil)
 
 ! depth of transition zone from lowest soil layer to groundwater head (in cm)
+! postivie ztrans -> head below LSM soil layer 
+! negative ztrans -> head within LSM soil layers
   ztrans = (rt_domain(did)%elrt + nlst_rt(did)%zsoil8(nsoil)) - gw2d(did)%ho
   ztrans = ztrans * 100
   
-! Step 2, compute flux  TODO: deal with cases where gwhead > soil model layers
+  ! darcyGwSoil not defined for ztran = 0
+  where(ztrans == 0) ztrans = -5
+  
+! Step 2, compute flux either up or down
 
   do j=gw2d(did)%jts, gw2d(did)%jte
     do i=gw2d(did)%its, gw2d(did)%ite
       
         if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
-	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qsgwrt(i,j))
+        ! if groundwater head < soil layers
+	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qdarcyRT(i,j))
 	  
+	  ! check mass balance
+	  if(((gw2d(did)%ho(i,j)-gw2d(did)%bot(i,j)) &
+	    *gw2d(did)%poros(i,j)) < (gw2d(did)%qsgwrt(i,j)*gw2d(did)%dt)) &
+	     gw2d(did)%qdarcyRT(i,j) = 0.
+	
 	else if(ztrans(i,j) < 0 .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
+	! if groundwater head > soil layers
+	  zres = -ztrans(i,j)
 	  do k=nsoil,1,-1
-	     if(ztrans(i,j) .le. sum(rt_domain(did)%sldpth(k:nsoil))*100*(-1)) then
+	     
+	     if(zres >= rt_domain(did)%sldpth(k)*100.) then
+	     ! complete filling of a LSM soil layer if groundwater head > layer top
+	       
+	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
+	                               * (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
+				       + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
+				       
 	       RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
+	       
+	       zres = zres - rt_domain(did)%sldpth(k)*100.
+	       
 	     else
+	     ! partial filling of a soil layer if not completely below groundwater head
+	     
+	       if(zres > 0) then
+		 
+		 frac = zres / (rt_domain(did)%sldpth(k) * 100.)
+	       
+	       
+	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
+	                                * (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
+					* frac + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
+	       
+	          RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k) * frac
+	          
+	       end if
 	       
 	     end if
 	  end do
@@ -1247,13 +1287,7 @@ subroutine gwSoilFlux(did)
 ! 	   modify gw-head before gwstep call with respect to specific yield of the 
 ! 	   aquifer and the computed flux (qsgwrt)
 
- ! Mass balance check
- where(((gw2d(did)%ho-gw2d(did)%bot)*gw2d(did)%poros) .lt. (gw2d(did)%qsgwrt*gw2d(did)%dt))
- 
-    gw2d(did)%qsgwrt = 0.
- 
- end where 
- 
+  
  headChange = (-gw2d(did)%qsgwrt) * gw2d(did)%dt / gw2d(did)%poros
  gw2d(did)%ho = gw2d(did)%ho + headChange
   
@@ -1309,11 +1343,11 @@ alpha = 1 + 1.5 /  (beta - 1)
 q_cap = ks * alpha * (aep / Z)**beta
 
 
+q_darcy = y * q_cap + q_grav ![cm/min]
+
 ! limit for exteme gradients with q >> saturated hydraulic conductivity
 ! if(q_cap > ks) q_cap = ks
 ! if(q_grav < -ks) q_grav = -ks
-
-q_darcy = y * q_cap + q_grav ![cm/min]
 
 if(q_darcy > ks) q_darcy = ks
 if(q_darcy < ks) q_darcy = -ks
@@ -1360,7 +1394,7 @@ subroutine aggregateQsgw(did)
 	    if(left_id.ge.0) ixxRT=ixxRT+1
 	    if(down_id.ge.0) jyyRT=jyyRT+1
 #endif
-             agg = agg + gw2d(did)%qsgwRT(ixxRT, jyyRT)
+             agg = agg + gw2d(did)%qdarcyRT(ixxRT, jyyRT)
            end do
          end do
 	
@@ -2232,6 +2266,7 @@ end subroutine aggregateQsgw
 
       return
       end subroutine
+#endif
 
 ! Tridiagonal solver useful for domain decomposed ADI
 ! Author(s): Mike Lambert
