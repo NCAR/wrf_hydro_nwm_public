@@ -1235,10 +1235,16 @@ subroutine gwSoilFlux(did)
         ! if groundwater head < soil layers
 	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qdarcyRT(i,j))
 	  
-	  ! check mass balance
+	  gw2d(did)%qsgwrt(i,j) = gw2d(did)%qdarcyRT(i,j)
+	  
+	  ! check and correct for mass balance
 	  if(((gw2d(did)%ho(i,j)-gw2d(did)%bot(i,j)) &
-	    *gw2d(did)%poros(i,j)) < (gw2d(did)%qsgwrt(i,j)*gw2d(did)%dt)) &
-	     gw2d(did)%qdarcyRT(i,j) = 0.
+	    *gw2d(did)%poros(i,j)) < (gw2d(did)%qsgwrt(i,j)*gw2d(did)%dt)) then
+	    
+	        gw2d(did)%qdarcyRT(i,j) = 0.
+	        gw2d(did)%qsgwrt(i,j) = 0.
+	        
+	   end if
 	
 	else if(ztrans(i,j) < 0 .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
 	! if groundwater head > soil layers
