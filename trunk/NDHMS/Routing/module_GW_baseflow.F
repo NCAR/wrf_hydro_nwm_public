@@ -1210,6 +1210,7 @@ subroutine gwSoilFlux(did)
   integer :: nsoil, i, j, k  
   
   gw2d(did)%qsgwrt = 0.
+  gw2d(did)%qdarcyRT = 0.
   
 ! Step 1, collect data
 
@@ -1355,8 +1356,8 @@ q_darcy = y * q_cap + q_grav ![cm/min]
 ! if(q_cap > ks) q_cap = ks
 ! if(q_grav < -ks) q_grav = -ks
 
-if(q_darcy > ks) q_darcy = ks
-if(q_darcy < ks) q_darcy = -ks
+! if(q_darcy > ks) q_darcy = ks
+! if(q_darcy < ks) q_darcy = -ks
 
 
 fac     = 1./6000.
