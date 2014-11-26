@@ -710,19 +710,23 @@ nodeType:if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
               
 gwOption:   if(gwBaseSwCRT == 3) then
 
-!DJG Implement gw-channel coupling...idealized hardwire here using a generic 'bank conductivity' term = 0.0005 m/s...
-!              dzGwChanHead(i)=(ELRT(CHANXI(i),CHANYJ(i))-gwHead(CHANXI(i),CHANYJ(i))) - (HLINK(i)+ZELEV(i))  !--units in (m)
-
-             dzGwChanHead(i) = gwHead(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i)) + 1 !--units in (m); assume 1 m deep channel
+             ! determine potential gradient between groundwater head and channel stage
+             ! units in (m)
+             dzGwChanHead(i) = gwHead(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i)) 
 
              if(gwChanCondSw .eq. 0) then
+	       
                 qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
 	        
              else if(gwChanCondSw .eq. 1) then
+	       
+	       ! channel bed interface, units in (m^3/s), + is flux into channel...
+	       ! BF todo: consider channel width
                 qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConst * dzGwChanHead(i) &
-                                                * CHANLEN(i) * 2. ! channel bed interface, units in (m^3/s), + is flux into channel...
+                                                * CHANLEN(i) * 2. 
 
              else
+	       
 	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
 	        
              end if
