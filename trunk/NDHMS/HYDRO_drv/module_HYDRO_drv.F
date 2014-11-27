@@ -485,7 +485,7 @@ module module_HYDRO_drv
           
 	  ! put surface exceeding groundwater to surface routing inflow
           RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%SFCHEADSUBRT &
-	                              + gw2d(did)%excess
+	                              + gw2d(did)%excess*1000. ! convert to mm
 	  
 	  ! aggregate  qsgw from routing to lsm grid
 	  call aggregateQsgw(did)

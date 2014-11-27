@@ -22,7 +22,7 @@ CONTAINS
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                     GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                    sys_cpl, rst_typ, gwChanCondSw, GwSpinCycles
+                    sys_cpl, rst_typ, gwChanCondSw, GwSpinCycles, GwSpinDiagInterval
           real:: DTRT,dxrt, gwChanCondConst, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -58,7 +58,7 @@ CONTAINS
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
                     GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConst, &
-                    GwSpinCycles, GwSpinDiags, gwIhShift, &
+                    GwSpinCycles, GwSpinDiags, GwSpinDiagInterval, gwIhShift, &
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -131,6 +131,7 @@ CONTAINS
   call mpp_land_bcast_int1(gwChanCondSw)
   call mpp_land_bcast_int1(GwSpinCycles)
   call mpp_land_bcast_log1(GwSpinDiags)
+  call mpp_land_bcast_int1(GwSpinDiagInterval)
   call mpp_land_bcast_int1(GW_RESTART)
   call mpp_land_bcast_int1(RSTRT_SWC  )
   call mpp_land_bcast_int1(TERADJ_SOLAR)
@@ -156,6 +157,7 @@ CONTAINS
     nlst%gwIhShift = gwIhShift
     nlst%GwSpinCycles = GwSpinCycles
     nlst%GwSpinDiags = GwSpinDiags
+    nlst%GwSpinDiagInterval = GwSpinDiagInterval
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
     nlst%sys_cpl = sys_cpl
     nlst%rst_typ = rst_typ
@@ -194,6 +196,7 @@ CONTAINS
     write(6,*) " nlst%gwIhShift ", gwIhShift
     write(6,*) " nlst%GwSpinCycles ", GwSpinCycles
     write(6,*) " nlst%GwSpinDiags ", GwSpinDiags
+    write(6,*) " nlst%GwSpinDiagInterval ", GwSpinDiagInterval
     write(6,*) " nlst%TERADJ_SOLAR ", TERADJ_SOLAR
     write(6,*) " nlst%sys_cpl ", sys_cpl
     write(6,*) " nlst%rst_typ ", rst_typ

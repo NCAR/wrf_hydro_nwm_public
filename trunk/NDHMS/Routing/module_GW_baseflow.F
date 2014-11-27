@@ -288,7 +288,8 @@ contains
 	   
 	     gw2d(did)%ho = gw2d(did)%h
 	     
-	  if(nlst_rt(did)%GwSpinDiags) then
+	  if((nlst_rt(did)%GwSpinDiags .and. iter==1) .or. &
+	      nlst_rt(did)%GwSpinDiags .and. (mod(iter, nlst_rt(did)%GwSpinDiagInterval) .eq. 0) ) then
            call output_gw_spinup(nlst_rt(did)%igrid, 1000000,                &
                             RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt,   &
                             nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
@@ -1073,7 +1074,7 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
         do i=its,ite
 	  
 	  if((elev(i,j) - h(i,j)) .lt. 0.) then
-	    excess(i,j) = sf2(i,j)*(h(i,j) - elev(i,j))*1000 ! m to mm
+	    excess(i,j) = sf2(i,j)*(h(i,j) - elev(i,j))
                  h(i,j) = elev(i,j)
           else 
 	    excess(i,j) = 0.
