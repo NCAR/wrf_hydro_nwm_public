@@ -674,6 +674,8 @@ module module_HYDRO_drv
                     RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
                                  = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
                                  / RT_DOMAIN(did)%SH2OX(I,J,KRT)
+!?yw
+                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = max(1.0E-30, RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT))
                   end do
 
                 end do

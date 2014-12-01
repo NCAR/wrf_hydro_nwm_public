@@ -2439,7 +2439,7 @@
                       print*, "SMC=", SMC(i,j,KRT), "SICE =", sice(i,j,KRT)
                       print *, "VEGTYP = ", VEGTYP(I,J)
                       print *, "i,j,krt, nsoil",i,j,krt,nsoil
-                      call hydro_stop("disaggregateDomain")
+                       call hydro_stop("disaggregateDomain SMCRT depleted")
 #endif
                   END IF
                end do !debug loop

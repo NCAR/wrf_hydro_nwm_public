@@ -4654,7 +4654,7 @@ end subroutine mpp_output_chrt
 
             end if
 
-            if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0) then
+            if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0 .and. rt_domain(did)%numbasns .gt. 0) then
                call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
             end if
         end if
@@ -4898,10 +4898,10 @@ end subroutine mpp_output_chrt
       subroutine read_rst_crt_stream_nc(ncid,var_out,n,varStr,gnlinks,map_l2g)
          implicit none
          integer ::  ncid, varid, n, iret, gnlinks
-         integer, intent(in), dimension(n) :: map_l2g
+         integer, intent(in), dimension(:) :: map_l2g
          character(len=*) :: varStr
          integer :: l, g
-         real,intent(out) , dimension(n) ::  var_out
+         real,intent(out) , dimension(:) ::  var_out
 #ifdef MPP_LAND
          real,dimension(gnlinks) ::  var
 #else
@@ -4934,7 +4934,7 @@ end subroutine mpp_output_chrt
          endif
          call mpp_land_bcast_real(gnlinks,var)
         
-!         if(n .le. 0) return
+         if(n .le. 0) return
          var_out = 0
 
          do l = 1, n
