@@ -7,8 +7,8 @@ module module_NoahMP_hrldas_driver
   USE module_date_utilities
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char
-  use module_mpp_land, only: check_land, my_id
-
+  use module_mpp_land, only: check_land, my_id , node_info
+  use module_cpl_land, only: cpl_land_init
 #endif
 
   IMPLICIT NONE
@@ -27,6 +27,7 @@ module module_NoahMP_hrldas_driver
    character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
+   integer  :: finemesh, finemesh_factor
 #endif
 
 
@@ -357,7 +358,7 @@ module module_NoahMP_hrldas_driver
 
   namelist / NOAHLSM_OFFLINE /    &
 #ifdef WRF_HYDRO
-       forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, &
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, &
 #endif
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
        start_year, start_month, start_day, start_hour, start_min, &
@@ -379,13 +380,14 @@ module module_NoahMP_hrldas_driver
 
   contains
 
-  subroutine land_driver_ini(NTIME_out)
+  subroutine land_driver_ini(NTIME_out,wrfits,wrfite,wrfjts,wrfjte)
      implicit  none
      integer:: NTIME_out
 
 
-#ifdef MPP_LAND
     ! initilization for stand alone parallel code.
+    integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
+#ifdef MPP_LAND
     call  MPP_LAND_INIT()
 #endif
 
@@ -535,9 +537,23 @@ module module_NoahMP_hrldas_driver
 !----------------------------------------------------------------------
 
 #ifdef MPP_LAND
-    call read_dim(hrldas_constants_file,ix_tmp,jx_tmp)
-    call MPP_LAND_PAR_INI(1,ix_tmp,jx_tmp,1)
-    call getLocalXY(ix_tmp,jx_tmp,xstart,ystart,xend,yend)
+#ifdef WRF_HYDRO
+    if(finemesh .ne. 0) then
+         xstart = (wrfits-1)*finemesh_factor + 1
+         xend = (wrfite-1)*finemesh_factor
+         ystart = (wrfjts-1)*finemesh_factor + 1
+         yend = (wrfjte-1)*finemesh_factor
+         call CPL_LAND_INIT(xstart,xend, ystart,yend)
+         ix_tmp = xend - xstart + 1
+         jx_tmp = yend - ystart + 1
+    else
+#endif
+       call read_dim(hrldas_constants_file,ix_tmp,jx_tmp)
+       call MPP_LAND_PAR_INI(1,ix_tmp,jx_tmp,1)
+       call getLocalXY(ix_tmp,jx_tmp,xstart,ystart,xend,yend)
+#ifdef WRF_HYDRO
+    endif
+#endif
 #endif
 
   call read_hrldas_hdrinfo(hrldas_constants_file, ix, jx, &
@@ -1159,6 +1175,15 @@ module module_NoahMP_hrldas_driver
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
+
+   if(finemesh .ne. 0 ) then
+       if(restart_flag) then
+          NTIME_out =  10
+       else
+          NTIME_out =  1 
+       endif
+       return
+   endif
 #endif
 
    NTIME_out = NTIME 
@@ -1205,7 +1230,7 @@ end subroutine land_driver_ini
 #ifdef MPP_LAND
      call mpp_land_bcast_char(19,forcDate(1:19))
 #endif
-
+     if(finemesh .ne. 0) goto 991
     
      if(forc_typ .eq. 0) then
         CALL READFORC_HRLDAS(INFLNM_TEMPLATE, FORCING_TIMESTEP, OLDDATE,  &
@@ -1234,6 +1259,7 @@ end subroutine land_driver_ini
      VEGFRA = VEGFRA * 100.
 #endif
 
+991  continue
 
      P8W(:,2,:)     = P8W(:,1,:)      ! WRF uses lowest two layers
      T_PHY(:,2,:)   = T_PHY(:,1,:)    ! Only pressure is needed in two layer but fill the rest

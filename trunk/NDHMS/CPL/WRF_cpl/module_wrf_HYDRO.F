@@ -162,12 +162,6 @@ CONTAINS
             rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
        endif  
 
-
-!yw       if(checkSOIL_flag .ne. 99) then
-!yw           call checkSoil(did) 
-!yw           checkSOIL_flag = 99
-!yw       endif
-
             call HYDRO_exe(did)
 
 

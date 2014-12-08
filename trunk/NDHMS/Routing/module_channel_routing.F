@@ -165,7 +165,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL    :: Bw         !-bottom width (meters)
         REAL    :: Cs         !-Channel side slope slope
         REAL    :: dx         !-channel lngth (m)
-        REAL    :: n          !-mannings coefficient
+        REAL,intent(in)    :: n          !-mannings coefficient
         REAL    :: R          !-Hydraulic radius
         REAL    :: AREA       !- wetted area
         REAL    :: h1,h2      !-tmp height variables
