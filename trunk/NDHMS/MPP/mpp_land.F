@@ -588,7 +588,7 @@ MODULE MODULE_MPP_LAND
   subroutine decompose_data_real3d (in_buff,out_buff,klevel)
       implicit none
       integer:: klevel, k
-      real in_buff(global_nx,1:klevel,global_ny),out_buff(local_nx,1:klevel,local_ny) 
+      real,dimension(:,:,:) ::  in_buff,out_buff
       do k = 1, klevel
           call decompose_data_real(in_buff(:,k,:),out_buff(:,k,:))
       end do
@@ -598,7 +598,8 @@ MODULE MODULE_MPP_LAND
   subroutine decompose_data_real (in_buff,out_buff)
 ! usage: all of the cpu call this subroutine.
 ! the IO node will distribute the data to rest of the node.
-      real in_buff(global_nx,global_ny),out_buff(local_nx,local_ny) 
+      real,intent(in), dimension(:,:) :: in_buff
+      real,intent(out), dimension(local_nx,local_ny) :: out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
@@ -627,10 +628,11 @@ MODULE MODULE_MPP_LAND
       return
   end subroutine decompose_data_real
 
+
   subroutine decompose_data_int (in_buff,out_buff)
 ! usage: all of the cpu call this subroutine.
 ! the IO node will distribute the data to rest of the node.
-      integer in_buff(global_nx,global_ny),out_buff(local_nx,local_ny) 
+      integer,dimension(:,:) ::  in_buff,out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
  
@@ -660,8 +662,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine write_IO_int(in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
-      integer in_buff(1:local_nx,1:local_ny),    &
-          out_buff(global_nx,global_ny)
+      integer,dimension(:,:):: in_buff,  out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
       if(my_id .ne. IO_id) then
@@ -692,8 +693,7 @@ MODULE MODULE_MPP_LAND
      implicit none
 ! the IO node will receive the data from the rest process.
       integer klevel, k
-      real in_buff(1:local_nx,1:klevel,1:local_ny),    &
-          out_buff(global_nx,1:klevel,global_ny)
+      real,dimension(:,:,:):: in_buff, out_buff
       do k = 1, klevel
          call write_IO_real(in_buff(:,k,:),out_buff(:,k,:))
       end do
@@ -701,8 +701,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine write_IO_real(in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
-      real in_buff(1:local_nx,1:local_ny),    &
-          out_buff(global_nx,global_ny)
+      real,dimension(:,:):: in_buff, out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
       if(my_id .ne. IO_id) then
@@ -731,8 +730,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine write_IO_RT_real(in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
-      real in_buff(1:local_rt_nx,1:local_rt_ny),    &
-          out_buff(global_rt_nx,global_rt_ny)
+      real,dimension(:,:) ::  in_buff, out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
       if(my_id .ne. IO_id) then
@@ -764,8 +762,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine write_IO_RT_int (in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
-      integer :: in_buff(1:local_rt_nx,1:local_rt_ny),    &
-          out_buff(global_rt_nx,global_rt_ny)
+      integer,dimension(:,:) :: in_buff, out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
       if(my_id .ne. IO_id) then
@@ -1104,7 +1101,7 @@ MODULE MODULE_MPP_LAND
 ! usage: all of the cpu call this subroutine.
 ! the IO node will distribute the data to rest of the node.
       integer g_nx,g_ny,nx,ny
-      real in_buff(g_nx,g_ny),out_buff(nx,ny)
+      real,dimension(:,:) :: in_buff,out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
@@ -1139,7 +1136,7 @@ MODULE MODULE_MPP_LAND
 ! usage: all of the cpu call this subroutine.
 ! the IO node will distribute the data to rest of the node.
       integer g_nx,g_ny,nx,ny
-      integer in_buff(g_nx,g_ny),out_buff(nx,ny)
+      integer,dimension(:,:) ::  in_buff,out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
@@ -1495,16 +1492,26 @@ MODULE MODULE_MPP_LAND
 
      subroutine write_chanel_real(v,map_l2g,gnlinks,nlinks,g_v)   
         implicit none
-        integer  gnlinks,nlinks, map_l2g(nlinks),tmp_map(gnlinks)
+        integer  gnlinks,nlinks, map_l2g(nlinks)
         real recv(nlinks), v(nlinks)
-        real g_v(gnlinks), tmp_v(gnlinks)
+        ! real g_v(gnlinks), tmp_v(gnlinks)
         integer i, ierr, tag, k
         integer length, node, message_len
+        integer,allocatable,dimension(:) :: tmp_map
+        real, allocatable, dimension(:) :: tmp_v
+        real, dimension(:) :: g_v
 
-        if(nlinks .le. 0) then
-            tmp_map = -999
+        if(my_id .eq. io_id) then
+           allocate(tmp_map(gnlinks))
+           allocate(tmp_v(gnlinks))
+           if(nlinks .le. 0) then
+               tmp_map = -999
+           else
+               tmp_map(1:nlinks) = map_l2g(1:nlinks)
+           endif
         else
-            tmp_map(1:nlinks) = map_l2g(1:nlinks)
+           allocate(tmp_map(1))
+           allocate(tmp_v(1))
         endif
 
         if(my_id .eq. IO_id) then
@@ -1550,21 +1557,33 @@ MODULE MODULE_MPP_LAND
                tag,MPI_COMM_WORLD,ierr)
 
         end if
+           deallocate(tmp_map)
+           deallocate(tmp_v)
      end subroutine write_chanel_real
 
      subroutine write_chanel_int(v,map_l2g,gnlinks,nlinks,g_v)   
         implicit none
-        integer gnlinks,nlinks, map_l2g(nlinks),tmp_map(gnlinks)
+        integer gnlinks,nlinks, map_l2g(nlinks)
         integer ::  recv(nlinks), v(nlinks)
-        integer ::  g_v(gnlinks), tmp_v(gnlinks)
+        integer, allocatable, dimension(:) :: tmp_map , tmp_v
+        integer, dimension(:) :: g_v
         integer i, ierr, tag, k
         integer length, node, message_len
 
-        if(nlinks .le. 0) then
-            tmp_map = -999
+        if(my_id .eq. io_id) then
+           allocate(tmp_map(gnlinks))
+           allocate(tmp_v(gnlinks))
+           if(nlinks .le. 0) then
+               tmp_map = -999
+           else
+               tmp_map(1:nlinks) = map_l2g(1:nlinks)
+           endif
         else
-            tmp_map(1:nlinks) = map_l2g(1:nlinks)
+           allocate(tmp_map(1))
+           allocate(tmp_v(1))
         endif
+
+
         if(my_id .eq. IO_id) then
            do i = 0, numprocs - 1
               message_len = mpp_nlinks(i+1)
@@ -1607,6 +1626,8 @@ MODULE MODULE_MPP_LAND
            call mpi_send(v,nlinks,MPI_INTEGER,IO_id,   &
                tag,MPI_COMM_WORLD,ierr)
         end if
+           deallocate(tmp_map)
+           deallocate(tmp_v)
      end subroutine write_chanel_int
 
 
