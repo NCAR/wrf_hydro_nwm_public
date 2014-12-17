@@ -1,6 +1,6 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
-   use module_HYDRO_io, only:  mpp_output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd
+   use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes
@@ -155,11 +155,7 @@ module module_HYDRO_drv
            
 !              goto 9991
 
-#ifdef MPP_LAND
-              call mpp_output_rt(rt_domain(did)%g_ixrt, rt_domain(did)%g_jxrt,    &
-#else
               call output_rt(    &
-#endif
                 nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                 RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
                 nlst_rt(did)%nsoil, &

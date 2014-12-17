@@ -18,7 +18,11 @@ module module_HYDRO_io
           character(len=*), intent(in) :: fileName
           get2d_real = -1
 
+#ifdef PARALLELIO
+          iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+#endif
           if (iret .ne. 0) then
 #ifdef HYDRO_D 
             print*,"failed to open the netcdf file: ",trim(fileName)
@@ -47,19 +51,25 @@ module module_HYDRO_io
          integer ix,jx, status
          character (len=*),intent(in) :: var_name, fileName
          real,dimension(ix,jx):: out_buff
+
+
 #ifdef MPP_LAND
+#ifdef PARALLELIO
+         status = get2d_real(var_name,out_buff,ix,jx,fileName)
+#else
          real,allocatable, dimension(:,:) :: buff_g
 
-#ifdef HYDRO_D
-         write(6,*) "start to read variable ", var_name
-#endif
-         allocate(buff_g (global_nx,global_ny) )
 
+         write(6,*) "start to read variable ", var_name
          if(my_id .eq. IO_id) then
+            allocate(buff_g (global_nx,global_ny) )
             status = get2d_real(var_name,buff_g,global_nx,global_ny,fileName)
+         else
+            allocate(buff_g (1,1) )
          end if
          call decompose_data_real(buff_g,out_buff)     
          deallocate(buff_g)
+#endif
 #else         
          status = get2d_real(var_name,out_buff,ix,jx,fileName)
 #endif
@@ -78,43 +88,51 @@ module module_HYDRO_io
 #ifdef MPP_LAND
          real,allocatable, dimension(:,:) :: buff_g
 
-         allocate(buff_g (global_nx,global_ny) )
 
+#ifndef PARALLELIO
+         if(my_id .eq. IO_id) then
+            allocate(buff_g (global_nx,global_ny) )
+         else
+            allocate(buff_g (1,1) )
+         endif
          if(my_id .eq. IO_id) then
 #endif
+#endif
                 ! Open the NetCDF file.
+#ifdef PARALLELIO
+              iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
               iret = nf_open(fileName, NF_NOWRITE, ncid)
+#endif
               if (iret /= 0) then
-#ifdef HYDRO_D
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
                  call hydro_stop("get2d_lsm_vegtyp")
-#endif
               endif
 
             iret = nf_inq_dimid(ncid, "land_cat", dimid)
             if (iret /= 0) then
-#ifdef HYDRO_D
               print*, "nf_inq_dimid:  land_cat"
               call hydro_stop("get2d_lsm_vegtyp")
-#endif
              endif
 
             iret = nf_inq_dimlen(ncid, dimid, land_cat)
             if (iret /= 0) then
-#ifdef HYDRO_D
                print*, "nf_inq_dimlen:  land_cat"
                call hydro_stop("get2d_lsm_vegtyp")
-#endif
             endif
 
 #ifdef MPP_LAND
+#ifndef PARALLELIO
             call get_landuse_netcdf(ncid, buff_g, units, global_nx ,global_ny, land_cat)
-            iret = nf_close(ncid)
          end if
-
          call decompose_data_real(buff_g,xdum)     
          deallocate(buff_g)
+#else
+          call get_landuse_netcdf(ncid, xdum,   units, ix, jx, land_cat)
+#endif
+          iret = nf_close(ncid)
+
 #else         
           call get_landuse_netcdf(ncid, xdum,   units, ix, jx, land_cat)
           iret = nf_close(ncid)
@@ -122,59 +140,59 @@ module module_HYDRO_io
          out_buff = nint(xdum)
      end subroutine get2d_lsm_vegtyp
 
+
+
      subroutine get_file_dimension(fileName, ix,jx)
             implicit none
             character(len=*) fileName
             integer ncid , iret, ix,jx, dimid
 #ifdef MPP_LAND
+#ifndef PARALLELIO
             if(my_id .eq. IO_id) then
 #endif
+#endif
+#ifdef PARALLELIO
+            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
             iret = nf_open(fileName, NF_NOWRITE, ncid)
+#endif
             if (iret /= 0) then
-#ifdef HYDRO_D
                write(*,'("Problem opening geo_static file: ''", A, "''")') &
                     trim(fileName)
                call hydro_stop("get_file_dimension")
-#endif
             endif
         
             iret = nf_inq_dimid(ncid, "west_east", dimid)
         
             if (iret /= 0) then
-#ifdef HYDRO_D
                print*, "nf_inq_dimid:  west_east"
                call hydro_stop("get_file_dimension")
-#endif
             endif
         
             iret = nf_inq_dimlen(ncid, dimid, ix)
             if (iret /= 0) then
-#ifdef HYDRO_D
                print*, "nf_inq_dimlen:  west_east"
                call hydro_stop("get_file_dimension")
-#endif
             endif
         
             iret = nf_inq_dimid(ncid, "south_north", dimid)
             if (iret /= 0) then
-#ifdef HYDRO_D
                        print*, "nf_inq_dimid:  south_north"
                        call hydro_stop("get_file_dimension")
-#endif
             endif
         
             iret = nf_inq_dimlen(ncid, dimid, jx)
             if (iret /= 0) then
-#ifdef HYDRO_D
                print*, "nf_inq_dimlen:  south_north"
                call hydro_stop("get_file_dimension")
-#endif
             endif
             iret = nf_close(ncid)
 #ifdef MPP_LAND
+#ifndef PARALLELIO
             endif
             call mpp_land_bcast_int1(ix)
             call mpp_land_bcast_int1(jx)
+#endif
 #endif
 
      end subroutine get_file_dimension
@@ -187,55 +205,54 @@ module module_HYDRO_io
          integer,dimension(ix,jx):: out_buff
          real, dimension(ix,jx) :: xdum
 #ifdef MPP_LAND
+#ifndef PARALLELIO
          real,allocatable, dimension(:,:) :: buff_g
 
          allocate(buff_g (global_nx,global_ny) )
 
          if(my_id .eq. IO_id) then
 #endif
+#endif
                 ! Open the NetCDF file.
-              iret = nf_open(fileName, NF_NOWRITE, ncid)
+#ifdef PARALLELIO
+            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
+            iret = nf_open(fileName, NF_NOWRITE, ncid)
+#endif
               if (iret /= 0) then
-#ifdef HYDRO_D
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
                  call hydro_stop("get2d_lsm_soltyp")
-#endif
               endif
 
             iret = nf_inq_dimid(ncid, "soil_cat", dimid)
             if (iret /= 0) then
-#ifdef HYDRO_D
-              print*, "nf_inq_dimid:  soil_cat"
-              call hydro_stop("get2d_lsm_soltyp")
-#endif
-             endif
+                print*, "nf_inq_dimid:  soil_cat"
+                call hydro_stop("get2d_lsm_soltyp")
+            endif
 
             iret = nf_inq_dimlen(ncid, dimid, land_cat)
             if (iret /= 0) then
-#ifdef HYDRO_D
                print*, "nf_inq_dimlen:  soil_cat"
                call hydro_stop("get2d_lsm_soltyp")
-#endif
             endif
 
 #ifdef MPP_LAND
+#ifndef PARALLELIO
             call get_soilcat_netcdf(ncid, buff_g, units, global_nx ,global_ny, land_cat)
-            iret = nf_close(ncid)
          end if
-
          call decompose_data_real(buff_g,xdum)     
          deallocate(buff_g)
+#else
+          call get_soilcat_netcdf(ncid, xdum,   units, ix, jx, land_cat)
+#endif
+          iret = nf_close(ncid)
 #else         
           call get_soilcat_netcdf(ncid, xdum,   units, ix, jx, land_cat)
           iret = nf_close(ncid)
 #endif
           out_buff = nint(xdum)
      end subroutine get2d_lsm_soltyp
-
-
-   
-
 
 
   subroutine get_landuse_netcdf(ncid, array, units, idim, jdim, ldim)
@@ -255,20 +272,16 @@ module module_HYDRO_io
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_inq_varid"
        call hydro_stop("get_landuse_netcdf")
-#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_get_var_real"
        call hydro_stop("get_landuse_netcdf")
-#endif
     endif
 
     do i = 1, idim
@@ -302,20 +315,16 @@ module module_HYDRO_io
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_inq_varid"
        call hydro_stop("get_soilcat_netcdf")
-#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_get_var_real"
        call hydro_stop("get_soilcat_netcdf")
-#endif
     endif
 
     do i = 1, idim
@@ -351,20 +360,16 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
        call hydro_stop("get_greenfrac_netcdf")
-#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
        call hydro_stop("get_greenfrac_netcdf")
-#endif
     endif
 
 
@@ -385,9 +390,7 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
           ddfrac = float(dd)/float(daytot)
           if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
 
-#ifdef HYDRO_D
     print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
-#endif
 
     do i = 1, idim
        do j = 1, jdim
@@ -424,20 +427,16 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_inq_varid"
        call hydro_stop("get_albedo12m_netcdf")
-#endif
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
-#ifdef HYDRO_D
        print*, 'name = "', trim(name)//'"'
        print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_get_var_real"
        call hydro_stop("get_albedo12m_netcdf")
-#endif
     endif
 
     if (mm.lt.12) then 
@@ -474,6 +473,7 @@ end subroutine get_albedo12m_netcdf
 
 
 
+
   subroutine get_2d_netcdf(name, ncid, array, units, idim, jdim, &
        fatal_if_error, ierr)
     implicit none
@@ -496,11 +496,9 @@ end subroutine get_albedo12m_netcdf
 
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
-#ifdef HYDRO_D
           print*, 'name = "', trim(name)//'"'
           print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_inq_varid"
           call hydro_stop("get_2d_netcdf")
-#endif
        else
           ierr = iret
           return
@@ -511,11 +509,9 @@ end subroutine get_albedo12m_netcdf
     iret = nf_get_var_real(ncid, varid, array)
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
-#ifdef HYDRO_D
           print*, 'name = "', trim(name)//'"'
           print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_get_var_real"
           call hydro_stop("get_2d_netcdf")
-#endif
        else
           ierr = iret
           return
@@ -524,6 +520,7 @@ end subroutine get_albedo12m_netcdf
 
     ierr = 0;
   end subroutine get_2d_netcdf
+
 
       subroutine get_2d_netcdf_cows(var_name,ncid,var, &
             ix,jx,tlevel,fatal_if_error,ierr)
@@ -544,10 +541,8 @@ end subroutine get_albedo12m_netcdf
 
       if (iret /= 0) then
         if (fatal_IF_ERROR) then
-#ifdef HYDRO_D
            print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_cows:nf_inq_varid"
            call hydro_stop("get_2d_netcdf_cows")
-#endif
         else
           ierr = iret
           return
@@ -595,8 +590,6 @@ end subroutine get_albedo12m_netcdf
         CHARACTER(len=256)       :: InputLine
         CHARACTER(len=256)       :: geo_finegrid_flnm
         CHARACTER(len=256)       :: var_name
-!        external get2d_real
-!       integer ::  get2d_real
      
         NLINKS = 0
         NLAKES = 0
@@ -822,641 +815,95 @@ end subroutine get_albedo12m_netcdf
 
      END SUBROUTINE READ_ROUTEDIM
 
-       SUBROUTINE READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
-            FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
-            NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
-            HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
-            ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
-            route_link_f, &
-            route_lake_f, route_direction_f, route_order_f, &
-            CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
-            CHANXI, CHANYJ, CHLAT, CHLON,  &
-            channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm)
-#include <netcdf.inc>
-        INTEGER, INTENT(IN)                          :: IXRT,JXRT
-        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
-        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
-        INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
-        INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
-        INTEGER, INTENT(OUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
-        INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
-        INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
-        INTEGER                                      :: I,J,channel_option
-        REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
-        CHARACTER(len=28)                            :: dir
-!Dummy inverted grids from arc
 
 
-!----DJG,DNY New variables for channel and lake routing
-        CHARACTER(len=155)	 :: header
-        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: FROM_NODE
-        REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: ZELEV
-        REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: CHLAT,CHLON
-
-        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: TYPEL
-        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: TO_NODE,ORDER
-        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: STRMFRXSTPTS
-
-        INTEGER, INTENT(OUT)                       :: MAXORDER
-        REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: MUSK, MUSX !muskingum
-        REAL, INTENT(OUT),  DIMENSION(NLINKS,2)    :: QLINK  !channel flow
-        REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: CHANLEN   !channel length
-        REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: MannN, So !mannings N
-        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: LAKENODE  ! identifies which nodes pour into which lakes
-        REAL, INTENT(IN)                             :: dist(ixrt,jxrt,9)
-
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT)    :: CH_NETLNK
-        REAL,  DIMENSION(IXRT,JXRT)                  ::  ChSSlpG,BwG,MannNG  !channel properties on Grid
-
-
-!-- store the location x,y location of the channel element
-         INTEGER, INTENT(OUT), DIMENSION(NLINKS)   :: CHANXI, CHANYJ
-
-!--reservoir/lake attributes
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: HRZAREA
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: LAKEMAXH
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: WEIRC
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: WEIRL
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: ORIFICEC
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: ORIFICEA
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: ORIFICEE
-        REAL, INTENT(OUT),  DIMENSION(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
-        REAL, INTENT(OUT), DIMENSION(NLINKS)       :: ChSSlp, Bw
-
-        CHARACTER(len=256)                           :: route_link_f
-        CHARACTER(len=256)                           :: route_lake_f
-        CHARACTER(len=256)                           :: route_direction_f
-        CHARACTER(len=256)                           :: route_order_f
-        CHARACTER(len=256)                           :: geo_finegrid_flnm
-        CHARACTER(len=256)                           :: var_name
-
-        INTEGER                                      :: tmp, cnt, ncid, iret, jj,ct
-        real                                         :: gc,n
-
-!---------------------------------------------------------
-! End Declarations
-!---------------------------------------------------------
-        MAXORDER = -9999
-!initialize GSTRM
-        GSTRMFRXSTPTS = -9999
-
-!yw initialize the array.
-        to_node =   MAXORDER
-        from_node = MAXORDER
-
-#ifdef HYDRO_D
-        print *, "reading routing initialization files..."
-        print *, "route direction", route_direction_f
-        print *, "route order", route_order_f
-        print *, "route linke",route_link_f
-        print *, "route lake",route_lake_f
-
-     BwG = 0.0
-     ChSSlpG = 0.0
-     MannNG = 0.0
-     TYPEL = 0
-     MannN = 0.0
-     Bw = 0.0
-     ChSSlp = 0.0 
-
-#endif
-
-!DJG Edited code here to retrieve data from hires netcdf file....
-
-   IF((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then
-
-        var_name = "LATITUDE"
-        call readRT2d_real(var_name,LATVAL,ixrt,jxrt,&
-                     trim(geo_finegrid_flnm))
-        var_name = "LONGITUDE"
-        call readRT2d_real(var_name,LONVAL,ixrt,jxrt,&
-                     trim(geo_finegrid_flnm))
-
-    END IF
-
-
-       IF(CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2) then
-!DJG change filename to LAKEPARM.TBL        open(unit=79,file=trim(route_link_f),          &
-        open(unit=79,file='LAKEPARM.TBL',          &
-                  form='formatted',status='old')
-       END IF
-
-
-       var_name = "LAKEGRID"
-       call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
-       var_name = "FLOWDIRECTION"
-       call readRT2d_int(var_name,DIRECTION,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
-       var_name = "STREAMORDER"
-       call readRT2d_int(var_name,GORDER,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
-       var_name = "frxst_pts"
-       call readRT2d_int(var_name,GSTRMFRXSTPTS,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
-
-!--1/13/2011 real hi res sfc calibrtion parameters (...)
-!       var_name = "LAKEGRID"
-!       call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
-!               trim(geo_finegrid_flnm))
-!       var_name = "LAKEGRID"
-!       call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
-!               trim(geo_finegrid_flnm))
-
-
-!-- real hi res channel properties (not yet implemented...)
-!        var_name = "MANNINGS"
-!        iret = get2d_real(var_name,MannNG,ixrt,jxrt,&
-!                     trim(geo_finegrid_flnm))
-!        var_name = "SIDE_SLOPE"
-!        iret = get2d_real(var_name,ChSSlpG,ixrt,jxrt,&
-!                     trim(geo_finegrid_flnm))
-!        var_name = "BOTTOM_WIDTH"
-!        iret = get2d_real(var_name,BwG,ixrt,jxrt,&
-!                     trim(geo_finegrid_flnm))
-
-
-!!!Flip y-dimension of highres grids from exported Arc files...
-
-
-       
-
-     
-! temp fix for buggy Arc export...
-        do j=1,jxrt
-          do i=1,ixrt
-            if(DIRECTION(i,j).eq.-128) DIRECTION(i,j)=128
-          end do
+     SUBROUTINE nreadRT2d_real(var_name, inv, ixrt, jxrt, fileName) 
+         implicit none
+         INTEGER :: iret
+         INTEGER, INTENT(IN) :: ixrt,jxrt
+         INTEGER :: i, j, ii,jj
+         CHARACTER(len=*):: var_name,fileName
+         real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
+         real, dimension(ixrt,jxrt) :: inv_tmp
+#ifdef MPP_LAND
+         real, allocatable,dimension(:,:) :: g_inv_tmp, g_inv
+         if(my_id .eq. io_id) then
+              allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
+              allocate(g_inv(global_rt_nx,global_rt_ny))
+              g_inv_tmp = -9999.9
+              iret =  get2d_real(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
+                     trim(fileName))
+              do i=1,global_rt_nx
+                 jj=global_rt_ny
+                 do j=1,global_rt_ny
+                   g_inv(i,j)=g_inv_tmp(i,jj)
+                   jj=global_rt_ny-j
+                 end do
+              end do
+         else
+              allocate(g_inv_tmp(1,1))
+              allocate(g_inv(1,1))
+         endif 
+         call decompose_RT_real(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
+         deallocate(g_inv_tmp, g_inv)
+#else
+         inv_tmp = -9999.9
+         iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
+                     trim(fileName))
+         do i=1,ixrt
+            jj=jxrt
+         do j=1,jxrt
+           inv(i,j)=inv_tmp(i,jj)
+           jj=jxrt-j
+         end do
         end do
+#endif
 
-      cnt =0
-      if ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option .ne. 3) then ! not routing on grid, read from file
-       read(79,*)  header
-       do i=1,NLINKS
-          read (79,*) tmp, FROM_NODE(i), TO_NODE(i), TYPEL(i),&
-                   ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
-                   MannN(i), So(i), ChSSlp(i), Bw(i), HRZAREA(i),&
-                   LAKEMAXH(i), WEIRC(i), WEIRL(i), ORIFICEC(i), &
-                   ORIFICEA(i),ORIFICEE(i)
+        
+     end SUBROUTINE nreadRT2d_real
 
-           !-- hardwire QLINK
-          QLINK(i,1) = 1.0
-          QLINK(i,2) = QLINK(i,1)
-
-          if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
- 
-          if (ORDER(i) .gt. MAXORDER) then
-            MAXORDER = ORDER(i)
-          endif
-
+     SUBROUTINE nreadRT2d_int(var_name, inv, ixrt, jxrt, fileName) 
+         implicit none
+         INTEGER, INTENT(IN) :: ixrt,jxrt
+         INTEGER :: i, j, ii,jj, iret
+         CHARACTER(len=*):: var_name,fileName
+         integer, INTENT(OUT), dimension(ixrt,jxrt) :: inv
+         integer, dimension(ixrt,jxrt) :: inv_tmp
+#ifdef MPP_LAND
+         integer, allocatable,dimension(:,:) :: g_inv_tmp, g_inv
+         if(my_id .eq. io_id) then
+              allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
+              allocate(g_inv(global_rt_nx,global_rt_ny))
+              g_inv_tmp = -9999.9
+              call  get2d_int(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
+                     trim(fileName))
+              do i=1,global_rt_nx
+                 jj=global_rt_ny
+                do j=1,global_rt_ny
+                  g_inv(i,j)=g_inv_tmp(i,jj)
+                  jj=global_rt_ny-j
+                end do
+              end do
+         else
+              allocate(g_inv_tmp(1,1))
+              allocate(g_inv(1,1))
+         endif
+         call decompose_RT_int(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
+         deallocate(g_inv_tmp, g_inv)
+#else
+         call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
+                     trim(fileName))
+         do i=1,ixrt
+            jj=jxrt
+         do j=1,jxrt
+           inv(i,j)=inv_tmp(i,jj)
+           jj=jxrt-j
+         end do
         end do
-
-      elseif ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then  !-- handle setting up topology on the grid for diffusion scheme
-
-       read(79,*)  header  !-- read the lake file
-#ifdef HYDRO_D
-       write(*,*) "reading lake file ", header
-       write(6,*) "error check read file ",route_link_f
 #endif
-
-
-      if (NLAKES.gt.0) then !read in only if there are lakes
-       do i=1, NLAKES
-        read (79,*) tmp, HRZAREA(i),LAKEMAXH(i), &
-          WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-           LATLAKE(i), LONLAKE(i),ELEVLAKE(i)
-#ifdef HYDRO_D
-        write (*,*) tmp, HRZAREA(i),LAKEMAXH(i), LATLAKE(i), LONLAKE(i),ELEVLAKE(i),NLAKES
-#endif
-       enddo
-      end if   !end if for NLAKES >0 check
-
-       cnt = 0 
-
-!yw  add temperary to initialize the following two variables.
-
-!yw debug
-!    write(6,*) "ixrt =",ixrt, "jxrt=",jxrt
-!    write(18) CH_NETRT
-!    write(19) DIRECTION
-!    write(20) GORDER
-!    write(21) GSTRMFRXSTPTS
-!    write(22) ELRT
-!ywend debug
-      
-     BwG = 0.0
-     ChSSlpG = 0.0
-
-!DJG inv       DO j = JXRT,1,-1  !rows
-       DO j = 1,JXRT  !rows
-        DO i = 1 ,IXRT   !colsumns
-         If (CH_NETRT(i, j) .ge. 0) then !get its direction and assign its elevation and order
-          If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT) .AND. &
-               (CH_NETRT(i,j+1).ge.0) ) then !North
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             TO_NODE(cnt) = CH_NETLNK(i, j + 1)
-             CHANLEN(cnt) = dist(i,j,1)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1).ge.0) ) then !North East
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             TO_NODE(cnt) = CH_NETLNK(i + 1, j + 1)
-             CHANLEN(cnt) = dist(i,j,2)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (CH_NETRT(i+1,j).ge.0) ) then !East
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             TO_NODE(cnt) = CH_NETLNK(i + 1, j)
-             CHANLEN(cnt) = dist(i,j,3)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i+1,j-1).ge.0) ) then !south east
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             TO_NODE(cnt) = CH_NETLNK(i + 1, j - 1)
-             CHANLEN(cnt) = dist(i,j,4)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0) ) then !due south
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             TO_NODE(cnt) = CH_NETLNK(i, j - 1)
-             CHANLEN(cnt) = dist(i,j,5)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
-               .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i-1,j-1).ge.0)) then !south west
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i,j)
-             TO_NODE(cnt) = CH_NETLNK(i - 1, j - 1)
-             CHANLEN(cnt) = dist(i,j,6)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0) ) then !West
-             cnt = cnt + 1
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             TO_NODE(cnt) = CH_NETLNK(i - 1, j)
-             CHANLEN(cnt) = dist(i,j,7)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0) ) then !North West
-             cnt = cnt + 1
-             ORDER(cnt) = GORDER(i,j)
-             STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-             ZELEV(cnt) = ELRT(i,j)
-             MannN(cnt) = MannNG(i,j)
-             ChSSlp(cnt) = ChSSlpG(i,j)
-             Bw(cnt) = BwG(i,j)
-             CHLAT(cnt) = LATVAL(i,j)
-             CHLON(cnt) = LONVAL(i,j)
-             FROM_NODE(cnt) = CH_NETLNK(i, j)
-             TO_NODE(cnt) = CH_NETLNK(i - 1, j + 1)
-             CHANLEN(cnt) = dist(i,j,8)
-             CHANXI(cnt) = i
-             CHANYJ(cnt) = j
-             Link_Location(i,j) = cnt
-          else 
-#ifdef HYDRO_D
-             print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
-#endif
-          End If
-
-         End If !CH_NETRT check for this node
-
-        END DO
-       END DO 
-
-#ifdef HYDRO_D
-       print *, "after exiting the channel, this many nodes", cnt
-       write(*,*) " " 
-#endif
-
-!Find out if the boundaries are on an edge
-!DJG inv       DO j = JXRT,1,-1
-       DO j = 1,JXRT
-         DO i = 1 ,IXRT
-          If (CH_NETRT(i, j) .ge. 0) then !get its direction
-           If (((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT)) .OR. &        !-- 64's can only flow north
-              ((DIRECTION(i, j) .EQ. 64) .and. (j < jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if(j+1 .GT. JXRT) then !-- an edge
-               TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i,j+1).gt.0) then 
-               TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j+1)
-              else
-               TYPEL(cnt) = 1 
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,1)
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point N", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if((i+1 .GT. IXRT) .OR. (j+1 .GT. JXRT))  then ! an edge
-                TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i+1,j+1).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i+1,j+1)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,2)  
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point NE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT)) .OR. &    !-- 1's can only flow due east
-               ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if(i+1 .GT. IXRT) then  !an edge
-                TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i+1,j).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i+1,j)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,3)
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point E", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if((i+1 .GT. IXRT) .OR. (j-1 .EQ. 0)) then !an edge 
-                TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i+1,j-1).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i+1,j-1)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,4)
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point SE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           else if (((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0)) .OR. &       !-- 4's can only flow due south
-               ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if(j-1 .EQ. 0) then !- an edge
-                TYPEL(cnt) =1
-              elseif(LAKE_MSKRT(i,j-1).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i,j-1)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,5)
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point S", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-          else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
-               .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
-               .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if( (i-1 .EQ. 0) .OR. (j-1 .EQ. 0) ) then !- an edge
-               TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i-1,j-1).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i-1,j-1)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,6) 
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point SW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           else if (((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE.0) ) &                  !16's can only flow due west
-               .OR.((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if(i-1 .EQ. 0) then !-- an edge
-                TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i-1,j).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i-1,j)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,7)
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point W", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
-               .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
-               .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
-              cnt = cnt + 1
-              ORDER(cnt) = GORDER(i,j)
-              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
-              ZELEV(cnt) = ELRT(i,j)
-              MannN(cnt) = MannNG(i,j)
-              ChSSlp(cnt) = ChSSlpG(i,j)
-              Bw(cnt) = BwG(i,j)
-              CHLAT(cnt) = LATVAL(i,j)
-              CHLON(cnt) = LONVAL(i,j)
-              if( (i-1 .EQ. 0) .OR. (j+1 .GT. JXRT)) then !-- an edge
-               TYPEL(cnt) = 1
-              elseif(LAKE_MSKRT(i-1,j+1).gt.0) then 
-                TYPEL(cnt) = 2
-                LAKENODE(cnt) = LAKE_MSKRT(i-1,j+1)
-              else
-                TYPEL(cnt) = 1
-              endif
-              FROM_NODE(cnt) = CH_NETLNK(i, j)
-              CHANLEN(cnt) = dist(i,j,8)   
-              CHANXI(cnt) = i
-              CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Pour Point NW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
-#endif
-           endif
-          endif !CH_NETRT check for this node
-         END DO
-       END DO 
-      endif
-
-     close(79)
-       if (cnt .ne. NLINKS) then 
-#ifdef HYDRO_D
-         print *, "Apparent error in network topology", cnt, NLINKS
-         print* , "ixrt =", ixrt, "jxrt =", jxrt
-#endif
-         call hydro_stop("READ_CHROUTING")
-       endif
-
-
-     do i=1,NLINKS
-#ifdef HYDRO_D
-      if (STRMFRXSTPTS(i).ne.-9999) print *,"Frxst_pt: ",STRMFRXSTPTS(i)
-#endif
-     end do
-
-     return
-
+     end SUBROUTINE nreadRT2d_int
+!---------------------------------------------------------
 !DJG -----------------------------------------------------
-   END SUBROUTINE READ_CHROUTING
-
 
      SUBROUTINE readRT2d_real(var_name, inv, ixrt, jxrt, fileName) 
          implicit none
@@ -1500,7 +947,6 @@ end subroutine get_albedo12m_netcdf
 !---------------------------------------------------------
 !DJG -----------------------------------------------------
 
-
 #ifdef MPP_LAND
   subroutine MPP_READ_SIMP_GW(IX,JX,IXRT,JXRT,GWSUBBASMSK,gwbasmskfil,&
           gw_strm_msk,numbasns,ch_netrt,AGGFACTRT)
@@ -1513,8 +959,21 @@ end subroutine get_albedo12m_netcdf
     integer, intent(out), dimension(IXRT,JXRT)  :: gw_strm_msk
     integer, intent(in), dimension(IXRT,JXRT)  :: ch_netrt
     character(len=256)                      :: gwbasmskfil
-    integer,dimension(global_nX,global_ny) ::  g_GWSUBBASMSK
-    integer,dimension(global_rt_nx, global_rt_ny) ::  g_gw_strm_msk,g_ch_netrt
+    !integer,dimension(global_nX,global_ny) ::  g_GWSUBBASMSK
+    !yw integer,dimension(global_rt_nx, global_rt_ny) ::  g_gw_strm_msk,g_ch_netrt
+
+    integer,allocatable,dimension(:,:) ::  g_GWSUBBASMSK
+    integer,allocatable,dimension(:, :) ::  g_gw_strm_msk,g_ch_netrt
+    
+     if(my_id .eq. IO_id) then
+          allocate(g_gw_strm_msk(global_rt_nx, global_rt_ny))
+          allocate(g_ch_netrt(global_rt_nx, global_rt_ny))
+          allocate(g_GWSUBBASMSK(global_nX,global_ny))
+     else
+          allocate(g_gw_strm_msk(1,1))
+          allocate(g_ch_netrt(1,1))
+          allocate(g_GWSUBBASMSK(1,1))
+     endif
 
 
      call write_IO_rt_int(ch_netrt,g_ch_netrt)
@@ -1528,6 +987,10 @@ end subroutine get_albedo12m_netcdf
      call decompose_RT_int(g_gw_strm_msk,gw_strm_msk,  &
           global_rt_nx, global_rt_ny,ixrt,jxrt)
      call mpp_land_bcast_int1(numbasns)
+
+     deallocate(g_gw_strm_msk)
+     deallocate(g_ch_netrt)
+     deallocate(g_GWSUBBASMSK)
 
   return
   end subroutine MPP_READ_SIMP_GW
@@ -1600,6 +1063,7 @@ end subroutine get_albedo12m_netcdf
    END SUBROUTINE READ_SIMP_GW
 !DJG -----------------------------------------------------
 
+
   ! BF read the static input fields needed for the 2D GW scheme
   subroutine readGW2d(ix, jx, hc, ihead, botelv, por, ltype)
   implicit none
@@ -1616,13 +1080,23 @@ end subroutine get_albedo12m_netcdf
 !, get2d_real
   
 #ifdef MPP_LAND
-  allocate(gHC(global_rt_nx, global_rt_ny))
-  allocate(gIHEAD(global_rt_nx, global_rt_ny))
-  allocate(gBOTELV(global_rt_nx, global_rt_ny))
-  allocate(gPOR(global_rt_nx, global_rt_ny))
-  allocate(gLtype(global_rt_nx, global_rt_ny))
-  
   if(my_id .eq. IO_id) then
+      allocate(gHC(global_rt_nx, global_rt_ny))
+      allocate(gIHEAD(global_rt_nx, global_rt_ny))
+      allocate(gBOTELV(global_rt_nx, global_rt_ny))
+      allocate(gPOR(global_rt_nx, global_rt_ny))
+      allocate(gLtype(global_rt_nx, global_rt_ny))
+  else
+      allocate(gHC(1, 1))
+      allocate(gIHEAD(1, 1))
+      allocate(gBOTELV(1, 1))
+      allocate(gPOR(1, 1))
+      allocate(gLtype(1, 1))
+  endif
+ 
+#ifndef PARALLELIO 
+  if(my_id .eq. IO_id) then
+#endif
 #ifdef HYDRO_D
   print*, "2D GW-Scheme selected, retrieving files from gwhires.nc ..."
 #endif
@@ -1632,7 +1106,11 @@ end subroutine get_albedo12m_netcdf
         ! hydraulic conductivity
         i = get2d_real("HC", &
 #ifdef MPP_LAND
+#ifndef PARALLELIO 
                        gHC, global_nx, global_ny,  &
+#else
+                       hc, ix, jx,  &
+#endif
 #else
                        hc, ix, jx,  &
 #endif
@@ -1650,7 +1128,11 @@ end subroutine get_albedo12m_netcdf
         ! aquifer bottom elevation                
         i = get2d_real("BOTELV", &
 #ifdef MPP_LAND
+#ifndef PARALLELIO 
                        gBOTELV, global_nx, global_ny, &
+#else
+                       botelv, ix, jx,  &
+#endif
 #else
                        botelv, ix, jx,  &
 #endif
@@ -1659,14 +1141,19 @@ end subroutine get_albedo12m_netcdf
 	! aquifer porosity
         i = get2d_real("POR", &
 #ifdef MPP_LAND
+#ifndef PARALLELIO 
                        gPOR, global_nx, global_ny, &
+#else
+                       por, ix, jx,  &
+#endif
 #else
                        por, ix, jx,  &
 #endif
                        trim("./gwhires.nc"))
 
 ! bftodo: develop proper landtype mask
- 
+
+!?yw this part could have problem when use parallel IO 
 #ifdef MPP_LAND
        gLtype=1
        gLtype(1,:) = 2
@@ -1682,6 +1169,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
 #ifdef MPP_LAND  
+#ifndef PARALLELIO 
   endif
      call decompose_rt_int (gLtype, ltype, global_rt_nx, global_rt_ny, ix, jx)
      call decompose_rt_real(gHC,hc,global_rt_nx, global_rt_ny, ix, jx)
@@ -1689,6 +1177,7 @@ end subroutine get_albedo12m_netcdf
      call decompose_rt_real(gBOTELV,botelv,global_rt_nx, global_rt_ny, ix, jx)
      call decompose_rt_real(gPOR,por,global_rt_nx, global_rt_ny, ix, jx)
      deallocate(gHC, gIHEAD, gBOTELV, gPOR)
+#endif
 #endif
   !bftodo: make filename accessible in namelist
   return
@@ -1720,7 +1209,7 @@ end subroutine get_albedo12m_netcdf
     character(len=*),          intent(in)                :: geo_finegrid_flnm
     real,             dimension(nsoil),       intent(in) :: sldpth
     real, allocatable, DIMENSION(:,:)                   :: xdumd  !-- decimated variable
-    real*8, allocatable, DIMENSION(:)                   :: xcoord_d, xcoord
+    real*8, allocatable, DIMENSION(:)                   :: xcoord_d
     real*8, allocatable, DIMENSION(:)                   :: ycoord_d, ycoord
 
     integer, save :: ncid,ncstatic
@@ -1752,15 +1241,35 @@ end subroutine get_albedo12m_netcdf
     seconds_since = int(dt)*output_count
 
     decimation = 1 !-- decimation factor
+#ifdef MPP_LAND
+    ixrtd = int(global_rt_nx/decimation)
+    jxrtd = int(global_rt_ny/decimation)
+#else
     ixrtd = int(ixrt/decimation)
     jxrtd = int(jxrt/decimation)
-    allocate(xdumd(ixrtd,jxrtd))
-    allocate(xcoord_d(ixrtd))
-    allocate(ycoord_d(jxrtd))
-    allocate(xcoord(ixrtd))
-    allocate(ycoord(jxrtd))
+#endif
+
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
+       allocate(xdumd(ixrtd,jxrtd))
+       allocate(xcoord_d(ixrtd))
+       allocate(ycoord_d(jxrtd))
+       allocate(ycoord(jxrtd))
+
+       xdumd = -999
+       xcoord_d = -999 
+       ycoord_d = -999
+       ycoord = -999
+#ifdef MPP_LAND
+    else
+       allocate(xdumd(1,1))
+       allocate(xcoord_d(1))
+       allocate(ycoord_d(1))
+       allocate(ycoord(1))
+    endif
+#endif
     ii = 0
-    jj = 0
 
 !DJG Dump timeseries for channel inflow accum. for calibration...(8/28/09)
     chan_in = 0.0
@@ -1769,62 +1278,78 @@ end subroutine get_albedo12m_netcdf
         chan_in=chan_in+QSTRMVOLRT(I,J)/1000.0*(dist(i,j,9))  !(units m^3)
       enddo
     enddo
-    open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
+#ifdef MPP_LAND
+      call sum_real1(chan_in)
+#endif
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
+       open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
              status='unknown',position='append')
-    write (46,713) chan_in
+        write (46,713) chan_in
+       close (46)
+#ifdef MPP_LAND
+    endif
+#endif
 713 FORMAT (F20.7)
-    close (46)
 !    return
 !DJG end dump of channel inflow for calibration....
 
     if (hires_out.eq.1) return  ! return if hires flag eq 1, if =2 output full grid
 
-    if (output_count == 0) then
+    if (output_count == 0) then  
 
    !-- Open the  finemesh static files to obtain projection information
 #ifdef HYDRO_D
       write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(geo_finegrid_flnm)
 #endif
+
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) then
+#endif
       iret = nf_open(trim(geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+#ifdef MPP_LAND
+   endif
+   call mpp_land_bcast_int1(iret)
+#endif
 
       if (iret /= 0) then
-#ifdef HYDRO_D
          write(*,'("Problem opening geo_finegrid file: ''", A, "''")') &
          trim(geo_finegrid_flnm)
          write(*,*) "HIRES_OUTPUT will not be georeferenced..."
-#endif
-         
         hires_flag = 0
       else
         hires_flag = 1
       endif
 
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) then
+#endif
+
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get Latitude (X)
       iret = NF_INQ_VARID(ncstatic,'x',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, xcoord)
+      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, xcoord_d)
       ! Get Longitude (Y)
       iret = NF_INQ_VARID(ncstatic,'y',varid)
       if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, ycoord)
      else
-      xcoord_d = 0.
       ycoord_d = 0.
+      xcoord_d = 0.
      end if  !endif hires_georef 
 
+     jj = 0
+#ifdef MPP_LAND
+     do j=global_rt_ny,1,-1*decimation
+#else
      do j=jxrt,1,-1*decimation
+#endif
         jj = jj+1
         if (jj<= jxrtd) then
          ycoord_d(jj) = ycoord(j)
         endif
      enddo
 
-!yw     do i = 1,ixrt,decimation
-!yw        ii = ii + 1
-!yw        if (ii <= ixrtd) then 
-!yw         xcoord_d(ii) = xcoord(i)
-         xcoord_d = xcoord
-!yw        endif
-!yw     enddo
        
 
      if(hires_flag.eq.1) then !if/then hires_georef
@@ -1838,6 +1363,7 @@ end subroutine get_albedo12m_netcdf
      end if  !endif hires_georef 
       iret = nf_close(ncstatic)
 
+
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
 #ifdef HYDRO_D
@@ -1846,7 +1372,11 @@ end subroutine get_albedo12m_netcdf
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
        iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
 #else
+#ifdef PARALLELIO
+      iret = nf90_open_par(trim(geo_finegrid_flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
 #endif
 #ifdef HYDRO_D
        if (iret /= 0) then
@@ -1994,29 +1524,43 @@ end subroutine get_albedo12m_netcdf
       iret = nf_enddef(ncid)
 
 !!-- write latitude and longitude locations
-!       xdumd = LATVAL
-        iret = nf_inq_varid(ncid,"x", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+         iret = nf_inq_varid(ncid,"x", varid)
          iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
 
-!       xdumd = LONVAL
-        iret = nf_inq_varid(ncid,"y", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
-        iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
+         iret = nf_inq_varid(ncid,"y", varid)
+         iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
 
+#ifdef MPP_LAND
+    endif
+
+        call write_IO_rt_real(LATVAL,xdumd)
+    if( my_id .eq. io_id) then
+#else
         xdumd = LATVAL
+#endif
         iret = nf_inq_varid(ncid,"LATITUDE", varid)
         iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
 
+
+#ifdef MPP_LAND
+    endif
+
+        call write_IO_rt_real(LONVAL,xdumd)
+
+    if( my_id .eq. io_id) then
+#else
         xdumd = LONVAL
+#endif
         iret = nf_inq_varid(ncid,"LONGITUDE", varid)
         iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
 
+#ifdef MPP_LAND
+    endif
 
-#ifdef HYDRO_D 
-        write (*,*) "TEST....",LONVAL (1,1),(1,2)
-        write (*,*) "TEST....",LATVAL (1,1),(1,2)
+    if( my_id .eq. io_id) then
 #endif
+
+
 
 
 
@@ -2032,185 +1576,104 @@ end subroutine get_albedo12m_netcdf
        iret = nf_inq_varid(ncid,"depth", varid)
        iret = nf_put_vara_real(ncid, varid, (/1/), (/nsoil/), asldpth)
 !yw       iret = nf_close(ncstatic)
-
-    endif
-
+#ifdef MPP_LAND
+    endif  ! end of my_id .eq. io_id
+#endif
+   endif !!! end of if block output_count == 0
     output_count = output_count + 1
 
 !!-- time
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) then
+#endif
         iret = nf_inq_varid(ncid,"time", varid)
         iret = nf_put_vara_int(ncid, varid, (/output_count/), (/1/), seconds_since)
+#ifdef MPP_LAND
+   endif
+#endif
 
 !-- 3-d soils
      do n = 1, nsoil
-!DJG inv      jj = int(jxrt/decimation)
-      jj = 1
-      ii = 0
-!DJG inv      do j = jxrt,1,-decimation
-       do j = 1,jxrt,decimation
-       do i = 1,ixrt,decimation
-        ii = ii + 1  
-        if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-         xdumd(ii,jj) = smcrt(i,j,n)
-        endif
-      enddo 
-       ii = 0
-!DJG inv       jj = jj -1
-       jj = jj + 1
-     enddo
-!       where (vegtyp(:,:) == 16) xdum = -1.E33
+#ifdef MPP_LAND
+          call write_IO_rt_real(smcrt(:,:,n),xdumd)
+#else
+          xdumd(:,:) = smcrt(:,:,n)
+#endif
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
           iret = nf_inq_varid(ncid,  "SOIL_M", varid)
           iret = nf_put_vara_real(ncid, varid, (/1,1,n,output_count/), (/ixrtd,jxrtd,1,1/), xdumd)
+#ifdef MPP_LAND
+    endif
+#endif
     enddo !-n soils
 
 
-!!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!       jj = int(jxrt/decimation)
-!       ii = 0
-!!       do j = jxrt,1,-decimation
-!      do j = 1,jxrt,decimation
-!        do i = 1,ixrt,decimation
-!         ii = ii + 1  
-!         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-!          xdumd(ii,jj) = QSUBRT(i,j)
-!         endif
-!       enddo 
-!       ii = 0
-!       jj = jj - 1 
-!      enddo
-!     iret = nf_inq_varid(ncid,  "QSUBRT", varid)
-!     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 
-!    xdum = ZWATTABLRT
-!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!DJG inv       jj = int(jxrt/decimation)
-       jj = 1
-       ii = 0
-!DJG inv       do j = jxrt,1,-decimation
-       do j = 1,jxrt,decimation
-        do i = 1,ixrt,decimation
-         ii = ii + 1  
-         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-          xdumd(ii,jj) = ZWATTABLRT(i,j)
-         endif
-       enddo 
-       ii = 0
-!DJG inv       jj = jj - 1 
-       jj = jj + 1 
-      enddo
+#ifdef MPP_LAND
+          call write_IO_rt_real(ZWATTABLRT,xdumd)
+#else
+          xdumd(:,:) = ZWATTABLRT(:,:)
+#endif
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
         iret = nf_inq_varid(ncid,  "ZWATTABLRT", varid)
         iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+#ifdef MPP_LAND
+     endif
+#endif
 
 
-!!    xdum = Q_SFCFLX_X
-!!!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!       jj = int(jxrt/decimation)
-!       ii = 0
-!!       do j = jxrt,1,-decimation
-!      do j = 1,jxrt,decimation
-!        do i = 1,ixrt,decimation
-!         ii = ii + 1  
-!         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-!          xdumd(ii,jj) = Q_SFCFLX_X(i,j)
-!         endif
-!       enddo 
-!       ii = 0
-!       jj = jj - 1 
-!      enddo
-!     iret = nf_inq_varid(ncid,  "Q_SFCFLX_X", varid)
-!     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-!!
-!!    xdum = Q_SFCFLX_Y
-!!!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!       jj = int(jxrt/decimation)
-!       ii = 0
-!!       do j = jxrt,1,-decimation
-!      do j = 1,jxrt,decimation
-!        do i = 1,ixrt,decimation
-!         ii = ii + 1  
-!         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-!          xdumd(ii,jj) = Q_SFCFLX_Y(i,j)
-!         endif
-!       enddo 
-!       ii = 0
-!       jj = jj - 1 
-!      enddo
-!     iret = nf_inq_varid(ncid,  "Q_SFCFLX_Y", varid)
-!     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 
-! for compareing between sequential and parallel to initialized xdumd
-       xdumd = 0.0
-       jj = 1
-       ii = 0
-       do j = 1,jxrt,decimation
-        do i = 1,ixrt,decimation
-         ii = ii + 1  
-         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-          xdumd(ii,jj) = QBDRYRT(i,j)
-         endif
-       enddo 
-       ii = 0
-       jj = jj + 1 
-      enddo
+#ifdef MPP_LAND
+          call write_IO_rt_real(QBDRYRT,xdumd)
+#else
+          xdumd(:,:) = QBDRYRT(:,:)
+#endif
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
      iret = nf_inq_varid(ncid,  "QBDRYRT", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+#ifdef MPP_LAND
+     endif
+#endif
 
 
-       xdumd = 0.0
-!    xdum = QSTRMVOLRT
-!!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!DJG inv       jj = int(jxrt/decimation)
-       jj = 1
-       ii = 0
-!DJG inv       do j = jxrt,1,-decimation
-       do j = 1,jxrt,decimation
-        do i = 1,ixrt,decimation
-         ii = ii + 1  
-         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-          xdumd(ii,jj) = QSTRMVOLRT(i,j)
-         endif
-       enddo 
-       ii = 0
-!DJG inv      jj = jj - 1 
-       jj = jj + 1 
-      enddo
+#ifdef MPP_LAND
+          call write_IO_rt_real(QSTRMVOLRT,xdumd)
+#else
+          xdumd(:,:) = QSTRMVOLRT(:,:)
+#endif
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
      iret = nf_inq_varid(ncid,  "QSTRMVOLRT", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+#ifdef MPP_LAND
+     endif
+#endif
  
-!     xdum = SFCHEADSUBRT 
-!     where (vegtyp(:,:) == 16) xdum = -1.E33
-!DJG inv       jj = int(jxrt/decimation)
-       jj = 1
-       ii = 0
-!DJG inv       do j = jxrt,1,-decimation
-      do j = 1,jxrt,decimation
-        do i = 1,ixrt,decimation
-         ii = ii + 1  
-         if(ii <= ixrtd .and. jj <= jxrtd .and. jj >0) then
-          xdumd(ii,jj) = SFCHEADSUBRT(i,j)
-         endif
-       enddo 
-       ii = 0
-!DJG inv       jj = jj - 1 
-       jj = jj + 1 
-      enddo
+
+#ifdef MPP_LAND
+          call write_IO_rt_real(SFCHEADSUBRT,xdumd)
+#else
+          xdumd(:,:) = SFCHEADSUBRT(:,:)
+#endif
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
      iret = nf_inq_varid(ncid,  "SFCHEADSUBRT", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+#ifdef MPP_LAND
+     endif
+#endif
  
-
-!   iret = nf_inq_varid(ncid,  "SOXRT", varid)
-!   iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-
-!!!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!    iret = nf_inq_varid(ncid,  "SOYRT", varid)
-!    iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-!
-!!    xdum = SUB_RESID
-!!!   where (vegtyp(:,:) == 16) xdum = -1.E33
-!!    iret = nf_inq_varid(ncid,  "SUB_RESID", varid)
-!!    iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-!
-!!time in seconds since startdate
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
 
        iret = nf_redef(ncid)
        date19(1:len_trim(date)) = date
@@ -2222,10 +1685,14 @@ end subroutine get_albedo12m_netcdf
         output_count = 0
         iret = nf_close(ncid)
       endif
+#ifdef MPP_LAND
+     endif
+     call mpp_land_bcast_int1(output_count)
+     call mpp_land_bcast_int1(hires_out)
+#endif
 
      deallocate(xdumd)
      deallocate(xcoord_d)
-     deallocate(xcoord)
      deallocate(ycoord_d)
      deallocate(ycoord)
     
@@ -2234,6 +1701,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
   end subroutine output_rt
+
 
 !BF output section for gw2d model
 !bftodo: clean up an customize for GW usage
@@ -3217,10 +2685,30 @@ end subroutine output_chrt
      character(len=*),                         intent(in) :: date
 
      integer  :: gnlinks, map_l2g(nlinks), order_to_write
-     real, dimension(gNLINKS) :: g_chlon,g_chlat, g_hlink,g_zelev
-     real, dimension(gNLINKS,2) :: g_qlink
-     integer ,  dimension(gNLINKS) :: g_order,g_STRMFRXSTPTS
+     !real, dimension(gNLINKS) :: g_chlon,g_chlat, g_hlink,g_zelev
+     !real, dimension(gNLINKS,2) :: g_qlink
+     !integer ,  dimension(gNLINKS) :: g_order,g_STRMFRXSTPTS
+      real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
+      integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
+      real,allocatable,dimension(:,:) :: g_qlink
 
+     if(my_id .eq. io_id ) then
+        allocate(g_chlon(gNLINKS))
+        allocate(g_chlat(gNLINKS))
+        allocate(g_hlink(gNLINKS))
+        allocate(g_zelev(gNLINKS))
+        allocate(g_qlink(gNLINKS,2))
+        allocate(g_order(gNLINKS))
+        allocate(g_STRMFRXSTPTS(gNLINKS))
+     else
+        allocate(g_chlon(1))
+        allocate(g_chlat(1))
+        allocate(g_hlink(1))
+        allocate(g_zelev(1))
+        allocate(g_qlink(1,2))
+        allocate(g_order(1))
+        allocate(g_STRMFRXSTPTS(1))
+     endif
 
      call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
      call write_chanel_int(STRMFRXSTPTS,map_l2g,gnlinks,nlinks,g_STRMFRXSTPTS)
@@ -3236,6 +2724,7 @@ end subroutine output_chrt
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt,K,&
           g_STRMFRXSTPTS,order_to_write)
     end if
+    deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink)
 
 end subroutine mpp_output_chrt
 
@@ -3701,117 +3190,6 @@ end subroutine mpp_output_chrt
  end subroutine output_chrtgrd
 
 
-
-#ifdef MPP_LAND
-  subroutine mpp_output_rt(ixrt, jxrt,igrid, split_output_count, &
-       ixrt_in, jxrt_in,nsoil, startdate, olddate, &
-       QSUBRT_in,ZWATTABLRT_in,SMCRT_in,SUB_RESID_in,       &
-       q_sfcflx_x_in,q_sfcflx_y_in,soxrt_in,soyrt_in,       &
-       QSTRMVOLRT_in,SFCHEADSUBRT_in, &
-       geo_finegrid_flnm,dt,sldpth,LATVAL_in,LONVAL_in,dist,HIRES_OUT, &
-       QBDRYRT_in)
-
-!output the routing variables over routing grid.
-   USE module_mpp_land
-
-    implicit none
-#include <netcdf.inc>
-
-    integer,                                  intent(in) :: igrid
-    integer,                                  intent(in) :: split_output_count
-
-! ixrt and jxrt are global. ixrt_in and jxrt_in are local array index.
-    integer,                                  intent(in) :: ixrt,jxrt,ixrt_in,jxrt_in
-    real,                                     intent(in) :: dt
-    real,                                     intent(in) :: dist(ixrt_in,jxrt_in,9)
-    integer,                                  intent(in) :: nsoil
-    integer,                                  intent(in) :: HIRES_OUT
-    character(len=*),                         intent(in) :: startdate
-    character(len=*),                         intent(in) :: olddate
-    character(len=*),          intent(in)                :: geo_finegrid_flnm
-    real,             dimension(nsoil),       intent(in) :: sldpth
-
-    real, dimension(ixrt_in,jxrt_in) :: QSUBRT_in,ZWATTABLRT_in,SUB_RESID_in
-    real, dimension(ixrt_in,jxrt_in) :: q_sfcflx_x_in,q_sfcflx_y_in
-    real, dimension(ixrt_in,jxrt_in) :: QSTRMVOLRT_in
-    real, dimension(ixrt_in,jxrt_in) :: SFCHEADSUBRT_in, QBDRYRT_in
-    real, dimension(ixrt_in,jxrt_in) :: soxrt_in,soyrt_in
-    real, dimension(ixrt_in,jxrt_in,nsoil) :: SMCRT_in
-    real, dimension(ixrt_in,jxrt_in) :: LATVAL_in,LONVAL_in
-
-    real, dimension(ixrt,jxrt) :: QSUBRT,ZWATTABLRT,SUB_RESID
-    real, dimension(ixrt,jxrt) :: q_sfcflx_x,q_sfcflx_y
-    real, dimension(ixrt,jxrt) :: QSTRMVOLRT, QBDRYRT
-    real, dimension(ixrt,jxrt) :: SFCHEADSUBRT
-    real, dimension(ixrt,jxrt) :: soxrt,soyrt
-    real, dimension(ixrt,jxrt,nsoil) :: SMCRT
-    real, dimension(ixrt,jxrt,9) :: dist_g
-    real, dimension(ixrt,jxrt) :: LATVAL,LONVAL
-    integer i
-
-
-#ifdef HYDRO_D
-    write(6,*) "mpp_output_RT output file: ",trim(geo_finegrid_flnm)
-#endif
-
-    call write_IO_rt_real(LATVAL_in,LATVAL)
-    call write_IO_rt_real(LONVAL_in,LONVAL)
-    call write_IO_rt_real(QSUBRT_in,QSUBRT)
-   
-
-    call write_IO_rt_real(ZWATTABLRT_in,ZWATTABLRT)
-
-
-    call write_IO_rt_real(SUB_RESID_in,SUB_RESID)
-
-
-    call write_IO_rt_real(QSTRMVOLRT_in,QSTRMVOLRT)
-
-
-
-    call write_IO_rt_real(SFCHEADSUBRT_in,SFCHEADSUBRT)
-    call write_IO_rt_real(soxrt_in,soxrt)
-
-    call write_IO_rt_real(QBDRYRT_in,QBDRYRT)
-
-
-
-    call write_IO_rt_real(soyrt_in,soyrt)
-    call write_IO_rt_real(q_sfcflx_x_in,q_sfcflx_x)
-    call write_IO_rt_real(q_sfcflx_y_in,q_sfcflx_y)
-
-
-
-
-    do i = 1, NSOIL
-         call write_IO_rt_real(SMCRT_in(:,:,i),SMCRT(:,:,i))
-    end do
-    do i = 1, 9    
-         call write_IO_rt_real(dist(:,:,i),dist_g(:,:,i))
-    end do
-
-!   yyywwww  ! temp test
-!   if(my_id.eq. IO_id  ) write(14,*) dist(:,:,9)
-!   if(my_id.eq. IO_id  ) write(12,*) dist_g(:,:,9)
-
-
-
-
-    if(my_id.eq.IO_id) then
-       call output_rt(igrid, split_output_count, ixrt, jxrt, nsoil, &
-          startdate, olddate, QSUBRT,ZWATTABLRT,SMCRT,SUB_RESID,       &
-          q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
-          geo_finegrid_flnm,DT,SLDPTH,latval,lonval,dist_g,HIRES_OUT, &
-          QBDRYRT)
-    end if
-
-#ifdef HYDRO_D
-    write(6,*) "return from mpp_output_RT"
-#endif
-  end subroutine mpp_output_rt
-
-#endif
-
  subroutine read_chan_forcing( &
        indir,olddate,startdate,hgrid,&
        ixrt,jxrt,QSTRMVOLRT_ACC,QINFLOWBASE,QSUBRT)
@@ -3843,7 +3221,11 @@ end subroutine mpp_output_chrt
 
 
 !DJG Open NetCDF file...
+#ifdef PARALLELIO
+    iret = nf90_open_par(trim(inflnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
     ierr = nf_open(inflnm, NF_NOWRITE, ncid)
+#endif
     if (ierr /= 0) then
 #ifdef HYDRO_D
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
@@ -3870,7 +3252,11 @@ end subroutine mpp_output_chrt
           integer out_buff(ix,jx)
           character(len=*), intent(in) :: var_name
           character(len=*), intent(in) :: fileName
+#ifdef PARALLELIO
+    iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+#else
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+#endif
           if (iret .ne. 0) then
 #ifdef HYDRO_D
             print*,"aaa failed to open the netcdf file: ",trim(fileName)
@@ -3888,6 +3274,7 @@ end subroutine mpp_output_chrt
           iret = nf_close(ncid)
          return
       end subroutine get2d_int
+
 
 #ifdef MPP_LAND
        SUBROUTINE MPP_READ_ROUTEDIM(did,g_IXRT,g_JXRT, GCH_NETLNK,GNLINKS,IXRT,JXRT, &
@@ -3908,7 +3295,8 @@ end subroutine mpp_output_chrt
         INTEGER, DIMENSION(IXRT,JXRT)                :: CH_NETRT   !- binary channel mask
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETLNK  !- each node gets unique id
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: GCH_NETLNK  !- each node gets unique id based on global domain
-        INTEGER, DIMENSION(g_IXRT,g_JXRT) :: g_CH_NETLNK  ! temp array
+        ! INTEGER, DIMENSION(g_IXRT,g_JXRT) :: g_CH_NETLNK  ! temp array
+        INTEGER, allocatable,DIMENSION(:,:) :: g_CH_NETLNK  ! temp array
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION  !- flow direction
         INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
@@ -3922,9 +3310,12 @@ end subroutine mpp_output_chrt
         integer :: ywcount
 
         if(my_id .eq. IO_id) then
-          CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
+           allocate(g_CH_NETLNK(g_IXRT,g_JXRT))
+           CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, route_lake_f, GNLINKS, NLAKES, &
               g_CH_NETLNK, channel_option,geo_finegrid_flnm)
+        else
+           allocate(g_CH_NETLNK(1,1))
         endif
         
 
@@ -3933,6 +3324,7 @@ end subroutine mpp_output_chrt
 
 
         call decompose_RT_int(g_CH_NETLNK,GCH_NETLNK,g_IXRT,g_JXRT,ixrt,jxrt)
+        deallocate(g_CH_NETLNK)
         ywcount = 0 
         CH_NETLNK = -9999
         do j = 1, jxrt
@@ -3960,77 +3352,8 @@ end subroutine mpp_output_chrt
         return 
         end SUBROUTINE MPP_READ_ROUTEDIM
 
-      SUBROUTINE MPP_READ_ROUTING(IXRT,JXRT,ELRT,  &
-              CH_NETRT,LKSATFAC,route_topo_f,    &
-            route_chan_f, geo_finegrid_flnm,g_IXRT,g_JXRT, &
-            OVROUGHRTFAC,RETDEPRTFAC)
-
-        implicit none
-#include <netcdf.inc>
-        INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)    :: ELRT,LKSATFAC
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)    :: OVROUGHRTFAC,RETDEPRTFAC
-        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
-
-        REAL, DIMENSION(g_IXRT,g_JXRT)               :: g1_ELRT
-        INTEGER,DIMENSION(g_IXRT,g_JXRT)             :: g1_CH_NETRT
-        REAL, DIMENSION(g_IXRT,g_JXRT)               :: g1_LKSATFAC
-        REAL, DIMENSION(g_IXRT,g_JXRT)               :: g1_OVROUGHRTFAC
-        REAL, DIMENSION(g_IXRT,g_JXRT)               :: g1_RETDEPRTFAC
-
-        CHARACTER(len=256)                           :: route_topo_f,route_chan_f,geo_finegrid_flnm
-
-        if(my_id .eq. IO_id)  then
-          CALL READ_ROUTING_seq(g_IXRT,g_JXRT,g1_ELRT,g1_CH_NETRT,g1_LKSATFAC,&
-              route_topo_f, route_chan_f,geo_finegrid_flnm,g1_OVROUGHRTFAC,&
-               g1_RETDEPRTFAC)
-        endif
-
-        call decompose_RT_real(g1_ELRT,ELRT,g_IXRT,g_JXRT,IXRT,JXRT)
-        call decompose_RT_int(g1_CH_NETRT,CH_NETRT,g_IXRT,g_JXRT,IXRT,JXRT)
-        call decompose_RT_real(g1_LKSATFAC,LKSATFAC,g_IXRT,g_JXRT,IXRT,JXRT)
-        call decompose_RT_real(g1_RETDEPRTFAC,RETDEPRTFAC,g_IXRT,g_JXRT,IXRT,JXRT)
-        call decompose_RT_real(g1_OVROUGHRTFAC,OVROUGHRTFAC,g_IXRT,g_JXRT,IXRT,JXRT)
-
-       return
-       end SUBROUTINE MPP_READ_ROUTING
 
 
-      subroutine MPP_DEEPGW_HRLDAS(ix,jx,in_SMCMAX,&
-                 global_nX, global_ny,nsoil,out_SMC,out_SH2OX)
-        implicit none
-#include <netcdf.inc>
-
-        integer,  intent(in)  :: ix,global_nx,global_ny
-        integer,  intent(in)  :: jx,nsoil
-        real,             dimension(ix,jx), intent(in) :: in_smcmax
-        real,             dimension(ix,jx,nsoil), intent(out) :: out_smc,out_sh2ox
-
-        real,dimension(global_nX, global_ny,nsoil):: g_smc, g_sh2ox
-        real,dimension(global_nX, global_ny):: g_smcmax
-        integer   :: i,j,k
-       
-
-          call write_IO_real(in_smcmax,g_smcmax)  ! get global grid of smcmax
-
-          write (*,*) "In deep GW...", nsoil
-
-!loop to overwrite soils to saturation...
-        do i=1,global_nx
-         do j=1,global_ny
-            g_smc(i,j,1:NSOIL) = g_smcmax(i,j)
-            g_sh2ox(i,j,1:NSOIL) = g_smcmax(i,j)
-         end do 
-        end do 
-
-!decompose global grid to parallel tiles...
-       do k=1,nsoil
-        call decompose_data_real(g_smc(:,:,k),out_smc(:,:,k))
-        call decompose_data_real(g_sh2ox(:,:,k),out_sh2ox(:,:,k))
-       end do
-
-        return 
-        end  subroutine MPP_DEEPGW_HRLDAS
 
 #endif
         
@@ -4054,7 +3377,7 @@ end subroutine mpp_output_chrt
 
         var_name = "TOPOGRAPHY"
 
-        call readRT2d_real(var_name,ELRT,ixrt,jxrt,&
+        call nreadRT2d_real(var_name,ELRT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
         write(6,*) "read ",var_name
@@ -4066,7 +3389,7 @@ end subroutine mpp_output_chrt
 !                     trim(geo_finegrid_flnm))
 
         var_name = "CHANNELGRID"
-        call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
+        call nreadRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 #ifdef HYDRO_D
@@ -4075,7 +3398,7 @@ end subroutine mpp_output_chrt
 
         var_name = "LKSATFAC"
         LKSATFAC = -9999.9
-        call readRT2d_real(var_name,LKSATFAC,ixrt,jxrt,&
+        call nreadRT2d_real(var_name,LKSATFAC,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 #ifdef HYDRO_D
@@ -4087,12 +3410,12 @@ end subroutine mpp_output_chrt
 
 !1.12.2012...Read in routing calibration factors...
         var_name = "RETDEPRTFAC"
-        call readRT2d_real(var_name,RETDEPRTFAC,ixrt,jxrt,&
+        call nreadRT2d_real(var_name,RETDEPRTFAC,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
         where (RETDEPRTFAC < 0.) RETDEPRTFAC = 1.0  ! reset grid to = 1.0 if non-valid value exists
 
         var_name = "OVROUGHRTFAC"
-        call readRT2d_real(var_name,OVROUGHRTFAC,ixrt,jxrt,&
+        call nreadRT2d_real(var_name,OVROUGHRTFAC,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
         where (OVROUGHRTFAC <= 0.) OVROUGHRTFAC = 1.0 ! reset grid to = 1.0 if non-valid value exists
 
@@ -4105,6 +3428,7 @@ end subroutine mpp_output_chrt
 
 !DJG -----------------------------------------------------
    END SUBROUTINE READ_ROUTING_seq
+
 !DJG _____________________________
    subroutine output_lsm(outFile,did)
 
@@ -4957,81 +4281,10 @@ end subroutine mpp_output_chrt
       subroutine hrldas_out()
       end subroutine hrldas_out
 
-      SUBROUTINE READ_ROUTING_old(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,route_topo_f,    &
-            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC)
 
 
-#include <netcdf.inc>
-        INTEGER, INTENT(IN) :: IXRT,JXRT
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
-        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
-!Dummy inverted grids
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
-        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
 
-        INTEGER         :: I,J, iret, jj
-        CHARACTER(len=256)        :: var_name
-        CHARACTER(len=256)       :: route_topo_f
-        CHARACTER(len=256)       :: route_chan_f
-        CHARACTER(len=256)       :: geo_finegrid_flnm
-
-        var_name = "TOPOGRAPHY"
-        call readRT2d_real(var_name,ELRT,ixrt,jxrt,&
-                     trim(geo_finegrid_flnm))
-#ifdef HYDRO_D
-        write(6,*) "read ",var_name
-#endif
-
-!!!DY to be fixed ... 6/27/08
-!        var_name = "BED_ELEVATION"
-!        iret = get2d_real(var_name,ELRT,ixrt,jxrt,&
-!                     trim(geo_finegrid_flnm))
-
-        var_name = "CHANNELGRID"
-        call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
-
-#ifdef HYDRO_D
-        write(6,*) "read ",var_name
-#endif
-
-        var_name = "LKSATFAC"
-        LKSATFAC = -9999.9
-        call readRT2d_real(var_name,LKSATFAC,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
-#ifdef HYDRO_D
-        write(6,*) "read ",var_name
-#endif
-
-           where (LKSATFAC == -9999.9) LKSATFAC = 1000.0  !specify LKSAFAC if no term avail...
-
-
-!1.12.2012...Read in routing calibration factors...
-        var_name = "RETDEPRTFAC"
-        call readRT2d_real(var_name,RETDEPRTFAC,ixrt,jxrt,&
-                     trim(geo_finegrid_flnm))
-        where (RETDEPRTFAC < 0.) RETDEPRTFAC = 1.0  ! reset grid to = 1.0 if non-valid value exists
-
-        var_name = "OVROUGHRTFAC"
-        call readRT2d_real(var_name,OVROUGHRTFAC,ixrt,jxrt,&
-                     trim(geo_finegrid_flnm))
-        where (OVROUGHRTFAC <= 0.) OVROUGHRTFAC = 1.0 ! reset grid to = 1.0 if non-valid value exists
-
-
-#ifdef HYDRO_D  
-        write(6,*) "finish READ_ROUTING_old"
-#endif
-
-        return
-
-!DJG -----------------------------------------------------
-   END SUBROUTINE READ_ROUTING_old
-!DJG _____________________________
-
-
-#ifdef MPP_LAND
-
-       SUBROUTINE MPP_READ_CHROUTING(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+       SUBROUTINE READ_CHROUTING1(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
             NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
             HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
@@ -5041,10 +4294,16 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm,Link_Location)
+            STRMFRXSTPTS,geo_finegrid_flnm &
+#ifdef MPP_LAND
+               ,Link_Location &
+#endif
+            )
+#ifdef MPP_LAND
         use module_mpp_land, only:  my_id, io_id
+#endif
 #include <netcdf.inc>
-        INTEGER, INTENT(IN)                          :: IXRT,JXRT, did
+        INTEGER, INTENT(IN)                          :: IXRT,JXRT
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
@@ -5052,7 +4311,9 @@ end subroutine mpp_output_chrt
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
         INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
+#ifdef MPP_LAND
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
+#endif
         INTEGER                                      :: I,J,channel_option
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
         CHARACTER(len=28)                            :: dir
@@ -5115,7 +4376,9 @@ end subroutine mpp_output_chrt
 !yw initialize the array.
         to_node =   MAXORDER
         from_node = MAXORDER
+#ifdef MPP_LAND
         Link_location = MAXORDER
+#endif
 
 #ifdef HYDRO_D
         print *, "reading routing initialization files..."
@@ -5130,20 +4393,12 @@ end subroutine mpp_output_chrt
    IF((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then
 
         var_name = "LATITUDE"
-#ifdef MPP_LAND
-        call mpp_readRT2d_real  (did,   &
-#else
-        call readRT2d_real  (   &
-#endif
+        call nreadRT2d_real  (   &
              var_name,LATVAL,ixrt,jxrt,trim(geo_finegrid_flnm))
 
 
         var_name = "LONGITUDE"
-#ifdef MPP_LAND
-        call mpp_readRT2d_real(did,   &
-#else
-        call readRT2d_real(   &
-#endif
+        call nreadRT2d_real(   &
              var_name,LONVAL,ixrt,jxrt,trim(geo_finegrid_flnm))
 
     END IF
@@ -5163,36 +4418,20 @@ end subroutine mpp_output_chrt
 
 
        var_name = "LAKEGRID"
-#ifdef MPP_LAND
-       call mpp_readRT2d_int(did,&
-#else
-       call readRT2d_int(&
-#endif
+       call nreadRT2d_int(&
              var_name,LAKE_MSKRT,ixrt,jxrt,trim(geo_finegrid_flnm))
 
        var_name = "FLOWDIRECTION"
-#ifdef MPP_LAND
-       call mpp_readRT2d_int(did, & 
-#else
-       call readRT2d_int(& 
-#endif
+       call nreadRT2d_int(& 
               var_name,DIRECTION,ixrt,jxrt,trim(geo_finegrid_flnm))
 
        var_name = "STREAMORDER"
-#ifdef MPP_LAND
-       call mpp_readRT2d_int(did,&
-#else
-       call readRT2d_int(&
-#endif
+       call nreadRT2d_int(&
                var_name,GORDER,ixrt,jxrt,trim(geo_finegrid_flnm))
 
 
        var_name = "frxst_pts"
-#ifdef MPP_LAND
-       call mpp_readRT2d_int(did,&
-#else
-       call readRT2d_int(&
-#endif
+       call nreadRT2d_int(&
              var_name,GSTRMFRXSTPTS,ixrt,jxrt,trim(geo_finegrid_flnm))
 
 !!!Flip y-dimension of highres grids from exported Arc files...
@@ -5333,8 +4572,11 @@ end subroutine mpp_output_chrt
          If (CH_NETRT(i, j) .ge. 0) then !get its direction and assign its elevation and order
           If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT) .AND. &
                (CH_NETRT(i,j+1).ge.0) ) then !North
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5348,11 +4590,16 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,1)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
                     .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1).ge.0) ) then !North East
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5366,11 +4613,16 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,2)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT) &
                     .AND. (CH_NETRT(i+1,j).ge.0) ) then !East
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5384,11 +4636,16 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,3)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
                     .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i+1,j-1).ge.0) ) then !south east
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5402,10 +4659,15 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,4)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0) ) then !due south
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5419,11 +4681,16 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,5)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
                .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i-1,j-1).ge.0)) then !south west
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5437,10 +4704,15 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,6)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0) ) then !West
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              FROM_NODE(cnt) = CH_NETLNK(i, j)
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
@@ -5454,11 +4726,16 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,7)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
                     .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0) ) then !North West
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
              ORDER(cnt) = GORDER(i,j)
              STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
              ZELEV(cnt) = ELRT(i,j)
@@ -5472,7 +4749,9 @@ end subroutine mpp_output_chrt
              CHANLEN(cnt) = dist(i,j,8)
              CHANXI(cnt) = i
              CHANYJ(cnt) = j
+#ifdef MPP_LAND
              Link_Location(i,j) = cnt
+#endif
           else 
 #ifdef HYDRO_D
              print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
@@ -5495,15 +4774,13 @@ end subroutine mpp_output_chrt
          DO i = 1 ,IXRT
           If (CH_NETRT(i, j) .ge. 0) then !get its direction
 
-!#ifdef MPP_LAND
-!           If (((DIRECTION(i, j).EQ. 64) .AND. ((j + 1 .GT. JXRT) .and. (up_id < 0)) ) .OR. &        !-- 64's can only flow north
-!              ((DIRECTION(i, j) .EQ. 64) .and. (j < jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
-!#else
            If (((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT)) .OR. &        !-- 64's can only flow north
               ((DIRECTION(i, j) .EQ. 64) .and. (j < jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
-!#endif
-             !yw  cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5525,22 +4802,22 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,1)
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point N", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
 
-!#ifdef MPP_LAND
-!           else if ( ((DIRECTION(i, j) .EQ. 128) .AND. ((i + 1 .GT. IXRT) .and. (right_id < 0)) )  & !-- 128's can flow out of the North or East edge
-!               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. ((j + 1 .GT. JXRT) .and. (up_id < 0)) )  & !   this is due north edge
-!               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
-!#else
            else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge
                .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
 !#endif
-             !yw  cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5562,20 +4839,20 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,2)  
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point NE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
 
-!#ifdef MPP_LAND
-!           else if (((DIRECTION(i, j) .EQ. 1) .AND. ((i + 1 .GT. IXRT) .and. (right_id <0) ) ) .OR. &    !-- 1's can only flow due east
-!               ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
-!#else
            else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT)) .OR. &    !-- 1's can only flow due east
                ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
-!#endif
-             !yw  cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5596,15 +4873,20 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,3)
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point E", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
            else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
                 .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5625,20 +4907,20 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,4)
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point SE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
 
-!#ifdef MPP_LAND
-!           else if (((DIRECTION(i, j) .EQ. 4) .AND. ((j - 1 .EQ. 0) .and. (down_id <0)) ) .OR. &       !-- 4's can only flow due south
-!               ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
-!#else
            else if (((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0)) .OR. &       !-- 4's can only flow due south
                ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
-!#endif
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5659,22 +4941,21 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,5)
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point S", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
 
-!#ifdef MPP_LAND
-!          else if ( ((DIRECTION(i, j) .EQ. 8) .AND. ((i - 1 .LE. 0).and.(left_id <0)))      &      !-- 8's can flow south or west
-!               .OR.  ((DIRECTION(i, j) .EQ. 8) .AND.( (j - 1 .EQ. 0) .and. (down_id <0)) )      &      !-- this is the south edge
-!               .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
-!#else
           else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
                .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
                .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
-!#endif
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5695,18 +4976,19 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,6) 
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point SW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
-!#ifdef MPP_LAND
-!           else if (((DIRECTION(i, j) .EQ. 16) .AND. ((i - 1 .LE.0) .and. (left_id <0)) ) &                  !16's can only flow due west
-!#else
            else if (((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE.0) ) &                  !16's can only flow due west
-!#endif
                .OR.((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5727,21 +5009,22 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,7)
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point W", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
 
-!#ifdef MPP_LAND
-!           else if ( ((DIRECTION(i, j) .EQ. 32) .AND. ((i - 1 .LE. 0) .and. (left_id <0)) )      &      !-- 32's can flow either west or north
-!               .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. ((j + 1 .GT. JXRT) .and. (up_id <0)) )   &      !-- this is the north edge
-!#else
            else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
                .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
 !#endif
                .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
-             !yw cnt = cnt + 1
+#ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
+#else
+             cnt = cnt + 1
+#endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
               ZELEV(cnt) = ELRT(i,j)
@@ -5762,7 +5045,9 @@ end subroutine mpp_output_chrt
               CHANLEN(cnt) = dist(i,j,8)   
               CHANXI(cnt) = i
               CHANYJ(cnt) = j
-              Link_Location(i,j) = cnt
+#ifdef MPP_LAND
+             Link_Location(i,j) = cnt
+#endif
 #ifdef HYDRO_D
               print *, "Pour Point NW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
@@ -5798,9 +5083,10 @@ end subroutine mpp_output_chrt
 #endif
      end do
  
-
+#ifdef MPP_LAND
      Link_location = CH_NETLNK
      call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,TYPEL,NLINKS,99) 
+#endif
 !    call check_channel(71,MannN,1,nlinks)
 !    call check_channel(72,TYPEL*1.0,1,nlinks)
 !    call check_channel(73,Bw*1.0,1,nlinks)
@@ -5811,274 +5097,16 @@ end subroutine mpp_output_chrt
      return
 
 !DJG -----------------------------------------------------
-   END SUBROUTINE MPP_READ_CHROUTING
-     SUBROUTINE mpp_readRT2d_real(did,var_name, inv, ixrt, jxrt, fileName) 
-         implicit none
-         INTEGER :: iret, did
-         INTEGER, INTENT(IN) :: ixrt,jxrt
-         INTEGER :: i, j, ii,jj
-         CHARACTER(len=*):: var_name,fileName
-         real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
-         real, dimension(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt) :: inv_tmp
-
-         if(my_id .eq. IO_id) then
-            call readRT2d_real(var_name, inv_tmp,rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt, fileName)
-         end if
-
-         call decompose_RT_real(inv_tmp,inv,rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,ixrt,jxrt)
-
-     end SUBROUTINE mpp_readRT2d_real
-
-     SUBROUTINE mpp_readRT2d_int(did,var_name, inv, ixrt, jxrt, fileName) 
-         implicit none
-         INTEGER, INTENT(IN) :: ixrt,jxrt, did
-         CHARACTER(len=*):: var_name,fileName
-         integer, INTENT(OUT), dimension(ixrt,jxrt) :: inv
-         integer, dimension(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt) :: inv_tmp
-
-         if(my_id .eq. IO_id) then
-            call readRT2d_int(var_name, inv_tmp,rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt, fileName)
-         endif
-
-         call decompose_RT_int(inv_tmp,inv,rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,ixrt,jxrt)
-
-     end SUBROUTINE mpp_readRT2d_int
+   END SUBROUTINE READ_CHROUTING1
 
 
-       SUBROUTINE READ_ROUTEDIM_local(did,IXRT,JXRT,route_chan_f,route_link_f, &
-            route_direction_f, route_lake_f, NLINKS, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm)
 
-         implicit none
-#include <netcdf.inc>
-        INTEGER                                      :: I,J,channel_option,iret,jj, did
-        INTEGER, INTENT(OUT)                       :: NLINKS
-        INTEGER, INTENT(OUT), DIMENSION(IXRT,JXRT) :: CH_NETLNK  !- each node gets unique id
-
-        INTEGER, INTENT(IN)                          :: IXRT,JXRT
-        INTEGER                                      :: CHNID,cnt
-        INTEGER, DIMENSION(IXRT,JXRT)                :: CH_NETRT   !- binary channel mask
-        INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION  !- flow direction
-        INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
-        REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
-
-!!Dummy read in grids for inverted y-axis
-
-
-        CHARACTER(len=*)       :: route_chan_f, route_link_f,route_direction_f,route_lake_f
-        CHARACTER(len=256)       :: InputLine
-        CHARACTER(len=256)       :: geo_finegrid_flnm
-        CHARACTER(len=256)       :: var_name
-!        external get2d_real
-!       integer ::  get2d_real
-     
-        NLINKS = 0
-        CH_NETRT = -9999
-        CH_NETLNK = -9999
-
-
-        cnt = 0 
-#ifdef HYDRO_D
-       print *, "Channel Option in Routedim is ", channel_option
-#endif
-
-       IF(channel_option.eq.3) then  !get maxnodes and links from grid
-
-         var_name = "CHANNELGRID"
-#ifdef MPP_LAND
-         call mpp_readRT2d_int(did,&
-#else
-         call readRT2d_int(&
-#endif
-           var_name,CH_NETRT,ixrt,jxrt, trim(geo_finegrid_flnm))
-         
-
-         var_name = "FLOWDIRECTION"
-#ifdef MPP_LAND
-         call mpp_readRT2d_int(did, &
-#else
-         call readRT2d_int( &
-#endif
-              var_name,DIRECTION,ixrt,jxrt, trim(geo_finegrid_flnm))
-
-         var_name = "LAKEGRID"
-#ifdef MPP_LAND
-         call mpp_readRT2d_int(did, &
-#else
-         call readRT2d_int( &
-#endif
-             var_name,LAKE_MSKRT,ixrt,jxrt,trim(geo_finegrid_flnm))
-
-
-        var_name = "LATITUDE"
-#ifdef MPP_LAND
-        call mpp_readRT2d_real(did, &
-#else
-        call readRT2d_real( &
-#endif
-             var_name,LAT,ixrt,jxrt,trim(geo_finegrid_flnm))
-
-
-        var_name = "LONGITUDE"
-#ifdef MPP_LAND
-        call mpp_readRT2d_real(did, &
-#else
-        call readRT2d_real( &
-#endif
-             var_name,LON,ixrt,jxrt,trim(geo_finegrid_flnm))
-          
-! temp fix for buggy Arc export...
-        do j=1,jxrt
-          do i=1,ixrt
-            if(DIRECTION(i,j).eq.-128) DIRECTION(i,j)=128
-          end do
-        end do
-
-!DJG inv         do j=jxrt,1,-1
-         do j=1,jxrt
-             do i = 1, ixrt
-               if (CH_NETRT(i,j) .ge.0.AND.CH_NETRT(i,j).lt.100) then 
-                 NLINKS = NLINKS + 1
-               endif
-            end do 
-         end do 
-#ifdef HYDRO_D
-         print *, "NLINKS IS ", NLINKS 
-#endif
-
-
-!DJG inv         DO j = JXRT,1,-1  !rows
-         DO j = 1,JXRT  !rows
-          DO i = 1 ,IXRT   !colsumns
-           If (CH_NETRT(i, j) .ge. 0) then !get its direction
-            If ((DIRECTION(i, j) .EQ. 64) .AND. (j+1 .LE. JXRT).AND.(CH_NETRT(i,j+1) .ge.0) ) then !North
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
-               .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1) .ge.0)) then !North East
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT).AND.(CH_NETRT(i+1,j) .ge. 0)) then !East
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt 
-            else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i+1,j-1).ge.0)) then !south east
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 4).AND.(j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0)) then !due south
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
-                    .AND. (j - 1 .NE. 0).AND. (CH_NETRT(i-1,j-1).ge.0) ) then !south west
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0)) then !West
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0)) then !North West
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt 
-           else 
-#ifdef HYDRO_D
-             write(*,135) "PrPt/LkIn", CH_NETRT(i,j), DIRECTION(i,j), LON(i,j), LAT(i,j),i,j 
-135             FORMAT(A9,1X,I3,1X,I3,1X,F10.5,1X,F9.5,1X,I4,1X,I4)
-#endif
-             if (DIRECTION(i,j) .eq. 0) then
-#ifdef HYDRO_D
-               print *, "Direction i,j ",i,j," of point ", cnt, "is invalid"
-#endif
-             endif
-
-           End If
-         End If !CH_NETRT check for this node
-        END DO
-       END DO 
-#ifdef HYDRO_D
-       print *, "found type 0 nodes", cnt
-#endif
-      
-!Find out if the boundaries are on an edge or flow into a lake
-!DJG inv       DO j = JXRT,1,-1
-       DO j = 1,JXRT
-         DO i = 1 ,IXRT
-          If (CH_NETRT(i, j) .ge. 0) then !get its direction
-
-           If ( ((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT))         & !-- 64's can only flow north
-               .OR. ((DIRECTION(i, j) .EQ. 64).and. (j<jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point N", cnt,CH_NETRT(i,j), i,j
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge     
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point NE", cnt, CH_NETRT(i,j),i,j
-#endif
-           else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT))     & !-- 1's can only flow due east
-               .OR. ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point E", cnt,CH_NETRT(i,j), i,j
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point SE", cnt,CH_NETRT(i,j), i,j
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0))       &      !-- 4's can only flow due south
-                .OR. ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point S", cnt,CH_NETRT(i,j), i,j
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
-               .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
-               .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point SW", cnt,CH_NETRT(i,j), i,j
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE. 0))       &      !-- 16's can only flow due west 
-               .OR.  ((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt              
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point W", cnt,CH_NETRT(i,j), i,j
-#endif
-           else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
-               .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
-               .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
-#ifdef HYDRO_D
-              print *, "Boundary Pour Point NW", cnt,CH_NETRT(i,j), i,j
-#endif
-           endif
-          endif !CH_NETRT check for this node
-         END DO
-       END DO 
-     end if
-
-        write(6,*) "in READ_ROUTEDIM_local NLINKS=",NLINKS, " cnt = ", cnt
-     END SUBROUTINE READ_ROUTEDIM_local
-
-#endif
 
 #ifdef MPP_LAND
 
+!yw continue
 
-       SUBROUTINE MPP_READ_CHROUTING_new(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+       SUBROUTINE MPP_READ_CHROUTING_new(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
             NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
             HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
@@ -6094,7 +5122,7 @@ end subroutine mpp_output_chrt
         implicit none
         INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
-        INTEGER                                      :: I,J,channel_option, did
+        INTEGER                                      :: I,J,channel_option
         CHARACTER(len=28)                            :: dir
 
 !----DJG,DNY New variables for channel and lake routing
@@ -6155,18 +5183,7 @@ end subroutine mpp_output_chrt
 !        link_location = -999
 
 
-!          CALL READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
-!               FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
-!               NLAKES, MUSK, MUSX, QLINK,CHANLEN, MannN, So, ChSSlp, Bw, &
-!               HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
-!               ORIFICEA, ORIFICEE, LATLAKE, LONLAKE, ELEVLAKE, &
-!               route_link_f,route_lake_f, &
-!               route_direction_f, route_order_f, &
-!               CHANRTSWCRT,dist, ZELEV, LAKENODE, GCH_NETLNK, CHANXI, CHANYJ, &
-!               CHLAT, CHLON, channel_option, latval,lonval,&
-!               STRMFRXSTPTS,geo_finegrid_flnm)
-
-          call MPP_READ_CHROUTING(did,IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+          call READ_CHROUTING1(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
             NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
             HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
@@ -6176,7 +5193,11 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm,Link_Location)
+            STRMFRXSTPTS,geo_finegrid_flnm &
+#ifdef MPP_LAND
+           ,Link_Location  &
+#endif
+           )
 
 
       call mpp_land_max_int1(MAXORDER)

@@ -762,7 +762,8 @@ MODULE MODULE_MPP_LAND
 
   subroutine write_IO_RT_int (in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
-      integer,dimension(:,:) :: in_buff, out_buff
+      integer,intent(in),dimension(:,:) :: in_buff
+      integer,intent(out),dimension(:,:) ::  out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
       if(my_id .ne. IO_id) then
@@ -1101,7 +1102,8 @@ MODULE MODULE_MPP_LAND
 ! usage: all of the cpu call this subroutine.
 ! the IO node will distribute the data to rest of the node.
       integer g_nx,g_ny,nx,ny
-      real,dimension(:,:) :: in_buff,out_buff
+      real,intent(in),dimension(:,:) :: in_buff
+      real,intent(out),dimension(:,:) :: out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
@@ -1136,7 +1138,8 @@ MODULE MODULE_MPP_LAND
 ! usage: all of the cpu call this subroutine.
 ! the IO node will distribute the data to rest of the node.
       integer g_nx,g_ny,nx,ny
-      integer,dimension(:,:) ::  in_buff,out_buff
+      integer,intent(in),dimension(:,:) ::  in_buff
+      integer,intent(out),dimension(:,:) :: out_buff
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
@@ -1783,6 +1786,14 @@ MODULE MODULE_MPP_LAND
 
      return 
   end  subroutine gather_1d_real_tmp
+
+  subroutine sum_real1(inout)
+      implicit none
+      real:: inout, send
+      integer :: ierr
+      send = inout
+      CALL MPI_ALLREDUCE(send,inout,1,MPI_REAL,MPI_SUM,MPI_COMM_WORLD,ierr)
+  end subroutine sum_real1 
 
   subroutine sum_double(inout)
       implicit none

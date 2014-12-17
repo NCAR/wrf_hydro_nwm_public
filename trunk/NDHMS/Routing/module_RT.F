@@ -1,11 +1,11 @@
 MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
-   use module_HYDRO_io, only: mpp_read_routedim, mpp_read_routing, mpp_read_chrouting_new, &
+   use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
-   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting,read_simp_gw
+   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
 #endif
    use module_HYDRO_io, only: readgw2d
    use module_HYDRO_utils 
@@ -400,17 +400,10 @@ CONTAINS
   print *, "Terrain routing initialization..."
 #endif
 
-#ifdef MPP_LAND
-    CALL MPP_READ_ROUTING( &
-#else
      CALL READ_ROUTING_seq  (  &
-#endif
           rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
-#ifdef MPP_LAND
-           rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
-#endif
           rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
 
     !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
@@ -420,9 +413,9 @@ CONTAINS
     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
 
 #ifdef MPP_LAND
-          CALL MPP_READ_CHROUTING_new(did,    &
+          CALL MPP_READ_CHROUTING_new(    &
 #else
-          CALL READ_CHROUTING(    &
+          CALL READ_CHROUTING1(    &
 #endif
                rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
                rt_domain(did)%LAKE_MSKRT, &
