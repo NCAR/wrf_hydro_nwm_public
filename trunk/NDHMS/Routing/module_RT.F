@@ -205,7 +205,7 @@ CONTAINS
       rt_domain(did)%LINK = 0.0        
       rt_domain(did)%TO_NODE = 0.0        
       rt_domain(did)%FROM_NODE = 0        
-      rt_domain(did)%TYPEL = 0.0        
+      rt_domain(did)%TYPEL = 0          
       rt_domain(did)%ORDER = 0.0        
       rt_domain(did)%STRMFRXSTPTS = 0.0        
       rt_domain(did)%MUSK = 0.0        
@@ -439,7 +439,6 @@ CONTAINS
                rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index    &
 #endif
                )
-
 
 !yw #ifdef MPP_LAND
 !yw          call MPP_CHROUTING_CONF(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt, rt_domain(did)%NLAKES,rt_domain(did)%NLINKS,&

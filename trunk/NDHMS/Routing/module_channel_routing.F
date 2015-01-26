@@ -723,7 +723,6 @@ crnt:    DO                      !-- loop on the courant condition
     endif
 #endif
 
-!     call check_channel(79,QLINK(:,1),1,nlinks)
 
 
           !-- compute conveyances, with known depths (just assign to QLINK(,1)
@@ -923,6 +922,7 @@ crnt:    DO                      !-- loop on the courant condition
            endif 
 
            END DO  !--- done processing all the links
+
 
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOLTMP,NLINKS,99)

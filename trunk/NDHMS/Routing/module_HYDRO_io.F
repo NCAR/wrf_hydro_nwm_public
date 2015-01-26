@@ -3021,7 +3021,7 @@ end subroutine mpp_output_chrt
 
 !-- output the channel route in an IDV 'grid' compatible format
    subroutine mpp_output_chrtgrd(igrid, split_output_count, ixrt,jxrt, &
-        NLINKS,CH_NETRT_in, CH_NETLNK_in, ORDER, startdate, date, &
+        NLINKS,CH_NETLNK_in, startdate, date, &
         qlink, dt, geo_finegrid_flnm, gnlinks,map_l2g,g_ixrt,g_jxrt )
 
    USE module_mpp_land
@@ -3034,37 +3034,43 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLINKS,ixrt,jxrt
      real,                                     intent(in) :: dt
      real, dimension(NLINKS,2),                intent(in) :: qlink
-     integer, dimension(g_IXRT,g_JXRT)         :: CH_NETRT,CH_NETLNK
-     integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETRT_in,CH_NETLNK_in
-     integer, dimension(NLINKS),               intent(in) :: ORDER !--currently not used here, see finegrid.f
+     integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK_in
      character(len=*),          intent(in)     :: geo_finegrid_flnm
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
+
      integer::  gnlinks , map_l2g(nlinks)
 
-     integer,dimension(gnlinks) :: g_order
-     real, dimension(gNLINKS,2)                :: g_qlink
+     integer, allocatable,dimension(:,:)         :: CH_NETLNK
+     real, allocatable,dimension(:,:)                :: g_qlink
+
+     if(my_id .eq. io_id) then
+        allocate(CH_NETLNK(g_IXRT,g_JXRT))
+        allocate(g_qlink(gNLINKS,2) )
+     else
+        allocate(CH_NETLNK(1,1))
+        allocate(g_qlink(1,2) )
+     endif
 
      call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
      call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
-     call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
 
-     call write_IO_rt_int(CH_NETRT_in, CH_NETRT)
      call write_IO_rt_int(CH_NETLNK_in, CH_NETLNK)
 
     if(my_id.eq.IO_id) then
         call  output_chrtgrd(igrid, split_output_count, g_ixrt,g_jxrt, &
-           GNLINKS,CH_NETRT, CH_NETLNK, g_ORDER, startdate, date, &
+           GNLINKS, CH_NETLNK, startdate, date, &
            g_qlink, dt, geo_finegrid_flnm)
     endif
-  
+
+     deallocate(g_qlink, CH_NETLNK)  
      return
      end subroutine mpp_output_chrtgrd
 #endif
 
 !-- output the channel route in an IDV 'grid' compatible format
    subroutine output_chrtgrd(igrid, split_output_count, ixrt,jxrt, &
-        NLINKS,CH_NETRT, CH_NETLNK, ORDER, startdate, date, &
+        NLINKS, CH_NETLNK, startdate, date, &
         qlink, dt, geo_finegrid_flnm)
 
      integer,                                  intent(in) :: igrid
@@ -3072,8 +3078,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLINKS,ixrt,jxrt
      real,                                     intent(in) :: dt
      real, dimension(NLINKS,2),                intent(in) :: qlink
-     integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETRT,CH_NETLNK
-     integer, dimension(NLINKS),               intent(in) :: ORDER !--currently not used here, see finegrid.f
+     integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK
      character(len=*),          intent(in)     :: geo_finegrid_flnm
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -3170,7 +3175,7 @@ end subroutine mpp_output_chrt
 !DJG inv    do j=jxrt,1,-1
     do j=1,jxrt
      do i=1,ixrt
-       if(CH_NETRT(i,j).GE.0) then
+       if(CH_NETLNK(i,j).GT.0) then
          tmpflow(i,j) = qlink(CH_NETLNK(i,j),1) 
        else
          tmpflow(i,j) = -9E15
@@ -3311,6 +3316,7 @@ end subroutine mpp_output_chrt
 
         if(my_id .eq. IO_id) then
            allocate(g_CH_NETLNK(g_IXRT,g_JXRT))
+           g_CH_NETLNK = -9999
            CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, route_lake_f, GNLINKS, NLAKES, &
               g_CH_NETLNK, channel_option,geo_finegrid_flnm)
@@ -3336,6 +3342,10 @@ end subroutine mpp_output_chrt
            end do
         end do
         NLINKS = ywcount
+
+!ywcheck
+!        CH_NETLNK = GCH_NETLNK
+
 
         allocate(rt_domain(did)%map_l2g(NLINKS))
 
@@ -4484,6 +4494,7 @@ end subroutine mpp_output_chrt
           endif
 
         end do
+
 #ifdef MPP_LAND
        endif
         call mpp_land_bcast_int(NLINKS,FROM_NODE)
@@ -4767,6 +4778,7 @@ end subroutine mpp_output_chrt
        print *, "after exiting the channel, this many nodes", cnt
        write(*,*) " " 
 #endif
+
 
 !Find out if the boundaries are on an edge
 !DJG inv       DO j = JXRT,1,-1
@@ -5057,6 +5069,7 @@ end subroutine mpp_output_chrt
        END DO 
       endif
 
+
 #ifdef MPP_LAND
      if(my_id .eq. IO_id)  &
 #endif
@@ -5093,6 +5106,7 @@ end subroutine mpp_output_chrt
 !    call check_channel(74,ChSSlp*1.0,1,nlinks)
 !    call check_channel(75,CHANLEN*1.0,1,nlinks)
 !    call hydro_stop("55555555")
+
 
      return
 
@@ -5241,12 +5255,10 @@ end subroutine mpp_output_chrt
                     continue
                else
                         l = CH_NETLNK(i,j)
-                  !      if(from_node(l) .lt. 0) write(6,*) "yyyy1 ",nlinks,ixrt,jxrt, i,j,l
-                  !      if(from_node(l) .gt. 1000) write(6,*) "yyyy2 ",nlinks,ixrt,jxrt, i,j,l,from_node(1)
-                        if(from_node(l) .gt. 0 .and. to_node(l) .gt. 0) then
+                        ! if(from_node(l) .gt. 0 .and. to_node(l) .gt. 0) then
                              yw_mpp_nlinks = yw_mpp_nlinks + 1
                              nlinks_index(yw_mpp_nlinks) = l
-                        endif
+                        ! endif
                endif
             endif
           end do
