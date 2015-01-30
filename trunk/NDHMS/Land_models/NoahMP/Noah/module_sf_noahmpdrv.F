@@ -702,12 +702,13 @@ end if
             QFX(I,J) = ECAN + ESOIL + ETRAN
             LH       (I,J)                = FCEV + FGEV + FCTR
 
+   ENDIF ! glacial split ends 
+
 #ifdef WRF_HYDRO
             soldrain(i,j) = RUNSB*dt        !mm , underground runoff
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
 #endif
 
-   ENDIF ! glacial split ends 
 
 ! INPUT/OUTPUT
 
