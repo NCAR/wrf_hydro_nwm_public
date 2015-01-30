@@ -705,7 +705,7 @@ end if
    ENDIF ! glacial split ends 
 
 #ifdef WRF_HYDRO
-            soldrain(i,j) = RUNSB*dt        !mm , underground runoff
+            soldrain(i,j) = max(RUNSB*dt,0)        !mm , underground runoff
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
 #endif
 
