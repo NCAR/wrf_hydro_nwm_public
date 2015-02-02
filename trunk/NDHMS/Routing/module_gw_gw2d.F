@@ -232,7 +232,7 @@ module module_gw_gw2d
                                          dd, &         ! right hand side
                                          hh            ! solution vector
 #endif
-      real, parameter    :: botinc = 0.01  ! re-wetting increment to fix h < bot
+      real, parameter    :: botinc = 0.001  ! re-wetting increment to fix h < bot
 !     parameter (botinc = 0.  )  ! re-wetting increment to fix h < bot
                                  ! (m); else no flow into dry cells
       real, parameter    :: delskip = 0.005 ! av.|dhead| value for iter.skip out(m)
