@@ -232,7 +232,7 @@ module module_gw_gw2d
                                          dd, &         ! right hand side
                                          hh            ! solution vector
 #endif
-      real, parameter    :: botinc = 0.001  ! re-wetting increment to fix h < bot
+      real, parameter    :: botinc = 0.01  ! re-wetting increment to fix h < bot
 !     parameter (botinc = 0.  )  ! re-wetting increment to fix h < bot
                                  ! (m); else no flow into dry cells
       real, parameter    :: delskip = 0.005 ! av.|dhead| value for iter.skip out(m)
@@ -976,7 +976,7 @@ subroutine gwSoilFlux(did)
   
   
   real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
-  real :: zres
+  real :: frac, zres
   integer :: nsoil, i, j, k  
   
   gw2d(did)%qsgwrt = 0.
@@ -1006,11 +1006,14 @@ subroutine gwSoilFlux(did)
         ! if groundwater head < soil layers
 	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qdarcyRT(i,j))
 	  
+	  gw2d(did)%qsgwrt(i,j) = gw2d(did)%qdarcyRT(i,j)
+	  
 	  ! check and correct for mass balance
 	  if(((gw2d(did)%ho(i,j)-gw2d(did)%bot(i,j)) &
 	    *gw2d(did)%poros(i,j)) < (gw2d(did)%qsgwrt(i,j)*gw2d(did)%dt)) then
 	    
 	        gw2d(did)%qdarcyRT(i,j) = 0.
+	        gw2d(did)%qsgwrt(i,j) = 0.
 	        
 	   end if
 	
@@ -1022,23 +1025,28 @@ subroutine gwSoilFlux(did)
 	     if(zres >= rt_domain(did)%sldpth(k)*100.) then
 	     ! complete filling of a LSM soil layer if groundwater head > layer top
 	       
-	       gw2d(did)%qsgwrt(i,j) = (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
-	                                *rt_domain(did)%sldpth(k)*10/gw2d(did)%dt
+! 	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
+! 	                               * (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
+! 				       + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
 				       
+	       RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
 	       
 	       zres = zres - rt_domain(did)%sldpth(k)*100.
 	       
 	     else
 	     ! partial filling of a soil layer if not completely below groundwater head
 	     
-	       if(zres > 0.5 * rt_domain(did)%sldpth(k) * 100.) then
+	       if(zres > (0.5 * rt_domain(did)%sldpth(k)*100.)) then
 		 
-	          gw2d(did)%qsgwrt(i,j) = ((zres - &
-	                          (rt_domain(did)%sldpth(k) * 100. * &
-	                           RT_DOMAIN(did)%SMCRT(i,j,k)/RT_DOMAIN(did)%SMCMAXRT(i,j,k))) * &
-	                          (RT_DOMAIN(did)%SMCRT(i,j,k)/RT_DOMAIN(did)%SMCMAXRT(i,j,k))) / &
-	                          gw2d(did)%dt
+		 frac = zres / (rt_domain(did)%sldpth(k) * 100.)
 	       
+	       
+! 	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
+! 	                                * (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
+! 					* frac + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
+	       
+	          RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k) * frac
+	          
 	       end if
 	       
 	     end if
@@ -1059,9 +1067,7 @@ subroutine gwSoilFlux(did)
   
  headChange = (-gw2d(did)%qdarcyRT) * gw2d(did)%dt / gw2d(did)%poros
  gw2d(did)%ho = gw2d(did)%ho + headChange
- gw2d(did)%qdarcyRT = gw2d(did)%qdarcyRT + gw2d(did)%qsgwrt
- gw2d(did)%qsgwrt = gw2d(did)%qdarcyRT + gw2d(did)%qsgwrt
-   
+  
 end subroutine gwSoilFlux
       
 subroutine darcyGwSoil(Z, s, soil, q_darcy)
