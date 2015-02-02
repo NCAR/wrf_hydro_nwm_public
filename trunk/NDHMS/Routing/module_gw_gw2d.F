@@ -981,7 +981,6 @@ subroutine gwSoilFlux(did)
   
   gw2d(did)%qsgwrt = 0.
   gw2d(did)%qdarcyRT = 0.
-  soilFill = 0.
   
 ! Step 1, collect data
 
