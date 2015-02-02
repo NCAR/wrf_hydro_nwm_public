@@ -9,8 +9,9 @@ module module_HYDRO_drv
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm
    use module_rt_data, only: rt_domain
-   use module_GW_baseflow_data, only: gw2d
    use module_GW_baseflow
+   use module_gw_gw2d
+   use module_gw_gw2d_data, only: gw2d
    use module_channel_routing, only: drive_channel
    use module_namelist, only: nlst_rt
    use module_routing, only: getChanDim, landrt_ini

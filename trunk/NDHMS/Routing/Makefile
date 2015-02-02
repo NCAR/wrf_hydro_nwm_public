@@ -9,6 +9,7 @@ OBJS = \
 	module_HYDRO_utils.o \
 	module_noah_chan_param_init_rt.o \
 	module_GW_baseflow.o \
+	module_gw_gw2d.o \
 	module_HYDRO_io.o \
  	module_RT.o Noah_distr_routing.o \
 	module_channel_routing.o \
@@ -36,7 +37,7 @@ all:	$(OBJS)
 #
 # Dependencies:
 #
-module_GW_baseflow.o: ../Data_Rec/module_GW_baseflow_data.o module_HYDRO_io.o
+module_gw_gw2d.o: ../Data_Rec/module_gw_gw2d_data.o module_HYDRO_io.o
 
 module_HYDRO_io.o:  module_HYDRO_utils.o ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o 
 
@@ -44,9 +45,9 @@ module_HYDRO_utils.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 
 module_lsm_forcing.o: module_HYDRO_io.o 
 
-module_RT.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o ../Data_Rec/module_GW_baseflow_data.o \
+module_RT.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o ../Data_Rec/module_gw_gw2d_data.o \
 	module_GW_baseflow.o module_HYDRO_utils.o module_HYDRO_io.o\
-	module_noah_chan_param_init_rt.o ../Data_Rec/module_GW_baseflow_data.o 
+	module_noah_chan_param_init_rt.o
 
 
 clean:

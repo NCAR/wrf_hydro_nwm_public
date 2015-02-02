@@ -5,7 +5,7 @@ module module_HYDRO_io
    use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
-   use module_GW_baseflow_data, only: gw2d   
+   use module_gw_gw2d_data, only: gw2d   
    
    implicit none
 #include <netcdf.inc>

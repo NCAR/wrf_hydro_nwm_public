@@ -8,7 +8,7 @@ module module_WRF_HYDRO
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
-    use module_GW_baseflow_data, only:  gw2d
+    use module_gw_gw2d_data, only:  gw2d
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
     use module_namelist, only: nlst_rt
     USE module_domain, ONLY : domain, domain_clock_get

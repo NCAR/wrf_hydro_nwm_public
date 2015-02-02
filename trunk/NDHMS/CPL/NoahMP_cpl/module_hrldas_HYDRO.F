@@ -9,7 +9,7 @@ module module_HRLDAS_HYDRO
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
     use module_namelist, only: nlst_rt
-    use module_GW_baseflow_data, only: gw2d
+    use module_gw_gw2d_data, only: gw2d
 
     implicit none
     integer begg, endg
