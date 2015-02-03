@@ -3558,8 +3558,12 @@ end subroutine mpp_output_chrt
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
        iret = nf_create(trim(outFile), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       write(6,*) "yyywww using large netcdf file definition. "
+       call flush(6)
 #else
        iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
+       write(6,*) "yyywww do not use large netcdf file definition. "
+       call flush(6)
 #endif
 
 
@@ -3754,6 +3758,140 @@ end subroutine mpp_output_chrt
 
         return
         end subroutine RESTART_OUT_nc
+
+#ifdef MPP_LAND
+
+   subroutine RESTART_OUT_bi(outFile,did)
+
+
+   implicit none
+
+   integer did
+
+   character(len=*) outFile
+
+    integer :: iunit
+
+
+    iunit = 80
+    open(iunit, file = outFile, form="unformatted")
+          write(iunit) rt_domain(did)%his_out_counts
+          write(iunit) nlst_rt(did)%olddate(1:19)
+          write(iunit) nlst_rt(did)%sincedate(1:19)
+          write(iunit) nlst_rt(did)%DTCT 
+          write(iunit) rt_domain(did)%stc
+          write(iunit) rt_domain(did)%smc
+          write(iunit) rt_domain(did)%sh2ox
+          write(iunit) rt_domain(did)%SMCMAX1
+          write(iunit) rt_domain(did)%SMCREF1
+          write(iunit) rt_domain(did)%SMCWLT1
+          write(iunit) rt_domain(did)%INFXSRT
+          write(iunit) rt_domain(did)%soldrain
+          write(iunit) rt_domain(did)%sfcheadrt
+
+          if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
+                write(iunit) rt_domain(did)%QBDRYRT
+                write(iunit) rt_domain(did)%INFXSWGT
+                write(iunit) rt_domain(did)%SFCHEADSUBRT
+                write(iunit) rt_domain(did)%SH2OWGT
+                write(iunit) rt_domain(did)%QSTRMVOLRT
+                write(iunit) rt_domain(did)%RETDEPRT
+                if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
+                   write(iunit) rt_domain(did)%HLINK
+                   write(iunit) rt_domain(did)%QLINK(:,1)
+                   write(iunit) rt_domain(did)%QLINK(:,2)
+                   write(iunit) rt_domain(did)%cvol
+                   write(iunit) rt_domain(did)%resht
+                   write(iunit) rt_domain(did)%qlakeo
+                   write(iunit) rt_domain(did)%LAKE_INFLORT
+                end if
+                if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+                     write(iunit) rt_domain(did)%z_gwsubbas
+                end if
+          end if  
+
+        close(iunit)
+
+        return
+        end subroutine RESTART_OUT_bi
+
+   subroutine RESTART_in_bi(inFileTmp,did)
+
+
+   implicit none
+
+   integer did
+
+   character(len=*) inFileTmp
+   character(len=256) inFile
+   character(len=19) str_tmp
+
+    integer :: iunit
+    logical :: fexist
+
+
+    iunit = 80
+
+             if(my_id .lt. 10) then
+                write(str_tmp,'(I1)') my_id
+             else if(my_id .lt. 100) then
+                write(str_tmp,'(I2)') my_id
+             else if(my_id .lt. 1000) then
+                write(str_tmp,'(I3)') my_id
+             else if(my_id .lt. 10000) then
+                write(str_tmp,'(I4)') my_id
+             else if(my_id .lt. 100000) then
+                write(str_tmp,'(I5)') my_id
+             endif
+
+    inFile = trim(inFileTmp)//"."//str_tmp 
+
+    inquire (file=trim(inFile), exist=fexist)
+    if(.not. fexist) then
+        call hydro_stop("could not find restart file")
+    endif
+
+    open(iunit, file = inFile, form="unformatted")
+          read(iunit) rt_domain(did)%his_out_counts
+          read(iunit) nlst_rt(did)%olddate(1:19)
+          read(iunit) nlst_rt(did)%sincedate(1:19)
+          read(iunit) nlst_rt(did)%DTCT 
+          read(iunit) rt_domain(did)%stc
+          read(iunit) rt_domain(did)%smc
+          read(iunit) rt_domain(did)%sh2ox
+          read(iunit) rt_domain(did)%SMCMAX1
+          read(iunit) rt_domain(did)%SMCREF1
+          read(iunit) rt_domain(did)%SMCWLT1
+          read(iunit) rt_domain(did)%INFXSRT
+          read(iunit) rt_domain(did)%soldrain
+          read(iunit) rt_domain(did)%sfcheadrt
+
+          if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
+                read(iunit) rt_domain(did)%QBDRYRT
+                read(iunit) rt_domain(did)%INFXSWGT
+                read(iunit) rt_domain(did)%SFCHEADSUBRT
+                read(iunit) rt_domain(did)%SH2OWGT
+                read(iunit) rt_domain(did)%QSTRMVOLRT
+                read(iunit) rt_domain(did)%RETDEPRT
+                if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
+                   read(iunit) rt_domain(did)%HLINK
+                   read(iunit) rt_domain(did)%QLINK(:,1)
+                   read(iunit) rt_domain(did)%QLINK(:,2)
+                   read(iunit) rt_domain(did)%cvol
+                   read(iunit) rt_domain(did)%resht
+                   read(iunit) rt_domain(did)%qlakeo
+                   read(iunit) rt_domain(did)%LAKE_INFLORT
+                end if
+                if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+                     read(iunit) rt_domain(did)%z_gwsubbas
+                end if
+          end if  
+
+        close(iunit)
+
+        return
+        end subroutine RESTART_in_bi
+#endif
 
         subroutine w_rst_rt_nc2(ncid,ix,jx,inVar,varName)
            implicit none

@@ -8,6 +8,8 @@
        logical            :: history_output
        integer            :: split_output_count
        integer :: igrid
+       integer :: rst_bi   ! used for parallel io with large restart file.
+                           ! each process will output the restart tile.
        character(len=256) :: geo_static_flnm = ""
        integer  :: DEEPGWSPIN
        integer :: HIRES_OUT, order_to_write, rst_typ
