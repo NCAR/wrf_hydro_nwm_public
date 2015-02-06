@@ -54,7 +54,7 @@ module module_HYDRO_drv
 #endif
     if(rst_out .gt. 0) then 
 #ifdef MPP_LAND
-      if(nlst_rt(did)%rst_bi .eq. 1) then
+      if(nlst_rt(did)%rst_bi_out .eq. 1) then
              if(my_id .lt. 10) then
                   write(str_tmp,'(I1)') my_id 
              else if(my_id .lt. 100) then 
@@ -311,7 +311,7 @@ module module_HYDRO_drv
 #endif
 
 #ifdef MPP_LAND
-      if(nlst_rt(did)%rst_bi .eq. 1) then
+      if(nlst_rt(did)%rst_bi_in .eq. 1) then
          call RESTART_IN_bi(trim(nlst_rt(did)%restart_file), did)
       else
 #endif

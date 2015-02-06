@@ -22,7 +22,7 @@ CONTAINS
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                     GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                    sys_cpl, rst_typ, rst_bi
+                    sys_cpl, rst_typ, rst_bi_in, rst_bi_out
           real:: DTRT,dxrt
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -60,7 +60,7 @@ CONTAINS
                     GWBASESWCRT,route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
-                    order_to_write , rst_typ, rst_bi
+                    order_to_write , rst_typ, rst_bi_in, rst_bi_out
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
@@ -132,7 +132,8 @@ CONTAINS
   call mpp_land_bcast_int1(TERADJ_SOLAR)
   call mpp_land_bcast_int1(sys_cpl)
   call mpp_land_bcast_int1(rst_typ)
-  call mpp_land_bcast_int1(rst_bi)
+  call mpp_land_bcast_int1(rst_bi_in)
+  call mpp_land_bcast_int1(rst_bi_out)
   call mpp_land_bcast_int1(order_to_write)
 #endif
     nlst%RT_OPTION = RT_OPTION
@@ -150,7 +151,8 @@ CONTAINS
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
     nlst%sys_cpl = sys_cpl
     nlst%rst_typ = rst_typ
-    nlst%rst_bi = rst_bi
+    nlst%rst_bi_in = rst_bi_in
+    nlst%rst_bi_out = rst_bi_out
     nlst%order_to_write = order_to_write
 ! files
     nlst%route_topo_f   =  route_topo_f
