@@ -1271,7 +1271,7 @@ contains
        if (ierr /= 0) then
           ! print*, 'LAI not found!'
           ! If we don't find a new LAI, carry over the old one
-          if (associated(lastread%fpar)) then
+          if (associated(lastread%lai)) then
              nextread%lai = lastread%lai
           endif
        endif

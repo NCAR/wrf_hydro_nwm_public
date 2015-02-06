@@ -35,6 +35,7 @@ CONTAINS
 		 SHGXY,    SHCXY,    SHBXY,     EVGXY,    EVBXY,     GHVXY, & ! OUT Noah MP only
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
+               ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR,                      & ! NEW output accumulator variables
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
 #endif
@@ -202,7 +203,10 @@ CONTAINS
     INTEGER,  INTENT(IN   )   ::     ids,ide, jds,jde, kds,kde,  &  ! d -> domain
          &                           ims,ime, jms,jme, kms,kme,  &  ! m -> memory
          &                           its,ite, jts,jte, kts,kte      ! t -> tile
-
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCPRCP     ! accumulated precip [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
 
 ! 1D equivalent of 2D/3D fields
 
@@ -555,7 +559,11 @@ CONTAINS
                                 FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
                                TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
                               QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
-			      EMISSI,  FPICE,    CHB2 )                             ! OUT :
+                              EMISSI,  FPICE,    CHB2                             & ! OUT :
+#ifdef WRF_HYDRO
+                              , sfcheadrt(i,j)                                      &
+#endif
+                              )
 
        FSNO   = 1.0       
        TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
@@ -705,7 +713,9 @@ end if
    ENDIF ! glacial split ends 
 
 #ifdef WRF_HYDRO
-            soldrain(i,j) = max(RUNSB*dt,0.0)        !mm , underground runoff
+!AD_CHANGE: Glacier cells can produce small negative subsurface runoff for mass balance.
+!	    This will crash channel routing, so only pass along positive runoff.
+            soldrain(i,j) = max(RUNSB*dt, 0.)        !mm , underground runoff
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
 #endif
 
@@ -719,6 +729,10 @@ end if
              SMSTOT   (I,J)                = 0.0  ! [maintained as Noah consistency]
              SFCRUNOFF(I,J)                = SFCRUNOFF(I,J) + RUNSF * DT
              UDRUNOFF (I,J)                = UDRUNOFF(I,J)  + RUNSB * DT
+             ACCPRCP  (I,J)                = ACCPRCP(I,J) + PRCP * DT
+             ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
+             ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
+             ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
              IF ( SALB > -999 ) THEN
                 ALBEDO(I,J)                = SALB
              ENDIF

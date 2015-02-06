@@ -536,7 +536,8 @@
           end if
 
 !Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
-          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
+!AD_CHANGE: beta is already a slope so no tan (consistent with ROUTE_SUBSURFACE1) 
+          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
 !DJG lacks tan(beta) of original Wigmosta version          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
 
           qqsub = gamma * hh
@@ -2460,13 +2461,18 @@
 !DJG 6.12.08 Map lateral hydraulic conductivity and apply distributed scaling
 ! ---        factor that will be read in from hires terrain file
 !              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) 
-              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
+!              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
 ! ...and scale from max to 0 when SMC decreases from SMCMAX to SMCREF...
 !!DJG error found from KIT,improper scaling       ((SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL)) / &
-                                    (max(0.,(SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL))) / &
-                                    (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
+!                                    (max(0.,(SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL))) / &
+!                                    (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
 
-
+!AD_CHANGE: 
+!New model corrected to scale from 0 at SMCREF to full LKSAT*LKSATFAC at SMCMAX:
+		LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &
+				min (1., &     !just in case, make sure scale factor doesn't go over 1
+					( max(0.,(SMCRT(IXXRT,JYYRT,NSOIL) - SMCREFRT(IXXRT,JYYRT,NSOIL))) / &     !becomes 0 if less than SMCREF
+				(SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) ) )
 
 !DJG set up lake mask...
 !--- modify to make lake mask large here, but not one of the routed lakes!!!
