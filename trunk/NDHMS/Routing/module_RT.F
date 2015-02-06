@@ -377,7 +377,7 @@ CONTAINS
       integer did
       real Vmax
 
-     integer :: bas , bas_id
+     integer :: bas 
      CHARACTER(len=19)                      :: header
      CHARACTER(len=1)                       :: jnk
 
@@ -636,6 +636,7 @@ CONTAINS
             allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
             allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
@@ -658,7 +659,7 @@ CONTAINS
 
 
      do bas = 1,rt_domain(did)%numbasns
-       read(81,812) bas_id,jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
+       read(81,812) rt_domain(did)%bas_id(bas),jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
              jnk,rt_domain(did)%z_gwsubbas(bas)
 !DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
@@ -670,6 +671,7 @@ CONTAINS
    call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp  )
    call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%z_max   )
    call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas   )
+   call mpp_land_bcast_int(rt_domain(did)%numbasns,rt_domain(did)%bas_id)
 #endif
 
 !!! Determine number of stream pixels per GW basin for distribution...

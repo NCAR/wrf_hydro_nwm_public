@@ -1708,9 +1708,6 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D 
      write(6,*) "end of output_rt" 
 #endif
-    if( my_id .eq. io_id) then
-        iret = nf_close(ncid)
-    endif
 
   end subroutine output_rt
 
@@ -3510,10 +3507,14 @@ end subroutine mpp_output_chrt
     
 !define variables
           do n = 1, nlst_rt(did)%nsoil
-             write(tmpStr, '(i2)') n
-             iret = nf_def_var(ncid,"stc"//tmpStr,NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"smc"//tmpStr,NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"sh2ox"//tmpStr,NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             if( n .lt. 10) then
+                write(tmpStr, '(i1)') n
+             else
+                write(tmpStr, '(i2)') n
+             endif
+             iret = nf_def_var(ncid,"stc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             iret = nf_def_var(ncid,"smc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             iret = nf_def_var(ncid,"sh2ox"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           end do
 
           iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
@@ -3622,10 +3623,14 @@ end subroutine mpp_output_chrt
 
 !define variables
           do n = 1, nlst_rt(did)%nsoil
-             write(tmpStr, '(i2)') n
-             iret = nf_def_var(ncid,"stc"//tmpStr,NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"smc"//tmpStr,NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"sh2ox"//tmpStr,NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             if( n .lt. 10) then
+                write(tmpStr, '(i1)') n
+             else
+                write(tmpStr, '(i2)') n
+             endif
+             iret = nf_def_var(ncid,"stc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             iret = nf_def_var(ncid,"smc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             iret = nf_def_var(ncid,"sh2ox"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           end do
     
           iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
@@ -3640,8 +3645,12 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"SFCHEADSUBRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
           do n = 1, nlst_rt(did)%nsoil
-             write(tmpStr, '(i2)') n
-             iret = nf_def_var(ncid,"sh2owgt"//tmpStr,NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+             if( n .lt. 10) then
+                write(tmpStr, '(i1)') n
+             else
+                write(tmpStr, '(i2)') n
+             endif
+             iret = nf_def_var(ncid,"sh2owgt"//trim(tmpStr),NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
           end do
             iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"RETDEPRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
@@ -3947,21 +3956,29 @@ end subroutine mpp_output_chrt
            character(len=*) varName
            real,dimension(ix,jx,nsoil):: inVar
            character(len=2) tmpStr
-#ifdef MPP_LAND
            integer k
+#ifdef MPP_LAND
            real varTmp(global_rt_nx,global_rt_ny)
            do k = 1, nsoil
               call write_IO_rt_real(inVar(:,:,k),varTmp(:,:)) 
               if(my_id .eq. IO_id) then
-                 write(tmpStr, '(i2)') k
-                 iret = nf_inq_varid(ncid,varName//tmpStr, varid)
+                 if( k .lt. 10) then
+                    write(tmpStr, '(i1)') k
+                 else
+                    write(tmpStr, '(i2)') k
+                 endif
+                 iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
                  iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_rt_nx,global_rt_ny/),varTmp)
               endif
            end do
 #else
            do k = 1, nsoil
-              write(tmpStr, '(i2)') k
-              iret = nf_inq_varid(ncid,varName//tmpStr, varid)
+                 if( k .lt. 10) then
+                    write(tmpStr, '(i1)') k
+                 else
+                    write(tmpStr, '(i2)') k
+                 endif
+              iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
               iret = nf_put_vara_real(ncid, varid, (/1,1/),(/ix,jx/),inVar(:,:,k)) 
            end do 
 #endif
@@ -4002,15 +4019,23 @@ end subroutine mpp_output_chrt
            do k = 1, nsoil
               call write_IO_real(inVar(:,:,k),varTmp(:,:)) 
               if(my_id .eq. IO_id) then
-                write(tmpStr, '(i2)') k
-                iret = nf_inq_varid(ncid,varName//tmpStr, varid)
+                 if( k .lt. 10) then
+                    write(tmpStr, '(i1)') k
+                 else
+                    write(tmpStr, '(i2)') k
+                 endif
+                iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
                 iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_nx,global_ny/),varTmp)
               endif
            end do
 #else
            do k = 1, nsoil
-             write(tmpStr, '(i2)') k
-             iret = nf_inq_varid(ncid,varName//tmpStr, varid)
+                 if( k .lt. 10) then
+                    write(tmpStr, '(i1)') k
+                 else
+                    write(tmpStr, '(i2)') k
+                 endif
+             iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
              iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
            end do 
 #endif
@@ -4208,18 +4233,23 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
          character(len=2) :: tmpStr
          integer :: n
+         integer i
 #ifdef MPP_LAND
          real,dimension(global_nx,global_ny) :: xtmp
-         integer i
 #endif
 
          do i = 1, nsoil
 #ifdef MPP_LAND
-         if(my_id .eq. IO_id) & 
+         if(my_id .eq. IO_id) then
 #endif
-           write(tmpStr,'(i2)') i
-           iret = nf_inq_varid(ncid,  trim(varStr)//tmpStr,  varid)
+                 if( i .lt. 10) then
+                    write(tmpStr, '(i1)') i
+                 else
+                    write(tmpStr, '(i2)') i
+                 endif
+           iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
 #ifdef MPP_LAND
+         endif
          call mpp_land_bcast_int1(iret)
 #endif
 
@@ -4230,7 +4260,7 @@ end subroutine mpp_output_chrt
             return
          endif
 #ifdef HYDRO_D
-         print*, "read restart variable ", varStr//tmpStr
+         print*, "read restart variable ", varStr//trim(tmpStr)
 #endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
@@ -4287,16 +4317,20 @@ end subroutine mpp_output_chrt
          real,dimension(ix,jx,nsoil) ::  var
          character(len=*) :: varStr
          character(len=2) :: tmpStr
+         integer i
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp
-         integer i
 #endif
          do i = 1, nsoil
-            write(tmpStr,'(i2)') i
+                 if( i .lt. 10) then
+                    write(tmpStr, '(i1)') i
+                 else
+                    write(tmpStr, '(i2)') i
+                 endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
 #endif
-            iret = nf_inq_varid(ncid,  trim(varStr)//tmpStr,  varid)
+            iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
 #endif
@@ -4307,7 +4341,7 @@ end subroutine mpp_output_chrt
             return
          endif
 #ifdef HYDRO_D
-         print*, "read restart variable ", varStr//tmpStr
+         print*, "read restart variable ", varStr//trim(tmpStr)
 #endif
 #ifdef MPP_LAND
          iret = nf_get_var_real(ncid, varid, xtmp)
