@@ -1,6 +1,7 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
-   use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd
+   use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
+                               restart_out_bi, restart_in_bi
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes
@@ -26,6 +27,9 @@ module module_HYDRO_drv
       integer:: rst_out  
       integer did, outflag
       character(len=19) out_date
+#ifdef MPP_LAND
+      character(len=19) str_tmp
+#endif
       rst_out = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
@@ -48,9 +52,33 @@ module module_HYDRO_drv
    endif
      call mpp_land_bcast_int1(rst_out)
 #endif
-    if(rst_out .gt. 0) &
+    if(rst_out .gt. 0) then 
+#ifdef MPP_LAND
+      if(nlst_rt(did)%rst_bi_out .eq. 1) then
+             if(my_id .lt. 10) then
+                  write(str_tmp,'(I1)') my_id 
+             else if(my_id .lt. 100) then 
+                  write(str_tmp,'(I2)') my_id 
+             else if(my_id .lt. 1000) then
+                  write(str_tmp,'(I3)') my_id 
+             else if(my_id .lt. 10000) then
+                  write(str_tmp,'(I4)') my_id 
+             else if(my_id .lt. 100000) then 
+                  write(str_tmp,'(I5)') my_id 
+             else
+                continue
+             endif
+             call mpp_land_bcast_char(16,nlst_rt(did)%olddate(1:16))
+             call   RESTART_OUT_bi(trim("HYDRO_RST."//nlst_rt(did)%olddate(1:16)   &
+                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)//"."//trim(str_tmp)),  did)
+      else
+#endif
              call   RESTART_OUT_nc(trim("HYDRO_RST."//nlst_rt(did)%olddate(1:16)   &
                  //"_DOMAIN"//trim(nlst_rt(did)%hgrid)),  did)
+#ifdef MPP_LAND
+      endif
+#endif
+   endif
 
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
@@ -281,7 +309,16 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
      endif 
 #endif
-      call   RESTART_IN_nc(trim(nlst_rt(did)%restart_file), did)
+
+#ifdef MPP_LAND
+      if(nlst_rt(did)%rst_bi_in .eq. 1) then
+         call RESTART_IN_bi(trim(nlst_rt(did)%restart_file), did)
+      else
+#endif
+         call RESTART_IN_nc(trim(nlst_rt(did)%restart_file), did)
+#ifdef MPP_LAND
+      endif
+#endif
 
 !yw  if (trim(nlst_rt(did)%restart_file) /= "") then 
 !yw          nlst_rt(did)%restart_file = ""
