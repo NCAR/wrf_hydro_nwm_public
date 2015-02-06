@@ -366,7 +366,7 @@ CONTAINS
     REAL, PARAMETER                     :: CO2 = 395.e-06
     REAL, PARAMETER                     :: O2 = 0.209
     REAL, PARAMETER                     :: undefined_value = -1.E36
-
+    REAL, PARAMETER                     :: undefined_value2 = 0.0
 
 ! ----------------------------------------------------------------------
 ! ----------------------------------------------------------------------
@@ -568,34 +568,34 @@ CONTAINS
        FSNO   = 1.0       
        TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
        TGB    = TG 
-       CANICE = undefined_value 
-       CANLIQ = undefined_value 
+       CANICE = undefined_value2 
+       CANLIQ = undefined_value2 
        EAH    = undefined_value 
        TAH    = undefined_value
-       FWET   = undefined_value 
-       WSLAKE = undefined_value 
+       FWET   = undefined_value2 
+       WSLAKE = undefined_value2 
        ZWT    = undefined_value 
        WA     = undefined_value 
        WT     = undefined_value 
-       LFMASS = undefined_value 
-       RTMASS = undefined_value 
-       STMASS = undefined_value 
-       WOOD   = undefined_value 
+       LFMASS = undefined_value2 
+       RTMASS = undefined_value2 
+       STMASS = undefined_value2 
+       WOOD   = undefined_value2 
        STBLCP = undefined_value 
        FASTCP = undefined_value 
-       PLAI   = undefined_value 
-       PSAI   = undefined_value 
+       PLAI   = undefined_value2 
+       PSAI   = undefined_value2 
        T2MV   = undefined_value 
        Q2MV   = undefined_value 
-       NEE    = undefined_value 
-       GPP    = undefined_value 
-       NPP    = undefined_value 
+       NEE    = undefined_value2 
+       GPP    = undefined_value2 
+       NPP    = undefined_value2 
        FVEGMP = 0.0 
-       ECAN   = undefined_value 
-       ETRAN  = undefined_value 
-       APAR   = undefined_value 
-       PSN    = undefined_value 
-       SAV    = undefined_value 
+       ECAN   = undefined_value2 
+       ETRAN  = undefined_value2 
+       APAR   = undefined_value2 
+       PSN    = undefined_value2 
+       SAV    = undefined_value2 
        RSSUN  = undefined_value 
        RSSHA  = undefined_value 
        BGAP   = undefined_value 
@@ -613,13 +613,13 @@ CONTAINS
        SHB    = FSH
        EVB    = FGEV
        GHB    = SSOIL
-       TR     = undefined_value 
-       EVC    = undefined_value 
+       TR     = undefined_value2 
+       EVC    = undefined_value2 
        CHLEAF = undefined_value 
        CHUC   = undefined_value 
        CHV2   = undefined_value 
-       FCEV   = undefined_value 
-       FCTR   = undefined_value        
+       FCEV   = undefined_value2 
+       FCTR   = undefined_value2        
        
        QFX(I,J) = ESOIL
        LH (I,J) = FGEV
