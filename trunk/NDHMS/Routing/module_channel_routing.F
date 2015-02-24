@@ -165,7 +165,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL    :: Bw         !-bottom width (meters)
         REAL    :: Cs         !-Channel side slope slope
         REAL    :: dx         !-channel lngth (m)
-        REAL    :: n          !-mannings coefficient
+        REAL,intent(in)    :: n          !-mannings coefficient
         REAL    :: R          !-Hydraulic radius
         REAL    :: AREA       !- wetted area
         REAL    :: h1,h2      !-tmp height variables
@@ -663,7 +663,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINK,NLINKS,99)
          call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOL,NLINKS,99)
 #endif
- 
+
          KRT = 0                  !-- initialize the time counter
          minDTCT = 0.01           ! define minimum routing sub-timestep (s), simulation will end with smaller timestep
          DTCT = min(max(DTCT*2.0, minDTCT),DTRT)
@@ -782,7 +782,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
     endif
 #endif
 
-!     call check_channel(79,QLINK(:,1),1,nlinks)
 
 
           !-- compute conveyances, with known depths (just assign to QLINK(,1)
@@ -796,7 +795,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
            DO i = 1,NLINKS
 #endif
            if (TYPEL(i) .eq. 0 .AND. HLINKTMP(FROM_NODE(i)) .gt. RETDEP_CHAN) then 
-               if(from_node(i) .ne. to_node(i) ) &  ! added by Wei Yu
+               if(from_node(i) .ne. to_node(i) .and. (to_node(i) .gt. 0) .and.(from_node(i) .gt. 0) ) &  ! added by Wei Yu
                    QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
                      HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
                      CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
@@ -875,12 +874,12 @@ gwOption:   if(gwBaseSwCRT == 3) then
             write(6,*) "Unstatble at node ",i, "lat=",latval(CHANXI(i),CHANYJ(i)), "lon=",lonval(CHANXI(i),CHANYJ(i))
             write(6,*) "TYPEL, CVOLTMP, QSUM, QSUM*DTCT",TYPEL(i), CVOLTMP(i), QSUM(i), QSUM(i)*DTCT
             write(6,*) "qsubrt, qstrmvolrt,qlink",QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)),qlink(i,1),qlink(i,2)
-               write(6,*) "current nodes, z, h", ZELEV(FROM_NODE(i)),HLINKTMP(FROM_NODE(i))
-            if(TO_NODE(i) .gt. 0) then
-               write(6,*) "to nodes, z, h", ZELEV(TO_NODE(i)), HLINKTMP(TO_NODE(i))
-            else
-               write(6,*) "no to nodes   "
-            endif
+!              write(6,*) "current nodes, z, h", ZELEV(FROM_NODE(i)),HLINKTMP(FROM_NODE(i))
+!           if(TO_NODE(i) .gt. 0) then
+!              write(6,*) "to nodes, z, h", ZELEV(TO_NODE(i)), HLINKTMP(TO_NODE(i))
+!           else
+!              write(6,*) "no to nodes   "
+!           endif
                write(6,*) "CHANLEN(i), MannN(i), Bw(i), ChSSlp(i) ", CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)
             write(6,*) "*******end of  diag ***************"
 #endif
@@ -895,7 +894,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif
 
 
-        if(flag < 0 )   then   
+        if(flag < 0  .and. DTCT >0.1)   then   
              
              ! call smoth121(HLINK,nlinks,maxv_p,pnode,to_node)
 
@@ -982,6 +981,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
            endif 
 
            END DO  !--- done processing all the links
+
 
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOLTMP,NLINKS,99)

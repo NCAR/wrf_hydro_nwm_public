@@ -4,12 +4,16 @@ module module_WRF_HYDRO
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
                 mpp_land_bcast_real, mpp_land_bcast_int1
+    use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
+<<<<<<< HEAD
     use module_gw_gw2d_data, only:  gw2d
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
+=======
+>>>>>>> master
     use module_namelist, only: nlst_rt
     USE module_domain, ONLY : domain, domain_clock_get
     USE module_configure, ONLY : grid_config_rec_type
@@ -22,6 +26,9 @@ module module_WRF_HYDRO
     !yw   added for check soil moisture and soiltype
     integer ::  checkSOIL_flag
 
+#ifndef MPP_LAND
+    character(len=19) :: cpl_outdate
+#endif
 !
 ! added to consider the adaptive time step from WRF model. 
     real    :: dtrt0  
@@ -91,7 +98,9 @@ CONTAINS
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
 
+#ifdef MPP_LAND
             call CPL_LAND_INIT(its,ite,jts,jte)
+#endif
 
 #ifdef HYDRO_D
                write(6,*) "sf_surface_physics is ", grid%sf_surface_physics
@@ -164,12 +173,6 @@ CONTAINS
             rt_domain(did)%infxsrt = grid%infxsrt(its:ite,jts:jte)
             rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
        endif  
-
-
-!yw       if(checkSOIL_flag .ne. 99) then
-!yw           call checkSoil(did) 
-!yw           checkSOIL_flag = 99
-!yw       endif
 
             call HYDRO_exe(did)
 

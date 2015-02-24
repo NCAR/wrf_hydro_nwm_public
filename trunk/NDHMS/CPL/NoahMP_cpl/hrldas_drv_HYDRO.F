@@ -89,8 +89,12 @@
           did = 1
           read(olddate(6:7),*) mm
           read(olddate(9:10),*) dd
-          call get_greenfrac_netcdf(inFile,greenfrac,idim, jdim, months,mm,dd) 
-          SHDMAX = maxval(greenfrac)
+	  !call get_greenfrac_netcdf(inFile,greenfrac,idim, jdim, months,mm,dd)
+	  !SHDMAX = maxval(greenfrac)
+	  !AD_CHANGE: Old get_greenfrac routine was grabbing max across spatial domain.
+	  !	      Updated to new routine that grabs maximum for each cell across time series.
+	  call get_maxgreenfrac_netcdf(inFile,greenfrac,idim, jdim, months)
+          SHDMAX = greenfrac
        end subroutine get_greenfrac
 
 #ifdef MPP_LAND
@@ -188,6 +192,48 @@
           iret=nf_close(ncid)
       end subroutine get_greenfrac_netcdf
 
+        subroutine get_maxgreenfrac_netcdf(fileName, array3, idim, jdim, ldim)
+          implicit none
+#         include "netcdf.inc"
+          character(len=*) :: fileName
+          integer, intent(in) :: idim, jdim, ldim
+          real, dimension(idim,jdim), intent(out) :: array3
+          integer :: iret, varid, ncid
+          real, dimension(idim,jdim,ldim) :: xtmp
+          character(len=24), parameter :: name = "GREENFRAC"
+      
+!          units = "fraction"
+
+          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+          if(iret /= 0) then
+#ifdef HYDRO_D
+              write(6,*) "Error: failed to open file in get_maxgreenfrac: ", trim(fileName)
+              call hydro_stop("in get_maxgreenfrac_netcdf") 
+#endif
+          endif 
+            
+          iret = nf_inq_varid(ncid,  trim(name),  varid)
+          if (iret /= 0) then
+#ifdef HYDRO_D
+             print*, 'name = "', trim(name)//'"'
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_inq_varid"
+             call hydro_stop("in get_maxgreenfrac_netcdf")
+#endif
+          endif
+      
+          iret = nf_get_var_real(ncid, varid, xtmp)
+          if (iret /= 0) then
+
+#ifdef HYDRO_D
+             print*, 'name = "', trim(name)//'"'
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_get_var_real"
+             call hydro_stop("in get_maxgreenfrac_netcdf")
+#endif
+          endif
+      
+          array3 = maxval(xtmp,3)
+          iret=nf_close(ncid)
+      end subroutine get_maxgreenfrac_netcdf
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, &
             snodep,lai, fpar, vegtyp,FNDSNOWH)

@@ -6,9 +6,7 @@ module module_GW_baseflow
    implicit none
 
 #include "rt_include.inc"
-#include "namelist.inc"
-
-
+!yw #include "namelist.inc"
 contains
 
 !------------------------------------------------------------------------------

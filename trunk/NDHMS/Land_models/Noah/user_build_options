@@ -21,10 +21,10 @@ else
 WRFIO_NCD_LARGE_FILE_SUPPORT = 
 endif
 
-RM		=	ls -l #rm -f  
-RMD		=	ls -l #rm -f    
+RM		=	rm -f  
+RMD		=	rm -f    
 COMPILER90=	mpif90
-F90FLAGS  =     -Mfree -c -byteswapio -g -Kieee # -O2 -Kieee
+F90FLAGS  =     -Mfree -c -byteswapio -O2 -Kieee
 LDFLAGS  =      $(F90FLAGS)
 MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod 
 LDFLAGS	=	
@@ -33,7 +33,8 @@ CPPFLAGS	=       -C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D) $(WRFIO_
 LIBS 	=	
 NETCDFINC	=	$(NETCDF_INC) 
 NETCDFLIB	=	-L$(NETCDF_LIB) -lnetcdff -lnetcdf
-NETCDFLIB       =       -L/home/fersch-b/bin/netcdf/lib -lnetcdf
+NETCDF_INC = /opt/netcdf/include
+NETCDF_LIB = /opt/netcdf/lib
 
 # flag from HRLDAS
 COMPILERF90 = $(COMPILER90)
