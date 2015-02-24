@@ -13,10 +13,10 @@ module module_HYDRO_drv
    use module_gw_gw2d
    use module_gw_gw2d_data, only: gw2d
    use module_channel_routing, only: drive_channel
-   use module_namelist, only: nlst_rt
+   use module_namelist, only: nlst_rt, read_rt_nlst
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
-   use module_namelist
+!   use module_namelist
    use module_lsm_forcing, only: geth_newdate
    
    implicit none
@@ -36,13 +36,15 @@ module module_HYDRO_drv
      else
         call geth_newdate(out_date, nlst_rt(did)%startdate, nint(nlst_rt(did)%rst_dt*60*rt_domain(did)%rst_counts))
      endif
-     if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
+     if ( (nlst_rt(did)%rst_dt .gt. 0) .and. (out_date(1:19) == nlst_rt(did)%olddate(1:19)) ) then
            rst_out = 99
            rt_domain(did)%rst_counts = rt_domain(did)%rst_counts + 1
      endif
 ! restart every month automatically.
-     if ((nlst_rt(did)%olddate(9:10) == "01") .and. (nlst_rt(did)%olddate(12:13) == "00") .and. &
-          (nlst_rt(did)%olddate(15:16) == "00").and. (nlst_rt(did)%olddate(18:19) == "00")) rst_out = 99
+     if ( (nlst_rt(did)%olddate(9:10) == "01") .and. (nlst_rt(did)%olddate(12:13) == "00") .and. &
+          (nlst_rt(did)%olddate(15:16) == "00").and. (nlst_rt(did)%olddate(18:19) == "00") .and. &
+          (nlst_rt(did)%rst_dt .le. 0)  ) rst_out = 99
+
 #ifdef MPP_LAND
    endif
      call mpp_land_bcast_int1(rst_out)
@@ -134,7 +136,10 @@ module module_HYDRO_drv
    endif  
    call mpp_land_bcast_int1(rtflag)
 #endif
-   if(rtflag == 1) return ! jump the initial time output for routing restart
+
+
+!yw keep the initial time otuput for debug
+      if(rtflag == 1) return ! jump the initial time output for routing restart
 
 
 
@@ -204,7 +209,7 @@ module module_HYDRO_drv
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
 
 #ifdef MPP_LAND
-             call mpp_output_chrt(rt_domain(did)%mpp_nlinks,rt_domain(did)%nlinks_index, &
+             call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%map_l2g, &
 #else
              call output_chrt(  &
 #endif
@@ -218,13 +223,13 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
 
 #ifdef MPP_LAND
-              call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                  RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-                  RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
-                  nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                  RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-                  RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
-                  RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
+!             call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                 RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
+!                 RT_DOMAIN(did)%CH_NETRT, RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%ORDER, &
+!                 nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+!                 RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+!                 RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index,                   &
+!                 RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  &
@@ -359,15 +364,17 @@ module module_HYDRO_drv
 
               RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
               RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+
 			
 		! step 4) baseflow or groundwater physics
 		  call driveGwBaseflow(did)
 		
 		! step 5) river channel physics
 		  call driveChannelRouting(did)
-		
+	
 		! step 6) aggregate specific fields from Hydro to LSM grid
 		  call aggregateDomain(did)
+
 
            end if
 
@@ -377,6 +384,11 @@ module module_HYDRO_drv
 
       ! output for history 
            call HYDRO_out(did)
+
+
+!           write(90 + my_id,*) "finish calling hydro_exe"
+!           call flush(90+my_id)
+!          call mpp_land_sync()
 
 
             
@@ -869,6 +881,7 @@ module module_HYDRO_drv
        write(6,*) "finish LandRT_ini"
 #endif
 
+    
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
      IF (nlst_rt(did)%TERADJ_SOLAR.EQ.1 .and. nlst_rt(did)%CHANRTSWCRT.NE.2) THEN   ! Perform ter rain adjustment of incoming solar
@@ -909,7 +922,6 @@ module module_HYDRO_drv
        call HYDRO_rst_in(did)
 
 !      call HYDRO_out(did)
-
 
 
       end subroutine HYDRO_ini
@@ -1004,7 +1016,8 @@ module module_HYDRO_drv
        rt_domain(did)%lksat = 0.0
        do j = 1, RT_DOMAIN(did)%jx
              do i = 1, RT_DOMAIN(did)%ix
-                rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
+                !yw rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
+                rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) 
                 IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
                     rt_domain(did)%SMCMAX1(i,j) = 0.45
                     rt_domain(did)%SMCREF1(i,j) = 0.42
@@ -1030,6 +1043,9 @@ end module module_HYDRO_drv
 
 ! stop the job due to the fatal error.
       subroutine HYDRO_stop(msg)
+#ifdef MPP_LAND
+        use module_mpp_land
+#endif
         character(len=*) :: msg
         integer :: ierr
 #ifdef HYDRO_D
@@ -1042,6 +1058,11 @@ end module module_HYDRO_drv
       print*, "ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
       print*, ""
 #endif
+
+!        call mpp_land_sync()
+!        write(my_id+90,*) msg
+!        call flush(my_id+90)
+
          call mpp_land_abort()
          call MPI_finalize(ierr)
 #else
@@ -1062,6 +1083,7 @@ end module module_HYDRO_drv
         print*, "The model finished successfully......."
 #ifdef MPP_LAND
 !         call mpp_land_abort()
+         call flush(6)
          call mpp_land_sync()
          call MPI_finalize(ierr)
          stop 

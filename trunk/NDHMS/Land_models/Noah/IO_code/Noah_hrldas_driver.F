@@ -25,6 +25,7 @@ program Noah_hrldas_driver
   REAL, DIMENSION(NSOLDX) :: ZSOIL
 
   REAL :: T1V,TH2V
+  LOGICAL :: FNDSNOWH
 
 !-----------------------------------------------------------------
 !  Dimensions from the input file:
@@ -951,6 +952,8 @@ program Noah_hrldas_driver
   XLAI2D = 0.
   GVFMIN = -999.
   GVFMAX = -999.
+ 
+  LAI = 0.0
 
 !---------------------------------------------------------------------
 ! Initialize static surface data
@@ -1047,6 +1050,7 @@ program Noah_hrldas_driver
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "Q12D"    , q12d     )
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "CHX"     , chx      )
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "CMX"     , cmx      )
+     call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "LAI"   , lai   )
 
      allocate(fpar_save(PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
      call get_from_restart(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, "FPAR_SAVE", fpar_save, ierr)
@@ -1116,7 +1120,7 @@ program Noah_hrldas_driver
   else
     call HYDRO_HRLDAS_ini(trim(hrldas_constants_file),&
        parallel_xend-parallel_xstart+1,subwindow_yend-subwindow_ystart+1, &
-       nsoil,smc,stc,sh2ox, cmc, t1, weasd, snodep,lai, fpar,vegtyp)
+       nsoil,smc,stc,sh2ox, cmc, t1, weasd, snodep,lai, fpar,vegtyp,GVFMIN,GVFMAX,FNDSNOWH)
   endif
 
      SOILMX = -1.0 * SMC (:,:,1)* ZSOIL (1)
@@ -1212,7 +1216,7 @@ program Noah_hrldas_driver
     sh2ox = 0.0
   else
     greenfrac = 0.0
-    call get_greenfrac(trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate)
+!yw    call get_greenfrac(trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate)
   endif 
     sfcheadrt =0.0
     infxsrt = 0.0
@@ -1232,109 +1236,6 @@ program Noah_hrldas_driver
   call hrldas_drv_HYDRO_ini(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, k, dt, olddate,zsoil(1:NSOIL))
 
   if(rank .eq. 0) then
-!yw      call get_greenfrac(greenfrac, ix, jx, olddate)
-
-     if ((olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
-          (olddate(15:16) == "00").and. (olddate(18:19) == "00")) yw_rst_out = 99
-
-
-
-     print *, "restart_frequency_hours = ",restart_frequency_hours
-
-     if (restart_frequency_hours > 0) then
-!yw        if ((k > 1) .and. (mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0)) then
-!yw        if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0).or. yw_rst_out .eq. 99) ) then
-        !yw if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0)) .or. yw_rst_out .eq. 99 ) then
-        if ((k > 1) .and. ((mod(k-1, int(restart_frequency_hours*3600./nint(dt))) == 0).or. yw_rst_out .eq. 99) ) then 
-           yw_rst_out = -999
-
-           if (rank == 0) print*, 'Write restart at '//olddate(1:13)
-           call prepare_restart_file(trim(outdir), version, iz0tlnd, sfcdif_option,   &
-                sf_urban_physics, igrid, llanduse, olddate, startdate,                         & 
-                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
-                nsoil, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,      &
-                iswater, vegtyp)
-
-           ! Since the restart files are not really for user consumption, the units and description are 
-           ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
-
-           call add_to_restart ( stc,      "SOIL_T"   )
-           call add_to_restart ( smc,      "SOIL_M"   )
-           call add_to_restart ( sh2ox,    "SOIL_W"   )
-           call add_to_restart ( qfx,      "QFX"      )
-           call add_to_restart ( snodep,   "SNODEP"   )
-           call add_to_restart ( weasd,    "WEASD"    )
-           call add_to_restart ( fx,       "FDOWN"    )
-           call add_to_restart ( etpx,     "ETP"      )
-           call add_to_restart ( t1,       "SKINTEMP" )
-           call add_to_restart ( etax,     "ETA"      )
-           call add_to_restart ( etakin,   "ETAKIN"   )
-           call add_to_restart ( cmc,      "CANWAT"   )
-           call add_to_restart ( grdflx,   "GRDFLX"   )
-           call add_to_restart ( chx,      "CH"       )
-           call add_to_restart ( runoff1x, "RUNOFF1"  )
-           call add_to_restart ( runoff2x, "RUNOFF2"  )
-           call add_to_restart ( runoff3x, "RUNOFF3"  )
-           call add_to_restart ( edirx,    "EDIR"     )
-           call add_to_restart ( ettx,     "ETT"      )
-           call add_to_restart ( ecx,      "EC"       )
-           call add_to_restart ( emiss,    "EMISS"    )
-           call add_to_restart ( gvfmin,   "GVFMIN"   )
-           call add_to_restart ( gvfmax,   "GVFMAX"   )
-           call add_to_restart ( snotime,  "SNOTIME"  )
-           call add_to_restart ( q12d,     "Q12D"     )
-           call add_to_restart ( chx,      "CHX"      )
-           call add_to_restart ( cmx,      "CMX"      )
-           call add_to_restart ( fpar,     "FPAR"     )
-           call add_to_restart ( znt,      "ZNT"      )
-           call add_to_restart ( soilmx,   "SOIL_MX"  )
-           call add_to_restart ( dewfall,  "DEWFALL"  )
-           call add_to_restart ( drip2d,   "DRIP"     )
-           call add_to_restart ( esnow2d,  "ESNOW"    )
-           call add_to_restart ( acsnom,   "ACSNOM"   )
-           call add_to_restart ( acrain,   "ACRAIN"   )
-           call add_to_restart ( albedx,   "ALBED"    )
-           call add_to_restart ( smcwlt1,  "SMCWLT"   )
-           call add_to_restart ( smcref1,  "SMCREF"   )
-           call add_to_restart ( smcmax1,  "SMCMAX"   )
-           call add_to_restart ( hx,       "HFX"      )
-           call add_to_restart ( rcx,      "RC"       )
-#ifdef _HRLDAS_URBAN_
-           if (sf_urban_physics == 1) then
-              call add_to_restart ( utype_urb2d, "UTYPE_URB2D" )
-              call add_to_restart ( trl_urb3d,   "TRL_URB3D"   )
-              call add_to_restart ( tbl_urb3d,   "TBL_URB3D"   )
-              call add_to_restart ( tgl_urb3d,   "TGL_URB3D"   )
-              call add_to_restart ( ts_urb2d,    "TS_URB2D"    )
-              call add_to_restart ( tr_urb2d,    "TR_URB2D"    )
-              call add_to_restart ( tb_urb2d,    "TB_URB2D"    )
-              call add_to_restart ( tg_urb2d,    "TG_URB2D"    )
-              call add_to_restart ( tc_urb2d,    "TC_URB2D"    )
-              call add_to_restart ( qc_urb2d,    "QC_URB2D"    )
-              call add_to_restart ( uc_urb2d,    "UC_URB2D"    )
-              call add_to_restart ( xxxr_urb2d,  "XXXR_URB2D"  )
-              call add_to_restart ( xxxb_urb2d,  "XXXB_URB2D"  )
-              call add_to_restart ( xxxg_urb2d,  "XXXG_URB2D"  )
-              call add_to_restart ( xxxc_urb2d,  "XXXC_URB2D"  )
-              call add_to_restart ( frc_urb2d,   "FRC_URB2D"   )
-              call add_to_restart ( cmr_urb2d,   "CMR_URB2D"     )
-              call add_to_restart ( chr_urb2d,   "CHR_URB2D"     )
-              call add_to_restart ( cmc_urb2d,   "CMC_URB2D"     )
-              call add_to_restart ( chc_urb2d,   "CHC_URB2D"     )
-           endif
-#endif
-           if (allocated(FPAR_SAVE)) then
-              call add_to_restart( fpar_save, "FPAR_SAVE")
-           endif
-
-           if (allocated(LAI_SAVE)) then
-              call add_to_restart( lai_save, "LAI_SAVE")
-           endif
-
-           call finalize_restart_file()
-        endif
-     endif
-
 
 !---------------------------------------------------------------------------------
 ! Read the forcing data.
@@ -1355,23 +1256,14 @@ program Noah_hrldas_driver
 !yw          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
 
      if(olddate == forcDate) then
-        CALL HYDRO_seq_frocing(trim(indir), forc_typ,snow_assim,olddate,                      &
+        CALL HYDRO_forcing_drv(trim(indir), forc_typ,snow_assim,olddate,                      &
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,    &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep,k,FORCING_TIMESTEP,prcp_old)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep,k,FORCING_TIMESTEP,prcp_old)
 
         call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
         forcDate = newdate
      endif
 
-
-!yw     if ( update_snow_from_forcing ) then
-!yw        ! Every 24 hours, update the snow field from analyses.
-!yw        if ( OLDDATE(12:13) == "00") then
-!yw           CALL READSNOW_HRLDAS(inflnm,                                             &
-!yw                parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend, &
-!yw               OLDDATE,WEASD,SNODEP)
-!yw        endif
-!yw     endif
 
 !----------------------------------------------------------------------------------
 ! Read possible external maps.  There's got to be some good way to make this
@@ -1566,12 +1458,13 @@ program Noah_hrldas_driver
               shdmin = gvfmin(i,j)
               shdmax = gvfmax(i,j)
 
-!             if (gvfmax(i,j) == gvfmin(i,j)) then
-!                fraction = 0.0
-!             else
-!yw                 fraction = real((dble(SHDFAC)-dble(GVFMIN(I,J)))/(dble(GVFMAX(I,J))-dble(GVFMIN(I,J))))
-                 fraction = greenfrac(i,j)
-!             endif
+              if (gvfmax(i,j) == gvfmin(i,j)) then
+                 fraction = 0.0
+              else
+                    fraction = real((dble(SHDFAC)-dble(GVFMIN(I,J)))/(dble(GVFMAX(I,J))-dble(GVFMIN(I,J))))
+!                 fraction = greenfrac(i,j)
+              endif
+
               fraction = max(fraction,0.)
               fraction = min(fraction,1.)
               if ( ( k==1 ) .and. ( .not. restart_flag ) ) then
@@ -2529,6 +2422,108 @@ program Noah_hrldas_driver
   call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL), &
                         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,               &
 			gwsoilcpl, qsgw)
+
+     if (rank==0) then
+     yw_rst_out = -9999
+
+     print *, "restart_frequency_hours = ",restart_frequency_hours
+
+!!! restart every month
+     if( (olddate(9:10) == "01") .and. (olddate(12:13) == "00") .and. &
+                     (olddate(15:16) == "00").and. (olddate(18:19) == "00")    &
+             .and. (restart_frequency_hours <= 0) )  yw_rst_out = 99
+
+        if ((k >= 0) .and. ((restart_frequency_hours .gt. 0) .and. (mod(k, int(restart_frequency_hours*3600./nint(dt))) == 0) &
+               .or. yw_rst_out .eq. 99) ) then 
+           yw_rst_out = -999
+
+           if (rank == 0) print*, 'Write restart at '//olddate(1:13)
+           call prepare_restart_file(trim(outdir), version, iz0tlnd, sfcdif_option,   &
+                sf_urban_physics, igrid, llanduse, olddate, startdate,                         & 
+                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
+                nsoil, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,      &
+                iswater, vegtyp)
+
+           ! Since the restart files are not really for user consumption, the units and description are 
+           ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
+
+           call add_to_restart ( stc,      "SOIL_T"   )
+           call add_to_restart ( smc,      "SOIL_M"   )
+           call add_to_restart ( sh2ox,    "SOIL_W"   )
+           call add_to_restart ( qfx,      "QFX"      )
+           call add_to_restart ( snodep,   "SNODEP"   )
+           call add_to_restart ( weasd,    "WEASD"    )
+           call add_to_restart ( fx,       "FDOWN"    )
+           call add_to_restart ( etpx,     "ETP"      )
+           call add_to_restart ( t1,       "SKINTEMP" )
+           call add_to_restart ( etax,     "ETA"      )
+           call add_to_restart ( etakin,   "ETAKIN"   )
+           call add_to_restart ( cmc,      "CANWAT"   )
+           call add_to_restart ( grdflx,   "GRDFLX"   )
+           call add_to_restart ( chx,      "CH"       )
+           call add_to_restart ( runoff1x, "RUNOFF1"  )
+           call add_to_restart ( runoff2x, "RUNOFF2"  )
+           call add_to_restart ( runoff3x, "RUNOFF3"  )
+           call add_to_restart ( edirx,    "EDIR"     )
+           call add_to_restart ( ettx,     "ETT"      )
+           call add_to_restart ( ecx,      "EC"       )
+           call add_to_restart ( emiss,    "EMISS"    )
+           call add_to_restart ( gvfmin,   "GVFMIN"   )
+           call add_to_restart ( gvfmax,   "GVFMAX"   )
+           call add_to_restart ( snotime,  "SNOTIME"  )
+           call add_to_restart ( q12d,     "Q12D"     )
+           call add_to_restart ( chx,      "CHX"      )
+           call add_to_restart ( cmx,      "CMX"      )
+           call add_to_restart ( fpar,     "FPAR"     )
+           call add_to_restart ( znt,      "ZNT"      )
+           call add_to_restart ( soilmx,   "SOIL_MX"  )
+           call add_to_restart ( dewfall,  "DEWFALL"  )
+           call add_to_restart ( drip2d,   "DRIP"     )
+           call add_to_restart ( esnow2d,  "ESNOW"    )
+           call add_to_restart ( acsnom,   "ACSNOM"   )
+           call add_to_restart ( acrain,   "ACRAIN"   )
+           call add_to_restart ( albedx,   "ALBED"    )
+           call add_to_restart ( smcwlt1,  "SMCWLT"   )
+           call add_to_restart ( smcref1,  "SMCREF"   )
+           call add_to_restart ( smcmax1,  "SMCMAX"   )
+           call add_to_restart ( hx,       "HFX"      )
+           call add_to_restart ( rcx,      "RC"       )
+           call add_to_restart ( lai,      "LAI"       )
+#ifdef _HRLDAS_URBAN_
+           if (sf_urban_physics == 1) then
+              call add_to_restart ( utype_urb2d, "UTYPE_URB2D" )
+              call add_to_restart ( trl_urb3d,   "TRL_URB3D"   )
+              call add_to_restart ( tbl_urb3d,   "TBL_URB3D"   )
+              call add_to_restart ( tgl_urb3d,   "TGL_URB3D"   )
+              call add_to_restart ( ts_urb2d,    "TS_URB2D"    )
+              call add_to_restart ( tr_urb2d,    "TR_URB2D"    )
+              call add_to_restart ( tb_urb2d,    "TB_URB2D"    )
+              call add_to_restart ( tg_urb2d,    "TG_URB2D"    )
+              call add_to_restart ( tc_urb2d,    "TC_URB2D"    )
+              call add_to_restart ( qc_urb2d,    "QC_URB2D"    )
+              call add_to_restart ( uc_urb2d,    "UC_URB2D"    )
+              call add_to_restart ( xxxr_urb2d,  "XXXR_URB2D"  )
+              call add_to_restart ( xxxb_urb2d,  "XXXB_URB2D"  )
+              call add_to_restart ( xxxg_urb2d,  "XXXG_URB2D"  )
+              call add_to_restart ( xxxc_urb2d,  "XXXC_URB2D"  )
+              call add_to_restart ( frc_urb2d,   "FRC_URB2D"   )
+              call add_to_restart ( cmr_urb2d,   "CMR_URB2D"     )
+              call add_to_restart ( chr_urb2d,   "CHR_URB2D"     )
+              call add_to_restart ( cmc_urb2d,   "CMC_URB2D"     )
+              call add_to_restart ( chc_urb2d,   "CHC_URB2D"     )
+           endif
+#endif
+           if (allocated(FPAR_SAVE)) then
+              call add_to_restart( fpar_save, "FPAR_SAVE")
+           endif
+
+           if (allocated(LAI_SAVE)) then
+              call add_to_restart( lai_save, "LAI_SAVE")
+           endif
+
+           call finalize_restart_file()
+        endif
+  endif !!! rank if block
 
   ENDDO KLOOP
 

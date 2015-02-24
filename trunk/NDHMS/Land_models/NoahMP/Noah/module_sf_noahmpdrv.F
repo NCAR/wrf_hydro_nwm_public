@@ -36,7 +36,7 @@ CONTAINS
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
 #ifdef WRF_HYDRO
-               sfcheadrt,INFXSRT,soldrain,                                  & 
+               sfcheadrt,INFXSRT,soldrain,                                  &
 #endif
                ids,ide,  jds,jde,  kds,kde,                    &
                ims,ime,  jms,jme,  kms,kme,                    &
@@ -88,6 +88,9 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  GLW       ! longwave down at surface [W m-2]
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  P8W3D     ! 3D pressure, valid at interface [Pa]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  RAINBL    ! precipitation entering land model [mm]
+#ifdef WRF_HYDRO
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  sfcheadrt,INFXSRT,soldrain   ! for WRF-Hydro
+#endif
 
 ! INOUT (with generic LSM equivalent)
 
@@ -112,9 +115,6 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACSNOW    ! accumulated snow on grid
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  EMISS     ! surface bulk emissivity
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  QSFC      ! bulk surface specific humidity
-#ifdef WRF_HYDRO
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  sfcheadrt,INFXSRT,soldrain   ! for WRF-Hydro
-#endif
 
 ! INOUT (with no Noah LSM equivalent)
 
@@ -361,7 +361,7 @@ CONTAINS
     INTEGER, PARAMETER                  :: NSNOW = 3    ! number of snow layers fixed to 3
     REAL, PARAMETER                     :: CO2 = 395.e-06
     REAL, PARAMETER                     :: O2 = 0.209
-    REAL, PARAMETER                     :: undefined_value = -1.E33
+    REAL, PARAMETER                     :: undefined_value = -1.E36
 
 
 ! ----------------------------------------------------------------------
@@ -551,7 +551,7 @@ CONTAINS
                                PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
                               QSNOW,  SNEQVO,  ALBOLD,      CM,      CH,   ISNOW, & ! IN/OUT :
                                 SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
-                                TGB,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
+                                 TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
                                 FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
                                TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
                               QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
@@ -559,7 +559,7 @@ CONTAINS
 
        FSNO   = 1.0       
        TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
-       TG     = TGB 
+       TGB    = TG 
        CANICE = undefined_value 
        CANLIQ = undefined_value 
        EAH    = undefined_value 
@@ -667,145 +667,6 @@ end if
 !	    stop999
 1000 continue
 
-!if(i.eq.1086.and.j.eq.552) then
-if(.false.) then
-print*, "Before noahmp call"
-print*, "       I:",I
-print*, "       J:",J
-print*, "     LAT:",LAT
-print*, " YEARLEN:",YEARLEN
-print*, "  JULIAN:",JULIAN
-print*, "    COSZ:",COSZ
-print*, "      DT:",DT
-print*, "      DX:",DX
-print*, "  DZ8W1D:",DZ8W1D
-print*, "   NSOIL:",NSOIL
-print*, "   ZSOIL:",ZSOIL
-print*, "   NSNOW:",NSNOW
-print*, "    FVEG:",FVEG
-print*, "  FVGMAX:",FVGMAX
-print*, "  VEGTYP:",VEGTYP
-print*, " SOILTYP:",SOILTYP
-print*, " ISURBAN:",ISURBAN
-print*, "     ICE:",ICE
-print*, "     IST:",IST
-print*, "     ISC:",ISC
-print*, "   SMCEQ:",SMCEQ
-print*, " IZ0TLND:",IZ0TLND
-print*, "    T_ML:",T_ML
-print*, "    P_ML:",P_ML
-print*, "    PSFC:",PSFC
-print*, "    U_ML:",U_ML
-print*, "    V_ML:",V_ML
-print*, "    Q_ML:",Q_ML
-print*, "      QC:",QC
-print*, "    SWDN:",SWDN
-print*, "    LWDN:",LWDN
-print*, "    PRCP:",PRCP
-print*, "    TBOT:",TBOT
-print*, "   CO2PP:",CO2PP
-print*, "    O2PP:",O2PP
-print*, "    FOLN:",FOLN
-print*, " FICEOLD:",FICEOLD
-print*, "    PBLH:",PBLH
-print*, "    Z_ML:",Z_ML
-print*, "  ALBOLD:",ALBOLD
-print*, "  SNEQVO:",SNEQVO
-print*, "     STC:",STC
-print*, "   SMH2O:",SMH2O
-print*, "     SMC:",SMC
-print*, "     TAH:",TAH
-print*, "     EAH:",EAH
-print*, "    FWET:",FWET
-print*, "  CANLIQ:",CANLIQ
-print*, "  CANICE:",CANICE
-print*, "      TV:",TV
-print*, "      TG:",TG
-print*, "  QSFC1D:",QSFC1D
-print*, "   QSNOW:",QSNOW
-print*, "   ISNOW:",ISNOW
-print*, "   ZSNSO:",ZSNSO
-print*, "  SNDPTH:",SNDPTH
-print*, "     SWE:",SWE
-print*, "   SNICE:",SNICE
-print*, "   SNLIQ:",SNLIQ
-print*, "     ZWT:",ZWT
-print*, "      WA:",WA
-print*, "      WT:",WT
-print*, "  WSLAKE:",WSLAKE
-print*, "  LFMASS:",LFMASS
-print*, "  RTMASS:",RTMASS
-print*, "  STMASS:",STMASS
-print*, "    WOOD:",WOOD
-print*, "  STBLCP:",STBLCP
-print*, "  FASTCP:",FASTCP
-print*, "    PLAI:",PLAI
-print*, "    PSAI:",PSAI
-print*, "      CM:",CM
-print*, "      CH:",CH
-print*, "   TAUSS:",TAUSS
-print*, "  SMCWTD:",SMCWTD
-print*, "DEEPRECH:",DEEPRECH
-print*, "    RECH:",RECH
-print*, "     FSA:",FSA
-print*, "     FSR:",FSR
-print*, "    FIRA:",FIRA
-print*, "     FSH:",FSH
-print*, "   SSOIL:",SSOIL
-print*, "    FCEV:",FCEV
-print*, "    FGEV:",FGEV
-print*, "    FCTR:",FCTR
-print*, "    ECAN:",ECAN
-print*, "   ETRAN:",ETRAN
-print*, "   ESOIL:",ESOIL
-print*, "    TRAD:",TRAD
-print*, "     TGB:",TGB
-print*, "     TGV:",TGV
-print*, "    T2MV:",T2MV
-print*, "    T2MB:",T2MB
-print*, "    Q2MV:",Q2MV
-print*, "    Q2MB:",Q2MB
-print*, "   RUNSF:",RUNSF
-print*, "   RUNSB:",RUNSB
-print*, "    APAR:",APAR
-print*, "     PSN:",PSN
-print*, "     SAV:",SAV
-print*, "     SAG:",SAG
-print*, "    FSNO:",FSNO
-print*, "     NEE:",NEE
-print*, "     GPP:",GPP
-print*, "     NPP:",NPP
-print*, "  FVEGMP:",FVEGMP
-print*, "    SALB:",SALB
-print*, "  QSNBOT:",QSNBOT
-print*, " PONDING:",PONDING
-print*, "PONDING1:",PONDING1
-print*, "PONDING2:",PONDING2
-print*, "   RSSUN:",RSSUN
-print*, "   RSSHA:",RSSHA
-print*, "    BGAP:",BGAP
-print*, "    WGAP:",WGAP
-print*, "     CHV:",CHV
-print*, "     CHB:",CHB
-print*, "  EMISSI:",EMISSI
-print*, "     SHG:",SHG
-print*, "     SHC:",SHC
-print*, "     SHB:",SHB
-print*, "     EVG:",EVG
-print*, "     EVB:",EVB
-print*, "     GHV:",GHV
-print*, "     GHB:",GHB
-print*, "     IRG:",IRG
-print*, "     IRC:",IRC
-print*, "     IRB:",IRB
-print*, "      TR:",TR
-print*, "     EVC:",EVC
-print*, "  CHLEAF:",CHLEAF
-print*, "    CHUC:",CHUC
-print*, "    CHV2:",CHV2
-print*, "    CHB2:",CHB2
-print*, "   FPICE:",FPICE
-end if
        CALL NOAHMP_SFLX (&
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
             DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
@@ -847,146 +708,6 @@ end if
 #endif
 
    ENDIF ! glacial split ends 
-!if(i.eq.1086.and.j.eq.552) then
-if(.false.) then
-print*, "After noahmp call"
-print*, "       I:",I
-print*, "       J:",J
-print*, "     LAT:",LAT
-print*, " YEARLEN:",YEARLEN
-print*, "  JULIAN:",JULIAN
-print*, "    COSZ:",COSZ
-print*, "      DT:",DT
-print*, "      DX:",DX
-print*, "  DZ8W1D:",DZ8W1D
-print*, "   NSOIL:",NSOIL
-print*, "   ZSOIL:",ZSOIL
-print*, "   NSNOW:",NSNOW
-print*, "    FVEG:",FVEG
-print*, "  FVGMAX:",FVGMAX
-print*, "  VEGTYP:",VEGTYP
-print*, " SOILTYP:",SOILTYP
-print*, " ISURBAN:",ISURBAN
-print*, "     ICE:",ICE
-print*, "     IST:",IST
-print*, "     ISC:",ISC
-print*, "   SMCEQ:",SMCEQ
-print*, " IZ0TLND:",IZ0TLND
-print*, "    T_ML:",T_ML
-print*, "    P_ML:",P_ML
-print*, "    PSFC:",PSFC
-print*, "    U_ML:",U_ML
-print*, "    V_ML:",V_ML
-print*, "    Q_ML:",Q_ML
-print*, "      QC:",QC
-print*, "    SWDN:",SWDN
-print*, "    LWDN:",LWDN
-print*, "    PRCP:",PRCP
-print*, "    TBOT:",TBOT
-print*, "   CO2PP:",CO2PP
-print*, "    O2PP:",O2PP
-print*, "    FOLN:",FOLN
-print*, " FICEOLD:",FICEOLD
-print*, "    PBLH:",PBLH
-print*, "    Z_ML:",Z_ML
-print*, "  ALBOLD:",ALBOLD
-print*, "  SNEQVO:",SNEQVO
-print*, "     STC:",STC
-print*, "   SMH2O:",SMH2O
-print*, "     SMC:",SMC
-print*, "     TAH:",TAH
-print*, "     EAH:",EAH
-print*, "    FWET:",FWET
-print*, "  CANLIQ:",CANLIQ
-print*, "  CANICE:",CANICE
-print*, "      TV:",TV
-print*, "      TG:",TG
-print*, "  QSFC1D:",QSFC1D
-print*, "   QSNOW:",QSNOW
-print*, "   ISNOW:",ISNOW
-print*, "   ZSNSO:",ZSNSO
-print*, "  SNDPTH:",SNDPTH
-print*, "     SWE:",SWE
-print*, "   SNICE:",SNICE
-print*, "   SNLIQ:",SNLIQ
-print*, "     ZWT:",ZWT
-print*, "      WA:",WA
-print*, "      WT:",WT
-print*, "  WSLAKE:",WSLAKE
-print*, "  LFMASS:",LFMASS
-print*, "  RTMASS:",RTMASS
-print*, "  STMASS:",STMASS
-print*, "    WOOD:",WOOD
-print*, "  STBLCP:",STBLCP
-print*, "  FASTCP:",FASTCP
-print*, "    PLAI:",PLAI
-print*, "    PSAI:",PSAI
-print*, "      CM:",CM
-print*, "      CH:",CH
-print*, "   TAUSS:",TAUSS
-print*, "  SMCWTD:",SMCWTD
-print*, "DEEPRECH:",DEEPRECH
-print*, "    RECH:",RECH
-print*, "     FSA:",FSA
-print*, "     FSR:",FSR
-print*, "    FIRA:",FIRA
-print*, "     FSH:",FSH
-print*, "   SSOIL:",SSOIL
-print*, "    FCEV:",FCEV
-print*, "    FGEV:",FGEV
-print*, "    FCTR:",FCTR
-print*, "    ECAN:",ECAN
-print*, "   ETRAN:",ETRAN
-print*, "   ESOIL:",ESOIL
-print*, "    TRAD:",TRAD
-print*, "     TGB:",TGB
-print*, "     TGV:",TGV
-print*, "    T2MV:",T2MV
-print*, "    T2MB:",T2MB
-print*, "    Q2MV:",Q2MV
-print*, "    Q2MB:",Q2MB
-print*, "   RUNSF:",RUNSF
-print*, "   RUNSB:",RUNSB
-print*, "    APAR:",APAR
-print*, "     PSN:",PSN
-print*, "     SAV:",SAV
-print*, "     SAG:",SAG
-print*, "    FSNO:",FSNO
-print*, "     NEE:",NEE
-print*, "     GPP:",GPP
-print*, "     NPP:",NPP
-print*, "  FVEGMP:",FVEGMP
-print*, "    SALB:",SALB
-print*, "  QSNBOT:",QSNBOT
-print*, " PONDING:",PONDING
-print*, "PONDING1:",PONDING1
-print*, "PONDING2:",PONDING2
-print*, "   RSSUN:",RSSUN
-print*, "   RSSHA:",RSSHA
-print*, "    BGAP:",BGAP
-print*, "    WGAP:",WGAP
-print*, "     CHV:",CHV
-print*, "     CHB:",CHB
-print*, "  EMISSI:",EMISSI
-print*, "     SHG:",SHG
-print*, "     SHC:",SHC
-print*, "     SHB:",SHB
-print*, "     EVG:",EVG
-print*, "     EVB:",EVB
-print*, "     GHV:",GHV
-print*, "     GHB:",GHB
-print*, "     IRG:",IRG
-print*, "     IRC:",IRC
-print*, "     IRB:",IRB
-print*, "      TR:",TR
-print*, "     EVC:",EVC
-print*, "  CHLEAF:",CHLEAF
-print*, "    CHUC:",CHUC
-print*, "    CHV2:",CHV2
-print*, "    CHB2:",CHB2
-print*, "   FPICE:",FPICE
-stop
-end if
 
 ! INPUT/OUTPUT
 
@@ -1109,9 +830,6 @@ end if
        fwetxy   ,sneqvoxy ,alboldxy ,qsnowxy  ,wslakexy ,zwtxy    ,waxy     , &
        wtxy     ,tsnoxy   ,zsnsoxy  ,snicexy  ,snliqxy  ,lfmassxy ,rtmassxy , &
        stmassxy ,woodxy   ,stblcpxy ,fastcpxy ,xsaixy   , &
-       smoiseq  ,smcwtdxy ,rechxy   ,deeprechxy, areaxy, dx, dy, msftx, msfty,&
-       wtddt    ,stepwtd  ,dt       ,qrfsxy     ,qspringsxy  , qslatxy    ,  &
-       fdepthxy ,ht     ,riverbedxy ,eqzwt     ,rivercondxy ,pexpxy,           &
 !jref:start
        t2mvxy   ,t2mbxy   ,chstarxy,            &
 !jref:end       
@@ -1119,7 +837,10 @@ end if
        allowed_to_read , iopt_run,                         &
        ids,ide, jds,jde, kds,kde,                &
        ims,ime, jms,jme, kms,kme,                &
-       its,ite, jts,jte, kts,kte                 )
+       its,ite, jts,jte, kts,kte,                &
+       smoiseq  ,smcwtdxy ,rechxy   ,deeprechxy, areaxy, dx, dy, msftx, msfty,&     ! Optional groundwater
+       wtddt    ,stepwtd  ,dt       ,qrfsxy     ,qspringsxy  , qslatxy    ,  &      ! Optional groundwater
+       fdepthxy ,ht     ,riverbedxy ,eqzwt     ,rivercondxy ,pexpxy            )    ! Optional groundwater
 
   USE module_sf_noahmplsm, ONLY : BB, SATPSI, MAXSMC  ! Added to have access 
 
@@ -1137,8 +858,8 @@ end if
          &                           allowed_to_read
 
     REAL,    DIMENSION( NSOIL), INTENT(IN)    ::     DZS  ! Thickness of the soil layers [m]
-    REAL,    INTENT(IN)        ::     DX, DY
-    REAL,    DIMENSION( ims:ime, jms:jme ) ,  INTENT(IN) :: MSFTX,MSFTY
+    REAL,    INTENT(IN) , OPTIONAL ::     DX, DY
+    REAL,    DIMENSION( ims:ime, jms:jme ) ,  INTENT(IN) , OPTIONAL :: MSFTX,MSFTY
 
     REAL,    DIMENSION( ims:ime, NSOIL, jms:jme ) ,    &
          &   INTENT(INOUT)    ::     SMOIS,                      &
@@ -1148,8 +869,7 @@ end if
     REAL,    DIMENSION( ims:ime, jms:jme ) ,                     &
          &   INTENT(INOUT)    ::     SNOW,                       &
          &                           SNOWH,                      &
-         &                           CANWAT,  &
-                                     XICE  
+         &                           CANWAT
 
     INTEGER, DIMENSION( ims:ime, jms:jme ),                      &
          &   INTENT(IN)       ::     ISLTYP,  &
@@ -1160,6 +880,7 @@ end if
 
     REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: TSK         !skin temperature (k)
     REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: TMN         !deep soil temperature (k)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: XICE         !sea ice fraction
     INTEGER, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: isnowxy     !actual no. of snow layers
     REAL, DIMENSION(ims:ime,-2:NSOIL,jms:jme), INTENT(INOUT) :: zsnsoxy  !snow layer depth [m]
     REAL, DIMENSION(ims:ime,-2:              0,jms:jme), INTENT(INOUT) :: tsnoxy   !snow temperature [K]
@@ -1191,23 +912,23 @@ end if
 
 ! IOPT_RUN = 5 option
 
-    REAL, DIMENSION(ims:ime,1:nsoil,jms:jme), INTENT(INOUT) :: smoiseq !equilibrium soil moisture content [m3m-3]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: smcwtdxy    !deep soil moisture content [m3m-3]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: deeprechxy  !deep recharge [m]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: rechxy      !accumulated recharge [mm]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: qrfsxy      !accumulated flux from groundwater to rivers [mm]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: qspringsxy  !accumulated seeping water [mm]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: qslatxy     !accumulated lateral flow [mm]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: areaxy      !grid cell area [m2]
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: FDEPTHXY    !efolding depth for transmissivity (m)
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: HT          !terrain height (m)
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: RIVERBEDXY  !riverbed depth (m)
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: EQZWT       !equilibrium water table depth (m)
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: RIVERCONDXY !river conductance
-    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: PEXPXY      !factor for river conductance
+    REAL, DIMENSION(ims:ime,1:nsoil,jms:jme), INTENT(INOUT) , OPTIONAL :: smoiseq !equilibrium soil moisture content [m3m-3]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: smcwtdxy    !deep soil moisture content [m3m-3]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: deeprechxy  !deep recharge [m]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: rechxy      !accumulated recharge [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: qrfsxy      !accumulated flux from groundwater to rivers [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: qspringsxy  !accumulated seeping water [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: qslatxy     !accumulated lateral flow [mm]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) , OPTIONAL :: areaxy      !grid cell area [m2]
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: FDEPTHXY    !efolding depth for transmissivity (m)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: HT          !terrain height (m)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: RIVERBEDXY  !riverbed depth (m)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: EQZWT       !equilibrium water table depth (m)
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: RIVERCONDXY !river conductance
+    REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: PEXPXY      !factor for river conductance
 
-    INTEGER,  INTENT(OUT) :: STEPWTD
-    REAL, INTENT(IN) :: DT, WTDDT
+    INTEGER,  INTENT(OUT) , OPTIONAL :: STEPWTD
+    REAL, INTENT(IN) , OPTIONAL :: DT, WTDDT
 
 !jref:start
     REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: t2mvxy        !2m temperature vegetation part (k)
@@ -1239,7 +960,6 @@ end if
     !
     ! initialize three Noah LSM related tables
     !
-
     IF ( allowed_to_read ) THEN
        CALL wrf_message( 'INITIALIZE THREE Noah LSM RELATED TABLES' )
        CALL  SOIL_VEG_GEN_PARM( MMINLU, MMINSL )
@@ -1249,6 +969,19 @@ end if
 
        itf=min0(ite,ide-1)
        jtf=min0(jte,jde-1)
+
+       !
+       ! initialize physical snow height SNOWH
+       !
+       IF(.NOT.FNDSNOWH)THEN
+          ! If no SNOWH do the following
+          CALL wrf_message( 'SNOW HEIGHT NOT FOUND - VALUE DEFINED IN LSMINIT' )
+          DO J = jts,jtf
+             DO I = its,itf
+                SNOWH(I,J)=SNOW(I,J)*0.005               ! SNOW in mm and SNOWH in m
+             ENDDO
+          ENDDO
+       ENDIF
 
        errflag = 0
        DO j = jts,jtf
@@ -1274,7 +1007,7 @@ end if
 #endif
 
 ! initialize soil liquid water content SH2O
-       
+
        DO J = jts , jtf
           DO I = its , itf
 	    IF(IVGTYP(I,J)==ISICE .AND. XICE(I,J) <= 0.0) THEN
@@ -1283,8 +1016,9 @@ end if
 	        SH2O(I,NS,J) = 0.0
 	        TSLB(I,NS,J) = MIN(TSLB(I,NS,J),263.15) ! set glacier temp to at most -10C
               END DO
-	        TMN(I,J) = MIN(TMN(I,J),263.15)         ! set deep temp to at most -10C
+	        !TMN(I,J) = MIN(TMN(I,J),263.15)         ! set deep temp to at most -10C
 		SNOW(I,J) = MAX(SNOW(I,J), 10.0)        ! set SWE to at least 10mm
+                SNOWH(I,J)=SNOW(I,J)*0.01               ! SNOW in mm and SNOWH in m
 	    ELSE
 	      
               BX = BB(ISLTYP(I,J))
@@ -1315,32 +1049,24 @@ end if
 !  ENDIF
 
 
-       !
-       ! initialize physical snow height SNOWH
-       !
-       IF(.NOT.FNDSNOWH)THEN
-          ! If no SNOWH do the following
-          CALL wrf_message( 'SNOW HEIGHT NOT FOUND - VALUE DEFINED IN LSMINIT' )
-          DO J = jts,jtf
-             DO I = its,itf
-                SNOWH(I,J)=SNOW(I,J)*0.005               ! SNOW in mm and SNOWH in m
-             ENDDO
-          ENDDO
-       ENDIF
-
        DO J = jts,jtf
           DO I = its,itf
              tvxy       (I,J) = TSK(I,J)
+	       if(snow(i,j) > 0.0 .and. tsk(i,j) > 273.15) tvxy(I,J) = 273.15
              tgxy       (I,J) = TSK(I,J)
+	       if(snow(i,j) > 0.0 .and. tsk(i,j) > 273.15) tgxy(I,J) = 273.15
              CANWAT     (I,J) = 0.0
              canliqxy   (I,J) = CANWAT(I,J)
              canicexy   (I,J) = 0.
              eahxy      (I,J) = 2000. 
              tahxy      (I,J) = TSK(I,J)
+	       if(snow(i,j) > 0.0 .and. tsk(i,j) > 273.15) tahxy(I,J) = 273.15
 !             tahxy      (I,J) = 287.
 !jref:start
              t2mvxy     (I,J) = TSK(I,J)
+	       if(snow(i,j) > 0.0 .and. tsk(i,j) > 273.15) t2mvxy(I,J) = 273.15
              t2mbxy     (I,J) = TSK(I,J)
+	       if(snow(i,j) > 0.0 .and. tsk(i,j) > 273.15) t2mbxy(I,J) = 273.15
              chstarxy     (I,J) = 0.1
 !jref:end
 
@@ -1359,6 +1085,7 @@ end if
              else
                    waxy       (I,J) = 0.
                    wtxy       (I,J) = 0.
+                   areaxy     (I,J) = (DX * DY) / ( MSFTX(I,J) * MSFTY(I,J) )
              endif
 
              lfmassxy   (I,J) = 50.         !
@@ -1369,7 +1096,6 @@ end if
              fastcpxy   (I,J) = 1000.0      !
              xsaixy     (I,J) = 0.1         !
 
-             areaxy     (I,J) = (DX * DY) / ( MSFTX(I,J) * MSFTY(I,J) )
           enddo
        enddo
 
@@ -1388,20 +1114,44 @@ end if
 
        !initialize arrays for groundwater dynamics iopt_run=5
 
-     if(iopt_run.eq.5) then
+       if(iopt_run.eq.5) then
+          IF ( PRESENT(smoiseq)     .AND. &
+            PRESENT(smcwtdxy)    .AND. &
+            PRESENT(rechxy)      .AND. &
+            PRESENT(deeprechxy)  .AND. &
+            PRESENT(areaxy)      .AND. &
+            PRESENT(dx)          .AND. &
+            PRESENT(dy)          .AND. &
+            PRESENT(msftx)       .AND. &
+            PRESENT(msfty)       .AND. &
+            PRESENT(wtddt)       .AND. &
+            PRESENT(stepwtd)     .AND. &
+            PRESENT(dt)          .AND. &
+            PRESENT(qrfsxy)      .AND. &
+            PRESENT(qspringsxy)  .AND. &
+            PRESENT(qslatxy)     .AND. &
+            PRESENT(fdepthxy)    .AND. &
+            PRESENT(ht)          .AND. &
+            PRESENT(riverbedxy)  .AND. &
+            PRESENT(eqzwt)       .AND. &
+            PRESENT(rivercondxy) .AND. &
+            PRESENT(pexpxy)            ) THEN
 
-   STEPWTD = nint(WTDDT*60./DT)
-   STEPWTD = max(STEPWTD,1)
+             STEPWTD = nint(WTDDT*60./DT)
+             STEPWTD = max(STEPWTD,1)
 
-        CALL groundwater_init ( & 
-            &        nsoil, zsoil , dzs  ,isltyp, ivgtyp, isurban, isice ,iswater ,wtddt , &
-            &        fdepthxy, ht, riverbedxy, eqzwt, rivercondxy, pexpxy , areaxy, zwtxy,   &
-            &        smois,sh2o, smoiseq, smcwtdxy, deeprechxy, rechxy, qslatxy, qrfsxy, qspringsxy, &
-            &        ids,ide, jds,jde, kds,kde,                    &
-            &        ims,ime, jms,jme, kms,kme,                    &
-            &        its,ite, jts,jte, kts,kte                     )
+              CALL groundwater_init ( & 
+      &       nsoil, zsoil , dzs  ,isltyp, ivgtyp, isurban, isice ,iswater ,wtddt , &
+      &       fdepthxy, ht, riverbedxy, eqzwt, rivercondxy, pexpxy , areaxy, zwtxy,   &
+      &       smois,sh2o, smoiseq, smcwtdxy, deeprechxy, rechxy, qslatxy, qrfsxy, qspringsxy, &
+      &       ids,ide, jds,jde, kds,kde,                    &
+      &       ims,ime, jms,jme, kms,kme,                    &
+      &       its,ite, jts,jte, kts,kte                     )
 
-      endif
+          ELSE
+             CALL wrf_error_fatal ('Not enough fields to use groundwater option in Noah-MP')
+          END IF
+       endif
 
     ENDIF
   END SUBROUTINE NOAHMP_INIT
@@ -1476,6 +1226,7 @@ end if
                 DZSNO(-1) = 0.20
                 DZSNO( 0) = SNODEP(I,J) - DZSNO(-1) - DZSNO(-2)
              ELSE
+                write(6,*) "SNODEP(I,J) = ", SNODEP(I,J)
                 CALL wrf_error_fatal("Problem with the logic assigning snow layers.")
              END IF
           END IF
@@ -1510,9 +1261,8 @@ end if
     END DO
 
   END SUBROUTINE SNOW_INIT
-!------------------------------------------------------------------------
-! End exact copy from WRF driver 
-!------------------------------------------------------------------------
+! ==================================================================================================
+! ----------------------------------------------------------------------
     SUBROUTINE GROUNDWATER_INIT (   &
             &            NSOIL , ZSOIL , DZS, ISLTYP, IVGTYP, ISURBAN, ISICE ,ISWATER , WTDDT , &
             &            FDEPTH, TOPO, RIVERBED, EQWTD, RIVERCOND, PEXP , AREA ,WTD ,  &
@@ -1521,6 +1271,7 @@ end if
             &            ids,ide, jds,jde, kds,kde,                    &
             &            ims,ime, jms,jme, kms,kme,                    &
             &            its,ite, jts,jte, kts,kte                     )
+
 
   USE module_sf_noahmplsm, ONLY : BB, SATPSI, MAXSMC, WLTSMC, SATDW, SATDK  ! Added to have access 
   USE module_sf_noahmp_groundwater, ONLY : LATERALFLOW
@@ -1757,7 +1508,7 @@ END  SUBROUTINE EQSMOISTURE
         SUBROUTINE SOIL_VEG_GEN_PARM( MMINLU, MMINSL)
 !-----------------------------------------------------------------
 
-  USE module_sf_noahmplsm
+!        USE module_wrf_error
         IMPLICIT NONE
 
         CHARACTER(LEN=*), INTENT(IN) :: MMINLU, MMINSL
@@ -1835,6 +1586,8 @@ END  SUBROUTINE EQSMOISTURE
              SIZE(Z0MAXTBL)     < LUCATS .OR. &
              SIZE(ALBEDOMINTBL) < LUCATS .OR. &
              SIZE(ALBEDOMAXTBL) < LUCATS .OR. &
+             SIZE(ZTOPVTBL) < LUCATS .OR. &
+             SIZE(ZBOTVTBL) < LUCATS .OR. &
              SIZE(EMISSMINTBL ) < LUCATS .OR. &
              SIZE(EMISSMAXTBL ) < LUCATS ) THEN
            CALL wrf_error_fatal('Table sizes too small for value of LUCATS in module_sf_noahdrv.F')
@@ -1847,7 +1600,8 @@ END  SUBROUTINE EQSMOISTURE
                         SNUPTBL(LC),MAXALB(LC), LAIMINTBL(LC),     &
                         LAIMAXTBL(LC),EMISSMINTBL(LC),             &
                         EMISSMAXTBL(LC), ALBEDOMINTBL(LC),         &
-                        ALBEDOMAXTBL(LC), Z0MINTBL(LC), Z0MAXTBL(LC)
+                        ALBEDOMAXTBL(LC), Z0MINTBL(LC), Z0MAXTBL(LC),&
+			ZTOPVTBL(LC), ZBOTVTBL(LC)
           ENDDO
 !
           READ (19,*)
@@ -1890,6 +1644,8 @@ END  SUBROUTINE EQSMOISTURE
       CALL wrf_dm_bcast_real    ( EMISSMAXTBL  , NLUS )
       CALL wrf_dm_bcast_real    ( ALBEDOMINTBL , NLUS )
       CALL wrf_dm_bcast_real    ( ALBEDOMAXTBL , NLUS )
+      CALL wrf_dm_bcast_real    ( ZTOPVTBL , NLUS )
+      CALL wrf_dm_bcast_real    ( ZBOTVTBL , NLUS )
       CALL wrf_dm_bcast_real    ( MAXALB  , NLUS )
       CALL wrf_dm_bcast_real    ( TOPT_DATA    , 1 )
       CALL wrf_dm_bcast_real    ( CMCMAX_DATA  , 1 )

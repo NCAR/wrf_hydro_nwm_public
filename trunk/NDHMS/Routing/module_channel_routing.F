@@ -488,22 +488,22 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
 
         !-- lake params
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: HRZAREA  !-- horizontal area (km^2)
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: WEIRC    !-- weir coefficient
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: WEIRL    !-- weir length (m)
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ORIFICEC !-- orrifice coefficient
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ORIFICEA !-- orrifice area (m^2)
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ORIFICEE !-- orrifce elevation (m)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
 
-        REAL, INTENT(INOUT), DIMENSION(NLINKS)    :: RESHT    !-- reservoir height (m)
-        REAL, INTENT(INOUT), DIMENSION(NLINKS)    :: QLAKEI   !-- lake inflow (cms)
-        REAL,                DIMENSION(NLINKS)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
-        REAL, INTENT(INOUT), DIMENSION(NLINKS)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
+        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
+        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
+        REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
+        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LAKENODE !-- outflow from lake used in diffusion scheme
         REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flux
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
-        REAL, DIMENSION(NLINKS)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
+        REAL, DIMENSION(NLAKES)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
 
 !-- Local Variables
         INTEGER                     :: i,j,k,m,kk,KRT,node
@@ -553,6 +553,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          DT_STEPS = 1
 
          DO KRT=1,DT_STEPS                 !-- route over routing timestep
+
           do k = 1, NLINKS
              QLateral(k)=0                        !--initial lateral flux to 0 for this reach
              do i = 1, IXRT
@@ -657,6 +658,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
 !yw begin
          elseif(channel_option .eq. 3) then   !--- route using the diffusion scheme on nodes not links
+
 #ifdef MPP_LAND
          call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINK,NLINKS,99)
          call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOL,NLINKS,99)
@@ -671,9 +673,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          CVOLTMP = CVOL           !-- temporary storage of the volume of water in channel (m^3)
          QLAKEIP = QLAKEI         !-- temporary lake inflow from previous timestep  (cms)
 
-
+!        call check_channel(77,HLINKTMP,1,nlinks)
 !        call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,ZELEV,NLINKS,99)
- crnt:   DO                      !-- loop on the courant condition
+ crnt:    DO                      !-- loop on the courant condition
          QSUM   = 0              !-- initialize the total flow out of each cell to zero
          QLAKEI = 0              !-- set the lake inflow as zero
          QLLAKE = 0              !-- initialize each lake's lateral inflow to zero  
@@ -696,11 +698,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #else
          DO i = 1,NLINKS
 #endif
+          
            if(node_area(i) .eq. 0) then
-#ifdef HYDRO_D
                write(6,*) "Error: node_area(i) is zero. i=", i
                call hydro_stop("drive_CHANNEL") 
-#endif
            endif
 
            
@@ -776,8 +777,12 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLateral,NLINKS,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLINKS,99)
+    if(NLAKES .gt. 0) then
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+    endif
 #endif
+
+!     call check_channel(79,QLINK(:,1),1,nlinks)
 
 
           !-- compute conveyances, with known depths (just assign to QLINK(,1)
@@ -791,6 +796,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
            DO i = 1,NLINKS
 #endif
            if (TYPEL(i) .eq. 0 .AND. HLINKTMP(FROM_NODE(i)) .gt. RETDEP_CHAN) then 
+               if(from_node(i) .ne. to_node(i) ) &  ! added by Wei Yu
                    QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
                      HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
                      CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
@@ -802,7 +808,17 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLINK(:,1),NLINKS,99)
 #endif
+!          call check_lake(80,QLLAKE,lake_index,nlakes)
+!         call check_channel(81,QLINK(:,1),1,nlinks)
+!         call check_channel(82,HLINKTMP,1,nlinks)
+!         call check_channel(89,HLINKTMP,1,nlinks)
+!         call check_channel(83,CHANLEN,1,nlinks)
+!         call check_channel(84,MannN,1,nlinks)
+!         call check_channel(85,Bw,1,nlinks)
+!         call check_channel(86,ChSSlp,1,nlinks)
+!         call check_channel(87,TYPEL*1.0,1,nlinks)
  
+
           !-- compute total flow across face, into node
 #ifdef MPP_LAND
          DO iyw = 1,yw_mpp_nlinks
@@ -811,14 +827,21 @@ gwOption:   if(gwBaseSwCRT == 3) then
           DO i = 1,NLINKS                                                 !-- inflow to node across each face
 #endif
            if(TYPEL(i) .eq. 0) then                                       !-- only regular nodes have to attribute
-            QSUM(TO_NODE(i)) = QSUM(TO_NODE(i)) + QLINK(i,1)
+              QSUM(TO_NODE(i)) = QSUM(TO_NODE(i)) + QLINK(i,1)
            endif
           END DO
 
 #ifdef MPP_LAND
-    !call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,99)
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,0)
 #endif
+
+!    call check_channel(79,TYPEL*1.0,1,nlinks)
+
+!    call check_channel(80,QLINK(:,1),1,nlinks)
+
+!    call check_channel(89,qsum,1,nlinks)
+
+
 
 #ifdef MPP_LAND
          DO iyw = 1,yw_mpp_nlinks
@@ -831,6 +854,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,99)
 #endif
+!   call check_channel(89,qsum,1,nlinks)
+
 
          flag = 99
 
@@ -945,7 +970,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
             else
 #ifdef HYDRO_D
-              print *, "this node does not have a type.. error"
+              print *, "this node does not have a type.. error TYPEL =", TYPEL(i)
               call hydro_stop("drive_CHANNEL") 
 #endif
             endif
@@ -961,14 +986,19 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOLTMP,NLINKS,99)
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CD,NLINKS,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+    if(NLAKES .gt. 0) then
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+    endif
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINKTMP,NLINKS,99)
 #endif 
+!   call check_channel(83,CVOLTMP,1,nlinks)
+!   call check_channel(84,CD,1,nlinks)
+!   call check_channel(85,HLINKTMP,1,nlinks)
+!   call check_lake(86,QLAKEI,lake_index,nlakes)
 
-!         call check_channel(92,CVOLTMP,nlinks_index,mpp_nlinks,nlinks)
-!         call check_channel(91,CD,nlinks_index,mpp_nlinks,nlinks)
-!         call check_channel(55,QLAKEI,nlinks_index,mpp_nlinks,nlinks)
-!         call check_channel(56,HLINKTMP,nlinks_index,mpp_nlinks,nlinks)
+!   call hydro_stop("88888888")
+      
+
 
 
            do i = 1, NLAKES !-- mass balances of lakes
@@ -984,11 +1014,13 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif
            enddo
 #ifdef MPP_LAND
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLLAKE,NLINKS,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,RESHT,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
-    call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
+    if(NLAKES .gt. 0) then
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLLAKE,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,RESHT,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
+    endif
 #endif
 
 
@@ -1284,18 +1316,41 @@ gwOption:   if(gwBaseSwCRT == 3) then
      END FUNCTION fnDXCDT
 ! ----------------------------------------------------------------------
 
-    subroutine check_channel(unit,cd,nlinks_index,mpp_nlinks,nlinks)
-         integer :: unit,mpp_nlinks,nlinks,nlinks_index(nlinks),i
+    subroutine check_lake(unit,cd,lake_index,nlakes)
+         use module_RT_data, only: rt_domain
+         implicit none 
+         integer :: unit,nlakes,i,lake_index(nlakes)
+         real cd(nlakes)
+#ifdef MPP_LAND
+         call write_lake_real(cd,lake_index,nlakes)
+#endif
+         write(unit,*) cd
+          call flush(unit)
+         return
+    end subroutine check_lake
+
+    subroutine check_channel(unit,cd,did,nlinks)
+         use module_RT_data, only: rt_domain
+#ifdef MPP_LAND
+  USE module_mpp_land
+#endif
+         implicit none 
+         integer :: unit,nlinks,i, did
          real cd(nlinks)
 #ifdef MPP_LAND
-         call write_chanel_real(cd,nlinks_index,mpp_nlinks,nlinks)
+         real g_cd(rt_domain(did)%gnlinks)
+         call write_chanel_real(cd,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,nlinks,g_cd)
          if(my_id .eq. IO_id) then
-           write(unit,*) cd
+            write(unit,*) "rt_domain(did)%gnlinks = ",rt_domain(did)%gnlinks
+           write(unit,*) g_cd
          endif
+#else
+           write(unit,*) cd
 #endif
+          call flush(unit)
+          close(unit)
          return
     end subroutine check_channel
-
     subroutine smoth121(var,nlinks,maxv_p,from_node,to_node)
         implicit none
         integer,intent(in) ::  nlinks, maxv_p

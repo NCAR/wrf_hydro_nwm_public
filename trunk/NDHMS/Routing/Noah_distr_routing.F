@@ -2470,9 +2470,8 @@
                IF (VEGTYP(I,J).eq.16 .and. &
                         CH_NETRT(IXXRT,JYYRT).le.0) then
                  !--LAKE_MSKRT(IXXRT,JYYRT) = 1
-                 LAKE_MSKRT(IXXRT,JYYRT) = 9999
-!yw                 LAKE_MSKRT(IXXRT,JYYRT) = -9999
-
+!yw                 LAKE_MSKRT(IXXRT,JYYRT) = 9999
+                 LAKE_MSKRT(IXXRT,JYYRT) = -9999
                end if
                ! BF disaggregate soiltype information for gw-soil-coupling
 	       ! TODO: move this disaggregation code line to lsm_init section because soiltype is time-invariant

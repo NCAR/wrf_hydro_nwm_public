@@ -246,5 +246,5 @@ CONTAINS
        write(fileout,'(a11,i0.5)') "diag_hydro.",0    
 #endif
        open(iunit,file=fileout,form="formatted")
-     endsubroutine open_print_mpp
+     end subroutine open_print_mpp
 end module module_HRLDAS_HYDRO

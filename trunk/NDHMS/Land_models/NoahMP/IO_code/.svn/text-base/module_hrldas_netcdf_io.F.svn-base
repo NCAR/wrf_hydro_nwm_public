@@ -1610,7 +1610,7 @@ contains
        ixpar = size(array,1)
        jxpar = size(array,2)
        call put_var_2d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
-            ixpar , jxpar , xstartpar_remember , trim(name) , array )
+            ixpar , jxpar , xstartpar_remember , trim(name) , array, .false. )
     endif
   end subroutine add_to_output_2d_float
 
@@ -1737,7 +1737,7 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine put_var_2d(ncid, output_count, vegtyp, iswater, ix, jx, xstart, varname, vardata)
+  subroutine put_var_2d(ncid, output_count, vegtyp, iswater, ix, jx, xstart, varname, vardata, restart_flag)
     implicit none
     integer,                   intent(in) :: ncid
     integer,                   intent(in) :: output_count
@@ -1748,6 +1748,7 @@ contains
     integer, dimension(ix,jx), intent(in) :: vegtyp
     integer,                   intent(in) :: iswater
     real,    dimension(ix,jx), intent(in) :: vardata
+    logical,                   intent(in) :: restart_flag
 
     real,    dimension(ix,jx)             :: xdum
     integer                               :: iret
@@ -1756,7 +1757,7 @@ contains
     integer, dimension(3) :: nstart
     integer, dimension(3) :: ncount
 
-    where (vegtyp == ISWATER)
+    where (vegtyp == ISWATER .and. .not. restart_flag)
        xdum = -1.E33
     elsewhere
        xdum = vardata
@@ -2047,7 +2048,7 @@ contains
     ierr = nf90_enddef(ncid)
     call error_handler(ierr, "ADD_TO_RESTART:  nf90_enddef")
 
-    call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array)
+    call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array, .true.)
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "ADD_TO_RESTART:  nf90_close")

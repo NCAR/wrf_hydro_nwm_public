@@ -1,6 +1,13 @@
 module module_hrldas_netcdf_io
   use module_date_utilities
   use netcdf
+
+#ifdef MPP_LAND
+  use module_mpp_land, only:mpp_land_bcast_int1, decompose_data_real, mpp_land_bcast_real1, decompose_data_int, &
+                  io_id, global_nx, global_ny, my_id, write_io_real, write_io_int, write_io_real3d,decompose_data_real3d, &
+                   mpp_land_sync,mpp_land_bcast_char,mpp_land_bcast
+#endif
+
 #ifdef _PARALLEL_
   use mpi
 #endif
@@ -36,16 +43,46 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
 
+  interface prepare_output_file
+#ifdef MPP_LAND
+     module procedure prepare_output_file_mpp
+#else
+     module procedure prepare_output_file_seq
+#endif
+  end interface
+
+  interface prepare_restart_file
+#ifdef MPP_LAND
+     module procedure prepare_restart_file_mpp
+#else
+     module procedure prepare_restart_file_seq
+#endif
+  end interface
+
+
   interface add_to_restart
+#ifdef MPP_LAND
+     module procedure add_to_restart_2d_float_mpp, add_to_restart_2d_integer_mpp, add_to_restart_3d_mpp
+#else
      module procedure add_to_restart_2d_float, add_to_restart_2d_integer, add_to_restart_3d
+#endif
   end interface
 
   interface get_from_restart
-     module procedure get_from_restart_2d_float, get_from_restart_2d_integer, get_from_restart_3d
+#ifdef MPP_LAND
+     module procedure get_from_restart_2d_float_mpp, get_from_restart_2d_integer_mpp, get_from_restart_3d_mpp, &
+              get_from_restart_att
+#else
+     module procedure get_from_restart_2d_float, get_from_restart_2d_integer, get_from_restart_3d, get_from_restart_att
+#endif
   end interface
 
   interface add_to_output
+#ifdef MPP_LAND
+     module procedure add_to_output_2d_float_mpp, add_to_output_2d_integer_mpp, add_to_output_3d_mpp
+#else
      module procedure add_to_output_2d_float, add_to_output_2d_integer, add_to_output_3d
+#endif
   end interface
 
 contains
@@ -117,6 +154,9 @@ contains
     integer                           :: riend
     logical                           :: lexist
 
+#ifdef MPP_LAND
+     if(my_id .ne. IO_id) return
+#endif
 
     ribeg = index(restart_filename_requested, "<LATEST>")-1
 
@@ -173,6 +213,27 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
+  subroutine read_dim(wrfinput_flnm, ix, jx)
+       implicit none
+       character(len=*),   intent(in)    :: wrfinput_flnm
+       integer,            intent(out)   :: ix, jx    ! dimensions 
+       integer  :: ncid, dimid, ierr
+       ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
+
+       ierr = nf90_inq_dimid(ncid, "west_east", dimid)
+       call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension 'west_east'")
+
+       ierr = nf90_inquire_dimension(ncid, dimid, len=ix)
+       call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension length for 'west_east'")
+   
+       ierr = nf90_inq_dimid(ncid, "south_north", dimid)
+       call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension 'south_north'")
+   
+       ierr = nf90_inquire_dimension(ncid, dimid, len=jx)
+       call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension length for 'south_north'")
+
+  end subroutine read_dim
+
   subroutine read_hrldas_hdrinfo(wrfinput_flnm, ix, jx, &
        xstart, xend, ystart, yend,                      &
        iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
@@ -188,7 +249,11 @@ contains
     integer,            intent(out)   :: igrid
     integer,            intent(out)   :: ix, jx    ! dimensions
     integer,            intent(in)    :: xstart, ystart ! Subwindow definition
+#ifdef MPP_LAND
+    integer,            intent(in) :: xend, yend     ! Subwindow definition
+#else
     integer,            intent(inout) :: xend, yend     ! Subwindow definition
+#endif
     integer,            intent(out)   :: iswater   ! vegetation category corresponding to water bodies
     integer,            intent(out)   :: isurban   ! vegetation category corresponding to urban areas
     integer,            intent(out)   :: isice     ! vegetation category corresponding to ice areas
@@ -280,25 +345,41 @@ contains
        if (ichar(llanduse(i:i)) == 0) llanduse(i:i) = " "
     enddo
 
+#ifndef MPP_LAND
     if (xend == 0) then
        xend = ix
     endif
     if (yend == 0) then
        yend = jx
     endif
+#endif
 
 !
 ! This section is for reading the information from the wrfinput file
 !
 
     ! We only need to read the one starting point.
+#ifdef MPP_LAND
+    allocate(dum2d(xstart:xend,ystart:yend))
+    call get_2d_netcdf("XLAT", ncid, dum2d,  units, xstart, xend  , ystart, yend , FATAL, ierr)
+#else
     allocate(dum2d(xstart:xstart,ystart:ystart))
     call get_2d_netcdf("XLAT", ncid, dum2d,  units, xstart, xstart, ystart, ystart, FATAL, ierr)
+#endif
     lat1 = dum2d(xstart,ystart)
 
+#ifdef MPP_LAND
+    call get_2d_netcdf("XLONG", ncid, dum2d,  units, xstart, xend  , ystart, yend  , FATAL, ierr)
+#else
     call get_2d_netcdf("XLONG", ncid, dum2d,  units, xstart, xstart, ystart, ystart, FATAL, ierr)
+#endif
     lon1 = dum2d(xstart,ystart)
     deallocate (dum2d)
+
+#ifdef MPP_LAND
+    call mpp_land_bcast_real1(lon1)
+    call mpp_land_bcast_real1(lat1)
+#endif
 
 #ifdef _PARALLEL_
     allocate(dum2d_ptr(xstart:xend,ystart:yend))
@@ -547,16 +628,26 @@ contains
     character(len=*), intent(in) :: name
     integer, intent(in) :: ncid
     integer, intent(in) :: xstart, xend, ystart, yend
+#ifdef MPP_LAND
+    real, dimension(xstart:xend,ystart:yend), intent(inout) :: array
+#else
     real, dimension(xstart:xend,ystart:yend), intent(out) :: array
-    character(len=256), intent(out) :: units
+#endif
+    character(len=*), intent(out) :: units
     integer :: iret, varid
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
     logical, intent(in) :: fatal_if_error 
     integer, intent(out) :: ierr
-
+#ifdef MPP_LAND
+    real:: g_array(global_nx,global_ny)
+#endif
     units = " "
+    
+#ifdef MPP_LAND
+    if(my_id .eq. 0) then
+#endif
 
     iret = nf90_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
@@ -565,6 +656,9 @@ contains
           call error_handler(iret, "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file.")
        else
           ierr = iret
+#ifdef MPP_LAND
+          goto 9991
+#endif
           return
        endif
     endif
@@ -581,8 +675,15 @@ contains
 !KWM       endif
 !KWM    endif
 
+#ifdef MPP_LAND
+    iret = nf90_get_var(ncid, varid, values=g_array, start=(/1,1/), count=(/global_nx,global_ny/))
+#else
     iret = nf90_get_var(ncid, varid, values=array, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+#endif
     if (iret /= 0) then
+#ifdef MPP_LAND
+          goto 9991
+#endif
        if (FATAL_IF_ERROR) then
           print*, 'ncid =', ncid
           call error_handler(iret, "MODULE_HRLDAS_NETCDF_IO:  Problem retrieving variable '"//trim(name)//"' from NetCDF file.")
@@ -593,6 +694,16 @@ contains
     endif
 
     ierr = 0;
+#ifdef MPP_LAND
+9991    continue
+    endif
+    call mpp_land_bcast_int1(ierr)
+    !yyww call mpp_land_bcast(units)
+    call mpp_land_bcast_char(256,units)
+    if(ierr /= 0) return
+    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+    call decompose_data_real(g_array,array)
+#endif
   end subroutine get_2d_netcdf
 
 !---------------------------------------------------------------------------------------------------------
@@ -615,8 +726,15 @@ contains
     real, intent(out) :: layer_top
 
     integer :: iret, varid
+#ifdef MPP_LAND
+    real:: g_array(global_nx,global_ny)
+#endif
 
     units = " "
+
+#ifdef MPP_LAND
+    if(my_id .eq. 0) then
+#endif
 
     iret = nf90_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
@@ -625,6 +743,9 @@ contains
           stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_inq_varid"
        else
           ierr = iret
+#ifdef MPP_LAND
+          goto 9992
+#endif
           return
        endif
     endif
@@ -632,7 +753,11 @@ contains
     iret = nf90_get_att(ncid, varid, "units", units)
     if (iret /= 0) units = "units unknown"
 
+#ifdef MPP_LAND
+    iret = nf90_get_var(ncid, varid, values=g_array, start=(/1,1/), count=(/global_nx,global_ny/))
+#else
     iret = nf90_get_var(ncid, varid, values=array, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+#endif
     if (iret /= 0) then
        if (FATAL_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
@@ -641,6 +766,9 @@ contains
           stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_get_var"
        else
           ierr = iret
+#ifdef MPP_LAND
+          goto 9992
+#endif
           return
        endif
     endif
@@ -653,6 +781,16 @@ contains
     call error_handler(iret, "Attempted to find 'layer_bottom' attribute on variable "//trim(name))
 
     ierr = 0;
+#ifdef MPP_LAND
+9992    continue
+    endif
+    call mpp_land_bcast_int1(ierr)
+    call mpp_land_bcast_char(256,units)
+    call mpp_land_bcast(layer_bottom)
+    call mpp_land_bcast(layer_top)
+    if(ierr /= 0) return
+    call decompose_data_real(g_array,array)
+#endif
   end subroutine get_2d_netcdf_soillevel
 
 !---------------------------------------------------------------------------------------------------------
@@ -1038,13 +1176,18 @@ contains
 !KWM    print*, 'lastread%read_date = ', lastread%read_date
 !KWM    print*, 'nextread%read_date = ', nextread%read_date
 
+
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,target_date(1:19))
+     call mpp_land_bcast_char(19,nextread%read_date(1:19))
+#endif
+
     if (target_date > nextread%read_date ) then
        !
        ! We've advanced beyond the date of the end-bracketing data in memory.
        ! Read the next (later) forcing data, and put the data into the nextread
        ! structure.
        !
-
        if (nextread%read_date /= "0000-00-00_00:00:00") then
           ! Clear the old lastread data
           call clear_inputstruct(lastread)
@@ -1060,7 +1203,10 @@ contains
        ! If there is no last date, assume we're at the beginning of our processing
        ! and take the target_date as the first timestep, for which forcing data
        ! must be available.
-
+     
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,lastread%read_date(1:19))
+#endif
        if (lastread%read_date == "0000-00-00_00:00:00") then
           nextread%read_date = target_date
        else
@@ -1069,11 +1215,13 @@ contains
 
        ! Build a file name
        flnm = flnm_template
+
+#ifdef MPP_LAND
+       if(my_id .eq. IO_id) then
+#endif
        call strrep(flnm, "<date>", nextread%read_date(1:4)//nextread%read_date(6:7)//nextread%read_date(9:10)//nextread%read_date(12:13))
 
-!KWM       print*, 'new nextread%read_date = ', nextread%read_date
        !print*, 'read file:  ', trim(flnm)
-
        ! Open the NetCDF file.
 #ifdef _PARALLEL_
        ierr = nf90_open_par(flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
@@ -1094,6 +1242,9 @@ contains
           stop
        endif
 
+#ifdef MPP_LAND
+      endif
+#endif
        ! Allocate space to hold data
        call allocate_inputstruct(nextread, xstart, xend, ystart, yend)
 
@@ -1125,10 +1276,19 @@ contains
           endif
        endif
 
+#ifdef MPP_LAND
+       if(my_id .eq. IO_id) &
+#endif
        ! Close the file
        ierr = nf90_close(ncid)
 
     endif
+
+
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,target_date(1:19))
+#endif
+
 
     if (target_date == nextread%read_date) then
        !
@@ -1218,6 +1378,9 @@ contains
 
     allocate(instruct%lai (xstart:xend,ystart:yend), stat=allostat )
     if (allostat/=0) stop "Problem allocating instruct%lai"
+#ifdef MPP_LAND
+    instruct%lai = 0.0
+#endif
   end subroutine allocate_inputstruct
 
 !---------------------------------------------------------------------------------------------------------
@@ -1407,8 +1570,65 @@ contains
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
+#ifdef MPP_LAND
+      subroutine prepare_output_file_mpp(outdir, version, igrid, &
+       output_timestep, llanduse, split_output_count, hgrid, &
+       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
+       mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
+       nsoil, nsnow, sldpth, startdate, date, &
+       vegtyp, soltyp)
 
-  subroutine prepare_output_file(outdir, version, igrid, &
+    implicit none
+
+    character(len=*),                         intent(in) :: outdir
+    character(len=*),                         intent(in) :: version
+    integer,                                  intent(in) :: igrid
+    integer,                                  intent(in) :: output_timestep
+    character(len=*),                         intent(in) :: llanduse
+    integer,                                  intent(in) :: split_output_count
+    character,                                intent(in) :: hgrid
+    integer,                                  intent(in) :: ixfull
+    integer,                                  intent(in) :: jxfull
+    integer,                                  intent(in) :: ixpar
+    integer,                                  intent(in) :: jxpar
+    integer,                                  intent(in) :: xstartpar
+    integer,                                  intent(in) :: ystartpar
+    integer,                                  intent(in) :: iswater
+    integer,                                  intent(in) :: mapproj
+    real,                                     intent(in) :: lat1
+    real,                                     intent(in) :: lon1
+    real,                                     intent(in) :: dx
+    real,                                     intent(in) :: dy
+    real,                                     intent(in) :: truelat1
+    real,                                     intent(in) :: truelat2
+    real,                                     intent(in) :: cen_lon
+    integer,                                  intent(in) :: nsoil
+    integer,                                  intent(in) :: nsnow
+    real,             dimension(nsoil),       intent(in) :: sldpth
+    character(len=19),                        intent(in) :: startdate
+    character(len=19),                        intent(in) :: date
+    integer,          dimension(ixpar,jxpar), intent(in) :: vegtyp
+    integer,          dimension(ixpar,jxpar), intent(in) :: soltyp
+    integer,          dimension(global_nx,global_ny) :: g_vegtyp
+    integer,          dimension(global_nx,global_ny) :: g_soltyp
+
+
+    call write_io_int(vegtyp, g_vegtyp)
+    call write_io_int(soltyp, g_soltyp)
+
+    if(my_id .eq. IO_id) then
+       call prepare_output_file_seq(outdir, version, igrid, &
+       output_timestep, llanduse, split_output_count, hgrid, &
+       global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar, iswater,  &
+       mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
+       nsoil, nsnow, sldpth, startdate, date, &
+       g_vegtyp, g_soltyp)
+    end if
+
+    end subroutine prepare_output_file_mpp
+#endif
+
+  subroutine prepare_output_file_seq(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
@@ -1417,6 +1637,7 @@ contains
     ! To prepare the output file, we create the file, write dimensions and attributes, write the time variable.
     ! At the end of this routine, the output file is out of define mode.
     implicit none
+#include <netcdf.inc>
 
     character(len=*),                         intent(in) :: outdir
     character(len=*),                         intent(in) :: version
@@ -1473,7 +1694,11 @@ contains
        iret = nf90_create(trim(output_flnm), &
             OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
        iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
+#endif
 #endif
        call error_handler(iret, failure="Problem nf90_create for "//trim(output_flnm))
 
@@ -1546,7 +1771,7 @@ contains
     iret = nf90_put_var(ncid_remember, varid, date, (/1,output_count_remember+1/), (/19,1/))
     call error_handler(iret, "OUTPUT_HRLDAS:  Problem writing variable 'Times'")
 
-  end subroutine prepare_output_file
+  end subroutine prepare_output_file_seq
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
@@ -1555,6 +1780,10 @@ contains
     implicit none
     integer, intent(in) :: imode
     integer :: ierr
+
+#ifdef MPP_LAND
+    if(my_id .ne. IO_id) return
+#endif
 
     if (imode == 1) then
        ! We need to define things only with a new file, i.e., only when output_count_remember == 0
@@ -1580,6 +1809,10 @@ contains
     integer, intent(in)  :: split_output_count
     integer :: ierr
 
+#ifdef MPP_LAND
+    if(my_id .ne. IO_id) return
+#endif
+
     output_count_remember = output_count_remember + 1
     if (output_count_remember == split_output_count) then
        output_count_remember = 0 
@@ -1596,6 +1829,49 @@ contains
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
+#ifdef MPP_LAND
+  subroutine add_to_output_2d_float_mpp ( array, name, description, units )
+    implicit none
+    real, dimension(:,:), intent(in) :: array
+    real, dimension(global_nx,global_ny) :: garray
+    character(len=*), intent(in) :: name, description, units
+    call write_io_real(array,garray)
+    if(my_id .eq. io_id) then
+         call add_to_output_2d_float( garray, name, description, units )
+    endif
+  end subroutine add_to_output_2d_float_mpp
+
+  subroutine add_to_output_2d_integer_mpp ( array, name, description, units )
+    implicit none
+    integer, dimension(:,:), intent(in) :: array
+    character(len=*), intent(in) :: name, description, units
+    integer, dimension(global_nx,global_ny) :: garray
+    call write_io_int(array,garray)
+    if(my_id .eq. io_id) then
+         call add_to_output_2d_integer( garray, name, description, units )
+    endif
+  end subroutine add_to_output_2d_integer_mpp
+
+  subroutine add_to_output_3d_mpp ( array, name, description, units, snow_or_soil )
+    implicit none
+    real, dimension(:,:,:), intent(in) :: array
+    character(len=*), intent(in) :: name, description, units
+    character(len=4), intent(in) :: snow_or_soil
+    integer :: k, klevel
+
+    real, allocatable, dimension(:,:,:) :: garray
+    klevel = size(array,2)
+
+    allocate(garray(global_nx,klevel,global_ny))
+
+    call write_io_real3d(array,garray,klevel)
+    if(my_id .eq. io_id) then
+       call add_to_output_3d( garray, name, description, units, snow_or_soil )
+    endif
+    deallocate(garray)
+
+  end subroutine add_to_output_3d_mpp
+#endif
 
   subroutine add_to_output_2d_float ( array, name, description, units )
     implicit none
@@ -1610,7 +1886,7 @@ contains
        ixpar = size(array,1)
        jxpar = size(array,2)
        call put_var_2d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
-            ixpar , jxpar , xstartpar_remember , trim(name) , array )
+            ixpar , jxpar , xstartpar_remember , trim(name) , array, .false. )
     endif
   end subroutine add_to_output_2d_float
 
@@ -1737,7 +2013,7 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine put_var_2d(ncid, output_count, vegtyp, iswater, ix, jx, xstart, varname, vardata)
+  subroutine put_var_2d(ncid, output_count, vegtyp, iswater, ix, jx, xstart, varname, vardata, restart_flag)
     implicit none
     integer,                   intent(in) :: ncid
     integer,                   intent(in) :: output_count
@@ -1748,6 +2024,7 @@ contains
     integer, dimension(ix,jx), intent(in) :: vegtyp
     integer,                   intent(in) :: iswater
     real,    dimension(ix,jx), intent(in) :: vardata
+    logical,                   intent(in) :: restart_flag
 
     real,    dimension(ix,jx)             :: xdum
     integer                               :: iret
@@ -1756,7 +2033,7 @@ contains
     integer, dimension(3) :: nstart
     integer, dimension(3) :: ncount
 
-    where (vegtyp == ISWATER)
+    where (vegtyp == ISWATER .and. .not. restart_flag)
        xdum = -1.E33
     elsewhere
        xdum = vardata
@@ -1848,7 +2125,8 @@ contains
   subroutine finalize_restart_file()
     implicit none
 
-    deallocate(vegtyp_remember)
+    !yw  deallocate(vegtyp_remember)
+    if(allocated(vegtyp_remember)) deallocate(vegtyp_remember)
     restart_filename_remember = " "
     iswater_remember   = -999999
     xstartpar_remember = -999999
@@ -1858,12 +2136,56 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine prepare_restart_file(outdir, version, igrid, llanduse, olddate, startdate,  &
+#ifdef MPP_LAND
+      subroutine prepare_restart_file_mpp(outdir, version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
        iswater, vegtyp)
 
     implicit none
+
+    character(len=*),                      intent(in) :: outdir
+    character(len=*),                      intent(in) :: version
+    integer,                               intent(in) :: igrid
+    character(len=*),                      intent(in) :: llanduse
+    character(len=*),                      intent(in) :: olddate
+    character(len=*),                      intent(in) :: startdate
+    integer,                               intent(in) :: ixfull
+    integer,                               intent(in) :: jxfull
+    integer,                               intent(in) :: ixpar
+    integer,                               intent(in) :: jxpar
+    integer,                               intent(in) :: xstartpar
+    integer,                               intent(in) :: ystartpar
+    integer,                               intent(in) :: nsoil
+    integer,                               intent(in) :: nsnow
+    real,                                  intent(in) :: dx, dy
+    real,                                  intent(in) :: truelat1, truelat2
+    integer,                               intent(in) :: mapproj
+    real,                                  intent(in) :: lat1, lon1, cen_lon
+    integer,                               intent(in) :: iswater
+    integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
+    integer, dimension(global_nx,global_ny) :: gvegtyp
+
+    call write_io_int(vegtyp, gvegtyp)
+    if(my_id .eq. io_id) then
+      call prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
+       global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar,               &
+       nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,         &
+       iswater, gvegtyp)
+    endif 
+
+    call mpp_land_sync()
+
+    end subroutine prepare_restart_file_mpp
+#endif
+
+  subroutine prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
+       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
+       nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
+       iswater, vegtyp)
+
+    implicit none
+#include <netcdf.inc>
 
     character(len=*),                      intent(in) :: outdir
     character(len=*),                      intent(in) :: version
@@ -1921,7 +2243,11 @@ contains
     ierr = nf90_create(trim(output_flnm), &
          OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       ierr = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
     ierr = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
+#endif
 #endif
 
     if (ierr /= 0) stop "Problem nf_create"
@@ -1972,16 +2298,73 @@ contains
     ierr = nf90_inq_varid(ncid, "Times", varid)
     call error_handler(ierr, "WRITE_RESTART:  Problem inquiring varid for 'Times'")
 
+    write(6,*) "yywww olddate  = ", olddate
+    write(6,*) "yywww output_count_remember  = ", output_count_remember
+
     ierr = nf90_put_var(ncid, varid, olddate, (/1,1/), (/19,1/))
     call error_handler(ierr, "WRITE_RESTART:  problem putting 'Times' to restart file")
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "WRITE_RESTART:  nf90_close")
 
-  end subroutine prepare_restart_file
+  end subroutine prepare_restart_file_seq
 
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
+#ifdef MPP_LAND
+  subroutine add_to_restart_2d_float_mpp(array, name, units, description)
+    implicit none
+    real,            dimension(:,:),                              intent(in) :: array
+    real,            dimension(global_nx,global_ny) :: garray
+    character(len=*),                                             intent(in) :: name
+    character(len=*), optional,                                   intent(in) :: units
+    character(len=*), optional,                                   intent(in) :: description
+    call write_io_real(array,garray)
+    if(my_id .eq. IO_id) then
+         call add_to_restart_2d_float(garray, name, units, description)
+    endif
+    call mpp_land_sync()
+  end subroutine add_to_restart_2d_float_mpp
+
+  subroutine add_to_restart_2d_integer_mpp(array, name, units, description)
+    implicit none
+    integer,            dimension(:,:),                              intent(in) :: array
+    integer,            dimension(global_nx,global_ny) :: garray
+    character(len=*),                                             intent(in) :: name
+    character(len=*), optional,                                   intent(in) :: units
+    character(len=*), optional,                                   intent(in) :: description
+    call write_io_int(array,garray)
+    if(my_id .eq. IO_id) then
+         call add_to_restart_2d_integer(garray, name, units, description)
+    endif
+    call mpp_land_sync()
+  end subroutine add_to_restart_2d_integer_mpp
+
+  subroutine add_to_restart_3d_mpp(array, name, units, description, layers)
+    implicit none
+    real,            dimension(:,:,:),                            intent(in) :: array
+    character(len=*),                                             intent(in) :: name
+    character(len=*), optional,                                   intent(in) :: units
+    character(len=*), optional,                                   intent(in) :: description
+    character(len=4), optional,                                   intent(in) :: layers
+    integer  :: k, klevel
+
+    real, allocatable, dimension(:,:,:) :: garray
+    klevel = size(array,2)
+    allocate(garray(global_nx,klevel,global_ny))
+
+       call write_io_real3d(array,garray,klevel)
+
+    if(my_id .eq. IO_id) then
+         call add_to_restart_3d(garray, name, units, description, layers)
+    endif
+    deallocate(garray)
+
+    call mpp_land_sync()
+  end subroutine add_to_restart_3d_mpp
+
+
+#endif
 
   subroutine add_to_restart_2d_float(array, name, units, description)
     implicit none
@@ -2047,7 +2430,7 @@ contains
     ierr = nf90_enddef(ncid)
     call error_handler(ierr, "ADD_TO_RESTART:  nf90_enddef")
 
-    call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array)
+    call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array, .true.)
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "ADD_TO_RESTART:  nf90_close")
@@ -2259,6 +2642,10 @@ contains
     integer :: rank
     integer :: read_sfcdif
 
+#ifdef MPP_LAND
+     if(my_id .ne. IO_id) return
+#endif
+
     restart_filename_remember = restart_flnm
 
 #ifdef _PARALLEL_
@@ -2325,6 +2712,84 @@ contains
 
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
+#ifdef MPP_LAND
+  subroutine get_from_restart_2d_float_mpp(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, name, array, return_error)
+    implicit none
+    integer,                            intent(in) :: parallel_xstart
+    integer,                            intent(in) :: parallel_xend
+    integer,                            intent(in) :: subwindow_xstart
+    integer,                            intent(in) :: ixfull
+    integer,                            intent(in) :: jxfull
+    character(len=*),                   intent(in)  :: name
+    real,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
+    real,             dimension(global_nx,global_ny):: garray 
+    integer,          optional,         intent(out) :: return_error
+      if(my_id .eq. IO_id) then
+          call get_from_restart_2d_float(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
+      endif
+      call decompose_data_real(garray,array)
+  end subroutine get_from_restart_2d_float_mpp
+
+  subroutine get_from_restart_2d_integer_mpp(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, name, array, return_error)
+    implicit none
+    integer,                            intent(in) :: parallel_xstart
+    integer,                            intent(in) :: parallel_xend
+    integer,                            intent(in) :: subwindow_xstart
+    integer,                            intent(in) :: ixfull
+    integer,                            intent(in) :: jxfull
+    character(len=*),                   intent(in)  :: name
+    integer,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
+    integer,             dimension(global_nx,global_ny):: garray 
+    integer,          optional,         intent(out) :: return_error
+      if(my_id .eq. IO_id) then
+          call get_from_restart_2d_integer(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
+      endif
+      call decompose_data_int(garray,array)
+  end subroutine get_from_restart_2d_integer_mpp
+
+  subroutine get_from_restart_3d_mpp(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, name, array, return_error)
+    implicit none
+    integer,                            intent(in) :: parallel_xstart
+    integer,                            intent(in) :: parallel_xend
+    integer,                            intent(in) :: subwindow_xstart
+    integer,                            intent(in) :: ixfull
+    integer,                            intent(in) :: jxfull
+    character(len=*),                   intent(in)  :: name
+    real,             dimension(:,:,:), intent(out) :: array
+    integer,          optional,         intent(out) :: return_error
+    integer :: klevel,k
+    real, allocatable, dimension(:,:,:) :: garray
+
+    klevel = size(array,2)
+    allocate(garray(global_nx,klevel,global_ny))
+    
+
+      if(my_id .eq. IO_id) then
+          call get_from_restart_3d(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
+      endif
+      do k = 1, klevel
+         call decompose_data_real(garray(:,k,:),array(:,k,:))
+      end do
+      deallocate(garray)
+
+  end subroutine get_from_restart_3d_mpp
+#endif
+
+  subroutine get_from_restart_att(itime)
+    implicit none
+    integer,intent(out) :: itime
+    integer  :: ncid, ierr
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
+        ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
+        ierr = nf90_get_att(ncid, NF90_GLOBAL, "ITIMESTEP", itime)
+        call error_handler(ierr, failure="restart info:  Problems finding global attribute 'ITIMESTEP'")
+         ierr = nf90_close(ncid)
+#ifdef MPP_LAND
+    endif
+#endif
+  end subroutine get_from_restart_att
 
   subroutine get_from_restart_2d_float(parallel_xstart, parallel_xend, subwindow_xstart, ixfull, jxfull, name, array, return_error)
     implicit none

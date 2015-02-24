@@ -22,11 +22,11 @@
              call open_print_mpp(6)
        end subroutine hrldas_drv_HYDRO_ini
 
-       subroutine HYDRO_seq_frocing (indir,forc_typ, snow_assim,olddate,     &
+       subroutine HYDRO_forcing_drv (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,weasd,snodep, kt,FORCING_TIMESTEP,prcp_old)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt,FORCING_TIMESTEP,prcp_old)
 
-         use module_lsm_forcing, only: read_seq_forcing
+         use module_lsm_forcing, only: read_hydro_forcing, read_hydro_forcing_seq
          use module_namelist, only:nlst_rt
          implicit none
          integer did, ixs,ixe,jxs,jxe
@@ -34,19 +34,20 @@
          character(len=19) :: olddate
          character(len=*) :: indir
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
-                 weasd, snodep  ,prcp_old
+                 lai, fpar,snodep  ,prcp_old
          integer :: forc_typ, snow_assim, FORCING_TIMESTEP
 
          ix = ixe-ixs+1
          jx = jxe-jxs+1
          did = 1
-         call read_seq_forcing( &
+!yw          call read_hydro_forcing( &
+         call read_hydro_forcing_seq( &
             indir, olddate, &
             nlst_rt(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
-            weasd,snodep,FORCING_TIMESTEP*1.0,kt ,prcp_old)
-       end subroutine HYDRO_seq_frocing
+            lai,fpar,snodep,FORCING_TIMESTEP*1.0,kt ,prcp_old)
+       end subroutine HYDRO_forcing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
           use module_namelist, only:nlst_rt
@@ -144,7 +145,7 @@
 
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, &
-            snodep,lai, fpar, vegtyp)
+            snodep,lai, fpar, vegtyp,SHDMIN,SHDMAX,FNDSNOWH)
       ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
@@ -152,8 +153,9 @@
           integer :: ix,jx , nsoil, i, j
           integer :: iret, ncid, ierr, varid
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
-          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
+          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar ,SHDMIN,SHDMAX
           integer, dimension(ix,jx) ::    vegtyp
+          logical :: FNDSNOWH
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
@@ -175,8 +177,23 @@
 #endif
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
-           if (iret == 0) iret = nf_get_var_real(ncid, varid, fpar)
-           fpar = fpar/100.
+           if (iret == 0) then 
+               iret = nf_get_var_real(ncid, varid, fpar)
+               if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 1000)) fpar = fpar/100.
+           endif
+
+           iret = nf_inq_varid(ncid,"SHDMIN",  varid)
+           if (iret == 0) then 
+               iret = nf_get_var_real(ncid, varid, SHDMIN)
+               if(maxval(SHDMIN) .gt. 10 .and. (maxval(SHDMIN) .lt. 1000)) SHDMIN = SHDMIN / 100.
+           endif
+             
+
+           iret = nf_inq_varid(ncid,"SHDMAX",  varid)
+           if (iret == 0) then 
+              iret = nf_get_var_real(ncid, varid, SHDMAX)
+               if(maxval(SHDMAX) .gt. 10 .and. (maxval(SHDMAX) .lt. 1000)) SHDMAX = SHDMAX / 100.
+           endif
 
 !yw
 !yw           do j = 1, jx
@@ -196,6 +213,9 @@
              print*, "read snowh for initialization ...."
 #endif
              iret = nf_get_var_real(ncid, varid, snodep)
+             FNDSNOWH = .true.
+          else
+             FNDSNOWH = .false.
           endif  
 
           iret = nf_inq_varid(ncid,"SNOW",  varid)
