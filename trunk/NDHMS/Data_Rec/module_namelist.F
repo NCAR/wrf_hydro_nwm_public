@@ -24,7 +24,7 @@ CONTAINS
                     GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval
-          real:: DTRT,dxrt, gwChanCondConst, gwIhShift
+          real:: DTRT,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
@@ -58,8 +58,8 @@ CONTAINS
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
-                    GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConst, &
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
+                    GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut &
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -129,7 +129,8 @@ CONTAINS
   call mpp_land_bcast_int1(AGGFACTRT)
   call mpp_land_bcast_real1(DTRT)
   call mpp_land_bcast_real1(DXRT)
-  call mpp_land_bcast_real1(gwChanCondConst)
+  call mpp_land_bcast_real1(gwChanCondConstIn)
+  call mpp_land_bcast_real1(gwChanCondConstOut)
   call mpp_land_bcast_real1(gwIhShift)
   call mpp_land_bcast_int1(GWBASESWCRT)
   call mpp_land_bcast_int1(GWSOILCPL)
@@ -162,7 +163,8 @@ CONTAINS
     nlst%GWBASESWCRT = GWBASESWCRT
     nlst%GWSOILCPL= GWSOILCPL
     nlst%gwChanCondSw = gwChanCondSw
-    nlst%gwChanCondConst = gwChanCondConst
+    nlst%gwChanCondConstIn = gwChanCondConstIn
+    nlst%gwChanCondConstOut = gwChanCondConstOut
     nlst%gwIhShift = gwIhShift
     nlst%GwSpinCycles = GwSpinCycles
     nlst%GwPreCycles = GwPreCycles
@@ -205,7 +207,8 @@ CONTAINS
     write(6,*) " nlst%GWBASESWCRT ", GWBASESWCRT
     write(6,*) " nlst%GWSOILCPL ", GWSOILCPL
     write(6,*) " nlst%gwChanCondSw ", gwChanCondSw
-    write(6,*) " nlst%gwChanCondConst ", gwChanCondConst
+    write(6,*) " nlst%gwChanCondConstIn ", gwChanCondConstIn
+    write(6,*) " nlst%gwChanCondConstOut ", gwChanCondConstOut
     write(6,*) " nlst%gwIhShift ", gwIhShift
     write(6,*) " nlst%GwSpinCycles ", GwSpinCycles
     write(6,*) " nlst%GwPreDiag ", GwPreDiag

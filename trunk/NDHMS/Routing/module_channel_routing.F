@@ -434,8 +434,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND 
        ,lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks &
 #endif
-       ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConst &
-       )
+       ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConstIn, &
+       gwChanCondConstOut)
 
        IMPLICIT NONE
 
@@ -475,7 +475,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL                                      :: RETDEP_CHAN
         INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, &
                                                      gwBaseSwCRT, gwChanCondSw
-        real, intent(in)                          :: gwChanCondConst ! aquifer-channel conductivity constant from namelist                                             
+        real, intent(in)                          :: gwChanCondConstIn, gwChanCondConstOut ! aquifer-channel conductivity constant from namelist                                             
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
 
 !DJG GW-chan coupling variables...
@@ -719,13 +719,22 @@ gwOption:   if(gwBaseSwCRT == 3) then
 	       
                 qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
 	        
-             else if(gwChanCondSw .eq. 1) then
+             else if(gwChanCondSw .eq. 1 .and. dzGwChanHead(i) > 0) then
 	       
-	       ! channel bed interface, units in (m^3/s), + is flux into channel...
+	       ! channel bed interface, units in (m^3/s), flux into channel...
 	       ! BF todo: consider channel width
-                qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConst * dzGwChanHead(i) &
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConstIn * dzGwChanHead(i) &
                                                 * CHANLEN(i) * 2. 
 
+             else if(gwChanCondSw .eq. 1 .and. dzGwChanHead(i) < 0) then
+	       
+	       ! channel bed interface, units in (m^3/s), flux out of channel...
+	       ! BF todo: consider channel width
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = max(-0.005, gwChanCondConstOut * dzGwChanHead(i) &
+                                                * CHANLEN(i) * 2.)
+!              else if(gwChanCondSw .eq. 2 .and. dzGwChanHead(i) > 0) then  TBD: exponential dependency
+!              else if(gwChanCondSw .eq. 2 .and. dzGwChanHead(i) > 0) then
+	       
              else
 	       
 	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
@@ -736,10 +745,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !             if ( i .eq. 1001 ) then
 !                print *, Q_GW_CHAN_FLUX(i), dzGwChanHead(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)
 !             end if
-             if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
-                Q_GW_CHAN_FLUX(i) = 0.
-	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
-             end if
+!              if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
+!                 Q_GW_CHAN_FLUX(i) = 0.
+! 	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+!              end if
             
             else
 	      Q_GW_CHAN_FLUX(i) = 0.
@@ -752,14 +761,14 @@ gwOption:   if(gwBaseSwCRT == 3) then
                 ((QSTRMVOLRT(CHANXI(i),CHANYJ(i))+&
                  QINFLOWBASE(CHANXI(i),CHANYJ(i))) &
                    /DT_STEPS*node_area(i)/1000/DTCT)
-	if(Qlateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) then
+	if((QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) .and. (gwChanCondSw == 0)) then
 #ifdef HYDRO_D
                print*, "i, CHANXI(i),CHANYJ(i) = ", i, CHANXI(i),CHANYJ(i)
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
 #endif
-               call hydro_stop("drive_CHANNEL") 
+!                call hydro_stop("drive_CHANNEL") 
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
@@ -928,7 +937,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
  
             if(TYPEL(i) .eq. 0) then                   !--  regular channel grid point, compute volume
               CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) )* DTCT
-              if(CVOLTMP(i) .lt. 0) then 
+              if((CVOLTMP(i) .lt. 0) .and. (gwChanCondSw == 0)) then 
 #ifdef HYDRO_D
                 print *, "warning! channel volume less than 0:i,CVOL,QSUM,QLat", &
                                i, CVOLTMP(i),QSUM(i),QLateral(i),HLINK(i)
@@ -951,7 +960,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                        DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
                        CD(i),CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
             elseif (TYPEL(i) .eq. 2) then              !--- into a reservoir, assume critical depth
-              if (QSUM(i)+QLateral(i) .lt. 0) then
+              if ((QSUM(i)+QLateral(i) .lt. 0) .and. (gwChanCondSw == 0)) then
 #ifdef HYDRO_D
                print *, i, 'CrtDpth Qsum+QLat into lake< 0',QSUM(i), QLateral(i)
 #endif

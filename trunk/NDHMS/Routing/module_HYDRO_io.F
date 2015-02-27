@@ -4923,7 +4923,7 @@ end subroutine mpp_output_chrt
 
 
 
-       SUBROUTINE READ_CHROUTING1(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+       SUBROUTINE READ_CHROUTING1(IXRT,JXRT,fgDEM,CH_NETRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
             NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
             HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
@@ -4944,7 +4944,7 @@ end subroutine mpp_output_chrt
 #include <netcdf.inc>
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
-        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: fgDEM
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
         INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
@@ -4979,6 +4979,7 @@ end subroutine mpp_output_chrt
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT)    :: CH_NETLNK
         REAL,  DIMENSION(IXRT,JXRT)                  ::  ChSSlpG,BwG,MannNG  !channel properties on Grid
+        REAL,  DIMENSION(IXRT,JXRT)                  ::  chanDepth, elrt
 
 
 !-- store the location x,y location of the channel element
@@ -5075,11 +5076,13 @@ end subroutine mpp_output_chrt
 
 !!!Flip y-dimension of highres grids from exported Arc files...
 
-!         var_name = "CHAN_DEPTH"
-!        call readRT2d_real(var_name,CHAN_DEPTH,ixrt,jxrt,&
-!                trim(geo_finegrid_flnm))
+        var_name = "CHAN_DEPTH"
+        call nreadRT2d_real(   &
+             var_name,chanDepth,ixrt,jxrt,trim(geo_finegrid_flnm))
 
-        ct = 0
+       elrt = fgDEM - chanDepth
+       
+       ct = 0
      
 ! temp fix for buggy Arc export...
         do j=1,jxrt

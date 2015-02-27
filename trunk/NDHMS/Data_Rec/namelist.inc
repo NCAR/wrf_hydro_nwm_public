@@ -27,9 +27,8 @@
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                   GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                   sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval
-          real:: DTRT,dxrt0, DTCT, gwChanCondConst, gwIhShift
           logical:: GwPreDiag, GwSpinUp
-
+          real:: DTRT,dxrt0, DTCT, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""

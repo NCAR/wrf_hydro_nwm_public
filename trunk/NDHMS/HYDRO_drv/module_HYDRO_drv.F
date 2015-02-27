@@ -594,7 +594,8 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%yw_mpp_nlinks  &
 #endif
        ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
-       nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConst &
+       nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
+       nlst_rt(did)%gwChanCondConstOut &
        )
     
     if((nlst_rt(did)%gwBaseSwCRT == 3) .and. (nlst_rt(did)%gwChanCondSw .eq. 1)) then
