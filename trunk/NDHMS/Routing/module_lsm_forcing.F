@@ -2933,6 +2933,7 @@ Contains
         if (ierr_flg /= 0) then
           write(*,'("READFORC_MDV Problem opening netcdf file: ''",A,"''")') &
                 trim(flnm)
+           deallocate(buf2)
            return
         end if
 
@@ -2946,10 +2947,19 @@ Contains
 #endif
         if(ierr /= 0) ierr_flg = ierr
         if (ierr /= 0) then
+#ifdef MPP_LAND
+      if(my_id .eq. io_id) then
+#endif
           ierr = nf_inq_varid(ncid,  "precip_rate",  varid)   !recheck variable name...
+#ifdef MPP_LAND
+      endif
+      call mpp_land_bcast_int1(ierr)
+#endif
           if (ierr /= 0) then
             write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
                  trim(flnm)
+              deallocate(buf2)
+              return
           end if
           ierr_flg = ierr
           mmflag = 1
