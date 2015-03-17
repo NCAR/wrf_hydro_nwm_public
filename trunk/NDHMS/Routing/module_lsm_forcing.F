@@ -2928,7 +2928,9 @@ Contains
         if (ierr_flg /= 0) then
           write(*,'("READFORC_MDV Problem opening netcdf file: ''",A,"''")') &
                 trim(flnm)
+#ifdef MPP_LAND
            deallocate(buf2)
+#endif
            return
         end if
 
@@ -2953,7 +2955,9 @@ Contains
           if (ierr /= 0) then
             write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
                  trim(flnm)
+#ifdef MPP_LAND
               deallocate(buf2)
+#endif
               return
           end if
           ierr_flg = ierr
