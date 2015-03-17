@@ -770,6 +770,11 @@
 !!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
                QSTRMVOLTRT = QSTRMVOLTRT + (SFCHEADSUBRT(I,J) - RETDEPRT(I,J))
                QSTRMVOLRT(I,J) = QSTRMVOLRT(I,J)+SFCHEADSUBRT(I,J)-RETDEPRT(I,J)
+
+             ! if(QSTRMVOLRT(I,J) .gt. 0) then 
+             !     print *, "QSTRVOL GT 0", QSTRMVOLRT(I,J),I,J 
+             !  endif
+
                SFCHEADSUBRT(I,J) = RETDEPRT(I,J)
              END IF
            END IF

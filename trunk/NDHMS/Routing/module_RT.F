@@ -18,7 +18,7 @@ CONTAINS
    subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT)   
       use module_RT_data, only: rt_domain
       implicit none
-      integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES
+      integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
       integer istatus, did
       if(rt_domain(did)%allo_status .eq. 1) return
       rt_domain(did)%allo_status = 1
@@ -32,9 +32,11 @@ CONTAINS
       
       NLINKS = rt_domain(did)%NLINKS
       NLAKES = rt_domain(did)%NLAKES
+      NLINKSL = rt_domain(did)%NLINKSL
 
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
+!?     if(rt_domain(did)%NLINKSL.eq. 0) NLINKSL = 1
 
 !DJG Allocate routing and disaggregation arrays
 
@@ -93,7 +95,9 @@ CONTAINS
   allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
   allocate( rt_domain(did)%QSTRMVOLRT_DUM  (IXRT,JXRT) )
   allocate( rt_domain(did)%QBDRYRT   	(IXRT,JXRT) )
+
   allocate( rt_domain(did)%CH_NETRT   	(IXRT,JXRT) )
+
   allocate( rt_domain(did)%LAKE_MSKRT 	(IXRT,JXRT) )
   allocate( rt_domain(did)%LAKE_INFLORT(IXRT,JXRT) )
   allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
@@ -135,7 +139,9 @@ CONTAINS
     rt_domain(did)%QSTRMVOLRT  = 0.0
     rt_domain(did)%QSTRMVOLRT_DUM  = 0.0                
     rt_domain(did)%QBDRYRT   	= 0.0                
+
     rt_domain(did)%CH_NETRT   	= 0.0                
+
     rt_domain(did)%LAKE_MSKRT 	= -9999              
     rt_domain(did)%LAKE_INFLORT= 0.0                
     rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
@@ -150,8 +156,12 @@ CONTAINS
    IF (CHANRTSWCRT.EQ.1 .or. CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
   allocate( rt_domain(did)%CH_NETLNK (IXRT,JXRT) )
             rt_domain(did)%CH_NETLNK = 0.0           
+
   allocate( rt_domain(did)%GCH_NETLNK (IXRT,JXRT) )
             rt_domain(did)%GCH_NETLNK = 0.0           
+
+  allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
+            rt_domain(did)%CH_LNKRT = 0.0           
 
 !DJG,DNY Allocate channel routing and lake routing arrays
 
@@ -200,6 +210,7 @@ CONTAINS
      allocate( rt_domain(did)%MannN(NLINKS))
 
      allocate( rt_domain(did)%node_area(NLINKS) )
+     allocate( rt_domain(did)%LINKID(NLINKS) )
 
 !!!! tmp
       rt_domain(did)%LINK = 0.0        
@@ -237,6 +248,8 @@ CONTAINS
 
       rt_domain(did)%HLINK = 0.0        !--used for diffusion only
       rt_domain(did)%MannN = 0.0        
+      rt_domain(did)%LINKID = 0.0        
+
 
      rt_domain(did)%So = 0.01
   END IF   !IF/then for channel routing
@@ -338,7 +351,7 @@ CONTAINS
               IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_lake_f, &
               rt_domain(did)%NLINKS, rt_domain(did)%NLAKES, &
-              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm)
+              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL)
 
 #ifdef HYDRO_D
         write(6,*) "before rt_allocate after READ_ROUTEDIM"
@@ -406,6 +419,7 @@ CONTAINS
      CALL READ_ROUTING_seq  (  &
 #endif
           rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+          rt_domain(did)%CH_LNKRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
 #ifdef MPP_LAND
@@ -415,8 +429,6 @@ CONTAINS
 
     !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
 
-
-
     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
 
 #ifdef MPP_LAND
@@ -425,7 +437,7 @@ CONTAINS
           CALL READ_CHROUTING(    &
 #endif
                rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-               rt_domain(did)%LAKE_MSKRT, &
+               rt_domain(did)%CH_LNKRT, rt_domain(did)%LAKE_MSKRT, &
                rt_domain(did)%FROM_NODE, rt_domain(did)%TO_NODE, rt_domain(did)%TYPEL, rt_domain(did)%ORDER, &
                rt_domain(did)%MAXORDER,rt_domain(did)%NLINKS, &
                rt_domain(did)%NLAKES, rt_domain(did)%MUSK, rt_domain(did)%MUSX, rt_domain(did)%QLINK,&
@@ -439,11 +451,12 @@ CONTAINS
                rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
                rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
                rt_domain(did)%latval, rt_domain(did)%lonval,&
-               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm        &
+               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL, rt_domain(did)%LINKID &
 #ifdef MPP_LAND
                ,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT   &
-               ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g, &
-               rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index    &
+               ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
+               ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
+               , rt_domain(did)%NLINKSL, rt_domain(did)%LINKID &
 #endif
                )
 

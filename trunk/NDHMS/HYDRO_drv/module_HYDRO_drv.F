@@ -216,7 +216,8 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%CHLAT, &
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
-               RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
+               RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write, &
+               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option)
 
 #ifdef MPP_LAND
 !             call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
@@ -506,15 +507,16 @@ module module_HYDRO_drv
 !-------------------------------------------------------------------
 !DJG,DNY  Begin Channel and Lake Routing Routines
 !-------------------------------------------------------------------
+
   IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT.EQ.2) THEN
- 
+     
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
-       RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT, &
+       RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT,RT_DOMAIN(did)%CH_LNKRT,&
        RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT,nlst_rt(did)%DTRT,&
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
@@ -528,8 +530,8 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%LAKENODE, RT_DOMAIN(did)%dist, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
        RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option, &
-       RT_DOMAIN(did)%RETDEP_CHAN &
-       , RT_DOMAIN(did)%node_area &
+       RT_DOMAIN(did)%RETDEP_CHAN, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, &
+       RT_DOMAIN(did)%node_area  &
 #ifdef MPP_LAND
        ,RT_DOMAIN(did)%lake_index,RT_DOMAIN(did)%link_location,&
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &

@@ -1016,10 +1016,6 @@ Contains
 
      end if
 
-
-
-
-
 !!!DJG CONSTant, idealized forcing...
      if(FORC_TYP.eq.4) then
 ! Impose a fixed diurnal cycle...
@@ -1029,7 +1025,6 @@ Contains
 !       IF (K.GE.1 .and. K.LE.2) THEN
        IF (K.EQ.1) THEN
         PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
-!        PRCP1 =0./3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
        ELSEIF (K.GT.1) THEN
 !        PRCP1 =0./3600.0      !units mm/s
 !       ELSE

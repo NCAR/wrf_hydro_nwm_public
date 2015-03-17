@@ -574,15 +574,18 @@ end subroutine get_albedo12m_netcdf
 
        SUBROUTINE READ_ROUTEDIM(IXRT,JXRT,route_chan_f,route_link_f, &
             route_direction_f, route_lake_f, NLINKS, NLAKES, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm)
+            CH_NETLNK, channel_option, geo_finegrid_flnm,NLINKSL)
 
          implicit none
 #include <netcdf.inc>
         INTEGER                                      :: I,J,channel_option,iret,jj
-        INTEGER, INTENT(INOUT)                       :: NLINKS, NLAKES
+        INTEGER, INTENT(INOUT)                       :: NLINKS, NLAKES, NLINKSL
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
         INTEGER                                      :: CHNID,cnt
+
         INTEGER, DIMENSION(IXRT,JXRT)                :: CH_NETRT   !- binary channel mask
+        INTEGER, DIMENSION(IXRT,JXRT)                :: CH_LNKRT   !- link routing ID
+
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETLNK  !- each node gets unique id
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION  !- flow direction
         INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
@@ -598,23 +601,29 @@ end subroutine get_albedo12m_netcdf
 !        external get2d_real
 !       integer ::  get2d_real
      
-        NLINKS = 0
-        NLAKES = 0
-        CH_NETRT = -9999
+        NLINKS    = 0
+        NLINKSL   = 0
+        NLAKES    = 0
+        CH_NETRT  = -9999
+        CH_LNKRT  = -9999
         CH_NETLNK = -9999
-
 
         cnt = 0 
 #ifdef HYDRO_D
        print *, "Channel Option in Routedim is ", channel_option
 #endif
 
-       IF(channel_option.eq.3) then  !get maxnodes and links from grid
+!-- will always read channel grid --!  IF(channel_option.eq.3) then  !get maxnodes and links from grid
 
          var_name = "CHANNELGRID"
          call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
-         
+
+!-- new link id variable to handle link routing
+         var_name = "LINKID"
+         call readRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
+                   trim(geo_finegrid_flnm))
+
          var_name = "FLOWDIRECTION"
          call readRT2d_int(var_name,DIRECTION,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
@@ -622,7 +631,6 @@ end subroutine get_albedo12m_netcdf
          var_name = "LAKEGRID"
          call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
-
 
         var_name = "LATITUDE"
         call readRT2d_real(var_name,LAT,ixrt,jxrt,&
@@ -641,7 +649,8 @@ end subroutine get_albedo12m_netcdf
 !DJG inv         do j=jxrt,1,-1
          do j=1,jxrt
              do i = 1, ixrt
-               if (CH_NETRT(i,j) .ge.0.AND.CH_NETRT(i,j).lt.100) then 
+!              if (CH_NETRT(i,j) .ge.0.AND.CH_NETRT(i,j).lt.100) then 
+               if (CH_NETRT(i,j) .ge.0) then 
                  NLINKS = NLINKS + 1
                endif
             end do 
@@ -778,8 +787,6 @@ end subroutine get_albedo12m_netcdf
        print *, "total number of NLINKS          ", NLINKS
 #endif
 
-
-
       !-- get the number of lakes
        if (cnt .ne. NLINKS) then 
 #ifdef HYDRO_D
@@ -800,29 +807,31 @@ end subroutine get_albedo12m_netcdf
        write(6,*) "finish read_red ..  nlakes = ", nlakes
 #endif
 
-       return
-
-     else  ! get nlinks from the ascii file of links
-        open(unit=79,file=trim(route_link_f),          & !link
+!-- don't return here--!  return
+    if (channel_option.ne.3) then  ! overwrite the NLINKS
+!-IF is now commented above   else  ! get nlinks from the ascii file of links
+     open(unit=79,file=trim(route_link_f),          & !link
                    form='formatted',status='old')
 #ifdef HYDRO_D
                    write(6,*) "read file ",route_link_f
 #endif
 1011    read(79,*,end= 1999) InputLine
-        NLINKS = NLINKS + 1
+        NLINKSL = NLINKSL + 1
         goto 1011
 1999   continue
-        NLINKS = NLINKS - 1 !-- first line is a comment 
+        NLINKSL = NLINKSL - 1 !-- first line is a comment 
         close(79)
 #ifdef HYDRO_D
-        print *, "Number of Links on sparse network", NLINKS
+        print *, "Number of Segments or Links on sparse network", NLINKSL
 #endif
-        return
-     end if
+    end if !end-if is now for channel_option just above, not IF from further up
 
-     END SUBROUTINE READ_ROUTEDIM
+   call flush(6)
+   return
 
-       SUBROUTINE READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, LAKE_MSKRT, &
+  END SUBROUTINE READ_ROUTEDIM
+
+  SUBROUTINE READ_CHROUTING(IXRT,JXRT,ELRT,CH_NETRT, CH_LNKRT, LAKE_MSKRT, &
             FROM_NODE, TO_NODE, TYPEL, ORDER, MAXORDER, NLINKS, &
             NLAKES, MUSK, MUSX, QLINK, CHANLEN, MannN, So, ChSSlp, Bw, &
             HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
@@ -832,15 +841,15 @@ end subroutine get_albedo12m_netcdf
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm)
+            STRMFRXSTPTS,geo_finegrid_flnm, NLINKSL, LINKID)
 #include <netcdf.inc>
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
-        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
+        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
         INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
-        INTEGER, INTENT(OUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
+        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT)    :: CH_NETRT,CH_LNKRT
+        INTEGER, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: LAKE_MSKRT
         INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
         INTEGER                                      :: I,J,channel_option
@@ -864,11 +873,11 @@ end subroutine get_albedo12m_netcdf
         REAL, INTENT(OUT),  DIMENSION(NLINKS,2)    :: QLINK  !channel flow
         REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: CHANLEN   !channel length
         REAL, INTENT(OUT),  DIMENSION(NLINKS)      :: MannN, So !mannings N
-        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: LAKENODE  ! identifies which nodes pour into which lakes
+        INTEGER, INTENT(OUT),  DIMENSION(NLINKS)   :: LAKENODE,LINKID  ! identifies which nodes pour into which lakes,linkid
         REAL, INTENT(IN)                             :: dist(ixrt,jxrt,9)
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT)    :: CH_NETLNK
-        REAL,  DIMENSION(IXRT,JXRT)                  ::  ChSSlpG,BwG,MannNG  !channel properties on Grid
+        REAL,  DIMENSION(IXRT,JXRT)                  :: ChSSlpG,BwG,MannNG  !channel properties on Grid
 
 
 !-- store the location x,y location of the channel element
@@ -915,8 +924,8 @@ end subroutine get_albedo12m_netcdf
 #endif
 
 !DJG Edited code here to retrieve data from hires netcdf file....
-
-   IF((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then
+!!-- read regardless; commented out on 7/21/14
+!  IF((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then
 
         var_name = "LATITUDE"
         call readRT2d_real(var_name,LATVAL,ixrt,jxrt,&
@@ -924,17 +933,7 @@ end subroutine get_albedo12m_netcdf
         var_name = "LONGITUDE"
         call readRT2d_real(var_name,LONVAL,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
-
-    END IF
-
-
-       IF(CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2) then
-!DJG change filename to LAKEPARM.TBL        open(unit=79,file=trim(route_link_f),          &
-        open(unit=79,file='LAKEPARM.TBL',          &
-                  form='formatted',status='old')
-       END IF
-
-
+!   END IF
        var_name = "LAKEGRID"
        call readRT2d_int(var_name,LAKE_MSKRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
@@ -970,10 +969,6 @@ end subroutine get_albedo12m_netcdf
 
 
 !!!Flip y-dimension of highres grids from exported Arc files...
-
-
-       
-
      
 ! temp fix for buggy Arc export...
         do j=1,jxrt
@@ -982,36 +977,12 @@ end subroutine get_albedo12m_netcdf
           end do
         end do
 
-      cnt =0
-      if ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option .ne. 3) then ! not routing on grid, read from file
-       read(79,*)  header
-       do i=1,NLINKS
-          read (79,*) tmp, FROM_NODE(i), TO_NODE(i), TYPEL(i),&
-                   ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
-                   MannN(i), So(i), ChSSlp(i), Bw(i), HRZAREA(i),&
-                   LAKEMAXH(i), WEIRC(i), WEIRL(i), ORIFICEC(i), &
-                   ORIFICEA(i),ORIFICEE(i)
-
-           !-- hardwire QLINK
-          QLINK(i,1) = 1.0
-          QLINK(i,2) = QLINK(i,1)
-
-          if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
- 
-          if (ORDER(i) .gt. MAXORDER) then
-            MAXORDER = ORDER(i)
-          endif
-
-        end do
-
-      elseif ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option.eq.3) then  !-- handle setting up topology on the grid for diffusion scheme
-
-       read(79,*)  header  !-- read the lake file
+        open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
+        read(79,*)  header  !-- read the lake file
 #ifdef HYDRO_D
        write(*,*) "reading lake file ", header
        write(6,*) "error check read file ",route_link_f
 #endif
-
 
       if (NLAKES.gt.0) then !read in only if there are lakes
        do i=1, NLAKES
@@ -1019,13 +990,12 @@ end subroutine get_albedo12m_netcdf
           WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
            LATLAKE(i), LONLAKE(i),ELEVLAKE(i)
 #ifdef HYDRO_D
-        write (*,*) tmp, HRZAREA(i),LAKEMAXH(i), LATLAKE(i), LONLAKE(i),ELEVLAKE(i),NLAKES
+!        write (*,*) tmp, HRZAREA(i),LAKEMAXH(i), LATLAKE(i), LONLAKE(i),ELEVLAKE(i),NLAKES
 #endif
        enddo
       end if   !end if for NLAKES >0 check
 
-       cnt = 0 
-
+  cnt = 0 
 !yw  add temperary to initialize the following two variables.
 
 !yw debug
@@ -1183,7 +1153,6 @@ end subroutine get_albedo12m_netcdf
              print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
 #endif
           End If
-
          End If !CH_NETRT check for this node
 
         END DO
@@ -1425,23 +1394,45 @@ end subroutine get_albedo12m_netcdf
           endif !CH_NETRT check for this node
          END DO
        END DO 
-      endif
 
-     close(79)
-       if (cnt .ne. NLINKS) then 
+     if (cnt .ne. NLINKS) then 
 #ifdef HYDRO_D
          print *, "Apparent error in network topology", cnt, NLINKS
          print* , "ixrt =", ixrt, "jxrt =", jxrt
 #endif
          call hydro_stop("READ_CHROUTING")
-       endif
+     endif
 
+     close(79)
 
-     do i=1,NLINKS
-#ifdef HYDRO_D
-      if (STRMFRXSTPTS(i).ne.-9999) print *,"Frxst_pt: ",STRMFRXSTPTS(i)
-#endif
-     end do
+!     do i=1,NLINKS
+!#ifdef HYDRO_D
+!      if (STRMFRXSTPTS(i).ne.-9999) print *,"Frxst_pt: ",STRMFRXSTPTS(i)
+!#endif
+!     end do
+
+!!-- if routing on link network, read those data too
+    IF ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option .ne. 3) then ! not routing on grid, read from file
+       open(unit=79,file=trim(route_link_f),form='formatted',status='old')
+        read(79,*)  header
+        print *, "header ", header
+        do i=1,NLINKSL
+          read (79,*) LINKID(i), FROM_NODE(i), TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
+                   TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
+                   MannN(i), So(i), ChSSlp(i), Bw(i), HRZAREA(i),&
+                   LAKEMAXH(i), WEIRC(i), WEIRL(i), ORIFICEC(i), &
+                   ORIFICEA(i),ORIFICEE(i)
+        ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
+          if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
+       end do
+
+!!- initialize channel via QLINK
+        do i=1,NLINKSL
+             QLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+             QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+        end do
+
+   ENDIF
 
      return
 
@@ -2608,14 +2599,14 @@ end subroutine get_albedo12m_netcdf
 !-- output the channel route in an IDV 'station' compatible format
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
         startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt,K,   &
-        STRMFRXSTPTS,order_to_write)
+        STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
      
      implicit none
 #include <netcdf.inc>
 !!output the routing variables over just channel
-     integer,                                  intent(in) :: igrid,K
+     integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
-     integer,                                  intent(in) :: NLINKS
+     integer,                                  intent(in) :: NLINKS,NLINKSL
      real, dimension(NLINKS),                  intent(in) :: chlon,chlat
      real, dimension(NLINKS),                  intent(in) :: hlink,zelev
      integer, dimension(NLINKS),               intent(in) :: ORDER
@@ -2649,7 +2640,7 @@ end subroutine get_albedo12m_netcdf
      integer :: obsdim, dimdataO, charidO
 
      integer :: iret,i, start_pos, prev_pos, order_to_write!-- order_to_write is the lowest stream order to output
-     integer :: start_posO, prev_posO
+     integer :: start_posO, prev_posO, nlk 
 
      integer :: previous_pos  !-- used for the station model
      character(len=256) :: output_flnm,output_flnm2
@@ -2683,14 +2674,18 @@ end subroutine get_albedo12m_netcdf
 #endif
    
      seconds_since = int(dtrt)*K
-
-!    order_to_write = 2  !-- 1 all; 6 feweest
-
-      nstations = 0  ! total number of channel points to display
-      nobs      = 0  ! number of observation points
+     nstations = 0  ! total number of channel points to display
+     nobs      = 0  ! number of observation points
+ 
+     if(channel_option .ne. 3) then
+        nlk = NLINKSL 
+     else 
+        nlk = NLINKS
+     endif
 
 !-- output only the higher oder streamflows  and only observation points
-       do i=1,NLINKS
+!      do i=1,NLINKS
+       do i=1,nlk
         if(ORDER(i) .ge. order_to_write) then 
          nstations = nstations + 1
         endif
@@ -2762,7 +2757,9 @@ end subroutine get_albedo12m_netcdf
         endif
 #endif
 
-       do i=1,NLINKS
+!      do i=1,NLINKS
+       do i=1,nlk
+
         if(ORDER(i) .ge. order_to_write) then 
          nstations = nstations + 1
          chanlat(nstations) = chlat(i)
@@ -2780,7 +2777,9 @@ end subroutine get_albedo12m_netcdf
        enddo 
 
 
-       do i=1,NLINKS
+!      do i=1,NLINKS
+       do i=1,nlk
+
         if(STRMFRXSTPTS(i) .ne. -9999) then 
          nobs = nobs + 1
          chanlatO(nobs) = chlat(i)
@@ -2796,15 +2795,9 @@ end subroutine get_albedo12m_netcdf
        enddo 
 
        iret = nf_def_dim(ncid, "recNum", NF_UNLIMITED, dimdata)  !--for linked list approach
-
-
        iret = nf_def_dim(ncid, "station", nstations, stationdim)
-
-
-
        iret = nf_def_dim(ncid2, "recNum", NF_UNLIMITED, dimdataO)  !--for linked list approach
        iret = nf_def_dim(ncid2, "station", nobs, obsdim)
-
 
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
@@ -2820,36 +2813,30 @@ end subroutine get_albedo12m_netcdf
        write(6,*) "iret 2.3", iret
 #endif
 
-
       !- station location definition obs,  lat
         iret = nf_def_var(ncid2,"latitude",NF_FLOAT, 1, (/obsdim/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',20,'Observation latitude')
         iret = nf_put_att_text(ncid2,varid,'units',13,'degrees_north')
-
 
       !- station location definition,  long
         iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',17,'Station longitude')
         iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
 
-
       !- station location definition, obs long
         iret = nf_def_var(ncid2,"longitude",NF_FLOAT, 1, (/obsdim/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',21,'Observation longitude')
         iret = nf_put_att_text(ncid2,varid,'units',12,'degrees_east')
-
 
 !     !-- elevation is ZELEV
         iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',16,'Station altitude')
         iret = nf_put_att_text(ncid,varid,'units',6,'meters')
 
-
 !     !-- elevation is obs ZELEV
         iret = nf_def_var(ncid2,"altitude",NF_FLOAT, 1, (/obsdim/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',20,'Observation altitude')
         iret = nf_put_att_text(ncid2,varid,'units',6,'meters')
-
 
 !     !--  gage observation
 !       iret = nf_def_var(ncid,"gages",NF_FLOAT, 1, (/stationdim/), varid)
@@ -2908,7 +2895,6 @@ end subroutine get_albedo12m_netcdf
         iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
 
-
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
@@ -2917,7 +2903,6 @@ end subroutine get_albedo12m_netcdf
         iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
         iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
-
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
@@ -2932,7 +2917,6 @@ end subroutine get_albedo12m_netcdf
          OTXDIMS(2) = obsdim
          iret = nf_def_var(ncid2,"station_id",NF_CHAR, OTDIMS, OTXDIMS, varid)
          iret = nf_put_att_text(ncid2,varid,'long_name',14,'Observation id')
-
 
 !     !- time definition, timeObs
          iret = nf_def_var(ncid,"time_observation",NF_INT, 1, (/dimdata/), varid)
@@ -3028,7 +3012,8 @@ end subroutine get_albedo12m_netcdf
      open (unit=999,file='frxst_pts_out.txt',status='unknown',position='append')
 
      cnt=0
-     do i=1,NLINKS
+!    do i=1,NLINKS
+     do i=1,nlk
 
        if(ORDER(i) .ge. order_to_write) then 
          start_pos = (cnt+1)+(nstations*(output_count-1))
@@ -3071,7 +3056,8 @@ end subroutine get_albedo12m_netcdf
 
     !-- output  only observation points
     cnt=0
-    do i=1,NLINKS
+!   do i=1,NLINKS
+    do i=1,nlk
 
       if(STRMFRXSTPTS(i) .ne. -9999) then 
          start_posO = (cnt+1)+(nobs * (output_count-1))
@@ -3222,7 +3208,7 @@ end subroutine output_chrt
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER, &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt,K,&
-          g_STRMFRXSTPTS,order_to_write)
+          g_STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
     end if
 
 end subroutine mpp_output_chrt
@@ -3881,7 +3867,7 @@ end subroutine mpp_output_chrt
        SUBROUTINE MPP_READ_ROUTEDIM(did,g_IXRT,g_JXRT, GCH_NETLNK,GNLINKS,IXRT,JXRT, &
             route_chan_f,route_link_f, &
             route_direction_f, route_lake_f,NLINKS, NLAKES, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm)
+            CH_NETLNK, channel_option, geo_finegrid_flnm,NLINKSL)
 
 
          USE module_mpp_land
@@ -3890,7 +3876,7 @@ end subroutine mpp_output_chrt
 #include <netcdf.inc>
         INTEGER                                      :: channel_option, did
         INTEGER                                      :: g_IXRT,g_JXRT
-        INTEGER, INTENT(INOUT)                       :: NLINKS, NLAKES, GNLINKS
+        INTEGER, INTENT(INOUT)                       :: NLINKS, NLAKES, GNLINKS, NLINKSL
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
         INTEGER                                      :: CHNID,cnt
         INTEGER, DIMENSION(IXRT,JXRT)                :: CH_NETRT   !- binary channel mask
@@ -3912,13 +3898,12 @@ end subroutine mpp_output_chrt
         if(my_id .eq. IO_id) then
           CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, route_lake_f, GNLINKS, NLAKES, &
-              g_CH_NETLNK, channel_option,geo_finegrid_flnm)
+              g_CH_NETLNK, channel_option,geo_finegrid_flnm, NLINKSL)
         endif
         
-
         call mpp_land_bcast_int1(NLAKES)
         call mpp_land_bcast_int1(GNLINKS)
-
+        call mpp_land_bcast_int1(NLINKSL)
 
         call decompose_RT_int(g_CH_NETLNK,GCH_NETLNK,g_IXRT,g_JXRT,ixrt,jxrt)
         ywcount = 0 
@@ -4022,14 +4007,14 @@ end subroutine mpp_output_chrt
 
 #endif
         
-      SUBROUTINE READ_ROUTING_seq(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,route_topo_f,    &
+      SUBROUTINE READ_ROUTING_seq(IXRT,JXRT,ELRT,CH_NETRT,CH_LNKRT,LKSATFAC,route_topo_f, &
             route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC)
 
 
 #include <netcdf.inc>
         INTEGER, INTENT(IN) :: IXRT,JXRT
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
-        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
+        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT,CH_LNKRT
 !Dummy inverted grids
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
@@ -4041,11 +4026,10 @@ end subroutine mpp_output_chrt
         CHARACTER(len=256)       :: geo_finegrid_flnm
 
         var_name = "TOPOGRAPHY"
-
         call readRT2d_real(var_name,ELRT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 #ifdef HYDRO_D
-        write(6,*) "read ",var_name
+        write(6,*) "read grid file ",var_name
 #endif
 
 !!!DY to be fixed ... 6/27/08
@@ -4057,8 +4041,12 @@ end subroutine mpp_output_chrt
         call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
+        var_name = "LINKID"
+        call readRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
+               trim(geo_finegrid_flnm))
+
 #ifdef HYDRO_D
-        write(6,*) "read ",var_name
+        write(6,*) "read linkid grid CH_LNKRT ", var_name
 #endif
 
         var_name = "LKSATFAC"
@@ -4926,7 +4914,7 @@ end subroutine mpp_output_chrt
       subroutine hrldas_out()
       end subroutine hrldas_out
 
-      SUBROUTINE READ_ROUTING_old(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,route_topo_f,    &
+      SUBROUTINE READ_ROUTING_old(IXRT,JXRT,ELRT,CH_NETRT,LKSATFAC,route_topo_f, &
             route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC)
 
 
@@ -5009,11 +4997,12 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm,Link_Location)
+            STRMFRXSTPTS,geo_finegrid_flnm,Link_Location, &
+            NLINKSL, LINKID)
         use module_mpp_land, only:  my_id, io_id
 #include <netcdf.inc>
         INTEGER, INTENT(IN)                          :: IXRT,JXRT, did
-        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
+        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
         INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS
@@ -5042,7 +5031,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT),  DIMENSION(NLINKS,2)    :: QLINK  !channel flow
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: CHANLEN   !channel length
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: MannN, So !mannings N
-        INTEGER, INTENT(INOUT),  DIMENSION(NLINKS)   :: LAKENODE  ! identifies which nodes pour into which lakes
+        INTEGER, INTENT(INOUT),  DIMENSION(NLINKS)   :: LAKENODE,LINKID  ! identifies which nodes pour into which lakes
         REAL, INTENT(IN)                             :: dist(ixrt,jxrt,9)
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT)    :: CH_NETLNK
@@ -6041,7 +6030,7 @@ end subroutine mpp_output_chrt
             channel_option,LATVAL,&
             LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,g_ixrt,g_jxrt, &
             gnlinks,GCH_NETLNK, map_l2g, link_location,yw_mpp_nlinks, &
-            lake_index, nlinks_index)
+            lake_index, nlinks_index, NLINKL,LINKID)
         implicit none
         INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES
@@ -6185,8 +6174,7 @@ end subroutine mpp_output_chrt
                route_direction_f, route_order_f, &
                CHANRTSWCRT,g_dist, gg_ZELEV, gg_LAKENODE, g_GCH_NETLNK, gg_CHANXI, gg_CHANYJ, &
                gg_CHLAT, gg_CHLON, channel_option, g1_latval,g1_lonval,&
-               gg_STRMFRXSTPTS,geo_finegrid_flnm)
-
+               gg_STRMFRXSTPTS,geo_finegrid_flnm,NLINKSL, NLINKID)
 
         endif
 
@@ -6280,12 +6268,13 @@ end subroutine mpp_output_chrt
 !     endif
 
       CHANXI = 0
-      CHANYj = 0
+      CHANYJ = 0
       do j = 1, jxrt
           do i = 1, ixrt
              if(CH_NETLNK(i,j) .gt. 0) then
                CHANXI(CH_NETLNK(i,j)) = i
                CHANYJ(CH_NETLNK(i,j)) = j
+              ! print *, CHANXI(CH_NETLNK(i,j)), CHANYJ(CH_NETLNK(i,j)),CH_NETLNK(i,j) = j
              endif
           end do
       end do

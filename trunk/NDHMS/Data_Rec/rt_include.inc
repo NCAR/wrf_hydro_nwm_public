@@ -13,6 +13,7 @@
   INTEGER :: NLINKS  !maximum number of unique links in channel
   INTEGER :: GNLINKS  !maximum number of unique links in channel for parallel computation
   INTEGER :: NLAKES  !number of lakes
+  INTEGER :: NLINKSL !maximum number of links using linked routing
   INTEGER :: MAXORDER !maximum stream order
   integer :: timestep_flag    ! 1 cold start run else continue run
 
@@ -20,6 +21,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETRT !-- keeps track of the 0-1 channel network
+  INTEGER, allocatable, DIMENSION(:,:)      :: CH_LNKRT !-- linked routing grid (should combine with CH_NETRT.. redundant Gochis!)
+
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETLNK, GCH_NETLNK !-- assigns a unique value to each channel gridpoint, called links
   REAL,    allocatable, DIMENSION(:,:)      :: LATVAL,LONVAL !-- lat lon
   REAL,    allocatable, DIMENSION(:,:)      :: TERRAIN
@@ -81,10 +84,10 @@
   REAL, allocatable, DIMENSION(:)      :: QLAKEI      !lake inflow in difussion scheme
   REAL, allocatable, DIMENSION(:)      :: QLAKEO      !lake outflow in difussion scheme
   INTEGER, allocatable, DIMENSION(:)   :: LAKENODE   !which nodes flow into which lakes
+  INTEGER, allocatable, DIMENSION(:)   :: LINKID     ! id of links on linked routing
   REAL, allocatable, DIMENSION(:)      :: CVOL       ! channel volume
   INTEGER, allocatable, DIMENSION(:,:)   :: pnode    !parent nodes : start from 2
   integer :: maxv_p              ! array size for  second column of the pnode
-
 
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
