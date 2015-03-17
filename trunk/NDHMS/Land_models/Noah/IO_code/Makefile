@@ -25,7 +25,7 @@ Noah_hrldas_driver.o: Noah_hrldas_driver.F
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
 	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
+	$(CPP) $(CPPFLAGS) $(NETCDFMOD) $(CPPHRLDAS) $(*).F > $(*).f
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG)../Utility_routines $(NETCDFMOD)  $(*).f
 	$(RM) $(*).f
 	@echo ""

@@ -7,7 +7,7 @@ module module_GW_baseflow
 
 #include "gw_field_include.inc"
 #include "rt_include.inc"
-#include "namelist.inc"
+!yw #include "namelist.inc"
 contains
 
 !------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ contains
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
    real, intent(out),dimension(numbasns)             :: qin_gwsubbas
    real*8                                            :: z_gwsubbas(numbasns)
-   real                                              :: qout_max
+   real                                              :: qout_max, qout_spill, z_gw_spill
    real, intent(inout),dimension(numbasns)           :: z_gwsubbas_tmp
    real, intent(out),dimension(ixrt,jxrt)            :: qinflowbase
    integer, intent(in),dimension(ixrt,jxrt)          :: gw_strm_msk
@@ -107,22 +107,43 @@ contains
      z_gwsubbas(bas) = z_gwsubbas(bas) + qin_gwsubbas(bas)*DT/( &
                        ct_bas(bas)*basns_area(bas))*1000.   !  units (mm)
 
-!DJG...Meximum estimation of bucket outlfow that is limited by total quantity in bucket...
+
+
+
+
+!Calculate baseflow as a function of GW bucket depth...
+
+     if(GWBASESWCRT.eq.1) then  !active exponential bucket... if/then for bucket model discharge type...
+
+!DJG...Estimation of bucket 'overflow' (qout_spill) if/when bucket gets filled...
+     qout_spill = 0.
+     z_gw_spill = 0.
+     if (z_gwsubbas(bas).gt.z_mx(bas)) then  !If/then for bucket overflow case...
+       z_gw_spill = z_gwsubbas(bas) - z_mx(bas)
+       z_gwsubbas(bas) = z_mx(bas)
+       write (6,*) "Bucket spilling...", bas, z_gwsubbas(bas), z_mx(bas), z_gw_spill
+     else
+       z_gw_spill = 0.
+     end if   ! End if for bucket overflow case...
+
+     qout_spill = z_gw_spill/1000.*(ct_bas(bas)*basns_area(bas))/DT  !amount spilled from bucket overflow...units (cms)
+
+
+!DJG...Maximum estimation of bucket outlfow that is limited by total quantity in bucket...
      qout_max = z_gwsubbas(bas)/1000.*(ct_bas(bas)*basns_area(bas))/DT   ! Estimate max bucket disharge limit to total volume in bucket...(m^3/s)
 
 
-
-!Calculate baseflow as a function of GW depth...
-
-     if(GWBASESWCRT.eq.1) then  !active exponential bucket... if/then for bucket model discharge type...
-! Assuming and exponential relation between z/zmax and Q...
+! Assume exponential relation between z/zmax and Q...
 !DJG...old...creates non-asymptotic flow...   qout_gwsubbas(bas) = C(bas)*EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas)) !Exp.model. q_out (m^3/s)
 !DJG force asymptote to zero to prevent 'overdraft'... 
-
-       qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas))-1) !Exp.model. q_out (m^3/s)
 !DJG debug hardwire test...       qout_gwsubbas(bas) = 1*(EXP(7.0*10./100.)-1) !Exp.model. q_out (m^3/s)
+     qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas))-1) !Exp.model. q_out (m^3/s)
+       
+!DJG...Calculation of max bucket outlfow that is limited by total quantity in bucket...
+     qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit
 
-!DJG...debug       write (6,*) "DJG-exp bucket...during",C(bas),ex(bas),z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max
+     write (6,*) "DJG-exp bucket...during",C(bas),ex(bas),z_gwsubbas(bas),qin_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max, qout_spill
+
 
 
      elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
@@ -131,14 +152,9 @@ contains
 !DJG convert input and output units to cms...       qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3)
        qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3/s)
 
-!DJG...debug       write (6,*) "DJG-pass through...during",C(bas),ex(bas),z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max
+!DJG...debug       write (6,*) "DJG-pass through...during",C(bas),ex(bas),qin_gwsubbas(bas), z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max
 
      end if    ! End if for bucket model discharge type....
-
-
-
-!DJG...Final calculation of bucket outlfow that is limited by total quantity in bucket...
-     qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit
 
 
 
@@ -150,8 +166,12 @@ contains
      z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
                        ct_bas(bas)*basns_area(bas))*1000.   ! units (mm)	
 
-!DJG...debug      write (6,*) "DJG...after",C(bas),ex(bas),z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas)
-!DJG...debug      write (6,*) "DJG...after...calc",bas,ct_bas(bas),ct_bas(bas)*basns_area(bas),basns_area(bas),DT
+!DJG...Combine calculated bucket discharge and amount spilled from bucket...
+     qout_gwsubbas(bas) = qout_gwsubbas(bas) + qout_spill   ! units (cms)
+
+
+     write (6,*) "DJG...after",C(bas),ex(bas),z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_spill
+     write (6,*) "DJG...after...calc",bas,ct_bas(bas),ct_bas(bas)*basns_area(bas),basns_area(bas),DT
 
 
 

@@ -1,11 +1,11 @@
 MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
-   use module_HYDRO_io, only: mpp_read_routedim, mpp_read_routing, mpp_read_chrouting_new, &
+   use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
-   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting,read_simp_gw
+   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
 #endif
    use module_HYDRO_io, only: readgw2d
    use module_HYDRO_utils 
@@ -216,7 +216,7 @@ CONTAINS
       rt_domain(did)%LINK = 0.0        
       rt_domain(did)%TO_NODE = 0.0        
       rt_domain(did)%FROM_NODE = 0        
-      rt_domain(did)%TYPEL = 0.0        
+      rt_domain(did)%TYPEL = 0          
       rt_domain(did)%ORDER = 0.0        
       rt_domain(did)%STRMFRXSTPTS = 0.0        
       rt_domain(did)%MUSK = 0.0        
@@ -390,7 +390,7 @@ CONTAINS
       integer did
       real Vmax
 
-     integer :: bas , bas_id
+     integer :: bas 
      CHARACTER(len=19)                      :: header
      CHARACTER(len=1)                       :: jnk
 
@@ -413,18 +413,11 @@ CONTAINS
   print *, "Terrain routing initialization..."
 #endif
 
-#ifdef MPP_LAND
-    CALL MPP_READ_ROUTING( &
-#else
      CALL READ_ROUTING_seq  (  &
-#endif
           rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
           rt_domain(did)%CH_LNKRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
-#ifdef MPP_LAND
-           rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
-#endif
           rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
 
     !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
@@ -434,7 +427,7 @@ CONTAINS
 #ifdef MPP_LAND
           CALL MPP_READ_CHROUTING_new(    &
 #else
-          CALL READ_CHROUTING(    &
+          CALL READ_CHROUTING1(    &
 #endif
                rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
                rt_domain(did)%CH_LNKRT, rt_domain(did)%LAKE_MSKRT, &
@@ -459,7 +452,6 @@ CONTAINS
                , rt_domain(did)%NLINKSL, rt_domain(did)%LINKID &
 #endif
                )
-
 
 !yw #ifdef MPP_LAND
 !yw          call MPP_CHROUTING_CONF(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt, rt_domain(did)%NLAKES,rt_domain(did)%NLINKS,&
@@ -657,6 +649,7 @@ CONTAINS
             allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
             allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
@@ -679,7 +672,7 @@ CONTAINS
 
 
      do bas = 1,rt_domain(did)%numbasns
-       read(81,812) bas_id,jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
+       read(81,812) rt_domain(did)%bas_id(bas),jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
              jnk,rt_domain(did)%z_gwsubbas(bas)
 !DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
@@ -691,6 +684,7 @@ CONTAINS
    call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp  )
    call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%z_max   )
    call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas   )
+   call mpp_land_bcast_int(rt_domain(did)%numbasns,rt_domain(did)%bas_id)
 #endif
 
 !!! Determine number of stream pixels per GW basin for distribution...
@@ -867,7 +861,7 @@ CONTAINS
   END IF     ! Endif for channel routing setup
 !-----------------------------------------------------------------------
 
-       rt_domain(did)%INFXSWGT = 1./FLOAT(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+       rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
        rt_domain(did)%SH2OWGT = 1.
   rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
   rt_domain(did)%QSUBRT = 0.0

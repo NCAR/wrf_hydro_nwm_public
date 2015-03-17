@@ -1,4 +1,8 @@
+There are two parts in thi readme file.
+Part I is for fully coupled with WRF model. Part II is for offline version.
 
+
+Part I Fully coupled with WRF Model
 1. Building
 
 1) General description
@@ -83,4 +87,23 @@ The basic steps to do so are as follows:
 "make -f Makefile.cpl "
 
 If there is no error, then user can compile the fully coupled WRF and WRF-Hydro model on the new platform.
+
+
+Part II Offline compiling
+Under hydro/ directory.
+1. setenv WRF_HYDRO 1
+2. setenv NETCDF your_netcdf_library_path
+or
+setenv NETCDF_INC   "$path/netcdf/include"
+setenv NETCDF_LIB   "$path/netcdf/lib"
+3. ./configure    
+     -------> choose correct compiler
+4. ./compile_offline_NoahMP.csh   
+     ---->compile offine version with NoahMP driver
+or
+ ./compile_offline_Noah.csh  
+     ----->compile offline version with Noah driver
+5. Executable files are created under hydro/Run directory.
+
+Note: Noah and NoahMP have the same name of "namelist.hrldas". But they are different.
 

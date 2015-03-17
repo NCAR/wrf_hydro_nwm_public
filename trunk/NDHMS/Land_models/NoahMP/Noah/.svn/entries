@@ -1,14 +1,14 @@
 10
 
 dir
-121
-svn+ssh://hydrolab@chiltapin/home/hydrolab/SVN/repository/NDHMS/trunk/HRLDAS_V3.5/Noah
-svn+ssh://hydrolab@chiltapin/home/hydrolab/SVN/repository/NDHMS
+3
+svn+ssh://hydrolab@chiltapin/home/hydrolab/SVN/repository/HRLDAS_unify/HRLDAS-v3.6/trunk/Noah
+svn+ssh://hydrolab@chiltapin/home/hydrolab/SVN/repository/HRLDAS_unify
 
 
 
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -24,279 +24,7 @@ hydrolab
 
 
 
-215d22d2-b6aa-0410-86a5-ff1c289a9015
-
-module_sf_noahmplsm.F.gonzalo.z0test
-file
-
-
-
-
-2013-09-26T21:52:12.906444Z
-632753650912479102f43a630801cc99
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444154
-
-module_sf_noahmpdrv.F
-file
-
-
-
-
-2013-09-26T21:52:12.906444Z
-25f6f4016afdfeb6ea052aca4a6fedd0
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-101418
-
-module_sf_noahmplsm.F
-file
-
-
-
-
-2013-09-26T21:52:12.906444Z
-381f265dcd5e1c9917d9bf2d0dcd10a1
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444458
-
-module_sf_noahmplsm.F.gonzalo.swapz0h
-file
-
-
-
-
-2013-09-26T21:52:12.909468Z
-30ac83889150c9e630eb223c71fc8a0d
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444299
-
-module_sf_noahmp_groundwater.F
-file
-
-
-
-
-2013-09-26T21:52:12.909468Z
-84291f0db4f0423b771c4a0063f24aef
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-23775
-
-module_sf_noahmplsm.F.gonzalo.1
-file
-
-
-
-
-2013-09-26T21:52:12.909468Z
-9b757c179658959346a83276d24cd1e2
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-443220
-
-module_sf_noahmplsm.F.gonzalo
-file
-
-
-
-
-2013-09-26T21:52:12.909468Z
-fe8564046f1bf4cb51ca9dc4b34fa3e5
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-443549
-
-module_sf_urban.F
-file
-
-
-
-
-2013-09-26T21:52:12.909468Z
-2f79a9c744492396dca1935820832d22
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-81760
+8b8666d0-fd60-4447-b79b-b87714a59c36
 
 module_sf_noahmp_glacier.F
 file
@@ -304,10 +32,10 @@ file
 
 
 
-2013-09-26T21:52:12.909468Z
-1aa52fa846071ccbcd38316e4a9b8e50
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T16:02:57.415238Z
+c76189de99dd241ce3905a10a25175f4
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -330,347 +58,7 @@ hydrolab
 
 
 
-134428
-
-module_sf_noahmplsm.F.layer
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-baef5015a4dfc5cb89056de205b17d79
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-425809
-
-module_sf_noahmplsm.F.gonzalo.swap.avgwdf.nosunadj.newt2
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-4bb0ef5f007f44feebece36317913cbf
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-445057
-
-ragrb
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-1f61dd615f4bd2bf052d00b884371d8d
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-10901
-
-README
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-ae8285a2588696bcb2db2df1c905ef12
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-974
-
-module_sf_noahmplsm.F.gonzalo.swap.avgwdf.nosunadj
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-8aaeaa222bd80f7b752d2cb9cee1db01
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-445018
-
-module_sf_noahmplsm.F.gonzalo.swapchv
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-73e2e5de3cc30600254c4759323b911b
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444144
-
-module_sf_noahmplsm.F.gonzalo.swaprahg
-file
-
-
-
-
-2013-09-26T21:52:12.913626Z
-673a7a6902759283b208bf17be41cb83
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444148
-
-module_sf_sfclay.F
-file
-
-
-
-
-2013-09-26T21:52:12.918445Z
-a0059e07fd94a41cb6b89a4159ce4bf4
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-47988
-
-module_sf_noahmplsm.F.gonzalo.swap.avgwdf.nosunadj.cropfveg
-file
-
-
-
-
-2013-09-26T21:52:12.918445Z
-48522de8f2387b0c27459e55b182b323
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-447356
-
-module_sf_noahmplsm.F.gonzalo.swapsmois
-file
-
-
-
-
-2013-09-26T21:52:12.918445Z
-862a3d69b16d4a01255f965773eeec91
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444184
+134691
 
 module_sf_myjsfc.F
 file
@@ -678,10 +66,10 @@ file
 
 
 
-2013-09-26T21:52:12.918445Z
+2014-07-17T16:02:57.415238Z
 47a3ba59ef5a5e6096da618794801cea
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -706,50 +94,16 @@ hydrolab
 
 44246
 
-module_sf_noahmplsm.F.gonzalo.swap.avgwdf
-file
-
-
-
-
-2013-09-26T21:52:12.921208Z
-5e3849aea76be4f6e336d8cf8ef26bf0
-2013-09-24T20:41:47.942586Z
-121
-hydrolab
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-444633
-
 Makefile
 file
 
 
 
 
-2013-09-26T21:52:12.921208Z
-99737848511444735b30203ba7310f00
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T16:02:57.415238Z
+f8c8ca94019e04d498b6d064d3c8aad2
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -772,18 +126,18 @@ hydrolab
 
 
 
-801
+751
 
-module_sf_noahmpdrv.F.orig
+module_sf_noahmpdrv.F
 file
 
 
 
 
-2013-09-26T21:52:12.921208Z
-daef1120c65270a3b9995097845ebb0c
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T16:02:57.415238Z
+e4a084103e887214c88ce88490209fed
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -806,18 +160,18 @@ hydrolab
 
 
 
-68878
+96889
 
-diff.out
+module_sf_noahmplsm.F
 file
 
 
 
 
-2013-09-26T21:52:12.921208Z
-3475736cf1cbdbeb798f554e0d2d7bb0
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T16:02:57.415238Z
+dfc33007f460cda781c05edc45536b39
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -840,18 +194,18 @@ hydrolab
 
 
 
-10326
+442008
 
-module_sf_noahmplsm.F.orig
+module_sf_sfclay.F
 file
 
 
 
 
-2013-09-26T21:52:12.921208Z
-29984e9ebcfff88d9a597fc86a1bb33a
-2013-09-24T20:41:47.942586Z
-121
+2014-07-17T16:02:57.415238Z
+da1e2c231da970b52cf8586821304269
+2014-07-17T02:07:41.778080Z
+3
 hydrolab
 
 
@@ -874,5 +228,39 @@ hydrolab
 
 
 
-425791
+48157
+
+module_sf_noahmp_groundwater.F
+file
+
+
+
+
+2014-07-17T16:02:57.415238Z
+eaeef0c0b0b669a4e80d30eca4038ec9
+2014-07-17T02:07:41.778080Z
+3
+hydrolab
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23878
 

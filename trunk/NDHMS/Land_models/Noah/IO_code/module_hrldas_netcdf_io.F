@@ -1322,6 +1322,7 @@ contains
     ! To prepare the output file, we create the file, write dimensions and attributes, write the time variable.
     ! At the end of this routine, the output file is out of define mode.
     implicit none
+#include <netcdf.inc>
 
     character(len=*),                         intent(in) :: outdir
     character(len=*),                         intent(in) :: version
@@ -1380,7 +1381,11 @@ contains
        iret = nf90_create(trim(output_flnm), &
             OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf90_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
        iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
+#endif
 #endif
        call error_handler(iret, failure="Problem nf90_create for "//trim(output_flnm))
 
@@ -1762,6 +1767,7 @@ contains
        iswater, vegtyp)
 
     implicit none
+#include <netcdf.inc>
 
     character(len=*),                      intent(in) :: outdir
     character(len=*),                      intent(in) :: version
@@ -1821,7 +1827,11 @@ contains
     ierr = nf90_create(trim(output_flnm), &
          OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       ierr = nf90_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
     ierr = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
+#endif
 #endif
 
     if (ierr /= 0) stop "Problem nf_create"

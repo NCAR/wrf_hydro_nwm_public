@@ -299,6 +299,7 @@
 	      DO KK=SATLYRCHK(I,J),NSOIL
                  WATAVAIL = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
                  IF (WATAVAIL.GE.ABS(SUBFLO)) THEN
+!?yw mod                 IF (WATAVAIL.GE.(ABS(SUBFLO)+0.000001) ) THEN
                    SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
                    SUBFLO=0.
                  ELSE     ! Since subflo is small on a time-step following is unlikely...
@@ -535,7 +536,8 @@
           end if
 
 !Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
-          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
+!AD_CHANGE: beta is already a slope so no tan (consistent with ROUTE_SUBSURFACE1) 
+          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
 !DJG lacks tan(beta) of original Wigmosta version          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
 
           qqsub = gamma * hh
@@ -2428,6 +2430,7 @@
 
 
                do KRT=1,NSOIL  !debug loop
+
                   IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
 #ifdef HYDRO_D
                       print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
@@ -2438,9 +2441,11 @@
 #ifdef HYDRO_D
                       print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
                               SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
+
+                      print*, "SMC=", SMC(i,j,KRT), "SICE =", sice(i,j,KRT)
                       print *, "VEGTYP = ", VEGTYP(I,J)
                       print *, "i,j,krt, nsoil",i,j,krt,nsoil
-                      call hydro_stop("disaggregateDomain")
+                       call hydro_stop("disaggregateDomain SMCRT depleted")
 #endif
                   END IF
                end do !debug loop
@@ -2461,13 +2466,18 @@
 !DJG 6.12.08 Map lateral hydraulic conductivity and apply distributed scaling
 ! ---        factor that will be read in from hires terrain file
 !              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) 
-              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
+!              LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &  !Apply scaling factor...
 ! ...and scale from max to 0 when SMC decreases from SMCMAX to SMCREF...
 !!DJG error found from KIT,improper scaling       ((SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL)) / &
-                                    (max(0.,(SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL))) / &
-                                    (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
+!                                    (max(0.,(SMCMAXRT(IXXRT,JYYRT,NSOIL) - SMCRT(IXXRT,JYYRT,NSOIL))) / &
+!                                    (SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) )
 
-
+!AD_CHANGE: 
+!New model corrected to scale from 0 at SMCREF to full LKSAT*LKSATFAC at SMCMAX:
+		LKSATRT(IXXRT,JYYRT) = LKSAT(I,J) * LKSATFAC(IXXRT,JYYRT) * &
+				min (1., &     !just in case, make sure scale factor doesn't go over 1
+					( max(0.,(SMCRT(IXXRT,JYYRT,NSOIL) - SMCREFRT(IXXRT,JYYRT,NSOIL))) / &     !becomes 0 if less than SMCREF
+				(SMCMAXRT(IXXRT,JYYRT,NSOIL)-SMCREFRT(IXXRT,JYYRT,NSOIL)) ) )
 
 !DJG set up lake mask...
 !--- modify to make lake mask large here, but not one of the routed lakes!!!

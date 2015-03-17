@@ -35,7 +35,14 @@ CONTAINS
        integer k
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-
+!lpr add 2014-06-24
+#ifdef WRF_HYDRO_RAPID
+#ifdef MPP_LAND
+        real, dimension(ii,jj) :: g_runoff
+#endif
+        real, dimension(ii,jj) :: runoff
+#endif
+!lpr add end
         integer ::  did
 
         integer ntime
@@ -50,6 +57,26 @@ CONTAINS
 
         did = 1
 
+!--------LPR add 2014-06-24---------------------------
+!    it is rapid model
+#ifdef WRF_HYDRO_RAPID
+        if(nlst_rt(did)%channel_option .eq. 4) then
+                runoff  = infxsrt + soldrain
+                call hrldas_RAPID_ini(ntime)    
+#ifdef MPP_LAND
+                call write_io_real(runoff,g_runoff)
+                if(my_id.eq.io_id) &
+                call hrldas_RAPID_exe(runoff,g_global_nx,global_ny)     
+#else
+                call hrldas_RAPID_exe(runoff,ii,jj)     
+#endif
+                sfcheadrt = 0.0
+                return
+        endif
+#endif
+!--------LPR add end----------------------------------
+
+
 
 
 !        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
@@ -62,21 +89,11 @@ CONTAINS
 
 
 ! decompose the hrldas 1-d data into routing domain
-#ifdef MPP_LAND
-        do k = 1, kk
-           call decompose_data_real(STC(:,:,k),RT_DOMAIN(did)%STC(:,:,k))
-           call decompose_data_real(SMC(:,:,k),RT_DOMAIN(did)%SMC(:,:,k))
-           call decompose_data_real(SH2OX(:,:,k),RT_DOMAIN(did)%SH2OX(:,:,k))
-        end do
-        call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
-        call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
-#else
         RT_DOMAIN(did)%STC = STC
         RT_DOMAIN(did)%SMC = SMC
         RT_DOMAIN(did)%SH2OX = SH2OX
         RT_DOMAIN(did)%infxsrt = infxsrt
         RT_DOMAIN(did)%soldrain = soldrain
-#endif
   
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
@@ -85,7 +102,9 @@ CONTAINS
 #endif
 
         ntime = 1
+
         call HYDRO_exe(did)
+
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
            call  time_seconds(t2)
@@ -95,19 +114,10 @@ CONTAINS
 #endif
 
 ! add for update the HRLDAS state variable.
-#ifdef MPP_LAND
-        do k = 1, kk
-           call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))
-           call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
-           call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
-        end do
-         call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
-#else
         STC = rt_domain(did)%STC
         SMC = rt_domain(did)%SMC
         SH2OX = rt_domain(did)%SH2OX
         sfcheadrt = rt_domain(did)%sfcheadrt
-#endif
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
@@ -160,6 +170,15 @@ CONTAINS
             endif
 
            RT_DOMAIN(did)%initialized = .true.
+
+#ifdef WRF_HYDRO_RAPID
+!--------LPR add 2014-06-24---------------------------
+         if(nlst_rt(did)%channel_option .eq. 4) then
+!  it  is rapid model.
+             return
+         endif
+!--------LPR add 2014-06-24---------------------------
+#endif
    
            IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
@@ -167,22 +186,7 @@ CONTAINS
 
 #ifdef MPP_LAND
            call mpp_land_bcast_real1(nlst_rt(did)%dt)
-           call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
-           call write_io_real(rt_domain(did)%infxsrt, infxsrt)
-           if(nlst_rt(did)%rst_typ .eq. 1) then
-              do k = 1, kk
-                 call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))
-                 call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
-                 call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
-              end do
-           else
-              if(nlst_rt(did)%sys_cpl .eq. 1) then
-                 where( abs(STC) .gt. 500) stc = 282
-                 where( abs(SMC) .gt. 500) SMC = 0.25
-                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
-              endif
-           endif 
-#else
+#endif
            sfcheadrt = rt_domain(did)%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt
            if(nlst_rt(did)%rst_typ .eq. 1) then
@@ -196,7 +200,6 @@ CONTAINS
                  where( abs(SH2OX) .gt. 500) SH2OX = 0.25
               endif
            endif
-#endif
         endif
 
      end subroutine hrldas_cpl_HYDRO_ini

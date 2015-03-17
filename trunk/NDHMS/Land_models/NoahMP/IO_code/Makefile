@@ -21,26 +21,23 @@ module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F
 	@echo ""
 	$(RM) $(*).f
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG). \
-	$(MODFLAG)../Noah $(MODFLAG)../Utility_routines $(NETCDFMOD) $(*).f
-	$(RM) $(*).f
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG) -I. \
+	-I../Noah -I../Utility_routines $(NETCDFMOD) $(*).f
 	@echo ""
 
 main_hrldas_driver.o: main_hrldas_driver.F
 	@echo ""
 	$(RM) $(*).f
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG). \
-	$(MODFLAG)../Noah $(MODFLAG)../Utility_routines $(NETCDFMOD) $(*).f
-	$(RM) $(*).f
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
+	-I../Noah -I../Utility_routines $(NETCDFMOD) $(*).f
 	@echo ""
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
 	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG)../Utility_routines $(NETCDFMOD)  $(*).f
-	$(RM) $(*).f
+	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(NETCDFMOD) $(*).F > $(*).f
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(NETCDFMOD)  $(*).f
 	@echo ""
 
 .F.o:
@@ -48,7 +45,6 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	$(RM) $(*).f
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f
-	$(RM) $(*).f
 	@echo ""
 
 
@@ -62,4 +58,4 @@ $(OBJS_NoahMP):	module_hrldas_netcdf_io.o
 
 # This command cleans up object files, etc.
 clean:
-	$(RM) *.o *.mod *.stb *~
+	$(RM) *.o *.mod *.stb *~ *.f

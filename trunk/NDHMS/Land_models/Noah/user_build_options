@@ -1,10 +1,12 @@
-NETCDF_INC = /opt/netcdf/include
-NETCDF_LIB = /opt/netcdf/lib
 .IGNORE:
 ifeq ($(WRF_HYDRO),1)
 WRF_HYDRO = -DWRF_HYDRO
 else
 WRF_HYDRO =
+endif
+
+ifeq ($(WRF_HYDRO_RAPID),1)
+WRF_HYDRO = -DWRF_HYDRO -DWRF_HYDRO_RAPID
 endif
 
 ifeq ($(HYDRO_D),1)

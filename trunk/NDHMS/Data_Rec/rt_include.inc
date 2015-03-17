@@ -63,7 +63,8 @@
   REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm !GW bucket disch params
   INTEGER, allocatable, DIMENSION(:)     :: ct2_bas       !ct of lnd pixels in basn
   REAL,    allocatable, DIMENSION(:)     :: bas_pcp      !sub-basin avg'd pcp
-  INTEGER                                :: bas,bas_id
+  INTEGER                                :: bas
+  INTEGER, allocatable, DIMENSION(:)        :: bas_id
   CHARACTER(len=19)                      :: header
   CHARACTER(len=1)                       :: jnk
   REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff,gw_buck_exp,z_max  !GW bucket parameters
