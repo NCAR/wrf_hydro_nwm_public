@@ -4039,7 +4039,7 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') k
                  endif
              iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
+             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar(:,:,k) )
            end do 
 #endif
            return
