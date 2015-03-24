@@ -22,7 +22,8 @@ CONTAINS
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                     GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                    sys_cpl, rst_typ, rst_bi_in, rst_bi_out, gwChanCondSw, GwSpinCycles, GwSpinDiagInterval
+                    sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
+                    gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval
           real:: DTRT,dxrt, gwChanCondConst, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -36,7 +37,7 @@ CONTAINS
        integer :: SOLVEG_INITSWC
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
-       logical            :: history_output, GwSpinDiags
+       logical            :: history_output, GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
        integer :: igrid
        character(len=256) :: geo_static_flnm = ""
@@ -58,7 +59,7 @@ CONTAINS
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
                     GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConst, &
-                    GwSpinCycles, GwSpinDiags, GwSpinDiagInterval, gwIhShift, &
+                    GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -134,8 +135,10 @@ CONTAINS
   call mpp_land_bcast_int1(GWSOILCPL)
   call mpp_land_bcast_int1(gwChanCondSw)
   call mpp_land_bcast_int1(GwSpinCycles)
-  call mpp_land_bcast_log1(GwSpinDiags)
-  call mpp_land_bcast_int1(GwSpinDiagInterval)
+  call mpp_land_bcast_int1(GwPreCycles)
+  call mpp_land_bcast_log1(GwPreDiag)
+  call mpp_land_bcast_log1(GwSpinUp)
+  call mpp_land_bcast_int1(GwPreDiagInterval)
   call mpp_land_bcast_int1(GW_RESTART)
   call mpp_land_bcast_int1(RSTRT_SWC  )
   call mpp_land_bcast_int1(TERADJ_SOLAR)
@@ -162,8 +165,10 @@ CONTAINS
     nlst%gwChanCondConst = gwChanCondConst
     nlst%gwIhShift = gwIhShift
     nlst%GwSpinCycles = GwSpinCycles
-    nlst%GwSpinDiags = GwSpinDiags
-    nlst%GwSpinDiagInterval = GwSpinDiagInterval
+    nlst%GwPreCycles = GwPreCycles
+    nlst%GwPreDiag = GwPreDiag
+    nlst%GwSpinUp = GwSpinUp
+    nlst%GwPreDiagInterval = GwPreDiagInterval
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
     nlst%sys_cpl = sys_cpl
     nlst%rst_typ = rst_typ
@@ -203,8 +208,8 @@ CONTAINS
     write(6,*) " nlst%gwChanCondConst ", gwChanCondConst
     write(6,*) " nlst%gwIhShift ", gwIhShift
     write(6,*) " nlst%GwSpinCycles ", GwSpinCycles
-    write(6,*) " nlst%GwSpinDiags ", GwSpinDiags
-    write(6,*) " nlst%GwSpinDiagInterval ", GwSpinDiagInterval
+    write(6,*) " nlst%GwPreDiag ", GwPreDiag
+    write(6,*) " nlst%GwPreDiagInterval ", GwPreDiagInterval
     write(6,*) " nlst%TERADJ_SOLAR ", TERADJ_SOLAR
     write(6,*) " nlst%sys_cpl ", sys_cpl
     write(6,*) " nlst%rst_typ ", rst_typ

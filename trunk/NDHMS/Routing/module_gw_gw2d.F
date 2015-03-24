@@ -40,7 +40,7 @@ module module_gw_gw2d
      
     
 
-      itermax = nlst_rt(did)%GwSpinCycles
+      itermax = nlst_rt(did)%GwPreCycles
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
            
@@ -59,7 +59,7 @@ module module_gw_gw2d
 #ifdef MPP_LAND
           if(my_id .eq. IO_id) &
 #endif
-          write(6,*) "       GW Spinup cycle", iter, "of", itermax
+          write(6,*) "       GW Pre-cycle", iter, "of", itermax
 #endif
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
              gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
@@ -70,8 +70,8 @@ module module_gw_gw2d
 	   
 	     gw2d(did)%ho = gw2d(did)%h
 	     
-	  if((nlst_rt(did)%GwSpinDiags .and. iter==1) .or. &
-	      nlst_rt(did)%GwSpinDiags .and. (mod(iter, nlst_rt(did)%GwSpinDiagInterval) .eq. 0) ) then
+	  if((nlst_rt(did)%GwPreDiag .and. iter==1) .or. &
+	      nlst_rt(did)%GwPreDiag .and. (mod(iter, nlst_rt(did)%GwPreDiagInterval) .eq. 0) ) then
            call output_gw_spinup(nlst_rt(did)%igrid, 1000000,                &
                             RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt,   &
                             nlst_rt(did)%startdate, nlst_rt(did)%olddate, &

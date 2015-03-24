@@ -443,12 +443,14 @@ program Noah_hrldas_driver
   integer :: noah_timestep = -999
   integer :: forcing_timestep = -999
   character(len = 256):: GEO_STATIC_FLNM
+  
+  integer :: cycles
 
   namelist / NOAHLSM_OFFLINE/ INDIR, NSOIL, ZSOIL, FORCING_TIMESTEP, NOAH_TIMESTEP, &
        START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN, &
        RESTART_FREQUENCY_HOURS, OUTPUT_TIMESTEP, &
        SPLIT_OUTPUT_COUNT, SFCDIF_OPTION, IZ0TLND, UPDATE_SNOW_FROM_FORCING, & 
-       KHOUR, KDAY, ZLVL, ZLVL_WIND, HRLDAS_CONSTANTS_FILE, OUTDIR, RESTART_FILENAME_REQUESTED, &
+       KHOUR, KDAY, cycles, ZLVL, ZLVL_WIND, HRLDAS_CONSTANTS_FILE, OUTDIR, RESTART_FILENAME_REQUESTED, &
        external_fpar_filename_template, external_lai_filename_template, &
        subwindow_xstart, subwindow_xend, subwindow_ystart, subwindow_yend, &
        forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
@@ -516,7 +518,8 @@ program Noah_hrldas_driver
   zlvl_wind = 10.0
 !KWM  vegmin = -999.
 !KWM  vegmax = -999.
-
+  cycles = 0
+  
   output_timestep = 0
   restart_frequency_hours = 0
 
@@ -2525,6 +2528,15 @@ program Noah_hrldas_driver
         endif
   endif !!! rank if block
 
+   if(cycles > 0) then
+    
+     if(k .eq. ntime) then
+       k = 1
+       cycles = cycles - 1
+       olddate = startdate
+     end if
+    
+   end if
   ENDDO KLOOP
 
 #ifdef _PARALLEL_
