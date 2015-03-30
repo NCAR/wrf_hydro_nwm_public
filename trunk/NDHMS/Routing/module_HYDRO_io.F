@@ -3566,6 +3566,7 @@ end subroutine mpp_output_chrt
         iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
         iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
         iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+        iret = nf_def_var(ncid,"index",NF_INT, 2, (/ixlondim,jxlatdim/), varid)
 
 
 !-- place prjection information
@@ -3585,7 +3586,7 @@ end subroutine mpp_output_chrt
 !DJG inv    do j=jxrt,1,-1
     do j=1,jxrt
      do i=1,ixrt
-       if(CH_NETLNK(i,j).GT.0) then
+       if(CH_NETLNK(i,j).GE.0) then
          tmpflow(i,j) = qlink(CH_NETLNK(i,j),1) 
        else
          tmpflow(i,j) = -9E15
@@ -3594,6 +3595,8 @@ end subroutine mpp_output_chrt
     enddo
 
 !!time in seconds since startdate
+    iret = nf_inq_varid(ncid,"index", varid)
+    iret = nf_put_vara_int(ncid, varid, (/1,1/), (/ixrt,jxrt/),CH_NETLNK)
 
     iret = nf_inq_varid(ncid,"flow", varid)
     iret = nf_put_vara_real(ncid, varid, (/1,1,1/), (/ixrt,jxrt,1/),tmpflow)
@@ -4443,7 +4446,7 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') k
                  endif
              iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
+             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar(:,:,k) )
            end do 
 #endif
            return
