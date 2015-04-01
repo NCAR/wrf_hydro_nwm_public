@@ -530,12 +530,6 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         
 
         IF(channel_option .ne. 3) then   !--muskingum methods ROUTE ON DT timestep, not DTRT!!
-#ifdef MPP_LAND
-#ifdef HYDRO_D
-   write(6,*) "Error: not parallelized"
-   call hydro_stop("in drive_CHANNEL") 
-#endif
-#endif
          DT_STEPS = 1
 
          DO KRT=1,DT_STEPS                 !-- route over routing timestep
