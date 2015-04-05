@@ -25,7 +25,7 @@
 
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                  GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                  GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                   sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, &
                   gwCycle, gwsoilcpl
           logical:: GwPreDiag, GwSpinUp

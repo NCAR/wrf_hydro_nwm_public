@@ -21,7 +21,7 @@ CONTAINS
           integer ierr
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                    GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                    GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwCycle,gwsoilcpl
           real:: DTRT,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
@@ -59,7 +59,7 @@ CONTAINS
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
-                    GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut &
+                    GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -134,7 +134,6 @@ CONTAINS
   call mpp_land_bcast_real1(gwIhShift)
   call mpp_land_bcast_int1(GWBASESWCRT)
   call mpp_land_bcast_int1(gwCycle)
-  call mpp_land_bcast_int1(gwsoilcpl)
   call mpp_land_bcast_int1(GWSOILCPL)
   call mpp_land_bcast_int1(gwChanCondSw)
   call mpp_land_bcast_int1(GwSpinCycles)
@@ -164,7 +163,6 @@ CONTAINS
     nlst%AGGFACTRT = AGGFACTRT
     nlst%GWBASESWCRT = GWBASESWCRT
     nlst%gwCycle = gwCycle
-    nlst%gwsoilcpl = gwsoilcpl
     nlst%GWSOILCPL= GWSOILCPL
     nlst%gwChanCondSw = gwChanCondSw
     nlst%gwChanCondConstIn = gwChanCondConstIn
