@@ -1,12 +1,12 @@
 !2345678
-       subroutine hrldas_drv_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+       subroutine hrldas_drv_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk, qsgw)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
           integer:: ii,jj,kk
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
 
-          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
+          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk, qsgw)  
        end subroutine hrldas_drv_HYDRO
 
        subroutine hrldas_drv_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
@@ -63,6 +63,7 @@
           read(olddate(9:10),*) dd
           call get_greenfrac_netcdf(inFile,greenfrac,idim, jdim, months,mm,dd) 
        end subroutine get_greenfrac
+
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
           implicit none
@@ -259,3 +260,11 @@
 
  
        end subroutine HYDRO_HRLDAS_ini
+
+       subroutine getHydroNameList(varName,pVar)
+          use module_hrldas_HYDRO, only: getNameList 
+          implicit none
+          integer ::  pVar
+          character(len=*)  ::varName
+          call getNameList(varName,pVar)
+       end subroutine getHydroNameList

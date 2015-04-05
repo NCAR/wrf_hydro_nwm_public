@@ -9,6 +9,7 @@ module module_HRLDAS_HYDRO
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
     use module_namelist, only: nlst_rt
+    use module_gw_gw2d_data, only: gw2d
 
     implicit none
     integer begg, endg
@@ -32,9 +33,9 @@ CONTAINS
        implicit none
 
        integer ii,jj,kk
-       integer k
+       integer k, gwsoilcpl
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
+       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
 !lpr add 2014-06-24
 #ifdef WRF_HYDRO_RAPID
 #ifdef MPP_LAND
@@ -94,6 +95,7 @@ CONTAINS
         RT_DOMAIN(did)%SH2OX = SH2OX
         RT_DOMAIN(did)%infxsrt = infxsrt
         RT_DOMAIN(did)%soldrain = soldrain
+        if(nlst_rt(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
   
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
@@ -118,6 +120,7 @@ CONTAINS
         SMC = rt_domain(did)%SMC
         SH2OX = rt_domain(did)%SH2OX
         sfcheadrt = rt_domain(did)%sfcheadrt
+        if(nlst_rt(did)%GWBASESWCRT == 3)  qsgw = gw2d(did)%qsgw
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice

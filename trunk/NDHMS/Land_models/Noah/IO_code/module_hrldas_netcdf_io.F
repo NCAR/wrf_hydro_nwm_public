@@ -311,7 +311,8 @@ contains
   subroutine readland_hrldas(wrfinput_flnm,                            &
        xstart, xend,                                                   &
        ystart, yend,                                                   &
-       iswater, vegtyp, soltyp, terrain, tbot_2d, latitude, longitude)
+       iswater, vegtyp, soltyp, terrain, tbot_2d, latitude, longitude, &
+			    refdk2d, refkdt2d)
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -321,9 +322,10 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: latitude
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: longitude
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: refdk2d, refkdt2d
 
     character(len=256) :: units
-    integer :: ierr
+    integer :: ierr, varid
     integer :: ncid
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
@@ -377,6 +379,16 @@ contains
     call get_soilcat_netcdf(ncid, xdum ,   units, xstart, xend, ystart, yend)
     soltyp = nint(xdum)
     ! print*, 'soltyp(xstart,ystart) = ', soltyp(xstart,ystart)
+
+    ! read 2d parameter fields for Noah-LSM
+    ierr = nf90_inq_varid(ncid,"REFDK", varid)
+    if(ierr .eq. 0) then
+     call get_2d_netcdf("REFDK", ncid, refdk2d,   units, xstart, xend, ystart, yend, FATAL, ierr)
+    endif
+    ierr = nf90_inq_varid(ncid,"REFKDT", varid)
+    if(ierr .eq. 0) then
+     call get_2d_netcdf("REFKDT", ncid, refkdt2d,   units, xstart, xend, ystart, yend, FATAL, ierr)
+   endif
 
     ! Close the NetCDF file
     ierr = nf90_close(ncid)

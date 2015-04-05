@@ -10,8 +10,9 @@ module module_HYDRO_drv
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm
    use module_rt_data, only: rt_domain
-   use module_GW_baseflow_data, only: gw2d
-   use module_GW_baseflow, only:simp_gw_buck, gwstep, gw2d_allocate, gw2d_ini
+   use module_GW_baseflow
+   use module_gw_gw2d
+   use module_gw_gw2d_data, only: gw2d
    use module_channel_routing, only: drive_channel
    use module_namelist, only: nlst_rt, read_rt_nlst
    use module_routing, only: getChanDim, landrt_ini
@@ -212,8 +213,9 @@ module module_HYDRO_drv
                 nlst_rt(did)%nsoil,                               &
 !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
                 nlst_rt(did)%sincedate, nlst_rt(did)%olddate,    &
-                gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                 &
-                gw2d(did)%convgw, RT_DOMAIN(did)%SFCHEADSUBRT,     &
+                gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                   &
+                gw2d(did)%convgw, gw2d(did)%excess,                  &
+                gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,              &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
                 RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
@@ -437,7 +439,7 @@ module module_HYDRO_drv
        implicit none
        integer, intent(in) :: did
        
-       integer :: i
+       integer :: i, jj, ii
 
 !------------------------------------------------------------------
 !DJG Begin GW/Baseflow Routines
@@ -496,24 +498,45 @@ module module_HYDRO_drv
 
 !!!For parameter setup runs output the percolation for each basin,
 !!!otherwise comment out this output...
-    else if (nlst_rt(did)%GWBASESWCRT .eq. 3) then
+    else if (nlst_rt(did)%gwBaseSwCRT .eq. 3) then
 
 #ifdef HYDRO_D
            write(6,*) "*****bf******start 2d_gw_model "
 #endif
 
+	   ! 	   compute qsgwrt  between lsm and gw with namelist selected coupling method
+	   ! 	   qsgwrt is defined on the routing grid  and needs to be aggregated for SFLX
+	   if (nlst_rt(did)%gwsoilcpl .GT. 0) THEN
+	     
+	     call gwSoilFlux(did)
+	     
+	   end if
+           
+	   
+	   gw2d(did)%excess = 0.
+	   
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
 			gw2d(did)%ltype, gw2d(did)%elev, gw2d(did)%bot, &
 			gw2d(did)%hycond, gw2d(did)%poros, gw2d(did)%compres, &
 			gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, &
+			gw2d(did)%excess, &
 			gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
 			gw2d(did)%istep)
            
            
-! bftodo head postprocessing block 
-! GW-SOIL-CHANNEL interaction section
 	  gw2d(did)%ho = gw2d(did)%h
+ 
+          
+          
+	  ! put surface exceeding groundwater to surface routing inflow
+          RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%SFCHEADSUBRT &
+	                              + gw2d(did)%excess*1000. ! convert to mm
+	  
+	  ! aggregate  qsgw from routing to lsm grid
+	  call aggregateQsgw(did)
 
+          gw2d(did)%istep =  gw2d(did)%istep + 1
+	  
 #ifdef HYDRO_D
            write(6,*) "*****bf******end 2d_gw_model "
 #endif
@@ -570,7 +593,20 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
 #endif
+       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
+       nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
+       nlst_rt(did)%gwChanCondConstOut &
        )
+    
+    if((nlst_rt(did)%gwBaseSwCRT == 3) .and. (nlst_rt(did)%gwChanCondSw .eq. 1)) then
+      
+           ! add/rm channel-aquifer exchange contribution
+           
+           gw2d(did)%ho =  gw2d(did)%ho  &
+                        +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
+                        /  gw2d(did)%poros)
+      
+    endif
   endif
 
 #ifdef HYDRO_D
@@ -747,7 +783,6 @@ module module_HYDRO_drv
 !        integer, OPTIONAL:: ix0,jx0
         integer:: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
-
 
 
 #ifdef MPP_LAND
@@ -1042,6 +1077,9 @@ module module_HYDRO_drv
              end do
        end do
 
+
+       rt_domain(did)%soiltyp = soltyp
+       
        deallocate(soltyp)
 
 

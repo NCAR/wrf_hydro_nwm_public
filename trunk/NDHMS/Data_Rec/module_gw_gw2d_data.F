@@ -1,4 +1,4 @@
-Module module_GW_baseflow_data
+Module module_gw_gw2d_data
    IMPLICIT NONE
    INTEGER, PARAMETER :: max_domain=5
 
@@ -6,4 +6,4 @@ Module module_GW_baseflow_data
       type (gw_field) :: gw2d(max_domain)
       save gw2d
 
-end module module_GW_baseflow_data
+end module module_gw_gw2d_data

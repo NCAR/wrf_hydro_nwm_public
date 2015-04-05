@@ -274,6 +274,7 @@ Contains
     ! Make sure vegtyp and soltyp are consistent when it comes to water points,
     ! by setting soil category to water when vegetation category is water, and
     ! vice-versa.
+    where (vegtyp == 28) vegtyp = 16
     where (vegtyp == 16) soltyp = 14
     where (soltyp == 14) vegtyp = 16
 

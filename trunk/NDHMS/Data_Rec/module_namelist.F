@@ -21,9 +21,10 @@ CONTAINS
           integer ierr
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                    GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                    sys_cpl, rst_typ, rst_bi_in, rst_bi_out
-          real:: DTRT,dxrt
+                    GWBASESWCRT, GWSOILCPL, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                    sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
+                    gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwCycle,gwsoilcpl
+          real:: DTRT,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
@@ -36,7 +37,7 @@ CONTAINS
        integer :: SOLVEG_INITSWC
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
-       logical            :: history_output
+       logical            :: history_output, GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
        integer :: igrid
        character(len=256) :: geo_static_flnm = ""
@@ -57,10 +58,12 @@ CONTAINS
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
-                    GWBASESWCRT,route_topo_f,route_chan_f,route_link_f,route_lake_f, &
+                    GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
+                    GWBASESWCRT, GWSOILCPL, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut &
+                    route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
-                    order_to_write , rst_typ, rst_bi_in, rst_bi_out
+                    order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwCycle,gwsoilcpl
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
@@ -126,7 +129,19 @@ CONTAINS
   call mpp_land_bcast_int1(AGGFACTRT)
   call mpp_land_bcast_real1(DTRT)
   call mpp_land_bcast_real1(DXRT)
+  call mpp_land_bcast_real1(gwChanCondConstIn)
+  call mpp_land_bcast_real1(gwChanCondConstOut)
+  call mpp_land_bcast_real1(gwIhShift)
   call mpp_land_bcast_int1(GWBASESWCRT)
+  call mpp_land_bcast_int1(gwCycle)
+  call mpp_land_bcast_int1(gwsoilcpl)
+  call mpp_land_bcast_int1(GWSOILCPL)
+  call mpp_land_bcast_int1(gwChanCondSw)
+  call mpp_land_bcast_int1(GwSpinCycles)
+  call mpp_land_bcast_int1(GwPreCycles)
+  call mpp_land_bcast_log1(GwPreDiag)
+  call mpp_land_bcast_log1(GwSpinUp)
+  call mpp_land_bcast_int1(GwPreDiagInterval)
   call mpp_land_bcast_int1(GW_RESTART)
   call mpp_land_bcast_int1(RSTRT_SWC  )
   call mpp_land_bcast_int1(TERADJ_SOLAR)
@@ -148,6 +163,18 @@ CONTAINS
     nlst%dxrt0 = dxrt
     nlst%AGGFACTRT = AGGFACTRT
     nlst%GWBASESWCRT = GWBASESWCRT
+    nlst%gwCycle = gwCycle
+    nlst%gwsoilcpl = gwsoilcpl
+    nlst%GWSOILCPL= GWSOILCPL
+    nlst%gwChanCondSw = gwChanCondSw
+    nlst%gwChanCondConstIn = gwChanCondConstIn
+    nlst%gwChanCondConstOut = gwChanCondConstOut
+    nlst%gwIhShift = gwIhShift
+    nlst%GwSpinCycles = GwSpinCycles
+    nlst%GwPreCycles = GwPreCycles
+    nlst%GwPreDiag = GwPreDiag
+    nlst%GwSpinUp = GwSpinUp
+    nlst%GwPreDiagInterval = GwPreDiagInterval
     nlst%TERADJ_SOLAR = TERADJ_SOLAR
     nlst%sys_cpl = sys_cpl
     nlst%rst_typ = rst_typ
@@ -182,6 +209,14 @@ CONTAINS
     write(6,*) " nlst%dxrt0 ", dxrt
     write(6,*) " nlst%AGGFACTRT ", AGGFACTRT
     write(6,*) " nlst%GWBASESWCRT ", GWBASESWCRT
+    write(6,*) " nlst%GWSOILCPL ", GWSOILCPL
+    write(6,*) " nlst%gwChanCondSw ", gwChanCondSw
+    write(6,*) " nlst%gwChanCondConstIn ", gwChanCondConstIn
+    write(6,*) " nlst%gwChanCondConstOut ", gwChanCondConstOut
+    write(6,*) " nlst%gwIhShift ", gwIhShift
+    write(6,*) " nlst%GwSpinCycles ", GwSpinCycles
+    write(6,*) " nlst%GwPreDiag ", GwPreDiag
+    write(6,*) " nlst%GwPreDiagInterval ", GwPreDiagInterval
     write(6,*) " nlst%TERADJ_SOLAR ", TERADJ_SOLAR
     write(6,*) " nlst%sys_cpl ", sys_cpl
     write(6,*) " nlst%rst_typ ", rst_typ

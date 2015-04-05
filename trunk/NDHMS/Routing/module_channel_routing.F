@@ -434,7 +434,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #ifdef MPP_LAND 
        ,lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks &
 #endif
-       )
+       ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConstIn, &
+       gwChanCondConstOut)
 
        IMPLICIT NONE
 
@@ -468,11 +469,23 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         REAL , INTENT(INOUT), DIMENSION(NLINKS)   :: HLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
         REAL, INTENT(IN)                          :: DTRT  !-- routing timestep
-        REAL, INTENT(INOUT):: DTCT
-        REAL                                         :: dist(ixrt,jxrt,9)
+        REAL, INTENT(INOUT)                       :: DTCT
+        real                                      :: minDTCT !BF minimum routing timestep
+        REAL                                      :: dist(ixrt,jxrt,9)
         REAL                                      :: RETDEP_CHAN
-        INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT
+        INTEGER, INTENT(IN)                       :: MAXORDER, SUBRTSWCRT, &
+                                                     gwBaseSwCRT, gwChanCondSw
+        real, intent(in)                          :: gwChanCondConstIn, gwChanCondConstOut ! aquifer-channel conductivity constant from namelist                                             
         REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
+
+!DJG GW-chan coupling variables...
+        REAL, DIMENSION(NLINKS)                   :: dzGwChanHead
+        REAL, DIMENSION(NLINKS)                   :: Q_GW_CHAN_FLUX     !DJG !!! Change 'INTENT' to 'OUT' when ready to update groundwater state...
+        REAL, DIMENSION(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: gwHead            !DJG !!! groundwater head from Fersch-2d gw implementation...units (m ASL)
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: qgw_chanrt         !DJG !!! Channel-gw flux as used in Fersch 2d gw implementation...units (m^3/s)...Change 'INTENT' to 'OUT' when ready to update groundwater state...
+         
+
 
         !-- lake params
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
@@ -527,7 +540,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         QLateral = 0
         QSUM     = 0
         QLLAKE   = 0
-        
+
+        dzGwChanHead = 0.
 
         IF(channel_option .ne. 3) then   !--muskingum methods ROUTE ON DT timestep, not DTRT!!
          DT_STEPS = 1
@@ -585,8 +599,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                 else
 #ifdef HYDRO_D
                  print *, "No channel option selected"
-                 call hydro_stop("drive_CHANNEL") 
 #endif
+                 call hydro_stop("drive_CHANNEL") 
                 endif
             endif
           end do
@@ -620,8 +634,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                    else
 #ifdef HYDRO_D
                     print *, " no channel option selected"
-                    call hydro_stop("drive_CHANNEL") 
 #endif
+                    call hydro_stop("drive_CHANNEL") 
                    endif
                    QLINK(k,1) = qu    !save inflow to reach at current timestep
                                       !to be used as inflow from previous timestep
@@ -645,8 +659,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
 
          KRT = 0                  !-- initialize the time counter
-
-         DTCT = min(DTCT*2.0,DTRT)
+         minDTCT = 0.01           ! define minimum routing sub-timestep (s), simulation will end with smaller timestep
+         DTCT = min(max(DTCT*2.0, minDTCT),DTRT)
 !yw         DTCT = DTRT              !-- initialize the routing timestep to the timestep in namelist (s)
        
          HLINKTMP = HLINK         !-- temporary storage of the water elevations (m)
@@ -655,15 +669,19 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
 !        call check_channel(77,HLINKTMP,1,nlinks)
 !        call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,ZELEV,NLINKS,99)
-!        call check_channel(78,ZELEV,1,nlinks)
-
-
-crnt:    DO                      !-- loop on the courant condition
+ crnt:    DO                      !-- loop on the courant condition
          QSUM   = 0              !-- initialize the total flow out of each cell to zero
          QLAKEI = 0              !-- set the lake inflow as zero
          QLLAKE = 0              !-- initialize each lake's lateral inflow to zero  
          DT_STEPS=INT(DT/DTCT)   !-- fix the timestep
          QLateral = 0. 
+!DJG GW-chan coupling variables...
+         if(gwBaseSwCRT == 3) then
+	  Q_GW_CHAN_FLUX = 0.
+	  qgw_chanrt     = 0.
+         end if
+         
+!         ZWATTBLRT=1.0   !--HARDWIRE, remove this and pass in from subsfc/gw routing routines...
 
 
 !-- vectorize
@@ -680,21 +698,71 @@ crnt:    DO                      !-- loop on the courant condition
                call hydro_stop("drive_CHANNEL") 
            endif
 
-           if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
+           
+
+nodeType:if((CH_NETRT(CHANXI(i), CHANYJ(i) ) .eq. 0) .and. &
               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .lt.0) ) then !--a reg. node
+              
+gwOption:   if(gwBaseSwCRT == 3) then
+
+             ! determine potential gradient between groundwater head and channel stage
+             ! units in (m)
+             dzGwChanHead(i) = gwHead(CHANXI(i),CHANYJ(i)) - (HLINK(i)+ZELEV(i)) 
+
+             if(gwChanCondSw .eq. 0) then
+	       
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+	        
+             else if(gwChanCondSw .eq. 1 .and. dzGwChanHead(i) > 0) then
+	       
+	       ! channel bed interface, units in (m^3/s), flux into channel...
+	       ! BF todo: consider channel width
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = gwChanCondConstIn * dzGwChanHead(i) &
+                                                * CHANLEN(i) * 2. 
+
+             else if(gwChanCondSw .eq. 1 .and. dzGwChanHead(i) < 0) then
+	       
+	       ! channel bed interface, units in (m^3/s), flux out of channel...
+	       ! BF todo: consider channel width
+                qgw_chanrt(CHANXI(i),CHANYJ(i)) = max(-0.005, gwChanCondConstOut * dzGwChanHead(i) &
+                                                * CHANLEN(i) * 2.)
+!              else if(gwChanCondSw .eq. 2 .and. dzGwChanHead(i) > 0) then  TBD: exponential dependency
+!              else if(gwChanCondSw .eq. 2 .and. dzGwChanHead(i) > 0) then
+	       
+             else
+	       
+	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+	        
+             end if
+             
+             Q_GW_CHAN_FLUX(i) = qgw_chanrt(CHANXI(i),CHANYJ(i))
+!             if ( i .eq. 1001 ) then
+!                print *, Q_GW_CHAN_FLUX(i), dzGwChanHead(i), ELRT(CHANXI(i),CHANYJ(i)), HLINK(i), ZELEV(i)
+!             end if
+!              if ( Q_GW_CHAN_FLUX(i) .lt. 0. ) then   !-- temporary hardwire for only allowing flux into channel...REMOVE later...
+!                 Q_GW_CHAN_FLUX(i) = 0.
+! 	        qgw_chanrt(CHANXI(i),CHANYJ(i)) = 0.
+!              end if
+            
+            else
+	      Q_GW_CHAN_FLUX(i) = 0.
+	    end if gwOption
+
+
               QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
-! await subsfc exchg   ((QSUBRT(CHANXI(i),CHANYJ(i))+QSTRMVOLRT(CHANXI(i),CHANYJ(i))+&
+!DJG  awaiting gw-channel exchg...  Q_GW_CHAN_FLUX(i)+& ...obsolete-> ((QSUBRT(CHANXI(i),CHANYJ(i))+&
+                Q_GW_CHAN_FLUX(i)+&
                 ((QSTRMVOLRT(CHANXI(i),CHANYJ(i))+&
                  QINFLOWBASE(CHANXI(i),CHANYJ(i))) &
                    /DT_STEPS*node_area(i)/1000/DTCT)
-	if(Qlateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) then
+	if((QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) .and. (gwChanCondSw == 0)) then
 #ifdef HYDRO_D
                print*, "i, CHANXI(i),CHANYJ(i) = ", i, CHANXI(i),CHANYJ(i)
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
-               call hydro_stop("drive_CHANNEL") 
 #endif
+!                call hydro_stop("drive_CHANNEL") 
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
@@ -706,7 +774,7 @@ crnt:    DO                      !-- loop on the courant condition
             elseif(CH_NETRT(CHANXI(i),CHANYJ(i)) .gt. 0) then  !pour out of lake
                  QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
                    QLAKEO(CH_NETRT(CHANXI(i),CHANYJ(i)))  !-- previous timestep
-          endif
+          endif nodeType
         ENDDO
 
 
@@ -833,17 +901,17 @@ crnt:    DO                      !-- loop on the courant condition
              
              ! call smoth121(HLINK,nlinks,maxv_p,pnode,to_node)
 
-             if(DTCT .gt. 0.001) then                  !-- timestep in seconds
-              DTCT = max(DTCT/2 ,0.1)                           !-- 1/2 timestep
+             if(DTCT .gt. minDTCT) then                !-- timestep in seconds
+              DTCT = max(DTCT/2 , minDTCT)             !-- 1/2 timestep
               KRT = 0                                  !-- restart counter
               HLINKTMP = HLINK                         !-- set head and vol to start value of timestep
               CVOLTMP = CVOL
               CYCLE crnt                               !-- start cycle over with smaller timestep
              else
 #ifdef HYDRO_D
-              write(6,*) "Error ..... with small DTCT",DTCT
-              call hydro_stop("drive_CHANNEL")
+              write(6,*) "Courant error with smallest routing timestep DTCT: ",DTCT
 #endif
+              call hydro_stop("drive_CHANNEL")
               DTCT = 0.1
               HLINKTMP = HLINK                          !-- set head and volume to start values of timestep
               CVOLTMP  = CVOL
@@ -863,7 +931,7 @@ crnt:    DO                      !-- loop on the courant condition
  
             if(TYPEL(i) .eq. 0) then                   !--  regular channel grid point, compute volume
               CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) )* DTCT
-              if(CVOLTMP(i) .lt. 0) then 
+              if((CVOLTMP(i) .lt. 0) .and. (gwChanCondSw == 0)) then 
 #ifdef HYDRO_D
                 print *, "warning! channel volume less than 0:i,CVOL,QSUM,QLat", &
                                i, CVOLTMP(i),QSUM(i),QLateral(i),HLINK(i)
@@ -886,7 +954,7 @@ crnt:    DO                      !-- loop on the courant condition
                        DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
                        CD(i),CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
             elseif (TYPEL(i) .eq. 2) then              !--- into a reservoir, assume critical depth
-              if (QSUM(i)+QLateral(i) .lt. 0) then
+              if ((QSUM(i)+QLateral(i) .lt. 0) .and. (gwChanCondSw == 0)) then
 #ifdef HYDRO_D
                print *, i, 'CrtDpth Qsum+QLat into lake< 0',QSUM(i), QLateral(i)
 #endif
@@ -950,7 +1018,7 @@ crnt:    DO                      !-- loop on the courant condition
            enddo
 #ifdef MPP_LAND
     if(NLAKES .gt. 0) then
-       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLLAKE,NLAKES,99)
        call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,RESHT,NLAKES,99)
        call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
        call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
@@ -986,8 +1054,8 @@ crnt:    DO                      !-- loop on the courant condition
         else                                            !-- no channel option apparently selected
 #ifdef HYDRO_D
          print *, "no channel option selected"
-         call hydro_stop("drive_CHANNEL") 
 #endif
+         call hydro_stop("drive_CHANNEL") 
         endif
 
 #ifdef HYDRO_D
