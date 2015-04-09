@@ -253,8 +253,8 @@ CONTAINS
           integer :: did 
           character(len=*) :: varName
           did = 1
-          if(varName .eq. "GWCYCLE") then
-               pVar =  nlst_rt(did)%GWBASESWCRT
+          if(varName .eq. "GWSPINCYCLES") then
+               pVar = nlst_rt(did)%gwSpinCycles
           elseif(varName .eq. "GWBASESWCRT") then
                pVar = nlst_rt(did)%GWBASESWCRT
           elseif(varName .eq. "GWSOILCPL") then

@@ -1144,9 +1144,9 @@ program Noah_hrldas_driver
 
 !yw added this for restart from different restart date
   olddate = startdate
-    call getHydroNameList("GWCYCLE",gwCycle)
-    call getHydroNameList("GWBASESWCRT",GWBASESWCRT)
-    call getHydroNameList("GWSOILCPL",gwsoilcpl)
+    call getHydroNameList("GWSPINCYCLES", gwCycle)
+    call getHydroNameList("GWBASESWCRT", GWBASESWCRT)
+    call getHydroNameList("GWSOILCPL", gwsoilcpl)
 
 #ifdef _HRLDAS_URBAN_
   if (sf_urban_physics == 1) then
@@ -1231,6 +1231,7 @@ program Noah_hrldas_driver
 
   call hrldas_drv_HYDRO_ini(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, 1, dt, olddate,zsoil(1:NSOIL))
 
+1002   continue
 
   KLOOP : DO K=1,NTIME
     if(rank == 0) print*, "k, NTIME, dt = ",k,NTIME , dt
@@ -1240,7 +1241,6 @@ program Noah_hrldas_driver
 ! so that upon restart, we're ready to go on this time step.
 !--------------------------------------------------------------------------------
 
-1002   continue
 
   if(rank .eq. 0) then
 
@@ -2431,14 +2431,6 @@ program Noah_hrldas_driver
   call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL), &
                         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,               &
 			qsgw)
-   if(GWBASESWCRT .eq. 3) then
-      if(gwCycle > 0) then
-          gwCycle = gwCycle - 1
-          olddate = startdate
-          goto 1002
-      end if
-   endif
-
      if (rank==0) then
      yw_rst_out = -9999
 
@@ -2542,6 +2534,14 @@ program Noah_hrldas_driver
   endif !!! rank if block
 
   ENDDO KLOOP
+
+   if(GWBASESWCRT .eq. 3) then
+      if(gwCycle > 0) then
+          gwCycle = gwCycle - 1
+          olddate = startdate
+          goto 1002
+      end if
+   endif
 
 #ifdef _PARALLEL_
   call mpi_finalize(ierr)

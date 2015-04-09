@@ -23,7 +23,7 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
-                    gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwCycle,gwsoilcpl
+                    gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl
           real:: DTRT,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -63,7 +63,7 @@ CONTAINS
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
-                    order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwCycle,gwsoilcpl
+                    order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
@@ -133,7 +133,6 @@ CONTAINS
   call mpp_land_bcast_real1(gwChanCondConstOut)
   call mpp_land_bcast_real1(gwIhShift)
   call mpp_land_bcast_int1(GWBASESWCRT)
-  call mpp_land_bcast_int1(gwCycle)
   call mpp_land_bcast_int1(GWSOILCPL)
   call mpp_land_bcast_int1(gwChanCondSw)
   call mpp_land_bcast_int1(GwSpinCycles)
@@ -162,7 +161,6 @@ CONTAINS
     nlst%dxrt0 = dxrt
     nlst%AGGFACTRT = AGGFACTRT
     nlst%GWBASESWCRT = GWBASESWCRT
-    nlst%gwCycle = gwCycle
     nlst%GWSOILCPL= GWSOILCPL
     nlst%gwChanCondSw = gwChanCondSw
     nlst%gwChanCondConstIn = gwChanCondConstIn
