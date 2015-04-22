@@ -4,13 +4,16 @@ module module_WRF_HYDRO
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
                 mpp_land_bcast_real, mpp_land_bcast_int1
+    use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     use module_rt_data, only:  rt_domain
+    use module_gw_gw2d_data, only:  gw2d
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
     use module_namelist, only: nlst_rt
     USE module_domain, ONLY : domain, domain_clock_get
+    USE module_configure, ONLY : grid_config_rec_type
     !yw USE module_configure, only : config_flags
     USE module_configure, only: model_config_rec
  
@@ -20,6 +23,9 @@ module module_WRF_HYDRO
     !yw   added for check soil moisture and soiltype
     integer ::  checkSOIL_flag
 
+#ifndef MPP_LAND
+    character(len=19) :: cpl_outdate
+#endif
 !
 ! added to consider the adaptive time step from WRF model. 
     real    :: dtrt0  
@@ -31,10 +37,11 @@ module module_WRF_HYDRO
 CONTAINS
 
 !wrf_cpl_HYDRO will not call the off-line lsm 
-    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid,its,ite,jts,jte)
+    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid, config_flags, its,ite,jts,jte)
 
        implicit none
        TYPE ( domain ), INTENT(INOUT) :: grid
+       TYPE ( grid_config_rec_type ), INTENT(IN) :: config_flags
        integer its, ite, jts, jte, ij
        real :: HYDRO_dt
 
@@ -88,7 +95,9 @@ CONTAINS
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
 
+#ifdef MPP_LAND
             call CPL_LAND_INIT(its,ite,jts,jte)
+#endif
 
 #ifdef HYDRO_D
                write(6,*) "sf_surface_physics is ", grid%sf_surface_physics
@@ -162,12 +171,6 @@ CONTAINS
             rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
        endif  
 
-
-!yw       if(checkSOIL_flag .ne. 99) then
-!yw           call checkSoil(did) 
-!yw           checkSOIL_flag = 99
-!yw       endif
-
             call HYDRO_exe(did)
 
 
@@ -180,6 +183,13 @@ CONTAINS
 
 ! update WRF variable after running routing model.
             grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
+
+! provide groundwater soil flux to WRF for fully coupled simulations (FERSCH 09/2014)            
+            if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
+!Wei Yu: comment the following two lines. Not ready for WRF3.7 release
+!yw             grid%qsgw(its:ite,jts:jte) = gw2d(did)%qsgw
+!yw             config_flags%gwsoilcpl = nlst_rt(did)%gwsoilcpl
+            end if
 
 !yw not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice

@@ -8,7 +8,7 @@ include ../macros
 OBJS = \
 	module_namelist.o \
 	module_RT_data.o \
-	module_GW_baseflow_data.o
+	module_gw_gw2d_data.o
 
 all:	$(OBJS) 
 

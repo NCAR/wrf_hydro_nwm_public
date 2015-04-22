@@ -110,7 +110,8 @@ CONTAINS
                        RIBB,                                            &
                        SMCWLT,SMCDRY,SMCREF,SMCMAX,NROOT,   &
                        SFHEAD1RT,                                       &    !I
-                       INFXS1RT,ETPND1 )                    !P
+                       INFXS1RT,ETPND1,                                 &
+		       gwsoilcpl, qlowbdry)                    !P
 ! ----------------------------------------------------------------------
 ! SUBROUTINE SFLX - UNIFIED NOAHLSM VERSION 1.0 JULY 2007
 ! ----------------------------------------------------------------------
@@ -330,6 +331,11 @@ CONTAINS
 
       REAL, INTENT(INOUT):: SFHEAD1RT,INFXS1RT, ETPND1
 
+      !BF gw soil coupling
+      real, intent(in)                       :: qlowbdry
+      integer, intent(in)                    :: gwsoilcpl
+      !BF end
+      
       REAL, INTENT(IN)   :: SHDMIN,SHDMAX,DT,DQSDT2,LWDN,PRCP,PRCPRAIN,     &
                             Q2,Q2SAT,SFCPRS,SFCSPD,SFCTMP, SNOALB,          &
                             SOLDN,SOLNET,TBOT,TH2,ZLVL,                            &
@@ -830,7 +836,8 @@ CONTAINS
                             RUNOFF3,EDIR,EC,ET,ETT,NROOT,ICE,RTDIS,      &
                             QUARTZ,FXEXP,CSOIL,                          &
                             BETA,DRIP,DEW,FLX1,FLX3,VEGTYP,ISURBAN,      &
-                            SFHEAD1RT,INFXS1RT,ETPND1 )
+                            SFHEAD1RT,INFXS1RT,ETPND1,                   &
+		            gwsoilcpl, qlowbdry)
             ETA_KINEMATIC = ETA
          ELSE
             CALL SNOPAC (ETP,ETA,PRCP,PRCPF,SNOWNG,SMC,SMCMAX,SMCWLT,    &
@@ -845,7 +852,8 @@ CONTAINS
                          BETA,DRIP,DEW,FLX1,FLX2,FLX3,ESNOW,ETNS,EMISSI, &
                          RIBB,SOLDN,                                     &
                          ISURBAN,                                        &
-                         VEGTYP, SFHEAD1RT,INFXS1RT,ETPND1)
+                         VEGTYP, SFHEAD1RT,INFXS1RT,ETPND1,              &
+			 gwsoilcpl, qlowbdry)
             ETA_KINEMATIC =  ESNOW + ETNS
          END IF
 
@@ -2111,7 +2119,8 @@ CONTAINS
                          QUARTZ,FXEXP,CSOIL,                            &
                          BETA,DRIP,DEW,FLX1,FLX3,VEGTYP,ISURBAN,        &
 !DJG NDHMS/WRF-Hydro edit...
-                         SFHEAD1RT,INFXS1RT,ETPND1)
+                         SFHEAD1RT,INFXS1RT,ETPND1,                     &
+		         gwsoilcpl, qlowbdry)
 
 ! ----------------------------------------------------------------------
 ! SUBROUTINE NOPAC
@@ -2136,6 +2145,8 @@ CONTAINS
                               RUNOFF1,RUNOFF2,RUNOFF3,SSOIL
 !DJG NDHMS/WRF-Hydro edit...
       REAL, INTENT(INOUT)  :: SFHEAD1RT,INFXS1RT,ETPND1
+      real, intent(in)     :: qlowbdry
+      integer, intent(in) :: gwsoilcpl
 
       REAL, DIMENSION(1:NSOIL),INTENT(IN)     :: RTDIS,ZSOIL
       REAL, DIMENSION(1:NSOIL),INTENT(OUT)    :: ET
@@ -2183,7 +2194,8 @@ CONTAINS
                       SHDFAC,CMCMAX,                                    &
                       RUNOFF1,RUNOFF2,RUNOFF3,                          &
                       EDIR1,EC1,ET1,                                    &
-                      DRIP, SFHEAD1RT,INFXS1RT)
+                      DRIP, SFHEAD1RT,INFXS1RT,                         &
+		      gwsoilcpl, qlowbdry)
 
 ! ----------------------------------------------------------------------
 ! CONVERT MODELED EVAPOTRANSPIRATION FROM  M S-1  TO  KG M-2 S-1.
@@ -2209,7 +2221,8 @@ CONTAINS
                       SHDFAC,CMCMAX,                                    &
                       RUNOFF1,RUNOFF2,RUNOFF3,                          &
                       EDIR1,EC1,ET1,                                    &
-                      DRIP, SFHEAD1RT,INFXS1RT)
+                      DRIP, SFHEAD1RT,INFXS1RT,                         &
+		      gwsoilcpl, qlowbdry)
 
 ! ----------------------------------------------------------------------
 ! CONVERT MODELED EVAPOTRANSPIRATION FROM 'M S-1' TO 'KG M-2 S-1'.
@@ -2739,7 +2752,8 @@ CONTAINS
      &                   SHDFAC,CMCMAX,                                 &
      &                   RUNOFF1,RUNOFF2,RUNOFF3,                       &
      &                   EDIR,EC,ET,                                    &
-     &                   DRIP, SFHEAD1RT,INFXS1RT)
+     &                   DRIP, SFHEAD1RT,INFXS1RT,                      &
+	                 gwsoilcpl, qlowbdry)
 
 ! ----------------------------------------------------------------------
 ! SUBROUTINE SMFLX
@@ -2768,6 +2782,8 @@ CONTAINS
       REAL :: FLIMIT
 
       REAL,    INTENT(INOUT)                 :: SFHEAD1RT,INFXS1RT
+      real, intent(in)                       :: qlowbdry
+      integer, intent(in)                    :: gwsoilcpl
 
 ! ----------------------------------------------------------------------
 ! EXECUTABLE CODE BEGINS HERE.
@@ -2845,7 +2861,8 @@ CONTAINS
          CALL SRT (RHSTT,EDIR,ET,SH2O,SH2O,NSOIL,PCPDRP,ZSOIL,          &
                     DWSAT,DKSAT,SMCMAX,BEXP,RUNOFF1,                    &
                     RUNOFF2,DT,SMCWLT,SLOPE,KDT,FRZFACT,SICE,AI,BI,CI,  &
-                    SFHEAD1RT,INFXS1RT) 
+                    SFHEAD1RT,INFXS1RT, &
+		    gwsoilcpl, qlowbdry) 
          CALL SSTEP (SH2OFG,SH2O,DUMMY,RHSTT,RHSCT,DT,NSOIL,SMCMAX,     &
                         CMCMAX,RUNOFF3,ZSOIL,SMC,SICE,AI,BI,CI,INFXS1RT)
          DO K = 1,NSOIL
@@ -2854,7 +2871,8 @@ CONTAINS
          CALL SRT (RHSTT,EDIR,ET,SH2O,SH2OA,NSOIL,PCPDRP,ZSOIL,         &
                     DWSAT,DKSAT,SMCMAX,BEXP,RUNOFF1,                    &
                     RUNOFF2,DT,SMCWLT,SLOPE,KDT,FRZFACT,SICE,AI,BI,CI,  &
-                    SFHEAD1RT,INFXS1RT)
+                    SFHEAD1RT,INFXS1RT, &
+		    gwsoilcpl, qlowbdry)
          CALL SSTEP (SH2O,SH2O,CMC,RHSTT,RHSCT,DT,NSOIL,SMCMAX,         &
                         CMCMAX,RUNOFF3,ZSOIL,SMC,SICE,AI,BI,CI,INFXS1RT)
 
@@ -2862,7 +2880,8 @@ CONTAINS
          CALL SRT (RHSTT,EDIR,ET,SH2O,SH2O,NSOIL,PCPDRP,ZSOIL,          &
                     DWSAT,DKSAT,SMCMAX,BEXP,RUNOFF1,                    &
                     RUNOFF2,DT,SMCWLT,SLOPE,KDT,FRZFACT,SICE,AI,BI,CI,  &
-                   SFHEAD1RT,INFXS1RT)
+                   SFHEAD1RT,INFXS1RT, &
+		    gwsoilcpl, qlowbdry)
          CALL SSTEP (SH2O,SH2O,CMC,RHSTT,RHSCT,DT,NSOIL,SMCMAX,         &
                      CMCMAX,RUNOFF3,ZSOIL,SMC,SICE,AI,BI,CI,INFXS1RT)
 !      RUNOF = RUNOFF
@@ -3015,7 +3034,8 @@ CONTAINS
                           RIBB,SOLDN,                                   &
                           ISURBAN,                                      &
 
-                          VEGTYP, SFHEAD1RT,INFXS1RT,ETPND1)
+                          VEGTYP, SFHEAD1RT,INFXS1RT,ETPND1,            &
+		          gwsoilcpl, qlowbdry)
 
 ! ----------------------------------------------------------------------
 ! SUBROUTINE SNOPAC
@@ -3037,6 +3057,10 @@ CONTAINS
 
 !DJG NDHMS/WRF-Hydro edit...
        REAL, INTENT(INOUT)    ::  SFHEAD1RT,INFXS1RT,ETPND1
+
+!BF gw soil coupling
+      real, intent(in)                       :: qlowbdry
+      integer, intent(in)                    :: gwsoilcpl
 
       REAL, INTENT(IN)      :: BEXP,CFACTR, CMCMAX,CSOIL,DF1,DKSAT,     &
                                DT,DWSAT, EPSCA,FDOWN,F1,FXEXP,          &
@@ -3346,7 +3370,8 @@ CONTAINS
                       SHDFAC,CMCMAX,                                    &
                       RUNOFF1,RUNOFF2,RUNOFF3,                          &
                       EDIR1,EC1,ET1,                                    &
-                      DRIP, SFHEAD1RT,INFXS1RT)
+                      DRIP, SFHEAD1RT,INFXS1RT,                         &
+		      gwsoilcpl, qlowbdry)
 ! ----------------------------------------------------------------------
 ! BEFORE CALL SHFLX IN THIS SNOWPACK CASE, SET ZZ1 AND YY ARGUMENTS TO
 ! SPECIAL VALUES THAT ENSURE THAT GROUND HEAT FLUX CALCULATED IN SHFLX
@@ -3630,7 +3655,8 @@ CONTAINS
       SUBROUTINE SRT (RHSTT,EDIR,ET,SH2O,SH2OA,NSOIL,PCPDRP,            &
                        ZSOIL,DWSAT,DKSAT,SMCMAX,BEXP,RUNOFF1,           &
                      RUNOFF2,DT,SMCWLT,SLOPE,KDT,FRZX,SICE,AI,BI,CI,  &
-                     SFHEAD1RT,INFXS1RT )
+                     SFHEAD1RT,INFXS1RT, &
+		     gwsoilcpl, qlowbdry)
 
 ! ----------------------------------------------------------------------
 ! SUBROUTINE SRT
@@ -3639,6 +3665,7 @@ CONTAINS
 ! WATER DIFFUSION EQUATION.  ALSO TO COMPUTE ( PREPARE ) THE MATRIX
 ! COEFFICIENTS FOR THE TRI-DIAGONAL MATRIX OF THE IMPLICIT TIME SCHEME.
 ! ----------------------------------------------------------------------
+
       IMPLICIT NONE
       INTEGER, INTENT(IN)       :: NSOIL
       INTEGER                   :: IALP1, IOHINF, J, JJ,  K, KS
@@ -3647,6 +3674,9 @@ CONTAINS
        REAL, INTENT(INOUT)     :: SFHEAD1RT, INFXS1RT
        REAL                    :: SFCWATR,chcksm
 
+      !BF edit: variables for gw soil coupling
+      integer, intent(in)      :: gwsoilcpl
+      real, intent(in)         :: qlowbdry
 
 
       REAL, INTENT(IN)          :: BEXP, DKSAT, DT, DWSAT, EDIR, FRZX,  &
@@ -3878,9 +3908,24 @@ CONTAINS
 ! CALC RHSTT FOR THIS LAYER AFTER CALC'NG ITS NUMERATOR
 ! ----------------------------------------------------------------------
          END IF
+
+select case(gwsoilcpl)
+case(2)
+        if(K .eq. nsoil) then
+         NUMER = (WDF2 * DSMDZ2) - qLowBdry - (WDF * DSMDZ) - WCND + ET (K)  
+  else 
+        ! withdrawal has positive sign (e.g. ET), replenishment has negative sign (e.g. qlowbdry)
          NUMER = (WDF2 * DSMDZ2) + SLOPX * WCND2- (WDF * DSMDZ)         &
                  - WCND+ ET (K)
+  end if
 
+case default  
+ 
+         NUMER = (WDF2 * DSMDZ2) + SLOPX * WCND2- (WDF * DSMDZ)         &
+                 - WCND+ ET (K)
+ 
+
+end select
 ! ----------------------------------------------------------------------
 ! CALC MATRIX COEFS, AI, AND BI FOR THIS LAYER
 ! ----------------------------------------------------------------------
@@ -3893,7 +3938,17 @@ CONTAINS
 ! ----------------------------------------------------------------------
          BI (K) = - ( AI (K) + CI (K) )
          IF (K .eq. NSOIL) THEN
-            RUNOFF2 = SLOPX * WCND2
+
+!BF gwsoil coupling
+select case (gwsoilcpl)
+ case(2)
+            RUNOFF2 = -qLowBdry  
+
+ case default
+	    RUNOFF2 = SLOPX * WCND2
+
+end select
+	    
          END IF
          IF (K .ne. NSOIL) THEN
             WDF = WDF2

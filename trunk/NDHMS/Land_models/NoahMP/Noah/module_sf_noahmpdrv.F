@@ -35,6 +35,7 @@ CONTAINS
 		 SHGXY,    SHCXY,    SHBXY,     EVGXY,    EVBXY,     GHVXY, & ! OUT Noah MP only
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
+               ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR,                      & ! NEW output accumulator variables
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
 #endif
@@ -202,7 +203,10 @@ CONTAINS
     INTEGER,  INTENT(IN   )   ::     ids,ide, jds,jde, kds,kde,  &  ! d -> domain
          &                           ims,ime, jms,jme, kms,kme,  &  ! m -> memory
          &                           its,ite, jts,jte, kts,kte      ! t -> tile
-
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCPRCP     ! accumulated precip [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
 
 ! 1D equivalent of 2D/3D fields
 
@@ -362,7 +366,7 @@ CONTAINS
     REAL, PARAMETER                     :: CO2 = 395.e-06
     REAL, PARAMETER                     :: O2 = 0.209
     REAL, PARAMETER                     :: undefined_value = -1.E36
-
+    REAL, PARAMETER                     :: undefined_value2 = 0.0
 
 ! ----------------------------------------------------------------------
 ! ----------------------------------------------------------------------
@@ -555,39 +559,43 @@ CONTAINS
                                 FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
                                TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
                               QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
-			      EMISSI,  FPICE,    CHB2 )                             ! OUT :
+                              EMISSI,  FPICE,    CHB2                             & ! OUT :
+#ifdef WRF_HYDRO
+                              , sfcheadrt(i,j)                                      &
+#endif
+                              )
 
        FSNO   = 1.0       
        TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
        TGB    = TG 
-       CANICE = undefined_value 
-       CANLIQ = undefined_value 
+       CANICE = undefined_value2 
+       CANLIQ = undefined_value2 
        EAH    = undefined_value 
        TAH    = undefined_value
-       FWET   = undefined_value 
-       WSLAKE = undefined_value 
+       FWET   = undefined_value2 
+       WSLAKE = undefined_value2 
        ZWT    = undefined_value 
        WA     = undefined_value 
        WT     = undefined_value 
-       LFMASS = undefined_value 
-       RTMASS = undefined_value 
-       STMASS = undefined_value 
-       WOOD   = undefined_value 
+       LFMASS = undefined_value2 
+       RTMASS = undefined_value2 
+       STMASS = undefined_value2 
+       WOOD   = undefined_value2 
        STBLCP = undefined_value 
        FASTCP = undefined_value 
-       PLAI   = undefined_value 
-       PSAI   = undefined_value 
+       PLAI   = undefined_value2 
+       PSAI   = undefined_value2 
        T2MV   = undefined_value 
        Q2MV   = undefined_value 
-       NEE    = undefined_value 
-       GPP    = undefined_value 
-       NPP    = undefined_value 
+       NEE    = undefined_value2 
+       GPP    = undefined_value2 
+       NPP    = undefined_value2 
        FVEGMP = 0.0 
-       ECAN   = undefined_value 
-       ETRAN  = undefined_value 
-       APAR   = undefined_value 
-       PSN    = undefined_value 
-       SAV    = undefined_value 
+       ECAN   = undefined_value2 
+       ETRAN  = undefined_value2 
+       APAR   = undefined_value2 
+       PSN    = undefined_value2 
+       SAV    = undefined_value2 
        RSSUN  = undefined_value 
        RSSHA  = undefined_value 
        BGAP   = undefined_value 
@@ -605,13 +613,13 @@ CONTAINS
        SHB    = FSH
        EVB    = FGEV
        GHB    = SSOIL
-       TR     = undefined_value 
-       EVC    = undefined_value 
+       TR     = undefined_value2 
+       EVC    = undefined_value2 
        CHLEAF = undefined_value 
        CHUC   = undefined_value 
        CHV2   = undefined_value 
-       FCEV   = undefined_value 
-       FCTR   = undefined_value        
+       FCEV   = undefined_value2 
+       FCTR   = undefined_value2        
        
        QFX(I,J) = ESOIL
        LH (I,J) = FGEV
@@ -702,12 +710,15 @@ end if
             QFX(I,J) = ECAN + ESOIL + ETRAN
             LH       (I,J)                = FCEV + FGEV + FCTR
 
+   ENDIF ! glacial split ends 
+
 #ifdef WRF_HYDRO
-            soldrain(i,j) = RUNSB*dt        !mm , underground runoff
+!AD_CHANGE: Glacier cells can produce small negative subsurface runoff for mass balance.
+!	    This will crash channel routing, so only pass along positive runoff.
+            soldrain(i,j) = max(RUNSB*dt, 0.)        !mm , underground runoff
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
 #endif
 
-   ENDIF ! glacial split ends 
 
 ! INPUT/OUTPUT
 
@@ -718,6 +729,10 @@ end if
              SMSTOT   (I,J)                = 0.0  ! [maintained as Noah consistency]
              SFCRUNOFF(I,J)                = SFCRUNOFF(I,J) + RUNSF * DT
              UDRUNOFF (I,J)                = UDRUNOFF(I,J)  + RUNSB * DT
+             ACCPRCP  (I,J)                = ACCPRCP(I,J) + PRCP * DT
+             ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
+             ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
+             ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
              IF ( SALB > -999 ) THEN
                 ALBEDO(I,J)                = SALB
              ENDIF

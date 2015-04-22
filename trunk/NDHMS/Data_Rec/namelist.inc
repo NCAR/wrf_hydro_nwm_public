@@ -8,6 +8,9 @@
        logical            :: history_output
        integer            :: split_output_count
        integer :: igrid
+       integer :: rst_bi_in   ! used for parallel io with large restart file.
+       integer :: rst_bi_out   ! used for parallel io with large restart file.
+                           ! each process will output the restart tile.
        character(len=256) :: geo_static_flnm = ""
        integer  :: DEEPGWSPIN
        integer :: HIRES_OUT, order_to_write, rst_typ
@@ -22,9 +25,11 @@
 
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                  GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
-                  sys_cpl
-          real:: DTRT,dxrt0, DTCT
+                  GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                  sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, &
+                  gwsoilcpl
+          logical:: GwPreDiag, GwSpinUp
+          real:: DTRT,dxrt0, DTCT, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
