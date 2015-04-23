@@ -1202,7 +1202,8 @@ end subroutine get_albedo12m_netcdf
   
   where(ltype .eq. 0) 
    hc = 0.
-   por = 10**21
+!yw   por = 10**21
+   por = 10E21
   end where
 
   
