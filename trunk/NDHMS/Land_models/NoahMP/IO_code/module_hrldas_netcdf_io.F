@@ -90,6 +90,23 @@ contains
 !-------------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------------
 
+  integer function checkRstV(name)
+       implicit none
+       character(len=*) name
+       integer :: ncid, ierr, varid
+#ifdef MPP_LAND
+     if(my_id .eq. io_id) then
+#endif
+       checkRstV = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
+       if(checkRstV .eq. 0) then   
+           checkRstV = nf90_inq_varid(ncid, name, varid)
+       endif
+#ifdef MPP_LAND
+     endif
+       call mpp_land_bcast_int1(checkRstV)
+#endif
+  end function checkRstV
+
   subroutine check_outdir(rank, outdir)
     implicit none
 

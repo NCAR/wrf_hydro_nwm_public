@@ -196,12 +196,13 @@ module module_NoahMP_hrldas_driver
    &         ims,ime, jms,jme, kms,kme,  &  ! m -> memory
    &         its,ite, jts,jte, kts,kte   ! t -> tile
 
-! OUT (new accumulator variables for output water balance)
-  
+#ifdef WRF_HYDRO
+! INOUT (new accumulator variables for output water balance) 
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
+#endif
 
 !    REAL, ALLOCATABLE, DIMENSION(:)     :: SLDPTH       ! depth to soil interfaces [m]
 
@@ -750,10 +751,12 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( GVFMIN    (XSTART:XEND,YSTART:YEND) )  ! annual minimum in vegetation fraction
   ALLOCATE ( GVFMAX    (XSTART:XEND,YSTART:YEND) )  ! annual maximum in vegetation fraction
 
+#ifdef WRF_HYDRO
   ALLOCATE ( ACCPRCP  (XSTART:XEND,YSTART:YEND) )  ! accumulated precip [mm]
   ALLOCATE ( ACCECAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated canopy evap [mm]
   ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
   ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
+#endif
 
 !------------------------------------------------------------------------
 ! Needed for MMF_RUNOFF (IOPT_RUN = 5); not part of MP driver in WRF
@@ -783,11 +786,13 @@ module module_NoahMP_hrldas_driver
    greenfrac = 0
 #endif
 
+#ifdef WRF_HYDRO
 ! Initialize accumulator variables to 0
   ACCPRCP = 0.0
   ACCECAN = 0.0
   ACCETRAN = 0.0
   ACCEDIR = 0.0
+#endif
 
 !yw added  initialize the value
   COSZEN = undefined_value
@@ -1029,6 +1034,12 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSFC"    , QSFC     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF",SFCRUNOFF   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF" ,UDRUNOFF    )
+#ifdef WRF_HYDRO
+     if(checkRstV("ACCPRCP") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCPRCP"  ,ACCPRCP    )
+     if(checkRstV("ACCECAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCECAN"  ,ACCECAN    )
+     if(checkRstV("ACCEDIR") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCEDIR"  ,ACCEDIR    )
+     if(checkRstV("ACCETRAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCETRAN" ,ACCETRAN    )
+#endif
     ! below for opt_run = 5
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMOISEQ"   , SMOISEQ    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "AREAXY"    , AREAXY     )
@@ -1368,8 +1379,8 @@ end subroutine land_driver_ini
 		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
 		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
 	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &                          
-                ACCPRCP,  ACCECAN, ACCETRAN,  ACCEDIR,                        &
 #ifdef WRF_HYDRO
+                ACCPRCP,  ACCECAN, ACCETRAN,  ACCEDIR,                        &
                  sfcheadrt,INFXSRT,soldrain,                          &    
 #endif
                 ids,ide, jds,jde, kds,kde,                      &
@@ -1450,10 +1461,12 @@ end subroutine land_driver_ini
               call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
               call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
               call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
+#ifdef WRF_HYDRO
               call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"                    )
               call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"                    )
               call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
               call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"                    )
+#endif
         ! Additional needed to close the canopy energy budget
               call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
               call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
@@ -1655,6 +1668,13 @@ subroutine lsm_restart()
   call add_to_restart(QSFC      , "QSFC"  )
   call add_to_restart(SFCRUNOFF , "SFCRUNOFF")
   call add_to_restart(UDRUNOFF  , "UDRUNOFF" )
+#ifdef WRF_HYDRO
+  call add_to_restart(ACCPRCP   , "ACCPRCP" )
+  call add_to_restart(ACCECAN   , "ACCECAN" )
+  call add_to_restart(ACCEDIR   , "ACCEDIR" )
+  call add_to_restart(ACCETRAN  , "ACCETRAN" )
+#endif
+
   ! below for opt_run = 5
   call add_to_restart(SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
   call add_to_restart(AREAXY    , "AREAXY"     )
