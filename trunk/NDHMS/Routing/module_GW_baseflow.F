@@ -14,7 +14,7 @@ contains
 !------------------------------------------------------------------------------
 
    subroutine simp_gw_buck(ix,jx,ixrt,jxrt,numbasns,basns_area,&
-                            gwsubbasmsk, runoff1x, runoff2x, z_gwsubbas_tmp, qin_gwsubbas,&
+                            gwsubbasmsk, runoff1x_in, runoff2x_in, z_gwsubbas_tmp, qin_gwsubbas,&
                             qout_gwsubbas,qinflowbase,gw_strm_msk,gwbas_pix_ct,dist,DT,&
                             C,ex,z_mx,GWBASESWCRT,OVRTSWCRT)
    implicit none
@@ -23,8 +23,10 @@ contains
    integer, intent(in)                               :: ix,jx,ixrt,jxrt
    integer, intent(in)                               :: numbasns
    integer, intent(in), dimension(ix,jx)             :: gwsubbasmsk
-   real, intent(in), dimension(ix,jx)                :: runoff2x 
-   real, intent(in), dimension(ix,jx)                :: runoff1x 
+   real, intent(in), dimension(ix,jx)                :: runoff2x_in 
+   real, dimension(ix,jx)                            :: runoff2x 
+   real, intent(in), dimension(ix,jx)                :: runoff1x_in
+   real, dimension(ix,jx)                            :: runoff1x
    real, intent(in)                                  :: basns_area(numbasns),dist(ixrt,jxrt,9),DT
    real, intent(in),dimension(numbasns)              :: C,ex,z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
@@ -57,11 +59,26 @@ contains
    qin_gwsubbas = 0.
    z_gwsubbas = z_gwsubbas_tmp
 
+!Assign local value of runoff2 (drainage) for flux caluclation to buckets...
+   runoff2x = runoff2x_in
+   runoff1x = runoff1x_in
+
+
 
 
 !!!Calculate aggregated percolation from deep runoff into GW basins...
    do i=1,ix
      do j=1,jx
+
+!!DJG 4/15/2015...reset runoff2x, runoff1x, values to 0 where extreme values exist...(<0 or
+!> 1000)
+       if((runoff2x(i,j).lt.0.).OR.(runoff2x(i,j).gt.1000.)) then
+         runoff2x(i,j)=0.
+       end if
+       if((runoff1x(i,j).lt.0.).OR.(runoff1x(i,j).gt.1000.)) then
+         runoff1x(i,j)=0.
+       end if
+
        do bas=1,numbasns
          if(gwsubbasmsk(i,j).eq.bas) then
            if(OVRTSWCRT.ne.0) then

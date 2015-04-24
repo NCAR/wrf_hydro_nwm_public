@@ -37,11 +37,12 @@ module module_WRF_HYDRO
 CONTAINS
 
 !wrf_cpl_HYDRO will not call the off-line lsm 
-    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid, config_flags, its,ite,jts,jte)
+!ywGW subroutine wrf_cpl_HYDRO(HYDRO_dt,grid, config_flags, its,ite,jts,jte)
+    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid,its,ite,jts,jte)
 
        implicit none
        TYPE ( domain ), INTENT(INOUT) :: grid
-       TYPE ( grid_config_rec_type ), INTENT(IN) :: config_flags
+!ywGW       TYPE ( grid_config_rec_type ), INTENT(IN) :: config_flags
        integer its, ite, jts, jte, ij
        real :: HYDRO_dt
 

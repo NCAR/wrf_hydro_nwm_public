@@ -1202,7 +1202,8 @@ end subroutine get_albedo12m_netcdf
   
   where(ltype .eq. 0) 
    hc = 0.
-   por = 10**21
+!yw   por = 10**21
+   por = 10E21
   end where
 
   
@@ -4581,6 +4582,8 @@ end subroutine mpp_output_chrt
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
      endif
+
+!yw check
  
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
         call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1")
