@@ -420,6 +420,7 @@ CONTAINS
 
 
 !-----------------------------------------------------------------------
+
    ILOOP : DO I = its, ite
 
     IF (XICE(I,J) >= XICE_THRES) THEN
@@ -838,6 +839,7 @@ end if
       ENDDO ILOOP                                                       ! of I loop
    ENDDO JLOOP                                                          ! of J loop
 
+         
 !------------------------------------------------------
   END SUBROUTINE noahmplsm
 !------------------------------------------------------

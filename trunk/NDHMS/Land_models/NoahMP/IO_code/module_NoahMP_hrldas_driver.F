@@ -270,7 +270,7 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
     INTEGER                             :: I
-    INTEGER                             :: J
+    INTEGER                             :: J, K
     INTEGER                             :: SLOPETYP
     INTEGER                             :: YEARLEN
 
@@ -283,6 +283,7 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
   character(len=19)  :: olddate, newdate, startdate
+  character(len=19)  ::  tmpdate
   character          :: hgrid
   integer            :: igrid
   logical            :: lexist
@@ -975,22 +976,49 @@ module module_NoahMP_hrldas_driver
 
 
   ITIMESTEP = 1
+!!! begin added by Wei Yu
+       IF(ITIMESTEP == 1)THEN
+          DO I=its,ite
+             IF((XLAND(I,J)-1.5) >= 0.) THEN    ! Open water case
+                SMSTAV(I,J) = 1.0
+                SMSTOT(I,J) = 1.0
+                DO K = 1, NSOIL
+                   SMOIS(I,K,J) = 1.0
+                    TSLB(I,K,J) = 273.16
+                ENDDO
+             ELSE
+                IF(XICE(I,J) == 1.) THEN        ! Sea-ice case
+                   SMSTAV(I,J) = 1.0
+                   SMSTOT(I,J) = 1.0
+                   DO K = 1, NSOIL
+                      SMOIS(I,K,J) = 1.0
+                   ENDDO
+                ENDIF
+             ENDIF
+          ENDDO
+       ENDIF
+!!! end added by wei
 
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
 
+#ifdef WRF_HYDRO
+     tmpdate = olddate
+#endif
      call find_restart_file(rank, trim(restart_filename_requested), startdate, khour, olddate, restart_flnm)
 
      call read_restart(trim(restart_flnm), &
           xstart, xend, xstart, ixfull, jxfull, nsoil, olddate)
 
-#ifdef MPP_LAND
-     call mpp_land_bcast_char(19,OLDDATE(1:19))
+#ifdef WRF_HYDRO
+     olddate = tmpdate 
 #endif
 
      ITIMESTEP = 2
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SOIL_T"  , TSLB     )
+
+
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOW_T"  , TSNOXY   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMC"     , SMOIS    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SH2O"    , SH2O     )
@@ -1198,6 +1226,7 @@ module module_NoahMP_hrldas_driver
    end do
    
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
+
 
 
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
@@ -1414,7 +1443,6 @@ end subroutine land_driver_ini
 ! END of surface_driver consistent code
 !------------------------------------------------------------------------
 
-
 ! Output for history
      OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
         if (mod((ITIME-1)*noah_timestep, output_timestep) == 0) then
@@ -1604,6 +1632,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
       call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
 #endif
+      ITIMESTEP = ITIMESTEP + 1
 
 end subroutine land_driver_exe
 
