@@ -1210,8 +1210,6 @@ program Noah_hrldas_driver
 
   allocate ( qsgw (ix,jx))
 
-  allocate ( qsgw (ix,jx))
-
   if(rank .ne. 0) then
     allocate(smc (ix,jx,nsoil))
     allocate(stc (ix,jx,nsoil))

@@ -75,6 +75,10 @@ CONTAINS
 #endif
 
 
+
+   rst_bi_in = 0
+   rst_bi_out = 0
+
 #ifdef MPP_LAND
 !  call mpp_land_bcast_real1(DT)
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
