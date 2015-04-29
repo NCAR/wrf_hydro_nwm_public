@@ -1303,7 +1303,7 @@ end subroutine land_driver_ini
                xstart, xend, ystart, yend,    &
                T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
                GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,SNOWH,ITIME,FORCING_TIMESTEP,prcp0)
-
+	   if(maxval(VEGFRA) .lt. 1.1) VEGFRA = VEGFRA * 100.
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate
         endif
