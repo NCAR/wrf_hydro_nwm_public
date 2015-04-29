@@ -1218,7 +1218,7 @@ end subroutine get_albedo12m_netcdf
   subroutine output_rt(igrid, split_output_count, ixrt, jxrt, nsoil, &
        startdate, date, QSUBRT,ZWATTABLRT,SMCRT,SUB_RESID,       &
        q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
-       geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,HIRES_OUT,  &
+       geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,CHRTOUT_GRID,  &
        QBDRYRT)
 
 !output the routing variables over routing grid.
@@ -1231,7 +1231,7 @@ end subroutine get_albedo12m_netcdf
     real,                                     intent(in) :: dt
     real,                                     intent(in) :: dist(ixrt,jxrt,9)
     integer,                                  intent(in) :: nsoil
-    integer,                                  intent(in) :: HIRES_OUT 
+    integer,                                  intent(in) :: CHRTOUT_GRID
     character(len=*),                         intent(in) :: startdate
     character(len=*),                         intent(in) :: date
     character(len=*),          intent(in)                :: geo_finegrid_flnm
@@ -1325,7 +1325,7 @@ end subroutine get_albedo12m_netcdf
 !    return
 !DJG end dump of channel inflow for calibration....
 
-    if (hires_out.eq.1) return  ! return if hires flag eq 1, if =2 output full grid
+    if (CHRTOUT_GRID.eq.0) return  ! return if hires flag eq 1, if =2 output full grid
 
     if (output_count == 0) then  
 
@@ -1725,7 +1725,6 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
      endif
      call mpp_land_bcast_int1(output_count)
-     call mpp_land_bcast_int1(hires_out)
 #endif
 
      deallocate(xdumd)
@@ -1745,7 +1744,7 @@ end subroutine get_albedo12m_netcdf
 
   subroutine output_gw_spinup(igrid, split_output_count, ixrt, jxrt, &
        startdate, date, HEAD, convgw, excess, &
-       geo_finegrid_flnm,dt,LATVAL,LONVAL,dist,HIRES_OUT)
+       geo_finegrid_flnm,dt,LATVAL,LONVAL,dist,output_gw)
 
 #ifdef MPP_LAND
        USE module_mpp_land
@@ -1759,7 +1758,7 @@ end subroutine get_albedo12m_netcdf
     integer,                                  intent(in) :: ixrt,jxrt
     real,                                     intent(in) :: dt
     real,                                     intent(in) :: dist(ixrt,jxrt,9)
-    integer,                                  intent(in) :: HIRES_OUT 
+    integer,                                  intent(in) ::  output_gw
     character(len=*),                         intent(in) :: startdate
     character(len=*),                         intent(in) :: date
     character(len=*),          intent(in)                :: geo_finegrid_flnm
@@ -1824,7 +1823,7 @@ end subroutine get_albedo12m_netcdf
     ii = 0
     jj = 0
 
-    if (hires_out.eq.1) return  ! return if hires flag eq 1, if =2 output full grid
+    if (output_gw.eq.0) return  ! return if hires flag eq 0, if =1 output full grid
 
     if (output_count == 0) then
 
@@ -2073,9 +2072,9 @@ end subroutine get_albedo12m_netcdf
   end subroutine output_gw_spinup
 
 
-subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
+subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        startdate, date, HEAD, SMCRT, convgw, excess, qsgwrt, qgw_chanrt, &
-       geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,HIRES_OUT)
+       geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,output_gw)
 
 #ifdef MPP_LAND
        USE module_mpp_land
@@ -2090,7 +2089,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     real,                                     intent(in) :: dt
     real,                                     intent(in) :: dist(ixrt,jxrt,9)
     integer,                                  intent(in) :: nsoil
-    integer,                                  intent(in) :: HIRES_OUT 
+    integer,                                  intent(in) ::  output_gw
     character(len=*),                         intent(in) :: startdate
     character(len=*),                         intent(in) :: date
     character(len=*),          intent(in)                :: geo_finegrid_flnm
@@ -2169,7 +2168,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     ii = 0
     jj = 0
 
-    if (hires_out.eq.1) return  ! return if hires flag eq 1, if =2 output full grid
+    if (output_gw.eq.0) return  ! return if hires flag eq 0, if =1 output full grid
 
     if (output_count == 0) then
 
@@ -2500,7 +2499,7 @@ subroutine output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     endif
 #endif
 
-  end subroutine output_gw
+  end subroutine sub_output_gw
 
 !-- output the channel route in an IDV 'station' compatible format
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
@@ -3567,7 +3566,7 @@ end subroutine mpp_output_chrt
 !yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
 
 !     !- flow definition, var
-        iret = nf_def_var(ncid,"flow",NF_REAL, 3, (/ixlondim,jxlatdim,timedim/), varid)
+        iret = nf_def_var(ncid,"streamflow",NF_REAL, 3, (/ixlondim,jxlatdim,timedim/), varid)
         iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
         iret = nf_put_att_text(ncid,varid,'long_name',15,'water flow rate')
         iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')

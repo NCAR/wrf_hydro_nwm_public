@@ -79,7 +79,7 @@ module module_gw_gw2d
                             nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,     &
                             RT_DOMAIN(did)%LATVAL,        &
                             RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,          &
-                            nlst_rt(did)%HIRES_OUT)
+                            nlst_rt(did)%output_gw)
 	   end if
 	  
   

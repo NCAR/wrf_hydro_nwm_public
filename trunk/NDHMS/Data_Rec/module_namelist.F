@@ -43,8 +43,18 @@ CONTAINS
        character(len=256) :: geo_static_flnm = ""
        integer  :: DEEPGWSPIN
 
-       integer :: HIRES_OUT
        integer :: i
+
+       
+          integer ::frxst_pts_out         ! ASCII point timeseries output at user specified points
+          integer ::CHANOBS_DOMAIN            ! Netcdf point timeseries output at user specified points
+          integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
+          integer ::CHRTOUT_GRID                ! Netcdf grid of channel streamflow values
+          integer ::LSMOUT_DOMAN              ! Netcdf grid of variables passed between LSM and routing components
+          integer ::RTOUT_DOMAIN                ! Netcdf grid of terrain routing variables on routing grid
+          integer  :: output_gw
+          integer  :: outlake
+
 
 !!! add the following two dummy variables 
        integer  :: NSOIL
@@ -54,7 +64,6 @@ CONTAINS
             RESTART_FILE,HISTORY_OUTPUT,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
             out_dt, rst_dt, &
-            HIRES_OUT, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
@@ -63,7 +72,9 @@ CONTAINS
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
-                    order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl
+                    order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
+                    frxst_pts_out, CHANOBS_DOMAIN,CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake
+                    
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
@@ -85,7 +96,6 @@ CONTAINS
   call mpp_land_bcast_int1(IGRID)
   call mpp_land_bcast_real1(out_dt)
   call mpp_land_bcast_real1(rst_dt)
-  call mpp_land_bcast_int1(HIRES_OUT)
   call mpp_land_bcast_int1(DEEPGWSPIN)
   call mpp_land_bcast_int1(SOLVEG_INITSWC)
 #endif
@@ -110,7 +120,6 @@ CONTAINS
   nlst%geo_static_flnm = geo_static_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt
-  nlst%HIRES_OUT = HIRES_OUT
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
 
@@ -152,7 +161,23 @@ CONTAINS
   call mpp_land_bcast_int1(rst_bi_in)
   call mpp_land_bcast_int1(rst_bi_out)
   call mpp_land_bcast_int1(order_to_write)
+  call mpp_land_bcast_int1(frxst_pts_out)
+  call mpp_land_bcast_int1(CHANOBS_DOMAIN)
+  call mpp_land_bcast_int1(CHRTOUT_DOMAIN)
+  call mpp_land_bcast_int1(output_gw)
+  call mpp_land_bcast_int1(outlake)
+  call mpp_land_bcast_int1(CHRTOUT_GRID)
+  call mpp_land_bcast_int1(LSMOUT_DOMAN)
+  call mpp_land_bcast_int1(RTOUT_DOMAIN)
 #endif
+    nlst%frxst_pts_out = frxst_pts_out
+    nlst%CHANOBS_DOMAIN = CHANOBS_DOMAIN
+    nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
+    nlst%output_gw      = output_gw
+    nlst%outlake      = outlake
+    nlst%CHRTOUT_GRID = CHRTOUT_GRID
+    nlst%LSMOUT_DOMAN = LSMOUT_DOMAN
+    nlst%RTOUT_DOMAIN = RTOUT_DOMAIN
     nlst%RT_OPTION = RT_OPTION
     nlst%CHANRTSWCRT = CHANRTSWCRT
     nlst%GW_RESTART  = GW_RESTART 
