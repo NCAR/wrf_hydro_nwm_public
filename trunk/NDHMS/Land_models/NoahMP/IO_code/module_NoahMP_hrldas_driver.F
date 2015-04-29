@@ -941,28 +941,6 @@ module module_NoahMP_hrldas_driver
 !yw end 
 
   ITIMESTEP = 1
-!!! begin added by Wei Yu
-       IF(ITIMESTEP == 1)THEN
-          DO I=its,ite
-             IF((XLAND(I,J)-1.5) >= 0.) THEN    ! Open water case
-                SMSTAV(I,J) = 1.0
-                SMSTOT(I,J) = 1.0
-                DO K = 1, NSOIL
-                   SMOIS(I,K,J) = 1.0
-                    TSLB(I,K,J) = 273.16
-                ENDDO
-             ELSE
-                IF(XICE(I,J) == 1.) THEN        ! Sea-ice case
-                   SMSTAV(I,J) = 1.0
-                   SMSTOT(I,J) = 1.0
-                   DO K = 1, NSOIL
-                      SMOIS(I,K,J) = 1.0
-                   ENDDO
-                ENDIF
-             ENDIF
-          ENDDO
-       ENDIF
-!!! end added by wei
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice

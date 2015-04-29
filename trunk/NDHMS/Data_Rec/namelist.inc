@@ -5,7 +5,6 @@
        real out_dt, rst_dt, dt
        integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
        character(len=256)  :: restart_file = ""
-       logical            :: history_output
        integer            :: split_output_count
        integer :: igrid
        integer :: rst_bi_in   ! used for parallel io with large restart file.
@@ -41,7 +40,6 @@
           character(len=256) :: geo_finegrid_flnm =""
 
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
-          integer ::CHANOBS_DOMAIN            ! Netcdf point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
           integer ::CHRTOUT_GRID                ! Netcdf grid of channel streamflow values
           integer ::LSMOUT_DOMAN              ! Netcdf grid of variables passed between LSM and routing components

@@ -4,7 +4,7 @@ module module_HYDRO_drv
                                restart_out_bi, restart_in_bi
    USE module_mpp_land
 #else
-   use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes, output_chrtgrd
+   use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes
 #endif
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
@@ -244,8 +244,8 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write)
 
       
-              if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
 #ifdef MPP_LAND
+              if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
               call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                   RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
                   RT_DOMAIN(did)%GCH_NETLNK, &
@@ -253,12 +253,6 @@ module module_HYDRO_drv
                   RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
                   RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
                   RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
-#else
-              call  output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                  RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-                  RT_DOMAIN(did)%GCH_NETLNK, &
-                  nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                  RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm)
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then

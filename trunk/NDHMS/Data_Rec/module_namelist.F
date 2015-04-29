@@ -37,7 +37,7 @@ CONTAINS
        integer :: SOLVEG_INITSWC
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
-       logical            :: history_output, GwPreDiag, GwSpinUp
+       logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
        integer :: igrid
        character(len=256) :: geo_static_flnm = ""
@@ -46,8 +46,6 @@ CONTAINS
        integer :: i
 
        
-          integer ::frxst_pts_out         ! ASCII point timeseries output at user specified points
-          integer ::CHANOBS_DOMAIN            ! Netcdf point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
           integer ::CHRTOUT_GRID                ! Netcdf grid of channel streamflow values
           integer ::LSMOUT_DOMAN              ! Netcdf grid of variables passed between LSM and routing components
@@ -61,7 +59,7 @@ CONTAINS
        real :: ZSOIL8(8)
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
-            RESTART_FILE,HISTORY_OUTPUT,SPLIT_OUTPUT_COUNT,IGRID,&
+            RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
             out_dt, rst_dt, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
@@ -73,7 +71,7 @@ CONTAINS
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
-                    frxst_pts_out, CHANOBS_DOMAIN,CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake
+                    CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake
                     
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
@@ -114,7 +112,6 @@ CONTAINS
 
 !  nlst%DT = DT
   nlst%RESTART_FILE = RESTART_FILE
-  nlst%HISTORY_OUTPUT = HISTORY_OUTPUT
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
   nlst%geo_static_flnm = geo_static_flnm
@@ -161,8 +158,6 @@ CONTAINS
   call mpp_land_bcast_int1(rst_bi_in)
   call mpp_land_bcast_int1(rst_bi_out)
   call mpp_land_bcast_int1(order_to_write)
-  call mpp_land_bcast_int1(frxst_pts_out)
-  call mpp_land_bcast_int1(CHANOBS_DOMAIN)
   call mpp_land_bcast_int1(CHRTOUT_DOMAIN)
   call mpp_land_bcast_int1(output_gw)
   call mpp_land_bcast_int1(outlake)
@@ -170,8 +165,6 @@ CONTAINS
   call mpp_land_bcast_int1(LSMOUT_DOMAN)
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
 #endif
-    nlst%frxst_pts_out = frxst_pts_out
-    nlst%CHANOBS_DOMAIN = CHANOBS_DOMAIN
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
     nlst%output_gw      = output_gw
     nlst%outlake      = outlake
