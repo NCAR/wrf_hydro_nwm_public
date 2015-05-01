@@ -196,7 +196,7 @@ module module_HYDRO_drv
                 RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%CHRTOUT_GRID,&
+                RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
                 RT_DOMAIN(did)%QBDRYRT )
 
 

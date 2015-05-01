@@ -63,14 +63,6 @@
 !      WRF has this capability so be careful not to double apply the correction!!!
  TERADJ_SOLAR = 0
 
-!Specify the number of soil layers (integer) and the depth of the bottom of each layer (meters)...
-! Notes: In Version 1 of WRF-Hydro these must be the same as in the namelist.input file
-!       Future versions will permit this to be different.
- NSOIL=4
- ZSOIL8(1) = -0.10
- ZSOIL8(2) = -0.40
- ZSOIL8(3) = -1.00
- ZSOIL8(4) = -2.00
 
 !Specify the grid spacing of the terrain routing grid...(meters)
  DXRT = 100.0
