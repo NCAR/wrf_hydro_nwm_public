@@ -5,6 +5,7 @@ module module_HYDRO_io
    use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
+   use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io , ReachLS_wInt, reachls_wreal2
 
    implicit none
 #include <netcdf.inc>
@@ -813,7 +814,8 @@ end subroutine get_albedo12m_netcdf
      open(unit=79,file=trim(route_link_f),          & !link
                    form='formatted',status='old')
 #ifdef HYDRO_D
-                   write(6,*) "read file ",route_link_f
+                   write(6,*) "read file to get NLINKSL",route_link_f
+                    call flush(6)
 #endif
 1011    read(79,*,end= 1999) InputLine
         NLINKSL = NLINKSL + 1
@@ -824,6 +826,10 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
         print *, "Number of Segments or Links on sparse network", NLINKSL
 #endif
+        NLAKES = NLINKSL
+
+        write(6,*) "NLINKSL = ", NLINKSL
+        call flush(6)
 
       end if !end-if is now for channel_option just above, not IF from further up
 
@@ -2691,33 +2697,30 @@ end subroutine output_chrt
 
 #ifdef MPP_LAND
 !-- output the channel route in an IDV 'station' compatible format
-   subroutine mpp_output_chrt(gnlinks,map_l2g,igrid, &
+   subroutine mpp_output_chrt(gnlinks,gnlinksl,map_l2g,igrid, &
         split_output_count, NLINKS, ORDER, &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt, &
-        K,STRMFRXSTPTS,order_to_write)
+        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
 
        USE module_mpp_land
 
 !!output the routing variables over just channel
-     integer,                                  intent(in) :: igrid,K
+     integer,                                  intent(in) :: igrid,K,channel_option,NLINKSL
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS
-     real, dimension(NLINKS),               intent(in) :: chlon,chlat
-     real, dimension(NLINKS),                  intent(in) :: hlink,zelev
+     real, dimension(:),               intent(in) :: chlon,chlat
+     real, dimension(:),                  intent(in) :: hlink,zelev
 
-     integer, dimension(NLINKS),               intent(in) :: ORDER
-     integer, dimension(NLINKS),               intent(inout) :: STRMFRXSTPTS
+     integer, dimension(:),               intent(in) :: ORDER
+     integer, dimension(:),               intent(inout) :: STRMFRXSTPTS
 
      real,                                     intent(in) :: dtrt
-     real, dimension(NLINKS,2),                intent(in) :: qlink
+     real, dimension(:,:),                intent(in) :: qlink
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
 
-     integer  :: gnlinks, map_l2g(nlinks), order_to_write
-     !real, dimension(gNLINKS) :: g_chlon,g_chlat, g_hlink,g_zelev
-     !real, dimension(gNLINKS,2) :: g_qlink
-     !integer ,  dimension(gNLINKS) :: g_order,g_STRMFRXSTPTS
+      integer  :: gnlinks, map_l2g(nlinks), order_to_write, gnlinksl
       real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
       integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
       real,allocatable,dimension(:,:) :: g_qlink
@@ -2740,20 +2743,37 @@ end subroutine output_chrt
         allocate(g_STRMFRXSTPTS(1))
      endif
 
-     call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
+
+
+     if(channel_option .eq. 1 .or. channel_option .eq. 2) then
+        g_qlink = 0
+
+
+        call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
+        call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
+        call ReachLS_write_io(order, g_order)
+        call ReachLS_write_io(chlon, g_chlon)
+        call ReachLS_write_io(chlat, g_chlat)
+        call ReachLS_write_io(zelev, g_zelev)
+
+     else
+        call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
+        call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
+        call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
+        call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
+        call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
+        call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
+     endif
+
      call write_chanel_int(STRMFRXSTPTS,map_l2g,gnlinks,nlinks,g_STRMFRXSTPTS)
-     call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
-     call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
      call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
-     call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
-     call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
-     call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
 
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER, &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt,K,&
-          g_STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
+          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option)
     end if
+
     deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink)
 
 end subroutine mpp_output_chrt
@@ -3425,7 +3445,7 @@ end subroutine mpp_output_chrt
                      trim(geo_finegrid_flnm))
 
         var_name = "LINKID"
-        call readRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
+        call nreadRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
 
 
@@ -4067,7 +4087,7 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') k
                  endif
              iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
+             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar(:,:,k))
            end do 
 #endif
            return
@@ -4551,7 +4571,7 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID     &
+            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID, GNLINKSL     &
 #ifdef MPP_LAND
                ,Link_Location &
 #endif
@@ -4561,7 +4581,7 @@ end subroutine mpp_output_chrt
 #endif
 #include <netcdf.inc>
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
-        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
+        INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL, GNLINKSL
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: ELRT
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
         INTEGER, DIMENSION(IXRT,JXRT)                :: GSTRMFRXSTPTS
@@ -4570,6 +4590,8 @@ end subroutine mpp_output_chrt
         INTEGER,                DIMENSION(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
 #ifdef MPP_LAND
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
+        INTEGER :: LNLINKSL
+        INTEGER,                dimension(LNLINKSL) :: LLINKID
 #endif
         INTEGER                                      :: I,J,channel_option
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
@@ -4623,6 +4645,7 @@ end subroutine mpp_output_chrt
         INTEGER                                      :: tmp, cnt, ncid, iret, jj,ct
         real                                         :: gc,n
 
+
 !---------------------------------------------------------
 ! End Declarations
 !---------------------------------------------------------
@@ -4644,6 +4667,7 @@ end subroutine mpp_output_chrt
         print *, "route linke",route_link_f
         print *, "route lake",route_lake_f
 #endif
+
 
 !DJG Edited code here to retrieve data from hires netcdf file....
 
@@ -4703,18 +4727,23 @@ end subroutine mpp_output_chrt
        if(my_id .eq. IO_id) then
 #endif
         open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
+        write(6,*) "before read(79)  header for LAKEPARM.TBL"
+        call flush(6)
         read(79,*)  header  !-- read the lake file
 
 #ifdef MPP_LAND
        endif
 #endif
 
+   if(channel_option .eq. 3) then
 
       if (NLAKES.gt.0) then !read in only if there are lakes
 
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) then
 #endif
+        write(6,*) "before read(79) for LAKEPARM.TBL"
+        call flush(6)
 
        do i=1, NLAKES
         read (79,*) tmp, HRZAREA(i),LAKEMAXH(i), &
@@ -4724,6 +4753,7 @@ end subroutine mpp_output_chrt
         write (*,*) tmp, HRZAREA(i),LAKEMAXH(i), LATLAKE(i), LONLAKE(i),ELEVLAKE(i),NLAKES
 #endif
        enddo
+       close(79)
 
 #ifdef MPP_LAND
        endif
@@ -4740,6 +4770,8 @@ end subroutine mpp_output_chrt
 #endif
 
       end if   !end if for NLAKES >0 check
+
+   endif  ! end if for channel_option .eq. 3
 
        cnt = 0 
 
@@ -5244,11 +5276,6 @@ end subroutine mpp_output_chrt
        END DO 
 
 
-#ifdef MPP_LAND
-     if(my_id .eq. IO_id)  &
-#endif
-     close(79)
-
 
 #ifdef MPP_LAND
 #ifdef HYDRO_D
@@ -5265,13 +5292,106 @@ end subroutine mpp_output_chrt
 
 !!-- if routing on link network, read those data too
     IF ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option .ne. 3) then ! not routing on grid, read from file
-       open(unit=79,file=trim(route_link_f),form='formatted',status='old')
-#ifdef MPP_LAND
-      if(my_id .eq. IO_id) then
-#endif
 
+       call readLinkSL( GNLINKSL,NLINKSL,route_link_f,  maxorder, &
+                   LINKID, FROM_NODE, TO_NODE, TYPEL, ORDER , &
+                   QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
+                   MannN, So, ChSSlp, Bw, HRZAREA,  &
+                   LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
+                   ORIFICEA, ORIFICEE  )
+
+
+
+   ENDIF
+
+     return
+
+!DJG -----------------------------------------------------
+   END SUBROUTINE READ_CHROUTING1
+
+   subroutine readLinkSL( GNLINKSL,NLINKSL,route_link_f,  maxorder, &
+                   LINKID, FROM_NODE, TO_NODE, TYPEL, ORDER , &
+                   QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
+                   MannN, So, ChSSlp, Bw, HRZAREA,  &
+                   LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
+                   ORIFICEA, ORIFICEE  )
+
+        implicit none
+        character(len=*) :: route_link_f
+        integer  :: GNLINKSL, NLINKSL
+        INTEGER, INTENT(INOUT)                       :: MAXORDER
+
+        INTEGER, intent(out), dimension(NLINKSL) ::  LINKID, FROM_NODE, TO_NODE, TYPEL, ORDER 
+        real  :: QLINK(NLINKSL,2)
+        REAL, intent(out), dimension(NLINKSL) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
+                   MannN, So, ChSSlp, Bw, HRZAREA,&
+                   LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
+                   ORIFICEA, ORIFICEE
+
+        INTEGER, dimension(GNLINKSL) ::  tmpLINKID, tmpFROM_NODE, tmpTO_NODE, tmpTYPEL, tmpORDER 
+        real :: tmpQLINK(GNLINKSL,2)
+        CHARACTER(len=155)	 :: header
+        integer :: i
+
+#ifdef MPP_LAND
+        REAL, dimension(GNLINKSL) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
+                   tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpHRZAREA,&
+                   tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
+                   tmpORIFICEA,tmpORIFICEE
+
+       if(my_id .eq. IO_id) then
+          open(unit=79,file=trim(route_link_f),form='formatted',status='old')
+
+           read(79,*)  header
+           print *, "header ", header, "NLINKSL = ", NLINKSL, GNLINKSL
+           call flush(6)
+           do i=1,GNLINKSL
+             read (79,*) tmpLINKID(i), tmpFROM_NODE(i), tmpTO_NODE(i), tmpCHLON(i),tmpCHLAT(i),tmpZELEV(i), &
+                      tmpTYPEL(i), tmpORDER(i), tmpQLINK(i,1), tmpMUSK(i), tmpMUSX(i), tmpCHANLEN(i), &
+                      tmpMannN(i), tmpSo(i), tmpChSSlp(i), tmpBw(i), tmpHRZAREA(i),&
+                      tmpLAKEMAXH(i), tmpWEIRC(i), tmpWEIRL(i), tmpORIFICEC(i), &
+                      tmpORIFICEA(i),tmpORIFICEE(i)
+           ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
+             if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
+            end do
+
+!!- initialize channel via QLINK
+           do i=1,GNLINKSL
+                tmpQLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
+                tmpQLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+           end do
+           close(79)
+       endif
+
+        call ReachLS_decomp(tmpLINKID,   LINKID )
+        call ReachLS_decomp(tmpFROM_NODE, FROM_NODE)
+        call ReachLS_decomp(tmpTO_NODE, TO_NODE)
+        call ReachLS_decomp(tmpCHLON,    CHLON  )
+        call ReachLS_decomp(tmpCHLAT,    CHLAT  )
+        call ReachLS_decomp(tmpZELEV,    ZELEV  )
+        call ReachLS_decomp(tmpTyPEL,   TYPEL  )
+        call ReachLS_decomp(tmpORDER,   ORDER  )
+        call ReachLS_decomp(tmpQLINK(:,1), QLINK(:,1))
+        call ReachLS_decomp(tmpMUSK,    MUSK   )
+        call ReachLS_decomp(tmpMUSX,     MUSX   )
+        call ReachLS_decomp(tmpCHANLEN,  CHANLEN)
+        call ReachLS_decomp(tmpMannN,       MannN  )
+        call ReachLS_decomp(tmpSo,       So     )
+        call ReachLS_decomp(tmpChSSlp,   ChSSlp )
+        call ReachLS_decomp(tmpBw,       Bw     )
+        call ReachLS_decomp(tmpHRZAREA,  HRZAREA)
+        call ReachLS_decomp(tmpLAKEMAXH, LAKEMAXH)
+        call ReachLS_decomp(tmpWEIRC,    WEIRC  )
+        call ReachLS_decomp(tmpWEIRL,    WEIRL  )
+        call ReachLS_decomp(tmpORIFICEC, ORIFICEC)
+        call ReachLS_decomp(tmpORIFICEA, ORIFICEA)
+        call ReachLS_decomp(tmpORIFICEE, ORIFICEE)
+        call mpp_land_bcast_int1(MAXORDER)
+
+#else
+       open(unit=79,file=trim(route_link_f),form='formatted',status='old')
         read(79,*)  header
-        print *, "header ", header
+        print *, "header ", header, "NLINKSL = ", NLINKSL
         do i=1,NLINKSL
           read (79,*) LINKID(i), FROM_NODE(i), TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
                    TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
@@ -5281,45 +5401,15 @@ end subroutine mpp_output_chrt
         ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
           if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
        end do
-
 !!- initialize channel via QLINK
         do i=1,NLINKSL
              QLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
              QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
         end do
-
-#ifdef MPP_LAND
-       endif
-        call mpp_land_bcast_int(NLINKS,FROM_NODE)
-        call mpp_land_bcast_int(NLINKS,TO_NODE)
-        call mpp_land_bcast_int(NLINKS,TYPEL  )
-        call mpp_land_bcast_int(NLINKS,ORDER  )
-        call mpp_land_bcast_real(NLINKS,QLINK  )
-        call mpp_land_bcast_real(NLINKS,MUSK   )
-        call mpp_land_bcast_real(NLINKS,MUSX   )
-        call mpp_land_bcast_real(NLINKS,CHANLEN)
-        call mpp_land_bcast_real(NLINKS,MannN  )
-        call mpp_land_bcast_real(NLINKS,So     )
-        call mpp_land_bcast_real(NLINKS,ChSSlp )
-        call mpp_land_bcast_real(NLINKS,Bw     )
-        call mpp_land_bcast_real(NLINKS,HRZAREA)
-        call mpp_land_bcast_real(NLINKS,LAKEMAXH)
-        call mpp_land_bcast_real(NLINKS,WEIRC  )
-        call mpp_land_bcast_real(NLINKS,WEIRL  )
-        call mpp_land_bcast_real(NLINKS,ORIFICEC)
-        call mpp_land_bcast_real(NLINKS,ORIFICEA)
-        call mpp_land_bcast_real(NLINKS,ORIFICEE)
-        call mpp_land_bcast_int1(MAXORDER)
-
+        close(79)
 #endif
 
-
-   ENDIF
-
-     return
-
-!DJG -----------------------------------------------------
-   END SUBROUTINE READ_CHROUTING1
+   end subroutine readLinkSL
 
 
 
@@ -5338,9 +5428,9 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,&
-            LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,g_ixrt,g_jxrt, &
+            LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,NLINKSL, LINKID, GNLINKSL,g_ixrt,g_jxrt, &
             gnlinks,GCH_NETLNK, map_l2g, link_location,yw_mpp_nlinks, &
-            lake_index, nlinks_index, NLINKSL, LINKID)
+            lake_index, nlinks_index)
         implicit none
         INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
@@ -5399,10 +5489,8 @@ end subroutine mpp_output_chrt
         integer :: k
         INTEGER, DIMENSION(nlinks)            :: node_table, nlinks_index
         INTEGER, DIMENSION(nlakes)            :: lake_index
-        integer :: yw_mpp_nlinks , l, mpp_nlinks
+        integer :: yw_mpp_nlinks , l, mpp_nlinks, GNLINKSL
 
-
-!        link_location = -999
 
 
           call READ_CHROUTING1(IXRT,JXRT,ELRT,CH_NETRT, CH_LNKRT, LAKE_MSKRT, &
@@ -5415,7 +5503,7 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID)
+            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID, GNLINKSL  &
 #ifdef MPP_LAND
            ,Link_Location  &
 #endif

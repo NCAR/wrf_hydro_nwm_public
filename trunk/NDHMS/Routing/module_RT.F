@@ -3,6 +3,8 @@ MODULE module_Routing
    use module_gw_baseflow, only: pix_ct_1
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw
+   use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx, reachls_write_io, getToInd
+   USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
    use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
@@ -36,7 +38,7 @@ CONTAINS
 
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
-!?     if(rt_domain(did)%NLINKSL.eq. 0) NLINKSL = 1
+      if(rt_domain(did)%NLINKSL .eq. 0) NLINKSL = 1
 
 !DJG Allocate routing and disaggregation arrays
 
@@ -171,25 +173,27 @@ CONTAINS
      allocate( rt_domain(did)%Link_location(ixrt,jxrt))
 #endif
      
+!tmp  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 3 ) then
+!tmp       NLINKS = rt_domain(did)%NLINKSL
+!tmp       NLAKES = rt_domain(did)%NLINKSL
+!tmp  endif
 
-     allocate( rt_domain(did)%LINK(NLINKS) )
+     allocate( rt_domain(did)%LINKID(NLINKS) )
      allocate( rt_domain(did)%TO_NODE(NLINKS) )
      allocate( rt_domain(did)%FROM_NODE(NLINKS) )
-     allocate( rt_domain(did)%TYPEL(NLINKS) )
-     allocate( rt_domain(did)%ORDER(NLINKS) )
-     allocate( rt_domain(did)%STRMFRXSTPTS(NLINKS) )
-     allocate( rt_domain(did)%MUSK(NLINKS) )
-     allocate( rt_domain(did)%MUSX(NLINKS) )
-     allocate( rt_domain(did)%CHANXI(NLINKS) )
-     allocate( rt_domain(did)%CHANYJ(NLINKS) )
      allocate( rt_domain(did)%CHLAT(NLINKS) )   !-latitutde of channel grid point
      allocate( rt_domain(did)%CHLON(NLINKS) )   !-longitude of channel grid point
+     allocate( rt_domain(did)%ZELEV(NLINKS) )
+     allocate( rt_domain(did)%TYPEL(NLINKS) )
+     allocate( rt_domain(did)%ORDER(NLINKS) )
+     allocate( rt_domain(did)%QLINK(NLINKS,2) )
+     allocate( rt_domain(did)%MUSK(NLINKS) )
+     allocate( rt_domain(did)%MUSX(NLINKS) )
      allocate( rt_domain(did)%CHANLEN(NLINKS) )
+     allocate( rt_domain(did)%MannN(NLINKS))
      allocate( rt_domain(did)%So(NLINKS) )
      allocate( rt_domain(did)%ChSSlp(NLINKS) )
      allocate( rt_domain(did)%Bw(NLINKS) )
-     allocate( rt_domain(did)%ZELEV(NLINKS) )
-     allocate( rt_domain(did)%CVOL(NLINKS) )
      allocate( rt_domain(did)%HRZAREA(NLAKES) )
      allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
      allocate( rt_domain(did)%WEIRC(NLAKES) )
@@ -197,6 +201,17 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEC(NLAKES) )
      allocate( rt_domain(did)%ORIFICEA(NLAKES) )
      allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+
+  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 3 ) then
+       NLINKS = rt_domain(did)%NLINKS
+       NLAKES = rt_domain(did)%NLAKES 
+  endif
+
+     allocate( rt_domain(did)%LINK(NLINKS) )
+     allocate( rt_domain(did)%STRMFRXSTPTS(NLINKS) )
+     allocate( rt_domain(did)%CHANXI(NLINKS) )
+     allocate( rt_domain(did)%CHANYJ(NLINKS) )
+     allocate( rt_domain(did)%CVOL(NLINKS) )
      allocate( rt_domain(did)%LATLAKE(NLAKES) )
      allocate( rt_domain(did)%LONLAKE(NLAKES) )
      allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
@@ -204,13 +219,10 @@ CONTAINS
      allocate( rt_domain(did)%RESHT(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEO(NLAKES),STAT=istatus )
-     allocate( rt_domain(did)%QLINK(NLINKS,2) )
 
      allocate( rt_domain(did)%HLINK(NLINKS) )  !--used for diffusion only
-     allocate( rt_domain(did)%MannN(NLINKS))
 
      allocate( rt_domain(did)%node_area(NLINKS) )
-     allocate( rt_domain(did)%LINKID(NLINKS) )
 
 !!!! tmp
       rt_domain(did)%LINK = 0.0        
@@ -327,7 +339,7 @@ CONTAINS
       use module_RT_data, only: rt_domain
       implicit none
       
-      integer ixrt,jxrt, ix,jx, did
+      integer ixrt,jxrt, ix,jx, did, i,j
       INTEGER, allocatable,dimension(:,:) :: CH_NETLNK, GCH_NETLNK
 !      INTEGER, dimension( rt_domain(did)%ixrt,GCH_NETLNK(ixrt,jxrt)) :: GCH_NETLNK, CH_NETLNK
 
@@ -351,20 +363,39 @@ CONTAINS
               IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_lake_f, &
               rt_domain(did)%NLINKS, rt_domain(did)%NLAKES, &
-              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL)
+              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL )
 
 #ifdef HYDRO_D
         write(6,*) "before rt_allocate after READ_ROUTEDIM"
 #endif
 
+
+        if(nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
+            rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
+
+#ifdef MPP_LAND
+         
+            call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   & 
+                         rt_domain(did)%linklsS, rt_domain(did)%linklsE )
+#else
+            rt_domain(did)%linklsS = 1
+            rt_domain(did)%linklsE = rt_domain(did)%NLINKSL
+#endif
+        else
+            rt_domain(did)%GNLINKSL = 1
+            rt_domain(did)%NLINKSL = 1
+        endif
+
 #ifndef MPP_LAND
          GCH_NETLNK = CH_NETLNK
 #endif
 
-      end if
+      endif
+
 
         call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
                    rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+
 
       IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
         rt_domain(did)%CH_NETLNK = CH_NETLNK
@@ -383,9 +414,6 @@ CONTAINS
       use module_RT_data, only: rt_domain
       use module_gw_baseflow_data, only: gw2d
 
-#ifdef MPP_LAND
-      USE module_mpp_land
-#endif
       implicit none 
       integer did
       real Vmax
@@ -444,14 +472,51 @@ CONTAINS
                rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
                rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
                rt_domain(did)%latval, rt_domain(did)%lonval,&
-               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL, rt_domain(did)%LINKID &
+               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL, rt_domain(did)%LINKID, rt_domain(did)%GNLINKSL &
 #ifdef MPP_LAND
                ,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT   &
                ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
                ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
-               , rt_domain(did)%NLINKSL, rt_domain(did)%LINKID &
 #endif
                )
+#ifdef MPP_LAND
+    if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
+        rt_domain(did)%LNLINKSL = 0
+        do j = 1, rt_domain(did)%jxrt
+           do i = 1, rt_domain(did)%ixrt
+              if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                     (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                 if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
+                    rt_domain(did)%LNLINKSL =    rt_domain(did)%LNLINKSL+1
+                 endif
+              endif
+           end do 
+        end do
+        allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+        rt_domain(did)%LNLINKSL =    0
+        do j = 1, rt_domain(did)%jxrt
+           do i = 1, rt_domain(did)%ixrt
+              if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                     (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                  if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
+                     rt_domain(did)%LNLINKSL =    rt_domain(did)%LNLINKSL+1
+                     rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL) = rt_domain(did)%CH_LNKRT(i,j)
+                  endif
+              endif
+           end do 
+        end do
+
+            call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
+
+            allocate(rt_domain(did)%gtoNode(rt_domain(did)%GNLINKSL))
+            call ReachLS_write_io(rt_domain(did)%to_node, rt_domain(did)%gtoNode)
+!!!            call getFromInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%fromNodeInd,rt_domain(did)%nFromInd)
+            call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd)
+     endif
+#endif
+
+
+
 
 !yw #ifdef MPP_LAND
 !yw          call MPP_CHROUTING_CONF(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt, rt_domain(did)%NLAKES,rt_domain(did)%NLINKS,&
@@ -746,14 +811,15 @@ CONTAINS
         CALL CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #endif
        end if
-
-        do j=1,rt_domain(did)%NLINKS
-           if (nlst_rt(did)%channel_option .ne. 3) then
+     if (nlst_rt(did)%channel_option .ne. 3) then
+        do j=1,rt_domain(did)%NLINKSL
             if (rt_domain(did)%TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
-              rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.935  !-- assumes lake is ~90%
+              rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.935  !-- assumes lake is ~90% MA
             endif
-           else !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
+        end do
+     else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
                 !--  put condition within the if/then structure, which will assign a value if something is missing in hi res
+        do j=1,rt_domain(did)%NLINKS
 
              if (rt_domain(did)%ORDER(j) .eq. 1) then    !-- smallest stream reach
                if(rt_domain(did)%Bw(j) .eq. 0.0) then 
@@ -848,8 +914,8 @@ CONTAINS
              endif
                 
             rt_domain(did)%CVOL(j) = (rt_domain(did)%Bw(j)+ 1/rt_domain(did)%ChSSLP(j)*rt_domain(did)%HLINK(j))*rt_domain(did)%HLINK(j)*rt_domain(did)%CHANLEN(j) !-- initalize channel volume
-           endif  !Endif channel option eq 3
         end do
+     endif  !Endif channel option eq 3
 
         if (nlst_rt(did)%channel_option .eq. 3) then
            do j=1,rt_domain(did)%NLAKES

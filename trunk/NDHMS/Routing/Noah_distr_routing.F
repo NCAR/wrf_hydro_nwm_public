@@ -982,12 +982,13 @@
           ((ixx0.eq.1) .and.(left_id  .lt. 0)) .or. &
           ((jyy0.eq.1) .and.(down_id  .lt. 0)) .or. &
           ((JYY0.eq.YY).and.(up_id    .lt. 0)) ) then 
-              QBDRY_tmp(IXX0,JYY0)=QBDRY_tmp(IXX0,JYY0) - qqsfc*1000.
+!              QBDRY_tmp(IXX0,JYY0)=QBDRY_tmp(IXX0,JYY0) - qqsfc*1000.
 #else
                 if ((ixx0.eq.XX).or.(ixx0.eq.1).or.(jyy0.eq.1)   &
                      .or.(JYY0.eq.YY )) then
-                     QBDRY(IXX0,JYY0)=QBDRY(IXX0,JYY0) - qqsfc*1000.
+!                     QBDRY(IXX0,JYY0)=QBDRY(IXX0,JYY0) - qqsfc*1000.
 #endif
+                     QBDRY_tmp(IXX0,JYY0)=QBDRY_tmp(IXX0,JYY0) - qqsfc*1000.
                      QBDRYT=QBDRYT - qqsfc
                      DH_tmp(IXX0,JYY0)= DH_tmp(IXX0,JYY0)-tmp_adjust
                 end if

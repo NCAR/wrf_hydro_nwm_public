@@ -108,6 +108,7 @@ module module_HYDRO_drv
 
    outflag = -99
 
+
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
@@ -229,7 +230,7 @@ module module_HYDRO_drv
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
 
 #ifdef MPP_LAND
-             call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%map_l2g, &
+             call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
 #else
              call output_chrt(  &
 #endif
@@ -399,7 +400,8 @@ module module_HYDRO_drv
 			
 		! step 4) baseflow or groundwater physics
 		  call driveGwBaseflow(did)
-		
+	
+	
 		! step 5) river channel physics
 		  call driveChannelRouting(did)
 	
@@ -571,6 +573,8 @@ module module_HYDRO_drv
        ,RT_DOMAIN(did)%lake_index,RT_DOMAIN(did)%link_location,&
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL,RT_DOMAIN(did)%LLINKID &
+       , rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd &
 #endif
        )
   endif
@@ -876,10 +880,6 @@ module module_HYDRO_drv
 ! rt model initilization
       call LandRT_ini(did)
 
-#ifdef HYDRO_D
-      write(6,*) "finish LandRT_ini"    
-#endif
-
        
       if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
 	
@@ -932,7 +932,9 @@ module module_HYDRO_drv
 !        rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
 !        rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
 
+
        call HYDRO_rst_in(did)
+
 
 
 !      call HYDRO_out(did)

@@ -17,6 +17,7 @@
   INTEGER :: MAXORDER !maximum stream order
   integer :: timestep_flag    ! 1 cold start run else continue run
 
+  INTEGER :: GNLINKSL, linklsS, linklsE   !## for reach based channel routing
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
@@ -43,6 +44,9 @@
   REAL,    allocatable, DIMENSION(:,:)      :: SUB_RESID
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x,q_sfcflx_y
   INTEGER,    allocatable, DIMENSION(:)      :: map_l2g, map_g2l
+
+  INTEGER :: nToInd
+  INTEGER,    allocatable, DIMENSION(:)      :: gtoNode, toNodeInd
 
 ! temp arrary cwatavail
   real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT 
@@ -112,8 +116,10 @@
 #ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index
   INTEGER, allocatable, DIMENSION(:,:)  :: Link_location
-  integer mpp_nlinks, yw_mpp_nlinks
+  INTEGER, allocatable, DIMENSION(:)  :: LLINKID
+  integer mpp_nlinks, yw_mpp_nlinks, LNLINKSL
 #endif
+
 
   REAL,    allocatable, DIMENSION(:,:)      :: OVROUGHRTFAC,RETDEPRTFAC
 
