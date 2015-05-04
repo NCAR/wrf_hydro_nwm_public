@@ -3604,7 +3604,7 @@ end subroutine mpp_output_chrt
     iret = nf_inq_varid(ncid,"index", varid)
     iret = nf_put_vara_int(ncid, varid, (/1,1/), (/ixrt,jxrt/),CH_NETLNK)
 
-    iret = nf_inq_varid(ncid,"flow", varid)
+    iret = nf_inq_varid(ncid,"streamflow", varid)
     iret = nf_put_vara_real(ncid, varid, (/1,1,1/), (/ixrt,jxrt,1/),tmpflow)
 
         iret = nf_close(ncid)
