@@ -251,8 +251,8 @@
 #ifdef HYDRO_D
                    print *, "Subsfc acct. SMCMAX exceeded...", &
                        SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
-                   call hydro_stop("SUBSFC_RTNG")
 #endif
+                   call hydro_stop("SUBSFC_RTNG")
                   ELSE
                   END IF
                 ELSE
@@ -1639,7 +1639,6 @@
         end subroutine ROUTE_OVERLAND2
 
 
-!DJG ----------------------------------------------------------------------
 
 
 !DJG-----------------------------------------------------------------------
@@ -2282,7 +2281,8 @@
              RT_DOMAIN(did)%INFXSUBRT,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
              RT_DOMAIN(did)%SMCRT, &
              RT_DOMAIN(did)%OVROUGHRT, RT_DOMAIN(did)%LAKE_MSKRT, &
-             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH,RT_DOMAIN(did)%SLDPTH )
+             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH,RT_DOMAIN(did)%SLDPTH, &
+	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp)
 
       end subroutine disaggregateDomain_drv
 
@@ -2291,7 +2291,7 @@
                SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
                LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
                SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT,OV_ROUGH,  &
-               SLDPTH                                                    &
+               SLDPTH, soiltypRT, soiltyp                               &
             )
 #ifdef MPP_LAND
         use module_mpp_land, only: left_id,down_id,right_id, &
@@ -2301,16 +2301,16 @@
 #endif
      implicit none
         integer,INTENT(IN) :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT
-        real,INTENT(OUT),DIMENSION(IX,JX,NSOIL)::SICE
-        real,INTENT(IN),DIMENSION(IX,JX,NSOIL)::SMC,SH2OX
-        real,INTENT(IN),DIMENSION(IX,JX)::INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
-               SMCWLT1,  LKSAT
-       integer,INTENT(IN),DIMENSION(IX,JX)      ::VEGTYP
+        real, INTENT(OUT), DIMENSION(IX,JX,NSOIL) :: SICE
+        real, INTENT(IN),  DIMENSION(IX,JX,NSOIL) :: SMC,SH2OX
+        real, INTENT(IN),  DIMENSION(IX,JX) :: INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
+                                               SMCWLT1,  LKSAT
+        integer, INTENT(IN), DIMENSION(IX,JX)      :: VEGTYP, soiltyp
 
         real,INTENT(IN),DIMENSION(IXRT,JXRT,9)::dist
         real,INTENT(IN),DIMENSION(IXRT,JXRT)::INFXSWGT,OVROUGHRTFAC, &
                LKSATFAC
-        integer,INTENT(IN), DIMENSION(IXRT,JXRT)     ::CH_NETRT
+        integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)     ::CH_NETRT, soiltypRT
         real,INTENT(IN),DIMENSION(IXRT,JXRT,NSOIL)::SH2OWGT
         real,INTENT(OUT),DIMENSION(IXRT,JXRT,NSOIL)::SMCREFRT, SMCMAXRT, &
                SMCWLTRT,SMCRT
@@ -2489,6 +2489,10 @@
 !yw                 LAKE_MSKRT(IXXRT,JYYRT) = 9999
                  LAKE_MSKRT(IXXRT,JYYRT) = -9999
                end if
+               ! BF disaggregate soiltype information for gw-soil-coupling
+	       ! TODO: move this disaggregation code line to lsm_init section because soiltype is time-invariant
+               soiltypRT(ixxrt,jyyrt) = soiltyp(i,j)
+
 
               end do
              end do

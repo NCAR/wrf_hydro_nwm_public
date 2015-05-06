@@ -107,3 +107,12 @@ or
 
 Note: Noah and NoahMP have the same name of "namelist.hrldas". But they are different.
 
+
+6. Other Issues
+If you are doing fully coupled run and your fine mesh grid time step is  <= 1.
+
+Edit the file "dyn_em/module_first_rk_step_part1.F", change the line from
+if(HYDRO_dt .gt. 1 ) call wrf_drv_HYDRO(HYDRO_dt, grid,  &
+to
+if(HYDRO_dt .gt. 0 ) call wrf_drv_HYDRO(HYDRO_dt, grid,  &
+

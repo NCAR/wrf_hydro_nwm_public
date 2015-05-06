@@ -68,6 +68,7 @@ CONTAINS
 
 
   allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
+  allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
   allocate( rt_domain(did)%ELRT   	(IXRT,JXRT) )
   allocate( rt_domain(did)%SOXRT  	(IXRT,JXRT) )
   allocate( rt_domain(did)%SOYRT   	(IXRT,JXRT) )
@@ -293,6 +294,7 @@ CONTAINS
   allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
   allocate( rt_domain(did)%SMCREF1  (IX,JX) )
   allocate( rt_domain(did)%VEGTYP   (IX,JX) )
+  allocate( rt_domain(did)%SOILTYP   (IX,JX) )
   allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
   allocate( rt_domain(did)%SLDPTH(NSOIL) )
   allocate( rt_domain(did)%SO8LD_D   (IX,JX,3) )
@@ -417,7 +419,7 @@ CONTAINS
       use module_noah_chan_param_init_rt
       use module_namelist, only:  nlst_rt
       use module_RT_data, only: rt_domain
-      use module_gw_baseflow_data, only: gw2d
+      use module_gw_gw2d_data, only: gw2d
 
       implicit none 
       integer did
@@ -787,7 +789,7 @@ CONTAINS
         call readGW2d(gw2d(did)%ix, gw2d(did)%jx,     &
                       gw2d(did)%hycond, gw2d(did)%ho, &
 		      gw2d(did)%bot, gw2d(did)%poros, &
-		      gw2d(did)%ltype)
+		      gw2d(did)%ltype, nlst_rt(did)%gwIhShift)
 
         gw2d(did)%elev = rt_domain(did)%elrt
 

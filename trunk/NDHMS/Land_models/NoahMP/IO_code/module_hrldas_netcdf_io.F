@@ -90,6 +90,23 @@ contains
 !-------------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------------
 
+  integer function checkRstV(name)
+       implicit none
+       character(len=*) name
+       integer :: ncid, ierr, varid
+#ifdef MPP_LAND
+     if(my_id .eq. io_id) then
+#endif
+       checkRstV = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
+       if(checkRstV .eq. 0) then   
+           checkRstV = nf90_inq_varid(ncid, name, varid)
+       endif
+#ifdef MPP_LAND
+     endif
+       call mpp_land_bcast_int1(checkRstV)
+#endif
+  end function checkRstV
+
   subroutine check_outdir(rank, outdir)
     implicit none
 
@@ -2724,6 +2741,9 @@ contains
     real,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
     real,             dimension(global_nx,global_ny):: garray 
     integer,          optional,         intent(out) :: return_error
+    
+    if(checkRstV(name) .ne. 0) return
+ 
       if(my_id .eq. IO_id) then
           call get_from_restart_2d_float(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
       endif
@@ -2741,6 +2761,7 @@ contains
     integer,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
     integer,             dimension(global_nx,global_ny):: garray 
     integer,          optional,         intent(out) :: return_error
+    if(checkRstV(name) .ne. 0) return
       if(my_id .eq. IO_id) then
           call get_from_restart_2d_integer(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
       endif
@@ -2760,6 +2781,7 @@ contains
     integer :: klevel,k
     real, allocatable, dimension(:,:,:) :: garray
 
+    if(checkRstV(name) .ne. 0) return
     klevel = size(array,2)
     allocate(garray(global_nx,klevel,global_ny))
     

@@ -196,12 +196,13 @@ module module_NoahMP_hrldas_driver
    &         ims,ime, jms,jme, kms,kme,  &  ! m -> memory
    &         its,ite, jts,jte, kts,kte   ! t -> tile
 
-! OUT (new accumulator variables for output water balance)
-  
+#ifdef WRF_HYDRO
+! INOUT (new accumulator variables for output water balance) 
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
+#endif
 
 !    REAL, ALLOCATABLE, DIMENSION(:)     :: SLDPTH       ! depth to soil interfaces [m]
 
@@ -269,7 +270,7 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
     INTEGER                             :: I
-    INTEGER                             :: J
+    INTEGER                             :: J, K
     INTEGER                             :: SLOPETYP
     INTEGER                             :: YEARLEN
 
@@ -282,6 +283,7 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
   character(len=19)  :: olddate, newdate, startdate
+  character(len=19)  ::  tmpdate
   character          :: hgrid
   integer            :: igrid
   logical            :: lexist
@@ -750,10 +752,12 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( GVFMIN    (XSTART:XEND,YSTART:YEND) )  ! annual minimum in vegetation fraction
   ALLOCATE ( GVFMAX    (XSTART:XEND,YSTART:YEND) )  ! annual maximum in vegetation fraction
 
+#ifdef WRF_HYDRO
   ALLOCATE ( ACCPRCP  (XSTART:XEND,YSTART:YEND) )  ! accumulated precip [mm]
   ALLOCATE ( ACCECAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated canopy evap [mm]
   ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
   ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
+#endif
 
 !------------------------------------------------------------------------
 ! Needed for MMF_RUNOFF (IOPT_RUN = 5); not part of MP driver in WRF
@@ -783,11 +787,13 @@ module module_NoahMP_hrldas_driver
    greenfrac = 0
 #endif
 
+#ifdef WRF_HYDRO
 ! Initialize accumulator variables to 0
   ACCPRCP = 0.0
   ACCECAN = 0.0
   ACCETRAN = 0.0
   ACCEDIR = 0.0
+#endif
 
 !yw added  initialize the value
   COSZEN = undefined_value
@@ -934,6 +940,8 @@ module module_NoahMP_hrldas_driver
 
 !yw end 
 
+  ITIMESTEP = 1
+
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
   XICE_THRESHOLD = 0.5   ! fraction of grid determining seaice
@@ -969,23 +977,27 @@ module module_NoahMP_hrldas_driver
   DZS       =  SOIL_THICK_INPUT(1:NSOIL)
 
 
-  ITIMESTEP = 1
 
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
 
+#ifdef WRF_HYDRO
+     tmpdate = olddate
+#endif
      call find_restart_file(rank, trim(restart_filename_requested), startdate, khour, olddate, restart_flnm)
 
      call read_restart(trim(restart_flnm), &
           xstart, xend, xstart, ixfull, jxfull, nsoil, olddate)
 
-#ifdef MPP_LAND
-     call mpp_land_bcast_char(19,OLDDATE(1:19))
+#ifdef WRF_HYDRO
+     olddate = tmpdate 
 #endif
 
      ITIMESTEP = 2
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SOIL_T"  , TSLB     )
+
+
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOW_T"  , TSNOXY   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMC"     , SMOIS    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SH2O"    , SH2O     )
@@ -1029,6 +1041,12 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSFC"    , QSFC     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF",SFCRUNOFF   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF" ,UDRUNOFF    )
+#ifdef WRF_HYDRO
+     if(checkRstV("ACCPRCP") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCPRCP"  ,ACCPRCP    )
+     if(checkRstV("ACCECAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCECAN"  ,ACCECAN    )
+     if(checkRstV("ACCEDIR") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCEDIR"  ,ACCEDIR    )
+     if(checkRstV("ACCETRAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCETRAN" ,ACCETRAN    )
+#endif
     ! below for opt_run = 5
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMOISEQ"   , SMOISEQ    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "AREAXY"    , AREAXY     )
@@ -1189,6 +1207,7 @@ module module_NoahMP_hrldas_driver
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
 
 
+
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
@@ -1262,7 +1281,7 @@ end subroutine land_driver_ini
                xstart, xend, ystart, yend,    &
                T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
                GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,SNOWH,ITIME,FORCING_TIMESTEP,prcp0)
-
+	   if(maxval(VEGFRA) .lt. 1.1) VEGFRA = VEGFRA * 100.
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate
         endif
@@ -1368,8 +1387,8 @@ end subroutine land_driver_ini
 		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
 		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
 	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &                          
-                ACCPRCP,  ACCECAN, ACCETRAN,  ACCEDIR,                        &
 #ifdef WRF_HYDRO
+                ACCPRCP,  ACCECAN, ACCETRAN,  ACCEDIR,                        &
                  sfcheadrt,INFXSRT,soldrain,                          &    
 #endif
                 ids,ide, jds,jde, kds,kde,                      &
@@ -1403,7 +1422,6 @@ end subroutine land_driver_ini
 ! END of surface_driver consistent code
 !------------------------------------------------------------------------
 
-
 ! Output for history
      OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
         if (mod((ITIME-1)*noah_timestep, output_timestep) == 0) then
@@ -1430,7 +1448,7 @@ end subroutine land_driver_ini
               call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
               call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"                    , "W m{-2}"               )
               call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"               )
-              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
+              call add_to_output(RAINBL_tmp     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
         ! Grid energy budget terms
               call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
               call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
@@ -1450,10 +1468,12 @@ end subroutine land_driver_ini
               call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
               call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
               call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
+#ifdef WRF_HYDRO
               call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"                    )
               call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"                    )
               call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
               call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"                    )
+#endif
         ! Additional needed to close the canopy energy budget
               call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
               call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
@@ -1591,6 +1611,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
       call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
 #endif
+      ITIMESTEP = ITIMESTEP + 1
 
 end subroutine land_driver_exe
 
@@ -1655,6 +1676,13 @@ subroutine lsm_restart()
   call add_to_restart(QSFC      , "QSFC"  )
   call add_to_restart(SFCRUNOFF , "SFCRUNOFF")
   call add_to_restart(UDRUNOFF  , "UDRUNOFF" )
+#ifdef WRF_HYDRO
+  call add_to_restart(ACCPRCP   , "ACCPRCP" )
+  call add_to_restart(ACCECAN   , "ACCECAN" )
+  call add_to_restart(ACCEDIR   , "ACCEDIR" )
+  call add_to_restart(ACCETRAN  , "ACCETRAN" )
+#endif
+
   ! below for opt_run = 5
   call add_to_restart(SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
   call add_to_restart(AREAXY    , "AREAXY"     )

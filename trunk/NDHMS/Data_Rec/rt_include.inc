@@ -74,7 +74,9 @@
   REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff,gw_buck_exp,z_max  !GW bucket parameters
 !DJG Switch for Deep Sat GW Init:
   INTEGER                                :: DEEPGWSPIN  !Switch to setup deep GW spinp
-
+!BF Variables for gw2d
+  integer, allocatable, dimension(:,:)      :: soiltyp, soiltypRT
+ 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG,DNY   VARIABLES FOR CHANNEL ROUTING
 !-- channel params

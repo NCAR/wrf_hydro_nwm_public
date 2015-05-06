@@ -35,8 +35,8 @@ CONTAINS
 		 SHGXY,    SHCXY,    SHBXY,     EVGXY,    EVBXY,     GHVXY, & ! OUT Noah MP only
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
-               ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR,                      & ! NEW output accumulator variables
 #ifdef WRF_HYDRO
+               ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR,                      & ! NEW output accumulator variables
                sfcheadrt,INFXSRT,soldrain,                                  &
 #endif
                ids,ide,  jds,jde,  kds,kde,                    &
@@ -203,10 +203,12 @@ CONTAINS
     INTEGER,  INTENT(IN   )   ::     ids,ide, jds,jde, kds,kde,  &  ! d -> domain
          &                           ims,ime, jms,jme, kms,kme,  &  ! m -> memory
          &                           its,ite, jts,jte, kts,kte      ! t -> tile
+#ifdef WRF_HYDRO
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCPRCP     ! accumulated precip [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
+#endif
 
 ! 1D equivalent of 2D/3D fields
 
@@ -418,6 +420,7 @@ CONTAINS
 
 
 !-----------------------------------------------------------------------
+
    ILOOP : DO I = its, ite
 
     IF (XICE(I,J) >= XICE_THRES) THEN
@@ -729,10 +732,12 @@ end if
              SMSTOT   (I,J)                = 0.0  ! [maintained as Noah consistency]
              SFCRUNOFF(I,J)                = SFCRUNOFF(I,J) + RUNSF * DT
              UDRUNOFF (I,J)                = UDRUNOFF(I,J)  + RUNSB * DT
+#ifdef WRF_HYDRO
              ACCPRCP  (I,J)                = ACCPRCP(I,J) + PRCP * DT
              ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
              ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
              ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
+#endif
              IF ( SALB > -999 ) THEN
                 ALBEDO(I,J)                = SALB
              ENDIF
@@ -834,6 +839,7 @@ end if
       ENDDO ILOOP                                                       ! of I loop
    ENDDO JLOOP                                                          ! of J loop
 
+         
 !------------------------------------------------------
   END SUBROUTINE noahmplsm
 !------------------------------------------------------

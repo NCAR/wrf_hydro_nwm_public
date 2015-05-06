@@ -1,4 +1,6 @@
 #!/bin/csh -f
+
+if(! $?WRF_HYDRO) setenv WRF_HYDRO 1
 rm -f  LandModel LandModel_cpl
 if(! -e Land_models/NoahMP/MPP) then
   cd Land_models/NoahMP
