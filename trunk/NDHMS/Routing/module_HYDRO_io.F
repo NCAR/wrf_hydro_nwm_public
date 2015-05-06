@@ -1,11 +1,11 @@
 module module_HYDRO_io
 #ifdef MPP_LAND
      use module_mpp_land
+     use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io , ReachLS_wInt, reachls_wreal2
 #endif
    use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
-   use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io , ReachLS_wInt, reachls_wreal2
 
    implicit none
 #include <netcdf.inc>
@@ -3773,37 +3773,74 @@ end subroutine mpp_output_chrt
 
 
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
-              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
+              if(nlst_rt(did)%channel_option .eq. 3) then
+                    call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
 #ifdef MPP_LAND
-                 ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+                            ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
 #endif
-                  )
-
-              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,1),"qlink1" &
+                          )
+              else
+                    call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
 #ifdef MPP_LAND
-                 ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+                            ,rt_domain(did)%gnlinks&
 #endif
-                  )
+                          )
+              endif
 
-
-              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,2),"qlink2" &
+              if(nlst_rt(did)%channel_option .eq. 3) then
+                     call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,1),"qlink1" &
 #ifdef MPP_LAND
-                 ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+                        ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
 #endif
-                  )
+                         )
+              else
+                    call w_rst_crt_reach(ncid,rt_domain(did)%QLINK(:,1), "qlink1"  &
+#ifdef MPP_LAND   
+                            ,rt_domain(did)%gnlinks&
+#endif
+                          )
+              endif
 
 
-              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%cvol,"cvol" &
+
+              if(nlst_rt(did)%channel_option .eq. 3) then
+                    call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,2),"qlink2" &
 #ifdef MPP_LAND
-                 ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+                       ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
 #endif
-                  )
+                        )
+              else
+                    call w_rst_crt_reach(ncid,rt_domain(did)%QLINK(:,2), "qlink2"  &
+#ifdef MPP_LAND   
+                            ,rt_domain(did)%gnlinks&
+#endif
+                          )
+              endif
+
+              
+
+
+              if(nlst_rt(did)%channel_option .eq. 3) then
+                     call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%cvol,"cvol" &
+#ifdef MPP_LAND
+                        ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+#endif
+                         )
+              else
+                    call w_rst_crt_reach(ncid,rt_domain(did)%cvol, "cvol"  &
+#ifdef MPP_LAND   
+                            ,rt_domain(did)%gnlinks&
+#endif
+                          )
+              endif
+
 
 !              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%resht,"resht" &
 !#ifdef MPP_LAND
 !                 ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
 !#endif
 !                  )
+
 
               call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
 #ifdef MPP_LAND
@@ -4117,6 +4154,40 @@ end subroutine mpp_output_chrt
            return
         end subroutine w_rst_crt_nc1_lake
 
+        subroutine w_rst_crt_reach(ncid,inVar,varName &
+#ifdef MPP_LAND
+                 , gnlinksl&
+#endif
+                  )
+           implicit none
+           integer:: ncid,varid , iret, n   
+           character(len=*) varName
+           real, dimension(:) :: inVar
+    
+#ifdef MPP_LAND
+           integer:: gnlinksl
+           real,allocatable,dimension(:) :: g_var
+           if(my_id .eq. io_id) then
+                allocate(g_var(gnlinksl))
+                g_var  = 0
+           else
+                allocate(g_var(1) )
+           endif
+  
+           call ReachLS_write_io(inVar, g_var)
+           if(my_id .eq. IO_id) then
+              iret = nf_inq_varid(ncid,varName, varid)
+              iret = nf_put_vara_real(ncid, varid, (/1/), (/gnlinksl/),g_var)
+           endif
+           deallocate(g_var)
+#else
+           n = size(inVar,1) 
+           iret = nf_inq_varid(ncid,varName, varid)
+           iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+#endif
+           return
+        end subroutine w_rst_crt_reach
+
         subroutine w_rst_crt_nc1(ncid,n,inVar,varName &
 #ifdef MPP_LAND
                  ,map_l2g, gnlinks&
@@ -4232,10 +4303,18 @@ end subroutine mpp_output_chrt
 
 
             if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
-              call read_rst_crt_stream_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
-              call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
-              call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
-              call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+                if(nlst_rt(did)%channel_option .eq. 3) then
+                    call read_rst_crt_stream_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+                    call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+                    call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+                    call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+                else
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKS)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKS)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKS)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%CVOL,"cvol",rt_domain(did)%GNLINKS)
+                endif
+
               if(rt_domain(did)%NLAKES .gt. 0) then
                  call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
                  call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
@@ -4554,6 +4633,70 @@ end subroutine mpp_output_chrt
 #endif
          return
       end subroutine read_rst_crt_stream_nc 
+
+      subroutine read_rst_crt_reach_nc(ncid,var_out,varStr,gnlinksl)
+         implicit none
+         integer ::  ncid, varid, n, iret, gnlinksl
+         character(len=*) :: varStr
+         integer :: l, g
+         real, dimension(:) ::  var_out
+
+         real,allocatable,dimension(:) ::  var
+
+         n = size(var_out,1)
+
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) then
+              allocate(var(gnlinksl))
+         else
+              allocate(var(1))
+         endif
+#else
+              allocate(var(n))
+#endif
+         
+
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) then
+            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+         endif
+         call mpp_land_bcast_int1(iret)
+         if (iret /= 0) then
+#ifdef HYDRO_D
+               print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
+
+               deallocate(var)
+               return
+            endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
+         if(my_id .eq. IO_id) then
+            var = 0.0
+            iret = nf_get_var_real(ncid, varid, var)
+         endif
+         call ReachLS_decomp(var,   var_out)
+         deallocate(var)
+#else
+            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+           if (iret /= 0) then
+#ifdef HYDRO_D
+               print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
+               deallocate(var)
+               return
+            endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif   
+         iret = nf_get_var_real(ncid, varid, var_out)
+         deallocate(var)
+#endif
+
+
+         return
+      end subroutine read_rst_crt_reach_nc 
 
       subroutine hrldas_out()
       end subroutine hrldas_out

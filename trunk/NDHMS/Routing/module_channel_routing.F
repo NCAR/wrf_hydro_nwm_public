@@ -513,8 +513,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         real     ywtmp(ixrt,jxrt)
         integer LNLINKSL
         INTEGER, dimension(LNLINKSL) :: LLINKID
-        real*8, allocatable, dimension(:) :: LQLateral
-        real, dimension(gnlinksl) :: gQLateral 
+        real*8,  dimension(LNLINKSL) :: LQLateral
         real, dimension(gnlinksl,2) :: gQLINK
         integer, dimension(:) ::  gtoNode,toNodeInd
         integer  :: nToNodeInd
@@ -538,24 +537,28 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
       !DT_STEPS=INT(DT/DTCT)   !-- fix the timestep
       !DTCT = min(DTCT*2.0,DTRT)
 
+
    IF(channel_option .ne. 3) then   !--muskingum methods ROUTE ON DT timestep, not DTRT!!
 
 #ifdef MPP_LAND
-       allocate ( LQLateral(LNLINKSL) )
-       LQLATERAL = 0
-
        DO k = 1, LNLINKSL        !-- route on space at this timestep
          LQLateral(k)=0          !-- initial lateral flow to 0 for this reach
          DO iyw = 1,yw_MPP_NLINKS
          jj = nlinks_index(iyw)
           !--------river grid points, convert depth in mm to rate across reach in m^3/sec
-           if (CH_LNKRT(CHANXI(jj),CHANYJ(jj)) .eq. LLINKID(k)) then
-              LQLateral(k) = LQLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
+              if( .not. (  (CHANXI(jj) .eq. 1 .and. left_id .ge. 0) .or. &
+                           (CHANXI(jj) .eq. ixrt .and. right_id .ge. 0) .or. &
+                           (CHANYJ(jj) .eq. 1 .and. down_id .ge. 0) .or. &
+                           (CHANYJ(jj) .eq. jxrt .and. up_id .ge. 0)      &
+                   ) ) then
+                  if (CH_LNKRT(CHANXI(jj),CHANYJ(jj)) .eq. LLINKID(k)) then
+                     LQLateral(k) = LQLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
                             *node_area(jj)/DT)
-           elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .eq. k)) then !-lake grid
-              LQLateral(k) = LQLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
-                       *node_area(jj)/DT)
-           endif
+                  elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .eq. k)) then !-lake grid
+                     LQLateral(k) = LQLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
+                              *node_area(jj)/DT)
+                  endif
+              endif
          end do  ! jj
        end do     ! k
 
@@ -563,10 +566,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !   assign LQLATERAL to QLATERAL
        call updateLinkV(LQLateral, QLateral)
 
-       deallocate(LQLateral)
 
-
-!       call ReachLS_write_io(QLateral, gQLateral)
 
 
 #else
@@ -574,17 +574,19 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          QLateral(k)=0          !-- initial lateral flow to 0 for this reach
          do jj = 1, NLINKS
           !--------river grid points, convert depth in mm to rate across reach in m^3/sec
-           if (CH_LNKRT(CHANXI(jj),CHANYJ(jj)) .eq. LINKID(k)) then
-              QLateral(k) = QLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
+
+                  if (CH_LNKRT(CHANXI(jj),CHANYJ(jj)) .eq. LINKID(k)) then
+                     QLateral(k) = QLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
                             *node_area(jj)/DT)
-           elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .eq. k)) then !-lake grid
-              QLateral(k) = QLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
-                       *node_area(jj)/DT)
-           endif
+                  elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .eq. k)) then !-lake grid
+                     QLateral(k) = QLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
+                              *node_area(jj)/DT)
+                  endif   
 
           end do  ! jj
        end do     ! k
 #endif
+
 
 !----------  route order 1 reaches which have no upstream inflow
         do k=1, NLINKSL
@@ -610,8 +612,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
            endif
         end do
 
+
+#ifdef MPP_LAND
       call gBcastValue(QLINK(:,2), gQLINK(:,2))
       call gBcastValue(QLINK(:,1), gQLINK(:,1))
+#endif
+
+         
 
       !---------- route other reaches, with upstream inflow
 !       write(6,*) "yyyww check for nToNodeInd", nToNodeInd
@@ -630,21 +637,26 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              Qup  = 0
                 if (ORDER(k) .eq. kk) then    !--do the orders sequentially
 #ifdef MPP_LAND
-                   do i = 1, nToNodeInd
-                          m = toNodeInd(i)
-                        if (FROM_Node(k) .eq. gtoNODE(m) ) then
-                          Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                          Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                    do i = 1, nToNodeInd
+                         m = toNodeInd(i)
+                         if (FROM_Node(k) .eq. gtoNODE(i) ) then
+                           Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                           Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+!                           write(my_id+80,*) "ywccc check FROM_Node(k) = ", FROM_Node(k), m, gtoNODE(i)
+                         endif
+                    end do ! do i
+
+!                    write(my_id+80,*) "yw check FROM_Node(k) = ", FROM_Node(k), Quc, Qup
+!                    call flush(my_id+80)
  
 #else
                    do m = 1, NLINKSL
-                      if (FROM_NODE(k) .eq. TO_NODE(m) ) then
-                        !print *, k,m,FROM_NODE(k),QLINK(m,2)
-                        Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                        Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-#endif
-                      endif
+                         if (FROM_NODE(k) .eq. TO_NODE(m) ) then
+                           Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                           Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                         endif
                    end do ! do m
+#endif
                    
                    if(TYPEL(k) .eq. 1) then   !--link is a reservoir
 
@@ -680,6 +692,18 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              end do       !--k links
           end do          !--kk order
 
+!yw check
+!        gQLINK = 0.0
+!        call ReachLS_write_io(tmpQLINK(:,2), gQLINK(:,2))
+!        call ReachLS_write_io(tmpQLINK(:,1), gQLINK(:,1))
+!        write(6,*) " io_id = ", io_id
+!        if(my_id .eq. io_id) then
+!            write(71,*) gQLINK(:,1)
+!            call flush(71)
+!            call flush(72)
+!        endif
+!        call hydro_finish()
+
 
           do k = 1, NLINKSL
             if(TYPEL(k) .ne. 1) then
@@ -687,9 +711,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
             endif
             QLINK(k,1) = QLINK(k,2)    !assing link flow of current to be previous for next time step
          end do
-         call gBcastValue(QLINK(:,2), gQLINK(:,2))
-         call gBcastValue(QLINK(:,1), gQLINK(:,1))
-         gQLINK(:,1) = gQLINK(:,2)
+
 
 #ifdef HYDRO_D
           print *, "END OF ALL REACHES...",KRT,DT_STEPS

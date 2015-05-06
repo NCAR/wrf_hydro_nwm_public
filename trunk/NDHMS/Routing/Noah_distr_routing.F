@@ -798,7 +798,7 @@
          END DO
         END DO
 
-!        call MPP_LAND_COM_REAL(QSTRMVOLRT,IXRT,JXRT,99)
+!yw check         call MPP_LAND_COM_REAL(QSTRMVOLRT,IXRT,JXRT,99)
 !DJG----------------------------------------------------------------------
 !DJG CALL OVERLAND FLOW ROUTING SUBROUTINE
 !DJG----------------------------------------------------------------------

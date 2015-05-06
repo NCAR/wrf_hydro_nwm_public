@@ -3,7 +3,7 @@ MODULE module_Routing
    use module_gw_baseflow, only: pix_ct_1
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw
-   use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx, reachls_write_io, getToInd
+   use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
    USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
@@ -32,9 +32,14 @@ CONTAINS
 !     ixrt = rt_domain(did)%ixrt
 !     jxrt = rt_domain(did)%jxrt
       
+!     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
+!         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
+!     endif
+
       NLINKS = rt_domain(did)%NLINKS
       NLAKES = rt_domain(did)%NLAKES
       NLINKSL = rt_domain(did)%NLINKSL
+
 
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
@@ -202,7 +207,7 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEA(NLAKES) )
      allocate( rt_domain(did)%ORIFICEE(NLAKES) )
 
-  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 3 ) then
+  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
        NLINKS = rt_domain(did)%NLINKS
        NLAKES = rt_domain(did)%NLAKES 
   endif
@@ -508,10 +513,11 @@ CONTAINS
 
             call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
-            allocate(rt_domain(did)%gtoNode(rt_domain(did)%GNLINKSL))
-            call ReachLS_write_io(rt_domain(did)%to_node, rt_domain(did)%gtoNode)
+!!            allocate(rt_domain(did)%gtoNode(rt_domain(did)%GNLINKSL))
+!!            call ReachLS_write_io(rt_domain(did)%to_node, rt_domain(did)%gtoNode)
 !!!            call getFromInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%fromNodeInd,rt_domain(did)%nFromInd)
-            call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd)
+
+            call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
      endif
 #endif
 
