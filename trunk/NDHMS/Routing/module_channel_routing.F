@@ -1,7 +1,7 @@
 MODULE module_channel_routing
 #ifdef MPP_LAND
   USE module_mpp_land
-  use MODULE_mpp_ReachLS, only : updatelinkv, gNlinksl, ReachLS_write_io, gbcastvalue
+  use MODULE_mpp_ReachLS, only : updatelinkv, gNlinksl, ReachLS_write_io, gbcastvalue, gbcastreal2
 #endif
   IMPLICIT NONE
 
@@ -527,9 +527,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         integer LNLINKSL
         INTEGER, dimension(LNLINKSL) :: LLINKID
         real*8,  dimension(LNLINKSL) :: LQLateral
-        real, dimension(gnlinksl,2) :: gQLINK
         integer, dimension(:) ::  gtoNode,toNodeInd
         integer  :: nToNodeInd
+        real, dimension(nToNodeInd,2) :: gQLINK
 #endif
         integer flag
 
@@ -629,15 +629,24 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         end do
 
 
+!            write(80+my_id,*) "check in channel routing "
+!            write(80+my_id,*) "size of toNodeInd  ", size(toNodeInd,1), nToNodeInd
+!            call flush(80+my_id)
+
 #ifdef MPP_LAND
-      call gBcastValue(QLINK(:,2), gQLINK(:,2))
-      call gBcastValue(QLINK(:,1), gQLINK(:,1))
+       gQLINK = 0
+!      call gBcastValue(QLINK(:,2), gQLINK(:,2))
+!      call gBcastValue(QLINK(:,1), gQLINK(:,1))
+       call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
+       call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1))
 #endif
 
+!          write(6,*) "************finish the loop  ***********"
+!          call flush(6)
+!          call hydro_finish()
          
 
       !---------- route other reaches, with upstream inflow
-!       write(6,*) "yyyww check for nToNodeInd", nToNodeInd
 !       write(6,*) " toNodeInd =", toNodeInd
 !       write(6,*) " gtoNode  =", gtoNode  
 !       write(6,*) " gQLINK(:,2)=", gQLINK(:,2)
@@ -653,11 +662,11 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              Qup  = 0
                 if (ORDER(k) .eq. kk) then    !--do the orders sequentially
 #ifdef MPP_LAND
-                    do i = 1, nToNodeInd
-                         m = toNodeInd(i)
-                         if (FROM_Node(k) .eq. gtoNODE(i) ) then
-                           Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                           Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                    do m = 1, nToNodeInd
+!                        m = toNodeInd(i)
+                         if (FROM_Node(k) .eq. gtoNODE(m) ) then
+                            Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                            Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
 !                           write(my_id+80,*) "ywccc check FROM_Node(k) = ", FROM_Node(k), m, gtoNODE(i)
                          endif
                     end do ! do i

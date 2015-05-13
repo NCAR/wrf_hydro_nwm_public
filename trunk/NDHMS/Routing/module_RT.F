@@ -520,6 +520,10 @@ CONTAINS
 !!!            call getFromInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%fromNodeInd,rt_domain(did)%nFromInd)
 
             call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+
+!            write(80+my_id,*) "check in module_RT.F "
+!            write(80+my_id,*) "size of toNodeInd  ", size(rt_domain(did)%toNodeInd,1), rt_domain(did)%nToInd
+!            call flush(80+my_id)
      endif
 #endif
 
