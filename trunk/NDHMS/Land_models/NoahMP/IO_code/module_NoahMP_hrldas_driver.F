@@ -1437,7 +1437,7 @@ end subroutine land_driver_ini
               call set_output_define_mode(imode)
 
               ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
-
+#ifndef HYDRO_REALTIME
         ! Properties - Assigned or predicted
               call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
               call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
@@ -1457,23 +1457,29 @@ end subroutine land_driver_ini
               call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
               call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
               call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
-              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
               call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
               call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
+#endif
+              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
         ! Grid water budget terms - in addition to above
               call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
               call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
               call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
               call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
+#ifndef HYDRO_REALTIME
               call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
               call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
               call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
+#endif
 #ifdef WRF_HYDRO
               call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"                    )
               call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"                    )
-              call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
               call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"                    )
+#ifndef HYDRO_REALTIME
+              call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
 #endif
+#endif
+#ifndef HYDRO_REALTIME
         ! Additional needed to close the canopy energy budget
               call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
               call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
@@ -1510,12 +1516,14 @@ end subroutine land_driver_ini
               call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
               call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
               call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
-              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
               call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
               call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
+#endif
+              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
         ! Snow - 2D terms
               call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
               call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
+#ifndef HYDRO_REALTIME
               call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
               call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
               call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
@@ -1551,6 +1559,7 @@ end subroutine land_driver_ini
               call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"               )
               call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"               )
 	    ENDIF
+#endif
 
            enddo DEFINE_MODE_LOOP
 
