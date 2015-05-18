@@ -99,11 +99,6 @@ MODULE MODULE_mpp_ReachLS
      real, dimension(max_nlinkSL) :: tmpV  
      integer :: ierr, k, i, m, j, bsize
 
-!     write(80+my_id,*) " dim of index ",size(index,1), size1
-!     write(80+my_id,*) "size, insize, max_nlinkSL",size1, insize, max_nlinkSL
-!     write(80+my_id,*) " dim of inV",size(inV,1)
-!     write(80+my_id,*) " dim of ToInd, outV",size(inV,1), size(outV,1)
-!     call flush(80+my_id)
      outV = 0
      do i = 0, numprocs -1
             bsize = linkls_e(i+1) - linkls_s(i+1) + 1
@@ -112,7 +107,6 @@ MODULE MODULE_mpp_ReachLS
             call mpi_bcast(tmpV(1:bsize),bsize,MPI_REAL,   &
                 i,MPI_COMM_WORLD,ierr) 
 
-!            goto 200
             do j = 1, size1
                 do k = 1, bsize
                    if(index(j) .eq. (linkls_s(i+1) + k -1) ) then
@@ -122,7 +116,6 @@ MODULE MODULE_mpp_ReachLS
                 end do
  100            continue
             end do
-!200      continue
 
          endif
      end do
@@ -517,8 +510,6 @@ MODULE MODULE_mpp_ReachLS
          call mpi_bcast(ToInd(i+1),1,MPI_INTEGER,   &
             i,MPI_COMM_WORLD,ierr)
       end do
-!      write(my_id+80,*) ToInd
-!      call hydro_finish()
 
   end subroutine getToInd
 

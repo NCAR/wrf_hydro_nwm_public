@@ -629,9 +629,6 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         end do
 
 
-!            write(80+my_id,*) "check in channel routing "
-!            write(80+my_id,*) "size of toNodeInd  ", size(toNodeInd,1), nToNodeInd
-!            call flush(80+my_id)
 
 #ifdef MPP_LAND
        gQLINK = 0
@@ -667,12 +664,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                          if (FROM_Node(k) .eq. gtoNODE(m) ) then
                             Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                             Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-!                           write(my_id+80,*) "ywccc check FROM_Node(k) = ", FROM_Node(k), m, gtoNODE(i)
                          endif
                     end do ! do i
 
-!                    write(my_id+80,*) "yw check FROM_Node(k) = ", FROM_Node(k), Quc, Qup
-!                    call flush(my_id+80)
  
 #else
                    do m = 1, NLINKSL
@@ -904,15 +898,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLINK(:,1),NLINKS,99)
 #endif
-!          call check_lake(80,QLLAKE,lake_index,nlakes)
-!         call check_channel(81,QLINK(:,1),1,nlinks)
-!         call check_channel(82,HLINKTMP,1,nlinks)
-!         call check_channel(89,HLINKTMP,1,nlinks)
-!         call check_channel(83,CHANLEN,1,nlinks)
-!         call check_channel(84,MannN,1,nlinks)
-!         call check_channel(85,Bw,1,nlinks)
-!         call check_channel(86,ChSSlp,1,nlinks)
-!         call check_channel(87,TYPEL*1.0,1,nlinks)
  
 
           !-- compute total flow across face, into node
@@ -931,12 +916,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,0)
 #endif
 
-!    call check_channel(79,TYPEL*1.0,1,nlinks)
-
-!    call check_channel(80,QLINK(:,1),1,nlinks)
-
-!    call check_channel(89,qsum,1,nlinks)
-
 
 
 #ifdef MPP_LAND
@@ -950,7 +929,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,99)
 #endif
-!   call check_channel(89,qsum,1,nlinks)
 
 
          flag = 99

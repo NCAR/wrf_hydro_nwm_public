@@ -521,38 +521,17 @@ CONTAINS
 
             call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
 
-!            write(80+my_id,*) "check in module_RT.F "
-!            write(80+my_id,*) "size of toNodeInd  ", size(rt_domain(did)%toNodeInd,1), rt_domain(did)%nToInd
-!            call flush(80+my_id)
      endif
 #endif
 
 
 
-
-!yw #ifdef MPP_LAND
-!yw          call MPP_CHROUTING_CONF(rt_domain(did)%g_ixrt,rt_domain(did)%g_jxrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt, rt_domain(did)%NLAKES,rt_domain(did)%NLINKS,&
-!yw               rt_domain(did)%lake_mskrt, rt_domain(did)%lake_index,rt_domain(did)%link_location,rt_domain(did)%HRZAREA,rt_domain(did)%LAKEMAXH,&
-!yw               rt_domain(did)%WEIRC,rt_domain(did)%WEIRL,&
-!yw               rt_domain(did)%ORIFICEC,rt_domain(did)%ORIFICEA,rt_domain(did)%ORIFICEE,rt_domain(did)%LATLAKE,rt_domain(did)%LONLAKE,rt_domain(did)%ELEVLAKE, &
-!yw               rt_domain(did)%FROM_NODE,rt_domain(did)%TO_NODE,rt_domain(did)%ZELEV,rt_domain(did)%CHLAT,rt_domain(did)%CHLON,rt_domain(did)%TYPEL, &
-!yw               rt_domain(did)%ORDER,rt_domain(did)%CHANLEN, &
-!yw               rt_domain(did)%CHANXI,rt_domain(did)%CHANYJ, rt_domain(did)%lakenode,rt_domain(did)%mpp_nlinks, rt_domain(did)%nlinks_index, rt_domain(did)%maxorder, &
-!yw               rt_domain(did)%yw_mpp_nlinks)
-!!!!!   lake_index,Link_Location)
-!yw#endif
-!        call deriveFromNode(did)
     endif
   END IF
 
    
        allocate(tmp_int(rt_domain(did)%GNLINKS))
        allocate(tmp_real(rt_domain(did)%GNLINKS))
-!      call write_chanel_int(rt_domain(did)%GCH_NETLNK,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,tmp_int)
-!      call write_chanel_real(rt_domain(did)%chlon,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,tmp_real)
-!       if(my_id .eq. IO_id) write(50,*) tmp_int
-!      if(my_id .eq. IO_id) write(51,*) tmp_real
-!      call hydro_stop("88888888")
 
 
 
