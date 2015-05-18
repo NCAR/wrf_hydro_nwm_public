@@ -123,7 +123,7 @@ CONTAINS
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
             nlst_rt(did)%dt = HYDRO_dt
-            if(nlst_rt(did)%dtrt .lt. HYDRO_dt) then
+            if(nlst_rt(did)%dtrt .ge. HYDRO_dt) then
                nlst_rt(did)%dtrt = HYDRO_dt
                mm0 = 1
             else
@@ -136,7 +136,7 @@ CONTAINS
         endif
 
             if((mm0*nlst_rt(did)%dtrt) .ne. HYDRO_dt) then   ! WRF model time step changed.
-               if(dtrt0 .lt. HYDRO_dt) then
+               if(dtrt0 .ge. HYDRO_dt) then
                   nlst_rt(did)%dtrt = HYDRO_dt
                   mm0 = 1
                else

@@ -37,7 +37,7 @@
  SPLIT_OUTPUT_COUNT = 1
 
 !Switch to overwrite the restart or initialization of soil variables with values from the routing restart file (=0-no reset, 1-yes reset using routing restart)
- rst_typ = 0
+ rst_typ = 1
 
 !Switch to set restart accumulation variables = 0 (0-no reset, 1-yes reset to 0.0)
  RSTRT_SWC = 0
