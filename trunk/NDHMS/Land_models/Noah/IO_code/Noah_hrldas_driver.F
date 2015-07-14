@@ -1239,6 +1239,16 @@ program Noah_hrldas_driver
 ! so that upon restart, we're ready to go on this time step.
 !--------------------------------------------------------------------------------
 
+  if(forc_typ .eq. 8 ) then
+       if(rank == 0) then
+          call read_forc_ldasout_seq(olddate,hgrid, indir, FORCING_TIMESTEP, ix,jx,infxsrt,soldrain)
+       endif
+
+          call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL), &
+                        infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,               &
+			qsgw)
+          goto 1003 
+  endif
 
   if(rank .eq. 0) then
 
@@ -2530,6 +2540,8 @@ program Noah_hrldas_driver
            call finalize_restart_file()
         endif
   endif !!! rank if block
+
+1003   continue
 
   ENDDO KLOOP
 
