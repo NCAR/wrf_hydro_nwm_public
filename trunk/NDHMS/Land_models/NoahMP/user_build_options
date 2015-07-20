@@ -40,8 +40,8 @@ CPPFLAGS	=       -C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D) $(WRFIO_
 LIBS 	=	
 NETCDFINC	=	$(NETCDF_INC) 
 NETCDFLIB	=	-L$(NETCDF_LIB) -lnetcdff -lnetcdf
-NETCDF_INC = /opt/netcdf/include
-NETCDF_LIB = /opt/netcdf/lib
+NETCDF_INC = /usr/local/netcdf4/include
+NETCDF_LIB = /usr/local/netcdf4/lib
 
 # flag from HRLDAS
 COMPILERF90 = $(COMPILER90)
