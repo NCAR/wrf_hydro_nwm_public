@@ -28,3 +28,25 @@ clean:
 		(cd Rapid_routing; make -f makefile.cpl clean); \
 	fi
 	(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
+
+nuopc:
+	@if [ -d "CPL/NUOPC_cpl" ]; then \
+	(cd CPL/NUOPC_cpl; make clean WRFHYDRODIR=$(CURDIR); make WRFHYDRODIR=$(CURDIR)) \
+	else \
+	(echo "CPL/NUOPC_cpl directory not found."; exit 1) \
+	fi
+
+nuopcinstall:
+	@if [ -d "CPL/NUOPC_cpl" ]; then \
+	(cd CPL/NUOPC_cpl; make install WRFHYDRODIR=$(CURDIR)) \
+	else \
+	(echo "CPL/NUOPC_cpl directory not found."; exit 1) \
+	fi
+
+nuopcclean:
+	@if [ -d "CPL/NUOPC_cpl" ]; then \
+	(cd CPL/NUOPC_cpl; make clean WRFHYDRODIR=$(CURDIR)) \
+	else \
+	(echo "CPL/NUOPC_cpl directory not found."; exit 1) \
+	fi
+
