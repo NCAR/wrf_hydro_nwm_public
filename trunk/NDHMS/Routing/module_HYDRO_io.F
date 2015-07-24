@@ -5152,7 +5152,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
         INTEGER :: LNLINKSL
-        INTEGER,                dimension(LNLINKSL) :: LLINKID
+!yw        INTEGER,                dimension(LNLINKSL) :: LLINKID
 #endif
         INTEGER                                      :: I,J,channel_option
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
