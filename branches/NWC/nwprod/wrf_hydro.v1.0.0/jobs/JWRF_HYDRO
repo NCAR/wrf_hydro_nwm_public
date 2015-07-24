@@ -1,0 +1,158 @@
+#!/bin/sh
+
+#### UNIX Script Documentation Block
+#
+# Script Name:  JWRF_HYDRO_TEST
+####
+
+module load prod_util
+
+
+export PS4='$SECONDS + '
+set -xa
+date
+
+######################################################
+# Default to NCO production run environment
+#######################################################
+export RUN_ENVIR=${RUN_ENVIR:-prod}
+export SENDECF=${SENDECF:-YES}
+
+##########################
+# Specify NET and RUN Name 
+##########################
+export NET=wrf_hydro
+export RUN=wrf_hydro
+
+###############################################################
+# This block can be modified for different Production test
+# environment. This is used for operational testings
+###############################################################
+if [ "$RUN_ENVIR" = prod -a $envir != prod ]; then
+  export jlogfile=/ohd/noscrub/$LOGNAME/com/logs/${envir}/jlogfile
+  export SENDDBN=NO #NO for developers
+fi
+
+
+# #### 06/09/15 #####################################
+# SET WRF_HYDRO TESTING SCRIPT PROCESSING VARIABLES
+# ###################################################
+ 
+
+###############################
+# obtain unique process id (pid)
+################################
+export pid=$$
+export cycle=t${cyc}z
+
+########################################################
+# Make working directory and file To Log Msgs 
+########################################################
+
+export WORKDIR=/tmpnwprd1/${job}_${envir}.${pid}
+
+if [ -d $WORKDIR ]; then
+  rm -rf $WORKDIR
+fi
+
+mkdir -m 775 -p ${WORKDIR}
+cd ${WORKDIR}
+
+####################################
+# File To Log Msgs
+####################################
+export jlogfile=${jlogfile:-/com/logs/jlogfiles/jlogfile.${job}.${pid}}
+
+####################################
+# Determine Job Output Name on System
+####################################
+export outid="LSF${job}"
+export jobid="${outid}.o${pid}"
+export pgmout="OUTPUT.${pid}"
+
+####################################
+# SENDECF  - Flag Events on ECF
+# SENDCOM  - Copy files to /com directory
+####################################
+
+export SENDECF=${SENDECF:-YES}
+export SENDDBN=${SENDDBN:-YES}
+export SENDCOM=${SENDCOM:-YES}
+
+if [ "${PARAFLAG}" = "YES" ]
+then
+  export SENDCOM=YES
+  export SENDECF=NO 
+fi
+
+####################################
+# Specify Application Areas
+####################################
+export HOMEwrf_hydro=${HOMEwrf_hydro:-${NWROOT:?}/${NET}.${model_ver}}
+export EXECwrf_hydro=${EXECwrf_hydro:-${HOMEwrf_hydro}/exec}
+export FIXwrf_hydro=${FIXwrf_hydro:-${HOMEwrf_hydro}/fix}
+export USHwrf_hydro=${USHwrf_hydro:-${HOMEwrf_hydro}/ush}
+export PARMwrf_hydro=${PARMwrf_hydro:-${HOMEwrf_hydro}/parm}
+export EXECode=${EXECode:-${CODEwrf_hydro}/exec}
+
+
+###################################
+# Set up the UTILITIES
+###################################
+export utilscript=${utilscript:-/nw${envir}/util/ush}
+export utilexec=${utilexec:-/nw${envir}/util/exec}
+
+
+# Run setup to initialize working directory and utility scripts
+sh $utilscript/setup.sh
+
+# Set PDY
+sh $utilscript/setpdy.sh
+. ./PDY
+
+export COMINforcing=/com/forcing
+export COMINdomain=/com/DOMAIN
+export COMIN=/com/${NET}/${envir}/${RUN}.${PDY}
+export COMOUT=/com/${NET}/${envir}/${RUN}.${PDY}
+export PCOM=/ohd/noscrub/$LOGNAME/pcom/{NET}
+
+mkdir -m 775 -p $COMOUT $PCOM 
+
+
+######################################################
+# Set the mpi run command appropriate for the job card
+######################################################
+
+export mpicmd="mpirun -genvall -n $LSB_DJOB_NUMPROC -machinefile $LSB_DJOB_HOSTFILE"
+
+env
+
+########################################################
+# Specify runs to do 
+#  default to one basic run of each
+########################################################
+########################################################
+# Specify dissemination jobs
+#  note these are only for certain of the above runs
+########################################################
+# SET uncoupled model flag
+export WRF_HYDRO=${WRF_HYDRO:-1}        
+
+########################################################
+# Execute the script.
+########################################################
+${HOMEwrf_hydro}/scripts/exwrf_hydro.sh.ecf
+
+###################################
+# Remove temp directories
+###################################
+
+#cd ${DATAROOT}
+#cd /ohd/noscrub/$LOGNAME
+#export KEEPDATA=NO
+#if [ 	"${KEEPDATA}" != "YES" ]; then
+#   rm -rf ${WORKDIR}
+#fi
+
+date
+

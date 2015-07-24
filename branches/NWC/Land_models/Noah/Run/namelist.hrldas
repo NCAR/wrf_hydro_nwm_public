@@ -1,0 +1,70 @@
+&NOAHLSM_OFFLINE
+
+! HRLDAS_CONSTANTS_FILE = "/data/user/hrldas-v3.2/wrfinput_d01"
+! INDIR = "/data/user/hrldas-v3.2/HRLDAS_COLLECT_DATA/run"
+
+ HRLDAS_CONSTANTS_FILE = "wrfinput_d03"
+ ! INDIR  = '/d2/weiyu/wrf_release/EXE/wrf_run'
+ INDIR  = '/d2/weiyu/wrf_release/EXE/wrf_run_noah/thomson_org'
+
+ ! OUTDIR = "./hrldas_output/"
+
+ START_YEAR  = 2013
+ START_MONTH  = 09
+ START_DAY  = 11
+ START_HOUR  = 00
+ START_MIN   = 00
+
+! RESTART_FILENAME_REQUESTED  = 'RESTART.2013091212_DOMAIN3'
+
+! KDAY = 720
+! KDAY = 1440
+ KHOUR = 1
+
+ FORCING_TIMESTEP =  3600
+ NOAH_TIMESTEP    =    60
+ OUTPUT_TIMESTEP  =  3600
+
+! RESTART_FREQUENCY_HOURS = 0 ! 480
+! RESTART_FREQUENCY_HOURS = 99999 ! 480
+ RESTART_FREQUENCY_HOURS = 6 ! 480
+ ! Split output after split_output_count output times.
+! SPLIT_OUTPUT_COUNT = 240
+ SPLIT_OUTPUT_COUNT = 1
+
+! SUBWINDOW_XSTART = 32
+! SUBWINDOW_XEND = 32
+! SUBWINDOW_YSTART = 60
+! SUBWINDOW_YEND = 60
+
+ NSOIL=4
+ ZSOIL(1) = -0.10
+ ZSOIL(2) = -0.40
+ ZSOIL(3) = -1.00
+ ZSOIL(4) = -2.00
+
+ ZLVL = 2.0
+ ZLVL_WIND = 10.0
+
+ IZ0TLND = 0
+ SFCDIF_OPTION = 0
+ UPDATE_SNOW_FROM_FORCING = .TRUE.
+
+!Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format, 3=WRF, 4=Idealized, 5=Ideal w/ Spec.Precip., 6=HRLDAS-hrly format w/ Spec. Precip, 7=WRF w/Spec. Precip
+ FORC_TYP = 3
+
+!Switch for snow data assimilation: 0=no, 1=yes
+SNOW_ASSIM = 0
+
+! for extract greenfrac
+GEO_STATIC_FLNM = "DOMAIN/geo_em.d03.nc"
+
+!HRLDAS_ini_typ 1: initial and parameters from frocing; 0: from wrfinput.
+HRLDAS_ini_typ = 0
+
+/
+
+&URBAN_OFFLINE
+ SF_URBAN_PHYSICS = 0
+ ZLVL_URBAN = 15.0
+/

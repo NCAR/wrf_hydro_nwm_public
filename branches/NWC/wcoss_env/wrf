@@ -1,0 +1,56 @@
+#%Module######################################################################
+##							Zhengtao.Cui@noaa.gov 
+##							NWC/NWS/NOAA
+##    WRF-Hydro 3.0.0
+##_____________________________________________________
+proc ModulesHelp { } {
+  puts stderr "Set environment veriables for WRF-Hydro code"
+        puts stderr "\tHycom: This module initializes environment variables"
+        puts stderr "\t\tfor the Intel Compiler Suite $version\n"
+}
+
+# 
+module-whatis   " WRF-Hydro whatis description"
+
+
+set ver 1.0.0
+set COMP intel
+
+
+
+# Loding nceplibs modules _____________
+module load EnvVars/1.0.0
+module load ics/15.0.1
+module load NetCDF/3.6.3
+module load ibmpe
+module load lsf
+
+
+
+#module load bacio/v2.0.1
+#module load g2/v1.4.0
+#module load w3nco/v2.0.6
+#module load jasper
+#module load png
+#module load z
+
+
+# setenv _______________
+
+#setenv 
+
+setenv NETCDF_INC /usrx/local/NetCDF/3.6.3/include
+setenv NETCDF_LIB /usrx/local/NetCDF/3.6.3/lib
+setenv WRF_HYDRO 1
+setenv HYDRO_D 1
+setenv NCEP_WCOSS 1
+
+#prepending         _________________
+
+#prepend-path MANPATH $path/share/man
+#prepend-path MANPATH $path/share/man
+#prepend-path RTOFS_CODE_SRC /contrib/nceplibs/src/$lname/$ver
+#prepend-path RTOFS_CODE_INC $dinc
+#prepend-path RTOFS_CODE_LIB $dlib
+#prepend-path RTOFS_CODE_PREC $prec
+

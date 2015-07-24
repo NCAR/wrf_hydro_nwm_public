@@ -1,0 +1,17 @@
+/opt/apps/intel11_1/mvapich2/1.6/bin/mpif90 -fPIC -xW    -o \
+	rapid \
+	hrldas_RAPID_drv.o \
+	rapid_main.o \
+	rapid_init.o \
+	rapid_read_namelist.o \
+	rapid_create_obj.o \
+	rapid_net_mat.o \
+	rapid_routing.o \
+	rapid_routing_param.o \
+	rapid_obs_mat.o \
+	rapid_phiroutine.o \
+	rapid_destro_obj.o \
+	rapid_final.o \
+	rapid_var.o \
+	-L/opt/apps/intel11_1/mvapich2_1_6/tao/1.10.1/lib/westmere-cxx -ltaofortran -L/opt/apps/intel11_1/mvapich2_1_6/tao/1.10.1/lib/westmere-cxx -ltaopetsc -ltao -Wl,-rpath,/opt/apps/intel11_1/mvapich2_1_6/tao/1.10.1/lib/westmere-cxx -Wl,-rpath,/opt/apps/intel11_1/mvapich2_1_6/petsc/3.1/westmere-cxx/lib -L/opt/apps/intel11_1/mvapich2_1_6/petsc/3.1/westmere-cxx/lib -lpetsc       -Wl,-rpath,/var/tmp/petsc-3.1-buildroot/opt/apps/intel11_1/mvapich2_1_6/petsc/3.1/westmere-cxx/lib -L/var/tmp/petsc-3.1-buildroot/opt/apps/intel11_1/mvapich2_1_6/petsc/3.1/westmere-cxx/lib -lcmumps -ldmumps -lsmumps -lzmumps -lmumps_common -lpord -lsuperlu_dist_2.4 -lparmetis -lmetis -lscalapack -lblacs -lPLAPACK -lspooles -lHYPRE -lspai -lchaco -lsuperlu_4.0 -Wl,-rpath,/opt/apps/intel11_1/mvapich2_1_6/phdf5/1.8.5/lib -L/opt/apps/intel11_1/mvapich2_1_6/phdf5/1.8.5/lib -lz -Wl,-rpath,/opt/apps/intel/11.1/mkl/lib/em64t -L/opt/apps/intel/11.1/mkl/lib/em64t -lmkl_lapack -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lguide -lpthread -Wl,-rpath,/opt/apps/limic2/0.5.4/lib -L/opt/apps/limic2/0.5.4/lib -Wl,-rpath,/opt/ofed/lib64 -L/opt/ofed/lib64 -limf -ldl -Wl,-rpath,/opt/apps/intel11_1/mvapich2/1.6/lib -L/opt/apps/intel11_1/mvapich2/1.6/lib -lmpich -lopa -llimic2 -lpthread -lrdmacm -libverbs -libumad -lrt -Wl,-rpath,/opt/apps/intel/11.1/lib/intel64 -L/opt/apps/intel/11.1/lib/intel64 -Wl,-rpath,/usr/lib/gcc/x86_64-redhat-linux/4.1.2 -L/usr/lib/gcc/x86_64-redhat-linux/4.1.2 -lsvml -lipgo -ldecimal -lgcc_s -lirc -lirc_s -lmpichf90 -lifport -lifcore -lm -lm -lmpichcxx -lstdc++ -lmpichcxx -lstdc++ -limf -ldl -lmpich -lopa -llimic2 -lpthread -lrdmacm -libverbs -libumad -lrt -lsvml -lipgo -ldecimal -lgcc_s -lirc -lirc_s -ldl  -L /opt/apps/intel11_1/netcdf/3.6.3/lib -lnetcdf -I /opt/apps/intel11_1/mvapich2_1_6/phdf5/1.8.8/include \
+        -Wl,-rpath,/opt/apps/intel11_1/mvapich2_1_6/phdf5/1.8.8/lib -L/opt/apps/intel11_1/mvapich2_1_6/phdf5/1.8.8/lib -lz

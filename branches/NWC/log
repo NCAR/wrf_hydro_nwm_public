@@ -1,0 +1,272 @@
+make[1]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/CPL/NoahMP_cpl'
+rm -f *.o *.mod *.stb *~ *.f Noah_hrldas_beta
+make[1]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/CPL/NoahMP_cpl'
+(make -f Makefile.comm clean)
+make[1]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS'
+(cd Data_Rec; make -f Makefile clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Data_Rec'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Data_Rec'
+(cd HYDRO_drv; make -f Makefile clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/HYDRO_drv'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/HYDRO_drv'
+(cd MPP; make -f Makefile clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/MPP'
+rm -f     *.o *.mod *.stb *~
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/MPP'
+(cd Routing;    make -f Makefile clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Routing'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Routing'
+(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)
+make[1]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS'
+make[1]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP'
+(cd Utility_routines;		make clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+rm -f   *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+(cd Noah;			make clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Noah'
+rm -f   *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Noah'
+(cd IO_code;			make clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/IO_code'
+rm -f   *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/IO_code'
+(cd Run;			make -f Makefile clean)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Run'
+rm -f   *~ Noah_hrldas_beta
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Run'
+make[1]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP'
+if [  -eq 1 ]; then \
+		(cd Rapid_routing; make -f makefile.cpl clean); \
+	fi
+/bin/sh: 1: [: -eq: unexpected operator
+(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
+(rm -f Run/wrf_hydro.exe   )
+(make -f Makefile.comm BASIC)
+make[1]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS'
+(cd MPP     ; make -f Makefile)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/MPP'
+
+rm -f     CPL_WRF.o CPL_WRF.mod CPL_WRF.stb *~ *.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  CPL_WRF.F > CPL_WRF.f
+mpif90 -o CPL_WRF.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  CPL_WRF.f
+mpif90 -Mfree -c -byteswapio -O2 -Kieee   -c CPL_WRF.F
+ar -r ../lib/libHYDRO.a CPL_WRF.o
+ar: creating ../lib/libHYDRO.a
+
+rm -f     mpp_land.o mpp_land.mod mpp_land.stb *~
+mpif90 -Mfree -c -byteswapio -O2 -Kieee  -c mpp_land.F
+ar -r ../lib/libHYDRO.a mpp_land.o
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/MPP'
+(cd Data_Rec     ; make -f Makefile)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Data_Rec'
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_namelist.F > module_namelist.f
+mpif90 -o module_namelist.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  -I../mod module_namelist.f
+rm -f     module_namelist.f
+
+ar -r ../lib/libHYDRO.a module_namelist.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_RT_data.F > module_RT_data.f
+mpif90 -o module_RT_data.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  -I../mod module_RT_data.f
+rm -f     module_RT_data.f
+
+ar -r ../lib/libHYDRO.a module_RT_data.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_gw_gw2d_data.F > module_gw_gw2d_data.f
+mpif90 -o module_gw_gw2d_data.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  -I../mod module_gw_gw2d_data.f
+rm -f     module_gw_gw2d_data.f
+
+ar -r ../lib/libHYDRO.a module_gw_gw2d_data.o
+cp *.mod ../mod
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Data_Rec'
+(cd Routing; make -f Makefile)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Routing'
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_HYDRO_utils.F > module_HYDRO_utils.f
+mpif90 -o module_HYDRO_utils.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_HYDRO_utils.f
+rm -f     module_HYDRO_utils.f
+
+ar -r ../lib/libHYDRO.a module_HYDRO_utils.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_noah_chan_param_init_rt.F > module_noah_chan_param_init_rt.f
+mpif90 -o module_noah_chan_param_init_rt.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_noah_chan_param_init_rt.f
+rm -f     module_noah_chan_param_init_rt.f
+
+ar -r ../lib/libHYDRO.a module_noah_chan_param_init_rt.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_GW_baseflow.F > module_GW_baseflow.f
+mpif90 -o module_GW_baseflow.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_GW_baseflow.f
+rm -f     module_GW_baseflow.f
+
+ar -r ../lib/libHYDRO.a module_GW_baseflow.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_HYDRO_io.F > module_HYDRO_io.f
+mpif90 -o module_HYDRO_io.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_HYDRO_io.f
+rm -f     module_HYDRO_io.f
+
+ar -r ../lib/libHYDRO.a module_HYDRO_io.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_gw_gw2d.F > module_gw_gw2d.f
+mpif90 -o module_gw_gw2d.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_gw_gw2d.f
+rm -f     module_gw_gw2d.f
+
+ar -r ../lib/libHYDRO.a module_gw_gw2d.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_RT.F > module_RT.f
+mpif90 -o module_RT.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_RT.f
+rm -f     module_RT.f
+
+ar -r ../lib/libHYDRO.a module_RT.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  Noah_distr_routing.F > Noah_distr_routing.f
+mpif90 -o Noah_distr_routing.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  Noah_distr_routing.f
+rm -f     Noah_distr_routing.f
+
+ar -r ../lib/libHYDRO.a Noah_distr_routing.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_channel_routing.F > module_channel_routing.f
+mpif90 -o module_channel_routing.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_channel_routing.f
+rm -f     module_channel_routing.f
+
+ar -r ../lib/libHYDRO.a module_channel_routing.o
+cp *.mod ../mod
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_lsm_forcing.F > module_lsm_forcing.f
+mpif90 -o module_lsm_forcing.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  module_lsm_forcing.f
+rm -f     module_lsm_forcing.f
+
+ar -r ../lib/libHYDRO.a module_lsm_forcing.o
+cp *.mod ../mod
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Routing'
+(cd HYDRO_drv;   make -f Makefile)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/HYDRO_drv'
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_HYDRO_drv.F > module_HYDRO_drv.f
+mpif90 -o module_HYDRO_drv.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../MPP -I ../mod  -I../mod module_HYDRO_drv.f
+rm -f     module_HYDRO_drv.f
+
+ar -r ../lib/libHYDRO.a module_HYDRO_drv.o
+cp *.mod ../mod
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/HYDRO_drv'
+make[1]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS'
+make[1]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/CPL/NoahMP_cpl'
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  module_hrldas_HYDRO.F > module_hrldas_HYDRO.f
+mpif90 -o module_hrldas_HYDRO.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../../mod module_hrldas_HYDRO.f
+rm -f     module_hrldas_HYDRO.f
+
+ar -r ../../lib/libHYDRO.a module_hrldas_HYDRO.o
+
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -I/opt/netcdf/include  hrldas_drv_HYDRO.F > hrldas_drv_HYDRO.f
+mpif90 -o hrldas_drv_HYDRO.o -Mfree -c -byteswapio -O2 -Kieee  -I./ -I ../../MPP -I ../../mod hrldas_drv_HYDRO.f
+rm -f     hrldas_drv_HYDRO.f
+
+ar -r ../../lib/libHYDRO.a hrldas_drv_HYDRO.o
+make[1]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/CPL/NoahMP_cpl'
+if [  -eq 1 ]; then \
+		(cd lib;rm -f librapid.a); \
+	fi
+/bin/sh: 1: [: -eq: unexpected operator
+if [  -eq 1 ]; then \
+		(cd Rapid_routing; make -f makefile.cpl rapid); \
+	fi
+/bin/sh: 1: [: -eq: unexpected operator
+make[1]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP'
+(cd Utility_routines;		make)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+
+rm -f   module_date_utilities.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_date_utilities.F > module_date_utilities.f
+mpif90 -o module_date_utilities.o -c -Mfree -c -byteswapio -O2 -Kieee   module_date_utilities.f
+
+
+rm -f   module_model_constants.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_model_constants.F > module_model_constants.f
+mpif90 -o module_model_constants.o -c -Mfree -c -byteswapio -O2 -Kieee   module_model_constants.f
+
+
+rm -f   module_wrf_utilities.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_wrf_utilities.F > module_wrf_utilities.f
+mpif90 -o module_wrf_utilities.o -c -Mfree -c -byteswapio -O2 -Kieee   module_wrf_utilities.f
+
+
+rm -f   kwm_string_utilities.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ kwm_string_utilities.F > kwm_string_utilities.f
+mpif90 -o kwm_string_utilities.o -c -Mfree -c -byteswapio -O2 -Kieee   kwm_string_utilities.f
+
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+(cd Noah;			make)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Noah'
+
+rm -f   module_sf_myjsfc.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_sf_myjsfc.F > module_sf_myjsfc.f
+mpif90 -o module_sf_myjsfc.o -c -I../Utility_routines -Mfree -c -byteswapio -O2 -Kieee   module_sf_myjsfc.f
+
+
+rm -f   module_sf_sfclay.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_sf_sfclay.F > module_sf_sfclay.f
+mpif90 -o module_sf_sfclay.o -c -I../Utility_routines -Mfree -c -byteswapio -O2 -Kieee   module_sf_sfclay.f
+
+
+rm -f   module_sf_noahmplsm.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_sf_noahmplsm.F > module_sf_noahmplsm.f
+mpif90 -o module_sf_noahmplsm.o -c -I../Utility_routines -Mfree -c -byteswapio -O2 -Kieee   module_sf_noahmplsm.f
+
+
+rm -f   module_sf_noahmp_glacier.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_sf_noahmp_glacier.F > module_sf_noahmp_glacier.f
+mpif90 -o module_sf_noahmp_glacier.o -c -I../Utility_routines -Mfree -c -byteswapio -O2 -Kieee   module_sf_noahmp_glacier.f
+
+
+rm -f   module_sf_noahmp_groundwater.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_sf_noahmp_groundwater.F > module_sf_noahmp_groundwater.f
+mpif90 -o module_sf_noahmp_groundwater.o -c -I../Utility_routines -Mfree -c -byteswapio -O2 -Kieee   module_sf_noahmp_groundwater.f
+
+
+rm -f   module_sf_noahmpdrv.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_ module_sf_noahmpdrv.F > module_sf_noahmpdrv.f
+mpif90 -o module_sf_noahmpdrv.o -c -I../Utility_routines -Mfree -c -byteswapio -O2 -Kieee   module_sf_noahmpdrv.f
+
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Noah'
+(cd IO_code;			make)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/IO_code'
+
+rm -f   module_hrldas_netcdf_io.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_  -I /opt/netcdf/include  module_hrldas_netcdf_io.F > module_hrldas_netcdf_io.f
+mpif90 -o module_hrldas_netcdf_io.o -c -Mfree -c -byteswapio -O2 -Kieee   -I ../MPP -I../Utility_routines -I /opt/netcdf/include   module_hrldas_netcdf_io.f
+
+
+rm -f   module_NoahMP_hrldas_driver.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_  module_NoahMP_hrldas_driver.F > module_NoahMP_hrldas_driver.f
+mpif90 -o module_NoahMP_hrldas_driver.o -c -Mfree -c -byteswapio -O2 -Kieee   -I./ -I ../../MPP -I ../MPP -I ../mod  -I. \
+	-I../Noah -I../Utility_routines -I /opt/netcdf/include  module_NoahMP_hrldas_driver.f
+
+
+rm -f   main_hrldas_driver.f
+cpp -C -P -traditional -DMPP_LAND -I../Data_Rec -DWRF_HYDRO -DWRFIO_NCD_LARGE_FILE_SUPPORT -D_HRLDAS_OFFLINE_  main_hrldas_driver.F > main_hrldas_driver.f
+mpif90 -o main_hrldas_driver.o -c -Mfree -c -byteswapio -O2 -Kieee   -I ../MPP -I. \
+	-I../Noah -I../Utility_routines -I /opt/netcdf/include  main_hrldas_driver.f
+
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/IO_code'
+(cd Run;			make -f Makefile all)
+make[2]: Entering directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Run'
+
+echo "    -Wl,-rpath, -L -lhdf5 -lz"
+    -Wl,-rpath, -L -lhdf5 -lz
+mpif90 -o Noah_hrldas_beta -I../IO_code -I../Noah ../IO_code/main_hrldas_driver.o ../IO_code/module_hrldas_netcdf_io.o ../Noah/module_sf_noahmpdrv.o ../Noah/module_sf_noahmplsm.o ../Noah/module_sf_noahmp_glacier.o ../Noah/module_sf_noahmp_groundwater.o ../Noah/module_sf_myjsfc.o ../Noah/module_sf_sfclay.o ../Utility_routines/module_wrf_utilities.o ../Utility_routines/module_model_constants.o ../Utility_routines/module_date_utilities.o ../Utility_routines/kwm_string_utilities.o ../IO_code/module_NoahMP_hrldas_driver.o  -L../../../lib  -lHYDRO  -L/opt/netcdf/lib -lnetcdff -lnetcdf 
+
+make[2]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP/Run'
+make[1]: Leaving directory `/d2/weiyu/hydro_source/current-release/ndhms_wrf_hydro/trunk/NDHMS/Land_models/NoahMP'

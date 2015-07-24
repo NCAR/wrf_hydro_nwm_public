@@ -1,0 +1,32 @@
+#%Module######################################################################
+##							Zhengtao.Cui@noaa.gov 
+##							NWC/NWS/NOAA
+##    WRF-Hydro 3.0.0
+##_____________________________________________________
+proc ModulesHelp { } {
+  puts stderr "Set environment veriables for WRF-Hydro code"
+        puts stderr "\tHycom: This module initializes environment variables"
+        puts stderr "\t\tfor the Intel Compiler Suite $version\n"
+}
+
+# 
+module-whatis   " WRF-Hydro whatis description"
+
+
+set ver 1.0.0
+set COMP intel
+
+# Loding nceplibs modules _____________
+module load EnvVars
+module load ics
+module load NetCDF
+module load ibmpe
+module load lsf
+
+# setenv _______________
+setenv NETCDF_INC /usrx/local/NetCDF/4.2/serial/include
+setenv NETCDF_LIB /usrx/local/NetCDF/4.2/serial/lib
+setenv WRF_HYDRO 1
+setenv HYDRO_D 1
+setenv NCEP_WCOSS 1
+

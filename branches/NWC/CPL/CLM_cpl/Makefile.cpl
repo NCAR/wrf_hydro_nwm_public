@@ -1,0 +1,8 @@
+# Makefile 
+
+all:
+	(cd ../../; make -f Makefile.comm)
+	(make)
+
+clean:
+	(cd ../../; make -f Makefile.comm clean)

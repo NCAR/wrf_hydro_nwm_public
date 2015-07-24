@@ -1,0 +1,173 @@
+#!/bin/sh
+
+###############################################################################
+#  Program Name: wrf_hydro_forecast                                           #
+#                                                                             #
+#  Author(s)/Contact(s): NWC                                                  #
+#                                                                             #
+#  This is the actual forecast script for the WRF-Hydro model.                #
+#                                                                             #
+#  Usage:                                                                     #
+#                                                                             #
+# For non-fatal errors output is witten to the OUTPUT.{$$} file.              #
+#                                                                             #
+# Origination                                                  July, 2015     #
+# Compliance to Environment Equivalence                        July, 2015     #
+#                                                                             #
+###############################################################################
+# --------------------------------------------------------------------------- #
+
+cd $WORKDIR
+
+seton='-xa'
+setoff='+xa'
+
+./postmsg "$jlogfile" "HAS BEGUN on `hostname`"
+
+msg="Starting WRF-HYDRO MODEL SCRIPT"
+
+./postmsg "$jlogfile" "$msg"
+
+set $setoff
+echo ' '
+echo '*****************************'
+echo '** WRF-HYDRO SYSTEM        **'
+echo '*****************************'
+echo ' '
+echo "Starting at : `date`"
+set $seton
+
+# --------------------------------------------------------------------------- #
+# Set times                                                                   #
+#     YMDH     :  nowcast time in yyyymmddhh format                           #
+# --------------------------------------------------------------------------- #
+export date=$PDY
+#export YMDH=${PDY}${cyc} #{YYYYMMDD}{hh}
+export YMDH="2013091200"
+export ymdh=${YMDH}
+export yyyy=`     echo $ymdh | cut -c1-4`
+export yy=`       echo $ymdh | cut -c3-4`
+export yymmddhh=` echo $ymdh | cut -c3-10`
+export mm=`       echo $ymdh | cut -c5-6`
+export dd=`       echo $ymdh | cut -c7-8`
+export hh=`       echo $ymdh | cut -c9-10`
+export min='00'
+# --------------------------------------------------------------------------- #
+# Get and prepare input and output files      
+# --------------------------------------------------------------------------- #
+set $setoff    
+echo 'Preparing input files :'      
+echo '-----------------------'      
+set $seton    
+    
+# Copy the namelist template files and Model parameter files
+cpreq $FIXwrf_hydro/* $WORKDIR
+
+# input, output and namelist template files
+namelistHRLDAS=${WORKDIR}/namelist.hrldas
+namelistHYDRO=${WORKDIR}/hydro.namelist
+
+cpfs $PARMwrf_hydro/namelist.hrldas.tmpl $namelistHRLDAS
+cpfs $PARMwrf_hydro/hydro.namelist.tmpl $namelistHYDRO
+
+
+# Update the namelist template file
+sed -i "s|@domainDIR|${COMINdomain}|g" ${namelistHRLDAS}
+sed -i "s|@forcingDIR|${COMINforcing}|g" ${namelistHRLDAS}
+sed -i "s|@outputDIR|${COMOUT}|g" ${namelistHRLDAS}
+
+sed -i "s|@YYYY|${yyyy}|g" ${namelistHRLDAS}
+sed -i "s|@MM|${mm}|g" ${namelistHRLDAS}
+sed -i "s|@DD|${dd}|g" ${namelistHRLDAS}
+sed -i "s|@HH|${hh}|g" ${namelistHRLDAS}
+sed -i "s|@MIN|${min}|g" ${namelistHRLDAS}
+
+sed -i "s|@domainDIR|${COMINdomain}|g" ${namelistHYDRO}
+
+
+# Copy executable from exec to working dir
+cp -f ${EXECwrf_hydro}/wrf_hydro.exe wrf_hydro.exe
+
+# --------------------------------------------------------------------------- #
+# Run model      
+# --------------------------------------------------------------------------- #
+
+set $seton  
+echo ' '    
+echo 'Start the wrf-hydro model :'       
+echo '---------------------------'       
+echo ' '
+
+set $setoff
+
+pgm=wrf_hydro
+
+./prep_step
+
+# Define unit numbers for all input files
+export FORT11="namelist.hrldas"
+export FORT12="hydro.namelist"
+export FORT13="HYDRO.TBL"
+export FORT15="MPTABLE.TBL"
+export FORT16="LAKEPARM.TBL"
+export FORT20="VEGPARM.TBL"
+export FORT21="SOILPARM.TBL"
+export FORT22="GENPARM.TBL"
+export FORT23="CHANPARM.TBL"
+export FORT24="GWBUCKPARM.TBL"
+export FORT25="URBPARM.TBL"
+
+# Define unit numbers for all output files
+#"wrf_hydro.${cycle}.LDASOUT.f${cyc}.domain3.nc"  #2013091100.LDASOUT_DOMAIN3
+export FORT51="GW_inflow.txt"
+export FORT52="GW_outflow.txt"
+export FORT53="GW_zlev.txt"
+export FORT54="qstrmvolrt_accum.txt"
+export FORT55="frxst_pts_out.txt"
+export FORT78="diag_hydro."
+
+# ========================== #
+# Check the required input   #
+# ========================== #
+for infile in $FORT11 $FORT12 $FORT13 $FORT15 \
+              $FORT16 $FORT20 $FORT21 $FORT22 \
+              $FORT23 $FORT24 $FORT25
+do
+   if [ ! -e $infile ]; then
+     msg="FATAL ERROR: Input file '$WORKDIR/$infile' does not exist."
+     ./postmsg "$jlogfile" "$msg"
+     echo "$msg"
+     err_exit
+   fi
+done
+
+./startmsg
+
+# --------------------------------------------------------------------------- #
+# Execute model
+# --------------------------------------------------------------------------- #
+$mpicmd ./wrf_hydro.exe >> $WORKDIR/$pgmout 2> errfile
+
+export err=$?; err_chk
+
+# ========================== #
+# Check the expected output  #
+# ========================== #
+for outfile in $FORT51 $FORT52 $FORT53 $FORT54 $FORT55
+do
+   if [ ! -e $outfile ]; then
+     msg="FATAL ERROR: Output file '$WORKDIR/$outfile' does not exist."
+     ./postmsg "$jlogfile" "$msg"
+     echo "$msg"
+     err_exit
+   fi
+done
+# ====================================================== #
+# clean up working directory in preparation for next run #
+# ====================================================== #
+$USHwrf_hydro/run_save.sh  ${COMOUT}
+
+msg="JOB $job FOR WRF_HYDRO_TEST HAS COMPLETED NORMALLY"
+./postmsg "$jlogfile" "$msg"
+
+exit 0

@@ -1,0 +1,66 @@
+#BSUB -J %E%jwrf_hydro_%CYC%
+#BSUB -a intelmpi
+#BSUB -W 0:30
+#BSUB -cwd /tmpnwprd
+#BSUB -n 8
+#BSUB -R span[ptile=4]
+#BSUB -o /com/output/%ENVIR%/today/jwrf_hydro_%CYC%.o%J
+#BSUB -e /ohd/noscrub/Cham.Pham/jwrf_hydro_%CYC%.o%J
+#BSUB -q "prod"
+#BSUB -P "OHD-T2O"
+#BSUB -x
+
+%include <head.h>
+
+set -x
+module load ics
+# This specifies eight tasks each with eight openMP threads evently
+# over 2 hosts (8/4=2 hosts) 
+#export OMP_NUM_THREADS=8
+export I_MPI_RDMA_EAGER_THRESHOLD=65536
+export I_MPI_PIN_DOMAIN=auto
+export I_MPI_PIN_PROCESSOR_LIST=allcores:scatter
+export SAVE_ALL_TASKS=yes
+
+#Unlimit the stack size
+ulimit -s unlimited
+ 
+# EXPORT list here
+export envir=%ENVIR%
+export cyc=%CYC%
+export job=wrf_hydro_test_${cyc}
+
+# CALL executable job script here
+VERSION_FILE=/nw${envir}/versions/wrf_hydro.ver
+if [ -f $VERSION_FILE ]; then
+  . $VERSION_FILE
+else
+  ecflow_client --msg="***JOB ${ECF_NAME} ERROR: Version File $VERSION_FILE does not exist ***"
+  ecflow_client --abort
+  exit
+fi
+
+/nw${envir}/wrf_hydro.${model_ver}/jobs/JWRF_HYDRO
+
+if [ $? -ne 0 ]; then
+  ecflow_client --msg="***JOB ${ECF_NAME} ERROR RUNNING J-SCRIPT ***"
+  ecflow_client --abort
+  exit
+fi
+
+%include <tail.h>
+%manual
+######################################################################
+# Purpose:  To execute the job that runs the WRF_HYDRO model
+#           forecast on the IBMSP
+######################################################################
+
+######################################################################
+# Job specific troubleshooting instructions:
+#  see generic troubleshoot manual page
+#
+######################################################################
+
+# include manual page below
+%end
+
