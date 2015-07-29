@@ -161,6 +161,9 @@ CONTAINS
 
     rt_domain(did)%timestep_flag = 1    ! default is cold start
 
+  allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
+            rt_domain(did)%CH_LNKRT = 0.0
+
    IF (CHANRTSWCRT.EQ.1 .or. CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
   allocate( rt_domain(did)%CH_NETLNK (IXRT,JXRT) )
             rt_domain(did)%CH_NETLNK = 0.0           
@@ -168,8 +171,7 @@ CONTAINS
   allocate( rt_domain(did)%GCH_NETLNK (IXRT,JXRT) )
             rt_domain(did)%GCH_NETLNK = 0.0           
 
-  allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
-            rt_domain(did)%CH_LNKRT = 0.0           
+
 
 !DJG,DNY Allocate channel routing and lake routing arrays
 
@@ -178,6 +180,9 @@ CONTAINS
      allocate( rt_domain(did)%nlinks_INDEX(NLINKS) )
      allocate( rt_domain(did)%Link_location(ixrt,jxrt))
 #endif
+
+     allocate( rt_domain(did)%CH_LNKRT_SL (IXRT,JXRT) )
+               rt_domain(did)%CH_LNKRT_SL = -99         
      
 !tmp  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 3 ) then
 !tmp       NLINKS = rt_domain(did)%NLINKSL
@@ -430,10 +435,11 @@ CONTAINS
      CHARACTER(len=1)                       :: jnk
 
      REAL,  DIMENSION(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
-     integer :: i,j
+     integer :: i,j,k
  
      integer, allocatable, dimension(:) :: tmp_int
      real, allocatable, dimension(:) :: tmp_real
+     integer, allocatable, dimension(:) :: buf
      
      
 !------------------------------------------------------------------------
@@ -486,32 +492,61 @@ CONTAINS
                ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
 #endif
                )
-#ifdef MPP_LAND
+
     if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
-        rt_domain(did)%LNLINKSL = 0
+#ifdef MPP_LAND
+
+        allocate (buf(rt_domain(did)%GNLINKS) )
+        buf = -99
         do j = 1, rt_domain(did)%jxrt
            do i = 1, rt_domain(did)%ixrt
               if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
                      (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
                  if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
-                    rt_domain(did)%LNLINKSL =    rt_domain(did)%LNLINKSL+1
+                    k = rt_domain(did)%CH_LNKRT(i,j)
+                    buf(k) = k
                  endif
               endif
            end do 
         end do
-        allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
-        rt_domain(did)%LNLINKSL =    0
-        do j = 1, rt_domain(did)%jxrt
-           do i = 1, rt_domain(did)%ixrt
-              if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                     (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
-                  if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
-                     rt_domain(did)%LNLINKSL =    rt_domain(did)%LNLINKSL+1
-                     rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL) = rt_domain(did)%CH_LNKRT(i,j)
-                  endif
-              endif
-           end do 
+
+        rt_domain(did)%LNLINKSL = 0
+        do k = 1, rt_domain(did)%GNLINKS
+             if(buf(k) .gt. 0) then
+                 rt_domain(did)%LNLINKSL = rt_domain(did)%LNLINKSL + 1
+             endif
         end do
+
+#ifdef HYDRO_D
+        write(6,*) "LNLINKSL, NLINKS, GNLINKS =",rt_domain(did)%LNLINKSL,rt_domain(did)%NLINKSL,rt_domain(did)%GNLINKSL
+        call flush(6)
+#endif
+
+        allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+
+        k = 0
+        do i = 1, rt_domain(did)%GNLINKS
+             if(buf(i) .gt. 0) then
+                k = k + 1
+                rt_domain(did)%LLINKID(k) = buf(i)
+             endif
+        end do
+
+     
+        do k = 1, rt_domain(did)%LNLINKSL
+            do j = 1, rt_domain(did)%jxrt
+               do i = 1, rt_domain(did)%ixrt
+                  if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                         (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                         if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+                            rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+                         endif
+                  endif
+               end do 
+            end do
+        end do
+        deallocate(buf)
+
 
             call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
@@ -519,11 +554,20 @@ CONTAINS
 !!            call ReachLS_write_io(rt_domain(did)%to_node, rt_domain(did)%gtoNode)
 !!!            call getFromInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%fromNodeInd,rt_domain(did)%nFromInd)
 
-            call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+           call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+#else
+        do k = 1, rt_domain(did)%NLINKSL
+            do j = 1, rt_domain(did)%jxrt
+               do i = 1, rt_domain(did)%ixrt
+                         if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LINKID(k) ) then
+                            rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+                         endif
+               end do 
+            end do
+        end do
 
-     endif
 #endif
-
+     endif   ! end of channel option if block
 
 
     endif
