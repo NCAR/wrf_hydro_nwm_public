@@ -592,7 +592,7 @@ end subroutine get_albedo12m_netcdf
 !!Dummy read in grids for inverted y-axis
 
 
-        CHARACTER(len=*)       :: route_chan_f, route_link_f,route_direction_f,route_lake_f
+        CHARACTER(len=*)         :: route_chan_f, route_link_f,route_direction_f,route_lake_f
         CHARACTER(len=256)       :: InputLine
         CHARACTER(len=256)       :: geo_finegrid_flnm
         CHARACTER(len=256)       :: var_name
@@ -858,7 +858,7 @@ end subroutine get_albedo12m_netcdf
         
         NLAKES = NLINKSL
 
-        write(6,*) "NLINKSL = ", NLINKSL
+        write(6,*) "NLINKSL = ", route_link_f, NLINKSL
         call flush(6)
 
       end if !end-if is now for channel_option just above, not IF from further up
@@ -3773,7 +3773,6 @@ end subroutine mpp_output_chrt
             route_direction_f, route_lake_f,NLINKS, NLAKES, &
             CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL)
 
-
          USE module_mpp_land
 
          implicit none
@@ -5178,7 +5177,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
         INTEGER :: LNLINKSL
-        INTEGER,                dimension(LNLINKSL) :: LLINKID
+!yw        INTEGER,                dimension(LNLINKSL) :: LLINKID
 #endif
         INTEGER                                      :: I,J,channel_option
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
@@ -6036,6 +6035,7 @@ end subroutine mpp_output_chrt
                    MannN(i), So(i), ChSSlp(i), Bw(i), HRZAREA(i),&
                    LAKEMAXH(i), WEIRC(i), WEIRL(i), ORIFICEC(i), &
                    ORIFICEA(i),ORIFICEE(i)
+<<<<<<< HEAD
               ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
               if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
            end do
@@ -6043,10 +6043,11 @@ end subroutine mpp_output_chrt
 
         end if  ! routeLinkNetcdf 
 
-        !!- initialize channel via QLINK
+!!- initialize channel via QLINK
         do i=1,NLINKSL
-           QLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
-           QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+             !! jlm: my codes has a coefficient of 25 in the next line??
+             QLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+             QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
         end do
         
 #endif
@@ -6151,9 +6152,7 @@ end subroutine mpp_output_chrt
 #endif
            )
 
-
       call mpp_land_max_int1(MAXORDER)
-
 
       if(MAXORDER .eq. 0)  MAXORDER = -9999
 

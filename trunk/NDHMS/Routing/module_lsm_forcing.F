@@ -1023,9 +1023,9 @@ Contains
 ! assumes model timestep is 1 hr
 ! assumes K=1 is 12z (Ks or ~ sunrise)
 ! First Precip...
-!       IF (K.GE.1 .and. K.LE.2) THEN
-       IF (K.EQ.1) THEN
-        PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
+       IF (K.EQ.2) THEN
+       PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
+!       PRCP1 =0./3600.0      !units mm/s  (Simulates <1"/hr for first 10 hours...)
        ELSEIF (K.GT.1) THEN
 !        PRCP1 =0./3600.0      !units mm/s
 !       ELSE
@@ -1041,11 +1041,10 @@ Contains
        PRES = 100000.0
        XLONG=400.0 + 25.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
        SHORT=450.0 + 450.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+
+!      print *, "PCP", PRCP1
+
     end if
-
-
-
-
 
 !!!DJG  Idealized Met. w/ Specified Precip. Forcing Data...(Note: input precip units here are in 'mm/hr')
 !   This option uses hard-wired met forcing EXCEPT precipitation which is read in
@@ -2687,7 +2686,6 @@ Contains
        where(PRCP1 .gt. 0.138889) PRCP1= 0.138889 ! set maximum to be 500 mm/h
    end if
 
-
 !!!!DJG Check for snow data assimilation...
 
    if (SNOW_ASSIM .eq. 1) then
@@ -3088,5 +3086,191 @@ Contains
 
   end subroutine READSNOW_FORC_mpp
 
+  subroutine read_ldasout(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
 
+      implicit none
+      logical :: fexist
+      integer :: ix,jx
+      character(len=*) :: olddate,hgrid,indir
+      character(len=19) :: outdate
+      character(len=256) :: inflnm, inflnm2
+      real :: dt
+      real, dimension(ix,jx):: infxsrt,infxsrt2,soldrain,soldrain2
+      integer :: ncid, ierr
+      character(len=256) :: units
+#ifdef MPP_LAND
+      real, dimension(global_nx,global_ny) :: gArr
+#endif
+
+        ! check for file with hours first 
+        inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             ".LDASOUT_DOMAIN"//hgrid
+        inquire (file=trim(inflnm), exist=fexist)
+
+        if(.not. fexist) then
+           ! check for file with minutes
+             inflnm = trim(indir)//"/"//&
+                  olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//olddate(15:16)//&
+                  ".LDASOUT_DOMAIN"//hgrid
+             inquire (file=trim(inflnm), exist=fexist)
+        endif
+        if(.not. fexist) then
+            write(6,*) "Error: input file does not exist. Check ", trim(olddate)
+            stop "LDASOUT input Error"
+        endif
+
+        call geth_newdate(outdate,olddate,nint(dt))
+        ! check file for next date 
+        ! check for file with hours first 
+        inflnm2 = trim(indir)//"/"//&
+             outdate(1:4)//outdate(6:7)//outdate(9:10)//outdate(12:13)//&
+             ".LDASOUT_DOMAIN"//hgrid
+        inquire (file=trim(inflnm2), exist=fexist)
+
+        if(.not. fexist) then
+           ! check for file with minutes
+             inflnm2 = trim(indir)//"/"//&
+                  outdate(1:4)//outdate(6:7)//outdate(9:10)//outdate(12:13)//outdate(15:16)//&
+                  ".LDASOUT_DOMAIN"//hgrid
+             inquire (file=trim(inflnm2), exist=fexist)
+        endif
+        if(.not. fexist) then
+            write(6,*) "Error: input file does not exist. Check ", trim(outdate)
+            stop "LDASOUT input Error"
+        endif
+!       read file1
+#ifdef MPP_LAND
+        if(my_id .eq. io_id) then
+           ierr = nf_open(trim(inflnm), NF_NOWRITE, ncid)
+           call get_2d_netcdf("SFCRNOFF",    ncid, gArr, units,  global_nx, global_ny, .TRUE., ierr)
+        endif
+        call decompose_data_real (gArr,infxsrt)
+        if(my_id .eq. io_id) then
+           call get_2d_netcdf("UGDRNOFF",    ncid, gArr, units, global_nx, global_ny, .TRUE., ierr)
+        endif
+        call decompose_data_real (gArr,soldrain)
+        if(my_id .eq. io_id) then
+            ierr = nf_close(ncid)
+        endif
+#else
+        ierr = nf_open(trim(inflnm), NF_NOWRITE, ncid)
+        call get_2d_netcdf("SFCRNOFF",    ncid, infxsrt, units,  ix, jx, .TRUE., ierr)
+        call get_2d_netcdf("UGDRNOFF",    ncid, soldrain, units,  ix, jx, .TRUE., ierr)
+        ierr = nf_close(ncid)
+#endif
+!       read file2
+#ifdef MPP_LAND
+       if(my_id .eq. io_id) then
+           ierr = nf_open(trim(inflnm2), NF_NOWRITE, ncid)
+           call get_2d_netcdf("SFCRNOFF",    ncid, gArr, units,  global_nx, global_ny, .TRUE., ierr)
+        endif
+        call decompose_data_real (gArr,infxsrt2)
+        if(my_id .eq. io_id) then
+           call get_2d_netcdf("UGDRNOFF",    ncid, gArr, units, global_nx, global_ny, .TRUE., ierr)
+        endif
+        call decompose_data_real (gArr,soldrain2)
+        if(my_id .eq. io_id) then
+           ierr = nf_close(ncid)
+        endif
+#else
+        ierr = nf_open(trim(inflnm2), NF_NOWRITE, ncid)
+        call get_2d_netcdf("SFCRNOFF",    ncid, infxsrt2, units,  ix, jx, .TRUE., ierr)
+        call get_2d_netcdf("UGDRNOFF",    ncid, soldrain2, units,  ix, jx, .TRUE., ierr)
+        ierr = nf_close(ncid)
+#endif
+
+        infxsrt = infxsrt2 - infxsrt
+        soldrain = soldrain2 - soldrain
+
+   end subroutine read_ldasout
+
+!temporary for Noah model
+
+  subroutine read_ldasout_seq(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
+      implicit none
+      logical :: fexist
+      integer :: ix,jx
+      character(len=*) :: olddate,hgrid,indir
+      character(len=19) :: outdate
+      character(len=256) :: inflnm, inflnm2
+      real :: dt
+      real, dimension(ix,jx):: infxsrt,infxsrt2,soldrain,soldrain2
+      integer :: ncid, ierr
+      character(len=256) :: units
+
+        ! check for file with hours first 
+        inflnm = trim(indir)//"/"//&
+             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             ".LDASOUT_DOMAIN"//hgrid
+        inquire (file=trim(inflnm), exist=fexist)
+
+        if(.not. fexist) then
+           ! check for file with minutes
+             inflnm = trim(indir)//"/"//&
+                  olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//olddate(15:16)//&
+                  ".LDASOUT_DOMAIN"//hgrid
+             inquire (file=trim(inflnm), exist=fexist)
+        endif
+        if(.not. fexist) then
+            write(6,*) "Error: input file does not exist. Check ", trim(olddate)
+            stop "LDASOUT input Error"
+        endif
+
+        call geth_newdate(outdate,olddate,nint(dt))
+        ! check file for next date 
+        ! check for file with hours first 
+        inflnm2 = trim(indir)//"/"//&
+             outdate(1:4)//outdate(6:7)//outdate(9:10)//outdate(12:13)//&
+             ".LDASOUT_DOMAIN"//hgrid
+        inquire (file=trim(inflnm2), exist=fexist)
+
+        if(.not. fexist) then
+           ! check for file with minutes
+             inflnm2 = trim(indir)//"/"//&
+                  outdate(1:4)//outdate(6:7)//outdate(9:10)//outdate(12:13)//outdate(15:16)//&
+                  ".LDASOUT_DOMAIN"//hgrid
+             inquire (file=trim(inflnm2), exist=fexist)
+        endif
+        if(.not. fexist) then
+            write(6,*) "Error: input file does not exist. Check ", trim(outdate)
+            stop "LDASOUT input Error"
+        endif
+!       read file1
+        ierr = nf_open(trim(inflnm), NF_NOWRITE, ncid)
+        call get_2d_netcdf("SFCRNOFF",    ncid, infxsrt, units,  ix, jx, .TRUE., ierr)
+        call get_2d_netcdf("UGDRNOFF",    ncid, soldrain, units,  ix, jx, .TRUE., ierr)
+        ierr = nf_close(ncid)
+!       read file2
+        ierr = nf_open(trim(inflnm2), NF_NOWRITE, ncid)
+        call get_2d_netcdf("SFCRNOFF",    ncid, infxsrt2, units,  ix, jx, .TRUE., ierr)
+        call get_2d_netcdf("UGDRNOFF",    ncid, soldrain2, units,  ix, jx, .TRUE., ierr)
+        ierr = nf_close(ncid)
+
+        infxsrt = infxsrt2 - infxsrt
+        soldrain = soldrain2 - soldrain
+
+   end subroutine read_ldasout_seq
 end module module_lsm_forcing
+
+     subroutine read_forc_ldasout(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
+      use module_lsm_forcing, only: read_ldasout
+      implicit none
+      integer :: ix,jx
+      character(len=*) :: olddate,hgrid,indir
+      real :: dt
+      real, dimension(ix,jx):: infxsrt,soldrain
+      call read_ldasout(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
+    end subroutine read_forc_ldasout
+    
+    subroutine read_forc_ldasout_seq(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
+! temporary for Noah model
+      use module_lsm_forcing, only: read_ldasout_seq
+      implicit none
+      integer :: ix,jx
+      character(len=*) :: olddate,hgrid,indir
+      real :: dt
+      real, dimension(ix,jx):: infxsrt,soldrain
+      call read_ldasout_seq(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
+    end subroutine read_forc_ldasout_seq
+

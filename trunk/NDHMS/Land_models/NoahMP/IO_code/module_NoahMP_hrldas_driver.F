@@ -1246,6 +1246,18 @@ end subroutine land_driver_ini
 ! Read the forcing data.
 !---------------------------------------------------------------------------------
 
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,OLDDATE(1:19))
+#endif
+
+#ifdef WRF_HYDRO
+      if(forc_typ .eq. 8) then
+          call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
+          return
+      endif
+#endif
+
 ! For HRLDAS, we're assuming (for now) that each time period is in a 
 ! separate file.  So we can open a new one right now.
 
@@ -1257,9 +1269,6 @@ end subroutine land_driver_ini
      inflnm_template = trim(indir)//"/<date>.LDASIN_DOMAIN"//hgrid
 
 
-#ifdef MPP_LAND
-     call mpp_land_bcast_char(19,OLDDATE(1:19))
-#endif
 
 #ifdef WRF_HYDRO
 
