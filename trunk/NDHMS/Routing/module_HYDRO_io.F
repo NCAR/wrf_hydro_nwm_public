@@ -6035,7 +6035,7 @@ end subroutine mpp_output_chrt
                    MannN(i), So(i), ChSSlp(i), Bw(i), HRZAREA(i),&
                    LAKEMAXH(i), WEIRC(i), WEIRL(i), ORIFICEC(i), &
                    ORIFICEA(i),ORIFICEE(i)
-<<<<<<< HEAD
+
               ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
               if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
            end do
