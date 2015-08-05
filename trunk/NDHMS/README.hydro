@@ -89,6 +89,9 @@ The basic steps to do so are as follows:
 
 If there is no error, then user can compile the fully coupled WRF and WRF-Hydro model on the new platform.
 
+4. Realtime mode: 
+For realtime mode, user need to do setenv HYDRO_REALTIME before compiling the code. 
+This will thin the output. 
 
 Part II Offline compiling
 Under hydro/ directory.

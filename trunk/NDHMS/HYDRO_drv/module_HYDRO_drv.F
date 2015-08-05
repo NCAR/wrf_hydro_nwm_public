@@ -19,8 +19,20 @@ module module_HYDRO_drv
    use module_HYDRO_utils
 !   use module_namelist
    use module_lsm_forcing, only: geth_newdate
-   
+
    implicit none
+
+#ifdef HYDRO_D
+  real :: timeOr = 0
+  real :: timeSr = 0
+  real :: timeCr = 0
+  real :: timeGW = 0
+  integer :: clock_count_1 = 0
+  integer :: clock_count_2 = 0
+  integer :: clock_rate    = 0
+#endif
+
+   
 
    contains
    subroutine HYDRO_rst_out(did)
@@ -392,22 +404,55 @@ module module_HYDRO_drv
                 ! step 1) disaggregate specific fields from LSM to Hydro grid
                   call disaggregateDomain_drv(did)
 
+
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_1, count_rate=clock_rate)
+#endif
 		! step 2) 
                   call SubsurfaceRouting_drv(did)
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_2, count_rate=clock_rate)
+                timeSr = timeSr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+                write(6,*) "Timing: Subsurface Routing  accumulated time--", timeSr
+#endif
 		
 		! step 3) todo split
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_1, count_rate=clock_rate)
+#endif
   		  call OverlandRouting_drv(did)
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_2, count_rate=clock_rate)
+                timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+                write(6,*) "Timing: Overland Routing  accumulated time--", timeOr
+#endif
 
               RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
               RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 
 			
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_1, count_rate=clock_rate)
+#endif
 		! step 4) baseflow or groundwater physics
 		  call driveGwBaseflow(did)
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_2, count_rate=clock_rate)
+                timeGw = timeGw     + float(clock_count_2-clock_count_1)/float(clock_rate)
+                write(6,*) "Timing: GwBaseflow  accumulated time--", timeGw
+#endif
 	
 	
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_1, count_rate=clock_rate)
+#endif
 		! step 5) river channel physics
 		  call driveChannelRouting(did)
+#ifdef HYDRO_D
+                call system_clock(count=clock_count_2, count_rate=clock_rate)
+                timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+                write(6,*) "Timing: Channel Routing  accumulated time--", timeCr
+#endif
 	
 		! step 6) aggregate specific fields from Hydro to LSM grid
 		  call aggregateDomain(did)
@@ -599,8 +644,9 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
        , RT_DOMAIN(did)%LNLINKSL,RT_DOMAIN(did)%LLINKID &
-       , rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd &
+       , rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd  &
 #endif
+       , rt_domain(did)%CH_LNKRT_SL   &
        ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
        nlst_rt(did)%gwChanCondConstOut &

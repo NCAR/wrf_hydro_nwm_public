@@ -1023,9 +1023,9 @@ Contains
 ! assumes model timestep is 1 hr
 ! assumes K=1 is 12z (Ks or ~ sunrise)
 ! First Precip...
-!       IF (K.GE.1 .and. K.LE.2) THEN
-       IF (K.EQ.1) THEN
-        PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
+       IF (K.EQ.2) THEN
+       PRCP1 =25.4/3600.0      !units mm/s  (Simulates 1"/hr for first time step...)
+!       PRCP1 =0./3600.0      !units mm/s  (Simulates <1"/hr for first 10 hours...)
        ELSEIF (K.GT.1) THEN
 !        PRCP1 =0./3600.0      !units mm/s
 !       ELSE
@@ -1041,11 +1041,10 @@ Contains
        PRES = 100000.0
        XLONG=400.0 + 25.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
        SHORT=450.0 + 450.0*(cos((2*3.1416*K/24.0)-12.0*2*3.1416/24.0))
+
+!      print *, "PCP", PRCP1
+
     end if
-
-
-
-
 
 !!!DJG  Idealized Met. w/ Specified Precip. Forcing Data...(Note: input precip units here are in 'mm/hr')
 !   This option uses hard-wired met forcing EXCEPT precipitation which is read in

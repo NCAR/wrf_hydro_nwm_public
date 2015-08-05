@@ -592,7 +592,7 @@ end subroutine get_albedo12m_netcdf
 !!Dummy read in grids for inverted y-axis
 
 
-        CHARACTER(len=*)       :: route_chan_f, route_link_f,route_direction_f,route_lake_f
+        CHARACTER(len=*)         :: route_chan_f, route_link_f,route_direction_f,route_lake_f
         CHARACTER(len=256)       :: InputLine
         CHARACTER(len=256)       :: geo_finegrid_flnm
         CHARACTER(len=256)       :: var_name
@@ -832,7 +832,7 @@ end subroutine get_albedo12m_netcdf
 #endif
         NLAKES = NLINKSL
 
-        write(6,*) "NLINKSL = ", NLINKSL
+        write(6,*) "NLINKSL = ", route_link_f, NLINKSL
         call flush(6)
 
       end if !end-if is now for channel_option just above, not IF from further up
@@ -3747,7 +3747,6 @@ end subroutine mpp_output_chrt
             route_direction_f, route_lake_f,NLINKS, NLAKES, &
             CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL)
 
-
          USE module_mpp_land
 
          implicit none
@@ -5926,9 +5925,10 @@ end subroutine mpp_output_chrt
 
 !!- initialize channel via QLINK
            do i=1,GNLINKSL
-                tmpQLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
+                tmpQLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
                 tmpQLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
            end do
+
            close(79)
        endif
 
@@ -5970,9 +5970,10 @@ end subroutine mpp_output_chrt
         ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
           if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
        end do
+
 !!- initialize channel via QLINK
         do i=1,NLINKSL
-             QLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+             QLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
              QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
         end do
         close(79)
@@ -6078,9 +6079,7 @@ end subroutine mpp_output_chrt
 #endif
            )
 
-
       call mpp_land_max_int1(MAXORDER)
-
 
       if(MAXORDER .eq. 0)  MAXORDER = -9999
 

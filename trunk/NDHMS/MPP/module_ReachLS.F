@@ -30,6 +30,10 @@ MODULE MODULE_mpp_ReachLS
      module procedure gbcastReal2
   end interface
 
+  interface updateLinkV
+     module procedure updateLinkV8
+     module procedure updateLinkV4
+  end interface
   
 
 
@@ -47,7 +51,8 @@ MODULE MODULE_mpp_ReachLS
 
   contains
 
-  subroutine updateLinkV(LinkV, outV)
+
+  subroutine updateLinkV8(LinkV, outV)
      implicit none
      real, dimension(:) :: outV 
      real*8, dimension(:) :: LinkV
@@ -76,9 +81,41 @@ MODULE MODULE_mpp_ReachLS
           end do
       end if
       gLinkV_r4 = gLinkV_r
-      call ReachLS_decompReal(gLinkV_r4,outV)      
 
-  end subroutine updateLinkV
+      call ReachLS_decompReal(gLinkV_r4,outV)      
+  end subroutine updateLinkV8
+
+  subroutine updateLinkV4(LinkV, outV)
+     implicit none
+     real, dimension(:) :: outV  
+     real, dimension(:) :: LinkV
+     real, dimension(gNlinksl) :: gLinkV,gLinkV_r
+     real, dimension(gNlinksl) :: gLinkV_r4
+     integer :: ierr, i, tag
+     gLinkV = 0.0 
+     gLinkV_r = 0.0
+     do i = 1, LLINKLEN
+         gLinkV(LLINKIDINDX(i)) = LinkV(i)
+     end do
+
+     if(my_id .ne. IO_id) then
+          tag = 102
+          call mpi_send(gLinkV,gnlinksl,MPI_REAL, IO_id,     &
+                tag,MPI_COMM_WORLD,ierr)
+      else
+          gLinkV_r = gLinkV    
+          do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+               tag = 102
+               call mpi_recv(gLinkV,gnlinksl,&
+                   MPI_REAL,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+               gLinkV_r = gLinkV_r + gLinkV
+            end if
+          end do
+      end if
+      gLinkV_r4 = gLinkV_r
+      call ReachLS_decompReal(gLinkV_r4,outV)
+  end subroutine updateLinkV4
 
   subroutine gbcastReal(inV, outV)
      implicit none
