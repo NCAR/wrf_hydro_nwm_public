@@ -5867,9 +5867,6 @@ end subroutine mpp_output_chrt
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE  )
-
-
-
    ENDIF
 
      return
@@ -5897,16 +5894,17 @@ end subroutine mpp_output_chrt
                    ORIFICEA, ORIFICEE
 
         INTEGER, dimension(GNLINKSL) ::  tmpLINKID, tmpFROM_NODE, tmpTO_NODE, tmpTYPEL, tmpORDER 
-        real :: tmpQLINK(GNLINKSL,2)
         CHARACTER(len=155)	 :: header
         integer :: i
 
 #ifdef MPP_LAND
+        real :: tmpQLINK(GNLINKSL,2)
         REAL, dimension(GNLINKSL) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
                    tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpHRZAREA,&
                    tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
                    tmpORIFICEA,tmpORIFICEE
 
+       tmpQLINK = 0 
        if(my_id .eq. IO_id) then
           open(unit=79,file=trim(route_link_f),form='formatted',status='old')
 
@@ -5919,14 +5917,17 @@ end subroutine mpp_output_chrt
                       tmpMannN(i), tmpSo(i), tmpChSSlp(i), tmpBw(i), tmpHRZAREA(i),&
                       tmpLAKEMAXH(i), tmpWEIRC(i), tmpWEIRL(i), tmpORIFICEC(i), &
                       tmpORIFICEA(i),tmpORIFICEE(i)
+
            ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
              if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
             end do
 
-!!- initialize channel via QLINK
+!!- initialize channel  if missing in input
            do i=1,GNLINKSL
-                tmpQLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
-                tmpQLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+              if(tmpQLINK(i,1) .eq. 0.0) then
+                tmpQLINK(i,1) = 20.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
+                tmpQLINK(i,2) = tmpQLINK(i,1) !## initialize the current flow at each link
+              endif
            end do
 
            close(79)
@@ -5941,6 +5942,7 @@ end subroutine mpp_output_chrt
         call ReachLS_decomp(tmpTyPEL,   TYPEL  )
         call ReachLS_decomp(tmpORDER,   ORDER  )
         call ReachLS_decomp(tmpQLINK(:,1), QLINK(:,1))
+        call ReachLS_decomp(tmpQLINK(:,2), QLINK(:,2))
         call ReachLS_decomp(tmpMUSK,    MUSK   )
         call ReachLS_decomp(tmpMUSX,     MUSX   )
         call ReachLS_decomp(tmpCHANLEN,  CHANLEN)
@@ -5958,6 +5960,7 @@ end subroutine mpp_output_chrt
         call mpp_land_bcast_int1(MAXORDER)
 
 #else
+       QLINK = 0 
        open(unit=79,file=trim(route_link_f),form='formatted',status='old')
         read(79,*)  header
         print *, "header ", header, "NLINKSL = ", NLINKSL
@@ -5971,10 +5974,13 @@ end subroutine mpp_output_chrt
           if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
        end do
 
-!!- initialize channel via QLINK
+!!- initialize channel according to order if missing in input
         do i=1,NLINKSL
-             QLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
-             QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+            if(QLINK(i,1) .eq. 0) then
+!yw           QLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+              QLINK(i,1) = 20.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+              QLINK(i,2) = QLINK(i,1) !## initialize the current flow at each link
+            endif
         end do
         close(79)
 #endif

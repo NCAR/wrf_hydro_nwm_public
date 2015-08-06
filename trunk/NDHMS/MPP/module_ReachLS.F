@@ -474,17 +474,17 @@ MODULE MODULE_mpp_ReachLS
       call mpp_land_sync()   
   END subroutine ReachLS_wReal2
 
-  subroutine getFromInd(from,to,ind,indLen)
-      integer,dimension(:) :: from, to
+  subroutine getFromInd(linkid,to,ind,indLen)
+      integer,dimension(:) :: linkid, to
       integer, allocatable, dimension(:) ::ind
       integer :: k, m, kk, mm,indLen
-      integer, dimension(gnlinksl) :: gfrom     
-      call ReachLS_write_io(from,gfrom)
+      integer, dimension(gnlinksl) :: glinkid   
+      call ReachLS_write_io(linkid,glinkid)
       mm = size(to,1)
       kk = 0
       do k = 1, gnlinksl
           do m = 1, mm
-             if(gfrom(k) .eq. to(m) ) then
+             if(glinkid(k) .eq. to(m) ) then
                  kk = kk +1
                  goto 2001
              endif
@@ -495,9 +495,9 @@ MODULE MODULE_mpp_ReachLS
       kk = 0
       do k = 1, gnlinksl
           do m = 1, mm
-             if(gfrom(k) .eq. to(m) ) then
+             if(glinkid(k) .eq. to(m) ) then
                  kk = kk +1
-                 ind(kk) = gfrom(k)
+                 ind(kk) = glinkid(k)
                  goto 2002
              endif
           end do

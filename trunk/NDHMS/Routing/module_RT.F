@@ -554,7 +554,8 @@ CONTAINS
 !!            call ReachLS_write_io(rt_domain(did)%to_node, rt_domain(did)%gtoNode)
 !!!            call getFromInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%fromNodeInd,rt_domain(did)%nFromInd)
 
-           call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+!old           call getToInd(rt_domain(did)%from_node,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+           call getToInd(rt_domain(did)%LINKID,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
 #else
         do k = 1, rt_domain(did)%NLINKSL
             do j = 1, rt_domain(did)%jxrt

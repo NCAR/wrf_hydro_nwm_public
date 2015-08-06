@@ -455,7 +455,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         C2 = (dt/2 - Km*X)/D
         C3 = (Km*(1-X)-dt/2)/D
         !C4 = (ql*dt)/D                       !-- ql already multipled by the dx length
-        qdc =  (C1*Qj)+(C2*qup)+(C3*qdp)!+C4  !-- pg 295 Bedient huber assume flows from previous
+        !qdc =  (C1*Qj)+(C2*qup)+(C3*qdp)!+C4  !-- pg 295 Bedient huber assume flows from previous
+        qdc =  (C1*qup)+(C2*Qj)+(C3*qdp)!+C4  !-- pg 295 Bedient huber assume flows from previous
 
       ! if(idx .ge. 34674) then 
       ! if(idx .ge. 402) then 
@@ -584,6 +585,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !-- Local Variables
         INTEGER                     :: i,j,k,t,m,jj,kk,KRT,node
         INTEGER                     :: DT_STEPS               !-- number of timestep in routing
+        INTEGER                     :: NOrder0                !-- number of 0 order links
         REAL                        :: Qup,Quc                !--Q upstream Previous, Q Upstream Current, downstream Previous
         REAL                        :: bo                     !--critical depth, bnd outflow just for testing
 
@@ -621,6 +623,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         QSUM     = 0
         QLLAKE   = 0
 
+        NOrder0 = 0
+
 !yw      print *, "DRIVE_channel,option,nlinkl,nlinks!!", channel_option,NLINKSL,NLINKS
          
       dzGwChanHead = 0.
@@ -628,7 +632,6 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
    IF(channel_option .ne. 3) then   !--muskingum methods ROUTE ON DT timestep, not DTRT!!
 
      !DT_STEPS=INT(DT/DTRT)   !-- fix the timestep
-     !DTCT = min(DTCT*2.0,DTRT)
 
 #ifdef MPP_LAND
          LQLateral = 0          !-- initial lateral flow to 0 for this reach
@@ -679,6 +682,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !----------  route order 1 reaches which have no upstream inflow
         do k=1, NLINKSL
            if (ORDER(k) .eq. 1) then  !-- first order stream has no headflow
+
+              NOrder0 = NOrder0 + 1   !-- number of first order reaches
+
               if(TYPEL(k) .eq. 1) then    !-- level pool route of reservoir
                   !CALL LEVELPOOL(1,0.0, 0.0, qd, QLINK(k,2), QLateral(k), &
                   ! DT, RESHT(k), HRZAREA(k), LAKEMAXH(k), &
@@ -700,43 +706,44 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
            endif
         end do
 
-
 #ifdef MPP_LAND
        gQLINK = 0
        call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
        call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1))
 #endif
 
-
       !---------- route other reaches, with upstream inflow
-
-
-      
        tmpQlink = 0
-       do kk = 2, MAXORDER
-          do k = 1, NLINKSL
+           !yw do k = NOrder0,NLINKSL
+       do k = 1,NLINKSL
+          if (ORDER(k) .gt. 1 ) then  !-- exclude first order stream 
              Quc  = 0
              Qup  = 0
-                if (ORDER(k) .eq. kk) then    !--do the orders sequentially
+
 #ifdef MPP_LAND
-                    do m = 1, nToNodeInd
-!                        m = toNodeInd(i)
-                         if (FROM_Node(k) .eq. gtoNODE(m) ) then
-                            Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                            Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-                         endif
-                    end do ! do i
+               do m = 1, nToNodeInd
+                  if (LINKID(k) .eq. gtoNODE(m)) then
+                    Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                    Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+
+                      !     if(LINKID(k) .eq. 3259 .or. LINKID(k) .eq. 3316 .or. LINKID(k) .eq. 3219) then
+                      !       write(6,*) "id,Uc,Up",LINKID(k),Quc,Qup
+                      !       call flush(6)
+                      !     endif
+
+                   endif
+                end do ! do i
 
 #else
-                   do m = 1, NLINKSL
-                         if (FROM_NODE(k) .eq. TO_NODE(m) ) then
-                           Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                           Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-                         endif
-                   end do ! do m
+               do m = 1, NLINKSL
+                  if (LINKID(k) .eq. TO_NODE(m)) then
+                    Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                    Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                  endif
+               end do ! do m
 #endif
                    
-                   if(TYPEL(k) .eq. 1) then   !--link is a reservoir
+                if(TYPEL(k) .eq. 1) then   !--link is a reservoir
 
                    ! CALL LEVELPOOL(1,QLINK(k,1), Qup, QLINK(k,1), QLINK(k,2), &
                    !  QLateral(k), DT, RESHT(k), HRZAREA(k), LAKEMAXH(k), &
@@ -757,9 +764,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
                     call hydro_stop("drive_CHANNEL") 
                    endif
-                endif     !--order == kk
-             end do       !--k links
-          end do          !--kk order
+            endif !!! order(1) .ne. 1
+         end do       !--k links
 
 !yw check
 !        gQLINK = 0.0
