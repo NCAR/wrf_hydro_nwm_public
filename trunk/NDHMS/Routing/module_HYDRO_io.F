@@ -6564,7 +6564,7 @@ call get_1d_netcdf_real(ncid, 'LkHZArea', HRZAREA,   'read_route_linknetcdf', .T
 call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_linknetcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'OrificC',  ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_linknetcdf', .TRUE.)
 
