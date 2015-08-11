@@ -5,11 +5,12 @@ MODULE module_Routing
                               mpp_read_simp_gw
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
    USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int
+   use module_mpp_GWBUCKET, only : collectSizeInd
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
    use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
 #endif
-   use module_HYDRO_io, only: readgw2d
+   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind
    use module_HYDRO_utils 
    IMPLICIT NONE
 
@@ -276,6 +277,7 @@ CONTAINS
   !DJG Allocate routing and disaggregation arrays
   allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
   allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
+  allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
 
 !!! allocate land surface grid variables
  allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
@@ -453,7 +455,7 @@ CONTAINS
           rt_domain(did)%CH_LNKRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
-          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC)
+          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, nlst_rt(did)%channel_option)
 
     !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
 
@@ -698,6 +700,19 @@ CONTAINS
               rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
               rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
               rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%ch_netrt,nlst_rt(did)%AGGFACTRT)
+
+
+            call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
+                  rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
+
+#ifdef MPP_LAND
+            call collectSizeInd(rt_domain(did)%numbasns)
+#endif
+
+            call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, rt_domain(did)%gw_strm_msk,&
+                 rt_domain(did)%numbasns,rt_domain(did)%basnsInd,rt_domain(did)%gw_strm_msk_lind)
+
+
             allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
@@ -714,52 +729,38 @@ CONTAINS
             write(6,*)  "end Simple GW-Bucket ..."
             print *, "Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
-
+     
 !Temporary hardwire...
       rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
 
-#ifdef MPP_LAND
-   if(my_id .eq. IO_id) then
-#endif
-!Read in GW bucket params and Zinit from input file in Run directory...
-     OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
-     read(81,811) header
-811   FORMAT(A19)
+
+            call read_GWBUCKPARM(rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
+                 rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
+                 rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
 
 
-     do bas = 1,rt_domain(did)%numbasns
-       read(81,812) rt_domain(did)%bas_id(bas),jnk,rt_domain(did)%gw_buck_coeff(bas),jnk,rt_domain(did)%gw_buck_exp(bas),jnk,rt_domain(did)%z_max(bas),&
-             jnk,rt_domain(did)%z_gwsubbas(bas)
-!DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
-812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
-     end do
-     close(81)
-#ifdef MPP_LAND
-   endif
-   call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%gw_buck_coeff)
-   call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp  )
-   call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%z_max   )
-   call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas   )
-   call mpp_land_bcast_int(rt_domain(did)%numbasns,rt_domain(did)%bas_id)
-#endif
 
 !!! Determine number of stream pixels per GW basin for distribution...
 
 #ifdef MPP_LAND
-         call pix_ct_1(rt_domain(did)%gw_strm_msk,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns)
+         call pix_ct_1(rt_domain(did)%gw_strm_msk,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
+                     rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
 #else
          rt_domain(did)%gwbas_pix_ct = 0.
-         do bas = 1, rt_domain(did)%numbasns
+!         do k = 1, rt_domain(did)%numbasns
+!            bas = rt_domain(did)%basnsInd(k)
          do i=1,rt_domain(did)%ixrt
            do j=1,rt_domain(did)%jxrt
-             if (rt_domain(did)%gw_strm_msk(i,j).eq.bas) then
-                 rt_domain(did)%gwbas_pix_ct(rt_domain(did)%gw_strm_msk(i,j)) = & 
-                 rt_domain(did)%gwbas_pix_ct(rt_domain(did)%gw_strm_msk(i,j))  + 1.0
+             if (rt_domain(did)%gw_strm_msk(i,j).gt.0) then
+                 bas = rt_domain(did)%gw_strm_msk(i,j)
+                 rt_domain(did)%gwbas_pix_ct(bas) = & 
+                 rt_domain(did)%gwbas_pix_ct(bas)  + 1.0
              endif
            end do
          end do
-         end do
+!         end do
 #endif
+
 
 #ifdef HYDRO_D
     print *, "Starting GW basin levels...",rt_domain(did)%z_gwsubbas

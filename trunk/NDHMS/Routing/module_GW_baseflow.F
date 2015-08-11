@@ -2,6 +2,7 @@ module module_GW_baseflow
 
 #ifdef MPP_LAND
    use module_mpp_land
+   use MODULE_mpp_GWBUCKET, only: gw_sum_real, gw_write_io_real
 #endif
    implicit none
 
@@ -13,7 +14,7 @@ contains
 !DJG   Simple GW Bucket Model
 !------------------------------------------------------------------------------
 
-   subroutine simp_gw_buck(ix,jx,ixrt,jxrt,numbasns,basns_area,&
+   subroutine simp_gw_buck(ix,jx,ixrt,jxrt,numbasns,gnumbasns,basns_area,basnsInd,gw_strm_msk_lind,&
                             gwsubbasmsk, runoff1x_in, runoff2x_in, z_gwsubbas_tmp, qin_gwsubbas,&
                             qout_gwsubbas,qinflowbase,gw_strm_msk,gwbas_pix_ct,dist,DT,&
                             C,ex,z_mx,GWBASESWCRT,OVRTSWCRT)
@@ -21,13 +22,14 @@ contains
    
 !!!Declarations...
    integer, intent(in)                               :: ix,jx,ixrt,jxrt
-   integer, intent(in)                               :: numbasns
+   integer, intent(in)                               :: numbasns, gnumbasns
    integer, intent(in), dimension(ix,jx)             :: gwsubbasmsk
    real, intent(in), dimension(ix,jx)                :: runoff2x_in 
    real, dimension(ix,jx)                            :: runoff2x 
    real, intent(in), dimension(ix,jx)                :: runoff1x_in
    real, dimension(ix,jx)                            :: runoff1x
    real, intent(in)                                  :: basns_area(numbasns),dist(ixrt,jxrt,9),DT
+   integer, intent(in)                                  :: basnsInd(numbasns)
    real, intent(in),dimension(numbasns)              :: C,ex,z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
    real, intent(out),dimension(numbasns)             :: qin_gwsubbas
@@ -35,7 +37,7 @@ contains
    real                                              :: qout_max, qout_spill, z_gw_spill
    real, intent(inout),dimension(numbasns)           :: z_gwsubbas_tmp
    real, intent(out),dimension(ixrt,jxrt)            :: qinflowbase
-   integer, intent(in),dimension(ixrt,jxrt)          :: gw_strm_msk
+   integer, intent(in),dimension(ixrt,jxrt)          :: gw_strm_msk, gw_strm_msk_lind
    integer, intent(in)                               :: GWBASESWCRT
    integer, intent(in)                               :: OVRTSWCRT
    
@@ -46,7 +48,7 @@ contains
 
    real, dimension(numbasns)                        :: ct_bas
    real, dimension(numbasns)                        :: gwbas_pix_ct
-   integer                                          :: i,j,bas
+   integer                                          :: i,j,bas, k
    character(len=19)				    :: header
    character(len=1)				    :: jnk
 
@@ -80,7 +82,7 @@ contains
        end if
 
        do bas=1,numbasns
-         if(gwsubbasmsk(i,j).eq.bas) then
+         if(gwsubbasmsk(i,j).eq.basnsInd(bas) ) then
            if(OVRTSWCRT.ne.0) then
              sum_perc8(bas) = sum_perc8(bas)+runoff2x(i,j)  !Add only drainage to bucket...runoff2x in (mm)
            else
@@ -93,8 +95,8 @@ contains
    end do
 
 #ifdef MPP_LAND
-   call sum_real8(sum_perc8,numbasns)
-   call sum_real8(ct_bas8,numbasns)
+    call gw_sum_real(sum_perc8,numbasns,gnumbasns,basnsInd)
+    call gw_sum_real(ct_bas8,numbasns,gnumbasns,basnsInd)
 #endif
    sum_perc = sum_perc8
    ct_bas = ct_bas8
@@ -208,10 +210,10 @@ contains
       do i=1,ixrt
         do j=1,jxrt
 !!!    -simple uniform disaggregation (8.31.06)
-           if (gw_strm_msk(i,j).gt.0) then
+           if (gw_strm_msk_lind(i,j).gt.0) then
 
-             qinflowbase(i,j) = qout_gwsubbas(gw_strm_msk(i,j))*1000.*DT/ &
-                gwbas_pix_ct(gw_strm_msk(i,j))/dist(i,j,9)     ! units (mm) that gets passed into chan routing as stream inflow
+             qinflowbase(i,j) = qout_gwsubbas(gw_strm_msk_lind(i,j))*1000.*DT/ &
+                gwbas_pix_ct(gw_strm_msk_lind(i,j))/dist(i,j,9)     ! units (mm) that gets passed into chan routing as stream inflow
 
            end if
         end do
@@ -238,31 +240,54 @@ contains
 
 
 #ifdef MPP_LAND
-   subroutine pix_ct_1(in_gw_strm_msk,ixrt,jxrt,gwbas_pix_ct,numbasns)
+   subroutine pix_ct_1(in_gw_strm_msk,ixrt,jxrt,gwbas_pix_ct,numbasns,gnumbasns,basnsInd)
       USE module_mpp_land
       implicit none
-      integer ::    i,j,ixrt,jxrt,numbasns, bas
+      integer ::    i,j,ixrt,jxrt,numbasns, bas, gnumbasns, k
       integer,dimension(ixrt,jxrt) :: in_gw_strm_msk
       integer,dimension(global_rt_nx,global_rt_ny) :: gw_strm_msk
       real,dimension(numbasns) :: gwbas_pix_ct 
+      real,dimension(gnumbasns) :: tmp_gwbas_pix_ct 
+      integer, intent(in), dimension(:) :: basnsInd
 
       gw_strm_msk = 0
+
+
       call write_IO_rt_int(in_gw_strm_msk, gw_strm_msk)    
+    
+      call mpp_land_sync() 
 
       if(my_id .eq. IO_id) then
-         gwbas_pix_ct = 0.
-         do bas = 1,numbasns  
-         do i=1,global_rt_nx
-           do j=1,global_rt_ny
-             if(gw_strm_msk(i,j) .eq. bas) then
-                gwbas_pix_ct(gw_strm_msk(i,j)) = gwbas_pix_ct(gw_strm_msk(i,j)) &
-                     + 1.0
-             endif
-           end do
-         end do
-         end do
+!        tmp_gwbas_pix_ct = 0.0
+!         do bas = 1,gnumbasns  
+!         do i=1,global_rt_nx
+!           do j=1,global_rt_ny
+!             if(gw_strm_msk(i,j) .eq. bas) then
+!                tmp_gwbas_pix_ct(bas) = tmp_gwbas_pix_ct(bas) + 1.0
+!             endif
+!           end do
+!         end do
+!         end do
+
+            tmp_gwbas_pix_ct = 0.0
+            do i=1,global_rt_nx
+              do j=1,global_rt_ny
+                if(gw_strm_msk(i,j) .gt. 0) then
+                   bas = gw_strm_msk(i,j)
+                   tmp_gwbas_pix_ct(bas) = tmp_gwbas_pix_ct(bas) + 1.0
+               endif
+              end do
+            end do
       end if
-      call mpp_land_bcast_real(numbasns,gwbas_pix_ct)
+
+      call mpp_land_sync() 
+
+      call mpp_land_bcast_real(gnumbasns,tmp_gwbas_pix_ct)
+      do k = 1, numbasns
+         bas = basnsInd(k)
+         gwbas_pix_ct(k) = tmp_gwbas_pix_ct(bas)
+      end do
+
 
       return
    end subroutine pix_ct_1

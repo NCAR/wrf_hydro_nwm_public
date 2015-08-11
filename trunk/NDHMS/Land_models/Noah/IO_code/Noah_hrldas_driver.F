@@ -1336,6 +1336,7 @@ program Noah_hrldas_driver
      JLOOP : DO J=subwindow_ystart,subwindow_yend
         ILOOP : DO I=parallel_xstart, parallel_xend
 !yw           if (gvfmin(i,j) < -1.E25) cycle ILOOP
+           if(abs(u(i,j)) .lt. 200 .and. abs(v(i,j)) .lt. 200) then   !! do not run for missing data
 
            IF((VEGTYP(I,J).GT.0).AND.(VEGTYP(I,J).NE.ISWATER)) THEN
               VEGTYPX=VEGTYP(I,J)
@@ -2321,6 +2322,8 @@ program Noah_hrldas_driver
 
 ! ***  endif of the land-point
            ENDIF
+
+       endif  !!!   if(abs(u) .lt. 200) then   !! do not run for missing data
 
         ENDDO ILOOP
      ENDDO JLOOP

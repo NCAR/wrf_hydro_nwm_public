@@ -5,7 +5,7 @@
 
 include ../macros
 
-OBJS =  CPL_WRF.o mpp_land.o module_ReachLS.o
+OBJS =  CPL_WRF.o mpp_land.o module_mpp_ReachLS.o module_mpp_GWBUCKET.o
 
 all:	$(OBJS)
 mpp_land.o: mpp_land.F
@@ -23,7 +23,13 @@ CPL_WRF.o: CPL_WRF.F
 	$(COMPILER90) $(F90FLAGS)  -c $(*).F
 	ar -r ../lib/libHYDRO.a $(@)
 
-module_ReachLS.o: module_ReachLS.F
+module_mpp_ReachLS.o: module_mpp_ReachLS.F
+	@echo ""
+	$(RMD) $(*).o $(*).mod $(*).stb *~
+	$(COMPILER90) $(F90FLAGS) -c $(*).F
+	ar -r ../lib/libHYDRO.a $(@)
+
+module_mpp_GWBUCKET.o: module_mpp_GWBUCKET.F
 	@echo ""
 	$(RMD) $(*).o $(*).mod $(*).stb *~
 	$(COMPILER90) $(F90FLAGS) -c $(*).F
