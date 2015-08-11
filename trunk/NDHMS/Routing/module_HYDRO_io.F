@@ -579,7 +579,7 @@ end subroutine get_albedo12m_netcdf
 
          implicit none
 #include <netcdf.inc>
-        INTEGER                                      :: I,J,channel_option,iret,jj
+        INTEGER                                      :: I,J,channel_option,jj
         INTEGER, INTENT(INOUT)                       :: NLINKS, NLAKES, NLINKSL
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
         INTEGER                                      :: CHNID,cnt
@@ -593,10 +593,15 @@ end subroutine get_albedo12m_netcdf
 !!Dummy read in grids for inverted y-axis
 
 
-        CHARACTER(len=*)       :: route_chan_f, route_link_f,route_direction_f,route_lake_f
+        CHARACTER(len=*)         :: route_chan_f, route_link_f,route_direction_f,route_lake_f
         CHARACTER(len=256)       :: InputLine
         CHARACTER(len=256)       :: geo_finegrid_flnm
         CHARACTER(len=256)       :: var_name
+
+        ! variables for handling netcdf dimensions
+        character(len=256) :: route_link_f_r
+        integer :: lenRouteLinkFR, iRet, ncid, dimId
+        logical :: routeLinkNetcdf
      
         NLINKS = 0
         NLAKES = 0
@@ -824,23 +829,44 @@ end subroutine get_albedo12m_netcdf
 !-- don't return here--!  return
     if (channel_option.ne.3) then  ! overwrite the NLINKS
 !-IF is now commented above   else  ! get nlinks from the ascii file of links
-     open(unit=79,file=trim(route_link_f),          & !link
-                   form='formatted',status='old')
 #ifdef HYDRO_D
-                   write(6,*) "read file to get NLINKSL",route_link_f
-                    call flush(6)
+       write(6,*) "read file to get NLINKSL",route_link_f
+       call flush(6)
 #endif
-1011    read(79,*,end= 1999) InputLine
-        NLINKSL = NLINKSL + 1
-        goto 1011
-1999   continue
-        NLINKSL = NLINKSL - 1 !-- first line is a comment 
-        close(79)
+       !! is RouteLink file netcdf (*.nc) or csv (*.csv)
+       route_link_f_r = adjustr(route_link_f)
+       lenRouteLinkFR = len(route_link_f_r)
+       routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq. '.nc'
+
+       if(routeLinkNetcdf) then 
+          write(6,'("getting NLINKS from: ''", A, "''")') trim(route_link_f)
+          iRet = nf_open(trim(route_link_f), NF_NOWRITE, ncId)
+          if (iRet /= 0) then
+             write(6,'("READ_ROUTEDIM: Problem opening file ''", A, "''")') trim(route_link_f)
+             !! JLM what to do here??
+          endif
+          !! get the number of links
+          iRet = nf_inq_dimid(ncId, 'link', dimId)
+          iRet = nf_inq_dimlen(ncId, dimId, NLINKSL)         
+          iRet = nf_close(ncId)
+       else 
+          open(unit=79,file=trim(route_link_f),          & !link
+               form='formatted',status='old')
+
+1011      read(79,*,end= 1999) InputLine
+          NLINKSL = NLINKSL + 1
+          goto 1011
+1999      continue
+          NLINKSL = NLINKSL - 1 !-- first line is a comment 
+          close(79)
+       end if ! routeLinkNetcdf
+
 #ifdef HYDRO_D
         print *, "Number of Segments or Links on sparse network", NLINKSL
         write(6,*) "NLINKSL = ", NLINKSL
         call flush(6)
 #endif
+        
         NLAKES = NLINKSL
 
 
@@ -3883,7 +3909,6 @@ end subroutine mpp_output_chrt
             route_direction_f, route_lake_f,NLINKS, NLAKES, &
             CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL)
 
-
          USE module_mpp_land
 
          implicit none
@@ -5334,7 +5359,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
         INTEGER,                DIMENSION(IXRT,JXRT) :: Link_Location !-- gridded stream orderk
         INTEGER :: LNLINKSL
-        INTEGER,                dimension(LNLINKSL) :: LLINKID
+!yw        INTEGER,                dimension(LNLINKSL) :: LLINKID
 #endif
         INTEGER                                      :: I,J,channel_option
         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)      :: LATVAL, LONVAL
@@ -6045,14 +6070,11 @@ end subroutine mpp_output_chrt
     IF ((CHANRTSWCRT.eq.1.or.CHANRTSWCRT.eq.2).AND.channel_option .ne. 3) then ! not routing on grid, read from file
 
        call readLinkSL( GNLINKSL,NLINKSL,route_link_f,  maxorder, &
-                   LINKID, FROM_NODE, TO_NODE, TYPEL, ORDER , &
+                   LINKID, TO_NODE, TYPEL, ORDER , &
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE  )
-
-
-
    ENDIF
 
      return
@@ -6061,7 +6083,7 @@ end subroutine mpp_output_chrt
    END SUBROUTINE READ_CHROUTING1
 
    subroutine readLinkSL( GNLINKSL,NLINKSL,route_link_f,  maxorder, &
-                   LINKID, FROM_NODE, TO_NODE, TYPEL, ORDER , &
+                   LINKID, TO_NODE, TYPEL, ORDER , &
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
@@ -6069,53 +6091,84 @@ end subroutine mpp_output_chrt
 
         implicit none
         character(len=*) :: route_link_f
-        integer  :: GNLINKSL, NLINKSL
+        integer  :: GNLINKSL, NLINKSL, tmp_from_node
         INTEGER, INTENT(INOUT)                       :: MAXORDER
 
-        INTEGER, intent(out), dimension(NLINKSL) ::  LINKID, FROM_NODE, TO_NODE, TYPEL, ORDER 
+        INTEGER, intent(out), dimension(NLINKSL) ::  LINKID, TO_NODE, TYPEL, ORDER 
         real  :: QLINK(NLINKSL,2)
         REAL, intent(out), dimension(NLINKSL) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,&
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE
 
-        INTEGER, dimension(GNLINKSL) ::  tmpLINKID, tmpFROM_NODE, tmpTO_NODE, tmpTYPEL, tmpORDER 
-        real :: tmpQLINK(GNLINKSL,2)
+        INTEGER, dimension(GNLINKSL) ::  tmpLINKID,  tmpTO_NODE, tmpTYPEL, tmpORDER 
         CHARACTER(len=155)	 :: header
         integer :: i
 
+        character(len=256) :: route_link_f_r
+        integer :: lenRouteLinkFR ! so the preceeding chan be changed without changing code
+        logical :: routeLinkNetcdf
+
 #ifdef MPP_LAND
+        real :: tmpQLINK(GNLINKSL,2)
         REAL, dimension(GNLINKSL) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
                    tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpHRZAREA,&
                    tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
                    tmpORIFICEA,tmpORIFICEE
+#endif 
 
+        !! is RouteLink file netcdf (*.nc) or csv (*.csv)
+        route_link_f_r = adjustr(route_link_f)
+        lenRouteLinkFR = len(route_link_f_r)
+        routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq. '.nc'
+     
+#ifdef MPP_LAND
+       tmpQLINK = 0
+ 
        if(my_id .eq. IO_id) then
-          open(unit=79,file=trim(route_link_f),form='formatted',status='old')
 
-           read(79,*)  header
-           print *, "header ", header, "NLINKSL = ", NLINKSL, GNLINKSL
-           call flush(6)
-           do i=1,GNLINKSL
-             read (79,*) tmpLINKID(i), tmpFROM_NODE(i), tmpTO_NODE(i), tmpCHLON(i),tmpCHLAT(i),tmpZELEV(i), &
-                      tmpTYPEL(i), tmpORDER(i), tmpQLINK(i,1), tmpMUSK(i), tmpMUSX(i), tmpCHANLEN(i), &
-                      tmpMannN(i), tmpSo(i), tmpChSSlp(i), tmpBw(i), tmpHRZAREA(i),&
-                      tmpLAKEMAXH(i), tmpWEIRC(i), tmpWEIRL(i), tmpORIFICEC(i), &
-                      tmpORIFICEA(i),tmpORIFICEE(i)
-           ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
-             if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
-            end do
+          if(routeLinkNetcdf) then
 
-!!- initialize channel via QLINK
+             call read_route_link_netcdf(                               &
+                  route_link_f,                                         &
+                  tmpLINKID,     tmpTO_NODE, tmpCHLON,    &
+                  tmpCHLAT,      tmpZELEV,     tmpTYPEL,   tmpORDER,    &
+                  tmpQLINK(:,1), tmpMUSK,      tmpMUSX,    tmpCHANLEN,  &
+                  tmpMannN,      tmpSo,        tmpChSSlp,  tmpBw,       &
+                  tmpHRZAREA,    tmpLAKEMAXH,  tmpWEIRC,   tmpWEIRL,    &
+                  tmpORIFICEC,   tmpORIFICEA,  tmpORIFICEE              )
+
+          else
+
+             open(unit=79,file=trim(route_link_f),form='formatted',status='old')
+             read(79,*)  header
+             print *, "header ", header, "NLINKSL = ", NLINKSL, GNLINKSL
+             call flush(6)
+             do i=1,GNLINKSL
+                read (79,*) tmpLINKID(i),   tmp_from_node, tmpTO_NODE(i), tmpCHLON(i),    &
+                            tmpCHLAT(i),    tmpZELEV(i),     tmpTYPEL(i),   tmpORDER(i),    &
+                            tmpQLINK(i,1),  tmpMUSK(i),      tmpMUSX(i),    tmpCHANLEN(i),  &
+                            tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i),       &
+                            tmpHRZAREA(i),  tmpLAKEMAXH(i),  tmpWEIRC(i),   tmpWEIRL(i),    &
+                            tmpORIFICEC(i), tmpORIFICEA(i),  tmpORIFICEE(i)
+                ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
+                if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
+             end do
+             close(79)
+          
+          end if  ! routeLinkNetcdf 
+             
+!!- initialize channel  if missing in input
            do i=1,GNLINKSL
-                tmpQLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
-                tmpQLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+              if(tmpQLINK(i,1) .eq. 0.0) then
+                tmpQLINK(i,1) = 20.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
+                tmpQLINK(i,2) = tmpQLINK(i,1) !## initialize the current flow at each link
+              endif
            end do
-           close(79)
-       endif
+
+       endif ! my_id .eq. IO_id
 
         call ReachLS_decomp(tmpLINKID,   LINKID )
-        call ReachLS_decomp(tmpFROM_NODE, FROM_NODE)
         call ReachLS_decomp(tmpTO_NODE, TO_NODE)
         call ReachLS_decomp(tmpCHLON,    CHLON  )
         call ReachLS_decomp(tmpCHLAT,    CHLAT  )
@@ -6123,6 +6176,7 @@ end subroutine mpp_output_chrt
         call ReachLS_decomp(tmpTyPEL,   TYPEL  )
         call ReachLS_decomp(tmpORDER,   ORDER  )
         call ReachLS_decomp(tmpQLINK(:,1), QLINK(:,1))
+        call ReachLS_decomp(tmpQLINK(:,2), QLINK(:,2))
         call ReachLS_decomp(tmpMUSK,    MUSK   )
         call ReachLS_decomp(tmpMUSX,     MUSX   )
         call ReachLS_decomp(tmpCHANLEN,  CHANLEN)
@@ -6140,24 +6194,46 @@ end subroutine mpp_output_chrt
         call mpp_land_bcast_int1(MAXORDER)
 
 #else
-       open(unit=79,file=trim(route_link_f),form='formatted',status='old')
-        read(79,*)  header
-        print *, "header ", header, "NLINKSL = ", NLINKSL
-        do i=1,NLINKSL
-          read (79,*) LINKID(i), FROM_NODE(i), TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
+       QLINK = 0 
+        if(routeLinkNetcdf) then
+
+           call read_route_link_netcdf(                     &
+                 route_link_f,                             &
+                 LINKID,     TO_NODE, CHLON,    &
+                 CHLAT,      ZELEV,     TYPEL,   ORDER,    &
+                 QLINK(:,1), MUSK,      MUSX,    CHANLEN,  &
+                 MannN,      So,        ChSSlp,  Bw,       &
+                 HRZAREA,    LAKEMAXH,  WEIRC,   WEIRL,    &
+                 ORIFICEC,   ORIFICEA,  ORIFICEE           )
+           
+        else 
+
+           open(unit=79,file=trim(route_link_f),form='formatted',status='old')
+           read(79,*)  header
+           print *, "header ", header, "NLINKSL = ", NLINKSL
+           do i=1,NLINKSL
+              read (79,*) LINKID(i), tmp_from_node, TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
                    TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
                    MannN(i), So(i), ChSSlp(i), Bw(i), HRZAREA(i),&
                    LAKEMAXH(i), WEIRC(i), WEIRL(i), ORIFICEC(i), &
                    ORIFICEA(i),ORIFICEE(i)
-        ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
-          if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
-       end do
-!!- initialize channel via QLINK
+
+              ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
+              if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
+           end do
+           close(79)
+
+        end if  ! routeLinkNetcdf 
+
+!!- initialize channel according to order if missing in input
         do i=1,NLINKSL
-             QLINK(i,1) = 25.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
-             QLINK(i,2) = 0! QLINK(i,1) !## initialize the current flow at each link
+            if(QLINK(i,1) .eq. 0) then
+!yw           QLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+              QLINK(i,1) = 20.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+              QLINK(i,2) = QLINK(i,1) !## initialize the current flow at each link
+            endif
         end do
-        close(79)
+        
 #endif
 
    end subroutine readLinkSL
@@ -6260,9 +6336,7 @@ end subroutine mpp_output_chrt
 #endif
            )
 
-
       call mpp_land_max_int1(MAXORDER)
-
 
       if(MAXORDER .eq. 0)  MAXORDER = -9999
 
@@ -6417,4 +6491,158 @@ end subroutine mpp_output_chrt
            iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlon)
           iret = nf_close(ncid)
     end subroutine outPutChanInfo
+
+
+!===================================================================================================
+! Program Name: read_route_link_netcdf
+! Author(s)/Contact(s): James L McCreight <jamesmcc><ucar><edu>
+! Abstract: Read in the "RouteLink.nc" netcdf file specifing the channel topology. 
+! History Log: 
+! 7/17/15 -Created, JLM.
+! Usage:
+! Parameters: <Specify typical arguments passed>
+! Input Files: netcdf file RouteLink.nc or other name.
+! Output Files: None.
+! Condition codes: Currently incomplete error handling. 
+!
+! If appropriate, descriptive troubleshooting instructions or 
+! likely causes for failures could be mentioned here with the 
+! appropriate error code
+!
+! User controllable options: None. 
+
+subroutine read_route_link_netcdf( route_link_file,                        &
+                                   LINKID,   TO_NODE, CHLON,    &
+                                   CHLAT,    ZELEV,     TYPEL,   ORDER,    &
+                                   QLINK,    MUSK,      MUSX,    CHANLEN,  &
+                                   MannN,    So,        ChSSlp,  Bw,       &
+                                   HRZAREA,  LAKEMAXH,  WEIRC,   WEIRL,    &
+                                   ORIFICEC, ORIFICEA,  ORIFICEE           )
+
+implicit none
+character(len=*),        intent(in)  :: route_link_file
+integer, dimension(:),   intent(out) :: LINKID, TO_NODE
+real,    dimension(:),   intent(out) :: CHLON, CHLAT, ZELEV
+integer, dimension(:),   intent(out) :: TYPEL, ORDER 
+real,    dimension(:),   intent(out) :: QLINK
+real,    dimension(:),   intent(out) :: MUSK, MUSX, CHANLEN
+real,    dimension(:),   intent(out) :: MannN,    So,       ChSSlp,   Bw
+real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL
+real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE
+
+integer :: iRet, ncid, ii
+logical :: fatal_if_error
+fatal_if_error = .TRUE.  !! was thinking this would be a global variable...could become an input.
+
+#ifdef HYDRO_D
+print*,"start read_route_link_netcdf"
+#endif
+   
+iRet = nf_open(trim(route_link_file), NF_NOWRITE, ncid)
+if (iRet /= 0) then
+   write(*,'("read_route_link_netcdf: Problem opening: ''", A, "''")') trim(route_link_file)
+   if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem opening file.")
+endif
+
+call get_1d_netcdf_int(ncid,  'link',     LINKID,    'read_route_linknetcdf', .TRUE.)
+!yw call get_1d_netcdf_int(ncid,  'from',     FROM_NODE, 'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'to',       TO_NODE,   'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'lon',      CHLON,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'lat',      CHLAT,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'alt',      ZELEV,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'type',     TYPEL,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'order',    ORDER,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'Qi',       QLINK,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'MusK',     MUSK,      'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'MusX',     MUSX,      'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'Length',   CHANLEN,   'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'n',        MannN,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'LkHZArea', HRZAREA,   'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificC',  ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_linknetcdf', .TRUE.)
+
+iRet = nf_close(ncId)
+if (iRet /= 0) then
+   write(*,'("read_route_link_netcdf: Problem closing: ''", A, "''")') trim(route_link_file)
+   if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem closing file.")
+end if
+
+#ifdef HYDRO_D
+ii = size(LINKID)
+print*,'last index=',ii
+print*, 'CHLON', CHLON(ii), 'CHLAT', CHLAT(ii), 'ZELEV', ZELEV(ii)
+print*,'TYPEL', TYPEL(ii), 'ORDER', ORDER(ii), 'QLINK', QLINK(ii), 'MUSK', MUSK(ii)
+print*, 'MUSX', MUSX(ii), 'CHANLEN', CHANLEN(ii), 'MannN', MannN(ii)
+print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii), 'HRZAREA', HRZAREA(ii)
+print*,'LAKEMAXH', LAKEMAXH(ii), 'WEIRC', WEIRC(ii), 'WEIRL', WEIRL(ii)
+print*,'ORIFICEC', ORIFICEC(ii), 'ORIFICEA', ORIFICEA(ii), 'ORIFICEE', ORIFICEE(ii)
+print*,"finish read_route_link_netcdf"
+#endif
+
+end subroutine read_route_link_netcdf
+
+
+!===================================================================================================
+! Program Names: get_1d_netcdf_real, get_1d_netcdf_int
+! Author(s)/Contact(s): James L McCreight <jamesmcc><ucar><edu>
+! Abstract: Read a variable of real or integer type from an open netcdf file, respectively. 
+! History Log: 
+! 7/17/15 -Created, JLM.
+! Usage:
+! Parameters: See definitions.
+! Input Files: This file is refered to by it's "ncid" obtained from nc_open
+!              prior to calling this routine. 
+! Output Files: None.
+! Condition codes: hydro_stop is passed "get_1d_netcdf".
+!
+! If appropriate, descriptive troubleshooting instructions or 
+! likely causes for failures could be mentioned here with the 
+! appropriate error code
+!
+! User controllable options: None. 
+
+!! could define an interface for these. 
+subroutine get_1d_netcdf_int(ncid, varName, var, callingRoutine, fatal_if_error)
+integer,               intent(in)  :: ncid !! the file identifier
+character(len=*),      intent(in)  :: varName
+integer, dimension(:), intent(out) :: var
+character(len=*),      intent(in)  :: callingRoutine
+logical,               intent(in)  :: fatal_if_error
+integer :: varid, iret
+iRet = nf_inq_varid(ncid, varName, varid)
+if (iret /= 0) then
+   if (fatal_IF_ERROR) then
+      print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
+      call hydro_stop("get_1d_netcdf")
+   end if
+end if
+iRet = nf_get_var_int(ncid, varid, var)
+end subroutine get_1d_netcdf_int
+
+subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error)
+integer,            intent(in)  :: ncid !! the file identifier
+character(len=*),   intent(in)  :: varName
+real, dimension(:), intent(out) :: var
+character(len=*),   intent(in)  :: callingRoutine
+logical,            intent(in)  :: fatal_if_error
+
+integer :: varid, iret
+iRet = nf_inq_varid(ncid, varName, varid)
+if (iret /= 0) then
+   if (fatal_IF_ERROR) then
+      print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
+      call hydro_stop("get_1d_netcdf")
+   end if
+end if
+iRet = nf_get_var_real(ncid, varid, var)
+end subroutine get_1d_netcdf_real
+
 end module module_HYDRO_io
+
