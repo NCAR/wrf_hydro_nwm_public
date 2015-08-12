@@ -6160,7 +6160,7 @@ end subroutine mpp_output_chrt
              
 !!- initialize channel  if missing in input
            do i=1,GNLINKSL
-              if(tmpQLINK(i,1) .eq. 0.0) then
+              if(tmpQLINK(i,1) .le. 1e-3) then
                 tmpQLINK(i,1) = 20.0 * (1/(float(MAXORDER+1) - float(tmpORDER(i))))**3
                 tmpQLINK(i,2) = tmpQLINK(i,1) !## initialize the current flow at each link
               endif
@@ -6227,8 +6227,7 @@ end subroutine mpp_output_chrt
 
 !!- initialize channel according to order if missing in input
         do i=1,NLINKSL
-            if(QLINK(i,1) .eq. 0) then
-!yw           QLINK(i,1) = 1.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
+            if(QLINK(i,1) .le. 1e-3) then
               QLINK(i,1) = 20.0 * (1/(float(MAXORDER+1) - float(ORDER(i))))**3
               QLINK(i,2) = QLINK(i,1) !## initialize the current flow at each link
             endif
@@ -6544,8 +6543,7 @@ if (iRet /= 0) then
    if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem opening file.")
 endif
 
-call get_1d_netcdf_int(ncid,  'link',     LINKID,    'read_route_linknetcdf', .TRUE.)
-!yw call get_1d_netcdf_int(ncid,  'from',     FROM_NODE, 'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'linkid',     LINKID,    'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_int(ncid,  'to',       TO_NODE,   'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon',      CHLON,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lat',      CHLAT,     'read_route_linknetcdf', .TRUE.)
@@ -6564,8 +6562,8 @@ call get_1d_netcdf_real(ncid, 'LkHZArea', HRZAREA,   'read_route_linknetcdf', .T
 call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_linknetcdf', .TRUE.)
-!yw call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'OrificC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+!yw call get_1d_netcdf_real(ncid, 'OrificC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_linknetcdf', .TRUE.)
 
