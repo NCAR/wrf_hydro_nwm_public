@@ -1126,7 +1126,7 @@ end subroutine get_albedo12m_netcdf
       integer, intent(in) :: ixrt,jxrt, numbasns
       integer, dimension(:,:) :: gw_strm_msk, gw_strm_msk_lind
       integer, dimension(:) :: basnsInd
-      integer, i,j,k,bas
+      integer:: i,j,k,bas
       gw_strm_msk_lind = -999
       do j = 1, jxrt
          do i = 1, ixrt
@@ -6564,7 +6564,8 @@ call get_1d_netcdf_real(ncid, 'LkHZArea', HRZAREA,   'read_route_linknetcdf', .T
 call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_linknetcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+!yw call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_linknetcdf', .TRUE.)
 

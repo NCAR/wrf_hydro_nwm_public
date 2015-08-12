@@ -995,7 +995,8 @@ module module_HYDRO_drv
     endif
 
 
-     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 .or. nlst_rt(did)%GWBASESWCRT .gt. 0) then
+!yw     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 .or. nlst_rt(did)%GWBASESWCRT .gt. 0) then
+     IF (nlst_rt(did)%GWBASESWCRT .gt. 0) then
        call get_basn_area(did)
      endif
 
