@@ -422,6 +422,9 @@ CONTAINS
 !-----------------------------------------------------------------------
 
    ILOOP : DO I = its, ite
+ 
+    if(abs(U_PHY(I,1,J)) .lt. 200 .and. abs(V_PHY(I,1,J)) .lt. 200) then   !! do not run for missing data
+
 
     IF (XICE(I,J) >= XICE_THRES) THEN
        ICE = 1                            ! Sea-ice point
@@ -458,6 +461,8 @@ CONTAINS
        Q_ML   = QV3D(I,1,J)/(1.0+QV3D(I,1,J))         ! convert from mixing ratio to specific humidity [kg/kg]
        U_ML   = U_PHY(I,1,J)                          ! u-wind at interface [m/s]
        V_ML   = V_PHY(I,1,J)                          ! v-wind at interface [m/s]
+      
+ 
        SWDN   = SWDOWN(I,J)                           ! shortwave down from SW scheme [W/m2]
        LWDN   = GLW(I,J)                              ! total longwave down from LW scheme [W/m2]
        P_ML   =(P8W3D(I,KTS+1,J)+P8W3D(I,KTS,J))*0.5  ! surface pressure defined at intermediate level [Pa]
@@ -834,7 +839,10 @@ end if
              DEEPRECHXY(I,J)               = DEEPRECHXY(I,J) + DEEPRECH
              SMCWTDXY(I,J)                 = SMCWTD
 
+
           ENDIF                                                         ! endif of land-sea test
+
+    end if!  if(abs(U_PHY(I,1,J)) .lt. 200 .and. abs(V_PHY(I,1,J)) .lt. 200) then   !! do not run for missing data
 
       ENDDO ILOOP                                                       ! of I loop
    ENDDO JLOOP                                                          ! of J loop

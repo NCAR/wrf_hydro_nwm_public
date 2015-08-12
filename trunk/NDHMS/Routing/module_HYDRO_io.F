@@ -2,6 +2,7 @@ module module_HYDRO_io
 #ifdef MPP_LAND
      use module_mpp_land
      use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io , ReachLS_wInt, reachls_wreal2
+     use MODULE_mpp_GWBUCKET, only: gw_write_io_real
 #endif
    use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
@@ -625,8 +626,16 @@ end subroutine get_albedo12m_netcdf
 
 !-- new link id variable to handle link routing
          var_name = "LINKID"
+
+#ifdef MPP_LAND
+    write(6,*) "read LINKID for CH_LNKRT from ", trim(geo_finegrid_flnm)
+#endif
+
+!!!! LINKID is used for reach based method.  ?
+     IF(channel_option.ne.3) then  !get maxnodes and links from grid
          call readRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
+     endif
 
 
          
@@ -854,12 +863,12 @@ end subroutine get_albedo12m_netcdf
 
 #ifdef HYDRO_D
         print *, "Number of Segments or Links on sparse network", NLINKSL
+        write(6,*) "NLINKSL = ", NLINKSL
+        call flush(6)
 #endif
         
         NLAKES = NLINKSL
 
-        write(6,*) "NLINKSL = ", route_link_f, NLINKSL
-        call flush(6)
 
       end if !end-if is now for channel_option just above, not IF from further up
 
@@ -1110,6 +1119,133 @@ end subroutine get_albedo12m_netcdf
 !DJG -----------------------------------------------------
    END SUBROUTINE READ_SIMP_GW
 !DJG -----------------------------------------------------
+
+!Wei Yu
+  subroutine get_gw_strm_msk_lind (ixrt,jxrt,gw_strm_msk,numbasns,basnsInd,gw_strm_msk_lind)
+      implicit none
+      integer, intent(in) :: ixrt,jxrt, numbasns
+      integer, dimension(:,:) :: gw_strm_msk, gw_strm_msk_lind
+      integer, dimension(:) :: basnsInd
+      integer, i,j,k,bas
+      gw_strm_msk_lind = -999
+      do j = 1, jxrt
+         do i = 1, ixrt
+             if(gw_strm_msk(i,j) .gt. 0) then
+                  do k = 1, numbasns
+                     if(gw_strm_msk(i,j) .eq. basnsInd(k)) then
+                          gw_strm_msk_lind(i,j) = k
+                     endif
+                  end do
+             end if
+         end do 
+      end do 
+         
+  end subroutine get_gw_strm_msk_lind
+
+  subroutine SIMP_GW_IND(ix,jx,GWSUBBASMSK,numbasns,gnumbasns,basnsInd)
+! create an index of basin mask so that it is faster for parallel computation.
+     implicit none
+     integer, intent(in) ::  ix,jx
+     integer, intent(in),dimension(ix,jx) ::  GWSUBBASMSK
+     integer, intent(out):: gnumbasns
+     integer, intent(inout):: numbasns
+     integer, intent(inout),allocatable,dimension(:):: basnsInd
+
+     integer,dimension(numbasns):: tmpbuf
+
+     integer :: i,j,k
+     
+     
+     gnumbasns = numbasns
+     numbasns = 0
+     tmpbuf = -999.
+
+     do j = 1,jx
+        do i = 1, ix
+           if(GWSUBBASMSK(i,j) .gt.0) then
+                tmpbuf(GWSUBBASMSK(i,j)) = GWSUBBASMSK(i,j) 
+           endif
+        end do
+     end do
+     do k = 1, gnumbasns
+         if(tmpbuf(k) .gt. 0) numbasns = numbasns + 1 
+     end do
+
+     allocate(basnsInd(numbasns))
+ 
+     i = 1 
+     do k = 1, gnumbasns
+         if(tmpbuf(k) .gt. 0) then
+             basnsInd(i) = tmpbuf(k)
+             i = i + 1
+         endif
+     end do
+#ifdef HYDRO_D
+     write(6,*) "check numbasns, gnumbasns : ", numbasns, gnumbasns
+#endif
+
+     return
+  end subroutine SIMP_GW_IND
+
+!Wei Yu
+  subroutine read_GWBUCKPARM (numbasns,gnumbasns, basnsInd, &
+                 gw_buck_coeff, gw_buck_exp, z_max, &
+                 z_gwsubbas, bas_id,basns_area)
+! read GWBUCKPARM file
+
+   implicit none
+   integer, intent(in) :: gnumbasns, numbasns
+   integer, intent(in),dimension(numbasns)  :: basnsInd
+   real, intent(out),dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max, &
+                 z_gwsubbas, basns_area
+   integer, intent(out),dimension(numbasns) :: bas_id
+   real, dimension(gnumbasns) :: tmp_buck_coeff, tmp_buck_exp, tmp_z_max, &
+                  tmp_z_gwsubbas,  tmp_basns_area
+   integer, dimension(gnumbasns) :: tmp_bas_id
+   CHARACTER(len=100)                     :: header 
+   CHARACTER(len=1)                       :: jnk
+   integer :: bas,k
+
+#ifdef MPP_LAND
+   if(my_id .eq. IO_id) then
+#endif
+!Read in GW bucket params and Zinit from input file in Run directory...
+     OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
+     read(81,811) header
+811   FORMAT(A19)
+
+
+     do bas = 1,gnumbasns
+       read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
+             jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas),jnk,tmp_basns_area(bas)
+!DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
+!yw 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
+812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4,A1,F11.3)
+     end do
+     close(81)
+
+#ifdef MPP_LAND
+   endif
+
+   call mpp_land_bcast_real(gnumbasns,tmp_buck_coeff)
+   call mpp_land_bcast_real(gnumbasns,tmp_buck_exp  )
+   call mpp_land_bcast_real(gnumbasns,tmp_z_max   )
+   call mpp_land_bcast_real(gnumbasns,tmp_z_gwsubbas   )
+   call mpp_land_bcast_real(gnumbasns,tmp_basns_area   )
+   call mpp_land_bcast_int(gnumbasns,tmp_bas_id)
+#endif
+
+    do k = 1, numbasns
+       bas = basnsInd(k)
+       gw_buck_coeff(k) = tmp_buck_coeff(bas)
+       gw_buck_exp(k) = tmp_buck_exp(bas)
+       z_max(k) = tmp_z_max(bas)
+       z_gwsubbas(k) = tmp_z_gwsubbas(bas)
+       basns_area(k) = tmp_basns_area(bas)
+       bas_id(k) = tmp_bas_id(bas)
+    end do
+  end subroutine read_GWBUCKPARM
+
 
 
   ! BF read the static input fields needed for the 2D GW scheme
@@ -3854,7 +3990,7 @@ end subroutine mpp_output_chrt
 #endif
         
       SUBROUTINE READ_ROUTING_seq(IXRT,JXRT,ELRT,CH_NETRT,CH_LNKRT,LKSATFAC,route_topo_f,    &
-            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC)
+            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,channel_option)
 
 
 #include <netcdf.inc>
@@ -3865,7 +4001,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
 
-        INTEGER         :: I,J, iret, jj
+        INTEGER         :: I,J, iret, jj, channel_option
         CHARACTER(len=256)        :: var_name
         CHARACTER(len=256)       :: route_topo_f
         CHARACTER(len=256)       :: route_chan_f
@@ -3876,9 +4012,11 @@ end subroutine mpp_output_chrt
         call nreadRT2d_real(var_name,ELRT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 
+     IF(channel_option .ne. 3) then  !get maxnodes and links from grid
         var_name = "LINKID"
         call nreadRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm))
+     endif
 
 
 #ifdef HYDRO_D
@@ -4102,7 +4240,7 @@ end subroutine mpp_output_chrt
           if(rt_domain(did)%nlakes .gt. 0) then
               iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
           endif
-          iret = nf_def_dim(ncid, "basns", rt_domain(did)%numbasns, dimid_basns)
+          iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
 
 !define variables
           do n = 1, nlst_rt(did)%nsoil
@@ -4295,7 +4433,9 @@ end subroutine mpp_output_chrt
             end if
 
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-              call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+!              call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+              call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
+                       rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
 !yw test bucket model
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gwbas_pix_ct,"gwbas_pix_ct" )
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp,"gw_buck_exp" )
@@ -4656,7 +4796,7 @@ end subroutine mpp_output_chrt
            implicit none
            integer:: ncid,n,varid , iret
            character(len=*) varName
-           real inVar(n)
+           real,dimension(:) ::  inVar
 #ifdef MPP_LAND
            if(my_id .eq. IO_id) then
 #endif
@@ -4668,8 +4808,48 @@ end subroutine mpp_output_chrt
            return
         end subroutine w_rst_crt_nc1g
 
-   subroutine RESTART_IN_NC(inFile,did)
+   subroutine w_rst_gwbucket_real(ncid,numbasns,gnumbasns, &
+                       basnsInd, inV,vName )
+      implicit none
+      integer :: ncid,numbasns,gnumbasns
+      integer, dimension(:) :: basnsInd
+      real, dimension(:) :: inV 
+      character(len=*) :: vName
+      integer i, j, k
+      real, allocatable,dimension(:) :: buf
+#ifdef MPP_LAND
+      if (my_id .eq. IO_id) then 
+        allocate(buf(gnumbasns))
+      else
+        allocate(buf(1))
+      endif
+      call gw_write_io_real(numbasns,inV,basnsInd,buf)
+#else
+      allocate(buf(gnumbasns))
+      do k = 1, numbasns
+        buf(basnsInd(k)) = inV(k)
+      end do
+#endif
+      call w_rst_crt_nc1g(ncid,gnumbasns,buf,vName)
+      deallocate(buf)
+   end subroutine w_rst_gwbucket_real
 
+   subroutine read_rst_gwbucket_real(ncid,outV,numbasns,&
+                       gnumbasns,basnsInd, vName)
+      implicit none
+      integer :: ncid,numbasns,gnumbasns
+      integer, dimension(:) :: basnsInd
+      real, dimension(:) :: outV 
+      character(len=*) :: vName
+      integer i, j,k
+      real, dimension(gnumbasns) :: buf
+      call read_rst_crt_nc(ncid,buf,gnumbasns,vName)
+      do k = 1, numbasns
+         outV(k) = buf(basnsInd(k))
+      end do
+   end subroutine read_rst_gwbucket_real
+
+   subroutine RESTART_IN_NC(inFile,did)
 
    implicit none
    character(len=*) inFile
@@ -4763,8 +4943,10 @@ end subroutine mpp_output_chrt
 
             end if
 
-            if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0 .and. rt_domain(did)%numbasns .gt. 0) then
-               call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
+            if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0 .and. rt_domain(did)%gnumbasns .gt. 0) then
+!               call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
+               call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
+                       rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.3) then
               call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho,"HEAD")
@@ -6382,7 +6564,7 @@ call get_1d_netcdf_real(ncid, 'LkHZArea', HRZAREA,   'read_route_linknetcdf', .T
 call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_linknetcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'OrificC',  ORIFICEC,  'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_linknetcdf', .TRUE.)
 
