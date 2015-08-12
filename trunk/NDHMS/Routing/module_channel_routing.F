@@ -604,7 +604,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         INTEGER, dimension(LNLINKSL) :: LLINKID
         real*8,  dimension(LNLINKSL) :: LQLateral
 !        real*4,  dimension(LNLINKSL) :: LQLateral
-        integer, dimension(:) ::  gtoNode,toNodeInd
+        integer, dimension(:) ::  toNodeInd
+        integer, dimension(:,:) ::  gtoNode
         integer  :: nToNodeInd
         real, dimension(nToNodeInd,2) :: gQLINK
 #else
@@ -612,7 +613,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
         integer flag
 
-        integer :: kk2  ! tmp 
+        integer :: n, kk2  ! tmp 
 
         QLAKEIP = 0
         HLINKTMP = 0
@@ -721,8 +722,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              Qup  = 0
 
 #ifdef MPP_LAND
-               do m = 1, nToNodeInd
-                  if (LINKID(k) .eq. gtoNODE(m)) then
+!using mapping index
+               do n = 1, gtoNODE(k,1)
+                  m = gtoNODE(k,n+1)
+!yw                  if (LINKID(k) .eq. m) then
                     Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                     Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
 
@@ -731,7 +734,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                       !       call flush(6)
                       !     endif
 
-                   endif
+!yw                  endif
                 end do ! do i
 
 #else

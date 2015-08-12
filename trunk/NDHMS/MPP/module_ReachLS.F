@@ -509,36 +509,49 @@ MODULE MODULE_mpp_ReachLS
 
   subroutine getToInd(from,to,ind,indLen,gToNodeOut)
       integer,dimension(:) :: from, to
-      integer, allocatable, dimension(:) ::ind, gToNodeOut
+      integer, allocatable, dimension(:) ::ind
+      integer, allocatable, dimension(:,:) :: gToNodeOut
       integer :: k, m, kk, mm,indLen, i, ierr
       integer, dimension(gnlinksl) :: gto
+      integer:: maxNum,num
 
       call gBcastValue(to,gto)
 
 !      mm = size(from,1)
        mm = l_nlinksl
+ 
+      maxNum = 0
 
       kk = 0 
-      do k = 1, gnlinksl
-          do m = 1, mm
+      do m = 1, mm
+          num = 0
+          do k = 1, gnlinksl
              if(gto(k) .eq. from(m) ) then
                  kk = kk +1
+                 num = num + 1
              endif
           end do
+          if(num .gt. maxNum) maxNum = num
       end do 
 
       allocate(ind(kk))
-      allocate(gToNodeOut(kk))
+      allocate(gToNodeOut(mm,maxNum+1))
+      gToNodeOut = -99
+
       indLen = kk
 
       kk = 0 
-      do k = 1, gnlinksl
-          do m = 1, mm
+      do m = 1, mm
+         num = 1
+         do k = 1, gnlinksl
              if(gto(k) .eq. from(m) ) then
                  kk = kk +1
                  !yw ind(kk) = gto(k)
                  ind(kk) = k
-                 gToNodeOut(kk) = gto(k)
+                 !! gToNodeOut(m,num+1) = gto(k)
+                 gToNodeOut(m,num+1) = kk
+                 gToNodeOut(m,1) = num
+                 num = num + 1
              endif
           end do
       end do 

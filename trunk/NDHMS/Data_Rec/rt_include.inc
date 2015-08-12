@@ -47,7 +47,8 @@
   INTEGER,    allocatable, DIMENSION(:)      :: map_l2g, map_g2l
 
   INTEGER :: nToInd
-  INTEGER,    allocatable, DIMENSION(:)      :: gtoNode, toNodeInd
+  INTEGER,    allocatable, DIMENSION(:)      :: toNodeInd
+  INTEGER,    allocatable, DIMENSION(:,:)      :: gtoNode
 
 ! temp arrary cwatavail
   real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT 
