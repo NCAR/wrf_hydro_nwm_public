@@ -19,38 +19,38 @@ module wrfhydro_nuopc
   use module_rt_data, only: rt_domain
   use module_namelist, only: nlst_rt
 
-  
+
   implicit none
 
 #include <netcdf.inc>
 
-  
+
   private
 
     real(ESMF_KIND_R8) :: min_lat, max_lat, min_lon, max_lon
     integer :: i_count, j_count
     integer :: did
     integer :: nsoil
-  
+
   public SetServices
-  
+
   !-----------------------------------------------------------------------------
   contains
   !-----------------------------------------------------------------------------
-  
+
   subroutine SetServices(gcomp, rc)
     type(ESMF_GridComp)  :: gcomp
     integer, intent(out) :: rc
-    
+
     rc = ESMF_SUCCESS
-    
+
     ! the NUOPC model component will register the generic methods
     call NUOPC_CompDerive(gcomp, model_routine_SS, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     ! set entry point for methods that require specific implementation
     call NUOPC_CompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, &
       phaseLabelList=(/"IPDv00p1"/), userRoutine=InitializeP1, rc=rc)
@@ -64,7 +64,7 @@ module wrfhydro_nuopc
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     ! attach specializing method(s)
     call NUOPC_CompSpecialize(gcomp, specLabel=model_label_Advance, &
       specRoutine=ModelAdvance, rc=rc)
@@ -72,9 +72,9 @@ module wrfhydro_nuopc
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine InitializeP1(gcomp, importState, exportState, clock, rc)
@@ -84,10 +84,10 @@ module wrfhydro_nuopc
     integer, intent(out) :: rc
 
     ! local variables
-    
+
 !print *, 'KDS: HYDRO InitializeP1 - begin'
     rc = ESMF_SUCCESS
-   
+
     !!
     !! import fields
     !!
@@ -125,7 +125,7 @@ module wrfhydro_nuopc
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     !!
     !! export fields
     !!
@@ -135,21 +135,21 @@ module wrfhydro_nuopc
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     call NUOPC_StateAdvertiseField(exportState, &
       StandardName="soil_moisture", name="soil_moisture", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     call NUOPC_StateAdvertiseField(exportState, &
       StandardName="soil_water_content", name="soil_water_content", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     call NUOPC_StateAdvertiseField(exportState, &
       StandardName="surface_head", name="surface_head", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -159,7 +159,7 @@ module wrfhydro_nuopc
 !print *, 'KDS: HYDRO InitializeP1 - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine InitializeP2(gcomp, importState, exportState, clock, rc)
@@ -167,8 +167,8 @@ module wrfhydro_nuopc
     type(ESMF_State)     :: importState, exportState
     type(ESMF_Clock)     :: clock
     integer, intent(out) :: rc
-    
-    ! local variables    
+
+    ! local variables
     type(ESMF_ArraySpec)    :: soilArraySpec
     type(ESMF_Field)        :: field
     type(ESMF_Grid)         :: gridIn
@@ -184,10 +184,10 @@ module wrfhydro_nuopc
     i_count = 268
     j_count = 260
     nsoil = 4
-    
+
 !print *, 'KDS: HYDRO InitializeP2 - begin'
     rc = ESMF_SUCCESS
-    
+
     ! create a Grid object for Fields
     gridIn = NUOPC_GridCreateSimpleXY( &
       min_lat, max_lat, &
@@ -212,7 +212,7 @@ module wrfhydro_nuopc
       file=__FILE__)) &
       return  ! bail out
 
-    ! create an ArraySpec object for those Fields that have a 3rd 
+    ! create an ArraySpec object for those Fields that have a 3rd
     ! dimension for soil
     call ESMF_ArraySpecSet(soilArraySpec, 3, ESMF_TYPEKIND_R4, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -340,7 +340,7 @@ module wrfhydro_nuopc
       file=__FILE__)) &
       return  ! bail out
 
-     
+
     call InitHydro(distGrid, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -350,13 +350,13 @@ module wrfhydro_nuopc
 !print *, 'KDS: HYDRO InitializeP2 - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine ModelAdvance(gcomp, rc)
     type(ESMF_GridComp)  :: gcomp
     integer, intent(out) :: rc
-    
+
     ! local variables
     type(ESMF_Clock)              :: clock
     type(ESMF_State)              :: importState, exportState
@@ -364,7 +364,7 @@ module wrfhydro_nuopc
 
 !print *, 'KDS: ModelAdvance - begin'
     rc = ESMF_SUCCESS
-    
+
     ! query the Component for its clock, importState and exportState
     call ESMF_GridCompGet(gcomp, clock=clock, importState=importState, &
       exportState=exportState, rc=rc)
@@ -374,19 +374,19 @@ module wrfhydro_nuopc
       return  ! bail out
 
     ! HERE THE MODEL ADVANCES: currTime -> currTime + timeStep
-    
+
     ! Because of the way that the internal Clock was set by default,
     ! its timeStep is equal to the parent timeStep. As a consequence the
     ! currTime + timeStep is equal to the stopTime of the internal Clock
     ! for this call of the ModelAdvance() routine.
-    
+
     call NUOPC_ClockPrintCurrTime(clock, &
       "------>Advancing HYDRO from: ", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     call NUOPC_ClockPrintStopTime(clock, &
       "--------------------------------> to: ", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -415,13 +415,13 @@ module wrfhydro_nuopc
 !print *, 'KDS: ModelAdvance - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine CopyImportData(importState, rc)
     type(ESMF_State), intent(in)  :: importState
     integer,          intent(out) :: rc
-    
+
     ! local variables
 
 
@@ -453,7 +453,7 @@ module wrfhydro_nuopc
       return  ! bail out
 
 !!
-!! KDS: This is the code giving me fits... uncomment it and the code will 
+!! KDS: This is the code giving me fits... uncomment it and the code will
 !!      seg fault.  Basically, it's copying the value from the importState
 !!      to the soldrain array.  I've checked the soldrain array and it is
 !!      allocated and it's got the same size as the importState array.
@@ -461,7 +461,7 @@ module wrfhydro_nuopc
 !!      elsewhere is not consistent... last time I ran it, it was crashing in
 !!      the NUOPC compliance checker).  I've tried tracking it down in
 !!      TotalView, but TV crashes during the HYDRO_ini when trying to read
-!!      in a NetCDF file not related to this problem (I think that may be a 
+!!      in a NetCDF file not related to this problem (I think that may be a
 !!      memory size issue).  I've also tried re-arranging the calls, putting
 !!      infxsrt as the last import field... but that didn't affect it at all.
 !!      Not sure what to try next.
@@ -474,13 +474,13 @@ module wrfhydro_nuopc
 !print *, 'KDS: CopyImportData - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine CopyExportData(exportState, rc)
     type(ESMF_State), intent(inout) :: exportState
     integer,          intent(out)   :: rc
-    
+
     ! local variables
 
 
@@ -513,7 +513,7 @@ module wrfhydro_nuopc
 !print *, 'KDS: CopyExportData - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine CopyData3d(state, fieldName, hydroArray, stateType, rc)
@@ -522,7 +522,7 @@ module wrfhydro_nuopc
     real,             intent(inout) :: hydroArray(:,:,:)
     character,        intent(in)    :: stateType
     integer,          intent(out)   :: rc
-    
+
     ! local variables
     type(ESMF_Field)                :: field
     real(kind=ESMF_KIND_R4),pointer :: farrayPtr(:,:,:)
@@ -548,7 +548,7 @@ module wrfhydro_nuopc
     ! retrieve the Fortran data pointer from the Field and bounds
     call ESMF_FieldGet(field=field, farrayPtr=farrayPtr, &
         computationalLBound=compLBnd, computationalUBound=compUBnd, &
-        rc=rc)   
+        rc=rc)
 
 !print *, 'KDS - Field Info - compLBnd(1): ', compLBnd(1)
 !print *, 'KDS - Field Info - compLBnd(2): ', compLBnd(2)
@@ -563,7 +563,7 @@ module wrfhydro_nuopc
                 compLBnd(3):compUBnd(3)) = &
         hydroArray(compLBnd(1):compUBnd(1), &
                    compLBnd(2):compUBnd(2), &
-                   compLBnd(3):compUBnd(3)) 
+                   compLBnd(3):compUBnd(3))
     else
       hydroArray(compLBnd(1):compUBnd(1), &
                  compLBnd(2):compUBnd(2), &
@@ -575,7 +575,7 @@ module wrfhydro_nuopc
 !print *, 'KDS: CopyData3d - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine CopyData2d(state, fieldName, hydroArray, stateType, rc)
@@ -584,7 +584,7 @@ module wrfhydro_nuopc
     real,             intent(inout) :: hydroArray(:,:)
     character,        intent(in)    :: stateType
     integer,          intent(out)   :: rc
-    
+
     ! local variables
     type(ESMF_Field)                :: field
     real(kind=ESMF_KIND_R4),pointer :: farrayPtr(:,:)
@@ -611,7 +611,7 @@ module wrfhydro_nuopc
     ! retrieve the Fortran data pointer from the Field and bounds
     call ESMF_FieldGet(field=field, farrayPtr=farrayPtr, &
         computationalLBound=compLBnd, computationalUBound=compUBnd, &
-        rc=rc)   
+        rc=rc)
 
 !print *, 'KDS - Field Info - compLBnd(1): ', compLBnd(1)
 !print *, 'KDS - Field Info - compLBnd(2): ', compLBnd(2)
@@ -624,7 +624,7 @@ module wrfhydro_nuopc
       farrayPtr(compLBnd(1):compUBnd(1), &
                 compLBnd(2):compUBnd(2)) = &
         hydroArray(compLBnd(1):compUBnd(1), &
-                   compLBnd(2):compUBnd(2)) 
+                   compLBnd(2):compUBnd(2))
     else
       hydroArray(compLBnd(1):compUBnd(1), &
                  compLBnd(2):compUBnd(2)) = &
@@ -634,13 +634,13 @@ module wrfhydro_nuopc
 !print *, 'KDS: CopyData2d - end'
 
   end subroutine
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine InitHydro(distGrid, rc)
     type(ESMF_DistGrid), intent(in)    :: distGrid
     integer,             intent(out)   :: rc
-    
+
     ! local variables
     integer               :: de, dim
     integer               :: localDeCount, localDe
@@ -678,13 +678,13 @@ module wrfhydro_nuopc
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
     call ESMF_VMGet(currentVM, localPet=localPet, petCount=petCount, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
 !print *, "KDS - InitHydro: localPet = ", localPet
 !print *, "KDS - InitHydro: ", localPet, "/petCount = ", petCount
 
@@ -696,12 +696,12 @@ module wrfhydro_nuopc
                           indexCountPDe=dimExtent, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
-    allocate(iIndexList(dimExtent(1, localPet))) 
+    allocate(iIndexList(dimExtent(1, localPet)))
     call ESMF_DistGridGet(distgrid, localDe=0, dim=1, &
                           indexList=iIndexList, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
-    allocate(jIndexList(dimExtent(2, localPet))) 
+    allocate(jIndexList(dimExtent(2, localPet)))
     call ESMF_DistGridGet(distgrid, localDe=0, dim=2, &
                           indexList=jIndexList, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
@@ -710,10 +710,10 @@ module wrfhydro_nuopc
     iEnd   = maxVal(iIndexList)
     jStart = minVal(jIndexList)
     jEnd   = maxVal(jIndexList)
-!print *, "KDS - InitHydro: ", localPet, ": iStart - ", iStart 
-!print *, "KDS - InitHydro: ", localPet, ": iEnd - ", iEnd 
-!print *, "KDS - InitHydro: ", localPet, ": jStart - ", jStart 
-!print *, "KDS - InitHydro: ", localPet, ": jEnd - ", jEnd 
+!print *, "KDS - InitHydro: ", localPet, ": iStart - ", iStart
+!print *, "KDS - InitHydro: ", localPet, ": iEnd - ", iEnd
+!print *, "KDS - InitHydro: ", localPet, ": jStart - ", jStart
+!print *, "KDS - InitHydro: ", localPet, ": jEnd - ", jEnd
 
     iSize = (iEnd - iStart) + 1
     jSize = (jEnd - jStart) + 1
@@ -733,7 +733,7 @@ module wrfhydro_nuopc
     kk = 4
     zsoil(1) = -0.1
     zsoil(2) = -0.4
-    zsoil(3) = -1.0 
+    zsoil(3) = -1.0
     zsoil(4) = -2.0
 
     nlst_rt(did)%dt = dt

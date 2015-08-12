@@ -198,7 +198,7 @@ clean_wrfhydro_nuopc:
 	@echo $(HR)
 	@echo "Cleaning WRF-Hydro NUOPC build..."
 	@echo
-	rm -f *.o *.mod *.a *.mk
+	rm -f *.o *.mod *.a *.mk VERSION
 
 # ###############
 # Clean WRF-Hydro

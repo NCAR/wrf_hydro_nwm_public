@@ -2,7 +2,10 @@
 *.f
 *.mod
 *~
+Makefile.comm
 trunk/NDHMS/lib/*
 trunk/NDHMS/macros
 trunk/NDHMS/HRLDAS/user_build_options
+trunk/NDHMS/CPL/NUOPC_cpl/VERSION
+trunk/NDHMS/CPL/NUOPC_cpl/wrfhydro.mk
 /.project
