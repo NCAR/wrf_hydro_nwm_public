@@ -8,7 +8,8 @@ module wrfhydro_nuopc
   use NUOPC
   use NUOPC_Model, only: &
     model_routine_SS    => SetServices, &
-    model_label_Advance => label_Advance
+    model_label_Advance => label_Advance, &
+    model_label_Finalize  => label_Finalize
 
   use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
@@ -27,16 +28,45 @@ module wrfhydro_nuopc
 
   private
 
+    ! Offline mode
+    logical :: offline_mode
+
+    ! Grid Variables
     real(ESMF_KIND_R8) :: min_lat, max_lat, min_lon, max_lon
     integer :: i_count, j_count
-    integer :: did
-    integer :: nsoil
+    type(ESMF_Grid)         :: WrfhydroGrid
 
-  public SetServices
+    ! Variables normally set in WRF
+    integer :: num_tiles
+    ! integer :: ide, jde - used in call to nuopc_cpl_Hydro
 
-  !-----------------------------------------------------------------------------
+    ! Variables normally set in WRF Domain
+    integer :: num_soil_layers
+    real,dimension(:),allocatable :: zs ! zoil layer depths
+    integer,dimension(:,:), allocatable :: IVGTYP, isltyp
+    integer :: sf_surface_physics
+    integer :: num_nests
+    INTEGER,allocatable :: i_start(:),i_end(:)
+    INTEGER,allocatable :: j_start(:),j_end(:)
+
+    ! added for check soil moisture and soiltype
+    integer ::  checkSOIL_flag
+
+    ! added to track the driver clock
+    character(len=19) :: cpl_outdate
+
+    ! added to consider the adaptive time step from driver.
+    real    :: dtrt0
+    integer ::  mm0
+
+    public SetServices
+
   contains
+
   !-----------------------------------------------------------------------------
+  ! NUOPC subroutines
+  !-----------------------------------------------------------------------------
+
 
   subroutine SetServices(gcomp, rc)
     type(ESMF_GridComp)  :: gcomp
@@ -68,6 +98,13 @@ module wrfhydro_nuopc
     ! attach specializing method(s)
     call NUOPC_CompSpecialize(gcomp, specLabel=model_label_Advance, &
       specRoutine=ModelAdvance, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call NUOPC_CompSpecialize(gcomp, specLabel=model_label_Finalize, &
+      specRoutine=ModelFinalize, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -174,30 +211,26 @@ module wrfhydro_nuopc
     type(ESMF_Grid)         :: gridIn
     type(ESMF_Grid)         :: gridOut
     type(ESMF_DistGrid)     :: distGrid
+    type(ESMF_TimeInterval) :: timeStep
+    real                    :: HYDRO_dt
 
-
-    min_lat = 38.60428
-    max_lat = 40.94429
-    min_lon = -106.6588
-    max_lon = -103.5294
-
-    i_count = 268
-    j_count = 260
-    nsoil = 4
-
-!print *, 'KDS: HYDRO InitializeP2 - begin'
     rc = ESMF_SUCCESS
 
-    ! create a Grid object for Fields
-    gridIn = NUOPC_GridCreateSimpleXY( &
-      min_lat, max_lat, &
-      min_lon, max_lon, &
-      i_count, j_count, rc=rc)
+    call InitializeWrfhydroGrid(rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    gridOut = gridIn ! for now out same as in
+
+    call InitializeWrfhydroDomain(rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+     return  ! bail out
+
+    ! create a Grid object for Fields
+    gridIn = WrfhydroGrid
+    gridOut = WrfhydroGrid ! for now out same as in
 
     ! See if the grid create has a dist grid already
     call ESMF_GridGet(gridOut, distgrid=distGrid, rc=rc)
@@ -225,7 +258,7 @@ module wrfhydro_nuopc
     !!
     field = ESMF_FieldCreate(name="soil_temperature_b", grid=gridIn, &
       arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/nsoil/), rc=rc)
+      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -238,7 +271,7 @@ module wrfhydro_nuopc
 
     field = ESMF_FieldCreate(name="soil_moisture", grid=gridIn, &
       arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/nsoil/), rc=rc)
+      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -251,7 +284,7 @@ module wrfhydro_nuopc
 
     field = ESMF_FieldCreate(name="soil_water_content", grid=gridIn, &
       arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/nsoil/), rc=rc)
+      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -291,7 +324,7 @@ module wrfhydro_nuopc
     !!
     field = ESMF_FieldCreate(name="soil_temperature", grid=gridOut, &
       arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/nsoil/), rc=rc)
+      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -304,7 +337,7 @@ module wrfhydro_nuopc
 
     field = ESMF_FieldCreate(name="soil_moisture", grid=gridOut, &
       arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/nsoil/), rc=rc)
+      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -317,7 +350,7 @@ module wrfhydro_nuopc
 
     field = ESMF_FieldCreate(name="soil_water_content", grid=gridOut, &
       arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/nsoil/), rc=rc)
+      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -340,92 +373,500 @@ module wrfhydro_nuopc
       file=__FILE__)) &
       return  ! bail out
 
-
-    call InitHydro(distGrid, rc=rc)
+    call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
-!print *, 'KDS: HYDRO InitializeP2 - end'
+    call timeinterval_to_real(timeInterval=timeStep,dt=HYDRO_dt,rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call nuopc_cpl_HYDRO_ini(HYDRO_dt, clock, gcomp, &
+      i_start(1),i_end(1), &
+      j_start(1),j_end(1), &
+      rc )
 
   end subroutine
 
   !-----------------------------------------------------------------------------
 
-  subroutine ModelAdvance(gcomp, rc)
-    type(ESMF_GridComp)  :: gcomp
-    integer, intent(out) :: rc
+    subroutine ModelAdvance(gcomp, rc)
+        type(ESMF_GridComp)  :: gcomp
+        integer, intent(out) :: rc
 
-    ! local variables
-    type(ESMF_Clock)              :: clock
-    type(ESMF_State)              :: importState, exportState
+        ! local variables
+        type(ESMF_Clock)              :: clock
+        type(ESMF_State)              :: importState, exportState
+        type(ESMF_TimeInterval)       :: timeStep
+        real                          :: HYDRO_dt
+
+        rc = ESMF_SUCCESS
+
+        ! query the Component for its clock, importState and exportState
+        call ESMF_GridCompGet(gcomp, clock=clock, importState=importState, &
+            exportState=exportState, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        ! HERE THE MODEL ADVANCES: currTime -> currTime + timeStep
+
+        ! Because of the way that the internal Clock was set by default,
+        ! its timeStep is equal to the parent timeStep. As a consequence the
+        ! currTime + timeStep is equal to the stopTime of the internal Clock
+        ! for this call of the ModelAdvance() routine.
+
+        call NUOPC_ClockPrintCurrTime(clock, &
+            "------>Advancing WRFHYDRO from: ", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        call NUOPC_ClockPrintStopTime(clock, &
+            "--------------------------------> to: ", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        call timeinterval_to_real(timeInterval=timeStep,dt=HYDRO_dt,rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        ! ide, jde?
+        !    call nuopc_drv_HYDRO(HYDRO_dt, gcomp, &
+        !      i_start(1),min(i_end(1), ide-1), &
+        !      j_start(1),min(j_end(1), jde-1), &
+        !      rc )
+        call nuopc_cpl_HYDRO_run(HYDRO_dt, gcomp, &
+            i_start(1),i_end(1), &
+            j_start(1),j_end(1), &
+            rc )
+
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+    end subroutine
+
+    !-----------------------------------------------------------------------------
+
+    subroutine ModelFinalize(model,rc)
+        type(ESMF_GridComp)  :: model
+        integer, intent(out) :: rc
+
+        rc = ESMF_SUCCESS
+
+        deallocate(zs)
+        deallocate(IVGTYP)
+        deallocate(isltyp)
+        deallocate(i_start)
+        deallocate(i_end)
+        deallocate(j_start)
+        deallocate(j_end)
+
+    end subroutine
+
+    !-----------------------------------------------------------------------------
+    ! Domain Intialization
+    !-----------------------------------------------------------------------------
+
+    subroutine InitializeWrfhydroGrid(rc)
+        integer, intent(out)    :: rc
+
+        rc = ESMF_SUCCESS
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Start Initialize WRF-Hydro Grid", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        num_tiles = 1
+        min_lat = 38.60428
+        max_lat = 40.94429
+        min_lon = -106.6588
+        max_lon = -103.5294
+        i_count = 268
+        j_count = 260
+
+        ! create a Grid object for Fields
+        WrfhydroGrid = NUOPC_GridCreateSimpleXY( &
+            min_lat, max_lat, &
+            min_lon, max_lon, &
+            i_count, j_count, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish Initialize WRF-Hydro Grid", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+    end subroutine
+
+    !-----------------------------------------------------------------------------
+
+    subroutine InitializeWrfhydroDomain(rc)
+        integer, intent(out)           :: rc
+
+        ! local variables
+        type(ESMF_VM)           :: currentVM
+        integer                 :: localPet
+        integer                 :: petCount
+        integer                 :: peCount
+        integer                 :: iStart, iEnd
+        integer                 :: jStart, jEnd
+        type(ESMF_DELayout)     :: delayout
+        integer, allocatable    :: dimExtent(:,:)
+        integer, allocatable    :: iIndexList(:), jIndexList(:)
+        type(ESMF_DistGrid)     :: distGrid
+
+        rc = ESMF_SUCCESS
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Start Initialize WRF-Hydro Domain", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        num_nests = 0
+        num_soil_layers = 4 ! Normally set in WRF domain grid%num_soil_layers
+        sf_surface_physics = 0 ! Normally set in WRF domain grid%sf_surface_physics
+
+        allocate(zs(num_soil_layers))
+        allocate(IVGTYP(i_count,j_count))
+        allocate(isltyp(i_count,j_count))
+        allocate(i_start(num_tiles))
+        allocate(i_end(num_tiles))
+        allocate(j_start(num_tiles))
+        allocate(j_end(num_tiles))
+
+        zs(1) = -0.1 ! Normally set in WRF domain grid%zs(1)
+        zs(2) = -0.4 ! Normally set in WRF domain grid%zs(2)
+        zs(3) = -1.0 ! Normally set in WRF domain grid%zs(3)
+        zs(4) = -2.0 ! Normally set in WRF domain grid%zs(4)
+        IVGTYP = 0 ! Normally set in WRF domain grid%IVGTYP(its:ite,jts:jte)
+        isltyp = 0 ! Normally set in WRF domain grid%isltyp(its:ite,jts:jte)
+
+        !! Get VM Info to see if this will give me the PET info I need
+        !!
+        call ESMF_VMGetCurrent(currentVM, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        call ESMF_VMGet(currentVM, localPet=localPet, petCount=petCount, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        ! See if the grid create has a dist grid already
+        call ESMF_GridGet(WrfhydroGrid, distgrid=distGrid, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        !! Get the grid distribution for this pet
+        allocate(dimExtent(2, 0:(petCount - 1))) ! (dimCount, deCount)
+        call ESMF_DistGridGet(distgrid, delayout=delayout, &
+            indexCountPDe=dimExtent, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+
+        allocate(iIndexList(dimExtent(1, localPet)))
+        call ESMF_DistGridGet(distgrid, localDe=0, dim=1, &
+            indexList=iIndexList, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+
+        allocate(jIndexList(dimExtent(2, localPet)))
+        call ESMF_DistGridGet(distgrid, localDe=0, dim=2, &
+            indexList=jIndexList, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+
+        i_start(1) = minVal(iIndexList)
+        i_end(1)   = maxVal(iIndexList)
+        j_start(1) = minVal(jIndexList)
+        j_end(1)   = maxVal(jIndexList)
+
+        deallocate(dimExtent)
+        deallocate(iIndexList)
+        deallocate(jIndexList)
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish Initialize WRF-Hydro Domain", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+    end subroutine
+
+    !-----------------------------------------------------------------------------
+    ! Model Glue Code
+    !-----------------------------------------------------------------------------
+
+    subroutine nuopc_cpl_HYDRO_ini(HYDRO_dt,clock,gcomp,its,ite,jts,jte,rc)
+        real, intent(in)                :: HYDRO_dt
+        type(ESMF_Clock)                :: clock
+        type(ESMF_GridComp)             :: gcomp
+
+        integer, intent(in)             :: its, ite, jts,jte
+        integer, intent(out)            :: rc
+
+        ! local variables
+        integer             :: k, ix, jx, mm, nn
+        integer             :: did
+        integer             :: ntime
+        integer             :: i,j
+        character(len=80)   :: msg
+
+        rc = ESMF_SUCCESS
+
+        did = 1
+        ix = ite - its + 1
+        jx = jte - jts + 1
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Start Initialize WRF Hydro Model", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        if(HYDRO_dt .le. 0) then
+            call ESMF_LogWrite(msg="WRFHDRYO: HYDRO_dt less than 1 is not supported.", &
+                logmsgFlag=ESMF_LOGMSG_ERROR, &
+                line=__LINE__, &
+                file=__FILE__)
+            rc = ESMF_RC_ARG_OUTOFRANGE
+            return  ! bail out
+        endif
+
+        ntime = 1
+        nlst_rt(did)%dt = HYDRO_dt
+        nlst_rt(did)%nsoil = num_soil_layers
+
+        call mpp_land_bcast_int1 (nlst_rt(did)%nsoil)
+
+        allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
+        if(zs(1) <  0) then
+            nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zs(1:nlst_rt(did)%nsoil)
+        else
+            nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = -1*zs(1:nlst_rt(did)%nsoil)
+        endif
 
 
-!print *, 'KDS: ModelAdvance - begin'
-    rc = ESMF_SUCCESS
 
-    ! query the Component for its clock, importState and exportState
-    call ESMF_GridCompGet(gcomp, clock=clock, importState=importState, &
-      exportState=exportState, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+        call clock_get(clock,current_timestr=cpl_outdate,rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+        nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+        nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
-    ! HERE THE MODEL ADVANCES: currTime -> currTime + timeStep
+        call CPL_LAND_INIT(its, ite, jts, jte)
 
-    ! Because of the way that the internal Clock was set by default,
-    ! its timeStep is equal to the parent timeStep. As a consequence the
-    ! currTime + timeStep is equal to the stopTime of the internal Clock
-    ! for this call of the ModelAdvance() routine.
+        write (msg, "(A32,I2)") "WRFHYDRO: sf_surface_physics is ", sf_surface_physics
+        call ESMF_LogWrite(msg=trim(msg), &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
 
-    call NUOPC_ClockPrintCurrTime(clock, &
-      "------>Advancing HYDRO from: ", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+        if(sf_surface_physics .eq. 5) then
+            ! clm4
+            call HYDRO_ini(ntime,did=did,ix0=1,jx0=1)
+        else
+            call HYDRO_ini(ntime,did,ix0=ix,jx0=jx,vegtyp=IVGTYP(its:ite,jts:jte),soltyp=isltyp(its:ite,jts:jte))
+        endif
 
-    call NUOPC_ClockPrintStopTime(clock, &
-      "--------------------------------> to: ", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+        if(nlst_rt(did)%sys_cpl .ne. 2) then
+            call ESMF_LogWrite(msg="WRFHYDRO: sys_cpl should be 2.", &
+                logmsgFlag=ESMF_LOGMSG_ERROR, &
+                line=__LINE__, &
+                file=__FILE__)
+            rc = ESMF_RC_ARG_OUTOFRANGE
+            call hydro_stop()
+            return
+        endif
 
-    !! Copy data from import fields to RT_Domain object
-    call CopyImportData(importState, rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+        nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+        nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
-    !!
-    !! Call the WRF-HYDRO run routine
-    !!
-    call HYDRO_exe(did=did)
+        nlst_rt(did)%dt = HYDRO_dt
+        if(nlst_rt(did)%dtrt .ge. HYDRO_dt) then
+            nlst_rt(did)%dtrt = HYDRO_dt
+            mm0 = 1
+        else
+            mm = HYDRO_dt/nlst_rt(did)%dtrt
+            if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+            mm0 = mm
+        endif
 
-    !! Copy data from RT_Domain object to export fields
-    call CopyExportData(exportState, rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-!print *, 'KDS: ModelAdvance - end'
+        dtrt0 = nlst_rt(did)%dtrt
+        RT_DOMAIN(did)%initialized = .true.
 
-  end subroutine
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish Initialize WRF Hydro Model", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+    end subroutine
 
   !-----------------------------------------------------------------------------
 
-  subroutine CopyImportData(importState, rc)
+    subroutine nuopc_cpl_HYDRO_run(HYDRO_dt,gcomp,its,ite,jts,jte,rc)
+        real, intent(in)                :: HYDRO_dt
+        type(ESMF_GridComp)             :: gcomp
+
+        integer, intent(in)             :: its, ite, jts,jte
+        integer, intent(out)            :: rc
+
+        ! local variables
+        integer             :: k, ix, jx, mm, nn
+        integer             :: did
+        integer             :: ntime
+        integer             :: i,j
+        character(len=80)   :: msg
+        type(ESMF_State)    :: importState, exportState
+
+        rc = ESMF_SUCCESS
+
+        did = 1
+        ix = ite - its + 1
+        jx = jte - jts + 1
+
+        if(.not. RT_DOMAIN(did)%initialized) then
+            call ESMF_LogWrite(msg="WRFHDRYO: Model has not been initialized!", &
+                logmsgFlag=ESMF_LOGMSG_ERROR, &
+                line=__LINE__, &
+                file=__FILE__)
+            rc = ESMF_RC_ARG_OUTOFRANGE
+            return  ! bail out
+        endif
+
+        if(HYDRO_dt .le. 0) then
+            call ESMF_LogWrite(msg="WRFHDRYO: HYDRO_dt less than 1 is not supported.", &
+                logmsgFlag=ESMF_LOGMSG_ERROR, &
+                line=__LINE__, &
+                file=__FILE__)
+            rc = ESMF_RC_ARG_OUTOFRANGE
+            return  ! bail out
+        endif
+
+        ntime = 1
+        nlst_rt(did)%dt = HYDRO_dt
+
+        if((mm0*nlst_rt(did)%dtrt) .ne. HYDRO_dt) then   ! NUOPC driver time step changed.
+            if(dtrt0 .ge. HYDRO_dt) then
+                nlst_rt(did)%dtrt = HYDRO_dt
+                mm0 = 1
+            else
+                mm = HYDRO_dt/dtrt0
+                if(mm*dtrt0 .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+                mm0 = mm
+            endif
+        endif
+
+        write (msg,"(A32,I2,I2)") "WRFHDRYO: mm, nlst_rt(did)%dt = ",mm, nlst_rt(did)%dt
+        call ESMF_LogWrite(msg=trim(msg), &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        if(nlst_rt(did)%SUBRTSWCRT .eq.0  .and. &
+            nlst_rt(did)%OVRTSWCRT .eq. 0 .and. &
+            nlst_rt(did)%GWBASESWCRT .eq. 0) then
+          call ESMF_LogWrite(msg="WRFHDRYO: SUBRTSWCRT,OVRTSWCRT,GWBASESWCRT are zero!", &
+            logmsgFlag=ESMF_LOGMSG_ERROR, &
+            line=__LINE__, &
+            file=__FILE__)
+          rc = ESMF_RC_ARG_OUTOFRANGE
+          return  ! bail out
+        endif
+
+        if((.not. RT_DOMAIN(did)%initialized) .and. (nlst_rt(did)%rst_typ .eq. 1) ) then
+            call ESMF_LogWrite(msg="WRFHYDRO: Restart initial data from offline file.", &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+        else
+            ! query the Component for its importState
+            call ESMF_GridCompGet(gcomp, importState=importState, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail out
+
+            ! Copy the data from NUOPC fields
+            call CopyImportData(importState, did, rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__)) &
+                return  ! bail out
+        endif
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Start Exe", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        ! Call the WRF-HYDRO run routine
+        call HYDRO_exe(did=did)
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish Exe", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        ! query the Component for its exportState
+        call ESMF_GridCompGet(gcomp, exportState=exportState, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        !! Copy the data to NUOPC fields
+        call CopyExportData(exportState, did, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        ! provide groundwater soil flux to WRF for fully coupled simulations (FERSCH 09/2014)
+        if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
+          !Wei Yu: comment the following two lines. Not ready
+        !yw     qsgw(its:ite,jts:jte) = gw2d(did)%qsgw
+        !yw     config_flags%gwsoilcpl = nlst_rt(did)%gwsoilcpl
+        end if
+
+    end subroutine
+
+  !-----------------------------------------------------------------------------
+  ! Data copy Model to/from NUOPC
+  !-----------------------------------------------------------------------------
+
+  subroutine CopyImportData(importState, did, rc)
     type(ESMF_State), intent(in)  :: importState
+    integer,          intent(in)  :: did
     integer,          intent(out) :: rc
 
     ! local variables
 
-
-!print *, 'KDS: CopyImportData - begin'
     rc = ESMF_SUCCESS
 
     call CopyData3d(importState, "soil_temperature_b", rt_domain(did)%STC, 'i', rc)
@@ -471,21 +912,18 @@ module wrfhydro_nuopc
 !      file=__FILE__)) &
 !      return  ! bail out
 
-!print *, 'KDS: CopyImportData - end'
-
   end subroutine
 
   !-----------------------------------------------------------------------------
 
-  subroutine CopyExportData(exportState, rc)
+  subroutine CopyExportData(exportState, did, rc)
     type(ESMF_State), intent(inout) :: exportState
+    integer,          intent(in)  :: did
     integer,          intent(out)   :: rc
 
     ! local variables
 
-
     rc = ESMF_SUCCESS
-!print *, 'KDS: CopyExportData - begin'
 
     call CopyData3d(exportState, "soil_temperature", rt_domain(did)%STC, 'e', rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -510,7 +948,6 @@ module wrfhydro_nuopc
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-!print *, 'KDS: CopyExportData - end'
 
   end subroutine
 
@@ -531,7 +968,6 @@ module wrfhydro_nuopc
 
 
     rc = ESMF_SUCCESS
-!print *, 'KDS: CopyData3d - begin'
 
     call ESMF_StateGet(state, itemName=trim(fieldName), field=field, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -550,13 +986,6 @@ module wrfhydro_nuopc
         computationalLBound=compLBnd, computationalUBound=compUBnd, &
         rc=rc)
 
-!print *, 'KDS - Field Info - compLBnd(1): ', compLBnd(1)
-!print *, 'KDS - Field Info - compLBnd(2): ', compLBnd(2)
-!print *, 'KDS - Field Info - compLBnd(3): ', compLBnd(3)
-!print *, 'KDS - Field Info - compUBnd(1): ', compUBnd(1)
-!print *, 'KDS - Field Info - compUBnd(2): ', compUBnd(2)
-!print *, 'KDS - Field Info - compUBnd(3): ', compUBnd(3)
-
     if (stateType .eq. 'e') then
       farrayPtr(compLBnd(1):compUBnd(1), &
                 compLBnd(2):compUBnd(2), &
@@ -572,7 +1001,6 @@ module wrfhydro_nuopc
                   compLBnd(2):compUBnd(2), &
                   compLBnd(3):compUBnd(3))
     end if
-!print *, 'KDS: CopyData3d - end'
 
   end subroutine
 
@@ -594,7 +1022,6 @@ module wrfhydro_nuopc
 
 
     rc = ESMF_SUCCESS
-!print *, 'KDS: CopyData2d - begin'
 
     call ESMF_StateGet(state, itemName=trim(fieldName), field=field, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -613,13 +1040,6 @@ module wrfhydro_nuopc
         computationalLBound=compLBnd, computationalUBound=compUBnd, &
         rc=rc)
 
-!print *, 'KDS - Field Info - compLBnd(1): ', compLBnd(1)
-!print *, 'KDS - Field Info - compLBnd(2): ', compLBnd(2)
-!print *, 'KDS - Field Info - compUBnd(1): ', compUBnd(1)
-!print *, 'KDS - Field Info - compUBnd(2): ', compUBnd(2)
-!print *, 'KDS - Array Info - size hydroArray: ', size(hydroArray)
-!print *, 'KDS - Array Info - size fArrayPtr: ', size(farrayPtr)
-
     if (stateType .eq. 'e') then
       farrayPtr(compLBnd(1):compUBnd(1), &
                 compLBnd(2):compUBnd(2)) = &
@@ -631,136 +1051,77 @@ module wrfhydro_nuopc
         farrayPtr(compLBnd(1):compUBnd(1), &
                   compLBnd(2):compUBnd(2))
     end if
-!print *, 'KDS: CopyData2d - end'
 
   end subroutine
 
-  !-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
+    ! Utilities
+    !-----------------------------------------------------------------------------
 
-  subroutine InitHydro(distGrid, rc)
-    type(ESMF_DistGrid), intent(in)    :: distGrid
-    integer,             intent(out)   :: rc
+    SUBROUTINE clock_get(clock, current_timestr, rc)
+        IMPLICIT NONE
 
-    ! local variables
-    integer               :: de, dim
-    integer               :: localDeCount, localDe
-    type(ESMF_DELayout)   :: delayout
-    integer, allocatable  :: dimExtent(:,:), localIndexList(:)
-    integer, allocatable  :: localDeToDeMap(:)
-    integer, allocatable  :: iIndexList(:), jIndexList(:)
+        type(ESMF_Clock)                :: clock
+        integer, intent(out)            :: rc
+        character (LEN=*), intent(out)  :: current_timestr
 
+        ! Locals
+        type(ESMF_Time)     :: currTime
+        character (LEN=256) :: tmpstr
+        integer             :: strlen
 
+        rc = ESMF_SUCCESS
 
-    integer             :: kk
-    real                :: dt
-    real, dimension(4)  :: zsoil
-    character(len = 19) :: olddate
-    integer, dimension(268, 260) :: vegtyp, soltyp
+        IF ( LEN(current_timestr) < 19 ) THEN
+            call ESMF_LogWrite(msg="current_timestr is too short!", &
+                logmsgFlag=ESMF_LOGMSG_ERROR, &
+                line=__LINE__, &
+                file=__FILE__)
+            rc = ESMF_RC_ARG_OUTOFRANGE
+            return  ! bail out
+        ENDIF
 
-    character(160)      :: msgString
-    type(ESMF_VM)       :: currentVM
-    integer             :: localPet
-    integer             :: petCount
-    integer             :: peCount
-    integer             :: iSize, jSize
-    integer             :: iStart, iEnd
-    integer             :: jStart, jEnd
+        ! Get the current time from the clock
+        call ESMF_ClockGet(clock=clock,currTime=currTime, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
 
+        tmpstr = ''
+        CALL ESMF_TimeGet( currTime, timeString=tmpstr, rc=rc )
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
 
-!print *, 'KDS: InitHydro - begin'
-    rc = ESMF_SUCCESS
+        strlen = MIN( LEN(current_timestr), LEN_TRIM(tmpstr) )
+        current_timestr = ''
+        current_timestr(1:strlen) = tmpstr(1:strlen)
+        current_timestr(11:11) = '_'
 
-    !!
-    !! Get VM Info to see if this will give me the PET info I need
-    !!
-    call ESMF_VMGetCurrent(currentVM, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    END SUBROUTINE clock_get
 
-    call ESMF_VMGet(currentVM, localPet=localPet, petCount=petCount, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    !-----------------------------------------------------------------------------
 
-!print *, "KDS - InitHydro: localPet = ", localPet
-!print *, "KDS - InitHydro: ", localPet, "/petCount = ", petCount
+    subroutine timeinterval_to_real(timeInterval,dt,rc)
+        type(ESMF_TimeInterval),intent(in)   :: timeInterval
+        real, intent(out)                     :: dt
+        integer, intent(out)                 :: rc
 
-    !!
-    !! Get the grid distribution for this pet
-    !!
-    allocate(dimExtent(2, 0:(petCount - 1))) ! (dimCount, deCount)
-    call ESMF_DistGridGet(distgrid, delayout=delayout, &
-                          indexCountPDe=dimExtent, rc=rc)
-    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+        ! local variables
+        real(ESMF_KIND_R8) :: s_r8
 
-    allocate(iIndexList(dimExtent(1, localPet)))
-    call ESMF_DistGridGet(distgrid, localDe=0, dim=1, &
-                          indexList=iIndexList, rc=rc)
-    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+        rc = ESMF_SUCCESS
 
-    allocate(jIndexList(dimExtent(2, localPet)))
-    call ESMF_DistGridGet(distgrid, localDe=0, dim=2, &
-                          indexList=jIndexList, rc=rc)
-    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+        call ESMF_TimeIntervalGet(timeInterval,s_r8=s_r8)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+        dt = s_r8
 
-    iStart = minVal(iIndexList)
-    iEnd   = maxVal(iIndexList)
-    jStart = minVal(jIndexList)
-    jEnd   = maxVal(jIndexList)
-!print *, "KDS - InitHydro: ", localPet, ": iStart - ", iStart
-!print *, "KDS - InitHydro: ", localPet, ": iEnd - ", iEnd
-!print *, "KDS - InitHydro: ", localPet, ": jStart - ", jStart
-!print *, "KDS - InitHydro: ", localPet, ": jEnd - ", jEnd
-
-    iSize = (iEnd - iStart) + 1
-    jSize = (jEnd - jStart) + 1
-
-    deallocate(dimExtent)
-    deallocate(iIndexList)
-    deallocate(jIndexList)
-
-    !!
-    !! Setup the values that the HYDRO_ini is expecting to be set
-    !! KDS NOTE: Most of this stuff is temporary and will need to be defined
-    !!           at runtime
-    !!
-    did = 1
-    dt = 60.0
-    olddate = '2008-08-08_00:00:00'
-    kk = 4
-    zsoil(1) = -0.1
-    zsoil(2) = -0.4
-    zsoil(3) = -1.0
-    zsoil(4) = -2.0
-
-    nlst_rt(did)%dt = dt
-    nlst_rt(did)%olddate(1:19) = olddate(1:19)
-    nlst_rt(did)%startdate(1:19) = olddate(1:19)
-
-    nlst_rt(did)%nsoil = kk
-    call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
-    allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
-    nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
-
-    vegtyp = 0
-    soltyp = 0
-
-
-    call CPL_LAND_INIT(iStart, iEnd, jStart, jEnd)
-
-    !!
-    !! Call the WRF-HYDRO initialization routine
-    !!
-    call HYDRO_ini(ntime=1, did=did, ix0=iSize, jx0=jSize, &
-      vegtyp=vegtyp, soltyp=soltyp)
-
-    rt_domain(did)%initialized = .true.
-!print *, 'KDS: InitHydro - end'
-
-  end subroutine
+    end subroutine
 
 end module
 
