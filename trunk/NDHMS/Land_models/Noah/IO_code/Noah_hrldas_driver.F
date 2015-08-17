@@ -1896,6 +1896,7 @@ program Noah_hrldas_driver
                    SMCWLT,SMCDRY,SMCREF,SMCMAX,NROOT,               &
                    sfcheadrt(i,j),INFXSRT(i,j),ETPND1,              &
 		   gwsoilcpl, qsgw(i,j))           !P  
+         
 
 #if _DEBUG_PRINT_
               ETPND(i,j) = ETPND(i,j) + etpnd1

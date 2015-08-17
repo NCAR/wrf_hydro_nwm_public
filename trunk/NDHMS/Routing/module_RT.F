@@ -276,6 +276,9 @@ CONTAINS
 
 
      rt_domain(did)%So = 0.01
+   
+     rt_domain(did)%restQSTRM = .true.
+
   END IF   !IF/then for channel routing
 
 

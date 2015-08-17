@@ -28,7 +28,7 @@
                   sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, &
                   gwsoilcpl
           logical:: GwPreDiag, GwSpinUp
-          real:: DTRT,dxrt0, DTCT, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
+          real:: DTRT_TER,DTRT_CH, DTCT, dxrt0,  gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""

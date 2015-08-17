@@ -647,7 +647,7 @@
 !DJG   SUBROUTINE OV_RTNG
 !DJG ------------------------------------------------
 
-	SUBROUTINE OV_RTNG(DT,DTRT,IXRT,JXRT,INFXSUBRT,      &
+	SUBROUTINE OV_RTNG(DT,DTRT_TER,IXRT,JXRT,INFXSUBRT,      &
           SFCHEADSUBRT,DHRT,CH_NETRT,RETDEPRT,OVROUGHRT,      &
           QSTRMVOLRT,QBDRYRT,QSTRMVOLTRT,QBDRYTRT,SOXRT,     &
           SOYRT,dist,LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,  &
@@ -665,7 +665,7 @@
 !DJG --------DECLARATIONS----------------------------
 
 	INTEGER, INTENT(IN)			:: IXRT,JXRT
-	REAL, INTENT(IN)			:: DT,DTRT
+	REAL, INTENT(IN)			:: DT,DTRT_TER
 
 	INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
 	INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
@@ -701,12 +701,12 @@
 ! DJG BEGIN 1-D or 2-D OVERLAND FLOW ROUTING LOOP
 !DJG ---------------------------------------------------------------------
 !DJG  Loop over 'routing time step'
-!DJG  Compute the number of time steps based on NOAH DT and routing DTRT
+!DJG  Compute the number of time steps based on NOAH DT and routing DTRT_TER
 
-       DT_FRAC=INT(DT/DTRT)
+       DT_FRAC=INT(DT/DTRT_TER)
 
 #ifdef HYDRO_D
-       write(6,*) "OV_RTNG  DT_FRAC, DT, DTRT",DT_FRAC, DT, DTRT
+       write(6,*) "OV_RTNG  DT_FRAC, DT, DTRT_TER",DT_FRAC, DT, DTRT_TER
        write(6,*) "IXRT, JXRT = ",ixrt,jxrt
 #endif
 
@@ -720,7 +720,7 @@
             SFCHEADSUBRT=INFXSUBRT
 
 !DJG Divide infiltration excess over all routing time-steps
-!	     INFXS_FRAC=INFXSUBRT/(DT/DTRT)
+!	     INFXS_FRAC=INFXSUBRT/(DT/DTRT_TER)
 
 !DJG Set flux accumulation fields to 0. before each loop...
       q_sfcflx_x = 0.
@@ -759,7 +759,8 @@
 
 
 
-           IF (CH_NETRT(I,J).ne.-9999) THEN
+!yw            IF (CH_NETRT(I,J).ne.-9999) THEN
+           IF (CH_NETRT(I,J).ge.0) THEN
              ct = ct +1
 
 !DJG Temporary test to up the retention depth of channel grid cells to 'soak' 
@@ -807,11 +808,11 @@
 
 
            if(rt_option .eq. 1) then
-              CALL ROUTE_OVERLAND1(DTRT,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
+              CALL ROUTE_OVERLAND1(DTRT_TER,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
 		SOYRT,RETDEPRT,OVROUGHRT,IXRT,JXRT,QBDRYRT,QBDRYTRT,    & 
                 SO8RT,SO8RT_D,q_sfcflx_x,q_sfcflx_y)
             else
-              CALL ROUTE_OVERLAND2(DTRT,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
+              CALL ROUTE_OVERLAND2(DTRT_TER,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
                   SOYRT,RETDEPRT,OVROUGHRT,IXRT,JXRT,QBDRYRT,QBDRYTRT,  &
                   q_sfcflx_x,q_sfcflx_y)    
             end if
@@ -2611,7 +2612,7 @@
              implicit none
              integer :: did
              if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
-                 call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT, nlst_rt(did)%rt_option, &
+                 call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
                           rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%LAKE_MSKRT, &
                           rt_domain(did)%INFXSUBRT, rt_domain(did)%RETDEPRT,rt_domain(did)%OVROUGHRT, &
                           rt_domain(did)%SOXRT, rt_domain(did)%SOYRT, rt_domain(did)%SFCHEADSUBRT,  &
@@ -2627,7 +2628,7 @@
 
 
 
-       subroutine OverlandRouting (DT, DTRT, rt_option, ixrt, jxrt,LAKE_MSKRT, &
+       subroutine OverlandRouting (DT, DTRT_TER, rt_option, ixrt, jxrt,LAKE_MSKRT, &
                   INFXSUBRT, RETDEPRT,OVROUGHRT,SOXRT, SOYRT, SFCHEADSUBRT,DHRT, &
                   CH_NETRT, QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
                   QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y, &
@@ -2638,7 +2639,7 @@
 #endif
        implicit none
 
-       REAL, INTENT(IN) :: DT, DTRT
+       REAL, INTENT(IN) :: DT, DTRT_TER
        integer, INTENT(IN) :: ixrt, jxrt, rt_option
        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
 
@@ -2720,7 +2721,7 @@
 #ifdef HYDRO_D
       write(6,*) "calling OV_RTNG "
 #endif
-      CALL OV_RTNG(DT,DTRT,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
+      CALL OV_RTNG(DT,DTRT_TER,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
         CH_NETRT,RETDEPRT,OVROUGHRT,QSTRMVOLRT,QBDRYRT,              &
         QSTRMVOLTRT,QBDRYTRT,SOXRT,SOYRT,dist,                       &
         LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,SO8RT,SO8RT_D,rt_option,&
