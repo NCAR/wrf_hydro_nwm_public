@@ -213,8 +213,14 @@ module wrfhydro_nuopc
     type(ESMF_DistGrid)     :: distGrid
     type(ESMF_TimeInterval) :: timeStep
     real                    :: HYDRO_dt
+    integer                 :: importCountConnected, exportCountConnected
 
     rc = ESMF_SUCCESS
+
+    call ESMF_LogWrite(msg="WRFHYDRO: Start Initialization Phase 2", &
+      logmsgFlag=ESMF_LOGMSG_INFO, &
+      line=__LINE__, &
+      file=__FILE__)
 
     call InitializeWrfhydroGrid(rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -253,125 +259,168 @@ module wrfhydro_nuopc
       file=__FILE__)) &
       return  ! bail out
 
-    !!
-    !! import fields
-    !!
-    field = ESMF_FieldCreate(name="soil_temperature_b", grid=gridIn, &
-      arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+    call count_connected_fields(importState, importCountConnected, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_StateRealizeField(importState, field=field, rc=rc)
+    call count_connected_fields(exportState, exportCountConnected, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
-    field = ESMF_FieldCreate(name="soil_moisture", grid=gridIn, &
-      arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(importState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if ( importCountConnected == 0 .and. exportCountConnected == 0 ) then
+      call ESMF_LogWrite(msg="WRFHYDRO: Running in offline mode.", &
+        logmsgFlag=ESMF_LOGMSG_INFO, &
+        line=__LINE__, &
+        file=__FILE__)
 
-    field = ESMF_FieldCreate(name="soil_water_content", grid=gridIn, &
-      arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(importState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      offline_mode = .true.
 
-    field = ESMF_FieldCreate(name="surface_runoff", grid=gridIn, &
-      typekind=ESMF_TYPEKIND_R4, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(importState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      call ESMF_LogWrite(msg="WRFHYDRO: Remove all fields", &
+        logmsgFlag=ESMF_LOGMSG_INFO, &
+        line=__LINE__, &
+        file=__FILE__)
+      call remove_fields(importState, rc)
+      call remove_fields(exportState, rc)
 
-    field = ESMF_FieldCreate(name="subsurface_runoff", grid=gridIn, &
-      typekind=ESMF_TYPEKIND_R4, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(importState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    elseif ( importCountConnected == 5 .and. exportCountConnected == 4 ) then
+      call ESMF_LogWrite(msg="WRFHYDRO: Running in coupled mode.", &
+        logmsgFlag=ESMF_LOGMSG_INFO, &
+        line=__LINE__, &
+        file=__FILE__)
+        offline_mode = .false.
 
-    !!
-    !! export fields
-    !!
-    field = ESMF_FieldCreate(name="soil_temperature", grid=gridOut, &
-      arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      !!
+      !! import fields
+      !!
 
-    field = ESMF_FieldCreate(name="soil_moisture", grid=gridOut, &
-      arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      field = ESMF_FieldCreate(name="soil_temperature_b", grid=gridIn, &
+        arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
+        ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(importState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
 
-    field = ESMF_FieldCreate(name="soil_water_content", grid=gridOut, &
-      arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
-      ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      field = ESMF_FieldCreate(name="soil_moisture", grid=gridIn, &
+        arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
+        ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(importState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
 
-    field = ESMF_FieldCreate(name="surface_head", grid=gridOut, &
-      typekind=ESMF_TYPEKIND_R4, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
+      field = ESMF_FieldCreate(name="soil_water_content", grid=gridIn, &
+        arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
+        ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(importState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      field = ESMF_FieldCreate(name="surface_runoff", grid=gridIn, &
+        typekind=ESMF_TYPEKIND_R4, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(importState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      field = ESMF_FieldCreate(name="subsurface_runoff", grid=gridIn, &
+        typekind=ESMF_TYPEKIND_R4, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(importState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      !!
+      !! export fields
+      !!
+      field = ESMF_FieldCreate(name="soil_temperature", grid=gridOut, &
+        arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
+        ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      field = ESMF_FieldCreate(name="soil_moisture", grid=gridOut, &
+        arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
+        ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      field = ESMF_FieldCreate(name="soil_water_content", grid=gridOut, &
+        arrayspec=soilArraySpec, gridToFieldMap=(/1,2/), &
+        ungriddedLBound=(/1/), ungriddedUBound=(/num_soil_layers/), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      field = ESMF_FieldCreate(name="surface_head", grid=gridOut, &
+        typekind=ESMF_TYPEKIND_R4, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+    else
+      call ESMF_LogWrite(msg="WRFHYDRO: Partial field connection!", &
+        logmsgFlag=ESMF_LOGMSG_ERROR, &
+        line=__LINE__, &
+        file=__FILE__)
+      rc = ESMF_RC_ARG_OUTOFRANGE
       return  ! bail out
-    call NUOPC_StateRealizeField(exportState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    endif
 
     call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -390,6 +439,11 @@ module wrfhydro_nuopc
       j_start(1),j_end(1), &
       rc )
 
+    call ESMF_LogWrite(msg="WRFHYDRO: Finish Initialization Phase 2", &
+      logmsgFlag=ESMF_LOGMSG_INFO, &
+      line=__LINE__, &
+      file=__FILE__)
+
   end subroutine
 
   !-----------------------------------------------------------------------------
@@ -405,6 +459,11 @@ module wrfhydro_nuopc
         real                          :: HYDRO_dt
 
         rc = ESMF_SUCCESS
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Start Advance WRF Hydro Model", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
 
         ! query the Component for its clock, importState and exportState
         call ESMF_GridCompGet(gcomp, clock=clock, importState=importState, &
@@ -456,11 +515,15 @@ module wrfhydro_nuopc
             i_start(1),i_end(1), &
             j_start(1),j_end(1), &
             rc )
-
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish Advance WRF Hydro Model", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
 
     end subroutine
 
@@ -480,6 +543,11 @@ module wrfhydro_nuopc
         deallocate(j_start)
         deallocate(j_end)
 
+        call ESMF_LogWrite(msg="WRFHYDRO: WRF Hydro Model Finalized", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
     end subroutine
 
     !-----------------------------------------------------------------------------
@@ -488,6 +556,9 @@ module wrfhydro_nuopc
 
     subroutine InitializeWrfhydroGrid(rc)
         integer, intent(out)    :: rc
+
+        ! local
+        character(len=160)   :: msg
 
         rc = ESMF_SUCCESS
 
@@ -503,6 +574,13 @@ module wrfhydro_nuopc
         max_lon = -103.5294
         i_count = 268
         j_count = 260
+
+        write (msg, "(A66,4F12.5,2I4)") "WRFHYDRO: grid min_lat, max_lat min_lon, max_lon, i_count, j_count ", &
+         min_lat, max_lat, min_lon, max_lon, i_count, j_count
+        call ESMF_LogWrite(msg=trim(msg), &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
 
         ! create a Grid object for Fields
         WrfhydroGrid = NUOPC_GridCreateSimpleXY( &
@@ -634,7 +712,7 @@ module wrfhydro_nuopc
         integer             :: did
         integer             :: ntime
         integer             :: i,j
-        character(len=80)   :: msg
+        character(len=160)   :: msg
 
         rc = ESMF_SUCCESS
 
@@ -669,8 +747,6 @@ module wrfhydro_nuopc
             nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = -1*zs(1:nlst_rt(did)%nsoil)
         endif
 
-
-
         call clock_get(clock,current_timestr=cpl_outdate,rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
@@ -679,6 +755,11 @@ module wrfhydro_nuopc
         nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
         nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
+        write (msg, "(A45,4I5)") "WRFHYDRO: CPL_LAND_INIT its, ite, jts, jte = ", its, ite, jts, jte
+        call ESMF_LogWrite(msg=trim(msg), &
+          logmsgFlag=ESMF_LOGMSG_INFO, &
+          line=__LINE__, &
+          file=__FILE__)
         call CPL_LAND_INIT(its, ite, jts, jte)
 
         write (msg, "(A32,I2)") "WRFHYDRO: sf_surface_physics is ", sf_surface_physics
@@ -691,18 +772,19 @@ module wrfhydro_nuopc
             ! clm4
             call HYDRO_ini(ntime,did=did,ix0=1,jx0=1)
         else
+            write (msg, "(A29,2I5)") "WRFHYDRO: HYDRO_ini ix, jx = ", ix, jx
+            call ESMF_LogWrite(msg=trim(msg), &
+              logmsgFlag=ESMF_LOGMSG_INFO, &
+              line=__LINE__, &
+              file=__FILE__)
             call HYDRO_ini(ntime,did,ix0=ix,jx0=jx,vegtyp=IVGTYP(its:ite,jts:jte),soltyp=isltyp(its:ite,jts:jte))
         endif
 
-        if(nlst_rt(did)%sys_cpl .ne. 2) then
-            call ESMF_LogWrite(msg="WRFHYDRO: sys_cpl should be 2.", &
-                logmsgFlag=ESMF_LOGMSG_ERROR, &
-                line=__LINE__, &
-                file=__FILE__)
-            rc = ESMF_RC_ARG_OUTOFRANGE
-            call hydro_stop()
-            return
-        endif
+        write (msg, "(A21,I2)") "WRFHYDRO: sys_cpl is ", nlst_rt(did)%sys_cpl
+        call ESMF_LogWrite(msg=msg, &
+          logmsgFlag=ESMF_LOGMSG_INFO, &
+          line=__LINE__, &
+          file=__FILE__)
 
         nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
         nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
@@ -741,14 +823,21 @@ module wrfhydro_nuopc
         integer             :: did
         integer             :: ntime
         integer             :: i,j
-        character(len=80)   :: msg
+        character(len=160)   :: msg
+        character(len=80)   :: hgrid, indir
         type(ESMF_State)    :: importState, exportState
+        type(ESMF_Clock)    :: clock
 
         rc = ESMF_SUCCESS
 
         did = 1
         ix = ite - its + 1
         jx = jte - jts + 1
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Start model advance glue code", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
 
         if(.not. RT_DOMAIN(did)%initialized) then
             call ESMF_LogWrite(msg="WRFHDRYO: Model has not been initialized!", &
@@ -771,6 +860,12 @@ module wrfhydro_nuopc
         ntime = 1
         nlst_rt(did)%dt = HYDRO_dt
 
+        write (msg,"(A35,2F10.2)") "WRFHDRYO: mm0, nlst_rt(did)%dtrt = ",mm0, nlst_rt(did)%dtrt
+        call ESMF_LogWrite(msg=trim(msg), &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
         if((mm0*nlst_rt(did)%dtrt) .ne. HYDRO_dt) then   ! NUOPC driver time step changed.
             if(dtrt0 .ge. HYDRO_dt) then
                 nlst_rt(did)%dtrt = HYDRO_dt
@@ -782,7 +877,7 @@ module wrfhydro_nuopc
             endif
         endif
 
-        write (msg,"(A32,I2,I2)") "WRFHDRYO: mm, nlst_rt(did)%dt = ",mm, nlst_rt(did)%dt
+        write (msg,"(A32,2F10.2)") "WRFHDRYO: mm, nlst_rt(did)%dt = ",mm, nlst_rt(did)%dt
         call ESMF_LogWrite(msg=trim(msg), &
             logmsgFlag=ESMF_LOGMSG_INFO, &
             line=__LINE__, &
@@ -805,19 +900,86 @@ module wrfhydro_nuopc
                 line=__LINE__, &
                 file=__FILE__)
         else
-            ! query the Component for its importState
-            call ESMF_GridCompGet(gcomp, importState=importState, rc=rc)
-            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-              line=__LINE__, &
-              file=__FILE__)) &
-              return  ! bail out
+            if (.not. offline_mode) then
 
-            ! Copy the data from NUOPC fields
-            call CopyImportData(importState, did, rc)
-            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              call ESMF_LogWrite(msg="WRFHYDRO: Copy import data from NUOPC", &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              ! query the Component for its importState
+              call ESMF_GridCompGet(gcomp, importState=importState, rc=rc)
+              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
                 line=__LINE__, &
                 file=__FILE__)) &
                 return  ! bail out
+
+              ! Copy the data from NUOPC fields
+              call CopyImportData(importState, did, rc)
+              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__)) &
+                return  ! bail out
+            else
+
+              call ESMF_LogWrite(msg="WRFHYDRO: Read forcing data from ldasout", &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              ! query the Component for its clock
+              call ESMF_GridCompGet(gcomp, clock=clock, rc=rc)
+              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__)) &
+                return  ! bail out
+
+              call clock_get(clock,current_timestr=cpl_outdate,rc=rc)
+              if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__)) &
+                return  ! bail out
+              nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
+
+              call ESMF_LogWrite(msg="WRFHYDRO: cpl_outdate = " // cpl_outdate, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+              call ESMF_LogWrite(msg="WRFHYDRO: nlst_rt(did)%olddate = " // nlst_rt(did)%olddate, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              write (msg,"(A36,F10.2,2I5)") "WRFHDRYO: nlst_rt(did)%dt, ix, jx = ",nlst_rt(did)%dt,ix,jx
+              call ESMF_LogWrite(msg=msg, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              write(msg,"(A52,2I5)") "WRFHYDRO: rt_domain(did)%ix, rt_domain(did)%jx = ", rt_domain(did)%ix, rt_domain(did)%jx
+              call ESMF_LogWrite(msg=msg, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              hgrid = "3"
+              indir = "./forcing"
+
+              call read_forc_ldasout(cpl_outdate,hgrid, &
+              indir, HYDRO_dt,rt_domain(did)%ix,rt_domain(did)%jx, &
+              rt_domain(did)%infxsrt,rt_domain(did)%soldrain)
+
+!              call ESMF_LogWrite(msg="WRFHYDRO: nlst_rt%hgrid = " // nlst_rt%hgrid, &
+!                logmsgFlag=ESMF_LOGMSG_INFO, &
+!                line=__LINE__, &
+!                file=__FILE__)
+!              call read_forc_ldasout(cpl_outdate,hgrid, indir, HYDRO_dt,ix,jx,infxsrt,soldrain)
+!             call hrldas_drv_HYDRO(rt_domain(did)%STC,rt_domain(did)%smc, &
+!               rt_domain(did)%sh2ox,rt_domain(did)%infxsrt, &
+!               rt_domain(did)%sfcheadrt,rt_domain(did)%soldrain, &
+!               ix,jx,num_soil_layers)
+
+            endif
         endif
 
         call ESMF_LogWrite(msg="WRFHYDRO: Start Exe", &
@@ -832,27 +994,39 @@ module wrfhydro_nuopc
             logmsgFlag=ESMF_LOGMSG_INFO, &
             line=__LINE__, &
             file=__FILE__)
+        if(.not. offline_mode) then
 
-        ! query the Component for its exportState
-        call ESMF_GridCompGet(gcomp, exportState=exportState, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          call ESMF_LogWrite(msg="WRFHYDRO: Copy export data to NUOPC", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+          ! query the Component for its exportState
+          call ESMF_GridCompGet(gcomp, exportState=exportState, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
 
-        !! Copy the data to NUOPC fields
-        call CopyExportData(exportState, did, rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          !! Copy the data to NUOPC fields
+          call CopyExportData(exportState, did, rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
+        endif
 
         ! provide groundwater soil flux to WRF for fully coupled simulations (FERSCH 09/2014)
-        if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
+        !if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
           !Wei Yu: comment the following two lines. Not ready
         !yw     qsgw(its:ite,jts:jte) = gw2d(did)%qsgw
         !yw     config_flags%gwsoilcpl = nlst_rt(did)%gwsoilcpl
-        end if
+        !end if
+
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish model advance glue code", &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
 
     end subroutine
 
@@ -1057,6 +1231,79 @@ module wrfhydro_nuopc
     !-----------------------------------------------------------------------------
     ! Utilities
     !-----------------------------------------------------------------------------
+
+    subroutine count_connected_fields(state, connectedCount, rc)
+      type(ESMF_State)     :: state
+      integer, intent(out) :: connectedCount
+      integer, intent(out) :: rc
+
+      character(len=80), allocatable  :: fieldNameList(:)
+      integer                         :: i, itemCount
+
+      rc = ESMF_SUCCESS
+
+      connectedCount = 0
+
+      call ESMF_StateGet(state, itemCount=itemCount, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      allocate(fieldNameList(itemCount))
+      call ESMF_StateGet(state, itemNameList=fieldNameList, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      do i=1, itemCount
+        if (NUOPC_StateIsFieldConnected(state, fieldName=fieldNameList(i))) then
+          call ESMF_LogWrite(msg="WRFHYDRO: Field IS connected: " // fieldNameList(i), &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+          connectedCount = connectedCount + 1
+        else
+          call ESMF_LogWrite(msg="WRFHYDRO: Field IS NOT connected: " // fieldNameList(i), &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+        endif
+      enddo
+    end subroutine
+
+    subroutine remove_fields(state, rc)
+      ! TODO: this method may move into the NUOPC_ utility layer
+      type(ESMF_State)                :: state
+      integer, intent(out), optional  :: rc
+      ! local variables
+      character(len=80), allocatable  :: fieldNameList(:)
+      integer                         :: i, itemCount
+
+      if (present(rc)) rc = ESMF_SUCCESS
+
+      call ESMF_StateGet(state, itemCount=itemCount, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+      allocate(fieldNameList(itemCount))
+      call ESMF_StateGet(state, itemNameList=fieldNameList, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      do i=1, itemCount
+          ! remove field from State
+          call ESMF_StateRemove(state, (/fieldNameList(i)/), rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+      enddo
+
+    end subroutine
 
     SUBROUTINE clock_get(clock, current_timestr, rc)
         IMPLICIT NONE
