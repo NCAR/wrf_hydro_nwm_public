@@ -33,7 +33,8 @@ WRFHYDRO_MPPMODS=module_mpp_land.mod \
 	module_cpl_land.mod
 WRFHYDRO_MODS=module_hydro_drv.mod \
 	module_rt_data.mod \
-	module_namelist.mod
+	module_namelist.mod \
+	module_hydro_io
 WRFHYDRO_FILES=$(addprefix $(WRFHYDRO_DIR)/$(WRFHYDRO_LIBDIR)/,$(WRFHYDRO_LIB)) \
 	$(addprefix $(WRFHYDRO_DIR)/$(WRFHYDRO_MPPDIR)/,$(WRFHYDRO_MPPMODS)) \
 	$(addprefix $(WRFHYDRO_DIR)/$(WRFHYDRO_MODDIR)/,$(WRFHYDRO_MODS))

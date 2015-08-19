@@ -16,10 +16,11 @@ module wrfhydro_nuopc
                 mpp_land_bcast_real, mpp_land_bcast_int1
 
   use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
+  use module_HYDRO_io, only: get_file_dimension
   use module_CPL_LAND, only: CPL_LAND_INIT
   use module_rt_data, only: rt_domain
   use module_namelist, only: nlst_rt
-
+  use netcdf
 
   implicit none
 
@@ -30,6 +31,11 @@ module wrfhydro_nuopc
 
     ! Offline mode
     logical :: offline_mode
+
+    ! HRLDAS Configuration
+    character(len=ESMF_MAXPATHLEN) :: hrldasConfigFile = "namelist.hrldas"
+    CHARACTER(len=80) :: indir = " "
+    character(len = 256):: GEO_STATIC_FLNM
 
     ! Grid Variables
     real(ESMF_KIND_R8) :: min_lat, max_lat, min_lon, max_lon
@@ -558,29 +564,170 @@ module wrfhydro_nuopc
         integer, intent(out)    :: rc
 
         ! local
-        character(len=160)   :: msg
+        character(len=160)          :: msg
+        integer                     :: ierr
+        real, allocatable           :: latitude(:,:), longitude(:,:)
+
+        ! NOAHLSM_OFFLINE namelist variables for NoahMP
+
+        integer  :: finemesh, finemesh_factor
+        integer :: forc_typ, snow_assim
+        integer :: HRLDAS_ini_typ
+        integer            :: nsoil
+        integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
+        REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
+        integer            :: forcing_timestep, noah_timestep
+        integer            :: start_year, start_month, start_day, start_hour, start_min
+        character(len=256) :: outdir = "."
+        character(len=256) :: restart_filename_requested = " "
+        integer            :: restart_frequency_hours
+        integer            :: output_timestep
+        integer            :: dynamic_veg_option
+        integer            :: canopy_stomatal_resistance_option
+        integer            :: btr_option
+        integer            :: runoff_option
+        integer            :: surface_drag_option
+        integer            :: supercooled_water_option
+        integer            :: frozen_soil_option
+        integer            :: radiative_transfer_option
+        integer            :: snow_albedo_option
+        integer            :: pcp_partition_option
+        integer            :: tbot_option
+        integer            :: temp_time_scheme_option
+        integer            :: split_output_count = 1
+        integer            :: khour, kday
+        real               :: zlvl
+        character(len=256) :: hrldas_constants_file = " "
+        character(len=256) :: mmf_runoff_file = " "
+        character(len=256) :: external_fpar_filename_template = " "
+        character(len=256) :: external_lai_filename_template = " "
+        integer            :: xstart = 1, ystart = 1, xend = 0, yend = 0
+
+  namelist / NOAHLSM_OFFLINE /    &
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, &
+       indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
+       start_year, start_month, start_day, start_hour, start_min, &
+       outdir, &
+       restart_filename_requested, restart_frequency_hours, output_timestep, &
+
+       dynamic_veg_option, canopy_stomatal_resistance_option, &
+       btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
+       frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
+       pcp_partition_option, tbot_option, temp_time_scheme_option, &
+
+       split_output_count, &
+       khour, kday, zlvl, hrldas_constants_file, mmf_runoff_file, &
+       external_fpar_filename_template, external_lai_filename_template, &
+       xstart, xend, ystart, yend
 
         rc = ESMF_SUCCESS
 
         call ESMF_LogWrite(msg="WRFHYDRO: Start Initialize WRF-Hydro Grid", &
+          logmsgFlag=ESMF_LOGMSG_INFO, &
+          line=__LINE__, &
+          file=__FILE__)
+
+        open(30, file=trim(hrldasConfigFile), form="FORMATTED", iostat=ierr)
+        if (ierr /= 0) then
+          write (msg,"(I5)") ierr
+          call ESMF_LogWrite(msg="WRFHYDRO: Error opening HRLDAS config file = " // msg, &
+            logmsgFlag=ESMF_LOGMSG_ERROR, &
+            line=__LINE__, &
+            file=__FILE__)
+          rc = ESMF_RC_ARG_OUTOFRANGE
+          return  ! bail out
+        endif
+        read(30, NOAHLSM_OFFLINE, iostat=ierr)
+        if (ierr /= 0) then
+          write (msg,"(I5)") ierr
+          call ESMF_LogWrite(msg="WRFHYDRO: Error reading HRLDAS config file = " // msg, &
+            logmsgFlag=ESMF_LOGMSG_ERROR, &
+            line=__LINE__, &
+            file=__FILE__)
+          rc = ESMF_RC_ARG_OUTOFRANGE
+          return  ! bail out
+        endif
+        close ( 30, iostat=ierr )
+        if (ierr /= 0) then
+          write (msg,"(I5)") ierr
+          call ESMF_LogWrite(msg="WRFHYDRO: Error closing hydro config file = " // msg, &
+            logmsgFlag=ESMF_LOGMSG_ERROR, &
+            line=__LINE__, &
+            file=__FILE__)
+          rc = ESMF_RC_ARG_OUTOFRANGE
+          return  ! bail out
+        endif
+
+        write (msg, "(A18,A40)") "WRFHYDRO: INDIR = ", indir
+        call ESMF_LogWrite(msg=msg, &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        write (msg, "(A28,A40)") "WRFHYDRO: GEO_STATIC_FLNM = ", GEO_STATIC_FLNM
+        call ESMF_LogWrite(msg=msg, &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        ! Default latitude, longitude and ix,jx (Front Range)
+        !min_lat = 38.60428
+        !max_lat = 40.94429
+        !min_lon = -106.6588
+        !max_lon = -103.5294
+        !i_count = 268
+        !j_count = 260
+
+        call get_file_dimension(fileName=GEO_STATIC_FLNM,ix=i_count,jx=j_count)
+
+        write (msg, "(A29,2I5)") "WRFHYDRO: i_count, j_count = ", &
+          i_count, j_count
+        call ESMF_LogWrite(msg=msg, &
             logmsgFlag=ESMF_LOGMSG_INFO, &
             line=__LINE__, &
             file=__FILE__)
 
         num_tiles = 1
-        min_lat = 38.60428
-        max_lat = 40.94429
-        min_lon = -106.6588
-        max_lon = -103.5294
-        i_count = 268
-        j_count = 260
 
-        write (msg, "(A66,4F12.5,2I4)") "WRFHYDRO: grid min_lat, max_lat min_lon, max_lon, i_count, j_count ", &
-         min_lat, max_lat, min_lon, max_lon, i_count, j_count
-        call ESMF_LogWrite(msg=trim(msg), &
+        allocate(latitude(i_count,j_count))
+        allocate(longitude(i_count,j_count))
+
+
+        ! Get Latitude (lat)
+        call get_2d_netcdf("XLAT_M", GEO_STATIC_FLNM, latitude, i_count, j_count, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        write (msg, "(A40,2F10.5)") "WRFHYDRO: XLATM(1:1), XLAT_M(ix:jx) = ", &
+          latitude(1,1), latitude(i_count,j_count)
+        call ESMF_LogWrite(msg=msg, &
             logmsgFlag=ESMF_LOGMSG_INFO, &
             line=__LINE__, &
             file=__FILE__)
+
+        min_lat = latitude(1,1)
+        max_lat = latitude(i_count,j_count)
+        deallocate(latitude)
+
+        ! Get Longitude (lon)
+        call get_2d_netcdf("XLONG_M", GEO_STATIC_FLNM, longitude, i_count, j_count, rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+
+        write (msg, "(A40,2F10.5)") "WRFHYDRO: XLON_M(1:1), XLON_M(ix:jx) = ", &
+          longitude(1,1), longitude(i_count,j_count)
+        call ESMF_LogWrite(msg=msg, &
+            logmsgFlag=ESMF_LOGMSG_INFO, &
+            line=__LINE__, &
+            file=__FILE__)
+
+        min_lon = longitude(1,1)
+        max_lon = longitude(i_count,j_count)
+        deallocate(longitude)
 
         ! create a Grid object for Fields
         WrfhydroGrid = NUOPC_GridCreateSimpleXY( &
@@ -814,17 +961,14 @@ module wrfhydro_nuopc
     subroutine nuopc_cpl_HYDRO_run(HYDRO_dt,gcomp,its,ite,jts,jte,rc)
         real, intent(in)                :: HYDRO_dt
         type(ESMF_GridComp)             :: gcomp
-
         integer, intent(in)             :: its, ite, jts,jte
         integer, intent(out)            :: rc
 
         ! local variables
         integer             :: k, ix, jx, mm, nn
         integer             :: did
-        integer             :: ntime
-        integer             :: i,j
-        character(len=160)   :: msg
-        character(len=80)   :: hgrid, indir
+        character(len=160)  :: msg
+        character(len=80)   :: hgrid
         type(ESMF_State)    :: importState, exportState
         type(ESMF_Clock)    :: clock
 
@@ -857,7 +1001,6 @@ module wrfhydro_nuopc
             return  ! bail out
         endif
 
-        ntime = 1
         nlst_rt(did)%dt = HYDRO_dt
 
         write (msg,"(A35,2F10.2)") "WRFHDRYO: mm0, nlst_rt(did)%dtrt = ",mm0, nlst_rt(did)%dtrt
@@ -941,10 +1084,6 @@ module wrfhydro_nuopc
                 return  ! bail out
               nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
-              call ESMF_LogWrite(msg="WRFHYDRO: cpl_outdate = " // cpl_outdate, &
-                logmsgFlag=ESMF_LOGMSG_INFO, &
-                line=__LINE__, &
-                file=__FILE__)
               call ESMF_LogWrite(msg="WRFHYDRO: nlst_rt(did)%olddate = " // nlst_rt(did)%olddate, &
                 logmsgFlag=ESMF_LOGMSG_INFO, &
                 line=__LINE__, &
@@ -956,33 +1095,41 @@ module wrfhydro_nuopc
                 line=__LINE__, &
                 file=__FILE__)
 
-              write(msg,"(A52,2I5)") "WRFHYDRO: rt_domain(did)%ix, rt_domain(did)%jx = ", rt_domain(did)%ix, rt_domain(did)%jx
+              write(hgrid,"(I1)") nlst_rt(did)%IGRID
+              call ESMF_LogWrite(msg="WRFHYDRO: hgrid = " // hgrid, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              write(msg,"(A49,2I5)") "WRFHYDRO: rt_domain(did)%ix, rt_domain(did)%jx = ", &
+                rt_domain(did)%ix, rt_domain(did)%jx
               call ESMF_LogWrite(msg=msg, &
                 logmsgFlag=ESMF_LOGMSG_INFO, &
                 line=__LINE__, &
                 file=__FILE__)
 
-              hgrid = "3"
-              indir = "./forcing"
+              write(msg,*) shape(rt_domain(did)%infxsrt)
+              call ESMF_LogWrite(msg="WRFHYDRO: shape(rt_domain(did)%infxsrt) = " // msg, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              write(msg,*) shape(rt_domain(did)%soldrain)
+              call ESMF_LogWrite(msg="WRFHYDRO: shape(rt_domain(did)%soldrain) = " // msg, &
+                logmsgFlag=ESMF_LOGMSG_INFO, &
+                line=__LINE__, &
+                file=__FILE__)
+
+              call ESMF_LogFlush()
 
               call read_forc_ldasout(cpl_outdate,hgrid, &
-              indir, HYDRO_dt,rt_domain(did)%ix,rt_domain(did)%jx, &
-              rt_domain(did)%infxsrt,rt_domain(did)%soldrain)
-
-!              call ESMF_LogWrite(msg="WRFHYDRO: nlst_rt%hgrid = " // nlst_rt%hgrid, &
-!                logmsgFlag=ESMF_LOGMSG_INFO, &
-!                line=__LINE__, &
-!                file=__FILE__)
-!              call read_forc_ldasout(cpl_outdate,hgrid, indir, HYDRO_dt,ix,jx,infxsrt,soldrain)
-!             call hrldas_drv_HYDRO(rt_domain(did)%STC,rt_domain(did)%smc, &
-!               rt_domain(did)%sh2ox,rt_domain(did)%infxsrt, &
-!               rt_domain(did)%sfcheadrt,rt_domain(did)%soldrain, &
-!               ix,jx,num_soil_layers)
+                indir, HYDRO_dt,rt_domain(did)%ix,rt_domain(did)%jx, &
+                rt_domain(did)%infxsrt,rt_domain(did)%soldrain)
 
             endif
         endif
 
-        call ESMF_LogWrite(msg="WRFHYDRO: Start Exe", &
+        call ESMF_LogWrite(msg="WRFHYDRO: Start HYDRO_exe", &
             logmsgFlag=ESMF_LOGMSG_INFO, &
             line=__LINE__, &
             file=__FILE__)
@@ -990,7 +1137,7 @@ module wrfhydro_nuopc
         ! Call the WRF-HYDRO run routine
         call HYDRO_exe(did=did)
 
-        call ESMF_LogWrite(msg="WRFHYDRO: Finish Exe", &
+        call ESMF_LogWrite(msg="WRFHYDRO: Finish HYDRO_exe", &
             logmsgFlag=ESMF_LOGMSG_INFO, &
             line=__LINE__, &
             file=__FILE__)
@@ -1369,6 +1516,63 @@ module wrfhydro_nuopc
         dt = s_r8
 
     end subroutine
+
+    !-----------------------------------------------------------------------------
+
+    subroutine get_2d_netcdf(name, geo_static_flnm, array, ix, jx, rc)
+      character(len=*), intent(in) :: name
+      character(len=*), intent(in) :: geo_static_flnm
+      integer, intent(in) :: ix, jx
+      real, dimension(ix,jx), intent(out) :: array
+      integer, intent(out) :: rc
+
+      ! Local variables
+      integer   :: iret, varid
+      integer   :: ncid
+
+      rc = ESMF_SUCCESS
+
+      iret = nf_open(geo_static_flnm, NF_NOWRITE, ncid)
+      if (iret /= 0) then
+        call ESMF_LogWrite(msg="WRFHYDRO: NetCDF Problem opening domain file "//trim(geo_static_flnm), &
+          logmsgFlag=ESMF_LOGMSG_ERROR, &
+          line=__LINE__, &
+          file=__FILE__)
+        rc = ESMF_RC_ARG_OUTOFRANGE
+        return  ! bail out
+      endif
+
+      iret = nf90_inq_varid(ncid,  name,  varid)
+      if (iret /= 0) then
+        call ESMF_LogWrite(msg="WRFHYDRO: Problem finding variable "//trim(name), &
+          logmsgFlag=ESMF_LOGMSG_ERROR, &
+          line=__LINE__, &
+          file=__FILE__)
+        rc = ESMF_RC_ARG_OUTOFRANGE
+        return  ! bail out
+      endif
+
+      iret = nf90_get_var(ncid, varid, values=array, start=(/1,1/), count=(/ix,jx/))
+      if (iret /= 0) then
+        call ESMF_LogWrite(msg="WRFHYDRO: Problem retrieving variable "//trim(name), &
+          logmsgFlag=ESMF_LOGMSG_ERROR, &
+          line=__LINE__, &
+          file=__FILE__)
+        rc = ESMF_RC_ARG_OUTOFRANGE
+        return  ! bail out
+      endif
+
+      iret = nf_close(ncid)
+      if (iret /= 0) then
+        call ESMF_LogWrite(msg="WRFHYDRO: NetCDF Problem closing domain file "//trim(geo_static_flnm), &
+          logmsgFlag=ESMF_LOGMSG_ERROR, &
+          line=__LINE__, &
+          file=__FILE__)
+        rc = ESMF_RC_ARG_OUTOFRANGE
+        return  ! bail out
+      endif
+
+  end subroutine
 
 end module
 
