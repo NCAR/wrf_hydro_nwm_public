@@ -28,7 +28,7 @@ module module_WRF_HYDRO
 #endif
 !
 ! added to consider the adaptive time step from WRF model. 
-    real    :: dtrt0  
+    real    :: dtrt_ter0  , dtrt_ch0
     integer ::  mm0
 
 
@@ -125,25 +125,47 @@ CONTAINS
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
             nlst_rt(did)%dt = HYDRO_dt
-            if(nlst_rt(did)%dtrt .ge. HYDRO_dt) then
-               nlst_rt(did)%dtrt = HYDRO_dt
+            if(nlst_rt(did)%dtrt_ter .ge. HYDRO_dt) then
+               nlst_rt(did)%dtrt_ter = HYDRO_dt
                mm0 = 1
             else
-               mm = HYDRO_dt/nlst_rt(did)%dtrt
-               if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+               mm = HYDRO_dt/nlst_rt(did)%dtrt_ter
+               if(mm*nlst_rt(did)%dtrt_ter.lt. HYDRO_dt) nlst_rt(did)%dtrt_ter = HYDRO_dt/mm
                mm0 = mm
             endif
 
-            dtrt0 = nlst_rt(did)%dtrt  
+            dtrt_ter0 = nlst_rt(did)%dtrt_ter  
+
+            if(nlst_rt(did)%dtrt_ch .ge. HYDRO_dt) then
+               nlst_rt(did)%dtrt_ch = HYDRO_dt
+               mm0 = 1
+            else
+               mm = HYDRO_dt/nlst_rt(did)%dtrt_ch_
+               if(mm*nlst_rt(did)%dtrt_ch.lt. HYDRO_dt) nlst_rt(did)%dtrt_ch = HYDRO_dt/mm
+               mm0 = mm
+            endif
+
+            dtrt_ch0 = nlst_rt(did)%dtrt_ch  
         endif
 
-            if((mm0*nlst_rt(did)%dtrt) .ne. HYDRO_dt) then   ! WRF model time step changed.
-               if(dtrt0 .ge. HYDRO_dt) then
-                  nlst_rt(did)%dtrt = HYDRO_dt
+            if((mm0*nlst_rt(did)%dtrt_ter) .ne. HYDRO_dt) then   ! WRF model time step changed.
+               if(dtrt_ter0 .ge. HYDRO_dt) then
+                  nlst_rt(did)%dtrt_ter = HYDRO_dt
                   mm0 = 1
                else
-                  mm = HYDRO_dt/dtrt0
-                  if(mm*dtrt0 .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+                  mm = HYDRO_dt/dtrt_ter0
+                  if(mm*dtrt_ter0 .lt. HYDRO_dt) nlst_rt(did)%dtrt_ter = HYDRO_dt/mm
+                  mm0 = mm
+               endif
+            endif
+
+            if((mm0*nlst_rt(did)%dtrt_ch) .ne. HYDRO_dt) then   ! WRF model time step changed.
+               if(dtrt_ch0 .ge. HYDRO_dt) then
+                  nlst_rt(did)%dtrt_ch = HYDRO_dt
+                  mm0 = 1
+               else
+                  mm = HYDRO_dt/dtrt_ch0
+                  if(mm*dtrt_ch0 .lt. HYDRO_dt) nlst_rt(did)%dtrt_ch = HYDRO_dt/mm
                   mm0 = mm
                endif
             endif

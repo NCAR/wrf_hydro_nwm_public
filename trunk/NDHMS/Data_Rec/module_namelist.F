@@ -24,7 +24,7 @@ CONTAINS
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl
-          real:: DTRT,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
+          real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
@@ -64,7 +64,7 @@ CONTAINS
             out_dt, rst_dt, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
-                    SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt,dxrt,&
+                    SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt_ter,dtrt_ch,dxrt,&
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f,route_lake_f, &
@@ -137,7 +137,8 @@ CONTAINS
   call mpp_land_bcast_int1(SUBRTSWCRT)
   call mpp_land_bcast_int1(OVRTSWCRT)
   call mpp_land_bcast_int1(AGGFACTRT)
-  call mpp_land_bcast_real1(DTRT)
+  call mpp_land_bcast_real1(DTRT_TER)
+  call mpp_land_bcast_real1(DTRT_CH)
   call mpp_land_bcast_real1(DXRT)
   call mpp_land_bcast_real1(gwChanCondConstIn)
   call mpp_land_bcast_real1(gwChanCondConstOut)
@@ -176,8 +177,9 @@ CONTAINS
     nlst%GW_RESTART  = GW_RESTART 
     nlst%RSTRT_SWC   = RSTRT_SWC  
     nlst%channel_option = channel_option
-    nlst%DTRT   = DTRT
-    nlst%DTCT   = DTRT
+    nlst%DTRT_TER   = DTRT_TER
+    nlst%DTRT_CH   = DTRT_CH
+    nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
     nlst%SUBRTSWCRT = SUBRTSWCRT
     nlst%OVRTSWCRT = OVRTSWCRT
     nlst%dxrt0 = dxrt
@@ -221,7 +223,8 @@ CONTAINS
     write(6,*) " nlst%GW_RESTART  ", GW_RESTART 
     write(6,*) " nlst%RSTRT_SWC   ", RSTRT_SWC  
     write(6,*) " nlst%channel_option ", channel_option
-    write(6,*) " nlst%DTRT   ", DTRT
+    write(6,*) " nlst%DTRT_TER   ", DTRT_TER
+    write(6,*) " nlst%DTRT_CH   ", DTRT_CH
     write(6,*) " nlst%SUBRTSWCRT ", SUBRTSWCRT
     write(6,*) " nlst%OVRTSWCRT ", OVRTSWCRT
     write(6,*) " nlst%dxrt0 ", dxrt

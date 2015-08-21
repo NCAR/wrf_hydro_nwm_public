@@ -2685,7 +2685,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 !-- output the channel route in an IDV 'station' compatible format
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
-        startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt,K,   &
+        startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt_ch,K,   &
         STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
      
      implicit none
@@ -2699,7 +2699,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      integer, dimension(NLINKS),               intent(in) :: ORDER
      integer, dimension(NLINKS),               intent(inout) :: STRMFRXSTPTS
 
-     real,                                     intent(in) :: dtrt
+     real,                                     intent(in) :: dtrt_ch
      real, dimension(NLINKS,2),                intent(in) :: qlink
 
      character(len=*),                         intent(in) :: startdate
@@ -2756,11 +2756,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
 
-#ifdef HYDRO_D
-     write(6,*) "yyww dtrt =", dtrt , "k =", k
-#endif
    
-     seconds_since = int(dtrt)*K
+     seconds_since = int(dtrt_ch)*K
 
 !    order_to_write = 2  !-- 1 all; 6 feweest
 
@@ -3268,7 +3265,7 @@ end subroutine output_chrt
 !-- output the channel route in an IDV 'station' compatible format
    subroutine mpp_output_chrt(gnlinks,gnlinksl,map_l2g,igrid, &
         split_output_count, NLINKS, ORDER, &
-        startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt, &
+        startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch, &
         K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
 
        USE module_mpp_land
@@ -3283,7 +3280,7 @@ end subroutine output_chrt
      integer, dimension(:),               intent(in) :: ORDER
      integer, dimension(:),               intent(inout) :: STRMFRXSTPTS
 
-     real,                                     intent(in) :: dtrt
+     real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
 
      character(len=*),                         intent(in) :: startdate
@@ -3339,7 +3336,7 @@ end subroutine output_chrt
 
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER, &
-          startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt,K,&
+          startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,&
           g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option)
     end if
 
@@ -3351,7 +3348,7 @@ end subroutine mpp_output_chrt
 !-- output the ilake info an IDV 'station' compatible format -----------
    subroutine mpp_output_lakes(lake_index,igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt,K)
+        qlakei,qlakeo, resht,dtrt_ch,K)
 
    USE module_mpp_land
 
@@ -3361,7 +3358,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
-     real,                                     intent(in) :: dtrt
+     real,                                     intent(in) :: dtrt_ch
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -3376,7 +3373,7 @@ end subroutine mpp_output_chrt
      if(my_id.eq. IO_id) then
         call output_lakes(igrid, split_output_count, NLAKES, &
            startdate, date, latlake, lonlake, elevlake, &
-           qlakei,qlakeo, resht,dtrt,K)
+           qlakei,qlakeo, resht,dtrt_ch,K)
      end if
      return
      end subroutine mpp_output_lakes
@@ -3387,7 +3384,7 @@ end subroutine mpp_output_chrt
 !-- output the ilake info an IDV 'station' compatible format
    subroutine output_lakes(igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt,K)
+        qlakei,qlakeo, resht,dtrt_ch,K)
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid, K
@@ -3395,7 +3392,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
-     real,                                     intent(in) :: dtrt
+     real,                                     intent(in) :: dtrt_ch
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -3426,8 +3423,8 @@ end subroutine mpp_output_chrt
      INTEGER  TSTART(TDIMS), TCOUNT(TDIMS)
 
 !    sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
-!    seconds_since = int(dtrt)*output_count
-     seconds_since = int(dtrt)*K
+!    seconds_since = int(dtrt_ch)*output_count
+     seconds_since = int(dtrt_ch)*K
 
      allocate(station_id(NLAKES))
      allocate(rec_num_of_lake(NLAKES))
@@ -4883,9 +4880,9 @@ end subroutine mpp_output_chrt
         iret = nf_get_att_text(ncid,NF_GLOBAL,"Since_Date",nlst_rt(did)%sincedate(1:19))
         if(iret /= 0) nlst_rt(did)%sincedate = nlst_rt(did)%startdate
         if(nlst_rt(did)%DTCT .gt. 0) then
-           nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT)
+           nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH)
         else
-           nlst_rt(did)%DTCT = nlst_rt(did)%DTRT
+           nlst_rt(did)%DTCT = nlst_rt(did)%DTRT_CH
         endif
 #ifdef MPP_LAND
     endif

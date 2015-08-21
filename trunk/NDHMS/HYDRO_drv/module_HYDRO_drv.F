@@ -178,7 +178,10 @@ module module_HYDRO_drv
 
 
 !yw keep the initial time otuput for debug
-      if(rtflag == 1) return ! jump the initial time output for routing restart
+      if(rtflag == 1) then 
+          rt_domain(did)%restQSTRM = .false.   !!! do not reset QSTRM.. at initial time.
+          return ! jump the initial time output for routing restart
+      endif
 
 
      if(nlst_rt(did)%LSMOUT_DOMAN .eq. 1)  &
@@ -618,7 +621,18 @@ module module_HYDRO_drv
 !-------------------------------------------------------------------
 
   IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT.EQ.2) THEN
-     
+
+
+    if(rt_domain(did)%restQSTRM) then
+       RT_DOMAIN(did)%QSTRMVOLRT_TS = 0.000001
+       rt_domain(did)%restQSTRM = .false.
+#ifdef HYDRO_D
+       write(6,*) "***** set QSTRMVOLRT_TS = 0.000001 *********"
+       call flush(6)
+#endif
+    endif 
+101  continue
+
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
@@ -626,7 +640,7 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
        RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT,RT_DOMAIN(did)%CH_LNKRT,&
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT,nlst_rt(did)%DTRT,&
+       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH,&
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &
