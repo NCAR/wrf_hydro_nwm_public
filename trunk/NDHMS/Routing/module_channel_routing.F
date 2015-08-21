@@ -459,7 +459,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
            error = abs(h_1 - h) !error is new estatimate and 2nd estimate
 
     !      if(idx .eq. 1803 .or. idx .eq. 1802) then 
-            write(6,*) "h",idx,h_0,h,h_1
+    !       write(6,*) "h",idx,h_0,h,h_1
     !      endif
 
            h_0  = h 
@@ -476,8 +476,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
       endif
 
     !      write(6,"(a3,4f3.2)") "h's",h_0,h,h_1,error
-           write(6,*) "" !id,h,q",idx,h,((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-           call flush(6)
+    !      write(6,*) "" !id,h,q",idx,h,((C1*qup)+(C2*quc)+(C3*qdp) + C4)
+    !      call flush(6)
 
       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
 
