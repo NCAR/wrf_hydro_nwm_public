@@ -52,7 +52,7 @@ CONTAINS
 
         did = 1
 
-        if nlst_rt(did)%rtFlag .eq. 0) return
+        if (nlst_rt(did)%rtFlag .eq. 0) return
 
 !        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
 !                 nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
@@ -173,7 +173,7 @@ CONTAINS
            
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
-           if nlst_rt(did)%rtFlag .eq. 0) return
+           if(nlst_rt(did)%rtFlag .eq. 0) return
 
             if(nlst_rt(did)%sys_cpl .ne. 1) then
                write(6,*) "Error: sys_cpl should be 1."
