@@ -364,6 +364,7 @@ CONTAINS
       ixrt = rt_domain(did)%ixrt 
       jxrt = rt_domain(did)%jxrt 
 
+       if(nlst_rt(did)%rtFlag .eq. 0) return
    
        allocate(CH_NETLNK(ixrt,jxrt)) 
        allocate(GCH_NETLNK(ixrt,jxrt)) 
@@ -443,13 +444,14 @@ CONTAINS
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
      
-     
+        
 !------------------------------------------------------------------------
 !DJG Routing Processing
 !------------------------------------------------------------------------
 !DJG IF/then to get routing terrain fields if either routing module is 
 !DJG   activated
 
+     if(nlst_rt(did)%rtFlag .eq. 0) return
 
   IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) THEN
 #ifdef HYDRO_D

@@ -850,10 +850,7 @@ module module_HYDRO_drv
 ! the lsm namelist will be read by rtland sequentially again.
      call read_rt_nlst(nlst_rt(did) )
 
-
-             IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
-               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+     if(nlst_rt(did)%rtFlag .eq. 0) return
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

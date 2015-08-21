@@ -9,17 +9,18 @@ program Noah_hrldas_driver
    use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
 #endif
 
-
    implicit none
    integer :: ITIME, NTIME
 
    call land_driver_ini(NTIME)
-   
+#ifdef WRF_HYDRO   
    do ITIME = 1, NTIME
+#else
+   do ITIME = 0, NTIME
+#endif
        call land_driver_exe(ITIME)
    end do
 #ifdef WRF_HYDRO
-   write(6,*) "NTIME = ",NTIME, " ITIME =", ITIME
    call hydro_finish() 
 #endif
 

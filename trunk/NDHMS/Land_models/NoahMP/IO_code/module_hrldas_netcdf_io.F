@@ -26,7 +26,7 @@ module module_hrldas_netcdf_io
      real, pointer, dimension(:,:) :: lw
      real, pointer, dimension(:,:) :: sw
      real, pointer, dimension(:,:) :: pcp
-     real, pointer, dimension(:,:) :: fpar
+     real, pointer, dimension(:,:) :: vegfra
      real, pointer, dimension(:,:) :: lai
   end type inputstruct
 
@@ -90,6 +90,7 @@ contains
 !-------------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------------
 
+!!! check the existing of the variable from restart file
   integer function checkRstV(name)
        implicit none
        character(len=*) name
@@ -98,7 +99,7 @@ contains
      if(my_id .eq. io_id) then
 #endif
        checkRstV = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
-       if(checkRstV .eq. 0) then   
+       if(checkRstV .eq. 0) then
            checkRstV = nf90_inq_varid(ncid, name, varid)
        endif
 #ifdef MPP_LAND
@@ -106,6 +107,97 @@ contains
        call mpp_land_bcast_int1(checkRstV)
 #endif
   end function checkRstV
+
+
+!-------------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------------
+
+  subroutine get_2d_netcdf_soillevel(name, ncid, array, units, xstart, xend, ystart, yend, &
+       fatal_if_error, layer_bottom, layer_top, ierr)
+    implicit none
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: ncid
+    integer, intent(in) :: xstart, xend, ystart, yend
+    real, dimension(xstart:xend,ystart:yend), intent(out) :: array
+    character(len=256), intent(out) :: units
+    ! FATAL_IF_ERROR:  an input code value:
+    !      .TRUE. if an error in reading the data should stop the program.
+    !      Otherwise the, IERR error flag is set, but the program continues.
+    logical, intent(in) :: fatal_if_error 
+    integer, intent(out) :: ierr
+    real, intent(out) :: layer_bottom
+    real, intent(out) :: layer_top
+
+    integer :: iret, varid
+#ifdef MPP_LAND
+    real:: g_array(global_nx,global_ny)
+#endif
+
+    units = " "
+
+#ifdef MPP_LAND
+    if(my_id .eq. 0) then
+#endif
+
+    iret = nf90_inq_varid(ncid,  name,  varid)
+    if (iret /= 0) then
+       if (FATAL_IF_ERROR) then
+          print*, 'name = "', trim(name)//'"'
+          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_inq_varid"
+       else
+          ierr = iret
+#ifdef MPP_LAND
+          goto 9992
+#endif
+          return
+       endif
+    endif
+
+    iret = nf90_get_att(ncid, varid, "units", units)
+    if (iret /= 0) units = "units unknown"
+
+#ifdef MPP_LAND
+    iret = nf90_get_var(ncid, varid, values=g_array, start=(/1,1/), count=(/global_nx,global_ny/))
+#else
+    iret = nf90_get_var(ncid, varid, values=array, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+#endif
+    if (iret /= 0) then
+       if (FATAL_IF_ERROR) then
+          print*, 'name = "', trim(name)//'"'
+          print*, 'varid =', varid
+          print*, trim(nf90_strerror(iret))
+          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_get_var"
+       else
+          ierr = iret
+#ifdef MPP_LAND
+          goto 9992
+#endif
+          return
+       endif
+    endif
+
+    ! Also get some metadata about the soil layers:
+    iret = nf90_get_att(ncid, varid, "layer_top", layer_top)
+    call error_handler(iret, "Attempted to find 'layer_top' attribute on variable "//trim(name))
+
+    iret = nf90_get_att(ncid, varid, "layer_bottom", layer_bottom)
+    call error_handler(iret, "Attempted to find 'layer_bottom' attribute on variable "//trim(name))
+
+    ierr = 0;
+#ifdef MPP_LAND
+9992    continue
+    endif
+    call mpp_land_bcast_int1(ierr)
+    call mpp_land_bcast_char(256,units)
+    call mpp_land_bcast(layer_bottom)
+    call mpp_land_bcast(layer_top)
+    if(ierr /= 0) return
+    call decompose_data_real(g_array,array)
+#endif
+  end subroutine get_2d_netcdf_soillevel
+
+!---------------------------------------------------------------------------------------------------------
+!---------------------------------------------------------------------------------------------------------
 
   subroutine check_outdir(rank, outdir)
     implicit none
@@ -587,6 +679,191 @@ contains
   end subroutine read_mmf_runoff
 
 !---------------------------------------------------------------------------------------------------------
+
+  subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
+                          nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &
+		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d)
+    implicit none
+    character(len=*),          intent(in)  :: spatial_filename
+    integer,                   intent(in)  :: xstart, xend, ystart, yend
+    integer,                   intent(in)  :: nsoil
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: bexp_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: smcdry_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: smcwlt_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: smcref_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: smcmax_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: dksat_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: dwsat_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: psisat_3d
+    real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: quartz_3d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: refdk_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: refkdt_2d
+    
+    character(len=24)  :: name
+    character(len=256) :: units
+    integer :: ierr,iret, varid,isoil
+    integer :: ncid
+    real, dimension(xstart:xend,ystart:yend,nsoil) :: xdum
+
+    ierr = nf90_open(spatial_filename, NF90_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("read_3d_soil:  Problem opening 3d soil file: ''", A, "''")') trim(spatial_filename)
+       stop
+    endif
+
+    name = "bexp"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      bexp_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "smcdry"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      smcdry_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "smcwlt"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      smcwlt_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "smcref"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      smcref_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "smcmax"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      smcmax_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "dksat"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      dksat_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "dwsat"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      dwsat_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "psisat"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      psisat_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "quartz"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
+    
+    do isoil = 1,4
+      quartz_3d(:,isoil,:) = xdum(:,:,isoil)
+    end do
+
+    name = "refdk"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, refdk_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+    
+    name = "refkdt"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, refkdt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+    
+    ! Close the NetCDF file
+    ierr = nf90_close(ncid)
+    if (ierr /= 0) stop "MODULE_NOAHLSM_HRLDAS_INPUT:  read_3d_soil:  NF90_CLOSE"
+
+
+  end subroutine read_3d_soil
+
 !---------------------------------------------------------------------------------------------------------
 
   subroutine get_landuse_netcdf(ncid, array, units, xstart, xend, ystart, yend)
@@ -718,7 +995,7 @@ contains
     !yyww call mpp_land_bcast(units)
     call mpp_land_bcast_char(256,units)
     if(ierr /= 0) return
-    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+  !  write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
     call decompose_data_real(g_array,array)
 #endif
   end subroutine get_2d_netcdf
@@ -726,25 +1003,25 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine get_2d_netcdf_soillevel(name, ncid, array, units, xstart, xend, ystart, yend, &
-       fatal_if_error, layer_bottom, layer_top, ierr)
+  subroutine get_netcdf_soillevel(name, ncid, array, units, xstart, xend, ystart, yend, fatal_if_error, ierr)
     implicit none
     character(len=*), intent(in) :: name
     integer, intent(in) :: ncid
     integer, intent(in) :: xstart, xend, ystart, yend
-    real, dimension(xstart:xend,ystart:yend), intent(out) :: array
+    real, dimension(xstart:xend,4,ystart:yend), intent(out) :: array
     character(len=256), intent(out) :: units
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
     logical, intent(in) :: fatal_if_error 
     integer, intent(out) :: ierr
-    real, intent(out) :: layer_bottom
-    real, intent(out) :: layer_top
 
-    integer :: iret, varid
+    integer :: iret, varid, isoil
 #ifdef MPP_LAND
-    real:: g_array(global_nx,global_ny)
+    real:: g_array(global_nx,4,global_ny)
+    real:: insoil(global_nx,global_ny,4)
+#else
+    real:: insoil(xstart:xend,ystart:yend,4)
 #endif
 
     units = " "
@@ -771,9 +1048,15 @@ contains
     if (iret /= 0) units = "units unknown"
 
 #ifdef MPP_LAND
-    iret = nf90_get_var(ncid, varid, values=g_array, start=(/1,1/), count=(/global_nx,global_ny/))
+    iret = nf90_get_var(ncid, varid, values=insoil, start=(/1,1,1,1/), count=(/global_nx,global_ny,4,1/))
+    do isoil = 1,4
+      g_array(:,isoil,:) = insoil(:,:,isoil)
+    end do
 #else
-    iret = nf90_get_var(ncid, varid, values=array, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+    iret = nf90_get_var(ncid, varid, values=insoil, start=(/xstart,ystart,1,1/), count=(/xend-xstart+1,yend-ystart+1,4,1/))
+    do isoil = 1,4
+      array(:,isoil,:) = insoil(:,:,isoil)
+    end do
 #endif
     if (iret /= 0) then
        if (FATAL_IF_ERROR) then
@@ -790,25 +1073,16 @@ contains
        endif
     endif
 
-    ! Also get some metadata about the soil layers:
-    iret = nf90_get_att(ncid, varid, "layer_top", layer_top)
-    call error_handler(iret, "Attempted to find 'layer_top' attribute on variable "//trim(name))
-
-    iret = nf90_get_att(ncid, varid, "layer_bottom", layer_bottom)
-    call error_handler(iret, "Attempted to find 'layer_bottom' attribute on variable "//trim(name))
-
     ierr = 0;
 #ifdef MPP_LAND
 9992    continue
     endif
     call mpp_land_bcast_int1(ierr)
     call mpp_land_bcast_char(256,units)
-    call mpp_land_bcast(layer_bottom)
-    call mpp_land_bcast(layer_top)
     if(ierr /= 0) return
-    call decompose_data_real(g_array,array)
+    call decompose_data_real3d(g_array,array,4)
 #endif
-  end subroutine get_2d_netcdf_soillevel
+  end subroutine get_netcdf_soillevel
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
@@ -837,11 +1111,13 @@ contains
     character(len=8)   :: name
     character(len=256) :: ldasin_llanduse
 
-    integer :: ierr, ncid, ierr_snodep
-    integer :: idx
+    integer :: ierr, ncid, ierr_snodep, varid
+    integer :: idx, isoil
     real, dimension(100) :: layer_bottom
     real, dimension(100) :: layer_top
+    real, dimension(4)   :: dzs
 
+    real, dimension(xstart:xend, ystart:yend, 4) :: insoil
     real, dimension(xstart:xend, 4, ystart:yend) :: soildummy
     integer :: rank
 
@@ -884,15 +1160,15 @@ contains
        ! based on a search for the string "v20".
        idx = index(trim(titlestr), "v20")
        if (idx <= 0) then
-          write(*,'("FATAL:  LDASIN file has a perverse version identifier")')
+          write(*,'("WARNING:  LDASIN file has a perverse version identifier")')
           !  write(*,'("          I assume you know what you are doing.")')
-          stop
+          ! stop
        else
           read(titlestr(idx+1:), '(I8)', iostat=ierr) ldasin_version
           if (ierr /= 0) then
-             write(*,'("FATAL:  LDASIN file has a perverse version identifier")')
+             write(*,'("WARNING:  LDASIN file has a perverse version identifier")')
              !  write(*,'("          I assume you know what you are doing.")')
-             stop
+             ! stop
           endif
        endif
     endif
@@ -907,53 +1183,55 @@ contains
        write(*,'("LDASIN MMNINLU attribute: ", A)') ldasin_llanduse
     endif
 
-    call get_2d_netcdf("CANWAT",     ncid, cmc,     units, xstart, xend, ystart, yend, FATAL, ierr)
-    call get_2d_netcdf("SKINTEMP",   ncid, t1,      units, xstart, xend, ystart, yend, FATAL, ierr)
-    call get_2d_netcdf("WEASD",      ncid, weasd,   units, xstart, xend, ystart, yend, FATAL, ierr)
-    if (trim(units) == "m") then
-       ! No conversion necessary
-    else if (trim(units) == "mm") then
-       ! convert WEASD from mm to m
-       weasd = weasd * 1.E-3
-    else if (trim(units) == "kg m{-2}") then
-       ! convert WEASD from mm to m
-       weasd = weasd * 1.E-3
-    else if (trim(units) == "kg/m2") then
-       ! convert WEASD from mm to m
-       weasd = weasd * 1.E-3
-    else
-       print*, 'units = "'//trim(units)//'"'
-       stop "Unrecognized units on WEASD"
-    endif
+    call get_2d_netcdf("CANWAT", ncid, cmc,     units, xstart, xend, ystart, yend, FATAL, ierr)
+    call get_2d_netcdf("TSK",    ncid, t1,      units, xstart, xend, ystart, yend, FATAL, ierr)
+    call get_2d_netcdf("SNOW",   ncid, weasd,   units, xstart, xend, ystart, yend, FATAL, ierr)
+! MB: assume in mm in v3.7
+!    if (trim(units) == "m") then
+!       ! No conversion necessary
+!    else if (trim(units) == "mm") then
+!       ! convert WEASD from mm to m
+!       weasd = weasd * 1.E-3
+!    else if (trim(units) == "kg m{-2}") then
+!       ! convert WEASD from mm to m
+!       weasd = weasd * 1.E-3
+!    else if (trim(units) == "kg m-2") then
+!       ! convert WEASD from mm to m
+!       weasd = weasd * 1.E-3
+!    else if (trim(units) == "kg/m2") then
+!       ! convert WEASD from mm to m
+!       weasd = weasd * 1.E-3
+!    else
+!       print*, 'units = "'//trim(units)//'"'
+!       stop "Unrecognized units on WEASD"
+!    endif
 
     snodep = 0.0
     call get_2d_netcdf("SNODEP",     ncid, snodep,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr_snodep)
     fndsnowh = .true.
     if (ierr_snodep /= 0) fndsnowh = .false.
 
-
-    call get_2d_netcdf_soillevel("STEMP_1",    ncid, soildummy(:,1,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(1), layer_top(1), ierr)
-    call get_2d_netcdf_soillevel("STEMP_2",    ncid, soildummy(:,2,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(2), layer_top(2), ierr)
-    call get_2d_netcdf_soillevel("STEMP_3",    ncid, soildummy(:,3,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(3), layer_top(3), ierr)
-    call get_2d_netcdf_soillevel("STEMP_4",    ncid, soildummy(:,4,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(4), layer_top(4), ierr)
+    ! Get the interfaces from the input file (not the variable as of v3.7)
+    
+    ierr = nf90_inq_varid(ncid,  "DZS",  varid)
+    ierr = nf90_get_var(ncid, varid, values=dzs, start=(/1/), count=(/4/))
+    
+    layer_top(1) = 0.0
+    layer_bottom(1) = dzs(1)
+    do isoil = 2, 4
+      layer_top(isoil) = layer_bottom(isoil-1)
+      layer_bottom(isoil) = layer_top(isoil) + dzs(isoil)
+    end do
+	
+    call get_netcdf_soillevel("TSLB", ncid, soildummy, units,  xstart, xend, ystart, yend, FATAL, ierr)
+    
     write(*, '("layer_bottom(1:4) = ", 4F9.4)') layer_bottom(1:4)
     write(*, '("layer_top(1:4)    = ", 4F9.4)') layer_top(1:4)
     write(*, '("Soil depth = ", 10F12.6)') sldpth
-
+    
     call init_interp(xstart, xend, ystart, yend, nsoil, sldpth, stc, 4, soildummy, layer_bottom(1:4), layer_top(1:4))
 
-    call get_2d_netcdf_soillevel("SMOIS_1",    ncid, soildummy(:,1,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(1), layer_top(1), ierr)
-    call get_2d_netcdf_soillevel("SMOIS_2",    ncid, soildummy(:,2,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(2), layer_top(2), ierr)
-    call get_2d_netcdf_soillevel("SMOIS_3",    ncid, soildummy(:,3,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(3), layer_top(3), ierr)
-    call get_2d_netcdf_soillevel("SMOIS_4",    ncid, soildummy(:,4,:), units,  xstart, xend, ystart, yend, FATAL, &
-         layer_bottom(4), layer_top(4), ierr)
+    call get_netcdf_soillevel("SMOIS", ncid, soildummy, units,  xstart, xend, ystart, yend, FATAL, ierr)
 
     call init_interp(xstart, xend, ystart, yend, nsoil, sldpth, smc, 4, soildummy, layer_bottom(1:4), layer_top(1:4))
 
@@ -1084,7 +1362,7 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine READVEG_HRLDAS(flnm, xstart, xend, ystart, yend, target_date, vegtyp, fpar, lai, gvfmin, gvfmax)
+  subroutine READVEG_HRLDAS(flnm, xstart, xend, ystart, yend, target_date, vegtyp, vegfra, lai, gvfmin, gvfmax)
 
     implicit none
     character(len=*),                                  intent(in)  :: flnm
@@ -1092,7 +1370,7 @@ contains
     integer,                                           intent(in)  :: ystart, yend
     character(len=*),                                  intent(in)  :: target_date
     integer, dimension(xstart:xend,ystart:yend),       intent(in)  :: vegtyp
-    real,    dimension(xstart:xend,ystart:yend),       intent(out) :: fpar
+    real,    dimension(xstart:xend,ystart:yend),       intent(out) :: vegfra
     real,    dimension(xstart:xend,ystart:yend),       intent(out) :: lai
     real,    dimension(xstart:xend,ystart:yend),       intent(out) :: gvfmin
     real,    dimension(xstart:xend,ystart:yend),       intent(out) :: gvfmax
@@ -1101,7 +1379,7 @@ contains
     character(len=256) :: units
     integer :: ierr
 
-    integer :: ierr_fpar
+    integer :: ierr_vegfra
     integer :: ierr_lai
 
     integer :: i, j
@@ -1119,17 +1397,17 @@ contains
        stop
     endif
 
-    call get_2d_netcdf("VEGFRA",     ncid, fpar,     units, xstart, xend, ystart, yend, NOT_FATAL, ierr_fpar)
+    call get_2d_netcdf("VEGFRA",     ncid, vegfra,     units, xstart, xend, ystart, yend, NOT_FATAL, ierr_vegfra)
     call get_2d_netcdf("LAI",        ncid, lai,      units, xstart, xend, ystart, yend, NOT_FATAL, ierr_lai)
 
-    if (ierr_fpar == 0) then
-       ! fpar = fpar * 1.E-2 ! convert from percent to fraction
-    else if (ierr_fpar /= 0) then
+    if (ierr_vegfra == 0) then
+       ! vegfra = vegfra * 1.E-2 ! convert from percent to fraction
+    else if (ierr_vegfra /= 0) then
        ! Get it from tables
-       ! print*,' READVEG_HRLDAS:  VEGFRA not found.  Initializing FPAR from table SHDTBL.'
+       ! print*,' READVEG_HRLDAS:  VEGFRA not found.  Initializing VEGFRA from table SHDTBL.'
        do i = xstart, xend
           do j = ystart, yend
-!KWM             fpar(i,j) = shdtbl(vegtyp(i,j))
+!KWM             vegfra(i,j) = shdtbl(vegtyp(i,j))
           enddo
        enddo
     endif
@@ -1144,11 +1422,11 @@ contains
        enddo
     endif
 
-    ! Get Minimum Green Vegetation Fraction GVFMIN
-    call get_2d_netcdf("GVFMIN", ncid, gvfmin,   units, xstart, xend, ystart, yend, FATAL, ierr)
+    ! Get Minimum Green Vegetation Fraction SHDMIN
+    call get_2d_netcdf("SHDMIN", ncid, gvfmin,   units, xstart, xend, ystart, yend, FATAL, ierr)
 
-    ! Get Minimum Green Vegetation Fraction GVFMAX
-    call get_2d_netcdf("GVFMAX", ncid, gvfmax,   units, xstart, xend, ystart, yend, FATAL, ierr)
+    ! Get Minimum Green Vegetation Fraction SHDMAX
+    call get_2d_netcdf("SHDMAX", ncid, gvfmax,   units, xstart, xend, ystart, yend, FATAL, ierr)
 
     iret = nf90_close(ncid)
   end subroutine READVEG_HRLDAS
@@ -1157,7 +1435,7 @@ contains
 !---------------------------------------------------------------------------------------------------------
 
   subroutine READFORC_HRLDAS(flnm_template, forcing_timestep, target_date, xstart, xend, ystart, yend,  &
-       t,q,u,v,p,lw,sw,pcp,lai,fpar)
+       t,q,u,v,p,lw,sw,pcp,vegfra,update_veg,lai,update_lai)
     use kwm_string_utilities
     implicit none
 
@@ -1174,8 +1452,9 @@ contains
     real,             dimension(xstart:xend,ystart:yend), intent(out)   :: lw
     real,             dimension(xstart:xend,ystart:yend), intent(out)   :: sw
     real,             dimension(xstart:xend,ystart:yend), intent(out)   :: pcp
-    real,             dimension(xstart:xend,ystart:yend), intent(out)   :: lai
-    real,             dimension(xstart:xend,ystart:yend), intent(inout) :: fpar
+    real,             dimension(xstart:xend,ystart:yend), intent(inout) :: lai    !Barlage v3.7: change to inout
+    real,             dimension(xstart:xend,ystart:yend), intent(inout) :: vegfra
+    logical,                            intent(in)  :: update_veg, update_lai  ! Barlage v3.7: for veg read control
 
     character(len=256) :: flnm
     character(len=256) :: units
@@ -1274,25 +1553,37 @@ contains
        call get_2d_netcdf("LWDOWN",  ncid, nextread%lw,    units, xstart, xend, ystart, yend, FATAL, ierr)
        call get_2d_netcdf("SWDOWN",  ncid, nextread%sw,    units, xstart, xend, ystart, yend, FATAL, ierr)
        call get_2d_netcdf("RAINRATE",ncid, nextread%pcp,   units, xstart, xend, ystart, yend, FATAL, ierr)
-       call get_2d_netcdf("VEGFRA",  ncid, nextread%fpar,  units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
-       if (ierr /= 0) then
+       
+       if(update_veg) then    ! Barlage v3.7: update only if dveg option is appropriate
+       
+         call get_2d_netcdf("VEGFRA",  ncid, nextread%vegfra,units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+         if (ierr /= 0) then
           ! print*, 'VEGFRA not found!'
           ! If we don't find a new VEGFRA, carry over the old one
-          if (associated(lastread%fpar)) then
-             nextread%fpar = lastread%fpar
+          if (associated(lastread%vegfra)) then
+             nextread%vegfra = lastread%vegfra
           else
-             nextread%fpar = fpar
+             nextread%vegfra = vegfra
           endif
+         endif
+
        endif
-       call get_2d_netcdf("LAI",     ncid, nextread%lai,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
-       if (ierr /= 0) then
+	 
+       if(update_lai) then    ! Barlage v3.7: update only if dveg option is appropriate
+	 
+         call get_2d_netcdf("LAI",     ncid, nextread%lai,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+         if (ierr /= 0) then
           ! print*, 'LAI not found!'
           ! If we don't find a new LAI, carry over the old one
           if (associated(lastread%lai)) then
-             nextread%lai = lastread%lai
+            nextread%lai = lastread%lai
+          else
+            nextread%lai = lai
           endif
-       endif
+         endif
 
+       endif
+	 
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) &
 #endif
@@ -1315,7 +1606,8 @@ contains
        !
 
        ! Fill the t, q, u, v, ... arrays with data from the nextread structure.
-       call copyfrom_inputstruct(nextread, t, q, u, v, p, lw, sw, pcp, fpar, lai, xstart, xend, ystart, yend)
+       call copyfrom_inputstruct(nextread, t, q, u, v, p, lw, sw, pcp, vegfra, lai, &
+                                 update_veg, update_lai, xstart, xend, ystart, yend)
 
        ! Clear the old lastread data
        call clear_inputstruct(lastread)
@@ -1339,7 +1631,7 @@ contains
 
        ! Fill the t, q, u, v, ... arrays with data interpolated between lastread and nextread times.
        call interpolate_inputstruct(lastread, nextread, target_date, &
-            t, q, u, v, p, lw, sw, pcp, fpar, lai, xstart, xend, ystart, yend)
+            t, q, u, v, p, lw, sw, pcp, vegfra, lai, update_veg, update_lai, xstart, xend, ystart, yend)
 
     else
 
@@ -1390,8 +1682,8 @@ contains
     allocate(instruct%pcp (xstart:xend,ystart:yend), stat=allostat )
     if (allostat/=0) stop "Problem allocating instruct%pcp"
 
-    allocate(instruct%fpar(xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%fpar"
+    allocate(instruct%vegfra(xstart:xend,ystart:yend), stat=allostat )
+    if (allostat/=0) stop "Problem allocating instruct%vegfra"
 
     allocate(instruct%lai (xstart:xend,ystart:yend), stat=allostat )
     if (allostat/=0) stop "Problem allocating instruct%lai"
@@ -1403,11 +1695,13 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine copyfrom_inputstruct(instruct, t, q, u, v, p, lw, sw, pcp, fpar, lai, xstart, xend, ystart, yend)
+  subroutine copyfrom_inputstruct(instruct, t, q, u, v, p, lw, sw, pcp, vegfra, lai, &
+                                  update_veg, update_lai, xstart, xend, ystart, yend)
     implicit none
     type(inputstruct), intent(in) :: instruct
     integer,           intent(in) :: xstart, xend, ystart, yend
-    real, dimension(xstart:xend,ystart:yend), intent(out) :: t, q, u, v, p, lw, sw, pcp, fpar, lai
+    logical,           intent(in)  :: update_veg, update_lai  ! Barlage v3.7: for veg read control
+    real, dimension(xstart:xend,ystart:yend), intent(out) :: t, q, u, v, p, lw, sw, pcp, vegfra, lai
     t    = instruct%t
     q    = instruct%q
     u    = instruct%u
@@ -1416,20 +1710,21 @@ contains
     lw   = instruct%lw
     sw   = instruct%sw
     pcp  = instruct%pcp
-    fpar = instruct%fpar
-    lai  = instruct%lai
+    if(update_veg) vegfra = instruct%vegfra
+    if(update_lai)   lai  = instruct%lai
   end subroutine copyfrom_inputstruct
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
   subroutine interpolate_inputstruct(instructA, instructB, target_date, &
-       t, q, u, v, p, lw, sw, pcp, fpar, lai, xstart, xend, ystart, yend)
+       t, q, u, v, p, lw, sw, pcp, vegfra, lai, update_veg, update_lai, xstart, xend, ystart, yend)
     implicit none
     type(inputstruct),                        intent(in)  :: instructA, instructB
     character(len=19),                        intent(in)  :: target_date
     integer,                                  intent(in)  :: xstart, xend, ystart, yend
-    real, dimension(xstart:xend,ystart:yend), intent(out) :: t, q, u, v, p, lw, sw, pcp, fpar, lai
+    logical,                                  intent(in)  :: update_veg, update_lai  ! Barlage v3.7: for veg read control
+    real, dimension(xstart:xend,ystart:yend), intent(out) :: t, q, u, v, p, lw, sw, pcp, vegfra, lai
 
     integer :: idts, idts2
     real    :: fraction
@@ -1446,8 +1741,8 @@ contains
     lw = ( instructA%lw * fraction ) + ( instructB%lw * (1.0-fraction) )
     sw = ( instructA%sw * fraction ) + ( instructB%sw * (1.0-fraction) )
     pcp = instructA%pcp
-    fpar = instructA%fpar
-    lai  = instructA%lai
+    if(update_veg) vegfra = instructA%vegfra
+    if(update_lai)   lai  = instructA%lai
   end subroutine interpolate_inputstruct
 
 !---------------------------------------------------------------------------------------------------------
@@ -1497,9 +1792,9 @@ contains
        nullify(instruct%pcp)
     endif
 
-    if (associated(instruct%fpar)) then
-       deallocate(instruct%fpar)
-       nullify(instruct%fpar)
+    if (associated(instruct%vegfra)) then
+       deallocate(instruct%vegfra)
+       nullify(instruct%vegfra)
     endif
 
     if (associated(instruct%lai)) then
@@ -1523,7 +1818,7 @@ contains
     nullify(instruct%lw)
     nullify(instruct%sw)
     nullify(instruct%pcp)
-    nullify(instruct%fpar)
+    nullify(instruct%vegfra)
     nullify(instruct%lai)
   end subroutine nullify_inputstruct
 
@@ -2315,8 +2610,8 @@ contains
     ierr = nf90_inq_varid(ncid, "Times", varid)
     call error_handler(ierr, "WRITE_RESTART:  Problem inquiring varid for 'Times'")
 
-    write(6,*) "yywww olddate  = ", olddate
-    write(6,*) "yywww output_count_remember  = ", output_count_remember
+!    write(6,*) "yywww olddate  = ", olddate
+!    write(6,*) "yywww output_count_remember  = ", output_count_remember
 
     ierr = nf90_put_var(ncid, varid, olddate, (/1,1/), (/19,1/))
     call error_handler(ierr, "WRITE_RESTART:  problem putting 'Times' to restart file")
@@ -2741,9 +3036,9 @@ contains
     real,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
     real,             dimension(global_nx,global_ny):: garray 
     integer,          optional,         intent(out) :: return_error
-    
+
     if(checkRstV(name) .ne. 0) return
- 
+
       if(my_id .eq. IO_id) then
           call get_from_restart_2d_float(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
       endif
@@ -2761,7 +3056,9 @@ contains
     integer,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
     integer,             dimension(global_nx,global_ny):: garray 
     integer,          optional,         intent(out) :: return_error
+
     if(checkRstV(name) .ne. 0) return
+
       if(my_id .eq. IO_id) then
           call get_from_restart_2d_integer(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
       endif
@@ -2782,6 +3079,7 @@ contains
     real, allocatable, dimension(:,:,:) :: garray
 
     if(checkRstV(name) .ne. 0) return
+
     klevel = size(array,2)
     allocate(garray(global_nx,klevel,global_ny))
     

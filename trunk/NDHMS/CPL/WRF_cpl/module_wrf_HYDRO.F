@@ -59,6 +59,8 @@ CONTAINS
 !output flux and state variable
 
         did = 1
+
+
         ix = ite - its + 1
         jx = jte - jts + 1
 
@@ -150,12 +152,13 @@ CONTAINS
         write(6,*) "mm, nlst_rt(did)%dt = ",mm, nlst_rt(did)%dt
 #endif
 
-        if(nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 .and. nlst_rt(did)%GWBASESWCRT .eq. 0) return
+        if(nlst_rt(did)%rtFlag .eq. 0) return
+
 
         nn = nlst_rt(did)%nsoil
 
         ! get the data from WRF 
+
 
 
        if((.not. RT_DOMAIN(did)%initialized) .and. (nlst_rt(did)%rst_typ .eq. 1) ) then

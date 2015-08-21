@@ -1,6 +1,9 @@
 #!/bin/csh -f
 
+source setEnvar.csh
+
 rm -f LandModel LandModel_cpl
+cp arc/Makefile.Noah Makefile
 ln -sf CPL/Noah_cpl LandModel_cpl
 ln -sf Land_models/Noah LandModel
 make clean ; rm -f Run/wrf_hydro_Noah.exe

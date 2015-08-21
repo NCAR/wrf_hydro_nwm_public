@@ -46,6 +46,7 @@
           integer ::RTOUT_DOMAIN                ! Netcdf grid of terrain routing variables on routing grid
           integer ::output_gw                   ! Netcdf grid of GW
           integer ::outlake                   ! Netcdf grid of lake
+          integer :: rtFlag
 
    END TYPE namelist_rt_field 
 

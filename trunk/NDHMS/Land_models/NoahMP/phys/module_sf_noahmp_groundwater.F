@@ -7,8 +7,6 @@ MODULE module_sf_noahmp_groundwater
 ! November 2012 
 !===============================================================================
 
-  USE module_sf_noahmplsm, ONLY : BB, SATPSI, MAXSMC, WLTSMC, SATDW, SATDK  ! Added to have access 
-
 CONTAINS
 
   SUBROUTINE WTABLE_mmf_noahmp (NSOIL     ,XLAND    ,XICE    ,XICE_THRESHOLD  ,ISICE ,& !in
@@ -21,6 +19,8 @@ CONTAINS
                                 ims,ime, jms,jme, kms,kme,                    &
                                 its,ite, jts,jte, kts,kte                     )
 
+! ----------------------------------------------------------------------
+  USE NOAHMP_TABLES, ONLY: BEXP_TABLE, DKSAT_TABLE, SMCMAX_TABLE,PSISAT_TABLE, SMCWLT_TABLE
 ! ----------------------------------------------------------------------
   IMPLICIT NONE
 ! ----------------------------------------------------------------------
@@ -80,11 +80,13 @@ CONTAINS
   REAL, DIMENSION(       0:NSOIL)  :: ZSOIL !depth of soil layer-bottom [m]
   REAL,  DIMENSION(      1:NSOIL)  :: SMCEQ  !equilibrium soil water  content [m3/m3]
   REAL,  DIMENSION(      1:NSOIL)  :: SMC,SH2O
-  REAL                                        :: DELTAT,RCOND,TOTWATER,SMCMAX, PSISAT, BEXP, SMCWLT ,DKSAT,PSI &
+  REAL                                        :: DELTAT,RCOND,TOTWATER,PSI &
                                                 ,WFLUXDEEP,WCNDDEEP,DDZ,SMCWTDMID &
                                                 ,WPLUS,WMINUS
   REAL,      DIMENSION( ims:ime, jms:jme )    :: QLAT
   INTEGER,   DIMENSION( ims:ime, jms:jme )    :: LANDMASK !-1 for water (ice or no ice) and glacial areas, 1 for land where the LSM does its soil moisture calculations.
+  
+  REAL :: BEXP,DKSAT,PSISAT,SMCMAX,SMCWLT
 
     DELTAT = WTDDT * 60. !timestep in seconds for this calculation
 
@@ -133,11 +135,12 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
        DO I=its,ite
           IF(LANDMASK(I,J).GT.0)THEN
 
-             BEXP = BB(ISLTYP(I,J))
-             DKSAT = SATDK (ISLTYP(I,J))
-             SMCMAX = MAXSMC(ISLTYP(I,J))
-             PSISAT = -SATPSI(ISLTYP(I,J))
-             SMCWLT = WLTSMC (ISLTYP(I,J))
+            BEXP   = BEXP_TABLE   (ISLTYP(I,J))
+            DKSAT  = DKSAT_TABLE  (ISLTYP(I,J))
+            PSISAT = PSISAT_TABLE (ISLTYP(I,J))
+            SMCMAX = SMCMAX_TABLE (ISLTYP(I,J))
+            SMCWLT = SMCWLT_TABLE (ISLTYP(I,J))
+
              IF(IVGTYP(I,J)==ISURBAN)THEN
                  SMCMAX = 0.45
                  SMCWLT = 0.40
@@ -203,6 +206,8 @@ END  SUBROUTINE WTABLE_mmf_noahmp
                            ,ims,ime,jms,jme,kms,kme                      &
                            ,its,ite,jts,jte,kts,kte                      )
 ! ----------------------------------------------------------------------
+  USE NOAHMP_TABLES, ONLY : DKSAT_TABLE
+! ----------------------------------------------------------------------
   IMPLICIT NONE
 ! ----------------------------------------------------------------------
 ! input
@@ -237,7 +242,7 @@ jteh=min(jte+1,jde-1)
     DO J=jtsh,jteh
        DO I=itsh,iteh
            IF(FDEPTH(I,J).GT.0.)THEN
-                 KLAT = SATDK(ISLTYP(I,J)) * KLATFACTOR(ISLTYP(I,J))
+                 KLAT = DKSAT_TABLE(ISLTYP(I,J)) * KLATFACTOR(ISLTYP(I,J))
                  IF(WTD(I,J) < -1.5)THEN
                      KCELL(I,J) = FDEPTH(I,J) * KLAT * EXP( (WTD(I,J) + 1.5) / FDEPTH(I,J) )
                  ELSE

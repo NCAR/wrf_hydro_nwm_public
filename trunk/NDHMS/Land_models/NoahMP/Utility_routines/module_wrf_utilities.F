@@ -15,7 +15,7 @@ SUBROUTINE wrf_error_fatal( str )
   CALL wrf_message( '-------------- FATAL CALLED ---------------' )
   CALL wrf_message( str )
   CALL wrf_message( '-------------------------------------------' )
-  call flush(6)
+
   CALL wrf_abort
 END SUBROUTINE wrf_error_fatal
 

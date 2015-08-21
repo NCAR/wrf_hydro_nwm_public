@@ -13,7 +13,7 @@ all:
 	fi
 
 	@if [ -d "LandModel" ]; then \
-	(cd LandModel; make ; rm -f ../../Run/wrf_hydro.exe; mv run/hrldas.exe  ../../Run/wrf_hydro.exe  ) \
+	(cd LandModel; make ; rm -f ../../Run/wrf_hydro.exe; mv Run/Noah_hrldas_beta ../../Run/wrf_hydro.exe  ) \
 	fi
 
 clean:

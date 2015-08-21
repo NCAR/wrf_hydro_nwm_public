@@ -58,6 +58,8 @@ CONTAINS
 
         did = 1
 
+
+        if(nlst_rt(did)%rtFlag .eq. 0) return
 !--------LPR add 2014-06-24---------------------------
 !    it is rapid model
 #ifdef WRF_HYDRO_RAPID
@@ -152,6 +154,7 @@ CONTAINS
         did = 1
 
 
+
         if(.not. RT_DOMAIN(did)%initialized) then  
            nlst_rt(did)%dt = dt
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
@@ -176,7 +179,7 @@ CONTAINS
 
 #ifdef WRF_HYDRO_RAPID
 !--------LPR add 2014-06-24---------------------------
-         if(nlst_rt(did)%channel_option .eq. 4) then
+        if(nlst_rt(did)%rtFlag .eq. 0) return
 !  it  is rapid model.
              return
          endif

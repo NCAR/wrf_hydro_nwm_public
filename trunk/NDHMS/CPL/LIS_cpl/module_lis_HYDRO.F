@@ -34,6 +34,7 @@ module module_lis_HYDRO
 
 
         did = 1
+
         ntime = 1
 
 !           write(6,*) "yyyywww step 2, n =", n
@@ -68,6 +69,7 @@ module module_lis_HYDRO
         call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr )
       endif
 
+        if(nlst_rt(did)%rtFlag .eq. 0) return
 
         write(cpl_outdate(1:5),'(I4,"-")') LIS_rc%yr
 

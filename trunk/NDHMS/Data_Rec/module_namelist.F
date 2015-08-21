@@ -257,6 +257,11 @@ CONTAINS
   !bcast other  variable.
       call mpp_land_bcast_real1(nlst%dt)
 #endif
+
+! derive rtFlag
+      nlst%rtFlag = 1
+      if(channel_option .eq. 4) nlst%rtFlag = 0
+      if(CHANRTSWCRT .eq. 0 .and.  SUBRTSWCRT .eq. 0 .and. OVRTSWCRT .eq. 0 .and. GWBASESWCRT .eq. 0) nlst%rtFlag = 0
       return
     end subroutine read_rt_nlst
 

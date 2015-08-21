@@ -74,6 +74,8 @@ CONTAINS
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
         endif
 
+        if(nlst_rt(did)%rtFlag .eq. 0) return
+
         ix = rt_domain(did)%ix
         jx = rt_domain(did)%jx
 

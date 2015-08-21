@@ -305,8 +305,7 @@ contains
                          QVAP   ,QDEW   ,FICEOLD,ZSOIL  ,                 & !in
                          ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  ,STC    , & !inout
                          DZSNSO ,SH2O   ,SICE   ,PONDING,ZSNSO  ,         & !inout
-                         RUNSRF ,RUNSUB ,QSNOW  ,PONDING1       ,         & !out
-                         PONDING2,QSNBOT,FPICE                            & !out
+                         RUNSRF ,RUNSUB ,QSNOW  ,PONDING1       ,PONDING2,QSNBOT,FPICE &  !out
 #ifdef WRF_HYDRO
                         , sfcheadrt                     &
 #endif
@@ -1925,13 +1924,11 @@ contains
                             QVAP   ,QDEW   ,FICEOLD,ZSOIL  ,                 & !in
                             ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  ,STC    , & !inout
                             DZSNSO ,SH2O   ,SICE   ,PONDING,ZSNSO  ,         & !inout
-                            RUNSRF ,RUNSUB ,QSNOW  ,PONDING1 ,		     & !out
-                            PONDING2,QSNBOT,FPICE                            & !out
+                            RUNSRF ,RUNSUB ,QSNOW  ,PONDING1 ,PONDING2,QSNBOT,FPICE     &   !out
 #ifdef WRF_HYDRO
                             , sfcheadrt                                      &
 #endif
                             )  !out
-
 ! ----------------------------------------------------------------------  
 ! Code history:
 ! Initial code: Guo-Yue Niu, Oct. 2007
@@ -2004,7 +2001,7 @@ contains
 
 ! Jordan (1991)
 
-     IF(OPT_SNF == 1) THEN
+     IF(OPT_SNF == 1 .OR. OPT_SNF == 4) THEN
        IF(SFCTMP > TFRZ+2.5)THEN
            FPICE = 0.
        ELSE
@@ -2038,7 +2035,7 @@ contains
 ! Hedstrom NR and JW Pomeroy (1998), Hydrol. Processes, 12, 1611-1625
 ! fresh snow density
 
-     BDFALL = MIN(120.,67.92+51.25*EXP((SFCTMP-TFRZ)/2.59))
+     BDFALL = MIN(120.,67.92+51.25*EXP((SFCTMP-TFRZ)/2.59)) !MB: change to MIN v3.7
 
      QRAIN   = PRCP * (1.-FPICE)
      QSNOW   = PRCP * FPICE
