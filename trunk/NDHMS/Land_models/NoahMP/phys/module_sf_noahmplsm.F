@@ -4958,9 +4958,9 @@ contains
            END IF
 
 !ywstart added for failure of bfb between sequential and parallel run
-           IF (OPT_STC == 1) THEN
-              BI(K) = - CI(K)
-           END IF                                        
+!          IF (OPT_STC == 3) THEN
+!             BI(K) = - CI(K)
+!          END IF                                        
 !ywend
 
         ELSE IF (K < NSOIL) THEN
