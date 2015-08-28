@@ -28,7 +28,8 @@ all:	$(OBJS)
 .F.o:
 	@echo ""
 	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
+#	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
+	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(NETCDF_INC) $(*).f
 	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)

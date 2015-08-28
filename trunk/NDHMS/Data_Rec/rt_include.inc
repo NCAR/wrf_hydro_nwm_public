@@ -91,6 +91,11 @@
   INTEGER, allocatable, DIMENSION(:)   :: FROM_NODE  !link's from node
   INTEGER, allocatable, DIMENSION(:)   :: ORDER      !link's order
   INTEGER, allocatable, DIMENSION(:)   :: STRMFRXSTPTS      !frxst point flag
+  CHARACTER(len=15), allocatable, DIMENSION(:) :: gages
+  !                                                    123456789012345
+  CHARACTER(len=15)                     :: gageMiss = '               '
+!  CHARACTER(len=15)                     :: gageMiss = '          -9999'
+
   INTEGER, allocatable, DIMENSION(:)   :: TYPEL       !type of link Muskingum: 0 strm 1 lake
                                                       !-- Diffusion: 0 edge or pour; 1 interior; 2 lake
   INTEGER, allocatable, DIMENSION(:)   :: TYPEN      !type of link 0 strm 1 lake

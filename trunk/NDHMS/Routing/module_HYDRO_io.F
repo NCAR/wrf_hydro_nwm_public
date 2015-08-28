@@ -8,7 +8,8 @@ module module_HYDRO_io
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d   
-   
+   use netcdf 
+
    implicit none
 #include <netcdf.inc>
 
@@ -843,7 +844,7 @@ end subroutine get_albedo12m_netcdf
           iRet = nf_open(trim(route_link_f), NF_NOWRITE, ncId)
           if (iRet /= 0) then
              write(6,'("READ_ROUTEDIM: Problem opening file ''", A, "''")') trim(route_link_f)
-             !! JLM what to do here??
+             call hydro_stop("READ_ROUTEDIM")
           endif
           !! get the number of links
           iRet = nf_inq_dimid(ncId, 'link', dimId)
@@ -2686,7 +2687,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !-- output the channel route in an IDV 'station' compatible format
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
         startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt_ch,K,   &
-        STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
+        STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss)
      
      implicit none
 #include <netcdf.inc>
@@ -2698,6 +2699,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      real, dimension(NLINKS),                  intent(in) :: hlink,zelev
      integer, dimension(NLINKS),               intent(in) :: ORDER
      integer, dimension(NLINKS),               intent(inout) :: STRMFRXSTPTS
+     character(len=15), dimension(nlinks),     intent(inout) :: gages
+     character(len=15),                        intent(in) :: gageMiss
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(NLINKS,2),                intent(in) :: qlink
@@ -2736,7 +2739,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      integer :: seconds_since,nstations,cnt,ObsStation,nobs
      character(len=32)  :: convention
      character(len=11),allocatable, DIMENSION(:)  :: stname
-     character(len=11),allocatable, DIMENSION(:)  :: stnameO
+     character(len=15),allocatable, DIMENSION(:)  :: stnameO
 
     !--- all this for writing the station id string
      INTEGER   TDIMS, TXLEN
@@ -2750,7 +2753,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      !--  observation point  ids
      INTEGER   OTDIMS, OTXLEN
      PARAMETER (OTDIMS=2)    ! number of TX dimensions
-     PARAMETER (OTXLEN = 11) ! length of example string
+     PARAMETER (OTXLEN = 15) ! length of example string
      INTEGER  OTIMEID        ! record dimension id
      INTEGER  OTXID          ! variable ID
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
@@ -2772,18 +2775,25 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 
 !-- output only the higher oder streamflows  and only observation points
-       do i=1,nlk
-        if(ORDER(i) .ge. order_to_write) then 
-         nstations = nstations + 1
+
+
+     do i=1,nlk
+        if(ORDER(i) .ge. order_to_write) nstations = nstations + 1
+        if(channel_option .ne. 3) then
+           if(gages(i) .ne. gageMiss) nobs = nobs + 1
+        else 
+           if(STRMFRXSTPTS(i) .ne. -9999) nobs = nobs + 1
         endif
-        if(STRMFRXSTPTS(i) .ne. -9999) then 
-         nobs = nobs + 1
-        endif
-       enddo 
+     enddo
 
        if (nobs .eq. 0) then ! let's at least make one obs point
          nobs = 1
-         STRMFRXSTPTS(1) = 1
+         if(channel_option .ne. 3) then 
+            !           123456789012345
+            gages(1) = '          dummy'
+         else 
+            STRMFRXSTPTS(1) = 1
+         endif
        endif
 
        allocate(chanlat(nstations))
@@ -2863,23 +2873,33 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 
        do i=1,nlk
-        if(STRMFRXSTPTS(i) .ne. -9999) then 
-         nobs = nobs + 1
-         chanlatO(nobs) = chlat(i)
-         chanlonO(nobs) = chlon(i)
-         elevationO(nobs) = zelev(i)
-         lOrderO(nobs) = ORDER(i)
-         station_idO(nobs) = i
-         write(stnameO(nobs),'(I6,"_",I1)') nobs,lOrderO(nobs)
+          if(channel_option .ne. 3) then
+             if(gages(i) .ne. gageMiss) then
+                nobs = nobs + 1
+                chanlatO(nobs) = chlat(i)
+                chanlonO(nobs) = chlon(i)
+                elevationO(nobs) = zelev(i)
+                lOrderO(nobs) = ORDER(i)
+                station_idO(nobs) = i
+                stnameO(nobs) = gages(i)
+             endif
+          else 
+             if(STRMFRXSTPTS(i) .ne. -9999) then 
+                nobs = nobs + 1
+                chanlatO(nobs) = chlat(i)
+                chanlonO(nobs) = chlon(i)
+                elevationO(nobs) = zelev(i)
+                lOrderO(nobs) = ORDER(i)
+                station_idO(nobs) = i
+                write(stnameO(nobs),'(I6,"_",I1)') nobs,lOrderO(nobs)
 #ifdef HYDRO_D
-!        print *,"stationobservation name",  stnameO(nobs)
+                !        print *,"stationobservation name",  stnameO(nobs)
 #endif
-        endif
+             endif
+          endif
        enddo 
 
        iret = nf_def_dim(ncid, "recNum", NF_UNLIMITED, dimdata)  !--for linked list approach
-
-
        iret = nf_def_dim(ncid, "station", nstations, stationdim)
 
 
@@ -3009,7 +3029,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          iret = nf_def_var(ncid,"station_id",NF_CHAR, TDIMS, TXDIMS, varid)
          iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
 
-         iret = NF_DEF_DIM(ncid2, "id_len", 11, charidO)
+
+         iret = NF_DEF_DIM(ncid2, "id_len", 15, charidO)
          OTXDIMS(1) = charidO   ! define char-string variable and position dimension first
          OTXDIMS(2) = obsdim
          iret = nf_def_var(ncid2,"station_id",NF_CHAR, OTDIMS, OTXDIMS, varid)
@@ -3154,56 +3175,110 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     !-- output  only observation points
     cnt=0
     do i=1,nlk   
+       if(channel_option .ne. 3) then
+          ! jlm this verry repetitiuos, oh well.
+          if(gages(i) .ne. gageMiss) then
 
-      if(STRMFRXSTPTS(i) .ne. -9999) then 
-         start_posO = (cnt+1)+(nobs * (output_count-1))
-!Write frxst_pts to text file...
-!yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
-           write(999,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
-                    qlink(i,1), qlink(i,1)*35.315,hlink(i)
-!yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
-!yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
-  117 FORMAT(I8,",",A10,1X,A8,",",I7,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
-
-         !!--time in seconds since startdate
-         iret = nf_inq_varid(ncid2,"time_observation", varid)
-         iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), seconds_since)
-
-         iret = nf_inq_varid(ncid2,"streamflow", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
-
-         iret = nf_inq_varid(ncid2,"head", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
-
-         iret = nf_inq_varid(ncid,"order", varid)
-         iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
-
-         !-- station index.. will repeat for every timesstep
-         iret = nf_inq_varid(ncid2,"parent_index", varid)
-         iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
-
-          !--record number of previous record for same station
-!obsolete format          prev_posO = cnt+(nobs*(output_count-1))
-         prev_posO = cnt+(nobs*(output_count-2))
-         if(output_count.ne.1) then !-- only write next set of records
-           iret = nf_inq_varid(ncid2,"prevChild", varid)
-           iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
-
-!IF block to add -1 to last element of prevChild array to designate end of list...
-!           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
-!             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
-!           else
-!             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
-!           endif 
+             start_posO = (cnt+1)+(nobs * (output_count-1))
+             !Write frxst_pts to text file...
+             !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
+118          FORMAT(I8,",",A10,1X,A8,", ",A15,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
+             write(999,118) seconds_since,date(1:10),date(12:19),gages(i),chlon(i),chlat(i), &
+                   qlink(i,1), qlink(i,1)*35.315,hlink(i)
+             !yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
+             !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 
 
-         endif
+             !!--time in seconds since startdate
+             iret = nf_inq_varid(ncid2,"time_observation", varid)
+             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), seconds_since)
 
-         cnt=cnt+1  !--indices are 0 based
-         rec_num_of_stationO(cnt) = start_posO - 1  !-- save position for last child, 0-based!!
+             iret = nf_inq_varid(ncid2,"streamflow", varid)
+             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
 
+             iret = nf_inq_varid(ncid2,"head", varid)
+             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
 
-      endif
+             iret = nf_inq_varid(ncid,"order", varid)
+             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
+
+             !-- station index.. will repeat for every timesstep
+             iret = nf_inq_varid(ncid2,"parent_index", varid)
+             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
+
+             !--record number of previous record for same station
+             !obsolete format          prev_posO = cnt+(nobs*(output_count-1))
+             prev_posO = cnt+(nobs*(output_count-2))
+             if(output_count.ne.1) then !-- only write next set of records
+                iret = nf_inq_varid(ncid2,"prevChild", varid)
+                iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+
+                !IF block to add -1 to last element of prevChild array to designate end of list...
+                !           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
+                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
+                !           else
+                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                !           endif 
+
+             endif
+
+             cnt=cnt+1  !--indices are 0 based
+             rec_num_of_stationO(cnt) = start_posO - 1  !-- save position for last child, 0-based!!
+          endif
+          
+       else !! channel options 3 below
+
+          if(STRMFRXSTPTS(i) .ne. -9999) then 
+             start_posO = (cnt+1)+(nobs * (output_count-1))
+             !Write frxst_pts to text file...
+             !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
+117          FORMAT(I8,",",A10,1X,A8,",",I7,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
+             write(999,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
+                  qlink(i,1), qlink(i,1)*35.315,hlink(i)
+             ! JLM: makes more sense to output the value in frxstpts incase they have meaning,
+             ! as below, but I'm not going to make this change until I'm working with gridded
+             ! streamflow again.
+             !write(999,117) seconds_since,date(1:10),date(12:19),strmfrxstpts(i),chlon(i),chlat(i), &
+             !     qlink(i,1), qlink(i,1)*35.315,hlink(i)
+
+             !!--time in seconds since startdate
+             iret = nf_inq_varid(ncid2,"time_observation", varid)
+             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), seconds_since)
+
+             iret = nf_inq_varid(ncid2,"streamflow", varid)
+             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
+
+             iret = nf_inq_varid(ncid2,"head", varid)
+             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
+
+             iret = nf_inq_varid(ncid,"order", varid)
+             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
+
+             !-- station index.. will repeat for every timesstep
+             iret = nf_inq_varid(ncid2,"parent_index", varid)
+             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
+
+             !--record number of previous record for same station
+             !obsolete format          prev_posO = cnt+(nobs*(output_count-1))
+             prev_posO = cnt+(nobs*(output_count-2))
+             if(output_count.ne.1) then !-- only write next set of records
+                iret = nf_inq_varid(ncid2,"prevChild", varid)
+                iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+
+                !IF block to add -1 to last element of prevChild array to designate end of list...
+                !           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
+                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
+                !           else
+                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                !           endif 
+
+             endif
+
+             cnt=cnt+1  !--indices are 0 based
+             rec_num_of_stationO(cnt) = start_posO - 1  !-- save position for last child, 0-based!!
+          endif
+
+       endif
 
     enddo
     close(999) 
@@ -3266,7 +3341,7 @@ end subroutine output_chrt
    subroutine mpp_output_chrt(gnlinks,gnlinksl,map_l2g,igrid, &
         split_output_count, NLINKS, ORDER, &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch, &
-        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
+        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss)
 
        USE module_mpp_land
 
@@ -3279,6 +3354,8 @@ end subroutine output_chrt
 
      integer, dimension(:),               intent(in) :: ORDER
      integer, dimension(:),               intent(inout) :: STRMFRXSTPTS
+     character(len=15), dimension(:),     intent(inout) :: gages
+     character(len=15),                   intent(in) :: gageMiss
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
@@ -3337,7 +3414,7 @@ end subroutine output_chrt
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER, &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,&
-          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option)
+          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option, gages, gageMiss)
     end if
 
     deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink)
@@ -5340,7 +5417,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
                ,Link_Location &
 #endif
-            )
+            ,gages)
 #ifdef MPP_LAND
         use module_mpp_land, only:  my_id, io_id
 #endif
@@ -5400,6 +5477,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: ORIFICEE
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
         REAL, INTENT(INOUT), DIMENSION(NLINKS)       :: ChSSlp, Bw
+        character(len=15), intent(out), dimension(nlinks) :: gages
 
         CHARACTER(len=256)                           :: route_link_f
         CHARACTER(len=256)                           :: route_lake_f
@@ -6071,7 +6149,7 @@ end subroutine mpp_output_chrt
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
-                   ORIFICEA, ORIFICEE  )
+                   ORIFICEA, ORIFICEE, gages  )
    ENDIF
 
      return
@@ -6084,7 +6162,7 @@ end subroutine mpp_output_chrt
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
-                   ORIFICEA, ORIFICEE  )
+                   ORIFICEA, ORIFICEE, gages )
 
         implicit none
         character(len=*) :: route_link_f
@@ -6097,6 +6175,8 @@ end subroutine mpp_output_chrt
                    MannN, So, ChSSlp, Bw, HRZAREA,&
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE
+
+        character(len=15), dimension(nlinksl), intent(out) :: gages
 
         INTEGER, dimension(GNLINKSL) ::  tmpLINKID,  tmpTO_NODE, tmpTYPEL, tmpORDER 
         CHARACTER(len=155)	 :: header
@@ -6126,14 +6206,14 @@ end subroutine mpp_output_chrt
 
           if(routeLinkNetcdf) then
 
-             call read_route_link_netcdf(                               &
-                  route_link_f,                                         &
-                  tmpLINKID,     tmpTO_NODE, tmpCHLON,    &
-                  tmpCHLAT,      tmpZELEV,     tmpTYPEL,   tmpORDER,    &
-                  tmpQLINK(:,1), tmpMUSK,      tmpMUSX,    tmpCHANLEN,  &
-                  tmpMannN,      tmpSo,        tmpChSSlp,  tmpBw,       &
-                  tmpHRZAREA,    tmpLAKEMAXH,  tmpWEIRC,   tmpWEIRL,    &
-                  tmpORIFICEC,   tmpORIFICEA,  tmpORIFICEE              )
+             call read_route_link_netcdf(                                &
+                  route_link_f,                                          &
+                  tmpLINKID,     tmpTO_NODE, tmpCHLON,                   &
+                  tmpCHLAT,      tmpZELEV,     tmpTYPEL,    tmpORDER,    &
+                  tmpQLINK(:,1), tmpMUSK,      tmpMUSX,     tmpCHANLEN,  &
+                  tmpMannN,      tmpSo,        tmpChSSlp,   tmpBw,       &
+                  tmpHRZAREA,    tmpLAKEMAXH,  tmpWEIRC,    tmpWEIRL,    &
+                  tmpORIFICEC,   tmpORIFICEA,  tmpORIFICEE, gages        )
 
           else
 
@@ -6195,13 +6275,13 @@ end subroutine mpp_output_chrt
         if(routeLinkNetcdf) then
 
            call read_route_link_netcdf(                     &
-                 route_link_f,                             &
-                 LINKID,     TO_NODE, CHLON,    &
-                 CHLAT,      ZELEV,     TYPEL,   ORDER,    &
-                 QLINK(:,1), MUSK,      MUSX,    CHANLEN,  &
-                 MannN,      So,        ChSSlp,  Bw,       &
-                 HRZAREA,    LAKEMAXH,  WEIRC,   WEIRL,    &
-                 ORIFICEC,   ORIFICEA,  ORIFICEE           )
+                 route_link_f,                              &
+                 LINKID,     TO_NODE, CHLON,                &
+                 CHLAT,      ZELEV,     TYPEL,    ORDER,    &
+                 QLINK(:,1), MUSK,      MUSX,     CHANLEN,  &
+                 MannN,      So,        ChSSlp,   Bw,       &
+                 HRZAREA,    LAKEMAXH,  WEIRC,    WEIRL,    &
+                 ORIFICEC,   ORIFICEA,  ORIFICEE, gages     )
            
         else 
 
@@ -6253,7 +6333,7 @@ end subroutine mpp_output_chrt
             channel_option,LATVAL,&
             LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,NLINKSL, LINKID, GNLINKSL,g_ixrt,g_jxrt, &
             gnlinks,GCH_NETLNK, map_l2g, link_location,yw_mpp_nlinks, &
-            lake_index, nlinks_index)
+            lake_index, nlinks_index, gages)
         implicit none
         INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
@@ -6293,6 +6373,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: ORIFICEE
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
         REAL, INTENT(INOUT), DIMENSION(NLINKS)       :: ChSSlp, Bw
+        character(len=15), intent(out), dimension(nlinks) :: gages
 
         CHARACTER(len=256)                           :: route_link_f
         CHARACTER(len=256)                           :: route_lake_f
@@ -6330,7 +6411,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
            ,Link_Location  &
 #endif
-           )
+           ,gages)
 
       call mpp_land_max_int1(MAXORDER)
 
@@ -6507,13 +6588,13 @@ end subroutine mpp_output_chrt
 !
 ! User controllable options: None. 
 
-subroutine read_route_link_netcdf( route_link_file,                        &
-                                   LINKID,   TO_NODE, CHLON,    &
-                                   CHLAT,    ZELEV,     TYPEL,   ORDER,    &
-                                   QLINK,    MUSK,      MUSX,    CHANLEN,  &
-                                   MannN,    So,        ChSSlp,  Bw,       &
-                                   HRZAREA,  LAKEMAXH,  WEIRC,   WEIRL,    &
-                                   ORIFICEC, ORIFICEA,  ORIFICEE           )
+subroutine read_route_link_netcdf( route_link_file,                         &
+                                   LINKID,   TO_NODE, CHLON,                &
+                                   CHLAT,    ZELEV,     TYPEL,    ORDER,    &
+                                   QLINK,    MUSK,      MUSX,     CHANLEN,  &
+                                   MannN,    So,        ChSSlp,   Bw,       &
+                                   HRZAREA,  LAKEMAXH,  WEIRC,    WEIRL,    &
+                                   ORIFICEC, ORIFICEA,  ORIFICEE, gages     )
 
 implicit none
 character(len=*),        intent(in)  :: route_link_file
@@ -6525,8 +6606,9 @@ real,    dimension(:),   intent(out) :: MUSK, MUSX, CHANLEN
 real,    dimension(:),   intent(out) :: MannN,    So,       ChSSlp,   Bw
 real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL
 real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE
+character(len=15), dimension(:), intent(out) :: gages
 
-integer :: iRet, ncid, ii
+integer :: iRet, ncid, ii, varid
 logical :: fatal_if_error
 fatal_if_error = .TRUE.  !! was thinking this would be a global variable...could become an input.
 
@@ -6534,13 +6616,13 @@ fatal_if_error = .TRUE.  !! was thinking this would be a global variable...could
 print*,"start read_route_link_netcdf"
 #endif
    
-iRet = nf_open(trim(route_link_file), NF_NOWRITE, ncid)
-if (iRet /= 0) then
+iRet = nf90_open(trim(route_link_file), nf90_nowrite, ncid)
+if (iRet /= nf90_noErr) then
    write(*,'("read_route_link_netcdf: Problem opening: ''", A, "''")') trim(route_link_file)
    if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem opening file.")
 endif
 
-call get_1d_netcdf_int(ncid,  'linkid',     LINKID,    'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'link',     LINKID,    'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_int(ncid,  'to',       TO_NODE,   'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon',      CHLON,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lat',      CHLAT,     'read_route_linknetcdf', .TRUE.)
@@ -6564,8 +6646,14 @@ call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_linknetcdf', .T
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_linknetcdf', .TRUE.)
 
-iRet = nf_close(ncId)
-if (iRet /= 0) then
+! gages is optional, only get it if it's defined in the file.
+iRet = nf90_inq_varid(ncid, 'gages', varid)
+if (iret .eq. nf90_NoErr) then
+   call get_1d_netcdf_text(ncid, 'gages', gages,  'read_route_link_netcdf', .true.)
+end if
+
+iRet = nf90_close(ncId)
+if (iRet /= nf90_noErr) then
    write(*,'("read_route_link_netcdf: Problem closing: ''", A, "''")') trim(route_link_file)
    if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem closing file.")
 end if
@@ -6586,7 +6674,7 @@ end subroutine read_route_link_netcdf
 
 
 !===================================================================================================
-! Program Names: get_1d_netcdf_real, get_1d_netcdf_int
+! Program Names: get_1d_netcdf_real, get_1d_netcdf_int, get_1d_netcdf_text
 ! Author(s)/Contact(s): James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: Read a variable of real or integer type from an open netcdf file, respectively. 
 ! History Log: 
@@ -6612,15 +6700,20 @@ integer, dimension(:), intent(out) :: var
 character(len=*),      intent(in)  :: callingRoutine
 logical,               intent(in)  :: fatal_if_error
 integer :: varid, iret
-iRet = nf_inq_varid(ncid, varName, varid)
-if (iret /= 0) then
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_noErr) then
    if (fatal_IF_ERROR) then
       print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
       call hydro_stop("get_1d_netcdf")
    end if
 end if
-iRet = nf_get_var_int(ncid, varid, var)
+iRet = nf90_get_var(ncid, varid, var)
+if (iRet /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_int: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int")
+end if
 end subroutine get_1d_netcdf_int
+
 
 subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error)
 integer,            intent(in)  :: ncid !! the file identifier
@@ -6630,15 +6723,38 @@ character(len=*),   intent(in)  :: callingRoutine
 logical,            intent(in)  :: fatal_if_error
 
 integer :: varid, iret
-iRet = nf_inq_varid(ncid, varName, varid)
-if (iret /= 0) then
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_noErr) then
    if (fatal_IF_ERROR) then
       print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
       call hydro_stop("get_1d_netcdf")
    end if
 end if
-iRet = nf_get_var_real(ncid, varid, var)
+iRet = nf90_get_var(ncid, varid, var)
+if (iRet /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_real: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
+end if
 end subroutine get_1d_netcdf_real
+
+subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error)
+integer,                        intent(in)  :: ncid !! the file identifier
+character(len=*),               intent(in)  :: varName
+character(len=*), dimension(:), intent(out) :: var
+character(len=*),               intent(in)  :: callingRoutine
+logical,                        intent(in)  :: fatal_if_error
+integer :: varId, iRet
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_text: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_text: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+end if
+end subroutine get_1d_netcdf_text
 
 end module module_HYDRO_io
 

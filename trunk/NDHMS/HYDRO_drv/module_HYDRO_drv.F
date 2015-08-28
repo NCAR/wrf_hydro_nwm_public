@@ -258,7 +258,8 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write, &
-               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option)
+               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,   &
+               rt_domain(did)%gages, rt_domain(did)%gageMiss )
 
       
 #ifdef MPP_LAND
