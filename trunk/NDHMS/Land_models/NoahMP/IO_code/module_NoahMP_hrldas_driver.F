@@ -1251,9 +1251,19 @@ end subroutine land_driver_ini
 #endif
 
 #ifdef WRF_HYDRO
+!      if(forc_typ .eq. 8) then
+!          call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
+!          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+!          return
+!      endif
+#endif
+
+#ifdef WRF_HYDRO
       if(forc_typ .eq. 8) then
           call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
-          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call geth_newdate(newdate, olddate, nint(dtbl))
+          olddate = newdate
           return
       endif
 #endif

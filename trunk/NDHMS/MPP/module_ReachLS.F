@@ -1,7 +1,7 @@
 !   This is used as a coupler with the WRF model.
 MODULE MODULE_mpp_ReachLS
 
-  use module_mpp_land, only:  io_id, my_id, mpp_status, mpp_land_max_int1
+  use module_mpp_land, only:  HYDRO_COMM_WORLD, io_id, my_id, mpp_status, mpp_land_max_int1
   implicit none
 
 
@@ -68,14 +68,14 @@ MODULE MODULE_mpp_ReachLS
      if(my_id .ne. IO_id) then
           tag = 102
           call mpi_send(gLinkV,gnlinksl,MPI_DOUBLE, IO_id,     &
-                tag,MPI_COMM_WORLD,ierr)
+                tag,HYDRO_COMM_WORLD,ierr)
       else
           gLinkV_r = gLinkV 
           do i = 0, numprocs - 1
             if(i .ne. IO_id) then
                tag = 102
                call mpi_recv(gLinkV,gnlinksl,&
-                   MPI_DOUBLE,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                   MPI_DOUBLE,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                gLinkV_r = gLinkV_r + gLinkV
             end if
           end do
@@ -101,14 +101,14 @@ MODULE MODULE_mpp_ReachLS
      if(my_id .ne. IO_id) then
           tag = 102
           call mpi_send(gLinkV,gnlinksl,MPI_REAL, IO_id,     &
-                tag,MPI_COMM_WORLD,ierr)
+                tag,HYDRO_COMM_WORLD,ierr)
       else
           gLinkV_r = gLinkV    
           do i = 0, numprocs - 1
             if(i .ne. IO_id) then
                tag = 102
                call mpi_recv(gLinkV,gnlinksl,&
-                   MPI_REAL,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                gLinkV_r = gLinkV_r + gLinkV
             end if
           end do
@@ -124,7 +124,7 @@ MODULE MODULE_mpp_ReachLS
      integer :: ierr
      call ReachLS_write_io(inV,outV)
      call mpi_bcast(outV(1:gnlinksl),gnlinksl,MPI_REAL,   &
-            IO_id,MPI_COMM_WORLD,ierr) 
+            IO_id,HYDRO_COMM_WORLD,ierr)
   end subroutine gbcastReal
 
   subroutine gbcastReal2(index,size1,inV, insize, outV)
@@ -142,7 +142,7 @@ MODULE MODULE_mpp_ReachLS
          if(linkls_e(i+1) .gt. 0) then
             if(my_id .eq. i) tmpV(1:bsize) = inV(1:bsize)
             call mpi_bcast(tmpV(1:bsize),bsize,MPI_REAL,   &
-                i,MPI_COMM_WORLD,ierr) 
+                i,HYDRO_COMM_WORLD,ierr)
 
             do j = 1, size1
                 do k = 1, bsize
@@ -167,7 +167,7 @@ MODULE MODULE_mpp_ReachLS
      integer :: ierr
      call ReachLS_write_io(inV,outV)
      call mpi_bcast(outV(1:gnlinksl),gnlinksl,MPI_INTEGER,   &
-            IO_id,MPI_COMM_WORLD,ierr) 
+            IO_id,HYDRO_COMM_WORLD,ierr)
   end subroutine gbcastInt 
 
 
@@ -184,7 +184,7 @@ MODULE MODULE_mpp_ReachLS
        call ReachLS_write_io(LINKID,gLinkId)
 
        call mpi_bcast(gLinkId(1:glinksl),glinksl,MPI_INTEGER,   &
-            IO_id,MPI_COMM_WORLD,ierr)
+            IO_id,HYDRO_COMM_WORLD,ierr)
 
        do i = 1, LLINKLEN
            do k = 1, glinksl
@@ -206,8 +206,8 @@ MODULE MODULE_mpp_ReachLS
      integer :: i, ii, ierr
 
 ! get my_id and numprocs 
-     call MPI_COMM_RANK( MPI_COMM_WORLD, my_id, ierr )
-     call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr )
+     call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
+     call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
 
      nlinksl = glinksl / numprocs 
      allocate(linkls_s(numprocs))
@@ -272,7 +272,7 @@ MODULE MODULE_mpp_ReachLS
              tmpS = sDataRec
          endif
          call mpi_bcast(tmpS,numprocs,MPI_INTEGER,   &
-            n-1,MPI_COMM_WORLD,ierr)
+            n-1,HYDRO_COMM_WORLD,ierr)
          rDataRec(n) = tmpS(n)
      enddo
     
@@ -295,7 +295,7 @@ MODULE MODULE_mpp_ReachLS
                 if(aLinksl(i) .gt. 0) then
                     call mpi_send(inV(linkls_s(i):linkls_e(i)), &
                         aLinksl(i), &
-                        MPI_REAL, i-1 ,tag,MPI_COMM_WORLD,ierr)
+                        MPI_REAL, i-1 ,tag,HYDRO_COMM_WORLD,ierr)
                 endif
             endif
          end do
@@ -303,7 +303,7 @@ MODULE MODULE_mpp_ReachLS
          if(aLinksl(my_id+1) .gt. 0) then
              call mpi_recv(outV(1:(linkls_e(my_id+1)-linkls_s(my_id+1)+1) ), &
               aLinksl(my_id+1),                                        &
-              MPI_REAL, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+              MPI_REAL, io_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
       endif
       call mpp_land_sync()
@@ -325,7 +325,7 @@ MODULE MODULE_mpp_ReachLS
                if(aLinksl(i) .gt. 0) then
                   call mpi_send(inV(linkls_s(i):linkls_e(i)), &
                       aLinksl(i),                &
-                      MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,ierr)
+                      MPI_INTEGER, i-1,tag,HYDRO_COMM_WORLD,ierr)
                endif
             endif
          end do
@@ -333,7 +333,7 @@ MODULE MODULE_mpp_ReachLS
           if(aLinksl(my_id+1) .gt. 0) then
                call mpi_recv(outV(1:linkls_e(my_id+1)-linkls_s(my_id+1)), &
                     alinksl(my_id+1),                           &
-                    MPI_INTEGER, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                    MPI_INTEGER, io_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
           endif
       endif
 
@@ -359,7 +359,7 @@ MODULE MODULE_mpp_ReachLS
 
                     call mpi_recv(outV(linkls_s(i):linkls_e(i)), &
                          aLinksl(i),                            &
-                         MPI_REAL,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                         MPI_REAL,i-1,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                 endif
             endif
          end do
@@ -369,7 +369,7 @@ MODULE MODULE_mpp_ReachLS
                ss = size(inv,1)
                call mpi_send(inV(1:aLinksl(my_id+1) ), &
                       aLinksl(my_id+1),                      &
-                      MPI_REAL,io_id,tag,MPI_COMM_WORLD,ierr)
+                      MPI_REAL,io_id,tag,HYDRO_COMM_WORLD,ierr)
           endif
       endif
       call mpp_land_sync()
@@ -392,7 +392,7 @@ MODULE MODULE_mpp_ReachLS
                   tag = 12
                   call mpi_recv(outV(linkls_s(i):linkls_e(i)), &
                        aLinksl(i),                             &
-                       MPI_INTEGER,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                       MPI_INTEGER,i-1,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                endif
             endif
          end do
@@ -401,7 +401,7 @@ MODULE MODULE_mpp_ReachLS
                 tag = 12
                 call mpi_send(inV(1:aLinksl(my_id+1) ), &
                       aLinksl(my_id+1),                      &
-                      MPI_INTEGER,io_id,tag,MPI_COMM_WORLD,ierr)
+                      MPI_INTEGER,io_id,tag,HYDRO_COMM_WORLD,ierr)
            endif
       endif
       call mpp_land_sync()
@@ -426,7 +426,7 @@ MODULE MODULE_mpp_ReachLS
                   tag = 12
                   call mpi_recv(outV(linkls_s(i):linkls_e(i)), &
                        aLinksl(i),                             &
-                       MPI_INTEGER,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                       MPI_INTEGER,i-1,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                endif
             endif
          end do
@@ -435,7 +435,7 @@ MODULE MODULE_mpp_ReachLS
                 tag = 12
                 call mpi_send(inV(1:aLinksl(my_id+1) ), &
                       aLinksl(my_id+1),                      &
-                      MPI_INTEGER,io_id,tag,MPI_COMM_WORLD,ierr)
+                      MPI_INTEGER,io_id,tag,HYDRO_COMM_WORLD,ierr)
            endif
       endif  
       call mpp_land_sync()
@@ -459,7 +459,7 @@ MODULE MODULE_mpp_ReachLS
                     tag = 12
                     call mpi_recv(outV(linkls_s(i):linkls_e(i)), &
                          aLinksl(i),                            &
-                         MPI_REAL,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                         MPI_REAL,i-1,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                 endif
             endif
          end do
@@ -468,7 +468,7 @@ MODULE MODULE_mpp_ReachLS
                tag = 12
                call mpi_send(inV(1:aLinksl(my_id+1) ), &
                       aLinksl(my_id+1),                      &
-                      MPI_REAL,io_id,tag,MPI_COMM_WORLD,ierr)
+                      MPI_REAL,io_id,tag,HYDRO_COMM_WORLD,ierr)
           endif
       endif
       call mpp_land_sync()   
@@ -545,7 +545,7 @@ MODULE MODULE_mpp_ReachLS
       ToInd(my_id+1) = kk
       do i = 0, numprocs - 1
          call mpi_bcast(ToInd(i+1),1,MPI_INTEGER,   &
-            i,MPI_COMM_WORLD,ierr)
+            i,HYDRO_COMM_WORLD,ierr)
       end do
 
   end subroutine getToInd

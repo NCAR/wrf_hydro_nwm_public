@@ -21,7 +21,7 @@ module module_HYDRO_io
           get2d_real = -1
 
 #ifdef PARALLELIO
-          iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+          iret = nf90_open_par(trim(fileName), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
 #endif
@@ -102,7 +102,7 @@ module module_HYDRO_io
 #endif
                 ! Open the NetCDF file.
 #ifdef PARALLELIO
-              iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+              iret = nf90_open_par(trim(fileName), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
               iret = nf_open(fileName, NF_NOWRITE, ncid)
 #endif
@@ -148,13 +148,16 @@ module module_HYDRO_io
             implicit none
             character(len=*) fileName
             integer ncid , iret, ix,jx, dimid
+
+            print *, 'WRFHYDRO: inside get_file_dimension: ', my_id, IO_id
+
 #ifdef MPP_LAND
 #ifndef PARALLELIO
             if(my_id .eq. IO_id) then
 #endif
 #endif
 #ifdef PARALLELIO
-            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
             iret = nf_open(fileName, NF_NOWRITE, ncid)
 #endif
@@ -197,6 +200,8 @@ module module_HYDRO_io
 #endif
 #endif
 
+        print *, 'WRFHYDRO: exiting get_file_dimension: ', my_id, IO_id
+
      end subroutine get_file_dimension
 
      subroutine get2d_lsm_soltyp(out_buff,ix,jx,fileName)
@@ -217,7 +222,7 @@ module module_HYDRO_io
 #endif
                 ! Open the NetCDF file.
 #ifdef PARALLELIO
-            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
             iret = nf_open(fileName, NF_NOWRITE, ncid)
 #endif
@@ -1425,7 +1430,7 @@ end subroutine get_albedo12m_netcdf
 #else
        write(6,*) "using normal netcdf file for RTOUT_DOMAIN"
 #ifdef PARALLELIO
-      iret = nf90_open_par(trim(geo_finegrid_flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+      iret = nf90_open_par(trim(geo_finegrid_flnm), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
@@ -2790,23 +2795,23 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',57,'record number of the previous record for the same station')
 !ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
         iret = nf_def_var(ncid2,"prevChild",NF_INT,1,(/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',57,'record number of the previous record for the same station')
 !ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
 
      !-- lastChild
         iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
 !ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
         iret = nf_def_var(ncid2,"lastChild",NF_INT,1,(/obsdim/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',30,'latest report for this station')
 !ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
 
 !     !- flow definition, var
         iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/dimdata/), varid)
@@ -2835,11 +2840,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
         iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
 
      !-- station  id
@@ -3329,13 +3334,13 @@ end subroutine mpp_output_chrt
       iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',54,'record number of the previous record for the same lake')
 !ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-      iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
      !-- lastChild
       iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',27,'latest report for this lake')
 !ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-      iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
 !     !- water surface elevation
       iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/dimdata/), varid)
@@ -3687,7 +3692,7 @@ end subroutine mpp_output_chrt
 
 !DJG Open NetCDF file...
 #ifdef PARALLELIO
-    iret = nf90_open_par(trim(inflnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    iret = nf90_open_par(trim(inflnm), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf_open(inflnm, NF_NOWRITE, ncid)
 #endif
@@ -3718,7 +3723,7 @@ end subroutine mpp_output_chrt
           character(len=*), intent(in) :: var_name
           character(len=*), intent(in) :: fileName
 #ifdef PARALLELIO
-    iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    iret = nf90_open_par(trim(fileName), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
 #endif
