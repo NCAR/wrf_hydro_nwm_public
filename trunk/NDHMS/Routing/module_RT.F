@@ -499,7 +499,7 @@ CONTAINS
                ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
                ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
 #endif
-               ,rt_domain(did)%gages )
+               ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
 
     if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
 #ifdef MPP_LAND
@@ -577,15 +577,15 @@ CONTAINS
 
 #endif
 
-        ! use gage information in RouteLink like strmfrxstpts
-        rt_domain(did)%STRMFRXSTPTS = -9999  !! existing info useless for link-based routing
-        count = 1
-        do ll=1,rt_domain(did)%NLINKSL
-           if(trim(rt_domain(did)%gages(ll)) .ne. trim(rt_domain(did)%gageMiss)) then
-              rt_domain(did)%STRMFRXSTPTS(count) = ll
-              count = count + 1 
-           end if
-        end do
+!!$        ! use gage information in RouteLink like strmfrxstpts
+!!$        rt_domain(did)%STRMFRXSTPTS = -9999  !! existing info useless for link-based routing
+!!$        count = 1
+!!$        do ll=1,rt_domain(did)%NLINKSL
+!!$           if(trim(rt_domain(did)%gages(ll)) .ne. trim(rt_domain(did)%gageMiss)) then
+!!$              rt_domain(did)%STRMFRXSTPTS(count) = ll
+!!$              count = count + 1 
+!!$           end if
+!!$        end do
 
 
      endif   ! end of channel option if block

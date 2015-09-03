@@ -1,7 +1,8 @@
 module module_HYDRO_io
 #ifdef MPP_LAND
      use module_mpp_land
-     use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io , ReachLS_wInt, reachls_wreal2
+     use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io, &
+                                    ReachLS_wInt, reachls_wreal2
      use MODULE_mpp_GWBUCKET, only: gw_write_io_real
 #endif
    use module_HYDRO_utils, only: get_dist_ll
@@ -14,12 +15,20 @@ module module_HYDRO_io
 #include <netcdf.inc>
 
      contains
-        integer function get2d_real(var_name,out_buff,ix,jx,fileName)
+
+        integer function get2d_real(var_name,out_buff,ix,jx,fileName, fatalErr)
           implicit none
           integer :: ivar, iret,varid,ncid,ix,jx
           real out_buff(ix,jx)
           character(len=*), intent(in) :: var_name
           character(len=*), intent(in) :: fileName
+          logical, optional, intent(in) :: fatalErr
+          logical :: fatalErr_local
+          character(len=256) :: errMsg
+          
+          fatalErr_local = .false.
+          if(present(fatalErr)) fatalErr_local=fatalErr
+
           get2d_real = -1
 
 #ifdef PARALLELIO
@@ -28,27 +37,55 @@ module module_HYDRO_io
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
 #endif
           if (iret .ne. 0) then
-#ifdef HYDRO_D 
-            print*,"failed to open the netcdf file: ",trim(fileName)
+             errMsg = "get2d_real: failed to open the netcdf file: " // trim(fileName)
+#ifdef HYDRO_D
+             print*, trim(errMsg)
 #endif
-            out_buff = -9999.
-            return 
+             if(fatalErr_local) call hydro_stop(trim(errMsg))
+             out_buff = -9999.
+             return 
           endif
+
           ivar = nf_inq_varid(ncid,trim(var_name),  varid)
           if(ivar .ne. 0) then
-            ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
-            if(ivar .ne. 0) then
+             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
+             if(ivar .ne. 0) then
+                errMsg = "get2d_real: failed to find the variables: " //      &
+                         trim(var_name) // ' and ' // trim(var_name//"_M") // &
+                         ' in ' // trim(fileName)
 #ifdef HYDRO_D
-               write(6,*) "Read Variable Error file: ",trim(fileName)
-               write(6,*) "Read Error: could not find ",trim(var_name)
+                write(6,*) errMsg
 #endif
-                 return 
-            endif
+                if(fatalErr_local) call hydro_stop(errMsg)
+                return 
+             endif
           end if
+
           iret = nf_get_var_real(ncid, varid, out_buff)
+          if(iret .ne. 0) then
+             errMsg = "get2d_real: failed to read the variable: " // &
+                      trim(var_name) // ' or ' // trim(var_name//"_M") // &
+                      ' in ' // trim(fileName)
+#ifdef HYDRO_D
+             print*,trim(errMsg)
+#endif
+             if(fatalErr_local) call hydro_stop(trim(errMsg))
+             return
+          endif
+
           iret = nf_close(ncid)
+          if(iret .ne. 0) then
+             errMsg = "get2d_real: failed to close the file: " // &
+                      trim(fileName)
+#ifdef HYDRO_D
+             print*,trim(errMsg)
+#endif
+             if(fatalErr_local) call hydro_stop(trim(errMsg))
+          endif
+
           get2d_real =  ivar
       end function get2d_real
+
      
      subroutine get2d_lsm_real(var_name,out_buff,ix,jx,fileName)
          implicit none
@@ -627,15 +664,13 @@ end subroutine get_albedo12m_netcdf
 
 !-- new link id variable to handle link routing
          var_name = "LINKID"
-
 #ifdef MPP_LAND
     write(6,*) "read LINKID for CH_LNKRT from ", trim(geo_finegrid_flnm)
 #endif
-
 !!!! LINKID is used for reach based method.  ?
      IF(channel_option.ne.3) then  !get maxnodes and links from grid
          call readRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
-                   trim(geo_finegrid_flnm))
+                   trim(geo_finegrid_flnm), fatalErr=.TRUE.)
      endif
 
 
@@ -875,7 +910,7 @@ end subroutine get_albedo12m_netcdf
 
      END SUBROUTINE READ_ROUTEDIM
 
-     SUBROUTINE nreadRT2d_real(var_name, inv, ixrt, jxrt, fileName) 
+     subroutine nreadRT2d_real(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
          implicit none
          INTEGER :: iret
          INTEGER, INTENT(IN) :: ixrt,jxrt
@@ -883,14 +918,21 @@ end subroutine get_albedo12m_netcdf
          CHARACTER(len=*):: var_name,fileName
          real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
          real, dimension(ixrt,jxrt) :: inv_tmp
+         logical, optional, intent(in) :: fatalErr
+         logical :: fatalErr_local
 #ifdef MPP_LAND
          real, allocatable,dimension(:,:) :: g_inv_tmp, g_inv
+#endif
+         fatalErr_local = .FALSE.
+         if(present(fatalErr)) fatalErr_local=fatalErr
+
+#ifdef MPP_LAND
          if(my_id .eq. io_id) then
               allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
               allocate(g_inv(global_rt_nx,global_rt_ny))
               g_inv_tmp = -9999.9
               iret =  get2d_real(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
-                     trim(fileName))
+                     trim(fileName), fatalErr=fatalErr_local)
               do i=1,global_rt_nx
                  jj=global_rt_ny
                  do j=1,global_rt_ny
@@ -907,7 +949,7 @@ end subroutine get_albedo12m_netcdf
 #else
          inv_tmp = -9999.9
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
-                     trim(fileName))
+                     trim(fileName), fatalErr=fatalErr_local)
          do i=1,ixrt
             jj=jxrt
          do j=1,jxrt
@@ -920,21 +962,28 @@ end subroutine get_albedo12m_netcdf
         
      end SUBROUTINE nreadRT2d_real
 
-     SUBROUTINE nreadRT2d_int(var_name, inv, ixrt, jxrt, fileName) 
+     subroutine nreadRT2d_int(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
          implicit none
          INTEGER, INTENT(IN) :: ixrt,jxrt
          INTEGER :: i, j, ii,jj, iret
          CHARACTER(len=*):: var_name,fileName
          integer, INTENT(OUT), dimension(ixrt,jxrt) :: inv
          integer, dimension(ixrt,jxrt) :: inv_tmp
+         logical, optional, intent(in) :: fatalErr
+         logical :: fatalErr_local
 #ifdef MPP_LAND
          integer, allocatable,dimension(:,:) :: g_inv_tmp, g_inv
+#endif
+         fatalErr_local = .FALSE.
+         if(present(fatalErr)) fatalErr_local=fatalErr
+
+#ifdef MPP_LAND
          if(my_id .eq. io_id) then
               allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
               allocate(g_inv(global_rt_nx,global_rt_ny))
               g_inv_tmp = -9999.9
               call  get2d_int(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
-                     trim(fileName))
+                     trim(fileName), fatalErr=fatalErr_local)
               do i=1,global_rt_nx
                  jj=global_rt_ny
                 do j=1,global_rt_ny
@@ -950,7 +999,7 @@ end subroutine get_albedo12m_netcdf
          deallocate(g_inv_tmp, g_inv)
 #else
          call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
-                     trim(fileName))
+                     trim(fileName), fatalErr=fatalErr_local)
          do i=1,ixrt
             jj=jxrt
          do j=1,jxrt
@@ -963,7 +1012,7 @@ end subroutine get_albedo12m_netcdf
 !---------------------------------------------------------
 !DJG -----------------------------------------------------
 
-     SUBROUTINE readRT2d_real(var_name, inv, ixrt, jxrt, fileName) 
+     subroutine readRT2d_real(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
          implicit none
          INTEGER :: iret
          INTEGER, INTENT(IN) :: ixrt,jxrt
@@ -971,11 +1020,13 @@ end subroutine get_albedo12m_netcdf
          CHARACTER(len=*):: var_name,fileName
          real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
          real, dimension(ixrt,jxrt) :: inv_tmp
-
+         logical, optional, intent(in) :: fatalErr
+         logical :: fatalErr_local
+         fatalErr_local = .FALSE.
+         if(present(fatalErr)) fatalErr_local=fatalErr
          inv_tmp = -9999.9
-
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
-                     trim(fileName))
+                     trim(fileName), fatalErr=fatalErr_local)
          do i=1,ixrt
             jj=jxrt
          do j=1,jxrt
@@ -985,15 +1036,19 @@ end subroutine get_albedo12m_netcdf
         end do
      end SUBROUTINE readRT2d_real
 
-     SUBROUTINE readRT2d_int(var_name, inv, ixrt, jxrt, fileName) 
+     subroutine readRT2d_int(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
          implicit none
          INTEGER, INTENT(IN) :: ixrt,jxrt
          INTEGER :: i, j, ii,jj
          CHARACTER(len=*):: var_name,fileName
          integer, INTENT(OUT), dimension(ixrt,jxrt) :: inv
          integer, dimension(ixrt,jxrt) :: inv_tmp
+         logical, optional, intent(in) :: fatalErr
+         logical :: fatalErr_local
+         fatalErr_local = .FALSE.
+         if(present(fatalErr)) fatalErr_local=fatalErr
          call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
-                     trim(fileName))
+                     trim(fileName), fatalErr=fatalErr_local)
          do i=1,ixrt
             jj=jxrt
          do j=1,jxrt
@@ -1002,6 +1057,7 @@ end subroutine get_albedo12m_netcdf
          end do
         end do
      end SUBROUTINE readRT2d_int
+
 !---------------------------------------------------------
 !DJG -----------------------------------------------------
 
@@ -2780,11 +2836,13 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      do i=1,nlk
         if(ORDER(i) .ge. order_to_write) nstations = nstations + 1
         if(channel_option .ne. 3) then
-           if(gages(i) .ne. gageMiss) nobs = nobs + 1
+           if(trim(gages(i)) .ne. trim(gageMiss)) nobs = nobs + 1
         else 
            if(STRMFRXSTPTS(i) .ne. -9999) nobs = nobs + 1
         endif
      enddo
+print*,'jlm nobs:',nobs
+print*,'jlm gages():',gages
 
        if (nobs .eq. 0) then ! let's at least make one obs point
          nobs = 1
@@ -2874,7 +2932,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
        do i=1,nlk
           if(channel_option .ne. 3) then
-             if(gages(i) .ne. gageMiss) then
+             if(trim(gages(i)) .ne. trim(gageMiss)) then
                 nobs = nobs + 1
                 chanlatO(nobs) = chlat(i)
                 chanlonO(nobs) = chlon(i)
@@ -3177,13 +3235,13 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     do i=1,nlk   
        if(channel_option .ne. 3) then
           ! jlm this verry repetitiuos, oh well.
-          if(gages(i) .ne. gageMiss) then
+          if(trim(gages(i)) .ne. trim(gageMiss)) then
 
              start_posO = (cnt+1)+(nobs * (output_count-1))
              !Write frxst_pts to text file...
              !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 118          FORMAT(I8,",",A10,1X,A8,", ",A15,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
-             write(999,118) seconds_since,date(1:10),date(12:19),gages(i),chlon(i),chlat(i), &
+             write(999,118) seconds_since,date(1:10),date(12:19), gages(i),chlon(i),chlat(i), &
                    qlink(i,1), qlink(i,1)*35.315,hlink(i)
              !yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
@@ -3345,6 +3403,8 @@ end subroutine output_chrt
 
        USE module_mpp_land
 
+       !!implicit none
+
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid,K,channel_option,NLINKSL
      integer,                                  intent(in) :: split_output_count
@@ -3367,6 +3427,7 @@ end subroutine output_chrt
       real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
       integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
       real,allocatable,dimension(:,:) :: g_qlink
+      character(len=15),allocatable,dimension(:) :: g_gages
 
      if(my_id .eq. io_id ) then
         allocate(g_chlon(gNLINKS))
@@ -3376,6 +3437,7 @@ end subroutine output_chrt
         allocate(g_qlink(gNLINKS,2))
         allocate(g_order(gNLINKS))
         allocate(g_STRMFRXSTPTS(gNLINKS))
+        allocate(g_gages(gNLINKS))
      else
         allocate(g_chlon(1))
         allocate(g_chlat(1))
@@ -3384,13 +3446,14 @@ end subroutine output_chrt
         allocate(g_qlink(1,2))
         allocate(g_order(1))
         allocate(g_STRMFRXSTPTS(1))
+        allocate(g_gages(1))
      endif
 
 
 
      if(channel_option .eq. 1 .or. channel_option .eq. 2) then
         g_qlink = 0
-
+        g_gages = gageMiss
 
         call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
         call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
@@ -3398,6 +3461,7 @@ end subroutine output_chrt
         call ReachLS_write_io(chlon, g_chlon)
         call ReachLS_write_io(chlat, g_chlat)
         call ReachLS_write_io(zelev, g_zelev)
+        call ReachLS_write_io(gages, g_gages)
 
      else
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
@@ -3414,10 +3478,10 @@ end subroutine output_chrt
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER, &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,&
-          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option, gages, gageMiss)
+          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option, g_gages, gageMiss)
     end if
 
-    deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink)
+    deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_gages)
 
 end subroutine mpp_output_chrt
 
@@ -3945,36 +4009,65 @@ end subroutine mpp_output_chrt
 
 
 
-
-      subroutine get2d_int(var_name,out_buff,ix,jx,fileName)
-          implicit none
+ subroutine get2d_int(var_name,out_buff,ix,jx,fileName, fatalErr)
+    implicit none
 #include <netcdf.inc>
-          integer :: iret,varid,ncid,ix,jx
-          integer out_buff(ix,jx)
-          character(len=*), intent(in) :: var_name
-          character(len=*), intent(in) :: fileName
+    integer :: iret,varid,ncid,ix,jx
+    integer out_buff(ix,jx)
+    character(len=*), intent(in) :: var_name
+    character(len=*), intent(in) :: fileName
+    logical, optional, intent(in) :: fatalErr
+    logical :: fatalErr_local
+    character(len=256) :: errMsg
+
+    fatalErr_local = .false.
+    if(present(fatalErr)) fatalErr_local=fatalErr
+    
 #ifdef PARALLELIO
     iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
-          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+    iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
 #endif
-          if (iret .ne. 0) then
+    if (iret .ne. 0) then
+       errMsg = "get2d_int: failed to open the netcdf file: " // trim(fileName)
 #ifdef HYDRO_D
-            print*,"aaa failed to open the netcdf file: ",trim(fileName)
-            call hydro_stop("get2d_int")
+       print*, trim(errMsg)
 #endif
-          endif
-          iret = nf_inq_varid(ncid,trim(var_name),  varid)
-          if(iret .ne. 0) then
+       if(fatalErr_local) call hydro_stop(trim(errMsg))
+    endif
+    
+    iret = nf_inq_varid(ncid,trim(var_name),  varid)
+    if(iret .ne. 0) then
+       errMsg = "get2d_int: failed to find the variable: " // &
+                 trim(var_name) // ' in ' // trim(fileName)
 #ifdef HYDRO_D
-            print*,"failed to read the variabe: ",trim(var_name)
-            print*,"failed to read the netcdf file: ",trim(fileName)
+       print*, trim(errMsg)
 #endif
-          endif
-          iret = nf_get_var_int(ncid, varid, out_buff)
-          iret = nf_close(ncid)
-         return
-      end subroutine get2d_int
+       if(fatalErr_local) call hydro_stop(errMsg)
+    endif
+    
+    iret = nf_get_var_int(ncid, varid, out_buff)
+    if(iret .ne. 0) then
+       errMsg = "get2d_int: failed to read the variable: " // &
+                trim(var_name) // " in " //trim(fileName)
+#ifdef HYDRO_D
+       print*,trim(errMsg)
+#endif
+       if(fatalErr_local) call hydro_stop(trim(errMsg))
+    endif
+    
+    iret = nf_close(ncid)
+    if(iret .ne. 0) then
+       errMsg = "get2d_int: failed to close the file: " // &
+                trim(fileName)
+#ifdef HYDRO_D
+       print*,trim(errMsg)
+#endif
+       if(fatalErr_local) call hydro_stop(trim(errMsg))
+    endif
+    
+    return
+  end subroutine get2d_int
 
 
 #ifdef MPP_LAND
@@ -5417,7 +5510,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
                ,Link_Location &
 #endif
-            ,gages)
+            ,gages, gageMiss)
 #ifdef MPP_LAND
         use module_mpp_land, only:  my_id, io_id
 #endif
@@ -5477,7 +5570,8 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: ORIFICEE
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
         REAL, INTENT(INOUT), DIMENSION(NLINKS)       :: ChSSlp, Bw
-        character(len=15), intent(out), dimension(nlinks) :: gages
+        character(len=15), intent(inout), dimension(nlinks) :: gages  !! need to respect the default values
+        character(len=15), intent(in)                :: gageMiss
 
         CHARACTER(len=256)                           :: route_link_f
         CHARACTER(len=256)                           :: route_lake_f
@@ -6149,7 +6243,7 @@ end subroutine mpp_output_chrt
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
-                   ORIFICEA, ORIFICEE, gages  )
+                   ORIFICEA, ORIFICEE, gages, gageMiss  )
    ENDIF
 
      return
@@ -6162,7 +6256,7 @@ end subroutine mpp_output_chrt
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, HRZAREA,  &
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
-                   ORIFICEA, ORIFICEE, gages )
+                   ORIFICEA, ORIFICEE, gages, gageMiss )
 
         implicit none
         character(len=*) :: route_link_f
@@ -6176,9 +6270,11 @@ end subroutine mpp_output_chrt
                    LAKEMAXH, WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE
 
-        character(len=15), dimension(nlinksl), intent(out) :: gages
+        character(len=15), dimension(nlinksl), intent(inout) :: gages
+        character(len=15), intent(in) :: gageMiss
 
         INTEGER, dimension(GNLINKSL) ::  tmpLINKID,  tmpTO_NODE, tmpTYPEL, tmpORDER 
+        character(len=15), dimension(gnlinksl) :: tmpGages
         CHARACTER(len=155)	 :: header
         integer :: i
 
@@ -6201,6 +6297,7 @@ end subroutine mpp_output_chrt
      
 #ifdef MPP_LAND
        tmpQLINK = 0
+       tmpGages = gageMiss
  
        if(my_id .eq. IO_id) then
 
@@ -6208,12 +6305,12 @@ end subroutine mpp_output_chrt
 
              call read_route_link_netcdf(                                &
                   route_link_f,                                          &
-                  tmpLINKID,     tmpTO_NODE, tmpCHLON,                   &
+                  tmpLINKID,     tmpTO_NODE,   tmpCHLON,                 &
                   tmpCHLAT,      tmpZELEV,     tmpTYPEL,    tmpORDER,    &
                   tmpQLINK(:,1), tmpMUSK,      tmpMUSX,     tmpCHANLEN,  &
                   tmpMannN,      tmpSo,        tmpChSSlp,   tmpBw,       &
                   tmpHRZAREA,    tmpLAKEMAXH,  tmpWEIRC,    tmpWEIRL,    &
-                  tmpORIFICEC,   tmpORIFICEA,  tmpORIFICEE, gages        )
+                  tmpORIFICEC,   tmpORIFICEA,  tmpORIFICEE, tmpGages     )
 
           else
 
@@ -6243,6 +6340,8 @@ end subroutine mpp_output_chrt
               endif
            end do
 
+print*,'jlm size(tmpGages)',size(tmpGages)
+print*,'jlm tmpGages',tmpGages
        endif ! my_id .eq. IO_id
 
         call ReachLS_decomp(tmpLINKID,   LINKID )
@@ -6268,7 +6367,12 @@ end subroutine mpp_output_chrt
         call ReachLS_decomp(tmpORIFICEC, ORIFICEC)
         call ReachLS_decomp(tmpORIFICEA, ORIFICEA)
         call ReachLS_decomp(tmpORIFICEE, ORIFICEE)
+        call ReachLS_decomp(tmpGages,    gages)
         call mpp_land_bcast_int1(MAXORDER)
+
+print*,'size(gages): ',size(gages)
+print*,'jlm gages',gages
+
 
 #else
        QLINK = 0 
@@ -6333,7 +6437,7 @@ end subroutine mpp_output_chrt
             channel_option,LATVAL,&
             LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,NLINKSL, LINKID, GNLINKSL,g_ixrt,g_jxrt, &
             gnlinks,GCH_NETLNK, map_l2g, link_location,yw_mpp_nlinks, &
-            lake_index, nlinks_index, gages)
+            lake_index, nlinks_index, gages, gageMiss)
         implicit none
         INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
@@ -6373,7 +6477,8 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: ORIFICEE
         REAL, INTENT(INOUT),  DIMENSION(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
         REAL, INTENT(INOUT), DIMENSION(NLINKS)       :: ChSSlp, Bw
-        character(len=15), intent(out), dimension(nlinks) :: gages
+        character(len=15), intent(inout), dimension(nlinks) :: gages
+        character(len=15), intent(in)                :: gageMiss
 
         CHARACTER(len=256)                           :: route_link_f
         CHARACTER(len=256)                           :: route_lake_f
@@ -6411,7 +6516,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
            ,Link_Location  &
 #endif
-           ,gages)
+           ,gages, gageMiss)
 
       call mpp_land_max_int1(MAXORDER)
 
@@ -6606,7 +6711,7 @@ real,    dimension(:),   intent(out) :: MUSK, MUSX, CHANLEN
 real,    dimension(:),   intent(out) :: MannN,    So,       ChSSlp,   Bw
 real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL
 real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE
-character(len=15), dimension(:), intent(out) :: gages
+character(len=15), dimension(:), intent(inout) :: gages
 
 integer :: iRet, ncid, ii, varid
 logical :: fatal_if_error
@@ -6667,6 +6772,7 @@ print*, 'MUSX', MUSX(ii), 'CHANLEN', CHANLEN(ii), 'MannN', MannN(ii)
 print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii), 'HRZAREA', HRZAREA(ii)
 print*,'LAKEMAXH', LAKEMAXH(ii), 'WEIRC', WEIRC(ii), 'WEIRL', WEIRL(ii)
 print*,'ORIFICEC', ORIFICEC(ii), 'ORIFICEA', ORIFICEA(ii), 'ORIFICEE', ORIFICEE(ii)
+print*,'gages(ii): ',trim(gages(ii))
 print*,"finish read_route_link_netcdf"
 #endif
 
