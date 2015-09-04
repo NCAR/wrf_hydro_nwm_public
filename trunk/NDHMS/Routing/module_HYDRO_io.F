@@ -2830,7 +2830,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         if(channel_option .ne. 3) then
            if(trim(gages(i)) .ne. trim(gageMiss)) then 
               nobs = nobs + 1
-              print*,'i:',i
            endif
         else 
            if(STRMFRXSTPTS(i) .ne. -9999) nobs = nobs + 1
@@ -3421,9 +3420,6 @@ end subroutine output_chrt
       integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
       real,allocatable,dimension(:,:) :: g_qlink
       character(len=15),allocatable,dimension(:) :: g_gages
-
-print*,'gnlinks',gnlinks
-print*,'gnlinksl',gnlinksl
 
      if(my_id .eq. io_id ) then
         allocate(g_chlon(gNLINKS))
