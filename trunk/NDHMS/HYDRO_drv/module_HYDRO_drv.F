@@ -13,7 +13,7 @@ module module_HYDRO_drv
    use module_GW_baseflow
    use module_gw_gw2d
    use module_gw_gw2d_data, only: gw2d
-   use module_channel_routing, only: drive_channel
+   use module_channel_routing, only: drive_channel, drive_channel_rsl
    use module_namelist, only: nlst_rt, read_rt_nlst
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
@@ -633,6 +633,28 @@ module module_HYDRO_drv
     endif 
 101  continue
 
+ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+     !!! for user defined Reach based Routing method.
+
+    call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
+       RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
+       RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
+       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
+       RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
+       RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
+       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRC, &
+       RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
+       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, &
+       RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
+       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
+       RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area  &
+#ifdef MPP_LAND
+       , RT_DOMAIN(did)%nlinks_index,RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL  &
+       , RT_DOMAIN(did)%gtoNode,RT_DOMAIN(did)%toNodeInd,RT_DOMAIN(did)%nToInd      &
+#endif
+       , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff)
+else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
@@ -667,6 +689,7 @@ module module_HYDRO_drv
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
        nlst_rt(did)%gwChanCondConstOut &
        )
+endif
     
     if((nlst_rt(did)%gwBaseSwCRT == 3) .and. (nlst_rt(did)%gwChanCondSw .eq. 1)) then
       

@@ -12,6 +12,8 @@ MODULE module_Routing
 #endif
    use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind
    use module_HYDRO_utils 
+
+   use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    IMPLICIT NONE
 
 
@@ -41,6 +43,11 @@ CONTAINS
       NLAKES = rt_domain(did)%NLAKES
       NLINKSL = rt_domain(did)%NLINKSL
 
+      if(NLINKSL .gt. NLINKS) then
+           write(6,*) "Fatal Error: NLINKSL .gt. NLINKS .. "
+           call hydro_stop("not solved, contact WRF-Hydro group. ")
+      endif
+
 
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
@@ -67,6 +74,10 @@ CONTAINS
     rt_domain(did)%STCAGGRT = 0
   rt_domain(did)%SMCAGGRT = 0
 
+  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+        allocate ( RT_DOMAIN(did)%landRunOff (ixrt,jxrt) )
+  endif
+  
 
   allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
   allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
@@ -500,60 +511,74 @@ CONTAINS
 #endif
                )
 
+    if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
+          ! get NHDPLUS mapping function. 
+          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
+              nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%dist(:,:,9) )
+    endif
+
     if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
 #ifdef MPP_LAND
-
-        allocate (buf(rt_domain(did)%GNLINKS) )
-        buf = -99
-        do j = 1, rt_domain(did)%jxrt
-           do i = 1, rt_domain(did)%ixrt
-              if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                     (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
-                 if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
-                    k = rt_domain(did)%CH_LNKRT(i,j)
-                    buf(k) = k
+      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+           ! NHDPLUS
+           rt_domain(did)%LNLINKSL = LNUMRSL
+           allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+           do k = 1,LNUMRSL
+               rt_domain(did)%LLINKID(k) = LUDRSL(k)%myid
+           end do
+      else
+           allocate (buf(rt_domain(did)%GNLINKS) )
+           buf = -99
+           do j = 1, rt_domain(did)%jxrt
+              do i = 1, rt_domain(did)%ixrt
+                 if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                        (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                    if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
+                       k = rt_domain(did)%CH_LNKRT(i,j)
+                       buf(k) = k
+                    endif
                  endif
-              endif
-           end do 
-        end do
+              end do 
+           end do
 
-        rt_domain(did)%LNLINKSL = 0
-        do k = 1, rt_domain(did)%GNLINKS
-             if(buf(k) .gt. 0) then
-                 rt_domain(did)%LNLINKSL = rt_domain(did)%LNLINKSL + 1
-             endif
-        end do
-
+           rt_domain(did)%LNLINKSL = 0
+           do k = 1, rt_domain(did)%GNLINKS
+                if(buf(k) .gt. 0) then
+                    rt_domain(did)%LNLINKSL = rt_domain(did)%LNLINKSL + 1
+                endif
+           end do
+   
 #ifdef HYDRO_D
-        write(6,*) "LNLINKSL, NLINKS, GNLINKS =",rt_domain(did)%LNLINKSL,rt_domain(did)%NLINKSL,rt_domain(did)%GNLINKSL
-        call flush(6)
+           write(6,*) "LNLINKSL, NLINKS, GNLINKS =",rt_domain(did)%LNLINKSL,rt_domain(did)%NLINKSL,rt_domain(did)%GNLINKSL
+           call flush(6)
 #endif
 
-        allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+           allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+   
+           k = 0
+           do i = 1, rt_domain(did)%GNLINKS
+                if(buf(i) .gt. 0) then
+                   k = k + 1
+                   rt_domain(did)%LLINKID(k) = buf(i)
+                endif
+           end do
 
-        k = 0
-        do i = 1, rt_domain(did)%GNLINKS
-             if(buf(i) .gt. 0) then
-                k = k + 1
-                rt_domain(did)%LLINKID(k) = buf(i)
-             endif
-        end do
+           deallocate(buf)
 
+     endif  ! end if block for UDMP_OPT
      
-        do k = 1, rt_domain(did)%LNLINKSL
-            do j = 1, rt_domain(did)%jxrt
-               do i = 1, rt_domain(did)%ixrt
-                  if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                         (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
-                         if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                            rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                         endif
-                  endif
-               end do 
-            end do
-        end do
-        deallocate(buf)
-
+           do k = 1, rt_domain(did)%LNLINKSL
+               do j = 1, rt_domain(did)%jxrt
+                  do i = 1, rt_domain(did)%ixrt
+                     if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                            if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+                               rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+                            endif
+                     endif
+                  end do 
+               end do
+           end do
 
             call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 

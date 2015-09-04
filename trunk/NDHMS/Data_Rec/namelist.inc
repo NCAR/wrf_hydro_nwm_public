@@ -13,6 +13,7 @@
        character(len=256) :: geo_static_flnm = ""
        integer  :: DEEPGWSPIN
        integer ::  order_to_write, rst_typ
+       character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
        
 !      additional character
        character :: hgrid
@@ -26,7 +27,7 @@
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                   GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                   sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, &
-                  gwsoilcpl
+                  gwsoilcpl, UDMP_OPT
           logical:: GwPreDiag, GwSpinUp
           real:: DTRT_TER,DTRT_CH, DTCT, dxrt0,  gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
@@ -38,6 +39,7 @@
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
+          character(len=256) :: udmap_file =""
 
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points

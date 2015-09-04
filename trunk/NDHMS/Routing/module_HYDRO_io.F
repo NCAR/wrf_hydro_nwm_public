@@ -6540,7 +6540,7 @@ if (iRet /= 0) then
    if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem opening file.")
 endif
 
-call get_1d_netcdf_int(ncid,  'linkid',     LINKID,    'read_route_linknetcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'link',     LINKID,    'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_int(ncid,  'to',       TO_NODE,   'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon',      CHLON,     'read_route_linknetcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lat',      CHLAT,     'read_route_linknetcdf', .TRUE.)

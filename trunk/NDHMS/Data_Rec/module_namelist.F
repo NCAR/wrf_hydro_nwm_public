@@ -23,7 +23,8 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
-                    gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl
+                    gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
+                    UDMP_OPT
           real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -34,6 +35,7 @@ CONTAINS
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
+          character(len=256) :: udmap_file =""
        integer :: SOLVEG_INITSWC
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
@@ -71,7 +73,13 @@ CONTAINS
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
-                    CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake
+                    CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
+                    UDMP_OPT
+
+
+   UDMP_OPT = 0
+   rst_bi_in = 0
+   rst_bi_out = 0
                     
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
@@ -84,9 +92,6 @@ CONTAINS
 #endif
 
 
-
-   rst_bi_in = 0
-   rst_bi_out = 0
 
 #ifdef MPP_LAND
 !  call mpp_land_bcast_real1(DT)
@@ -165,6 +170,7 @@ CONTAINS
   call mpp_land_bcast_int1(CHRTOUT_GRID)
   call mpp_land_bcast_int1(LSMOUT_DOMAN)
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
+  call mpp_land_bcast_int1(UDMP_OPT)
 #endif
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
     nlst%output_gw      = output_gw
@@ -211,13 +217,17 @@ CONTAINS
     nlst%gwbasmskfil =  gwbasmskfil
     nlst%gwstrmfil =  gwstrmfil
     nlst%geo_finegrid_flnm =  geo_finegrid_flnm
+    nlst%udmap_file =  udmap_file
+    nlst%UDMP_OPT = UDMP_OPT
+
 
 #ifdef MPP_LAND
   if(my_id .eq. IO_id) then
 #endif
 #ifdef HYDRO_D
      write(6,*) "output of the namelist file "
-
+    write(6,*) "nlst%udmap_file ", trim(nlst%udmap_file)
+    write(6,*) "nlst%UDMP_OPT ", nlst%UDMP_OPT
     write(6,*) " nlst%RT_OPTION ", RT_OPTION
     write(6,*) " nlst%CHANRTSWCRT ", CHANRTSWCRT
     write(6,*) " nlst%GW_RESTART  ", GW_RESTART 
