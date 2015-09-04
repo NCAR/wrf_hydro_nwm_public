@@ -333,7 +333,7 @@ MODULE MODULE_mpp_ReachLS
          end do
       else
           if(aLinksl(my_id+1) .gt. 0) then
-               call mpi_recv(outV(1:linkls_e(my_id+1)-linkls_s(my_id+1)), &  !jlm should have +1?
+               call mpi_recv(outV(1: (linkls_e(my_id+1)-linkls_s(my_id+1)+1) ), &  !jlm should have +1
                     alinksl(my_id+1),                           &
                     MPI_INTEGER, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
           endif
@@ -345,71 +345,40 @@ MODULE MODULE_mpp_ReachLS
 
 
   subroutine ReachLS_decompChar(inV,outV)
-      implicit none
-      character(len=*),intent(in), dimension(:) :: inV
-      character(len=*),intent(out),dimension(:) :: outV
-      integer ::  i, ierr, tag
-
-      
-      tag = 11
-      if(my_id .eq. io_id) then
-         do i = 1, numprocs
-            if(i-1 .eq. io_id) then
-               if(alinksl(i) .gt. 0) then
-                  outV(1:(linkls_e(i)-linkls_s(i)+1)) = inV(linkls_s(i):linkls_e(i))
-               endif
-            else
-               if(aLinksl(i) .gt. 0) then
-
-                  !! this shows that that values are pr
-                  print*,'jlm top my_id, sum(pack((/(1,i=1,size(inV))/),mask=inV .ne. "               " ))', &
-                       i-1, sum(pack((/(1,i=1,size(inV(linkls_s(i):linkls_e(i))))/),mask=inV(linkls_s(i):linkls_e(i)) .ne. "               " ))
-
-                  call mpi_send(inV(linkls_s(i):linkls_e(i)), &
-                       aLinksl(i),                &
-                       MPI_CHARACTER, i-1,tag,MPI_COMM_WORLD,ierr)
-                  print*,'send my_id, MPI_SUCCESS?:', my_id, ierr.eq.MPI_SUCCESS
-               endif
-            endif
-
-            !$print*,'jlm',linkls_s(i),linkls_e(i)
-            !$print*,'jlm',linkls_e(i)-linkls_s(i)
-            !$print*,'jlm',aLinks(i)
-
-         end do
-      else
-         if(aLinksl(my_id+1) .gt. 0) then
-
-            ! These lines *confirm* the need for the +1 below.
-            !print*,'jlm1',linkls_s(my_id+1),linkls_e(my_id+1)
-            !print*,'jlm2',my_id, linkls_e(my_id+1)-linkls_s(my_id+1)+1
-            print*,'jlm3',my_id, aLinksl(my_id+1)
-
-            call mpi_recv(outV(1:(linkls_e(my_id+1)-linkls_s(my_id+1)+1)), &  !jlm should have +1?
-                 alinksl(my_id+1),                           &
-                 MPI_CHARACTER, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
-
-            print*,'recv my_id, MPI_SUCCESS?:', my_id, ierr.eq.MPI_SUCCESS
-
-         endif
-      endif
-
-      ! These lines indicate that the variables are appropriately sized/allocated.
-      !print*,linkls_s(i),linkls_e(i)
-      print*,'jlm my_id size(inV):  ', my_id, size(inV)
-      print*,'jlm my_id, size(outV): ', my_id, size(outV)
-
-      !These lines show that only the first image recieves the valid data.
-      !                                                                123456789012345
-      print*,'jlm my_id, sum(pack((/(1,i=1,size(inV))/),mask=inV .ne. "               " ))', &
-           my_id, sum(pack((/(1,i=1,size(inV))/),mask=inV .ne. "               " ))
-      print*,'3foo: ', my_id, pack((/(i,i=1,size(inV))/),mask=inV .ne. "               " )
-      print*,'jlm my_id, any(outV .ne. "               ")',my_id, any(outV .ne. "               ")
-
-      call mpp_land_sync()
-  END subroutine ReachLS_decompChar
-
-
+     implicit none
+     character(len=*),intent(in), dimension(:) :: inV
+     character(len=*),intent(out),dimension(:) :: outV
+     integer ::  i, ierr, tag
+     integer :: strLen
+     strLen = len(inV(1))
+     tag = 11
+     if(my_id .eq. io_id) then
+        do i = 1, numprocs
+           if(i-1 .eq. io_id) then
+              if(alinksl(i) .gt. 0) then
+                 outV(1:(linkls_e(i)-linkls_s(i)+1)) = inV(linkls_s(i):linkls_e(i))
+              endif
+           else
+              if(aLinksl(i) .gt. 0) then
+                 ! The mpi_send takes what you give it and THEN treats each caracter as an array element.
+                 call mpi_send(inV(linkls_s(i):linkls_e(i)),       &
+                      strLen*aLinksl(i),                           &
+                      MPI_CHARACTER, i-1, tag, MPI_COMM_WORLD, ierr)
+              endif
+           endif
+        end do
+     else
+        if(aLinksl(my_id+1) .gt. 0) then
+           ! The mpi_recv treats each caracter as an array element.
+           call mpi_recv(outV(1 : (strLen*(linkls_e(my_id+1)-linkls_s(my_id+1)+1)) ), &  !jlm should have +1
+                strLen*alinksl(my_id+1),                                              &
+                MPI_CHARACTER, io_id, tag, MPI_COMM_WORLD, mpp_status,ierr            )
+        endif
+     endif
+     call mpp_land_sync()
+  end subroutine ReachLS_decompChar
+     
+     
   subroutine ReachLS_wReal(inV,outV)
       implicit none
       real,INTENT(in),dimension(:) :: inV
@@ -544,36 +513,39 @@ MODULE MODULE_mpp_ReachLS
   END subroutine ReachLS_wReal2
 
   subroutine ReachLS_wChar(inV,outV)
-      implicit none
-      !integer :: len, glen
-      character(len=*), intent(in), dimension(:)  :: inV
-      character(len=*) ,intent(out),dimension(:) :: outV
-      integer :: i, ierr, tag
-      !outV = trim('')
-      if(my_id .eq. io_id) then
-         do i = 1, numprocs
-            if(i-1 .eq. io_id) then
-                if(alinksl(i) .gt. 0) then
-                   outV(linkls_s(i):linkls_e(i)) = inV(1:linkls_e(i)-linkls_s(i)+1)
-                endif
-            else
-                if(aLinksl(i) .gt. 0) then
-                    tag = 12
-                    call mpi_recv(outV(linkls_s(i):linkls_e(i)), &
-                         aLinksl(i),                            &
-                         MPI_CHARACTER,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
-                endif
-            endif
-         end do
-      else
-          if(aLinksl(my_id+1) .gt. 0) then
-               tag = 12
-               call mpi_send(inV(1:aLinksl(my_id+1) ), &
-                      aLinksl(my_id+1),                      &
-                      MPI_CHARACTER,io_id,tag,MPI_COMM_WORLD,ierr)
-          endif
-      endif
-      call mpp_land_sync()   
+     implicit none
+     character(len=*), intent(in), dimension(:)  :: inV
+     character(len=*) ,intent(out),dimension(:) :: outV
+     integer :: i, ierr, tag
+     integer :: strLen
+     strLen = len(inV(1))
+     if(my_id .eq. io_id) then
+        do i = 1, numprocs
+           if(i-1 .eq. io_id) then
+              if(alinksl(i) .gt. 0) then
+                 outV(linkls_s(i):linkls_e(i)) = inV(1:linkls_e(i)-linkls_s(i)+1)
+              endif
+           else
+              if(aLinksl(i) .gt. 0) then
+                 tag = 12
+                 ! ? seems asymmetric with ReachLS_decompChar
+                 call mpi_recv(outV( linkls_s(i) : linkls_e(i) ), &
+!                 call mpi_recv(outV( (strLen*(linkls_s(i)-1)+1) : (strLen*linkls_e(i)) ), &
+                      strLen*aLinksl(i),                                                  &
+                      MPI_CHARACTER, i-1, tag, MPI_COMM_WORLD, mpp_status, ierr           )
+              endif
+           endif
+        end do
+     else
+        if(aLinksl(my_id+1) .gt. 0) then
+           tag = 12
+           ! The mpi_send takes what you give it and THEN treats each caracter as an array element.
+           call mpi_send(inV(1:aLinksl(my_id+1)),              &
+                strLen*aLinksl(my_id+1),                       &
+                MPI_CHARACTER, io_id, tag, MPI_COMM_WORLD, ierr)
+        endif
+     endif
+     call mpp_land_sync()   
   end subroutine ReachLS_wChar
 
 

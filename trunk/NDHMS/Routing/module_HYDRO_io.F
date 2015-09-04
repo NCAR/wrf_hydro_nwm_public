@@ -875,16 +875,11 @@ end subroutine get_albedo12m_netcdf
        routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq. '.nc'
 
        if(routeLinkNetcdf) then 
+#ifdef HYDRO_D
           write(6,'("getting NLINKS from: ''", A, "''")') trim(route_link_f)
-          iRet = nf_open(trim(route_link_f), NF_NOWRITE, ncId)
-          if (iRet /= 0) then
-             write(6,'("READ_ROUTEDIM: Problem opening file ''", A, "''")') trim(route_link_f)
-             call hydro_stop("READ_ROUTEDIM")
-          endif
-          !! get the number of links
-          iRet = nf_inq_dimid(ncId, 'link', dimId)
-          iRet = nf_inq_dimlen(ncId, dimId, NLINKSL)         
-          iRet = nf_close(ncId)
+#endif
+          NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
+                                   'READ_ROUTEDIM', fatalErr=.true.) 
        else 
           open(unit=79,file=trim(route_link_f),          & !link
                form='formatted',status='old')
@@ -2139,7 +2134,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
-         call hydro_stop("output_rt")
+         call hydro_stop("output_gw_spinup")
        endif
 #endif
 
@@ -2484,7 +2479,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
-         call hydro_stop("output_rt")
+         call hydro_stop("sub_output_gw")
        endif
 #endif
 
@@ -2815,11 +2810,10 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
 
-   
+
      seconds_since = int(dtrt_ch)*K
 
-!    order_to_write = 2  !-- 1 all; 6 feweest
-
+!    order_to_write = 2  !-- 1 all; 6 fewest
       nstations = 0  ! total number of channel points to display
       nobs      = 0  ! number of observation points
 
@@ -2831,28 +2825,27 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 
 !-- output only the higher oder streamflows  and only observation points
-
-
      do i=1,nlk
         if(ORDER(i) .ge. order_to_write) nstations = nstations + 1
         if(channel_option .ne. 3) then
-           if(trim(gages(i)) .ne. trim(gageMiss)) nobs = nobs + 1
+           if(trim(gages(i)) .ne. trim(gageMiss)) then 
+              nobs = nobs + 1
+              print*,'i:',i
+           endif
         else 
            if(STRMFRXSTPTS(i) .ne. -9999) nobs = nobs + 1
         endif
      enddo
-print*,'jlm nobs:',nobs
-print*,'jlm gages():',gages
 
-       if (nobs .eq. 0) then ! let's at least make one obs point
-         nobs = 1
-         if(channel_option .ne. 3) then 
-            !           123456789012345
-            gages(1) = '          dummy'
-         else 
-            STRMFRXSTPTS(1) = 1
-         endif
-       endif
+     if (nobs .eq. 0) then ! let's at least make one obs point
+        nobs = 1
+        if(channel_option .ne. 3) then 
+           !           123456789012345
+           gages(1) = '          dummy'
+        else 
+           STRMFRXSTPTS(1) = 1
+        endif
+     endif
 
        allocate(chanlat(nstations))
        allocate(chanlon(nstations))
@@ -3429,6 +3422,9 @@ end subroutine output_chrt
       real,allocatable,dimension(:,:) :: g_qlink
       character(len=15),allocatable,dimension(:) :: g_gages
 
+print*,'gnlinks',gnlinks
+print*,'gnlinksl',gnlinksl
+
      if(my_id .eq. io_id ) then
         allocate(g_chlon(gNLINKS))
         allocate(g_chlat(gNLINKS))
@@ -3449,12 +3445,9 @@ end subroutine output_chrt
         allocate(g_gages(1))
      endif
 
-
-
      if(channel_option .eq. 1 .or. channel_option .eq. 2) then
         g_qlink = 0
         g_gages = gageMiss
-
         call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
         call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
         call ReachLS_write_io(order, g_order)
@@ -3462,7 +3455,6 @@ end subroutine output_chrt
         call ReachLS_write_io(chlat, g_chlat)
         call ReachLS_write_io(zelev, g_zelev)
         call ReachLS_write_io(gages, g_gages)
-
      else
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
         call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
@@ -6340,8 +6332,6 @@ end subroutine mpp_output_chrt
               endif
            end do
 
-print*,'jlm size(tmpGages)',size(tmpGages)
-print*,'jlm tmpGages',tmpGages
        endif ! my_id .eq. IO_id
 
         call ReachLS_decomp(tmpLINKID,   LINKID )
@@ -6369,10 +6359,6 @@ print*,'jlm tmpGages',tmpGages
         call ReachLS_decomp(tmpORIFICEE, ORIFICEE)
         call ReachLS_decomp(tmpGages,    gages)
         call mpp_land_bcast_int1(MAXORDER)
-
-print*,'size(gages): ',size(gages)
-print*,'jlm gages',gages
-
 
 #else
        QLINK = 0 
@@ -6861,6 +6847,70 @@ if (iret /= nf90_NoErr) then
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
 end if
 end subroutine get_1d_netcdf_text
+
+!===================================================================================================
+! Program Names: 
+!   get_netcdf_dim
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract: 
+!   Get the length of a provided dimension.
+! History Log: 
+!   7/23/15 -Created, JLM.
+! Usage:
+! Parameters: 
+!   file: character, the file to query
+!   dimName: character, the name of the dimension
+!   callingRoutine: character, the name of the calling routine for error messages
+!   fatalErr: Optional, Logical - all errors are fatal, calling hydro_stop()
+! Input Files:  
+!   Specified argument. 
+! Output Files: 
+! Condition codes: 
+!   hydro_stop is called. .
+! User controllable options:
+! Notes: 
+
+function get_netcdf_dim(file, dimName, callingRoutine, fatalErr) 
+implicit none
+integer :: get_netcdf_dim  !! return value
+character(len=*), intent(in)   :: file, dimName, callingRoutine
+integer :: ncId, dimId, iRet
+logical, optional, intent(in) :: fatalErr
+logical :: fatalErr_local
+character(len=256) :: errMsg
+
+fatalErr_local = .false.
+if(present(fatalErr)) fatalErr_local=fatalErr
+
+write(*,'("getting dimension from file: ", A)') trim(file)
+iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
+if (iret /= nf90_noerr) then
+   write(*,'("Problem opening file: ", A)') trim(file)
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+endif
+
+iRet = nf90_inq_dimid(ncId, trim(dimName), dimId)
+if (iret /= nf90_noerr) then
+   write(*,'("Problem getting the dimension ID ", A)') &
+        '"' // trim(dimName) // '" in file: ' // trim(file)
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+endif
+
+iRet = nf90_inquire_dimension(ncId, dimId, len= get_netcdf_dim)
+if (iret /= nf90_noerr) then
+   write(*,'("Problem getting the dimension length of ", A)') &
+        '"' // trim(dimName) // '" in file: ' // trim(file)
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+endif
+
+iRet = nf90_close(ncId)
+if (iret /= nf90_noerr) then
+   write(*,'("Problem closing file: ", A)') trim(file)
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+endif
+end function get_netcdf_dim
+
 
 end module module_HYDRO_io
 
