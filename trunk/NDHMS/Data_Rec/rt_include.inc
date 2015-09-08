@@ -123,6 +123,11 @@
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
   REAL, allocatable, DIMENSION(:)    :: LATLAKE, LONLAKE,ELEVLAKE ! lake info
 
+#ifndef HYDRO_REALTIME
+!!! accumulated variables for reach beased rt
+  REAL, allocatable, DIMENSION(:)    :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
+#endif
+
 #ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index
   INTEGER, allocatable, DIMENSION(:,:)  :: Link_location

@@ -258,7 +258,12 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write, &
-               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option)
+               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option &
+#ifndef HYDRO_REALTIME
+               , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, RT_DOMAIN(did)%accStrmvolrt,   &
+               RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT &
+#endif
+               )
 
       
 #ifdef MPP_LAND
@@ -653,7 +658,11 @@ module module_HYDRO_drv
        , RT_DOMAIN(did)%LNLINKSL  &
        , RT_DOMAIN(did)%gtoNode,RT_DOMAIN(did)%toNodeInd,RT_DOMAIN(did)%nToInd      &
 #endif
-       , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff)
+       , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
+#ifndef HYDRO_REALTIME
+       , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
+#endif
+       )
 else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &

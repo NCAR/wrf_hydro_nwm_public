@@ -31,6 +31,7 @@ TYPE ( userDefineMapping ), allocatable, DIMENSION (:) :: LUDRSL
 integer, allocatable, dimension(:) :: bufi,bufj,bufsize, bufid, idmask
 real*8 , allocatable, dimension(:) :: bufw
 integer :: LNUMRSL  ! number of local links
+integer :: ter_rt_flag
 
 
 contains
@@ -39,7 +40,6 @@ contains
         integer :: ixrt, jxrt, OVRTSWCRT, SUBRTSWCRT, nlinksl
         integer, intent(in), dimension(ixrt,jxrt):: rtmask
         integer :: npid    !local variable.
-        integer :: ter_rt_flag
         real,dimension(:,:) :: cell_area
         if(OVRTSWCRT .eq. 0 .and. SUBRTSWCRT .eq. 0) then
             ter_rt_flag = 0

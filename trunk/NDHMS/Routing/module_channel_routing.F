@@ -293,7 +293,6 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         C4 = 0
          Km = 0
          X = 0          !weighting factors 0<=X<=0.5
-!       qdc  = 0
         Ck =0
         Tw  = 0        ! top width at peak flow
         AREA  =0      ! Cross sectional area m^2
@@ -1522,11 +1521,15 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND 
        , nlinks_index,mpp_nlinks,yw_mpp_nlinks  &
        , LNLINKSL &
-       , gtoNode,toNodeInd,nToNodeInd &
+       , gtoNode,toNodeInd,nToNodeInd , CH_LNKRT_SL    & 
 #endif
-       , CH_LNKRT_SL, landRunOff )
+       ,landRunOff  & 
+#ifndef HYDRO_REALTIME
+       , accLndRunOff, accQLateral, accStrmvolrt, accBucket  &
+#endif
+       )
 
-       use module_UDMAP, only: LNUMRSL, LUDRSL
+       use module_UDMAP, only: LNUMRSL, LUDRSL, ter_rt_flag
 
        IMPLICIT NONE
 
@@ -1617,6 +1620,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
         integer :: n, kk2, nt, nsteps  ! tmp 
 
+#ifndef HYDRO_REALTIME
+        real, dimension(NLINKS) ::  accLndRunOff, accQLateral, accStrmvolrt, accBucket
+        real, dimension(NLINKS) ::  lcLndRunOff, lcQLateral, lcStrmvolrt, lcBucket  ! local variables
+#endif
+
         QLAKEIP = 0
         CD = 0  
         node = 1
@@ -1627,7 +1635,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 !yw      print *, "DRIVE_channel,option,nlinkl,nlinks!!", channel_option,NLINKSL,NLINKS
          
-      dzGwChanHead = 0.
+         dzGwChanHead = 0.
 
 
          nsteps = (DT+0.5)/DTRT_CH
@@ -1636,31 +1644,25 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
    if(UDMP_OPT .eq. 1) then
 
-
         ! NHDPLUS maping
         do k = 1, LNUMRSL
-           if(LUDRSL(k)%nLands .gt. 0) then
+           if(ter_rt_flag .eq. 0)      then
               ! get from land grid runoff
-              do m = 1, LUDRSL(k)%nLands
-                  ii =  LUDRSL(k)%grid_i(m)
-                  jj =  LUDRSL(k)%grid_j(m)
-
-                      LQLateral(k) = LQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
-                             *LUDRSL(k)%nodeArea(m)/DT
-
-              end do
+               do m = 1, LUDRSL(k)%nLands
+                   ii =  LUDRSL(k)%grid_i(m)
+                   jj =  LUDRSL(k)%grid_j(m)
+                   LQLateral(k) = LQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
+                              *LUDRSL(k)%nodeArea(m)/DT
+               end do
            else
               ! get from channel grid
-
               do m = 1, LUDRSL(k)%ngrids
                   ii =  LUDRSL(k)%grid_i(m)
                   jj =  LUDRSL(k)%grid_j(m)
-                  LQLateral(k) = LQLateral(k)+(QSTRMVOLRT(ii,jj)+QINFLOWBASE(ii,jj))*LUDRSL(k)%weight(m)/1000 & 
+                  LQLateral(k) = LQLateral(k) + QSTRMVOLRT(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
                           *LUDRSL(k)%nodeArea(m)/DT
               end do
-
            endif ! end block for LUDRSL(k)%nLands .gt. 0
-
         end do
 
 #ifdef MPP_LAND
@@ -1669,7 +1671,21 @@ gwOption:   if(gwBaseSwCRT == 3) then
        QLateral = LQLateral
 #endif
 
-302 continue
+#ifndef HYDRO_REALTIME
+     if(ter_rt_flag .eq. 0)      then
+         accLndRunOff = accLndRunOff + QLateral * DT
+     else
+         accStrmvolrt = accStrmvolrt + QLateral * DT
+     endif
+     accQLateral  = accLndRunOff + QLateral * DT 
+#endif
+ 
+!accLndRunOff
+!accQLateral
+!accBucket
+
+! add bucket information
+!         INFLOWBASE
        
    else
 #ifdef MPP_LAND
@@ -1686,9 +1702,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
                      LQLateral(k) = LQLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
                             *node_area(jj)/DT)
                   elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .gt. 0)) then !-lake grid
-                      k = LAKE_MSKRT(CHANXI(jj),CHANYJ(jj))
-                      LQLateral(k) = LQLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
-                               *node_area(jj)/DT)
+                       k = LAKE_MSKRT(CHANXI(jj),CHANYJ(jj))
+                       LQLateral(k) = LQLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
+                                *node_area(jj)/DT)
                   endif
               endif
          end do  ! jj
@@ -1737,6 +1753,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
                    X   = MUSX(k)
                    QLINK(k,2) = MUSKING(k,0.0, QLateral(k), QLINK(k,1), DTRT_CH, Km, X) !--current outflow
               elseif (channel_option .eq. 2) then !-- upstream is assumed constant initial condition
+!                  write(6,*) "yyww step 1 check "
+!                  call flush(6)
                    QLINK(k,2) = MUSKINGCUNGE(k,0.0,0.0,QLINK(k,1), &
                          QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
                          MannN(k), ChSSLP(k), Bw(k))
@@ -1767,8 +1785,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
                do n = 1, gtoNODE(k,1)
                   m = gtoNODE(k,n+1)
 !yw                  if (LINKID(k) .eq. m) then
-                    Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                    Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                     if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                     if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
 
                       !     if(LINKID(k) .eq. 3259 .or. LINKID(k) .eq. 3316 .or. LINKID(k) .eq. 3219) then
                       !       write(6,*) "id,Uc,Up",LINKID(k),Quc,Qup
@@ -1799,7 +1817,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
                        tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
                    elseif (channel_option .eq. 2) then ! muskingum cunge
 
-                    tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
+!                  write(6,*) "yyww step 2 check "
+!                  call flush(6)
+
+                       tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
                                     QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
                                     MannN(k), ChSSlp(k), Bw(k) )
                    else

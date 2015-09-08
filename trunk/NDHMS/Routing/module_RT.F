@@ -225,6 +225,17 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEA(NLAKES) )
      allocate( rt_domain(did)%ORIFICEE(NLAKES) )
 
+#ifndef HYDRO_REALTIME
+     allocate( rt_domain(did)%accLndRunOff(NLINKS) )
+     allocate( rt_domain(did)%accQLateral(NLINKS) )
+     allocate( rt_domain(did)%accStrmvolrt(NLINKS) )
+     allocate( rt_domain(did)%accBucket(NLINKS) )
+#endif
+     rt_domain(did)%accLndRunOff = 0
+     rt_domain(did)%accQLateral  = 0
+     rt_domain(did)%accStrmvolrt = 0
+     rt_domain(did)%accBucket    = 0
+
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
        NLINKS = rt_domain(did)%NLINKS
        NLAKES = rt_domain(did)%NLAKES 

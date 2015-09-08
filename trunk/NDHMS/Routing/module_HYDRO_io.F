@@ -2686,7 +2686,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !-- output the channel route in an IDV 'station' compatible format
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
         startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt_ch,K,   &
-        STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
+        STRMFRXSTPTS,order_to_write,NLINKSL,channel_option   &
+#ifndef HYDRO_REALTIME
+        , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT  &
+#endif
+        )
      
      implicit none
 #include <netcdf.inc>
@@ -2701,6 +2705,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(NLINKS,2),                intent(in) :: qlink
+     
+     integer  :: UDMP_OPT
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -2756,6 +2762,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
 
+     real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
    
      seconds_since = int(dtrt_ch)*K
 
@@ -2968,6 +2975,25 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
 
 !     !- flow definition, var
+#ifndef HYDRO_REALTIME
+        if(UDMP_OPT .eq. 1) then
+           iret = nf_def_var(ncid, "accLndRunOff", NF_FLOAT, 1, (/dimdata/), varid)
+           iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+           iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMUATED runoff from Land RunOff')
+
+           iret = nf_def_var(ncid, "accQLateral", NF_FLOAT, 1, (/dimdata/), varid)
+           iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+           iret = nf_put_att_text(ncid,varid,'long_name',10,'Total ACCUMUATED runoff')
+
+           iret = nf_def_var(ncid, "accStrmvolrt", NF_FLOAT, 1, (/dimdata/), varid)
+           iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+           iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMUATED runoff from terrain routing')
+
+           iret = nf_def_var(ncid, "accBucket", NF_FLOAT, 1, (/dimdata/), varid)
+           iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+           iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMUATED runoff from bucket')
+        endif
+#endif
         iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
         iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
@@ -3119,6 +3145,22 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
           iret = nf_inq_varid(ncid,"time_observation", varid)
           iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), seconds_since)
 
+#ifndef HYDRO_REALTIME
+         if(UDMP_OPT .eq. 1) then
+            iret = nf_inq_varid(ncid,"accLndRunOff", varid)
+            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), accLndRunOff(i))
+
+            iret = nf_inq_varid(ncid,"accQLateral", varid)
+            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), accQLateral(i))
+
+            iret = nf_inq_varid(ncid,"accStrmvolrt", varid)
+            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), accStrmvolrt(i))
+
+            iret = nf_inq_varid(ncid,"accBucket", varid)
+            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), accBucket(i))
+         endif
+#endif
+
          iret = nf_inq_varid(ncid,"streamflow", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
 
@@ -3266,7 +3308,11 @@ end subroutine output_chrt
    subroutine mpp_output_chrt(gnlinks,gnlinksl,map_l2g,igrid, &
         split_output_count, NLINKS, ORDER, &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch, &
-        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option)
+        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option   &
+#ifndef HYDRO_REALTIME
+        , accLndRunOff, accQLateral, accStrmvolrt, accBucket , UDMP_OPT &
+#endif
+        )
 
        USE module_mpp_land
 
@@ -3282,6 +3328,7 @@ end subroutine output_chrt
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
+     integer :: UDMP_OPT
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -3290,6 +3337,10 @@ end subroutine output_chrt
       real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
       integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
       real,allocatable,dimension(:,:) :: g_qlink
+#ifndef HYDRO_REALTIME
+      real,allocatable,dimension(:) :: g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket
+      real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
+#endif
 
      if(my_id .eq. io_id ) then
         allocate(g_chlon(gNLINKS))
@@ -3299,7 +3350,21 @@ end subroutine output_chrt
         allocate(g_qlink(gNLINKS,2))
         allocate(g_order(gNLINKS))
         allocate(g_STRMFRXSTPTS(gNLINKS))
+
+#ifndef HYDRO_REALTIME
+        allocate(g_accLndRunOff(gNLINKS))
+        allocate(g_accQLateral(gNLINKS))
+        allocate(g_accStrmvolrt(gNLINKS))
+        allocate(g_accBucket(gNLINKS))
+#endif
+
      else
+#ifndef HYDRO_REALTIME
+        allocate(g_accLndRunOff(1))
+        allocate(g_accQLateral(1))
+        allocate(g_accStrmvolrt(1))
+        allocate(g_accBucket(1))
+#endif
         allocate(g_chlon(1))
         allocate(g_chlat(1))
         allocate(g_hlink(1))
@@ -3322,6 +3387,13 @@ end subroutine output_chrt
         call ReachLS_write_io(chlat, g_chlat)
         call ReachLS_write_io(zelev, g_zelev)
 
+#ifndef HYDRO_REALTIME
+        call ReachLS_write_io(accLndRunOff, g_accLndRunOff)
+        call ReachLS_write_io(accQLateral, g_accQLateral)
+        call ReachLS_write_io(accStrmvolrt, g_accStrmvolrt)
+        call ReachLS_write_io(accBucket, g_accBucket)
+#endif
+
      else
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
         call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
@@ -3337,10 +3409,15 @@ end subroutine output_chrt
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER, &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,&
-          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option)
+          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option  &
+#ifndef HYDRO_REALTIME
+          , g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket, UDMP_OPT  &
+#endif
+          )
     end if
 
     deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink)
+    deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
 
 end subroutine mpp_output_chrt
 
