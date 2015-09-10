@@ -16,6 +16,7 @@ cp arc/Makefile.NoahMP Makefile
   cd ../..
 ## endif
 ln -sf Land_models/NoahMP LandModel
+cat macros LandModel/user_build_options.bak  > LandModel/user_build_options
 ln -sf CPL/NoahMP_cpl LandModel_cpl
 make clean; rm -f Run/wrf_hydro_NoahMP.exe
 

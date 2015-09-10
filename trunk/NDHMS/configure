@@ -104,4 +104,4 @@
   if(! (-e lib)) {mkdir lib;}
   if(! (-e mod)) {mkdir mod;}
   if(-e "macros.tmp")  { system("cat macros macros.tmp > macros.a; rm -f macros.tmp; mv macros.a macros");}
-  if((-d "LandModel") ) {system "cat macros LandModel/user_build_options.bak  > LandModel/user_build_options";}
+  # if((-d "LandModel") ) {system "cat macros LandModel/user_build_options.bak  > LandModel/user_build_options";}
