@@ -770,6 +770,38 @@ CONTAINS
 #endif
 
 
+if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%nlinks))
+            rt_domain(did)%qout_gwsubbas = 0
+   ! use different baseflow for NHDPlus
+     IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN
+            rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
+            RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
+
+            allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
+
+
+            rt_domain(did)%qin_gwsubbas = 0
+            rt_domain(did)%z_gwsubbas = 0
+            rt_domain(did)%gwbas_pix_ct = 0
+            rt_domain(did)%bas_pcp = 0
+
+            rt_domain(did)%gw_buck_coeff = 0.04
+            rt_domain(did)%gw_buck_exp  = 0.2
+            rt_domain(did)%z_max = 0.1
+            
+
+     endif
+else
 !---------------------------------------------------------------------
 !DJG  If GW/Baseflow activated...Read in req'd fields...
 !----------------------------------------------------------------------
@@ -869,6 +901,7 @@ CONTAINS
 !---------------------------------------------------------------------
 !DJG  End if GW/Baseflow activated...
 !----------------------------------------------------------------------
+endif   !!! end if block for UDMP_OPT .eq. 1 
 
 
 

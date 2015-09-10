@@ -1517,7 +1517,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
        RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
        ORIFICEE,  CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
-       nlinks,NLINKSL, LINKID, node_area  &
+       nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas  &
 #ifdef MPP_LAND 
        , nlinks_index,mpp_nlinks,yw_mpp_nlinks  &
        , LNLINKSL &
@@ -1619,6 +1619,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         integer flag
 
         integer :: n, kk2, nt, nsteps  ! tmp 
+        real, dimension(:) :: qout_gwsubbas
 
 #ifndef HYDRO_REALTIME
         real, dimension(NLINKS) ::  accLndRunOff, accQLateral, accStrmvolrt, accBucket
@@ -1648,9 +1649,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
         do k = 1, LNUMRSL
            if(ter_rt_flag .eq. 0)      then
               ! get from land grid runoff
-               do m = 1, LUDRSL(k)%nLands
-                   ii =  LUDRSL(k)%grid_i(m)
-                   jj =  LUDRSL(k)%grid_j(m)
+               do m = 1, LUDRSL(k)%ncell  
+                   ii =  LUDRSL(k)%cell_i(m)
+                   jj =  LUDRSL(k)%cell_j(m)
                    LQLateral(k) = LQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
                               *LUDRSL(k)%nodeArea(m)/DT
                end do
@@ -1671,6 +1672,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
        QLateral = LQLateral
 #endif
 
+     QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
+
 #ifndef HYDRO_REALTIME
      if(ter_rt_flag .eq. 0)      then
          accLndRunOff = accLndRunOff + QLateral * DT
@@ -1678,6 +1681,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
          accStrmvolrt = accStrmvolrt + QLateral * DT
      endif
      accQLateral  = accLndRunOff + QLateral * DT 
+     accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
 #endif
  
 !accLndRunOff

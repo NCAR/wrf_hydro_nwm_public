@@ -3,6 +3,7 @@ module module_GW_baseflow
 #ifdef MPP_LAND
    use module_mpp_land
    use MODULE_mpp_GWBUCKET, only: gw_sum_real, gw_write_io_real
+   use MODULE_mpp_ReachLS, only : updatelinkv
 #endif
    implicit none
 
@@ -10,6 +11,204 @@ module module_GW_baseflow
 !yw #include "namelist.inc"
 contains
 
+!------------------------------------------------------------------------------
+!DJG   Simple GW Bucket Model 
+!      for NHDPLUS mapping
+!------------------------------------------------------------------------------
+
+!   subroutine simp_gw_buck_nhd(ix,jx,ixrt,jxrt,numbasns,gnumbasns,basns_area,basnsInd,gw_strm_msk_lind,&
+!                            gwsubbasmsk, runoff1x_in, runoff2x_in, z_gwsubbas_tmp, qin_gwsubbas,&
+!                            qout_gwsubbas,qinflowbase,gw_strm_msk,gwbas_pix_ct,dist,DT,&
+!                            C,ex,z_mx,GWBASESWCRT,OVRTSWCRT)
+
+   subroutine simp_gw_buck_nhd(ix,jx,ixrt,jxrt,numbasns, AGGFACTRT, DT, INFXSWGT         &
+           , runoff1x_in, runoff2x_in,cellArea,area_lsm    &
+           , c, ex,z_mx,z_gwsubbas_tmp, qout_gwsubbas, qin_gwsubbas,GWBASESWCRT,OVRTSWCRT   &
+           , LNLINKSL, basns_area ) 
+
+   use module_UDMAP, only: LNUMRSL, LUDRSL
+
+   implicit none
+   
+!!!Declarations...
+   integer, intent(in)                               :: ix,jx,ixrt,jxrt
+   integer, intent(in)                               :: numbasns, lnlinksl
+   real, intent(in), dimension(ix,jx)                :: runoff2x_in 
+   real, dimension(ixrt,jxrt)                            :: runoff2x , runoff1x
+   real, intent(in), dimension(ix,jx)                :: runoff1x_in, area_lsm
+   real, intent(in)                                  :: cellArea(ixrt,jxrt),DT
+   real, intent(in),dimension(numbasns)              :: C,ex,z_mx
+   real, intent(out),dimension(numbasns)             :: qout_gwsubbas
+   real, intent(out),dimension(numbasns)             :: qin_gwsubbas
+   real*8                                            :: z_gwsubbas(numbasns)
+   real                                              :: qout_max, qout_spill, z_gw_spill
+   real, intent(inout),dimension(numbasns)           :: z_gwsubbas_tmp
+   real, intent(in),dimension(ixrt,jxrt)          ::  INFXSWGT
+   integer, intent(in)                               :: GWBASESWCRT
+   integer, intent(in)                               :: OVRTSWCRT
+   real, intent(in), dimension(numbasns)             :: basns_area
+   
+
+   real, dimension(numbasns)                        :: net_perc
+
+   integer                                          :: i,j,bas, k, m, ii,jj
+
+   integer :: AGGFACYRT, AGGFACTRT, AGGFACXRT, IXXRT, JYYRT
+   real*8,  dimension(LNLINKSL) :: LQLateral
+
+
+
+!!!Initialize variables...
+   net_perc = 0.
+   qout_gwsubbas = 0.
+   qin_gwsubbas = 0.
+   z_gwsubbas(1:numbasns) = z_gwsubbas_tmp(1:numbasns)
+
+!Assign local value of runoff2 (drainage) for flux caluclation to buckets...
+
+   write(6,*) "check step 1  "
+   call flush(6)
+
+        do J=1,JX
+        do I=1,IX
+             do AGGFACYRT=AGGFACTRT-1,0,-1
+             do AGGFACXRT=AGGFACTRT-1,0,-1
+               IXXRT=I*AGGFACTRT-AGGFACXRT
+               JYYRT=J*AGGFACTRT-AGGFACYRT
+#ifdef MPP_LAND  
+       if(left_id.ge.0) IXXRT=IXXRT+1
+       if(down_id.ge.0) JYYRT=JYYRT+1
+#endif
+!DJG Implement subgrid weighting routine...
+               runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
+                   *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+
+               runoff2x(IXXRT,JYYRT)=runoff2x_in(i,j)*area_lsm(I,J)     &
+                   *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+             enddo
+             enddo
+        enddo
+        enddo
+
+   write(6,*) "check step 2  "
+   call flush(6)
+
+       LQLateral = 0
+       do k = 1, LNUMRSL
+              ! get from land grid runoff
+               do m = 1, LUDRSL(k)%ncell 
+                   ii =  LUDRSL(k)%cell_i(m)
+                   jj =  LUDRSL(k)%cell_j(m)
+                   LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+                              *cellArea(ii,jj)/DT
+                   LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+                              *cellArea(ii,jj)/DT
+               end do
+       end do
+
+   write(6,*) "check step 3  "
+   call flush(6)
+
+#ifdef MPP_LAND
+       call updateLinkV(LQLateral, net_perc)
+#else
+       net_perc = LQLateral
+#endif
+
+
+   write(6,*) "check step 4  "
+   call flush(6)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!Loop through GW basins to adjust for inflow/outflow
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+   DO bas=1,numbasns     ! Loop for GW bucket calcs...
+     qin_gwsubbas(bas) = net_perc(bas)/1000.* &
+                         basns_area(bas)/DT    !units (m^3/s)
+
+!Adjust level of GW depth...(conceptual GW bucket units (mm))
+
+     z_gwsubbas(bas) = z_gwsubbas(bas) + net_perc(bas)
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!Calculate baseflow as a function of GW bucket depth...
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+     if(GWBASESWCRT.eq.1) then  !active exponential bucket... if/then for bucket model discharge type...
+
+!DJG...Estimation of bucket 'overflow' (qout_spill) if/when bucket gets filled...
+     qout_spill = 0.
+     z_gw_spill = 0.
+     if (z_gwsubbas(bas).gt.z_mx(bas)) then  !If/then for bucket overflow case...
+       z_gw_spill = z_gwsubbas(bas) - z_mx(bas)
+       z_gwsubbas(bas) = z_mx(bas)
+       write (6,*) "Bucket spilling...", bas, z_gwsubbas(bas), z_mx(bas), z_gw_spill
+     else
+       z_gw_spill = 0.
+     end if   ! End if for bucket overflow case...
+
+     qout_spill = z_gw_spill/1000.*(basns_area(bas))/DT  !amount spilled from bucket overflow...units (cms)
+
+
+!DJG...Maximum estimation of bucket outlfow that is limited by total quantity in bucket...
+     qout_max = z_gwsubbas(bas)/1000.*(basns_area(bas))/DT   ! Estimate max bucket disharge limit to total volume in bucket...(m^3/s)
+
+
+! Assume exponential relation between z/zmax and Q...
+!DJG force asymptote to zero to prevent 'overdraft'... 
+     qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas))-1) !Exp.model. q_out (m^3/s)
+       
+!DJG...Calculation of max bucket outlfow that is limited by total quantity in bucket...
+     qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit
+
+!DJG...debug...     write (6,*) "DJG-exp bucket...during",C(bas),ex(bas),z_gwsubbas(bas),qin_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max, qout_spill
+
+
+
+     elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
+
+! Assuming a steady-state (inflow=outflow) model...
+!DJG convert input and output units to cms...       qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3)
+       qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3/s)
+
+!DJG...debug       write (6,*) "DJG-pass through...during",C(bas),ex(bas),qin_gwsubbas(bas), z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max
+
+     end if    ! End if for bucket model discharge type....
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!Adjust level of GW depth in bucket...
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+     z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
+                       basns_area(bas) )*1000.   ! units (mm)	
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!Combine calculated bucket discharge and amount spilled from bucket...
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+     qout_gwsubbas(bas) = qout_gwsubbas(bas) + qout_spill   ! units (cms)
+
+
+   END DO                 ! End loop for GW bucket calcs...
+
+   write(6,*) "check step 5  "
+   call flush(6)
+
+
+   return
+
+!------------------------------------------------------------------------------
+   End subroutine simp_gw_buck_nhd
+!------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
 !DJG   Simple GW Bucket Model
 !------------------------------------------------------------------------------

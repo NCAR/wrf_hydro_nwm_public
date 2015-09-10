@@ -10,6 +10,8 @@ use module_mpp_land, only: mpp_land_bcast_int, mpp_land_bcast_real8_1d, mpp_land
 
 use module_mpp_land, only: sum_int1d, global_rt_nx, global_rt_ny, write_IO_rt_int
 
+use MODULE_mpp_ReachLS, only : updatelinkv, ReachLS_write_io
+
 #endif
 
 implicit none
@@ -21,18 +23,20 @@ type userDefineMapping
     real, allocatable, dimension(:) :: weight, nodeArea
     integer :: ngrids, nlands
     integer :: myid
+!   for bucket model definition
+    real, allocatable, dimension(:) :: cellWeight
+    integer, allocatable, dimension(:) :: cell_i, cell_j
+    integer :: ncell
 end type userDefineMapping
 
-
 TYPE ( userDefineMapping ), allocatable, DIMENSION (:) :: LUDRSL
-
-
 
 integer, allocatable, dimension(:) :: bufi,bufj,bufsize, bufid, idmask
 real*8 , allocatable, dimension(:) :: bufw
 integer :: LNUMRSL  ! number of local links
 integer :: ter_rt_flag
-
+real*8, allocatable, dimension(:) :: basns_area
+integer :: gnpid
 
 contains
     subroutine UDMP_ini(nlinksl,ixrt,jxrt,rtmask, OVRTSWCRT, SUBRTSWCRT,cell_area)
@@ -57,6 +61,8 @@ contains
         integer,allocatable,dimension(:) :: linkid ,bufidflag
         did = 1
         call get_dimension(trim(nlst_rt(did)%UDMAP_FILE), ndata, npid) 
+        gnpid = npid
+
         allocate(bufi(ndata))
         allocate(bufj(ndata))
         allocate(bufw(ndata))
@@ -140,7 +146,7 @@ contains
         integer :: i,j,k, nlands, ngrids, ix,jx, starti,startj, endi,endj, ii,jj, npid, kk
         integer, intent(in), dimension(ix,jx) :: rtmask
         integer, dimension(npid) :: lndflag,gridflag , tmpgridflag
-        integer :: ter_rt_flag, m
+        integer :: ter_rt_flag, m, c
 
 
 !   find ngrids is 0 so that we need to mapping from subsurface runoff.
@@ -214,6 +220,7 @@ contains
         enddo
         if(LNUMRSL .gt. 0) then 
                allocate(LUDRSL(LNUMRSL))
+               allocate( basns_area(LNUMRSL) )
         else
                write(6,*) "Warning: no routing links found."
                return
@@ -255,6 +262,12 @@ contains
                    allocate( LUDRSL(kk)%grid_j(LUDRSL(kk)%nlands))
                    allocate( LUDRSL(kk)%nodeArea(LUDRSL(kk)%nlands))
                endif
+!  define bucket variables
+                 LUDRSL(kk)%ncell = lndflag(k) 
+                 allocate( LUDRSL(kk)%cellweight(LUDRSL(kk)%ncell))
+                 allocate( LUDRSL(kk)%cell_i(LUDRSL(kk)%ncell))
+                 allocate( LUDRSL(kk)%cell_j(LUDRSL(kk)%ncell))
+
                kk = kk + 1
            endif
         enddo
@@ -273,6 +286,7 @@ contains
         kk = 1
         do k = 1, npid   
            m  = 1
+           c  = 1
            do j = 1, bufsize(k) 
                if( (bufid(k) .ge. 0) .and.  (lndflag(k) .gt. 0) ) then 
                    if(bufi(i) .ge. starti .and. bufj(i) .ge. startj .and. &
@@ -301,6 +315,17 @@ contains
                              m  = m  + 1
                           endif
                       endif
+!! begin define bucket variables
+#ifdef MPP_LAND
+                          LUDRSL(kk)%cell_i(c) = bufi(i) - local_startx_rt+1
+                          LUDRSL(kk)%cell_j(c) = bufj(i) - local_starty_rt+1
+#else
+                          LUDRSL(kk)%cell_i(c) = bufi(i)
+                          LUDRSL(kk)%cell_j(c) = bufj(i)
+#endif
+                          LUDRSL(kk)%cellWeight(c) = bufw(i)
+                          c  = c  + 1
+!! end define bucket variables 
                    endif
                 endif
                 i = i + 1
@@ -382,7 +407,7 @@ contains
                write(6,*) "Read Error: could not find ",trim(var_name)
                call hydro_stop("fatal error! ")
           end if
-          iret = nf_get_var_real(ncid, varid, out_buff)
+          iret = nf_get_var_double(ncid, varid, out_buff)
           iret = nf_close(ncid)
       end subroutine get1d_real8
 
@@ -425,7 +450,34 @@ contains
                     LUDRSL(k)%nodeArea(m) = cell_area(LUDRSL(k)%grid_i(m),LUDRSL(k)%grid_j(m)) 
                 enddo
             endif
+           
+            basns_area(k) = 0 
+            do m = 1, LUDRSL(k)%ncell
+                    basns_area(k) = basns_area(k) + &
+                          cell_area(LUDRSL(k)%cell_i(m),LUDRSL(k)%cell_j(m)) * LUDRSL(k)%cellWeight(m) 
+            enddo
+            
          end do
       end subroutine getUDMP_area
+    
+      subroutine get_basn_area_nhd(inOut)
+         implicit none
+         real, dimension(:) :: inOut
+         real, dimension(gnpid) :: buf
+#ifdef MPP_LAND
+         call updateLinkV(basns_area, inOut)
+#else
+         inOut = basns_area
+#endif
+
+!         call ReachLS_write_io(inOut,buf)
+!         if(my_id .eq. io_id) then
+!            write(90,*) buf
+!            call flush(90)
+!         endif
+!         call hydro_finish()
+      
+      end subroutine get_basn_area_nhd
+
 
 end module module_UDMAP

@@ -4508,8 +4508,16 @@ end subroutine mpp_output_chrt
 
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
 !              call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
-              call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
+              if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                    call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
+#ifdef MPP_LAND   
+                            ,rt_domain(did)%gnlinks  &
+#endif
+                          )
+              else
+                  call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
                        rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+              endif
 !yw test bucket model
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gwbas_pix_ct,"gwbas_pix_ct" )
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp,"gw_buck_exp" )
@@ -5018,9 +5026,12 @@ end subroutine mpp_output_chrt
             end if
 
             if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0 .and. rt_domain(did)%gnumbasns .gt. 0) then
-!               call read_rst_crt_nc(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,"z_gwsubbas")
-               call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
+               if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                   call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKS)
+               else 
+                   call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
                        rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
+               endif
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.3) then
               call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho,"HEAD")
