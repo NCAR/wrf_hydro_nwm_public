@@ -6728,5 +6728,98 @@ end if
 iRet = nf_get_var_real(ncid, varid, var)
 end subroutine get_1d_netcdf_real
 
+
+! read the GWBUCET Parm for NHDPlus
+subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
+                z_max, LINKID)
+    implicit none
+    integer :: numbasns
+    integer, dimension(numbasns) :: LINKID
+    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max
+    character(len=*) :: infile
+!   define temp array
+    integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
+    integer, allocatable, dimension(:) :: tmpLinkid
+    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpz_max
+
+!   get gnid
+#ifdef MPP_LAND
+    if(my_id .eq. io_id ) then
+#endif
+       iret = nf_open(trim(infile), NF_NOWRITE, ncid)
+#ifdef MPP_LAND
+       if(iret .ne. 0) then
+           call hydro_stop("Error: failed to open GWBUCKET Parameter file.")
+       endif
+       iret = nf_inq_dimid(ncid, "BasinDim", dimid)
+       if (iret /= 0) then
+               print*, "nf_inq_dimid:  BasinDim"
+               call hydro_stop("read GBUCKETPARM")
+       endif
+       iret = nf_inq_dimlen(ncid, dimid, gnid)
+    endif
+#endif
+
+    call mpp_land_bcast_int1(gnid)
+
+    allocate(tmpLinkid(gnid))
+    allocate(tmpCoeff(gnid))
+    allocate(tmpExp(gnid))
+    allocate(tmpz_max(gnid))
+#ifdef MPP_LAND
+    if(my_id .eq. io_id ) then
+#endif
+!      read the file data.
+          iret = nf_inq_varid(ncid,"Coeff",  varid)
+          if(iret /= 0) then
+               print * , "could not find Coeff from ", infile
+               call hydro_stop("failed to read BUCKETPARM")
+          endif
+          iret = nf_get_var_real(ncid, varid, tmpCoeff)
+
+          iret = nf_inq_varid(ncid,"Expon",  varid)
+          if(iret /= 0) then
+               print * , "could not find Expon from ", infile
+               call hydro_stop("failed to read BUCKETPARM")
+          endif
+          iret = nf_get_var_real(ncid, varid, tmpExp)
+
+          iret = nf_inq_varid(ncid,"Zmax",  varid)
+          if(iret /= 0) then
+               print * , "could not find Zmax from ", infile
+               call hydro_stop("failed to read BUCKETPARM")
+          endif
+          iret = nf_get_var_real(ncid, varid, tmpz_max)
+
+          iret = nf_inq_varid(ncid, "ComID",  varid)
+          if(iret /= 0) then
+               print * , "could not find ComID from ", infile
+               call hydro_stop("failed to read BUCKETPARM")
+          endif
+          iret = nf_get_var_int(ncid, varid, tmpLinkid)
+#ifdef MPP_LAND
+    endif
+#endif
+
+       call mpp_land_bcast_real_1d(tmpCoeff)
+       call mpp_land_bcast_real_1d(tmpExp)
+       call mpp_land_bcast_real_1d(tmpz_max)
+       call mpp_land_bcast_int(gnid ,tmpLinkid)
+   
+    do k = 1, numbasns
+        do i = 1, gnid
+            if(LINKID(k) .eq. tmpLinkid(i)) then
+               gw_buck_coeff(k) = tmpCoeff(i)
+               gw_buck_exp(k) = tmpExp(i)
+               z_max(k) = tmpz_max(i)
+               goto 301 
+            endif
+        end do
+301     continue
+    end do 
+
+    deallocate(tmpCoeff, tmpExp, tmpz_max, tmpLinkid)
+end subroutine readBucket_nhd
+
 end module module_HYDRO_io
 

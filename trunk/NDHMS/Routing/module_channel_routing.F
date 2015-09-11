@@ -1521,9 +1521,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND 
        , nlinks_index,mpp_nlinks,yw_mpp_nlinks  &
        , LNLINKSL &
-       , gtoNode,toNodeInd,nToNodeInd , CH_LNKRT_SL    & 
+       , gtoNode,toNodeInd,nToNodeInd   &
 #endif
-       ,landRunOff  & 
+       , CH_LNKRT_SL ,landRunOff  & 
 #ifndef HYDRO_REALTIME
        , accLndRunOff, accQLateral, accStrmvolrt, accBucket  &
 #endif

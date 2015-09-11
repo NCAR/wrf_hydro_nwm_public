@@ -40,6 +40,7 @@
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
           character(len=256) :: udmap_file =""
+          character(len=256) :: GWBUCKPARM_file = ""
 
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points

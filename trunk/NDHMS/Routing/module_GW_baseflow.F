@@ -66,9 +66,6 @@ contains
 
 !Assign local value of runoff2 (drainage) for flux caluclation to buckets...
 
-   write(6,*) "check step 1  "
-   call flush(6)
-
         do J=1,JX
         do I=1,IX
              do AGGFACYRT=AGGFACTRT-1,0,-1
@@ -90,8 +87,6 @@ contains
         enddo
         enddo
 
-   write(6,*) "check step 2  "
-   call flush(6)
 
        LQLateral = 0
        do k = 1, LNUMRSL
@@ -106,8 +101,6 @@ contains
                end do
        end do
 
-   write(6,*) "check step 3  "
-   call flush(6)
 
 #ifdef MPP_LAND
        call updateLinkV(LQLateral, net_perc)
@@ -116,8 +109,6 @@ contains
 #endif
 
 
-   write(6,*) "check step 4  "
-   call flush(6)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!Loop through GW basins to adjust for inflow/outflow
@@ -148,7 +139,8 @@ contains
      if (z_gwsubbas(bas).gt.z_mx(bas)) then  !If/then for bucket overflow case...
        z_gw_spill = z_gwsubbas(bas) - z_mx(bas)
        z_gwsubbas(bas) = z_mx(bas)
-       write (6,*) "Bucket spilling...", bas, z_gwsubbas(bas), z_mx(bas), z_gw_spill
+
+!yw        write (6,*) "Bucket spilling...", bas, z_gwsubbas(bas), z_mx(bas), z_gw_spill
      else
        z_gw_spill = 0.
      end if   ! End if for bucket overflow case...
@@ -199,9 +191,6 @@ contains
 
 
    END DO                 ! End loop for GW bucket calcs...
-
-   write(6,*) "check step 5  "
-   call flush(6)
 
 
    return

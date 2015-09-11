@@ -36,6 +36,7 @@ CONTAINS
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
           character(len=256) :: udmap_file =""
+          character(len=256) :: GWBUCKPARM_file = ""
        integer :: SOLVEG_INITSWC
        real out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
@@ -74,7 +75,7 @@ CONTAINS
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT
+                    UDMP_OPT, GWBUCKPARM_file
 
 
    UDMP_OPT = 0
@@ -219,6 +220,7 @@ CONTAINS
     nlst%geo_finegrid_flnm =  geo_finegrid_flnm
     nlst%udmap_file =  udmap_file
     nlst%UDMP_OPT = UDMP_OPT
+    nlst%GWBUCKPARM_file =  GWBUCKPARM_file
 
 
 #ifdef MPP_LAND

@@ -2,7 +2,7 @@ MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
-                              mpp_read_simp_gw
+                              mpp_read_simp_gw 
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
    USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int
    use module_mpp_GWBUCKET, only : collectSizeInd
@@ -10,7 +10,7 @@ MODULE module_Routing
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
    use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
 #endif
-   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind
+   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd
    use module_HYDRO_utils 
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
@@ -798,7 +798,9 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             rt_domain(did)%gw_buck_coeff = 0.04
             rt_domain(did)%gw_buck_exp  = 0.2
             rt_domain(did)%z_max = 0.1
-            
+            call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
+                 rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
+                 rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns) )     
 
      endif
 else
