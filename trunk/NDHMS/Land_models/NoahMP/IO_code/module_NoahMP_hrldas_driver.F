@@ -1208,6 +1208,7 @@ module module_NoahMP_hrldas_driver
 #endif
          (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
         !yw GVFMAX = maxval(greenfrac)
+	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
   endif
 #endif
 
