@@ -5,6 +5,7 @@ module module_HYDRO_io
                                     ReachLS_wInt, reachls_wreal2
      use MODULE_mpp_GWBUCKET, only: gw_write_io_real
 #endif
+   use Module_Date_utilities_rt, only: geth_newdate
    use module_HYDRO_utils, only: get_dist_ll
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
@@ -2736,9 +2737,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
   end subroutine sub_output_gw
 
 !-- output the channel route in an IDV 'station' compatible format
-   subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER, &
-        startdate,date,chlon, chlat, hlink,zelev,qlink,dtrt_ch,K,   &
-        STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss)
+   subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER,           &
+        startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,       &
+        STRMFRXSTPTS, order_to_write, NLINKSL, channel_option, gages, gageMiss)
      
      implicit none
 #include <netcdf.inc>
@@ -2785,7 +2786,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
      integer :: previous_pos  !-- used for the station model
      character(len=256) :: output_flnm,output_flnm2
-     character(len=19)  :: date19,date19start
+     character(len=19)  :: date19,date19start, hydroTime
      character(len=34)  :: sec_since_date
      integer :: seconds_since,nstations,cnt,ObsStation,nobs
      character(len=32)  :: convention
@@ -2809,8 +2810,13 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTXID          ! variable ID
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
+     integer, parameter :: did=1
 
-
+     !! currently, this is the time of the hydro model, it's
+     !! lsm time (olddate) plus one lsm timestep
+     !! i'm hardwiring did=1 just above here.
+     call geth_newdate(hydroTime, nlst_rt(did)%olddate, nint(nlst_rt(did)%dt))
+     
      seconds_since = int(dtrt_ch)*K
 
 !    order_to_write = 2  !-- 1 all; 6 fewest
@@ -2828,9 +2834,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      do i=1,nlk
         if(ORDER(i) .ge. order_to_write) nstations = nstations + 1
         if(channel_option .ne. 3) then
-           if(trim(gages(i)) .ne. trim(gageMiss)) then 
-              nobs = nobs + 1
-           endif
+           if(trim(gages(i)) .ne. trim(gageMiss)) nobs = nobs + 1
         else 
            if(STRMFRXSTPTS(i) .ne. -9999) nobs = nobs + 1
         endif
@@ -3233,11 +3237,12 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              !Write frxst_pts to text file...
              !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 118          FORMAT(I8,",",A10,1X,A8,", ",A15,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
-             write(999,118) seconds_since,date(1:10),date(12:19), gages(i),chlon(i),chlat(i), &
-                   qlink(i,1), qlink(i,1)*35.315,hlink(i)
+             !write(999,118) seconds_since, date(1:10), date(12:19), &
+             write(999,118) seconds_since, hydroTime(1:10), hydroTime(12:19), &
+                  gages(i), chlon(i), chlat(i),                               &
+                  qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
              !yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
-
 
              !!--time in seconds since startdate
              iret = nf_inq_varid(ncid2,"time_observation", varid)
@@ -3283,13 +3288,14 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              !Write frxst_pts to text file...
              !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 117          FORMAT(I8,",",A10,1X,A8,",",I7,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
-             write(999,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
-                  qlink(i,1), qlink(i,1)*35.315,hlink(i)
+             !write(999,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
+             !     qlink(i,1), qlink(i,1)*35.315,hlink(i)
              ! JLM: makes more sense to output the value in frxstpts incase they have meaning,
              ! as below, but I'm not going to make this change until I'm working with gridded
              ! streamflow again.
-             !write(999,117) seconds_since,date(1:10),date(12:19),strmfrxstpts(i),chlon(i),chlat(i), &
-             !     qlink(i,1), qlink(i,1)*35.315,hlink(i)
+             write(999,117) seconds_since, hydroTime(1:10), hydroTime(12:19), &
+                  strmfrxstpts(i), chlon(i), chlat(i),                        &
+                  qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
 
              !!--time in seconds since startdate
              iret = nf_inq_varid(ncid2,"time_observation", varid)
@@ -3395,7 +3401,7 @@ end subroutine output_chrt
 
        USE module_mpp_land
 
-       !!implicit none
+       implicit none
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid,K,channel_option,NLINKSL
