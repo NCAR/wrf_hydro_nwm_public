@@ -1608,7 +1608,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
         integer  iyw, yw_mpp_nlinks, mpp_nlinks
         real     ywtmp(ixrt,jxrt)
         integer LNLINKSL
-!        real*4,  dimension(LNLINKSL) :: LQLateral
         integer, dimension(:) ::  toNodeInd
         integer, dimension(:,:) ::  gtoNode
         integer  :: nToNodeInd
@@ -1633,8 +1632,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
         QSUM     = 0
         QLLAKE   = 0
 
-
-!yw      print *, "DRIVE_channel,option,nlinkl,nlinks!!", channel_option,NLINKSL,NLINKS
          
          dzGwChanHead = 0.
 
@@ -1642,8 +1639,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
          nsteps = (DT+0.5)/DTRT_CH
          LQLateral = 0          !-- initial lateral flow to 0 for this reach
 
-
-   if(UDMP_OPT .eq. 1) then
 
         ! NHDPLUS maping
         do k = 1, LNUMRSL
@@ -1669,6 +1664,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
        call updateLinkV(LQLateral, QLateral)
 #else
+       call hydro_stop("fatal error: NHDPlus only works for parallel now.")
        QLateral = LQLateral
 #endif
 
@@ -1683,60 +1679,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
      accQLateral  = accLndRunOff + QLateral * DT 
      accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
 #endif
- 
-!accLndRunOff
-!accQLateral
-!accBucket
-
-! add bucket information
-!         INFLOWBASE
-       
-   else
-#ifdef MPP_LAND
-         DO iyw = 1,yw_MPP_NLINKS
-         jj = nlinks_index(iyw)
-          !--------river grid points, convert depth in mm to rate across reach in m^3/sec
-              if( .not. (  (CHANXI(jj) .eq. 1 .and. left_id .ge. 0) .or. &
-                           (CHANXI(jj) .eq. ixrt .and. right_id .ge. 0) .or. &
-                           (CHANYJ(jj) .eq. 1 .and. down_id .ge. 0) .or. &
-                           (CHANYJ(jj) .eq. jxrt .and. up_id .ge. 0)      &
-                   ) ) then
-                  if (CH_LNKRT_SL(CHANXI(jj),CHANYJ(jj)) .gt. 0) then
-                     k = CH_LNKRT_SL(CHANXI(jj),CHANYJ(jj))
-                     LQLateral(k) = LQLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
-                            *node_area(jj)/DT)
-                  elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .gt. 0)) then !-lake grid
-                       k = LAKE_MSKRT(CHANXI(jj),CHANYJ(jj))
-                       LQLateral(k) = LQLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
-                                *node_area(jj)/DT)
-                  endif
-              endif
-         end do  ! jj
-
-
-!   assign LQLATERAL to QLATERAL
-       call updateLinkV(LQLateral, QLateral)
-
-#else
-         LQLateral = 0          !-- initial lateral flow to 0 for this reach
-         do jj = 1, NLINKS
-          !--------river grid points, convert depth in mm to rate across reach in m^3/sec
-
-                  if (CH_LNKRT_SL(CHANXI(jj),CHANYJ(jj)) .gt. 0 ) then
-                     k = CH_LNKRT_SL(CHANXI(jj),CHANYJ(jj))
-                     LQLateral(k) = LQLateral(k)+((QSTRMVOLRT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 & 
-                            *node_area(jj)/DT)
-                  elseif ( (LAKE_MSKRT(CHANXI(jj),CHANYJ(jj)) .gt. 0)) then !-lake grid
-                      k = LAKE_MSKRT(CHANXI(jj),CHANYJ(jj))
-                      LQLateral(k) = LQLateral(k) +((LAKEINFLORT(CHANXI(jj),CHANYJ(jj))+QINFLOWBASE(CHANXI(jj),CHANYJ(jj)))/1000 &
-                               *node_area(jj)/DT)
-                  endif   
-
-          end do  ! jj
-          QLateral = LQLateral
-#endif
-
-   endif
 
 !       QLateral = QLateral / nsteps
 
@@ -1757,8 +1699,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
                    X   = MUSX(k)
                    QLINK(k,2) = MUSKING(k,0.0, QLateral(k), QLINK(k,1), DTRT_CH, Km, X) !--current outflow
               elseif (channel_option .eq. 2) then !-- upstream is assumed constant initial condition
-!                  write(6,*) "yyww step 1 check "
-!                  call flush(6)
                    QLINK(k,2) = MUSKINGCUNGE(k,0.0,0.0,QLINK(k,1), &
                          QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
                          MannN(k), ChSSLP(k), Bw(k))
@@ -1788,16 +1728,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !using mapping index
                do n = 1, gtoNODE(k,1)
                   m = gtoNODE(k,n+1)
-!yw                  if (LINKID(k) .eq. m) then
                      if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                      if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
 
-                      !     if(LINKID(k) .eq. 3259 .or. LINKID(k) .eq. 3316 .or. LINKID(k) .eq. 3219) then
-                      !       write(6,*) "id,Uc,Up",LINKID(k),Quc,Qup
-                      !       call flush(6)
-                      !     endif
-
-!yw                  endif
                 end do ! do i
 
 #else
@@ -1821,9 +1754,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
                        tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
                    elseif (channel_option .eq. 2) then ! muskingum cunge
 
-!                  write(6,*) "yyww step 2 check "
-!                  call flush(6)
-
                        tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
                                     QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
                                     MannN(k), ChSSlp(k), Bw(k) )
@@ -1836,18 +1766,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
             endif !!! order(1) .ne. 1
          end do       !--k links
 
-!yw check
-!        gQLINK = 0.0
-!        call ReachLS_write_io(tmpQLINK(:,2), gQLINK(:,2))
-!        call ReachLS_write_io(tmpQLINK(:,1), gQLINK(:,1))
-!        write(6,*) " io_id = ", io_id
-!        if(my_id .eq. io_id) then
-!            write(71,*) gQLINK(:,1)
-!            call flush(71)
-!            call flush(72)
-!        endif
-!        call hydro_finish()
-
           do k = 1, NLINKSL
             if(TYPEL(k) .ne. 1) then
                QLINK(k,2) = tmpQLINK(k,2)
@@ -1855,21 +1773,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
             QLINK(k,1) = QLINK(k,2)    !assing link flow of current to be previous for next time step
          end do
 
-!#ifdef MPP_LAND 
-!         call ReachLS_write_io(QLINK(:,2),buf1)
-!         if(my_id .eq. IO_id) write(73,*) buf1
-!#else
-!         write(73,*) QLINK(1:NLINKSL,2)
-!#endif
-
 #ifdef HYDRO_D
           print *, "END OF ALL REACHES...",KRT,DT_STEPS
 #endif
 
    end do  ! nsteps
-
-!    END DO !-- krt timestep for muksingumcunge routing
-
 
         if (KT .eq. 1) KT = KT + 1
          
