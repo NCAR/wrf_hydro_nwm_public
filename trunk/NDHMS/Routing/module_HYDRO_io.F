@@ -3162,11 +3162,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
 
          iret = nf_inq_varid(ncid,"streamflow", varid)
-         if(UDMP_OPT .eq. 1) then
-            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,2))
-         else
-            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
-         endif
+         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
 
 !        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
 !        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
