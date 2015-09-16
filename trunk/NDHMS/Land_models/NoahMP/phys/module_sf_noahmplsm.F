@@ -70,6 +70,10 @@ MODULE MODULE_SF_NOAHMPLSM
                       !   3 -> off (use table LAI; calculate FVEG)
                       ! **4 -> off (use table LAI; use maximum vegetation fraction)
                       ! **5 -> on  (use maximum vegetation fraction)
+                      !   6 -> on  (use FVEG = SHDFAC from input)
+                      !   7 -> off (use input LAI; use FVEG = SHDFAC from input)
+                      !   8 -> off (use input LAI; calculate FVEG)
+                      !   9 -> off (use input LAI; use maximum vegetation fraction)
 
   INTEGER :: OPT_CRS  ! options for canopy stomatal resistance
                       ! **1 -> Ball-Berry
@@ -124,6 +128,12 @@ MODULE MODULE_SF_NOAHMPLSM
                       ! **1 -> semi-implicit; flux top boundary condition
 		      !   2 -> full implicit (original Noah); temperature top boundary condition
                       !   3 -> same as 1, but FSNO for TS calculation (generally improves snow; v3.7)
+
+  INTEGER :: OPT_RSF  ! options for surface resistent to evaporation/sublimation
+                      ! **1 -> Sakaguchi and Zeng, 2009
+		      !   2 -> Sellers (1992)
+                      !   3 -> adjusted Sellers to decrease RSURF for wet soil
+		      !   4 -> option 1 for non-snow; rsurf = rsurf_snow for snow (set in MPTABLE); AD v3.8
 
 !------------------------------------------------------------------------------------------!
 ! Physical Constants:                                                                      !
@@ -243,6 +253,7 @@ MODULE MODULE_SF_NOAHMPLSM
      REAL :: Z0SNO        !snow surface roughness length (m) (0.002)
      REAL :: SSI          !liquid water holding capacity for snowpack (m3/m3)
      REAL :: SWEMX        !new snow mass to fully cover old snow (mm)
+     REAL :: RSURF_SNOW   !surface resistance for snow(s/m)
 
 !------------------------------------------------------------------------------------------!
 ! From the SOILPARM.TBL tables, as functions of soil category.
@@ -603,13 +614,13 @@ contains
                      LAI    , SAI    , TROOT  , ELAI    , ESAI   ,IGS)
 
 !input GVF should be consistent with LAI
-     IF(DVEG == 1) THEN
+     IF(DVEG == 1 .or. DVEG == 6 .or. DVEG == 7) THEN
         FVEG = SHDFAC
         IF(FVEG <= 0.05) FVEG = 0.05
-     ELSE IF (DVEG == 2 .or. DVEG == 3) THEN
+     ELSE IF (DVEG == 2 .or. DVEG == 3 .or. DVEG == 8) THEN
         FVEG = 1.-EXP(-0.52*(LAI+SAI))
         IF(FVEG <= 0.05) FVEG = 0.05
-     ELSE IF (DVEG == 4 .or. DVEG == 5) THEN
+     ELSE IF (DVEG == 4 .or. DVEG == 5 .or. DVEG == 9) THEN
         FVEG = SHDMAX
         IF(FVEG <= 0.05) FVEG = 0.05
      ELSE
@@ -687,7 +698,7 @@ contains
 
 ! compute carbon budgets (carbon storages and co2 & bvoc fluxes)
 
-   IF (DVEG == 2 .OR. DVEG == 5) THEN
+   IF (DVEG == 2 .OR. DVEG == 5 .OR. DVEG == 6) THEN
     CALL CARBON (parameters,NSNOW  ,NSOIL  ,VEGTYP ,DT     ,ZSOIL  , & !in
                  DZSNSO ,STC    ,SMC    ,TV     ,TG     ,PSN    , & !in
                  FOLN   ,BTRAN  ,APAR   ,FVEG   ,IGS    , & !in
@@ -936,6 +947,12 @@ contains
      LAI = WT1*parameters%LAIM(IT1) + WT2*parameters%LAIM(IT2)
      SAI = WT1*parameters%SAIM(IT1) + WT2*parameters%SAIM(IT2)
   ENDIF
+
+  IF(DVEG == 7 .or. DVEG == 8 .or. DVEG == 9) THEN
+    SAI = MAX(0.05,0.1 * LAI)  ! when reading LAI, set SAI to 10% LAI, but not below 0.05 MB: v3.8
+    IF (LAI < 0.05) SAI = 0.0  ! if LAI below minimum, make sure SAI = 0
+  ENDIF
+
   IF (SAI < 0.05) SAI = 0.0                  ! MB: SAI CHECK, change to 0.05 v3.6
   IF (LAI < 0.05 .OR. SAI == 0.0) LAI = 0.0  ! MB: LAI CHECK
 
@@ -1763,16 +1780,22 @@ contains
        RHSUR = 1.0
      ELSE
 
-        ! RSURF based on Sakaguchi and Zeng, 2009
-        ! taking the "residual water content" to be the wilting point, 
-        ! and correcting the exponent on the D term (typo in SZ09 ?)
-        L_RSURF = (-ZSOIL(1)) * ( exp ( (1.0 - MIN(1.0,SH2O(1)/parameters%SMCMAX(1))) ** 5 ) - 1.0 ) / ( 2.71828 - 1.0 ) 
-        D_RSURF = 2.2E-5 * parameters%SMCMAX(1) * parameters%SMCMAX(1) * ( 1.0 - parameters%SMCWLT(1) / parameters%SMCMAX(1) ) ** (2.0+3.0/parameters%BEXP(1))
-        RSURF = L_RSURF / D_RSURF
+       IF(OPT_RSF == 1 .OR. OPT_RSF == 4) THEN
+         ! RSURF based on Sakaguchi and Zeng, 2009
+         ! taking the "residual water content" to be the wilting point, 
+         ! and correcting the exponent on the D term (typo in SZ09 ?)
+         L_RSURF = (-ZSOIL(1)) * ( exp ( (1.0 - MIN(1.0,SH2O(1)/parameters%SMCMAX(1))) ** 5 ) - 1.0 ) / ( 2.71828 - 1.0 ) 
+         D_RSURF = 2.2E-5 * parameters%SMCMAX(1) * parameters%SMCMAX(1) * ( 1.0 - parameters%SMCWLT(1) / parameters%SMCMAX(1) ) ** (2.0+3.0/parameters%BEXP(1))
+         RSURF = L_RSURF / D_RSURF
+       ELSEIF(OPT_RSF == 2) THEN
+         RSURF = FSNO * 1. + (1.-FSNO)* EXP(8.25-4.225*BEVAP) !Sellers (1992) ! Older RSURF computations
+       ELSEIF(OPT_RSF == 3) THEN
+         RSURF = FSNO * 1. + (1.-FSNO)* EXP(8.25-6.0  *BEVAP) !adjusted to decrease RSURF for wet soil
+       ENDIF
 
-        ! Older RSURF computations:
-        !    RSURF = FSNO * 1. + (1.-FSNO)* EXP(8.25-4.225*BEVAP) !Sellers (1992)
-        !    RSURF = FSNO * 1. + (1.-FSNO)* EXP(8.25-6.0  *BEVAP) !adjusted to decrease RSURF for wet soil
+       IF(OPT_RSF == 4) THEN  ! AD: FSNO weighted; snow RSURF set in MPTABLE v3.8
+         RSURF = 1. / (FSNO * (1./parameters%RSURF_SNOW) + (1.-FSNO) * (1./RSURF))
+       ENDIF
 
        IF(SH2O(1) < 0.01 .and. SNOWH == 0.) RSURF = 1.E6
        PSI   = -parameters%PSISAT(1)*(MAX(0.01,SH2O(1))/parameters%SMCMAX(1))**(-parameters%BEXP(1))   
@@ -4850,7 +4873,7 @@ contains
        ERR_EST = ERR_EST + (STC(IZ)-TBEG(IZ)) * DZSNSO(IZ) * HCPCT(IZ) / DT
     ENDDO
 
-    if (OPT_STC == 1) THEN   ! semi-implicit
+    if (OPT_STC == 1 .OR. OPT_STC == 3) THEN   ! semi-implicit
        ERR_EST = ERR_EST - (SSOIL +EFLXB)
     ELSE                     ! full-implicit
        SSOIL2 = DF(ISNOW+1)*(TG-STC(ISNOW+1))/(0.5*DZSNSO(ISNOW+1))   !M. Barlage
@@ -4950,7 +4973,7 @@ contains
         IF (K == ISNOW+1) THEN
            AI(K)    =   0.0
            CI(K)    = - DF(K)   * DDZ(K) / DENOM(K)
-           IF (OPT_STC == 1) THEN
+           IF (OPT_STC == 1 .OR. OPT_STC == 3) THEN
               BI(K) = - CI(K)
            END IF                                        
            IF (OPT_STC == 2) THEN
@@ -4958,9 +4981,9 @@ contains
            END IF
 
 !ywstart added for failure of bfb between sequential and parallel run
-!          IF (OPT_STC == 3) THEN
-!             BI(K) = - CI(K)
-!          END IF                                        
+            IF (OPT_STC == 3) THEN
+               BI(K) = - CI(K)
+            END IF                                        
 !ywend
 
         ELSE IF (K < NSOIL) THEN
@@ -8201,7 +8224,8 @@ END  SUBROUTINE SHALLOWWATERTABLE
 !== begin noahmp_options ===========================================================================
 
   subroutine noahmp_options(idveg     ,iopt_crs  ,iopt_btr  ,iopt_run  ,iopt_sfc  ,iopt_frz , & 
-                             iopt_inf  ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot, iopt_stc )
+                             iopt_inf  ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot, iopt_stc, &
+			     iopt_rsf )
 
   implicit none
 
@@ -8219,6 +8243,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
 
   INTEGER,  INTENT(IN) :: iopt_stc  !snow/soil temperature time scheme (only layer 1)
                                     ! 1 -> semi-implicit; 2 -> full implicit (original Noah)
+  INTEGER,  INTENT(IN) :: iopt_rsf  !surface resistance (1->Sakaguchi/Zeng; 2->Seller; 3->mod Sellers; 4->1+snow)
 
 ! -------------------------------------------------------------------------------------------------
 
@@ -8235,6 +8260,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
   opt_snf  = iopt_snf  
   opt_tbot = iopt_tbot 
   opt_stc  = iopt_stc
+  opt_rsf  = iopt_rsf
   
   end subroutine noahmp_options
  
@@ -8357,6 +8383,7 @@ MODULE NOAHMP_TABLES
     REAL :: Z0SNO_TABLE    !snow surface roughness length (m) (0.002)
     REAL :: SSI_TABLE      !liquid water holding capacity for snowpack (m3/m3) (0.03)
     REAL :: SWEMX_TABLE    !new snow mass to fully cover old snow (mm)
+    REAL :: RSURF_SNOW_TABLE    !surface resistance for snow(s/m)
 
 CONTAINS
 
@@ -8716,9 +8743,9 @@ CONTAINS
     implicit none
     integer :: ierr
 
-    REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SWEMX
+    REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SWEMX,RSURF_SNOW
 
-    NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SWEMX
+    NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SWEMX,RSURF_SNOW
 
 
     ! Initialize our variables to bad values, so that if the namelist read fails, we come to a screeching halt as soon as we try to use anything.
@@ -8729,6 +8756,7 @@ CONTAINS
      Z0SNO_TABLE     = -1.E36
        SSI_TABLE     = -1.E36
      SWEMX_TABLE     = -1.E36
+RSURF_SNOW_TABLE     = -1.E36
 
     open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
     if (ierr /= 0) then
@@ -8749,6 +8777,7 @@ CONTAINS
      Z0SNO_TABLE     = Z0SNO
        SSI_TABLE     = SSI
      SWEMX_TABLE     = SWEMX
+RSURF_SNOW_TABLE     = RSURF_SNOW
 
   end subroutine read_mp_global_parameters
 

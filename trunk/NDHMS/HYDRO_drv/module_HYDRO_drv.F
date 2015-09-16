@@ -13,12 +13,14 @@ module module_HYDRO_drv
    use module_GW_baseflow
    use module_gw_gw2d
    use module_gw_gw2d_data, only: gw2d
-   use module_channel_routing, only: drive_channel
+   use module_channel_routing, only: drive_channel, drive_channel_rsl
    use module_namelist, only: nlst_rt, read_rt_nlst
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
 !   use module_namelist
    use module_lsm_forcing, only: geth_newdate
+
+   use module_UDMAP, only: get_basn_area_nhd
 
    implicit none
 
@@ -258,7 +260,12 @@ module module_HYDRO_drv
                RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV, &
                RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt, &
                RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write, &
-               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option)
+               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option &
+#ifndef HYDRO_REALTIME
+               , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, RT_DOMAIN(did)%accStrmvolrt,   &
+               RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT &
+#endif
+               )
 
       
 #ifdef MPP_LAND
@@ -508,7 +515,24 @@ module module_HYDRO_drv
            write(6,*) "*****yw******start simp_gw_buck "
 #endif
 
-       call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
+       if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+          write(6,*) " check step 0 "
+          call flush(6)
+          call simp_gw_buck_nhd(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt,  &
+             RT_DOMAIN(did)%numbasns,nlst_rt(did)%AGGFACTRT, nlst_rt(did)%DT, RT_DOMAIN(did)%INFXSWGT,      &
+             RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%SOLDRAIN, RT_DOMAIN(did)%dist(:,:,9),rt_domain(did)%dist_lsm(:,:,9), &
+             RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp, RT_DOMAIN(did)%z_max,     &
+             RT_DOMAIN(did)%qinflowbase, RT_DOMAIN(did)%qout_gwsubbas,RT_DOMAIN(did)%qin_gwsubbas,    &
+             nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT,          & 
+#ifdef MPP_LAND
+             RT_DOMAIN(did)%LNLINKSL &
+#else
+             RT_DOMAIN(did)%numbasns &
+#endif
+             , rt_domain(did)%basns_area &
+             )
+       else
+          call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
              RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,& 
              RT_DOMAIN(did)%basns_area,&
              RT_DOMAIN(did)%basnsInd, RT_DOMAIN(did)%gw_strm_msk_lind,             &
@@ -522,6 +546,7 @@ module module_HYDRO_drv
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
+        endif
 
 
 #ifdef MPP_LAND
@@ -633,6 +658,33 @@ module module_HYDRO_drv
     endif 
 101  continue
 
+ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+     !!! for user defined Reach based Routing method.
+
+    call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
+       RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
+       RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
+       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
+       RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
+       RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
+       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRC, &
+       RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
+       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, &
+       RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
+       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
+       RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
+       RT_DOMAIN(did)%qout_gwsubbas  &
+#ifdef MPP_LAND
+       , RT_DOMAIN(did)%nlinks_index,RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL  &
+       , RT_DOMAIN(did)%gtoNode,RT_DOMAIN(did)%toNodeInd,RT_DOMAIN(did)%nToInd      &
+#endif
+       , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
+#ifndef HYDRO_REALTIME
+       , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
+#endif
+       )
+else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
@@ -667,6 +719,7 @@ module module_HYDRO_drv
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
        nlst_rt(did)%gwChanCondConstOut &
        )
+endif
     
     if((nlst_rt(did)%gwBaseSwCRT == 3) .and. (nlst_rt(did)%gwChanCondSw .eq. 1)) then
       
@@ -1006,13 +1059,15 @@ module module_HYDRO_drv
     endif
 
 
-!yw     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 .or. nlst_rt(did)%GWBASESWCRT .gt. 0) then
      IF (nlst_rt(did)%GWBASESWCRT .gt. 0) then
-       call get_basn_area(did)
+        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            call get_basn_area_nhd(rt_domain(did)%basns_area)
+        else
+            call get_basn_area(did)
+        endif
      endif
 
      IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 ) then
-!       call get_basn_area(did)
         call get_node_area(did)
      endif
      
