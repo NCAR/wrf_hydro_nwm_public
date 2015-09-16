@@ -3162,7 +3162,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
 
          iret = nf_inq_varid(ncid,"streamflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
+         if(UDMP_OPT .eq. 1) then
+            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,2))
+         else
+            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
+         endif
 
 !        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
 !        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
@@ -6758,10 +6762,8 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        endif
        iret = nf_inq_dimlen(ncid, dimid, gnid)
     endif
-#endif
-
     call mpp_land_bcast_int1(gnid)
-
+#endif
     allocate(tmpLinkid(gnid))
     allocate(tmpCoeff(gnid))
     allocate(tmpExp(gnid))
@@ -6799,12 +6801,11 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           iret = nf_get_var_int(ncid, varid, tmpLinkid)
 #ifdef MPP_LAND
     endif
-#endif
-
        call mpp_land_bcast_real_1d(tmpCoeff)
        call mpp_land_bcast_real_1d(tmpExp)
        call mpp_land_bcast_real_1d(tmpz_max)
        call mpp_land_bcast_int(gnid ,tmpLinkid)
+#endif
    
     do k = 1, numbasns
         do i = 1, gnid

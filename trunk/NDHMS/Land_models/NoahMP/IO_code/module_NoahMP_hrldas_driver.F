@@ -75,6 +75,8 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_SNF  ! rainfall & snowfall (1-Jordan91; 2->BATS; 3->Noah)
   INTEGER                                 ::  IOPT_TBOT ! lower boundary of soil temperature (1->zero-flux; 2->Noah)
   INTEGER                                 ::  IOPT_STC  ! snow/soil temperature time scheme
+  INTEGER                                 ::  IOPT_GLA  ! glacier option (1->phase change; 2->simple)
+  INTEGER                                 ::  IOPT_RSF  ! surface resistance option (1->Zeng; 2->simple)
   INTEGER                                 ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
@@ -363,6 +365,8 @@ module module_NoahMP_hrldas_driver
   integer            :: pcp_partition_option
   integer            :: tbot_option
   integer            :: temp_time_scheme_option
+  integer            :: glacier_option
+  integer            :: surface_resistance_option
 
   integer            :: split_output_count = 1
   integer            :: khour
@@ -394,6 +398,7 @@ module module_NoahMP_hrldas_driver
        btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
        frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
        pcp_partition_option, tbot_option, temp_time_scheme_option, &
+       glacier_option, surface_resistance_option, &
 
        split_output_count, & 
        khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
@@ -466,7 +471,8 @@ module module_NoahMP_hrldas_driver
   IOPT_SNF = pcp_partition_option
   IOPT_TBOT = tbot_option
   IOPT_STC = temp_time_scheme_option
-
+  IOPT_GLA = glacier_option
+  IOPT_RSF = surface_resistance_option
 !---------------------------------------------------------------------
 !  NAMELIST end
 !---------------------------------------------------------------------
@@ -476,10 +482,12 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
   update_lai = .true.   ! default: use LAI if present in forcing file
-  if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5) update_lai = .false.
+  if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5 .or. dynamic_veg_option == 6) &
+    update_lai = .false.
 
   update_veg = .false.  ! default: don't use VEGFRA if present in forcing file
-  if (dynamic_veg_option == 1) update_veg = .true.
+  if (dynamic_veg_option == 1 .or. dynamic_veg_option == 6 .or. dynamic_veg_option == 7) &
+    update_veg = .true.
 
   if (nsoil < 0) then
      stop " ***** ERROR: NSOIL must be set in the namelist."
@@ -556,12 +564,12 @@ module module_NoahMP_hrldas_driver
      endif
   endif
 
-  if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5) then
+  if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5 .or. dynamic_veg_option == 6) then
      if ( canopy_stomatal_resistance_option /= 1) then
         write(*, *)
         write(*, '(" ***** Namelist error: ******************************************************")')
         write(*, '(" ***** ")')
-        write(*, '(" *****       CANOPY_STOMATAL_RESISTANCE_OPTION must be 1 when DYNAMIC_VEG_OPTION == 2")')
+        write(*, '(" *****       CANOPY_STOMATAL_RESISTANCE_OPTION must be 1 when DYNAMIC_VEG_OPTION == 2/5/6")')
         write(*, *)
         stop
      endif
@@ -1300,8 +1308,6 @@ end subroutine land_driver_ini
       if(forc_typ .eq. 8) then
           call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
           call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
-          call geth_newdate(newdate, olddate, nint(dtbl))
-          olddate = newdate
           return
       endif
 #endif
@@ -1348,6 +1354,15 @@ end subroutine land_driver_ini
 #endif
 
 991  continue
+
+     where(XLAND > 1.5)   T_PHY(:,1,:) = 0.0  ! Prevent some overflow problems with ifort compiler [MB:20150812]
+     where(XLAND > 1.5)   U_PHY(:,1,:) = 0.0
+     where(XLAND > 1.5)   V_PHY(:,1,:) = 0.0
+     where(XLAND > 1.5) QV_CURR(:,1,:) = 0.0
+     where(XLAND > 1.5)     P8W(:,1,:) = 0.0
+     where(XLAND > 1.5)     GLW        = 0.0
+     where(XLAND > 1.5)  SWDOWN        = 0.0
+     where(XLAND > 1.5) RAINBL_tmp     = 0.0
 
      QV_CURR(:,1,:) = QV_CURR(:,1,:)/(1.0 - QV_CURR(:,1,:))  ! Assuming input forcing are specific hum.;
                                                              ! WRF wants mixing ratio at driver level
@@ -1417,7 +1432,7 @@ end subroutine land_driver_ini
 		  XLAND,     XICE,     XICE_THRESHOLD,                        &
                   IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
 	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
-	        IZ0TLND,                                                      &
+	       IOPT_GLA, IOPT_RSF, IZ0TLND,                                   &
 		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
 		    P8W,   RAINBL,       SR,                                  &
 		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &

@@ -10,13 +10,13 @@ rm -f  LandModel LandModel_cpl
 cp arc/Makefile.NoahMP Makefile
 ## if(! -e Land_models/NoahMP/MPP) then
   cd Land_models/NoahMP
-  cp Makefile.hydro Makefile
+  cp hydro/Makefile.hydro Makefile
   if(-e MPP) rm -rf  MPP
   ln -sf ../../MPP .
   cd ../..
 ## endif
 ln -sf Land_models/NoahMP LandModel
-cat macros LandModel/user_build_options.bak  > LandModel/user_build_options
+cat macros LandModel/hydro/user_build_options.bak  > LandModel/user_build_options
 ln -sf CPL/NoahMP_cpl LandModel_cpl
 make clean; rm -f Run/wrf_hydro_NoahMP.exe
 

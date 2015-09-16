@@ -24,7 +24,7 @@ CONTAINS
       use module_RT_data, only: rt_domain
       implicit none
       integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
-      integer istatus, did
+      integer istatus, did, nsizes
       if(rt_domain(did)%allo_status .eq. 1) return
       rt_domain(did)%allo_status = 1
 
@@ -42,10 +42,13 @@ CONTAINS
       NLINKS = rt_domain(did)%NLINKS
       NLAKES = rt_domain(did)%NLAKES
       NLINKSL = rt_domain(did)%NLINKSL
-
+     
       if(NLINKSL .gt. NLINKS) then
-           write(6,*) "Fatal Error: NLINKSL .gt. NLINKS .. "
-           call hydro_stop("not solved, contact WRF-Hydro group. ")
+         nsizes = nlinksl
+      else
+         nsizes = nlinks
+!           write(6,*) "Fatal Error: NLINKSL .gt. NLINKS .. "
+!           call hydro_stop("not solved, contact WRF-Hydro group. ")
       endif
 
 
@@ -189,7 +192,7 @@ CONTAINS
 
 #ifdef MPP_LAND
      allocate( rt_domain(did)%LAKE_INDEX(NLAKES) )
-     allocate( rt_domain(did)%nlinks_INDEX(NLINKS) )
+     allocate( rt_domain(did)%nlinks_INDEX(nsizes) )
      allocate( rt_domain(did)%Link_location(ixrt,jxrt))
 #endif
 
@@ -201,22 +204,22 @@ CONTAINS
 !tmp       NLAKES = rt_domain(did)%NLINKSL
 !tmp  endif
 
-     allocate( rt_domain(did)%LINKID(NLINKS) )
-     allocate( rt_domain(did)%TO_NODE(NLINKS) )
-     allocate( rt_domain(did)%FROM_NODE(NLINKS) )
-     allocate( rt_domain(did)%CHLAT(NLINKS) )   !-latitutde of channel grid point
-     allocate( rt_domain(did)%CHLON(NLINKS) )   !-longitude of channel grid point
-     allocate( rt_domain(did)%ZELEV(NLINKS) )
-     allocate( rt_domain(did)%TYPEL(NLINKS) )
-     allocate( rt_domain(did)%ORDER(NLINKS) )
-     allocate( rt_domain(did)%QLINK(NLINKS,2) )
-     allocate( rt_domain(did)%MUSK(NLINKS) )
-     allocate( rt_domain(did)%MUSX(NLINKS) )
-     allocate( rt_domain(did)%CHANLEN(NLINKS) )
-     allocate( rt_domain(did)%MannN(NLINKS))
-     allocate( rt_domain(did)%So(NLINKS) )
-     allocate( rt_domain(did)%ChSSlp(NLINKS) )
-     allocate( rt_domain(did)%Bw(NLINKS) )
+     allocate( rt_domain(did)%LINKID(nsizes) )
+     allocate( rt_domain(did)%TO_NODE(nsizes) )
+     allocate( rt_domain(did)%FROM_NODE(nsizes) )
+     allocate( rt_domain(did)%CHLAT(nsizes) )   !-latitutde of channel grid point
+     allocate( rt_domain(did)%CHLON(nsizes) )   !-longitude of channel grid point
+     allocate( rt_domain(did)%ZELEV(nsizes) )
+     allocate( rt_domain(did)%TYPEL(nsizes) )
+     allocate( rt_domain(did)%ORDER(nsizes) )
+     allocate( rt_domain(did)%QLINK(nsizes,2) )
+     allocate( rt_domain(did)%MUSK(nsizes) )
+     allocate( rt_domain(did)%MUSX(nsizes) )
+     allocate( rt_domain(did)%CHANLEN(nsizes) )
+     allocate( rt_domain(did)%MannN(nsizes))
+     allocate( rt_domain(did)%So(nsizes) )
+     allocate( rt_domain(did)%ChSSlp(nsizes) )
+     allocate( rt_domain(did)%Bw(nsizes) )
      allocate( rt_domain(did)%HRZAREA(NLAKES) )
      allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
      allocate( rt_domain(did)%WEIRC(NLAKES) )
@@ -226,10 +229,10 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEE(NLAKES) )
 
 #ifndef HYDRO_REALTIME
-     allocate( rt_domain(did)%accLndRunOff(NLINKS) )
-     allocate( rt_domain(did)%accQLateral(NLINKS) )
-     allocate( rt_domain(did)%accStrmvolrt(NLINKS) )
-     allocate( rt_domain(did)%accBucket(NLINKS) )
+     allocate( rt_domain(did)%accLndRunOff(nsizes) )
+     allocate( rt_domain(did)%accQLateral(nsizes) )
+     allocate( rt_domain(did)%accStrmvolrt(nsizes) )
+     allocate( rt_domain(did)%accBucket(nsizes) )
 #endif
      rt_domain(did)%accLndRunOff = 0
      rt_domain(did)%accQLateral  = 0
@@ -241,22 +244,22 @@ CONTAINS
        NLAKES = rt_domain(did)%NLAKES 
   endif
 
-     allocate( rt_domain(did)%LINK(NLINKS) )
-     allocate( rt_domain(did)%STRMFRXSTPTS(NLINKS) )
-     allocate( rt_domain(did)%CHANXI(NLINKS) )
-     allocate( rt_domain(did)%CHANYJ(NLINKS) )
-     allocate( rt_domain(did)%CVOL(NLINKS) )
+     allocate( rt_domain(did)%LINK(nsizes) )
+     allocate( rt_domain(did)%STRMFRXSTPTS(nsizes) )
+     allocate( rt_domain(did)%CHANXI(nsizes) )
+     allocate( rt_domain(did)%CHANYJ(nsizes) )
+     allocate( rt_domain(did)%CVOL(nsizes) )
      allocate( rt_domain(did)%LATLAKE(NLAKES) )
      allocate( rt_domain(did)%LONLAKE(NLAKES) )
      allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
-     allocate( rt_domain(did)%LAKENODE(NLINKS) )
+     allocate( rt_domain(did)%LAKENODE(nsizes) )
      allocate( rt_domain(did)%RESHT(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEO(NLAKES),STAT=istatus )
 
-     allocate( rt_domain(did)%HLINK(NLINKS) )  !--used for diffusion only
+     allocate( rt_domain(did)%HLINK(nsizes) )  !--used for diffusion only
 
-     allocate( rt_domain(did)%node_area(NLINKS) )
+     allocate( rt_domain(did)%node_area(nsizes) )
 
 !!!! tmp
       rt_domain(did)%LINK = 0.0        
