@@ -344,7 +344,7 @@ contains
     end subroutine UDMP2LOCAL
 
     subroutine cleanBuf()
-        deallocate(bufi,bufj,bufsize,bufw)
+        deallocate(bufi,bufj,bufsize,bufw, bufid)
     end subroutine cleanBuf
 
      subroutine get_dimension(fileName, ndata,npid)

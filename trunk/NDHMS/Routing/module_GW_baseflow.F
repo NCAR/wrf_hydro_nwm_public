@@ -77,11 +77,19 @@ contains
        if(down_id.ge.0) JYYRT=JYYRT+1
 #endif
 !DJG Implement subgrid weighting routine...
-               runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
-                   *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+               if( (runoff1x_in(i,j) .lt. 0) .or. (runoff1x_in(i,j) .gt. 1000) ) then
+                    runoff1x(IXXRT,JYYRT) = 0
+               else
+                    runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
+                        *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+               endif
 
-               runoff2x(IXXRT,JYYRT)=runoff2x_in(i,j)*area_lsm(I,J)     &
-                   *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+               if( (runoff2x_in(i,j) .lt. 0) .or. (runoff2x_in(i,j) .gt. 1000) ) then
+                    runoff2x(IXXRT,JYYRT) = 0
+               else
+                  runoff2x(IXXRT,JYYRT)=runoff2x_in(i,j)*area_lsm(I,J)     &
+                      *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+               endif
              enddo
              enddo
         enddo
@@ -94,10 +102,14 @@ contains
                do m = 1, LUDRSL(k)%ncell 
                    ii =  LUDRSL(k)%cell_i(m)
                    jj =  LUDRSL(k)%cell_j(m)
-                   LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
-                              *cellArea(ii,jj)/DT
-                   LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
-                              *cellArea(ii,jj)/DT
+!                   LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+!                              *cellArea(ii,jj)/DT
+!                   LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+!                              *cellArea(ii,jj)/DT
+                   if(OVRTSWCRT.ne.1) then
+                           LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)
+                   endif
+                           LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)
                end do
        end do
 
@@ -123,6 +135,10 @@ contains
 !Adjust level of GW depth...(conceptual GW bucket units (mm))
 
      z_gwsubbas(bas) = z_gwsubbas(bas) + net_perc(bas)
+    
+
+
+!     write(6,*) " bas, z_gwsubbas, net_perc = ",bas, z_gwsubbas(bas), net_perc(bas)
 
 
 
@@ -182,7 +198,6 @@ contains
      z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
                        basns_area(bas) )*1000.   ! units (mm)	
 
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Combine calculated bucket discharge and amount spilled from bucket...
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -192,6 +207,7 @@ contains
 
    END DO                 ! End loop for GW bucket calcs...
 
+     z_gwsubbas_tmp = z_gwsubbas
 
    return
 

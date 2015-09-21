@@ -846,7 +846,8 @@ end subroutine get_albedo12m_netcdf
              !! JLM what to do here??
           endif
           !! get the number of links
-          iRet = nf_inq_dimid(ncId, 'link', dimId)
+!yw          iRet = nf_inq_dimid(ncId, 'link', dimId)
+          iRet = nf_inq_dimid(ncId, 'linkDim', dimId)
           iRet = nf_inq_dimlen(ncId, dimId, NLINKSL)         
           iRet = nf_close(ncId)
        else 

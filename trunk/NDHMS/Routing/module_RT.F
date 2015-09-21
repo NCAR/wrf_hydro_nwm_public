@@ -233,11 +233,11 @@ CONTAINS
      allocate( rt_domain(did)%accQLateral(nsizes) )
      allocate( rt_domain(did)%accStrmvolrt(nsizes) )
      allocate( rt_domain(did)%accBucket(nsizes) )
-#endif
      rt_domain(did)%accLndRunOff = 0
      rt_domain(did)%accQLateral  = 0
      rt_domain(did)%accStrmvolrt = 0
      rt_domain(did)%accBucket    = 0
+#endif
 
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
        NLINKS = rt_domain(did)%NLINKS
