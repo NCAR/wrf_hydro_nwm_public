@@ -72,6 +72,7 @@
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
 
   REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm !GW bucket disch params
+  INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask   ! bucket mask for NHDPLUS
   INTEGER, allocatable, DIMENSION(:)     :: ct2_bas       !ct of lnd pixels in basn
   REAL,    allocatable, DIMENSION(:)     :: bas_pcp      !sub-basin avg'd pcp
   INTEGER                                :: bas
