@@ -2,7 +2,7 @@ MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
-                              mpp_read_simp_gw
+                              mpp_read_simp_gw 
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
    USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int
    use module_mpp_GWBUCKET, only : collectSizeInd
@@ -10,8 +10,10 @@ MODULE module_Routing
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
    use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
 #endif
-   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind
+   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd
    use module_HYDRO_utils 
+
+   use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    IMPLICIT NONE
 
 
@@ -22,7 +24,7 @@ CONTAINS
       use module_RT_data, only: rt_domain
       implicit none
       integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
-      integer istatus, did
+      integer istatus, did, nsizes
       if(rt_domain(did)%allo_status .eq. 1) return
       rt_domain(did)%allo_status = 1
 
@@ -40,6 +42,14 @@ CONTAINS
       NLINKS = rt_domain(did)%NLINKS
       NLAKES = rt_domain(did)%NLAKES
       NLINKSL = rt_domain(did)%NLINKSL
+     
+      if(NLINKSL .gt. NLINKS) then
+         nsizes = nlinksl
+      else
+         nsizes = nlinks
+!           write(6,*) "Fatal Error: NLINKSL .gt. NLINKS .. "
+!           call hydro_stop("not solved, contact WRF-Hydro group. ")
+      endif
 
 
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
@@ -67,6 +77,10 @@ CONTAINS
     rt_domain(did)%STCAGGRT = 0
   rt_domain(did)%SMCAGGRT = 0
 
+  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+        allocate ( RT_DOMAIN(did)%landRunOff (ixrt,jxrt) )
+  endif
+  
 
   allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
   allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
@@ -178,7 +192,7 @@ CONTAINS
 
 #ifdef MPP_LAND
      allocate( rt_domain(did)%LAKE_INDEX(NLAKES) )
-     allocate( rt_domain(did)%nlinks_INDEX(NLINKS) )
+     allocate( rt_domain(did)%nlinks_INDEX(nsizes) )
      allocate( rt_domain(did)%Link_location(ixrt,jxrt))
 #endif
 
@@ -190,23 +204,23 @@ CONTAINS
 !tmp       NLAKES = rt_domain(did)%NLINKSL
 !tmp  endif
 
-     allocate( rt_domain(did)%LINKID(NLINKS) )
-     allocate( rt_domain(did)%gages(NLINKS) )
-     allocate( rt_domain(did)%TO_NODE(NLINKS) )
-     allocate( rt_domain(did)%FROM_NODE(NLINKS) )
-     allocate( rt_domain(did)%CHLAT(NLINKS) )   !-latitutde of channel grid point
-     allocate( rt_domain(did)%CHLON(NLINKS) )   !-longitude of channel grid point
-     allocate( rt_domain(did)%ZELEV(NLINKS) )
-     allocate( rt_domain(did)%TYPEL(NLINKS) )
-     allocate( rt_domain(did)%ORDER(NLINKS) )
-     allocate( rt_domain(did)%QLINK(NLINKS,2) )
-     allocate( rt_domain(did)%MUSK(NLINKS) )
-     allocate( rt_domain(did)%MUSX(NLINKS) )
-     allocate( rt_domain(did)%CHANLEN(NLINKS) )
-     allocate( rt_domain(did)%MannN(NLINKS))
-     allocate( rt_domain(did)%So(NLINKS) )
-     allocate( rt_domain(did)%ChSSlp(NLINKS) )
-     allocate( rt_domain(did)%Bw(NLINKS) )
+     allocate( rt_domain(did)%LINKID(nsizes) )
+     allocate( rt_domain(did)%gages(nsizes) )
+     allocate( rt_domain(did)%TO_NODE(nsizes) )
+     allocate( rt_domain(did)%FROM_NODE(nsizes) )
+     allocate( rt_domain(did)%CHLAT(nsizes) )   !-latitutde of channel grid point
+     allocate( rt_domain(did)%CHLON(nsizes) )   !-longitude of channel grid point
+     allocate( rt_domain(did)%ZELEV(nsizes) )
+     allocate( rt_domain(did)%TYPEL(nsizes) )
+     allocate( rt_domain(did)%ORDER(nsizes) )
+     allocate( rt_domain(did)%QLINK(nsizes,2) )
+     allocate( rt_domain(did)%MUSK(nsizes) )
+     allocate( rt_domain(did)%MUSX(nsizes) )
+     allocate( rt_domain(did)%CHANLEN(nsizes) )
+     allocate( rt_domain(did)%MannN(nsizes))
+     allocate( rt_domain(did)%So(nsizes) )
+     allocate( rt_domain(did)%ChSSlp(nsizes) )
+     allocate( rt_domain(did)%Bw(nsizes) )
      allocate( rt_domain(did)%HRZAREA(NLAKES) )
      allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
      allocate( rt_domain(did)%WEIRC(NLAKES) )
@@ -215,27 +229,38 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEA(NLAKES) )
      allocate( rt_domain(did)%ORIFICEE(NLAKES) )
 
+#ifndef HYDRO_REALTIME
+     allocate( rt_domain(did)%accLndRunOff(nsizes) )
+     allocate( rt_domain(did)%accQLateral(nsizes) )
+     allocate( rt_domain(did)%accStrmvolrt(nsizes) )
+     allocate( rt_domain(did)%accBucket(nsizes) )
+     rt_domain(did)%accLndRunOff = 0
+     rt_domain(did)%accQLateral  = 0
+     rt_domain(did)%accStrmvolrt = 0
+     rt_domain(did)%accBucket    = 0
+#endif
+
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
        NLINKS = rt_domain(did)%NLINKS
        NLAKES = rt_domain(did)%NLAKES 
   endif
 
-     allocate( rt_domain(did)%LINK(NLINKS) )
-     allocate( rt_domain(did)%STRMFRXSTPTS(NLINKS) )
-     allocate( rt_domain(did)%CHANXI(NLINKS) )
-     allocate( rt_domain(did)%CHANYJ(NLINKS) )
-     allocate( rt_domain(did)%CVOL(NLINKS) )
+     allocate( rt_domain(did)%LINK(nsizes) )
+     allocate( rt_domain(did)%STRMFRXSTPTS(nsizes) )
+     allocate( rt_domain(did)%CHANXI(nsizes) )
+     allocate( rt_domain(did)%CHANYJ(nsizes) )
+     allocate( rt_domain(did)%CVOL(nsizes) )
      allocate( rt_domain(did)%LATLAKE(NLAKES) )
      allocate( rt_domain(did)%LONLAKE(NLAKES) )
      allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
-     allocate( rt_domain(did)%LAKENODE(NLINKS) )
+     allocate( rt_domain(did)%LAKENODE(nsizes) )
      allocate( rt_domain(did)%RESHT(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEO(NLAKES),STAT=istatus )
 
-     allocate( rt_domain(did)%HLINK(NLINKS) )  !--used for diffusion only
+     allocate( rt_domain(did)%HLINK(nsizes) )  !--used for diffusion only
 
-     allocate( rt_domain(did)%node_area(NLINKS) )
+     allocate( rt_domain(did)%node_area(nsizes) )
 
 !!!! tmp
       rt_domain(did)%LINK = 0.0        
@@ -501,60 +526,74 @@ CONTAINS
 #endif
                ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
 
+    if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
+          ! get NHDPLUS mapping function. 
+          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
+              nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%dist(:,:,9) )
+    endif
+
     if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
 #ifdef MPP_LAND
-
-        allocate (buf(rt_domain(did)%GNLINKS) )
-        buf = -99
-        do j = 1, rt_domain(did)%jxrt
-           do i = 1, rt_domain(did)%ixrt
-              if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                     (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
-                 if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
-                    k = rt_domain(did)%CH_LNKRT(i,j)
-                    buf(k) = k
+      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+           ! NHDPLUS
+           rt_domain(did)%LNLINKSL = LNUMRSL
+           allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+           do k = 1,LNUMRSL
+               rt_domain(did)%LLINKID(k) = LUDRSL(k)%myid
+           end do
+      else
+           allocate (buf(rt_domain(did)%GNLINKS) )
+           buf = -99
+           do j = 1, rt_domain(did)%jxrt
+              do i = 1, rt_domain(did)%ixrt
+                 if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                        (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                    if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
+                       k = rt_domain(did)%CH_LNKRT(i,j)
+                       buf(k) = k
+                    endif
                  endif
-              endif
-           end do 
-        end do
+              end do 
+           end do
 
-        rt_domain(did)%LNLINKSL = 0
-        do k = 1, rt_domain(did)%GNLINKS
-             if(buf(k) .gt. 0) then
-                 rt_domain(did)%LNLINKSL = rt_domain(did)%LNLINKSL + 1
-             endif
-        end do
-
+           rt_domain(did)%LNLINKSL = 0
+           do k = 1, rt_domain(did)%GNLINKS
+                if(buf(k) .gt. 0) then
+                    rt_domain(did)%LNLINKSL = rt_domain(did)%LNLINKSL + 1
+                endif
+           end do
+   
 #ifdef HYDRO_D
-        write(6,*) "LNLINKSL, NLINKS, GNLINKS =",rt_domain(did)%LNLINKSL,rt_domain(did)%NLINKSL,rt_domain(did)%GNLINKSL
-        call flush(6)
+           write(6,*) "LNLINKSL, NLINKS, GNLINKS =",rt_domain(did)%LNLINKSL,rt_domain(did)%NLINKSL,rt_domain(did)%GNLINKSL
+           call flush(6)
 #endif
 
-        allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+           allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+   
+           k = 0
+           do i = 1, rt_domain(did)%GNLINKS
+                if(buf(i) .gt. 0) then
+                   k = k + 1
+                   rt_domain(did)%LLINKID(k) = buf(i)
+                endif
+           end do
 
-        k = 0
-        do i = 1, rt_domain(did)%GNLINKS
-             if(buf(i) .gt. 0) then
-                k = k + 1
-                rt_domain(did)%LLINKID(k) = buf(i)
-             endif
-        end do
+           deallocate(buf)
 
+     endif  ! end if block for UDMP_OPT
      
-        do k = 1, rt_domain(did)%LNLINKSL
-            do j = 1, rt_domain(did)%jxrt
-               do i = 1, rt_domain(did)%ixrt
-                  if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                         (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
-                         if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                            rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                         endif
-                  endif
-               end do 
-            end do
-        end do
-        deallocate(buf)
-
+           do k = 1, rt_domain(did)%LNLINKSL
+               do j = 1, rt_domain(did)%jxrt
+                  do i = 1, rt_domain(did)%ixrt
+                     if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                            if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+                               rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+                            endif
+                     endif
+                  end do 
+               end do
+           end do
 
             call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
@@ -747,6 +786,40 @@ CONTAINS
 #endif
 
 
+if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%nlinks))
+            rt_domain(did)%qout_gwsubbas = 0
+   ! use different baseflow for NHDPlus
+     IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN
+            rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
+            RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
+
+            allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
+            allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
+
+
+            rt_domain(did)%qin_gwsubbas = 0
+            rt_domain(did)%z_gwsubbas = 0
+            rt_domain(did)%gwbas_pix_ct = 0
+            rt_domain(did)%bas_pcp = 0
+
+            rt_domain(did)%gw_buck_coeff = 0.04
+            rt_domain(did)%gw_buck_exp  = 0.2
+            rt_domain(did)%z_max = 0.1
+            call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
+                 rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
+                 rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns) )     
+
+     endif
+else
 !---------------------------------------------------------------------
 !DJG  If GW/Baseflow activated...Read in req'd fields...
 !----------------------------------------------------------------------
@@ -846,6 +919,7 @@ CONTAINS
 !---------------------------------------------------------------------
 !DJG  End if GW/Baseflow activated...
 !----------------------------------------------------------------------
+endif   !!! end if block for UDMP_OPT .eq. 1 
 
 
 

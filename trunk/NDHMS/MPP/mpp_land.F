@@ -14,6 +14,7 @@ MODULE MODULE_MPP_LAND
   integer, public :: local_rt_nx,local_rt_ny,rt_AGGFACTRT
   integer, public :: numprocs   ! total process, get by mpi initialization.
   integer :: local_startx, local_starty
+  integer :: local_startx_rt, local_starty_rt, local_endx_rt, local_endy_rt
 
   integer mpp_status(MPI_STATUS_SIZE)
 
@@ -35,6 +36,7 @@ MODULE MODULE_MPP_LAND
   interface mpp_land_bcast
      module procedure mpp_land_bcast_real2
      module procedure mpp_land_bcast_real_1d
+     module procedure mpp_land_bcast_real8_1d
      module procedure mpp_land_bcast_real1
      module procedure mpp_land_bcast_char1d 
      module procedure mpp_land_bcast_char1
@@ -42,6 +44,7 @@ MODULE MODULE_MPP_LAND
      module procedure mpp_land_bcast_int1d 
      module procedure mpp_land_bcast_int2d 
      module procedure mpp_land_bcast_logical
+     
   end interface
  
   contains
@@ -605,6 +608,15 @@ MODULE MODULE_MPP_LAND
 
      call mpp_land_sync()
 
+! calculate the routing land start x and y
+     local_startx_rt = local_startx*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+     if(local_startx_rt.gt.1) local_startx_rt=local_startx_rt - 1
+     local_starty_rt = local_starty*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+     if(local_starty_rt.gt.1) local_starty_rt=local_starty_rt - 1
+
+     local_endx_rt   = local_startx_rt + local_rt_nx -1
+     local_endy_rt   = local_starty_rt + local_rt_ny -1
+
      return
   end subroutine calculate_start_p
 
@@ -911,6 +923,17 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_real_1d
+
+  subroutine mpp_land_bcast_real8_1d(inout)
+      integer len
+      real*8 inout(:)
+      integer ierr
+      len = size(inout,1) 
+        call mpi_bcast(inout,len,MPI_double,   &
+            IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_real8_1d
 
   subroutine mpp_land_bcast_real(size,inout)
       integer size
@@ -1729,6 +1752,31 @@ MODULE MODULE_MPP_LAND
          return
          end subroutine write_rst_crt_r
 
+    subroutine sum_int1d(vin,nsize)
+       implicit none
+       integer nsize,i,j,tag,ierr
+       integer, dimension(nsize):: vin,recv
+       integer, dimension(nsize):: v 
+       tag = 319
+       if(my_id .eq. IO_id) then
+          do i = 0, numprocs - 1
+             if(i .ne. my_id) then
+               call mpi_recv(recv,nsize,MPI_INTEGER,i,  &
+                    tag,MPI_COMM_WORLD,mpp_status,ierr)
+               vin(:) = vin(:) + recv(:)
+             endif
+          end do
+          v = vin
+       else
+             call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
+                  tag,MPI_COMM_WORLD,ierr)
+       endif
+       call mpp_land_bcast_int1d(v) 
+       vin = v
+       return
+    end subroutine sum_int1d
+
+
     subroutine sum_real8(vin,nsize)
        implicit none
        integer nsize,i,j,tag,ierr
@@ -1915,6 +1963,31 @@ MODULE MODULE_MPP_LAND
            endif
         end do
      end subroutine check_landreal3d
+
+     subroutine mpp_collect_1d_int(nlinks,vinout)
+  ! collect the nlinks
+       implicit none
+       integer :: nlinks
+       integer :: i, ierr, status, tag
+       integer, dimension(nlinks) :: vinout
+       integer, dimension(nlinks) :: buf
+       tag = 139
+       if(my_id .eq. IO_id) then
+          do i = 0,numprocs -1
+            if(i .ne. my_id) then
+               call mpi_recv(buf,nlinks,MPI_INTEGER,i, &
+                      tag,MPI_COMM_WORLD,mpp_status,ierr)
+               vinout = vinout + buf
+            end if
+          end do
+       else
+           call mpi_send(vinout,nlinks,MPI_INTEGER, IO_id,     &
+               tag,MPI_COMM_WORLD,ierr)
+       endif
+       call mpp_land_bcast_int1d(vinout)
+    
+  end subroutine mpp_collect_1d_int
+
 
 END MODULE MODULE_MPP_LAND
 

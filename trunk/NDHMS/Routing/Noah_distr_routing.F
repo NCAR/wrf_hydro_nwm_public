@@ -2285,6 +2285,10 @@
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH,RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp)
 
+           if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                  RT_DOMAIN(did)%landRunOff = RT_DOMAIN(did)%INFXSUBRT
+           endif
+
       end subroutine disaggregateDomain_drv
 
       subroutine disaggregateDomain(IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, &

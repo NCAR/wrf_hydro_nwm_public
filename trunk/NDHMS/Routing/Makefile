@@ -6,6 +6,7 @@
 include ../macros
 
 OBJS = \
+	module_UDMAP.o \
 	module_HYDRO_utils.o \
 	module_noah_chan_param_init_rt.o \
 	module_GW_baseflow.o \
@@ -32,7 +33,7 @@ all:	$(OBJS)
 	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(NETCDF_INC) $(*).f
-	$(RMD) $(*).f
+#	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
 	cp *.mod ../mod
@@ -51,7 +52,12 @@ module_lsm_forcing.o: module_HYDRO_io.o
 
 module_RT.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o ../Data_Rec/module_gw_gw2d_data.o \
 	module_GW_baseflow.o module_HYDRO_utils.o module_HYDRO_io.o\
-	module_noah_chan_param_init_rt.o 
+	module_noah_chan_param_init_rt.o \
+	module_noah_chan_param_init_rt.o module_UDMAP.o
+
+module_UDMAP.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
+
+module_channel_routing.o: module_UDMAP.o
 
 
 clean:
