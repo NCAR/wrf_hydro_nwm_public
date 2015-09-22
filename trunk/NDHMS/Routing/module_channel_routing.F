@@ -82,13 +82,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
     dh1 = ((It - discharge)/sap)*dt
 
@@ -99,13 +99,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
     dh2 = ((Itdt_3 - discharge)/sap)*dt
 
@@ -116,13 +116,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6       ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
     dh3 = ((Itdt_2_3 - discharge)/sap)*dt
 
@@ -137,13 +137,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6       ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
 
     qo1  = discharge  ! return the flow rate from reservoir
@@ -223,11 +223,11 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         w = 0.5*(sgn + 1.)         !-- compute upstream or downstream weighting
         
         z = 1/Cs                   !--channel side distance (m)
-        R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z**2)) !-- Hyd Radius
+        R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z*z)) !-- Hyd Radius
         AREA = (Bw+z*h1)*h1        !-- Flow area
         Ku = (1/n)*(R**(2./3.))*AREA     !-- convenyance
 
-        R = ((Bw+z*h2)*h2)/(Bw+2*h2*sqrt(1+z**2)) !-- Hyd Radius
+        R = ((Bw+z*h2)*h2)/(Bw+2*h2*sqrt(1+z*z)) !-- Hyd Radius
         AREA = (Bw+z*h2)*h2        !-- Flow area
         Kd = (1/n)*(R**(2./3.))*AREA     !-- convenyance
 
@@ -350,7 +350,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
           !----- lower interval  --------------------
            Tw = Bw + 2*z*h_0                    !--top width of the channel inflow
-           Ck = (sqrt(So)/n)*(5/3)*h_0**0.667   !-- pg 287 Chow, Mdt, Mays
+           Ck = (sqrt(So)/n)*(5./3.)*(h_0**0.667)   !-- pg 287 Chow, Mdt, Mays
            if(Ck .gt. 0.0) then
              Km = dx/Ck                       !-- seconds Muskingum Param
              !if(Km .lt. dt) then           
@@ -387,19 +387,19 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              AREA= 0.0
              WP = 0.0
            else
-            AREA = (Bw * h_0 + z * h_0**2)
-            WP   = (Bw * h_0 + z * h_0**2) / (Bw + 2 * h_0 * sqrt(1+z**2))
+            AREA = (Bw * h_0 + z * (h_0*h_0) )
+            WP   = (Bw * h_0 + z * (h_0*h_0)) / (Bw + 2 * h_0 * sqrt(1+z*z))
            endif
            
            if(WP .le. 0.0) then 
               Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else 
-              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * WP**(2./3.) * sqrt(So)) !f(x)
+              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * (WP**(2./3.)) * sqrt(So)) !f(x)
            endif
            
            !--upper interval -----------
            Tw = Bw + 2*z*h                    !--top width of the channel inflow
-           Ck = (sqrt(So)/n)*(5/3)*h**0.667   !-- pg 287 Chow, Mdt, Mays
+           Ck = (sqrt(So)/n)*(5./3.)*(h**0.667)   !-- pg 287 Chow, Mdt, Mays
            if(Ck .gt. 0.0) then
              Km = dx/Ck                       !-- seconds Muskingum Param
              !if(Km .lt. dt) then           
@@ -436,14 +436,14 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
             AREA = 0.0
             WP   = 0.0
            else
-            AREA = (Bw * h + z * h**2)
-            WP   = (Bw * h + z * h**2) / (Bw + 2 * h * sqrt(1+z**2))
+            AREA = (Bw * h + z * (h*h) )
+            WP   = (Bw * h + z * (h*h)) / (Bw + 2 * h * sqrt(1+z*z))
            endif 
            
            if(WP .le. 0.0) then 
              Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else
-             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * WP**(2./3.) * sqrt(So))
+             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * (WP**(2./3.)) * sqrt(So))
            endif
 
            if(Qj_0-Qj .ne. 0.0) then
@@ -1307,7 +1307,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
      REAL :: z, AREA,R,Kd
 
      z=1/Cs
-     R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z**2)) !-- Hyd Radius
+     R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z*z)) !-- Hyd Radius
      AREA = (Bw+z*h1)*h1        !-- Flow area
      Kd = (1/n)*(R**(2./3.))*AREA     !-- convenyance
 #ifdef HYDRO_D
