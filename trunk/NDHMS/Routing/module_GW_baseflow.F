@@ -16,15 +16,10 @@ contains
 !      for NHDPLUS mapping
 !------------------------------------------------------------------------------
 
-!   subroutine simp_gw_buck_nhd(ix,jx,ixrt,jxrt,numbasns,gnumbasns,basns_area,basnsInd,gw_strm_msk_lind,&
-!                            gwsubbasmsk, runoff1x_in, runoff2x_in, z_gwsubbas_tmp, qin_gwsubbas,&
-!                            qout_gwsubbas,qinflowbase,gw_strm_msk,gwbas_pix_ct,dist,DT,&
-!                            C,ex,z_mx,GWBASESWCRT,OVRTSWCRT)
-
    subroutine simp_gw_buck_nhd(ix,jx,ixrt,jxrt,numbasns, AGGFACTRT, DT, INFXSWGT         &
            , runoff1x_in, runoff2x_in,cellArea,area_lsm    &
            , c, ex,z_mx,z_gwsubbas_tmp, qout_gwsubbas, qin_gwsubbas,GWBASESWCRT,OVRTSWCRT   &
-           , LNLINKSL, basns_area ) 
+           , LNLINKSL, basns_area, nhdBuckMask ) 
 
    use module_UDMAP, only: LNUMRSL, LUDRSL
 
@@ -37,12 +32,13 @@ contains
    real, dimension(ixrt,jxrt)                            :: runoff2x , runoff1x
    real, intent(in), dimension(ix,jx)                :: runoff1x_in, area_lsm
    real, intent(in)                                  :: cellArea(ixrt,jxrt),DT
-   real, intent(in),dimension(numbasns)              :: C,ex,z_mx
+   real, intent(in),dimension(numbasns)              :: C,ex
+   real, intent(inout),dimension(numbasns)              :: z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
    real, intent(out),dimension(numbasns)             :: qin_gwsubbas
    real*8                                            :: z_gwsubbas(numbasns)
    real                                              :: qout_max, qout_spill, z_gw_spill
-   real, intent(inout),dimension(numbasns)           :: z_gwsubbas_tmp
+   real, intent(inout),dimension(:)           :: z_gwsubbas_tmp
    real, intent(in),dimension(ixrt,jxrt)          ::  INFXSWGT
    integer, intent(in)                               :: GWBASESWCRT
    integer, intent(in)                               :: OVRTSWCRT
@@ -50,6 +46,7 @@ contains
    
 
    real, dimension(numbasns)                        :: net_perc
+   integer, dimension(numbasns)                        :: nhdBuckMask
 
    integer                                          :: i,j,bas, k, m, ii,jj
 
@@ -102,22 +99,21 @@ contains
                do m = 1, LUDRSL(k)%ncell 
                    ii =  LUDRSL(k)%cell_i(m)
                    jj =  LUDRSL(k)%cell_j(m)
-!                   LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
-!                              *cellArea(ii,jj)/DT
-!                   LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
-!                              *cellArea(ii,jj)/DT
                    if(OVRTSWCRT.ne.1) then
-                           LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)
+                           LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+                               *cellArea(ii,jj)
                    endif
-                           LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)
+                           LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+                               *cellArea(ii,jj)
                end do
        end do
 
 
 #ifdef MPP_LAND
-       call updateLinkV(LQLateral, net_perc)
+       call updateLinkV(LQLateral, net_perc)      ! m^3
+
 #else
-       net_perc = LQLateral
+       net_perc = LQLateral        ! m^3
 #endif
 
 
@@ -129,65 +125,57 @@ contains
 
 
    DO bas=1,numbasns     ! Loop for GW bucket calcs...
-     qin_gwsubbas(bas) = net_perc(bas)/1000.* &
-                         basns_area(bas)/DT    !units (m^3/s)
+      if(nhdBuckMask(bas) .eq. 1) then     ! if the basn is masked
+          qin_gwsubbas(bas) = net_perc(bas)             !units (m^3)
 
 !Adjust level of GW depth...(conceptual GW bucket units (mm))
 
-     z_gwsubbas(bas) = z_gwsubbas(bas) + net_perc(bas)
+          z_gwsubbas(bas) = z_gwsubbas(bas) + net_perc(bas) / basns_area(bas)   ! m
     
-
-
-!     write(6,*) " bas, z_gwsubbas, net_perc = ",bas, z_gwsubbas(bas), net_perc(bas)
-
-
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Calculate baseflow as a function of GW bucket depth...
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     if(GWBASESWCRT.eq.1) then  !active exponential bucket... if/then for bucket model discharge type...
+          if(GWBASESWCRT.eq.1) then  !active exponential bucket... if/then for bucket model discharge type...
 
 !DJG...Estimation of bucket 'overflow' (qout_spill) if/when bucket gets filled...
-     qout_spill = 0.
-     z_gw_spill = 0.
-     if (z_gwsubbas(bas).gt.z_mx(bas)) then  !If/then for bucket overflow case...
-       z_gw_spill = z_gwsubbas(bas) - z_mx(bas)
-       z_gwsubbas(bas) = z_mx(bas)
+               qout_spill = 0.
+               z_gw_spill = 0.
+               if (z_gwsubbas(bas).gt.z_mx(bas)) then  !If/then for bucket overflow case...
 
-!yw        write (6,*) "Bucket spilling...", bas, z_gwsubbas(bas), z_mx(bas), z_gw_spill
-     else
-       z_gw_spill = 0.
-     end if   ! End if for bucket overflow case...
+!yw  added by Wei Yu
+                    if(z_mx(bas) .gt. 10) then
+                         z_mx(bas) = z_mx(bas) /1000    ! change from mm to meters
+                    endif
+!end 
+                    z_gw_spill = z_gwsubbas(bas) - z_mx(bas)    ! meters
+                    z_gwsubbas(bas) = z_mx(bas)    ! meters
 
-     qout_spill = z_gw_spill/1000.*(basns_area(bas))/DT  !amount spilled from bucket overflow...units (cms)
+               else
+                      z_gw_spill = 0.
+               end if   ! End if for bucket overflow case...
 
+               qout_spill = z_gw_spill*(basns_area(bas))/DT  !amount spilled from bucket overflow...units (m^3/s)
 
 !DJG...Maximum estimation of bucket outlfow that is limited by total quantity in bucket...
-     qout_max = z_gwsubbas(bas)/1000.*(basns_area(bas))/DT   ! Estimate max bucket disharge limit to total volume in bucket...(m^3/s)
+               qout_max = z_gwsubbas(bas)*(basns_area(bas))/DT   ! (m^3/s)   ! Estimate max bucket disharge limit to total volume in bucket...(m^3/s)
 
 
 ! Assume exponential relation between z/zmax and Q...
 !DJG force asymptote to zero to prevent 'overdraft'... 
-     qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas))-1) !Exp.model. q_out (m^3/s)
+               qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas))-1) !Exp.model. q_out (m^3/s)
        
 !DJG...Calculation of max bucket outlfow that is limited by total quantity in bucket...
-     qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit
+               qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit   (m^3/s)
 
-!DJG...debug...     write (6,*) "DJG-exp bucket...during",C(bas),ex(bas),z_gwsubbas(bas),qin_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max, qout_spill
-
-
-
-     elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
+          elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
 
 ! Assuming a steady-state (inflow=outflow) model...
 !DJG convert input and output units to cms...       qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3)
-       qout_gwsubbas(bas) = qin_gwsubbas(bas)  !steady-state model...(m^3/s)
+               qout_gwsubbas(bas) = qin_gwsubbas(bas)/DT  !steady-state model...(m^3/s)
 
-!DJG...debug       write (6,*) "DJG-pass through...during",C(bas),ex(bas),qin_gwsubbas(bas), z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas), qout_gwsubbas(bas), qout_max
-
-     end if    ! End if for bucket model discharge type....
+          end if    ! End if for bucket model discharge type....
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -195,19 +183,20 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-     z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
-                       basns_area(bas) )*1000.   ! units (mm)	
+          z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
+                       basns_area(bas) )   ! units (meters)	
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Combine calculated bucket discharge and amount spilled from bucket...
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     qout_gwsubbas(bas) = qout_gwsubbas(bas) + qout_spill   ! units (cms)
+          qout_gwsubbas(bas) = qout_gwsubbas(bas) + qout_spill   ! units (m^3/s)
+      endif   ! the basns is masked
 
 
    END DO                 ! End loop for GW bucket calcs...
 
-     z_gwsubbas_tmp = z_gwsubbas
+   z_gwsubbas_tmp(1:numbasns) = z_gwsubbas(1:numbasns)     ! units (meters)
 
    return
 

@@ -781,8 +781,10 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
             RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
 
+            allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
+            allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
+
             allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
-            allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
@@ -792,7 +794,6 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
             allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
 
-
             rt_domain(did)%qin_gwsubbas = 0
             rt_domain(did)%z_gwsubbas = 0
             rt_domain(did)%gwbas_pix_ct = 0
@@ -801,9 +802,15 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             rt_domain(did)%gw_buck_coeff = 0.04
             rt_domain(did)%gw_buck_exp  = 0.2
             rt_domain(did)%z_max = 0.1
+
+!Temporary hardwire...
+      rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+
             call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
                  rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
-                 rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns) )     
+                 rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
+                 rt_domain(did)%nhdBuckMask )     
+
 
      endif
 else
