@@ -346,16 +346,16 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         h_0  = 0.0       !- lower interval
         Qj_0 = 0.0       !- initial flow of lower interval
 
-        do while ((error .gt. 0.05 .and. maxiter .le. 100 .and. h .gt. 0.001))  
+        do while ((error .gt. 0.05 .and. maxiter .le. 100 .and. h .gt. 0.01))  
 
           !----- lower interval  --------------------
            Tw = Bw + 2*z*h_0                    !--top width of the channel inflow
            Ck = (sqrt(So)/n)*(5./3.)*(h_0**0.667)   !-- pg 287 Chow, Mdt, Mays
            if(Ck .gt. 0.0) then
              Km = dx/Ck                       !-- seconds Muskingum Param
-             !if(Km .lt. dt) then           
-             !  Km = dt
-             !endif
+             if(Km .lt. dt) then           
+               Km = dt
+             endif
            else 
              Km = dt
            endif
@@ -402,9 +402,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
            Ck = (sqrt(So)/n)*(5./3.)*(h**0.667)   !-- pg 287 Chow, Mdt, Mays
            if(Ck .gt. 0.0) then
              Km = dx/Ck                       !-- seconds Muskingum Param
-             !if(Km .lt. dt) then           
-             !  Km = dt
-             !endif
+             if(Km .lt. dt) then           
+               Km = dt
+             endif
            else 
              Km = dt
            endif
@@ -457,9 +457,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
            error = abs((h_1 - h)/h) !error is new estatimate and 2nd estimate
 
-             if(idx .eq. 215) then 
-               write(6,*) h_0,h,h_1,error
-             endif
+            if(idx .eq. 626) then 
+              write(6,*) h_0,h,h_1,error
+            endif
 
            h_0  = h 
            h    = h_1
@@ -468,11 +468,20 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
       end do
 
       if((maxiter .ge. 100 .and. error .gt. 0.05) .or. h .gt. 100) then 
+
+         print*, "Warning message:"
          print*, "id,err,iters,h", idx, error, maxiter, h
          print*, "n,z,B,So,dx,X,dt,Km",n,z,Bw,So,dx,X,dt,Km
          print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
-         call hydro_stop("in MUSKINGCUNGE")
+         if(h.gt.100) then
+              print*, "Water Elevation Calculation is Diverging"
+              call hydro_stop("in MUSKINGCUNGE")
+         endif
       endif
+
+!      if(idx .eq. 626) then 
+!         write(6,*) ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+!      endif
 
 !     MUSKINGCUNGE =  h 
       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
