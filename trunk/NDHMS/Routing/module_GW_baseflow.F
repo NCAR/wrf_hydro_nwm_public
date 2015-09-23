@@ -191,6 +191,8 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
           qout_gwsubbas(bas) = qout_gwsubbas(bas) + qout_spill   ! units (m^3/s)
+      else
+          qout_gwsubbas(bas) = 0.0
       endif   ! the basns is masked
 
 
