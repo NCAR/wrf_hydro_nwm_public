@@ -2757,7 +2757,7 @@ Contains
     if(my_id .eq. io_id ) then 
           call get_2d_netcdf("VEGFRA", ncid,buf2, units, global_nx, global_ny, .FALSE., ierr)
           if (ierr == 0) then
-            if(maxval(buf2) .gt. 10 .and. maxval(buf2) .lt. 10000)  fpar = fpar * 1.E-2
+            if(maxval(buf2) .gt. 10 .and. maxval(buf2) .lt. 10000)  buf2 = buf2 * 1.E-2
           endif
     endif
     call mpp_land_bcast_int1(ierr)
