@@ -82,13 +82,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
     dh1 = ((It - discharge)/sap)*dt
 
@@ -99,13 +99,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
     dh2 = ((Itdt_3 - discharge)/sap)*dt
 
@@ -116,13 +116,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6       ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
     dh3 = ((Itdt_2_3 - discharge)/sap)*dt
 
@@ -137,13 +137,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * dh * sqrt(dh)
         discharge = tmp1 + tmp2
-        sap = (ar * 1000.0**2) * (1 + (H - we) / H)
+        sap = (ar * 1.0E6       ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     else
         discharge = 0.0
-        sap = ar * 1000.0**2
+        sap = ar * 1.0E6
     endif
 
     qo1  = discharge  ! return the flow rate from reservoir
@@ -223,11 +223,11 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         w = 0.5*(sgn + 1.)         !-- compute upstream or downstream weighting
         
         z = 1/Cs                   !--channel side distance (m)
-        R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z**2)) !-- Hyd Radius
+        R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z*z)) !-- Hyd Radius
         AREA = (Bw+z*h1)*h1        !-- Flow area
         Ku = (1/n)*(R**(2./3.))*AREA     !-- convenyance
 
-        R = ((Bw+z*h2)*h2)/(Bw+2*h2*sqrt(1+z**2)) !-- Hyd Radius
+        R = ((Bw+z*h2)*h2)/(Bw+2*h2*sqrt(1+z*z)) !-- Hyd Radius
         AREA = (Bw+z*h2)*h2        !-- Flow area
         Kd = (1/n)*(R**(2./3.))*AREA     !-- convenyance
 
@@ -262,7 +262,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !-- channel geometry and characteristics
         REAL    :: Bw         ! bottom width (meters)
         REAL    :: Cs         ! Channel side slope slope
-        REAL    :: So         ! Channel bottom slope
+        REAL    :: So         ! Channel bottom slope %
         REAL    :: dx         ! channel lngth (m)
         REAL    :: n          ! mannings coefficient
         REAL    :: Tw         ! top width at peak flow
@@ -346,14 +346,14 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         h_0  = 0.0       !- lower interval
         Qj_0 = 0.0       !- initial flow of lower interval
 
-        do while (error .gt. 0.05  .and. maxiter .le. 50)  !-- first estimate depth at top of channel
-          ! f(x) = ((C1*qup) + (C2*quc) + C3 * qdp) + C4 ) - ((1/n) * AREA * WP**(2./3.) * sqrt(So)) = 0.0
+        do while ((error .gt. 0.05 .and. maxiter .le. 100 .and. h .gt. 0.01))  
+
           !----- lower interval  --------------------
            Tw = Bw + 2*z*h_0                    !--top width of the channel inflow
-           Ck = (sqrt(So)/n)*(5/3)*h_0**0.667   !-- pg 287 Chow, Mdt, Mays
+           Ck = (sqrt(So)/n)*(5./3.)*(h_0**0.667)   !-- pg 287 Chow, Mdt, Mays
            if(Ck .gt. 0.0) then
              Km = dx/Ck                       !-- seconds Muskingum Param
-             if(Km .gt. dt) then           
+             if(Km .lt. dt) then           
                Km = dt
              endif
            else 
@@ -387,22 +387,22 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              AREA= 0.0
              WP = 0.0
            else
-            AREA = (Bw * h_0 + z * h_0**2)
-            WP   = (Bw * h_0 + z * h_0**2) / (Bw + 2 * h_0 * sqrt(1+z**2))
+            AREA = (Bw * h_0 + z * (h_0*h_0) )
+            WP   = (Bw * h_0 + z * (h_0*h_0)) / (Bw + 2 * h_0 * sqrt(1+z*z))
            endif
            
            if(WP .le. 0.0) then 
               Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else 
-              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * WP**(2./3.) * sqrt(So)) !f(x)
+              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * (WP**(2./3.)) * sqrt(So)) !f(x)
            endif
            
            !--upper interval -----------
            Tw = Bw + 2*z*h                    !--top width of the channel inflow
-           Ck = (sqrt(So)/n)*(5/3)*h**0.667   !-- pg 287 Chow, Mdt, Mays
+           Ck = (sqrt(So)/n)*(5./3.)*(h**0.667)   !-- pg 287 Chow, Mdt, Mays
            if(Ck .gt. 0.0) then
              Km = dx/Ck                       !-- seconds Muskingum Param
-             if(Km .gt. dt) then           
+             if(Km .lt. dt) then           
                Km = dt
              endif
            else 
@@ -436,14 +436,14 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
             AREA = 0.0
             WP   = 0.0
            else
-            AREA = (Bw * h + z * h**2)
-            WP   = (Bw * h + z * h**2) / (Bw + 2 * h * sqrt(1+z**2))
+            AREA = (Bw * h + z * (h*h) )
+            WP   = (Bw * h + z * (h*h)) / (Bw + 2 * h * sqrt(1+z*z))
            endif 
            
            if(WP .le. 0.0) then 
              Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else
-             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * WP**(2./3.) * sqrt(So))
+             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * (WP**(2./3.)) * sqrt(So))
            endif
 
            if(Qj_0-Qj .ne. 0.0) then
@@ -455,11 +455,11 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
              h_1 = h
            endif
 
-           error = abs(h_1 - h) !error is new estatimate and 2nd estimate
+           error = abs((h_1 - h)/h) !error is new estatimate and 2nd estimate
 
-    !      if(idx .eq. 1803 .or. idx .eq. 1802) then 
-    !       write(6,*) "h",idx,h_0,h,h_1
-    !      endif
+            if(idx .eq. 626) then 
+              write(6,*) h_0,h,h_1,error
+            endif
 
            h_0  = h 
            h    = h_1
@@ -467,17 +467,23 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
       end do
 
-      if(maxiter .ge. 99 .or. h .gt. 50) then 
-         print*, "BisErr-id,err,q,", idx, error, ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-         print*, "n,z,B,So,dx,X,dt,C1,C2,C3,C4",n,z,Bw,So,dx,X,dt,C1,C2,C3,C4
+      if((maxiter .ge. 100 .and. error .gt. 0.05) .or. h .gt. 100) then 
+
+         print*, "Warning message:"
+         print*, "id,err,iters,h", idx, error, maxiter, h
+         print*, "n,z,B,So,dx,X,dt,Km",n,z,Bw,So,dx,X,dt,Km
          print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
-         call hydro_stop("in MUSKINGCUNGE")
+         if(h.gt.100) then
+              print*, "Water Elevation Calculation is Diverging"
+              call hydro_stop("in MUSKINGCUNGE")
+         endif
       endif
 
-    !      write(6,"(a3,4f3.2)") "h's",h_0,h,h_1,error
-    !      write(6,*) "" !id,h,q",idx,h,((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-    !      call flush(6)
+!      if(idx .eq. 626) then 
+!         write(6,*) ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+!      endif
 
+!     MUSKINGCUNGE =  h 
       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
 
 ! ----------------------------------------------------------------
@@ -601,6 +607,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         INTEGER                     :: DT_STEPS               !-- number of timestep in routing
         REAL                        :: Qup,Quc                !--Q upstream Previous, Q Upstream Current, downstream Previous
         REAL                        :: bo                     !--critical depth, bnd outflow just for testing
+        REAL                        :: AREA,WP                !--wetted area and perimiter for MuskingC. routing
 
         REAL ,DIMENSION(NLINKS)     :: HLINKTMP,CVOLTMP       !-- temporarily store head values and volume values
         REAL ,DIMENSION(NLINKS)     :: CD                     !-- critical depth
@@ -710,9 +717,16 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                    X   = MUSX(k)
                    QLINK(k,2) = MUSKING(k,0.0, QLateral(k), QLINK(k,1), DTRT_CH, Km, X) !--current outflow
               elseif (channel_option .eq. 2) then !-- upstream is assumed constant initial condition
+
+                 ! HLINK(k) = MUSKINGCUNGE(k,0.0,0.0,QLINK(k,1), &
                    QLINK(k,2) = MUSKINGCUNGE(k,0.0,0.0,QLINK(k,1), &
                          QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
-                         MannN(k), ChSSLP(k), Bw(k))
+                         MannN(k), ChSSlp(k), Bw(k))
+
+                 ! AREA = (Bw(k) * HLINK(k) + 1/ChSSlp(k) * HLINK(k)**2)
+                 ! WP   = (Bw(k) * HLINK(k) + 1/ChSSlp(k) * HLINK(k)**2) / (Bw(k) + 2 * HLINK(k) * sqrt(1+(1/ChSSlp(k))**2))
+                 ! QLINK(k,2) = 1/MannN(k) * AREA * WP**(2./3.) * sqrt(So(k))
+
               else
 #ifdef HYDRO_D
                   print *, "No channel option selected"
@@ -772,9 +786,15 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                        tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
                    elseif (channel_option .eq. 2) then ! muskingum cunge
 
+                    !HLINK(k) =   MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
                     tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
                                     QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
                                     MannN(k), ChSSlp(k), Bw(k) )
+
+                    ! AREA = (Bw(k) * HLINK(k) + 1/ChSSLP(k) * HLINK(k)**2)
+                    ! WP   = (Bw(k) * HLINK(k) + 1/ChSSLP(k) * HLINK(k)**2) / (Bw(k) + 2 * HLINK(k) * sqrt(1+(1/ChSSLP(k))**2))
+                    ! tmpQLINK(k,2) = ((1/MannN(k)) * AREA * WP**(2./3.) * sqrt(So(k)))
+
                    else
 #ifdef HYDRO_D
                     print *, " no channel option selected"
@@ -1296,7 +1316,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
      REAL :: z, AREA,R,Kd
 
      z=1/Cs
-     R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z**2)) !-- Hyd Radius
+     R = ((Bw+z*h1)*h1)/(Bw+2*h1*sqrt(1+z*z)) !-- Hyd Radius
      AREA = (Bw+z*h1)*h1        !-- Flow area
      Kd = (1/n)*(R**(2./3.))*AREA     !-- convenyance
 #ifdef HYDRO_D

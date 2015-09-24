@@ -3421,9 +3421,12 @@ contains
 
 ! convert grid-cell LAI to the fractional vegetated area (FVEG)
 
-        VAIE    = MIN(6.,VAI    / FVEG)
-        LAISUNE = MIN(6.,LAISUN / FVEG)
-        LAISHAE = MIN(6.,LAISHA / FVEG)
+!        VAIE    = MIN(6.,VAI    / FVEG)
+!        LAISUNE = MIN(6.,LAISUN / FVEG)
+!        LAISHAE = MIN(6.,LAISHA / FVEG)
+        VAIE    = MIN(6.,VAI   )
+        LAISUNE = MIN(6.,LAISUN)
+        LAISHAE = MIN(6.,LAISHA)
 
 ! saturation vapor pressure at ground temperature
 
@@ -3652,7 +3655,7 @@ contains
 
      IF(OPT_STC == 1 .OR. OPT_STC == 3) THEN
      IF (SNOWH > 0.05 .AND. TG > TFRZ) THEN
-        TG  = TFRZ
+        IF(OPT_STC == 1) TG  = TFRZ
         IF(OPT_STC == 3) TG  = (1.-FSNO)*TG + FSNO*TFRZ   ! MB: allow TG>0C during melt v3.7
         IRG = CIR*TG**4 - EMG*(1.-EMV)*LWDN - EMG*EMV*SB*TV**4
         SHG = CSH * (TG         - TAH)
@@ -3970,7 +3973,7 @@ contains
 
      IF(OPT_STC == 1 .OR. OPT_STC == 3) THEN
      IF (SNOWH > 0.05 .AND. TGB > TFRZ) THEN
-          TGB = TFRZ
+          IF(OPT_STC == 1) TGB = TFRZ
           IF(OPT_STC == 3) TGB  = (1.-FSNO)*TGB + FSNO*TFRZ  ! MB: allow TG>0C during melt v3.7
           IRB = CIR * TGB**4 - EMG*LWDN
           SHB = CSH * (TGB        - SFCTMP)
@@ -4979,13 +4982,6 @@ contains
            IF (OPT_STC == 2) THEN
               BI(K) = - CI(K) + DF(K)/(0.5*ZSNSO(K)*ZSNSO(K)*HCPCT(K))
            END IF
-
-!ywstart added for failure of bfb between sequential and parallel run
-            IF (OPT_STC == 3) THEN
-               BI(K) = - CI(K)
-            END IF                                        
-!ywend
-
         ELSE IF (K < NSOIL) THEN
            AI(K)    = - DF(K-1) * DDZ(K-1) / DENOM(K) 
            CI(K)    = - DF(K  ) * DDZ(K  ) / DENOM(K) 

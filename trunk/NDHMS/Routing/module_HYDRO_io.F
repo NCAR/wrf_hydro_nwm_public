@@ -846,7 +846,8 @@ end subroutine get_albedo12m_netcdf
              !! JLM what to do here??
           endif
           !! get the number of links
-          iRet = nf_inq_dimid(ncId, 'link', dimId)
+!yw          iRet = nf_inq_dimid(ncId, 'link', dimId)
+          iRet = nf_inq_dimid(ncId, 'linkDim', dimId)
           iRet = nf_inq_dimlen(ncId, dimId, NLINKSL)         
           iRet = nf_close(ncId)
        else 
@@ -4377,7 +4378,13 @@ end subroutine mpp_output_chrt
 #endif
             end if
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-              iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
+
+                 if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                     iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_links/),varid)
+                 else
+                     iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
+                 endif
+
 !yw test bucket model
 !             iret = nf_def_var(ncid,"gwbas_pix_ct",NF_FLOAT,1,(/dimid_basns/),varid)
 !             iret = nf_def_var(ncid,"gw_buck_exp",NF_FLOAT,1,(/dimid_basns/),varid)
@@ -4540,9 +4547,11 @@ end subroutine mpp_output_chrt
 
             end if
 
+
             if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
 !              call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
               if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+
                     call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
 #ifdef MPP_LAND   
                             ,rt_domain(did)%gnlinks  &
@@ -6774,11 +6783,12 @@ end subroutine get_1d_netcdf_real
 
 ! read the GWBUCET Parm for NHDPlus
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
-                z_max, LINKID)
+                z_max, LINKID, nhdBuckMask)
     implicit none
     integer :: numbasns
     integer, dimension(numbasns) :: LINKID
     real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max
+    integer, dimension(numbasns) :: nhdBuckMask
     character(len=*) :: infile
 !   define temp array
     integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
@@ -6846,12 +6856,14 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        call mpp_land_bcast_int(gnid ,tmpLinkid)
 #endif
    
+    nhdBuckMask = -999
     do k = 1, numbasns
         do i = 1, gnid
             if(LINKID(k) .eq. tmpLinkid(i)) then
                gw_buck_coeff(k) = tmpCoeff(i)
                gw_buck_exp(k) = tmpExp(i)
                z_max(k) = tmpz_max(i)
+               nhdBuckMask(k) = 1
                goto 301 
             endif
         end do

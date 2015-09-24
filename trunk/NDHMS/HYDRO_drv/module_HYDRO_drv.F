@@ -516,20 +516,18 @@ module module_HYDRO_drv
 #endif
 
        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-          write(6,*) " check step 0 "
-          call flush(6)
           call simp_gw_buck_nhd(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt,  &
              RT_DOMAIN(did)%numbasns,nlst_rt(did)%AGGFACTRT, nlst_rt(did)%DT, RT_DOMAIN(did)%INFXSWGT,      &
              RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%SOLDRAIN, RT_DOMAIN(did)%dist(:,:,9),rt_domain(did)%dist_lsm(:,:,9), &
              RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp, RT_DOMAIN(did)%z_max,     &
-             RT_DOMAIN(did)%qinflowbase, RT_DOMAIN(did)%qout_gwsubbas,RT_DOMAIN(did)%qin_gwsubbas,    &
+             RT_DOMAIN(did)%z_gwsubbas, RT_DOMAIN(did)%qout_gwsubbas,RT_DOMAIN(did)%qin_gwsubbas,    &
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT,          & 
 #ifdef MPP_LAND
              RT_DOMAIN(did)%LNLINKSL &
 #else
              RT_DOMAIN(did)%numbasns &
 #endif
-             , rt_domain(did)%basns_area &
+             , rt_domain(did)%basns_area, rt_domain(did)%nhdBuckMask &
              )
        else
           call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
