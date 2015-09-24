@@ -1,4 +1,4 @@
-SHELL=/bin/sh
+ SHELL=/bin/sh
 .SUFFIXES:	
 .SUFFIXES:	.F .c .o .exe
 
@@ -22,11 +22,11 @@ lib/libsmda.a:
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPP_NETCDF4_COMPRESS) $(*).F > $(*).f90
-	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) -I./lib -I./lib $(*).f90
+	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) -c $(NETCDFMOD) -I./lib -I./lib $(*).f90
 
 $(CMD):	lib/libsmda.a $(OBJS)
 	(cd lib; make)
-	$(COMPILERF90) -o $(@) -I./lib $(F90FLAGS) -I./lib $(OBJS) \
+	$(COMPILERF90) -o $(@) -I./lib $(F90FLAGS) $(LDFLAGS) -I./lib $(OBJS) \
 		-L./lib -lsmda $(NETCDFLIB) $(BZIP2_LIB) $(LIBJASPER)
 
 clean:

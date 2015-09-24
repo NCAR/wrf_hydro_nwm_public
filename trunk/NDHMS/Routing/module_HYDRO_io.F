@@ -2736,11 +2736,12 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
   end subroutine sub_output_gw
 
 !-- output the channel route in an IDV 'station' compatible format
-   subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER,            &
-        startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,        &
-        STRMFRXSTPTS, order_to_write, NLINKSL, channel_option, gages, gageMiss & 
+   subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER,             &
+        startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
+        STRMFRXSTPTS, order_to_write, NLINKSL, channel_option, gages, gageMiss, & 
+        lsmDt                                                                   &
 #ifndef HYDRO_REALTIME
-        , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT         &
+        , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT          &
 #endif
         )
      
@@ -2756,6 +2757,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      integer, dimension(NLINKS),               intent(inout) :: STRMFRXSTPTS
      character(len=15), dimension(nlinks),     intent(inout) :: gages
      character(len=15),                        intent(in) :: gageMiss
+     real,                                     intent(in) :: lsmDt
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(NLINKS,2),                intent(in) :: qlink
@@ -2815,14 +2817,12 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTXID          ! variable ID
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
-     integer, parameter :: did=1
 
      real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
 
      !! currently, this is the time of the hydro model, it's
      !! lsm time (olddate) plus one lsm timestep
-     !! i'm hardwiring did=1 just above here.
-     call geth_newdate(hydroTime, nlst_rt(did)%olddate, nint(nlst_rt(did)%dt))
+     call geth_newdate(hydroTime, date, nint(lsmDt))
      
      seconds_since = int(dtrt_ch)*K
 
@@ -3436,12 +3436,13 @@ end subroutine output_chrt
 
 #ifdef MPP_LAND
 !-- output the channel route in an IDV 'station' compatible format
-   subroutine mpp_output_chrt(gnlinks,gnlinksl,map_l2g,igrid,                 &
-        split_output_count, NLINKS, ORDER,                                    &
-        startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,             &
-        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss &
+   subroutine mpp_output_chrt(gnlinks,gnlinksl,map_l2g,igrid,                  &
+        split_output_count, NLINKS, ORDER,                                     &
+        startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
+        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss, &
+        lsmDt                                                                  &
 #ifndef HYDRO_REALTIME
-        , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT        &
+        , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT         &
 #endif
         )
 
@@ -3460,6 +3461,7 @@ end subroutine output_chrt
      integer, dimension(:),               intent(inout) :: STRMFRXSTPTS
      character(len=15), dimension(:),     intent(inout) :: gages
      character(len=15),                   intent(in) :: gageMiss
+     real,                                intent(in) :: lsmDt
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
@@ -3546,11 +3548,12 @@ end subroutine output_chrt
      call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
 
      if(my_id .eq. IO_id) then
-       call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER,               &
-          startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,    &
-          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option, g_gages, gageMiss &
+       call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER,                &
+          startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,     &
+          g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option, g_gages, gageMiss, &
+          lsmDt                                                                     &
 #ifndef HYDRO_REALTIME
-          , g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket, UDMP_OPT   &
+          , g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket, UDMP_OPT    &
 #endif
           )
 
