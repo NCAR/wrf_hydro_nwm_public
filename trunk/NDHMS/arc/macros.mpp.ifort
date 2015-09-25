@@ -24,7 +24,7 @@
 ##       # Aliases for invoking ifort
 ##       alias impirun='/opt/openmpi-1.10.0-intel/bin/mpirun'
 ##       alias iman='man -M/opt/openmpi+intel/man'
-##       # Bonus: Check your wrf hydro environment - this is up you to maintain to your needs.
+##       # Bonus: Check your wrf hydro environment - up you to maintain to your needs.
 ##       alias henv='printenv | egrep -i "(HYDRO|NUDG|PRECIP|CHAN_CONN|^NETCDF|^LDFLAGS|^ifort)" | egrep -v PWD'
 
 .IGNORE:
@@ -65,14 +65,14 @@ endif
 
 
 RMD	    = rm -f
-COMPILER90  = $(ifortCompiler90)
+COMPILER90  = mpif90
 FORMAT_FREE = -FR
 BYTESWAPIO  = -convert big_endian
 F90FLAGS    = -w -c -ftz -align all -fno-alias -fp-model precise $(FORMAT_FREE) $(BYTESWAPIO)
 MODFLAG	    = -I./ -I ../../MPP -I ../MPP -I ../mod
-LDFLAGS	    = $(ifortLdFlags)
+LDFLAGS	    =
 CPP	    = cpp
 CPPFLAGS    = -C -P -traditional -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT)
 LIBS 	    =	
-NETCDFINC   = $(ifortNetcdfInc)
-NETCDFLIB   = -L$(ifortNetcdfLib) -lnetcdff -lnetcdf
+NETCDFINC   = $(NETCDF_INC)
+NETCDFLIB   = -L$(NETCDF_LIB) -lnetcdff -lnetcdf

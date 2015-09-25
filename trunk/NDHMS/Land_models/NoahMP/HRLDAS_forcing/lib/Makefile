@@ -51,7 +51,7 @@ decode_jpeg2000.o:	decode_jpeg2000.c
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(GRIBCODE_OPT) $(BZIP_CPP) $(*).F > $(*).f90
-	$(COMPILERF90) -c $(FREESOURCE) $(F90FLAGS) $(NETCDFMOD) $(*).f90
+	$(COMPILERF90) -c $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) $(NETCDFMOD) $(*).f90
 
 .c.o:
 	$(CC) -c $(BZIP_CPP) $(<)
