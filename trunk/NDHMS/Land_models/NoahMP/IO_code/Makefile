@@ -21,7 +21,7 @@ module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG) -I. \
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(MODFLAG) -I. \
 	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
 
@@ -29,7 +29,7 @@ main_hrldas_driver.o: main_hrldas_driver.F
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
 	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
 
@@ -37,14 +37,14 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(NETCDFMOD) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(NETCDFMOD)  $(*).f90
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(NETCDFMOD)  $(*).f90
 	@echo ""
 
 .F.o:
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f90
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).f90
 	@echo ""
 
 

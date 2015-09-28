@@ -205,6 +205,7 @@ CONTAINS
 !tmp  endif
 
      allocate( rt_domain(did)%LINKID(nsizes) )
+     allocate( rt_domain(did)%gages(nsizes) )
      allocate( rt_domain(did)%TO_NODE(nsizes) )
      allocate( rt_domain(did)%FROM_NODE(nsizes) )
      allocate( rt_domain(did)%CHLAT(nsizes) )   !-latitutde of channel grid point
@@ -263,6 +264,7 @@ CONTAINS
 
 !!!! tmp
       rt_domain(did)%LINK = 0.0        
+      rt_domain(did)%gages = rt_domain(did)%gageMiss
       rt_domain(did)%TO_NODE = 0.0        
       rt_domain(did)%FROM_NODE = 0        
       rt_domain(did)%TYPEL = 0          
@@ -466,13 +468,12 @@ CONTAINS
      CHARACTER(len=1)                       :: jnk
 
      REAL,  DIMENSION(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
-     integer :: i,j,k
+     integer :: i,j,k, ll, count
  
      integer, allocatable, dimension(:) :: tmp_int
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
-     
-        
+
 !------------------------------------------------------------------------
 !DJG Routing Processing
 !------------------------------------------------------------------------
@@ -523,7 +524,7 @@ CONTAINS
                ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
                ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
 #endif
-               )
+               ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
 
     if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
           ! get NHDPLUS mapping function. 
@@ -614,6 +615,18 @@ CONTAINS
         end do
 
 #endif
+
+!!$        ! use gage information in RouteLink like strmfrxstpts
+!!$        rt_domain(did)%STRMFRXSTPTS = -9999  !! existing info useless for link-based routing
+!!$        count = 1
+!!$        do ll=1,rt_domain(did)%NLINKSL
+!!$           if(trim(rt_domain(did)%gages(ll)) .ne. trim(rt_domain(did)%gageMiss)) then
+!!$              rt_domain(did)%STRMFRXSTPTS(count) = ll
+!!$              count = count + 1 
+!!$           end if
+!!$        end do
+
+
      endif   ! end of channel option if block
 
 
