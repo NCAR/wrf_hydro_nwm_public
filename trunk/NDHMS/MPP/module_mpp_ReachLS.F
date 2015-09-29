@@ -52,6 +52,67 @@ MODULE MODULE_mpp_ReachLS
   contains
 
 
+  subroutine updateLinkV8_mem(LinkV, outV)
+! for big memory data
+     implicit none
+     real, dimension(:) :: outV
+     real*8, dimension(:) :: LinkV
+     real, allocatable, dimension(:) :: gLinkV_r4
+     real*8, allocatable,dimension(:) :: gLinkV
+     integer :: ierr, i, tag, k,m,lsize
+     integer, dimension(LLINKLEN) :: lindex
+     if(my_id .eq. io_id) then
+           allocate(gLinkV(gnlinksl))
+           allocate(gLinkV_r4(gnlinksl))
+           gLinkV = 0.0
+           gLinkV_r4 = 0.0
+           do i = 1, LLINKLEN
+               gLinkV_r4(LLINKIDINDX(i)) = LinkV(i)
+           end do
+     endif
+
+     if(my_id .ne. IO_id) then
+        
+          tag = 101
+          call mpi_send(LLINKLEN,1,MPI_INTEGER, IO_id,     &
+                tag,MPI_COMM_WORLD,ierr)
+          if(LLINKLEN .gt. 0) then
+              tag = 102
+              call mpi_send(LLINKIDINDX,LLINKLEN,MPI_INTEGER, IO_id,     &
+                    tag,MPI_COMM_WORLD,ierr)
+              tag = 103
+              call mpi_send(LinkV,LLINKLEN,MPI_DOUBLE, IO_id,     &
+                   tag,MPI_COMM_WORLD,ierr)
+          endif
+      else   
+          do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+                tag = 101
+                call mpi_send(lsize,1,MPI_INTEGER, IO_id,     &
+                            tag,MPI_COMM_WORLD,ierr)
+                if(lsize .gt. 0) then
+                      tag = 102
+                      call mpi_send(lindex,lsize,MPI_INTEGER, IO_id,     &
+                            tag,MPI_COMM_WORLD,ierr)
+                      tag = 103
+                      call mpi_recv(gLinkV(1:lsize),lsize,&
+                            MPI_DOUBLE,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                      do k = 1, lsize
+                          gLinkV_r4(lindex(k)) = gLinkV_r4(lindex(k)) + gLinkV(k)
+                      end do
+               endif
+            end if
+          end do
+      end if 
+
+      call ReachLS_decompReal(gLinkV_r4,outV)
+
+      if(my_id .eq. io_id) then
+          deallocate(gLinkV_r4, gLinkV)
+      endif
+  end subroutine updateLinkV8_mem
+
+
   subroutine updateLinkV8(LinkV, outV)
      implicit none
      real, dimension(:) :: outV 
@@ -331,7 +392,7 @@ MODULE MODULE_mpp_ReachLS
          end do
       else
           if(aLinksl(my_id+1) .gt. 0) then
-               call mpi_recv(outV(1:linkls_e(my_id+1)-linkls_s(my_id+1)), &
+               call mpi_recv(outV(1:linkls_e(my_id+1)-linkls_s(my_id+1)+1), &
                     alinksl(my_id+1),                           &
                     MPI_INTEGER, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
           endif
@@ -562,6 +623,115 @@ MODULE MODULE_mpp_ReachLS
       end do
 
   end subroutine getToInd
+
+  subroutine com_decomp1dInt(inV,gsize,outV,lsize)
+!     output outV and lsize
+      implicit none
+      integer,INTENT(in),dimension(:) :: inV
+      integer,allocatable,dimension(:) :: outV
+      integer ::  i, ierr, tag, imod, ncomsize
+      integer :: lsize, ssize,start, gsize, end
+      tag = 19
+      ncomsize = gsize/numprocs
+      imod = mod(gsize,numprocs)
+
+
+      if(my_id .eq. io_id) then
+         start = 0
+         end = 0
+         do i = 1, numprocs
+            if(i-1 .lt. imod) then
+                  ssize = ncomsize + 1
+            else
+                  ssize = ncomsize 
+            endif
+ 
+            start = end + 1 
+            end = start + ssize - 1
+
+            if(i-1 .eq. io_id) then
+                if(ssize .gt. 0) then
+                    allocate(outV(ssize) )
+                    outV(1:ssize) = inV(1:ssize)
+                    lsize = ssize
+                else
+                    lsize = 0    
+                endif
+            else
+                if(ssize .gt. 0 ) then  
+                   call mpi_send(inV(start:start+ssize), ssize,       &
+                      MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,ierr)
+                endif
+            endif
+         end do
+      else   
+              if(my_id .lt. imod) then
+                   lsize = ncomsize + 1
+              else
+                   lsize = ncomsize 
+              endif
+              if( lsize .gt. 0) then
+                  allocate(outV(lsize) )
+                  call mpi_recv(outV,lsize,                           &
+                        MPI_INTEGER, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+              endif
+      endif
+      call mpp_land_sync()
+
+
+  END subroutine com_decomp1dInt
+
+  subroutine com_write1dInt(inV,lsize,outV,gsize)
+!     output outV and lsize
+      implicit none
+      integer,INTENT(in),dimension(:) :: inV
+      integer,dimension(:) :: outV
+      integer ::  i, ierr, tag, imod, ncomsize
+      integer :: lsize, rsize,start, gsize, end
+      tag = 18
+      ncomsize = gsize/numprocs
+      imod = mod(gsize,numprocs)
+
+      if(my_id .eq. io_id) then
+            start = 0
+            end = 0
+         do i = 1, numprocs
+            if(i-1 .lt. imod) then
+                  rsize = ncomsize + 1
+            else
+                  rsize = ncomsize 
+            endif
+
+            start = end + 1 
+            end = start + rsize - 1
+
+            if(i-1 .eq. io_id) then
+                if(rsize .gt. 0) then
+                    outV(1:rsize) = inV(1:rsize)
+                endif
+            else
+                if(rsize .gt. 0 ) then  
+                  call mpi_recv(outV(start:start+rsize), rsize,          &
+                        MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                endif
+            endif
+         end do
+      else   
+              if(my_id .lt. imod) then
+                   lsize = ncomsize + 1
+              else
+                   lsize = ncomsize 
+              endif
+              if( lsize .gt. 0) then
+                   call mpi_send(inV, lsize,       &
+                      MPI_INTEGER, io_id,tag,MPI_COMM_WORLD,ierr)
+              endif
+      endif
+
+      call mpp_land_sync()
+
+  END subroutine com_write1dInt 
+
 
 END MODULE MODULE_mpp_ReachLS
 

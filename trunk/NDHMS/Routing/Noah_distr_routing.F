@@ -45,6 +45,11 @@
 !       IXXRT=IXXRT+1
 !       JYYRT=JYYRT+1
 #endif
+        if(AGGFACTR .eq. 1) then
+            IXXRT=I
+            JYYRT=J
+        endif
+
 
 
 !DJG Urban, rock, playa, snow/ice...
@@ -2370,6 +2375,10 @@
 !       IXXRT=IXXRT+1
 !       JYYRT=JYYRT+1
 #endif
+        if(AGGFACTRT .eq. 1) then
+            IXXRT=I
+            JYYRT=J
+        endif
 
 
 !DJG Implement subgrid weighting routine...

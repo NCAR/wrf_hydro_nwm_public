@@ -882,15 +882,21 @@ end subroutine get_albedo12m_netcdf
          INTEGER :: i, j, ii,jj
          CHARACTER(len=*):: var_name,fileName
          real, INTENT(OUT), dimension(ixrt,jxrt) :: inv
+#ifndef MPP_LAND
          real, dimension(ixrt,jxrt) :: inv_tmp
+#endif
 #ifdef MPP_LAND
          real, allocatable,dimension(:,:) :: g_inv_tmp, g_inv
          if(my_id .eq. io_id) then
+
               allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
               allocate(g_inv(global_rt_nx,global_rt_ny))
+
+
               g_inv_tmp = -9999.9
               iret =  get2d_real(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
                      trim(fileName))
+
               do i=1,global_rt_nx
                  jj=global_rt_ny
                  do j=1,global_rt_ny
@@ -898,12 +904,17 @@ end subroutine get_albedo12m_netcdf
                    jj=global_rt_ny-j
                  end do
               end do
+              deallocate(g_inv_tmp)
          else
               allocate(g_inv_tmp(1,1))
               allocate(g_inv(1,1))
          endif 
          call decompose_RT_real(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
-         deallocate(g_inv_tmp, g_inv)
+         if(my_id .eq. io_id) then
+             deallocate(g_inv)
+         else
+             deallocate(g_inv_tmp, g_inv)
+         endif
 #else
          inv_tmp = -9999.9
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
@@ -2699,13 +2710,13 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS, NLINKSL
-     real, dimension(NLINKS),                  intent(in) :: chlon,chlat
-     real, dimension(NLINKS),                  intent(in) :: hlink,zelev
-     integer, dimension(NLINKS),               intent(in) :: ORDER
-     integer, dimension(NLINKS),               intent(inout) :: STRMFRXSTPTS
+     real, dimension(:),                  intent(in) :: chlon,chlat
+     real, dimension(:),                  intent(in) :: hlink,zelev
+     integer, dimension(:),               intent(in) :: ORDER
+     integer, dimension(:),               intent(inout) :: STRMFRXSTPTS
 
      real,                                     intent(in) :: dtrt_ch
-     real, dimension(NLINKS,2),                intent(in) :: qlink
+     real, dimension(:,:),                intent(in) :: qlink
      
      integer  :: UDMP_OPT
 
@@ -2763,7 +2774,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTXDIMS(OTDIMS) ! variable shape
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
 
+#ifndef HYDRO_REALTIME
      real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
+#endif
    
      seconds_since = int(dtrt_ch)*K
 
@@ -3338,25 +3351,28 @@ end subroutine output_chrt
       real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
       integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
       real,allocatable,dimension(:,:) :: g_qlink
+      integer  :: gsize
 #ifndef HYDRO_REALTIME
       real,allocatable,dimension(:) :: g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket
       real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
 #endif
 
+        gsize = gNLINKS
+        if(gnlinksl .gt. gsize) gsize = gnlinksl
      if(my_id .eq. io_id ) then
-        allocate(g_chlon(gNLINKS))
-        allocate(g_chlat(gNLINKS))
-        allocate(g_hlink(gNLINKS))
-        allocate(g_zelev(gNLINKS))
-        allocate(g_qlink(gNLINKS,2))
-        allocate(g_order(gNLINKS))
-        allocate(g_STRMFRXSTPTS(gNLINKS))
+        allocate(g_chlon(gsize  ))
+        allocate(g_chlat(gsize  ))
+        allocate(g_hlink(gsize  ))
+        allocate(g_zelev(gsize  ))
+        allocate(g_qlink(gsize  ,2))
+        allocate(g_order(gsize  ))
+        allocate(g_STRMFRXSTPTS(gsize  ))
 
 #ifndef HYDRO_REALTIME
-        allocate(g_accLndRunOff(gNLINKS))
-        allocate(g_accQLateral(gNLINKS))
-        allocate(g_accStrmvolrt(gNLINKS))
-        allocate(g_accBucket(gNLINKS))
+        allocate(g_accLndRunOff(gsize  ))
+        allocate(g_accQLateral(gsize  ))
+        allocate(g_accStrmvolrt(gsize  ))
+        allocate(g_accBucket(gsize  ))
 #endif
 
      else
@@ -4012,6 +4028,7 @@ end subroutine mpp_output_chrt
 !       integer, allocatable, dimension(:) :: tmp_int
         integer :: ywcount
 
+
         if(my_id .eq. IO_id) then
            allocate(g_CH_NETLNK(g_IXRT,g_JXRT))
            g_CH_NETLNK = -9999
@@ -4021,7 +4038,7 @@ end subroutine mpp_output_chrt
         else
            allocate(g_CH_NETLNK(1,1))
         endif
-        
+     
 
         call mpp_land_bcast_int1(NLAKES)
         call mpp_land_bcast_int1(GNLINKS)
@@ -4096,6 +4113,7 @@ end subroutine mpp_output_chrt
      endif
 
 
+       
 #ifdef HYDRO_D
         write(6,*) "read linkid grid CH_LNKRT ",var_name
 #endif

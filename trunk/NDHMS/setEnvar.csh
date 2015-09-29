@@ -15,8 +15,8 @@ if(! $?HYDRO_D) setenv HYDRO_D 1
 # if(! $?WRF_HYDRO_RAPID) setenv WRF_HYDRO_RAPID 1
 
 ### using large netcdf file definition.
-# if(! $?WRFIO_NCD_LARGE_FILE_SUPPORT) setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
+if(! $?WRFIO_NCD_LARGE_FILE_SUPPORT) setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
 
 ### running in REALTIME mode (with reduced output).
-# if(! $?HYDRO_REALTIME) setenv HYDRO_REALTIME 1
+if(! $?HYDRO_REALTIME) setenv HYDRO_REALTIME 1
 

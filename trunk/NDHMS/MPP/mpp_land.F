@@ -878,7 +878,7 @@ MODULE MODULE_MPP_LAND
   subroutine mpp_land_bcast_int1d(inout)
       integer len 
       integer inout(:)
-      integer ierr
+     integer ierr
       len = size(inout,1)
         call mpi_bcast(inout,len,MPI_INTEGER,   &
             IO_id,MPI_COMM_WORLD,ierr)
@@ -1972,6 +1972,7 @@ MODULE MODULE_MPP_LAND
        integer, dimension(nlinks) :: vinout
        integer, dimension(nlinks) :: buf
        tag = 139
+       call mpp_land_sync()
        if(my_id .eq. IO_id) then
           do i = 0,numprocs -1
             if(i .ne. my_id) then
@@ -1984,9 +1985,64 @@ MODULE MODULE_MPP_LAND
            call mpi_send(vinout,nlinks,MPI_INTEGER, IO_id,     &
                tag,MPI_COMM_WORLD,ierr)
        endif
+       call mpp_land_sync()
        call mpp_land_bcast_int1d(vinout)
     
   end subroutine mpp_collect_1d_int
+
+  subroutine mpp_collect_1d_int_mem(nlinks,vinout)
+  ! consider the memory and big size data transport
+  ! collect the nlinks
+       implicit none
+       integer :: nlinks
+       integer :: i, ierr, status, tag
+       integer, dimension(nlinks) :: vinout
+       integer, dimension(nlinks) :: buf
+       integer :: lsize, k,m
+       integer, allocatable, dimension(:) :: tmpBuf
+
+       call mpp_land_sync()
+       if(my_id .eq. IO_id) then
+          allocate (tmpBuf(nlinks))
+          do i = 0,numprocs -1
+            if(i .ne. my_id) then
+               tag = 120
+               call mpi_recv(lsize,1,MPI_INTEGER,i, &
+                      tag,MPI_COMM_WORLD,mpp_status,ierr)
+               if(lsize .gt. 0) then
+                   tag = 121
+                   call mpi_recv(tmpBuf(1:lsize),lsize,MPI_INTEGER,i, &
+                        tag,MPI_COMM_WORLD,mpp_status,ierr)
+                   do k = 1, lsize
+                      m = tmpBuf(k)
+                      vinout(m) = vinout(m) + tmpBuf(k)
+                   end do
+               endif
+            end if
+          end do
+          deallocate(tmpBuf)
+       else 
+           lsize = 0
+           do k = 1, nlinks
+               if(vinout(k) .gt. 0) then
+                  lsize = lsize + 1
+                  vinout(lsize) = vinout(k)
+               end if
+           end do 
+           tag = 120
+           call mpi_send(lsize,1,MPI_INTEGER, IO_id,     &
+                 tag,MPI_COMM_WORLD,ierr)
+           if(lsize .gt. 0) then
+              tag = 121
+              call mpi_send(vinout(1:lsize),lsize,MPI_INTEGER, IO_id,     &
+                 tag,MPI_COMM_WORLD,ierr)
+           endif
+       endif
+       call mpp_land_sync()
+       call mpp_land_bcast_int1d(vinout)
+   
+  end subroutine mpp_collect_1d_int_mem
+
 
 
 END MODULE MODULE_MPP_LAND

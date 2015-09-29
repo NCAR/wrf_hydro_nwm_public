@@ -10,7 +10,7 @@ use module_mpp_land, only: mpp_land_bcast_int, mpp_land_bcast_real8_1d, mpp_land
 
 use module_mpp_land, only: sum_int1d, global_rt_nx, global_rt_ny, write_IO_rt_int
 
-use MODULE_mpp_ReachLS, only : updatelinkv, ReachLS_write_io
+use MODULE_mpp_ReachLS, only : updatelinkv, ReachLS_write_io, com_write1dInt, com_decomp1dInt
 
 #endif
 
@@ -31,7 +31,7 @@ end type userDefineMapping
 
 TYPE ( userDefineMapping ), allocatable, DIMENSION (:) :: LUDRSL
 
-integer, allocatable, dimension(:) :: bufi,bufj,bufsize, bufid, idmask
+integer, allocatable, dimension(:) :: bufi,bufj,bufsize, bufid
 real*8 , allocatable, dimension(:) :: bufw
 integer :: LNUMRSL  ! number of local links
 integer :: ter_rt_flag
@@ -58,7 +58,8 @@ contains
     subroutine readUDMP(npid, nlinksl)
         implicit none
         integer :: i,j,Ndata, did, Npid, nlinksl, k, m
-        integer,allocatable,dimension(:) :: linkid ,bufidflag
+        integer,allocatable,dimension(:) :: linkid ,bufidflag, bufid_tmp
+        integer :: ix_bufid
         did = 1
         call get_dimension(trim(nlst_rt(did)%UDMAP_FILE), ndata, npid) 
         gnpid = npid
@@ -68,76 +69,93 @@ contains
         allocate(bufw(ndata))
         allocate(bufsize(npid))
         allocate(bufid(npid))
+        allocate(linkid(nlinksl))
 
 !       read the data
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) then
 #endif
-          allocate(linkid(nlinksl))
-          allocate(idmask(ndata))
-          allocate(bufidflag(npid))
-          bufidflag = -999
 
           call get1d_real8(trim(nlst_rt(did)%UDMAP_FILE),"regridweight",bufw)
           call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"polyid",bufid)
           call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"overlaps",bufsize)
-          call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"IDmask",idmask)
+!          call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"IDmask",idmask)
           call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"i_index",bufi)
           call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"j_index",bufj)
 !      check  polyid and linkid
-       call get1d_int(trim(nlst_rt(did)%route_link_f),"link",linkid)
+          call get1d_int(trim(nlst_rt(did)%route_link_f),"link",linkid)
+          write(6,*) "nlinksl = ", nlinksl, "npid = ", npid
+#ifdef MPP_LAND
+      endif
+#else 
+      call hydro_stop("Fatal error: sequential run for NHDPlus not defined.")
+#endif
 
-      write(6,*) "nlinksl = ", nlinksl, "npid = ", npid
+       call mpp_land_bcast_int(nlinksl,linkid)
+       
 
-       do i = 1, npid
+       call com_decomp1dInt(bufid,npid,bufid_tmp,ix_bufid)
+       if(ix_bufid .gt. 0) then
+          allocate(bufidflag(ix_bufid))
+          bufidflag = -999
+      endif
+
+       do i = 1, ix_bufid
           do j = 1, nlinksl
-               if(bufid(i) .eq. linkid(j)) then
-                  bufidflag(i) = bufid(i)
+               if(bufid_tmp(i) .eq. linkid(j)) then
+                  bufidflag(i) = bufid_tmp(i)
                   goto 102
                endif
           end do
 102       continue
        end do
-       bufid = bufidflag
+
+       call com_write1dInt(bufidflag,ix_bufid,bufid,npid)
+
+      if(ix_bufid .gt. 0) then
+          deallocate(bufidflag)
+          deallocate(bufid_tmp)
+      endif
+
 
 !   check bufsize
-    m = 0
-    do j = 1, npid
-       m = m + bufsize(j)
-    enddo
-   write(6,*) "m = ", m, "ndata = ", ndata
+!   m = 0
+!   do j = 1, npid
+!      m = m + bufsize(j)
+!   enddo
+!  write(6,*) "m = ", m, "ndata = ", ndata
      
      goto 101
  
-     k = 1  
-     j = 1
-     do i = 1, ndata-1
-        if(idmask(i) .ne. idmask(i+1) ) then 
-           bufsize(j) = k
-           j = j + 1
-           k = 1 
-        else
-           k = k + 1
-        end if
-     end do      
-     bufsize(j) = k
+!     k = 1  
+!     j = 1
+!     do i = 1, ndata-1
+!        if(idmask(i) .ne. idmask(i+1) ) then 
+!           bufsize(j) = k
+!           j = j + 1
+!           k = 1 
+!        else
+!!           k = k + 1
+!        end if
+!     end do      
+!     bufsize(j) = k
 
-     write(6,*) "j = ", j, "npid = ", npid
+!     write(6,*) "j = ", j, "npid = ", npid
 
 101   continue
 
           deallocate(linkid)
-          deallocate(bufidflag)
-          deallocate(idmask)
 
 #ifdef MPP_LAND
-       endif
        call mpp_land_bcast_int(npid,bufid)
        call mpp_land_bcast_int(npid,bufsize)
        call mpp_land_bcast_real8_1d(bufw)
        call mpp_land_bcast_int(ndata,bufi)
        call mpp_land_bcast_int(ndata,bufj)
 #endif
+
+!      if(my_id .eq. io_id) write(28) bufid 
+!      call hydro_finish()
 
     end subroutine readUDMP
 
@@ -213,6 +231,12 @@ contains
 !        call hydro_finish()
 
 
+! decide how many mapping land grids on current domain
+        tmpgridflag = gridflag
+#ifdef MPP_LAND
+        call mpp_collect_1d_int(npid,tmpgridflag)
+#endif
+
 ! decide how many user defined links on current domain
         LNUMRSL = 0 
         do k = 1, npid   
@@ -223,21 +247,12 @@ contains
                allocate( basns_area(LNUMRSL) )
         else
                write(6,*) "Warning: no routing links found."
+               call cleanBuf()
                return
         endif
 
         write(6,*) "my_id, starti, endi, startj,endj",starti, endi, startj,endj
         write(6,*) " LNUMRSL = ", LNUMRSL
-
-! decide how many mapping land grids on current domain
-        tmpgridflag = gridflag
-#ifdef MPP_LAND
-        call mpp_collect_1d_int(npid,tmpgridflag)
-#endif
-
-
-
-
 
         kk = 1
         do k = 1, npid   
