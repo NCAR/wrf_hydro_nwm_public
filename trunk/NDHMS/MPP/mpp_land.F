@@ -1996,7 +1996,7 @@ MODULE MODULE_MPP_LAND
        implicit none
        integer :: nlinks
        integer :: i, ierr, status, tag
-       integer, dimension(nlinks) :: vinout
+       integer, dimension(nlinks) :: vinout, tmpIn
        integer, dimension(nlinks) :: buf
        integer :: lsize, k,m
        integer, allocatable, dimension(:) :: tmpBuf
@@ -2015,7 +2015,7 @@ MODULE MODULE_MPP_LAND
                         tag,MPI_COMM_WORLD,mpp_status,ierr)
                    do k = 1, lsize
                       m = tmpBuf(k)
-                      vinout(m) = vinout(m) + tmpBuf(k)
+                      vinout(m) = 1
                    end do
                endif
             end if
@@ -2026,7 +2026,7 @@ MODULE MODULE_MPP_LAND
            do k = 1, nlinks
                if(vinout(k) .gt. 0) then
                   lsize = lsize + 1
-                  vinout(lsize) = vinout(k)
+                  tmpIn(lsize) = k        
                end if
            end do 
            tag = 120
@@ -2034,7 +2034,7 @@ MODULE MODULE_MPP_LAND
                  tag,MPI_COMM_WORLD,ierr)
            if(lsize .gt. 0) then
               tag = 121
-              call mpi_send(vinout(1:lsize),lsize,MPI_INTEGER, IO_id,     &
+              call mpi_send(tmpIn(1:lsize),lsize,MPI_INTEGER, IO_id,     &
                  tag,MPI_COMM_WORLD,ierr)
            endif
        endif

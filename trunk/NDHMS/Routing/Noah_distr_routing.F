@@ -45,10 +45,11 @@
 !       IXXRT=IXXRT+1
 !       JYYRT=JYYRT+1
 #endif
-        if(AGGFACTR .eq. 1) then
-            IXXRT=I
-            JYYRT=J
-        endif
+
+!        if(AGGFACTR .eq. 1) then
+!            IXXRT=I
+!            JYYRT=J
+!        endif
 
 
 
@@ -2375,10 +2376,10 @@
 !       IXXRT=IXXRT+1
 !       JYYRT=JYYRT+1
 #endif
-        if(AGGFACTRT .eq. 1) then
-            IXXRT=I
-            JYYRT=J
-        endif
+!        if(AGGFACTRT .eq. 1) then
+!            IXXRT=I
+!            JYYRT=J
+!        endif
 
 
 !DJG Implement subgrid weighting routine...

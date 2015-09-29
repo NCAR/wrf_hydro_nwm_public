@@ -4,7 +4,7 @@ module module_UDMAP
 use module_namelist, only: nlst_rt
 #ifdef MPP_LAND
 use module_mpp_land, only: my_id, local_startx_rt, local_starty_rt,  &
-         local_endx_rt,local_endy_rt, left_id, right_id, down_id, up_id, mpp_collect_1d_int, &
+         local_endx_rt,local_endy_rt, left_id, right_id, down_id, up_id, mpp_collect_1d_int_mem, &
          IO_id 
 use module_mpp_land, only: mpp_land_bcast_int, mpp_land_bcast_real8_1d, mpp_land_bcast_int1
 
@@ -234,7 +234,7 @@ contains
 ! decide how many mapping land grids on current domain
         tmpgridflag = gridflag
 #ifdef MPP_LAND
-        call mpp_collect_1d_int(npid,tmpgridflag)
+        call mpp_collect_1d_int_mem(npid,tmpgridflag)
 #endif
 
 ! decide how many user defined links on current domain

@@ -72,10 +72,10 @@ contains
 #ifdef MPP_LAND  
        if(left_id.ge.0) IXXRT=IXXRT+1
        if(down_id.ge.0) JYYRT=JYYRT+1
-              if(AGGFACTRT .eq. 1) then
-                  IXXRT=I
-                  JYYRT=J
-              endif
+!              if(AGGFACTRT .eq. 1) then
+!                  IXXRT=I
+!                  JYYRT=J
+!             endif
 #endif
 !DJG Implement subgrid weighting routine...
                if( (runoff1x_in(i,j) .lt. 0) .or. (runoff1x_in(i,j) .gt. 1000) ) then

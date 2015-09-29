@@ -31,8 +31,8 @@ MODULE MODULE_mpp_ReachLS
   end interface
 
   interface updateLinkV
-     module procedure updateLinkV8
-     module procedure updateLinkV4
+     module procedure updateLinkV8_mem
+     module procedure updateLinkV4_mem
   end interface
   
 
@@ -58,16 +58,16 @@ MODULE MODULE_mpp_ReachLS
      real, dimension(:) :: outV
      real*8, dimension(:) :: LinkV
      real, allocatable, dimension(:) :: gLinkV_r4
-     real*8, allocatable,dimension(:) :: gLinkV
+     real*8, allocatable,dimension(:) ::  tmpBuf, gLinkV_r8
      integer :: ierr, i, tag, k,m,lsize
-     integer, dimension(LLINKLEN) :: lindex
+     integer, allocatable,dimension(:) :: lindex
      if(my_id .eq. io_id) then
-           allocate(gLinkV(gnlinksl))
            allocate(gLinkV_r4(gnlinksl))
-           gLinkV = 0.0
+           allocate(gLinkV_r8(gnlinksl))
            gLinkV_r4 = 0.0
+           gLinkV_r8 = 0.0
            do i = 1, LLINKLEN
-               gLinkV_r4(LLINKIDINDX(i)) = LinkV(i)
+               gLinkV_r8(LLINKIDINDX(i)) = LinkV(i)
            end do
      endif
 
@@ -88,18 +88,86 @@ MODULE MODULE_mpp_ReachLS
           do i = 0, numprocs - 1
             if(i .ne. IO_id) then
                 tag = 101
-                call mpi_send(lsize,1,MPI_INTEGER, IO_id,     &
-                            tag,MPI_COMM_WORLD,ierr)
+                call mpi_recv(lsize,1,MPI_INTEGER, i,     &
+                            tag,MPI_COMM_WORLD,mpp_status,ierr)
                 if(lsize .gt. 0) then
+                      allocate(lindex(lsize) )
+                      allocate(tmpBuf(lsize) )
                       tag = 102
-                      call mpi_send(lindex,lsize,MPI_INTEGER, IO_id,     &
-                            tag,MPI_COMM_WORLD,ierr)
+                      call mpi_recv(lindex,lsize,MPI_INTEGER, i,     &
+                            tag,MPI_COMM_WORLD,mpp_status,ierr)
                       tag = 103
-                      call mpi_recv(gLinkV(1:lsize),lsize,&
+                      call mpi_recv(tmpBuf,lsize,&
                             MPI_DOUBLE,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
                       do k = 1, lsize
-                          gLinkV_r4(lindex(k)) = gLinkV_r4(lindex(k)) + gLinkV(k)
+                          gLinkV_r8(lindex(k)) = gLinkV_r8(lindex(k)) + tmpBuf(k)
                       end do
+                      deallocate(lindex)
+                      deallocate(tmpBuf)
+               endif
+            end if
+          end do
+          gLinkV_r4 = gLinkV_r8
+          deallocate(gLinkV_r8)
+      end if 
+
+      call ReachLS_decompReal(gLinkV_r4,outV)
+
+      if(my_id .eq. io_id) then
+          deallocate(gLinkV_r4)
+      endif
+  end subroutine updateLinkV8_mem
+
+  subroutine updateLinkV4_mem(LinkV, outV)
+! for big memory data
+     implicit none
+     real, dimension(:) :: outV
+     real, dimension(:) :: LinkV
+     real, allocatable, dimension(:) :: gLinkV_r4
+     real, allocatable,dimension(:) ::  tmpBuf
+     integer :: ierr, i, tag, k,m,lsize
+     integer, allocatable,dimension(:) :: lindex
+     if(my_id .eq. io_id) then
+           allocate(gLinkV_r4(gnlinksl))
+           gLinkV_r4 = 0.0
+           do i = 1, LLINKLEN
+               gLinkV_r4(LLINKIDINDX(i)) = LinkV(i)
+           end do
+     endif
+
+     if(my_id .ne. IO_id) then
+        
+          tag = 101
+          call mpi_send(LLINKLEN,1,MPI_INTEGER, IO_id,     &
+                tag,MPI_COMM_WORLD,ierr)
+          if(LLINKLEN .gt. 0) then
+              tag = 102
+              call mpi_send(LLINKIDINDX,LLINKLEN,MPI_INTEGER, IO_id,     &
+                    tag,MPI_COMM_WORLD,ierr)
+              tag = 103
+              call mpi_send(LinkV,LLINKLEN,MPI_REAL, IO_id,     &
+                   tag,MPI_COMM_WORLD,ierr)
+          endif
+      else   
+          do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+                tag = 101
+                call mpi_recv(lsize,1,MPI_INTEGER, i,     &
+                            tag,MPI_COMM_WORLD,mpp_status,ierr)
+                if(lsize .gt. 0) then
+                      allocate(lindex(lsize) )
+                      allocate(tmpBuf(lsize) )
+                      tag = 102
+                      call mpi_recv(lindex,lsize,MPI_INTEGER, i,     &
+                            tag,MPI_COMM_WORLD,mpp_status,ierr)
+                      tag = 103
+                      call mpi_recv(tmpBuf,lsize,&
+                            MPI_REAL,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                      do k = 1, lsize
+                          gLinkV_r4(lindex(k)) = gLinkV_r4(lindex(k)) + tmpBuf(k)
+                      end do
+                      deallocate(lindex)
+                      deallocate(tmpBuf)
                endif
             end if
           end do
@@ -108,9 +176,9 @@ MODULE MODULE_mpp_ReachLS
       call ReachLS_decompReal(gLinkV_r4,outV)
 
       if(my_id .eq. io_id) then
-          deallocate(gLinkV_r4, gLinkV)
+          deallocate(gLinkV_r4)
       endif
-  end subroutine updateLinkV8_mem
+  end subroutine updateLinkV4_mem
 
 
   subroutine updateLinkV8(LinkV, outV)
