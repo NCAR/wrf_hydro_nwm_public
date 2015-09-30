@@ -5451,6 +5451,7 @@ end subroutine mpp_output_chrt
             endif
 #ifdef HYDRO_D
          print*, "read restart variable ", varStr
+         call flush(6)
 #endif
          if(my_id .eq. IO_id) then
             var = 0.0

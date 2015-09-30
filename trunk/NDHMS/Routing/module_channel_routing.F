@@ -1547,7 +1547,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifndef HYDRO_REALTIME
        , accLndRunOff, accQLateral, accStrmvolrt, accBucket  &
 #endif
-       )
+       ,nsize       )
 
        use module_UDMAP, only: LNUMRSL, LUDRSL, ter_rt_flag
 
@@ -1568,22 +1568,22 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
-        INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: ORDER, TYPEL !--link
-        INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: TO_NODE, FROM_NODE
-        INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: CHANXI, CHANYJ
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: MUSK, MUSX
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: CHANLEN
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: So, MannN
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChSSlp,Bw  !--properties of nodes or links
+        INTEGER, INTENT(IN), DIMENSION(:)    :: ORDER, TYPEL !--link
+        INTEGER, INTENT(IN), DIMENSION(nsize)    :: TO_NODE, FROM_NODE
+        INTEGER, INTENT(IN), DIMENSION(nsize)    :: CHANXI, CHANYJ
+        REAL, INTENT(IN), DIMENSION(nsize)       :: MUSK, MUSX
+        REAL, INTENT(IN), DIMENSION(nsize)       :: CHANLEN
+        REAL, INTENT(IN), DIMENSION(nsize)       :: So, MannN
+        REAL, INTENT(IN), DIMENSION(nsize)       :: ChSSlp,Bw  !--properties of nodes or links
         REAL                                      :: Km, X
-        REAL , INTENT(INOUT), DIMENSION(NLINKS,2) :: QLINK
-        REAL ,  DIMENSION(NLINKS,2) :: tmpQLINK
+        REAL , INTENT(INOUT), DIMENSION(nsize,2) :: QLINK
+        REAL ,  DIMENSION(NLINKSL,2) :: tmpQLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
         REAL, INTENT(IN)                          :: DTRT_CH  !-- routing timestep
         REAL, INTENT(INOUT)                       :: DTCT
         real                                      :: minDTCT !BF minimum routing timestep
         INTEGER, INTENT(IN)                       :: MAXORDER
-        REAL , INTENT(IN), DIMENSION(NLINKS)   :: node_area
+        REAL , INTENT(IN), DIMENSION(nsize)   :: node_area
 
 !DJG GW-chan coupling variables...
         REAL, DIMENSION(NLINKS)                   :: dzGwChanHead
@@ -1607,9 +1607,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LAKENODE !-- outflow from lake used in diffusion scheme
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LINKID   !--  id of channel elements for linked scheme
-        REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flow
+        REAL, DIMENSION(NLINKSL)                   :: QLateral !--lateral flow
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
         REAL, DIMENSION(NLAKES)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
+        integer :: nsize
 
 !-- Local Variables
         INTEGER                     :: i,j,k,t,m,jj,ii,kk,KRT,node, UDMP_OPT

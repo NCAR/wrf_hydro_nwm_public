@@ -50,6 +50,7 @@ CONTAINS
 !           write(6,*) "Fatal Error: NLINKSL .gt. NLINKS .. "
 !           call hydro_stop("not solved, contact WRF-Hydro group. ")
       endif
+      rt_domain(did)%nlinksize = nsizes
 
 
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
@@ -220,13 +221,21 @@ CONTAINS
      allocate( rt_domain(did)%So(nsizes) )
      allocate( rt_domain(did)%ChSSlp(nsizes) )
      allocate( rt_domain(did)%Bw(nsizes) )
-     allocate( rt_domain(did)%HRZAREA(NLAKES) )
-     allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
-     allocate( rt_domain(did)%WEIRC(NLAKES) )
-     allocate( rt_domain(did)%WEIRL(NLAKES) )
-     allocate( rt_domain(did)%ORIFICEC(NLAKES) )
-     allocate( rt_domain(did)%ORIFICEA(NLAKES) )
-     allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+!    allocate( rt_domain(did)%HRZAREA(NLAKES) )
+!    allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+!    allocate( rt_domain(did)%WEIRC(NLAKES) )
+!    allocate( rt_domain(did)%WEIRL(NLAKES) )
+!    allocate( rt_domain(did)%ORIFICEC(NLAKES) )
+!    allocate( rt_domain(did)%ORIFICEA(NLAKES) )
+!    allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+
+     allocate( rt_domain(did)%HRZAREA(nsizes) )
+     allocate( rt_domain(did)%LAKEMAXH(nsizes) )
+     allocate( rt_domain(did)%WEIRC(nsizes) )
+     allocate( rt_domain(did)%WEIRL(nsizes) )
+     allocate( rt_domain(did)%ORIFICEC(nsizes) )
+     allocate( rt_domain(did)%ORIFICEA(nsizes) )
+     allocate( rt_domain(did)%ORIFICEE(nsizes) )
 
 #ifndef HYDRO_REALTIME
      allocate( rt_domain(did)%accLndRunOff(nsizes) )
@@ -769,7 +778,7 @@ CONTAINS
 
 
 if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-            allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%nlinks))
+            allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%nlinksL))
             rt_domain(did)%qout_gwsubbas = 0
    ! use different baseflow for NHDPlus
      IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN
