@@ -401,14 +401,16 @@ CONTAINS
 
       IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
 #ifdef MPP_LAND
-        CALL MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, GCH_NETLNK, rt_domain(did)%GNLINKS, &
+        CALL MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
+                               GCH_NETLNK, rt_domain(did)%GNLINKS, &
 #else
         CALL READ_ROUTEDIM( &
 #endif
               IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_lake_f, &
               rt_domain(did)%NLINKS, rt_domain(did)%NLAKES, &
-              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL )
+              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
+              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
 
 #ifdef HYDRO_D
         write(6,*) "before rt_allocate after READ_ROUTEDIM"
@@ -492,7 +494,8 @@ CONTAINS
           rt_domain(did)%CH_LNKRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
-          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, nlst_rt(did)%channel_option)
+          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
+          nlst_rt(did)%channel_option, nlst_rt(did)%udmp_opt)
 
     !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
 
