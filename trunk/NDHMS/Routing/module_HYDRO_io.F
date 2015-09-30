@@ -614,7 +614,7 @@ end subroutine get_albedo12m_netcdf
 
        SUBROUTINE READ_ROUTEDIM(IXRT,JXRT,route_chan_f,route_link_f, &
             route_direction_f, route_lake_f, NLINKS, NLAKES, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL)
+            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT)
 
          implicit none
 #include <netcdf.inc>
@@ -628,6 +628,7 @@ end subroutine get_albedo12m_netcdf
         INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
         INTEGER, DIMENSION(IXRT,JXRT)                :: CH_LNKRT   !- link routing ID
+        integer, INTENT(IN)                          :: UDMP_OPT                                
 
 !!Dummy read in grids for inverted y-axis
 
@@ -669,7 +670,7 @@ end subroutine get_albedo12m_netcdf
     write(6,*) "read LINKID for CH_LNKRT from ", trim(geo_finegrid_flnm)
 #endif
 !!!! LINKID is used for reach based method.  ?
-     IF(channel_option.ne.3) then  !get maxnodes and links from grid
+     IF(channel_option.ne.3 .and. UDMP_OPT.ne.1) then  !get maxnodes and links from grid
          call readRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm), fatalErr=.TRUE.)
      endif
@@ -4156,7 +4157,7 @@ end subroutine mpp_output_chrt
        SUBROUTINE MPP_READ_ROUTEDIM(did,g_IXRT,g_JXRT, GCH_NETLNK,GNLINKS,IXRT,JXRT, &
             route_chan_f,route_link_f, &
             route_direction_f, route_lake_f,NLINKS, NLAKES, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL)
+            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT)
 
          USE module_mpp_land
 
@@ -4175,6 +4176,7 @@ end subroutine mpp_output_chrt
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION  !- flow direction
         INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
+        INTEGER, INTENT(IN)                          :: UDMP_OPT
         integer:: i,j
 
         CHARACTER(len=256)       :: route_chan_f, route_link_f,route_direction_f,route_lake_f
@@ -4189,7 +4191,7 @@ end subroutine mpp_output_chrt
            g_CH_NETLNK = -9999
            CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, route_lake_f, GNLINKS, NLAKES, &
-              g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL)
+              g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL, UDMP_OPT)
         else
            allocate(g_CH_NETLNK(1,1))
         endif
@@ -4239,7 +4241,7 @@ end subroutine mpp_output_chrt
 #endif
         
       SUBROUTINE READ_ROUTING_seq(IXRT,JXRT,ELRT,CH_NETRT,CH_LNKRT,LKSATFAC,route_topo_f,    &
-            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,channel_option)
+            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,channel_option, UDMP_OPT)
 
 
 #include <netcdf.inc>
@@ -4250,7 +4252,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
 
-        INTEGER         :: I,J, iret, jj, channel_option
+        integer         :: I,J, iret, jj, channel_option, UDMP_OPT
         CHARACTER(len=256)        :: var_name
         CHARACTER(len=256)       :: route_topo_f
         CHARACTER(len=256)       :: route_chan_f
@@ -4261,10 +4263,10 @@ end subroutine mpp_output_chrt
         call nreadRT2d_real(var_name,ELRT,ixrt,jxrt,&
                      trim(geo_finegrid_flnm))
 
-     IF(channel_option .ne. 3) then  !get maxnodes and links from grid
+     IF(channel_option .ne. 3 .and. UDMP_OPT .ne. 1) then  !get maxnodes and links from grid
         var_name = "LINKID"
         call nreadRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
-               trim(geo_finegrid_flnm))
+               trim(geo_finegrid_flnm), fatalErr=.true.)
      endif
 
 
@@ -6876,6 +6878,8 @@ call get_1d_netcdf_real(ncid, 'MusX',     MUSX,      'read_route_link_netcdf', .
 call get_1d_netcdf_real(ncid, 'Length',   CHANLEN,   'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'n',        MannN,     'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .TRUE.)
+!! impose a minimum as this sometimes fails in the file.
+where(So .lt. 0.00001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkHZArea', HRZAREA,   'read_route_link_netcdf', .TRUE.)
