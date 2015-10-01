@@ -6390,6 +6390,10 @@ end subroutine mpp_output_chrt
         end do
         
 #endif
+        do i=1,NLINKSL
+!           if(So(i) .lt. 0.001) So(i) = 0.001
+           So(i) = max(So(i), 0.00001)
+        end do
 
    end subroutine readLinkSL
 

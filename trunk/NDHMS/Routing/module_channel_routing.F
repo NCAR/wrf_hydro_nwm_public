@@ -1646,6 +1646,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         real, dimension(NLINKS) ::  lcLndRunOff, lcQLateral, lcStrmvolrt, lcBucket  ! local variables
 #endif
 
+
         QLAKEIP = 0
         CD = 0  
         node = 1
@@ -1659,6 +1660,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
          nsteps = (DT+0.5)/DTRT_CH
          LQLateral = 0          !-- initial lateral flow to 0 for this reach
+
 
 
         ! NHDPLUS maping
@@ -1704,7 +1706,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !       QLateral = QLateral / nsteps
 
    do nt = 1, nsteps
-
  
 !----------  route order 1 reaches which have no upstream inflow
         do k=1, NLINKSL
@@ -1733,6 +1734,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         end do
 
 #ifdef MPP_LAND
+
        gQLINK = 0
        call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
        call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1)) 

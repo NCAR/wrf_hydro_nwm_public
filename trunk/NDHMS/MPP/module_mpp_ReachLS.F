@@ -256,7 +256,7 @@ MODULE MODULE_mpp_ReachLS
             IO_id,MPI_COMM_WORLD,ierr) 
   end subroutine gbcastReal
 
-  subroutine gbcastReal2(index,size1,inV, insize, outV)
+  subroutine gbcastReal2_old(index,size1,inV, insize, outV)
      implicit none
      integer :: size1, insize
      integer,dimension(:) :: index
@@ -264,7 +264,6 @@ MODULE MODULE_mpp_ReachLS
      real, dimension(:) :: inV  
      real, dimension(max_nlinkSL) :: tmpV  
      integer :: ierr, k, i, m, j, bsize
-
      outV = 0
      do i = 0, numprocs -1
             bsize = linkls_e(i+1) - linkls_s(i+1) + 1
@@ -272,7 +271,6 @@ MODULE MODULE_mpp_ReachLS
             if(my_id .eq. i) tmpV(1:bsize) = inV(1:bsize)
             call mpi_bcast(tmpV(1:bsize),bsize,MPI_REAL,   &
                 i,MPI_COMM_WORLD,ierr) 
-
             do j = 1, size1
                 do k = 1, bsize
                    if(index(j) .eq. (linkls_s(i+1) + k -1) ) then
@@ -285,8 +283,27 @@ MODULE MODULE_mpp_ReachLS
 
          endif
      end do
+  end subroutine gbcastReal2_old
 
+  subroutine gbcastReal2(index,size1,inV, insize, outV)
+     implicit none
+     integer :: size1, insize
+     integer,dimension(:) :: index
+     real, dimension(:) :: outV
+     real, dimension(:) :: inV
+!     real, dimension(max_nlinkSL) :: tmpV
+     real, dimension(gnlinksl) :: gbuf
+     integer :: ierr, k, i, m, j, bsize
+     outV = 0
+     call ReachLS_write_io(inV,gbuf)
+     call mpi_bcast(gbuf,gnlinksl,MPI_REAL,   &
+            IO_id,MPI_COMM_WORLD,ierr) 
+     do j = 1, size1
+        outV(j) = gbuf(index(j))
+     end do
   end subroutine gbcastReal2
+
+
 
 
   subroutine gbcastInt(inV, outV)
