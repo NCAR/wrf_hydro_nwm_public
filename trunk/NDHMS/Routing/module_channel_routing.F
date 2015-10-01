@@ -457,10 +457,6 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
            error = abs((h_1 - h)/h) !error is new estatimate and 2nd estimate
 
-            if(idx .eq. 626) then 
-              write(6,*) h_0,h,h_1,error
-            endif
-
            h_0  = h 
            h    = h_1
            maxiter = maxiter + 1
@@ -479,12 +475,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
          endif
       endif
 
-!      if(idx .eq. 626) then 
-!         write(6,*) ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
-!      endif
+      if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
+         MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+      else
+          MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+     endif
 
 !     MUSKINGCUNGE =  h 
-      MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
 
 ! ----------------------------------------------------------------
   END FUNCTION MUSKINGCUNGE
