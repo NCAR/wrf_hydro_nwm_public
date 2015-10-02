@@ -206,6 +206,7 @@ CONTAINS
 !tmp  endif
 
      allocate( rt_domain(did)%LINKID(nsizes) )
+     allocate( rt_domain(did)%gages(nsizes) )
      allocate( rt_domain(did)%TO_NODE(nsizes) )
      allocate( rt_domain(did)%FROM_NODE(nsizes) )
      allocate( rt_domain(did)%CHLAT(nsizes) )   !-latitutde of channel grid point
@@ -272,6 +273,7 @@ CONTAINS
 
 !!!! tmp
       rt_domain(did)%LINK = 0.0        
+      rt_domain(did)%gages = rt_domain(did)%gageMiss
       rt_domain(did)%TO_NODE = 0.0        
       rt_domain(did)%FROM_NODE = 0        
       rt_domain(did)%TYPEL = 0          
@@ -408,14 +410,16 @@ CONTAINS
 
       IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
 #ifdef MPP_LAND
-        CALL MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, GCH_NETLNK, rt_domain(did)%GNLINKS, &
+        CALL MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
+                               GCH_NETLNK, rt_domain(did)%GNLINKS, &
 #else
         CALL READ_ROUTEDIM( &
 #endif
               IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_lake_f, &
               rt_domain(did)%NLINKS, rt_domain(did)%NLAKES, &
-              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL )
+              CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
+              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
 
 #ifdef HYDRO_D
         write(6,*) "before rt_allocate after READ_ROUTEDIM"
@@ -475,13 +479,12 @@ CONTAINS
      CHARACTER(len=1)                       :: jnk
 
      REAL,  DIMENSION(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
-     integer :: i,j,k
+     integer :: i,j,k, ll, count
  
      integer, allocatable, dimension(:) :: tmp_int
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
-     
-        
+
 !------------------------------------------------------------------------
 !DJG Routing Processing
 !------------------------------------------------------------------------
@@ -500,7 +503,8 @@ CONTAINS
           rt_domain(did)%CH_LNKRT, &
           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
-          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, nlst_rt(did)%channel_option)
+          rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
+          nlst_rt(did)%channel_option, nlst_rt(did)%udmp_opt)
 
     !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
 
@@ -532,7 +536,7 @@ CONTAINS
                ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
                ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
 #endif
-               )
+               ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
 
     if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
           ! get NHDPLUS mapping function. 
@@ -618,6 +622,18 @@ CONTAINS
         end do
 
 #endif
+
+!!$        ! use gage information in RouteLink like strmfrxstpts
+!!$        rt_domain(did)%STRMFRXSTPTS = -9999  !! existing info useless for link-based routing
+!!$        count = 1
+!!$        do ll=1,rt_domain(did)%NLINKSL
+!!$           if(trim(rt_domain(did)%gages(ll)) .ne. trim(rt_domain(did)%gageMiss)) then
+!!$              rt_domain(did)%STRMFRXSTPTS(count) = ll
+!!$              count = count + 1 
+!!$           end if
+!!$        end do
+
+
      endif   ! end of channel option if block
 
 
