@@ -3215,8 +3215,12 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          start_posO = (cnt+1)+(nobs * (output_count-1))
 !Write frxst_pts to text file...
 !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
+
+#ifndef HYDRO_REALTIME
            write(999,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
                     qlink(i,1), qlink(i,1)*35.315,hlink(i)
+#endif
+
 !yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
   117 FORMAT(I8,",",A10,1X,A8,",",I7,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
@@ -4331,11 +4335,15 @@ end subroutine mpp_output_chrt
           iret = nf_def_dim(ncid, "iyrt", rt_domain(did)%jxrt, dimid_jxrt)
 #endif
 
-          iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinks, dimid_links)
-          if(rt_domain(did)%nlakes .gt. 0) then
-              iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
-          endif
-          iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
+          if(nlst_rt(did)%channel_option .eq. 3) then
+              iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinks, dimid_links)
+           else
+              iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinksl, dimid_links)
+           endif
+           iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
+           if(rt_domain(did)%nlakes .gt. 0) then
+                  iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+           endif
 
 !define variables
           do n = 1, nlst_rt(did)%nsoil
@@ -4464,7 +4472,7 @@ end subroutine mpp_output_chrt
               else
                     call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
 #ifdef MPP_LAND
-                            ,rt_domain(did)%gnlinks&
+                            ,rt_domain(did)%gnlinksl&
 #endif
                           )
               endif
@@ -4478,7 +4486,7 @@ end subroutine mpp_output_chrt
               else
                     call w_rst_crt_reach(ncid,rt_domain(did)%QLINK(:,1), "qlink1"  &
 #ifdef MPP_LAND   
-                            ,rt_domain(did)%gnlinks&
+                            ,rt_domain(did)%gnlinksl &
 #endif
                           )
               endif
@@ -4494,29 +4502,29 @@ end subroutine mpp_output_chrt
               else
                     call w_rst_crt_reach(ncid,rt_domain(did)%QLINK(:,2), "qlink2"  &
 #ifdef MPP_LAND   
-                            ,rt_domain(did)%gnlinks&
+                            ,rt_domain(did)%gnlinksl &
 #endif
                           )
 #ifndef HYDRO_REALTIME
                     if(nlst_rt(did)%UDMP_OPT .eq. 1) then
                         call w_rst_crt_reach(ncid,rt_domain(did)%accLndRunOff, "accLndRunOff"  &
 #ifdef MPP_LAND   
-                                ,rt_domain(did)%gnlinks&
+                                ,rt_domain(did)%gnlinksl &
 #endif
                               )
                         call w_rst_crt_reach(ncid,rt_domain(did)%accQLateral, "accQLateral"  &
 #ifdef MPP_LAND   
-                                ,rt_domain(did)%gnlinks&
+                                ,rt_domain(did)%gnlinksl &
 #endif
                               )
                         call w_rst_crt_reach(ncid,rt_domain(did)%accStrmvolrt, "accStrmvolrt"  &
 #ifdef MPP_LAND   
-                                ,rt_domain(did)%gnlinks&
+                                ,rt_domain(did)%gnlinksl &
 #endif
                               )
                         call w_rst_crt_reach(ncid,rt_domain(did)%accBucket, "accBucket"  &
 #ifdef MPP_LAND   
-                                ,rt_domain(did)%gnlinks&
+                                ,rt_domain(did)%gnlinksl &
 #endif
                               )
                     endif   ! end if of UDMP_OPT .eq. 1
@@ -4535,7 +4543,7 @@ end subroutine mpp_output_chrt
               else
                     call w_rst_crt_reach(ncid,rt_domain(did)%cvol, "cvol"  &
 #ifdef MPP_LAND   
-                            ,rt_domain(did)%gnlinks&
+                            ,rt_domain(did)%gnlinksl &
 #endif
                           )
               endif
@@ -4572,7 +4580,7 @@ end subroutine mpp_output_chrt
 
                     call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
 #ifdef MPP_LAND   
-                            ,rt_domain(did)%gnlinks  &
+                            ,rt_domain(did)%gnlinksl  &
 #endif
                           )
               else
@@ -5072,16 +5080,16 @@ end subroutine mpp_output_chrt
                     call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
                     call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
                 else
-                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKS)
-                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKS)
-                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKS)
-                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%CVOL,"cvol",rt_domain(did)%GNLINKS)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKSL)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKSL)
+                    call read_rst_crt_reach_nc(ncid,rt_domain(did)%CVOL,"cvol",rt_domain(did)%GNLINKSL)
 #ifndef HYDRO_REALTIME
                     if(nlst_rt(did)%UDMP_OPT .eq. 1) then
                        ! read in the statistic value
-                       call read_rst_crt_reach_nc(ncid,rt_domain(did)%accLndRunOff,"accLndRunOff",rt_domain(did)%GNLINKS)
-                       call read_rst_crt_reach_nc(ncid,rt_domain(did)%accQLateral,"accQLateral",rt_domain(did)%GNLINKS)
-                       call read_rst_crt_reach_nc(ncid,rt_domain(did)%accStrmvolrt,"accStrmvolrt",rt_domain(did)%GNLINKS)
+                       call read_rst_crt_reach_nc(ncid,rt_domain(did)%accLndRunOff,"accLndRunOff",rt_domain(did)%GNLINKSL)
+                       call read_rst_crt_reach_nc(ncid,rt_domain(did)%accQLateral,"accQLateral",rt_domain(did)%GNLINKSL)
+                       call read_rst_crt_reach_nc(ncid,rt_domain(did)%accStrmvolrt,"accStrmvolrt",rt_domain(did)%GNLINKSL)
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accBucket,"accBucket",rt_domain(did)%GNLINKS)
                     endif
 #endif
@@ -5097,7 +5105,7 @@ end subroutine mpp_output_chrt
 
             if(nlst_rt(did)%GWBASESWCRT.EQ.1.AND.nlst_rt(did)%GW_RESTART.NE.0 .and. rt_domain(did)%gnumbasns .gt. 0) then
                if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-                   call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKS)
+                   call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
                else 
                    call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
                        rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")

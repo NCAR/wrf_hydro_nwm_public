@@ -484,7 +484,16 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !      endif
 
 !     MUSKINGCUNGE =  h 
-      MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+!yw      MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+
+!yw added for test
+
+      if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
+         MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+      else
+          MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+      endif
+
 
 ! ----------------------------------------------------------------
   END FUNCTION MUSKINGCUNGE

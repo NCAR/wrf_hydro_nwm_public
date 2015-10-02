@@ -546,6 +546,7 @@ module module_HYDRO_drv
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
         endif
 
+#ifndef HYDRO_REALTIME
 
 #ifdef MPP_LAND
       if(my_id .eq. IO_id) then
@@ -570,6 +571,7 @@ module module_HYDRO_drv
      endif
 #endif
 
+#endif
 #ifdef HYDRO_D 
            write(6,*) "*****yw******end simp_gw_buck "
 #endif
