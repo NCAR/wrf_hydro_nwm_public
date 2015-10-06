@@ -4792,10 +4792,18 @@ end subroutine mpp_output_chrt
    character(len=*) outFile
 
     integer :: iunit
+    logical :: dir_e
+    inquire(file='./restart/.', exist=dir_e)
+
+    if ( dir_e ) then
+       print*, "output restart files to restart/."
+    else
+      call system('mkdir restart')
+    end if
 
 
     iunit = 80
-    open(iunit, file = outFile, form="unformatted")
+    open(iunit, file = "restart/"//outFile, form="unformatted")
           write(iunit) rt_domain(did)%his_out_counts
           write(iunit) nlst_rt(did)%olddate(1:19)
           write(iunit) nlst_rt(did)%sincedate(1:19)
@@ -7185,6 +7193,391 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 
     deallocate(tmpCoeff, tmpExp, tmpz_max, tmpLinkid)
 end subroutine readBucket_nhd
+
+!-- output the channel routine for fast output.
+!   subroutine mpp_output_chrt2(gnlinks,gnlinksl,map_l2g,igrid,                  &
+!        split_output_count, NLINKS, ORDER,                                     &
+!        startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
+!        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss, &
+!        lsmDt                                                                  &
+!        )
+   subroutine mpp_output_chrt2(gnlinks,gnlinksl,map_l2g,igrid,                  &
+        split_output_count, NLINKS, ORDER,                                     &
+        startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
+        K,NLINKSL,channel_option,linkid  &
+        )
+
+       USE module_mpp_land
+
+       implicit none
+
+!!output the routing variables over just channel
+     integer,                                  intent(in) :: igrid,K,NLINKSL
+     integer,                                  intent(in) :: split_output_count
+     integer,                                  intent(in) :: NLINKS
+     real, dimension(:),               intent(in) :: chlon,chlat
+     real, dimension(:),                  intent(in) :: hlink,zelev
+
+     integer, dimension(:),               intent(in) :: ORDER, linkid
+
+     real,                                     intent(in) :: dtrt_ch
+     real, dimension(:,:),                intent(in) :: qlink
+     integer :: UDMP_OPT, channel_option
+
+     character(len=*),                         intent(in) :: startdate
+     character(len=*),                         intent(in) :: date
+
+      integer  :: gnlinks, map_l2g(nlinks),  gnlinksl
+      real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
+      integer, allocatable,dimension(:) :: g_order, g_linkid
+      real,allocatable,dimension(:,:) :: g_qlink
+      integer  :: gsize
+#ifndef HYDRO_REALTIME
+!     real,allocatable,dimension(:) :: g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket
+!     real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
+#endif
+
+        gsize = gNLINKS
+        if(gnlinksl .gt. gsize) gsize = gnlinksl
+     if(my_id .eq. io_id ) then
+        allocate(g_chlon(gsize  ))
+        allocate(g_chlat(gsize  ))
+        allocate(g_hlink(gsize  ))
+        allocate(g_zelev(gsize  ))
+        allocate(g_qlink(gsize  ,2))
+        allocate(g_order(gsize  ))
+        allocate(g_linkid(gsize  ))
+
+#ifndef HYDRO_REALTIME
+!       allocate(g_accLndRunOff(gsize  ))
+!       allocate(g_accQLateral(gsize  ))
+!       allocate(g_accStrmvolrt(gsize  ))
+!       allocate(g_accBucket(gsize  ))
+#endif
+
+     else
+
+#ifndef HYDRO_REALTIME
+        allocate(g_accLndRunOff(1))
+        allocate(g_accQLateral(1))
+        allocate(g_accStrmvolrt(1))
+        allocate(g_accBucket(1))
+#endif
+        allocate(g_chlon(1))
+        allocate(g_chlat(1))
+        allocate(g_hlink(1))
+        allocate(g_zelev(1))
+        allocate(g_qlink(1,2))
+        allocate(g_order(1))
+        allocate(g_linkid(1))
+     endif
+
+     if(channel_option .eq. 1 .or. channel_option .eq. 2) then
+        g_qlink = 0
+        call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
+        call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
+        call ReachLS_write_io(order, g_order)
+        call ReachLS_write_io(linkid, g_linkid)
+        call ReachLS_write_io(chlon, g_chlon)
+        call ReachLS_write_io(chlat, g_chlat)
+        call ReachLS_write_io(zelev, g_zelev)
+
+#ifndef HYDRO_REALTIME
+!       call ReachLS_write_io(accLndRunOff, g_accLndRunOff)
+!       call ReachLS_write_io(accQLateral, g_accQLateral)
+!       call ReachLS_write_io(accStrmvolrt, g_accStrmvolrt)
+!       call ReachLS_write_io(accBucket, g_accBucket)
+#endif
+
+     else
+        call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
+        call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
+        call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
+        call write_chanel_int(linkid,map_l2g,gnlinks,nlinks,g_linkid)
+        call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
+        call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
+        call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
+     endif
+
+     call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
+
+     if(my_id .eq. IO_id) then
+       call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
+          startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,     &
+          gNLINKSL,channel_option, g_linkid  &
+          )
+     end if
+
+    deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink )
+
+#ifndef HYDRO_REALTIME
+!   deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
+#endif
+
+end subroutine mpp_output_chrt2
+
+
+!subroutine output_chrt2 
+!For realtime output only when CHRTOUT_GRID = 2.
+!   subroutine output_chrt2(igrid, split_output_count, NLINKS, ORDER,             &
+!        startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
+!        STRMFRXSTPTS, order_to_write, NLINKSL, channel_option, gages, gageMiss, & 
+!        lsmDt                                                                   &
+!        )
+   subroutine output_chrt2(igrid, split_output_count, NLINKS, ORDER,             &
+        startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
+        NLINKSL, channel_option ,linkid & 
+        )
+     
+     implicit none
+#include <netcdf.inc>
+!!output the routing variables over just channel
+     integer,                                  intent(in) :: igrid,K,channel_option
+     integer,                                  intent(in) :: split_output_count
+     integer,                                  intent(in) :: NLINKS, NLINKSL
+     real, dimension(:),                  intent(in) :: chlon,chlat
+     real, dimension(:),                  intent(in) :: hlink,zelev
+     integer, dimension(:),               intent(in) :: ORDER
+
+     real,                                     intent(in) :: dtrt_ch
+     real, dimension(:,:),                intent(in) :: qlink
+     
+     integer  :: UDMP_OPT
+
+     character(len=*),                         intent(in) :: startdate
+     character(len=*),                         intent(in) :: date
+
+
+
+     integer, allocatable, DIMENSION(:)         :: linkid    
+
+     integer, allocatable, DIMENSION(:)         :: rec_num_of_station
+     integer, allocatable, DIMENSION(:)         :: rec_num_of_stationO
+
+     integer, allocatable, DIMENSION(:)         :: lOrder !- local stream order
+
+     integer, save  :: output_count
+     integer, save  :: ncid
+
+     integer :: stationdim, dimdata, varid, charid, n
+
+     integer :: iret,i !-- order_to_write is the lowest stream order to output
+     integer :: start_posO, prev_posO, nlk
+
+     integer :: previous_pos  !-- used for the station model
+     character(len=256) :: output_flnm
+     character(len=34)  :: sec_since_date
+     integer :: seconds_since,nstations,cnt,ObsStation
+     character(len=32)  :: convention
+     character(len=11),allocatable, DIMENSION(:)  :: stname
+
+    !--- all this for writing the station id string
+     INTEGER   TDIMS, TXLEN
+     PARAMETER (TDIMS=2)    ! number of TX dimensions
+     PARAMETER (TXLEN = 11) ! length of example string
+     INTEGER  TIMEID        ! record dimension id
+     INTEGER  TXID          ! variable ID
+     INTEGER  TXDIMS(TDIMS) ! variable shape
+     INTEGER  TSTART(TDIMS), TCOUNT(TDIMS)
+
+     !--  observation point  ids
+     INTEGER   OTDIMS, OTXLEN
+     PARAMETER (OTDIMS=2)    ! number of TX dimensions
+     PARAMETER (OTXLEN = 15) ! length of example string
+     INTEGER  OTIMEID        ! record dimension id
+     INTEGER  OTXID          ! variable ID
+     INTEGER  OTXDIMS(OTDIMS) ! variable shape
+     INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
+     character(len=19)  :: date19, date19start
+
+#ifndef HYDRO_REALTIME
+!    real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
+#endif
+     seconds_since = int(dtrt_ch)*K
+
+     !! currently, this is the time of the hydro model, it's
+     !! lsm time (olddate) plus one lsm timestep
+     
+     seconds_since = int(dtrt_ch)*K
+
+     if(channel_option .ne. 3) then
+        nstations = NLINKSL
+     else
+        nstations = NLINKS
+     endif
+
+
+
+       if(split_output_count .ne. 1 ) then
+            write(6,*) "Warning: split_output_count need to be 1 for this output option."
+       endif
+!-- have moved sec_since_date from above here..
+        sec_since_date = 'seconds since '//startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10) &
+                  //' '//startdate(12:13)//':'//startdate(15:16)//' UTC'
+
+        date19start(1:len_trim(startdate)) = startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10)//'_' &
+                  //startdate(12:13)//':'//startdate(15:16)//':00'
+
+
+        write(output_flnm, '(A12,".CHRTOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+
+#ifdef HYDRO_D
+        print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+        if (iret /= 0) then
+           print*,  "Problem nf_create points"
+           call hydro_stop("output_chrt")
+        endif
+
+       iret = nf_def_dim(ncid, "station", nstations, stationdim)
+
+
+      !- station location definition all,  lat
+        iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
+        iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+
+      !- station location definition,  long
+        iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',17,'Station longitude')
+        iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
+
+!     !-- elevation is ZELEV
+        iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station altitude')
+        iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+
+!-- parent index
+!        iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/stationdim/), varid)
+!        iret = nf_put_att_text(ncid,varid,'long_name',36,'index of the station for this record')
+
+
+     !-- prevChild
+!        iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/stationdim/), varid)
+!        iret = nf_put_att_text(ncid,varid,'long_name',57,'record number of the previous record for the same station')
+        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+
+     !-- lastChild
+!        iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
+!        iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
+!        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+
+!     !- flow definition, var
+#ifndef HYDRO_REALTIME
+!       if(UDMP_OPT .eq. 1) then
+!          iret = nf_def_var(ncid, "accLndRunOff", NF_FLOAT, 1, (/stationdim/), varid)
+!          iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+!          iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMUATED runoff from Land RunOff')
+
+!          iret = nf_def_var(ncid, "accQLateral", NF_FLOAT, 1, (/stationdim/), varid)
+!          iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+!          iret = nf_put_att_text(ncid,varid,'long_name',10,'Total ACCUMUATED runoff')
+
+!          iret = nf_def_var(ncid, "accStrmvolrt", NF_FLOAT, 1, (/stationdim/), varid)
+!          iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+!          iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMUATED runoff from terrain routing')
+
+!          iret = nf_def_var(ncid, "accBucket", NF_FLOAT, 1, (/stationdim/), varid)
+!          iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
+!          iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMUATED runoff from bucket')
+!       endif
+#endif
+        iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+        iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
+
+
+!     !- head definition, var
+     if(channel_option .eq. 3) then
+        iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
+        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
+     endif
+
+
+!     !- order definition, var
+        iret = nf_def_var(ncid, "order", NF_INT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
+        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+
+
+     !-- station  id
+     ! define character-position dimension for strings of max length 11
+        iret = nf_def_var(ncid, "station_id", NF_INT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
+
+         convention(1:32) = "Unidata Observation Dataset v1.0"
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coverage_start",19, date19start)
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "stationDimension",7, "station")
+         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
+         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream order output",NF_INT,1,1)
+
+
+         iret = nf_enddef(ncid)
+        
+        !-- write latitudes
+         iret = nf_inq_varid(ncid,"latitude", varid)
+         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlat)
+
+
+        !-- write longitudes
+         iret = nf_inq_varid(ncid,"longitude", varid)
+         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon)
+
+
+        !-- write elevations
+         iret = nf_inq_varid(ncid,"altitude", varid)
+         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), zelev)
+
+        !-- write stream flow
+         iret = nf_inq_varid(ncid,"streamflow", varid)
+         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qlink(:,1))
+
+        !-- write order      
+         iret = nf_inq_varid(ncid,"order", varid)
+         iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), ORDER)
+
+     if(channel_option .eq. 3) then
+         iret = nf_inq_varid(ncid,"head", varid)
+         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), hlink)
+     endif
+
+         iret = nf_inq_varid(ncid,"station_id", varid)
+         iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), linkid)
+
+
+
+
+      iret = nf_redef(ncid)
+      date19(1:19) = "0000-00-00_00:00:00"
+      date19(1:len_trim(date)) = date
+      iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coverage_end", 19, date19)
+
+
+      iret = nf_enddef(ncid)
+      iret = nf_sync(ncid)
+
+
+        iret = nf_close(ncid)
+
+#ifdef HYDRO_D
+     print *, "Exited Subroutine output_chrt"
+#endif
+
+
+end subroutine output_chrt2
 
 end module module_HYDRO_io
 

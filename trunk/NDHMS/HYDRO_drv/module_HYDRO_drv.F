@@ -1,10 +1,10 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
-                               restart_out_bi, restart_in_bi
+                               restart_out_bi, restart_in_bi, mpp_output_chrt2
    USE module_mpp_land
 #else
-   use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes
+   use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes, output_chrt2
 #endif
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
@@ -246,29 +246,47 @@ module module_HYDRO_drv
      
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
 
-             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  &
+             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
 #ifdef MPP_LAND
-             call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+                 call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
 #else
-             call output_chrt(  &
+                 call output_chrt(  &
 #endif
-               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-               RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-!              nlst_rt(did)%startdate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
-               nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
-               RT_DOMAIN(did)%CHLAT,                                      &
-               RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-               RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
-               RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
-               RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-               rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
-               nlst_rt(did)%dt                                            &
+                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                   RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
+                   nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
+                   RT_DOMAIN(did)%CHLAT,                                      &
+                   RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
+                   RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+                   RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
+                   RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
+                   rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
+                   nlst_rt(did)%dt                                            &
 #ifndef HYDRO_REALTIME
-               , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
-               RT_DOMAIN(did)%accStrmvolrt,                               &
-               RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
+                   , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
+                   RT_DOMAIN(did)%accStrmvolrt,                               &
+                   RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
 #endif
-               )
+                   )
+              else
+                if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
+#ifdef MPP_LAND
+                     call mpp_output_chrt2(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+#else
+                     call output_chrt2(  &
+#endif
+                     nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                     RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
+                     nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
+                     RT_DOMAIN(did)%CHLAT,                                      &
+                     RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
+                     RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+                     RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
+                     rt_domain(did)%linkid                                      &
+                   )
+                 endif
+
+              endif
 
       
 #ifdef MPP_LAND

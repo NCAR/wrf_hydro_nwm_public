@@ -34,12 +34,19 @@
  rst_typ = 1
 
 !Output netcdf file control
- CHRTOUT_DOMAIN = 1           ! Netcdf point timeseries output at all channel points
+ CHRTOUT_DOMAIN = 1           ! 0: nooutput. 1: Netcdf point timeseries output at all channel points
+                              ! 2 : for fast output of stream flow variable.
  CHRTOUT_GRID = 1                ! Netcdf grid of channel streamflow values
  LSMOUT_DOMAN = 0              ! Netcdf grid of variables passed between LSM and routing components
  RTOUT_DOMAIN = 0               ! Netcdf grid of terrain routing variables on routing grid
  output_gw = 0                 ! Netcdf grid of GW
  outlake  = 0                  ! Netcdf grid of lake
+
+ rst_bi_in = 1       !0: use netcdf restart file.
+                     !1: use parallel io for reading multiple restart files by each core.
+ rst_bi_out = 1      !0: use netcdf restart file.
+                     !1: use parallel io for output multiple restart files.
+
 
 
 !Restart switch to set restart accumulation variables = 0 (0-no reset, 1-yes reset to 0.0)
