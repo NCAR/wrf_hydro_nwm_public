@@ -2043,6 +2043,16 @@ MODULE MODULE_MPP_LAND
    
   end subroutine mpp_collect_1d_int_mem
 
+! stop the job due to the fatal error.
+      subroutine fatal_error_stop(msg)
+        character(len=*) :: msg
+        integer :: ierr
+      write(6,*) "The job is stoped due to the fatal error. ", trim(msg)
+      call flush(6)
+      call mpp_land_abort()
+      call MPI_finalize(ierr)
+     return
+     end  subroutine fatal_error_stop
 
 
 END MODULE MODULE_MPP_LAND

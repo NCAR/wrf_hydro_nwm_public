@@ -55,6 +55,11 @@
  ZLVL = 10.0
 
 
+
+ rst_bi_in = 0       !0: use netcdf restart file.
+                     !1: use parallel io for reading multiple restart files by each core.
+ rst_bi_out = 0      !0: use netcdf restart file.
+                     !1: use parallel io for output multiple restart files.
 /
 
 &WRF_HYDRO_OFFLINE

@@ -6,7 +6,7 @@ module module_NoahMP_hrldas_driver
   USE module_date_utilities
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char
-  use module_mpp_land, only: check_land, node_info
+  use module_mpp_land, only: check_land, node_info, fatal_error_stop
   use module_cpl_land, only: cpl_land_init
 #endif
 
@@ -382,6 +382,8 @@ module module_NoahMP_hrldas_driver
   integer            ::   yend = 0
   integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
+  integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
+            
 
 #ifdef WRF_HYDRO
   character(len=19)  :: tmpdate
@@ -404,7 +406,7 @@ module module_NoahMP_hrldas_driver
        khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
        spatial_filename, &
        external_veg_filename_template, external_lai_filename_template, &
-       xstart, xend, ystart, yend
+       xstart, xend, ystart, yend, rst_bi_out, rst_bi_in
 
   contains
 
@@ -1043,6 +1045,8 @@ module module_NoahMP_hrldas_driver
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
+  if(rst_bi_out .eq. 0) then
+
 #ifdef WRF_HYDRO
       tmpdate = olddate
 #endif
@@ -1126,6 +1130,13 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "RIVERBEDXY" ,RIVERBEDXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "EQZWT"      ,EQZWT      )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PEXPXY"     ,PEXPXY     )
+  else  !  rst_bi_in
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,OLDDATE(1:19))
+#endif
+     ITIMESTEP = 2
+     call lsm_rst_bi_in()
+  endif
 
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
@@ -1666,13 +1677,21 @@ end subroutine land_driver_ini
 
       if ( (restart_frequency_hours .gt. 0) .and. &
            (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
-       call lsm_restart()
+       if(rst_bi_out .eq. 0) then
+           call lsm_restart()
+       else
+           call lsm_rst_bi_out()
+       endif
 #ifdef WRF_HYDRO
       else
        if (restart_frequency_hours <= 0) then
           if ( (olddate( 9:10) == "01") .and. (olddate(12:13) == "00") .and. &
                (olddate(15:16) == "00") .and. (olddate(18:19) == "00") ) then
-                call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
+               if(rst_bi_out .eq. 0) then
+                   call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
+               else
+                   call lsm_rst_bi_out()
+               endif
           endif
        endif
 #endif
@@ -1782,6 +1801,232 @@ subroutine lsm_restart()
 
 end subroutine lsm_restart
 
+subroutine lsm_rst_bi_out()
+  implicit none 
+  integer :: iunit, ierr
+  logical :: dir_e
+  character(len=256) :: output_flnm, str_tmp
+
+  inquire(file='./restart/.', exist=dir_e)
+
+  if ( dir_e ) then
+       print*, "output restart files to restart/."
+  else
+      call system('mkdir restart')
+  end if
+
+  write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13),igrid
+  iunit = 901
+
+#ifdef MPP_LAND
+             if(my_id .lt. 10) then
+                  write(str_tmp,'(I1)') my_id
+             else if(my_id .lt. 100) then
+                  write(str_tmp,'(I2)') my_id
+             else if(my_id .lt. 1000) then
+                  write(str_tmp,'(I3)') my_id
+             else if(my_id .lt. 10000) then
+                  write(str_tmp,'(I4)') my_id
+             else if(my_id .lt. 100000) then
+                  write(str_tmp,'(I5)') my_id
+             else
+                continue
+             endif
+  open(iunit,file="restart/"//trim(output_flnm)//"."//trim(str_tmp),form="unformatted",ERR=102)
+#else
+  open(iunit,file="restart/"//trim(output_flnm),form="unformatted",ERR=102)
+#endif
+
+  write(iunit,ERR=101) TSLB  
+  write(iunit,ERR=101) TSNOXY
+  write(iunit,ERR=101) SMOIS     
+  write(iunit,ERR=101) SH2O      
+  write(iunit,ERR=101) ZSNSOXY   
+  write(iunit,ERR=101) SNICEXY   
+  write(iunit,ERR=101) SNLIQXY   
+  write(iunit,ERR=101) QSNOWXY   
+  write(iunit,ERR=101) FWETXY    
+  write(iunit,ERR=101) SNEQVOXY  
+  write(iunit,ERR=101) EAHXY     
+  write(iunit,ERR=101) TAHXY     
+  write(iunit,ERR=101) ALBOLDXY  
+  write(iunit,ERR=101) CMXY      
+  write(iunit,ERR=101) CHXY      
+  write(iunit,ERR=101) ISNOWXY   
+  write(iunit,ERR=101) CANLIQXY  
+  write(iunit,ERR=101) CANICEXY  
+  write(iunit,ERR=101) SNOW      
+  write(iunit,ERR=101) SNOWH     
+  write(iunit,ERR=101) TVXY      
+  write(iunit,ERR=101) TGXY      
+  write(iunit,ERR=101) ZWTXY     
+  write(iunit,ERR=101) WAXY      
+  write(iunit,ERR=101) WTXY      
+  write(iunit,ERR=101) WSLAKEXY  
+  write(iunit,ERR=101) LFMASSXY  
+  write(iunit,ERR=101) RTMASSXY  
+  write(iunit,ERR=101) STMASSXY  
+  write(iunit,ERR=101) WOODXY    
+  write(iunit,ERR=101) STBLCPXY  
+  write(iunit,ERR=101) FASTCPXY  
+  write(iunit,ERR=101) LAI       
+  write(iunit,ERR=101) XSAIXY    
+  write(iunit,ERR=101) VEGFRA    
+  write(iunit,ERR=101) GVFMIN    
+  write(iunit,ERR=101) GVFMAX    
+  write(iunit,ERR=101) ACSNOM    
+  write(iunit,ERR=101) ACSNOW    
+  write(iunit,ERR=101) TAUSSXY   
+  write(iunit,ERR=101) QSFC      
+  write(iunit,ERR=101) SFCRUNOFF    
+  write(iunit,ERR=101) UDRUNOFF     
+#ifndef REALTIME
+#ifdef WRF_HYDRO
+  write(iunit,ERR=101) ACCPRCP   
+  write(iunit,ERR=101) ACCECAN   
+  write(iunit,ERR=101) ACCEDIR   
+  write(iunit,ERR=101) ACCETRAN  
+#endif
+#endif
+! below for opt_run = 5
+  if(IOPT_RUN .eq. 5) then
+     write(iunit,ERR=101) SMOISEQ   
+     write(iunit,ERR=101) AREAXY    
+     write(iunit,ERR=101) SMCWTDXY  
+     write(iunit,ERR=101) DEEPRECHXY
+     write(iunit,ERR=101) QSLATXY   
+     write(iunit,ERR=101) QRFSXY    
+     write(iunit,ERR=101) QSPRINGSXY
+     write(iunit,ERR=101) RECHXY    
+     write(iunit,ERR=101) QRFXY     
+     write(iunit,ERR=101) QSPRINGXY 
+     write(iunit,ERR=101) FDEPTHXY 
+     write(iunit,ERR=101) RIVERCONDXY 
+     write(iunit,ERR=101) RIVERBEDXY 
+     write(iunit,ERR=101) EQZWT 
+     write(iunit,ERR=101) PEXPXY 
+  endif
+  close(iunit)
+  return
+101  continue
+#ifdef MPP_LAND
+  call fatal_error_stop("failed to write lsm restartfile")
+#else
+  stop "failed to write lsm restart file"
+#endif
+102  continue
+#ifdef MPP_LAND
+  call fatal_error_stop("failed to open lsm restartfile")
+#else
+  stop "failed to open restart file"
+#endif
+end subroutine lsm_rst_bi_out
+
+subroutine lsm_rst_bi_in()
+  implicit none 
+  integer :: iunit, ierr
+  character(len=256):: str_tmp
+
+  iunit = 901
+#ifdef MPP_LAND
+             if(my_id .lt. 10) then
+                  write(str_tmp,'(I1)') my_id
+             else if(my_id .lt. 100) then
+                  write(str_tmp,'(I2)') my_id
+             else if(my_id .lt. 1000) then
+                  write(str_tmp,'(I3)') my_id
+             else if(my_id .lt. 10000) then
+                  write(str_tmp,'(I4)') my_id
+             else if(my_id .lt. 100000) then
+                  write(str_tmp,'(I5)') my_id
+             else
+                continue
+             endif
+  open(iunit,file=trim(restart_filename_requested)//"."//trim(str_tmp),form="unformatted",ERR=101)
+#else
+  open(iunit,file=trim(restart_filename_requested),form="unformatted",ERR=101)
+#endif
+
+
+  read(iunit,ERR=101) TSLB  
+  read(iunit,ERR=101) TSNOXY
+  read(iunit,ERR=101) SMOIS     
+  read(iunit,ERR=101) SH2O      
+  read(iunit,ERR=101) ZSNSOXY   
+  read(iunit,ERR=101) SNICEXY   
+  read(iunit,ERR=101) SNLIQXY   
+  read(iunit,ERR=101) QSNOWXY   
+  read(iunit,ERR=101) FWETXY    
+  read(iunit,ERR=101) SNEQVOXY  
+  read(iunit,ERR=101) EAHXY     
+  read(iunit,ERR=101) TAHXY     
+  read(iunit,ERR=101) ALBOLDXY  
+  read(iunit,ERR=101) CMXY      
+  read(iunit,ERR=101) CHXY      
+  read(iunit,ERR=101) ISNOWXY   
+  read(iunit,ERR=101) CANLIQXY  
+  read(iunit,ERR=101) CANICEXY  
+  read(iunit,ERR=101) SNOW      
+  read(iunit,ERR=101) SNOWH     
+  read(iunit,ERR=101) TVXY      
+  read(iunit,ERR=101) TGXY      
+  read(iunit,ERR=101) ZWTXY     
+  read(iunit,ERR=101) WAXY      
+  read(iunit,ERR=101) WTXY      
+  read(iunit,ERR=101) WSLAKEXY  
+  read(iunit,ERR=101) LFMASSXY  
+  read(iunit,ERR=101) RTMASSXY  
+  read(iunit,ERR=101) STMASSXY  
+  read(iunit,ERR=101) WOODXY    
+  read(iunit,ERR=101) STBLCPXY  
+  read(iunit,ERR=101) FASTCPXY  
+  read(iunit,ERR=101) LAI       
+  read(iunit,ERR=101) XSAIXY    
+  read(iunit,ERR=101) VEGFRA    
+  read(iunit,ERR=101) GVFMIN    
+  read(iunit,ERR=101) GVFMAX    
+  read(iunit,ERR=101) ACSNOM    
+  read(iunit,ERR=101) ACSNOW    
+  read(iunit,ERR=101) TAUSSXY   
+  read(iunit,ERR=101) QSFC      
+  read(iunit,ERR=101) SFCRUNOFF    
+  read(iunit,ERR=101) UDRUNOFF     
+#ifndef REALTIME
+#ifdef WRF_HYDRO
+  read(iunit,ERR=101) ACCPRCP   
+  read(iunit,ERR=101) ACCECAN   
+  read(iunit,ERR=101) ACCEDIR   
+  read(iunit,ERR=101) ACCETRAN  
+#endif
+#endif
+! below for opt_run = 5
+  if(IOPT_RUN .eq. 5) then
+      read(iunit,ERR=101) SMOISEQ   
+      read(iunit,ERR=101) AREAXY    
+      read(iunit,ERR=101) SMCWTDXY  
+      read(iunit,ERR=101) DEEPRECHXY
+      read(iunit,ERR=101) QSLATXY   
+      read(iunit,ERR=101) QRFSXY    
+      read(iunit,ERR=101) QSPRINGSXY
+      read(iunit,ERR=101) RECHXY    
+      read(iunit,ERR=101) QRFXY     
+      read(iunit,ERR=101) QSPRINGXY 
+      read(iunit,ERR=101) FDEPTHXY 
+      read(iunit,ERR=101) RIVERCONDXY 
+      read(iunit,ERR=101) RIVERBEDXY 
+      read(iunit,ERR=101) EQZWT 
+      read(iunit,ERR=101) PEXPXY 
+  endif
+  close(iunit)
+  return
+
+101  continue
+#ifdef MPP_LAND
+  call fatal_error_stop("failed to read in lsm restartfile")
+#else
+  stop "failed to read lsm restart file"
+#endif
+end subroutine lsm_rst_bi_in
 
 end module module_NoahMP_hrldas_driver
 

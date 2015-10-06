@@ -4803,45 +4803,47 @@ end subroutine mpp_output_chrt
 
 
     iunit = 80
-    open(iunit, file = "restart/"//outFile, form="unformatted")
-          write(iunit) rt_domain(did)%his_out_counts
-          write(iunit) nlst_rt(did)%olddate(1:19)
-          write(iunit) nlst_rt(did)%sincedate(1:19)
-          write(iunit) nlst_rt(did)%DTCT 
-          write(iunit) rt_domain(did)%stc
-          write(iunit) rt_domain(did)%smc
-          write(iunit) rt_domain(did)%sh2ox
-          write(iunit) rt_domain(did)%SMCMAX1
-          write(iunit) rt_domain(did)%SMCREF1
-          write(iunit) rt_domain(did)%SMCWLT1
-          write(iunit) rt_domain(did)%INFXSRT
-          write(iunit) rt_domain(did)%soldrain
-          write(iunit) rt_domain(did)%sfcheadrt
+    open(iunit, file = "restart/"//outFile, form="unformatted",ERR=101)
+          write(iunit,ERR=101) rt_domain(did)%his_out_counts
+          write(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
+          write(iunit,ERR=101) nlst_rt(did)%sincedate(1:19)
+          write(iunit,ERR=101) nlst_rt(did)%DTCT 
+          write(iunit,ERR=101) rt_domain(did)%stc
+          write(iunit,ERR=101) rt_domain(did)%smc
+          write(iunit,ERR=101) rt_domain(did)%sh2ox
+          write(iunit,ERR=101) rt_domain(did)%SMCMAX1
+          write(iunit,ERR=101) rt_domain(did)%SMCREF1
+          write(iunit,ERR=101) rt_domain(did)%SMCWLT1
+          write(iunit,ERR=101) rt_domain(did)%INFXSRT
+          write(iunit,ERR=101) rt_domain(did)%soldrain
+          write(iunit,ERR=101) rt_domain(did)%sfcheadrt
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
-                write(iunit) rt_domain(did)%QBDRYRT
-                write(iunit) rt_domain(did)%INFXSWGT
-                write(iunit) rt_domain(did)%SFCHEADSUBRT
-                write(iunit) rt_domain(did)%SH2OWGT
-                write(iunit) rt_domain(did)%QSTRMVOLRT
-                write(iunit) rt_domain(did)%RETDEPRT
+                write(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                write(iunit,ERR=101) rt_domain(did)%INFXSWGT
+                write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                write(iunit,ERR=101) rt_domain(did)%SH2OWGT
+                write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
+                write(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
-                   write(iunit) rt_domain(did)%HLINK
-                   write(iunit) rt_domain(did)%QLINK(:,1)
-                   write(iunit) rt_domain(did)%QLINK(:,2)
-                   write(iunit) rt_domain(did)%cvol
-                   write(iunit) rt_domain(did)%resht
-                   write(iunit) rt_domain(did)%qlakeo
-                   write(iunit) rt_domain(did)%LAKE_INFLORT
+                   write(iunit,ERR=101) rt_domain(did)%HLINK
+                   write(iunit,ERR=101) rt_domain(did)%QLINK(:,1)
+                   write(iunit,ERR=101) rt_domain(did)%QLINK(:,2)
+                   write(iunit,ERR=101) rt_domain(did)%cvol
+                   write(iunit,ERR=101) rt_domain(did)%resht
+                   write(iunit,ERR=101) rt_domain(did)%qlakeo
+                   write(iunit,ERR=101) rt_domain(did)%LAKE_INFLORT
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-                     write(iunit) rt_domain(did)%z_gwsubbas
+                     write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
           end if  
 
         close(iunit)
 
         return
+101     continue
+        call hydro_stop("failed to output the hydro restart file.")
         end subroutine RESTART_OUT_bi
 
    subroutine RESTART_in_bi(inFileTmp,did)
@@ -4880,45 +4882,47 @@ end subroutine mpp_output_chrt
         call hydro_stop("could not find restart file")
     endif
 
-    open(iunit, file = inFile, form="unformatted")
-          read(iunit) rt_domain(did)%his_out_counts
-          read(iunit) nlst_rt(did)%olddate(1:19)
-          read(iunit) nlst_rt(did)%sincedate(1:19)
-          read(iunit) nlst_rt(did)%DTCT 
-          read(iunit) rt_domain(did)%stc
-          read(iunit) rt_domain(did)%smc
-          read(iunit) rt_domain(did)%sh2ox
-          read(iunit) rt_domain(did)%SMCMAX1
-          read(iunit) rt_domain(did)%SMCREF1
-          read(iunit) rt_domain(did)%SMCWLT1
-          read(iunit) rt_domain(did)%INFXSRT
-          read(iunit) rt_domain(did)%soldrain
-          read(iunit) rt_domain(did)%sfcheadrt
+    open(iunit, file = inFile, form="unformatted",ERR=101)
+          read(iunit,ERR=101) rt_domain(did)%his_out_counts
+          read(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
+          read(iunit,ERR=101) nlst_rt(did)%sincedate(1:19)
+          read(iunit,ERR=101) nlst_rt(did)%DTCT 
+          read(iunit,ERR=101) rt_domain(did)%stc
+          read(iunit,ERR=101) rt_domain(did)%smc
+          read(iunit,ERR=101) rt_domain(did)%sh2ox
+          read(iunit,ERR=101) rt_domain(did)%SMCMAX1
+          read(iunit,ERR=101) rt_domain(did)%SMCREF1
+          read(iunit,ERR=101) rt_domain(did)%SMCWLT1
+          read(iunit,ERR=101) rt_domain(did)%INFXSRT
+          read(iunit,ERR=101) rt_domain(did)%soldrain
+          read(iunit,ERR=101) rt_domain(did)%sfcheadrt
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
-                read(iunit) rt_domain(did)%QBDRYRT
-                read(iunit) rt_domain(did)%INFXSWGT
-                read(iunit) rt_domain(did)%SFCHEADSUBRT
-                read(iunit) rt_domain(did)%SH2OWGT
-                read(iunit) rt_domain(did)%QSTRMVOLRT
-                read(iunit) rt_domain(did)%RETDEPRT
+                read(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                read(iunit,ERR=101) rt_domain(did)%INFXSWGT
+                read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                read(iunit,ERR=101) rt_domain(did)%SH2OWGT
+                read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
+                read(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
-                   read(iunit) rt_domain(did)%HLINK
-                   read(iunit) rt_domain(did)%QLINK(:,1)
-                   read(iunit) rt_domain(did)%QLINK(:,2)
-                   read(iunit) rt_domain(did)%cvol
-                   read(iunit) rt_domain(did)%resht
-                   read(iunit) rt_domain(did)%qlakeo
-                   read(iunit) rt_domain(did)%LAKE_INFLORT
+                   read(iunit,ERR=101) rt_domain(did)%HLINK
+                   read(iunit,ERR=101) rt_domain(did)%QLINK(:,1)
+                   read(iunit,ERR=101) rt_domain(did)%QLINK(:,2)
+                   read(iunit,ERR=101) rt_domain(did)%cvol
+                   read(iunit,ERR=101) rt_domain(did)%resht
+                   read(iunit,ERR=101) rt_domain(did)%qlakeo
+                   read(iunit,ERR=101) rt_domain(did)%LAKE_INFLORT
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-                     read(iunit) rt_domain(did)%z_gwsubbas
+                     read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
           end if  
 
         close(iunit)
 
         return
+101     continue
+        call hydro_stop("failed to read the hydro restart file.")
         end subroutine RESTART_in_bi
 #endif
 
