@@ -39,9 +39,7 @@ module module_HYDRO_io
 #endif
           if (iret .ne. 0) then
              errMsg = "get2d_real: failed to open the netcdf file: " // trim(fileName)
-#ifdef HYDRO_D
              print*, trim(errMsg)
-#endif
              if(fatalErr_local) call hydro_stop(trim(errMsg))
              out_buff = -9999.
              return 
@@ -54,9 +52,7 @@ module module_HYDRO_io
                 errMsg = "get2d_real: failed to find the variables: " //      &
                          trim(var_name) // ' and ' // trim(var_name//"_M") // &
                          ' in ' // trim(fileName)
-#ifdef HYDRO_D
                 write(6,*) errMsg
-#endif
                 if(fatalErr_local) call hydro_stop(errMsg)
                 return 
              endif
@@ -67,9 +63,7 @@ module module_HYDRO_io
              errMsg = "get2d_real: failed to read the variable: " // &
                       trim(var_name) // ' or ' // trim(var_name//"_M") // &
                       ' in ' // trim(fileName)
-#ifdef HYDRO_D
              print*,trim(errMsg)
-#endif
              if(fatalErr_local) call hydro_stop(trim(errMsg))
              return
           endif
@@ -78,9 +72,7 @@ module module_HYDRO_io
           if(iret .ne. 0) then
              errMsg = "get2d_real: failed to close the file: " // &
                       trim(fileName)
-#ifdef HYDRO_D
              print*,trim(errMsg)
-#endif
              if(fatalErr_local) call hydro_stop(trim(errMsg))
           endif
 
@@ -845,10 +837,8 @@ end subroutine get_albedo12m_netcdf
 
       !-- get the number of lakes
        if (cnt .ne. NLINKS) then 
-#ifdef HYDRO_D
          print *, "Apparent error in network topology", cnt, NLINKS
          print* , "ixrt =", ixrt, "jxrt =", jxrt
-#endif
          call hydro_stop("READ_ROUTEDIM")
        endif
 !DJG inv       do j=jxrt,1,-1
@@ -2142,12 +2132,10 @@ end subroutine get_albedo12m_netcdf
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
 
-#ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
          call hydro_stop("output_gw_spinup")
        endif
-#endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
@@ -2487,12 +2475,10 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
 
-#ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
          call hydro_stop("sub_output_gw")
        endif
-#endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
@@ -2910,24 +2896,20 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #else
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
-#ifdef HYDRO_D
         if (iret /= 0) then
            print*,  "Problem nf_create points"
            call hydro_stop("output_chrt")
         endif
-#endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
        iret = nf_create(trim(output_flnm2), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid2)
 #else
        iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
 #endif
-#ifdef HYDRO_D
         if (iret /= 0) then
             print*, "Problem nf_create observation"
             call hydro_stop("output_chrt")
         endif
-#endif
 
        do i=1,nlk
         if(ORDER(i) .ge. order_to_write) then 
@@ -3691,12 +3673,10 @@ end subroutine mpp_output_chrt
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
 
-#ifdef HYDRO_D
       if (iret /= 0) then
           print*, "Problem nf_create"
           call hydro_stop("output_lakes")
       endif
-#endif
 
       do i=1,NLAKES
          station_id(i) = i
@@ -3978,13 +3958,10 @@ end subroutine mpp_output_chrt
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
 
-#ifdef HYDRO_D
         if (iret /= 0) then
             print*, "Problem nf_create"
             call hydro_stop("output_chrtgrd")
         endif
-#endif
-
 
         iret = nf_def_dim(ncid, "time", NF_UNLIMITED, timedim)
         iret = nf_def_dim(ncid, "x", ixrt, ixlondim)
@@ -4092,10 +4069,8 @@ end subroutine mpp_output_chrt
     ierr = nf_open(inflnm, NF_NOWRITE, ncid)
 #endif
     if (ierr /= 0) then
-#ifdef HYDRO_D
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
        call hydro_stop("read_chan_forcing")
-#endif
     endif
 
 !DJG read data...
@@ -4130,9 +4105,7 @@ end subroutine mpp_output_chrt
 #endif
     if (iret .ne. 0) then
        errMsg = "get2d_int: failed to open the netcdf file: " // trim(fileName)
-#ifdef HYDRO_D
        print*, trim(errMsg)
-#endif
        if(fatalErr_local) call hydro_stop(trim(errMsg))
     endif
     
@@ -4140,9 +4113,7 @@ end subroutine mpp_output_chrt
     if(iret .ne. 0) then
        errMsg = "get2d_int: failed to find the variable: " // &
                  trim(var_name) // ' in ' // trim(fileName)
-#ifdef HYDRO_D
        print*, trim(errMsg)
-#endif
        if(fatalErr_local) call hydro_stop(errMsg)
     endif
     
@@ -4150,9 +4121,7 @@ end subroutine mpp_output_chrt
     if(iret .ne. 0) then
        errMsg = "get2d_int: failed to read the variable: " // &
                 trim(var_name) // " in " //trim(fileName)
-#ifdef HYDRO_D
        print*,trim(errMsg)
-#endif
        if(fatalErr_local) call hydro_stop(trim(errMsg))
     endif
     
@@ -4160,9 +4129,7 @@ end subroutine mpp_output_chrt
     if(iret .ne. 0) then
        errMsg = "get2d_int: failed to close the file: " // &
                 trim(fileName)
-#ifdef HYDRO_D
        print*,trim(errMsg)
-#endif
        if(fatalErr_local) call hydro_stop(trim(errMsg))
     endif
     
@@ -4371,12 +4338,10 @@ end subroutine mpp_output_chrt
        call mpp_land_bcast_int1(iret)
 #endif
 
-#ifdef HYDRO_D
        if (iret /= 0) then
           print*, "Problem nf_create"
           call hydro_stop("output_lsm")
        endif
-#endif
 
 
 #ifdef MPP_LAND
@@ -4481,12 +4446,10 @@ end subroutine mpp_output_chrt
        call mpp_land_bcast_int1(iret)
 #endif
 
-#ifdef HYDRO_D
        if (iret /= 0) then
           print*, "Problem nf_create"
           call hydro_stop("RESTART_OUT_nc")
        endif
-#endif
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
@@ -5202,11 +5165,9 @@ end subroutine mpp_output_chrt
     call mpp_land_bcast_int1(iret)
 #endif
     if (iret /= 0) then
-#ifdef HYDRO_D
        write(*,'("Problem opening file: ''", A, "''")') &
             trim(inFile)
        call hydro_stop("RESTART_IN_NC") 
-#endif
     endif
 
 #ifdef MPP_LAND
@@ -5317,12 +5278,6 @@ end subroutine mpp_output_chrt
         write(6,*) "end of RESTART_IN"
         call flush(6)
 #endif
-
-         !call check_channel(81,rt_domain(did)%QLINK(:,1),1,rt_domain(did)%NLINKS)
-         !call check_channel(83,rt_domain(did)%QLINK(:,2),1,rt_domain(did)%NLINKS)
-         !call check_channel(84,rt_domain(did)%HLINK,1,rt_domain(did)%NLINKS)
-         !call check_channel(85,rt_domain(did)%CVOL,1,rt_domain(did)%NLINKS)
-         !call hydro_stop("666666666666")
 
         return
         end subroutine RESTART_IN_nc
@@ -7262,10 +7217,10 @@ end subroutine readBucket_nhd
      else
 
 #ifndef HYDRO_REALTIME
-        allocate(g_accLndRunOff(1))
-        allocate(g_accQLateral(1))
-        allocate(g_accStrmvolrt(1))
-        allocate(g_accBucket(1))
+!       allocate(g_accLndRunOff(1))
+!       allocate(g_accQLateral(1))
+!       allocate(g_accStrmvolrt(1))
+!       allocate(g_accBucket(1))
 #endif
         allocate(g_chlon(1))
         allocate(g_chlat(1))

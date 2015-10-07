@@ -135,29 +135,23 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
-#ifdef HYDRO_D
               write(6,*) "Error: failed to open file in get_greenfrac: ", trim(fileName)
               call hydro_stop("in get_greenfrac_netcdf") 
-#endif
           endif 
             
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
              call hydro_stop("in get_greenfrac_netcdf")
-#endif
           endif
       
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
 
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
              call hydro_stop("in get_greenfrac_netcdf")
-#endif
           endif
       
       
@@ -207,29 +201,23 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
-#ifdef HYDRO_D
               write(6,*) "Error: failed to open file in get_maxgreenfrac: ", trim(fileName)
               call hydro_stop("in get_maxgreenfrac_netcdf") 
-#endif
           endif 
             
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_inq_varid"
              call hydro_stop("in get_maxgreenfrac_netcdf")
-#endif
           endif
       
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
 
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_get_var_real"
              call hydro_stop("in get_maxgreenfrac_netcdf")
-#endif
           endif
       
           array3 = maxval(xtmp,3)
@@ -258,7 +246,6 @@
 
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
-#ifdef HYDRO_D
           if(iret /= 0) then
               write(6,*) "Error: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
               call hydro_stop("HYDRO_HRLDAS_ini") 
@@ -267,7 +254,6 @@
               write(6,*) "initialization from the file  : ", trim(fileName)
 
           endif 
-#endif
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
            if (iret == 0) then 

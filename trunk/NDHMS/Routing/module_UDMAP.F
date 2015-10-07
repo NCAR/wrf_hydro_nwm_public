@@ -410,9 +410,7 @@ contains
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
-#ifdef HYDRO_D
             print*,"failed to open the netcdf file: ",trim(fileName)
-#endif
             call hydro_stop("fatal error! ")
             return
           endif
@@ -435,9 +433,7 @@ contains
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
-#ifdef HYDRO_D
             print*,"failed to open the netcdf file: ",trim(fileName)
-#endif
             call hydro_stop("fatal error! ")
             return
           endif

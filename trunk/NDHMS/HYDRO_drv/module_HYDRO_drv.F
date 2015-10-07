@@ -869,29 +869,25 @@ endif
 
 !!!yw added for debug
                    if(RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .lt. 0) then
-                      print*, "Error negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      print*, "Warning: negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
                    endif
                    if(RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) .lt. 0) then
-                      print *, "Error negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      print *, "Warning: negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
                    endif
 
 !end 
                     IF (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .GT. &
                         RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-#ifdef HYDRO_D
                       print *, "SMCMAX exceeded upon aggregation...", &
                            RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
                       call hydro_stop("aggregateDomain")
-#endif
                     END IF
                     IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LE.0.) THEN
-#ifdef HYDRO_D
                       print *, "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
                       print *, "Error negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
                       call hydro_stop("aggregateDomain")
-#endif
                     END IF
                     RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
                                  = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
@@ -1247,16 +1243,12 @@ end module module_HYDRO_drv
 #endif
         character(len=*) :: msg
         integer :: ierr
-#ifdef HYDRO_D
       write(6,*) "The job is stoped due to the fatal error. ", trim(msg)
       call flush(6)
-#endif
 #ifdef MPP_LAND
-#ifndef HYDRO_D
       print*, "---"
       print*, "ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
       print*, ""
-#endif
 
 !        call mpp_land_sync()
 !        write(my_id+90,*) msg

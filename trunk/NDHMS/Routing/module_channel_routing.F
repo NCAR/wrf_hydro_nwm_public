@@ -193,11 +193,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !end 
 
         if (n.le.0.0.or.Cs.le.0.or.Bw.le.0) then
-#ifdef HYDRO_D
          print *, "error in Diffusion function ->channel coefficients"
          print *, "nod, n, Cs, Bw", nod, n, Cs, Bw 
          call hydro_stop("in DIFFUSION")
-#endif
         endif
 
 !        Sf = ((z1+h1)-(z2+h2))/dx  !-- compute the friction slope
@@ -325,10 +323,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         !qC = quc + ql !current upstream in reach
 
         if (n .le.0 .or. So .le. 0 .or. z .le. 0 .or. Bw .le. 0) then
-#ifdef HYDRO_D
           print*, "error in channel coefficients -> Muskingum cunge",n,So,z,Bw
           call hydro_stop("in MUSKINGCUNGE")
-#endif
         end if
 
         error   = 1.0
@@ -737,10 +733,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                  ! QLINK(k,2) = 1/MannN(k) * AREA * WP**(2./3.) * sqrt(So(k))
 
               else
-#ifdef HYDRO_D
                   print *, "No channel option selected"
                   call hydro_stop("drive_CHANNEL") 
-#endif
               endif
            endif
         end do
@@ -805,9 +799,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                     ! tmpQLINK(k,2) = ((1/MannN(k)) * AREA * WP**(2./3.) * sqrt(So(k)))
 
                    else
-#ifdef HYDRO_D
                     print *, " no channel option selected"
-#endif
                     call hydro_stop("drive_CHANNEL") 
                    endif
             endif !!! order(1) .ne. 1
@@ -957,7 +949,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
 #endif
-!                call hydro_stop("drive_CHANNEL") 
         end if
             elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
@@ -1085,10 +1076,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
               CVOLTMP = CVOL
               CYCLE crnt                               !-- start cycle over with smaller timestep
              else
-#ifdef HYDRO_D
               write(6,*) "Courant error with smallest routing timestep DTCT: ",DTCT
-#endif
-              call hydro_stop("drive_CHANNEL")
+!              call hydro_stop("drive_CHANNEL")
               DTCT = 0.1
               HLINKTMP = HLINK                          !-- set head and volume to start values of timestep
               CVOLTMP  = CVOL
@@ -1148,10 +1137,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
               QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
 
             else
-#ifdef HYDRO_D
               print *, "this node does not have a type.. error TYPEL =", TYPEL(i)
               call hydro_stop("drive_CHANNEL") 
-#endif
             endif
            
            if(TYPEL(i) == 0) then !-- regular channel node, finalize head and flow
@@ -1176,7 +1163,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !   call check_channel(85,HLINKTMP,1,nlinks)
 !   call check_lake(86,QLAKEI,lake_index,nlakes)
 
-!   call hydro_stop("88888888")
       
 
 
@@ -1229,9 +1215,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
            HLINK = HLINKTMP                 !-- update head based on final solution in timestep
            CVOL  = CVOLTMP                  !-- update volume
         else                                !-- no channel option apparently selected
-#ifdef HYDRO_D
          print *, "no channel option selected"
-#endif
          call hydro_stop("drive_CHANNEL") 
         endif
 
@@ -1255,10 +1239,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
      REAL FUNCTION CDf(Q,Bw,h,z)
      REAL :: Q, Bw, z, h
        if(h .le. 0) then
-#ifdef HYDRO_D
          print *, "head is zero, will get division by zero error"
          call hydro_stop("in AREAf") 
-#endif
        else
        CDf = (Q/((Bw+z*h)*h))/(sqrt(9.81*(((Bw+z*h)*h)/(Bw+2*z*h))))-1  !--critical depth function
        endif
@@ -1734,10 +1716,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
                          QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
                          MannN(k), ChSSLP(k), Bw(k))
               else
-#ifdef HYDRO_D
                   print *, "No channel option selected"
                   call hydro_stop("drive_CHANNEL") 
-#endif
               endif
            endif
         end do
@@ -1790,9 +1770,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                                     QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
                                     MannN(k), ChSSlp(k), Bw(k) )
                    else
-#ifdef HYDRO_D
                     print *, " no channel option selected"
-#endif
                     call hydro_stop("drive_CHANNEL") 
                    endif
             endif !!! order(1) .ne. 1
