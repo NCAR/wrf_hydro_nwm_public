@@ -7183,6 +7183,8 @@ end subroutine readBucket_nhd
 !        K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss, &
 !        lsmDt                                                                  &
 !        )
+
+#ifdef MPP_LAND
    subroutine mpp_output_chrt2(gnlinks,gnlinksl,map_l2g,igrid,                  &
         split_output_count, NLINKS, ORDER,                                     &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
@@ -7297,6 +7299,8 @@ end subroutine readBucket_nhd
 #endif
 
 end subroutine mpp_output_chrt2
+
+#endif
 
 
 !subroutine output_chrt2 

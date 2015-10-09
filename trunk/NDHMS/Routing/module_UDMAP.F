@@ -91,10 +91,10 @@ contains
       call hydro_stop("Fatal error: sequential run for NHDPlus not defined.")
 #endif
 
+#ifdef MPP_LAND
        call mpp_land_bcast_int(nlinksl,linkid)
-       
-
        call com_decomp1dInt(bufid,npid,bufid_tmp,ix_bufid)
+#endif
        if(ix_bufid .gt. 0) then
           allocate(bufidflag(ix_bufid))
           bufidflag = -999
@@ -110,7 +110,9 @@ contains
 102       continue
        end do
 
-       call com_write1dInt(bufidflag,ix_bufid,bufid,npid)
+#ifdef MPP_LAND
+      call com_write1dInt(bufidflag,ix_bufid,bufid,npid)
+#endif
 
       if(ix_bufid .gt. 0) then
           deallocate(bufidflag)
