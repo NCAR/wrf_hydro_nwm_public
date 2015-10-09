@@ -20,9 +20,7 @@ program Noah_hrldas_driver
 #endif
        call land_driver_exe(ITIME)
    end do
-#ifdef WRF_HYDRO
    call hydro_finish() 
-#endif
 
 END 
 

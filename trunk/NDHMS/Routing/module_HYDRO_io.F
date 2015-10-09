@@ -1645,12 +1645,10 @@ end subroutine get_albedo12m_netcdf
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
 #endif
-#ifdef HYDRO_D
        if (iret /= 0) then
          print*, "Problem nf_create"
-         call hydro_finish("output_rt")
+         call hydro_stop("output_rt")
        endif
-#endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
@@ -4756,17 +4754,27 @@ end subroutine mpp_output_chrt
 
     integer :: iunit
     logical :: dir_e
-    inquire(file='./restart/.', exist=dir_e)
+    integer  :: i0,ie, i, istep
+    
+    if(my_id .eq. io_id) then
+       inquire(file='restart', exist=dir_e)
 
-    if ( dir_e ) then
-       print*, "output restart files to restart/."
-    else
-      call system('mkdir restart')
-    end if
+       if (dir_e) then
+          print*, "output restart files to restart/."
+       else
+         call system('mkdir restart')
+       end if
+    endif
+    call mpp_land_sync()
 
 
-    iunit = 80
-    open(iunit, file = "restart/"//outFile, form="unformatted",ERR=101)
+    iunit = 801
+ istep = 64
+ i0 = 0
+ ie = istep
+ do i = 0, numprocs,istep 
+   if(my_id .ge. i0 .and. my_id .lt. ie) then
+     open(iunit, file = "restart/"//trim(outFile), form="unformatted",ERR=101, access="sequential")
           write(iunit,ERR=101) rt_domain(did)%his_out_counts
           write(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
           write(iunit,ERR=101) nlst_rt(did)%sincedate(1:19)
@@ -4803,6 +4811,11 @@ end subroutine mpp_output_chrt
           end if  
 
         close(iunit)
+    endif
+    call mpp_land_sync()
+    i0 = i0 + istep
+    ie = ie + istep
+  end do ! end do of i loop
 
         return
 101     continue
@@ -4822,9 +4835,9 @@ end subroutine mpp_output_chrt
 
     integer :: iunit
     logical :: fexist
+    integer  :: i0,ie, i, istep
 
-
-    iunit = 80
+    iunit = 801
 
              if(my_id .lt. 10) then
                 write(str_tmp,'(I1)') my_id
@@ -4842,10 +4855,15 @@ end subroutine mpp_output_chrt
 
     inquire (file=trim(inFile), exist=fexist)
     if(.not. fexist) then
-        call hydro_stop("could not find restart file")
+        call hydro_stop("could not find restart file "//trim(inFile))
     endif
 
-    open(iunit, file = inFile, form="unformatted",ERR=101)
+ istep = 64
+ i0 = 0
+ ie = istep
+ do i = 0, numprocs,istep 
+   if(my_id .ge. i0 .and. my_id .lt. ie) then
+    open(iunit, file = inFile, form="unformatted",ERR=101,access="sequential")
           read(iunit,ERR=101) rt_domain(did)%his_out_counts
           read(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
           read(iunit,ERR=101) nlst_rt(did)%sincedate(1:19)
@@ -4882,10 +4900,15 @@ end subroutine mpp_output_chrt
           end if  
 
         close(iunit)
+    endif
+    call mpp_land_sync()
+    i0 = i0 + istep
+    ie = ie + istep
+  end do ! end do of i loop
 
         return
 101     continue
-        call hydro_stop("failed to read the hydro restart file.")
+        call hydro_stop("failed to read the hydro restart file "//trim(inFile))
         end subroutine RESTART_in_bi
 #endif
 

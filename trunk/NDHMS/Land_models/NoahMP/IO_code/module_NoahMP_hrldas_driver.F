@@ -5,8 +5,8 @@ module module_NoahMP_hrldas_driver
   USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
   USE module_date_utilities
 #ifdef MPP_LAND
-  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char
-  use module_mpp_land, only: check_land, node_info, fatal_error_stop
+  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char, mpp_land_sync
+  use module_mpp_land, only: check_land, node_info, fatal_error_stop, numprocs
   use module_cpl_land, only: cpl_land_init
 #endif
 
@@ -1806,14 +1806,30 @@ subroutine lsm_rst_bi_out()
   integer :: iunit, ierr
   logical :: dir_e
   character(len=256) :: output_flnm, str_tmp
+  integer  :: i0,ie, i, istep
 
-  inquire(file='./restart/.', exist=dir_e)
+  inquire(file='restart', exist=dir_e)
 
-  if ( dir_e ) then
-       print*, "output restart files to restart/."
-  else
-      call system('mkdir restart')
-  end if
+#ifdef MPP_LAND
+  if(my_id .eq. io_id) then
+#endif
+     if ( dir_e ) then
+          print*, "output restart files to restart/."
+     else
+         call system('mkdir restart')
+     end if
+
+#ifdef MPP_LAND
+  endif
+  call mpp_land_sync()
+
+
+ i0 = 0
+ istep = 64
+ ie = istep
+ do i = 0, numprocs,istep
+   if(my_id .ge. i0 .and. my_id .lt. ie) then
+#endif
 
   write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13),igrid
   iunit = 901
@@ -1832,9 +1848,9 @@ subroutine lsm_rst_bi_out()
              else
                 continue
              endif
-  open(iunit,file="restart/"//trim(output_flnm)//"."//trim(str_tmp),form="unformatted",ERR=102)
+  open(iunit,file="restart/"//trim(output_flnm)//"."//trim(str_tmp),form="unformatted",ERR=102, access="sequential")
 #else
-  open(iunit,file="restart/"//trim(output_flnm),form="unformatted",ERR=102)
+  open(iunit,file="restart/"//trim(output_flnm),form="unformatted",ERR=102, access="sequential")
 #endif
 
   write(iunit,ERR=101) TSLB  
@@ -1907,6 +1923,15 @@ subroutine lsm_rst_bi_out()
      write(iunit,ERR=101) PEXPXY 
   endif
   close(iunit)
+
+#ifdef MPP_LAND
+    endif
+    call mpp_land_sync()
+    i0 = i0 + istep
+    ie = ie + istep
+  end do ! end do of i loop
+#endif
+
   return
 101  continue
 #ifdef MPP_LAND
@@ -1926,9 +1951,16 @@ subroutine lsm_rst_bi_in()
   implicit none 
   integer :: iunit, ierr
   character(len=256):: str_tmp
+  integer  :: i0,ie, i, istep
 
   iunit = 901
 #ifdef MPP_LAND
+ i0 = 0
+ istep = 64
+ ie = istep
+ do i = 0, numprocs,istep
+   if(my_id .ge. i0 .and. my_id .lt. ie) then
+
              if(my_id .lt. 10) then
                   write(str_tmp,'(I1)') my_id
              else if(my_id .lt. 100) then
@@ -1942,9 +1974,9 @@ subroutine lsm_rst_bi_in()
              else
                 continue
              endif
-  open(iunit,file=trim(restart_filename_requested)//"."//trim(str_tmp),form="unformatted",ERR=101)
+  open(iunit,file=trim(restart_filename_requested)//"."//trim(str_tmp),form="unformatted",ERR=101, access="sequential")
 #else
-  open(iunit,file=trim(restart_filename_requested),form="unformatted",ERR=101)
+  open(iunit,file=trim(restart_filename_requested),form="unformatted",ERR=101, access="sequential")
 #endif
 
 
@@ -2018,11 +2050,21 @@ subroutine lsm_rst_bi_in()
       read(iunit,ERR=101) PEXPXY 
   endif
   close(iunit)
+
+#ifdef MPP_LAND
+    endif
+    call mpp_land_sync()
+    i0 = i0 + istep
+    ie = ie + istep
+  end do ! end do of i loop
+#endif
+
   return
 
 101  continue
 #ifdef MPP_LAND
-  call fatal_error_stop("failed to read in lsm restartfile")
+  call fatal_error_stop("failed to read in lsm restartfile "   &
+          //trim(restart_filename_requested)//"."//trim(str_tmp))
 #else
   stop "failed to read lsm restart file"
 #endif
