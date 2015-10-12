@@ -209,9 +209,9 @@ contains
                     lndflag(k) = lndflag(k) + 1
                     if(ter_rt_flag .eq. 1) then
 #ifdef MPP_LAND
-                        if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .gt. 0) then
+                        if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .ge. 0) then
 #else
-                        if(rtmask(bufi(i),bufj(i)) .gt. 0) then
+                        if(rtmask(bufi(i),bufj(i)) .ge. 0) then
 #endif
                              gridflag(k) = gridflag(k) + 1 
                         endif
@@ -222,14 +222,13 @@ contains
            end do
         end do
 
-
 !        call sum_int1d(lndflag,npid)
 !        call sum_int1d(gridflag,npid)
 !        if(my_id .eq. io_id) then
 !            write(60,*) lndflag
 !            write(61,*) gridflag
-!            write(62,*) grtmask
 !        endif
+!         write(my_id+70,*) "rtmask=",rtmask 
 !        call hydro_finish()
 
 
@@ -253,8 +252,13 @@ contains
                return
         endif
 
-        write(6,*) "my_id, starti, endi, startj,endj",starti, endi, startj,endj
-        write(6,*) " LNUMRSL = ", LNUMRSL
+!       write(6,*) "my_id, starti, endi, startj,endj",starti, endi, startj,endj
+!       write(6,*) " LNUMRSL = ", LNUMRSL
+!       write(my_id+60,*) "lndflag=",lndflag
+!       write(my_id+60,*) "gridflag=",gridflag
+!       write(my_id+60,*) "tmpgridflag=",tmpgridflag
+!       call flush(my_id+60)
+!       call hydro_finish()
 
         kk = 1
         do k = 1, npid   
@@ -320,11 +324,11 @@ contains
                           m  = m  + 1
                       else
 #ifdef MPP_LAND
-                          if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .gt. 0) then
+                          if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .ge. 0) then
                              LUDRSL(kk)%grid_i(m) = bufi(i) - local_startx_rt+1
                              LUDRSL(kk)%grid_j(m) = bufj(i) - local_starty_rt+1
 #else
-                          if(rtmask(bufi(i),bufj(i)) .gt. 0) then
+                          if(rtmask(bufi(i),bufj(i)) .ge. 0) then
                              LUDRSL(kk)%grid_i(m) = bufi(i)
                              LUDRSL(kk)%grid_j(m) = bufj(i) 
 #endif

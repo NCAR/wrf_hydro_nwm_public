@@ -815,7 +815,6 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !            call flush(71)
 !            call flush(72)
 !        endif
-!        call hydro_finish()
 
           do k = 1, NLINKSL
             if(TYPEL(k) .ne. 1) then
@@ -1674,6 +1673,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               end do
            endif ! end block for LUDRSL(k)%nLands .gt. 0
         end do
+
 
 #ifdef MPP_LAND
        call updateLinkV(LQLateral, QLateral)
