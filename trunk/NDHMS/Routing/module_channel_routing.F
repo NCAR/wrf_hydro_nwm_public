@@ -1718,7 +1718,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
      QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
 
 #ifndef HYDRO_REALTIME
-     accQLateral  = accLndRunOff + QLateral * DT 
+     ! accQLateral  = accLndRunOff + QLateral * DT 
+     accQLateral  = accQLateral + QLateral * DT 
      accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
 #endif
 
