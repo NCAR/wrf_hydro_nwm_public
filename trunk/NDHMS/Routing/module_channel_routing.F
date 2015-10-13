@@ -1537,15 +1537,15 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifndef HYDRO_REALTIME
        , accLndRunOff, accQLateral, accStrmvolrt, accBucket  &
 #endif
-       ,nsize       )
+       ,nsize , OVRTSWCRT, SUBRTSWCRT      )
 
-       use module_UDMAP, only: LNUMRSL, LUDRSL, ter_rt_flag
+       use module_UDMAP, only: LNUMRSL, LUDRSL
 
        IMPLICIT NONE
 
 ! -------- DECLARATIONS ------------------------
 
-        INTEGER, INTENT(IN) :: IXRT,JXRT,channel_option
+        INTEGER, INTENT(IN) :: IXRT,JXRT,channel_option, OVRTSWCRT, SUBRTSWCRT
         INTEGER, INTENT(IN) :: NLAKES, NLINKSL, nlinks
         integer, INTENT(INOUT) :: KT   ! flag of cold start (1) or continue run.
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: QSTRMVOLRT
@@ -1615,6 +1615,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifdef MPP_LAND
         real*8,  dimension(LNLINKSL) :: LQLateral
+#ifndef HYDRO_REALTIME
+        real*8,  dimension(LNLINKSL) :: tmpLQLateral
+        real,  dimension(NLINKSL) :: tmpQLateral
+#endif
         integer nlinks_index(nlinks)
         integer  iyw, yw_mpp_nlinks, mpp_nlinks
         real     ywtmp(ixrt,jxrt)
@@ -1624,12 +1628,16 @@ gwOption:   if(gwBaseSwCRT == 3) then
         integer  :: nToNodeInd
         real, dimension(nToNodeInd,2) :: gQLINK
 #else
-        real*8,  dimension(NLINKS) :: LQLateral
+#ifndef HYDRO_REALTIME
+        real*8,  dimension(NLINKS) :: tmpLQLateral
+        real,  dimension(NLINKSL) :: tmpQLateral
+#endif
 #endif
         integer flag
 
         integer :: n, kk2, nt, nsteps  ! tmp 
         real, dimension(:) :: qout_gwsubbas
+  
 
 #ifndef HYDRO_REALTIME
         real, dimension(NLINKS) ::  accLndRunOff, accQLateral, accStrmvolrt, accBucket
@@ -1652,27 +1660,52 @@ gwOption:   if(gwBaseSwCRT == 3) then
          LQLateral = 0          !-- initial lateral flow to 0 for this reach
 
 
+#ifndef HYDRO_REALTIME
+        tmpLQLateral = 0
+        tmpQLateral = 0
+#endif
 
         ! NHDPLUS maping
+    if(OVRTSWCRT .eq. 0)      then
         do k = 1, LNUMRSL
-           if(ter_rt_flag .eq. 0)      then
               ! get from land grid runoff
                do m = 1, LUDRSL(k)%ncell  
                    ii =  LUDRSL(k)%cell_i(m)
                    jj =  LUDRSL(k)%cell_j(m)
-                   LQLateral(k) = LQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
-                              *LUDRSL(k)%nodeArea(m)/DT
+                   LQLateral(k) = LQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%cellweight(m)/1000 & 
+                              *LUDRSL(k)%cellArea(m)/DT
+#ifndef HYDRO_REALTIME
+                   tmpLQLateral(k) = tmpLQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%cellweight(m)/1000 & 
+                              *LUDRSL(k)%cellArea(m)/DT
+#endif
                end do
-           else
+        end do
+#ifndef HYDRO_REALTIME
+        call updateLinkV(tmpLQLateral, tmpQLateral)
+        accLndRunOff = accLndRunOff + tmpQLateral * DT
+        tmpLQLateral = 0
+        tmpQLateral = 0
+#endif
+     endif
+     if(OVRTSWCRT .ne. 0 .or. SUBRTSWCRT .ne. 0 ) then
+        do k = 1, LNUMRSL
               ! get from channel grid
               do m = 1, LUDRSL(k)%ngrids
                   ii =  LUDRSL(k)%grid_i(m)
                   jj =  LUDRSL(k)%grid_j(m)
                   LQLateral(k) = LQLateral(k) + QSTRMVOLRT(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
                           *LUDRSL(k)%nodeArea(m)/DT
+#ifndef HYDRO_REALTIME
+                  tmpLQLateral(k) = tmpLQLateral(k) + QSTRMVOLRT(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
+                          *LUDRSL(k)%nodeArea(m)/DT
+#endif
               end do
-           endif ! end block for LUDRSL(k)%nLands .gt. 0
         end do
+#ifndef HYDRO_REALTIME
+        call updateLinkV(tmpLQLateral, tmpQLateral)
+        accStrmvolrt = accStrmvolrt + tmpQLateral * DT
+#endif
+     endif
 
 
 #ifdef MPP_LAND
@@ -1685,11 +1718,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
      QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
 
 #ifndef HYDRO_REALTIME
-     if(ter_rt_flag .eq. 0)      then
-         accLndRunOff = accLndRunOff + QLateral * DT
-     else
-         accStrmvolrt = accStrmvolrt + QLateral * DT
-     endif
      accQLateral  = accLndRunOff + QLateral * DT 
      accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
 #endif

@@ -20,7 +20,7 @@ implicit none
 
 type userDefineMapping
     integer, allocatable, dimension(:) :: grid_i, grid_j
-    real, allocatable, dimension(:) :: weight, nodeArea
+    real, allocatable, dimension(:) :: weight, nodeArea, cellArea
     integer :: ngrids, nlands
     integer :: myid
 !   for bucket model definition
@@ -45,9 +45,8 @@ contains
         integer, intent(in), dimension(ixrt,jxrt):: rtmask
         integer :: npid    !local variable.
         real,dimension(:,:) :: cell_area
-        if(OVRTSWCRT .eq. 0 .and. SUBRTSWCRT .eq. 0) then
-            ter_rt_flag = 0
-        else
+        ter_rt_flag = 0
+        if(OVRTSWCRT .eq. 1 .or. SUBRTSWCRT .eq. 1) then
             ter_rt_flag = 1
         endif
         call readUDMP(npid,nlinksl)
@@ -288,6 +287,7 @@ contains
                  allocate( LUDRSL(kk)%cellweight(LUDRSL(kk)%ncell))
                  allocate( LUDRSL(kk)%cell_i(LUDRSL(kk)%ncell))
                  allocate( LUDRSL(kk)%cell_j(LUDRSL(kk)%ncell))
+                 allocate( LUDRSL(kk)%cellArea(LUDRSL(kk)%ncell))
 
                kk = kk + 1
            endif
@@ -467,6 +467,9 @@ contains
                     LUDRSL(k)%nodeArea(m) = cell_area(LUDRSL(k)%grid_i(m),LUDRSL(k)%grid_j(m)) 
                 enddo
             endif
+                do m = 1, LUDRSL(k)%ncell
+                    LUDRSL(k)%cellArea(m) = cell_area(LUDRSL(k)%cell_i(m),LUDRSL(k)%cell_j(m)) 
+                enddo
            
             basns_area(k) = 0 
             do m = 1, LUDRSL(k)%ncell
