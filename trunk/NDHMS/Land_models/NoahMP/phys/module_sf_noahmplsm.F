@@ -6869,7 +6869,7 @@ contains
 
     QDRAIN = QDRAIN_SAVE/NITER
 
-    RUNSRF = RUNSRF * 1000. + RSAT * 1000./DT  ! m/s -> mm/s
+     RUNSRF = RUNSRF * 1000. + RSAT * 1000./DT  ! m/s -> mm/s
     QDRAIN = QDRAIN * 1000.
 
 !WRF_HYDRO_DJG...

@@ -52,6 +52,8 @@ contains
         call readUDMP(npid,nlinksl)
         call UDMP2LOCAL(npid,ixrt,jxrt,rtmask, ter_rt_flag)
         call getUDMP_area(cell_area)
+        print*, "******  finish UDMP_ini *****"
+        call flush(6)
     end subroutine UDMP_ini
 
     subroutine readUDMP(npid, nlinksl)

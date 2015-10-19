@@ -244,7 +244,7 @@ contains
     if (.not.opass) then
 #ifdef HYDRO_D
        write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
-       stop
+       call hydro_stop(" Crazy ODATE")
 #endif
     end if
 

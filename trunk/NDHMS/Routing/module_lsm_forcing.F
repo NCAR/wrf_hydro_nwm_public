@@ -3045,7 +3045,7 @@ Contains
         endif
         if(.not. fexist) then
             write(6,*) "Error: input file does not exist. Check ", trim(olddate)
-            stop "LDASOUT input Error"
+            call hydro_stop( "LDASOUT input Error")
         endif
 
         call geth_newdate(outdate,olddate,nint(dt))
@@ -3065,7 +3065,7 @@ Contains
         endif
         if(.not. fexist) then
             write(6,*) "Error: input file does not exist. Check ", trim(outdate)
-            stop "LDASOUT input Error"
+            call hydro_stop( "LDASOUT input Error")
         endif
 !       read file1
 #ifdef MPP_LAND
@@ -3142,7 +3142,7 @@ Contains
         endif
         if(.not. fexist) then
             write(6,*) "Error: input file does not exist. Check ", trim(olddate)
-            stop "LDASOUT input Error"
+            call hydro_stop( "LDASOUT input Error")
         endif
 
         call geth_newdate(outdate,olddate,nint(dt))
@@ -3162,7 +3162,7 @@ Contains
         endif
         if(.not. fexist) then
             write(6,*) "Error: input file does not exist. Check ", trim(outdate)
-            stop "LDASOUT input Error"
+            call hydro_stop( "LDASOUT input Error")
         endif
 !       read file1
         ierr = nf_open(trim(inflnm), NF_NOWRITE, ncid)

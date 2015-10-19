@@ -433,14 +433,25 @@ module module_HYDRO_drv
 
 
                 ! step 1) disaggregate specific fields from LSM to Hydro grid
-                  call disaggregateDomain_drv(did)
+                if(nlst_rt(did)%SUBRTSWCRT .NE.0 .and. nlst_rt(did)%OVRTSWCRT .NE. 0) then
+                    call disaggregateDomain_drv(did)
+                endif
+                if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
+                   if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                      call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
+                          rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%dist(:,:,9), &
+                          RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
+                   endif
+                endif
 
 
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
 		! step 2) 
-                  call SubsurfaceRouting_drv(did)
+                if(nlst_rt(did)%SUBRTSWCRT .NE.0) then
+                    call SubsurfaceRouting_drv(did)
+                endif
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeSr = timeSr     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -451,7 +462,9 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
-  		  call OverlandRouting_drv(did)
+                if(nlst_rt(did)%OVRTSWCRT .NE. 0) then
+  		    call OverlandRouting_drv(did)
+                endif
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -466,7 +479,9 @@ module module_HYDRO_drv
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
 		! step 4) baseflow or groundwater physics
-		  call driveGwBaseflow(did)
+                if (nlst_rt(did)%GWBASESWCRT) then
+		     call driveGwBaseflow(did)
+                endif
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeGw = timeGw     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -486,7 +501,9 @@ module module_HYDRO_drv
 #endif
 	
 		! step 6) aggregate specific fields from Hydro to LSM grid
-		  call aggregateDomain(did)
+               if (nlst_rt(did)%SUBRTSWCRT .NE.0  .and. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
+		      call aggregateDomain(did)
+               endif
 
 
            end if
@@ -924,6 +941,35 @@ endif
 	
       end subroutine aggregateDomain
       
+      subroutine RunOffDisag(runoff1x_in, runoff1x, area_lsm,cellArea, infxswgt, AGGFACTRT, ix,jx)
+        implicit none
+        real, dimension(:,:) :: runoff1x_in, runoff1x, area_lsm, cellArea, infxswgt
+        integer :: i,j,ix,jx,AGGFACYRT, AGGFACXRT, AGGFACTRT, IXXRT, JYYRT
+
+        do J=1,JX
+        do I=1,IX
+             do AGGFACYRT=AGGFACTRT-1,0,-1
+             do AGGFACXRT=AGGFACTRT-1,0,-1
+               IXXRT=I*AGGFACTRT-AGGFACXRT
+               JYYRT=J*AGGFACTRT-AGGFACYRT
+#ifdef MPP_LAND
+       if(left_id.ge.0) IXXRT=IXXRT+1
+       if(down_id.ge.0) JYYRT=JYYRT+1
+#endif
+!DJG Implement subgrid weighting routine...
+               if( (runoff1x_in(i,j) .lt. 0) .or. (runoff1x_in(i,j) .gt. 1000) ) then
+                    runoff1x(IXXRT,JYYRT) = 0
+               else
+                    runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
+                        *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+               endif
+
+             enddo
+             enddo
+        enddo
+        enddo
+
+      end subroutine RunOffDisag
       
 
       subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
@@ -1277,7 +1323,6 @@ end module module_HYDRO_drv
          call flush(6)
          call mpp_land_sync()
          call MPI_finalize(ierr)
-         stop 
 #else
          stop 
 #endif
