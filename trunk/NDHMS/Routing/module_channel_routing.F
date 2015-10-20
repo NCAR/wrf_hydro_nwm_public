@@ -1682,7 +1682,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         end do
 #ifndef HYDRO_REALTIME
         call updateLinkV(tmpLQLateral, tmpQLateral)
-        accLndRunOff = accLndRunOff + tmpQLateral * DT
+        accLndRunOff(1:NLINKSL) = accLndRunOff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
         tmpLQLateral = 0
         tmpQLateral = 0
 #endif
@@ -1703,7 +1703,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         end do
 #ifndef HYDRO_REALTIME
         call updateLinkV(tmpLQLateral, tmpQLateral)
-        accStrmvolrt = accStrmvolrt + tmpQLateral * DT
+        accStrmvolrt(1:NLINKSL) = accStrmvolrt(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
 #endif
      endif
 
@@ -1719,7 +1719,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifndef HYDRO_REALTIME
      ! accQLateral  = accLndRunOff + QLateral * DT 
-     accQLateral  = accQLateral + QLateral * DT 
+     accQLateral(1:NLINKSL)  = accQLateral(1:NLINKSL) + QLateral(1:NLINKSL) * DT 
      accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
 #endif
 

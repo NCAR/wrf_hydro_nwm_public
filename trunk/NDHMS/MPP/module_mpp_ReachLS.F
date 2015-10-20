@@ -892,6 +892,106 @@ MODULE MODULE_mpp_ReachLS
 
   END subroutine com_write1dInt 
 
+  subroutine pack_decomp_int(g1bufid, ndata, nprocs_map, lnsizes, istart,bufid)
+     implicit none
+     integer :: ndata
+     integer, dimension(:) :: g1bufid,  nprocs_map, lnsizes, bufid
+     integer :: i,j,k, tag, ierr
+     integer, allocatable,dimension(:) :: buf
+     integer, dimension(:) :: istart
+     integer, dimension(numprocs) :: count
+     ! pack data
+
+
+     if(my_id .eq. io_id) then
+         allocate(buf(ndata))
+         count = 0
+         do i = 1, ndata
+            k = nprocs_map(i)
+            if( k .gt. 0) then
+               buf(istart(k) + count(k)) = g1bufid(i) 
+               count(k) = count(k) + 1
+            end if
+         end do
+!         write(6,*) " count = ", count
+!         write(6,*) " istart = ", istart
+!         write(6,*) " lnsizes = ", lnsizes
+      end if
+      !finish packing 
+
+      call mpp_land_sync()
+!      call hydro_finish()
+
+      if(my_id .ne. IO_id) then
+          tag = 72
+          if(lnsizes(my_id + 1) .gt. 0) then
+             call mpi_recv(bufid,lnsizes(my_id + 1),&
+                   MPI_INTEGER,io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+          endif
+      else
+          do i = 0, numprocs - 1
+            if(i .ne. my_id) then
+               tag = 72
+               if(lnsizes(i+1) .gt. 0) then
+                  call mpi_send(buf(istart(i+1):istart(i+1)+lnsizes(i+1)-1),  &
+                      lnsizes(i+1),MPI_INTEGER,i, tag,MPI_COMM_WORLD,ierr)
+               endif
+            else
+                if(lnsizes(i+1) .gt. 0) then
+                   bufid = buf(istart(i+1):istart(i+1)+lnsizes(i+1)-1)
+                endif
+            end if
+          end do
+       end if
+     if(my_id .eq. io_id) deallocate(buf)
+  end subroutine pack_decomp_int
+
+  subroutine pack_decomp_real8(g1bufid, ndata, nprocs_map, lnsizes, istart,bufid)
+     implicit none
+     integer :: ndata
+     real*8, dimension(:) :: g1bufid, bufid
+     integer,dimension(:) ::  nprocs_map, lnsizes 
+     integer :: i,j,k, tag, ierr
+     real*8, allocatable,dimension(:) :: buf
+     integer, dimension(numprocs) :: istart, count
+     ! pack data
+     if(my_id .eq. io_id) then
+         allocate(buf(ndata))
+         count = 0
+         do i = 1, ndata
+            k = nprocs_map(i)
+            if( k .gt. 0) then
+              buf(istart(k) + count(k)) = g1bufid(i) 
+              count(k) = count(k) + 1
+            endif
+         end do
+      end if
+       call mpp_land_sync()
+      if(my_id .ne. IO_id) then
+          tag = 72
+          if(lnsizes(my_id + 1) .gt. 0) then
+             call mpi_recv(bufid,lnsizes(my_id + 1),&
+                   MPI_DOUBLE,io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+          endif
+      else
+          do i = 0, numprocs - 1
+            if(i .ne. my_id) then
+               tag = 72
+               if(lnsizes(i+1) .gt. 0) then
+                  call mpi_send(buf(istart(i+1):istart(i+1)+lnsizes(i+1)-1),  &
+                      lnsizes(i+1),MPI_DOUBLE,i, tag,MPI_COMM_WORLD,ierr)
+               endif
+            else
+                if(lnsizes(my_id + 1) .gt. 0) then
+                   bufid = buf(istart(i + 1):istart(i+1)+lnsizes(i+1)-1)
+                endif
+            end if
+          end do
+       end if
+     if(my_id .eq. io_id) deallocate(buf)
+  end subroutine pack_decomp_real8
+
+
 
 END MODULE MODULE_mpp_ReachLS
 
