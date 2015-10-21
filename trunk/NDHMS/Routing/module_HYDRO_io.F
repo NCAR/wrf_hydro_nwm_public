@@ -1279,7 +1279,7 @@ end subroutine get_albedo12m_netcdf
 ! following is old GWBUCKPARM.TBL
        read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
              jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
-812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
+812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
 
      end do
      close(81)
