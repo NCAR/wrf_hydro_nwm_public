@@ -31,6 +31,10 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
+#ifdef HYDRO_REALTIME
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT1 ! top layer soil saturation [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
+#endif
 #endif
 
   character(len=9), parameter :: version = "v20150506"
@@ -842,8 +846,10 @@ module module_NoahMP_hrldas_driver
    ALLOCATE ( ACCECAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated canopy evap [mm]
    ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
    ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
-
-
+#ifdef HYDRO_REALTIME
+   ALLOCATE ( SOILSAT1  (XSTART:XEND,YSTART:YEND) )  ! top layer soil saturation [fraction]
+   ALLOCATE ( SOILSAT  (XSTART:XEND,YSTART:YEND) )  ! column integrated soil saturation [fraction]
+#endif
  ! Initialize accumulator variables to 0
    ACCPRCP = 0.0
    ACCECAN = 0.0
@@ -1482,6 +1488,9 @@ end subroutine land_driver_ini
 		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
+#ifdef HYDRO_REALTIME
+                , SOILSAT1=SOILSAT1, SOILSAT=SOILSAT      &
+#endif
 #endif
                 )
 
@@ -1537,8 +1546,10 @@ end subroutine land_driver_ini
         ! Properties - Assigned or predicted
               call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
               call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
+#endif
               call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
               call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"                     )
+#ifndef HYDRO_REALTIME
               call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
         ! Forcing
               call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
@@ -1547,17 +1558,20 @@ end subroutine land_driver_ini
               call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
         ! Grid energy budget terms
               call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
+#endif
               call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
               call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
               call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
               call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
               call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
+#ifndef HYDRO_REALTIME
               call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
               call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
-              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
 #endif
+              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
+#ifndef HYDRO_REALTIME
               call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
-
+#endif
         ! Grid water budget terms - in addition to above
               call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
               call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
@@ -1572,9 +1586,10 @@ end subroutine land_driver_ini
               call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"                    )
               call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"                    )
               call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"                    )
-#ifndef HYDRO_REALTIME
               call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
 #endif
+#ifdef HYDRO_REALTIME
+	      call add_to_output(ACCECAN+ACCEDIR+ACCETRAN, "ACCET", "Accumulated total ET"       , "mm"                    )
 #endif
 #ifndef HYDRO_REALTIME
         ! Additional needed to close the canopy energy budget
@@ -1595,7 +1610,9 @@ end subroutine land_driver_ini
               call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
               call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
         ! Above-soil temperatures
+#endif
               call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
+#ifndef HYDRO_REALTIME
               call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
               call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
               call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
@@ -1611,21 +1628,30 @@ end subroutine land_driver_ini
         ! Snow and soil - 3D terms
               call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
               call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
+#endif
               call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
               call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
+#ifndef HYDRO_REALTIME
               call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
-              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
 #endif
+              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
               call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
+#ifdef HYDRO_REALTIME
+              call add_to_output((SMOIS-SH2O)/SMOIS, "SOILICE", "fraction of soil miosture that is ice", "fraction" , "SOIL")
+              call add_to_output(SOILSAT1   , "SOILSAT1" , "fraction of soil saturation, top layer", "fraction"             )
+              call add_to_output(SOILSAT    , "SOILSAT"  , "fraction of soil saturation, column integrated", "fraction"     )
+#endif
         ! Snow - 2D terms
               call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
               call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
 #ifndef HYDRO_REALTIME
               call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
+#endif
               call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
               call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
               call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
               call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
+#ifndef HYDRO_REALTIME
         ! Exchange coefficients
               call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
               call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
