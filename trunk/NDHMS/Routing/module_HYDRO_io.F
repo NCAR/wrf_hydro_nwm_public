@@ -1269,11 +1269,18 @@ end subroutine get_albedo12m_netcdf
 
 
      do bas = 1,gnumbasns
-       read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
-             jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas),jnk,tmp_basns_area(bas)
+
+! commented out the new GWBUCKPARM.TBL used for Caralina domain
+!new        read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
+!new              jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas),jnk,tmp_basns_area(bas)
+!new 812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4,A1,F11.3)
+
 !DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
-!yw 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
-812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4,A1,F11.3)
+! following is old GWBUCKPARM.TBL
+       read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
+             jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
+812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
+
      end do
      close(81)
 
@@ -7564,6 +7571,75 @@ end subroutine mpp_output_chrt2
 
 
 end subroutine output_chrt2
+
+   subroutine output_GW_Diag(did)
+       implicit none
+       integer :: i , did
+
+#ifdef MPP_LAND
+       real, allocatable, dimension(:) :: g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas
+       if(my_id .eq. io_id) then
+          if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+               allocate(g_qin_gwsubbas(rt_domain(did)%gnumbasns))
+               allocate(g_qout_gwsubbas(rt_domain(did)%gnumbasns))
+               allocate(g_z_gwsubbas(rt_domain(did)%gnumbasns))
+          else
+               allocate(g_qin_gwsubbas(rt_domain(did)%gnlinksl))
+               allocate(g_qout_gwsubbas(rt_domain(did)%gnlinksl))
+               allocate(g_z_gwsubbas(rt_domain(did)%gnlinksl))
+          endif
+       endif 
+     
+       if(nlst_rt(did)%channel_option .ne. 3) then
+          call ReachLS_write_io(rt_domain(did)%qin_gwsubbas,g_qin_gwsubbas)
+          call ReachLS_write_io(rt_domain(did)%qout_gwsubbas,g_qout_gwsubbas)
+          call ReachLS_write_io(rt_domain(did)%z_gwsubbas,g_z_gwsubbas)
+       else
+          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,  &
+                 rt_domain(did)%basnsInd,g_qin_gwsubbas)
+          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,  & 
+                 rt_domain(did)%basnsInd,g_qout_gwsubbas)
+          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,  & 
+                 rt_domain(did)%basnsInd,g_z_gwsubbas)
+       endif
+       if(my_id .eq. io_id) then
+          open (unit=51,file='GW_inflow.txt',form='formatted',&
+                status='unknown',position='append')
+          open (unit=52,file='GW_outflow.txt',form='formatted',&
+                status='unknown',position='append')
+          open (unit=53,file='GW_zlev.txt',form='formatted',&
+                status='unknown',position='append')
+          do i=1,RT_DOMAIN(did)%gnumbasns
+             write (51,951) i,nlst_rt(did)%olddate,g_qin_gwsubbas(i)
+951        FORMAT(I3,1X,A19,1X,F11.3)
+             write (52,951) i,nlst_rt(did)%olddate,g_qout_gwsubbas(i)
+             write (53,951) i,nlst_rt(did)%olddate,g_z_gwsubbas(i)
+          end do  
+          close(51)
+          close(52)
+          close(53)
+          deallocate(g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas)
+         
+       endif
+# else
+       open (unit=51,file='GW_inflow.txt',form='formatted',&
+             status='unknown',position='append')
+       open (unit=52,file='GW_outflow.txt',form='formatted',&
+             status='unknown',position='append')
+       open (unit=53,file='GW_zlev.txt',form='formatted',&
+             status='unknown',position='append')
+       do i=1,RT_DOMAIN(did)%numbasns
+          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
+951        FORMAT(I3,1X,A19,1X,F11.3)
+          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
+          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
+       end do  
+       close(51)
+       close(52)
+       close(53)
+#endif
+    end subroutine output_GW_Diag
+
 
 end module module_HYDRO_io
 

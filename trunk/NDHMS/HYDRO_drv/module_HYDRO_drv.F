@@ -8,7 +8,7 @@ module module_HYDRO_drv
 #endif
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
-        output_lsm
+        output_lsm,  output_GW_Diag
    use module_rt_data, only: rt_domain
    use module_GW_baseflow
    use module_gw_gw2d
@@ -595,31 +595,9 @@ module module_HYDRO_drv
         endif
 
 #ifndef HYDRO_REALTIME
-
-#ifdef MPP_LAND
-      if(my_id .eq. IO_id) then
+        call output_GW_Diag(did)
 #endif
 
-       open (unit=51,file='GW_inflow.txt',form='formatted',&
-             status='unknown',position='append')
-       open (unit=52,file='GW_outflow.txt',form='formatted',&
-             status='unknown',position='append')
-       open (unit=53,file='GW_zlev.txt',form='formatted',&
-             status='unknown',position='append')
-       do i=1,RT_DOMAIN(did)%numbasns
-          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
-951        FORMAT(I3,1X,A19,1X,F11.3)
-          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
-          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
-       end do
-       close(51)
-       close(52)
-       close(53)
-#ifdef MPP_LAND
-     endif
-#endif
-
-#endif
 #ifdef HYDRO_D 
            write(6,*) "*****yw******end simp_gw_buck "
 #endif
