@@ -1640,7 +1640,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
   
 
 #ifndef HYDRO_REALTIME
-        real, dimension(NLINKS) ::  accLndRunOff, accQLateral, accStrmvolrt, accBucket
+        real, dimension(:) ::  accLndRunOff, accQLateral, accStrmvolrt, accBucket
         real, dimension(NLINKS) ::  lcLndRunOff, lcQLateral, lcStrmvolrt, lcBucket  ! local variables
 #endif
 
@@ -1682,7 +1682,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
         end do
 #ifndef HYDRO_REALTIME
         call updateLinkV(tmpLQLateral, tmpQLateral)
-        accLndRunOff(1:NLINKSL) = accLndRunOff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
+        if(NLINKSL .gt. 0) then
+            accLndRunOff(1:NLINKSL) = accLndRunOff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
+        endif
         tmpLQLateral = 0
         tmpQLateral = 0
 #endif
@@ -1703,7 +1705,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
         end do
 #ifndef HYDRO_REALTIME
         call updateLinkV(tmpLQLateral, tmpQLateral)
-        accStrmvolrt(1:NLINKSL) = accStrmvolrt(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
+        if(NLINKSL .gt. 0) then
+            accStrmvolrt(1:NLINKSL) = accStrmvolrt(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
+        endif
 #endif
      endif
 
@@ -1715,12 +1719,16 @@ gwOption:   if(gwBaseSwCRT == 3) then
        QLateral = LQLateral
 #endif
 
-     QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
+     if(NLINKSL .gt. 0) then
+        QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
+     endif
 
 #ifndef HYDRO_REALTIME
      ! accQLateral  = accLndRunOff + QLateral * DT 
-     accQLateral(1:NLINKSL)  = accQLateral(1:NLINKSL) + QLateral(1:NLINKSL) * DT 
-     accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
+     if(NLINKSL .gt. 0) then
+        accQLateral(1:NLINKSL)  = accQLateral(1:NLINKSL) + QLateral(1:NLINKSL) * DT 
+        accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
+     endif
 #endif
 
 !       QLateral = QLateral / nsteps

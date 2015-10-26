@@ -483,7 +483,9 @@ contains
 
       call mpp_land_sync() 
 
-      call mpp_land_bcast_real(gnumbasns,tmp_gwbas_pix_ct)
+      if(gnumbasns .gt. 0) then
+         call mpp_land_bcast_real(gnumbasns,tmp_gwbas_pix_ct)
+      endif
       do k = 1, numbasns
          bas = basnsInd(k)
          gwbas_pix_ct(k) = tmp_gwbas_pix_ct(bas)

@@ -242,9 +242,9 @@ module module_HYDRO_io
 #ifndef PARALLELIO
          real,allocatable, dimension(:,:) :: buff_g
 
-         allocate(buff_g (global_nx,global_ny) )
 
          if(my_id .eq. IO_id) then
+              allocate(buff_g (global_nx,global_ny) )
 #endif
 #endif
                 ! Open the NetCDF file.
@@ -276,7 +276,7 @@ module module_HYDRO_io
             call get_soilcat_netcdf(ncid, buff_g, units, global_nx ,global_ny, land_cat)
          end if
          call decompose_data_real(buff_g,xdum)     
-         deallocate(buff_g)
+         if(my_id .eq. io_id) deallocate(buff_g)
 #else
           call get_soilcat_netcdf(ncid, xdum,   units, ix, jx, land_cat)
 #endif
@@ -705,39 +705,54 @@ end subroutine get_albedo12m_netcdf
          print *, "NLINKS IS ", NLINKS 
 #endif
 
-
 !DJG inv         DO j = JXRT,1,-1  !rows
          DO j = 1,JXRT  !rows
           DO i = 1 ,IXRT   !colsumns
            If (CH_NETRT(i, j) .ge. 0) then !get its direction
-            If ((DIRECTION(i, j) .EQ. 64) .AND. (j+1 .LE. JXRT).AND.(CH_NETRT(i,j+1) .ge.0) ) then !North
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
+            If ((DIRECTION(i, j) .EQ. 64) .AND. (j+1 .LE. JXRT) ) then !North
+               if(CH_NETRT(i,j+1) .ge.0) then 
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
+                endif
             else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
-               .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1) .ge.0)) then !North East
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT).AND.(CH_NETRT(i+1,j) .ge. 0)) then !East
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt 
+               .AND. (j + 1 .LE. JXRT) ) then !North East
+                if(CH_NETRT(i+1,j+1) .ge.0) then
+                   cnt = cnt + 1
+                   CH_NETLNK(i,j) = cnt
+                endif
+            else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT)) then !East
+                if(CH_NETRT(i+1,j) .ge. 0) then
+                   cnt = cnt + 1
+                   CH_NETLNK(i,j) = cnt 
+                endif
             else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i+1,j-1).ge.0)) then !south east
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 4).AND.(j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0)) then !due south
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
+                    .AND. (j - 1 .NE. 0)) then !south east
+                 if(CH_NETRT(i+1,j-1).ge.0) then
+                     cnt = cnt + 1
+                     CH_NETLNK(i,j) = cnt
+                 endif
+            else if ((DIRECTION(i, j) .EQ. 4).AND.(j - 1 .NE. 0)) then !due south
+                 if(CH_NETRT(i,j-1).ge.0) then
+                         cnt = cnt + 1
+                         CH_NETLNK(i,j) = cnt
+                 endif
             else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
-                    .AND. (j - 1 .NE. 0).AND. (CH_NETRT(i-1,j-1).ge.0) ) then !south west
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
-            else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0)) then !West
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt
+                    .AND. (j - 1 .NE. 0)  ) then !south west
+                if(CH_NETRT(i-1,j-1).ge.0) then
+                     cnt = cnt + 1
+                     CH_NETLNK(i,j) = cnt
+                endif
+            else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0)) then !West
+                 if(CH_NETRT(i-1,j).ge.0) then
+                       cnt = cnt + 1
+                       CH_NETLNK(i,j) = cnt
+                 endif
             else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0)) then !North West
-             cnt = cnt + 1
-             CH_NETLNK(i,j) = cnt 
+                    .AND. (j + 1 .LE. JXRT) ) then !North West
+                 if(CH_NETRT(i-1,j+1).ge.0) then
+                        cnt = cnt + 1
+                        CH_NETLNK(i,j) = cnt 
+                 endif
            else 
 #ifdef HYDRO_D
              write(*,135) "PrPt/LkIn", CH_NETRT(i,j), DIRECTION(i,j), LON(i,j), LAT(i,j),i,j 
@@ -756,73 +771,104 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
        print *, "found type 0 nodes", cnt
 #endif
-      
 !Find out if the boundaries are on an edge or flow into a lake
 !DJG inv       DO j = JXRT,1,-1
        DO j = 1,JXRT
          DO i = 1 ,IXRT
           If (CH_NETRT(i, j) .ge. 0) then !get its direction
 
-           If ( ((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT))         & !-- 64's can only flow north
-               .OR. ((DIRECTION(i, j) .EQ. 64).and. (j<jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+           If ( (DIRECTION(i, j).EQ. 64) )then 
+              if( j + 1 .GT. JXRT) then           !-- 64's can only flow north
+                 cnt = cnt + 1
+                 CH_NETLNK(i,j) = cnt
+              elseif(CH_NETRT(i,j+1) .lt. 0) then !North
+                 cnt = cnt + 1
+                 CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
-              print *, "Boundary Pour Point N", cnt,CH_NETRT(i,j), i,j
+                  print *, "Boundary Pour Point N", cnt,CH_NETRT(i,j), i,j
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge     
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+              endif
+           else if ( DIRECTION(i, j) .EQ. 128) then
+               if ((i + 1 .GT. IXRT) .or. (j + 1 .GT. JXRT))  then    !-- 128's can flow out of the North or East edge
+                   cnt = cnt + 1
+                   CH_NETLNK(i,j) = cnt
+                                                                      !   this is due north edge     
+               elseif(CH_NETRT(i + 1, j + 1).lt.0) then !North East
+                   cnt = cnt + 1
+                   CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
               print *, "Boundary Pour Point NE", cnt, CH_NETRT(i,j),i,j
 #endif
-           else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT))     & !-- 1's can only flow due east
-               .OR. ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+               endif
+           else if (DIRECTION(i, j) .EQ. 1) then 
+                if (i + 1 .GT. IXRT) then      !-- 1's can only flow due east
+                   cnt = cnt + 1
+                   CH_NETLNK(i,j) = cnt
+                elseif(CH_NETRT(i + 1, j) .lt. 0) then !East
+                   cnt = cnt + 1
+                   CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
               print *, "Boundary Pour Point E", cnt,CH_NETRT(i,j), i,j
+                endif
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+           else if (DIRECTION(i, j) .EQ. 2) then
+               !-- 2's can flow out of east or south edge
+              if( (i + 1 .GT. IXRT) .OR.  (j - 1 .EQ. 0)) then            !-- this is the south edge
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
+              elseif(CH_NETRT(i + 1, j - 1) .lt.0) then !south east
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
-              print *, "Boundary Pour Point SE", cnt,CH_NETRT(i,j), i,j
+                  print *, "Boundary Pour Point SE", cnt,CH_NETRT(i,j), i,j
+              endif
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0))       &      !-- 4's can only flow due south
-                .OR. ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+           else if ( DIRECTION(i, j) .EQ. 4) then 
+              if( (j - 1 .EQ. 0))  then            !-- 4's can only flow due south
+                 cnt = cnt + 1
+                 CH_NETLNK(i,j) = cnt
+              elseif (CH_NETRT(i, j - 1) ) then !due south
+                 cnt = cnt + 1
+                 CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
-              print *, "Boundary Pour Point S", cnt,CH_NETRT(i,j), i,j
+                 print *, "Boundary Pour Point S", cnt,CH_NETRT(i,j), i,j
+              endif
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
-               .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
-               .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+           else if ( DIRECTION(i, j) .EQ. 8) then
+          !-- 8's can flow south or west
+              if( (i - 1 .eq. 0) .OR. ( j - 1 .EQ. 0)) then             !-- this is the south edge
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
+              elseif  (CH_NETRT(i - 1, j - 1).lt.0) then !south west
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
-              print *, "Boundary Pour Point SW", cnt,CH_NETRT(i,j), i,j
+                  print *, "Boundary Pour Point SW", cnt,CH_NETRT(i,j), i,j
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE. 0))       &      !-- 16's can only flow due west 
-               .OR.  ((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt              
+              endif
+           else if ( DIRECTION(i, j) .EQ. 16) then 
+              if(i - 1 .eq. 0) then              !-- 16's can only flow due west 
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt              
+              elseif (CH_NETRT(i - 1, j).lt.0) then !West
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt              
 #ifdef HYDRO_D
               print *, "Boundary Pour Point W", cnt,CH_NETRT(i,j), i,j
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
-               .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
-               .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
-              cnt = cnt + 1
-              CH_NETLNK(i,j) = cnt
+              endif
+           else if ( DIRECTION(i, j) .EQ. 32)  then
+              if ( (i - 1 .eq. 0)      &      !-- 32's can flow either west or north
+               .OR.   (j .eq. JXRT))  then         !-- this is the north edge
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
+              elseif (CH_NETRT(i - 1, j + 1).lt.0) then !North West
+                  cnt = cnt + 1
+                  CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
-              print *, "Boundary Pour Point NW", cnt,CH_NETRT(i,j), i,j
+                  print *, "Boundary Pour Point NW", cnt,CH_NETRT(i,j), i,j
 #endif
+              endif
            endif
           endif !CH_NETRT check for this node
          END DO
@@ -890,7 +936,7 @@ end subroutine get_albedo12m_netcdf
         call flush(6)
 #endif
         
-        NLAKES = NLINKSL
+!yw This is incorrect!         NLAKES = NLINKSL
 
       end if !end-if is now for channel_option just above, not IF from further up
 
@@ -933,15 +979,10 @@ end subroutine get_albedo12m_netcdf
               end do
               deallocate(g_inv_tmp)
          else
-              allocate(g_inv_tmp(1,1))
               allocate(g_inv(1,1))
          endif 
          call decompose_RT_real(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
-         if(my_id .eq. io_id) then
-             deallocate(g_inv)
-         else
-             deallocate(g_inv_tmp, g_inv)
-         endif
+         deallocate(g_inv)
 #else
          inv_tmp = -9999.9
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
@@ -1287,12 +1328,14 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
    endif
 
-   call mpp_land_bcast_real(gnumbasns,tmp_buck_coeff)
-   call mpp_land_bcast_real(gnumbasns,tmp_buck_exp  )
-   call mpp_land_bcast_real(gnumbasns,tmp_z_max   )
-   call mpp_land_bcast_real(gnumbasns,tmp_z_gwsubbas   )
-   call mpp_land_bcast_real(gnumbasns,tmp_basns_area   )
-   call mpp_land_bcast_int(gnumbasns,tmp_bas_id)
+   if(gnumbasns .gt. 0 ) then
+      call mpp_land_bcast_real(gnumbasns,tmp_buck_coeff)
+      call mpp_land_bcast_real(gnumbasns,tmp_buck_exp  )
+      call mpp_land_bcast_real(gnumbasns,tmp_z_max   )
+      call mpp_land_bcast_real(gnumbasns,tmp_z_gwsubbas   )
+      call mpp_land_bcast_real(gnumbasns,tmp_basns_area   )
+      call mpp_land_bcast_int(gnumbasns,tmp_bas_id)
+   endif
 #endif
 
     do k = 1, numbasns
@@ -1435,7 +1478,7 @@ end subroutine get_albedo12m_netcdf
      call decompose_rt_real(gIHEAD,ihead,global_rt_nx, global_rt_ny, ix, jx)
      call decompose_rt_real(gBOTELV,botelv,global_rt_nx, global_rt_ny, ix, jx)
      call decompose_rt_real(gPOR,por,global_rt_nx, global_rt_ny, ix, jx)
-     deallocate(gHC, gIHEAD, gBOTELV, gPOR)
+     deallocate(gLtype, gHC, gIHEAD, gBOTELV, gPOR)
 #endif
 #endif
  
@@ -2821,7 +2864,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      INTEGER  OTSTART(OTDIMS), OTCOUNT(OTDIMS)
 
 #ifndef HYDRO_REALTIME
-     real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
+     real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
 #endif
      seconds_since = int(dtrt_ch)*K
 
@@ -5533,7 +5576,9 @@ end subroutine mpp_output_chrt
             iret = nf_get_var_real(ncid, varid, var)
 #ifdef MPP_LAND
          endif
-         call mpp_land_bcast_real(n,var)
+         if(n .gt. 0) then
+             call mpp_land_bcast_real(n,var)
+         endif
 #endif
          return
       end subroutine read_rst_crt_nc 
@@ -5575,7 +5620,9 @@ end subroutine mpp_output_chrt
             iret = nf_get_var_real(ncid, varid, var)
 #ifdef MPP_LAND
          endif
-         call mpp_land_bcast_real(gnlinks,var)
+         if(gnlinks .gt. 0) then
+            call mpp_land_bcast_real(gnlinks,var)
+         endif
         
          if(n .le. 0) return
          var_out = 0
@@ -5867,6 +5914,7 @@ end subroutine mpp_output_chrt
 
 #ifdef MPP_LAND
        endif
+       if(NLAKES .gt. 0) then
           call mpp_land_bcast_real(NLAKES,HRZAREA)
           call mpp_land_bcast_real(NLAKES,LAKEMAXH)
           call mpp_land_bcast_real(NLAKES,WEIRC  )
@@ -5877,6 +5925,7 @@ end subroutine mpp_output_chrt
           call mpp_land_bcast_real(NLAKES,LATLAKE )
           call mpp_land_bcast_real(NLAKES,LONLAKE )
           call mpp_land_bcast_real(NLAKES,ELEVLAKE)
+       endif
 #endif
 
       end if   !end if for NLAKES >0 check
@@ -5894,12 +5943,13 @@ end subroutine mpp_output_chrt
      Bw = 0.0
      ChSSlp = 0.0
 
+
 !DJG inv       DO j = JXRT,1,-1  !rows
        DO j = 1,JXRT  !rows
         DO i = 1 ,IXRT   !colsumns
          If (CH_NETRT(i, j) .ge. 0) then !get its direction and assign its elevation and order
-          If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT) .AND. &
-               (CH_NETRT(i,j+1).ge.0) ) then !North
+          If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT) ) then !North
+             if(CH_NETRT(i,j+1).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5921,8 +5971,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+             endif
           else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1).ge.0) ) then !North East
+                    .AND. (j + 1 .LE. JXRT)  ) then !North East
+             if(CH_NETRT(i+1,j+1).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5944,8 +5996,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
-          else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (CH_NETRT(i+1,j).ge.0) ) then !East
+             endif
+          else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT) ) then !East
+             if(CH_NETRT(i+1,j).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5967,8 +6020,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+             endif
           else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i+1,j-1).ge.0) ) then !south east
+                    .AND. (j - 1 .NE. 0)  ) then !south east
+             if(CH_NETRT(i+1,j-1).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5990,7 +6045,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
-          else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0) ) then !due south
+             endif
+          else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0) ) then !due south
+             if(CH_NETRT(i,j-1).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6012,8 +6069,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+             endif
           else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
-               .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i-1,j-1).ge.0)) then !south west
+               .AND. (j - 1 .NE. 0) ) then !south west
+             if(CH_NETRT(i-1,j-1).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6035,7 +6094,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
-          else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0) ) then !West
+             endif
+          else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0) ) then !West
+             if(CH_NETRT(i-1,j).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6057,8 +6118,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+             endif
           else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0) ) then !North West
+                    .AND. (j + 1 .LE. JXRT)  ) then !North West
+             if(CH_NETRT(i-1,j+1).ge.0) then
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6080,6 +6143,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+             endif
           else 
 #ifdef HYDRO_D
              print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
@@ -6103,12 +6167,18 @@ end subroutine mpp_output_chrt
          DO i = 1 ,IXRT
           If (CH_NETRT(i, j) .ge. 0) then !get its direction
 
-           If (((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT)) .OR. &        !-- 64's can only flow north
-              ((DIRECTION(i, j) .EQ. 64) .and. (j < jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North
+           If (DIRECTION(i, j).EQ. 64) then
+              if( j + 1 .GT. JXRT)  then         !-- 64's can only flow north
+                 goto 101
+              elseif ( CH_NETRT(i,j+1) .lt. 0) then !North
+                 goto 101
+              endif
+              goto 102
+101           continue
 #ifdef MPP_LAND
-             cnt = CH_NETLNK(i,j)
+                cnt = CH_NETLNK(i,j)
 #else
-             cnt = cnt + 1
+                cnt = cnt + 1
 #endif
               ORDER(cnt) = GORDER(i,j)
               STRMFRXSTPTS(cnt) = GSTRMFRXSTPTS(i,j)
@@ -6130,18 +6200,25 @@ end subroutine mpp_output_chrt
               FROM_NODE(cnt) = CH_NETLNK(i, j)
               CHANLEN(cnt) = dist(i,j,1)
               CHANXI(cnt) = i
-              CHANYJ(cnt) = j
+                 CHANYJ(cnt) = j
 #ifdef MPP_LAND
-             Link_Location(i,j) = cnt
+                Link_Location(i,j) = cnt
 #endif
 #ifdef HYDRO_D
-              print *, "Pour Point N", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
+                 print *, "Pour Point N", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
+102           continue
 
-           else if ( ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .GT. IXRT))  & !-- 128's can flow out of the North or East edge
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (j + 1 .GT. JXRT))  & !   this is due north edge
-               .OR.  ((DIRECTION(i, j) .EQ. 128) .AND. (i<ixrt .and. j<jxrt) .AND.(CH_NETRT(i + 1, j + 1).lt.0))) then !North East
+           else if ( DIRECTION(i, j) .EQ. 128) then
+               if ((i + 1 .GT. IXRT)  & !-- 128's can flow out of the North or East edge
+               .OR.  (j + 1 .GT. JXRT))  then !   this is due north edge
+                   goto 201
+               elseif (CH_NETRT(i + 1, j + 1).lt.0) then !North East
+                   goto 201
+               endif
 !#endif
+               goto 202 
+201            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6174,9 +6251,16 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point NE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
+202            continue
 
-           else if (((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .GT. IXRT)) .OR. &    !-- 1's can only flow due east
-               ((DIRECTION(i, j) .EQ. 1) .and. (i<ixrt) .AND. (CH_NETRT(i + 1, j) .lt. 0))) then !East
+           else if (DIRECTION(i, j) .EQ. 1) then 
+               if(i + 1 .GT. IXRT) then     !-- 1's can only flow due east
+                  goto 301
+               elseif(CH_NETRT(i + 1, j) .lt. 0) then !East
+                  goto 301
+               endif
+               goto 302
+301            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6208,9 +6292,16 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point E", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
-           else if ( ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .GT. IXRT))    &      !-- 2's can flow out of east or south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .AND. (j - 1 .EQ. 0))       &      !-- this is the south edge
-                .OR. ((DIRECTION(i, j) .EQ. 2) .and. (i<ixrt .and. j>1) .AND.(CH_NETRT(i + 1, j - 1) .lt.0))) then !south east
+302            continue
+           else if (DIRECTION(i, j) .EQ. 2) then 
+                if((i + 1 .GT. IXRT)    &      !-- 2's can flow out of east or south edge
+                   .OR.  (j - 1 .EQ. 0))   then              !-- this is the south edge
+                   goto 401
+                elseif (CH_NETRT(i + 1, j - 1) .lt.0) then !south east
+                   goto 401
+                endif
+              goto 402
+401            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6242,9 +6333,16 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point SE", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
+402            continue
 
-           else if (((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .EQ. 0)) .OR. &       !-- 4's can only flow due south
-               ((DIRECTION(i, j) .EQ. 4) .and. (j>1) .AND.(CH_NETRT(i, j - 1) .lt. 0))) then !due south
+           else if (DIRECTION(i, j) .EQ. 4)  then
+               if(j - 1 .EQ. 0) then         !-- 4's can only flow due south
+                   goto 501
+               elseif (CH_NETRT(i, j - 1) .lt. 0) then !due south
+                   goto 501
+               endif
+               goto 502
+501            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6276,10 +6374,17 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point S", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
+502            continue
 
-          else if ( ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .LE. 0))      &      !-- 8's can flow south or west
-               .OR.  ((DIRECTION(i, j) .EQ. 8) .AND. (j - 1 .EQ. 0))      &      !-- this is the south edge
-               .OR.  ((DIRECTION(i, j).EQ.8).and. (i>1 .and. j>1) .AND.(CH_NETRT(i - 1, j - 1).lt.0))) then !south west
+          else if ( DIRECTION(i, j) .EQ. 8) then
+               if( (i - 1 .LE. 0)      &      !-- 8's can flow south or west
+                  .OR.  (j - 1 .EQ. 0)) then        !-- this is the south edge
+                   goto 601
+               elseif (CH_NETRT(i - 1, j - 1).lt.0) then !south west
+                   goto 601
+               endif
+               goto 602
+601            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6311,8 +6416,15 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point SW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
-           else if (((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .LE.0) ) &                  !16's can only flow due west
-               .OR.((DIRECTION(i, j).EQ.16) .and. (i>1) .AND.(CH_NETRT(i - 1, j).lt.0))) then !West
+602            continue
+           else if (DIRECTION(i, j) .EQ. 16) then
+               if( i - 1 .LE.0) then                 !16's can only flow due west
+                  goto 701
+               elseif( CH_NETRT(i - 1, j).lt.0) then !West
+                  goto 701
+               endif
+               goto 702
+701            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6344,11 +6456,17 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point W", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
+702            continue
 
-           else if ( ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .LE. 0))      &      !-- 32's can flow either west or north
-               .OR.  ((DIRECTION(i, j) .EQ. 32) .AND. (j + 1 .GT. JXRT))   &      !-- this is the north edge
-!#endif
-               .OR.  ((DIRECTION(i, j).EQ.32) .and. (i>1 .and. j<jxrt) .AND.(CH_NETRT(i - 1, j + 1).lt.0))) then !North West
+           else if ( DIRECTION(i, j) .EQ. 32) then
+               if( (i - 1 .LE. 0)      &      !-- 32's can flow either west or north
+                 .OR.  (j + 1 .GT. JXRT)) then     !-- this is the north edge
+                   goto 801
+               elseif (CH_NETRT(i - 1, j + 1).lt.0) then !North West
+                   goto 801
+               endif
+               goto 802
+801            continue
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -6380,6 +6498,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
               print *, "Pour Point NW", TYPEL(cnt), LAKENODE(cnt), CHANLEN(cnt), cnt
 #endif
+802            continue
            endif
           endif !CH_NETRT check for this node
          END DO
@@ -6449,7 +6568,7 @@ end subroutine mpp_output_chrt
 
 #ifdef MPP_LAND
         real :: tmpQLINK(GNLINKSL,2)
-        REAL, dimension(GNLINKSL) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
+        REAL, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
                    tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpHRZAREA,&
                    tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
                    tmpORIFICEA,tmpORIFICEE
@@ -6465,6 +6584,23 @@ end subroutine mpp_output_chrt
        tmpGages = gageMiss
  
        if(my_id .eq. IO_id) then
+          allocate(tmpCHLON(GNLINKSL))
+          allocate(tmpCHLAT(GNLINKSL))
+          allocate(tmpZELEV(GNLINKSL))
+          allocate(tmpMUSK(GNLINKSL))
+          allocate(tmpMUSX(GNLINKSL))
+          allocate(tmpCHANLEN(GNLINKSL))
+          allocate(tmpMannN(GNLINKSL))
+          allocate(tmpSo(GNLINKSL))
+          allocate(tmpChSSlp(GNLINKSL))
+          allocate(tmpBw(GNLINKSL))
+          allocate(tmpHRZAREA(GNLINKSL))
+          allocate(tmpLAKEMAXH(GNLINKSL))
+          allocate(tmpWEIRC(GNLINKSL))
+          allocate(tmpWEIRL(GNLINKSL))
+          allocate(tmpORIFICEC(GNLINKSL))
+          allocate(tmpORIFICEA(GNLINKSL))
+          allocate(tmpORIFICEE(GNLINKSL))
 
           if(routeLinkNetcdf) then
 
@@ -6532,6 +6668,12 @@ end subroutine mpp_output_chrt
         call ReachLS_decomp(tmpORIFICEE, ORIFICEE)
         call ReachLS_decomp(tmpGages,    gages)
         call mpp_land_bcast_int1(MAXORDER)
+        if(my_id .eq. io_id ) then
+           deallocate( tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
+                   tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpHRZAREA,&
+                   tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
+                   tmpORIFICEA,tmpORIFICEE)
+        endif
 
 #else
        QLINK = 0 
@@ -6579,6 +6721,8 @@ end subroutine mpp_output_chrt
            So(i) = max(So(i), 0.00001)
         end do
 
+       write(6,*) "finish read readLinkSL "
+       call flush(6) 
    end subroutine readLinkSL
 
 
@@ -6694,7 +6838,7 @@ end subroutine mpp_output_chrt
           enddo
        enddo
 
-
+  
       CHANXI = 0
       CHANYj = 0
       do j = 1, jxrt
@@ -6729,20 +6873,22 @@ end subroutine mpp_output_chrt
             endif
           end do
       end do
-
-       write(6,*) "nlinks = ", nlinks, " yw_mpp_nlinks = ", yw_mpp_nlinks
+#ifdef HYDRO_D
+       write(6,*) "nlinks=", nlinks, " yw_mpp_nlinks=", yw_mpp_nlinks," nlakes=", nlakes
        call flush(6)
-
-        call mpp_land_bcast_real(NLAKES,HRZAREA)
-        call mpp_land_bcast_real(NLAKES,LAKEMAXH)
-        call mpp_land_bcast_real(NLAKES,WEIRC)
-        call mpp_land_bcast_real(NLAKES,WEIRL)
-        call mpp_land_bcast_real(NLAKES,ORIFICEC)
-        call mpp_land_bcast_real(NLAKES,ORIFICEA)
-        call mpp_land_bcast_real(NLAKES,ORIFICEE)
-        call mpp_land_bcast_real(NLAKES,LATLAKE)
-        call mpp_land_bcast_real(NLAKES,LONLAKE)
-        call mpp_land_bcast_real(NLAKES,ELEVLAKE)
+#endif
+       if(NLAKES .gt. 0) then
+          call mpp_land_bcast_real(NLAKES,HRZAREA)
+          call mpp_land_bcast_real(NLAKES,LAKEMAXH)
+          call mpp_land_bcast_real(NLAKES,WEIRC)
+          call mpp_land_bcast_real(NLAKES,WEIRL)
+          call mpp_land_bcast_real(NLAKES,ORIFICEC)
+          call mpp_land_bcast_real(NLAKES,ORIFICEA)
+          call mpp_land_bcast_real(NLAKES,ORIFICEE)
+          call mpp_land_bcast_real(NLAKES,LATLAKE)
+          call mpp_land_bcast_real(NLAKES,LONLAKE)
+          call mpp_land_bcast_real(NLAKES,ELEVLAKE)
+       endif
 
 
         link_location = CH_NETLNK
@@ -7160,10 +7306,12 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           iret = nf_get_var_int(ncid, varid, tmpLinkid)
 #ifdef MPP_LAND
     endif
-       call mpp_land_bcast_real_1d(tmpCoeff)
-       call mpp_land_bcast_real_1d(tmpExp)
-       call mpp_land_bcast_real_1d(tmpz_max)
-       call mpp_land_bcast_int(gnid ,tmpLinkid)
+       if(gnid .gt. 0) then
+          call mpp_land_bcast_real_1d(tmpCoeff)
+          call mpp_land_bcast_real_1d(tmpExp)
+          call mpp_land_bcast_real_1d(tmpz_max)
+          call mpp_land_bcast_int(gnid ,tmpLinkid)
+       endif
 #endif
    
     nhdBuckMask = -999
@@ -7299,7 +7447,7 @@ end subroutine readBucket_nhd
           )
      end if
 
-    deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink )
+    deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_linkid )
 
 #ifndef HYDRO_REALTIME
 !   deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )

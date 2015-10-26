@@ -54,7 +54,6 @@ contains
         call readUDMP(ixrt,jxrt,npid,nlinksl)
         call UDMP2LOCAL(npid,ixrt,jxrt,rtmask, ter_rt_flag)
         call getUDMP_area(cell_area)
-        print*, "******  finish UDMP_ini *****"
     end subroutine UDMP_ini
 
     subroutine readUDMP(ixrt,jxrt,npid, nlinksl)
@@ -113,7 +112,9 @@ contains
 
       if(lnsizes(my_id+1) .gt. 0)  allocate(bufi(lnsizes(my_id+1) ))
       call pack_decomp_int(gbufi, ndata, nprocs_map, lnsizes, istart,bufi)
-      if(my_id .eq. io_id)  deallocate(gbufi)
+      if(my_id .eq. io_id) then 
+            deallocate(gbufi)
+      endif
 
       
       if(lnsizes(my_id+1) .gt. 0) allocate(bufj(lnsizes(my_id+1) ))
@@ -130,13 +131,15 @@ contains
             call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"polyid",gbufid)
         endif
 #ifdef MPP_LAND
-       call mpp_land_bcast_int(nlinksl,linkid)
+       if(nlinksl .gt. 0) then
+          call mpp_land_bcast_int(nlinksl,linkid)
+       endif
        call com_decomp1dInt(gbufid,npid,bufid_tmp,ix_bufid)
 #endif
        if(ix_bufid .gt. 0) then
           allocate(bufidflag(ix_bufid))
           bufidflag = -999
-      endif
+       endif
 
        do i = 1, ix_bufid
           do j = 1, nlinksl
@@ -155,7 +158,7 @@ contains
           deallocate(bufidflag)
           deallocate(bufid_tmp)
       endif
-      deallocate(linkid)
+      if(allocated(linkid)) deallocate(linkid)
       if(my_id .eq. io_id) then
           allocate(bufsize(npid))
           allocate(g1bufid(ndata))

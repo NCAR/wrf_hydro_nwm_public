@@ -110,7 +110,7 @@ MODULE MODULE_mpp_ReachLS
             end if
           end do
           gLinkV_r4 = gLinkV_r8
-          deallocate(gLinkV_r8)
+          if(allocated(gLinkV_r8)) deallocate(gLinkV_r8)
       end if 
 
       call ReachLS_decompReal(gLinkV_r4,outV)
@@ -953,7 +953,8 @@ MODULE MODULE_mpp_ReachLS
      integer,dimension(:) ::  nprocs_map, lnsizes 
      integer :: i,j,k, tag, ierr
      real*8, allocatable,dimension(:) :: buf
-     integer, dimension(numprocs) :: istart, count
+     integer, dimension(:) :: istart
+     integer, dimension(numprocs) :: count
      ! pack data
      if(my_id .eq. io_id) then
          allocate(buf(ndata))

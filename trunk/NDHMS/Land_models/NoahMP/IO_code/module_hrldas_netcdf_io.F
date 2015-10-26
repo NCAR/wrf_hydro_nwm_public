@@ -2135,7 +2135,8 @@ contains
        call error_handler(ierr, failure="Problem nf90_sync for output file")
     endif
 
-    deallocate(vegtyp_remember)
+!yw    deallocate(vegtyp_remember)
+    if(allocated(vegtyp_remember)) deallocate(vegtyp_remember)
 
   end subroutine finalize_output_file
 

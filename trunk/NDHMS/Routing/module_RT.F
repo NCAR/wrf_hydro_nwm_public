@@ -239,14 +239,16 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEE(nsizes) )
 
 #ifndef HYDRO_REALTIME
-     allocate( rt_domain(did)%accLndRunOff(nsizes) )
-     allocate( rt_domain(did)%accQLateral(nsizes) )
-     allocate( rt_domain(did)%accStrmvolrt(nsizes) )
-     allocate( rt_domain(did)%accBucket(nsizes) )
-     rt_domain(did)%accLndRunOff = 0
-     rt_domain(did)%accQLateral  = 0
-     rt_domain(did)%accStrmvolrt = 0
-     rt_domain(did)%accBucket    = 0
+     if(nsizes .gt. 0) then
+        allocate( rt_domain(did)%accLndRunOff(nsizes) )
+        allocate( rt_domain(did)%accQLateral(nsizes) )
+        allocate( rt_domain(did)%accStrmvolrt(nsizes) )
+        allocate( rt_domain(did)%accBucket(nsizes) )
+        rt_domain(did)%accLndRunOff = 0
+        rt_domain(did)%accQLateral  = 0
+        rt_domain(did)%accStrmvolrt = 0
+        rt_domain(did)%accBucket    = 0
+     endif
 #endif
 
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
@@ -272,6 +274,7 @@ CONTAINS
      allocate( rt_domain(did)%node_area(nsizes) )
 
 !!!! tmp
+      if(nsizes .gt. 0) then
       rt_domain(did)%LINK = 0.0        
       rt_domain(did)%gages = rt_domain(did)%gageMiss
       rt_domain(did)%TO_NODE = 0.0        
@@ -312,6 +315,7 @@ CONTAINS
 
 
      rt_domain(did)%So = 0.01
+     endif
    
      rt_domain(did)%restQSTRM = .true.
 
@@ -543,6 +547,10 @@ CONTAINS
 !          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
           call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_NETRT , &
               nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%dist(:,:,9) )
+#ifdef HYDRO_D
+          write(6,*) "after UDMP_ini "
+          call flush(6)
+#endif
     endif
 
     if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
@@ -642,8 +650,8 @@ CONTAINS
   END IF
 
    
-       allocate(tmp_int(rt_domain(did)%GNLINKS))
-       allocate(tmp_real(rt_domain(did)%GNLINKS))
+!yw       allocate(tmp_int(rt_domain(did)%GNLINKS))
+!yw       allocate(tmp_real(rt_domain(did)%GNLINKS))
 
 
 
@@ -831,8 +839,10 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
                  rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
                  rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
                  rt_domain(did)%nhdBuckMask )     
-
-
+#ifdef HYDRO_D
+            write(6,*) "finish readBucket_nhd "
+            call flush(6)
+#endif
      endif
 else
 !---------------------------------------------------------------------

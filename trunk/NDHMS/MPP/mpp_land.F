@@ -935,13 +935,17 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_real8_1d
 
-  subroutine mpp_land_bcast_real(size,inout)
-      integer size
-      real inout(size)
-      integer ierr
-        call mpi_bcast(inout,size,MPI_real,   &
+  subroutine mpp_land_bcast_real(size1,inout)
+      integer size1
+      ! real inout(size1)
+      real , dimension(:) :: inout
+      integer ierr, len
+!        len = size(inout,1) 
+!        write(6,*) "size1 = ", size1, "my_id = ", my_id, len
+!        call flush(6) 
+        call mpi_bcast(inout,size1,MPI_real,   &
             IO_id,MPI_COMM_WORLD,ierr)
-      call mpp_land_sync()
+        call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_real
 
