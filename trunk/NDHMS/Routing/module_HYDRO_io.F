@@ -756,8 +756,8 @@ end subroutine get_albedo12m_netcdf
            else 
 #ifdef HYDRO_D
              write(*,135) "PrPt/LkIn", CH_NETRT(i,j), DIRECTION(i,j), LON(i,j), LAT(i,j),i,j 
-135             FORMAT(A9,1X,I3,1X,I3,1X,F10.5,1X,F9.5,1X,I4,1X,I4)
 #endif
+135             FORMAT(A9,1X,I3,1X,I3,1X,F10.5,1X,F9.5,1X,I4,1X,I4)
              if (DIRECTION(i,j) .eq. 0) then
 #ifdef HYDRO_D
                print *, "Direction i,j ",i,j," of point ", cnt, "is invalid"
@@ -809,8 +809,8 @@ end subroutine get_albedo12m_netcdf
                    CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
               print *, "Boundary Pour Point E", cnt,CH_NETRT(i,j), i,j
-                endif
 #endif
+                endif
            else if (DIRECTION(i, j) .EQ. 2) then
                !-- 2's can flow out of east or south edge
               if( (i + 1 .GT. IXRT) .OR.  (j - 1 .EQ. 0)) then            !-- this is the south edge
@@ -821,8 +821,8 @@ end subroutine get_albedo12m_netcdf
                   CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
                   print *, "Boundary Pour Point SE", cnt,CH_NETRT(i,j), i,j
-              endif
 #endif
+              endif
            else if ( DIRECTION(i, j) .EQ. 4) then 
               if( (j - 1 .EQ. 0))  then            !-- 4's can only flow due south
                  cnt = cnt + 1
@@ -832,8 +832,8 @@ end subroutine get_albedo12m_netcdf
                  CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
                  print *, "Boundary Pour Point S", cnt,CH_NETRT(i,j), i,j
-              endif
 #endif
+              endif
            else if ( DIRECTION(i, j) .EQ. 8) then
           !-- 8's can flow south or west
               if( (i - 1 .eq. 0) .OR. ( j - 1 .EQ. 0)) then             !-- this is the south edge
