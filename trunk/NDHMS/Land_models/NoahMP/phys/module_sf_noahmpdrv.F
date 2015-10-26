@@ -51,6 +51,9 @@ CONTAINS
                MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL  &    
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
+#ifdef HYDRO_REALTIME 
+               , SOILSAT1, SOILSAT                            &         ! NEW soil saturation
+#endif
 #endif
                )
 !----------------------------------------------------------------
@@ -248,6 +251,10 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
+#ifdef HYDRO_REALTIME
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT1    ! soil saturation in the top layer [fraction]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
+#endif
 #endif
 
 ! 1D equivalent of 2D/3D fields
@@ -764,6 +771,12 @@ CONTAINS
              if(present(ACCECAN)) ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
              if(present(ACCETRAN)) ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
              if(present(ACCEDIR)) ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
+#ifdef HYDRO_REALTIME
+	     ! Top layer soil saturation
+             if(present(SOILSAT1)) SOILSAT1 (I,J)           = SMC(1) / parameters%smcmax(1)
+	     ! Soil column integrated soil saturation
+             if(present(SOILSAT)) SOILSAT (I,J)  = SUM(SMC(1:NSOIL) * DZS(1:NSOIL)) / SUM(parameters%smcmax(1:NSOIL) * DZS(1:NSOIL))
+#endif
 #endif
              IF ( SALB > -999 ) THEN
                 ALBEDO(I,J)                = SALB
