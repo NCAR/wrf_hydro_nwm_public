@@ -25,6 +25,7 @@ module module_NoahMP_hrldas_driver
    character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
+   integer :: ioc_flag
    integer  :: finemesh, finemesh_factor
  ! INOUT (new accumulator variables for output water balance) 
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
@@ -392,7 +393,7 @@ module module_NoahMP_hrldas_driver
 #ifdef WRF_HYDRO
   character(len=19)  :: tmpdate
   namelist /WRF_HYDRO_OFFLINE/ &
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, ioc_flag
 #endif
   namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &

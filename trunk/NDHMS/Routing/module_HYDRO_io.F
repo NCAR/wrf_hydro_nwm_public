@@ -4840,12 +4840,6 @@ end subroutine mpp_output_chrt
           write(iunit,ERR=101) rt_domain(did)%sfcheadrt
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
-                write(iunit,ERR=101) rt_domain(did)%QBDRYRT
-                write(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
-                write(iunit,ERR=101) rt_domain(did)%SH2OWGT
-                write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
-                write(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
                    write(iunit,ERR=101) rt_domain(did)%HLINK
                    write(iunit,ERR=101) rt_domain(did)%QLINK(:,1)
@@ -4858,6 +4852,14 @@ end subroutine mpp_output_chrt
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
+                if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
+                    write(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                    write(iunit,ERR=101) rt_domain(did)%INFXSWGT
+                    write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                    write(iunit,ERR=101) rt_domain(did)%SH2OWGT
+                    write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
+                    write(iunit,ERR=101) rt_domain(did)%RETDEPRT
+                endif
           end if  
 
         close(iunit)
@@ -4929,12 +4931,6 @@ end subroutine mpp_output_chrt
           read(iunit,ERR=101) rt_domain(did)%sfcheadrt
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
-                read(iunit,ERR=101) rt_domain(did)%QBDRYRT
-                read(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
-                read(iunit,ERR=101) rt_domain(did)%SH2OWGT
-                read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
-                read(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
                    read(iunit,ERR=101) rt_domain(did)%HLINK
                    read(iunit,ERR=101) rt_domain(did)%QLINK(:,1)
@@ -4947,6 +4943,14 @@ end subroutine mpp_output_chrt
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
+                if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
+                   read(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                   read(iunit,ERR=101) rt_domain(did)%INFXSWGT
+                   read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                   read(iunit,ERR=101) rt_domain(did)%SH2OWGT
+                   read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
+                   read(iunit,ERR=101) rt_domain(did)%RETDEPRT
+                endif
           end if  
 
         close(iunit)
