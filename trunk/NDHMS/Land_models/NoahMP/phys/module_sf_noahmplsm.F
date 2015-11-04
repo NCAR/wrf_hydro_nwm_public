@@ -1794,7 +1794,7 @@ contains
        ENDIF
 
        IF(OPT_RSF == 4) THEN  ! AD: FSNO weighted; snow RSURF set in MPTABLE v3.8
-         RSURF = 1. / (FSNO * (1./parameters%RSURF_SNOW) + (1.-FSNO) * (1./RSURF))
+         RSURF = 1. / (FSNO * (1./parameters%RSURF_SNOW) + (1.-FSNO) * (1./max(RSURF, 0.001)))
        ENDIF
 
        IF(SH2O(1) < 0.01 .and. SNOWH == 0.) RSURF = 1.E6
