@@ -30,7 +30,7 @@ main_hrldas_driver.o: main_hrldas_driver.F
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
-	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
+	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP $(NETCDFMOD) $(*).f90
 	@echo ""
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
@@ -47,13 +47,14 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).f90
 	@echo ""
 
-
-
 #
 # Dependencies:
 #
 
-main_hrldas_driver.o:	$(OBJS_NoahMP)
+main_hrldas_driver.o:	$(OBJS_NoahMP) \
+		        ../../../nudging/module_nudging_utils.o \
+		        ../../../nudging/module_stream_nudging.o \
+			../../../MPP/mpp_land.o
 $(OBJS_NoahMP):	module_hrldas_netcdf_io.o
 
 # This command cleans up object files, etc.

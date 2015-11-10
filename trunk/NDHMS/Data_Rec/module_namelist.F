@@ -88,6 +88,11 @@ CONTAINS
           open(30, file="hydro.namelist", form="FORMATTED")
           read(30, HYDRO_nlist, iostat=ierr)
           close(30)
+          
+          !! JLM - this would have saved me alot of time.
+          if(ierr .ge. 1) call hydro_stop("hydro namelist error in read_rt_nlst")
+             
+
 #ifdef MPP_LAND
        endif
 #endif
@@ -187,6 +192,10 @@ CONTAINS
     nlst%DTRT_TER   = DTRT_TER
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
+
+    if(nlst%DT/DTRT_CH .ne. real(int(nlst%DT) / int(DTRT_CH)) ) &
+         call hydro_stop("driveChannelRouting: DT not a multiple of DTRT_CH")
+
     nlst%SUBRTSWCRT = SUBRTSWCRT
     nlst%OVRTSWCRT = OVRTSWCRT
     nlst%dxrt0 = dxrt
