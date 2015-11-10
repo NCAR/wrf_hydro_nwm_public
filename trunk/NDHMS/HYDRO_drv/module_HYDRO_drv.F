@@ -479,7 +479,7 @@ module module_HYDRO_drv
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
 		! step 4) baseflow or groundwater physics
-                if (nlst_rt(did)%GWBASESWCRT) then
+                if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
 		     call driveGwBaseflow(did)
                 endif
 #ifdef HYDRO_D

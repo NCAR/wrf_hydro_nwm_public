@@ -1235,7 +1235,7 @@ module module_NoahMP_hrldas_driver
          (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
         !yw GVFMAX = maxval(greenfrac)
 	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
-  endif
+  endif   ! initialization type
 #endif
 
 !     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
@@ -1260,7 +1260,12 @@ module module_NoahMP_hrldas_driver
                      )
 
       TAUSSXY = 0.0   ! Need to be added to _INIT later
-  endif
+
+#ifdef WRF_HYDRO
+      call ldas_output()
+#endif
+
+  endif  ! end of restart if block
   
   NTIME=(KHOUR)*3600./nint(dtbl)
 
@@ -1525,11 +1530,74 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
+     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
 #endif
 
 ! Output for history
      OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
         if (mod(ITIME*noah_timestep, output_timestep) == 0) then
+
+           call ldas_output()
+
+
+        endif
+     endif OUTPUT_FOR_HISTORY
+
+     if (IVGTYP(xstart,ystart)==ISWATER) then
+       write(*,'(" ***DATE=", A19)', advance="NO") olddate
+     else
+       write(*,'(" ***DATE=", A19, 6F10.5)', advance="NO") olddate, TSLB(xstart,1,ystart), LAI(xstart,ystart)
+     endif
+
+!------------------------------------------------------------------------
+! Write Restart - timestamp equal to output will have same states
+!------------------------------------------------------------------------
+
+      if ( (restart_frequency_hours .gt. 0) .and. &
+           (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
+       if(rst_bi_out .eq. 0) then
+           call lsm_restart()
+       else
+           call lsm_rst_bi_out()
+       endif
+#ifdef WRF_HYDRO
+      else
+       if (restart_frequency_hours <= 0) then
+          if ( (olddate( 9:10) == "01") .and. (olddate(12:13) == "00") .and. &
+               (olddate(15:16) == "00") .and. (olddate(18:19) == "00") ) then
+               if(rst_bi_out .eq. 0) then
+                   call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
+               else
+                   call lsm_rst_bi_out()
+               endif
+          endif
+       endif
+#endif
+      endif
+
+!------------------------------------------------------------------------
+! Advance the time 
+!------------------------------------------------------------------------
+#ifndef WRF_HYDRO
+     call geth_newdate(newdate, olddate, nint(dtbl))
+     olddate = newdate
+#endif
+
+! update the timer
+     call system_clock(count=clock_count_2, count_rate=clock_rate)
+     timing_sum = timing_sum + float(clock_count_2-clock_count_1)/float(clock_rate)
+     write(*,'("    Timing: ",f6.2," Cumulative:  ", f10.2, "  SFLX: ", f6.2 )') &
+          float(clock_count_2-clock_count_1)/float(clock_rate), &
+          timing_sum, real(sflx_count_sum) / real(clock_rate)
+     clock_count_1 = clock_count_2
+
+
+      ITIMESTEP = ITIMESTEP + 1
+
+end subroutine land_driver_exe
+
+!!===============================================================================
+subroutine  ldas_output()
 
            call prepare_output_file (trim(outdir), version, &
                 igrid, output_timestep, llanduse, split_output_count, hgrid,                &
@@ -1688,65 +1756,7 @@ end subroutine land_driver_ini
            enddo DEFINE_MODE_LOOP
 
            call finalize_output_file(split_output_count)
-
-        endif
-     endif OUTPUT_FOR_HISTORY
-
-     if (IVGTYP(xstart,ystart)==ISWATER) then
-       write(*,'(" ***DATE=", A19)', advance="NO") olddate
-     else
-       write(*,'(" ***DATE=", A19, 6F10.5)', advance="NO") olddate, TSLB(xstart,1,ystart), LAI(xstart,ystart)
-     endif
-
-!------------------------------------------------------------------------
-! Write Restart - timestamp equal to output will have same states
-!------------------------------------------------------------------------
-
-      if ( (restart_frequency_hours .gt. 0) .and. &
-           (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
-       if(rst_bi_out .eq. 0) then
-           call lsm_restart()
-       else
-           call lsm_rst_bi_out()
-       endif
-#ifdef WRF_HYDRO
-      else
-       if (restart_frequency_hours <= 0) then
-          if ( (olddate( 9:10) == "01") .and. (olddate(12:13) == "00") .and. &
-               (olddate(15:16) == "00") .and. (olddate(18:19) == "00") ) then
-               if(rst_bi_out .eq. 0) then
-                   call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
-               else
-                   call lsm_rst_bi_out()
-               endif
-          endif
-       endif
-#endif
-      endif
-
-!------------------------------------------------------------------------
-! Advance the time 
-!------------------------------------------------------------------------
-#ifndef WRF_HYDRO
-     call geth_newdate(newdate, olddate, nint(dtbl))
-     olddate = newdate
-#endif
-
-! update the timer
-     call system_clock(count=clock_count_2, count_rate=clock_rate)
-     timing_sum = timing_sum + float(clock_count_2-clock_count_1)/float(clock_rate)
-     write(*,'("    Timing: ",f6.2," Cumulative:  ", f10.2, "  SFLX: ", f6.2 )') &
-          float(clock_count_2-clock_count_1)/float(clock_rate), &
-          timing_sum, real(sflx_count_sum) / real(clock_rate)
-     clock_count_1 = clock_count_2
-
-#ifdef WRF_HYDRO
-      call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
-#endif
-
-      ITIMESTEP = ITIMESTEP + 1
-
-end subroutine land_driver_exe
+end subroutine  ldas_output
 
 !!===============================================================================
 subroutine lsm_restart()
