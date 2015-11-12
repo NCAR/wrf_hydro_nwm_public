@@ -998,11 +998,11 @@ MODULE MODULE_MPP_LAND
   end subroutine mpp_land_bcast_char
 
   subroutine mpp_land_bcast_char1d(inout)
-      integer len
-      character inout(:)
-      integer ierr
-      len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_CHARACTER,   &
+      character(len=*) :: inout(:)
+      integer :: lenSize
+      integer :: ierr
+      lenSize = size(inout,1)*len(inout)
+      call mpi_bcast(inout,lenSize,MPI_CHARACTER,   &
             IO_id,MPI_COMM_WORLD,ierr)
       call mpp_land_sync()
     return

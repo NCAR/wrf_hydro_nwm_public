@@ -16,9 +16,13 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    IMPLICIT NONE
 
+#ifdef OUTPUT_CHAN_CONN
+#ifdef MPP_LAND
+   include "mpif.h"  !! JLM: thought I could pick this up from module_mpp_land... but seems not
+#endif
+#endif
 
 CONTAINS
-
 
    subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT)   
       use module_RT_data, only: rt_domain
@@ -466,28 +470,38 @@ CONTAINS
        deallocate(GCH_NETLNK)
 
    end subroutine getChanDim
-   
-   subroutine LandRT_ini(did)
 
-      use module_noah_chan_param_init_rt
-      use module_namelist, only:  nlst_rt
-      use module_RT_data, only: rt_domain
-      use module_gw_gw2d_data, only: gw2d
+!===================================================================================================   
+subroutine LandRT_ini(did)
 
-      implicit none 
-      integer did
-      real Vmax
+use module_noah_chan_param_init_rt
+use module_namelist, only:  nlst_rt
+use module_RT_data, only: rt_domain
+use module_gw_gw2d_data, only: gw2d
 
-     integer :: bas 
-     CHARACTER(len=19)                      :: header
-     CHARACTER(len=1)                       :: jnk
+#ifdef OUTPUT_CHAN_CONN
+use module_nudging_io,        only: output_chan_connectivity
+#endif
 
-     REAL,  DIMENSION(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
-     integer :: i,j,k, ll, count
+implicit none 
+
+integer :: did
+real    :: Vmax
+
+integer :: bas 
+character(len=19)                      :: header
+character(len=1)                       :: jnk
+
+real,  dimension(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+integer :: i,j,k, ll, count
  
-     integer, allocatable, dimension(:) :: tmp_int
-     real, allocatable, dimension(:) :: tmp_real
-     integer, allocatable, dimension(:) :: buf
+integer, allocatable, dimension(:) :: tmp_int
+real, allocatable, dimension(:) :: tmp_real
+integer, allocatable, dimension(:) :: buf
+
+#ifdef OUTPUT_CHAN_CONN
+real :: connCalcTimeStart, connCalcTimeEnd
+#endif
 
 !------------------------------------------------------------------------
 !DJG Routing Processing
@@ -495,52 +509,97 @@ CONTAINS
 !DJG IF/then to get routing terrain fields if either routing module is 
 !DJG   activated
 
-     if(nlst_rt(did)%rtFlag .eq. 0) return
+if(nlst_rt(did)%rtFlag .eq. 0) return
+     
+if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
+    nlst_rt(did)%OVRTSWCRT   .eq.1 .or. &
+    nlst_rt(did)%GWBASESWCRT .ne. 0) then
 
-  IF (nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) THEN
 #ifdef HYDRO_D
-  print *, "Terrain routing initialization..."
+   print *, "Terrain routing initialization..."
 #endif
 
-     CALL READ_ROUTING_seq  (  &
-          rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-          rt_domain(did)%CH_LNKRT, &
-          rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
+   call READ_ROUTING_seq  (  &
+        rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+        rt_domain(did)%CH_LNKRT, &
+        rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
           nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
           rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
           nlst_rt(did)%channel_option, nlst_rt(did)%udmp_opt)
 
-    !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+   !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
 
-    IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
+   if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 
+#ifdef OUTPUT_CHAN_CONN
 #ifdef MPP_LAND
-          CALL MPP_READ_CHROUTING_new(    &
+      connCalcTimeStart = MPI_Wtime()
 #else
-          CALL READ_CHROUTING1(    &
+      call cpu_time(connCalcTimeStart)
 #endif
-               rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
-               rt_domain(did)%CH_LNKRT, rt_domain(did)%LAKE_MSKRT, &
-               rt_domain(did)%FROM_NODE, rt_domain(did)%TO_NODE, rt_domain(did)%TYPEL, rt_domain(did)%ORDER, &
-               rt_domain(did)%MAXORDER,rt_domain(did)%NLINKS, &
-               rt_domain(did)%NLAKES, rt_domain(did)%MUSK, rt_domain(did)%MUSX, rt_domain(did)%QLINK,&
-               rt_domain(did)%CHANLEN, rt_domain(did)%MannN, rt_domain(did)%So, rt_domain(did)%ChSSlp, rt_domain(did)%Bw, &
-               rt_domain(did)%HRZAREA, rt_domain(did)%LAKEMAXH, rt_domain(did)%WEIRC, rt_domain(did)%WEIRL, rt_domain(did)%ORIFICEC, &
-               rt_domain(did)%ORIFICEA,  rt_domain(did)%ORIFICEE, rt_domain(did)%LATLAKE, rt_domain(did)%LONLAKE, &
-               rt_domain(did)%ELEVLAKE , &
-               nlst_rt(did)%route_link_f,nlst_rt(did)%route_lake_f, &
-               nlst_rt(did)%route_direction_f, nlst_rt(did)%route_order_f, &
-               nlst_rt(did)%CHANRTSWCRT,rt_domain(did)%dist, rt_domain(did)%ZELEV, rt_domain(did)%LAKENODE, rt_domain(did)%CH_NETLNK, &
-               rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
-               rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
-               rt_domain(did)%latval, rt_domain(did)%lonval,&
-               rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL, rt_domain(did)%LINKID, rt_domain(did)%GNLINKSL &
+#endif
+
 #ifdef MPP_LAND
-               ,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT   &
-               ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
-               ,rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
+      call MPP_READ_CHROUTING_new(    &
+#else
+      call READ_CHROUTING1(    &
 #endif
-               ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
+        rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+        rt_domain(did)%CH_LNKRT, rt_domain(did)%LAKE_MSKRT, &
+        rt_domain(did)%FROM_NODE, rt_domain(did)%TO_NODE, rt_domain(did)%TYPEL, rt_domain(did)%ORDER, &
+        rt_domain(did)%MAXORDER,rt_domain(did)%NLINKS, &
+        rt_domain(did)%NLAKES, rt_domain(did)%MUSK, rt_domain(did)%MUSX, rt_domain(did)%QLINK, &
+        rt_domain(did)%CHANLEN, rt_domain(did)%MannN, rt_domain(did)%So, rt_domain(did)%ChSSlp,  & 
+        rt_domain(did)%Bw, &
+        rt_domain(did)%HRZAREA, rt_domain(did)%LAKEMAXH, rt_domain(did)%WEIRC, &
+        rt_domain(did)%WEIRL, rt_domain(did)%ORIFICEC, &
+        rt_domain(did)%ORIFICEA,  rt_domain(did)%ORIFICEE, rt_domain(did)%LATLAKE, &
+        rt_domain(did)%LONLAKE, &
+        rt_domain(did)%ELEVLAKE , &
+        nlst_rt(did)%route_link_f,nlst_rt(did)%route_lake_f, &
+        nlst_rt(did)%route_direction_f, nlst_rt(did)%route_order_f, &
+        nlst_rt(did)%CHANRTSWCRT,rt_domain(did)%dist, rt_domain(did)%ZELEV, &
+        rt_domain(did)%LAKENODE, rt_domain(did)%CH_NETLNK, &
+        rt_domain(did)%CHANXI, rt_domain(did)%CHANYJ, &
+        rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
+        rt_domain(did)%latval, rt_domain(did)%lonval,&
+        rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL, &
+        rt_domain(did)%LINKID, rt_domain(did)%GNLINKSL &
+#ifdef MPP_LAND
+        ,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT,   &
+        rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g, &
+        rt_domain(did)%link_location, rt_domain(did)%yw_mpp_nlinks, &
+        rt_domain(did)%lake_index,rt_domain(did)%nlinks_index &
+#endif
+        ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
+
+#ifdef OUTPUT_CHAN_CONN      
+#ifdef MPP_LAND
+      connCalcTimeEnd = MPI_Wtime()
+#else
+      call cpu_time(connCalcTimeEnd)
+#endif
+      if (nlst_rt(did)%channel_option .eq. 3) then 
+         call output_chan_connectivity(       &
+              rt_domain(did)%CHLAT,     &   !! Channel grid lat
+              rt_domain(did)%CHLON,     &   !! Channel grid lat
+              rt_domain(did)%CHANLEN,   &   !! The distance between channel grid centers in m.
+              rt_domain(did)%FROM_NODE, &   !! Index of a given cell and ...
+              rt_domain(did)%TO_NODE,   &   !!   ... the index which it flows to.
+              rt_domain(did)%CHANXI,    &   !! Index on fine/routing 
+              rt_domain(did)%CHANYJ,    &   !!   grid of grid cells.
+              rt_domain(did)%TYPEL,     &   !! Link type
+              rt_domain(did)%LAKENODE   &   !! Lake indexing
+              )
+      end if
+      
+      !if(my_id .eq. io_id) &
+      print '("Time to calculate channel connectivity= ",f6.3," seconds.")', &
+           connCalcTimeEnd-connCalcTimeStart        
+      call exit(17)  !! bail if you're just calculating output connectivity.
+#endif 
+! end OUTPUT_CHAN_CONN
+
 
     if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
           ! get NHDPLUS mapping function. 
@@ -642,9 +701,7 @@ CONTAINS
 !!$           end if
 !!$        end do
 
-
      endif   ! end of channel option if block
-
 
     endif
   END IF
@@ -659,8 +716,8 @@ CONTAINS
 !DJG    will later make this a function of SOLTYP and VEGTYP
 !            OVROUGHRT(i,j) = 0.01
 
-              rt_domain(did)%RETDEPRT = 0.001   ! units (mm)
-              rt_domain(did)%RETDEP_CHAN = 0.001
+rt_domain(did)%RETDEPRT = 0.001   ! units (mm)
+rt_domain(did)%RETDEP_CHAN = 0.001
 
 
 !DJG Need to insert call for acquiring routing fields here...
@@ -668,137 +725,146 @@ CONTAINS
 !DJG  Calculate terrain slopes 'SOXRT,SOYRT' from subgrid elevation 'ELRT'
 
 
-        rt_domain(did)%so8rt = -999
-        Vmax = 0.0
-        do j=2,rt_domain(did)%JXRT-1
-          do i=2,rt_domain(did)%IXRT-1
-              rt_domain(did)%SOXRT(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
-              rt_domain(did)%SOYRT(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
-!DJG Introduce reduction in retention depth as a linear function of terrain slope
-              IF (nlst_rt(did)%RT_OPTION.eq.2) then
-                IF (rt_domain(did)%SOXRT(i,j).gt.rt_domain(did)%SOYRT(i,j)) then
-                  Vmax=rt_domain(did)%SOXRT(i,j)
-                ELSE
-                  Vmax=rt_domain(did)%SOYRT(i,j)
-                END IF
-
-                IF (Vmax.gt.0.1) then
-                  rt_domain(did)%RETDEPRT(i,j)=0.
-                ELSE
-                  rt_domain(did)%RETDEPFRAC=Vmax/0.1
-                  rt_domain(did)%RETDEPRT(i,j)=rt_domain(did)%RETDEPRT(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
-                  IF (rt_domain(did)%RETDEPRT(i,j).lt.0.) rt_domain(did)%RETDEPRT(i,j)=0.
-                END IF
-              END IF
-
-               rt_domain(did)%SO8RT(i,j,1) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
-               rt_domain(did)%SO8RT_D(i,j,1) = i
-               rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
-               rt_domain(did)%SO8RT_D(i,j,3) = 1 
-               Vmax = rt_domain(did)%SO8RT(i,j,1)
-               
-               rt_domain(did)%SO8RT(i,j,2) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j+1))/rt_domain(did)%dist(i,j,2)  
-               if(rt_domain(did)%SO8RT(i,j,2) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i + 1
-                 rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
+rt_domain(did)%so8rt = -999
+Vmax = 0.0
+do j=2,rt_domain(did)%JXRT-1
+   do i=2,rt_domain(did)%IXRT-1
+      rt_domain(did)%SOXRT(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
+      rt_domain(did)%SOYRT(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
+      !DJG Introduce reduction in retention depth as a linear function of terrain slope
+      if (nlst_rt(did)%RT_OPTION.eq.2) then
+         if (rt_domain(did)%SOXRT(i,j).gt.rt_domain(did)%SOYRT(i,j)) then
+            Vmax=rt_domain(did)%SOXRT(i,j)
+         else
+            Vmax=rt_domain(did)%SOYRT(i,j)
+         end if
+         
+         if (Vmax.gt.0.1) then
+            rt_domain(did)%RETDEPRT(i,j)=0.
+         else
+            rt_domain(did)%RETDEPFRAC=Vmax/0.1
+            rt_domain(did)%RETDEPRT(i,j)=rt_domain(did)%RETDEPRT(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+            if (rt_domain(did)%RETDEPRT(i,j).lt.0.) rt_domain(did)%RETDEPRT(i,j)=0.
+         end if
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,1) = &
+           (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
+      rt_domain(did)%SO8RT_D(i,j,1) = i
+      rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
+      rt_domain(did)%SO8RT_D(i,j,3) = 1 
+      Vmax = rt_domain(did)%SO8RT(i,j,1)
+      
+      rt_domain(did)%SO8RT(i,j,2) = &
+           (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j+1))/rt_domain(did)%dist(i,j,2)  
+      if(rt_domain(did)%SO8RT(i,j,2) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i + 1
+         rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
                  rt_domain(did)%SO8RT_D(i,j,3) = 2
-                 Vmax = rt_domain(did)%SO8RT(i,j,2)
-               end if
-
-               rt_domain(did)%SO8RT(i,j,3) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
-               if(rt_domain(did)%SO8RT(i,j,3) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i + 1
-                 rt_domain(did)%SO8RT_D(i,j,2) = j  
+         Vmax = rt_domain(did)%SO8RT(i,j,2)
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,3) = &
+           (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
+      if(rt_domain(did)%SO8RT(i,j,3) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i + 1
+         rt_domain(did)%SO8RT_D(i,j,2) = j  
                  rt_domain(did)%SO8RT_D(i,j,3) = 3
-                 Vmax = rt_domain(did)%SO8RT(i,j,3)
-               end if
-
-               rt_domain(did)%SO8RT(i,j,4) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j-1))/rt_domain(did)%dist(i,j,4)  
-               if(rt_domain(did)%SO8RT(i,j,4) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i + 1
-                 rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
+         Vmax = rt_domain(did)%SO8RT(i,j,3)
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,4) = &
+           (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j-1))/rt_domain(did)%dist(i,j,4)  
+      if(rt_domain(did)%SO8RT(i,j,4) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i + 1
+         rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
                  rt_domain(did)%SO8RT_D(i,j,3) = 4
-                 Vmax = rt_domain(did)%SO8RT(i,j,4)
-               end if
-
-               rt_domain(did)%SO8RT(i,j,5) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j-1))/rt_domain(did)%dist(i,j,5)
-               if(rt_domain(did)%SO8RT(i,j,5) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i 
-                 rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
+         Vmax = rt_domain(did)%SO8RT(i,j,4)
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,5) = &
+           (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j-1))/rt_domain(did)%dist(i,j,5)
+      if(rt_domain(did)%SO8RT(i,j,5) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i 
+         rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
                  rt_domain(did)%SO8RT_D(i,j,3) = 5
-                 Vmax = rt_domain(did)%SO8RT(i,j,5)
-               end if
-
-               rt_domain(did)%SO8RT(i,j,6) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j-1))/rt_domain(did)%dist(i,j,6)  
-               if(rt_domain(did)%SO8RT(i,j,6) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
-                 rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
+         Vmax = rt_domain(did)%SO8RT(i,j,5)
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,6) = & 
+         (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j-1))/rt_domain(did)%dist(i,j,6)  
+      if(rt_domain(did)%SO8RT(i,j,6) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
+         rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
                  rt_domain(did)%SO8RT_D(i,j,3) = 6
-                 Vmax = rt_domain(did)%SO8RT(i,j,6)
-               end if
-
-               rt_domain(did)%SO8RT(i,j,7) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j))/rt_domain(did)%dist(i,j,7)
-               if(rt_domain(did)%SO8RT(i,j,7) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
-                 rt_domain(did)%SO8RT_D(i,j,2) = j  
+         Vmax = rt_domain(did)%SO8RT(i,j,6)
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,7) = &
+         (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j))/rt_domain(did)%dist(i,j,7)
+      if(rt_domain(did)%SO8RT(i,j,7) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
+         rt_domain(did)%SO8RT_D(i,j,2) = j  
                  rt_domain(did)%SO8RT_D(i,j,3) = 7
-                 Vmax = rt_domain(did)%SO8RT(i,j,7)
-               end if
-
-               rt_domain(did)%SO8RT(i,j,8) = (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j+1))/rt_domain(did)%dist(i,j,8)  
-               if(rt_domain(did)%SO8RT(i,j,8) .gt. Vmax ) then
-                 rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
-                 rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
+         Vmax = rt_domain(did)%SO8RT(i,j,7)
+      end if
+      
+      rt_domain(did)%SO8RT(i,j,8) = &
+         (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j+1))/rt_domain(did)%dist(i,j,8)  
+      if(rt_domain(did)%SO8RT(i,j,8) .gt. Vmax ) then
+         rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
+         rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
                  rt_domain(did)%SO8RT_D(i,j,3) = 8
-                 Vmax = rt_domain(did)%SO8RT(i,j,8)
-               end if
-
-!DJG Introduce reduction in retention depth as a linear function of terrain slope
-              IF (nlst_rt(did)%RT_OPTION.eq.1) then
-                IF (Vmax.gt.0.75) then
-                  rt_domain(did)%RETDEPRT(i,j)=0.
-                ELSE
-                  rt_domain(did)%RETDEPFRAC=Vmax/0.75
-                  rt_domain(did)%RETDEPRT(i,j)=rt_domain(did)%RETDEPRT(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
-                  IF (rt_domain(did)%RETDEPRT(i,j).lt.0.) rt_domain(did)%RETDEPRT(i,j)=0.
-                END IF
-              END IF
-
-
-          end do
-        end do
+         Vmax = rt_domain(did)%SO8RT(i,j,8)
+      end if
+      
+      !DJG Introduce reduction in retention depth as a linear function of terrain slope
+      if (nlst_rt(did)%RT_OPTION.eq.1) then
+         if (Vmax.gt.0.75) then
+            rt_domain(did)%RETDEPRT(i,j)=0.
+         else
+            rt_domain(did)%RETDEPFRAC=Vmax/0.75
+            rt_domain(did)%RETDEPRT(i,j)=rt_domain(did)%RETDEPRT(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+            if (rt_domain(did)%RETDEPRT(i,j).lt.0.) rt_domain(did)%RETDEPRT(i,j)=0.
+         end if
+      end if
+      
+      
+   end do
+end do
 
 
 !Apply calibration scaling factors to sfc roughness and retention depth here...
-                rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
-		rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
-
+rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
+rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
 
 
 ! calculate the slope for boundary        
 #ifdef MPP_LAND
-       if(right_id .lt. 0) rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)=rt_domain(did)%SOXRT(rt_domain(did)%IXRT-1,:)
-       if(left_id  .lt. 0) rt_domain(did)%SOXRT(1,:)=rt_domain(did)%SOXRT(2,:)
-       if(up_id    .lt. 0) rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT)=rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT-1)
-       if(down_id  .lt. 0) rt_domain(did)%SOYRT(:,1)=rt_domain(did)%SOYRT(:,2)
+if(right_id .lt. 0) rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)= &
+                       rt_domain(did)%SOXRT(rt_domain(did)%IXRT-1,:)
+if(left_id  .lt. 0) rt_domain(did)%SOXRT(1,:)=rt_domain(did)%SOXRT(2,:)
+if(up_id    .lt. 0) rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT)= &
+                       rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT-1)
+if(down_id  .lt. 0) rt_domain(did)%SOYRT(:,1)=rt_domain(did)%SOYRT(:,2)
 #else
-              rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)=rt_domain(did)%SOXRT(rt_domain(did)%IXRT-1,:)
-              rt_domain(did)%SOXRT(1,:)=rt_domain(did)%SOXRT(2,:)
-              rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT)=rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT-1)
-              rt_domain(did)%SOYRT(:,1)=rt_domain(did)%SOYRT(:,2)
+rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)=rt_domain(did)%SOXRT(rt_domain(did)%IXRT-1,:)
+rt_domain(did)%SOXRT(1,:)=rt_domain(did)%SOXRT(2,:)
+rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT)=rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT-1)
+rt_domain(did)%SOYRT(:,1)=rt_domain(did)%SOYRT(:,2)
 #endif
 
 #ifdef MPP_LAND
 ! communicate the value to 
-       call MPP_LAND_COM_REAL(rt_domain(did)%RETDEPRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-       call MPP_LAND_COM_REAL(rt_domain(did)%SOXRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-       call MPP_LAND_COM_REAL(rt_domain(did)%SOYRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-       do i = 1, 8
-          call MPP_LAND_COM_REAL(rt_domain(did)%SO8RT(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-       end do
-       do i = 1, 3
-          call MPP_LAND_COM_INTEGER(rt_domain(did)%SO8RT_D(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-       end do
+call MPP_LAND_COM_REAL(rt_domain(did)%RETDEPRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+call MPP_LAND_COM_REAL(rt_domain(did)%SOXRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+call MPP_LAND_COM_REAL(rt_domain(did)%SOYRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+do i = 1, 8
+   call MPP_LAND_COM_REAL(rt_domain(did)%SO8RT(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+end do
+do i = 1, 3
+   call MPP_LAND_COM_INTEGER(rt_domain(did)%SO8RT_D(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+end do
 #endif
 
 
@@ -848,15 +914,15 @@ else
 !---------------------------------------------------------------------
 !DJG  If GW/Baseflow activated...Read in req'd fields...
 !----------------------------------------------------------------------
-  IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN
-      If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) THEN
+if (nlst_rt(did)%GWBASESWCRT.ge.1) then
+   if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
 #ifdef HYDRO_D
-           print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
+      print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
 #ifdef MPP_LAND
-           CALL MPP_READ_SIMP_GW(              &
+      call MPP_READ_SIMP_GW(              &
 #else
-           CALL READ_SIMP_GW(                  &
+      call READ_SIMP_GW(                  &
 #endif
               rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
               rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
@@ -889,8 +955,8 @@ else
             allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
 
 #ifdef HYDRO_D
-            write(6,*)  "end Simple GW-Bucket ..."
-            print *, "Simple GW-Bucket Scheme selected, retrieving files..."
+      write(6,*)  "end Simple GW-Bucket ..."
+      print *, "Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
      
 !Temporary hardwire...
@@ -926,23 +992,23 @@ else
 
 
 #ifdef HYDRO_D
-    print *, "Starting GW basin levels...",rt_domain(did)%z_gwsubbas
+      print *, "Starting GW basin levels...",rt_domain(did)%z_gwsubbas
 #endif
-           
-
-  ! BF gw2d model
-      elseif (nlst_rt(did)%GWBASESWCRT.GE.3) THEN
-
-        call readGW2d(gw2d(did)%ix, gw2d(did)%jx,     &
-                      gw2d(did)%hycond, gw2d(did)%ho, &
-		      gw2d(did)%bot, gw2d(did)%poros, &
-		      gw2d(did)%ltype, nlst_rt(did)%gwIhShift)
-
-        gw2d(did)%elev = rt_domain(did)%elrt
-
-    End if
-    
-  END IF
+      
+      
+   ! BF gw2d model
+   elseif (nlst_rt(did)%GWBASESWCRT.ge.3) then
+      
+      call readGW2d(gw2d(did)%ix, gw2d(did)%jx,     &
+           gw2d(did)%hycond, gw2d(did)%ho, &
+           gw2d(did)%bot, gw2d(did)%poros, &
+           gw2d(did)%ltype, nlst_rt(did)%gwIhShift)
+      
+      gw2d(did)%elev = rt_domain(did)%elrt
+      
+   end if
+   
+end if
 !---------------------------------------------------------------------
 !DJG  End if GW/Baseflow activated...
 !----------------------------------------------------------------------
@@ -954,20 +1020,20 @@ endif   !!! end if block for UDMP_OPT .eq. 1
 !DJG,DNY  If channel routing activated...
 !----------------------------------------------------------------------
 
-  IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN
-
-!---------------------------------------------------------------------
-!DJG,DNY  Initalize lake and channel heights, this may be overwritten by RESTART
-!--------------------------------------------------------------------
-
-       if (nlst_rt(did)%channel_option .eq. 3) then
+if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
+   
+   !---------------------------------------------------------------------
+   !DJG,DNY  Initalize lake and channel heights, this may be overwritten by RESTART
+   !--------------------------------------------------------------------
+   
+   if (nlst_rt(did)%channel_option .eq. 3) then
 #ifdef MPP_LAND
-        CALL mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+      call mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #else
-        CALL CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+      call CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #endif
-       end if
-     if (nlst_rt(did)%channel_option .ne. 3) then
+   end if
+   if (nlst_rt(did)%channel_option .ne. 3) then
         do j=1,rt_domain(did)%NLINKSL
             if (rt_domain(did)%TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
               rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.935  !-- assumes lake is ~90% MA
@@ -1076,51 +1142,49 @@ endif   !!! end if block for UDMP_OPT .eq. 1
         if (nlst_rt(did)%channel_option .eq. 3) then
            do j=1,rt_domain(did)%NLAKES
              rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.99   !-- lake is 99% full at start
-           end do
-        endif
+      end do
+   endif
+   
 
-!--------------------------------------------------------------------
-  END IF     ! Endif for channel routing setup
+end if     ! Endif for channel routing setup
 !-----------------------------------------------------------------------
 
-       rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
-       rt_domain(did)%SH2OWGT = 1.
-  rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
-  rt_domain(did)%QSUBRT = 0.0
-  rt_domain(did)%ZWATTABLRT = 0.0
-  rt_domain(did)%QSUBBDRYRT = 0.0
-  rt_domain(did)%QSTRMVOLRT = 0.0
-  rt_domain(did)%QSTRMVOLRT = 0.0
-  rt_domain(did)%QBDRYRT = 0.0
-  rt_domain(did)%SFCHEADSUBRT = 0.0
-  rt_domain(did)%INFXSUBRT = 0.0
-  rt_domain(did)%DHRT = 0.0
-  rt_domain(did)%LAKE_INFLORT = 0.0
+rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+rt_domain(did)%SH2OWGT = 1.
+rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
+rt_domain(did)%QSUBRT = 0.0
+rt_domain(did)%ZWATTABLRT = 0.0
+rt_domain(did)%QSUBBDRYRT = 0.0
+rt_domain(did)%QSTRMVOLRT = 0.0
+rt_domain(did)%QSTRMVOLRT = 0.0
+rt_domain(did)%QBDRYRT = 0.0
+rt_domain(did)%SFCHEADSUBRT = 0.0
+rt_domain(did)%INFXSUBRT = 0.0
+rt_domain(did)%DHRT = 0.0
+rt_domain(did)%LAKE_INFLORT = 0.0
 !  rt_domain(did)%LAKE_INFLORT_DUM = 0.0
-  rt_domain(did)%LAKE_CT = 0
-  rt_domain(did)%STRM_CT = 0
+rt_domain(did)%LAKE_CT = 0
+rt_domain(did)%STRM_CT = 0
 !  rt_domain(did)%QSTRMVOLRT_DUM = 0.0
-  rt_domain(did)%SOLDRAIN = 0.0
-  rt_domain(did)%qinflowbase = 0.0
+rt_domain(did)%SOLDRAIN = 0.0
+rt_domain(did)%qinflowbase = 0.0
 
 !  rt_domain(did)%BASIN_MSK = 1
 ! !DJG Initialize mass balance check variables...
-  rt_domain(did)%SMC_INIT=0.
-  rt_domain(did)%DSMC=0.
-  rt_domain(did)%DACRAIN=0.
-  rt_domain(did)%DSFCEVP=0.
-  rt_domain(did)%DCANEVP=0.
-  rt_domain(did)%DEDIR=0.
-  rt_domain(did)%DETT=0.
-  rt_domain(did)%DEPND=0.
-  rt_domain(did)%DESNO=0.
-  rt_domain(did)%DSFCRNFF=0.
-  rt_domain(did)%DQBDRY=0.
-  rt_domain(did)%SUMINFXS1=0.
- 
+rt_domain(did)%SMC_INIT=0.
+rt_domain(did)%DSMC=0.
+rt_domain(did)%DACRAIN=0.
+rt_domain(did)%DSFCEVP=0.
+rt_domain(did)%DCANEVP=0.
+rt_domain(did)%DEDIR=0.
+rt_domain(did)%DETT=0.
+rt_domain(did)%DEPND=0.
+rt_domain(did)%DESNO=0.
+rt_domain(did)%DSFCRNFF=0.
+rt_domain(did)%DQBDRY=0.
+rt_domain(did)%SUMINFXS1=0.
 
-
-   end subroutine LandRT_ini
+end subroutine LandRT_ini
 
        subroutine deriveFromNode(did)
             implicit none

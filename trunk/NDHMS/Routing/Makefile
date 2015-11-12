@@ -6,6 +6,7 @@
 include ../macros
 
 OBJS = \
+	module_date_utilities_rt.o \
 	module_UDMAP.o \
 	module_HYDRO_utils.o \
 	module_noah_chan_param_init_rt.o \
@@ -29,7 +30,7 @@ all:	$(OBJS)
 #	cp *.mod ../mod
 
 .F.o:
-	@echo ""
+	@echo "Routing Makefile:"
 	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f
@@ -43,22 +44,35 @@ all:	$(OBJS)
 #
 module_gw_gw2d.o: ../Data_Rec/module_gw_gw2d_data.o module_HYDRO_io.o
 
-module_HYDRO_io.o:  module_HYDRO_utils.o ../Data_Rec/module_namelist.o \
-	../Data_Rec/module_RT_data.o module_date_utilities_rt.o
+module_HYDRO_io.o:  module_HYDRO_utils.o \
+	            module_date_utilities_rt.o \
+		    ../nudging/module_date_utils_nudging.o \
+	            ../nudging/module_nudging_io.o \
+                    ../Data_Rec/module_namelist.o \
+	 	    ../Data_Rec/module_RT_data.o 
 
 module_HYDRO_utils.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 
 module_lsm_forcing.o: module_HYDRO_io.o 
 
-module_RT.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o ../Data_Rec/module_gw_gw2d_data.o \
-	module_GW_baseflow.o module_HYDRO_utils.o module_HYDRO_io.o\
-	module_noah_chan_param_init_rt.o \
-	module_noah_chan_param_init_rt.o module_UDMAP.o
+module_RT.o: module_GW_baseflow.o \
+	     module_HYDRO_utils.o \
+             module_HYDRO_io.o \
+             module_noah_chan_param_init_rt.o \
+	     module_UDMAP.o \
+	     ../Data_Rec/module_namelist.o \
+	     ../Data_Rec/module_RT_data.o \
+	     ../Data_Rec/module_gw_gw2d_data.o \
+             ../nudging/module_date_utils_nudging.o \
+             ../nudging/module_nudging_io.o
 
 module_UDMAP.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 
 module_channel_routing.o: module_UDMAP.o
 
+module_channel_routing.o: ../nudging/module_date_utils_nudging.o \
+	                  ../nudging/module_nudging_utils.o \
+                          ../nudging/module_stream_nudging.o
 
 clean:
 	rm -f *.o *.mod *.stb *~ *.f

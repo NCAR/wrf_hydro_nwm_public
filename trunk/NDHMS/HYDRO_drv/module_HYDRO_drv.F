@@ -19,6 +19,10 @@ module module_HYDRO_drv
    use module_HYDRO_utils
 !   use module_namelist
    use module_lsm_forcing, only: geth_newdate
+#ifdef WRF_HYDRO_NUDGING
+   use module_stream_nudging,  only: init_stream_nudging
+   use module_nudging_utils,   only: accum_nudging_time
+#endif
 
    use module_UDMAP, only: get_basn_area_nhd
 
@@ -32,6 +36,10 @@ module module_HYDRO_drv
   integer :: clock_count_1 = 0
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
+#endif
+
+#ifdef WRF_HYDRO_NUDGING
+  real :: startCpuTime, endCpuTime
 #endif
 
    
@@ -1123,6 +1131,16 @@ endif
      endif
      
 
+#ifdef WRF_HYDRO_NUDGING
+     if(nlst_rt(did)%CHANRTSWCRT .ne. 0) then
+        call cpu_time(startCpuTime)
+        call init_stream_nudging
+        call cpu_time(endCpuTime)
+        call accum_nudging_time(startCpuTime, endCpuTime,'Init nudging')
+     end if
+#endif
+
+
 !    if (trim(nlst_rt(did)%restart_file) == "") then
 ! output at the initial time
 !        call HYDRO_out(did)
@@ -1267,11 +1285,11 @@ end module module_HYDRO_drv
 #endif
         character(len=*) :: msg
         integer :: ierr
-      write(6,*) "The job is stoped due to the fatal error. ", trim(msg)
+      write(6,*) "The job is stoped due to the FATAL ERROR: ", trim(msg)
       call flush(6)
 #ifdef MPP_LAND
       print*, "---"
-      print*, "ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
+      print*, "FATAL ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
       print*, ""
 
 !        call mpp_land_sync()
@@ -1281,7 +1299,7 @@ end module module_HYDRO_drv
          call mpp_land_abort()
          call MPI_finalize(ierr)
 #else
-         stop "Fatal Error"
+         stop "FATAL ERROR"
 #endif
 
      return
@@ -1293,7 +1311,15 @@ end module module_HYDRO_drv
 #ifdef MPP_LAND
         USE module_mpp_land
 #endif
+#ifdef WRF_HYDRO_NUDGING
+        use module_stream_nudging,  only: finish_stream_nudging
+#endif
+        
         integer :: ierr
+
+#ifdef WRF_HYDRO_NUDGING
+        call finish_stream_nudging
+#endif
 
         print*, "The model finished successfully......."
 #ifdef MPP_LAND
@@ -1302,8 +1328,12 @@ end module module_HYDRO_drv
          call mpp_land_sync()
          call MPI_finalize(ierr)
 #else
-         stop 
+
+#ifndef WRF_HYDRO_NUDGING
+         stop  !!JLM want to time at the top NoahMP level.
 #endif
 
-     return
-     end  subroutine HYDRO_finish
+#endif
+
+        return
+      end  subroutine HYDRO_finish
