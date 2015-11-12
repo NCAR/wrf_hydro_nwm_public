@@ -52,7 +52,7 @@ CONTAINS
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
 #ifdef HYDRO_REALTIME 
-               , SOILSAT1, SOILSAT                            &         ! NEW soil saturation
+               , SOILSAT_TOP, SOILSAT, SNOWT_AVG               &         ! NEW soil saturation and snow temp
 #endif
 #endif
                )
@@ -252,8 +252,9 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
 #ifdef HYDRO_REALTIME
-    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT1    ! soil saturation in the top layer [fraction]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT_TOP ! soil saturation in the top layer [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWT_AVG   ! average snowpack temperature (by layer mass) [K]
 #endif
 #endif
 
@@ -772,10 +773,18 @@ CONTAINS
              if(present(ACCETRAN)) ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
              if(present(ACCEDIR)) ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
 #ifdef HYDRO_REALTIME
-	     ! Top layer soil saturation
-             if(present(SOILSAT1)) SOILSAT1 (I,J)           = SMC(1) / parameters%smcmax(1)
+	     ! Top 2 layer soil saturation
+             if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)           = SUM(SMC(1:2) * DZS(1:2)) / SUM(parameters%smcmax(1:2) * DZS(1:2))
 	     ! Soil column integrated soil saturation
              if(present(SOILSAT)) SOILSAT (I,J)  = SUM(SMC(1:NSOIL) * DZS(1:NSOIL)) / SUM(parameters%smcmax(1:NSOIL) * DZS(1:NSOIL))
+             ! Snowpack average temperature (weighted by layer mass)
+             if (present(SNOWT_AVG)) then
+		if ( SUM(SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0)) .gt. 0 ) then
+		  SNOWT_AVG (I,J)  = SUM(STC(-NSNOW+1:0) * (SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0))) / SUM(SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0))
+		else
+		  SNOWT_AVG (I,J) = -1.E33
+		endif
+	     endif
 #endif
 #endif
              IF ( SALB > -999 ) THEN
