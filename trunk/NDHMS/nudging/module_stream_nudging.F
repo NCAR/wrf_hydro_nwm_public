@@ -100,6 +100,7 @@ logical,            parameter :: filterObsToDom   = .TRUE.
 character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
+logical,            parameter :: sanityQcDischarge = .TRUE.
 
 character(len=2) :: obsResolution    
 
@@ -1075,6 +1076,7 @@ if(filterObsToDom) then
 #endif HYDRO_D
    
    call read_timeslice_file(fileName,            &
+                            sanityQcDischarge,   &
                             timeIn,              &
                             updateTimeIn,        &
                             sliceResoIn,         &
@@ -1150,6 +1152,7 @@ else ! dont filterObsToDom
    obsTimeStr(structIndex)%obsStr%innov = -9999
 
    call read_timeslice_file(fileName,                                       &
+                            sanityQcDischarge,                              &
                             timeIn,                                         &
                             obsTimeStr(structIndex)%updateTime,             &
                             sliceResoIn,                                    &
