@@ -2018,9 +2018,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
    end do  ! nsteps
 
-        if (KT .eq. 1) KT = KT + 1
-         
-
+   if (KT .eq. 1) KT = KT + 1
+                 
  END SUBROUTINE drive_CHANNEL_RSL
 ! ----------------------------------------------------------------
 

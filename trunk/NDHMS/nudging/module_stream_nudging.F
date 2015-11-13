@@ -83,7 +83,7 @@ type(netwkReExpStructure) :: downNetwkStr, upNetwkStr
 
 !========================
 ! Track gages from NWIS not in our param file and/or NHD+
-integer, parameter :: maxNwisNotNhdCount=5000
+integer, parameter :: maxNwisNotNhdCount=20000
 character(len=15), dimension(maxNwisNotNhdCount) :: nwisNotNhd
 integer :: nwisNotNhdCount
 
@@ -109,7 +109,7 @@ character(len=2) :: obsResolution
 real    :: maxTau
 integer :: nObsTimes
 #ifdef MPP_LAND
-character(len=19) :: lsmTimeMinusDt
+character(len=19) :: lsmTime
 integer :: lsmDt
 integer, parameter :: did=1
 
@@ -629,9 +629,9 @@ if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 ! The hydro model time as a string.
 #ifdef MPP_LAND
 !update and broadcast the lsm time
-if(my_id .eq. io_id) lsmTimeMinusDt = nlst_rt(did)%olddate
+if(my_id .eq. io_id) lsmTime = nlst_rt(did)%olddate
 !! JLM - why broadcast this? is it not the same on all processors?
-call mpp_land_bcast_char(19, lsmTimeMinusDt)
+call mpp_land_bcast_char(19, lsmTime)
 #endif
 
 
@@ -645,9 +645,12 @@ if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 #endif HYDRO_D
 
 
-!! unintuitively, olddate is 2 lsm timesteps behind when the hydro model is run.
+! This is apparently fixed so that olddate is lsmTime and not
+! behind by 1 lsm timestep when the hydro model is run.
 !call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroDT+nint(nlst_rt(1)%dt))
-call geth_newdate(hydroTime, lsmTimeMinusDt, hydroDT+lsmDt)
+!call geth_newdate(hydroTime, lsmTimeMinusDt, hydroDT+lsmDt)
+call geth_newdate(hydroTime, lsmTime, hydroDT)
+
 ! Calculate the closest multiple of obsResolution to the hydroTime
 obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
 
@@ -1859,18 +1862,21 @@ linkInd = linkIndIn
 #endif
 checkInd=-3589  ! see above
 
-!! horrible, olddate is 2 lsm timesteps behind when the hydro model is run.
+!! apparently lsm is now only 1 lsm timestep behind when the hydro model is run.
 !call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroAdv+nint(nlst_rt(1)%dt))
-call geth_newdate(hydroTime, lsmTimeMinusDt, hydroAdv+lsmDt)
+!call geth_newdate(hydroTime, lsmTimeMinusDt, hydroAdv+lsmDt)
+call geth_newdate(hydroTime, lsmTime, hydroAdv)
 !call geth_newdate(hydroTime, nlst_rt(did)%olddate, hydroAdv)
 
 nudge_term_link = 0.
 weighting = 0.
 
-if(linkInd .eq. checkInd) print*,'Ndg: checkInd: hydroTime: ',hydroTime
-print*,'Ndg: checkInd: -*-*-*-*-*-*-*-*-*-*-*-*'
-print*,'Ndg: checkInd: hydroTime: ',hydroTime      
-print*,'Ndg: linkInd', linkInd
+if(linkInd .eq. checkInd) then
+   print*,'Ndg: checkInd: hydroTime: ',hydroTime
+   print*,'Ndg: checkInd: -*-*-*-*-*-*-*-*-*-*-*-*'
+   print*,'Ndg: checkInd: hydroTime: ',hydroTime      
+   print*,'Ndg: linkInd', linkInd
+end if
 
 do tt=1,size(obsTimeStr)
 
