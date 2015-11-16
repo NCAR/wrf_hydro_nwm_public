@@ -1691,7 +1691,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
 !#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
-         checkInd = 3589
+         checkInd = 2211014
 #ifdef MPP_LAND
          if(my_id .eq. io_id) &
 #endif
@@ -2019,6 +2019,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif
 
    end do  ! nsteps
+
+   call flush(6)
 
    if (KT .eq. 1) KT = KT + 1
                  

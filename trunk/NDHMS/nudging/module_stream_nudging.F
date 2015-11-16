@@ -202,10 +202,10 @@ integer, allocatable, dimension(:) :: whGageDists1, whGageDists2, whParamsDom
 integer :: downSize, upSize, baseSize
 
 #ifdef HYDRO_D
-#ifdef MPP_LAND
-print*,'Ndg: JLM:: PARALLEL NUDGING!'
-#endif
 print*, "Ndg: Start init_stream_nudging"
+#ifdef MPP_LAND
+print*, 'Ndg: PARALLEL NUDGING!'
+#endif
 #endif
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
@@ -1273,8 +1273,8 @@ do oo=1,nObs
       obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd = whUniLoop(theMask)
       deallocate(theMask)
 #ifdef HYDRO_D
-      print*,'Ndg: static prev solved:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-      print*,'Ndg: static prev above Ind:', obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd
+!      print*,'Ndg: static prev solved:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
+!      print*,'Ndg: static prev above Ind:', obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd
 #endif HYDRO_D
    else 
       whCalcStatic(oo) = .TRUE.
@@ -1282,8 +1282,8 @@ do oo=1,nObs
       whStaticInd(oo) = nObsStaticPrev + count
       whObsInd(count) = oo
 #ifdef HYDRO_D
-      print*,'Ndg: static solving:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-      print*,'Ndg: static solving above Ind:', whStaticInd(oo)
+!      print*,'Ndg: static solving:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
+!      print*,'Ndg: static solving above Ind:', whStaticInd(oo)
 #endif HYDRO_D
    end if
 
@@ -1576,8 +1576,8 @@ if (nlst_rt(did)%channel_option .eq. 1 .or.   &
 
 allocate(affectedInds(nLinks), nGageAffect(nLinks))
 
-print*,'Ndg: JLM: nlinks: ', nlinks
-call flush(6)
+!print*,'Ndg: JLM: nlinks: ', nlinks
+!call flush(6)
 
 affectedInds = 0
 nGageAffect  = 0
@@ -1793,7 +1793,7 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 #endif
 
 #ifdef HYDRO_D
-   checkInd = -3589
+   checkInd = 2211014
    if(ll .eq. checkInd) then
       print*,"Ndg: checkInd: checkInd: ",checkInd
       print*,'Ndg: checkInd: discharge(ll,2) before:',discharge(ll-startInd+1,2)
@@ -1863,7 +1863,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd=-3589  ! see above
+checkInd = 2211014  ! see above
 
 !! apparently lsm is now only 1 lsm timestep behind when the hydro model is run.
 !call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroAdv+nint(nlst_rt(1)%dt))
@@ -1943,7 +1943,7 @@ do tt=1,size(obsTimeStr)
            *obsStaticStr(staticInd)%ws(ll)     
 
 #ifdef HYDRO_D
-!if(linkInd .eq. checkInd) then 
+if(linkInd .eq. checkInd) then 
 !if( (obsTimeStr(tt)%time .eq. obsTimeStr(tt)%obsStr(oo)%obsTime) .and. &
 !    ( abs(discharge(obsInd,2)+theInnov - obsTimeStr(tt)%obsStr(oo)%obsDischarge) .gt. .01) ) then
       print*,'Ndg: checkInd: -*-*-*-*-*-*-*-*-*-*-*-*'
@@ -1965,8 +1965,9 @@ do tt=1,size(obsTimeStr)
       print*,'Ndg: checkInd: time: ', obsTimeStr(tt)%time
       print*,'Ndg: checkInd: obsTime: ', obsTimeStr(tt)%obsStr(oo)%obsTime
       print*,'Ndg: checkInd: ws: ',      obsStaticStr(staticInd)%ws(ll)
+      print*,'Ndg: checkInd: nudge_term_link: ', nudge_term_link
       print*,'Ndg: checkInd: weighting: ', weighting
-!endif
+endif
 #endif
 
    enddo
@@ -2009,9 +2010,12 @@ subroutine finish_stream_nudging
 use module_nudging_utils, only: totalNudgeTime
 use module_nudging_io,    only: write_nwis_not_in_nhd
 implicit none
-if(nwisNotNhdCount .gt. 0) call write_nwis_not_in_nhd(nwisNotNhd, nwisNotNhdCount)
-!! deallocate module variables here and time this
-print*,'Ndg: *nudge timing* TOTAL NUDGING TIME (seconds): ', totalNudgeTime
+if(my_id .eq. io_id) then
+   print*,'Ndg: nwisNotNhdCount: ', nwisNotNhdCount
+   if(nwisNotNhdCount .gt. 0) call write_nwis_not_in_nhd(nwisNotNhd, nwisNotNhdCount)
+   !! deallocate module variables here and time this
+   print*,'Ndg: *nudge timing* TOTAL NUDGING TIME (seconds): ', totalNudgeTime
+endif
 end subroutine finish_stream_nudging
 
 !===================================================================================================
