@@ -2866,13 +2866,13 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #ifndef HYDRO_REALTIME
      real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
 #endif
-     seconds_since = int(dtrt_ch)*K
 
      !! currently, this is the time of the hydro model, it's
      !! lsm time (olddate) plus one lsm timestep
-     call geth_newdate(hydroTime, date, nint(lsmDt))
-     
-     seconds_since = int(dtrt_ch)*K
+     !call geth_newdate(hydroTime, date, nint(lsmDt))
+     hydroTime=date
+
+     seconds_since = int(dtrt_ch)*(K-1)
 
 !    order_to_write = 2  !-- 1 all; 6 fewest
       nstations = 0  ! total number of channel points to display
@@ -7538,11 +7538,7 @@ end subroutine mpp_output_chrt2
 #ifndef HYDRO_REALTIME
 !    real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
 #endif
-     seconds_since = int(dtrt_ch)*K
 
-     !! currently, this is the time of the hydro model, it's
-     !! lsm time (olddate) plus one lsm timestep
-     
      seconds_since = int(dtrt_ch)*K
 
      if(channel_option .ne. 3) then

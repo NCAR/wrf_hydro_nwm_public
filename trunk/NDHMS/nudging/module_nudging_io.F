@@ -125,6 +125,12 @@ call get_1d_netcdf_text(ncid, 'stationId', gageId,        caller, .TRUE.)
 call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, .TRUE.)
 call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, .TRUE.)
 
+!! the quality short integer needs scaled
+allocate(gageQCIn(size(gageQC))) 
+call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, .TRUE.)
+gageQC=gageQCIn/oneHundred
+deallocate(gageQCIn)
+
 !! JLM fix temporary hardwire QC sanity checks
 if (sanityQcDischarge) then
    where(gageDischarge .le. 0.000) gageQC=0
@@ -136,12 +142,6 @@ if (sanityQcDischarge) then
       write(6,*) 'Ndg: some gageQC set to zero'  
    endif
 endif
-
-!! the quality short integer needs scaled
-allocate(gageQCIn(size(gageQC))) 
-call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, .TRUE.)
-gageQC=gageQCIn/oneHundred
-deallocate(gageQCIn)
  
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then

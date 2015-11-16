@@ -1688,17 +1688,19 @@ gwOption:   if(gwBaseSwCRT == 3) then
          allocate(g_qlink(gNLinksL,2))
          !! Initialize nudging for the current timestep.
          !! This establishes the data structure used to solve the nudges. 
-#ifdef HYDRO_D
-         checkInd = 3589
+
+
+!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
+         checkInd = 2211014
 #ifdef MPP_LAND
          if(my_id .eq. io_id) &
 #endif
          call nudging_timer(startCodeTimeAcc)
-#endif 
+!#endif JLM Temp un-ifdef to get timing results
 
          call setup_stream_nudging(0)  !! always zero b/c at beginning of hydro timestep
 
-#ifdef HYDRO_D
+!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
 #ifdef MPP_LAND
          if(my_id .eq. io_id) then
 #endif
@@ -1707,7 +1709,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
          endif
 #endif
-#endif HYDRO_D
+!#endif HYDRO_D JLM Temp un-ifdef to get timing results
 
 #endif WRF_HYDRO_NUDGING
 
@@ -1976,12 +1978,12 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifdef WRF_HYDRO_NUDGING         
          if(.not. nudgeWAdvance) then
-#ifdef HYDRO_D
+!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
 #ifdef MPP_LAND
             if(my_id .eq. io_id) &
 #endif MPP_LAND
             call nudging_timer(startCodeTimeAcc)
-#endif HYDRO_D
+!#endif HYDRO_D JLM Temp un-ifdef to get timing results
 
 #ifdef MPP_LAND
             ! this communication is only necessary if R> Reach%length/2 somewhere 
@@ -1997,7 +1999,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
             call nudge_term_all(qlink, g_qlink, int(nt*dtrt_ch))          
             QLINK(:,1) = QLINK(:,2) !! above only nudges the qlink(:,2)
 
-#ifdef HYDRO_D
+!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
 #ifdef MPP_LAND
             if(my_id .eq. io_id) then
 #endif MPP_LAND
@@ -2006,7 +2008,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
             endif
 #endif MPP_LAND
-#endif HYDRO_D
+!#endif HYDRO_D JLM Temp un-ifdef to get timing results
 
          endif
 #endif WRF_HYDRO_NUDGING
@@ -2018,9 +2020,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
    end do  ! nsteps
 
-        if (KT .eq. 1) KT = KT + 1
-         
+   call flush(6)
 
+   if (KT .eq. 1) KT = KT + 1
+                 
  END SUBROUTINE drive_CHANNEL_RSL
 ! ----------------------------------------------------------------
 
