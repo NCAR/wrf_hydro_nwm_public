@@ -952,9 +952,9 @@ print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
          print*,'Ndg: '
 #ifdef MPP_LAND
       end if ! (my_id .eq. io_id)
-   endif ! (obsTimeStrAllocated)
 #endif
 #endif !HYDRO_D
+   endif ! (obsTimeStrAllocated)
 end do ! ii 
 
 #ifdef HYDRO_D
@@ -1206,10 +1206,13 @@ end subroutine timeslice_file_to_struct
 ! Notes:
 
 subroutine obs_static_to_struct(timeIndex)
-use module_nudging_utils, only: whUniLoop &
+use module_nudging_utils, only:  &
 #ifdef HYDRO_D
-                        , accum_nudging_time, nudging_timer
+                          accum_nudging_time, &
+                          nudging_timer,      &
 #endif HYDRO_D
+                          whUniLoop
+
 
 implicit none
 integer, intent(in) :: timeIndex
