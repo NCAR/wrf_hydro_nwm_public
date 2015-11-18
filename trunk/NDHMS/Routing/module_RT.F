@@ -242,8 +242,8 @@ CONTAINS
      allocate( rt_domain(did)%ORIFICEA(nsizes) )
      allocate( rt_domain(did)%ORIFICEE(nsizes) )
 
-#ifndef HYDRO_REALTIME
      if(nsizes .gt. 0) then
+#ifndef HYDRO_REALTIME
         allocate( rt_domain(did)%accLndRunOff(nsizes) )
         allocate( rt_domain(did)%accQLateral(nsizes) )
         allocate( rt_domain(did)%accStrmvolrt(nsizes) )
@@ -252,8 +252,11 @@ CONTAINS
         rt_domain(did)%accQLateral  = 0
         rt_domain(did)%accStrmvolrt = 0
         rt_domain(did)%accBucket    = 0
-     endif
+#else
+	allocate( rt_domain(did)%QLateral(nsizes) )
+	rt_domain(did)%QLateral  = 0
 #endif
+     endif
 
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
        NLINKS = rt_domain(did)%NLINKS

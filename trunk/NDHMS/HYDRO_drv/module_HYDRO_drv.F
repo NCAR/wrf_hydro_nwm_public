@@ -275,6 +275,8 @@ module module_HYDRO_drv
                    , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
                    RT_DOMAIN(did)%accStrmvolrt,                               &
                    RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
+#else
+		   , RT_DOMAIN(did)%QLateral 			      &
 #endif
                    , nlst_rt(did)%iocflag)
               else
@@ -291,7 +293,8 @@ module module_HYDRO_drv
                      RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
                      RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                     rt_domain(did)%linkid                                      &
+                     rt_domain(did)%linkid,                                     &
+		     RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag              &
                    )
                  endif
 
@@ -718,6 +721,7 @@ module module_HYDRO_drv
 #ifndef HYDRO_REALTIME
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
 #endif
+       , rt_domain(did)%QLateral &
        , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT)
 else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
