@@ -2814,10 +2814,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         lsmDt                                                                   &
 #ifndef HYDRO_REALTIME
         , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT          &
-#else
-	, QLateral &
 #endif
-        , iocflag)
+        )
      
      implicit none
 #include <netcdf.inc>
@@ -2825,7 +2823,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS, NLINKSL
-     integer,                                  intent(in) :: iocflag
      real, dimension(:),                  intent(in) :: chlon,chlat
      real, dimension(:),                  intent(in) :: hlink,zelev
      integer, dimension(:),               intent(in) :: ORDER
@@ -2895,8 +2892,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 #ifndef HYDRO_REALTIME
      real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
-#else
-     real,dimension(:) :: QLateral
 #endif
 
      !! currently, this is the time of the hydro model, it's
@@ -3044,7 +3039,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        iret = nf_def_dim(ncid2, "recNum", NF_UNLIMITED, dimdataO)  !--for linked list approach
        iret = nf_def_dim(ncid2, "station", nobs, obsdim)
 
-#ifndef HYDRO_REALTIME
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
 #ifdef HYDRO_D
@@ -3143,13 +3137,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
            iret = nf_put_att_text(ncid,varid,'units',13,'unknow')
            iret = nf_put_att_text(ncid,varid,'long_name',10,'ACCUMULATED runoff from gw bucket')
         endif
-#endif
-
-#ifdef HYDRO_REALTIME
-           iret = nf_def_var(ncid, "QLateral", NF_FLOAT, 1, (/dimdata/), varid)
-           iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-           iret = nf_put_att_text(ncid,varid,'long_name',10,'Runoff into channel from land and gw bucket')
-#endif
 
         iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
@@ -3173,7 +3160,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
 
-#ifndef HYDRO_REALTIME
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
@@ -3182,7 +3168,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
         iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
-#endif
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
@@ -3238,7 +3223,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          iret = nf_enddef(ncid)
          iret = nf_enddef(ncid2)
 
-#ifndef HYDRO_REALTIME        
         !-- write latitudes
          iret = nf_inq_varid(ncid,"latitude", varid)
          iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chanlat)
@@ -3267,7 +3251,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         !-- write number_of_stations, OPTIONAL
       !!  iret = nf_inq_varid(ncid,"number_stations", varid)
       !!  iret = nf_put_var_int(ncid, varid, nstations)
-#endif
 
         !-- write station id's 
          do i=1,nstations
@@ -3321,11 +3304,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          endif
 #endif
 
-#ifdef HYDRO_REALTIME
-            iret = nf_inq_varid(ncid,"QLateral", varid)
-            iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), QLateral(i))
-#endif
-
          iret = nf_inq_varid(ncid,"streamflow", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
 
@@ -3335,7 +3313,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          iret = nf_inq_varid(ncid,"head", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), hlink(i))
 
-#ifndef HYDRO_REALTIME
          iret = nf_inq_varid(ncid,"order", varid)
          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), ORDER(i))
 
@@ -3350,7 +3327,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
            iret = nf_inq_varid(ncid,"prevChild", varid)
            iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
          endif
-#endif
          cnt=cnt+1  !--indices are 0 based
          rec_num_of_station(cnt) = start_pos-1  !-- save position for last child, 0-based!!
 
@@ -3389,7 +3365,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
 
-#ifndef HYDRO_REALTIME
              iret = nf_inq_varid(ncid,"order", varid)
              iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
 
@@ -3412,7 +3387,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
                 !           endif
 
              endif
-#endif
              cnt=cnt+1  !--indices are 0 based
              rec_num_of_stationO(cnt) = start_posO - 1  !-- save position for last child, 0-based!!
           endif
@@ -3444,7 +3418,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
 
-#ifndef HYDRO_REALTIME
              iret = nf_inq_varid(ncid,"order", varid)
              iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
 
@@ -3467,7 +3440,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
                 !           endif 
 
              endif
-#endif
              cnt=cnt+1  !--indices are 0 based
              rec_num_of_stationO(cnt) = start_posO - 1  !-- save position for last child, 0-based!!
           endif
@@ -3477,7 +3449,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     enddo
     close(999) 
 
-#ifndef HYDRO_REALTIME
       !-- lastChild variable gives the record number of the most recent report for the station
       iret = nf_inq_varid(ncid,"lastChild", varid)
       iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), rec_num_of_station)
@@ -3485,7 +3456,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
       !-- lastChild variable gives the record number of the most recent report for the station
       iret = nf_inq_varid(ncid2,"lastChild", varid)
       iret = nf_put_vara_int(ncid2, varid, (/1/), (/nobs/), rec_num_of_stationO)
-#endif
 
       iret = nf_redef(ncid)
       date19(1:19) = "0000-00-00_00:00:00"
@@ -3540,10 +3510,8 @@ end subroutine output_chrt
         lsmDt                                                                  &
 #ifndef HYDRO_REALTIME
         , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT         &
-#else
-	, QLateral &
 #endif
-       , iocflag )
+        )
 
        USE module_mpp_land
 
@@ -3553,7 +3521,6 @@ end subroutine output_chrt
      integer,                                  intent(in) :: igrid,K,channel_option,NLINKSL
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS
-     integer,                                  intent(in) :: iocflag
      real, dimension(:),               intent(in) :: chlon,chlat
      real, dimension(:),                  intent(in) :: hlink,zelev
 
@@ -3579,9 +3546,6 @@ end subroutine output_chrt
 #ifndef HYDRO_REALTIME
       real,allocatable,dimension(:) :: g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket
       real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
-#else
-      real,allocatable,dimension(:) :: g_QLateral
-      real,dimension(:) :: QLateral
 #endif
 
         gsize = gNLINKS
@@ -3601,8 +3565,6 @@ end subroutine output_chrt
         allocate(g_accQLateral(gsize  ))
         allocate(g_accStrmvolrt(gsize  ))
         allocate(g_accBucket(gsize  ))
-#else
-	allocate(g_QLateral(gsize  ))
 #endif
 
      else
@@ -3612,8 +3574,6 @@ end subroutine output_chrt
         allocate(g_accQLateral(1))
         allocate(g_accStrmvolrt(1))
         allocate(g_accBucket(1))
-#else
-	allocate(g_QLateral(1))
 #endif
         allocate(g_chlon(1))
         allocate(g_chlat(1))
@@ -3641,8 +3601,6 @@ end subroutine output_chrt
         call ReachLS_write_io(accQLateral, g_accQLateral)
         call ReachLS_write_io(accStrmvolrt, g_accStrmvolrt)
         call ReachLS_write_io(accBucket, g_accBucket)
-#else
-	call ReachLS_write_io(QLateral, g_QLateral)
 #endif
 
      else
@@ -3664,10 +3622,8 @@ end subroutine output_chrt
           lsmDt                                                                     &
 #ifndef HYDRO_REALTIME
           , g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket, UDMP_OPT    &
-#else
-	  , g_QLateral &
 #endif
-          , iocflag)
+          )
 
     end if
 
@@ -3675,8 +3631,6 @@ end subroutine output_chrt
 
 #ifndef HYDRO_REALTIME
     deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
-#else
-    deallocate(g_QLateral)
 #endif
 
 end subroutine mpp_output_chrt
@@ -7546,7 +7500,7 @@ end subroutine mpp_output_chrt2
    subroutine output_chrt2(igrid, split_output_count, NLINKS, ORDER,             &
         startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
         NLINKSL, channel_option ,linkid, &
-        QLateral, iocflag  &
+        QLateral, iocflag   &
         )
      
      implicit none
@@ -7713,24 +7667,30 @@ end subroutine mpp_output_chrt2
         iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
 
 !     !- head definition, var
-#ifndef HYDRO_REALTIME
       if(channel_option .eq. 3) then
-#endif
         iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
-#ifndef HYDRO_REALTIME
+      endif
+#ifdef HYDRO_REALTIME
+      if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
+        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
       endif
 #endif
 
+
 #ifdef HYDRO_REALTIME
-        !-- NEW lateral inflow definition, var
-        iret = nf_def_var(ncid, "QLateral", NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',10,'Runoff into channel from land and gw bucket')
+	!-- NEW lateral inflow definition, var
+	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	        iret = nf_def_var(ncid, "QLateral", NF_FLOAT, 1, (/stationdim/), varid)
+       		iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+        	iret = nf_put_att_text(ncid,varid,'long_name',10,'Runoff into channel from land and gw bucket')
+	endif
 
         !-- NEW velocity definition, var
-	if (iocflag .lt. 4) then
+	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) .and. (iocflag .lt. 4) ) then
         	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
         	iret = nf_put_att_text(ncid,varid,'units',5,'meter / sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',11,'River Velocity')
@@ -7790,21 +7750,24 @@ end subroutine mpp_output_chrt2
      	if(channel_option .eq. 3) then
            iret = nf_inq_varid(ncid,"head", varid)
            iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), hlink)
+	endif
 #ifdef HYDRO_REALTIME
-        else
-	   ! dummy value for now
-           iret = nf_inq_varid(ncid,"head", varid)
-           iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
-#endif
+	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	      ! dummy value for now
+              iret = nf_inq_varid(ncid,"head", varid)
+              iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
         endif
+#endif
 
 #ifdef HYDRO_REALTIME
         !-- write lateral inflow
-         iret = nf_inq_varid(ncid,"QLateral", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), QLateral)
+	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	        iret = nf_inq_varid(ncid,"QLateral", varid)
+       		iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), QLateral)
+        endif
 
         !-- write velocity (dummy value for now)
-	if (iocflag .lt. 4) then
+	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) .and. (iocflag .lt. 4) ) then
         	iret = nf_inq_varid(ncid,"velocity", varid)
          	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
 	endif

@@ -275,10 +275,8 @@ module module_HYDRO_drv
                    , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
                    RT_DOMAIN(did)%accStrmvolrt,                               &
                    RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
-#else
-		   , RT_DOMAIN(did)%QLateral 			      &
 #endif
-                   , nlst_rt(did)%iocflag)
+                   )
               else
                 if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
 #ifdef MPP_LAND
@@ -294,8 +292,8 @@ module module_HYDRO_drv
                      RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
                      rt_domain(did)%linkid,                                     &
-		     RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag              &
-                   )
+		     RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
+		     )
                  endif
 
               endif

@@ -1329,12 +1329,7 @@ module module_NoahMP_hrldas_driver
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
    endif
    if (iocflag .eq. 0) then
-!#ifdef MPP_LAND
-!  	call fatal_error_stop("Running HYDRO_REALTIME compile, but iocflag not set.")
-!#else
-!  	stop "Running HYDRO_REALTIME compile, but iocflag not set."
-!#endif
-	VARLIST = ' '
+	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
    endif
 
    !!--- Parse into character array. Constructor not valid with uneven 
