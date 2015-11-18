@@ -151,7 +151,7 @@ print*,'Ndg: totalNudgeTime: ', totalNudgeTime
 print*,'Ndg: sysClockCountRate: ', sysClockCountRate
 print*,'Ndg: sysClockCountMax: ', sysClockCountMax
 print*,'Ndg: clockType: ', trim(nudgingClockType)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 end subroutine init_stream_nudging_clock
 
 
@@ -611,7 +611,7 @@ integer :: nGages, nCellsInR, cc, nLinkAff, nStatic
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
-#endif HYDROD
+#endif /* HYDRO_D */
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -624,7 +624,7 @@ if(my_id .eq. io_id) &
 
 #ifdef HYDRO_D
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 ! The hydro model time as a string.
 #ifdef MPP_LAND
@@ -642,7 +642,7 @@ if(my_id .eq. io_id) then
                            'bcast lsm time', .false.   )
 endif
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 
 ! This is apparently fixed so that olddate is lsmTime and not
@@ -721,7 +721,7 @@ if(my_id .eq. io_id) then
                            'io_id shift left', .false.)
 endif
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
   
 !if(.NOT. all(obsTimeStr(:)%time .EQ. obsTimes)) &
@@ -759,7 +759,7 @@ if(my_id .eq. io_id) then
                            'io_id basic info', .false.)
 endif
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 
 ! Broadcast the basic info above.
@@ -779,7 +779,7 @@ if(my_id .eq. io_id) then
         'bcast basic info', .false.)
 endif
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 
 !bring in timeslice files
@@ -812,7 +812,7 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
            'timeslice files io_id', .false.)
    endif
    if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
    ! broadcast
    ! problem broadcasting here cant take adv of my_id .eq. mod(ii,numprocs)
@@ -848,7 +848,7 @@ print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
            'Bcast timeslice files', .false.)
    endif
    if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
    if(my_id .eq. io_id) then 
    !if(my_id .eq. mod(ii,numprocs)) then
@@ -864,7 +864,7 @@ print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
          endif
          if(my_id .eq. io_id) call nudging_timer(startCodeTime)
          call flush(6)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
          call tally_affected_links(tt)
 #ifdef HYDRO_D         
@@ -879,7 +879,7 @@ print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
               'Tally affected links io_id', .false.)
       endif
       if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 #ifdef MPP_LAND
    end if ! my_id .eq. io_id  -OR-  my_id .eq. mod(ii,numprocs)
@@ -963,7 +963,7 @@ end do ! ii
                call accum_nudging_time(startCodeTime, endCodeTime, &
                                        'Bcast tally affected links io_id', .false.)
             endif
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 
 #ifdef HYDRO_D
@@ -1025,7 +1025,7 @@ real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
-#endif HYDROD
+#endif /* HYDRO_D */
 
 #ifdef HYDRO_D
 print*,'Ndg: start timeslice_file_to_struct'
@@ -1033,7 +1033,7 @@ print*,'Ndg: start timeslice_file_to_struct'
 
 #ifdef HYDRO_D
       if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 ! Is there a timeslice file?
 thisTime = obsTimeStr(structIndex)%time
@@ -1076,7 +1076,7 @@ if(filterObsToDom) then
                                  'ts_file_to_struct above read in', .false.)
       endif
       if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
    
    call read_timeslice_file(fileName,            &
                             sanityQcDischarge,   &
@@ -1095,7 +1095,7 @@ if(filterObsToDom) then
                                  'ts_file_to_struct below read in', .false.)
       endif
       if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 
    if(timeIn .NE. obsTimeStr(structIndex)%time) &
@@ -1178,7 +1178,7 @@ endif !filterObsToDom
          call accum_nudging_time(startCodeTime, endCodeTime, &
               'ts_file_to_struct bottom of routine', .false.)
       endif
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 
 #ifdef HYDRO_D
@@ -1210,7 +1210,7 @@ use module_nudging_utils, only:  &
 #ifdef HYDRO_D
                           accum_nudging_time, &
                           nudging_timer,      &
-#endif HYDRO_D
+#endif /* HYDRO_D */
                           whUniLoop
 
 
@@ -1230,7 +1230,7 @@ real :: startCodeTime, endCodeTime
 
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 print*,'Ndg: start obs_static_to_struct'
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 ! number of obs at this time
 nObs = size(obsTimeStr(timeIndex)%obsStr)
@@ -1275,7 +1275,7 @@ do oo=1,nObs
 #ifdef HYDRO_D
 !      print*,'Ndg: static prev solved:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
 !      print*,'Ndg: static prev above Ind:', obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd
-#endif HYDRO_D
+#endif /* HYDRO_D */
    else 
       whCalcStatic(oo) = .TRUE.
       count=count+1
@@ -1284,7 +1284,7 @@ do oo=1,nObs
 #ifdef HYDRO_D
 !      print*,'Ndg: static solving:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
 !      print*,'Ndg: static solving above Ind:', whStaticInd(oo)
-#endif HYDRO_D
+#endif /* HYDRO_D */
    end if
 
 end do
@@ -1296,7 +1296,7 @@ end do
                                  'after: already solved static 4 gage?', .false.)
       endif
       if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 !|||parallelize this|||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ! Create new entries in  obsStaticStr.      
@@ -1412,7 +1412,7 @@ if(my_id .eq. io_id) then
 endif
 print*,'Ndg: finish obs_static_to_struct'
 call flush(6)
-#endif HYDRO_D
+#endif /* HYDRO_D */
 
 end subroutine obs_static_to_struct
 
@@ -1840,7 +1840,7 @@ function nudge_term_link(linkIndIn, hydroAdv, discharge)
 use module_nudging_utils,      only: whUniLoop
 use module_namelist,      only: nlst_rt
 use module_date_utils_nudging, only: geth_newdate
-#ifdef MPP_LAND
+#ifdef MPP_LAND 
 use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
 #endif
 
@@ -1940,6 +1940,10 @@ do tt=1,size(obsTimeStr)
            +time_wt(hydroTime,                          & 
                     obsStaticStr(staticInd)%tau,        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
+           *time_wt(hydroTime,                          & 
+                    obsStaticStr(staticInd)%tau,        &
+                    obsTimeStr(tt)%obsStr(oo)%obsTime)  &
+           *obsStaticStr(staticInd)%ws(ll)              &
            *obsStaticStr(staticInd)%ws(ll)     
 
 #ifdef HYDRO_D
