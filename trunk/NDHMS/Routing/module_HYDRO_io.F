@@ -7367,8 +7367,11 @@ end subroutine readBucket_nhd
    subroutine mpp_output_chrt2(gnlinks,gnlinksl,map_l2g,igrid,                  &
         split_output_count, NLINKS, ORDER,                                     &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
-        K,NLINKSL,channel_option,linkid,  &
-        QLateral, iocflag)
+        K,NLINKSL,channel_option,linkid  &
+#ifdef HYDRO_REALTIME
+        , QLateral, iocflag   &
+#endif
+	)
 
        USE module_mpp_land
 
@@ -7378,7 +7381,6 @@ end subroutine readBucket_nhd
      integer,                                  intent(in) :: igrid,K,NLINKSL
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS
-     integer,                                  intent(in) :: iocflag
      real, dimension(:),               intent(in) :: chlon,chlat
      real, dimension(:),                  intent(in) :: hlink,zelev
 
@@ -7401,7 +7403,10 @@ end subroutine readBucket_nhd
 !     real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
 !#endif
       real,allocatable,dimension(:) :: g_QLateral
+#ifdef HYDRO_REALTIME
       real,dimension(:) :: QLateral
+      integer, intent(in) :: iocflag
+#endif
 
         gsize = gNLINKS
         if(gnlinksl .gt. gsize) gsize = gnlinksl
@@ -7420,7 +7425,9 @@ end subroutine readBucket_nhd
 !       allocate(g_accStrmvolrt(gsize  ))
 !       allocate(g_accBucket(gsize  ))
 !#endif
+#ifdef HYDRO_REALTIME
 	allocate(g_QLateral(gsize  ))
+#endif
 
      else
 
@@ -7430,7 +7437,9 @@ end subroutine readBucket_nhd
 !       allocate(g_accStrmvolrt(1))
 !       allocate(g_accBucket(1))
 !#endif
+#ifdef HYDRO_REALTIME
 	allocate(g_QLateral(1))
+#endif
 
         allocate(g_chlon(1))
         allocate(g_chlat(1))
@@ -7457,7 +7466,9 @@ end subroutine readBucket_nhd
 !       call ReachLS_write_io(accStrmvolrt, g_accStrmvolrt)
 !       call ReachLS_write_io(accBucket, g_accBucket)
 !#endif
+#ifdef HYDRO_REALTIME
 	call ReachLS_write_io(QLateral, g_QLateral)
+#endif
 
      else
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
@@ -7474,8 +7485,11 @@ end subroutine readBucket_nhd
      if(my_id .eq. IO_id) then
        call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,     &
-          gNLINKSL,channel_option, g_linkid,  &
-          g_QLateral, iocflag)
+          gNLINKSL,channel_option, g_linkid  &
+#ifdef HYDRO_REALTIME
+          , g_QLateral, iocflag   &
+#endif
+	  )
      end if
 
     deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_linkid )
@@ -7483,7 +7497,9 @@ end subroutine readBucket_nhd
 !#ifndef HYDRO_REALTIME
 !   deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
 !#endif
+#ifdef HYDRO_REALTIME
     deallocate(g_QLateral)
+#endif
 
 end subroutine mpp_output_chrt2
 
@@ -7499,8 +7515,10 @@ end subroutine mpp_output_chrt2
 !        )
    subroutine output_chrt2(igrid, split_output_count, NLINKS, ORDER,             &
         startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
-        NLINKSL, channel_option ,linkid, &
-        QLateral, iocflag   &
+        NLINKSL, channel_option ,linkid &
+#ifdef HYDRO_REALTIME
+        , QLateral, iocflag   &
+#endif
         )
      
      implicit none
@@ -7509,7 +7527,6 @@ end subroutine mpp_output_chrt2
      integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS, NLINKSL
-     integer,                                  intent(in) :: iocflag
      real, dimension(:),                  intent(in) :: chlon,chlat
      real, dimension(:),                  intent(in) :: hlink,zelev
      integer, dimension(:),               intent(in) :: ORDER
@@ -7568,7 +7585,10 @@ end subroutine mpp_output_chrt2
 !#ifndef HYDRO_REALTIME
 !    real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
 !#endif
+#ifdef HYDRO_REALTIME
      real,dimension(:) :: QLateral
+     integer,  intent(in) :: iocflag
+#endif
 
      seconds_since = int(dtrt_ch)*K
 

@@ -291,8 +291,10 @@ module module_HYDRO_drv
                      RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
                      RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                     rt_domain(did)%linkid,                                     &
-		     RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
+                     rt_domain(did)%linkid                                     &
+#ifdef HYDRO_REALTIME
+		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
+#endif
 		     )
                  endif
 
