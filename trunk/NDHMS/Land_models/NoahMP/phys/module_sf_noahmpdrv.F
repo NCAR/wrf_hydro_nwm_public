@@ -52,7 +52,7 @@ CONTAINS
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
 #ifdef HYDRO_REALTIME 
-               , SOILSAT_TOP, SOILSAT, SNOWT_AVG               &         ! NEW soil saturation and snow temp
+               , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
 #endif
                )
@@ -254,6 +254,7 @@ CONTAINS
 #ifdef HYDRO_REALTIME
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT_TOP ! soil saturation in the top layer [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILICE     ! fraction of soil moisture that is ice [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWT_AVG   ! average snowpack temperature (by layer mass) [K]
 #endif
 #endif
@@ -777,6 +778,8 @@ CONTAINS
              if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)           = SUM(SMC(1:2) * DZS(1:2)) / SUM(parameters%smcmax(1:2) * DZS(1:2))
 	     ! Soil column integrated soil saturation
              if(present(SOILSAT)) SOILSAT (I,J)  = SUM(SMC(1:NSOIL) * DZS(1:NSOIL)) / SUM(parameters%smcmax(1:NSOIL) * DZS(1:NSOIL))
+	     ! Soil column integrated soil ice fraction
+	     if(present(SOILICE)) SOILICE (I,J)  = 1. - ( SUM(SMH2O(1:NSOIL) * DZS(1:NSOIL)) / SUM(SMC(1:NSOIL) * DZS(1:NSOIL)) )
              ! Snowpack average temperature (weighted by layer mass)
              if (present(SNOWT_AVG)) then
 		if ( SUM(SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0)) .gt. 0 ) then

@@ -223,7 +223,8 @@ module module_HYDRO_drv
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                 RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                RT_DOMAIN(did)%QBDRYRT )
+                RT_DOMAIN(did)%QBDRYRT, &
+		nlst_rt(did)%iocflag )
 
 
 
@@ -275,7 +276,7 @@ module module_HYDRO_drv
                    RT_DOMAIN(did)%accStrmvolrt,                               &
                    RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
 #endif
-                   )
+                   , nlst_rt(did)%iocflag)
               else
                 if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
 #ifdef MPP_LAND

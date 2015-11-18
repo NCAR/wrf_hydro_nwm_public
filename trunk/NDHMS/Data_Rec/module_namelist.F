@@ -42,7 +42,7 @@ CONTAINS
        character(len=256)  :: RESTART_FILE = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
-       integer :: igrid
+       integer :: igrid, iocflag
        character(len=256) :: geo_static_flnm = ""
        integer  :: DEEPGWSPIN
 
@@ -75,12 +75,13 @@ CONTAINS
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT, GWBUCKPARM_file
+                    UDMP_OPT, GWBUCKPARM_file, iocflag
 
 
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
+   iocflag = 0
                     
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
@@ -97,12 +98,15 @@ CONTAINS
        endif
 #endif
 
-
+#ifdef HYDRO_REALTIME
+   if ( (iocflag .eq. 1) .or. (iocflag .eq. 4) ) RTOUT_DOMAIN = 0
+#endif
 
 #ifdef MPP_LAND
 !  call mpp_land_bcast_real1(DT)
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
+  call mpp_land_bcast_int1(iocflag)
   call mpp_land_bcast_real1(out_dt)
   call mpp_land_bcast_real1(rst_dt)
   call mpp_land_bcast_int1(DEEPGWSPIN)
@@ -125,6 +129,7 @@ CONTAINS
   nlst%RESTART_FILE = RESTART_FILE
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
+  nlst%iocflag = iocflag
   nlst%geo_static_flnm = geo_static_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt

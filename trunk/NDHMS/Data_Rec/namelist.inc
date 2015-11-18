@@ -21,6 +21,7 @@
        character(len=19) :: startdate="123456"
        character(len=19) :: sincedate="123456"
 
+       integer :: iocflag  ! used for NCEP REALTIME OUTPUT
 
 
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &

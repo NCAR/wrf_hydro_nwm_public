@@ -25,7 +25,6 @@ module module_NoahMP_hrldas_driver
    character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
-   integer :: ioc_flag
    integer  :: finemesh, finemesh_factor
  ! INOUT (new accumulator variables for output water balance) 
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
@@ -33,8 +32,10 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
 #ifdef HYDRO_REALTIME
+   integer :: iocflag=0
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K]
    character(len=15), DIMENSION(30)        ::  IOCVARS
 #endif
@@ -395,11 +396,11 @@ module module_NoahMP_hrldas_driver
   character(len=19)  :: tmpdate
 #ifdef HYDRO_REALTIME
   character(len=500) :: VARLIST
-  character(len=15) :: tmpvar
-  integer :: brkflag, varind
+  integer :: brkflag = 0
+  integer :: varind = 1
 #endif
   namelist /WRF_HYDRO_OFFLINE/ &
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, ioc_flag
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ,
 #endif
   namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
@@ -486,39 +487,6 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = temp_time_scheme_option
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
-
-#ifdef WRF_HYDRO
-#ifdef HYDRO_REALTIME
-
-  if (ioc_flag .eq. 1) then
-  	VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
-  endif
-  if (ioc_flag .eq. 2) then
-  	VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
-  endif
-  if (ioc_flag .eq. 3) then
-  	VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET'
-  endif
-  if (ioc_flag .eq. 4) then
-  	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
-  endif
-
-  !!--- Parse into character array. Constructor not valid with uneven strings in f90.
-  brkflag = 0
-  varind = 1
-  do while (brkflag .eq. 0)
-	if (index(VARLIST, ',') .eq. 0) then
-		IOCVARS(varind) = adjustl(VARLIST)
-		brkflag = 1
-	else
-  		IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
-		VARLIST = VARLIST((index(VARLIST, ',')+1):)
-		varind = varind + 1
-	endif
-  end do
-
-#endif
-#endif
 
 
 !---------------------------------------------------------------------
@@ -891,6 +859,7 @@ module module_NoahMP_hrldas_driver
 #ifdef HYDRO_REALTIME
    ALLOCATE ( SOILSAT_TOP  (XSTART:XEND,YSTART:YEND) )  ! top 2 layer soil saturation [fraction]
    ALLOCATE ( SOILSAT  (XSTART:XEND,YSTART:YEND) )  ! column integrated soil saturation [fraction]
+   ALLOCATE ( SOILICE  (XSTART:XEND,YSTART:YEND) )  ! fraction of soil moisture that is ice [fraction]
    ALLOCATE ( SNOWT_AVG  (XSTART:XEND,YSTART:YEND) )  ! snowpack average temperature (by layer mass) [K]
 #endif
  ! Initialize accumulator variables to 0
@@ -1343,6 +1312,46 @@ module module_NoahMP_hrldas_driver
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
 
+#ifdef HYDRO_REALTIME
+   call get_iocflag(1, iocflag)
+
+   !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
+   if (iocflag .eq. 1) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+   endif
+   if (iocflag .eq. 2) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+   endif
+   if (iocflag .eq. 3) then 
+        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET'
+   endif
+   if (iocflag .eq. 4) then 
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
+   endif
+   if (iocflag .eq. 0) then
+!#ifdef MPP_LAND
+!  	call fatal_error_stop("Running HYDRO_REALTIME compile, but iocflag not set.")
+!#else
+!  	stop "Running HYDRO_REALTIME compile, but iocflag not set."
+!#endif
+	VARLIST = ' '
+   endif
+
+   !!--- Parse into character array. Constructor not valid with uneven 
+   !!--- strings in f90 so using brute force. 
+   do while (brkflag .eq. 0)
+        if (index(VARLIST, ',') .eq. 0) then 
+                IOCVARS(varind) = adjustl(VARLIST)
+                brkflag = 1
+        else 
+                IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
+                VARLIST = VARLIST((index(VARLIST, ',')+1):)
+                varind = varind + 1
+        endif
+   end do
+   print *, IOCVARS
+#endif
+
    if(finemesh .ne. 0 ) then
        if(restart_flag) then
           NTIME_out =  10
@@ -1537,7 +1546,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
 #ifdef HYDRO_REALTIME
-                , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SNOWT_AVG=SNOWT_AVG      &
+                , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
 #endif
                 )
@@ -1879,8 +1888,7 @@ subroutine  ldas_output()
 	! New realtime summary variables
               call add_to_output(ACCECAN+ACCEDIR+ACCETRAN, "ACCET", "Accumulated total ET"       , "mm"        , IOCVARS            )    
               call add_to_output(CANLIQXY+CANICEXY, "CANWAT", "Total canopy water (liquid + ice)", "mm"        , IOCVARS            )    
-              call add_to_output(1 - SUM(SH2O * ZSNSOXY(:,1:NSOIL,:), DIM=2)/SUM(SMOIS * ZSNSOXY(:,1:NSOIL,:), DIM=2), &
-                                             "SOILICE", "fraction of soil miosture that is ice", "fraction"                 , IOCVARS)
+              call add_to_output(SOILICE    , "SOILICE", "fraction of soil miosture that is ice", "fraction"                , IOCVARS)
               call add_to_output(SOILSAT_TOP, "SOILSAT_TOP" , "fraction of soil saturation, top 2 layers", "fraction"       , IOCVARS)
               call add_to_output(SOILSAT    , "SOILSAT"  , "fraction of soil saturation, column integrated", "fraction"     , IOCVARS)
               call add_to_output(SNOWT_AVG  , "SNOWT_AVG", "average snow temperature (by layer mass)",  "K"                 , IOCVARS)
