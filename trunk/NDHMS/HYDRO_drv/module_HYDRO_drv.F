@@ -223,8 +223,11 @@ module module_HYDRO_drv
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                 RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                RT_DOMAIN(did)%QBDRYRT, &
-		nlst_rt(did)%iocflag )
+                RT_DOMAIN(did)%QBDRYRT &
+#ifdef HYDRO_REALTIME
+		, nlst_rt(did)%iocflag &
+#endif
+		 )
 
 
 
@@ -891,7 +894,7 @@ endif
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
                       call hydro_stop("aggregateDomain")
                     END IF
-                    IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LE.0.) THEN
+                    IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LT.0.) THEN
                       print *, "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
                       print *, "Error negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)

@@ -1504,13 +1504,20 @@ end subroutine get_albedo12m_netcdf
        startdate, date, QSUBRT,ZWATTABLRT,SMCRT,SUB_RESID,       &
        q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,CHRTOUT_GRID,  &
-       QBDRYRT, iocflag)
+       QBDRYRT    &
+#ifdef HYDRO_REALTIME
+       , iocflag &
+#endif
+       )
 
 !output the routing variables over routing grid.
     implicit none
 #include <netcdf.inc>
 
-    integer,                                  intent(in) :: igrid, iocflag
+    integer,                                  intent(in) :: igrid
+#ifdef HYDRO_REALTIME
+    integer,                                  intent(in) :: iocflag
+#endif
     integer,                                  intent(in) :: split_output_count
     integer,                                  intent(in) :: ixrt,jxrt
     real,                                     intent(in) :: dt
@@ -1762,7 +1769,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
 #ifdef HYDRO_REALTIME
-	if ( (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+	if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #endif
           iret = nf_def_var(ncid,"ZWATTABLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
           iret = nf_put_att_text(ncid,varid,'units',1,'m')
@@ -1952,7 +1959,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
 #ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+   if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #endif
 #ifdef MPP_LAND
           call write_IO_rt_real(ZWATTABLRT,xdumd)
@@ -1988,7 +1995,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
 #ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then 
+   if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then 
 #endif
 #ifdef MPP_LAND
           call write_IO_rt_real(QSTRMVOLRT,xdumd)
@@ -7693,7 +7700,7 @@ end subroutine mpp_output_chrt2
         iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
       endif
 #ifdef HYDRO_REALTIME
-      if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+      if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
 	iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
@@ -7703,14 +7710,14 @@ end subroutine mpp_output_chrt2
 
 #ifdef HYDRO_REALTIME
 	!-- NEW lateral inflow definition, var
-	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
 	        iret = nf_def_var(ncid, "QLateral", NF_FLOAT, 1, (/stationdim/), varid)
        		iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',10,'Runoff into channel from land and gw bucket')
 	endif
 
         !-- NEW velocity definition, var
-	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) .and. (iocflag .lt. 4) ) then
+	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
         	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
         	iret = nf_put_att_text(ncid,varid,'units',5,'meter / sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',11,'River Velocity')
@@ -7772,7 +7779,7 @@ end subroutine mpp_output_chrt2
            iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), hlink)
 	endif
 #ifdef HYDRO_REALTIME
-	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
 	      ! dummy value for now
               iret = nf_inq_varid(ncid,"head", varid)
               iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
@@ -7781,13 +7788,13 @@ end subroutine mpp_output_chrt2
 
 #ifdef HYDRO_REALTIME
         !-- write lateral inflow
-	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) ) then
+	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
 	        iret = nf_inq_varid(ncid,"QLateral", varid)
        		iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), QLateral)
         endif
 
         !-- write velocity (dummy value for now)
-	if ( (channel_option .ne. 3) .and. (iocflag .gt. 0) .and. (iocflag .lt. 4) ) then
+	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
         	iret = nf_inq_varid(ncid,"velocity", varid)
          	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
 	endif
