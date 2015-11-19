@@ -400,7 +400,7 @@ module module_NoahMP_hrldas_driver
   integer :: varind = 1
 #endif
   namelist /WRF_HYDRO_OFFLINE/ &
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ,
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
 #endif
   namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
