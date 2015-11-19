@@ -1344,7 +1344,6 @@ module module_NoahMP_hrldas_driver
                 varind = varind + 1
         endif
    end do
-   print *, IOCVARS
 #endif
 
    if(finemesh .ne. 0 ) then
