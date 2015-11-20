@@ -1157,12 +1157,25 @@ endif
 
 #ifdef WRF_HYDRO_NUDGING
      if(nlst_rt(did)%CHANRTSWCRT .ne. 0) then
+
+#ifdef MPP_LAND
+        if(my_id .eq. io_id) &
+#endif
         call cpu_time(startCpuTime)
         call init_stream_nudging
-        call cpu_time(endCpuTime)
-        call accum_nudging_time(startCpuTime, endCpuTime,'Init nudging')
-     end if
+
+#ifdef MPP_LAND
+        if(my_id .eq. io_id) then
 #endif
+           call cpu_time(endCpuTime)
+           call accum_nudging_time(startCpuTime, endCpuTime,'Init nudging')
+#ifdef MPP_LAND
+        end if
+#endif
+           
+        call flush(6)
+     end if
+#endif /* WRF_HYDRO_NUDGING */
 
 
 !    if (trim(nlst_rt(did)%restart_file) == "") then
@@ -1309,6 +1322,7 @@ end module module_HYDRO_drv
 #endif
         character(len=*) :: msg
         integer :: ierr
+        ierr = 1
       write(6,*) "The job is stoped due to the FATAL ERROR: ", trim(msg)
       call flush(6)
 #ifdef MPP_LAND

@@ -105,6 +105,7 @@ real, parameter :: oneHundred = 100.0000000000000
 #ifdef HYDRO_D
 print*,'Ndg: start read_timeslice_file'
 write(*,'("Ndg: timeSliceFile: ''", A, "''")') trim(timeSliceFile)
+call flush(6)
 #endif
 
 caller = 'read_timeslice_file'
@@ -151,6 +152,7 @@ endif
 
 #ifdef HYDRO_D
 print*,'Ndg: finish read_timeslice_file'  
+call flush(6)!
 #endif 
 
 end subroutine read_timeslice_file

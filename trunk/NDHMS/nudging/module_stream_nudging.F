@@ -49,8 +49,14 @@ end type obsStaticStructure
 ! Currently the dimensions of this are fixed to 10000 which should 
 ! work for the forseeable future. May want to consider some routine for 
 ! augmenting this size if necessary. 
-integer, parameter :: maxGageDim=18226
+integer, parameter :: maxGageDim=8000
 type(obsStaticStructure), dimension(maxGageDim) :: obsStaticStr 
+
+!! The number of up/down stream links which can be collected
+!! using R to solve which links are "neighboring". 
+!! This value applies to both directions, it's the number 
+!! of links per R.
+integer, parameter :: maxNeighLinksDim=5000
 
 !========================
 ! Node and gage collocation - For reach based routing, corresponds to the "gage" column
@@ -100,7 +106,7 @@ logical,            parameter :: filterObsToDom   = .TRUE.
 character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
-logical,            parameter :: sanityQcDischarge = .TRUE.
+logical,            parameter :: sanityQcDischarge = .FALSE.
 
 character(len=2) :: obsResolution    
 
@@ -292,8 +298,12 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
       end do
 
       if(nGagesDomain .gt. 0) then  
-         if(nGagesDomain .gt. maxGageDim) call &
-              hydro_stop('init_stream_nudging: nGagesDomain > hardcoded maxGageDim, increase it!')
+         if(nGagesDomain .gt. maxGageDim) then 
+            print*, 'Ndg: nGagesDomain: ', nGagesDomain
+            print*, 'Ndg: maxGageDim: ', maxGageDim
+            print*,' Ndg: The following issue often results from improper Route_Link.nc file'
+            call hydro_stop('init_stream_nudging: nGagesDomain > hardcoded maxGageDim, increase it!')
+         end if
 
          allocate(nodeGageStr%nodeId(nGagesDomain), nodeGageStr%usgsId(nGagesDomain))
          nodeGageStr%usgsId = pack(nodeGageTmp%usgsId, mask=nodeGageTmp%usgsId .ne. missingGage)
@@ -576,8 +586,8 @@ use module_date_utils_nudging, only: geth_newdate,            &
 implicit none
 
 integer,           intent(in) :: hydroDT ! the number of seconds of hydro advance from lsmTime
-
-integer :: ff, ii, tt
+!integer :: ff
+integer :: ii, tt
 character(len=19) :: hydroTime, obsHydroTime ! hydro model time and corresponding observation 
 character(len=19), dimension(nObsTimes) :: obsTimes ! obs times in the current window
 integer :: oldDiff, nShiftLeft
@@ -586,23 +596,8 @@ logical, allocatable, dimension(:) :: theMask
 integer, allocatable, dimension(:) :: whObsMiss
 
 integer :: nObsMiss
-
-integer, allocatable, dimension(:) :: streamCellObsCount
-character(len=256), dimension(60)  :: timeSliceFiles
 integer :: did=1  !! jlm: assuming did=1
-
-integer :: nWhParamsNow, ww, count, gg, rr, jj, gg0, nWhObsMiss
-integer, allocatable, dimension(:) :: regionInds, whParamsNow, usgsId
-real,    allocatable, dimension(:) :: R, G, tau
-integer :: whNodeGage, whNudgeParams,  allRegSize
-
-real,    allocatable, dimension(:,:) :: distsInR
-integer, allocatable, dimension(:,:) :: indsInR
-integer, allocatable, dimension(:) :: nDistsInR
-real, dimension(10000) :: dumDistsInR
-integer, dimension(10000) :: dumIndsInR
-integer :: dumNDistsInR
-real :: rReg
+integer ::  nWhObsMiss
 logical :: obsTimeStrAllocated
 
 #ifdef MPP_LAND 
@@ -611,14 +606,15 @@ integer :: nGages, nCellsInR, cc, nLinkAff, nStatic
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
-#endif /* HYDRO_D */
+#endif
 
-#ifdef HYDRO_D
+#ifdef HYDRO_D  /* !! JLM */
 #ifdef MPP_LAND 
 if(my_id .eq. io_id) &
 #endif
    print*,'Ndg: start setup_stream_nudging'
-#endif
+call flush(6)
+#endif  /* !! JLM */
 
 !#ifdef MPP_LAND - just do this section on all images. There is no IO.
 
@@ -653,31 +649,34 @@ call geth_newdate(hydroTime, lsmTime, hydroDT)
 
 ! Calculate the closest multiple of obsResolution to the hydroTime
 obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
-
+print*,'Ndg: JLM: obsHydroTime: ', obsHydroTime
 ! Now solve all of the observation times in the current nudging window.
 ! nObsTimes is set at init from maxTau and obsResolution. 
 ! These times correspond to the timestamps on the observation files, which 
 ! mark the center of the time period they represent with width obsResolution.
 do tt=1,nObsTimes
-   print*,"Ndg: ", (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt
+   print*,"Ndg: JLM dtThing: ", (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt
    call geth_newdate(obsTimes(tt), obsHydroTime,  &
                      !obsResolutionInt*(tt - (nObsTimes+1)/2 )*60)
                      (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt )
+   print*,'Ndg: JLM: obsTimes(tt),tt: ', obsTimes(tt), tt
 end do
 
 
 ! If this is the first setup, these are all blank. This is their init value.
 if(all(obsTimeStr(:)%time .eq. '')) obsTimeStr(:)%time = obsTimes
 
-!print*,'Ndg: hydroTime: ', hydroTime
-!print*,'Ndg: obsHydroTime: ', obsHydroTime
-!print*,'Ndg: obsTimes: ', obsTimes
-!print*,'Ndg: obsTimeStr: before obsTimeStr(:)%time: ', obsTimeStr(:)%time
+print*,'Ndg: hydroTime: ', hydroTime
+print*,'Ndg: obsHydroTime: ', obsHydroTime
+print*,'Ndg: obsTimes: ', obsTimes
+print*,'Ndg: obsTimeStr: before obsTimeStr(:)%time: ', obsTimeStr(:)%time
 
 
 ! If there are existing observations older than the first obsTime for this 
 ! nudging window, shift them left. This should just shift one position left 
 ! with each advance in time resolution.
+print*,'Ndg: JLM : obsTimes(1):', obsTimes(1)
+call flush(6)
 call geth_idts(obsTimeStr(1)%time, obsTimes(1), oldDiff)
 print*,"Ndg: olddiff:", oldDiff
 if(oldDiff .eq. 0) then 
@@ -706,7 +705,7 @@ endif
 if(nShiftLeft .gt. 0) then 
    ! here tt= nObsTimes
    do tt=nObsTimes-nShiftLeft+1,nObsTimes
-      obsTimeStr(tt)%time = ''
+      obsTimeStr(tt)%time = obsTimes(tt) !''  !! JLM is this a fix? why?
       obsTimeStr(tt)%updateTime = 'none'
       if(allocated(obsTimeStr(tt)%allCellInds)) deallocate(obsTimeStr(tt)%allCellInds)
       if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
@@ -803,15 +802,15 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
    end if ! my_id .eq. io_id  -OR-  my_id .eq. mod(ii,numprocs)
 
 #ifdef HYDRO_D
-   print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
-   print*,'Ndg: obstTimeStrAllocated: ', obsTimeStrAllocated
-   call flush(6)
    if(my_id .eq. io_id) then
+      print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
+      print*,'Ndg: obsTimeStrAllocated: ', obsTimeStrAllocated
+      call flush(6)
       call nudging_timer(endCodeTime)
       call accum_nudging_time(startCodeTime, endCodeTime, &
            'timeslice files io_id', .false.)
+      call nudging_timer(startCodeTime)
    endif
-   if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 #endif /* HYDRO_D */
 
    ! broadcast
@@ -839,10 +838,9 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       call mpp_land_bcast_real_1d(obsTimeStr(tt)%obsStr(:)%obsDischarge)
    end if
 
-print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
-
 #ifdef HYDRO_D
    if(my_id .eq. io_id) then
+      !print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
       call nudging_timer(endCodeTime)
       call accum_nudging_time(startCodeTime, endCodeTime, &
            'Bcast timeslice files', .false.)
@@ -1219,17 +1217,18 @@ integer, intent(in) :: timeIndex
 integer :: nObs, nObsStaticPrev, count, oo, cc, whParams, ii
 integer :: staticInd, nCellsInR
 logical :: newStaticCount
-logical, allocatable, dimension(:) :: whCalcStatic, theMask
-integer, allocatable, dimension(:) :: whStaticInd, whObsInd
-integer, dimension(maxGageDim) :: upAllInds,  downAllInds   ! the collected inds/links
-real,    dimension(maxGageDim) :: upAllDists, downAllDists  ! distance at each collected ind
-integer                        :: upLastInd,  downLastInd   ! number of inds/links collected so far
+logical, allocatable, dimension(:)   :: whCalcStatic, theMask
+integer, allocatable, dimension(:)   :: whStaticInd, whObsInd
+integer, dimension(maxNeighLinksDim) :: upAllInds,  downAllInds   ! the collected inds/links
+real,    dimension(maxNeighLinksDim) :: upAllDists, downAllDists  ! distance at each collected ind
+integer                              :: upLastInd,  downLastInd   ! number of inds/links collected so far
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
 
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 print*,'Ndg: start obs_static_to_struct'
+call flush(6)
 #endif /* HYDRO_D */
 
 ! number of obs at this time
@@ -1490,8 +1489,8 @@ type(netwkReExpStructure), intent(in) :: direction ! up/down NtwkStr with tarver
 integer, intent(in)    :: startInd  ! the starting link
 real,    intent(in)    :: startDist ! distance at the starting node (for this iteration)
 real,    intent(in)    :: radius    ! in meteres
-integer, intent(inout), dimension(10000) :: allInds   ! the collected inds/links
-real,    intent(inout), dimension(10000) :: allDists  ! the distance at each collected ind
+integer, intent(inout), dimension(maxNeighLinksDim) :: allInds   ! the collected inds/links
+real,    intent(inout), dimension(maxNeighLinksDim) :: allDists  ! the distance at each collected ind
 integer, intent(inout) :: lastInd   ! the number of inds/links collected so far.
 
 ! whGo is only > 1 upstream with a current max of 17 in NHD+
