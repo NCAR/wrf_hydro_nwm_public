@@ -1542,7 +1542,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifndef HYDRO_REALTIME
        , accLndRunOff, accQLateral, accStrmvolrt, accBucket  &
 #endif
+#ifdef HYDRO_REALTIME
        , QLateral &
+#endif
        ,nsize , OVRTSWCRT, SUBRTSWCRT      )
 
        use module_UDMAP, only: LNUMRSL, LUDRSL

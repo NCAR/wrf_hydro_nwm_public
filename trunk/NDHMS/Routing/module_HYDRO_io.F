@@ -1673,7 +1673,7 @@ end subroutine get_albedo12m_netcdf
      enddo
 
        
-
+#ifndef HYDRO_REALTIME
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
       iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
@@ -1684,7 +1684,7 @@ end subroutine get_albedo12m_netcdf
       iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
      end if  !endif hires_georef 
       iret = nf_close(ncstatic)
-
+#endif
 
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
@@ -1710,13 +1710,16 @@ end subroutine get_albedo12m_netcdf
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
        iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
+#ifndef HYDRO_REALTIME
        iret = nf_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
+#endif
 
 !--- define variables
 !     !- time definition, timeObs
          iret = nf_def_var(ncid,"time",NF_INT, 1, (/dimid_times/), varid)
          iret = nf_put_att_text(ncid,varid,'units',34,sec_since_date)
 
+#ifndef HYDRO_REALTIME
        !- x-coordinate in cartesian system
         iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
@@ -1729,7 +1732,6 @@ end subroutine get_albedo12m_netcdf
           iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
           iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
 
-#ifndef HYDRO_REALTIME
        !- LATITUDE
         iret = nf_def_var(ncid,"LATITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',8,'LATITUDE')
@@ -1792,13 +1794,6 @@ end subroutine get_albedo12m_netcdf
 !       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
 !       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
-       iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',14,'channel inflow')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
-
        iret = nf_def_var(ncid,"SFCHEADSUBRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
        iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
@@ -1807,10 +1802,17 @@ end subroutine get_albedo12m_netcdf
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
 #ifdef HYDRO_REALTIME
-	endif
+        endif
 #endif
 
-#ifndef HYDRO_REALTIME
+#ifndef HYDRO_REALTIME   
+       iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
+       iret = nf_put_att_text(ncid,varid,'long_name',14,'channel inflow')
+       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+
 !      iret = nf_def_var(ncid,"SOXRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
 !      iret = nf_put_att_text(ncid,varid,'units',1,'1')
 !      iret = nf_put_att_text(ncid,varid,'long_name',7,'slope x')
@@ -1834,7 +1836,6 @@ end subroutine get_albedo12m_netcdf
        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
-#endif
 
 !-- place projection information
      if(hires_flag.eq.1) then !if/then hires_georef
@@ -1846,6 +1847,7 @@ end subroutine get_albedo12m_netcdf
       iret = nf_put_att_real(ncid,varid,'false_northing',NF_FLOAT,1,fn)
       iret = nf_put_att_real(ncid,varid,'standard_parallel',NF_FLOAT,2,sp)
      end if   !endif hires_georef
+#endif
 
 !      iret = nf_def_var(ncid,"Date",   NF_CHAR,  2, (/dimid_datelen,dimid_times/),     varid)
 
@@ -1864,12 +1866,14 @@ end subroutine get_albedo12m_netcdf
 
       iret = nf_enddef(ncid)
 
+#ifndef HYDRO_REALTIME
 !!-- write latitude and longitude locations
          iret = nf_inq_varid(ncid,"x", varid)
          iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
 
          iret = nf_inq_varid(ncid,"y", varid)
          iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
+#endif
 
 #ifdef MPP_LAND
     endif
@@ -1992,11 +1996,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
      endif
 #endif
-#endif
 
-#ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then 
-#endif
 #ifdef MPP_LAND
           call write_IO_rt_real(QSTRMVOLRT,xdumd)
 #else
@@ -2010,8 +2010,11 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
      endif
 #endif
+#endif
  
-
+#ifdef HYDRO_REALTIME
+   if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+#endif
 #ifdef MPP_LAND
           call write_IO_rt_real(SFCHEADSUBRT,xdumd)
 #else
@@ -7717,9 +7720,9 @@ end subroutine mpp_output_chrt2
 	endif
 
         !-- NEW velocity definition, var
-	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+	if ( (channel_option .ne. 3) .and. ((iocflag .eq. 2) .or. (iocflag .eq. 3)) ) then
         	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
-        	iret = nf_put_att_text(ncid,varid,'units',5,'meter / sec')
+        	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',11,'River Velocity')
 	endif
 #endif
