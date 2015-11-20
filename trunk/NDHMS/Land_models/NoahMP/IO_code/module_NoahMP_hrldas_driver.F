@@ -25,7 +25,6 @@ module module_NoahMP_hrldas_driver
    character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
-   integer :: ioc_flag
    integer  :: finemesh, finemesh_factor
  ! INOUT (new accumulator variables for output water balance) 
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
@@ -33,8 +32,12 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
 #ifdef HYDRO_REALTIME
-   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT1 ! top layer soil saturation [fraction]
+   integer :: iocflag=0
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K]
+   character(len=15), DIMENSION(30)        ::  IOCVARS
 #endif
 #endif
 
@@ -388,12 +391,16 @@ module module_NoahMP_hrldas_driver
   integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
   integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
-            
 
 #ifdef WRF_HYDRO
   character(len=19)  :: tmpdate
+#ifdef HYDRO_REALTIME
+  character(len=500) :: VARLIST
+  integer :: brkflag = 0
+  integer :: varind = 1
+#endif
   namelist /WRF_HYDRO_OFFLINE/ &
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, ioc_flag
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
 #endif
   namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
@@ -480,6 +487,8 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = temp_time_scheme_option
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
+
+
 !---------------------------------------------------------------------
 !  NAMELIST end
 !---------------------------------------------------------------------
@@ -848,8 +857,10 @@ module module_NoahMP_hrldas_driver
    ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
    ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
 #ifdef HYDRO_REALTIME
-   ALLOCATE ( SOILSAT1  (XSTART:XEND,YSTART:YEND) )  ! top layer soil saturation [fraction]
+   ALLOCATE ( SOILSAT_TOP  (XSTART:XEND,YSTART:YEND) )  ! top 2 layer soil saturation [fraction]
    ALLOCATE ( SOILSAT  (XSTART:XEND,YSTART:YEND) )  ! column integrated soil saturation [fraction]
+   ALLOCATE ( SOILICE  (XSTART:XEND,YSTART:YEND) )  ! fraction of soil moisture that is ice [fraction]
+   ALLOCATE ( SNOWT_AVG  (XSTART:XEND,YSTART:YEND) )  ! snowpack average temperature (by layer mass) [K]
 #endif
  ! Initialize accumulator variables to 0
    ACCPRCP = 0.0
@@ -1301,6 +1312,40 @@ module module_NoahMP_hrldas_driver
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
 
+#ifdef HYDRO_REALTIME
+   call get_iocflag(1, iocflag)
+
+   !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
+   if (iocflag .eq. 1) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+   endif
+   if (iocflag .eq. 2) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+   endif
+   if (iocflag .eq. 3) then 
+        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET'
+   endif
+   if (iocflag .eq. 4) then 
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
+   endif
+   if (iocflag .eq. 0) then
+	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
+   endif
+
+   !!--- Parse into character array. Constructor not valid with uneven 
+   !!--- strings in f90 so using brute force. 
+   do while (brkflag .eq. 0)
+        if (index(VARLIST, ',') .eq. 0) then 
+                IOCVARS(varind) = adjustl(VARLIST)
+                brkflag = 1
+        else 
+                IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
+                VARLIST = VARLIST((index(VARLIST, ',')+1):)
+                varind = varind + 1
+        endif
+   end do
+#endif
+
    if(finemesh .ne. 0 ) then
        if(restart_flag) then
           NTIME_out =  10
@@ -1495,7 +1540,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
 #ifdef HYDRO_REALTIME
-                , SOILSAT1=SOILSAT1, SOILSAT=SOILSAT      &
+                , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
 #endif
                 )
@@ -1615,10 +1660,8 @@ subroutine  ldas_output()
         ! Properties - Assigned or predicted
               call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
               call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
-#endif
               call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
               call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"                     )
-#ifndef HYDRO_REALTIME
               call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
         ! Forcing
               call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
@@ -1627,40 +1670,29 @@ subroutine  ldas_output()
               call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
         ! Grid energy budget terms
               call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
-#endif
               call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
               call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
               call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
               call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
               call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
-#ifndef HYDRO_REALTIME
               call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
               call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
-#endif
               call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
-#ifndef HYDRO_REALTIME
               call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
-#endif
         ! Grid water budget terms - in addition to above
               call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
               call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
               call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
               call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
-#ifndef HYDRO_REALTIME
               call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
               call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
               call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
-#endif
 #ifdef WRF_HYDRO
               call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"                    )
               call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"                    )
               call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"                    )
               call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
 #endif
-#ifdef HYDRO_REALTIME
-	      call add_to_output(ACCECAN+ACCEDIR+ACCETRAN, "ACCET", "Accumulated total ET"       , "mm"                    )
-#endif
-#ifndef HYDRO_REALTIME
         ! Additional needed to close the canopy energy budget
               call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
               call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
@@ -1679,9 +1711,7 @@ subroutine  ldas_output()
               call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
               call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
         ! Above-soil temperatures
-#endif
               call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
-#ifndef HYDRO_REALTIME
               call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
               call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
               call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
@@ -1697,30 +1727,19 @@ subroutine  ldas_output()
         ! Snow and soil - 3D terms
               call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
               call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
-#endif
               call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
               call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
-#ifndef HYDRO_REALTIME
               call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
-#endif
               call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
               call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
-#ifdef HYDRO_REALTIME
-              call add_to_output((SMOIS-SH2O)/SMOIS, "SOILICE", "fraction of soil miosture that is ice", "fraction" , "SOIL")
-              call add_to_output(SOILSAT1   , "SOILSAT1" , "fraction of soil saturation, top layer", "fraction"             )
-              call add_to_output(SOILSAT    , "SOILSAT"  , "fraction of soil saturation, column integrated", "fraction"     )
-#endif
         ! Snow - 2D terms
               call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
               call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
-#ifndef HYDRO_REALTIME
               call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
-#endif
               call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
               call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
               call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
               call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
-#ifndef HYDRO_REALTIME
         ! Exchange coefficients
               call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
               call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
@@ -1751,6 +1770,131 @@ subroutine  ldas_output()
               call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"               )
               call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"               )
 	    ENDIF
+#endif
+
+!! ------- HYDRO REALTIME OPTIONS -----------------------
+
+#ifdef HYDRO_REALTIME
+        ! Properties - Assigned or predicted
+              call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category" , IOCVARS             )    
+              call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category" , IOCVARS             )    
+              call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"      , IOCVARS             )    
+              call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"        , IOCVARS             )    
+              call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"        , IOCVARS             )    
+        ! Forcing
+              call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"  , IOCVARS             )    
+              call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"               , "W m{-2}"  , IOCVARS             )    
+              call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"   , IOCVARS             )    
+              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"  , IOCVARS      )    
+        ! Grid energy budget terms
+              call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""           , IOCVARS 	    )    
+              call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"  , IOCVARS             )     
+              call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"  , IOCVARS             )    
+              call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"  , IOCVARS             )    
+              call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"  , IOCVARS             )    
+              call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"    , IOCVARS             )    
+              call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}" , IOCVARS       )    
+              call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}" , IOCVARS       )    
+              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"            , IOCVARS       )    
+              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}" , IOCVARS       )    
+        ! Grid water budget terms - in addition to above
+              call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"  , IOCVARS                  )    
+              call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"  , IOCVARS                  )    
+              call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"        , IOCVARS            )    
+              call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"        , IOCVARS            )    
+              call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"         , IOCVARS            )    
+              call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"  , IOCVARS            )    
+              call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"  , IOCVARS            )    
+#ifdef WRF_HYDRO
+              call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"        , IOCVARS            )    
+              call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"        , IOCVARS            )    
+              call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"        , IOCVARS            )    
+              call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"        , IOCVARS            )    
+#endif
+        ! Additional needed to close the canopy energy budget
+              call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}" , IOCVARS   )    
+              call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}" , IOCVARS            )    
+              call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat"                       , "W m{-2}" , IOCVARS            )    
+              call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad"                      , "W m{-2}" , IOCVARS            )    
+              call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat"                   , "W m{-2}" , IOCVARS            )    
+        ! Additional needed to close the under canopy ground energy budget
+              call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad"                      , "W m{-2}" , IOCVARS            )    
+              call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat"                   , "W m{-2}" , IOCVARS            )    
+              call add_to_output(EVGXY      , "EVG"     , "Ground evap heat"                       , "W m{-2}" , IOCVARS            )    
+              call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}" , IOCVARS            )    
+        ! Needed to close the bare ground energy budget
+              call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}" , IOCVARS       )
+              call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}" , IOCVARS            )
+              call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}" , IOCVARS            )
+              call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}" , IOCVARS            )
+              call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}" , IOCVARS            )
+        ! Above-soil temperatures
+              call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"         , IOCVARS            )
+              call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"         , IOCVARS            )
+              call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"         , IOCVARS            )
+              call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"         , IOCVARS            )
+              call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"       , IOCVARS            )
+              call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"       , IOCVARS            )
+              call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"       , IOCVARS            )
+              call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare"                       , "K"       , IOCVARS            )
+        ! Above-soil moisture
+              call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"   , IOCVARS            )
+              call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare"                   , "kg/kg"   , IOCVARS            )
+              call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"        , IOCVARS            )
+              call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"  , IOCVARS            )
+        ! Snow and soil - 3D terms
+              call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW"  , IOCVARS)
+              call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW", IOCVARS)
+              call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW", IOCVARS)
+              call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL", IOCVARS)
+              call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL", IOCVARS)
+              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW", IOCVARS)
+              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL", IOCVARS)
+        ! Snow - 2D terms
+              call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"          , IOCVARS           )
+              call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"   , IOCVARS           )
+              call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"   , IOCVARS           )
+              call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"      , IOCVARS           )
+              call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""         , IOCVARS           )
+              call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"       , IOCVARS           )
+              call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm" , IOCVARS           )
+        ! Exchange coefficients
+              call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""           , IOCVARS           )
+              call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""           , IOCVARS           )
+              call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"  , IOCVARS           )
+              call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"  , IOCVARS           )
+              call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"  , IOCVARS           )
+              call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"  , IOCVARS           )
+              call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"  , IOCVARS           )
+              call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"  , IOCVARS           )
+        ! Carbon allocation model
+              call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass"                            , "g m{-2}"    , IOCVARS           )
+              call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots"                   , "g m{-2}"    , IOCVARS           )
+              call add_to_output(STMASSXY   , "STMASS"  , "Stem mass"                            , "g m{-2}"    , IOCVARS           )
+              call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"    , IOCVARS           )
+              call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"    , IOCVARS           )
+              call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"    , IOCVARS           )
+              call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2" , IOCVARS  )
+              call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"   , IOCVARS  )
+              call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"   , IOCVARS  )
+              call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis"                   , "umol CO@ m{-2} s{-1}", IOCVARS)
+              call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"  , IOCVARS           )
+	! New realtime summary variables
+              call add_to_output(ACCECAN+ACCEDIR+ACCETRAN, "ACCET", "Accumulated total ET"       , "mm"        , IOCVARS            )    
+              call add_to_output(CANLIQXY+CANICEXY, "CANWAT", "Total canopy water (liquid + ice)", "mm"        , IOCVARS            )    
+              call add_to_output(SOILICE    , "SOILICE", "fraction of soil miosture that is ice", "fraction"                , IOCVARS)
+              call add_to_output(SOILSAT_TOP, "SOILSAT_TOP" , "fraction of soil saturation, top 2 layers", "fraction"       , IOCVARS)
+              call add_to_output(SOILSAT    , "SOILSAT"  , "fraction of soil saturation, column integrated", "fraction"     , IOCVARS)
+              call add_to_output(SNOWT_AVG  , "SNOWT_AVG", "average snow temperature (by layer mass)",  "K"                 , IOCVARS)
+
+        ! Carbon allocation model
+            IF(RUNOFF_OPTION == 5) THEN
+              call add_to_output(SMCWTDXY   , "SMCWTD"   , "Leaf mass"                            , "g m{-2}"   , IOCVARS            )
+              call add_to_output(RECHXY     , "RECH"     , "Mass of fine roots"                   , "g m{-2}"   , IOCVARS            )
+              call add_to_output(QRFSXY     , "QRFS"     , "Stem mass"                            , "g m{-2}"   , IOCVARS            )
+              call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"   , IOCVARS            )
+              call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"   , IOCVARS            )
+            ENDIF
 #endif
 
            enddo DEFINE_MODE_LOOP

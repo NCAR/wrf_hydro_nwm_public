@@ -2143,116 +2143,173 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 #ifdef MPP_LAND
-  subroutine add_to_output_2d_float_mpp ( array, name, description, units )
+  subroutine add_to_output_2d_float_mpp ( array, name, description, units, varlist )
     implicit none
     real, dimension(:,:), intent(in) :: array
     real, dimension(global_nx,global_ny) :: garray
     character(len=*), intent(in) :: name, description, units
-    call write_io_real(array,garray)
-    if(my_id .eq. io_id) then
-         call add_to_output_2d_float( garray, name, description, units )
+    character(len=15), dimension(30), optional :: varlist
+    character(len=15) :: namestretch
+    logical :: vartest
+    if (present(varlist)) then
+	namestretch = name
+	vartest = ANY(varlist .eq. namestretch)
+    else 
+	vartest = .TRUE.
+    endif
+    if ( vartest ) then
+    	call write_io_real(array,garray)
+    	if(my_id .eq. io_id) then
+        	 call add_to_output_2d_float( garray, name, description, units, varlist )
+    	endif
     endif
   end subroutine add_to_output_2d_float_mpp
 
-  subroutine add_to_output_2d_integer_mpp ( array, name, description, units )
+  subroutine add_to_output_2d_integer_mpp ( array, name, description, units, varlist )
     implicit none
     integer, dimension(:,:), intent(in) :: array
     character(len=*), intent(in) :: name, description, units
     integer, dimension(global_nx,global_ny) :: garray
-    call write_io_int(array,garray)
-    if(my_id .eq. io_id) then
-         call add_to_output_2d_integer( garray, name, description, units )
+    character(len=15), dimension(30), optional :: varlist
+    character(len=15) :: namestretch
+    logical :: vartest
+    if (present(varlist)) then 
+        namestretch = name 
+        vartest = ANY(varlist .eq. namestretch)
+    else 
+        vartest = .TRUE.
+    endif
+    if ( vartest ) then 
+    	call write_io_int(array,garray)
+    	if(my_id .eq. io_id) then
+        	 call add_to_output_2d_integer( garray, name, description, units, varlist )
+	endif
     endif
   end subroutine add_to_output_2d_integer_mpp
 
-  subroutine add_to_output_3d_mpp ( array, name, description, units, snow_or_soil )
+  subroutine add_to_output_3d_mpp ( array, name, description, units, snow_or_soil, varlist )
     implicit none
     real, dimension(:,:,:), intent(in) :: array
     character(len=*), intent(in) :: name, description, units
     character(len=4), intent(in) :: snow_or_soil
     integer :: k, klevel
-
     real, allocatable, dimension(:,:,:) :: garray
-    klevel = size(array,2)
-
-    allocate(garray(global_nx,klevel,global_ny))
-
-    call write_io_real3d(array,garray,klevel)
-    if(my_id .eq. io_id) then
-       call add_to_output_3d( garray, name, description, units, snow_or_soil )
+    character(len=15), dimension(30), optional :: varlist
+    character(len=15) :: namestretch
+    logical :: vartest
+    if (present(varlist)) then
+        namestretch = name 
+        vartest = ANY(varlist .eq. namestretch)
+    else 
+        vartest = .TRUE.
     endif
-    deallocate(garray)
-
+    if ( vartest ) then
+	klevel = size(array,2)
+    	allocate(garray(global_nx,klevel,global_ny))
+    	call write_io_real3d(array,garray,klevel)
+    	if(my_id .eq. io_id) then
+       		call add_to_output_3d( garray, name, description, units, snow_or_soil )
+    	endif
+    	deallocate(garray)
+    endif
   end subroutine add_to_output_3d_mpp
 #endif
 
-  subroutine add_to_output_2d_float ( array, name, description, units )
+  subroutine add_to_output_2d_float ( array, name, description, units, varlist )
     implicit none
     real, dimension(:,:), intent(in) :: array
     character(len=*), intent(in) :: name, description, units
     integer :: ixpar, jxpar
-
-    if (define_mode_remember) then
-       call make_var_att_2d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
-            NF90_FLOAT , trim(name) , trim(description) , trim(units) )
+    character(len=15), dimension(30), optional :: varlist
+    character(len=15) :: namestretch
+    logical :: vartest
+    if (present(varlist)) then
+        namestretch = name 
+        vartest = ANY(varlist .eq. namestretch)
     else 
-       ixpar = size(array,1)
-       jxpar = size(array,2)
-       call put_var_2d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
-            ixpar , jxpar , xstartpar_remember , trim(name) , array, .false. )
+        vartest = .TRUE.
+    endif
+    if ( vartest ) then
+    	if (define_mode_remember) then
+       		call make_var_att_2d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
+            		NF90_FLOAT , trim(name) , trim(description) , trim(units) )
+    	else 
+       		ixpar = size(array,1)
+       		jxpar = size(array,2)
+       		call put_var_2d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
+            		ixpar , jxpar , xstartpar_remember , trim(name) , array, .false. )
+    	endif
     endif
   end subroutine add_to_output_2d_float
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine add_to_output_2d_integer ( array, name, description, units )
+  subroutine add_to_output_2d_integer ( array, name, description, units, varlist )
     implicit none
     integer, dimension(:,:), intent(in) :: array
     character(len=*), intent(in) :: name, description, units
     integer :: ixpar, jxpar
-
-    if (define_mode_remember) then
-       call make_var_att_2d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
-            NF90_INT , trim(name) , trim(description) , trim(units) )
-    else
-       ixpar = size(array,1)
-       jxpar = size(array,2)
-       call put_var_int (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
-            ixpar , jxpar , xstartpar_remember , trim(name) , array )
+    character(len=15), dimension(30), optional :: varlist
+    character(len=15) :: namestretch
+    logical :: vartest
+    if (present(varlist)) then
+        namestretch = name 
+        vartest = ANY(varlist .eq. namestretch)
+    else 
+        vartest = .TRUE.
+    endif
+    if ( vartest ) then
+    	if (define_mode_remember) then
+       		call make_var_att_2d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
+            		NF90_INT , trim(name) , trim(description) , trim(units) )
+    	else
+       		ixpar = size(array,1)
+       		jxpar = size(array,2)
+       		call put_var_int (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
+            		ixpar , jxpar , xstartpar_remember , trim(name) , array )
+    	endif
     endif
   end subroutine add_to_output_2d_integer
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-  subroutine add_to_output_3d ( array, name, description, units, snow_or_soil )
+  subroutine add_to_output_3d ( array, name, description, units, snow_or_soil, varlist )
     implicit none
     real, dimension(:,:,:), intent(in) :: array
     character(len=*), intent(in) :: name, description, units
     character(len=4), intent(in) :: snow_or_soil
     integer :: ixpar, jxpar, kxpar
     integer :: zdimid
-
-    if (define_mode_remember) then
-       if (snow_or_soil == "SOIL") then
-          zdimid = dimid_layers_remember
-       elseif (snow_or_soil == "SNOW") then
-          zdimid = dimid_snow_layers_remember
-       else
-          write(*,'("SNOW_OR_SOIL unrecognized: ", A)') adjustl(trim(snow_or_soil))
-          stop "SNOW_OR_SOIL"
-       endif
-       call make_var_att_3d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
-            NF90_FLOAT , zdimid, trim(name) , trim(description) , trim(units) )
+    character(len=15), dimension(30), optional :: varlist
+    character(len=15) :: namestretch
+    logical :: vartest
+    if (present(varlist)) then
+        namestretch = name 
+        vartest = ANY(varlist .eq. namestretch)
     else 
-
-       ixpar = size(array,1)
-       kxpar = size(array,2)
-       jxpar = size(array,3)
-
-       call put_var_3d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
-            ixpar , jxpar , xstartpar_remember , kxpar, trim(name) , array )
+        vartest = .TRUE.
+    endif
+    if ( vartest ) then
+    	if (define_mode_remember) then
+       		if (snow_or_soil == "SOIL") then
+          		zdimid = dimid_layers_remember
+       		elseif (snow_or_soil == "SNOW") then
+          		zdimid = dimid_snow_layers_remember
+       		else
+          		write(*,'("SNOW_OR_SOIL unrecognized: ", A)') adjustl(trim(snow_or_soil))
+          		stop "SNOW_OR_SOIL"
+       		endif
+       		call make_var_att_3d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
+            		NF90_FLOAT , zdimid, trim(name) , trim(description) , trim(units) )
+    	else 
+       		ixpar = size(array,1)
+       		kxpar = size(array,2)
+       		jxpar = size(array,3)
+       		call put_var_3d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
+            		ixpar , jxpar , xstartpar_remember , kxpar, trim(name) , array )
+    	endif
     endif
   end subroutine add_to_output_3d
 

@@ -1542,6 +1542,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifndef HYDRO_REALTIME
        , accLndRunOff, accQLateral, accStrmvolrt, accBucket  &
 #endif
+#ifdef HYDRO_REALTIME
+       , QLateral &
+#endif
        ,nsize , OVRTSWCRT, SUBRTSWCRT      )
 
        use module_UDMAP, only: LNUMRSL, LUDRSL
@@ -1805,66 +1808,66 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif WRF_HYDRO_NUDGING
 
 !----------  route order 1 reaches which have no upstream inflow
-        do k=1, NLINKSL
-           if (ORDER(k) .eq. 1) then  !-- first order stream has no headflow
-
-
-              if(TYPEL(k) .eq. 1) then    !-- level pool route of reservoir
-                  !CALL LEVELPOOL(1,0.0, 0.0, qd, QLINK(k,2), QLateral(k), &
-                  ! DT, RESHT(k), HRZAREA(k), LAKEMAXH(k), &
-                  ! WEIRC(k), WEIRL(k), ORIFICEE(i), ORIFICEC(k), ORIFICEA(k) )
-              elseif (channel_option .eq. 1) then
-                   Km  = MUSK(k)
-                   X   = MUSX(k)
-                   QLINK(k,2) = MUSKING(k,0.0, QLateral(k), QLINK(k,1), DTRT_CH, Km, X) !--current outflow
-              elseif (channel_option .eq. 2) then !-- upstream is assumed constant initial condition
-                   QLINK(k,2) = MUSKINGCUNGE(k,0.0,0.0,QLINK(k,1), &
-                         QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
-                         MannN(k), ChSSLP(k), Bw(k))
-              else
-#ifdef HYDRO_D
-                  print *, "No channel option selected"
-                  call hydro_stop("drive_CHANNEL") 
-#endif
-              endif
-
-#ifdef WRF_HYDRO_NUDGING
-              if(nudgeWAdvance) then
-
-#ifdef HYDRO_D
-#ifdef MPP_LAND
-                 if(my_id .eq. io_id) &
-#endif MPP_LAND
-                 call nudging_timer(startCodeTimeAcc)
-#endif HYDRO_D
-
-                 ! For MPP_LAND, k is transformed to appropriate (non-image index) in nudge_term_link
-                 theNudge = nudge_term_link(k, int(nt*dtrt_ch), g_qlink) !qLink)
-                 QLINK(k,2) =  QLINK(k,2) + theNudge
-
-#ifdef HYDRO_D                      
-#ifdef MPP_LAND
-                 if(linkls_s(my_id+1)+k-1.eq.checkInd) &
-                      print*, checkInd, ': the O1 nudge: ', theNudge
-#else
-                 if(k.eq.checkInd) print*,k, ': the O1 nudge: ', theNudge
-#endif MPP_LAND
-
-#ifdef MPP_LAND
-                 if(my_id .eq. io_id) then
-#endif MPP_LAND
-                    call nudging_timer(endCodeTimeAcc)
-                    call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'Nudge wAdv O1')
-#ifdef MPP_LAND
-                 endif
-#endif MPP_LAND
-#endif HYDRO_D
-
-              endif
-#endif WRF_HYDRO_NUDGING
-
-           endif
-        end do
+!        do k=1, NLINKSL
+!           if (ORDER(k) .eq. 1) then  !-- first order stream has no headflow
+!
+!
+!              if(TYPEL(k) .eq. 1) then    !-- level pool route of reservoir
+!                  !CALL LEVELPOOL(1,0.0, 0.0, qd, QLINK(k,2), QLateral(k), &
+!                  ! DT, RESHT(k), HRZAREA(k), LAKEMAXH(k), &
+!                  ! WEIRC(k), WEIRL(k), ORIFICEE(i), ORIFICEC(k), ORIFICEA(k) )
+!              elseif (channel_option .eq. 1) then
+!                   Km  = MUSK(k)
+!                   X   = MUSX(k)
+!                   QLINK(k,2) = MUSKING(k,0.0, QLateral(k), QLINK(k,1), DTRT_CH, Km, X) !--current outflow
+!              elseif (channel_option .eq. 2) then !-- upstream is assumed constant initial condition
+!                   QLINK(k,2) = MUSKINGCUNGE(k,0.0,0.0,QLINK(k,1), &
+!                         QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
+!                         MannN(k), ChSSLP(k), Bw(k))
+!              else
+!#ifdef HYDRO_D
+!                  print *, "No channel option selected"
+!                  call hydro_stop("drive_CHANNEL") 
+!#endif
+!              endif
+!
+!#ifdef WRF_HYDRO_NUDGING
+!              if(nudgeWAdvance) then
+!
+!#ifdef HYDRO_D
+!#ifdef MPP_LAND
+!                 if(my_id .eq. io_id) &
+!#endif MPP_LAND
+!                 call nudging_timer(startCodeTimeAcc)
+!#endif HYDRO_D
+!
+!                 ! For MPP_LAND, k is transformed to appropriate (non-image index) in nudge_term_link
+!                 theNudge = nudge_term_link(k, int(nt*dtrt_ch), g_qlink) !qLink)
+!                 QLINK(k,2) =  QLINK(k,2) + theNudge
+!
+!#ifdef HYDRO_D                      
+!#ifdef MPP_LAND
+!                 if(linkls_s(my_id+1)+k-1.eq.checkInd) &
+!                      print*, checkInd, ': the O1 nudge: ', theNudge
+!#else
+!                 if(k.eq.checkInd) print*,k, ': the O1 nudge: ', theNudge
+!#endif MPP_LAND
+!
+!#ifdef MPP_LAND
+!                 if(my_id .eq. io_id) then
+!#endif MPP_LAND
+!                    call nudging_timer(endCodeTimeAcc)
+!                    call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'Nudge wAdv O1')
+!#ifdef MPP_LAND
+!                 endif
+!#endif MPP_LAND
+!#endif HYDRO_D
+!
+!              endif
+!#endif WRF_HYDRO_NUDGING
+!
+!           endif
+!        end do
 
 #ifdef MPP_LAND
 
@@ -1876,7 +1879,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
        tmpQlink = 0
        do k = 1,NLINKSL
-          if (ORDER(k) .gt. 1 ) then  !-- exclude first order stream 
+!DY order1fix          if (ORDER(k) .gt. 1 ) then  !-- exclude first order stream 
              Quc  = 0
              Qup  = 0
 
@@ -1966,7 +1969,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                    endif
 #endif WRF_HYDRO_NUDGING
 
-            endif !!! order(1) .ne. 1
+!            endif !!! order(1) .ne. 1
          end do       !--k links
 
           do k = 1, NLINKSL

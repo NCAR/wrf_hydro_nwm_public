@@ -132,6 +132,8 @@
 #ifndef HYDRO_REALTIME
 !!! accumulated variables for reach beased rt
   REAL, allocatable, DIMENSION(:)    :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
+#else
+  REAL, allocatable, DIMENSION(:)    :: QLateral
 #endif
 
 #ifdef MPP_LAND

@@ -223,7 +223,11 @@ module module_HYDRO_drv
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                 RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                RT_DOMAIN(did)%QBDRYRT )
+                RT_DOMAIN(did)%QBDRYRT &
+#ifdef HYDRO_REALTIME
+		, nlst_rt(did)%iocflag &
+#endif
+		 )
 
 
 
@@ -290,8 +294,11 @@ module module_HYDRO_drv
                      RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
                      RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                     rt_domain(did)%linkid                                      &
-                   )
+                     rt_domain(did)%linkid                                     &
+#ifdef HYDRO_REALTIME
+		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
+#endif
+		     )
                  endif
 
               endif
@@ -717,6 +724,9 @@ module module_HYDRO_drv
 #ifndef HYDRO_REALTIME
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
 #endif
+#ifdef HYDRO_REALTIME
+       , rt_domain(did)%QLateral &
+#endif
        , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT)
 else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
@@ -886,7 +896,7 @@ endif
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
                       call hydro_stop("aggregateDomain")
                     END IF
-                    IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LE.0.) THEN
+                    IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LT.0.) THEN
                       print *, "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
                       print *, "Error negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)

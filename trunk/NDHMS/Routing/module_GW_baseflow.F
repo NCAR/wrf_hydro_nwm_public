@@ -148,15 +148,18 @@ contains
 !DJG...Estimation of bucket 'overflow' (qout_spill) if/when bucket gets filled...
                qout_spill = 0.
                z_gw_spill = 0.
-               if (z_gwsubbas(bas).gt.z_mx(bas)) then  !If/then for bucket overflow case...
 
-!yw  added by Wei Yu
-                    if(z_mx(bas) .gt. 10) then
-                         z_mx(bas) = z_mx(bas) /1000    ! change from mm to meters
-                    endif
-!end 
-                    z_gw_spill = z_gwsubbas(bas) - z_mx(bas)    ! meters
-                    z_gwsubbas(bas) = z_mx(bas)    ! meters
+!!DJG...convert z_mx to millimeters...for v2 and later...
+!yw  added by Wei Yu...If block is to accomodate old parameter file...
+!                    if(z_mx(bas) .gt. 5) then
+!                         z_mx(bas) = z_mx(bas) /1000    ! change from mm to meters
+!                    endif
+ 
+
+               if (z_gwsubbas(bas).gt.z_mx(bas)/1000.) then  !If/then for bucket overflow case...
+
+                    z_gw_spill = z_gwsubbas(bas) - z_mx(bas)/1000.    ! meters
+                    z_gwsubbas(bas) = z_mx(bas)/1000.    ! meters
 
                else
                       z_gw_spill = 0.
@@ -170,7 +173,7 @@ contains
 
 ! Assume exponential relation between z/zmax and Q...
 !DJG force asymptote to zero to prevent 'overdraft'... 
-               qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas))-1) !Exp.model. q_out (m^3/s)
+               qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/z_mx(bas)/1000.)-1) !Exp.model. q_out (m^3/s)
        
 !DJG...Calculation of max bucket outlfow that is limited by total quantity in bucket...
                qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit   (m^3/s)
