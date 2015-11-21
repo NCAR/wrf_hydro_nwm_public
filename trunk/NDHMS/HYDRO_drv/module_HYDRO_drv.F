@@ -4,11 +4,12 @@ module module_HYDRO_drv
                                restart_out_bi, restart_in_bi, mpp_output_chrt2
    USE module_mpp_land
 #else
-   use module_HYDRO_io, only:  output_rt, output_chrt, output_lakes, output_chrt2
+   use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
 #endif
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
+   use module_HYDRO_io, only : output_lakes2
    use module_rt_data, only: rt_domain
    use module_GW_baseflow
    use module_gw_gw2d
@@ -301,21 +302,33 @@ module module_HYDRO_drv
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
-                  if(nlst_rt(did)%outlake  .eq. 1)  &
+                  if(nlst_rt(did)%outlake  .eq. 1)  then 
+                      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                          call output_lakes2(  &
+                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                               RT_DOMAIN(did)%NLAKES, &
+                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
+                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
+                               RT_DOMAIN(did)%QLAKEO, &
+                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
+                      else 
 #ifdef MPP_LAND
-                   call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
+                          call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
 #else
-                   call output_lakes(  &
+                          call output_lakes(  &
 #endif
-                      nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                      RT_DOMAIN(did)%NLAKES, &
-                      trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                      RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
-                      RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
-                      RT_DOMAIN(did)%QLAKEO, &
-                      RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
-               endif
-           endif
+                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                               RT_DOMAIN(did)%NLAKES, &
+                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
+                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
+                               RT_DOMAIN(did)%QLAKEO, &
+                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
+                      endif
+                  endif
+               endif   ! end if block of rNLAKES .gt. 0
+        endif 
 #ifdef HYDRO_D
            write(6,*) "end calling output functions"
 #endif
@@ -695,21 +708,22 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
        RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRC, &
        RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
-       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, &
+       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
        RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
        RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
-       RT_DOMAIN(did)%qout_gwsubbas  &
+       RT_DOMAIN(did)%qout_gwsubbas, &
+       RT_DOMAIN(did)%LAKEIDA, RT_DOMAIN(did)%LAKEIDM, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%LAKEIDX   &
 #ifdef MPP_LAND
-       , RT_DOMAIN(did)%nlinks_index,RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%yw_mpp_nlinks  &
-       , RT_DOMAIN(did)%LNLINKSL  &
-       , RT_DOMAIN(did)%gtoNode,RT_DOMAIN(did)%toNodeInd,RT_DOMAIN(did)%nToInd      &
+       , RT_DOMAIN(did)%nlinks_index, RT_DOMAIN(did)%mpp_nlinks, RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL   &
+       , RT_DOMAIN(did)%gtoNode, RT_DOMAIN(did)%toNodeInd, RT_DOMAIN(did)%nToInd      &
 #endif
        , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
 #ifndef HYDRO_REALTIME
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
 #endif
-       , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT)
+       , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT )
 else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &

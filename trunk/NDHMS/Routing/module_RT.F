@@ -4,13 +4,14 @@ MODULE module_Routing
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw 
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
-   USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int
+   USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int, &
+                            updateLake_seq
    use module_mpp_GWBUCKET, only : collectSizeInd
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
    use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
 #endif
-   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd
+   use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd, read_NSIMLAKES
    use module_HYDRO_utils 
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
@@ -222,21 +223,25 @@ CONTAINS
      allocate( rt_domain(did)%So(nsizes) )
      allocate( rt_domain(did)%ChSSlp(nsizes) )
      allocate( rt_domain(did)%Bw(nsizes) )
-!    allocate( rt_domain(did)%HRZAREA(NLAKES) )
-!    allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
-!    allocate( rt_domain(did)%WEIRC(NLAKES) )
-!    allocate( rt_domain(did)%WEIRL(NLAKES) )
-!    allocate( rt_domain(did)%ORIFICEC(NLAKES) )
-!    allocate( rt_domain(did)%ORIFICEA(NLAKES) )
-!    allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+     allocate( rt_domain(did)%LAKEIDA(nsizes) )
+     allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
-     allocate( rt_domain(did)%HRZAREA(nsizes) )
-     allocate( rt_domain(did)%LAKEMAXH(nsizes) )
-     allocate( rt_domain(did)%WEIRC(nsizes) )
-     allocate( rt_domain(did)%WEIRL(nsizes) )
-     allocate( rt_domain(did)%ORIFICEC(nsizes) )
-     allocate( rt_domain(did)%ORIFICEA(nsizes) )
-     allocate( rt_domain(did)%ORIFICEE(nsizes) )
+     allocate( rt_domain(did)%LAKEIDM(NLAKES) )
+     allocate( rt_domain(did)%HRZAREA(NLAKES) )
+     allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+     allocate( rt_domain(did)%WEIRC(NLAKES) )
+     allocate( rt_domain(did)%WEIRL(NLAKES) )
+     allocate( rt_domain(did)%ORIFICEC(NLAKES) )
+     allocate( rt_domain(did)%ORIFICEA(NLAKES) )
+     allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+
+
+!    allocate( rt_domain(did)%LAKEMAXH(nsizes) )
+!    allocate( rt_domain(did)%WEIRC(nsizes) )
+!    allocate( rt_domain(did)%WEIRL(nsizes) )
+!    allocate( rt_domain(did)%ORIFICEC(nsizes) )
+!    allocate( rt_domain(did)%ORIFICEA(nsizes) )
+!    allocate( rt_domain(did)%ORIFICEE(nsizes) )
 
 #ifndef HYDRO_REALTIME
      if(nsizes .gt. 0) then
@@ -279,7 +284,7 @@ CONTAINS
       rt_domain(did)%gages = rt_domain(did)%gageMiss
       rt_domain(did)%TO_NODE = 0.0        
       rt_domain(did)%FROM_NODE = 0        
-      rt_domain(did)%TYPEL = 0          
+      rt_domain(did)%TYPEL = -999       
       rt_domain(did)%ORDER = 0.0        
       rt_domain(did)%STRMFRXSTPTS = 0.0        
       rt_domain(did)%MUSK = 0.0        
@@ -294,6 +299,9 @@ CONTAINS
       rt_domain(did)%ZELEV = 0.0        
       rt_domain(did)%CVOL = 0.0        
       rt_domain(did)%HRZAREA = 0.0        
+      rt_domain(did)%LAKEIDA = 0
+      rt_domain(did)%LAKEIDX = 0
+
       rt_domain(did)%LAKEMAXH = 0.0        
       rt_domain(did)%WEIRC = 0.0        
       rt_domain(did)%WEIRL = 0.0        
@@ -420,8 +428,8 @@ CONTAINS
         CALL READ_ROUTEDIM( &
 #endif
               IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
-              nlst_rt(did)%route_direction_f, nlst_rt(did)%route_lake_f, &
-              rt_domain(did)%NLINKS, rt_domain(did)%NLAKES, &
+              nlst_rt(did)%route_direction_f, &
+              rt_domain(did)%NLINKS, &
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
               rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
 
@@ -452,6 +460,9 @@ CONTAINS
 
       endif
 
+  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+         call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+  endif
 
         call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
                    rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
@@ -488,6 +499,7 @@ CONTAINS
      integer, allocatable, dimension(:) :: tmp_int
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
+     real, allocatable, dimension(:) :: tmpRESHT
 
 !------------------------------------------------------------------------
 !DJG Routing Processing
@@ -525,9 +537,10 @@ CONTAINS
                rt_domain(did)%MAXORDER,rt_domain(did)%NLINKS, &
                rt_domain(did)%NLAKES, rt_domain(did)%MUSK, rt_domain(did)%MUSX, rt_domain(did)%QLINK,&
                rt_domain(did)%CHANLEN, rt_domain(did)%MannN, rt_domain(did)%So, rt_domain(did)%ChSSlp, rt_domain(did)%Bw, &
+               rt_domain(did)%LAKEIDA, &
                rt_domain(did)%HRZAREA, rt_domain(did)%LAKEMAXH, rt_domain(did)%WEIRC, rt_domain(did)%WEIRL, rt_domain(did)%ORIFICEC, &
                rt_domain(did)%ORIFICEA,  rt_domain(did)%ORIFICEE, rt_domain(did)%LATLAKE, rt_domain(did)%LONLAKE, &
-               rt_domain(did)%ELEVLAKE , &
+               rt_domain(did)%ELEVLAKE, rt_domain(did)%LAKEIDM, rt_domain(did)%LAKEIDX, &
                nlst_rt(did)%route_link_f,nlst_rt(did)%route_lake_f, &
                nlst_rt(did)%route_direction_f, nlst_rt(did)%route_order_f, &
                nlst_rt(did)%CHANRTSWCRT,rt_domain(did)%dist, rt_domain(did)%ZELEV, rt_domain(did)%LAKENODE, rt_domain(did)%CH_NETLNK, &
@@ -968,11 +981,24 @@ endif   !!! end if block for UDMP_OPT .eq. 1
 #endif
        end if
      if (nlst_rt(did)%channel_option .ne. 3) then
+        if(my_id .eq. io_id) then
+           allocate(tmpRESHT(rt_domain(did)%nlakes))
+           tmpRESHT = rt_domain(did)%RESHT
+        endif
         do j=1,rt_domain(did)%NLINKSL
-            if (rt_domain(did)%TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
-              rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.935  !-- assumes lake is ~90% MA
+           do k = 1, rt_domain(did)%NLAKES
+            if(rt_domain(did)%LAKEIDM(k) .eq. rt_domain(did)%LINKID(j)) then
+              if (rt_domain(did)%TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
+                rt_domain(did)%RESHT(k) = rt_domain(did)%LAKEMAXH(k) * 0.935  !-- assumes lake is ~90% MA, should put in Lake Parm
+              endif
             endif
+           end do
         end do
+#ifdef MPP_LAND
+        call updateLake_seq(rt_domain(did)%RESHT, rt_domain(did)%NLAKES,tmpRESHT)
+        if(my_id .eq. io_id) deallocate(tmpRESHT)
+#endif
+
      else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
                 !--  put condition within the if/then structure, which will assign a value if something is missing in hi res
         do j=1,rt_domain(did)%NLINKS
@@ -1073,11 +1099,11 @@ endif   !!! end if block for UDMP_OPT .eq. 1
         end do
      endif  !Endif channel option eq 3
 
-        if (nlst_rt(did)%channel_option .eq. 3) then
+!       if (nlst_rt(did)%channel_option .eq. 3) then
            do j=1,rt_domain(did)%NLAKES
-             rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.99   !-- lake is 99% full at start
+             rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.935   !-- lake is 99% full at start
            end do
-        endif
+!       endif
 
 !--------------------------------------------------------------------
   END IF     ! Endif for channel routing setup

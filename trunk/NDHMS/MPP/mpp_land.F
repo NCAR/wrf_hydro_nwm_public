@@ -1760,8 +1760,8 @@ MODULE MODULE_MPP_LAND
        implicit none
        integer nsize,i,j,tag,ierr
        integer, dimension(nsize):: vin,recv
-       integer, dimension(nsize):: v 
        tag = 319
+       if(nsize .le. 0) return
        if(my_id .eq. IO_id) then
           do i = 0, numprocs - 1
              if(i .ne. my_id) then
@@ -1770,13 +1770,11 @@ MODULE MODULE_MPP_LAND
                vin(:) = vin(:) + recv(:)
              endif
           end do
-          v = vin
        else
              call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
                   tag,MPI_COMM_WORLD,ierr)
        endif
-       call mpp_land_bcast_int1d(v) 
-       vin = v
+       call mpp_land_bcast_int1d(vin) 
        return
     end subroutine sum_int1d
 
@@ -2058,14 +2056,42 @@ MODULE MODULE_MPP_LAND
      return
      end  subroutine fatal_error_stop
 
+     subroutine updateLake_seq(in,nsize,in0)
+       implicit none
+       integer :: nsize
+       real, dimension(nsize) :: in
+       real, dimension(nsize) :: tmp
+       real, dimension(:) :: in0
+       integer tag, i, status, ierr, k
+       if(nsize .le. 0) return
+
+       tag = 29
+       if(my_id .ne. IO_id) then
+          call mpi_send(in,nsize,MPI_REAL, IO_id,     &
+                tag,MPI_COMM_WORLD,ierr)
+       else
+          do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+               call mpi_recv(tmp,nsize,&
+                   MPI_REAL,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+               do k = 1, nsize 
+                  if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
+               end do
+            end if
+          end do
+       end if
+       call mpp_land_bcast_real_1d(in)
+     
+     end subroutine updateLake_seq
+
 
 END MODULE MODULE_MPP_LAND
 
         subroutine mpp_land_abort()
             implicit none
   include "mpif.h"
-            integer ierr
-            CALL MPI_ABORT(MPI_COMM_WORLD,1,IERR)
+            integer ierr, status
+            CALL MPI_ABORT(MPI_COMM_WORLD,status,IERR)
         end ! mpp_land_abort
 
   subroutine mpp_land_sync()

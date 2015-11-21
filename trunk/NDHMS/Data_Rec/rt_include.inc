@@ -13,7 +13,7 @@
   REAL                                 :: RETDEP_CHAN  ! Channel retention depth
   INTEGER :: NLINKS  !maximum number of unique links in channel
   INTEGER :: GNLINKS  !maximum number of unique links in channel for parallel computation
-  INTEGER :: NLAKES  !number of lakes
+  INTEGER :: NLAKES !number of lakes modeled 
   INTEGER :: NLINKSL !maximum number of links using linked routing
   INTEGER :: MAXORDER !maximum stream order
   integer :: timestep_flag    ! 1 cold start run else continue run
@@ -31,7 +31,7 @@
   REAL,    allocatable, DIMENSION(:,:)      :: TERRAIN
   REAL,    allocatable, DIMENSION(:,:)      :: landRunOff   ! used for NHDPLUS only
   REAL, allocatable,    DIMENSION(:)        :: CHLAT,CHLON   !  channel lat and lon
-  ! INTEGER, allocatable, DIMENSION(:,:)      :: LAKE_MSKRT, BASIN_MSK,LAK_1K
+  ! INTEGER, allocatable, DIMENSION(:,:)    :: LAKE_MSKRT, BASIN_MSK,LAK_1K
   INTEGER, allocatable, DIMENSION(:,:)      :: LAKE_MSKRT, LAK_1K
   INTEGER, allocatable, DIMENSION(:,:)      :: g_LAK_1K
   ! REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT, QSUBBDRYTRT
@@ -122,12 +122,16 @@
 
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
+  INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file
+  INTEGER, allocatable, DIMENSION(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
   REAL, allocatable, DIMENSION(:)    :: HRZAREA    !horizontal extent of lake, km^2
   REAL, allocatable, DIMENSION(:)    :: WEIRL      !overtop weir length (m)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEC   !coefficient of orifice
   REAL, allocatable, DIMENSION(:)    :: ORIFICEA   !orifice opening area (m^2)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
   REAL, allocatable, DIMENSION(:)    :: LATLAKE, LONLAKE,ELEVLAKE ! lake info
+
+  INTEGER, allocatable, DIMENSION(:) :: LAKEIDX ! integer index for lakes, mapped to linkid
 
 #ifndef HYDRO_REALTIME
 !!! accumulated variables for reach beased rt

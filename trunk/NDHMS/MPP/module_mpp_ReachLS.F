@@ -357,6 +357,7 @@ MODULE MODULE_mpp_ReachLS
      call MPI_COMM_RANK( MPI_COMM_WORLD, my_id, ierr )
      call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr )
 
+
      nlinksl = glinksl / numprocs 
      allocate(linkls_s(numprocs))
      allocate(linkls_e(numprocs))
@@ -387,6 +388,7 @@ MODULE MODULE_mpp_ReachLS
      max_nlinksl = l_nlinksl
      call mpp_land_max_int1(max_nlinksl)
      
+     gNlinksl = glinksl
   end subroutine ReachLS_ini
   
   subroutine MapGrid2ReachIni(in2d)
@@ -992,6 +994,69 @@ MODULE MODULE_mpp_ReachLS
      if(my_id .eq. io_id) deallocate(buf)
   end subroutine pack_decomp_real8
 
+! this is used for nhdPlus with Lake. 
+! resolve the data from TO_NODE grids, and update back to NLINKSL grids.
+  subroutine TONODE2RSL (ind,inVar,size,gNLINKSL,NLINKSL,ioVar,flag)
+    implicit none
+    integer,intent(in) :: size,gNLINKSL,NLINKSL  ! 
+    integer,intent(in) , dimension(size) :: ind, inVar
+    integer,intent(inout), dimension(nlinksl) :: ioVar
+    integer, allocatable, dimension(:) :: gvar, buf, tmpInd
+    integer :: i,j,k, tag, ierr, tmpSize, flag
+
+    if(gNLINKSL .le. 0) return
+
+    if(my_id .eq. io_id) then
+       allocate(gvar(gNLINKSL))
+    else
+       allocate(gvar(1))
+    endif
+    call ReachLS_wInt(ioVar,gvar)
+
+      if(my_id .eq. io_id) then
+         do i = 1, numprocs
+            if(i-1 .eq. io_id) then
+                do k = 1, size
+                   if(inVar(k) .ne. flag) then
+                      gvar(ind(k)) = inVar(k)
+                   endif
+                end do
+            else
+                  tag = 82
+                  call mpi_recv(tmpSize,1,MPI_INTEGER,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                  if(tmpSize .gt. 0) then
+                      allocate(buf(tmpSize))
+                      allocate(tmpInd(tmpSize))
+                      tag = 83
+                      call mpi_recv(tmpInd, tmpSize , &
+                           MPI_INTEGER,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                      tag = 84
+                      call mpi_recv(buf, tmpSize , &
+                           MPI_INTEGER,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                      do k = 1, tmpSize
+                         if(buf(k) .ne. flag) then
+                             gvar(tmpInd(k)) = buf(k)
+                         endif
+                      end do
+                      deallocate(buf,tmpInd)
+                  endif
+            endif
+         end do
+      else   
+          tag = 82
+          call mpi_send(size,1,MPI_INTEGER,io_id,tag,MPI_COMM_WORLD,ierr)
+          if(size .gt. 0) then
+             tag = 83
+             call mpi_send(ind(1:size),size, &
+                 MPI_INTEGER,io_id,tag,MPI_COMM_WORLD,ierr)
+             tag = 84
+             call mpi_send(inVar(1:size),size, &
+                 MPI_INTEGER,io_id,tag,MPI_COMM_WORLD,ierr)
+          endif
+      endif 
+      call ReachLS_decomp(gvar, ioVar)
+      deallocate(gvar)
+  end subroutine TONODE2RSL 
 
 
 END MODULE MODULE_mpp_ReachLS
