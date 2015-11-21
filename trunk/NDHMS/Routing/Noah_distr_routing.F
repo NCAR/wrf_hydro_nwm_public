@@ -2427,22 +2427,25 @@
 
 
 
-               do KRT=1,NSOIL  !debug loop
-
-                  IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-                      print *, "Err. SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
-                              SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop("disaggregateDomain")
-                  ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
-                      print *, "Err. SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
-                              SMCRT(IXXRT,JYYRT,KRT),SH2OWGT(IXXRT,JYYRT,KRT),SH2OX(I,J,KRT)
-
-                      print*, "SMC=", SMC(i,j,KRT), "SICE =", sice(i,j,KRT)
-                      print *, "VEGTYP = ", VEGTYP(I,J)
-                      print *, "i,j,krt, nsoil",i,j,krt,nsoil
-                       call hydro_stop("disaggregateDomain SMCRT depleted")
-                  END IF
-               end do !debug loop
+             do KRT=1,NSOIL  !debug loop
+               IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+                       print *, "Err. SMCMAX exceeded upon disaggregation3...",ixxrt,jyyrt,krt,&
+                       SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
+                       call hydro_stop("disaggregateDomain")
+               ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
+                       print *, "Warning SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
+                       "SMCRT=",SMCRT(IXXRT,JYYRT,KRT),"SH2OWGT=",SH2OWGT(IXXRT,JYYRT,KRT),&
+                       "SH2O=",SH2OX(I,J,KRT)
+                       print*, "SMC=", SMC(i,j,KRT), "SICE =", sice(i,j,KRT)
+                       print *, "VEGTYP = ", VEGTYP(I,J)
+                       print *, "i,j,krt, nsoil",i,j,krt,nsoil
+                       IF (SMC(i,j,KRT).EQ.sice(i,j,KRT)) THEN
+                               print *, "SMC = SICE, soil layer totally frozen, proceeding..."
+                       ELSE
+                               call hydro_stop("disaggregateDomain SMCRT depleted")
+                       END IF
+               END IF
+             end do !debug loop
 
 
 

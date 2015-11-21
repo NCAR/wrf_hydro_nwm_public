@@ -1557,6 +1557,12 @@ Contains
 
    end if
 
+#ifdef PRECIP_DOUBLE
+#ifdef HYDRO_D
+   print*,'PRECIP DOUBLE'
+#endif
+   PRCP1 = PRCP1 * 2.0
+#endif 
 
  end subroutine read_hydro_forcing_seq
 
@@ -2628,6 +2634,14 @@ Contains
      endif
 
    end if
+
+#ifdef PRECIP_DOUBLE
+#ifdef HYDRO_D
+   print*,'PRECIP DOUBLE'
+#endif
+   PRCP1 = PRCP1 * 2.0
+#endif 
+
  end subroutine read_hydro_forcing_mpp1
 
   subroutine READFORC_HRLDAS_mpp(flnm,ix,jx,target_date, t,q,u,v,p,lw,sw,pcp,lai,fpar)

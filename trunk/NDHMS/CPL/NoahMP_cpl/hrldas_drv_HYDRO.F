@@ -362,3 +362,10 @@
            
       end subroutine HYDRO_HRLDAS_ini_mpp
 #endif
+      subroutine get_iocflag(did, iocflag) 
+         use module_namelist, only:nlst_rt
+         implicit none
+         integer :: did, iocflag
+         iocflag = nlst_rt(did)%iocflag
+      end subroutine get_iocflag
+ 
