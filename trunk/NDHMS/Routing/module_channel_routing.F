@@ -2024,6 +2024,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
          
 
    if (KT .eq. 1) KT = KT + 1
+
+#ifdef WRF_HYDRO_NUDGING
+   deallocate(g_qlink)
+#endif 
                  
  END SUBROUTINE drive_CHANNEL_RSL
 ! ----------------------------------------------------------------
