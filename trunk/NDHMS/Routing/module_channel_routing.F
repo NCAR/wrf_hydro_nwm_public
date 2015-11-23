@@ -1549,7 +1549,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif
          CH_LNKRT_SL, landRunOff  & 
 #ifndef HYDRO_REALTIME
-       ,  accLndRunOff, accQLateral, accStrmvolrt, accBucket,  &
+       ,  accLndRunOff, accQLateral, accStrmvolrt, accBucket   &
 #endif
 #ifdef HYDRO_REALTIME
        , QLateral &
@@ -2027,7 +2027,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
    if (KT .eq. 1) KT = KT + 1
 
 #ifdef WRF_HYDRO_NUDGING
+#ifdef MPP_LAND
    deallocate(g_qlink)
+#endif 
 #endif 
                  
  END SUBROUTINE drive_CHANNEL_RSL
