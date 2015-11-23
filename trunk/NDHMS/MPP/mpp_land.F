@@ -2084,6 +2084,41 @@ MODULE MODULE_MPP_LAND
      
      end subroutine updateLake_seq
 
+!subroutine match1dLake:
+!global lake. Find the same lake and mark as flag
+! default of win is 0
+    subroutine match1dLake(vin,nsize,flag)
+       implicit none
+       integer nsize,i,j,tag,ierr, flag, k
+       integer, dimension(nsize):: vin,recv
+       tag = 319
+       if(nsize .le. 0) return
+       if(my_id .eq. IO_id) then
+          do i = 0, numprocs - 1
+             if(i .ne. my_id) then
+               call mpi_recv(recv,nsize,MPI_INTEGER,i,  &
+                    tag,MPI_COMM_WORLD,mpp_status,ierr)
+               do k = 1, nsize 
+                 if(recv(k) .eq. flag) vin(k) = flag
+                 if(vin(k) .ne. flag) then
+                   if(vin(k) .gt. 0 .and. recv(k) .gt. 0) then
+                       vin(k) = flag
+                   else
+                       if(recv(k) .gt. 0) vin(k) = recv(k)
+                   endif 
+                 endif
+               end do
+             endif
+          end do
+       else
+             call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
+                  tag,MPI_COMM_WORLD,ierr)
+       endif   
+       call mpp_land_bcast_int1d(vin)
+       return  
+    end subroutine match1dLake
+
+
 
 END MODULE MODULE_MPP_LAND
 

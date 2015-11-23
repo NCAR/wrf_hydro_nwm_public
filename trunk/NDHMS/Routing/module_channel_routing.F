@@ -1881,7 +1881,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 !yw ### process each link k,
 !       There is a situation that different k point to the same LAKEIDX
-        if(TYPEL(k) .eq. 1 .and. LAKEIDX(k) .gt. 0) then   !--link is a reservoir
+!        if(TYPEL(k) .eq. 1 .and. LAKEIDX(k) .gt. 0) then   !--link is a reservoir
+        if(TYPEL(k) .eq. 1 ) then   !--link is a reservoir
              
              lakeid = LAKEIDX(k)
 !            goto 105

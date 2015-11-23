@@ -8284,7 +8284,8 @@ end subroutine output_chrt2
         implicit none
         integer, dimension(:),   intent(out) :: TYPEL, LAKELINKID, LAKEIDX
         integer, dimension(:),   intent(inout) :: TO_NODE
-        integer, dimension(:),   intent(in) :: LINKID, LAKEIDM, LAKEIDA
+        integer, dimension(:),   intent(in) :: LINKID, LAKEIDA
+        integer, dimension(:),   intent(inout) :: LAKEIDM
         integer, intent(in) :: NLAKES, NLINKSL ,GNLINKSL
         integer, dimension(NLINKSL) :: OUTLAKEID
         integer :: i,size ,j,k, kk, num, maxNum, m, mm
@@ -8297,7 +8298,12 @@ end subroutine output_chrt2
 !       integer tmpBuf(GNLINKSL)
 
       allocate (gto(GNLINKSL))
- 
+
+
+!     prescan the data and remove the LAKEIDM which point to two links.
+      call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
+
+   
       call gBcastValue(TO_NODE,gto)   
       maxNum = 0
       kk = 0
@@ -8454,6 +8460,114 @@ end subroutine output_chrt2
 !     call hydro_finish()
 
     end subroutine nhdLakeMap_mpp
+
+    subroutine nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
+        !--- get the lake configuration here.
+        implicit none
+        integer, dimension(NLAKES) :: LAKELINKID
+        integer, dimension(:),   intent(in) :: TO_NODE
+        integer, dimension(:),   intent(in) :: LINKID, LAKEIDA
+        integer, dimension(:),   intent(inout) :: LAKEIDM
+        integer, intent(in) :: NLAKES, NLINKSL ,GNLINKSL
+        integer :: i,size ,j,k, kk, num, maxNum, m, mm
+        integer, allocatable, dimension(:) :: ind,  &
+                    tmplakeida, tmpoutlakeid, tmpTO_NODE, gLAKEIDA
+        integer, allocatable, dimension(:,:) :: gtonodeout
+    
+        integer,allocatable, dimension(:) ::  gto
+
+!       integer tmpBuf(GNLINKSL)
+
+      allocate (gto(GNLINKSL))
+ 
+      call gBcastValue(TO_NODE,gto)   
+      maxNum = 0
+      kk = 0
+      do m = 1, NLINKSL
+          num = 0
+          do k = 1, gnlinksl
+             if(gto(k) .eq. LINKID(m) ) then
+                 kk = kk +1
+                 num = num + 1
+             endif
+          end do
+          if(num .gt. maxNum) maxNum = num
+      end do
+
+      allocate(ind(kk))
+      allocate(gToNodeOut(NLINKSL,maxNum+1))
+      gToNodeOut = -99
+      allocate(tmpLAKEIDA(kk))
+      allocate(tmpTO_NODE(kk))
+
+
+      kk = 0
+      do m = 1, NLINKSL
+         num = 1
+         do k = 1, gnlinksl
+             if(gto(k) .eq. LINKID(m) ) then
+                 kk = kk +1
+                 ind(kk) = k
+                 tmpTO_NODE(kk) = gto(k)
+                 gToNodeOut(m,num+1) = kk
+                 gToNodeOut(m,1) = num
+                 num = num + 1
+             endif
+          end do
+      end do
+      size = kk
+      deallocate (gto)
+    
+
+      allocate(gLAKEIDA(gnlinksl))
+      call gBcastValue(LAKEIDA(1:NLINKSL),gLAKEIDA(1:gnlinksl) )   
+      do i = 1, size
+            k = ind(i)
+            tmpLAKEIDA(i) = gLAKEIDA(k)
+      enddo
+      deallocate(gLAKEIDA)
+
+        LAKELINKID = 0
+        DO i = 1, NLAKES
+          DO k = 1, NLINKSL
+             do m = 1, gToNodeOut(k,1)
+                 j = gToNodeOut(k,m+1)
+                 if( (tmpTO_NODE(j) .eq. LINKID(k) ) .and. &
+                     (LAKEIDA(k) .lt. 0 .and. tmpLAKEIDA(j) .eq. LAKEIDM(i))) then
+                     if(LAKELINKID(i) .gt. 0) then
+                         LAKELINKID(i) = -999
+#ifdef HYDRO_D
+                         write(6,*) "get rid of LAKEIDM(i) ", i, LAKEIDM(i)
+                         call flush(6)
+#endif
+                     endif
+                     if(LAKELINKID(i) .eq. 0) LAKELINKID(i) = ind(j)      
+                 endif
+            END DO
+          END DO
+       END DO
+       call match1dLake(LAKELINKID, NLAKES, -999) 
+
+!      if(my_id .eq. 0) then
+!          write(65,*) "check LAKEIDM   *****,"
+!          write(65,*) LAKEIDM
+!          call flush(6)
+!      endif
+
+       do k = 1, NLAKES
+           if(LAKELINKID(k) .eq. -999) LAKEIDM(k) = -999
+       end do
+
+!      if(my_id .eq. 0) then
+!          write(65,*) "check LAKEIDM   *****,"
+!          write(65,*) LAKEIDM
+!          call flush(6)
+!      endif
+
+       close(65)
+      deallocate(tmpTO_NODE, tmpLAKEIDA)
+
+    end subroutine nhdLakeMap_scan
 #endif
   
 

@@ -99,6 +99,9 @@
  ! route_link_f = "../DOMAIN/Route_Link.csv"
  route_link_f = "DOMAIN/Route_Link_2.nc"
 
+! simulated LAKE PARAM files, it will looking for LAKEPARM.TBL if this line has been commented.
+route_lake_f = "../DOMAIN/LAKEPARM.nc"
+
 !Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
  GWBASESWCRT = 1
 
@@ -109,6 +112,9 @@
 !Note: Only required if baseflow bucket model is active
  gwbasmskfil = "../DOMAIN/gw_basns_geogrid.txt"
  GWBUCKPARM_file = "DOMAIN/GWBUCKPARM_NHD.nc"
+
+! Realtime IOC run configuration option: 0=diagnostic, 1=analysis, 2=short-range, 3=medium-range, 4=long-range
+iocflag=1
 
 ! User defined mapping, such NHDPlus
 !0: deafult none. 1: yes

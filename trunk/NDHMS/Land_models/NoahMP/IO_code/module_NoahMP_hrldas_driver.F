@@ -1989,11 +1989,11 @@ subroutine lsm_rst_bi_out()
   character(len=256) :: output_flnm, str_tmp
   integer  :: i0,ie, i, istep
 
-  inquire(file='restart', exist=dir_e)
 
 #ifdef MPP_LAND
   if(my_id .eq. io_id) then
 #endif
+     inquire(file='restart', exist=dir_e)
      if ( dir_e ) then
           print*, "output restart files to restart/."
      else
