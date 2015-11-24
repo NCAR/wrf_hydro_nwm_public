@@ -436,6 +436,9 @@ call mpp_land_bcast_real_1d(nudgingParamsStr%tau)
 !=================================================
 ! 5. Bring in the network re-expression for indexed traversal 
 !    of the stream network.
+
+!! JLM check that spatial interpolation is in use??
+
 #ifdef MPP_LAND
 if(my_id .eq. IO_id) then
 #endif
@@ -1762,22 +1765,31 @@ end subroutine nudge_innov
 ! User controllable options: 
 ! Notes: 
 
-subroutine nudge_term_all(discharge, global_discharge, hydroAdv)
+subroutine nudge_term_all(discharge, nudgeAdj, hydroAdv)
 use module_RT_data,  only: rt_domain
 #ifdef MPP_LAND
-use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
+use module_mpp_land,    only: mpp_land_bcast_real_1d
+use MODULE_mpp_ReachLS, only: linkls_s, linkls_e, gNLinksL, ReachLS_write_io
 #endif
 
 implicit none
 real, dimension(:,:), intent(inout) :: discharge !! modeled discharge (m3/s)
-real, dimension(:,:), intent(inout) :: global_discharge !! modeled discharge (m3/s)
+real, dimension(:),   intent(out)   :: nudgeAdj  !! modeled discharge (m3/s)
 integer,              intent(in)    :: hydroAdv  !! number of seconds the channel model has advanced 
+
+real, allocatable, dimension(:) :: global_discharge !! modeled discharge (m3/s)
 
 integer :: ll, startInd, endInd, checkInd
 real :: theNudge
 
-!! need to transform passed index to appropriate index for image
+
 #ifdef MPP_LAND
+!! get global discharge. This is only needed if spatial interpolation.
+!! eventually logic: if spatialNudging determines use of global_discharge
+allocate(global_discharge(gNLinksL))
+call ReachLS_write_io(discharge(:,2), global_discharge)
+call mpp_land_bcast_real_1d(global_discharge)
+!! need to transform passed index to appropriate index for image
 startInd=linkls_s(my_id+1)
 endInd  =linkls_e(my_id+1)
 #else 
@@ -1792,7 +1804,7 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 #endif
 
 #ifdef HYDRO_D
-   checkInd = 2211014
+   checkInd = 3499 ! 2211014 ! see below as well
    if(ll .eq. checkInd) then
       print*,"Ndg: checkInd: checkInd: ",checkInd
       print*,'Ndg: checkInd: discharge(ll,2) before:',discharge(ll-startInd+1,2)
@@ -1808,6 +1820,10 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
    endif
 #endif
 end do
+!! the following only valid since nudge_term_all is applied after the time step.
+nudgeAdj=discharge(:,2)-discharge(:,1)
+discharge(:,1)=discharge(:,2)
+deallocate(global_discharge)
 
 end subroutine nudge_term_all
 
@@ -1846,7 +1862,7 @@ use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
 implicit none
 integer,              intent(in) :: linkIndIn   !! stream cell index
 integer,              intent(in) :: hydroAdv  !! number of seconds the channel model has advanced 
-real, dimension(:,:), intent(in) :: discharge !! modeled discharge (m3/s)
+real, dimension(:),   intent(in) :: discharge !! modeled discharge (m3/s)
 real :: nudge_term_link
 
 integer :: linkInd
@@ -1862,7 +1878,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = 2211014  ! see above
+checkInd = 3499 !2211014  ! see above
 
 !! apparently lsm is now only 1 lsm timestep behind when the hydro model is run.
 !call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroAdv+nint(nlst_rt(1)%dt))
@@ -1919,7 +1935,7 @@ do tt=1,size(obsTimeStr)
 !#endif
 
       theInnov =                                                            & 
-           ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd,2) ) &
+           ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd) ) &
            *obsTimeStr(tt)%obsStr(oo)%obsQC
 
       nudge_term_link = nudge_term_link                 &
@@ -1948,14 +1964,14 @@ do tt=1,size(obsTimeStr)
 #ifdef HYDRO_D
 if(linkInd .eq. checkInd) then 
 !if( (obsTimeStr(tt)%time .eq. obsTimeStr(tt)%obsStr(oo)%obsTime) .and. &
-!    ( abs(discharge(obsInd,2)+theInnov - obsTimeStr(tt)%obsStr(oo)%obsDischarge) .gt. .01) ) then
+!    ( abs(discharge(obsInd)+theInnov - obsTimeStr(tt)%obsStr(oo)%obsDischarge) .gt. .01) ) then
       print*,'Ndg: checkInd: -*-*-*-*-*-*-*-*-*-*-*-*'
       print*,'Ndg: checkInd: linkInd: ', linkInd
       print*,'Ndg: checkInd: tt: ', tt
       print*,'Ndg: checkInd: oo: ', oo
       print*,'Ndg: checkInd: obsCellInd: ', obsInd
 
-      print*,'Ndg: checkInd: discharge: ',    discharge(obsInd,2)
+      print*,'Ndg: checkInd: discharge: ',    discharge(obsInd)
       print*,'Ndg: checkInd: theInnov: ',theInnov
 
       print*,'Ndg: checkInd: obsDischarge: ', obsTimeStr(tt)%obsStr(oo)%obsDischarge 

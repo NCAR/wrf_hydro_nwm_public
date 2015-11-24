@@ -1,7 +1,7 @@
 MODULE module_channel_routing
 #ifdef MPP_LAND
   USE module_mpp_land
-  use MODULE_mpp_ReachLS, only : updatelinkv,      gNlinksl,    & 
+  use MODULE_mpp_ReachLS, only : updatelinkv,                   & 
                                  ReachLS_write_io, gbcastvalue, &
 #ifdef WRF_HYDRO_NUDGING
                                  linkls_s,                      &
@@ -1678,14 +1678,13 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
 #ifdef WRF_HYDRO_NUDGING
+        real, dimension(nsize) :: nudgeAdj
         real :: theNudge   !! JLM: just for testing, remove eventually?
         real :: startCodeTimeAcc, endCodeTimeAcc
         integer :: checkInd
 #ifdef MPP_LAND        
         integer :: tt
-        real,allocatable,dimension(:,:) :: g_qlink
         logical :: obsTimeStrAllocated, obsTimeStrObsStrAllocated
-
 #endif
 #endif
 
@@ -1709,13 +1708,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
         dzGwChanHead = 0.
 
 #ifdef WRF_HYDRO_NUDGING
-         ! Allocate the global qlink
-         if(allocated(g_qlink)) deallocate(g_qlink)
-         allocate(g_qlink(gNLinksL,2))
          !! Initialize nudging for the current timestep.
          !! This establishes the data structure used to solve the nudges. 
-
-
 !#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
          checkInd = 2211014
 #ifdef MPP_LAND
@@ -1818,18 +1812,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
    do nt = 1, nsteps
  
-#ifdef WRF_HYDRO_NUDGING
-#ifdef MPP_LAND     
-      if(nudgeWAdvance) then
-         !! need the global qlink from the last timestep to nudge.
-         call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
-         call mpp_land_bcast_real_1d(g_qlink(:,2))
-#else 
-         g_qlink = qlink
-#endif
-      endif
-#endif /* WRF_HYDRO_NUDGING */
-
 #ifdef MPP_LAND
 
        gQLINK = 0
@@ -1912,53 +1894,20 @@ gwOption:   if(gwBaseSwCRT == 3) then
                     call hydro_stop("drive_CHANNEL") 
         endif
 
-#ifdef WRF_HYDRO_NUDGING
-                   if(nudgeWAdvance) then
-
-#ifdef HYDRO_D                      
-#ifdef MPP_LAND
-                      if(my_id .eq. io_id) &
-#endif /* MPP_LAND */
-                      call nudging_timer(startCodeTimeAcc)
-#endif /* HYDRO_D */
-
-                      theNudge = nudge_term_link(k, int(nt*dtrt_ch), g_qlink)! tmpQLink)
-
-#ifdef HYDRO_D                      
-#ifdef MPP_LAND
-                      if(linkls_s(my_id+1)+k-1 .eq. checkInd)&
-                           print*,'tmpQLINK(k,2) before: ',tmpQLINK(k,2)
-#else 
-                      if(k .eq. checkInd) print*,'tmpQLINK(k,2) before: ',tmpQLINK(k,2)
-#endif /* MPP_LAND */
-#endif /* HYDRO_D */
-
-                      tmpQLINK(k,2) = tmpQLINK(k,2) + theNudge
-
-#ifdef HYDRO_D
-#ifdef MPP_LAND
-                      if(linkls_s(my_id+1)+k-1 .eq. checkInd) & 
-                           print*,'tmpQLINK(k,2) after: ',tmpQLINK(k,2)
-                      if(linkls_s(my_id+1)+k-1.eq.checkInd) &
-                           print*, checkInd, ': the O1+ nudge: ', theNudge
-#else 
-                      if(k .eq. checkInd) print*,'tmpQLINK(k,2) after: ',tmpQLINK(k,2)
-                      if(k.eq.checkInd) print*,checkInd, ': the O1+ nudge: ', theNudge
-#endif /* MPP_LAND */
-#ifdef MPP_LAND
-                      if(my_id .eq. io_id) then
-#endif /* MPP_LAND */
-                         call nudging_timer(endCodeTimeAcc)
-                         call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'Nudge wAdv O1+')
-#ifdef MPP_LAND  
-                      end if
-#endif /* MPP_LAND */
-#endif /* HYDRO_D */
-
-                   endif
-#endif /* WRF_HYDRO_NUDGING */
-
        END DO        !--k links
+
+       call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
+       call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
+       call updateLake_seq(RESHT,nlakes,tmpRESHT)
+
+       do k = 1, NLINKSL !tmpQLINK?
+          if(TYPEL(k) .ne. 2) then !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
+             QLINK(k,2) = tmpQLINK(k,2)
+          endif
+            QLINK(k,1) = QLINK(k,2)    !assigng link flow of current to be previous for next time step
+       end do
+
+
 #ifdef WRF_HYDRO_NUDGING         
          if(.not. nudgeWAdvance) then
 !#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
@@ -1967,20 +1916,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif /* MPP_LAND */
             call nudging_timer(startCodeTimeAcc)
 !#endif /* HYDRO_D */ JLM Temp un-ifdef to get timing results
-
-#ifdef MPP_LAND
-            ! this communication is only necessary if R> Reach%length/2 somewhere 
-            ! in the domain
-            ! JLM- put in that logic
-            call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
-            call mpp_land_bcast_real_1d(g_qlink(:,2))
-#else
-            g_qlink=qlink
-#endif /* MPP_LAND */
             
             !! the nudging
-            call nudge_term_all(qlink, g_qlink, int(nt*dtrt_ch))          
-            QLINK(:,1) = QLINK(:,2) !! above only nudges the qlink(:,2)
+            call nudge_term_all(qlink, nudgeAdj, int(nt*dtrt_ch))          
 
 !#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
 #ifdef MPP_LAND
@@ -1996,20 +1934,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
          endif
 #endif /* WRF_HYDRO_NUDGING */
 
-       call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
-       call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
-       call updateLake_seq(RESHT,nlakes,tmpRESHT)
-
-       do k = 1, NLINKSL !tmpQLINK?
-!         if(TYPEL(k) .ne. 1) then
-!            QLINK(k,2) = tmpQLINK(k,2)
-!         endif
-
-          if(TYPEL(k) .ne. 2) then !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
-             QLINK(k,2) = tmpQLINK(k,2)
-          endif
-            QLINK(k,1) = QLINK(k,2)    !assigng link flow of current to be previous for next time step
-       end do
 
 !#ifdef HYDRO_D
 !          print *, "END OF ALL REACHES...",KRT,DT_STEPS
@@ -2021,17 +1945,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifdef MPP_LAND
     if(my_id .eq. io_id)       deallocate(tmpQLAKEO,tmpQLAKEI, tmpRESHT)
-#endif
-         
+#endif        
 
    if (KT .eq. 1) KT = KT + 1
 
-#ifdef WRF_HYDRO_NUDGING
-#ifdef MPP_LAND
-   deallocate(g_qlink)
-#endif 
-#endif 
-                 
  END SUBROUTINE drive_CHANNEL_RSL
 ! ----------------------------------------------------------------
 
