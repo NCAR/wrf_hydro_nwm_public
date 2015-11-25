@@ -550,7 +550,6 @@ call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
 !=================================================
 #ifdef HYDRO_D
 print*, "Ndg: Finish init_stream_nudging"
-call flush(6)
 #endif
 
 end subroutine init_stream_nudging
@@ -609,6 +608,7 @@ integer :: nGages, nCellsInR, cc, nLinkAff, nStatic
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
+real :: startCodeTimeOuter
 #endif
 
 #ifdef HYDRO_D  /* !! JLM */
@@ -616,7 +616,6 @@ real :: startCodeTime, endCodeTime
 if(my_id .eq. io_id) &
 #endif
    print*,'Ndg: start setup_stream_nudging'
-call flush(6)
 #endif  /* !! JLM */
 
 !#ifdef MPP_LAND - just do this section on all images. There is no IO.
@@ -679,7 +678,6 @@ print*,'Ndg: obsTimeStr: before obsTimeStr(:)%time: ', obsTimeStr(:)%time
 ! nudging window, shift them left. This should just shift one position left 
 ! with each advance in time resolution.
 print*,'Ndg: JLM : obsTimes(1):', obsTimes(1)
-call flush(6)
 call geth_idts(obsTimeStr(1)%time, obsTimes(1), oldDiff)
 print*,"Ndg: olddiff:", oldDiff
 if(oldDiff .eq. 0) then 
@@ -780,12 +778,15 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'bcast basic info', .false.)
 endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
+if(my_id .eq. io_id) call nudging_timer(startCodeTimeOuter)
 #endif /* HYDRO_D */
-
 
 !bring in timeslice files
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+
+#ifdef HYDRO_D
+if(my_id .eq. io_id) call nudging_timer(startCodeTime)
+#endif
 
 #ifdef MPP_LAND
    if(my_id .eq. io_id) then 
@@ -808,7 +809,6 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
    if(my_id .eq. io_id) then
       print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
       print*,'Ndg: obsTimeStrAllocated: ', obsTimeStrAllocated
-      call flush(6)
       call nudging_timer(endCodeTime)
       call accum_nudging_time(startCodeTime, endCodeTime, &
            'timeslice files io_id', .false.)
@@ -864,7 +864,6 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
                  'obs_static_to_struct io_id', .false.)
          endif
          if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-         call flush(6)
 #endif /* HYDRO_D */
 
          call tally_affected_links(tt)
@@ -879,7 +878,6 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
          call accum_nudging_time(startCodeTime, endCodeTime, &
               'Tally affected links io_id', .false.)
       endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 #endif /* HYDRO_D */
 
 #ifdef MPP_LAND
@@ -930,6 +928,15 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #endif
 
 #ifdef HYDRO_D
+      if(my_id .eq. io_id) then
+         call nudging_timer(endCodeTime)
+         call accum_nudging_time(startCodeTime, endCodeTime, &
+              'Bcat tally affected links io_id', .false.)
+      endif
+      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
+#endif /* HYDRO_D */
+
+#ifdef HYDRO_D
 #ifdef MPP_LAND
       !if(my_id .eq. io_id) then 
       if(my_id .eq. -5) then 
@@ -961,8 +968,8 @@ end do ! ii
 #ifdef HYDRO_D
             if(my_id .eq. io_id) then
                call nudging_timer(endCodeTime)
-               call accum_nudging_time(startCodeTime, endCodeTime, &
-                                       'Bcast tally affected links io_id', .false.)
+               call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
+                                       'main loop finish setup_stream_nudging', .false.)
             endif
 #endif /* HYDRO_D */
 
@@ -999,7 +1006,7 @@ end subroutine setup_stream_nudging
 ! Notes:
 
 subroutine timeslice_file_to_struct(structIndex)
-use module_nudging_utils, only: whichInLoop,         &
+use module_nudging_utils, only: whichInLoop2,        &
                                 accum_nudging_time,  &
                                 nudging_timer
 
@@ -1053,7 +1060,6 @@ end if
 print*,'Ndg: Found file:', fileName
 print*,'Ndg: timeSlice: ',thisTime
 print*,'Ndg: timeSliceFile:',trim(fileName)
-call flush(6)
 #endif
 
 nGages=get_netcdf_dim(fileName, 'stationIdInd', 'timeslice_file_to_struct')
@@ -1108,8 +1114,19 @@ if(filterObsToDom) then
 
    allocate(whSliceInDom(size(usgsIdIn)))
    !! parallelize this? !!
-   call whichInLoop(usgsIdIn, nodeGageStr%usgsId, &
+   call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, &
                     whSliceInDom, nWhSliceInDom)
+
+#ifdef HYDRO_D
+      if(my_id .eq. io_id) then
+         call nudging_timer(endCodeTime)
+         call accum_nudging_time(startCodeTime, endCodeTime, &
+                                 'ts_file_to_struct below whichInLoop', .false.)
+      endif
+      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
+#endif /* HYDRO_D */
+
+
 
 #ifdef HYDRO_D
 !   print*,'Ndg: usgsIdIn: ',         usgsIdIn
@@ -1184,6 +1201,7 @@ endif !filterObsToDom
 
 #ifdef HYDRO_D
 print*,'Ndg: finish timeslice_file_to_struct'
+call flush(6)
 #endif 
 
 end subroutine timeslice_file_to_struct
@@ -1231,7 +1249,6 @@ real :: startCodeTime, endCodeTime
 
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 print*,'Ndg: start obs_static_to_struct'
-call flush(6)
 #endif /* HYDRO_D */
 
 ! number of obs at this time
@@ -1413,7 +1430,6 @@ if(my_id .eq. io_id) then
         'after solved static 4 gage', .false.)
 endif
 print*,'Ndg: finish obs_static_to_struct'
-call flush(6)
 #endif /* HYDRO_D */
 
 end subroutine obs_static_to_struct
@@ -1535,7 +1551,6 @@ end do
 
 #ifdef HYDRO_D
 print*,'Ndg: end distance_along_channel'
-call flush(6)
 #endif
 
 end subroutine distance_along_channel
@@ -1601,7 +1616,6 @@ nLinkAff = sum((/(1, ii=1,nLinks)/), mask=affectedInds .ne. 0)
 
 #ifdef HYDRO_D
 print*,'Ndg: naff-1',nLinkAff
-call flush(6)
 #endif
 
 allocate( obsTimeStr(timeIndex)%allCellInds(nLinkAff), &
@@ -1614,7 +1628,6 @@ deallocate(affectedInds, nGageAffect)
 
 #ifdef HYDRO_D
 print*,'Ndg: end tally_affected_links'
-call flush(6)
 #endif
 
 end subroutine tally_affected_links

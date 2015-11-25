@@ -181,6 +181,25 @@ end do
 end subroutine whichInLoop
 
 
+! parallelize this? ||||||||||||||||||||||||||||||||||
+subroutine whichInLoop2(vecToSearch, vecToMatch, which, nWhich)
+implicit none
+character(len=15), intent(in),  dimension(:) :: vecToSearch
+character(len=15), intent(in),  dimension(:) :: vecToMatch
+integer, intent(out), dimension(:) :: which
+integer, intent(out)               :: nWhich
+integer :: ii, jj
+which = -9999
+nWhich = 0
+do ii=1,size(vecToSearch)
+   if(any(vecToMatch .eq. vecToSearch(ii))) then
+      which(ii)=ii
+      nWhich = nWhich + 1
+   end if
+end do
+end subroutine whichInLoop2
+
+
 !===================================================================================================
 ! Program Names: 
 !   accum_nudging_cpu_time
