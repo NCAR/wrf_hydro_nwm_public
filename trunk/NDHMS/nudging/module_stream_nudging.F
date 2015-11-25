@@ -369,15 +369,15 @@ if(my_id .eq. IO_id) then
 !   print*,'Ndg: nudgingParamsTmp%tau(nParamGages)',    nudgingParamsTmp%tau(nParamGages)
 #endif
 
-   ! Reduce to just the gages in the domain
+   ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
 
    call whichInLoop(nudgingParamsTmp%usgsId, nodeGageStr%usgsId, whParamsDom, nGagesWParamsDom)
 #ifdef HYDRO_D
    if(nGagesWParamsDom .ne. nGagesDomain) then
-      print*,'Ndg: Gages are apparently missing from the nudgingParams.nc file'
-      print*,'Ndg: nGagesWParamsDom: ', nGagesWParamsDom
-      print*,'Ndg: nGagesDomain: ', nGagesDomain
+      print*,'Ndg: WARNING Gages are apparently missing from the nudgingParams.nc file'
+      print*,'Ndg: WARNING nGagesWParamsDom: ', nGagesWParamsDom
+      print*,'Ndg: WARNING nGagesDomain: ', nGagesDomain
    end if
 #endif
 
@@ -1006,7 +1006,8 @@ end subroutine setup_stream_nudging
 ! Notes:
 
 subroutine timeslice_file_to_struct(structIndex)
-use module_nudging_utils, only: whichInLoop2,        &
+use module_nudging_utils, only: whichInLoop,         &
+                                whichInLoop2,        &
                                 accum_nudging_time,  &
                                 nudging_timer
 
@@ -1021,8 +1022,9 @@ character(len=19)  :: thisTime  !! the of this time/slice of the structure
 character(len=256) :: fileName  !! the corresponding obs file.
 
 integer :: nGages
-integer, allocatable, dimension(:) :: whSliceInDom
-integer :: nWhSliceInDom, count, ww
+integer, allocatable, dimension(:) :: whSliceInDom, whSliceInDom2
+integer :: nWhSliceInDom, nWhSliceInDom2
+integer :: count, ww
 
 character(len=19)  :: timeIn, updateTimeIn  !! the time of file/slice and when it was updated
 character(len=2)   :: sliceResoIn           !! the temporal resolution of the slice
@@ -1113,9 +1115,18 @@ if(filterObsToDom) then
    obsTimeStr(structIndex)%updateTime = updateTimeIn
 
    allocate(whSliceInDom(size(usgsIdIn)))
+   allocate(whSliceInDom2(size(usgsIdIn)))
    !! parallelize this? !!
-   call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, &
-                    whSliceInDom, nWhSliceInDom)
+   call whichInLoop (usgsIdIn, nodeGageStr%usgsId, whSliceInDom,  nWhSliceInDom )
+   call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, whSliceInDom2, nWhSliceInDom2)
+
+   print*,'Ndg: nWhSliceInDom: ', nWhSliceInDom
+   print*,'Ndg: nWhSliceInDom2: ', nWhSliceInDom2
+   print*,'Ndg: all(whSliceInDom .eq. whSliceInDom2): ', all(whSliceInDom .eq. whSliceInDom2)
+   print*,'Ndg: whSliceInDom: ', whSliceInDom
+   print*,'Ndg: whSliceInDom2: ', whSliceInDom2
+
+call flush(6)
 
 #ifdef HYDRO_D
       if(my_id .eq. io_id) then
