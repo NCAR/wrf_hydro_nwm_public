@@ -49,7 +49,7 @@ end type obsStaticStructure
 ! Currently the dimensions of this are fixed to 10000 which should 
 ! work for the forseeable future. May want to consider some routine for 
 ! augmenting this size if necessary. 
-integer, parameter :: maxGageDim=8000
+integer, parameter :: maxGageDim=20000
 type(obsStaticStructure), dimension(maxGageDim) :: obsStaticStr 
 
 !! The number of up/down stream links which can be collected
@@ -186,7 +186,7 @@ subroutine init_stream_nudging
 
 use module_namelist, only: nlst_rt
 use module_RT_data,  only: rt_domain
-use module_nudging_utils, only: whichInLoop,        &
+use module_nudging_utils, only: whichInLoop2,        &
                                 totalNudgeTime,     &
                                 sysClockCountRate,  &
                                 sysClockCountMax,   &
@@ -372,7 +372,7 @@ if(my_id .eq. IO_id) then
    ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
 
-   call whichInLoop(nudgingParamsTmp%usgsId, nodeGageStr%usgsId, whParamsDom, nGagesWParamsDom)
+   call whichInLoop2(nudgingParamsTmp%usgsId, nodeGageStr%usgsId, whParamsDom, nGagesWParamsDom)
 #ifdef HYDRO_D
    if(nGagesWParamsDom .ne. nGagesDomain) then
       print*,'Ndg: WARNING Gages are apparently missing from the nudgingParams.nc file'
@@ -576,8 +576,7 @@ subroutine setup_stream_nudging(hydroDT)
 
 use module_namelist,      only: nlst_rt
 use module_RT_data,       only: rt_domain
-use module_nudging_utils,      only: whichLoop,               &
-                                whichInLoop,             &
+use module_nudging_utils, only: whichLoop,               &
                                 whUniLoop,               &
                                 accum_nudging_time,      &
                                 nudging_timer
@@ -600,10 +599,11 @@ integer, allocatable, dimension(:) :: whObsMiss
 integer :: nObsMiss
 integer :: did=1  !! jlm: assuming did=1
 integer ::  nWhObsMiss
-logical :: obsTimeStrAllocated
+logical, allocatable, dimension(:) :: obsTimeStrAllocated
+!logical :: obsTimeStrAllocated
 
 #ifdef MPP_LAND 
-integer :: nGages, nCellsInR, cc, nLinkAff, nStatic
+integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 #endif
 
 #ifdef HYDRO_D
@@ -779,18 +779,18 @@ if(my_id .eq. io_id) then
         'bcast basic info', .false.)
 endif
 if(my_id .eq. io_id) call nudging_timer(startCodeTimeOuter)
-#endif /* HYDRO_D */
-
-!bring in timeslice files
-do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-
-#ifdef HYDRO_D
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 #endif
 
+!bring in timeslice files
+allocate(obsTimeStrAllocated(nObsMiss))
+
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   if(my_id .eq. io_id) then 
-   !if(my_id .eq. mod(ii,numprocs)) then  !! this would give parallel IO
+   !if(my_id .eq. io_id) then 
+   iiImage = mod(ii-1,numprocs)
+print*,'JLM :: iiImage: ', iiImage
+   if(my_id .eq. iiImage) then  !! this would give parallel IO
 #endif
       tt = whObsMiss(ii)
       ! set/reset this obsTime
@@ -801,105 +801,105 @@ if(my_id .eq. io_id) call nudging_timer(startCodeTime)
       if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
       if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
       call timeslice_file_to_struct(tt) ! uses obsTimeStr%time to get file
-      obsTimeStrAllocated = allocated(obsTimeStr(tt)%obsStr)
+      obsTimeStrAllocated(ii) = allocated(obsTimeStr(tt)%obsStr)
+      !obsTimeStrAllocated = allocated(obsTimeStr(tt)%obsStr)
 #ifdef MPP_LAND
-   end if ! my_id .eq. io_id  -OR-  my_id .eq. mod(ii,numprocs)
+   end if ! my_id .eq. io_id
+#endif
+end do
 
 #ifdef HYDRO_D
    if(my_id .eq. io_id) then
       print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
-      print*,'Ndg: obsTimeStrAllocated: ', obsTimeStrAllocated
+      print*,'Ndg: obsTimeStrAllocated(ii), ii: ', obsTimeStrAllocated(ii), ii
       call nudging_timer(endCodeTime)
       call accum_nudging_time(startCodeTime, endCodeTime, &
            'timeslice files io_id', .false.)
       call nudging_timer(startCodeTime)
    endif
-#endif /* HYDRO_D */
+#endif
 
+#ifdef MPP_LAND
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+   iiImage = mod(ii-1,numprocs)
+   tt = whObsMiss(ii)
    ! broadcast
-   ! problem broadcasting here cant take adv of my_id .eq. mod(ii,numprocs)
-   ! because it creates a block in the loop.
-   ! Writing it efficiently outside the loop requires using something
-   ! like mpi_get to get dimensions on a certain image.
    ! Here have to expose some of the guts of timeslice_file_to_struct
    ! Note nGages depends on ii/tt
-   call mpp_land_bcast_int1(tt)
-   call mpp_land_bcast_logical(obsTimeStrAllocated)
-   if(obsTimeStrAllocated) then 
-      if(my_id .eq. io_id) nGages=size(obsTimeStr(tt)%obsStr)
-      call mpp_land_bcast_int1(nGages)
-      if(my_id .ne. io_id) then
-         if(allocated(obsTimeStr(tt)%obsStr)) deallocate(obsTimeStr(tt)%obsStr)
+   call mpp_land_bcast_int1_root(tt, iiImage)
+   call mpp_land_bcast_logical_root(obsTimeStrAllocated(ii), iiImage)
+   if(obsTimeStrAllocated(ii)) then 
+      if(my_id .eq. iiImage) nGages=size(obsTimeStr(tt)%obsStr)
+      call mpp_land_bcast_int1_root(nGages, iiImage)
+      if(my_id .ne. iiImage) then
+         if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
          allocate(obsTimeStr(tt)%obsStr(nGages))
       endif
       ! Variables in order assigned in the call in timeslice_file_to_struct
-      call mpp_land_bcast_char(19,obsTimeStr(tt)%time)
-      call mpp_land_bcast_char(19,obsTimeStr(tt)%updateTime)
-      call mpp_land_bcast_char1d(obsTimeStr(tt)%obsStr(:)%usgsId)
-      call mpp_land_bcast_char1d(obsTimeStr(tt)%obsStr(:)%obsTime)
-      call mpp_land_bcast_real_1d(obsTimeStr(tt)%obsStr(:)%obsQC)
-      call mpp_land_bcast_real_1d(obsTimeStr(tt)%obsStr(:)%obsDischarge)
+      call mpp_land_bcast_char_root(19,obsTimeStr(tt)%time, iiImage)
+      call mpp_land_bcast_char_root(19,obsTimeStr(tt)%updateTime, iiImage)
+      call mpp_land_bcast_char1d_root(obsTimeStr(tt)%obsStr(:)%usgsId, iiImage)
+      call mpp_land_bcast_char1d_root(obsTimeStr(tt)%obsStr(:)%obsTime, iiImage)
+      call mpp_land_bcast_real_1d_root(obsTimeStr(tt)%obsStr(:)%obsQC, iiImage)
+      call mpp_land_bcast_real_1d_root(obsTimeStr(tt)%obsStr(:)%obsDischarge, iiImage)
    end if
+end do
+#endif
 
 #ifdef HYDRO_D
-   if(my_id .eq. io_id) then
-      !print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
-      call nudging_timer(endCodeTime)
-      call accum_nudging_time(startCodeTime, endCodeTime, &
-           'Bcast timeslice files', .false.)
+if(my_id .eq. io_id) then
+   !print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'Bcast timeslice files', .false.)
+endif
+if(my_id .eq. io_id) call nudging_timer(startCodeTime)
+#endif /* HYDRO_D */
+
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+#ifdef MPP_LAND
+   iiImage = 0!mod(ii-1,numprocs)
+   if(my_id .eq. iiImage) then 
+      tt = whObsMiss(ii)
+#endif
+      if(obsTimeStrAllocated(ii)) call obs_static_to_struct(tt)   
+#ifdef MPP_LAND
+   end if
+#endif 
+end do
+
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+#ifdef MPP_LAND
+   iiImage = 0! mod(ii-1,numprocs)
+   if(my_id .eq. iiImage) then 
+      tt = whObsMiss(ii)
+#endif
+      if(obsTimeStrAllocated(ii)) call tally_affected_links(tt)
    endif
-   if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
-   if(my_id .eq. io_id) then 
-   !if(my_id .eq. mod(ii,numprocs)) then
+#ifdef MPP_LAND
+end do
 #endif
-      if(obsTimeStrAllocated) then 
-         call obs_static_to_struct(tt)      
-
-#ifdef HYDRO_D
-         if(my_id .eq. io_id) then
-            call nudging_timer(endCodeTime)
-            call accum_nudging_time(startCodeTime, endCodeTime, &
-                 'obs_static_to_struct io_id', .false.)
-         endif
-         if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
-         call tally_affected_links(tt)
-#ifdef HYDRO_D         
-         !print*,'Ndg: naff0', my_id, size(obsTimeStr(tt)%allCellInds)
-#endif
-      endif
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-              'Tally affected links io_id', .false.)
-      endif
-#endif /* HYDRO_D */
 
 #ifdef MPP_LAND
-   end if ! my_id .eq. io_id  -OR-  my_id .eq. mod(ii,numprocs)
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+   iiImage = 0!mod(ii-1,numprocs)
    ! broadcast
-   ! problem broadcasting here cant take adv of my_id .eq. mod(ii,numprocs)
-   ! because it creates a block in the loop.
-   if(obsTimeStrAllocated) then
+   if(obsTimeStrAllocated(ii)) then
+      tt = whObsMiss(ii)
       ! Treat obs_static_to_strutct
-      call mpp_land_bcast_int1d(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
-      call mpp_land_bcast_char1d(obsStaticStr(:)%usgsId)
-      call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%R)
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%G)
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%tau)
+      call mpp_land_bcast_int1d_root(obsTimeStr(tt)%obsStr(:)%obsStaticInd, iiImage)
+      call mpp_land_bcast_char1d_root(obsStaticStr(:)%usgsId, iiImage)
+      call mpp_land_bcast_int1d_root(obsStaticStr(:)%obsCellInd, iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%R, iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%tau, iiImage)
 
       nStatic = sum( (/ (1, cc=1,size(obsStaticStr(:)%obsCellInd)) /), &
                      mask=obsStaticStr(:)%obsCellInd .ne. 0            )
       do cc=1,nStatic
-         if(my_id .eq. io_id) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
-         call mpp_land_bcast_int1(nCellsInR)
-         if(my_id .ne. io_id) then
+         if(my_id .eq. iiImage) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
+         call mpp_land_bcast_int1_root(nCellsInR, iiImage)
+         if(my_id .ne. iiImage) then
             if(allocated(obsStaticStr(cc)%cellsAffected)) deallocate(obsStaticStr(cc)%cellsAffected)
             if(allocated(obsStaticStr(cc)%dist))          deallocate(obsStaticStr(cc)%dist)
             if(allocated(obsStaticStr(cc)%ws))            deallocate(obsStaticStr(cc)%ws)
@@ -907,72 +907,74 @@ if(my_id .eq. io_id) call nudging_timer(startCodeTime)
                      obsStaticStr(cc)%dist(nCellsInR),          &
                      obsStaticStr(cc)%ws(nCellsInR)             )
          end if
-         call mpp_land_bcast_int1d(obsStaticStr(cc)%cellsAffected)
-         call mpp_land_bcast_real_1d(obsStaticStr(cc)%dist)
-         call mpp_land_bcast_real_1d(obsStaticStr(cc)%ws)
+         call mpp_land_bcast_int1d_root(obsStaticStr(cc)%cellsAffected, iiImage)
+         call mpp_land_bcast_real_1d_root(obsStaticStr(cc)%dist, iiImage)
+         call mpp_land_bcast_real_1d_root(obsStaticStr(cc)%ws, iiImage)
       end do
 
       ! Treat tally_affected_links
-      if(my_id .eq. io_id) nLinkAff = size(obsTimeStr(tt)%allCellInds)
-      call mpp_land_bcast_int1(nLinkAff)
-      call mpp_land_bcast_int1(nLinkAff)
+      if(my_id .eq. iiImage) nLinkAff = size(obsTimeStr(tt)%allCellInds)
+      call mpp_land_bcast_int1_root(nLinkAff, iiImage)
+      call mpp_land_bcast_int1_root(nLinkAff, iiImage)
 
-      if(my_id .ne. io_id) then
+      if(my_id .ne. iiImage) then
          if(allocated(obsTimeStr(tt)%allCellInds)) deallocate(obsTimeStr(tt)%allCellInds)
          if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
          allocate(obsTimeStr(tt)%allCellInds(nLinkAff), &
                   obsTimeStr(tt)%nGageCell(nLinkAff)    )
       end if
-      call mpp_land_bcast(obsTimeStr(tt)%allCellInds)
-      call mpp_land_bcast(obsTimeStr(tt)%nGageCell)
-#endif
+      call mpp_land_bcast_int1d_root(obsTimeStr(tt)%allCellInds, iiImage)
+      call mpp_land_bcast_int1d_root(obsTimeStr(tt)%nGageCell, iiImage)
+   end if
+end do
+#endif /* MPP_LAND */
 
 #ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-              'Bcat tally affected links io_id', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'Bcat tally affected links io_id', .false.)
+endif
+if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 #endif /* HYDRO_D */
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND
-      !if(my_id .eq. io_id) then 
-      if(my_id .eq. -5) then 
+!if(my_id .eq. io_id) then 
+if(my_id .eq. -5) then 
 #endif          
-        print*,'Ndg: '
-         print*,'Ndg: !-------------------------------------------------'
-         print*,'Ndg: obsTimeStr(tt=',tt,')'
-         print*,'Ndg: obsTimeStr(tt)%time:',        obsTimeStr(tt)%time
-         print*,'Ndg: obsTimeStr(tt)%updateTime:',  obsTimeStr(tt)%updateTime
-         print*,'Ndg: obsTimeStr(tt)%allCellInds:', obsTimeStr(tt)%allCellInds
-         print*,'Ndg: obsTimeStr(tt)%nGageCell:',   obsTimeStr(tt)%nGageCell
-         if(trim(obsTimeStr(tt)%updateTime(1:7)) .ne. 'no file') then
-            print*,'Ndg: nobs:', size(obsTimeStr(tt)%obsStr)
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%usgsId:',       obsTimeStr(tt)%obsStr(1)%usgsId
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsTime:',      obsTimeStr(tt)%obsStr(1)%obsTime
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsDischarge:', obsTimeStr(tt)%obsStr(1)%obsDischarge
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsQC:',        obsTimeStr(tt)%obsStr(1)%obsQC
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsStaticInd:', obsTimeStr(tt)%obsStr(1)%obsStaticInd
-         end if
-         print*,'Ndg: !-------------------------------------------------'
-         print*,'Ndg: '
+   print*,'Ndg: '
+   print*,'Ndg: !-------------------------------------------------'
+   print*,'Ndg: obsTimeStr(tt=',tt,')'
+   print*,'Ndg: obsTimeStr(tt)%time:',        obsTimeStr(tt)%time
+   print*,'Ndg: obsTimeStr(tt)%updateTime:',  obsTimeStr(tt)%updateTime
+   print*,'Ndg: obsTimeStr(tt)%allCellInds:', obsTimeStr(tt)%allCellInds
+   print*,'Ndg: obsTimeStr(tt)%nGageCell:',   obsTimeStr(tt)%nGageCell
+   if(trim(obsTimeStr(tt)%updateTime(1:7)) .ne. 'no file') then
+      print*,'Ndg: nobs:', size(obsTimeStr(tt)%obsStr)
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%usgsId:',       obsTimeStr(tt)%obsStr(1)%usgsId
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsTime:',      obsTimeStr(tt)%obsStr(1)%obsTime
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsDischarge:', obsTimeStr(tt)%obsStr(1)%obsDischarge
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsQC:',        obsTimeStr(tt)%obsStr(1)%obsQC
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsStaticInd:', obsTimeStr(tt)%obsStr(1)%obsStaticInd
+   end if
+   print*,'Ndg: !-------------------------------------------------'
+   print*,'Ndg: '
 #ifdef MPP_LAND
-      end if ! (my_id .eq. io_id)
-#endif
-#endif !HYDRO_D
-   endif ! (obsTimeStrAllocated)
-end do ! ii 
-
-#ifdef HYDRO_D
-            if(my_id .eq. io_id) then
-               call nudging_timer(endCodeTime)
-               call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
-                                       'main loop finish setup_stream_nudging', .false.)
-            endif
+!if(my_id .eq. io_id) then 
+end if
+#endif          
 #endif /* HYDRO_D */
 
+#ifdef HYDRO_D
+   if(my_id .eq. io_id) then
+      call nudging_timer(endCodeTime)
+      call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
+           'main loop finish setup_stream_nudging', .false.)
+   endif
+#endif /* HYDRO_D */
+
+deallocate(obsTimeStrAllocated)
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -1006,8 +1008,7 @@ end subroutine setup_stream_nudging
 ! Notes:
 
 subroutine timeslice_file_to_struct(structIndex)
-use module_nudging_utils, only: whichInLoop,         &
-                                whichInLoop2,        &
+use module_nudging_utils, only: whichInLoop2,        &
                                 accum_nudging_time,  &
                                 nudging_timer
 
@@ -1022,8 +1023,8 @@ character(len=19)  :: thisTime  !! the of this time/slice of the structure
 character(len=256) :: fileName  !! the corresponding obs file.
 
 integer :: nGages
-integer, allocatable, dimension(:) :: whSliceInDom, whSliceInDom2
-integer :: nWhSliceInDom, nWhSliceInDom2
+integer, allocatable, dimension(:) :: whSliceInDom
+integer :: nWhSliceInDom
 integer :: count, ww
 
 character(len=19)  :: timeIn, updateTimeIn  !! the time of file/slice and when it was updated
@@ -1032,18 +1033,6 @@ character(len=19), allocatable, dimension(:) :: gageTimeIn      !!
 real,              allocatable, dimension(:) :: gageQCIn        !! 
 character(len=15), allocatable, dimension(:) :: usgsIdIn        !! USGS ID
 real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
-
-#ifdef HYDRO_D
-real :: startCodeTime, endCodeTime
-#endif /* HYDRO_D */
-
-#ifdef HYDRO_D
-print*,'Ndg: start timeslice_file_to_struct'
-#endif 
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
 
 ! Is there a timeslice file?
 thisTime = obsTimeStr(structIndex)%time
@@ -1061,7 +1050,7 @@ end if
 #ifdef HYDRO_D
 print*,'Ndg: Found file:', fileName
 print*,'Ndg: timeSlice: ',thisTime
-print*,'Ndg: timeSliceFile:',trim(fileName)
+print*,'Ndg: timeSliceFile:',trim(fileName), my_id
 #endif
 
 nGages=get_netcdf_dim(fileName, 'stationIdInd', 'timeslice_file_to_struct')
@@ -1076,16 +1065,6 @@ if(filterObsToDom) then
             gageTimeIn(nGages),     & 
             gageQCIn(nGages),       & 
             gageDischargeIn(nGages) )
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         print*
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-                                 'ts_file_to_struct above read in', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
    
    call read_timeslice_file(fileName,            &
                             sanityQcDischarge,   &
@@ -1097,16 +1076,6 @@ if(filterObsToDom) then
                             gageQCIn,            & 
                             gageDischargeIn      )
 
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-                                 'ts_file_to_struct below read in', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
-
    if(timeIn .NE. obsTimeStr(structIndex)%time) &
         call hydro_stop('timeslice_file_to_struct: file time does not match structure')
    if(obsResolution .NE. sliceResoIn) &
@@ -1115,29 +1084,8 @@ if(filterObsToDom) then
    obsTimeStr(structIndex)%updateTime = updateTimeIn
 
    allocate(whSliceInDom(size(usgsIdIn)))
-   allocate(whSliceInDom2(size(usgsIdIn)))
    !! parallelize this? !!
-   call whichInLoop (usgsIdIn, nodeGageStr%usgsId, whSliceInDom,  nWhSliceInDom )
-   call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, whSliceInDom2, nWhSliceInDom2)
-
-   print*,'Ndg: nWhSliceInDom: ', nWhSliceInDom
-   print*,'Ndg: nWhSliceInDom2: ', nWhSliceInDom2
-   print*,'Ndg: all(whSliceInDom .eq. whSliceInDom2): ', all(whSliceInDom .eq. whSliceInDom2)
-   print*,'Ndg: whSliceInDom: ', whSliceInDom
-   print*,'Ndg: whSliceInDom2: ', whSliceInDom2
-
-call flush(6)
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-                                 'ts_file_to_struct below whichInLoop', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
-
+   call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, whSliceInDom, nWhSliceInDom)
 
 #ifdef HYDRO_D
 !   print*,'Ndg: usgsIdIn: ',         usgsIdIn
@@ -1200,16 +1148,6 @@ else ! dont filterObsToDom
 
 endif !filterObsToDom
 
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-              'ts_file_to_struct bottom of routine', .false.)
-      endif
-#endif /* HYDRO_D */
-
-
 #ifdef HYDRO_D
 print*,'Ndg: finish timeslice_file_to_struct'
 call flush(6)
@@ -1260,6 +1198,7 @@ real :: startCodeTime, endCodeTime
 
 if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 print*,'Ndg: start obs_static_to_struct'
+call flush(6)
 #endif /* HYDRO_D */
 
 ! number of obs at this time

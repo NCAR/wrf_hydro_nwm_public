@@ -886,6 +886,17 @@ MODULE MODULE_MPP_LAND
     return 
   end subroutine mpp_land_bcast_int1d
 
+  subroutine mpp_land_bcast_int1d_root(inout, rootId)
+     integer len 
+     integer inout(:)
+     integer, intent(in) :: rootId
+     integer ierr
+      len = size(inout,1)
+        call mpi_bcast(inout,len,MPI_INTEGER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_int1d_root
+
   subroutine mpp_land_bcast_int1(inout)
       integer inout
       integer ierr
@@ -895,6 +906,15 @@ MODULE MODULE_MPP_LAND
     return 
   end subroutine mpp_land_bcast_int1
 
+  subroutine mpp_land_bcast_int1_root(inout, rootId)
+      integer inout
+      integer ierr
+      integer, intent(in) :: rootId
+        call mpi_bcast(inout,1,MPI_INTEGER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_int1_root
+
   subroutine mpp_land_bcast_logical(inout)
       logical ::  inout
       integer ierr
@@ -903,6 +923,16 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return 
   end subroutine mpp_land_bcast_logical
+
+  subroutine mpp_land_bcast_logical_root(inout, rootId)
+      logical ::  inout
+      integer, intent(in) :: rootId
+      integer ierr
+        call mpi_bcast(inout,1,MPI_LOGICAL,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_logical_root
+
 
   subroutine mpp_land_bcast_real1(inout)
       real inout
@@ -923,6 +953,18 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_real_1d
+
+  subroutine mpp_land_bcast_real_1d_root(inout, rootId)
+      integer len
+      real inout(:)
+      integer, intent(in) :: rootId
+      integer ierr
+      len = size(inout,1) 
+        call mpi_bcast(inout,len,MPI_real,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+    end subroutine mpp_land_bcast_real_1d_root
+
 
   subroutine mpp_land_bcast_real8_1d(inout)
       integer len
@@ -997,6 +1039,17 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_char
 
+  subroutine mpp_land_bcast_char_root(size,inout,rootId)
+      integer size
+      character inout(*)
+      integer, intent(in) :: rootId
+      integer ierr
+        call mpi_bcast(inout,size,MPI_CHARACTER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_char_root
+
+
   subroutine mpp_land_bcast_char1d(inout)
       character(len=*) :: inout(:)
       integer :: lenSize
@@ -1007,6 +1060,17 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_char1d
+
+  subroutine mpp_land_bcast_char1d_root(inout,rootId)
+      character(len=*) :: inout(:)
+      integer, intent(in) :: rootId
+      integer :: lenSize
+      integer :: ierr
+      lenSize = size(inout,1)*len(inout)
+      call mpi_bcast(inout,lenSize,MPI_CHARACTER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_char1d_root
 
   subroutine mpp_land_bcast_char1(inout)
       integer len
