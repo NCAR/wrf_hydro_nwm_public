@@ -611,19 +611,21 @@ real :: startCodeTime, endCodeTime
 real :: startCodeTimeOuter
 #endif
 
-#ifdef HYDRO_D  /* !! JLM */
+#ifdef HYDRO_D
 #ifdef MPP_LAND 
 if(my_id .eq. io_id) &
 #endif
    print*,'Ndg: start setup_stream_nudging'
-#endif  /* !! JLM */
-
-!#ifdef MPP_LAND - just do this section on all images. There is no IO.
+#endif  /* HYDRO_D */
 
 #ifdef HYDRO_D
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
+if(my_id .eq. io_id) then
+   call nudging_timer(startCodeTimeOuter)
+   call nudging_timer(startCodeTime)
+endif
+#endif
 
+!#ifdef MPP_LAND - just do this section on all images. There is no IO.
 ! The hydro model time as a string.
 #ifdef MPP_LAND
 !update and broadcast the lsm time
@@ -631,17 +633,6 @@ if(my_id .eq. io_id) lsmTime = nlst_rt(did)%olddate
 !! JLM - why broadcast this? is it not the same on all processors?
 call mpp_land_bcast_char(19, lsmTime)
 #endif
-
-
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-                           'bcast lsm time', .false.   )
-endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
 
 ! This is apparently fixed so that olddate is lsmTime and not
 ! behind by 1 lsm timestep when the hydro model is run.
@@ -657,36 +648,34 @@ print*,'Ndg: JLM: obsHydroTime: ', obsHydroTime
 ! These times correspond to the timestamps on the observation files, which 
 ! mark the center of the time period they represent with width obsResolution.
 do tt=1,nObsTimes
-   print*,"Ndg: JLM dtThing: ", (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt
+   !print*,"Ndg: JLM dtThing: ", (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt
    call geth_newdate(obsTimes(tt), obsHydroTime,  &
                      !obsResolutionInt*(tt - (nObsTimes+1)/2 )*60)
                      (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt )
-   print*,'Ndg: JLM: obsTimes(tt),tt: ', obsTimes(tt), tt
+   !print*,'Ndg: JLM: obsTimes(tt),tt: ', obsTimes(tt), tt
 end do
-
 
 ! If this is the first setup, these are all blank. This is their init value.
 if(all(obsTimeStr(:)%time .eq. '')) obsTimeStr(:)%time = obsTimes
 
-print*,'Ndg: hydroTime: ', hydroTime
-print*,'Ndg: obsHydroTime: ', obsHydroTime
-print*,'Ndg: obsTimes: ', obsTimes
-print*,'Ndg: obsTimeStr: before obsTimeStr(:)%time: ', obsTimeStr(:)%time
-
+!print*,'Ndg: hydroTime: ', hydroTime
+!print*,'Ndg: obsHydroTime: ', obsHydroTime
+!print*,'Ndg: obsTimes: ', obsTimes
+!print*,'Ndg: obsTimeStr: before obsTimeStr(:)%time: ', obsTimeStr(:)%time
 
 ! If there are existing observations older than the first obsTime for this 
 ! nudging window, shift them left. This should just shift one position left 
 ! with each advance in time resolution.
-print*,'Ndg: JLM : obsTimes(1):', obsTimes(1)
+!print*,'Ndg: JLM : obsTimes(1):', obsTimes(1)
 call geth_idts(obsTimeStr(1)%time, obsTimes(1), oldDiff)
-print*,"Ndg: olddiff:", oldDiff
+!print*,"Ndg: olddiff:", oldDiff
 if(oldDiff .eq. 0) then 
    nShiftLeft=0
 else 
    ! nShiftLeft should not exceed nObsTimes
    nShiftLeft = min( abs(oldDiff/obsResolutionInt/60), nObsTimes )
 end if
-print*,"Ndg: nShiftLeft:", nShiftLeft
+!print*,"Ndg: nShiftLeft:", nShiftLeft
 
 if(nShiftLeft .gt. 0 .and. nShiftLeft .lt. nObsTimes) then 
    do tt=1,nObsTimes-nShiftLeft
@@ -713,16 +702,6 @@ if(nShiftLeft .gt. 0) then
       if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
    end do
 end if
-
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-                           'io_id shift left', .false.)
-endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
   
 !if(.NOT. all(obsTimeStr(:)%time .EQ. obsTimes)) &
 !     call hydro_stop("obsTimeStr(:)%times not what they should be. Please investigate.")
@@ -752,16 +731,6 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 end if
 
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-                           'io_id basic info', .false.)
-endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
-
-
 ! Broadcast the basic info above.
 call mpp_land_bcast_int1(nWhObsMiss)
 if(my_id .ne. io_id) then
@@ -776,10 +745,9 @@ call mpp_land_bcast_int1(nObsMiss)
 if(my_id .eq. io_id) then
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
-        'bcast basic info', .false.)
+        'setup1: prelim', .false.)
+   call nudging_timer(startCodeTime)
 endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTimeOuter)
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 #endif
 
 !bring in timeslice files
@@ -787,9 +755,8 @@ allocate(obsTimeStrAllocated(nObsMiss))
 
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   !if(my_id .eq. io_id) then 
    iiImage = mod(ii-1,numprocs)
-print*,'JLM :: iiImage: ', iiImage
+   print*,'JLM :: iiImage: ', iiImage
    if(my_id .eq. iiImage) then  !! this would give parallel IO
 #endif
       tt = whObsMiss(ii)
@@ -804,24 +771,25 @@ print*,'JLM :: iiImage: ', iiImage
       obsTimeStrAllocated(ii) = allocated(obsTimeStr(tt)%obsStr)
       !obsTimeStrAllocated = allocated(obsTimeStr(tt)%obsStr)
 #ifdef MPP_LAND
-   end if ! my_id .eq. io_id
+   end if ! my_id .eq. iiImage
 #endif
 end do
 
 #ifdef HYDRO_D
-   if(my_id .eq. io_id) then
-      print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
-      print*,'Ndg: obsTimeStrAllocated(ii), ii: ', obsTimeStrAllocated(ii), ii
-      call nudging_timer(endCodeTime)
-      call accum_nudging_time(startCodeTime, endCodeTime, &
-           'timeslice files io_id', .false.)
-      call nudging_timer(startCodeTime)
-   endif
+if(my_id .eq. io_id) then
+   !print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
+   !print*,'Ndg: obsTimeStrAllocated(ii), ii: ', obsTimeStrAllocated(ii), ii
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup2.0: timeslice_file_to_struct before bcast', .false.)
+   !call nudging_timer(startCodeTime) ! skip this b/c there's no mpi sync till after next section
+endif
 #endif
 
 #ifdef MPP_LAND
+! broadcast the IO from above   
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = mod(ii-1,numprocs)
+   iiImage = mod(ii-1,numprocs) !must match above
    tt = whObsMiss(ii)
    ! broadcast
    ! Here have to expose some of the guts of timeslice_file_to_struct
@@ -848,17 +816,16 @@ end do
 
 #ifdef HYDRO_D
 if(my_id .eq. io_id) then
-   !print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
-        'Bcast timeslice files', .false.)
+        'setup2.1: timeslice_file_to_struct after bcast', .false.)
+   call nudging_timer(startCodeTime) ! images are synched so reset timer
 endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
+#endif
 
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = 0!mod(ii-1,numprocs)
+   iiImage = 0 ! this causes issues need refactor of obs_static_to_struct? mod(ii-1,numprocs)
    if(my_id .eq. iiImage) then 
       tt = whObsMiss(ii)
 #endif
@@ -868,9 +835,18 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #endif 
 end do
 
+#ifdef HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup3: obs_static_to_struct', .false.)
+   call nudging_timer(startCodeTime) 
+endif
+#endif
+
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = 0! mod(ii-1,numprocs)
+   iiImage = 0! causes issues also refactor tally_affected_links? mod(ii-1,numprocs)
    if(my_id .eq. iiImage) then 
       tt = whObsMiss(ii)
 #endif
@@ -880,9 +856,18 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 end do
 #endif
 
+#ifdef HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup4: tally_affected_links', .false.)
+   call nudging_timer(startCodeTime) 
+endif
+#endif
+
 #ifdef MPP_LAND
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = 0!mod(ii-1,numprocs)
+   iiImage = 0 ! this must happen on the same images as the above two mod(ii-1,numprocs)
    ! broadcast
    if(obsTimeStrAllocated(ii)) then
       tt = whObsMiss(ii)
@@ -933,10 +918,10 @@ end do
 if(my_id .eq. io_id) then
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
-        'Bcat tally affected links io_id', .false.)
+        'setup5: bcast obs_static & tally_aff', .false.)
+   call nudging_timer(startCodeTime) 
 endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif /* HYDRO_D */
+#endif
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND
@@ -966,15 +951,17 @@ end if
 #endif          
 #endif /* HYDRO_D */
 
-#ifdef HYDRO_D
-   if(my_id .eq. io_id) then
-      call nudging_timer(endCodeTime)
-      call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
-           'main loop finish setup_stream_nudging', .false.)
-   endif
-#endif /* HYDRO_D */
-
 deallocate(obsTimeStrAllocated)
+
+#ifdef HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup6: diagnostics at end', .false.)
+   call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
+        'setup7: finish setup_stream_nudging', .false.)
+   endif
+#endif
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
