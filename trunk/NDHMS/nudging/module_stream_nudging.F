@@ -326,10 +326,6 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
    call mpp_land_bcast_int1d(nodeGageStr%nodeId)
 #endif 
 
-!print*,'Ndg: JLM: my_id & nGagesDomain:', my_id, nGagesDomain
-!print*,'Ndg: JLM: my_id & nodeGageStr%usgsId:', my_id, nodeGageStr%usgsId
-!print*,'Ndg: JLM: my_id & nodeGageStr%nodeId:', my_id, nodeGageStr%nodeId
-
 end if ! muskingum channel models
 
 !=================================================
@@ -353,13 +349,6 @@ if(my_id .eq. IO_id) then
                                 nudgingParamsTmp%R,      &
                                 nudgingParamsTmp%G,      &
                                 nudgingParamsTmp%tau     )
-
-#ifdef HYDRO_D
-!   print*,'Ndg: nudgingParamsTmp%usgsId(nParamGages)', nudgingParamsTmp%usgsId(nParamGages)
-!   print*,'Ndg: nudgingParamsTmp%R(nParamGages)',      nudgingParamsTmp%R(nParamGages)
-!   print*,'Ndg: nudgingParamsTmp%G(nParamGages)',      nudgingParamsTmp%G(nParamGages)
-!   print*,'Ndg: nudgingParamsTmp%tau(nParamGages)',    nudgingParamsTmp%tau(nParamGages)
-#endif
 
    ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
@@ -412,11 +401,6 @@ call mpp_land_bcast_real_1d(nudgingParamsStr%R)
 call mpp_land_bcast_real_1d(nudgingParamsStr%G)
 call mpp_land_bcast_real_1d(nudgingParamsStr%tau)
 #endif
-
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%usgsId:', my_id, nudgingParamsStr%usgsId
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%R:', my_id, nudgingParamsStr%R
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%G:', my_id, nudgingParamsStr%G
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%tau:', my_id, nudgingParamsStr%tau
 
 !=================================================
 ! 4. Sort out which gages are actually in the domain.
@@ -584,12 +568,11 @@ integer :: oldDiff, nShiftLeft
 
 logical, allocatable, dimension(:) :: theMask
 integer, allocatable, dimension(:) :: whObsMiss
+logical, allocatable, dimension(:) :: obsTimeStrAllocated
 
 integer :: nObsMiss
 integer :: did=1  !! jlm: assuming did=1
-integer ::  nWhObsMiss
-logical, allocatable, dimension(:) :: obsTimeStrAllocated
-!logical :: obsTimeStrAllocated
+integer :: nWhObsMiss
 
 #ifdef MPP_LAND 
 integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
@@ -631,17 +614,18 @@ call geth_newdate(hydroTime, lsmTime, hydroDT)
 
 ! Calculate the closest multiple of obsResolution to the hydroTime
 obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
+#ifdef HYDRO_D
 print*,'Ndg: JLM: obsHydroTime: ', obsHydroTime
+#endif
+
 ! Now solve all of the observation times in the current nudging window.
 ! nObsTimes is set at init from maxTau and obsResolution. 
 ! These times correspond to the timestamps on the observation files, which 
 ! mark the center of the time period they represent with width obsResolution.
 do tt=1,nObsTimes
-   !print*,"Ndg: JLM dtThing: ", (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt
    call geth_newdate(obsTimes(tt), obsHydroTime,  &
                      !obsResolutionInt*(tt - (nObsTimes+1)/2 )*60)
                      (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt )
-   !print*,'Ndg: JLM: obsTimes(tt),tt: ', obsTimes(tt), tt
 end do
 
 ! If this is the first setup, these are all blank. This is their init value.
@@ -745,7 +729,6 @@ allocate(obsTimeStrAllocated(nObsMiss))
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
    iiImage = mod(ii-1,numprocs)
-   print*,'JLM :: iiImage: ', iiImage
    if(my_id .eq. iiImage) then  !! this would give parallel IO
 #endif
       tt = whObsMiss(ii)
@@ -815,7 +798,7 @@ endif
 !! get index of static info in obsStaticStr
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = 0 ! this causes issues need refactor of obs_static_to_struct? mod(ii-1,numprocs)
+   iiImage = mod(ii-1,numprocs) 
    if(my_id .eq. iiImage) then 
       tt = whObsMiss(ii)
 #endif
@@ -851,7 +834,7 @@ endif
 
 #ifdef MPP_LAND
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = 0 ! this must happen on the same images as the above two mod(ii-1,numprocs)
+   iiImage = mod(ii-1,numprocs) ! this must happen on the same images as the above: mod(ii-1,numprocs)
    ! broadcast
    if(obsTimeStrAllocated(ii)) then
       tt = whObsMiss(ii)
@@ -888,7 +871,7 @@ end do
 if(my_id .eq. io_id) then
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
-        'setup4: bcast obs_static & tally_aff', .false.)
+        'setup4: bcast obs_static_struct', .false.)
    call nudging_timer(startCodeTime) 
 endif
 #endif
@@ -925,12 +908,10 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       call mpp_land_bcast_int1_root(nLinkAff, iiImage)
 
       if(my_id .ne. iiImage) then
-         print*,'Ndg: JLM:: my_id, naff', my_id, nLinkAff
          if(allocated(obsTimeStr(tt)%allCellInds)) deallocate(obsTimeStr(tt)%allCellInds)
          if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
          allocate(obsTimeStr(tt)%allCellInds(nLinkAff), &
                   obsTimeStr(tt)%nGageCell(nLinkAff)    )
-         print*,'Ndg: JLM:: my_id, allocated(obsTimeStr(tt)%allCellInds)', my_id, allocated(obsTimeStr(tt)%allCellInds)
       end if
       call mpp_land_bcast_int1d_root(obsTimeStr(tt)%allCellInds, iiImage)
       call mpp_land_bcast_int1d_root(obsTimeStr(tt)%nGageCell, iiImage)
@@ -975,8 +956,6 @@ end if
 #endif          
 #endif /* HYDRO_D */
 
-deallocate(obsTimeStrAllocated)
-
 #ifdef HYDRO_D
 if(my_id .eq. io_id) then
    call nudging_timer(endCodeTime)
@@ -986,6 +965,8 @@ if(my_id .eq. io_id) then
         'setup7: finish setup_stream_nudging', .false.)
    endif
 #endif
+
+deallocate(obsTimeStrAllocated, whObsMiss)
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -1515,9 +1496,6 @@ if (nlst_rt(did)%channel_option .eq. 1 .or.   &
 
 allocate(affectedInds(nLinks), nGageAffect(nLinks))
 
-!print*,'Ndg: JLM: nlinks: ', nlinks
-!call flush(6)
-
 affectedInds = 0
 nGageAffect  = 0
 
@@ -1541,8 +1519,6 @@ allocate( obsTimeStr(timeIndex)%allCellInds(nLinkAff), &
 
 obsTimeStr(timeIndex)%allCellInds = pack(affectedInds, mask=affectedInds .ne. 0)
 obsTimeStr(timeIndex)%nGageCell   = pack(nGageAffect,  mask=nGageAffect .ne. 0)
-
-print*,'obsTimeStr(timeIndex)%allCellInds',obsTimeStr(timeIndex)%allCellInds
 
 deallocate(affectedInds, nGageAffect)
 
@@ -1823,21 +1799,18 @@ call geth_newdate(hydroTime, lsmTime, hydroAdv)
 nudge_term_link = 0.
 weighting = 0.
 
+#ifdef HYDRO_D
 if(linkInd .eq. checkInd) then
    print*,'Ndg: checkInd: hydroTime: ',hydroTime      
    print*,'Ndg: checkInd: linkInd', linkInd
 end if
+#endif
 
 do tt=1,size(obsTimeStr)
 
    if(.not. allocated(obsTimeStr(tt)%allCellInds)) cycle
-   print*,'Ndg: checkInd: not cycle 1'
-   if(my_id .eq. 0 .or. my_id .eq. 1) print*,'allCellInds',obsTimeStr(tt)%allCellInds
    if(.not. any(obsTimeStr(tt)%allCellInds .eq. linkInd)) cycle
-   print*,'matching linkInd:',linkInd
-   print*,'Ndg: checkInd: not cycle 2'
    if(.not. allocated(obsTimeStr(tt)%obsStr)) cycle
-   print*,'Ndg: checkInd: not cycle 3'
 
    do oo=1,size(obsTimeStr(tt)%obsStr)      
 
