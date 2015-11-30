@@ -87,10 +87,11 @@ end type netwkReExpStructure
 type(netwkReExpStructure) :: downNetwkStr, upNetwkStr
 
 !========================
-! Track gages from NWIS not in our param file and/or NHD+
-integer, parameter :: maxNwisNotNhdCount=20000
-character(len=15), dimension(maxNwisNotNhdCount) :: nwisNotNhd
-integer :: nwisNotNhdCount
+! Track gages from NWIS not in our param file and not in the intersection or 
+! the Route_Link gages and the gages in the parameter file. 
+integer, parameter :: maxNwisNotRLAndParamsCount=20000
+character(len=15), dimension(maxNwisNotRLAndParamsCount) :: nwisNotRLAndParams
+integer :: nwisNotRLAndParamsCount
 
 !========================
 ! Control book keeping
@@ -145,18 +146,19 @@ contains
 
 subroutine init_stream_nudging_clock
 use module_nudging_utils, only: totalNudgeTime,    &
-                           sysClockCountRate, &
-                           sysClockCountMax,  &
-                           clockType
+                                sysClockCountRate, &
+                                sysClockCountMax,  &
+                                clockType
+
 totalNudgeTime = 0. ! Nudging time accumulation init.
 call system_clock(count_rate=sysClockCountRate, count_max=sysClockCountMax)
 clockType = trim(nudgingClockType)
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
 print*,'Ndg: totalNudgeTime: ', totalNudgeTime
 print*,'Ndg: sysClockCountRate: ', sysClockCountRate
 print*,'Ndg: sysClockCountMax: ', sysClockCountMax
 print*,'Ndg: clockType: ', trim(nudgingClockType)
-#endif /* HYDRO_D */
+!#endif /* HYDRO_D */
 end subroutine init_stream_nudging_clock
 
 
@@ -189,7 +191,9 @@ use module_nudging_utils, only: whichInLoop2,       &
                                 totalNudgeTime,     &
                                 sysClockCountRate,  &
                                 sysClockCountMax,   &
-                                clockType          
+                                clockType,          &
+                                nudging_timer,      &
+                                accum_nudging_time        
 use module_nudging_io,    only: get_netcdf_dim,                      & 
                                 read_gridded_nudging_frxst_gage_csv, &
                                 read_reach_gage_collocation,         &
@@ -207,6 +211,15 @@ integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) :: whGageDists1, whGageDists2, whParamsDom
 integer :: downSize, upSize, baseSize
 
+real :: startCodeTimeAcc, endCodeTimeAcc
+
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif
+     call nudging_timer(startCodeTimeAcc)
+!#endif /* HYDRO_D */
+
 #ifdef HYDRO_D
 print*, "Ndg: Start init_stream_nudging"
 #ifdef MPP_LAND
@@ -222,8 +235,8 @@ nLinksL      = RT_DOMAIN(did)%NLINKSL   ! For reach-based routing
 #endif
 
 !Variable init
-nwisNotNhd = missingGage
-nwisNotNhdCount=0
+nwisNotRLAndParams = missingGage
+nwisNotRLAndParamsCount=0
 
 !=================================================
 ! 0. This routine is called with condition that chanrtswcrt.ne.0 in module_HYDRO_drv
@@ -511,7 +524,7 @@ obsTimeStr(:)%updateTime = 'none'
 !=================================================
 ! 8. MPP: Keep a copy of the full chanlen on image 0 
 !! only necessary if doing spatial nudging interpolation
-if(my_id .eq. 0) allocate(chanlen_image0(nLinksL))
+if(my_id .eq. io_id) allocate(chanlen_image0(nLinksL))
 call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
 #endif
 
@@ -524,6 +537,17 @@ call obs_static_to_struct()
 #ifdef HYDRO_D
 print*, "Ndg: Finish init_stream_nudging"
 #endif
+
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTimeAcc)
+   call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'init_stream_nudging', .true.)
+#ifdef MPP_LAND
+end if
+#endif 
+!#endif /* HYDRO_D */
 
 end subroutine init_stream_nudging
 
@@ -580,8 +604,13 @@ integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
-real :: startCodeTimeOuter
 #endif
+real :: startCodeTimeOuter
+
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif 
+     call nudging_timer(startCodeTimeOuter)
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -591,11 +620,11 @@ if(my_id .eq. io_id) &
 #endif  /* HYDRO_D */
 
 #ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(startCodeTimeOuter)
-   call nudging_timer(startCodeTime)
-endif
-#endif
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif 
+     call nudging_timer(startCodeTime)
+#endif /* HYDRO_D */
 
 !#ifdef MPP_LAND - just do this section on all images. There is no IO.
 ! The hydro model time as a string.
@@ -809,7 +838,9 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
             if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId)) then
                !! If you ended up here, then filterObsToDom should not be on... 
                if(filterObsToDom) call hydro_stop('obs_static_to_struct: logical clash with filterObsToDom')
-               call accumulate_nwis_not_in_nhd(obsTimeStr(tt)%obsStr(oo)%usgsId)
+               call accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams,             &
+                                                       nwisNotRLAndParamsCount,        &
+                                                       obsTimeStr(tt)%obsStr(oo)%usgsId)
                cycle !! skip this observation.
             endif            
             theMask = obsStaticStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId
@@ -957,14 +988,16 @@ end if
 #endif /* HYDRO_D */
 
 #ifdef HYDRO_D
+#ifdef MPP_LAND
 if(my_id .eq. io_id) then
+#endif 
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup6: diagnostics at end', .false.)
-   call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
-        'setup7: finish setup_stream_nudging', .false.)
-   endif
+#ifdef MPP_LAND
+endif
 #endif
+#endif /* HYDRO_D */
 
 deallocate(obsTimeStrAllocated, whObsMiss)
 
@@ -974,6 +1007,16 @@ if(my_id .eq. io_id) &
 #endif 
 print*,'Ndg: finish setup_stream_nudging'
 #endif
+
+#ifdef MPP_LAND 
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
+        'setup7: finish/full setup_stream_nudging', .true. )
+#ifdef MPP_LAND 
+endif
+#endif 
 
 end subroutine setup_stream_nudging
 
@@ -1000,9 +1043,7 @@ end subroutine setup_stream_nudging
 ! Notes:
 
 subroutine timeslice_file_to_struct(structIndex)
-use module_nudging_utils, only: whichInLoop2,        &
-                                accum_nudging_time,  &
-                                nudging_timer
+use module_nudging_utils, only: whichInLoop2
 
 use module_nudging_io,    only: find_timeslice_file, &
                                 read_timeslice_file, &
@@ -1076,7 +1117,6 @@ if(filterObsToDom) then
    obsTimeStr(structIndex)%updateTime = updateTimeIn
 
    allocate(whSliceInDom(size(usgsIdIn)))
-   !! parallelize this? !!
    call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, whSliceInDom, nWhSliceInDom)
 
 #ifdef HYDRO_D
@@ -1107,7 +1147,8 @@ if(filterObsToDom) then
          else 
             !! the gage is not in the domain/parameter file, record that this 
             !! gage is available but unable to be assimilated.
-            call accumulate_nwis_not_in_nhd(usgsIdIn(ww))
+            call accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams,    &
+                                                    nwisNotRLAndParamsCount, usgsIdIn(ww))
          end if
       end do
    end if
@@ -1166,12 +1207,7 @@ end subroutine timeslice_file_to_struct
 ! Notes:
 
 subroutine obs_static_to_struct()
-use module_nudging_utils, only:  &
-#ifdef HYDRO_D
-                          accum_nudging_time, &
-                          nudging_timer,      &
-#endif /* HYDRO_D */
-                          whUniLoop
+use module_nudging_utils, only: whUniLoop
 
 implicit none
 logical, allocatable, dimension(:)   :: theMask
@@ -1182,9 +1218,6 @@ integer :: ll
 integer, allocatable, dimension(:) :: nCellsInR
 
 #ifdef HYDRO_D
-real :: startCodeTime, endCodeTime
-
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 print*,'Ndg: start obs_static_to_struct'
 #endif
   
@@ -1326,26 +1359,18 @@ end do
 
 deallocate(nCellsInR)
 
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-        'after solved static 4 gage', .false.)
-endif
-print*,'Ndg: finish obs_static_to_struct'
-#endif /* HYDRO_D */
-
 end subroutine obs_static_to_struct
 
 
 !===================================================================================================
 ! Program Name: 
-!   accumulate_nwis_not_in_nhd
+!   accumulate_nwis_not_in_RLAndParams
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: 
 !   Keep a running, non-redundant log of gages seen in the forecast cycle 
-!   (from nwis) which were not collocated by us and/or by NHD. 
+!   (from nwis) which were not found in the intersection of the Route_Link
+!   gages and the parameter file gages. 
 ! History Log: 
 !   11/4/15 - Created, JLM.
 ! Usage:
@@ -1356,16 +1381,21 @@ end subroutine obs_static_to_struct
 ! User controllable options: 
 ! Notes: 
 
-subroutine accumulate_nwis_not_in_nhd( gageId )
-character(len=15) :: gageId
-if(.not. any(nwisNotNhd .eq. gageId)) then
-   nwisNotNhdCount=nwisNotNhdCount+1
-   if(nwisNotNhdCount .gt. maxNwisNotNhdCount) &
-        call hydro_stop('accumulate_nwis_not_in_nhd: gages from NWIS not found ' // &
-                        'in NHD exceeding the hardcoded limit, maxNwisNotNhdCount')
-   nwisNotNhd(nwisNotNhdCount)=gageId
+subroutine accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams_local,      &
+                                              nwisNotRLAndParamsCount_local, &
+                                              gageId )
+character(len=15), dimension(:), intent(inout) :: nwisNotRLAndParams_local
+integer,                         intent(inout) :: nwisNotRLAndParamsCount_local
+character(len=15),               intent(in)    :: gageId
+if(.not. any(nwisNotRLAndParams_local .eq. gageId)) then
+   nwisNotRLAndParamsCount_local=nwisNotRLAndParamsCount_local+1
+   if(nwisNotRLAndParamsCount .gt. size(nwisNotRLAndParams)) &
+        call hydro_stop('accumulate_nwis_not_in_RLAndParams: coutn of gages from NWIS not found '  // &
+                        'in intersection of RL and Param gages are exceeding the hardcoded limit:,'// &
+                        ' maxNwisNotRLAndParamsCount')
+   nwisNotRLAndParams_local(nwisNotRLAndParamsCount_local)=gageId
 end if
-end subroutine accumulate_nwis_not_in_nhd
+end subroutine accumulate_nwis_not_in_RLAndParams
 
 
 !===================================================================================================
@@ -1676,6 +1706,8 @@ end subroutine nudge_innov
 
 subroutine nudge_term_all(discharge, nudgeAdj, hydroAdv)
 use module_RT_data,  only: rt_domain
+use module_nudging_utils, only: nudging_timer,   &
+                                accum_nudging_time
 #ifdef MPP_LAND
 use module_mpp_land,    only: mpp_land_bcast_real_1d
 use MODULE_mpp_ReachLS, only: linkls_s, linkls_e, gNLinksL, ReachLS_write_io
@@ -1690,7 +1722,14 @@ real, allocatable, dimension(:) :: global_discharge !! modeled discharge (m3/s)
 
 integer :: ll, startInd, endInd, checkInd
 real :: theNudge
+real :: startCodeTimeAcc, endCodeTimeAcc
 
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif /* MPP_LAND */
+     call nudging_timer(startCodeTimeAcc)
+!#endif /* HYDRO_D */
 
 #ifdef MPP_LAND
 !! get global discharge. This is only needed if spatial interpolation.
@@ -1735,6 +1774,17 @@ nudgeAdj=discharge(:,2)-discharge(:,1)
 discharge(:,1)=discharge(:,2)
 deallocate(global_discharge)
 
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif
+   call nudging_timer(endCodeTimeAcc)
+   call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'nudge_term_all', .true.)
+#ifdef MPP_LAND
+endif
+#endif
+!#endif /* HYDRO_D */
+
 end subroutine nudge_term_all
 
 
@@ -1776,7 +1826,7 @@ real, dimension(:),   intent(in) :: discharge !! modeled discharge (m3/s)
 real :: nudge_term_link
 
 integer :: linkInd
-character(len=19)  :: hydroTime !! actual time of the routine model
+character(len=19)  :: hydroTime !! actual time of the routing model
 real :: theInnov, weighting 
 integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd
 logical, allocatable, dimension(:) :: theMask
@@ -1936,15 +1986,74 @@ end function nudge_term_link
 ! Notes: 
 
 subroutine finish_stream_nudging
-use module_nudging_utils, only: totalNudgeTime
-use module_nudging_io,    only: write_nwis_not_in_nhd
+use module_nudging_utils, only: totalNudgeTime,  &
+                                nudging_timer,   &
+                                accum_nudging_time
+use module_nudging_io,    only: write_nwis_not_in_RLAndParams
+#ifdef MPP_LAND
+use module_mpp_land,      only: numprocs, mpp_land_bcast_int, write_IO_char_head
+#endif
 implicit none
+
+character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsGathered
+character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
+integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
+integer :: nwisNotRLAndParamsCountConsolidated, gg
+#ifdef HYDRO_D
+real :: startCodeTimeAcc, endCodeTimeAcc
+#endif
+
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif 
+call nudging_timer(startCodeTimeAcc)
+
+!! accumulate_nwis_not_in_RLAndParams
+!! because of parallel IO,  accumulation is happening on 
+!! multiple images and these need to be consolidated before outputting.
+! get the total of nwisNotRLAndParam gages on all images
+nwisNotRLAndParamsCountVector(my_id+1) = nwisNotRLAndParamsCount
+call mpp_land_bcast_int(1,nwisNotRLAndParamsCountVector(my_id+1))
+#ifdef MPP_LAND
 if(my_id .eq. io_id) then
-   print*,'Ndg: nwisNotNhdCount: ', nwisNotNhdCount
-   if(nwisNotNhdCount .gt. 0) call write_nwis_not_in_nhd(nwisNotNhd, nwisNotNhdCount)
-   !! deallocate module variables here and time this
-   print*,'Ndg: *nudge timing* TOTAL NUDGING TIME (seconds): ', totalNudgeTime
+#endif
+   allocate(nwisNotRLAndParamsGathered(sum(nwisNotRLAndParamsCountVector)))
+   allocate(nwisNotRLAndParamsConsolidated(sum(nwisNotRLAndParamsCountVector)))
+#ifdef MPP_LAND
+end if
+#endif
+
+call write_IO_char_head(nwisNotRLAndParams, nwisNotRLAndParamsGathered, nwisNotRLAndParamsCountVector)
+if(my_id .eq. io_id) then
+   ! now consolidate these again... 
+   nwisNotRLAndParamsCountConsolidated=0
+   do gg=1,size(nwisNotRLAndParamsGathered) 
+      call accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,      &
+                                              nwisNotRLAndParamsCountConsolidated, &
+                                              nwisNotRLAndParamsGathered(gg)       )
+   end do
+   print*,'Ndg: nwisNotRLAndParamsCount: ', nwisNotRLAndParamsCountConsolidated
+   if(nwisNotRLAndParamsCountConsolidated .gt. 0) &
+        call write_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,     &
+                                           nwisNotRLAndParamsCountConsolidated )
+   deallocate(nwisNotRLAndParamsGathered, nwisNotRLAndParamsConsolidated)
 endif
+
+!! deallocate module variables here and time this
+
+
+!! print ouf the full timing results here.
+!! dont i need to make another accumultion call here?
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTimeAcc)
+   call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'nudge_term_all', .true.)
+   print*,'Ndg: *nudge timing* TOTAL NUDGING TIME (seconds): ', totalNudgeTime
+#ifdef MPP_LAND
+end if
+#endif 
+
 end subroutine finish_stream_nudging
 
 !===================================================================================================

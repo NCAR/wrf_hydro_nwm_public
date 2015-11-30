@@ -724,6 +724,46 @@ MODULE MODULE_MPP_LAND
       return
   end subroutine write_IO_int
 
+  subroutine write_IO_char_head(in, out, imageHead)
+  !! JLM 2015-11-30
+  !! for i is image number (starting from 0), 
+  !! this routine writes 
+  !! in(1:imageHead(i+1)) 
+  !! to 
+  !! out( (sum(imageHead(i+1-1))+1) : ((sum(imageHead(i+1-1))+1)+imageHead(i+1)) )
+  !! where out is on the IO node.
+      character(len=*), intent(in),  dimension(:) :: in 
+      character(len=*), intent(out), dimension(:) :: out
+      integer,   intent(in),  dimension(:) :: imageHead
+      integer :: tag, i, status, ierr, size
+      integer :: ibegin,iend,jbegin,jend
+      integer :: lenSize, theStart, theEnd
+      tag = 2 
+      if(my_id .ne. IO_id) then
+         lenSize = imageHead(my_id+1)*len(in(1))  !! some times necessary for character arrays?
+         if(lenSize .eq. 0) return
+         call mpi_send(in,lenSize,MPI_CHARACTER,IO_id,tag,MPI_COMM_WORLD,ierr)
+      else
+         do i = 0, numprocs-1
+            lenSize  = imageHead(i+1)*len(in(1))  !! necessary?
+            if(lenSize .eq. 0) cycle
+            if(i .eq. 0) then
+               theStart = 1
+            else 
+               theStart = sum(imageHead(1:(i+1-1))) +1
+            end if
+            theEnd   = theStart + imageHead(i+1) -1
+            if(i .eq. IO_id) then
+               out(theStart:theEnd) = in(1:imageHead(i+1))
+            else 
+               call mpi_recv(out(theStart:theEnd),lenSize,&
+                    MPI_CHARACTER,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+            end if
+         end do
+      end if
+  end subroutine write_IO_char_head
+
+
   subroutine write_IO_real3d(in_buff,out_buff,klevel)
      implicit none
 ! the IO node will receive the data from the rest process.

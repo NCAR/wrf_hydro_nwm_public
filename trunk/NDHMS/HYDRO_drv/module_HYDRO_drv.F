@@ -22,7 +22,6 @@ module module_HYDRO_drv
    use module_lsm_forcing, only: geth_newdate
 #ifdef WRF_HYDRO_NUDGING
    use module_stream_nudging,  only: init_stream_nudging
-   use module_nudging_utils,   only: accum_nudging_time
 #endif
 
    use module_UDMAP, only: get_basn_area_nhd
@@ -37,10 +36,6 @@ module module_HYDRO_drv
   integer :: clock_count_1 = 0
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
-#endif
-
-#ifdef WRF_HYDRO_NUDGING
-  real :: startCpuTime, endCpuTime
 #endif
 
    
@@ -538,16 +533,6 @@ module module_HYDRO_drv
 
 
        ! advance to next time step
-           ! jlm: conceptually shouldnt this time advance be before the hydro model is run?
-           ! jlm: olddate is not the "hydro time" it's really the lsm time.
-           ! jlm: here it is catching up to the lsm integration time *before*
-           ! jlm: hydro routing. before this call the difference between the 
-           ! jlm: hydro model is *two* lsm timesteps and after its one lsm timestep.
-           ! jlm: Putting the update here dosent play well with needing to know the 
-           ! jlm: time of the hydro model for nudging during channel routing. It's 
-           ! jlm: easy to fix, but that's just a band aid. I'm not sure if any of the
-           ! jlm: hydro models depend on this time NOT being updated, my preference 
-           ! jlm: would be to move this before model compnents are run.
            call HYDRO_time_adv(did)
 
       ! output for history 
@@ -1156,26 +1141,8 @@ endif
      
 
 #ifdef WRF_HYDRO_NUDGING
-     if(nlst_rt(did)%CHANRTSWCRT .ne. 0) then
-
-#ifdef MPP_LAND
-        if(my_id .eq. io_id) &
+     if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 #endif
-        call cpu_time(startCpuTime)
-        call init_stream_nudging
-
-#ifdef MPP_LAND
-        if(my_id .eq. io_id) then
-#endif
-           call cpu_time(endCpuTime)
-           call accum_nudging_time(startCpuTime, endCpuTime,'Init nudging')
-#ifdef MPP_LAND
-        end if
-#endif
-           
-        call flush(6)
-     end if
-#endif /* WRF_HYDRO_NUDGING */
 
 
 !    if (trim(nlst_rt(did)%restart_file) == "") then

@@ -391,12 +391,13 @@ end subroutine read_nudging_param_file
 
 !===================================================================================================
 ! Function Name: 
-!   function write_nwis_not_in_nhd
+!   function write_nwis_not_in_RLAndParams
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: 
 !   Write a log file of gages supplied by NWIS but which are not found in 
-!   our processing of NHD+. Perhaps they were not picked up by us as available, 
+!   the intersection of our Route_Link gages and our parameter file gages. 
+!   Perhaps they were not picked up by us as available, 
 !   or they are simply not in NHD+.
 ! History Log: 
 !   11/04/15 -Created, JLM.
@@ -408,16 +409,16 @@ end subroutine read_nudging_param_file
 ! User controllable options: None. 
 ! Notes:
 
-subroutine write_nwis_not_in_nhd( gageId, count )
+subroutine write_nwis_not_in_RLAndParams( gageId, count )
 character(len=15), dimension(:),  intent(in) :: gageId
 integer,                          intent(in) :: count
 integer :: cc
-open (unit=919,file='NWIS_gages_not_in_NHD.txt',status='unknown',position='append')
+open (unit=919,file='NWIS_gages_not_in_RLAndParams.txt',status='unknown',position='append')
 do cc=1,count
    write(919,'(A15)') gageId(cc)
 end do
 close(919) 
-end subroutine write_nwis_not_in_nhd
+end subroutine write_nwis_not_in_RLAndParams
 
 
 !===================================================================================================

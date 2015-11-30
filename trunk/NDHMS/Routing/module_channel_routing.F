@@ -3,9 +3,6 @@ MODULE module_channel_routing
   USE module_mpp_land
   use MODULE_mpp_ReachLS, only : updatelinkv,                   & 
                                  ReachLS_write_io, gbcastvalue, &
-#ifdef WRF_HYDRO_NUDGING
-                                 linkls_s,                      &
-#endif
                                  gbcastreal2
 
 #endif
@@ -1560,12 +1557,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifdef WRF_HYDRO_NUDGING
        use module_stream_nudging,  only: setup_stream_nudging,  & 
-                                         nudge_term_link,       &
                                          nudge_term_all,        &
-                                         nudgeWAdvance,         &
-                                         nudge_innov,           &
-                                         obsTimeStr         
-       use module_nudging_utils, only: accum_nudging_time, nudging_timer
+                                         nudgeWAdvance
 #endif 
 
 
@@ -1679,13 +1672,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 #ifdef WRF_HYDRO_NUDGING
         real, dimension(nsize) :: nudgeAdj
-        real :: theNudge   !! JLM: just for testing, remove eventually?
-        real :: startCodeTimeAcc, endCodeTimeAcc
-        integer :: checkInd
-#ifdef MPP_LAND        
-        integer :: tt
-        logical :: obsTimeStrAllocated, obsTimeStrObsStrAllocated
-#endif
 #endif
 
 
@@ -1710,27 +1696,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef WRF_HYDRO_NUDGING
          !! Initialize nudging for the current timestep.
          !! This establishes the data structure used to solve the nudges. 
-!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
-         checkInd = 2211014
-#ifdef MPP_LAND
-         if(my_id .eq. io_id) &
-#endif
-         call nudging_timer(startCodeTimeAcc)
-!#endif JLM Temp un-ifdef to get timing results
-
          call setup_stream_nudging(0)  !! always zero b/c at beginning of hydro timestep
-
-!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
-#ifdef MPP_LAND
-         if(my_id .eq. io_id) then
-#endif
-            call nudging_timer(endCodeTimeAcc)
-            call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'Nudging Setup')
-#ifdef MPP_LAND
-         endif
-#endif
-!#endif /* HYDRO_D */ JLM Temp un-ifdef to get timing results
-
 #endif /* WRF_HYDRO_NUDGING */
 
          nsteps = (DT+0.5)/DTRT_CH
@@ -1909,29 +1875,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
 #ifdef WRF_HYDRO_NUDGING         
-         if(.not. nudgeWAdvance) then
-!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
-#ifdef MPP_LAND
-            if(my_id .eq. io_id) &
-#endif /* MPP_LAND */
-            call nudging_timer(startCodeTimeAcc)
-!#endif /* HYDRO_D */ JLM Temp un-ifdef to get timing results
-            
-            !! the nudging
-            call nudge_term_all(qlink, nudgeAdj, int(nt*dtrt_ch))          
-
-!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
-#ifdef MPP_LAND
-            if(my_id .eq. io_id) then
-#endif /* MPP_LAND */
-               call nudging_timer(endCodeTimeAcc)
-               call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'Nudge NOT wAdv')
-#ifdef MPP_LAND
-            endif
-#endif /* MPP_LAND */
-!#endif /* HYDRO_D */ JLM Temp un-ifdef to get timing results
-
-         endif
+         if(.not. nudgeWAdvance) &           
+              !! the nudging
+              call nudge_term_all(qlink, nudgeAdj, int(nt*dtrt_ch))          
 #endif /* WRF_HYDRO_NUDGING */
 
 
