@@ -1709,7 +1709,6 @@ use module_RT_data,  only: rt_domain
 use module_nudging_utils, only: nudging_timer,   &
                                 accum_nudging_time
 #ifdef MPP_LAND
-use module_mpp_land,    only: mpp_land_bcast_real_1d
 use MODULE_mpp_ReachLS, only: linkls_s, linkls_e, gNLinksL, ReachLS_write_io
 #endif
 
@@ -1990,15 +1989,12 @@ use module_nudging_utils, only: totalNudgeTime,  &
                                 nudging_timer,   &
                                 accum_nudging_time
 use module_nudging_io,    only: write_nwis_not_in_RLAndParams
-#ifdef MPP_LAND
-use module_mpp_land,      only: numprocs, mpp_land_bcast_int, write_IO_char_head
-#endif
 implicit none
 
 character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsGathered
 character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
 integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
-integer :: nwisNotRLAndParamsCountConsolidated, gg
+integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
 #ifdef HYDRO_D
 real :: startCodeTimeAcc, endCodeTimeAcc
 #endif
@@ -2013,17 +2009,21 @@ call nudging_timer(startCodeTimeAcc)
 !! multiple images and these need to be consolidated before outputting.
 ! get the total of nwisNotRLAndParam gages on all images
 nwisNotRLAndParamsCountVector(my_id+1) = nwisNotRLAndParamsCount
-call mpp_land_bcast_int(1,nwisNotRLAndParamsCountVector(my_id+1))
+do ii=0,numprocs-1
+   call mpp_land_bcast_int1_root(nwisNotRLAndParamsCountVector(ii+1), ii)
+end do
+print*,'nwisNotRLAndParamsCountVector',nwisNotRLAndParamsCountVector
+call flush(6)
+
+allocate(nwisNotRLAndParamsGathered(sum(nwisNotRLAndParamsCountVector)))
+
 #ifdef MPP_LAND
-if(my_id .eq. io_id) then
+if(my_id .eq. io_id) &
 #endif
-   allocate(nwisNotRLAndParamsGathered(sum(nwisNotRLAndParamsCountVector)))
-   allocate(nwisNotRLAndParamsConsolidated(sum(nwisNotRLAndParamsCountVector)))
-#ifdef MPP_LAND
-end if
-#endif
+     allocate(nwisNotRLAndParamsConsolidated(sum(nwisNotRLAndParamsCountVector)))
 
 call write_IO_char_head(nwisNotRLAndParams, nwisNotRLAndParamsGathered, nwisNotRLAndParamsCountVector)
+
 if(my_id .eq. io_id) then
    ! now consolidate these again... 
    nwisNotRLAndParamsCountConsolidated=0
@@ -2036,8 +2036,11 @@ if(my_id .eq. io_id) then
    if(nwisNotRLAndParamsCountConsolidated .gt. 0) &
         call write_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,     &
                                            nwisNotRLAndParamsCountConsolidated )
-   deallocate(nwisNotRLAndParamsGathered, nwisNotRLAndParamsConsolidated)
 endif
+
+!! deallocate local variables
+if(allocated(nwisNotRLAndParamsGathered))     deallocate(nwisNotRLAndParamsGathered)
+if(allocated(nwisNotRLAndParamsConsolidated)) deallocate(nwisNotRLAndParamsConsolidated)
 
 !! deallocate module variables here and time this
 

@@ -220,6 +220,9 @@ CONTAINS
      allocate( rt_domain(did)%TYPEL(nsizes) )
      allocate( rt_domain(did)%ORDER(nsizes) )
      allocate( rt_domain(did)%QLINK(nsizes,2) )
+#ifdef WRF_HYDRO_NUDGING
+     allocate( rt_domain(did)%nudge(nsizes) )
+#endif
      allocate( rt_domain(did)%MUSK(nsizes) )
      allocate( rt_domain(did)%MUSX(nsizes) )
      allocate( rt_domain(did)%CHANLEN(nsizes) )
@@ -323,6 +326,9 @@ CONTAINS
       rt_domain(did)%QLAKEI = 0.0                     
       rt_domain(did)%QLAKEO = 0.0                     
       rt_domain(did)%QLINK = 0        
+#ifdef WRF_HYDRO_NUDGING
+      rt_domain(did)%nudge = 0
+#endif
 
       rt_domain(did)%HLINK = 0.0        !--used for diffusion only
       rt_domain(did)%MannN = 0.0        

@@ -270,6 +270,9 @@ module module_HYDRO_drv
                    RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
                    rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
                    nlst_rt(did)%dt                                            &
+#ifdef WRF_HYDRO_NUDGING
+                   , RT_DOMAIN(did)%nudge                                     &
+#endif
 #ifndef HYDRO_REALTIME
                    , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
                    RT_DOMAIN(did)%accStrmvolrt,                               &
@@ -290,7 +293,10 @@ module module_HYDRO_drv
                      RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
                      RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                     rt_domain(did)%linkid                                     &
+                     rt_domain(did)%linkid                                      &
+#ifdef WRF_HYDRO_NUDGING
+                     , RT_DOMAIN(did)%nudge                                     &
+#endif
 #ifdef HYDRO_REALTIME
 		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
 #endif
@@ -720,6 +726,9 @@ module module_HYDRO_drv
        , RT_DOMAIN(did)%gtoNode, RT_DOMAIN(did)%toNodeInd, RT_DOMAIN(did)%nToInd      &
 #endif
        , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
+#ifdef WRF_HYDRO_NUDGING
+       , RT_DOMAIN(did)%nudge &
+#endif
 #ifndef HYDRO_REALTIME
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
 #endif

@@ -1545,6 +1545,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
         gtoNode,toNodeInd,nToNodeInd,   &
 #endif
          CH_LNKRT_SL, landRunOff  & 
+#ifdef WRF_HYDRO_NUDGING
+       , nudge &
+#endif
+
 #ifndef HYDRO_REALTIME
        ,  accLndRunOff, accQLateral, accStrmvolrt, accBucket   &
 #endif
@@ -1587,6 +1591,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
         REAL, INTENT(IN), DIMENSION(nsize)        :: ChSSlp,Bw  !--properties of nodes or links
         REAL                                      :: Km, X
         REAL , INTENT(INOUT), DIMENSION(nsize,2)  :: QLINK
+#ifdef WRF_HYDRO_NUDGING
+        real, intent(out),    dimension(nsize)    :: nudge
+#endif
+
         REAL ,  DIMENSION(NLINKSL,2) :: tmpQLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
         REAL, INTENT(IN)                          :: DTRT_CH  !-- routing timestep
@@ -1670,9 +1678,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #endif
 
 
-#ifdef WRF_HYDRO_NUDGING
-        real, dimension(nsize) :: nudgeAdj
-#endif
 
 
 #ifdef MPP_LAND
@@ -1875,9 +1880,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
 #ifdef WRF_HYDRO_NUDGING         
-         if(.not. nudgeWAdvance) &           
-              !! the nudging
-              call nudge_term_all(qlink, nudgeAdj, int(nt*dtrt_ch))          
+         if(.not. nudgeWAdvance) call nudge_term_all(qlink, nudge, int(nt*dtrt_ch))
 #endif /* WRF_HYDRO_NUDGING */
 
 
