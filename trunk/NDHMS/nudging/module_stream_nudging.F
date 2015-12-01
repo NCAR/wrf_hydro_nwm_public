@@ -107,6 +107,7 @@ character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
 logical,            parameter :: sanityQcDischarge = .FALSE.
+logical,            parameter :: readTimesliceParallel = .TRUE.
 
 character(len=2) :: obsResolution    
 logical :: nudgeSpatial !! is spatial interpolation of nudging active?
@@ -757,7 +758,11 @@ allocate(obsTimeStrAllocated(nObsMiss))
 
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = mod(ii-1,numprocs)
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    if(my_id .eq. iiImage) then  !! this would give parallel IO
 #endif
       tt = whObsMiss(ii)
@@ -790,7 +795,11 @@ endif
 #ifdef MPP_LAND
 ! broadcast the IO from above   
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = mod(ii-1,numprocs) !must match above
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    tt = whObsMiss(ii)
    ! broadcast
    ! Here have to expose some of the guts of timeslice_file_to_struct
@@ -827,7 +836,11 @@ endif
 !! get index of static info in obsStaticStr
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = mod(ii-1,numprocs) 
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    if(my_id .eq. iiImage) then 
       tt = whObsMiss(ii)
 #endif
@@ -864,8 +877,12 @@ endif
 #endif
 
 #ifdef MPP_LAND
-do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = mod(ii-1,numprocs) ! this must happen on the same images as the above: mod(ii-1,numprocs)
+do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is skipped)
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    ! broadcast
    if(obsTimeStrAllocated(ii)) then
       tt = whObsMiss(ii)
@@ -1690,7 +1707,7 @@ end subroutine nudge_innov
 ! Program Name: 
 !   x
 ! Author(s)/Contact(s): 
-!   Wu YH
+!   Wu YH, James McCreight
 ! Abstract: 
 !   Calculate the nuding term for one 
 ! History Log: 
@@ -1872,26 +1889,6 @@ do tt=1,size(obsTimeStr)
       deallocate(theMask)
 
       obsInd = obsStaticStr(staticInd)%obsCellInd
-! because obsInd could be on a different image and getting the data here might 
-! slow down computation, especially if there is sync.
-! note that we also dont know if the innov is based on the current time solution 
-! at the link or the previous time solution at the link... it depends on if the 
-! current link comes after or before then observed link, respectively.
-! given that, I elect to just go with using the solution at the previous hydro 
-! timestep. This means the streamflow is sync'd to image 0 with each iteration.
-! then the innovations are broadcast to all the nodes. 
-! conclusion: see module_channel_routing.F:drive_CHANNEL where the muskingum 
-! loops on nsteps to fine the call to solve the innovations using a separate 
-! subroutine.
-! all of this makes vectorizing the nuding more attractive.... 
-!#ifdef MPP_LAND
-!      !! obsInd could be on a different image! 
-!      allocate(theMask(size(linkls_s)))
-!      theMask = linkInd .ge. linkls_s .and. linkInd .le. linkls_e
-!      whImage = whUniLoop(theMask)-1
-!      deallocate(theMask)
-!      print*,'Ndg: whImage: ',whImage
-!#endif
 
       theInnov =                                                            & 
            ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd) ) &
