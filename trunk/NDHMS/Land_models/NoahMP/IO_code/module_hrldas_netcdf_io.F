@@ -2056,7 +2056,7 @@ contains
        call error_handler(iret, failure="Problem nf90_def_var for "//trim(output_flnm))
 
        iret = nf90_enddef(ncid)
-       call error_handler(iret, failure="Problem nf90_enddef")
+       call error_handler(iret, failure="Problem nf90_enddef "//trim(output_flnm))
        define_mode_remember = .FALSE.
 
     endif
@@ -2101,12 +2101,12 @@ contains
        ! We need to define things only with a new file, i.e., only when output_count_remember == 0
        if (output_count_remember > 0) return
        ierr = nf90_redef(ncid_remember)
-       call error_handler(ierr, failure="Problem nf90_redef")
+       call error_handler(ierr, failure="Problem nf90_redef in set_output_define_mode")
        define_mode_remember = .TRUE.
     else
        if (define_mode_remember) then
           ierr = nf90_enddef(ncid_remember)
-          call error_handler(ierr, failure="Problem nf90_enddef")
+          call error_handler(ierr, failure="Problem nf90_enddef in set_output_define_mode")
           define_mode_remember = .FALSE.
        endif
     endif

@@ -49,8 +49,13 @@ end type obsStaticStructure
 ! Currently the dimensions of this are fixed to 10000 which should 
 ! work for the forseeable future. May want to consider some routine for 
 ! augmenting this size if necessary. 
-integer, parameter :: maxGageDim=18226
-type(obsStaticStructure), dimension(maxGageDim) :: obsStaticStr 
+type(obsStaticStructure), allocatable, dimension(:) :: obsStaticStr 
+
+!! The number of up/down stream links which can be collected
+!! using R to solve which links are "neighboring". 
+!! This value applies to both directions, it's the number 
+!! of links per R.
+integer, parameter :: maxNeighLinksDim=5000
 
 !========================
 ! Node and gage collocation - For reach based routing, corresponds to the "gage" column
@@ -82,10 +87,11 @@ end type netwkReExpStructure
 type(netwkReExpStructure) :: downNetwkStr, upNetwkStr
 
 !========================
-! Track gages from NWIS not in our param file and/or NHD+
-integer, parameter :: maxNwisNotNhdCount=20000
-character(len=15), dimension(maxNwisNotNhdCount) :: nwisNotNhd
-integer :: nwisNotNhdCount
+! Track gages from NWIS not in our param file and not in the intersection or 
+! the Route_Link gages and the gages in the parameter file. 
+integer, parameter :: maxNwisNotRLAndParamsCount=20000
+character(len=15), dimension(maxNwisNotRLAndParamsCount) :: nwisNotRLAndParams
+integer :: nwisNotRLAndParamsCount
 
 !========================
 ! Control book keeping
@@ -100,9 +106,10 @@ logical,            parameter :: filterObsToDom   = .TRUE.
 character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
-logical,            parameter :: sanityQcDischarge = .TRUE.
+logical,            parameter :: sanityQcDischarge = .FALSE.
 
 character(len=2) :: obsResolution    
+logical :: nudgeSpatial !! is spatial interpolation of nudging active?
 
 !========================
 ! Time book keeping
@@ -119,7 +126,6 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
 #endif 
 
 contains
-
 
 !===================================================================================================
 ! Program Names: 
@@ -140,18 +146,19 @@ contains
 
 subroutine init_stream_nudging_clock
 use module_nudging_utils, only: totalNudgeTime,    &
-                           sysClockCountRate, &
-                           sysClockCountMax,  &
-                           clockType
+                                sysClockCountRate, &
+                                sysClockCountMax,  &
+                                clockType
+
 totalNudgeTime = 0. ! Nudging time accumulation init.
 call system_clock(count_rate=sysClockCountRate, count_max=sysClockCountMax)
 clockType = trim(nudgingClockType)
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
 print*,'Ndg: totalNudgeTime: ', totalNudgeTime
 print*,'Ndg: sysClockCountRate: ', sysClockCountRate
 print*,'Ndg: sysClockCountMax: ', sysClockCountMax
 print*,'Ndg: clockType: ', trim(nudgingClockType)
-#endif HYDRO_D
+!#endif /* HYDRO_D */
 end subroutine init_stream_nudging_clock
 
 
@@ -180,16 +187,19 @@ subroutine init_stream_nudging
 
 use module_namelist, only: nlst_rt
 use module_RT_data,  only: rt_domain
-use module_nudging_utils, only: whichInLoop,        &
+use module_nudging_utils, only: whichInLoop2,       &
                                 totalNudgeTime,     &
                                 sysClockCountRate,  &
                                 sysClockCountMax,   &
-                                clockType          
+                                clockType,          &
+                                nudging_timer,      &
+                                accum_nudging_time        
 use module_nudging_io,    only: get_netcdf_dim,                      & 
                                 read_gridded_nudging_frxst_gage_csv, &
                                 read_reach_gage_collocation,         &
                                 read_nudging_param_file,             &
                                 read_network_reexpression
+
 
 implicit none
 integer                    :: nLinks, nLinksL
@@ -200,6 +210,15 @@ integer :: nParamGages, nGgDists, nGgDistsKeep
 integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) :: whGageDists1, whGageDists2, whParamsDom
 integer :: downSize, upSize, baseSize
+
+real :: startCodeTimeAcc, endCodeTimeAcc
+
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif
+     call nudging_timer(startCodeTimeAcc)
+!#endif /* HYDRO_D */
 
 #ifdef HYDRO_D
 print*, "Ndg: Start init_stream_nudging"
@@ -216,8 +235,8 @@ nLinksL      = RT_DOMAIN(did)%NLINKSL   ! For reach-based routing
 #endif
 
 !Variable init
-nwisNotNhd = missingGage
-nwisNotNhdCount=0
+nwisNotRLAndParams = missingGage
+nwisNotRLAndParamsCount=0
 
 !=================================================
 ! 0. This routine is called with condition that chanrtswcrt.ne.0 in module_HYDRO_drv
@@ -278,7 +297,6 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
 
 #ifdef HYDRO_D
       print*, 'Ndg: Start initializing reach gages (netcdf)'
-      print*,'Ndg: maxGageDim:',maxGageDim
 #endif
 
       allocate(nodeGageTmp%usgsId(nLinksL))
@@ -292,9 +310,6 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
       end do
 
       if(nGagesDomain .gt. 0) then  
-         if(nGagesDomain .gt. maxGageDim) call &
-              hydro_stop('init_stream_nudging: nGagesDomain > hardcoded maxGageDim, increase it!')
-
          allocate(nodeGageStr%nodeId(nGagesDomain), nodeGageStr%usgsId(nGagesDomain))
          nodeGageStr%usgsId = pack(nodeGageTmp%usgsId, mask=nodeGageTmp%usgsId .ne. missingGage)
          ! This just index, we are NOT using comIds in nudging.
@@ -324,10 +339,6 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
    call mpp_land_bcast_int1d(nodeGageStr%nodeId)
 #endif 
 
-!print*,'Ndg: JLM: my_id & nGagesDomain:', my_id, nGagesDomain
-!print*,'Ndg: JLM: my_id & nodeGageStr%usgsId:', my_id, nodeGageStr%usgsId
-!print*,'Ndg: JLM: my_id & nodeGageStr%nodeId:', my_id, nodeGageStr%nodeId
-
 end if ! muskingum channel models
 
 !=================================================
@@ -352,22 +363,15 @@ if(my_id .eq. IO_id) then
                                 nudgingParamsTmp%G,      &
                                 nudgingParamsTmp%tau     )
 
-#ifdef HYDRO_D
-!   print*,'Ndg: nudgingParamsTmp%usgsId(nParamGages)', nudgingParamsTmp%usgsId(nParamGages)
-!   print*,'Ndg: nudgingParamsTmp%R(nParamGages)',      nudgingParamsTmp%R(nParamGages)
-!   print*,'Ndg: nudgingParamsTmp%G(nParamGages)',      nudgingParamsTmp%G(nParamGages)
-!   print*,'Ndg: nudgingParamsTmp%tau(nParamGages)',    nudgingParamsTmp%tau(nParamGages)
-#endif
-
-   ! Reduce to just the gages in the domain
+   ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
 
-   call whichInLoop(nudgingParamsTmp%usgsId, nodeGageStr%usgsId, whParamsDom, nGagesWParamsDom)
+   call whichInLoop2(nudgingParamsTmp%usgsId, nodeGageStr%usgsId, whParamsDom, nGagesWParamsDom)
 #ifdef HYDRO_D
    if(nGagesWParamsDom .ne. nGagesDomain) then
-      print*,'Ndg: Gages are apparently missing from the nudgingParams.nc file'
-      print*,'Ndg: nGagesWParamsDom: ', nGagesWParamsDom
-      print*,'Ndg: nGagesDomain: ', nGagesDomain
+      print*,'Ndg: WARNING Gages are apparently missing from the nudgingParams.nc file'
+      print*,'Ndg: WARNING nGagesWParamsDom: ', nGagesWParamsDom
+      print*,'Ndg: WARNING nGagesDomain: ', nGagesDomain
    end if
 #endif
 
@@ -411,11 +415,6 @@ call mpp_land_bcast_real_1d(nudgingParamsStr%G)
 call mpp_land_bcast_real_1d(nudgingParamsStr%tau)
 #endif
 
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%usgsId:', my_id, nudgingParamsStr%usgsId
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%R:', my_id, nudgingParamsStr%R
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%G:', my_id, nudgingParamsStr%G
-!print*,'Ndg: JLM: my_id & nudgingParamsStr%tau:', my_id, nudgingParamsStr%tau
-
 !=================================================
 ! 4. Sort out which gages are actually in the domain.
 ! JLM: there can be an inconsistency between the gages with parameters
@@ -426,6 +425,9 @@ call mpp_land_bcast_real_1d(nudgingParamsStr%tau)
 !=================================================
 ! 5. Bring in the network re-expression for indexed traversal 
 !    of the stream network.
+
+!! JLM check that spatial interpolation is in use??
+
 #ifdef MPP_LAND
 if(my_id .eq. IO_id) then
 #endif
@@ -518,27 +520,34 @@ allocate(obsTimeStr(nObsTimes))
 obsTimeStr(:)%time     = ''
 obsTimeStr(:)%updateTime = 'none'
 
-! Init obsStaticStr for it's allocated variables
-obsStaticStr(:)%usgsId = missingGage
-obsStaticStr(:)%obsCellInd = 0
-obsStaticStr(:)%R = -9999.
-obsStaticStr(:)%G = -9999.
-obsStaticStr(:)%tau = -9999.
-
-
 #ifdef MPP_LAND
 !=================================================
-! 7. MPP: Going to keep a copy of the full chanlen on image 0 
-! May broadcast to all images if we want to do parallel IO
-if(my_id .eq. 0) allocate(chanlen_image0(nLinksL))
+! 8. MPP: Keep a copy of the full chanlen on image 0 
+!! only necessary if doing spatial nudging interpolation
+if(my_id .eq. io_id) allocate(chanlen_image0(nLinksL))
 call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
 #endif
 
 !=================================================
+! 9. Solve obsStaticStr once and for all on image 0 (could parallelize)
+!    This also solves nudgeSpatial: is spatial nudging active?
+call obs_static_to_struct()
+
+!=================================================
 #ifdef HYDRO_D
 print*, "Ndg: Finish init_stream_nudging"
-call flush(6)
 #endif
+
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTimeAcc)
+   call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'init_stream_nudging', .true.)
+#ifdef MPP_LAND
+end if
+#endif 
+!#endif /* HYDRO_D */
 
 end subroutine init_stream_nudging
 
@@ -564,8 +573,7 @@ subroutine setup_stream_nudging(hydroDT)
 
 use module_namelist,      only: nlst_rt
 use module_RT_data,       only: rt_domain
-use module_nudging_utils,      only: whichLoop,               &
-                                whichInLoop,             &
+use module_nudging_utils, only: whichLoop,               &
                                 whUniLoop,               &
                                 accum_nudging_time,      &
                                 nudging_timer
@@ -576,56 +584,49 @@ use module_date_utils_nudging, only: geth_newdate,            &
 implicit none
 
 integer,           intent(in) :: hydroDT ! the number of seconds of hydro advance from lsmTime
-
-integer :: ff, ii, tt
+!integer :: ff
+integer :: ii, tt, oo
 character(len=19) :: hydroTime, obsHydroTime ! hydro model time and corresponding observation 
 character(len=19), dimension(nObsTimes) :: obsTimes ! obs times in the current window
 integer :: oldDiff, nShiftLeft
 
 logical, allocatable, dimension(:) :: theMask
 integer, allocatable, dimension(:) :: whObsMiss
+logical, allocatable, dimension(:) :: obsTimeStrAllocated
 
 integer :: nObsMiss
-
-integer, allocatable, dimension(:) :: streamCellObsCount
-character(len=256), dimension(60)  :: timeSliceFiles
 integer :: did=1  !! jlm: assuming did=1
-
-integer :: nWhParamsNow, ww, count, gg, rr, jj, gg0, nWhObsMiss
-integer, allocatable, dimension(:) :: regionInds, whParamsNow, usgsId
-real,    allocatable, dimension(:) :: R, G, tau
-integer :: whNodeGage, whNudgeParams,  allRegSize
-
-real,    allocatable, dimension(:,:) :: distsInR
-integer, allocatable, dimension(:,:) :: indsInR
-integer, allocatable, dimension(:) :: nDistsInR
-real, dimension(10000) :: dumDistsInR
-integer, dimension(10000) :: dumIndsInR
-integer :: dumNDistsInR
-real :: rReg
-logical :: obsTimeStrAllocated
+integer :: nWhObsMiss
 
 #ifdef MPP_LAND 
-integer :: nGages, nCellsInR, cc, nLinkAff, nStatic
+integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 #endif
 
 #ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
-#endif HYDROD
+#endif
+real :: startCodeTimeOuter
+
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif 
+     call nudging_timer(startCodeTimeOuter)
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
 if(my_id .eq. io_id) &
 #endif
    print*,'Ndg: start setup_stream_nudging'
-#endif
-
-!#ifdef MPP_LAND - just do this section on all images. There is no IO.
+#endif  /* HYDRO_D */
 
 #ifdef HYDRO_D
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif 
+     call nudging_timer(startCodeTime)
+#endif /* HYDRO_D */
 
+!#ifdef MPP_LAND - just do this section on all images. There is no IO.
 ! The hydro model time as a string.
 #ifdef MPP_LAND
 !update and broadcast the lsm time
@@ -633,17 +634,6 @@ if(my_id .eq. io_id) lsmTime = nlst_rt(did)%olddate
 !! JLM - why broadcast this? is it not the same on all processors?
 call mpp_land_bcast_char(19, lsmTime)
 #endif
-
-
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-                           'bcast lsm time', .false.   )
-endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
 
 ! This is apparently fixed so that olddate is lsmTime and not
 ! behind by 1 lsm timestep when the hydro model is run.
@@ -653,18 +643,19 @@ call geth_newdate(hydroTime, lsmTime, hydroDT)
 
 ! Calculate the closest multiple of obsResolution to the hydroTime
 obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
+#ifdef HYDRO_D
+print*,'Ndg: JLM: obsHydroTime: ', obsHydroTime
+#endif
 
 ! Now solve all of the observation times in the current nudging window.
 ! nObsTimes is set at init from maxTau and obsResolution. 
 ! These times correspond to the timestamps on the observation files, which 
 ! mark the center of the time period they represent with width obsResolution.
 do tt=1,nObsTimes
-   print*,"Ndg: ", (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt
    call geth_newdate(obsTimes(tt), obsHydroTime,  &
                      !obsResolutionInt*(tt - (nObsTimes+1)/2 )*60)
                      (tt-1-ceiling(maxTau/obsResolutionInt))*60*obsResolutionInt )
 end do
-
 
 ! If this is the first setup, these are all blank. This is their init value.
 if(all(obsTimeStr(:)%time .eq. '')) obsTimeStr(:)%time = obsTimes
@@ -674,19 +665,19 @@ if(all(obsTimeStr(:)%time .eq. '')) obsTimeStr(:)%time = obsTimes
 !print*,'Ndg: obsTimes: ', obsTimes
 !print*,'Ndg: obsTimeStr: before obsTimeStr(:)%time: ', obsTimeStr(:)%time
 
-
 ! If there are existing observations older than the first obsTime for this 
 ! nudging window, shift them left. This should just shift one position left 
 ! with each advance in time resolution.
+!print*,'Ndg: JLM : obsTimes(1):', obsTimes(1)
 call geth_idts(obsTimeStr(1)%time, obsTimes(1), oldDiff)
-print*,"Ndg: olddiff:", oldDiff
+!print*,"Ndg: olddiff:", oldDiff
 if(oldDiff .eq. 0) then 
    nShiftLeft=0
 else 
    ! nShiftLeft should not exceed nObsTimes
    nShiftLeft = min( abs(oldDiff/obsResolutionInt/60), nObsTimes )
 end if
-print*,"Ndg: nShiftLeft:", nShiftLeft
+!print*,"Ndg: nShiftLeft:", nShiftLeft
 
 if(nShiftLeft .gt. 0 .and. nShiftLeft .lt. nObsTimes) then 
    do tt=1,nObsTimes-nShiftLeft
@@ -706,23 +697,13 @@ endif
 if(nShiftLeft .gt. 0) then 
    ! here tt= nObsTimes
    do tt=nObsTimes-nShiftLeft+1,nObsTimes
-      obsTimeStr(tt)%time = ''
+      obsTimeStr(tt)%time = obsTimes(tt) !''  !! JLM is this a fix? why?
       obsTimeStr(tt)%updateTime = 'none'
       if(allocated(obsTimeStr(tt)%allCellInds)) deallocate(obsTimeStr(tt)%allCellInds)
       if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
       if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
    end do
 end if
-
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-                           'io_id shift left', .false.)
-endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
   
 !if(.NOT. all(obsTimeStr(:)%time .EQ. obsTimes)) &
 !     call hydro_stop("obsTimeStr(:)%times not what they should be. Please investigate.")
@@ -752,16 +733,6 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 end if
 
-#ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-                           'io_id basic info', .false.)
-endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
-
 ! Broadcast the basic info above.
 call mpp_land_bcast_int1(nWhObsMiss)
 if(my_id .ne. io_id) then
@@ -776,18 +747,18 @@ call mpp_land_bcast_int1(nObsMiss)
 if(my_id .eq. io_id) then
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
-        'bcast basic info', .false.)
+        'setup1: prelim', .false.)
+   call nudging_timer(startCodeTime)
 endif
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
+#endif
 
 !bring in timeslice files
-do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+allocate(obsTimeStrAllocated(nObsMiss))
 
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   if(my_id .eq. io_id) then 
-   !if(my_id .eq. mod(ii,numprocs)) then  !! this would give parallel IO
+   iiImage = mod(ii-1,numprocs)
+   if(my_id .eq. iiImage) then  !! this would give parallel IO
 #endif
       tt = whObsMiss(ii)
       ! set/reset this obsTime
@@ -798,109 +769,120 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
       if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
       call timeslice_file_to_struct(tt) ! uses obsTimeStr%time to get file
-      obsTimeStrAllocated = allocated(obsTimeStr(tt)%obsStr)
+      obsTimeStrAllocated(ii) = allocated(obsTimeStr(tt)%obsStr)
+      !obsTimeStrAllocated = allocated(obsTimeStr(tt)%obsStr)
 #ifdef MPP_LAND
-   end if ! my_id .eq. io_id  -OR-  my_id .eq. mod(ii,numprocs)
+   end if ! my_id .eq. iiImage
+#endif
+end do
 
 #ifdef HYDRO_D
-   print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
-   print*,'Ndg: obstTimeStrAllocated: ', obsTimeStrAllocated
-   call flush(6)
-   if(my_id .eq. io_id) then
-      call nudging_timer(endCodeTime)
-      call accum_nudging_time(startCodeTime, endCodeTime, &
-           'timeslice files io_id', .false.)
-   endif
-   if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+if(my_id .eq. io_id) then
+   !print*,'Ndg: obsTimeStr(tt)%time: ',obsTimeStr(tt)%time
+   !print*,'Ndg: obsTimeStrAllocated(ii), ii: ', obsTimeStrAllocated(ii), ii
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup2.0: timeslice_file_to_struct before bcast', .false.)
+   !call nudging_timer(startCodeTime) ! skip this b/c there's no mpi sync till after next section
+endif
+#endif
 
+#ifdef MPP_LAND
+! broadcast the IO from above   
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+   iiImage = mod(ii-1,numprocs) !must match above
+   tt = whObsMiss(ii)
    ! broadcast
-   ! problem broadcasting here cant take adv of my_id .eq. mod(ii,numprocs)
-   ! because it creates a block in the loop.
-   ! Writing it efficiently outside the loop requires using something
-   ! like mpi_get to get dimensions on a certain image.
    ! Here have to expose some of the guts of timeslice_file_to_struct
    ! Note nGages depends on ii/tt
-   call mpp_land_bcast_int1(tt)
-   call mpp_land_bcast_logical(obsTimeStrAllocated)
-   if(obsTimeStrAllocated) then 
-      if(my_id .eq. io_id) nGages=size(obsTimeStr(tt)%obsStr)
-      call mpp_land_bcast_int1(nGages)
-      if(my_id .ne. io_id) then
-         if(allocated(obsTimeStr(tt)%obsStr)) deallocate(obsTimeStr(tt)%obsStr)
+   call mpp_land_bcast_int1_root(tt, iiImage)
+   call mpp_land_bcast_logical_root(obsTimeStrAllocated(ii), iiImage)
+   if(obsTimeStrAllocated(ii)) then 
+      if(my_id .eq. iiImage) nGages=size(obsTimeStr(tt)%obsStr)
+      call mpp_land_bcast_int1_root(nGages, iiImage)
+      if(my_id .ne. iiImage) then
+         if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
          allocate(obsTimeStr(tt)%obsStr(nGages))
       endif
       ! Variables in order assigned in the call in timeslice_file_to_struct
-      call mpp_land_bcast_char(19,obsTimeStr(tt)%time)
-      call mpp_land_bcast_char(19,obsTimeStr(tt)%updateTime)
-      call mpp_land_bcast_char1d(obsTimeStr(tt)%obsStr(:)%usgsId)
-      call mpp_land_bcast_char1d(obsTimeStr(tt)%obsStr(:)%obsTime)
-      call mpp_land_bcast_real_1d(obsTimeStr(tt)%obsStr(:)%obsQC)
-      call mpp_land_bcast_real_1d(obsTimeStr(tt)%obsStr(:)%obsDischarge)
+      call mpp_land_bcast_char_root(19,obsTimeStr(tt)%time, iiImage)
+      call mpp_land_bcast_char_root(19,obsTimeStr(tt)%updateTime, iiImage)
+      call mpp_land_bcast_char1d_root(obsTimeStr(tt)%obsStr(:)%usgsId, iiImage)
+      call mpp_land_bcast_char1d_root(obsTimeStr(tt)%obsStr(:)%obsTime, iiImage)
+      call mpp_land_bcast_real_1d_root(obsTimeStr(tt)%obsStr(:)%obsQC, iiImage)
+      call mpp_land_bcast_real_1d_root(obsTimeStr(tt)%obsStr(:)%obsDischarge, iiImage)
    end if
-
-print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
-
-#ifdef HYDRO_D
-   if(my_id .eq. io_id) then
-      call nudging_timer(endCodeTime)
-      call accum_nudging_time(startCodeTime, endCodeTime, &
-           'Bcast timeslice files', .false.)
-   endif
-   if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
-   if(my_id .eq. io_id) then 
-   !if(my_id .eq. mod(ii,numprocs)) then
+end do
 #endif
-      if(obsTimeStrAllocated) then 
-         call obs_static_to_struct(tt)      
 
 #ifdef HYDRO_D
-         if(my_id .eq. io_id) then
-            call nudging_timer(endCodeTime)
-            call accum_nudging_time(startCodeTime, endCodeTime, &
-                 'obs_static_to_struct io_id', .false.)
-         endif
-         if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-         call flush(6)
-#endif HYDRO_D
-
-         call tally_affected_links(tt)
-#ifdef HYDRO_D         
-         !print*,'Ndg: naff0', my_id, size(obsTimeStr(tt)%allCellInds)
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup2.1: timeslice_file_to_struct after bcast', .false.)
+   call nudging_timer(startCodeTime) ! images are synched so reset timer
+endif
 #endif
-      endif
+
+!! get index of static info in obsStaticStr
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+#ifdef MPP_LAND
+   iiImage = mod(ii-1,numprocs) 
+   if(my_id .eq. iiImage) then 
+      tt = whObsMiss(ii)
+#endif
+      if(obsTimeStrAllocated(ii)) then
+         allocate(theMask(size(obsStaticStr%usgsId)))
+         do oo=1,size(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
+            ! If the gage is not in the parameter file, skip it
+            if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId)) then
+               !! If you ended up here, then filterObsToDom should not be on... 
+               if(filterObsToDom) call hydro_stop('obs_static_to_struct: logical clash with filterObsToDom')
+               call accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams,             &
+                                                       nwisNotRLAndParamsCount,        &
+                                                       obsTimeStr(tt)%obsStr(oo)%usgsId)
+               cycle !! skip this observation.
+            endif            
+            theMask = obsStaticStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId
+            !! This is a double (tripple?!) for loop... thanks to whUniLoop
+            obsTimeStr(tt)%obsStr(oo)%obsStaticInd = whUniLoop(theMask)
+         end do
+         deallocate(theMask)
+      end if ! oo
+#ifdef MPP_LAND
+   end if ! ii
+#endif 
+end do
 
 #ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-              'Tally affected links io_id', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup3: obs_static_to_struct', .false.)
+   call nudging_timer(startCodeTime) 
+endif
+#endif
 
 #ifdef MPP_LAND
-   end if ! my_id .eq. io_id  -OR-  my_id .eq. mod(ii,numprocs)
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+   iiImage = mod(ii-1,numprocs) ! this must happen on the same images as the above: mod(ii-1,numprocs)
    ! broadcast
-   ! problem broadcasting here cant take adv of my_id .eq. mod(ii,numprocs)
-   ! because it creates a block in the loop.
-   if(obsTimeStrAllocated) then
+   if(obsTimeStrAllocated(ii)) then
+      tt = whObsMiss(ii)
       ! Treat obs_static_to_strutct
-      call mpp_land_bcast_int1d(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
-      call mpp_land_bcast_char1d(obsStaticStr(:)%usgsId)
-      call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%R)
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%G)
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%tau)
+      call mpp_land_bcast_int1d_root(obsTimeStr(tt)%obsStr(:)%obsStaticInd, iiImage)
+      call mpp_land_bcast_char1d_root(obsStaticStr(:)%usgsId, iiImage)
+      call mpp_land_bcast_int1d_root(obsStaticStr(:)%obsCellInd, iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%R, iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%tau, iiImage)
 
       nStatic = sum( (/ (1, cc=1,size(obsStaticStr(:)%obsCellInd)) /), &
                      mask=obsStaticStr(:)%obsCellInd .ne. 0            )
       do cc=1,nStatic
-         if(my_id .eq. io_id) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
-         call mpp_land_bcast_int1(nCellsInR)
-         if(my_id .ne. io_id) then
+         if(my_id .eq. iiImage) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
+         call mpp_land_bcast_int1_root(nCellsInR, iiImage)
+         if(my_id .ne. iiImage) then
             if(allocated(obsStaticStr(cc)%cellsAffected)) deallocate(obsStaticStr(cc)%cellsAffected)
             if(allocated(obsStaticStr(cc)%dist))          deallocate(obsStaticStr(cc)%dist)
             if(allocated(obsStaticStr(cc)%ws))            deallocate(obsStaticStr(cc)%ws)
@@ -908,63 +890,116 @@ print*,'Ndg: obsTimeStr: After obsTimeStr(:)%time: ', obsTimeStr(:)%time
                      obsStaticStr(cc)%dist(nCellsInR),          &
                      obsStaticStr(cc)%ws(nCellsInR)             )
          end if
-         call mpp_land_bcast_int1d(obsStaticStr(cc)%cellsAffected)
-         call mpp_land_bcast_real_1d(obsStaticStr(cc)%dist)
-         call mpp_land_bcast_real_1d(obsStaticStr(cc)%ws)
+         call mpp_land_bcast_int1d_root(obsStaticStr(cc)%cellsAffected, iiImage)
+         call mpp_land_bcast_real_1d_root(obsStaticStr(cc)%dist, iiImage)
+         call mpp_land_bcast_real_1d_root(obsStaticStr(cc)%ws, iiImage)
       end do
+   end if
+end do
+#endif 
 
+#ifdef HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup4: bcast obs_static_struct', .false.)
+   call nudging_timer(startCodeTime) 
+endif
+#endif
+
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+#ifdef MPP_LAND
+   iiImage = 0! causes issues also refactor tally_affected_links? mod(ii-1,numprocs)
+   if(my_id .eq. iiImage) then 
+#endif
+      tt = whObsMiss(ii)
+      if(obsTimeStrAllocated(ii)) call tally_affected_links(tt)
+   endif
+#ifdef MPP_LAND
+end do
+#endif
+
+#ifdef HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup5: tally_affected_links', .false.)
+   call nudging_timer(startCodeTime) 
+endif
+#endif
+
+#ifdef MPP_LAND
+do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
+   iiImage = 0 ! this must happen on the same images as the above two mod(ii-1,numprocs)
+   ! broadcast
+   if(obsTimeStrAllocated(ii)) then
+      tt = whObsMiss(ii)
       ! Treat tally_affected_links
-      if(my_id .eq. io_id) nLinkAff = size(obsTimeStr(tt)%allCellInds)
-      call mpp_land_bcast_int1(nLinkAff)
-      call mpp_land_bcast_int1(nLinkAff)
+      if(my_id .eq. iiImage) nLinkAff = size(obsTimeStr(tt)%allCellInds)
+      call mpp_land_bcast_int1_root(nLinkAff, iiImage)
 
-      if(my_id .ne. io_id) then
+      if(my_id .ne. iiImage) then
          if(allocated(obsTimeStr(tt)%allCellInds)) deallocate(obsTimeStr(tt)%allCellInds)
          if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
          allocate(obsTimeStr(tt)%allCellInds(nLinkAff), &
                   obsTimeStr(tt)%nGageCell(nLinkAff)    )
       end if
-      call mpp_land_bcast(obsTimeStr(tt)%allCellInds)
-      call mpp_land_bcast(obsTimeStr(tt)%nGageCell)
+      call mpp_land_bcast_int1d_root(obsTimeStr(tt)%allCellInds, iiImage)
+      call mpp_land_bcast_int1d_root(obsTimeStr(tt)%nGageCell, iiImage)
+   end if
+end do
+#endif
+
+#ifdef HYDRO_D
+if(my_id .eq. io_id) then
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup6: after bcast tally_aff', .false.)
+   call nudging_timer(startCodeTime) 
+endif
 #endif
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND
-      !if(my_id .eq. io_id) then 
-      if(my_id .eq. -5) then 
+!if(my_id .eq. io_id) then 
+if(my_id .eq. -5) then 
 #endif          
-        print*,'Ndg: '
-         print*,'Ndg: !-------------------------------------------------'
-         print*,'Ndg: obsTimeStr(tt=',tt,')'
-         print*,'Ndg: obsTimeStr(tt)%time:',        obsTimeStr(tt)%time
-         print*,'Ndg: obsTimeStr(tt)%updateTime:',  obsTimeStr(tt)%updateTime
-         print*,'Ndg: obsTimeStr(tt)%allCellInds:', obsTimeStr(tt)%allCellInds
-         print*,'Ndg: obsTimeStr(tt)%nGageCell:',   obsTimeStr(tt)%nGageCell
-         if(trim(obsTimeStr(tt)%updateTime(1:7)) .ne. 'no file') then
-            print*,'Ndg: nobs:', size(obsTimeStr(tt)%obsStr)
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%usgsId:',       obsTimeStr(tt)%obsStr(1)%usgsId
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsTime:',      obsTimeStr(tt)%obsStr(1)%obsTime
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsDischarge:', obsTimeStr(tt)%obsStr(1)%obsDischarge
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsQC:',        obsTimeStr(tt)%obsStr(1)%obsQC
-            print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsStaticInd:', obsTimeStr(tt)%obsStr(1)%obsStaticInd
-         end if
-         print*,'Ndg: !-------------------------------------------------'
-         print*,'Ndg: '
+   print*,'Ndg: '
+   print*,'Ndg: !-------------------------------------------------'
+   print*,'Ndg: obsTimeStr(tt=',tt,')'
+   print*,'Ndg: obsTimeStr(tt)%time:',        obsTimeStr(tt)%time
+   print*,'Ndg: obsTimeStr(tt)%updateTime:',  obsTimeStr(tt)%updateTime
+   print*,'Ndg: obsTimeStr(tt)%allCellInds:', obsTimeStr(tt)%allCellInds
+   print*,'Ndg: obsTimeStr(tt)%nGageCell:',   obsTimeStr(tt)%nGageCell
+   if(trim(obsTimeStr(tt)%updateTime(1:7)) .ne. 'no file') then
+      print*,'Ndg: nobs:', size(obsTimeStr(tt)%obsStr)
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%usgsId:',       obsTimeStr(tt)%obsStr(1)%usgsId
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsTime:',      obsTimeStr(tt)%obsStr(1)%obsTime
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsDischarge:', obsTimeStr(tt)%obsStr(1)%obsDischarge
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsQC:',        obsTimeStr(tt)%obsStr(1)%obsQC
+      print*,'Ndg: obsTimeStr(tt)%obsStr(1)%obsStaticInd:', obsTimeStr(tt)%obsStr(1)%obsStaticInd
+   end if
+   print*,'Ndg: !-------------------------------------------------'
+   print*,'Ndg: '
 #ifdef MPP_LAND
-      end if ! (my_id .eq. io_id)
-#endif
-#endif !HYDRO_D
-   endif ! (obsTimeStrAllocated)
-end do ! ii 
+!if(my_id .eq. io_id) then 
+end if
+#endif          
+#endif /* HYDRO_D */
 
 #ifdef HYDRO_D
-            if(my_id .eq. io_id) then
-               call nudging_timer(endCodeTime)
-               call accum_nudging_time(startCodeTime, endCodeTime, &
-                                       'Bcast tally affected links io_id', .false.)
-            endif
-#endif HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTime, endCodeTime, &
+        'setup6: diagnostics at end', .false.)
+#ifdef MPP_LAND
+endif
+#endif
+#endif /* HYDRO_D */
 
+deallocate(obsTimeStrAllocated, whObsMiss)
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -972,6 +1007,16 @@ if(my_id .eq. io_id) &
 #endif 
 print*,'Ndg: finish setup_stream_nudging'
 #endif
+
+#ifdef MPP_LAND 
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTime)
+   call accum_nudging_time(startCodeTimeOuter, endCodeTime, &
+        'setup7: finish/full setup_stream_nudging', .true. )
+#ifdef MPP_LAND 
+endif
+#endif 
 
 end subroutine setup_stream_nudging
 
@@ -998,9 +1043,7 @@ end subroutine setup_stream_nudging
 ! Notes:
 
 subroutine timeslice_file_to_struct(structIndex)
-use module_nudging_utils, only: whichInLoop,         &
-                                accum_nudging_time,  &
-                                nudging_timer
+use module_nudging_utils, only: whichInLoop2
 
 use module_nudging_io,    only: find_timeslice_file, &
                                 read_timeslice_file, &
@@ -1014,7 +1057,8 @@ character(len=256) :: fileName  !! the corresponding obs file.
 
 integer :: nGages
 integer, allocatable, dimension(:) :: whSliceInDom
-integer :: nWhSliceInDom, count, ww
+integer :: nWhSliceInDom
+integer :: count, ww
 
 character(len=19)  :: timeIn, updateTimeIn  !! the time of file/slice and when it was updated
 character(len=2)   :: sliceResoIn           !! the temporal resolution of the slice
@@ -1022,18 +1066,6 @@ character(len=19), allocatable, dimension(:) :: gageTimeIn      !!
 real,              allocatable, dimension(:) :: gageQCIn        !! 
 character(len=15), allocatable, dimension(:) :: usgsIdIn        !! USGS ID
 real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
-
-#ifdef HYDRO_D
-real :: startCodeTime, endCodeTime
-#endif HYDROD
-
-#ifdef HYDRO_D
-print*,'Ndg: start timeslice_file_to_struct'
-#endif 
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
 
 ! Is there a timeslice file?
 thisTime = obsTimeStr(structIndex)%time
@@ -1051,8 +1083,7 @@ end if
 #ifdef HYDRO_D
 print*,'Ndg: Found file:', fileName
 print*,'Ndg: timeSlice: ',thisTime
-print*,'Ndg: timeSliceFile:',trim(fileName)
-call flush(6)
+print*,'Ndg: timeSliceFile:',trim(fileName), my_id
 #endif
 
 nGages=get_netcdf_dim(fileName, 'stationIdInd', 'timeslice_file_to_struct')
@@ -1067,16 +1098,6 @@ if(filterObsToDom) then
             gageTimeIn(nGages),     & 
             gageQCIn(nGages),       & 
             gageDischargeIn(nGages) )
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         print*
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-                                 'ts_file_to_struct above read in', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
    
    call read_timeslice_file(fileName,            &
                             sanityQcDischarge,   &
@@ -1088,16 +1109,6 @@ if(filterObsToDom) then
                             gageQCIn,            & 
                             gageDischargeIn      )
 
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-                                 'ts_file_to_struct below read in', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
-
    if(timeIn .NE. obsTimeStr(structIndex)%time) &
         call hydro_stop('timeslice_file_to_struct: file time does not match structure')
    if(obsResolution .NE. sliceResoIn) &
@@ -1106,9 +1117,7 @@ if(filterObsToDom) then
    obsTimeStr(structIndex)%updateTime = updateTimeIn
 
    allocate(whSliceInDom(size(usgsIdIn)))
-   !! parallelize this? !!
-   call whichInLoop(usgsIdIn, nodeGageStr%usgsId, &
-                    whSliceInDom, nWhSliceInDom)
+   call whichInLoop2(usgsIdIn, nodeGageStr%usgsId, whSliceInDom, nWhSliceInDom)
 
 #ifdef HYDRO_D
 !   print*,'Ndg: usgsIdIn: ',         usgsIdIn
@@ -1138,7 +1147,8 @@ if(filterObsToDom) then
          else 
             !! the gage is not in the domain/parameter file, record that this 
             !! gage is available but unable to be assimilated.
-            call accumulate_nwis_not_in_nhd(usgsIdIn(ww))
+            call accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams,    &
+                                                    nwisNotRLAndParamsCount, usgsIdIn(ww))
          end if
       end do
    end if
@@ -1171,18 +1181,9 @@ else ! dont filterObsToDom
 
 endif !filterObsToDom
 
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-              'ts_file_to_struct bottom of routine', .false.)
-      endif
-#endif HYDRO_D
-
-
 #ifdef HYDRO_D
 print*,'Ndg: finish timeslice_file_to_struct'
+call flush(6)
 #endif 
 
 end subroutine timeslice_file_to_struct
@@ -1205,226 +1206,171 @@ end subroutine timeslice_file_to_struct
 ! User controllable options: 
 ! Notes:
 
-subroutine obs_static_to_struct(timeIndex)
-use module_nudging_utils, only:  &
-#ifdef HYDRO_D
-                          accum_nudging_time, &
-                          nudging_timer,      &
-#endif HYDRO_D
-                          whUniLoop
-
+subroutine obs_static_to_struct()
+use module_nudging_utils, only: whUniLoop
 
 implicit none
-integer, intent(in) :: timeIndex
-integer :: nObs, nObsStaticPrev, count, oo, cc, whParams, ii
-integer :: staticInd, nCellsInR
-logical :: newStaticCount
-logical, allocatable, dimension(:) :: whCalcStatic, theMask
-integer, allocatable, dimension(:) :: whStaticInd, whObsInd
-integer, dimension(maxGageDim) :: upAllInds,  downAllInds   ! the collected inds/links
-real,    dimension(maxGageDim) :: upAllDists, downAllDists  ! distance at each collected ind
-integer                        :: upLastInd,  downLastInd   ! number of inds/links collected so far
+logical, allocatable, dimension(:)   :: theMask
+integer, dimension(maxNeighLinksDim) :: upAllInds,  downAllInds   ! the collected inds/links
+real,    dimension(maxNeighLinksDim) :: upAllDists, downAllDists  ! distance at each collected ind
+integer                              :: upLastInd,  downLastInd   ! # of inds/links collected so far
+integer :: ll
+integer, allocatable, dimension(:) :: nCellsInR
 
 #ifdef HYDRO_D
-real :: startCodeTime, endCodeTime
-
-if(my_id .eq. io_id) call nudging_timer(startCodeTime)
 print*,'Ndg: start obs_static_to_struct'
-#endif HYDRO_D
-
-! number of obs at this time
-nObs = size(obsTimeStr(timeIndex)%obsStr)
-
-! which obs need their static information created/calculated and
-! what is their index in obsStaticStr?
-allocate(whCalcStatic(nObs), whStaticInd(nObs), whObsInd(nObs))
-whCalcStatic = .FALSE.
-whStaticInd = 0
-whObsInd    = 0
-
-! how many existing entries in obsStatic?
-allocate(theMask(size(obsStaticStr%usgsId)))
-theMask = obsStaticStr%usgsId .ne. missingGage
-nObsStaticPrev = sum((/ (1, ii=1,size(obsStaticStr%usgsId)) /), mask=theMask)
-deallocate(theMask)
-
-#ifdef HYDRO_D
-print*,'Ndg: nObsStaticPrev', nObsStaticPrev
 #endif
+  
+! nudgingParamStr was already reduced to the intersection of all the 
+! gages in the parameter file and all those defined in nodeGageStr (Route_Link)
+! so this is minimal by construction. 
 
-! Solve which observations need their static data generated. 
-! (Do this in a serial loop up-front so that the actual calculations 
-!  can be done in parallel.)
-count=0
-do oo=1,nObs
-   
-   ! If the gage is not in the parameter file, skip it
-   if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(timeIndex)%obsStr(oo)%usgsId)) then
-      !! If you ended up here, then filterObsToDom should not be on... 
-      if(filterObsToDom) call hydro_stop('obs_static_to_struct: logical clash with filterObsToDom')
-      call accumulate_nwis_not_in_nhd(obsTimeStr(timeIndex)%obsStr(oo)%usgsId)
-      cycle
-   endif
+allocate(obsStaticStr(size(nudgingParamsStr%usgsId)))
+! This seems silly now that I'm solving the whole thing at init.
+obsStaticStr(:)%R      = nudgingParamsStr%R
+obsStaticStr(:)%G      = nudgingParamsStr%G
+obsStaticStr(:)%tau    = nudgingParamsStr%tau
+obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
 
-   ! Has the static information already been calculated for this usgsID?
-   if(any(obsStaticStr%usgsId .eq. obsTimeStr(timeIndex)%obsStr(oo)%usgsId)) then
-      allocate(theMask(size(obsStaticStr%usgsId))) 
-      theMask = obsStaticStr%usgsId .eq. obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-      obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd = whUniLoop(theMask)
-      deallocate(theMask)
-#ifdef HYDRO_D
-!      print*,'Ndg: static prev solved:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-!      print*,'Ndg: static prev above Ind:', obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd
-#endif HYDRO_D
-   else 
-      whCalcStatic(oo) = .TRUE.
-      count=count+1
-      whStaticInd(oo) = nObsStaticPrev + count
-      whObsInd(count) = oo
-#ifdef HYDRO_D
-!      print*,'Ndg: static solving:', obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-!      print*,'Ndg: static solving above Ind:', whStaticInd(oo)
-#endif HYDRO_D
-   end if
-
-end do
-
-#ifdef HYDRO_D
-      if(my_id .eq. io_id) then
-         call nudging_timer(endCodeTime)
-         call accum_nudging_time(startCodeTime, endCodeTime, &
-                                 'after: already solved static 4 gage?', .false.)
-      endif
-      if(my_id .eq. io_id) call nudging_timer(startCodeTime)
-#endif HYDRO_D
-
-!|||parallelize this|||||||||||||||||||||||||||||||||||||||||||||||||||||||
-! Create new entries in  obsStaticStr.      
-do cc=1,count  ! not executed if count is zero
-   oo = whObsInd(cc)
-   staticInd = whStaticInd(oo)
-
-   if(staticInd .gt. maxGageDim) &
-        call hydro_stop('obs_static_to_struct: staticInd exceeds hardcoded maxGageDim, increase it!')
-
-   !---------------------
-   ! Assign the previously solved index in the obsStatic structure
-   obsTimeStr(timeIndex)%obsStr(oo)%obsStaticInd = staticInd
-
-   !---------------------
-   ! Find and get the location/link information
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then 
+#endif
+   ! have to search for the corresponding nodeId/obsCellInd. seems like this
+   ! could have been done with making nudgingParamsStr, but it's not (necessary).
    allocate(theMask(size(nodeGageStr%usgsId)))
-   theMask = nodeGageStr%usgsId .eq. obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-   if(any(theMask)) then
-      obsStaticStr(staticInd)%obsCellInd = nodeGageStr%nodeId(whUniLoop(theMask))
-      obsStaticStr(staticInd)%usgsId     = obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-      deallocate(theMask)
-   else 
-      deallocate(theMask)
-      cycle
-   end if
-
-   !---------------------
-   ! Find and get the parameters
-   allocate(theMask(size(nudgingParamsStr%usgsId)))
-   theMask = nudgingParamsStr%usgsId .eq. obsTimeStr(timeIndex)%obsStr(oo)%usgsId
-   whParams = whUniLoop(theMask)
+   ! loop over the entire structure and solve %obsCellind
+   nudgeSpatial=.false.
+   do ll=1,size(obsStaticStr%usgsId)
+      !! this will always have a match b/c all 
+      !! obsStaticStr%usgsId=nudgingParamsStr$usgsId
+      !! are in nodeGageStr by construction 
+      !! (if we were looping on nodeGageStr%usgsId this would not be assured)
+      theMask = nodeGageStr%usgsId .eq. obsStaticStr(ll)%usgsId
+      !! This is a double for loop... thanks to whUniLoop
+      obsStaticStr(ll)%obsCellInd = nodeGageStr%nodeId(whUniLoop(theMask))
+      if(obsStaticStr(ll)%R .ge. chanlen_image0(obsStaticStr(ll)%obsCellInd)/2) &
+           nudgeSpatial=.true.
+   end do
    deallocate(theMask)
-   obsStaticStr(staticInd)%R   = nudgingParamsStr%R(whParams)
-   obsStaticStr(staticInd)%G   = nudgingParamsStr%G(whParams)
-   obsStaticStr(staticInd)%tau = nudgingParamsStr%tau(whParams)
-
-   !---------------------
-   ! Calculate cells affected by this gage
-   ! upstream to R keep distances
-   upLastInd = 0
-   call distance_along_channel(                &
-        upNetwkStr,                            & ! traversal structure in up/down direction
-        obsStaticStr(staticInd)%obsCellInd,    & ! the starting link 
-        0.0000000000,                          & ! distance (m) at the starting node (this iter.)
-        obsStaticStr(staticInd)%R,             & ! to traverse, in meters.
-        upAllInds,                             & ! collected links/inds
-        upAllDists,                            & ! distance to collected links
-        upLastInd                              ) ! index of last collected link in above 2 arrays.
-
-   ! downstream to R keep distances
-   downLastInd = 0
-   call distance_along_channel(                &
-        downNetwkStr,                          & ! traversal structure in up/down direction
-        obsStaticStr(staticInd)%obsCellInd,    & ! the starting link 
-        0.0000000000,                          & ! distance (m) at the starting node (this iter.)
-        obsStaticStr(staticInd)%R,             & ! to traverse, in meters.
-        downAllInds,                           & ! collected links/inds
-        downAllDists,                          & ! distance to collected links
-        downLastInd                            ) ! index of last collected link in above 2 arrays.
-
-   ! Collect the up and down stream cells
-   nCellsInR = 1 + upLastInd + downLastInd
-   allocate(obsStaticStr(staticInd)%cellsAffected(nCellsInR), &
-            obsStaticStr(staticInd)%dist(nCellsInR),          &
-            obsStaticStr(staticInd)%ws(nCellsInR)             )
-
-   obsStaticStr(staticInd)%cellsAffected(1)                       = obsStaticStr(staticInd)%obsCellInd
-   obsStaticStr(staticInd)%cellsAffected(2:(upLastInd+1))         = upAllInds(1:upLastInd)
-   obsStaticStr(staticInd)%cellsAffected((upLastInd+2):nCellsInR) = downAllInds(1:downLastInd)
-
-   ! Distance is optional in obsStaticStr. Right now keeping it for diagnostic potential.
-   ! May replace with a local variable later when we dont want to keep it.
-   obsStaticStr(staticInd)%dist(1)                       = 0
-   obsStaticStr(staticInd)%dist(2:(upLastInd+1))         = -1. * upAllDists(1:upLastInd)
-   obsStaticStr(staticInd)%dist((upLastInd+2):nCellsInR) = downAllDists(1:downLastInd)
-
-   ! Calculate the cressman spatial weights
-   obsStaticStr(staticInd)%ws = &
-        ( obsStaticStr(staticInd)%R**2 - obsStaticStr(staticInd)%dist**2 ) / &
-        ( obsStaticStr(staticInd)%R**2 + obsStaticStr(staticInd)%dist**2 ) 
-
-#ifdef HYDRO_D
-!if (my_id .eq. -5) then
-if( any( (/ 981, 2242, 2845, 2946, 3014, 3066, 3068, 3072, 3158, 3228, 3325, 3328, 3330, 3353, &
-           3374, 3398, 3416, 3445, 3487, 3536, 3621, 3667, 13554, 13651, 15062, 15311, 17450, 17394 /) &
-           .eq. obsStaticStr(staticInd)%obsCellInd ) )then
-   print*,'Ndg: '
-   print*,'Ndg: !----------------------------------'
-   print*,'Ndg: ! obsStaticStr(',staticInd,'):'
-   print*,'Ndg: obsStaticStr(staticInd)%usgsId: ',        obsStaticStr(staticInd)%usgsId
-   print*,'Ndg: obsStaticStr(staticInd)%obsCellInd: ',    obsStaticStr(staticInd)%obsCellInd
-   print*,'Ndg: obsStaticStr(staticInd)%R: ',             obsStaticStr(staticInd)%R
-   print*,'Ndg: obsStaticStr(staticInd)%G: ',             obsStaticStr(staticInd)%G
-   print*,'Ndg: obsStaticStr(staticInd)%tau: ',           obsStaticStr(staticInd)%tau
-   print*,'Ndg: obsStaticStr(staticInd)%cellsAffected: ', obsStaticStr(staticInd)%cellsAffected
-   print*,'Ndg: obsStaticStr(staticInd)%dist: ',          obsStaticStr(staticInd)%dist
-   print*,'Ndg: obsStaticStr(staticInd)%ws: ',            obsStaticStr(staticInd)%ws
-   print*,'Ndg: !----------------------------------'
-   print*,'Ndg: '
-endif
+#ifdef MPP_LAND
+end if
+!broadcast 
+call mpp_land_bcast_logical(nudgeSpatial)
+call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
 #endif
 
-end do
+nudgeSpatial=.true.  !! hardwiring this for now... 
 
-deallocate(whCalcStatic, whStaticInd, whObsInd)
-
+! loop over the entire structure and solve the spatial info: %cellsAffected, %dist, %ws
+! print diagnostics with or witout spatial info
+allocate(nCellsInR(size(obsStaticStr%usgsId)))
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then 
+#endif
+   do ll=1,size(obsStaticStr%usgsId)
+      if(nudgeSpatial) then 
+         !! Now solve the spaital part of obsStaticStr
+         !---------------------
+         ! Calculate cells affected by this gage
+         ! upstream to R keep distances
+         upLastInd = 0
+         call distance_along_channel(         &
+              upNetwkStr,                     & ! traversal structure in up/down direction
+              obsStaticStr(ll)%obsCellInd,    & ! the starting link 
+              0.0000000000,                   & ! distance (m) at the starting node (this iter.)
+              obsStaticStr(ll)%R,             & ! to traverse, in meters.
+              upAllInds,                      & ! collected links/inds
+              upAllDists,                     & ! distance to collected links
+              upLastInd                       ) ! index of last collected link in above 2 arrays.
+         
+         ! downstream to R keep distances
+         downLastInd = 0
+         call distance_along_channel(         &
+              downNetwkStr,                   & ! traversal structure in up/down direction
+              obsStaticStr(ll)%obsCellInd,    & ! the starting link 
+              0.0000000000,                   & ! distance (m) at the starting node (this iter.)
+              obsStaticStr(ll)%R,             & ! to traverse, in meters.
+              downAllInds,                    & ! collected links/inds
+              downAllDists,                   & ! distance to collected links
+              downLastInd                     ) ! index of last collected link in above 2 arrays.
+         
+         ! Collect the up and down stream cells
+         nCellsInR(ll) = 1 + upLastInd + downLastInd
+         allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)), &
+                  obsStaticStr(ll)%dist(nCellsInR(ll)),          &
+                  obsStaticStr(ll)%ws(nCellsInR(ll))             )
+         
+         obsStaticStr(ll)%cellsAffected(1)                           = obsStaticStr(ll)%obsCellInd
+         obsStaticStr(ll)%cellsAffected(2:(upLastInd+1))             = upAllInds(1:upLastInd)
+         obsStaticStr(ll)%cellsAffected((upLastInd+2):nCellsInR(ll)) = downAllInds(1:downLastInd)
+         
+         ! Distance is optional in obsStaticStr. Right now keeping it for diagnostic potential.
+         ! May replace with a local variable later when we dont want to keep it.
+         obsStaticStr(ll)%dist(1)                           = 0
+         obsStaticStr(ll)%dist(2:(upLastInd+1))             = -1. * upAllDists(1:upLastInd)
+         obsStaticStr(ll)%dist((upLastInd+2):nCellsInR(ll)) = downAllDists(1:downLastInd)
+         
+         ! Calculate the cressman spatial weights
+         obsStaticStr(ll)%ws = &
+              ( obsStaticStr(ll)%R**2 - obsStaticStr(ll)%dist**2 ) / &
+              ( obsStaticStr(ll)%R**2 + obsStaticStr(ll)%dist**2 )       
+      end if ! nudgeSpatial
+      
 #ifdef HYDRO_D
-if(my_id .eq. io_id) then
-   call nudging_timer(endCodeTime)
-   call accum_nudging_time(startCodeTime, endCodeTime, &
-        'after solved static 4 gage', .false.)
-endif
-print*,'Ndg: finish obs_static_to_struct'
-call flush(6)
-#endif HYDRO_D
+      !if (my_id .eq. -5) then
+      if( any( (/ 981, 2242, 2845, 2946, 3014, 3066, 3068, 3072, 3158, 3228, 3325, 3328, 3330, 3353, &
+           3374, 3398, 3416, 3445, 3487, 3536, 3621, 3667, 13554, 13651, 15062, 15311, 17450, 17394 /) &
+           .eq. obsStaticStr(ll)%obsCellInd ) )then
+         print*,'Ndg: '
+         print*,'Ndg: !----------------------------------'
+         print*,'Ndg: ! obsStaticStr(',ll,'):'
+         print*,'Ndg: obsStaticStr(ll)%usgsId: ',        obsStaticStr(ll)%usgsId
+         print*,'Ndg: obsStaticStr(ll)%obsCellInd: ',    obsStaticStr(ll)%obsCellInd
+         print*,'Ndg: obsStaticStr(ll)%R: ',             obsStaticStr(ll)%R
+         print*,'Ndg: obsStaticStr(ll)%G: ',             obsStaticStr(ll)%G
+         print*,'Ndg: obsStaticStr(ll)%tau: ',           obsStaticStr(ll)%tau
+         if(nudgeSpatial) then 
+            print*,'Ndg: obsStaticStr(ll)%cellsAffected: ', obsStaticStr(ll)%cellsAffected
+            print*,'Ndg: obsStaticStr(ll)%dist: ',          obsStaticStr(ll)%dist
+            print*,'Ndg: obsStaticStr(ll)%ws: ',            obsStaticStr(ll)%ws
+         else 
+            print*,'Ndg: nudgeSpatial=F, no spatial information to show.'
+         end if
+         print*,'Ndg: !----------------------------------'
+         print*,'Ndg: '
+      endif ! any of these diag inds
+#endif
+   end do ! ll
+#ifdef MPP_LAND
+end if  !! my_id
+
+!broadcast  %cellsAffected, %dist, %ws
+do ll=1,size(obsStaticStr%usgsId)
+   call mpp_land_bcast_int1(nCellsInR(ll))
+   if(my_id .ne. io_id) & 
+        allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)), &
+                 obsStaticStr(ll)%dist(nCellsInR(ll)),          &
+                 obsStaticStr(ll)%ws(nCellsInR(ll))             )
+   call mpp_land_bcast_int1d(obsStaticStr(ll)%cellsAffected)
+   call mpp_land_bcast_real_1d(obsStaticStr(ll)%dist)
+   call mpp_land_bcast_real_1d(obsStaticStr(ll)%ws)
+end do
+#endif
+
+deallocate(nCellsInR)
 
 end subroutine obs_static_to_struct
 
 
 !===================================================================================================
 ! Program Name: 
-!   accumulate_nwis_not_in_nhd
+!   accumulate_nwis_not_in_RLAndParams
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: 
 !   Keep a running, non-redundant log of gages seen in the forecast cycle 
-!   (from nwis) which were not collocated by us and/or by NHD. 
+!   (from nwis) which were not found in the intersection of the Route_Link
+!   gages and the parameter file gages. 
 ! History Log: 
 !   11/4/15 - Created, JLM.
 ! Usage:
@@ -1435,16 +1381,21 @@ end subroutine obs_static_to_struct
 ! User controllable options: 
 ! Notes: 
 
-subroutine accumulate_nwis_not_in_nhd( gageId )
-character(len=15) :: gageId
-if(.not. any(nwisNotNhd .eq. gageId)) then
-   nwisNotNhdCount=nwisNotNhdCount+1
-   if(nwisNotNhdCount .gt. maxNwisNotNhdCount) &
-        call hydro_stop('accumulate_nwis_not_in_nhd: gages from NWIS not found ' // &
-                        'in NHD exceeding the hardcoded limit, maxNwisNotNhdCount')
-   nwisNotNhd(nwisNotNhdCount)=gageId
+subroutine accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams_local,      &
+                                              nwisNotRLAndParamsCount_local, &
+                                              gageId )
+character(len=15), dimension(:), intent(inout) :: nwisNotRLAndParams_local
+integer,                         intent(inout) :: nwisNotRLAndParamsCount_local
+character(len=15),               intent(in)    :: gageId
+if(.not. any(nwisNotRLAndParams_local .eq. gageId)) then
+   nwisNotRLAndParamsCount_local=nwisNotRLAndParamsCount_local+1
+   if(nwisNotRLAndParamsCount .gt. size(nwisNotRLAndParams)) &
+        call hydro_stop('accumulate_nwis_not_in_RLAndParams: coutn of gages from NWIS not found '  // &
+                        'in intersection of RL and Param gages are exceeding the hardcoded limit:,'// &
+                        ' maxNwisNotRLAndParamsCount')
+   nwisNotRLAndParams_local(nwisNotRLAndParamsCount_local)=gageId
 end if
-end subroutine accumulate_nwis_not_in_nhd
+end subroutine accumulate_nwis_not_in_RLAndParams
 
 
 !===================================================================================================
@@ -1490,8 +1441,8 @@ type(netwkReExpStructure), intent(in) :: direction ! up/down NtwkStr with tarver
 integer, intent(in)    :: startInd  ! the starting link
 real,    intent(in)    :: startDist ! distance at the starting node (for this iteration)
 real,    intent(in)    :: radius    ! in meteres
-integer, intent(inout), dimension(10000) :: allInds   ! the collected inds/links
-real,    intent(inout), dimension(10000) :: allDists  ! the distance at each collected ind
+integer, intent(inout), dimension(maxNeighLinksDim) :: allInds   ! the collected inds/links
+real,    intent(inout), dimension(maxNeighLinksDim) :: allDists  ! the distance at each collected ind
 integer, intent(inout) :: lastInd   ! the number of inds/links collected so far.
 
 ! whGo is only > 1 upstream with a current max of 17 in NHD+
@@ -1533,7 +1484,6 @@ end do
 
 #ifdef HYDRO_D
 print*,'Ndg: end distance_along_channel'
-call flush(6)
 #endif
 
 end subroutine distance_along_channel
@@ -1576,9 +1526,6 @@ if (nlst_rt(did)%channel_option .eq. 1 .or.   &
 
 allocate(affectedInds(nLinks), nGageAffect(nLinks))
 
-!print*,'Ndg: JLM: nlinks: ', nlinks
-!call flush(6)
-
 affectedInds = 0
 nGageAffect  = 0
 
@@ -1597,11 +1544,6 @@ end do
 ! how many total cells affected?
 nLinkAff = sum((/(1, ii=1,nLinks)/), mask=affectedInds .ne. 0)
 
-#ifdef HYDRO_D
-print*,'Ndg: naff-1',nLinkAff
-call flush(6)
-#endif
-
 allocate( obsTimeStr(timeIndex)%allCellInds(nLinkAff), &
           obsTimeStr(timeIndex)%nGageCell(nLinkAff)    )
 
@@ -1612,7 +1554,6 @@ deallocate(affectedInds, nGageAffect)
 
 #ifdef HYDRO_D
 print*,'Ndg: end tally_affected_links'
-call flush(6)
 #endif
 
 end subroutine tally_affected_links
@@ -1763,22 +1704,39 @@ end subroutine nudge_innov
 ! User controllable options: 
 ! Notes: 
 
-subroutine nudge_term_all(discharge, global_discharge, hydroAdv)
+subroutine nudge_term_all(discharge, nudgeAdj, hydroAdv)
 use module_RT_data,  only: rt_domain
+use module_nudging_utils, only: nudging_timer,   &
+                                accum_nudging_time
 #ifdef MPP_LAND
-use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
+use MODULE_mpp_ReachLS, only: linkls_s, linkls_e, gNLinksL, ReachLS_write_io
 #endif
 
 implicit none
 real, dimension(:,:), intent(inout) :: discharge !! modeled discharge (m3/s)
-real, dimension(:,:), intent(inout) :: global_discharge !! modeled discharge (m3/s)
+real, dimension(:),   intent(out)   :: nudgeAdj  !! modeled discharge (m3/s)
 integer,              intent(in)    :: hydroAdv  !! number of seconds the channel model has advanced 
+
+real, allocatable, dimension(:) :: global_discharge !! modeled discharge (m3/s)
 
 integer :: ll, startInd, endInd, checkInd
 real :: theNudge
+real :: startCodeTimeAcc, endCodeTimeAcc
 
-!! need to transform passed index to appropriate index for image
+!#ifdef HYDRO_D
 #ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif /* MPP_LAND */
+     call nudging_timer(startCodeTimeAcc)
+!#endif /* HYDRO_D */
+
+#ifdef MPP_LAND
+!! get global discharge. This is only needed if spatial interpolation.
+!! eventually logic: if spatialNudging determines use of global_discharge
+allocate(global_discharge(gNLinksL))
+call ReachLS_write_io(discharge(:,2), global_discharge)
+call mpp_land_bcast_real_1d(global_discharge)
+!! need to transform passed index to appropriate index for image
 startInd=linkls_s(my_id+1)
 endInd  =linkls_e(my_id+1)
 #else 
@@ -1793,8 +1751,9 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 #endif
 
 #ifdef HYDRO_D
-   checkInd = 2211014
+   checkInd = 3499 ! 2211014 ! see below as well
    if(ll .eq. checkInd) then
+      print*,'Ndg: checkInd: -------------------------'
       print*,"Ndg: checkInd: checkInd: ",checkInd
       print*,'Ndg: checkInd: discharge(ll,2) before:',discharge(ll-startInd+1,2)
    end if
@@ -1809,6 +1768,21 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
    endif
 #endif
 end do
+!! the following only valid since nudge_term_all is applied after the time step.
+nudgeAdj=discharge(:,2)-discharge(:,1)
+discharge(:,1)=discharge(:,2)
+deallocate(global_discharge)
+
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif
+   call nudging_timer(endCodeTimeAcc)
+   call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'nudge_term_all', .true.)
+#ifdef MPP_LAND
+endif
+#endif
+!#endif /* HYDRO_D */
 
 end subroutine nudge_term_all
 
@@ -1840,18 +1814,18 @@ function nudge_term_link(linkIndIn, hydroAdv, discharge)
 use module_nudging_utils,      only: whUniLoop
 use module_namelist,      only: nlst_rt
 use module_date_utils_nudging, only: geth_newdate
-#ifdef MPP_LAND
+#ifdef MPP_LAND 
 use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
 #endif
 
 implicit none
 integer,              intent(in) :: linkIndIn   !! stream cell index
 integer,              intent(in) :: hydroAdv  !! number of seconds the channel model has advanced 
-real, dimension(:,:), intent(in) :: discharge !! modeled discharge (m3/s)
+real, dimension(:),   intent(in) :: discharge !! modeled discharge (m3/s)
 real :: nudge_term_link
 
 integer :: linkInd
-character(len=19)  :: hydroTime !! actual time of the routine model
+character(len=19)  :: hydroTime !! actual time of the routing model
 real :: theInnov, weighting 
 integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd
 logical, allocatable, dimension(:) :: theMask
@@ -1863,7 +1837,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = 2211014  ! see above
+checkInd = 3499 !2211014  ! see above
 
 !! apparently lsm is now only 1 lsm timestep behind when the hydro model is run.
 !call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroAdv+nint(nlst_rt(1)%dt))
@@ -1874,12 +1848,12 @@ call geth_newdate(hydroTime, lsmTime, hydroAdv)
 nudge_term_link = 0.
 weighting = 0.
 
+#ifdef HYDRO_D
 if(linkInd .eq. checkInd) then
-   print*,'Ndg: checkInd: hydroTime: ',hydroTime
-   print*,'Ndg: checkInd: -*-*-*-*-*-*-*-*-*-*-*-*'
    print*,'Ndg: checkInd: hydroTime: ',hydroTime      
-   print*,'Ndg: linkInd', linkInd
+   print*,'Ndg: checkInd: linkInd', linkInd
 end if
+#endif
 
 do tt=1,size(obsTimeStr)
 
@@ -1920,7 +1894,7 @@ do tt=1,size(obsTimeStr)
 !#endif
 
       theInnov =                                                            & 
-           ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd,2) ) &
+           ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd) ) &
            *obsTimeStr(tt)%obsStr(oo)%obsQC
 
       nudge_term_link = nudge_term_link                 &
@@ -1940,19 +1914,23 @@ do tt=1,size(obsTimeStr)
            +time_wt(hydroTime,                          & 
                     obsStaticStr(staticInd)%tau,        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
+           *time_wt(hydroTime,                          & 
+                    obsStaticStr(staticInd)%tau,        &
+                    obsTimeStr(tt)%obsStr(oo)%obsTime)  &
+           *obsStaticStr(staticInd)%ws(ll)              &
            *obsStaticStr(staticInd)%ws(ll)     
 
 #ifdef HYDRO_D
 if(linkInd .eq. checkInd) then 
 !if( (obsTimeStr(tt)%time .eq. obsTimeStr(tt)%obsStr(oo)%obsTime) .and. &
-!    ( abs(discharge(obsInd,2)+theInnov - obsTimeStr(tt)%obsStr(oo)%obsDischarge) .gt. .01) ) then
+!    ( abs(discharge(obsInd)+theInnov - obsTimeStr(tt)%obsStr(oo)%obsDischarge) .gt. .01) ) then
       print*,'Ndg: checkInd: -*-*-*-*-*-*-*-*-*-*-*-*'
       print*,'Ndg: checkInd: linkInd: ', linkInd
       print*,'Ndg: checkInd: tt: ', tt
       print*,'Ndg: checkInd: oo: ', oo
       print*,'Ndg: checkInd: obsCellInd: ', obsInd
 
-      print*,'Ndg: checkInd: discharge: ',    discharge(obsInd,2)
+      print*,'Ndg: checkInd: discharge: ',    discharge(obsInd)
       print*,'Ndg: checkInd: theInnov: ',theInnov
 
       print*,'Ndg: checkInd: obsDischarge: ', obsTimeStr(tt)%obsStr(oo)%obsDischarge 
@@ -2007,15 +1985,78 @@ end function nudge_term_link
 ! Notes: 
 
 subroutine finish_stream_nudging
-use module_nudging_utils, only: totalNudgeTime
-use module_nudging_io,    only: write_nwis_not_in_nhd
+use module_nudging_utils, only: totalNudgeTime,  &
+                                nudging_timer,   &
+                                accum_nudging_time
+use module_nudging_io,    only: write_nwis_not_in_RLAndParams
 implicit none
+
+character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsGathered
+character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
+integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
+integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
+#ifdef HYDRO_D
+real :: startCodeTimeAcc, endCodeTimeAcc
+#endif
+
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif 
+call nudging_timer(startCodeTimeAcc)
+
+!! accumulate_nwis_not_in_RLAndParams
+!! because of parallel IO,  accumulation is happening on 
+!! multiple images and these need to be consolidated before outputting.
+! get the total of nwisNotRLAndParam gages on all images
+nwisNotRLAndParamsCountVector(my_id+1) = nwisNotRLAndParamsCount
+do ii=0,numprocs-1
+   call mpp_land_bcast_int1_root(nwisNotRLAndParamsCountVector(ii+1), ii)
+end do
+print*,'nwisNotRLAndParamsCountVector',nwisNotRLAndParamsCountVector
+call flush(6)
+
+allocate(nwisNotRLAndParamsGathered(sum(nwisNotRLAndParamsCountVector)))
+
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif
+     allocate(nwisNotRLAndParamsConsolidated(sum(nwisNotRLAndParamsCountVector)))
+
+call write_IO_char_head(nwisNotRLAndParams, nwisNotRLAndParamsGathered, nwisNotRLAndParamsCountVector)
+
 if(my_id .eq. io_id) then
-   print*,'Ndg: nwisNotNhdCount: ', nwisNotNhdCount
-   if(nwisNotNhdCount .gt. 0) call write_nwis_not_in_nhd(nwisNotNhd, nwisNotNhdCount)
-   !! deallocate module variables here and time this
-   print*,'Ndg: *nudge timing* TOTAL NUDGING TIME (seconds): ', totalNudgeTime
+   ! now consolidate these again... 
+   nwisNotRLAndParamsCountConsolidated=0
+   do gg=1,size(nwisNotRLAndParamsGathered) 
+      call accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,      &
+                                              nwisNotRLAndParamsCountConsolidated, &
+                                              nwisNotRLAndParamsGathered(gg)       )
+   end do
+   print*,'Ndg: nwisNotRLAndParamsCount: ', nwisNotRLAndParamsCountConsolidated
+   if(nwisNotRLAndParamsCountConsolidated .gt. 0) &
+        call write_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,     &
+                                           nwisNotRLAndParamsCountConsolidated )
 endif
+
+!! deallocate local variables
+if(allocated(nwisNotRLAndParamsGathered))     deallocate(nwisNotRLAndParamsGathered)
+if(allocated(nwisNotRLAndParamsConsolidated)) deallocate(nwisNotRLAndParamsConsolidated)
+
+!! deallocate module variables here and time this
+
+
+!! print ouf the full timing results here.
+!! dont i need to make another accumultion call here?
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   call nudging_timer(endCodeTimeAcc)
+   call accum_nudging_time(startCodeTimeAcc, endCodeTimeAcc, 'nudge_term_all', .true.)
+   print*,'Ndg: *nudge timing* TOTAL NUDGING TIME (seconds): ', totalNudgeTime
+#ifdef MPP_LAND
+end if
+#endif 
+
 end subroutine finish_stream_nudging
 
 !===================================================================================================

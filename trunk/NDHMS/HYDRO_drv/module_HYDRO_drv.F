@@ -22,7 +22,6 @@ module module_HYDRO_drv
    use module_lsm_forcing, only: geth_newdate
 #ifdef WRF_HYDRO_NUDGING
    use module_stream_nudging,  only: init_stream_nudging
-   use module_nudging_utils,   only: accum_nudging_time
 #endif
 
    use module_UDMAP, only: get_basn_area_nhd
@@ -37,10 +36,6 @@ module module_HYDRO_drv
   integer :: clock_count_1 = 0
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
-#endif
-
-#ifdef WRF_HYDRO_NUDGING
-  real :: startCpuTime, endCpuTime
 #endif
 
    
@@ -275,6 +270,9 @@ module module_HYDRO_drv
                    RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
                    rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
                    nlst_rt(did)%dt                                            &
+#ifdef WRF_HYDRO_NUDGING
+                   , RT_DOMAIN(did)%nudge                                     &
+#endif
 #ifndef HYDRO_REALTIME
                    , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
                    RT_DOMAIN(did)%accStrmvolrt,                               &
@@ -295,7 +293,10 @@ module module_HYDRO_drv
                      RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
                      RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                     rt_domain(did)%linkid                                     &
+                     rt_domain(did)%linkid                                      &
+#ifdef WRF_HYDRO_NUDGING
+                     , RT_DOMAIN(did)%nudge                                     &
+#endif
 #ifdef HYDRO_REALTIME
 		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
 #endif
@@ -538,16 +539,6 @@ module module_HYDRO_drv
 
 
        ! advance to next time step
-           ! jlm: conceptually shouldnt this time advance be before the hydro model is run?
-           ! jlm: olddate is not the "hydro time" it's really the lsm time.
-           ! jlm: here it is catching up to the lsm integration time *before*
-           ! jlm: hydro routing. before this call the difference between the 
-           ! jlm: hydro model is *two* lsm timesteps and after its one lsm timestep.
-           ! jlm: Putting the update here dosent play well with needing to know the 
-           ! jlm: time of the hydro model for nudging during channel routing. It's 
-           ! jlm: easy to fix, but that's just a band aid. I'm not sure if any of the
-           ! jlm: hydro models depend on this time NOT being updated, my preference 
-           ! jlm: would be to move this before model compnents are run.
            call HYDRO_time_adv(did)
 
       ! output for history 
@@ -735,6 +726,9 @@ module module_HYDRO_drv
        , RT_DOMAIN(did)%gtoNode, RT_DOMAIN(did)%toNodeInd, RT_DOMAIN(did)%nToInd      &
 #endif
        , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
+#ifdef WRF_HYDRO_NUDGING
+       , RT_DOMAIN(did)%nudge &
+#endif
 #ifndef HYDRO_REALTIME
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
 #endif
@@ -1156,12 +1150,7 @@ endif
      
 
 #ifdef WRF_HYDRO_NUDGING
-     if(nlst_rt(did)%CHANRTSWCRT .ne. 0) then
-        call cpu_time(startCpuTime)
-        call init_stream_nudging
-        call cpu_time(endCpuTime)
-        call accum_nudging_time(startCpuTime, endCpuTime,'Init nudging')
-     end if
+     if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 #endif
 
 
@@ -1309,6 +1298,7 @@ end module module_HYDRO_drv
 #endif
         character(len=*) :: msg
         integer :: ierr
+        ierr = 1
       write(6,*) "The job is stoped due to the FATAL ERROR: ", trim(msg)
       call flush(6)
 #ifdef MPP_LAND

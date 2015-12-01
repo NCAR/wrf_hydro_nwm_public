@@ -2818,7 +2818,10 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
    subroutine output_chrt(igrid, split_output_count, NLINKS, ORDER,             &
         startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
         STRMFRXSTPTS, order_to_write, NLINKSL, channel_option, gages, gageMiss, & 
-        lsmDt                                                                   &
+        lsmDt                                       &
+#ifdef WRF_HYDRO_NUDGING
+        , nudge                                     &
+#endif
 #ifndef HYDRO_REALTIME
         , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT          &
 #endif
@@ -2840,6 +2843,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
+#ifdef WRF_HYDRO_NUDGING
+     real, dimension(:),                  intent(in) :: nudge
+#endif
      
      integer  :: UDMP_OPT
 
@@ -3153,6 +3159,16 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_put_att_text(ncid2,varid,'units',13,'meter^3 / sec')
         iret = nf_put_att_text(ncid2,varid,'long_name',10,'River Flow')
 
+#ifdef WRF_HYDRO_NUDGING
+        iret = nf_def_var(ncid, "nudge", NF_FLOAT, 1, (/dimdata/), varid)
+        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+        iret = nf_put_att_text(ncid,varid,'long_name',32,'Amount of stream flow alteration')
+
+        iret = nf_def_var(ncid2, "nudge", NF_FLOAT, 1, (/dimdataO/), varid)
+        iret = nf_put_att_text(ncid2,varid,'units',13,'meter^3 / sec')
+        iret = nf_put_att_text(ncid2,varid,'long_name',32,'Amount of stream flow alteration')
+#endif
+
 !     !- flow definition, var
 !       iret = nf_def_var(ncid, "pos_streamflow", NF_FLOAT, 1, (/dimdata/), varid)
 !       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
@@ -3314,6 +3330,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          iret = nf_inq_varid(ncid,"streamflow", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
 
+#ifdef WRF_HYDRO_NUDGING
+         iret = nf_inq_varid(ncid,"nudge", varid)
+         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), nudge(i))
+#endif
+
 !        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
 !        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
 
@@ -3368,6 +3389,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
              iret = nf_inq_varid(ncid2,"streamflow", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
+
+#ifdef WRF_HYDRO_NUDGING
+             iret = nf_inq_varid(ncid2,"nudge", varid)
+             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), nudge(i))
+#endif
 
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
@@ -3514,7 +3540,10 @@ end subroutine output_chrt
         split_output_count, NLINKS, ORDER,                                     &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
         K,STRMFRXSTPTS,order_to_write,NLINKSL,channel_option, gages, gageMiss, &
-        lsmDt                                                                  &
+        lsmDt                                       &
+#ifdef WRF_HYDRO_NUDGING
+        , nudge                                     &
+#endif
 #ifndef HYDRO_REALTIME
         , accLndRunOff, accQLateral, accStrmvolrt, accBucket, UDMP_OPT         &
 #endif
@@ -3539,6 +3568,10 @@ end subroutine output_chrt
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
+#ifdef WRF_HYDRO_NUDGING
+     real, dimension(:),                  intent(in) :: nudge
+#endif
+
      integer :: UDMP_OPT
 
      character(len=*),                         intent(in) :: startdate
@@ -3546,6 +3579,9 @@ end subroutine output_chrt
 
       integer  :: gnlinks, map_l2g(nlinks), order_to_write, gnlinksl
       real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
+#ifdef WRF_HYDRO_NUDGING
+      real, allocatable,dimension(:) :: g_nudge
+#endif
       integer, allocatable,dimension(:) :: g_order,g_STRMFRXSTPTS
       real,allocatable,dimension(:,:) :: g_qlink
       integer  :: gsize
@@ -3563,6 +3599,9 @@ end subroutine output_chrt
         allocate(g_hlink(gsize  ))
         allocate(g_zelev(gsize  ))
         allocate(g_qlink(gsize  ,2))
+#ifdef WRF_HYDRO_NUDGING
+        allocate(g_nudge(gsize))
+#endif
         allocate(g_order(gsize  ))
         allocate(g_STRMFRXSTPTS(gsize  ))
         allocate(g_gages(gsize))
@@ -3587,6 +3626,9 @@ end subroutine output_chrt
         allocate(g_hlink(1))
         allocate(g_zelev(1))
         allocate(g_qlink(1,2))
+#ifdef WRF_HYDRO_NUDGING
+        allocate(g_nudge(1))
+#endif
         allocate(g_order(1))
         allocate(g_STRMFRXSTPTS(1))
         allocate(g_gages(1))
@@ -3597,6 +3639,10 @@ end subroutine output_chrt
         g_gages = gageMiss
         call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
         call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
+#ifdef WRF_HYDRO_NUDGING
+        g_nudge=0
+        call ReachLS_write_io(nudge,g_nudge)
+#endif
         call ReachLS_write_io(order, g_order)
         call ReachLS_write_io(chlon, g_chlon)
         call ReachLS_write_io(chlat, g_chlat)
@@ -3627,6 +3673,9 @@ end subroutine output_chrt
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,     &
           g_STRMFRXSTPTS,order_to_write,gNLINKSL,channel_option, g_gages, gageMiss, &
           lsmDt                                                                     &
+#ifdef WRF_HYDRO_NUDGING
+          , g_nudge                                     &
+#endif
 #ifndef HYDRO_REALTIME
           , g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket, UDMP_OPT    &
 #endif
@@ -3635,7 +3684,9 @@ end subroutine output_chrt
     end if
 
     deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_gages)
-
+#ifdef WRF_HYDRO_NUDGING
+    deallocate(g_nudge)
+#endif
 #ifndef HYDRO_REALTIME
     deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
 #endif
@@ -7661,6 +7712,9 @@ end subroutine readBucket_nhd
         split_output_count, NLINKS, ORDER,                                     &
         startdate, date, chlon, chlat, hlink,zelev,qlink,dtrt_ch,              &
         K,NLINKSL,channel_option,linkid  &
+#ifdef WRF_HYDRO_NUDGING
+        , nudge                                     &
+#endif
 #ifdef HYDRO_REALTIME
         , QLateral, iocflag   &
 #endif
@@ -7681,6 +7735,9 @@ end subroutine readBucket_nhd
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
+#ifdef WRF_HYDRO_NUDGING
+     real, dimension(:),                  intent(in) :: nudge
+#endif
      integer :: UDMP_OPT, channel_option
 
      character(len=*),                         intent(in) :: startdate
@@ -7688,6 +7745,9 @@ end subroutine readBucket_nhd
 
       integer  :: gnlinks, map_l2g(nlinks),  gnlinksl
       real, allocatable,dimension(:) :: g_chlon,g_chlat, g_hlink,g_zelev
+#ifdef WRF_HYDRO_NUDGING
+      real, allocatable,dimension(:) :: g_nudge
+#endif
       integer, allocatable,dimension(:) :: g_order, g_linkid
       real,allocatable,dimension(:,:) :: g_qlink
       integer  :: gsize
@@ -7709,6 +7769,9 @@ end subroutine readBucket_nhd
         allocate(g_hlink(gsize  ))
         allocate(g_zelev(gsize  ))
         allocate(g_qlink(gsize  ,2))
+#ifdef WRF_HYDRO_NUDGING
+        allocate(g_nudge(gsize))
+#endif
         allocate(g_order(gsize  ))
         allocate(g_linkid(gsize  ))
 
@@ -7739,6 +7802,9 @@ end subroutine readBucket_nhd
         allocate(g_hlink(1))
         allocate(g_zelev(1))
         allocate(g_qlink(1,2))
+#ifdef WRF_HYDRO_NUDGING
+        allocate(g_nudge(1))
+#endif
         allocate(g_order(1))
         allocate(g_linkid(1))
      endif
@@ -7747,6 +7813,10 @@ end subroutine readBucket_nhd
         g_qlink = 0
         call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
         call ReachLS_write_io(qlink(:,2), g_qlink(:,2))
+#ifdef WRF_HYDRO_NUDGING
+        g_nudge=0
+        call ReachLS_write_io(nudge,g_nudge)
+#endif
         call ReachLS_write_io(order, g_order)
         call ReachLS_write_io(linkid, g_linkid)
         call ReachLS_write_io(chlon, g_chlon)
@@ -7779,6 +7849,9 @@ end subroutine readBucket_nhd
        call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
           startdate, date, g_chlon, g_chlat, g_hlink,g_zelev,g_qlink,dtrt_ch,K,     &
           gNLINKSL,channel_option, g_linkid  &
+#ifdef WRF_HYDRO_NUDGING
+          , g_nudge                                     &
+#endif
 #ifdef HYDRO_REALTIME
           , g_QLateral, iocflag   &
 #endif
@@ -7786,7 +7859,9 @@ end subroutine readBucket_nhd
      end if
 
     deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_linkid )
-
+#ifdef WRF_HYDRO_NUDGING
+    deallocate(g_nudge)
+#endif
 !#ifndef HYDRO_REALTIME
 !   deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
 !#endif
@@ -7809,6 +7884,9 @@ end subroutine mpp_output_chrt2
    subroutine output_chrt2(igrid, split_output_count, NLINKS, ORDER,             &
         startdate, date, chlon, chlat, hlink, zelev, qlink, dtrt_ch, K,         &
         NLINKSL, channel_option ,linkid &
+#ifdef WRF_HYDRO_NUDGING
+        , nudge                                     &
+#endif
 #ifdef HYDRO_REALTIME
         , QLateral, iocflag   &
 #endif
@@ -7826,6 +7904,9 @@ end subroutine mpp_output_chrt2
 
      real,                                     intent(in) :: dtrt_ch
      real, dimension(:,:),                intent(in) :: qlink
+#ifdef WRF_HYDRO_NUDGING
+     real, dimension(:),                  intent(in) :: nudge
+#endif
      
      integer  :: UDMP_OPT
 
@@ -7979,6 +8060,14 @@ end subroutine mpp_output_chrt2
         iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
         iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
 
+#ifdef WRF_HYDRO_NUDGING
+        !- nudge definition
+        iret = nf_def_var(ncid, "nudge", NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+        iret = nf_put_att_text(ncid,varid,'long_name',32,'Amount of stream flow alteration')
+#endif
+
+
 !     !- head definition, var
       if(channel_option .eq. 3) then
         iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
@@ -8058,6 +8147,12 @@ end subroutine mpp_output_chrt2
         !-- write stream flow
          iret = nf_inq_varid(ncid,"streamflow", varid)
          iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qlink(:,1))
+
+#ifdef WRF_HYDRO_NUDGING
+        !-- write nudge
+         iret = nf_inq_varid(ncid,"nudge", varid)
+         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), nudge)
+#endif
 
 	!-- write head
      	if(channel_option .eq. 3) then

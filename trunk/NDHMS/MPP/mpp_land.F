@@ -724,6 +724,46 @@ MODULE MODULE_MPP_LAND
       return
   end subroutine write_IO_int
 
+  subroutine write_IO_char_head(in, out, imageHead)
+  !! JLM 2015-11-30
+  !! for i is image number (starting from 0), 
+  !! this routine writes 
+  !! in(1:imageHead(i+1)) 
+  !! to 
+  !! out( (sum(imageHead(i+1-1))+1) : ((sum(imageHead(i+1-1))+1)+imageHead(i+1)) )
+  !! where out is on the IO node.
+      character(len=*), intent(in),  dimension(:) :: in 
+      character(len=*), intent(out), dimension(:) :: out
+      integer,   intent(in),  dimension(:) :: imageHead
+      integer :: tag, i, status, ierr, size
+      integer :: ibegin,iend,jbegin,jend
+      integer :: lenSize, theStart, theEnd
+      tag = 2 
+      if(my_id .ne. IO_id) then
+         lenSize = imageHead(my_id+1)*len(in(1))  !! some times necessary for character arrays?
+         if(lenSize .eq. 0) return
+         call mpi_send(in,lenSize,MPI_CHARACTER,IO_id,tag,MPI_COMM_WORLD,ierr)
+      else
+         do i = 0, numprocs-1
+            lenSize  = imageHead(i+1)*len(in(1))  !! necessary?
+            if(lenSize .eq. 0) cycle
+            if(i .eq. 0) then
+               theStart = 1
+            else 
+               theStart = sum(imageHead(1:(i+1-1))) +1
+            end if
+            theEnd   = theStart + imageHead(i+1) -1
+            if(i .eq. IO_id) then
+               out(theStart:theEnd) = in(1:imageHead(i+1))
+            else 
+               call mpi_recv(out(theStart:theEnd),lenSize,&
+                    MPI_CHARACTER,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+            end if
+         end do
+      end if
+  end subroutine write_IO_char_head
+
+
   subroutine write_IO_real3d(in_buff,out_buff,klevel)
      implicit none
 ! the IO node will receive the data from the rest process.
@@ -886,6 +926,17 @@ MODULE MODULE_MPP_LAND
     return 
   end subroutine mpp_land_bcast_int1d
 
+  subroutine mpp_land_bcast_int1d_root(inout, rootId)
+     integer len 
+     integer inout(:)
+     integer, intent(in) :: rootId
+     integer ierr
+      len = size(inout,1)
+        call mpi_bcast(inout,len,MPI_INTEGER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_int1d_root
+
   subroutine mpp_land_bcast_int1(inout)
       integer inout
       integer ierr
@@ -895,6 +946,15 @@ MODULE MODULE_MPP_LAND
     return 
   end subroutine mpp_land_bcast_int1
 
+  subroutine mpp_land_bcast_int1_root(inout, rootId)
+      integer inout
+      integer ierr
+      integer, intent(in) :: rootId
+        call mpi_bcast(inout,1,MPI_INTEGER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_int1_root
+
   subroutine mpp_land_bcast_logical(inout)
       logical ::  inout
       integer ierr
@@ -903,6 +963,16 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return 
   end subroutine mpp_land_bcast_logical
+
+  subroutine mpp_land_bcast_logical_root(inout, rootId)
+      logical ::  inout
+      integer, intent(in) :: rootId
+      integer ierr
+        call mpi_bcast(inout,1,MPI_LOGICAL,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return 
+  end subroutine mpp_land_bcast_logical_root
+
 
   subroutine mpp_land_bcast_real1(inout)
       real inout
@@ -923,6 +993,18 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_real_1d
+
+  subroutine mpp_land_bcast_real_1d_root(inout, rootId)
+      integer len
+      real inout(:)
+      integer, intent(in) :: rootId
+      integer ierr
+      len = size(inout,1) 
+        call mpi_bcast(inout,len,MPI_real,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+    end subroutine mpp_land_bcast_real_1d_root
+
 
   subroutine mpp_land_bcast_real8_1d(inout)
       integer len
@@ -997,6 +1079,17 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_char
 
+  subroutine mpp_land_bcast_char_root(size,inout,rootId)
+      integer size
+      character inout(*)
+      integer, intent(in) :: rootId
+      integer ierr
+        call mpi_bcast(inout,size,MPI_CHARACTER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_char_root
+
+
   subroutine mpp_land_bcast_char1d(inout)
       character(len=*) :: inout(:)
       integer :: lenSize
@@ -1007,6 +1100,17 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return
   end subroutine mpp_land_bcast_char1d
+
+  subroutine mpp_land_bcast_char1d_root(inout,rootId)
+      character(len=*) :: inout(:)
+      integer, intent(in) :: rootId
+      integer :: lenSize
+      integer :: ierr
+      lenSize = size(inout,1)*len(inout)
+      call mpi_bcast(inout,lenSize,MPI_CHARACTER,rootId,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_char1d_root
 
   subroutine mpp_land_bcast_char1(inout)
       integer len
