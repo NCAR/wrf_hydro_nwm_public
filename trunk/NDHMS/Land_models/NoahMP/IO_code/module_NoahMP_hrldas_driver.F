@@ -2077,32 +2077,33 @@ subroutine lsm_rst_bi_out()
   write(iunit,ERR=101) QSFC      
   write(iunit,ERR=101) SFCRUNOFF    
   write(iunit,ERR=101) UDRUNOFF     
-#ifndef REALTIME
-#ifdef WRF_HYDRO
-  write(iunit,ERR=101) ACCPRCP   
-  write(iunit,ERR=101) ACCECAN   
-  write(iunit,ERR=101) ACCEDIR   
-  write(iunit,ERR=101) ACCETRAN  
-#endif
-#endif
-! below for opt_run = 5
-  if(IOPT_RUN .eq. 5) then
-     write(iunit,ERR=101) SMOISEQ   
-     write(iunit,ERR=101) AREAXY    
-     write(iunit,ERR=101) SMCWTDXY  
-     write(iunit,ERR=101) DEEPRECHXY
-     write(iunit,ERR=101) QSLATXY   
-     write(iunit,ERR=101) QRFSXY    
-     write(iunit,ERR=101) QSPRINGSXY
-     write(iunit,ERR=101) RECHXY    
-     write(iunit,ERR=101) QRFXY     
-     write(iunit,ERR=101) QSPRINGXY 
-     write(iunit,ERR=101) FDEPTHXY 
-     write(iunit,ERR=101) RIVERCONDXY 
-     write(iunit,ERR=101) RIVERBEDXY 
-     write(iunit,ERR=101) EQZWT 
-     write(iunit,ERR=101) PEXPXY 
-  endif
+! #ifndef REALTIME
+! #ifdef WRF_HYDRO
+!   write(iunit,ERR=101) ACCPRCP   
+!   write(iunit,ERR=101) ACCECAN   
+!   write(iunit,ERR=101) ACCEDIR   
+!   write(iunit,ERR=101) ACCETRAN  
+! #endif
+! #endif
+! ! below for opt_run = 5
+!   if(IOPT_RUN .eq. 5) then
+!      write(iunit,ERR=101) SMOISEQ   
+!      write(iunit,ERR=101) AREAXY    
+!      write(iunit,ERR=101) SMCWTDXY  
+!      write(iunit,ERR=101) DEEPRECHXY
+!      write(iunit,ERR=101) QSLATXY   
+!      write(iunit,ERR=101) QRFSXY    
+!      write(iunit,ERR=101) QSPRINGSXY
+!      write(iunit,ERR=101) RECHXY    
+!      write(iunit,ERR=101) QRFXY     
+!      write(iunit,ERR=101) QSPRINGXY 
+!      write(iunit,ERR=101) FDEPTHXY 
+!      write(iunit,ERR=101) RIVERCONDXY 
+!      write(iunit,ERR=101) RIVERBEDXY 
+!      write(iunit,ERR=101) EQZWT 
+!      write(iunit,ERR=101) PEXPXY 
+!   endif
+
   close(iunit)
 
 #ifdef MPP_LAND
@@ -2204,32 +2205,32 @@ subroutine lsm_rst_bi_in()
   read(iunit,ERR=101) QSFC      
   read(iunit,ERR=101) SFCRUNOFF    
   read(iunit,ERR=101) UDRUNOFF     
-#ifndef REALTIME
-#ifdef WRF_HYDRO
-  read(iunit,ERR=101) ACCPRCP   
-  read(iunit,ERR=101) ACCECAN   
-  read(iunit,ERR=101) ACCEDIR   
-  read(iunit,ERR=101) ACCETRAN  
-#endif
-#endif
-! below for opt_run = 5
-  if(IOPT_RUN .eq. 5) then
-      read(iunit,ERR=101) SMOISEQ   
-      read(iunit,ERR=101) AREAXY    
-      read(iunit,ERR=101) SMCWTDXY  
-      read(iunit,ERR=101) DEEPRECHXY
-      read(iunit,ERR=101) QSLATXY   
-      read(iunit,ERR=101) QRFSXY    
-      read(iunit,ERR=101) QSPRINGSXY
-      read(iunit,ERR=101) RECHXY    
-      read(iunit,ERR=101) QRFXY     
-      read(iunit,ERR=101) QSPRINGXY 
-      read(iunit,ERR=101) FDEPTHXY 
-      read(iunit,ERR=101) RIVERCONDXY 
-      read(iunit,ERR=101) RIVERBEDXY 
-      read(iunit,ERR=101) EQZWT 
-      read(iunit,ERR=101) PEXPXY 
-  endif
+! #ifndef REALTIME
+! #ifdef WRF_HYDRO
+!   read(iunit,ERR=101) ACCPRCP   
+!   read(iunit,ERR=101) ACCECAN   
+!   read(iunit,ERR=101) ACCEDIR   
+!   read(iunit,ERR=101) ACCETRAN  
+! #endif
+! #endif
+! ! below for opt_run = 5
+!   if(IOPT_RUN .eq. 5) then
+!       read(iunit,ERR=101) SMOISEQ   
+!       read(iunit,ERR=101) AREAXY    
+!       read(iunit,ERR=101) SMCWTDXY  
+!       read(iunit,ERR=101) DEEPRECHXY
+!       read(iunit,ERR=101) QSLATXY   
+!       read(iunit,ERR=101) QRFSXY    
+!       read(iunit,ERR=101) QSPRINGSXY
+!       read(iunit,ERR=101) RECHXY    
+!       read(iunit,ERR=101) QRFXY     
+!       read(iunit,ERR=101) QSPRINGXY 
+!       read(iunit,ERR=101) FDEPTHXY 
+!       read(iunit,ERR=101) RIVERCONDXY 
+!       read(iunit,ERR=101) RIVERBEDXY 
+!       read(iunit,ERR=101) EQZWT 
+!       read(iunit,ERR=101) PEXPXY 
+!   endif
   close(iunit)
 
 #ifdef MPP_LAND

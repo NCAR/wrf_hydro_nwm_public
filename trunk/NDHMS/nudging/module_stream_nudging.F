@@ -98,8 +98,8 @@ integer :: nwisNotRLAndParamsCount
 logical :: nudgeThisLsmTimeStep
 
 !! JLM: these files are hardcoded/hardwired for now, evnt go in namelist
-character(len=256), parameter :: nudgingParamFile = "nudgingParams.nc"
-character(len=256), parameter :: netwkReExFile    = "netwkReExFile.nc"
+character(len=256), parameter :: nudgingParamFile = "DOMAIN/nudgingParams.nc"
+character(len=256), parameter :: netwkReExFile    = "DOMAIN/netwkReExFile.nc"
 integer,            parameter :: obsResolutionInt = 15 ! minutes
 real,               parameter :: obsCheckFreq     = 90 ! minutes 
 logical,            parameter :: filterObsToDom   = .TRUE.
