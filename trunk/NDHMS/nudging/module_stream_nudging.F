@@ -107,6 +107,7 @@ character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
 logical,            parameter :: sanityQcDischarge = .FALSE.
+logical,            parameter :: readTimesliceParallel = .TRUE.
 
 character(len=2) :: obsResolution    
 logical :: nudgeSpatial !! is spatial interpolation of nudging active?
@@ -757,7 +758,11 @@ allocate(obsTimeStrAllocated(nObsMiss))
 
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = mod(ii-1,numprocs)
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    if(my_id .eq. iiImage) then  !! this would give parallel IO
 #endif
       tt = whObsMiss(ii)
@@ -790,7 +795,11 @@ endif
 #ifdef MPP_LAND
 ! broadcast the IO from above   
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = mod(ii-1,numprocs) !must match above
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    tt = whObsMiss(ii)
    ! broadcast
    ! Here have to expose some of the guts of timeslice_file_to_struct
@@ -827,7 +836,11 @@ endif
 !! get index of static info in obsStaticStr
 do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
 #ifdef MPP_LAND
-   iiImage = mod(ii-1,numprocs) 
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    if(my_id .eq. iiImage) then 
       tt = whObsMiss(ii)
 #endif
@@ -864,8 +877,12 @@ endif
 #endif
 
 #ifdef MPP_LAND
-do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
-   iiImage = mod(ii-1,numprocs) ! this must happen on the same images as the above: mod(ii-1,numprocs)
+do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is skipped)
+   if(readTimesliceParallel) then
+      iiImage = mod(ii-1,numprocs)
+   else 
+      iiImage = 0
+   end if
    ! broadcast
    if(obsTimeStrAllocated(ii)) then
       tt = whObsMiss(ii)
@@ -1563,11 +1580,12 @@ end subroutine tally_affected_links
 ! program name: 
 !   x
 ! author(s)/contact(s): 
-!   y
+!   James McCreight 
 ! abstract: 
 !   compute the temporal weight factor for an observation
 ! history log: 
 !   6/4/15 - created,
+!   12/1/15 - moved to inverse distance 
 ! usage:
 ! parameters: 
 !   q
@@ -1581,41 +1599,33 @@ real function time_wt(modelTime, tau, obsTime)
 use module_date_utils_nudging, only: geth_idts
 implicit none
 character(len=19), intent(in)  :: modelTime   ! model time string
-!Do we need to subtract this from modelTime? Model should be advanced to model time
-!before called.
-!real,              intent(in)  :: dtMin       ! model timestep  (seconds)
 real,              intent(in)  :: tau         ! tau half window (minutes)
 character(len=19), intent(in)  :: obsTime     ! observation time string
 ! local variables
 integer :: timeDiff
-!!$real :: fdtim            ! reference time (minutes)
-!!$real :: tw1              ! half of twindo, scaled, in minutes
-!!$real :: tw2              ! twindo, scaled, in minutes
-!!$real :: tconst           ! reciprical of tw1
-!!$real :: ttim             ! obtime in minutes
-!!$real :: dift             ! | fdtim-ttim |
-!!$!real :: time_wt           ! returned weight
+real, parameter :: ten  = 10.000000000
+real, parameter :: one  =  1.000000000
+real, parameter :: zero =  0.000000000
 !! returned timeDiff is in seconds
 call geth_idts(obsTime, modelTime, timeDiff) 
-timeDiff = timeDiff / 60.
-time_wt = 0. ! = if(abs(timeDiff) .gt. tau)
-if(abs(timeDiff) .lt. tau/2.)       time_wt = 1.
-if(abs(timeDiff) .ge. tau/2. .and. & 
-   abs(timeDiff) .le. tau      ) time_wt = (tau - abs(timeDiff)) / (tau/2.)
-!!$! determine the time-weight factor for n
-!!$fdtim=xtime-dtmin  !model time in minutes
-!!$tw1=twindo*30.     ! twindo is in minutes
-!!$tw2=twindo*60.
-!!$tconst=float(1)/tw1
-!!$time_wt=float(0)
-!!$ttim=obtime*float(60) !obs in minutes
-!!$
-!!$dift=abs(fdtim-ttim)
-!!$if(dift.le.tw1)time_wt=1.
-!!$if(dift.gt.tw1.and.dift.le.tw2) then
-!!$   if(fdtim.lt.ttim)time_wt=(fdtim-(ttim-tw2))*tconst
-!!$   if(fdtim.gt.ttim)time_wt=((ttim+tw2)-fdtim)*tconst
-!!$endif
+timeDiff = timeDiff / 60. ! minutes to match tau
+
+!! this is the old, ramped, wrf-style time weighting.
+!time_wt = 0. ! = if(abs(timeDiff) .gt. tau)
+!if(abs(timeDiff) .lt. tau/2.)       time_wt = 1.
+!if(abs(timeDiff) .ge. tau/2. .and. & 
+!   abs(timeDiff) .le. tau      ) time_wt = (tau - abs(timeDiff)) / (tau/2.)
+
+!this is tne new, inverse distance weighting
+if(abs(timeDiff) .gt. tau) then
+   time_wt = zero
+   return
+end if
+!! this function has a range of [1, 10^10] so that 
+!! the variable "weighting" in the function 'nudge_term_link' is
+!! assuredly greater than 1e-8 if weights are calculated.
+time_wt = (ten ** ten) * ((one/ten) ** (abs(timeDiff)/(tau/ten)))
+
 end function time_wt
 
 !!$!===================================================================================================
@@ -1690,7 +1700,7 @@ end subroutine nudge_innov
 ! Program Name: 
 !   x
 ! Author(s)/Contact(s): 
-!   Wu YH
+!   Wu YH, James McCreight
 ! Abstract: 
 !   Calculate the nuding term for one 
 ! History Log: 
@@ -1744,11 +1754,7 @@ startInd=1
 endInd  =RT_DOMAIN(did)%NLINKSL
 #endif
 
-#ifdef DO_CONCURRENT
-do concurrent (ll=startInd:endInd)
-#else
 do ll=startInd, endInd  ! ll is in the index of the global Route_Link
-#endif
 
 #ifdef HYDRO_D
    checkInd = 3499 ! 2211014 ! see below as well
@@ -1805,12 +1811,10 @@ end subroutine nudge_term_all
 ! Condition codes: 
 ! User controllable options: 
 ! Notes: 
+!    note well that the weighting term has to sum to more than 1.E-8 
+!    or the weighting is ignored.
 
-#ifdef DO_CONCURRENT
-pure function nudge_term_link(linkIndIn, hydroAdv, discharge)
-#else
 function nudge_term_link(linkIndIn, hydroAdv, discharge)
-#endif
 use module_nudging_utils,      only: whUniLoop
 use module_namelist,      only: nlst_rt
 use module_date_utils_nudging, only: geth_newdate
@@ -1839,11 +1843,7 @@ linkInd = linkIndIn
 #endif
 checkInd = 3499 !2211014  ! see above
 
-!! apparently lsm is now only 1 lsm timestep behind when the hydro model is run.
-!call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroAdv+nint(nlst_rt(1)%dt))
-!call geth_newdate(hydroTime, lsmTimeMinusDt, hydroAdv+lsmDt)
 call geth_newdate(hydroTime, lsmTime, hydroAdv)
-!call geth_newdate(hydroTime, nlst_rt(did)%olddate, hydroAdv)
 
 nudge_term_link = 0.
 weighting = 0.
@@ -1872,26 +1872,6 @@ do tt=1,size(obsTimeStr)
       deallocate(theMask)
 
       obsInd = obsStaticStr(staticInd)%obsCellInd
-! because obsInd could be on a different image and getting the data here might 
-! slow down computation, especially if there is sync.
-! note that we also dont know if the innov is based on the current time solution 
-! at the link or the previous time solution at the link... it depends on if the 
-! current link comes after or before then observed link, respectively.
-! given that, I elect to just go with using the solution at the previous hydro 
-! timestep. This means the streamflow is sync'd to image 0 with each iteration.
-! then the innovations are broadcast to all the nodes. 
-! conclusion: see module_channel_routing.F:drive_CHANNEL where the muskingum 
-! loops on nsteps to fine the call to solve the innovations using a separate 
-! subroutine.
-! all of this makes vectorizing the nuding more attractive.... 
-!#ifdef MPP_LAND
-!      !! obsInd could be on a different image! 
-!      allocate(theMask(size(linkls_s)))
-!      theMask = linkInd .ge. linkls_s .and. linkInd .le. linkls_e
-!      whImage = whUniLoop(theMask)-1
-!      deallocate(theMask)
-!      print*,'Ndg: whImage: ',whImage
-!#endif
 
       theInnov =                                                            & 
            ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd) ) &
@@ -1900,7 +1880,7 @@ do tt=1,size(obsTimeStr)
       nudge_term_link = nudge_term_link                 &
            !+obsTimeStr(tt)%obsStr(oo)%innov             &
            +theInnov                                    &
-           !*obsStaticStr(staticInd)%G                   &   !!JLM??
+           *obsStaticStr(staticInd)%G                   &
            *time_wt(hydroTime,                          &
                     obsStaticStr(staticInd)%tau,        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
@@ -1909,7 +1889,9 @@ do tt=1,size(obsTimeStr)
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
            *obsStaticStr(staticInd)%ws(ll)              &
            *obsStaticStr(staticInd)%ws(ll)
-      
+
+      !! note well that the weighting has to sum to more than 1.E-8 
+      !! or the weighting is ignored.
       weighting = weighting                             &
            +time_wt(hydroTime,                          & 
                     obsStaticStr(staticInd)%tau,        &
