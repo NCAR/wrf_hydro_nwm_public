@@ -1,5 +1,6 @@
 module module_stream_nudging
 
+use module_namelist,      only: nlst_rt
 #ifdef MPP_LAND
      use module_mpp_land
      use module_mpp_reachls,  only: ReachLS_write_io
@@ -99,8 +100,6 @@ integer :: nwisNotRLAndParamsCount
 logical :: nudgeThisLsmTimeStep
 
 !! JLM: these files are hardcoded/hardwired for now, evnt go in namelist
-character(len=256), parameter :: nudgingParamFile = "DOMAIN/nudgingParams.nc"
-character(len=256), parameter :: netwkReExFile    = "DOMAIN/netwkReExFile.nc"
 integer,            parameter :: obsResolutionInt = 15 ! minutes
 real,               parameter :: obsCheckFreq     = 90 ! minutes 
 logical,            parameter :: filterObsToDom   = .TRUE.
@@ -108,7 +107,15 @@ character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
 logical,            parameter :: sanityQcDischarge = .FALSE.
-logical,            parameter :: readTimesliceParallel = .TRUE.
+
+! these are in the namelist currently
+!character(len=256), parameter :: nudgingParamFile = "DOMAIN/nudgingParams.nc"
+!character(len=256), parameter :: netwkReExFile    = "DOMAIN/netwkReExFile.nc"
+!logical,            parameter :: readTimesliceParallel = .TRUE.
+character(len=256) :: nudgingParamFile
+character(len=256) :: netwkReExFile
+logical            :: readTimesliceParallel
+
 
 character(len=2) :: obsResolution    
 logical :: nudgeSpatial !! is spatial interpolation of nudging active?
@@ -126,6 +133,8 @@ integer, parameter :: did=1
 ! Parallel book keeping
 real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on image 0
 #endif 
+
+
 
 contains
 
@@ -187,7 +196,6 @@ end subroutine init_stream_nudging_clock
 
 subroutine init_stream_nudging
 
-use module_namelist, only: nlst_rt
 use module_RT_data,  only: rt_domain
 use module_nudging_utils, only: whichInLoop2,       &
                                 totalNudgeTime,     &
@@ -213,9 +221,9 @@ integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) ::  whParamsDom
 integer :: downSize, upSize, baseSize
 
+!#ifdef HYDRO_D
 real :: startCodeTimeAcc, endCodeTimeAcc
 
-!#ifdef HYDRO_D
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif
@@ -228,6 +236,10 @@ print*, "Ndg: Start init_stream_nudging"
 print*, 'Ndg: PARALLEL NUDGING!'
 #endif
 #endif
+
+nudgingParamFile      = nlst_rt(did)%nudgingParamFile
+netwkReExFile         = nlst_rt(did)%netwkReExFile
+readTimesliceParallel = nlst_rt(did)%readTimesliceParallel
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
 #ifdef MPP_LAND
@@ -574,7 +586,6 @@ end subroutine init_stream_nudging
 
 subroutine setup_stream_nudging(hydroDT)
 
-use module_namelist,      only: nlst_rt
 use module_RT_data,       only: rt_domain
 use module_nudging_utils, only: whichLoop,               &
                                 whUniLoop,               &
@@ -605,15 +616,16 @@ integer :: nWhObsMiss
 integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 #endif
 
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
 real :: startCodeTime, endCodeTime
-#endif
+
 real :: startCodeTimeOuter
 
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTimeOuter)
+!#endif
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -1525,7 +1537,6 @@ end subroutine distance_along_channel
 ! Notes: 
 
 subroutine tally_affected_links(timeIndex)
-use module_namelist, only: nlst_rt
 use module_RT_data,  only: rt_domain
 
 implicit none
@@ -1734,9 +1745,9 @@ real, allocatable, dimension(:) :: global_discharge !! modeled discharge (m3/s)
 
 integer :: ll, startInd, endInd, checkInd
 real :: theNudge
-real :: startCodeTimeAcc, endCodeTimeAcc
 
 !#ifdef HYDRO_D
+real :: startCodeTimeAcc, endCodeTimeAcc
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
@@ -1819,7 +1830,6 @@ end subroutine nudge_term_all
 
 function nudge_term_link(linkIndIn, hydroAdv, discharge)
 use module_nudging_utils,      only: whUniLoop
-use module_namelist,      only: nlst_rt
 use module_date_utils_nudging, only: geth_newdate
 #ifdef MPP_LAND 
 use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
@@ -1980,12 +1990,14 @@ character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsGathered
 character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
 integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
 integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
-real :: startCodeTimeAcc, endCodeTimeAcc
 
+!#ifdef HYDRO_D
+real :: startCodeTimeAcc, endCodeTimeAcc
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTimeAcc)
+!#endif
 
 !! accumulate_nwis_not_in_RLAndParams
 !! because of parallel IO,  accumulation is happening on 
