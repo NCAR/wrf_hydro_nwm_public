@@ -5087,9 +5087,9 @@ end subroutine mpp_output_chrt
    if(my_id .ge. i0 .and. my_id .lt. ie) then
      open(iunit, file = "restart/"//trim(outFile), form="unformatted",ERR=101, access="sequential")
           write(iunit,ERR=101) rt_domain(did)%his_out_counts
-          write(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
+!         write(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
           write(iunit,ERR=101) nlst_rt(did)%sincedate(1:19)
-          write(iunit,ERR=101) nlst_rt(did)%DTCT 
+!         write(iunit,ERR=101) nlst_rt(did)%DTCT 
           write(iunit,ERR=101) rt_domain(did)%stc
           write(iunit,ERR=101) rt_domain(did)%smc
           write(iunit,ERR=101) rt_domain(did)%sh2ox
@@ -5178,9 +5178,9 @@ end subroutine mpp_output_chrt
    if(my_id .ge. i0 .and. my_id .lt. ie) then
     open(iunit, file = inFile, form="unformatted",ERR=101,access="sequential")
           read(iunit,ERR=101) rt_domain(did)%his_out_counts
-          read(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
+!         read(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
           read(iunit,ERR=101) nlst_rt(did)%sincedate(1:19)
-          read(iunit,ERR=101) nlst_rt(did)%DTCT 
+!         read(iunit,ERR=101) nlst_rt(did)%DTCT 
           read(iunit,ERR=101) rt_domain(did)%stc
           read(iunit,ERR=101) rt_domain(did)%smc
           read(iunit,ERR=101) rt_domain(did)%sh2ox

@@ -99,17 +99,6 @@ module module_HYDRO_drv
 #endif
    endif
 
-#ifdef MPP_LAND
-   if(IO_id .eq. my_id) then
-#endif
-#ifdef HYDRO_D
-      write(6,*) "restartFile  =",  "RESTART."//nlst_rt(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)
-#endif
-#ifdef MPP_LAND
-   endif
-#endif
-
 
    end subroutine HYDRO_rst_out
 
