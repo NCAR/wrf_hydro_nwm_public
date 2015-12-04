@@ -5190,6 +5190,7 @@ end subroutine mpp_output_chrt
           read(iunit,ERR=101) rt_domain(did)%INFXSRT
           read(iunit,ERR=101) rt_domain(did)%soldrain
           read(iunit,ERR=101) rt_domain(did)%sfcheadrt
+          if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%sfcheadrt = 0
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
