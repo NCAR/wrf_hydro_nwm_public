@@ -237,9 +237,12 @@ print*, 'Ndg: PARALLEL NUDGING!'
 #endif
 #endif
 
+!! this ifdef is bizarre problem with pgf compiler
+#ifdef WRF_HYDRO_NUDGING
 nudgingParamFile      = nlst_rt(did)%nudgingParamFile
 netwkReExFile         = nlst_rt(did)%netwkReExFile
 readTimesliceParallel = nlst_rt(did)%readTimesliceParallel
+#endif 
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
 #ifdef MPP_LAND
