@@ -61,6 +61,12 @@ CONTAINS
        integer  :: NSOIL
        real :: ZSOIL8(8)
 
+#ifdef WRF_HYDRO_NUDGING
+       character(len=256) :: nudgingParamFile
+       character(len=256) :: netwkReExFile
+       logical            :: readTimesliceParallel
+#endif 
+
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
             RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
@@ -77,22 +83,33 @@ CONTAINS
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
                     UDMP_OPT, GWBUCKPARM_file, iocflag
 
-
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
    iocflag = 0
+
+
+#ifdef WRF_HYDRO_NUDGING
+       namelist /NUDGING_nlist/ nudgingParamFile, netwkReExFile, readTimesliceParallel
+       nudgingParamFile = "DOMAIN/nudgingParams.nc"
+       netwkReExFile    = "DOMAIN/netwkReExFile.nc"
+       readTimesliceParallel = .true.
+#endif 
+
                     
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
           open(30, file="hydro.namelist", form="FORMATTED")
           read(30, HYDRO_nlist, iostat=ierr)
+          if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst")
+
+#ifdef WRF_HYDRO_NUDGING          
+          open(30, file="hydro.namelist", form="FORMATTED")
+          read(30, NUDGING_nlist, iostat=ierr)
+          if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
+#endif
           close(30)
-          
-          !! JLM - this would have saved me alot of time.
-          if(ierr .ge. 1) call hydro_stop("hydro namelist error in read_rt_nlst")
-             
 
 #ifdef MPP_LAND
        endif
@@ -183,7 +200,12 @@ CONTAINS
   call mpp_land_bcast_int1(LSMOUT_DOMAN)
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
   call mpp_land_bcast_int1(UDMP_OPT)
-#endif
+#ifdef WRF_HYDRO_NUDGING
+  call mpp_land_bcast_char(256, nudgingParamFile)
+  call mpp_land_bcast_char(256, netwkReExFile   )
+  call mpp_land_bcast_log1(readTimesliceParallel)
+#endif 
+#endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
     nlst%output_gw      = output_gw
     nlst%outlake      = outlake
@@ -236,7 +258,11 @@ CONTAINS
     nlst%udmap_file =  udmap_file
     nlst%UDMP_OPT = UDMP_OPT
     nlst%GWBUCKPARM_file =  GWBUCKPARM_file
-
+#ifdef WRF_HYDRO_NUDGING
+    nlst%nudgingParamFile      = nudgingParamFile
+    nlst%netWkReExFile         = netWkReExFile
+    nlst%readTimesliceParallel = readTimesliceParallel
+#endif
 
 #ifdef MPP_LAND
   if(my_id .eq. IO_id) then
@@ -278,7 +304,12 @@ CONTAINS
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
+#ifdef WRF_HYDRO_NUDGING
+    write(6,*) " nlst%nudgingParamFile",       nudgingParamFile
+    write(6,*) " nlst%netWkReExFile",          netWkReExFile
+    write(6,*) " nlst%readTimesliceParallel",  readTimesliceParallel
 #endif
+#endif /* HYDRO_D */
 #ifdef MPP_LAND
   endif
 #endif
