@@ -1023,7 +1023,7 @@ deallocate(obsTimeStrAllocated, whObsMiss)
 if(my_id .eq. io_id) &
 #endif 
 print*,'Ndg: finish setup_stream_nudging'
-#endif
+
 
 #ifdef MPP_LAND 
 if(my_id .eq. io_id) then
@@ -1034,6 +1034,7 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND 
 endif
 #endif 
+#endif /* HYDRO_D */
 
 end subroutine setup_stream_nudging
 
@@ -1977,14 +1978,12 @@ character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsGathered
 character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
 integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
 integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
-#ifdef HYDRO_D
 real :: startCodeTimeAcc, endCodeTimeAcc
-#endif
 
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif 
-call nudging_timer(startCodeTimeAcc)
+     call nudging_timer(startCodeTimeAcc)
 
 !! accumulate_nwis_not_in_RLAndParams
 !! because of parallel IO,  accumulation is happening on 
