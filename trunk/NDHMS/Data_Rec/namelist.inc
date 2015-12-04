@@ -52,5 +52,12 @@
           integer ::outlake                   ! Netcdf grid of lake
           integer :: rtFlag
 
+#ifdef WRF_HYDRO_NUDGING
+       character(len=256) :: nudgingParamFile
+       character(len=256) :: netwkReExFile
+       logical            :: readTimesliceParallel
+#endif
+
+
    END TYPE namelist_rt_field 
 
