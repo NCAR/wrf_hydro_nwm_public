@@ -69,6 +69,7 @@ integer :: nGagesDomain   ! the number of gages specified
 
 !========================
 ! Nudging parameters structure, corresponding to NudgeParams.nc file.
+!! for dealloction purposes, might be better to put the dimension onthe derived type.
 type nudgingParamStructure
    character(len=15), allocatable, dimension(:) :: usgsId
    real,              allocatable, dimension(:) :: R
@@ -209,7 +210,7 @@ integer :: did=1
 integer :: ii, kk, ll, count, toSize, fromSize
 integer :: nParamGages, nGgDists, nGgDistsKeep
 integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
-integer, allocatable, dimension(:) :: whGageDists1, whGageDists2, whParamsDom
+integer, allocatable, dimension(:) ::  whParamsDom
 integer :: downSize, upSize, baseSize
 
 real :: startCodeTimeAcc, endCodeTimeAcc
@@ -391,8 +392,9 @@ if(my_id .eq. IO_id) then
       end if
    end do
 
-   deallocate(nudgingParamsTmp%usgsId,  nudgingParamsTmp%R,   &
-              nudgingParamsTmp%G,       nudgingParamsTmp%tau  )
+   deallocate(whParamsDom)
+   deallocate(nudgingParamsTmp%usgsId,  nudgingParamsTmp%R  )
+   deallocate(nudgingParamsTmp%G,       nudgingParamsTmp%tau)
 
 #ifdef HYDRO_D
    print*,'Ndg: nudgingParamsStr%usgsId', nudgingParamsStr%usgsId(size(nudgingParamsStr%usgsId))
@@ -2024,7 +2026,27 @@ if(allocated(nwisNotRLAndParamsGathered))     deallocate(nwisNotRLAndParamsGathe
 if(allocated(nwisNotRLAndParamsConsolidated)) deallocate(nwisNotRLAndParamsConsolidated)
 
 !! deallocate module variables here and time this
-
+if(allocated(obsTimeStr))              deallocate(obsTimeStr)
+if(allocated(obsStaticStr))            deallocate(obsStaticStr)
+if(allocated(nodeGageTmp%nodeId))      deallocate(nodeGageTmp%nodeId)
+if(allocated(nodeGageTmp%usgsId))      deallocate(nodeGageTmp%usgsId) !redundant
+if(allocated(nodeGageStr%nodeId))      deallocate(nodeGageStr%nodeId)
+if(allocated(nodeGageStr%usgsId))      deallocate(nodeGageStr%usgsId)
+if(allocated(nudgingParamsTmp%usgsId)) deallocate(nudgingParamsTmp%usgsId) !redundant
+if(allocated(nudgingParamsTmp%R))      deallocate(nudgingParamsTmp%R)      !redundant
+if(allocated(nudgingParamsTmp%G))      deallocate(nudgingParamsTmp%G)      !redundant
+if(allocated(nudgingParamsTmp%tau))    deallocate(nudgingParamsTmp%tau)    !redundant
+if(allocated(nudgingParamsStr%usgsId)) deallocate(nudgingParamsStr%usgsId)
+if(allocated(nudgingParamsStr%R))      deallocate(nudgingParamsStr%R)
+if(allocated(nudgingParamsStr%G))      deallocate(nudgingParamsStr%G)
+if(allocated(nudgingParamsStr%tau))    deallocate(nudgingParamsStr%tau)
+if(allocated(upNetwkStr%go))           deallocate(upNetwkStr%go)
+if(allocated(upNetwkStr%start))        deallocate(upNetwkStr%start)
+if(allocated(upNetwkStr%end))          deallocate(upNetwkStr%end)
+if(allocated(downNetwkStr%go))         deallocate(downNetwkStr%go)
+if(allocated(downNetwkStr%start))      deallocate(downNetwkStr%start)
+if(allocated(downNetwkStr%end))        deallocate(downNetwkStr%end)
+if(allocated(chanlen_image0))          deallocate(chanlen_image0)
 
 !! print ouf the full timing results here.
 !! dont i need to make another accumultion call here?
@@ -2040,118 +2062,5 @@ end if
 
 end subroutine finish_stream_nudging
 
-!===================================================================================================
-! Program Name: 
-!   x
-! Author(s)/Contact(s): 
-!   y
-! Abstract: 
-!   z
-! History Log: 
-!   6/4/15 - Created,
-! Usage:
-! Parameters: 
-!   q
-! Input Files:  
-! Output Files: 
-! Condition codes: 
-! User controllable options: 
-! Notes: 
-
-!!$subroutine get_up_down_reach (kcu,kup,kdn,kindex)
-!!$!! find the up and downsteam of a given reach
-!!$!! Author:: Wu YH
-!!$!! Date  :: 2015.07.30 
-!!$!!!===================================================================================================
-!!$implicit none
-!!$integer :: kcu   ! current reach
-!!$integer :: kup   ! upstream number
-!!$integer :: kdn   ! downstream number
-!!$integer :: korder ! order of the channel
-!!$integer,dimension(-kup:kdn)::kindex
-!!$
-!!$integer :: m,mcu,mup,mdn
-!!$
-!!$kindex = -999  ! default value
-!!$kindex(kcu) = kcu
-!!$korder = ORDER(kcu)
-!!$
-!!$mup = 0
-!!$mcu = kcu
-!!$#ifdef MPP_LAND
-!!$101 continue
-!!$mloop:   do m = 1, nToNodeInd
-!!$   if(ORDER(m) .eq. korder) then    !--do the orders sequentially
-!!$      if(gtoNODE(m) .eq. mcu) then
-!!$         mup = mup - 1
-!!$         kindex(mup) = m
-!!$         mcu = m
-!!$         go to 201
-!!$      endif
-!!$   endif
-!!$enddo mloop ! loop over m
-!!$go to 301
-!!$201 continue 
-!!$if (-mup .lt. kup) go to 101
-!!$301 continue
-!!$#else
-!!$102 continue
-!!$mloop:  do m = 1, NLINKSL
-!!$   if(ORDER(m) .eq. korder) then    !--do the orders sequentially
-!!$      if (TO_NODE(m) .eq. mcu ) then
-!!$         mup = mup - 1
-!!$         kindex(mup) = m
-!!$         mcu = m
-!!$         go to 202
-!!$      endif
-!!$   endif
-!!$enddo mloop ! loop over m
-!!$go to 302
-!!$202 continue 
-!!$if (-mup .lt. kup) go to 102
-!!$302 continue
-!!$#endif
-!!$
-!!$mdn = 0
-!!$#ifdef MPP_LAND
-!!$mcu = gtoNODE(kcu)     
-!!$401 continue
-!!$mloop:   do m = 1, nToNodeInd
-!!$   if(ORDER(m) .eq. korder) then    !--do the orders sequentially
-!!$      if(m .eq. mcu) then
-!!$         mdn = mnd + 1
-!!$         kindex(mdn) = m
-!!$         mcu =gtoNODE(m)
-!!$         go to 501
-!!$      endif
-!!$   endif
-!!$enddo mloop ! loop over m
-!!$go to 601
-!!$501 continue 
-!!$if ( mdn .lt. kdn) go to 401
-!!$601 continue
-!!$#else
-!!$mcu = TO_NODE(kcu)
-!!$402 continue
-!!$mloop:  do m = 1, NLINKSL
-!!$   if(ORDER(m) .eq. korder) then    !--do the orders sequentially
-!!$      if (m .eq. mcu ) then
-!!$         mdn = mdn + 1
-!!$         kindex(mdn) = m
-!!$         mcu = TO_NODE(m)
-!!$         go to 502
-!!$      endif
-!!$   endif
-!!$enddo mloop ! loop over m
-!!$go to 602
-!!$502 continue
-!!$if (-mdn .lt. kdn) go to 402
-!!$602 continue
-!!$#endif
-!!$
-!!$return        
-!!$end subroutine get_up_down_reach
-
-
-!===================================================================================================
+!==================================================
 end module module_stream_nudging
