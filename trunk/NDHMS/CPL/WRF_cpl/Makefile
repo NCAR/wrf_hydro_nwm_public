@@ -7,7 +7,7 @@
 
 include ../../macros
 
-MODFLAG =       -I./ -I ../../MPP -I ../../mod 
+MODFLAG =       -I./ -I ../../MPP -I ../../mod -I$(NETCDF_INC)
 
 WRF_ROOT = ../../..
 OBJS = \
@@ -17,7 +17,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
+	$(CPP) $(CPPFLAGS) -I$(NETCDF_INC) $(*).F > $(*).f
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(WRF_ROOT)/frame -I$(WRF_ROOT)/main -I$(WRF_ROOT)/external/esmf_time_f90 $(*).f
 	$(RMD) $(*).f
 	@echo ""

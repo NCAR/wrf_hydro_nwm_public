@@ -140,7 +140,7 @@ CONTAINS
                nlst_rt(did)%dtrt_ch = HYDRO_dt
                mm0 = 1
             else
-               mm = HYDRO_dt/nlst_rt(did)%dtrt_ch_
+               mm = HYDRO_dt/nlst_rt(did)%dtrt_ch
                if(mm*nlst_rt(did)%dtrt_ch.lt. HYDRO_dt) nlst_rt(did)%dtrt_ch = HYDRO_dt/mm
                mm0 = mm
             endif
