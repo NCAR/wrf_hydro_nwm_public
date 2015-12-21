@@ -2160,6 +2160,34 @@ MODULE MODULE_MPP_LAND
      return
      end  subroutine fatal_error_stop
 
+     subroutine updateLake_seqInt(in,nsize,in0)
+       implicit none
+       integer :: nsize
+       integer, dimension(nsize) :: in
+       integer, dimension(nsize) :: tmp
+       integer, dimension(:) :: in0
+       integer tag, i, status, ierr, k
+       if(nsize .le. 0) return
+
+       tag = 29
+       if(my_id .ne. IO_id) then
+          call mpi_send(in,nsize,MPI_INTEGER, IO_id,     &
+                tag,MPI_COMM_WORLD,ierr)
+       else
+          do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+               call mpi_recv(tmp,nsize,&
+                   MPI_INTEGER,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+               do k = 1, nsize 
+                  if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
+               end do
+            end if
+          end do
+       end if
+       call mpp_land_bcast_int1d(in)
+     
+     end subroutine updateLake_seqInt
+
      subroutine updateLake_seq(in,nsize,in0)
        implicit none
        integer :: nsize
@@ -2223,25 +2251,13 @@ MODULE MODULE_MPP_LAND
     end subroutine match1dLake
 
 
-
-END MODULE MODULE_MPP_LAND
-
         subroutine mpp_land_abort()
             implicit none
-  include "mpif.h"
             integer ierr, status
             CALL MPI_ABORT(MPI_COMM_WORLD,status,IERR)
-        end ! mpp_land_abort
-
-  subroutine mpp_land_sync()
-      implicit none
-      include "mpif.h"
-      integer ierr
-      call MPI_barrier( MPI_COMM_WORLD ,ierr)
-      if(ierr .ne. 0) call mpp_land_abort()
-      return
-  end ! mpp_land_sync
+        end subroutine mpp_land_abort  ! mpp_land_abort
 
 
+END MODULE MODULE_MPP_LAND
 
 

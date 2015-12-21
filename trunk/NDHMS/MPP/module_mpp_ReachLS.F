@@ -1,7 +1,7 @@
 !   This is used as a coupler with the WRF model.
 MODULE MODULE_mpp_ReachLS
 
-  use module_mpp_land, only:  io_id, my_id, mpp_status, mpp_land_max_int1
+  use module_mpp_land, only:  io_id, my_id, mpp_status, mpp_land_max_int1, mpp_land_sync
   implicit none
 
 

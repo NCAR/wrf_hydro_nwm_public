@@ -3727,6 +3727,39 @@ end subroutine mpp_output_chrt
      return
      end subroutine mpp_output_lakes
 
+   subroutine mpp_output_lakes2(lake_index,igrid, split_output_count, NLAKES, &
+        startdate, date, latlake, lonlake, elevlake, &
+        qlakei,qlakeo, resht,dtrt_ch,K, LAKEIDM)
+
+   USE module_mpp_land
+
+!!output the routing variables over just channel
+     integer,                                  intent(in) :: igrid, K
+     integer,                                  intent(in) :: split_output_count
+     integer,                                  intent(in) :: NLAKES
+     real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
+     real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     real,                                     intent(in) :: dtrt_ch
+     integer, dimension(NLAKES),               intent(in) :: LAKEIDM     ! lake id
+
+     character(len=*),                         intent(in) :: startdate
+     character(len=*),                         intent(in) :: date
+     integer lake_index(nlakes)
+
+     call write_lake_real(latlake,lake_index,nlakes)
+     call write_lake_real(lonlake,lake_index,nlakes)
+     call write_lake_real(elevlake,lake_index,nlakes)
+     call write_lake_real(resht,lake_index,nlakes)
+     call write_lake_real(qlakei,lake_index,nlakes)
+     call write_lake_real(qlakeo,lake_index,nlakes)
+
+     if(my_id.eq. IO_id) then
+        call output_lakes2(igrid, split_output_count, NLAKES, &
+           startdate, date, latlake, lonlake, elevlake, &
+           qlakei,qlakeo, resht,dtrt_ch,K, LAKEIDM)
+     end if
+     return
+     end subroutine mpp_output_lakes2
 #endif
 
 !----------------------------------- lake netcdf output
@@ -3978,12 +4011,12 @@ end subroutine mpp_output_chrt
      close(16)
 
  end subroutine output_lakes
-!----------------------------------- lake netcdf output
 
-! output the lakes directrly.
+!----------------------------------- lake netcdf output
+!-- output the lake as regular netcdf file format for better performance than point netcdf file.
    subroutine output_lakes2(igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt_ch,K, lake_id)
+        qlakei,qlakeo, resht,dtrt_ch,K,LAKEIDM)
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid, K
@@ -3991,46 +4024,25 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     integer, dimension(NLAKES),               intent(in) :: LAKEIDM        !-- LAKE ID
      real,                                     intent(in) :: dtrt_ch
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
 
-     integer,  DIMENSION(nlakes)                   :: lake_id    
 
      integer, save  :: output_count
      integer, save :: ncid
 
-     integer :: stationdim, varid, charid, n
-     integer :: iret,i,  prev_pos  !-- 
-     integer :: previous_pos        !-- used for the station model
+     integer :: stationdim, varid,  n
+     integer :: iret,i    !-- 
      character(len=256) :: output_flnm
      character(len=19)  :: date19, date19start
-     character(len=34)  :: sec_since_date
-     integer :: seconds_since,cnt
      character(len=32)  :: convention
-     character(len=6),allocatable, DIMENSION(:)  :: stname
 
-    !--- all this for writing the station id string
-     INTEGER   TDIMS, TXLEN
-     PARAMETER (TDIMS=2)    ! number of TX dimensions
-     PARAMETER (TXLEN = 6) ! length of example string
-     INTEGER  TIMEID        ! record dimension id
-     INTEGER  TXID          ! variable ID
-     INTEGER  TXDIMS(TDIMS) ! variable shape
-     INTEGER  TSTART(TDIMS), TCOUNT(TDIMS)
 
-!    sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
-!    seconds_since = int(dtrt_ch)*output_count
-     seconds_since = int(dtrt_ch)*K
-
-     allocate(stname(NLAKES))
 
      if (output_count == 0) then
-
-!-- have moved sec_since_date from above here..
-      sec_since_date = 'seconds since '//startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10) &
-                  //' '//startdate(12:13)//':'//startdate(15:16)//' UTC'
 
       date19start(1:len_trim(startdate)) = startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10)//'_' &
                   //startdate(12:13)//':'//startdate(15:16)//':00'
@@ -4047,9 +4059,9 @@ end subroutine mpp_output_chrt
 #endif
 
       if (iret /= 0) then
-          print*, "Problem nf_create"
-          call hydro_stop("output_lakes")
-      endif
+          print*, "Problem nf_create" 
+          call hydro_stop("output_lakes") 
+      endif 
 
       iret = nf_def_dim(ncid, "station", nlakes, stationdim)
 
@@ -4057,6 +4069,10 @@ end subroutine mpp_output_chrt
       iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake latitude')
       iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+
+      !- station location definition,  LAKEIDM
+      iret = nf_def_var(ncid,"LAKE_ID",NF_INT, 1, (/stationdim/), varid)
+      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake COMMON ID')
 
       !- station location definition,  long
       iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
@@ -4071,7 +4087,7 @@ end subroutine mpp_output_chrt
 !     !- water surface elevation
       iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-      iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake Elevation')
+      iret = nf_put_att_text(ncid,varid,'long_name',14,'Water Surface Elevation')
 
 !     !- inflow to lake
       iret = nf_def_var(ncid, "inflow", NF_FLOAT, 1, (/stationdim/), varid)
@@ -4081,27 +4097,13 @@ end subroutine mpp_output_chrt
       iret = nf_def_var(ncid, "outflow", NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
 
-     !-- station  id
-     ! define character-position dimension for strings of max length 6
-         iret = nf_def_var(ncid,"lakeid",NF_INT, 1, (/stationdim/), varid)
-         iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
-
-!     !- time definition, timeObs
-         iret = nf_def_var(ncid,"time_observation",NF_INT, 1, (/1/), varid)
-         iret = nf_put_att_text(ncid,varid,'units',34,sec_since_date)
-         iret = nf_put_att_text(ncid,varid,'long_name',19,'time of observation')
-
         date19(1:19) = "0000-00-00_00:00:00"
         date19(1:len_trim(startdate)) = startdate
-        convention(1:32) = "Unidata Observation Dataset v1.0"
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coverage_start",19, date19start)
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "stationDimension",7, "station")
         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
         iret = nf_enddef(ncid)
 
@@ -4117,30 +4119,25 @@ end subroutine mpp_output_chrt
         iret = nf_inq_varid(ncid,"altitude", varid)
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
 
-        iret = nf_inq_varid(ncid,"lakeid", varid)
-        iret = nf_put_vara_int(ncid, varid, (/1/), (/nlakes/), lake_id)
+        !-- write elevation  of lake
+        iret = nf_inq_varid(ncid,"elevation", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), resht   )
+
+        !-- write elevation  of inflow
+        iret = nf_inq_varid(ncid,"inflow", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), qlakei  )
+
+        !-- write elevation  of inflow
+        iret = nf_inq_varid(ncid,"outflow", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), qlakeo  )
+
+        !-- write lake id
+        iret = nf_inq_varid(ncid,"LAKE_ID", varid)
+        iret = nf_put_vara_int(ncid, varid, (/1/), (/NLAKES/), LAKEIDM)
 
      endif
 
      output_count = output_count + 1
-
-         !!--time in seconds since startdate
-         iret = nf_inq_varid(ncid,"time_observation", varid)
-         iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
-
-         iret = nf_inq_varid(ncid,"elevation", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nlakes/), resht)
-
-         iret = nf_inq_varid(ncid,"inflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nlakes/), qlakei)
-
-         iret = nf_inq_varid(ncid,"outflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nlakes/), qlakeo)
-
-
-          !--record number of previous record for same station
-
-
 
 
     iret = nf_redef(ncid)
@@ -4155,13 +4152,8 @@ end subroutine mpp_output_chrt
         iret = nf_close(ncid)
      endif
 
-     deallocate(stname)
-#ifdef HYDRO_D
-     print *, "Exited Subroutine output_lakes"
-#endif
-     close(16)
-
  end subroutine output_lakes2
+!----------------------------------- lake netcdf output
 
 #ifdef MPP_LAND
 
@@ -6784,8 +6776,8 @@ end subroutine mpp_output_chrt
 
 !--- get the lake configuration here.
 #ifdef MPP_LAND
-       call nhdLakeMap_mpp(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA, GNLINKSL)
-!yw       call nhdLakeMap(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA)
+      call nhdLakeMap_mpp(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA, GNLINKSL)
+!      call nhdLakeMap(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA)
 #else
        call nhdLakeMap(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA)
 #endif
@@ -8318,9 +8310,9 @@ end subroutine output_chrt2
     subroutine nhdLakeMap(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, gTO_NODE,LINKID, LAKEIDM, LAKEIDA)
         !--- get the lake configuration here.
         implicit none
-        integer, dimension(:),   intent(out) :: TYPEL, LAKELINKID, LAKEIDX
+        integer, dimension(:),   intent(inout) :: TYPEL, LAKELINKID, LAKEIDX
         integer, dimension(:),   intent(inout) :: gTO_NODE
-        integer, dimension(:),   intent(in) :: LINKID, LAKEIDM, LAKEIDA
+        integer, dimension(:),   intent(inout) :: LINKID, LAKEIDM, LAKEIDA
         integer, intent(in) :: NLAKES, NLINKSL 
         integer, dimension(NLINKSL) :: OUTLAKEID
         integer :: i,j,k, kk
@@ -8328,6 +8320,8 @@ end subroutine output_chrt2
         TYPEL = -999
 
 !! find the links that flow into lakes (e.g. TYPEL = 3), and update the TO_NODE, so that links flow into the lake reach
+     call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, gTO_NODE,LINKID, LAKEIDM, LAKEIDA,NLINKSL)
+
         OUTLAKEID = gTO_NODE
         DO i = 1, NLAKES
           DO j = 1, NLINKSL
@@ -8336,7 +8330,7 @@ end subroutine output_chrt2
               if( (gTO_NODE(j) .eq. LINKID(k) ) .and. &
                   (LAKEIDA(k) .lt. 0 .and. LAKEIDA(j) .eq. LAKEIDM(i))) then
                   TYPEL(j) = 1  !this is the link flowing out of the lake
-                  OUTLAKEID(j) = LINKID(j)
+                  OUTLAKEID(j) = LAKEIDA(j) ! LINKID(j)
                   LAKELINKID(i) = j
 !                    write(61,*) gTO_NODE(j),LAKEIDA(j),LAKEIDA(k),LAKELINKID(i) , j
 !                    call flush(61)
@@ -8344,6 +8338,7 @@ end subroutine output_chrt2
                   (LAKEIDA(j) .lt. 0 .and. LAKEIDA(k) .gt. 0) .and. &
                   (LAKEIDA(k) .eq. LAKEIDM(i)) ) then
                   TYPEL(j) = 3 !type_3 inflow link to lake
+                  OUTLAKEID(j) = LAKEIDM(i)
               elseif (LAKEIDA(j) .eq. LAKEIDM(i) .and. .not. TYPEL(j) .eq. 1) then
                   TYPEL(j) = 2 ! internal lake linkd
               endif
@@ -8359,18 +8354,42 @@ end subroutine output_chrt2
 
  ! assign the the inflow nodes to the lank with a new TO_NODE id, which is the outflow link
        DO i = 1, NLINKSL
-            if(TYPEL(i) .eq. 3) then
-              gTO_NODE(i) = OUTLAKEID(i)
-                  write(6,*) "typ_3,inflow link, reattached to", i, OUTLAKEID
-                  call flush(6)
+        DO j = 1, NLINKSL
+            if(TYPEL(i) .eq. 3 .and. TYPEL(j) .eq. 1 .and. (OUTLAKEID(j) .eq. OUTLAKEID(i))) then
+              gTO_NODE(i) = LINKID(j)  !   OUTLAKEID(i)
             endif
+        ENDDO
        ENDDO
 
 !     do k = 1, NLINKSL
 !         write(60+my_id,*) "k, typel, lakeidx", k, typel(k), lakeidx(k) 
 !         call flush(60+my_id)
 !     end do
+
+!     DO i = 1, NLINKSL
+!        write(61,*) i,LAKEIDX(i), TYPEL(i)
+!     end do
+!     DO i = 1, NLAKES 
+!        write(62,*) i,LAKELINKID(i)
+!        write(63,*) i,LAKEIDM(i)
+!     end do
+!     close(61)
+!     close(62)
+!     close(63)
 !     call hydro_finish()
+
+!   write(60,*) TYPEL
+!   write(63,*) LAKELINKID, LAKEIDX
+!   write(64,*) gTO_NODE
+!   write(61,*) LINKID
+!   write(62,*) LAKEIDM, LAKEIDA
+!   close(60)
+!   close(61)
+!   close(62)
+!   close(63)
+!   close(64)
+!   call hydro_finish()
+
 
     end subroutine nhdLakeMap
 
@@ -8389,15 +8408,21 @@ end subroutine output_chrt2
                     tmplakeida, tmpoutlakeid, tmpTO_NODE, gLAKEIDA, gLAKEIDX
         integer, allocatable, dimension(:,:) :: gtonodeout
     
-        integer,allocatable, dimension(:) ::  gto
+        integer,allocatable, dimension(:) ::  gto, tmpLAKELINKID, gTYPEL, gOUTLAKEID
 
-!       integer tmpBuf(GNLINKSL)
+      integer tmpBuf(GNLINKSL)
 
       allocate (gto(GNLINKSL))
 
+      if(my_id .eq. io_id) then
+         allocate (tmpLAKELINKID(nlakes) )
+      else
+         allocate (tmpLAKELINKID(1))
+      endif
+
 
 !     prescan the data and remove the LAKEIDM which point to two links.
-      call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
+     call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
 
    
       call gBcastValue(TO_NODE,gto)   
@@ -8426,6 +8451,7 @@ end subroutine output_chrt2
       if(kk .gt. 0) then
          tmpOUTLAKEID = -999
          tmpTYPEL = -999
+         tmpTO_NODE = -999
       endif
       if(NLINKSL .gt. 0) then
          OUTLAKEID = -999
@@ -8455,7 +8481,6 @@ end subroutine output_chrt2
             k = ind(i)
             tmpLINKID(i) = gLINKID(k)
       enddo
-      deallocate(gLINKID)
 
       allocate(gLAKEIDA(gnlinksl))
       call gBcastValue(LAKEIDA(1:NLINKSL),gLAKEIDA(1:gnlinksl) )   
@@ -8465,8 +8490,12 @@ end subroutine output_chrt2
       enddo
       deallocate(gLAKEIDA)
 
-        LAKELINKID = 0
-!! find the links that flow into lakes (e.g. TYPEL = 3), and update the TO_NODE, so that links flow into the lake reach
+!yw LAKELINKID = 0
+      tmpLAKELINKID = LAKELINKID
+      tmpOUTLAKEID  = tmpTO_NODE
+      OUTLAKEID  = TO_NODE
+
+ !! find the links that flow into lakes (e.g. TYPEL = 3), and update the TO_NODE, so that links flow into the lake reach
         DO i = 1, NLAKES
           DO k = 1, NLINKSL
              do m = 1, gToNodeOut(k,1)
@@ -8474,7 +8503,7 @@ end subroutine output_chrt2
                  if( (tmpTO_NODE(j) .eq. LINKID(k) ) .and. &
                      (LAKEIDA(k) .lt. 0 .and. tmpLAKEIDA(j) .eq. LAKEIDM(i))) then
                      tmpTYPEL(j) = 1  !this is the link flowing out of the lake
-                     tmpOUTLAKEID(j) = tmpLINKID(j)
+                     tmpOUTLAKEID(j) = tmpLAKEIDA(j) !tmpLINKID(j) ! Wei Check
                      LAKELINKID(i) = ind(j)
 !                    write(61,*) tmpTO_NODE(j),tmpLAKEIDA(j),LAKEIDA(k),LAKELINKID(i) 
 !                    call flush(61)
@@ -8482,6 +8511,9 @@ end subroutine output_chrt2
                      (tmpLAKEIDA(j) .lt. 0 .and. LAKEIDA(k) .gt. 0) .and. &
                      (LAKEIDA(k) .eq. LAKEIDM(i)) ) then
                      tmpTYPEL(j) = 3 !type_3 inflow link to lake
+                     tmpOUTLAKEID(j) = LAKEIDM(i) !Wei Check
+!                    write(62,*) tmpTO_NODE(j),tmpOUTLAKEID(j),LAKEIDM(i) 
+!                    call flush(62)
                  elseif (tmpLAKEIDA(j) .eq. LAKEIDM(i) .and. tmpTYPEL(j) .ne. 1) then
                      tmpTYPEL(j) = 2 ! internal lake linkd
                  endif
@@ -8489,12 +8521,15 @@ end subroutine output_chrt2
           END DO
        END DO
 
-       call sum_int1d(LAKELINKID, NLAKES) 
+!yw       call sum_int1d(LAKELINKID, NLAKES) 
+       call updateLake_seqInt(LAKELINKID,nlakes,tmpLAKELINKID)
+
+       deallocate(tmpLAKELINKID)
 
        if(gNLINKSL .gt. 0) then
           if(my_id .eq. 0) then
               allocate(gLAKEIDX(gNLINKSL))
-              gLAKEIDX = 0
+              gLAKEIDX = -999
               DO i = 1, NLAKES
                    if(LAKELINKID(i) .gt. 0) then
                       gLAKEIDX(LAKELINKID(i)) = i
@@ -8515,14 +8550,39 @@ end subroutine output_chrt2
        call TONODE2RSL(ind,tmpTYPEL,size,gNLINKSL,NLINKSL,TYPEL(1:NLINKSL), -999 )
        call TONODE2RSL(ind,tmpOUTLAKEID,size,gNLINKSL,NLINKSL,OUTLAKEID(1:NLINKSL), -999 )
 
+
  ! assign the the inflow nodes to the lank with a new TO_NODE id, which is the outflow link
+!yw       DO i = 1, NLINKSL
+!yw 105
+!     DO k = 1, NLINKSL
+!       do m = 1, gToNodeOut(k,1)
+!                i = gToNodeOut(k,m+1)
+!          DO j = 1, NLINKSL
+!             if (tmpTYPEL(i) .eq. 3 .and. TYPEL(j) .eq. 1 .and. (OUTLAKEID(j) .eq. tmpOUTLAKEID(i)) &
+!                  .and. tmpOUTLAKEID(i) .ne. -999) then
+!                    !yw tmpTO_NODE(i) = tmpOUTLAKEID(i)  !Wei Check
+!                    tmpTO_NODE(i) = LINKID(j)  !Wei Check
+!             endif 
+!          END DO
+!        END DO
+!     END DO 
+!     call TONODE2RSL(ind,tmpTO_NODE,size,gNLINKSL,NLINKSL,TO_NODE(1:NLINKSL), -999 )
+
+ ! assign the the inflow nodes to the lank with a new TO_NODE id, which is the outflow link
+      allocate(gTYPEL(gNLINKSL))
+      allocate(gOUTLAKEID(gNLINKSL))
+      call gBcastValue(TYPEL,gTYPEL)   
+      call gBcastValue(OUTLAKEID,gOUTLAKEID)   
        DO i = 1, NLINKSL
-            if(TYPEL(i) .eq. 3) then
-              if(OUTLAKEID(i) .ne. -999) then
-                 TO_NODE(i) = OUTLAKEID(i)
-              endif 
+        DO j = 1, gNLINKSL
+            if(TYPEL(i) .eq. 3 .and. gTYPEL(j) .eq. 1 .and. (gOUTLAKEID(j) .eq. OUTLAKEID(i))) then
+              TO_NODE(i) = gLINKID(j)  !   OUTLAKEID(i)
             endif
+        ENDDO
        ENDDO
+      deallocate(gLINKID)
+      deallocate(gTYPEL)
+      deallocate(gOUTLAKEID)
 
       deallocate(tmpTYPEL,tmpLINKID, tmpTO_NODE, tmpLAKEIDA, tmpOUTLAKEID)
 
@@ -8535,25 +8595,49 @@ end subroutine output_chrt2
 
 !     call ReachLS_write_io(TO_NODE(1:NLINKSL), tmpBuf(1:gNLINKSL) )
 !     if(my_id .eq. io_id ) then
-!       write(60,*) tmpBuf(1:gNLINKSL)
-!       call flush(60)
+!       write(70,*) tmpBuf(1:gNLINKSL)
+!       call flush(70)
 !     endif
 !     call ReachLS_write_io(TYPEL(1:NLINKSL), tmpBuf(1:gNLINKSL) )
 !     if(my_id .eq. io_id ) then
-!       write(61,*) tmpBuf
-!       call flush(61)
+!       write(71,*) tmpBuf
+!       call flush(71)
 !     endif
 !     call ReachLS_write_io(LAKEIDX(1:NLINKSL), tmpBuf(1:gNLINKSL))
 !     if(my_id .eq. io_id ) then
-!       write(62,*) tmpBuf
-!       call flush(62)
+!       write(72,*) tmpBuf
+!       call flush(72)
+!       close(72)
 !     endif
 !     call ReachLS_write_io(OUTLAKEID(1:NLINKSL), tmpBuf(1:gNLINKSL))
 !     if(my_id .eq. io_id ) then
-!       write(63,*) tmpBuf
-!       call flush(63)
+!       write(73,*) tmpBuf
+!       call flush(73)
 !     endif
 !     call hydro_finish()
+
+!     DO i = 1, NLINKSL
+!        write(61,*) i,LAKEIDX(i), TYPEL(i)
+!     end do
+!     DO i = 1, NLAKES 
+!        write(63,*) i,LAKEIDM(i)
+!        write(62,*) i,LAKELINKID(i)
+!     end do
+!     close(61)
+!     close(62)
+!     close(63)
+
+!   write(60,*) TYPEL
+!   write(63,*) LAKELINKID, LAKEIDX
+!   write(64,*) TO_NODE
+!   write(61,*) LINKID
+!   write(62,*) LAKEIDM, LAKEIDA
+!   close(60)
+!   close(61)
+!   close(62)
+!   close(63)
+!   close(64)
+!   call hydro_finish()
 
     end subroutine nhdLakeMap_mpp
 
@@ -8570,11 +8654,16 @@ end subroutine output_chrt2
                     tmplakeida, tmpoutlakeid, tmpTO_NODE, gLAKEIDA
         integer, allocatable, dimension(:,:) :: gtonodeout
     
-        integer,allocatable, dimension(:) ::  gto
+        integer,allocatable, dimension(:) ::  gto , tmpLAKELINKID
 
 !       integer tmpBuf(GNLINKSL)
 
       allocate (gto(GNLINKSL))
+      if(my_id .eq. io_id) then
+         allocate(tmpLAKELINKID(nlakes))
+      else
+         allocate(tmpLAKELINKID(1))
+      endif
  
       call gBcastValue(TO_NODE,gto)   
       maxNum = 0
@@ -8623,7 +8712,8 @@ end subroutine output_chrt2
       enddo
       deallocate(gLAKEIDA)
 
-        LAKELINKID = 0
+        tmpLAKELINKID = LAKELINKID
+!       LAKELINKID = 0
         DO i = 1, NLAKES
           DO k = 1, NLINKSL
              do m = 1, gToNodeOut(k,1)
@@ -8642,7 +8732,8 @@ end subroutine output_chrt2
             END DO
           END DO
        END DO
-       call match1dLake(LAKELINKID, NLAKES, -999) 
+!yw        call match1dLake(LAKELINKID, NLAKES, -999) 
+       call updateLake_seqInt(LAKELINKID,nlakes,tmpLAKELINKID)
 
 !      if(my_id .eq. 0) then
 !          write(65,*) "check LAKEIDM   *****,"
@@ -8661,7 +8752,7 @@ end subroutine output_chrt2
 !      endif
 
        close(65)
-      deallocate(tmpTO_NODE, tmpLAKEIDA)
+      deallocate(tmpTO_NODE, tmpLAKEIDA, tmpLAKELINKID)
 
     end subroutine nhdLakeMap_scan
 #endif

@@ -41,6 +41,7 @@
  RTOUT_DOMAIN = 0               ! Netcdf grid of terrain routing variables on routing grid
  output_gw = 0                 ! Netcdf grid of GW
  outlake  = 0                  ! Netcdf grid of lake
+                               !0: no output. 1: point netcdf. 2: for fast output.
 
  rst_bi_in = 1       !0: use netcdf restart file.
                      !1: use parallel io for reading multiple restart files by each core.

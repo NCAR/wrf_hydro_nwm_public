@@ -1,7 +1,7 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
-                               restart_out_bi, restart_in_bi, mpp_output_chrt2
+                               restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
@@ -307,17 +307,7 @@ module module_HYDRO_drv
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
-                  if(nlst_rt(did)%outlake  .eq. 1)  then 
-                      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-                          call output_lakes2(  &
-                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                               RT_DOMAIN(did)%NLAKES, &
-                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
-                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
-                               RT_DOMAIN(did)%QLAKEO, &
-                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
-                      else 
+                      if(nlst_rt(did)%outlake .eq. 1) then
 #ifdef MPP_LAND
                           call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
 #else
@@ -331,7 +321,21 @@ module module_HYDRO_drv
                                RT_DOMAIN(did)%QLAKEO, &
                                RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
                       endif
-                  endif
+                      if(nlst_rt(did)%outlake .eq. 2) then
+#ifdef MPP_LAND
+                          call mpp_output_lakes2( RT_DOMAIN(did)%lake_index, &
+#else
+                          call output_lakes2(  &
+#endif
+                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                               RT_DOMAIN(did)%NLAKES, &
+                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
+                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
+                               RT_DOMAIN(did)%QLAKEO, &
+                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
+                      endif
+
                endif   ! end if block of rNLAKES .gt. 0
         endif 
 #ifdef HYDRO_D
