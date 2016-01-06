@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 MODULE module_sf_noahdrv
 
 !-------------------------------
@@ -1426,7 +1446,9 @@ CONTAINS
 
 ! initialize three Noah LSM related tables
    IF ( allowed_to_read ) THEN
+#ifdef HYDRO_D
      CALL wrf_message( 'INITIALIZE THREE Noah LSM RELATED TABLES' )
+#endif
      CALL  SOIL_VEG_GEN_PARM( MMINLU, MMINSL )
    ENDIF
 
@@ -1450,7 +1472,9 @@ CONTAINS
        IF ( ISLTYP( i,j ) .LT. 1 ) THEN
          errflag = 1
          WRITE(err_message,*)"module_sf_noahlsm.F: lsminit: out of range ISLTYP ",i,j,ISLTYP( i,j )
+#ifdef HYDRO_D
          CALL wrf_message(err_message)
+#endif
        ENDIF
        IF(.not.RDMAXALB) THEN
           SNOALB(i,j)=MAXALB(IVGTYP(i,j))*0.01
@@ -1584,8 +1608,11 @@ CONTAINS
 !
 
        IF ( wrf_dm_on_monitor() ) THEN
-
-        OPEN(19, FILE='VEGPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#ifndef NCEP_WCOSS
+        OPEN(20, FILE='VEGPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#else
+       OPEN(20, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#endif
         IF(ierr .NE. OPEN_OK ) THEN
           WRITE(message,FMT='(A)') &
           'module_sf_noahlsm.F: soil_veg_gen_parm: failure opening VEGPARM.TBL'
@@ -1596,18 +1623,22 @@ CONTAINS
         LUMATCH=0
 
         FIND_LUTYPE : DO WHILE (LUMATCH == 0)
-           READ (19,*,END=2002)
-           READ (19,*,END=2002)LUTYPE
-           READ (19,*)LUCATS,IINDEX
+           READ (20,*,END=2002)
+           READ (20,*,END=2002)LUTYPE
+           READ (20,*)LUCATS,IINDEX
 
            IF(LUTYPE.EQ.MMINLU)THEN
               WRITE( mess , * ) 'LANDUSE TYPE = ' // TRIM ( LUTYPE ) // ' FOUND', LUCATS,' CATEGORIES'
+#ifdef HYDRO_D
               CALL wrf_message( mess )
+#endif
               LUMATCH=1
            ELSE
+#ifdef HYDRO_D
               call wrf_message ( "Skipping over LUTYPE = " // TRIM ( LUTYPE ) )
+#endif
               DO LC = 1, LUCATS+12
-                 read(19,*)
+                 read(20,*)
               ENDDO
            ENDIF
         ENDDO FIND_LUTYPE
@@ -1632,7 +1663,7 @@ CONTAINS
 
         IF(LUTYPE.EQ.MMINLU)THEN
           DO LC=1,LUCATS
-              READ (19,*)IINDEX,SHDTBL(LC),                        &
+              READ (20,*)IINDEX,SHDTBL(LC),                        &
                         NROTBL(LC),RSTBL(LC),RGLTBL(LC),HSTBL(LC), &
                         SNUPTBL(LC),MAXALB(LC), LAIMINTBL(LC),     &
                         LAIMAXTBL(LC),EMISSMINTBL(LC),             &
@@ -1640,23 +1671,23 @@ CONTAINS
                         ALBEDOMAXTBL(LC), Z0MINTBL(LC), Z0MAXTBL(LC)
           ENDDO
 !
-          READ (19,*)
-          READ (19,*)TOPT_DATA
-          READ (19,*)
-          READ (19,*)CMCMAX_DATA
-          READ (19,*)
-          READ (19,*)CFACTR_DATA
-          READ (19,*)
-          READ (19,*)RSMAX_DATA
-          READ (19,*)
-          READ (19,*)BARE
-          READ (19,*)
-          READ (19,*)NATURAL
+          READ (20,*)
+          READ (20,*)TOPT_DATA
+          READ (20,*)
+          READ (20,*)CMCMAX_DATA
+          READ (20,*)
+          READ (20,*)CFACTR_DATA
+          READ (20,*)
+          READ (20,*)RSMAX_DATA
+          READ (20,*)
+          READ (20,*)BARE
+          READ (20,*)
+          READ (20,*)NATURAL
         ENDIF
 !
  2002   CONTINUE
 
-        CLOSE (19)
+        CLOSE (20)
         IF (LUMATCH == 0) then
            CALL wrf_error_fatal ("Land Use Dataset '"//MMINLU//"' not found in VEGPARM.TBL.")
         ENDIF
@@ -1692,7 +1723,11 @@ CONTAINS
 !-----READ IN SOIL PROPERTIES FROM SOILPARM.TBL
 !
       IF ( wrf_dm_on_monitor() ) THEN
-        OPEN(19, FILE='SOILPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#ifndef NCEP_WCOSS
+        OPEN(21, FILE='SOILPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#else
+       OPEN(21, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#endif
         IF(ierr .NE. OPEN_OK ) THEN
           WRITE(message,FMT='(A)') &
           'module_sf_noahlsm.F: soil_veg_gen_parm: failure opening SOILPARM.TBL'
@@ -1700,18 +1735,21 @@ CONTAINS
         END IF
 
         WRITE(mess,*) 'INPUT SOIL TEXTURE CLASSIFICATION = ', TRIM ( MMINSL )
+#ifdef HYDRO_D
         CALL wrf_message( mess )
-
+#endif
         LUMATCH=0
 
-        READ (19,*)
-        READ (19,2000,END=2003)SLTYPE
+        READ (21,*)
+        READ (21,2000,END=2003)SLTYPE
  2000   FORMAT (A4)
-        READ (19,*)SLCATS,IINDEX
+        READ (21,*)SLCATS,IINDEX
         IF(SLTYPE.EQ.MMINSL)THEN
             WRITE( mess , * ) 'SOIL TEXTURE CLASSIFICATION = ', TRIM ( SLTYPE ) , ' FOUND', &
                   SLCATS,' CATEGORIES'
+#ifdef HYDRO_D
             CALL wrf_message ( mess )
+#endif
           LUMATCH=1
         ENDIF
 ! prevent possible array overwrite, Bill Bovermann, IBM, May 6, 2008
@@ -1729,7 +1767,7 @@ CONTAINS
         ENDIF
         IF(SLTYPE.EQ.MMINSL)THEN
           DO LC=1,SLCATS
-              READ (19,*) IINDEX,BB(LC),DRYSMC(LC),F11(LC),MAXSMC(LC),&
+              READ (21,*) IINDEX,BB(LC),DRYSMC(LC),F11(LC),MAXSMC(LC),&
                         REFSMC(LC),SATPSI(LC),SATDK(LC), SATDW(LC),   &
                         WLTSMC(LC), QTZ(LC)
           ENDDO
@@ -1737,7 +1775,7 @@ CONTAINS
 
  2003   CONTINUE
 
-        CLOSE (19)
+        CLOSE (21)
       ENDIF
 
       CALL wrf_dm_bcast_integer ( LUMATCH , 1 )
@@ -1766,16 +1804,20 @@ CONTAINS
 !-----READ IN GENERAL PARAMETERS FROM GENPARM.TBL
 !
       IF ( wrf_dm_on_monitor() ) THEN
-        OPEN(19, FILE='GENPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#ifndef NCEP_WCOSS
+        OPEN(22, FILE='GENPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#else
+        OPEN(22, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
+#endif
         IF(ierr .NE. OPEN_OK ) THEN
           WRITE(message,FMT='(A)') &
           'module_sf_noahlsm.F: soil_veg_gen_parm: failure opening GENPARM.TBL'
           CALL wrf_error_fatal ( message )
         END IF
 
-        READ (19,*)
-        READ (19,*)
-        READ (19,*) NUM_SLOPE
+        READ (22,*)
+        READ (22,*)
+        READ (22,*) NUM_SLOPE
 
           SLPCATS=NUM_SLOPE
 ! prevent possible array overwrite, Bill Bovermann, IBM, May 6, 2008
@@ -1784,34 +1826,34 @@ CONTAINS
           ENDIF
 
           DO LC=1,SLPCATS
-              READ (19,*)SLOPE_DATA(LC)
+              READ (22,*)SLOPE_DATA(LC)
           ENDDO
 
-          READ (19,*)
-          READ (19,*)SBETA_DATA
-          READ (19,*)
-          READ (19,*)FXEXP_DATA
-          READ (19,*)
-          READ (19,*)CSOIL_DATA
-          READ (19,*)
-          READ (19,*)SALP_DATA
-          READ (19,*)
-          READ (19,*)REFDK_DATA
-          READ (19,*)
-          READ (19,*)REFKDT_DATA
-          READ (19,*)
-          READ (19,*)FRZK_DATA
-          READ (19,*)
-          READ (19,*)ZBOT_DATA
-          READ (19,*)
-          READ (19,*)CZIL_DATA
-          READ (19,*)
-          READ (19,*)SMLOW_DATA
-          READ (19,*)
-          READ (19,*)SMHIGH_DATA
-          READ (19,*)
-          READ (19,*)LVCOEF_DATA
-        CLOSE (19)
+          READ (22,*)
+          READ (22,*)SBETA_DATA
+          READ (22,*)
+          READ (22,*)FXEXP_DATA
+          READ (22,*)
+          READ (22,*)CSOIL_DATA
+          READ (22,*)
+          READ (22,*)SALP_DATA
+          READ (22,*)
+          READ (22,*)REFDK_DATA
+          READ (22,*)
+          READ (22,*)REFKDT_DATA
+          READ (22,*)
+          READ (22,*)FRZK_DATA
+          READ (22,*)
+          READ (22,*)ZBOT_DATA
+          READ (22,*)
+          READ (22,*)CZIL_DATA
+          READ (22,*)
+          READ (22,*)SMLOW_DATA
+          READ (22,*)
+          READ (22,*)SMHIGH_DATA
+          READ (22,*)
+          READ (22,*)LVCOEF_DATA
+        CLOSE (22)
       ENDIF
 
       CALL wrf_dm_bcast_integer ( NUM_SLOPE    ,  1 )

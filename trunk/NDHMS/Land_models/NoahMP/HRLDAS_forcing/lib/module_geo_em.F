@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_geo_em
 !-------------------------------------------------------------
 ! At the moment, all that is used from the geo_em file
@@ -269,7 +289,7 @@ contains
             knowni=1.0, knownj=1.0, lat0=pole_lat, lon0=pole_lon, stdlon=stdlon)
 
     else if (map_proj == PROJ_LATLON) then
-       stop "PROJ_LATLON is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_geo_em.F -- PROJ_LATLON is not a valid map projection for WRF."
 
        ! iret = nf90_get_att(ncid, NF90_GLOBAL, "DX" , dx)
        ! call error_handler(iret, "STOP:  nf90_get_att:  DX")
@@ -283,24 +303,24 @@ contains
        !      latinc=latinc, loninc=loninc, knowni=1.0, knownj=1.0)
 
     else if (map_proj == PROJ_PS_WGS84) then
-       stop "PROJ_PS_WGS84 is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_geo_em.F -- PROJ_PS_WGS84 is not a valid map projection for WRF."
        ! call map_set(PROJ_PS_WGS84, geo_em%proj, lat1=geo_em%la1, lon1=geo_em%lo1, knowni=1.0, knownj=1.0, &
        !     stdlon=geo_em%lov, dx=geo_em%dx)
     else if (map_proj == PROJ_GAUSS) then
-       stop "PROJ_GAUSS is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_geo_em.F -- PROJ_GAUSS is not a valid map projection for WRF."
        ! call map_set(PROJ_GAUSS, geo_em%proj, lat1=, lon1=, nlat=, loninc=)
     else if (map_proj == PROJ_CYL) then
-       stop "PROJ_CYL is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_geo_em.F -- PROJ_CYL is not a valid map projection for WRF."
        ! call map_set(PROJ_CYL, geo_em%proj, latinc=, loninc=, stdlon=)
     else if (map_proj == PROJ_ALBERS_NAD83) then
-       stop "PROJ_ALBERS_NAD83 is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_geo_em.F -- PROJ_ALBERS_NAD83 is not a valid map projection for WRF."
        !call map_set(PROJ_ALBERS_NAD83, geo_em%proj, lat1=, lon1=, knowni=, knownj=, truelat1=, truelat2=, stdlon=, dx=)
     else if (map_proj == PROJ_ROTLL) then
-       stop "PROJ_ROTLL is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_geo_em.F -- PROJ_ROTLL is not a valid map projection for WRF."
        ! call map_set(PROJ_ROTLL, geo_em%proj, lat1=geo_em%lat1, lon1=geo_em%lon1, ixdim=, jydim=, phi=, lambda=)
     else
-       write(*,'("Unknown geo_em map projection:  map_proj = ", I10)') map_proj
-       stop
+       write(*,'("WARNING: Unknown geo_em map projection:  map_proj = ", I10)') map_proj
+       stop "FATAL ERROR: In module_geo_em.F -- Unknown geo_em map projection"
     endif
 
 ! Close the file and get out of here
@@ -415,10 +435,10 @@ contains
 
     if (status .ne. NF90_NOERR) then
        if (present(failure)) then
-          write(*,'(/," ***** ", A)') failure
+          write(*,'(/,"WARNING:  ***** ", A)') failure
        endif
-       write(*,'(" ***** ",A,/)') nf90_strerror(status)
-       stop 'Stopped'
+       write(*,'("WARNING:  ***** ",A,/)') nf90_strerror(status)
+       stop 'FATAL ERROR: In module_geo_em.F -- Stopped'
     endif
 
     if (present(success)) then

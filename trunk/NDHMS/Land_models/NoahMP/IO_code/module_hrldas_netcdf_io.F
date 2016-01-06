@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_hrldas_netcdf_io
   use module_date_utilities
   use netcdf
@@ -143,7 +163,7 @@ contains
     if (iret /= 0) then
        if (FATAL_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_inq_varid"
+          stop "FATAL ERROR: In get_2d_netcdf_soillevel() - error nf90_inq_varid"
        else
           ierr = iret
 #ifdef MPP_LAND
@@ -166,7 +186,7 @@ contains
           print*, 'name = "', trim(name)//'"'
           print*, 'varid =', varid
           print*, trim(nf90_strerror(iret))
-          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_get_var"
+          stop "FATAL ERROR: In get_2d_netcdf_soillevel() - error nf90_get_var"
        else
           ierr = iret
 #ifdef MPP_LAND
@@ -230,12 +250,14 @@ contains
           write(*, '(" ***** Check namelist option OUTDIR (currently set to ''", A, "'')")') trim(outdir)
           write(*, '(" *****       Check that the directory exists, is a directory, and is writable.")')
           write(*, '(/)')
-          stop "OUTDIR Problem"
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F check_outdir()"// &
+               " - Check namelist.hrldas option OUTDIR."
        endif
        close(unit=30, iostat=ierr, status='delete')
        if (ierr /= 0) then
           print*, "TESTFILE = " // trim(testfile) // '"'
-          stop "Much confusion.  Problem closing test file."
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F check_outdir()"// &
+               " - Much confusion.  Problem closing test file."
        endif
     endif
   end subroutine check_outdir
@@ -289,7 +311,8 @@ contains
                 write(*, '(" *****       but no restart file was found.")')
                 write(*, '(" ***** ")')
                 write(*, *)
-                stop " ***** ERROR EXIT:  Cannot find a restart file"
+                stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
+                     " - Cannot find a restart file."
              endif
           else
              exit RLOOP
@@ -308,13 +331,16 @@ contains
           write(*, '(" *****       Specified restart file = ''", A, "''")') trim(restart_flnm)
           write(*, '(" ***** ")')
           write(*, *)
-          stop " ***** ERROR EXIT:  Cannot find restart file"
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
+               " - Cannot find restart file."
        endif
 
     endif
 
     if (rank == 0) then
+#ifdef HYDRO_D
        write(*, '("Found restart file:  ''", A, "''")') trim(restart_flnm)
+#endif
     endif
 
   end subroutine find_restart_file
@@ -385,69 +411,90 @@ contains
 
 #ifdef _PARALLEL_  
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
+                                  "read_hrldas_hdrinfo() - MPI_COMM_RANK"
 #else
     rank = 0
 #endif
 
 
     ! Open the NetCDF file.
-    if (rank == 0) write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+    if (rank == 0) then
+#ifdef HYDRO_D
+        write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+#endif
+    endif
 
 !KWM#ifdef _PARALLEL_
 !KWM    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 !KWM#else
     ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
 !KWM#endif
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO: Problem opening wrfinput file: "//trim(wrfinput_flnm))
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo() - "// &
+                       "Problem opening wrfinput file: "//trim(wrfinput_flnm))
 
     ierr = nf90_inq_dimid(ncid, "west_east", dimid)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension 'west_east'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo() - "// &
+                       "Problems finding dimension 'west_east'")
 
     ierr = nf90_inquire_dimension(ncid, dimid, len=ix)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension length for 'west_east'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo() - "// &
+                       "Problems finding dimension length for 'west_east'")
 
     ierr = nf90_inq_dimid(ncid, "south_north", dimid)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension 'south_north'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo() - "// &
+                       "Problems finding dimension 'south_north'")
 
     ierr = nf90_inquire_dimension(ncid, dimid, len=jx)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension length for 'south_north'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding dimension length for 'south_north'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "DX", dx)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'DX'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'DX'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "DY", dy)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'DY'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'DY'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "TRUELAT1", truelat1)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'TRUELAT1'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'TRUELAT1'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "TRUELAT2", truelat2)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'TRUELAT2'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'TRUELAT2'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "STAND_LON", cen_lon)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'STAND_LON'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'STAND_LON'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "MAP_PROJ", mapproj)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'MAP_PROJ'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'MAP_PROJ'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "GRID_ID", igrid)
     if (ierr /= 0) then
        ierr = nf90_get_att(ncid, NF90_GLOBAL, "grid_id", igrid)
-       call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'GRID_ID' or 'grid_id'")
+       call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                          "Problems finding global attribute 'GRID_ID' or 'grid_id'")
     endif
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISWATER", iswater)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'ISWATER'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'ISWATER'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISURBAN", isurban)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'ISURBAN'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'ISURBAN'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISICE", isice)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'ISICE'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'ISICE'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'MMINLU'")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       "Problems finding global attribute 'MMINLU'")
     
     ! IBM XLF seems to need something like this:
     do i = 1, 256
@@ -496,7 +543,8 @@ contains
 #endif
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems closing NetCDF file.")
+    call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
+                       " Problems closing NetCDF file.")
 
   end subroutine read_hrldas_hdrinfo
 
@@ -529,14 +577,19 @@ contains
 
 #ifdef _PARALLEL_  
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
+                                  " - MPI_COMM_RANK"
 #else
     rank = 0
 #endif
 
 
     ! Open the NetCDF file.
-    if (rank == 0) write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+    if (rank == 0) then
+#ifdef HYDRO_D
+       write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+#endif
+    endif
 #ifdef _PARALLEL_
     ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
@@ -548,7 +601,8 @@ contains
        call mpi_finalize(ierr)
        if (ierr /= 0) write(*, '("Problem with MPI_finalize.")')
 #endif
-       stop
+       stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
+            " - Problem opening wrfinput file."
     endif
 
     ! Get Latitude (lat)
@@ -597,7 +651,8 @@ contains
 
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
-    if (ierr /= 0) stop "MODULE_NOAHLSM_HRLDAS_INPUT:  READLAND_HRLDAS:  NF90_CLOSE"
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
+                        " - MODULE_NOAHLSM_HRLDAS_INPUT: NF90_CLOSE"
 
     ! Make sure vegtyp and soltyp are consistent when it comes to water points,
     ! by setting soil category to water when vegetation category is water, and
@@ -631,14 +686,19 @@ contains
 
 #ifdef _PARALLEL_  
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
+                                  " - MPI_COMM_RANK"
 #else
     rank = 0
 #endif
 
 
     ! Open the NetCDF file.
-    if (rank == 0) write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+    if (rank == 0) then
+#ifdef HYDRO_D
+        write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+#endif
+    endif
 #ifdef _PARALLEL_
     ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
@@ -650,7 +710,8 @@ contains
        call mpi_finalize(ierr)
        if (ierr /= 0) write(*, '("Problem with MPI_finalize.")')
 #endif
-       stop
+       stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
+            " - Problem opening wrfinput file."
     endif
 
     ! Get water table depth (ZWT)
@@ -673,7 +734,8 @@ contains
 
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
-    if (ierr /= 0) stop "MODULE_NOAHLSM_HRLDAS_INPUT:  READLAND_HRLDAS:  NF90_CLOSE"
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
+                        " - NF90_CLOSE problem."
 
 
   end subroutine read_mmf_runoff
@@ -707,7 +769,7 @@ contains
 
     ierr = nf90_open(spatial_filename, NF90_NOWRITE, ncid)
     if (ierr /= 0) then
-       write(*,'("read_3d_soil:  Problem opening 3d soil file: ''", A, "''")') trim(spatial_filename)
+       write(*,'("FATAL ERROR: In read_3d_soil():  Problem opening 3d soil file: ''", A, "''")') trim(spatial_filename)
        stop
     endif
 
@@ -715,7 +777,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -729,7 +791,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -743,7 +805,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -757,7 +819,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil(): Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -771,7 +833,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -785,7 +847,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -799,7 +861,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -813,7 +875,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -827,7 +889,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -841,7 +903,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -851,7 +913,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
       stop
     endif
 
@@ -859,7 +921,7 @@ contains
     
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
-    if (ierr /= 0) stop "MODULE_NOAHLSM_HRLDAS_INPUT:  read_3d_soil:  NF90_CLOSE"
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_3d_soil() -  NF90_CLOSE"
 
 
   end subroutine read_3d_soil
@@ -880,13 +942,15 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf90_inq_varid"
+       stop "FATAL ERROR: In module_hrldas_netcdf_io.F get_landuse_netcdf()"// &
+            " - MODULE_NOAHLSM_HRLDAS_INPUT: nf90_inq_varid"
     endif
 
     iret = nf90_get_var(ncid, varid, array, (/xstart, ystart/), (/xend-xstart+1, yend-ystart+1/))
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf90_get_var"
+       stop "FATAL ERROR: In module_hrldas_netcdf_io.F get_landuse_netcdf()"// &
+            " - MODULE_NOAHLSM_HRLDAS_INPUT: nf90_get_var"
     endif
 
   end subroutine get_landuse_netcdf
@@ -947,7 +1011,7 @@ contains
     if (iret /= 0) then
        if (FATAL_IF_ERROR) then
           print*, 'ncid = ', ncid
-          call error_handler(iret, "MODULE_HRLDAS_NETCDF_IO:  Problem finding variable '"//trim(name)//"' in NetCDF file.")
+          call error_handler(iret, "FATAL ERROR: In get_2d_netcdf() -  Problem finding variable '"//trim(name)//"' in NetCDF file.")
        else
           ierr = iret
 #ifdef MPP_LAND
@@ -980,7 +1044,8 @@ contains
 #endif
        if (FATAL_IF_ERROR) then
           print*, 'ncid =', ncid
-          call error_handler(iret, "MODULE_HRLDAS_NETCDF_IO:  Problem retrieving variable '"//trim(name)//"' from NetCDF file.")
+          call error_handler(iret, "In module_hrldas_netcdf_io.F - "// &
+               "  Problem retrieving variable '"//trim(name)//"' from NetCDF file.")
        else
           ierr = iret
           return
@@ -995,7 +1060,9 @@ contains
     !yyww call mpp_land_bcast(units)
     call mpp_land_bcast_char(256,units)
     if(ierr /= 0) return
-  !  write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+#ifdef HYDRO_D
+    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+#endif
     call decompose_data_real(g_array,array)
 #endif
   end subroutine get_2d_netcdf
@@ -1034,7 +1101,8 @@ contains
     if (iret /= 0) then
        if (FATAL_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_inq_varid"
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F get_2d_netcdf_soillevel()"// &
+               " - nf90_inq_varid problem."
        else
           ierr = iret
 #ifdef MPP_LAND
@@ -1063,7 +1131,8 @@ contains
           print*, 'name = "', trim(name)//'"'
           print*, 'varid =', varid
           print*, trim(nf90_strerror(iret))
-          stop "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf90_get_var"
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F get_2d_netcdf_soillevel()"// &
+               " - nf90_get_var problem"
        else
           ierr = iret
 #ifdef MPP_LAND
@@ -1128,20 +1197,30 @@ contains
 #ifdef _PARALLEL_
 
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F"// &
+                                  " readinit_hrldas() - MPI_COMM_RANK"
 
     ierr = nf90_open_par(netcdf_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     rank = 0
     ierr = nf90_open(netcdf_flnm, NF90_NOWRITE, ncid)
 #endif
-    if (rank == 0) write(*,'("netcdf_flnm: ''", A, "''")') trim(netcdf_flnm)
+    if (rank == 0) then
+#ifdef HYDRO_D
+        write(*,'("netcdf_flnm: ''", A, "''")') trim(netcdf_flnm)
+#endif
+    endif
     if (ierr /= 0) then
-       if (rank == 0) write(*,'("Problem opening netcdf file: ''", A, "''")') trim(netcdf_flnm)
+       if (rank == 0) then
+#ifdef HYDRO_D
+           write(*,'("Problem opening netcdf file: ''", A, "''")') trim(netcdf_flnm)
+#endif
+       endif
 #ifdef _PARALLEL_
        call mpi_finalize(ierr)
 #endif
-       stop
+       stop "FATAL ERROR: In  module_hrldas_netcdf_io.F readinit_hrldas()"// &
+            " - Problem opening netcdf file."
     endif
 
     !
@@ -1155,7 +1234,9 @@ contains
        write(*,'("          I assume you know what you are doing.")')
        ldasin_version = 0
     else
+#ifdef HYDRO_D
        write(*,'("LDASIN TITLE attribute: ", A)') trim(titlestr)
+#endif
        ! Pull out the version number, assuming that the version is identified by vYYYYMMDD, and 
        ! based on a search for the string "v20".
        idx = index(trim(titlestr), "v20")
@@ -1180,7 +1261,9 @@ contains
        write(*,'("          This probably means that LDASIN files are from an older release.")')
        write(*,'("          I assume you know what you are doing.")')
     else
+#ifdef HYDRO_D
        write(*,'("LDASIN MMNINLU attribute: ", A)') ldasin_llanduse
+#endif
     endif
 
     call get_2d_netcdf("CANWAT", ncid, cmc,     units, xstart, xend, ystart, yend, FATAL, ierr)
@@ -1225,10 +1308,11 @@ contains
 	
     call get_netcdf_soillevel("TSLB", ncid, soildummy, units,  xstart, xend, ystart, yend, FATAL, ierr)
     
+#ifdef HYDRO_D
     write(*, '("layer_bottom(1:4) = ", 4F9.4)') layer_bottom(1:4)
     write(*, '("layer_top(1:4)    = ", 4F9.4)') layer_top(1:4)
     write(*, '("Soil depth = ", 10F12.6)') sldpth
-    
+#endif
     call init_interp(xstart, xend, ystart, yend, nsoil, sldpth, stc, 4, soildummy, layer_bottom(1:4), layer_top(1:4))
 
     call get_netcdf_soillevel("SMOIS", ncid, soildummy, units,  xstart, xend, ystart, yend, FATAL, ierr)
@@ -1258,7 +1342,8 @@ contains
 
 #ifdef _PARALLEL_    
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F init_interp()"// &
+                                  " - MPI_COMM_RANK."
 #else
     rank = 0
 #endif
@@ -1269,13 +1354,21 @@ contains
        else
           dst_centerpoint(k) = sldpth(k)/2. + sum(sldpth(1:k-1))
        endif
-       if (rank == 0) print*, 'k, dst_centerpoint(k) = ', k, dst_centerpoint(k)
+       if (rank == 0) then
+#ifdef HYDRO_D
+          print*, 'k, dst_centerpoint(k) = ', k, dst_centerpoint(k)
+#endif
+       endif
     enddo
     print*
 
     do k = 1, nvar
        src_centerpoint(k) = 0.5*(layer_bottom(k)+layer_top(k))
-       if (rank == 0) print*, 'k, src_centerpoint(k) = ', k, src_centerpoint(k)
+       if (rank == 0) then
+#ifdef HYDRO_D
+              print*, 'k, src_centerpoint(k) = ', k, src_centerpoint(k)
+#endif
+      endif
     enddo
 
     KLOOP : do k = 1, nsoil
@@ -1285,8 +1378,10 @@ contains
           ! the center of the topmost source layer, then simply set the 
           ! value of the destination layer equal to the topmost source layer:
           if (rank == 0) then
+#ifdef HYDRO_D
              print'("Shallow destination layer:  Taking destination layer at ",F7.4, " from source layer at ", F7.4)', &
                   dst_centerpoint(k), src_centerpoint(1)
+#endif
           endif
           var(:,k,:) = src(:,1,:)
           cycle KLOOP
@@ -1297,8 +1392,10 @@ contains
           ! the center of the deepest source layer, then simply set the 
           ! value of the destination layer equal to the deepest source layer:
           if (rank == 0) then
+#ifdef HYDRO_D
              print'("Deep destination layer:  Taking destination layer at ",F7.4, " from source layer at ", F7.4)', &
                   dst_centerpoint(k), src_centerpoint(nvar)
+#endif
           endif
           var(:,k,:) = src(:,nvar,:)
           cycle KLOOP
@@ -1310,8 +1407,10 @@ contains
        do kk = 1, nvar
           if (abs(dst_centerpoint(k)-src_centerpoint(kk)) < 0.01) then
              if (rank == 0) then
+#ifdef HYDRO_D
                 print'("(Near) match for destination layer:  Taking destination layer at ",F7.4, " from source layer at ", F7.4)', &
                      dst_centerpoint(k), src_centerpoint(kk)
+#endif
              endif
              var(:,k,:) = src(:,kk,:)
              cycle KLOOP
@@ -1330,7 +1429,8 @@ contains
              exit TOPLOOP
           endif
        enddo TOPLOOP
-       if (ktop < -99998) stop "ktop problem"
+       if (ktop < -99998) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F init_interp()"// &
+                               " - ktop problem"
 
 
        ! Get kbottom, the index of the bottom bracketing layer from the source dataset.
@@ -1343,14 +1443,17 @@ contains
              exit BOTTOMLOOP
           endif
        enddo BOTTOMLOOP
-       if (kbottom < -99998) stop "kbottom problem"
+       if (kbottom < -99998) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F init_interp()"// &
+                                  " - kbottom problem"
 
        fraction = (src_centerpoint(kbottom)-dst_centerpoint(k)) / (src_centerpoint(kbottom)-src_centerpoint(ktop))
 
        ! print '(I2, 1x, 3F7.3, F8.5)', k, src_centerpoint(ktop), dst_centerpoint(k), src_centerpoint(kbottom), fraction
 
        if (rank == 0) then
+#ifdef HYDRO_D
           print '("dst(",I1,") = src(",I1,")*",F8.5," + src(",I1,")*",F8.5)', k, ktop, fraction, kbottom, (1.0-fraction)
+#endif
        endif
 
        var(:,:,k) = (src(:,ktop,:)*fraction) + (src(:,kbottom,:)*(1.0-fraction))
@@ -1393,7 +1496,8 @@ contains
     iret = nf90_open(flnm, NF90_NOWRITE, ncid)
 #endif
     if (iret /= 0) then
-       write(*,'("READVEG_HRLDAS:  Problem opening netcdf file: ''", A, "''")') trim(flnm)
+       write(*,'("FATAL ERROR: In  module_hrldas_netcdf_io.F READVEG_HRLDAS()"// &
+                 " - Problem opening netcdf file: ''", A, "''")') trim(flnm)
        stop
     endif
 
@@ -1527,7 +1631,8 @@ contains
        if (ierr /= 0) then
 #ifdef _PARALLEL_
           call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-          if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+          if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F"// &
+                                        " READFORC_HRLDAS() - MPI_COMM_RANK"
           if (rank == 0) then
 #endif
              write(*,'("A)  Problem opening netcdf file: ''", A, "''")') trim(flnm)
@@ -1535,7 +1640,8 @@ contains
           endif
           call mpi_finalize(ierr)
 #endif
-          stop
+          stop  "FATAL ERROR: In  module_hrldas_netcdf_io.F READFORC_HRLDAS()"// &
+                " - Problem opening netcdf file"
        endif
 
 #ifdef MPP_LAND
@@ -1639,7 +1745,7 @@ contains
        print*, 'lastread%read_date = ', lastread%read_date
        print*, 'nextread%read_date = ', nextread%read_date
 
-       STOP "We should not be here.  Problem with the logic of READFORC_SHORTER_TIMESTEP"
+       STOP "FATAL ERROR: We should not be here.  Problem with the logic of READFORC_SHORTER_TIMESTEP"
 
     endif
 
@@ -1659,34 +1765,34 @@ contains
     integer :: allostat
 
     allocate(instruct%t   (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%t"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%t"
 
     allocate(instruct%q   (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%q"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%q"
 
     allocate(instruct%u   (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%u"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%u"
 
     allocate(instruct%v   (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%v"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%v"
 
     allocate(instruct%p   (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%p"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%p"
 
     allocate(instruct%lw  (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%lw"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%lw"
 
     allocate(instruct%sw  (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%sw"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%sw"
 
     allocate(instruct%pcp (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%pcp"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%pcp"
 
     allocate(instruct%vegfra(xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%vegfra"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct()- Problem allocating instruct%vegfra"
 
     allocate(instruct%lai (xstart:xend,ystart:yend), stat=allostat )
-    if (allostat/=0) stop "Problem allocating instruct%lai"
+    if (allostat/=0) stop "FATAL ERROR: In allocate_inputstruct() - Problem allocating instruct%lai"
 #ifdef MPP_LAND
     instruct%lai = 0.0
 #endif
@@ -1847,7 +1953,8 @@ contains
     ierr = nf90_open(flnm, NF90_NOWRITE, ncid)
 #endif
     if (ierr /= 0) then
-       write(*,'("READSNOW_HRLDAS:  Problem opening netcdf file: ''", A, "''")') trim(flnm)
+       write(*,'("FATAL ERROR: In  module_hrldas_netcdf_io.F READSNOW_HRLDAS()"// &
+                 " - Problem opening netcdf file: ''", A, "''")') trim(flnm)
        stop
     endif
 
@@ -1866,7 +1973,8 @@ contains
        weasd = weasd * 1.E-3
     else
        print*, 'units = "'//trim(units)//'"'
-       stop "Unrecognized units on WEASD"
+       stop "FATAL ERROR: In  module_hrldas_netcdf_io.F READSNOW_HRLDAS()"// &
+            " - Unrecognized units on WEASD"
     endif
 
     call get_2d_netcdf("SNODEP",     ncid, snodep,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
@@ -2053,10 +2161,12 @@ contains
 !
 
        iret = nf90_def_var(ncid,  "Times",  NF90_CHAR, (/dimid_datelen,dimid_times/), varid)
-       call error_handler(iret, failure="Problem nf90_def_var for "//trim(output_flnm))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_def_var for "//trim(output_flnm))
 
        iret = nf90_enddef(ncid)
-       call error_handler(iret, failure="Problem nf90_enddef "//trim(output_flnm))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_enddef")
        define_mode_remember = .FALSE.
 
     endif
@@ -2078,10 +2188,12 @@ contains
     date19(1:19) = "0000-00-00_00:00:00"
     date19(1:len_trim(date)) = date
     iret = nf90_inq_varid(ncid_remember, "Times", varid)
-    call error_handler(iret, "OUTPUT_HRLDAS:  Problem inquiring on 'Times'")
+    call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                             " - Problem inquiring on 'Times'")
 
     iret = nf90_put_var(ncid_remember, varid, date, (/1,output_count_remember+1/), (/19,1/))
-    call error_handler(iret, "OUTPUT_HRLDAS:  Problem writing variable 'Times'")
+    call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                             " - Problem writing variable 'Times'")
 
   end subroutine prepare_output_file_seq
 
@@ -2101,12 +2213,14 @@ contains
        ! We need to define things only with a new file, i.e., only when output_count_remember == 0
        if (output_count_remember > 0) return
        ierr = nf90_redef(ncid_remember)
-       call error_handler(ierr, failure="Problem nf90_redef in set_output_define_mode")
+       call error_handler(ierr, failure="In module_hrldas_netcdf_io.F "// &
+            "prepare_output_file_seq() - Problem nf90_redef")
        define_mode_remember = .TRUE.
     else
        if (define_mode_remember) then
           ierr = nf90_enddef(ncid_remember)
-          call error_handler(ierr, failure="Problem nf90_enddef in set_output_define_mode")
+          call error_handler(ierr, failure="In module_hrldas_netcdf_io.F "// &
+               "prepare_output_file_seq() - Problem nf90_enddef")
           define_mode_remember = .FALSE.
        endif
     endif
@@ -2129,10 +2243,12 @@ contains
     if (output_count_remember == split_output_count) then
        output_count_remember = 0 
        ierr = nf90_close(ncid_remember)
-       call error_handler(ierr, failure="Problem nf90_close for output file")
+       call error_handler(ierr, failure="In module_hrldas_netcdf_io.F "// &
+            "prepare_output_file_seq() - Problem nf90_close for output file")
     else
        ierr = nf90_sync(ncid_remember)
-       call error_handler(ierr, failure="Problem nf90_sync for output file")
+       call error_handler(ierr, failure="In module_hrldas_netcdf_io.F "// &
+            "prepare_output_file_seq() - Problem nf90_sync for output file")
     endif
 
 !yw    deallocate(vegtyp_remember)
@@ -2299,7 +2415,7 @@ contains
           		zdimid = dimid_snow_layers_remember
        		else
           		write(*,'("SNOW_OR_SOIL unrecognized: ", A)') adjustl(trim(snow_or_soil))
-          		stop "SNOW_OR_SOIL"
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_output_3d() - SNOW_OR_SOIL"
        		endif
        		call make_var_att_3d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
             		NF90_FLOAT , zdimid, trim(name) , trim(description) , trim(units) )
@@ -2330,13 +2446,16 @@ contains
     integer :: varid
 
     iret = nf90_def_var(ncid,  varname,   itype, (/dimid_ix,dimid_jx,dimid_times/), varid)
-    call error_handler(iret, "MAKE_VAR_ATT_2D: Failure defining variable "//trim(varname))
+    call error_handler(iret, "In module_hrldas_netcdf_io.F make_var_att_2d() - "// &
+         "Failure defining variable "//trim(varname))
 
     iret = nf90_put_att(ncid, varid, "MemoryOrder", "XY ")
-    call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding MemoryOrder attribute to variable "//trim(varname))
+    call error_handler(iret, "In module_hrldas_netcdf_io.F make_var_att_2d() - "// &
+         "Failure adding MemoryOrder attribute to variable "//trim(varname))
 
     iret = nf90_put_att(ncid, varid, "description", vardesc)
-    call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding description attribute to variable "//trim(varname))
+    call error_handler(iret, "In module_hrldas_netcdf_io.F make_var_att_2d() - "// &
+         "Failure adding description attribute to variable "//trim(varname))
 
     iret = nf90_put_att(ncid, varid, "units", varunits)
     call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding units attribute '"//trim(varunits)//"' to variable "//trim(varname))
@@ -2364,13 +2483,16 @@ contains
     integer :: varid
 
     iret = nf90_def_var(ncid,  varname, itype, (/dimid_ix,dimid_layers,dimid_jx,dimid_times/), varid)
-    call error_handler(iret, "MAKE_VAR_ATT_3D:  Failure defining variable "//trim(varname))
+    call error_handler(iret, "In module_hrldas_netcdf_io.F make_var_att_3d() - "// &
+         "Failure defining variable "//trim(varname))
 
     iret = nf90_put_att(ncid, varid, "MemoryOrder", "XZY")
-    call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding MemoryOrder attribute for variable "//trim(varname))
+    call error_handler(iret, "In module_hrldas_netcdf_io.F make_var_att_3d() - "// &
+         "Failure adding MemoryOrder attribute for variable "//trim(varname))
 
     iret = nf90_put_att(ncid, varid, "description", vardesc)
-    call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding description attribute to variable "//trim(varname))
+    call error_handler(iret, "In module_hrldas_netcdf_io.F make_var_att_3d() - "// &
+         "Failure adding description attribute to variable "//trim(varname))
 
     iret = nf90_put_att(ncid, varid, "units", varunits)
     call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding units attribute '"//trim(varunits)//"' to variable "//trim(varname))
@@ -2410,13 +2532,15 @@ contains
     endwhere
 
     iret = nf90_inq_varid(ncid,  varname, varid)
-    call error_handler(iret, "Subroutine PUT_VAR_2D:  Problem finding variable id for "//trim(varname)//".")
+    call error_handler(iret, "In module_hrldas_netcdf_io.F put_var_2d() - "// &
+         "Problem finding variable id for "//trim(varname)//".")
 
     nstart = (/ xstart ,  1 , output_count /)
     ncount = (/     ix , jx ,            1 /)
 
     iret = nf90_put_var(ncid, varid, xdum, start=nstart, count=ncount)
-    call error_handler(iret, "Subroutine PUT_VAR_2D:  Problem putting variable "//trim(varname)//" to NetCDF file.")
+    call error_handler(iret, "In module_hrldas_netcdf_io.F put_var_2d() - "// &
+         "Problem putting variable "//trim(varname)//" to NetCDF file.")
 
   end subroutine put_var_2d
 
@@ -2483,10 +2607,12 @@ contains
     enddo
 
     iret = nf90_inq_varid(ncid,  varname, varid)
-    call error_handler(iret, "Subroutine PUT_VAR_3D:  Problem finding variable id for "//trim(varname)//".")
+    call error_handler(iret, "In module_hrldas_netcdf_io.F put_var_3d() - "// &
+         "Problem finding variable id for "//trim(varname)//".")
 
     iret = nf90_put_var(ncid, varid, xdum, start=nstart, count=ncount)
-    call error_handler(iret, "Subroutine PUT_VAR_3D:  Problem putting variable "//trim(varname)//" to NetCDF file.")
+    call error_handler(iret,  "In module_hrldas_netcdf_io.F put_var_3d() - "// &
+         "Problem putting variable "//trim(varname)//" to NetCDF file.")
 
   end subroutine put_var_3d
 
@@ -2590,7 +2716,8 @@ contains
 #ifdef _PARALLEL_
 
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F"// &
+                                  " prepare_restart_file_seq() - MPI_COMM_RANK problem"
 
 #else
 
@@ -2600,7 +2727,11 @@ contains
 
 
     write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
-    if (rank==0) print*, 'output_flnm = "'//trim(output_flnm)//'"'
+    if (rank==0) then
+#ifdef HYDRO_D
+      print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
+    endif
 
     restart_filename_remember = output_flnm
     iswater_remember   = iswater
@@ -2620,7 +2751,8 @@ contains
 #endif
 #endif
 
-    if (ierr /= 0) stop "Problem nf_create"
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F"// &
+                       " prepare_restart_file_seq() - Problem nf_create"
 
     ierr = nf90_def_dim(ncid, "Time", NF90_UNLIMITED, dimid_times)
     ierr = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)
@@ -2666,7 +2798,8 @@ contains
     date19(1:len_trim(olddate)) = olddate
 
     ierr = nf90_inq_varid(ncid, "Times", varid)
-    call error_handler(ierr, "WRITE_RESTART:  Problem inquiring varid for 'Times'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F prepare_restart_file_seq"// &
+                             " - Problem inquiring varid for 'Times'")
 
 !    write(6,*) "yywww olddate  = ", olddate
 !    write(6,*) "yywww output_count_remember  = ", output_count_remember
@@ -2781,29 +2914,36 @@ contains
 #else
     ierr = nf90_open(trim(output_flnm), NF90_WRITE, ncid)
 #endif
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_open")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_open")
 
     ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'west_east'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                       "Problem nf90_inq_dimid for 'west_east'")
 
     ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'south_north'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_inq_dimid for 'south_north'")
 
     ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'Time'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_inq_dimid for 'Time'")
 
     ierr = nf90_redef(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_redef")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_redef")
 
     call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, name, trim(local_description), trim(local_units))
 
     ierr = nf90_enddef(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_enddef")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_enddef")
 
     call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array, .true.)
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_close")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_close")
 
   end subroutine add_to_restart_2d_float
 
@@ -2855,29 +2995,36 @@ contains
 #else
     ierr = nf90_open(trim(output_flnm), NF90_WRITE, ncid)
 #endif
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_open")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem  nf90_open")
 
     ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'west_east'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'west_east'")
 
     ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'south_north'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'south_north'")
 
     ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'Time'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'Time'")
 
     ierr = nf90_redef(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_redef")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_redef")
 
     call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_INT, name, trim(local_description), trim(local_units))
 
     ierr = nf90_enddef(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_enddef")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_enddef")
 
     call put_var_int(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array)
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_close")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_close")
 
   end subroutine add_to_restart_2d_integer
 
@@ -2940,42 +3087,52 @@ contains
 #else
     ierr = nf90_open(trim(output_flnm), NF90_WRITE, ncid)
 #endif
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_open")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_open")
 
     ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'west_east'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_inq_dimid for 'west_east'")
 
     ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'south_north'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_inq_dimid for 'south_north'")
 
     if (output_layers == "SOIL") then
        ierr = nf90_inq_dimid(ncid, "soil_layers_stag", dimid_kx)
-       call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'soil_layers_stag'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'soil_layers_stag'")
     else if (output_layers == "SNOW") then
        ierr = nf90_inq_dimid(ncid, "snow_layers", dimid_kx)
-       call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'snow_layers'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'snow_layers'")
     else if (output_layers == "SOSN") then
        ierr = nf90_inq_dimid(ncid, "sosn_layers", dimid_kx)
-       call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'sosn_layers'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'sosn_layers'")
     else
-       stop "PANIC!"
+       stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_restart_3d() - PANIC!"
     endif
 
     ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_inq_dimid for 'Time'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_inq_dimid for 'Time'")
 
     ierr = nf90_redef(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_redef")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_redef")
 
     call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, trim(local_description), trim(local_units))
 
     ierr = nf90_enddef(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_enddef")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_enddef")
 
     call put_var_3d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, kxpar, name, array)
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, "ADD_TO_RESTART:  nf90_close")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_close")
 
   end subroutine add_to_restart_3d
 
@@ -3020,7 +3177,8 @@ contains
 
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
+                                  "read_restart() - MPI_COMM_RANK"
 
     ierr = nf90_open_par(trim(restart_flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
@@ -3029,7 +3187,9 @@ contains
 #endif
 
     if (ierr == NF90_ENOTNC) then
+#ifdef HYDRO_D
        print*, "IERR = NF90_ENOTNC"
+#endif
 
     else
        if (ierr /= NF90_NOERR) then
@@ -3039,7 +3199,8 @@ contains
           write(*,'(" *****        There was a problem in accessing the file ''", A, "''")') trim(restart_flnm)
           write(*,'(" ***** ")')
        endif
-       call error_handler(ierr, " trying to open restart file "//restart_flnm)
+       call error_handler(ierr, "FALTAL ERROR: In module_hrldas_netcdf_io.F read_restart() - "// &
+            "trying to open restart file "//restart_flnm)
 
        ierr = nf90_get_att(ncid, NF90_GLOBAL, "TITLE", titlestr)
        if (ierr /= 0) then
@@ -3049,18 +3210,22 @@ contains
           write(*,'("          I assume you know what you are doing.")')
           restart_version = 0
        else
-          if (rank == 0) write(*,'("RESTART TITLE attribute: ", A)') trim(titlestr)
+          if (rank == 0) then
+#ifdef HYDRO_D
+                write(*,'("RESTART TITLE attribute: ", A)') trim(titlestr)
+#endif
+          endif
           ! Pull out the version number, assuming that the version is identified by vYYYYMMDD, and 
           ! based on a search for the string "v20".
           idx = index(trim(titlestr), "v20")
           if (idx <= 0) then
-             write(*,'("FATAL:  RESTART file has a perverse version identifier")')
+             write(*,'("FATAL ERROR:  RESTART file has a perverse version identifier")')
              !  write(*,'("          I assume you know what you are doing.")')
              stop
           else
              read(titlestr(idx+1:), '(I8)', iostat=ierr) restart_version
              if (ierr /= 0) then
-                write(*,'("FATAL:  RESTART file has a perverse version identifier")')
+                write(*,'("FATAL ERROR:  RESTART file has a perverse version identifier")')
                 !  write(*,'("          I assume you know what you are doing.")')
                 stop
              endif
@@ -3069,13 +3234,16 @@ contains
 
        ! Get the time stamp from the restart file.
        ierr = nf90_inq_varid(ncid, "Times", varid)
-       call error_handler(ierr, "Problem finding variable in restart file: 'Times'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F read_restart() - "// &
+                                "Problem finding variable in restart file: 'Times'")
        
        ierr = nf90_get_var(ncid, varid, olddate)
-       call error_handler(ierr, "Problem finding variable in restart file: 'Times'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F read_restart() - "// &
+                                "Problem finding variable in restart file: 'Times'")
 
        ierr = nf90_close(ncid)
-       call error_handler(ierr, "Problem closing restart file")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F read_restart() - "// &
+                                "Problem closing restart file")
     endif
 
   end subroutine read_restart
@@ -3162,7 +3330,8 @@ contains
 #endif
         ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
         ierr = nf90_get_att(ncid, NF90_GLOBAL, "ITIMESTEP", itime)
-        call error_handler(ierr, failure="restart info:  Problems finding global attribute 'ITIMESTEP'")
+        call error_handler(ierr, failure="In module_hrldas_netcdf_io.F get_from_restart_att - "// &
+                                         "Problems finding global attribute 'ITIMESTEP'")
          ierr = nf90_close(ncid)
 #ifdef MPP_LAND
     endif
@@ -3190,7 +3359,8 @@ contains
 #ifdef _PARALLEL_
 
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
-    if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
+    if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
+                                  "get_from_restart_2d_float() - MPI_COMM_RANK"
 
     ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 
@@ -3200,7 +3370,8 @@ contains
     ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
 
 #endif
-    call error_handler(ierr, "GET_FROM_RESTART: Problem opening restart file '"//trim(restart_filename_remember)//"'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float() - "// &
+                       "Problem opening restart file '"//trim(restart_filename_remember)//"'")
 
     nstart = (/ parallel_xstart-subwindow_xstart+1, 1,  1, -99999 /)
     ncount = (/ parallel_xend-parallel_xstart+1,   jxfull,  1, -99999 /)
@@ -3209,24 +3380,24 @@ contains
        ierr = nf90_inq_varid(ncid, name, varid)
        if (ierr == NF90_NOERR) then
           return_error = 0
-          call error_handler(ierr, "Problem finding variable in restart file '"//trim(name)//"'")
+          call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float(): Problem finding variable in restart file '"//trim(name)//"'")
 
           ierr = nf90_get_var(ncid, varid, array, start=nstart(1:3))
-          call error_handler(ierr, "Problem finding variable in restart file: '"//trim(name)//"'")
+          call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float(): Problem finding variable in restart file: '"//trim(name)//"'")
        else
           return_error = 1
           if (rank == 0) write(*,'("Did not find optional variable ''",A,"'' in restart file ''", A, "''")') trim(name), trim(restart_filename_remember)
        endif
     else
        ierr = nf90_inq_varid(ncid, name, varid)
-       call error_handler(ierr, "Problem finding required variable in restart file: '"//trim(name)//"'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float(): Problem finding required variable in restart file: '"//trim(name)//"'")
 
        ierr = nf90_get_var(ncid, varid, array, start=nstart(1:3))
-       call error_handler(ierr, "Problem finding variable in restart file: '"//trim(name)//"'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float(): Problem finding variable in restart file: '"//trim(name)//"'")
     endif
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, "Problem closing restart file")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float(): Problem closing restart file")
     
   end subroutine get_from_restart_2d_float
 
@@ -3255,7 +3426,8 @@ contains
 #else
     ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
 #endif
-    call error_handler(ierr, "GET_FROM_RESTART: Problem opening restart file '"//trim(restart_filename_remember)//"'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_integer() - "// &
+                       "Problem opening restart file '"//trim(restart_filename_remember)//"'")
 
     nstart = (/ parallel_xstart-subwindow_xstart+1, 1,  1, -99999 /)
     ncount = (/ parallel_xend-parallel_xstart+1,   jxfull,  1, -99999 /)
@@ -3267,21 +3439,24 @@ contains
           call error_handler(ierr, "Problem finding variable in restart file '"//trim(name)//"'")
 
           ierr = nf90_get_var(ncid, varid, array, start=nstart(1:3))
-          call error_handler(ierr, "Problem finding variable in restart file: '"//trim(name)//"'")
+          call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_integer()-Problem finding variable in restart file: '"//trim(name)//"'")
        else
           return_error = 1
           write(*,'("Did not find optional variable ''",A,"'' in restart file ''", A, "''")') trim(name), trim(restart_filename_remember)
        endif
     else
        ierr = nf90_inq_varid(ncid, name, varid)
-       call error_handler(ierr, "Problem finding required variable in restart file: '"//trim(name)//"'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_integer() - "// &
+                          "Problem finding required variable in restart file: '"//trim(name)//"'")
 
        ierr = nf90_get_var(ncid, varid, array, start=nstart(1:3))
-       call error_handler(ierr, "Problem finding variable in restart file: '"//trim(name)//"'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_integer() - "// &
+                          "Problem finding variable in restart file: '"//trim(name)//"'")
     endif
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, "Problem closing restart file")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_integer() - "// &
+                             "Problem closing restart file")
     
   end subroutine get_from_restart_2d_integer
 
@@ -3310,7 +3485,8 @@ contains
 #else
     ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
 #endif
-    call error_handler(ierr, "GET_FROM_RESTART: Problem opening restart file '"//trim(restart_filename_remember)//"'")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
+                       "Problem opening restart file '"//trim(restart_filename_remember)//"'")
 
     nstart = (/parallel_xstart-subwindow_xstart+1,1, 1, 1/)
     ncount = (/parallel_xend-parallel_xstart+1, size(array,2), size(array,3), 1/)
@@ -3319,24 +3495,29 @@ contains
        ierr = nf90_inq_varid(ncid, name, varid)
        if (ierr == NF90_NOERR) then
           return_error = 0
-          call error_handler(ierr, "Problem finding variable in restart file '"//trim(name)//"'")
+          call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
+                             "Problem finding variable in restart file '"//trim(name)//"'")
 
           ierr = nf90_get_var(ncid, varid, array, start=nstart(1:4))
-          call error_handler(ierr, "Problem finding variable in restart file: '"//trim(name)//"'")
+          call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
+                             "Problem finding variable in restart file: '"//trim(name)//"'")
        else
           return_error = 1
           write(*,'("Did not find optional variable ''",A,"'' in restart file ''", A, "''")') trim(name), trim(restart_filename_remember)
        endif
     else
        ierr = nf90_inq_varid(ncid, name, varid)
-       call error_handler(ierr, "Problem finding required variable in restart file: '"//trim(name)//"'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
+                          "Problem finding required variable in restart file: '"//trim(name)//"'")
 
        ierr = nf90_get_var(ncid, varid, array, start=nstart(1:4))
-       call error_handler(ierr, "Problem finding variable in restart file: '"//trim(name)//"'")
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
+                          "Problem finding variable in restart file: '"//trim(name)//"'")
     endif
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, "Problem closing restart file")
+    call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
+                       "Problem closing restart file")
     
   end subroutine get_from_restart_3d
 
@@ -3358,11 +3539,13 @@ contains
        if (present(failure)) then
           write(*,'(/," ***** ", A,/)') failure
        endif
-       stop 'Stopped'
+       stop 'FATAL ERROR: Model stopped'
     endif
 
     if (present(success)) then
+#ifdef HYDRO_D
        write(*,'(A)') success
+#endif
     endif
 
   end subroutine error_handler
@@ -3408,23 +3591,25 @@ contains
        return
     endif
 
+#ifdef HYDRO_D
     write(*, '("Additional flnm = ''",A,"''")') trim(flnm)
 
+#endif
 #ifdef _PARALLEL_
     ierr = nf90_open_par(trim(flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(trim(flnm), NF90_NOWRITE, ncid)
 #endif
-    call error_handler(ierr, failure="READ_ADDITIONAL: Problem opening additional file: "//trim(flnm))
+    call error_handler(ierr, failure="In read_additional() - Problem opening additional file: "//trim(flnm))
 
     ierr = nf90_inq_varid(ncid,  name,  varid)
-    call error_handler(ierr, failure="READ_ADDITIONAL: Problem finding variable: "//name)
+    call error_handler(ierr, failure="In read_additional() - Problem finding variable: "//name)
 
     ierr = nf90_get_var(ncid, varid, array, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-    call error_handler(ierr, failure="READ_ADDITIONAL: Problem getting variable: "//name)
+    call error_handler(ierr, failure="In read_additional() - Problem getting variable: "//name)
 
     ierr = nf90_close(ncid)
-    call error_handler(ierr, failure="READ_ADDITIONAL:  Problem closing file:  "//trim(flnm))
+    call error_handler(ierr, failure="In read_additional() - Problem closing file:  "//trim(flnm))
 
   end subroutine read_additional
 

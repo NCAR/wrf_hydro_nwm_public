@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 ! This subrouting includs the data structure and tools used for NHDPlus network mapping.
 module module_UDMAP
 
@@ -369,16 +389,16 @@ contains
 #endif
                iret = nf_open(fileName, NF_NOWRITE, ncid)
                if (iret /= 0) then
-                  write(*,'("Problem opening mapping file: ''", A, "''")') &
+                  write(*,'("FATAL ERROR: Problem opening mapping file: ''", A, "''")') &
                        trim(fileName)
-                  call hydro_stop("get_dimension")
+                  call hydro_stop("In get_dimension() - Problem opening mapping file.")
                endif
         
                iret = nf_inq_dimid(ncid, "polyid", dimid)
         
                if (iret /= 0) then
                   print*, "nf_inq_dimid:  polyid"
-                  call hydro_stop("get_dimension")
+                  call hydro_stop("In get_dimension() - nf_inq_dimid:  polyid")
                endif
            
                iret = nf_inq_dimlen(ncid, dimid, npid)
@@ -386,7 +406,7 @@ contains
                iret = nf_inq_dimid(ncid, "data", dimid)
                if (iret /= 0) then
                           print*, "nf_inq_dimid:  data"
-                          call hydro_stop("get_file_dimension")
+                          call hydro_stop("In get_file_dimension() - nf_inq_dimid:  data")
                endif
         
                iret = nf_inq_dimlen(ncid, dimid, ndata)
@@ -409,14 +429,14 @@ contains
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
             print*,"failed to open the netcdf file: ",trim(fileName)
-            call hydro_stop("fatal error! ")
+            call hydro_stop("In get1d_real8() - failed to open the netcdf file.")
             return
           endif
           ivar = nf_inq_varid(ncid,trim(var_name),  varid)
           if(ivar .ne. 0) then
                write(6,*) "Read Variable Error file: ",trim(fileName)
                write(6,*) "Read Error: could not find ",trim(var_name)
-               call hydro_stop("fatal error! ")
+               call hydro_stop("In get1d_real8() - failed to read netcdf varialbe name. ")
           end if
           iret = nf_get_var_double(ncid, varid, out_buff)
           iret = nf_close(ncid)
@@ -431,15 +451,15 @@ contains
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
-            print*,"failed to open the netcdf file: ",trim(fileName)
-            call hydro_stop("fatal error! ")
+            print*,"FATAL ERROR: Failed to open the netcdf file: ",trim(fileName)
+            call hydro_stop("In get1d_int() -  Failed to open the netcdf file")
             return
           endif
           ivar = nf_inq_varid(ncid,trim(var_name),  varid)
           if(ivar .ne. 0) then
                write(6,*) "Read Variable Error file: ",trim(fileName)
                write(6,*) "Read Error: could not find ",trim(var_name)
-               call hydro_stop("fatal error! ")
+               call hydro_stop("In get1d_int() - failed to read netcdf variable name.")
           end if
           iret = nf_get_var_int(ncid, varid, out_buff)
           iret = nf_close(ncid)

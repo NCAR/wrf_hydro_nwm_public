@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module arguments_module
   implicit none
   private
@@ -99,7 +119,7 @@ contains
        endif
     enddo
 
-    write(*,'(/,"Argument ", A, " MUST be present.",/)') trim(string)
+    write(*,'(/,"WARNING: Argument ", A, " MUST be present.",/)') trim(string)
     call print_help
   end subroutine argndi
 
@@ -253,7 +273,7 @@ contains
           endif
        enddo
 
-       write(*,'(/,"Argument ", A, " MUST be present.",/)') trim(string)
+       write(*,'(/,"WARNING: Argument ", A, " MUST be present.",/)') trim(string)
        call print_help
     else
 ! STRING is a default string value.
@@ -308,7 +328,7 @@ contains
     call initialize
     
     if (numarg /= 1) then
-       write(*,'(/,"A final command-line argument MUST be present.")')
+       write(*,'(/,"WARNING: A final command-line argument MUST be present.")')
        call print_help
     else
        if (harg(numarg)(1:1) == "-") then

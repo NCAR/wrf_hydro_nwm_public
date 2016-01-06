@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
@@ -940,8 +960,10 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then
             call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
                   rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
             
+#ifdef HYDRO_D            
             write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
 
+#endif
 #ifdef MPP_LAND
             call collectSizeInd(rt_domain(did)%numbasns)
 #endif

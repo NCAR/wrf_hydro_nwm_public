@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 !WRF:DRIVER_LAYER:UTIL
 !
 
@@ -12,9 +32,14 @@ END SUBROUTINE wrf_message
 SUBROUTINE wrf_error_fatal( str )
   IMPLICIT NONE
   CHARACTER*(*) str
-  CALL wrf_message( '-------------- FATAL CALLED ---------------' )
-  CALL wrf_message( str )
-  CALL wrf_message( '-------------------------------------------' )
+#ifdef NCEP_WCOSS
+  write(78,*) 'FATAL ERROR: ',trim(str)
+  call flush(78)
+  close(78)
+#else 
+  write(6,*),'FATAL ERROR: ',trim(str)
+  call flush(6)
+#endif
 
   CALL wrf_abort
 END SUBROUTINE wrf_error_fatal

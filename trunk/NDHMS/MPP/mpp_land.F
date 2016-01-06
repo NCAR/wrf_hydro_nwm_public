@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 !#### This is a module for parallel Land model.
 MODULE MODULE_MPP_LAND
 
@@ -1374,7 +1394,7 @@ MODULE MODULE_MPP_LAND
       call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr ) 
 
       if(numprocs .ne. total_pe) then
-         write(6,*) "Error: numprocs .ne. total_pe ",numprocs, total_pe 
+         write(6,*) "FATAL ERROR: In wrf_LAND_set_INIT() - numprocs .ne. total_pe ",numprocs, total_pe 
          call mpp_land_abort()
       endif
 
@@ -1698,7 +1718,9 @@ MODULE MODULE_MPP_LAND
                     if(node .gt. 0) then
                       g_v(node) = tmp_v(k)
                     else
+#ifdef HYDRO_D
                       write(6,*) "Maping infor k=",k," node=", node
+#endif
                     endif
                  enddo
               else
@@ -1707,7 +1729,9 @@ MODULE MODULE_MPP_LAND
                     if(node .gt. 0) then
                       g_v(node) = v(k)
                     else
+#ifdef HYDRO_D
                       write(6,*) "local Maping infor k=",k," node=",node 
+#endif
                     endif
                  enddo
               end if
@@ -1768,7 +1792,9 @@ MODULE MODULE_MPP_LAND
                       node = tmp_map(k) 
                       g_v(node) = tmp_v(k)
                     else 
+#ifdef HYDRO_D
                       write(6,*) "Maping infor k=",k," node=",tmp_v(k)
+#endif
                     endif
                  enddo
               else
@@ -1777,7 +1803,9 @@ MODULE MODULE_MPP_LAND
                       node = map_l2g(k) 
                       g_v(node) = v(k)
                     else
+#ifdef HYDRO_D
                       write(6,*) "Maping infor k=",k," node=",map_l2g(k)
+#endif
                     endif
                  enddo
               end if

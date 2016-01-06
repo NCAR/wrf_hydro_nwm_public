@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 !DJG ------------------------------------------------
 !DJG   SUBROUTINE RT_PARM
 !DJG ------------------------------------------------
@@ -254,9 +274,9 @@
 ! Check for saturated layers
                 IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK)) THEN
                   IF (SMCRT(I,J,KK).GT.SMCMAXRT(I,J,KK)) THEN
-                   print *, "Subsfc acct. SMCMAX exceeded...", &
+                   print *, "FATAL ERROR: Subsfc acct. SMCMAX exceeded...", &
                        SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
-                   call hydro_stop("SUBSFC_RTNG")
+                   call hydro_stop("In SUBSFC_RTNG() - SMCMAX exceeded")
                   ELSE
                   END IF
                 ELSE
@@ -534,7 +554,7 @@
           if (hh .lt. 0.) then
             print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j),nexp
-            call hydro_stop("ROUTE_SUBSURFACE2")
+            call hydro_stop("In ROUTE_SUBSURFACE2() - hsub<0 at gridcell")
           end if
 
 !Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
@@ -1179,12 +1199,11 @@
           index = SO8RT_D(i,j,3)
 
             if(dist(i,j,index) .le. 0) then
-               write(6,*) "Error: dist(i,j,index) is <= zero "   
-               call hydro_stop("ROUTE_SUBSURFACE1")
+               write(6,*) "FATAL ERROR: dist(i,j,index) is <= zero "   
+               call hydro_stop("In ROUTE_SUBSURFACE1() - dist(i,j,index) is <= zero ")
             endif
             if(soldep(i,j) .eq. 0) then
-               write(6,*) "Error: soldep          is = zero "   
-               call hydro_stop("ROUTE_SUBSURFACE1")
+               call hydro_stop("In ROUTE_SUBSURFACE1() - soldep is = zero")
             endif
 
           tmp_gsize = 1.0/dist(i,j,index)
@@ -1211,7 +1230,7 @@
               if (hh .lt. 0.) then
                  print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
                       soldep(i,j)
-                 call hydro_stop("ROUTE_SUBSURFACE1") 
+                 call hydro_stop("In ROUTE_SUBSURFACE1() - hsub<0 at gridcell ") 
               end if
 
 !err. tan slope     gamma=-1.0*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
@@ -1223,13 +1242,13 @@
 
 !!DJG Error Checks...
               if(qqsub .gt. 0) then
-                    print*, "Error: qqsub should be negative, qqsub =",qqsub,&
+                    print*, "FATAL ERROR: qqsub should be negative, qqsub =",qqsub,&
                        "gamma=",gamma,"hh=",hh,"beta=",beta,"dzdx=",dzdx,&
                        "so8RT=",so8RT(i,j,index),"latksat=",ksat, &
                        "tan(beta)=",tan(beta),i,j,z(i,j),z(IXX0,JYY0)
                     print*, "ixx0=",ixx0, "jyy0=",jyy0
                     print*, "soldep =", soldep(i,j), "nexp=",nexp
-                 call hydro_stop("ROUTE_SUBSURFACE1") 
+                 call hydro_stop("In ROUTE_SUBSURFACE1() - qqsub should be negative") 
               end if
 
 
@@ -1274,8 +1293,7 @@
         do j=2,YY-1
           do i=2,XX-1
             if(dist(i,j,9) .le. 0) then
-               write(6,*) "Error: dist(i,j,9) is <= zero "   
-               call hydro_stop("ROUTE_SUBSURFACE1")
+               call hydro_stop("In ROUTE_SUBSURFACE1() - dist(i,j,9) is <= zero")
             endif
             if(CWATAVAIL(i,j).lt.ABS(qsub(i,j))/dist(i,j,9)*SUBDT) THEN
               qsub(i,j) = -1.0*CWATAVAIL(i,j)
@@ -1473,13 +1491,13 @@
           if(tmp_adjust .le. 0 ) GOTO 998
            if((h(i,j) - tmp_adjust) <0 )  then
 #ifdef HYDRO_D
-               print*, "Error Warning: surface head is negative:  ",i,j
+               print*, "WARNING: surface head is negative:  ",i,j
 #endif
                tmp_adjust = h(i,j)
            end if
            if((h(i+1,j) + tmp_adjust) <0) then 
 #ifdef HYDRO_D
-               print*, "Error Warning: surface head is negative: ",i+1,j
+               print*, "WARNING: surface head is negative: ",i+1,j
 #endif
                tmp_adjust = -1*h(i+1,j)
            end if
@@ -1574,13 +1592,13 @@
 
            if((h(i,j) - tmp_adjust) <0 )  then
 #ifdef HYDRO_D
-               print*, "Error Warning: surface head is negative:  ",i,j
+               print *, "WARNING: surface head is negative:  ",i,j
 #endif
                tmp_adjust = h(i,j)
            end if
            if((h(i,j+1) + tmp_adjust) <0) then
 #ifdef HYDRO_D
-               print*, "Error Warning: surface head is negative: ",i,j+1
+               print *, "WARNING: surface head is negative: ",i,j+1
 #endif
                tmp_adjust = -1*h(i,j+1)
            end if
@@ -2429,11 +2447,11 @@
 
              do KRT=1,NSOIL  !debug loop
                IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
-                       print *, "Err. SMCMAX exceeded upon disaggregation3...",ixxrt,jyyrt,krt,&
+                      print *, "FATAL ERROR: SMCMAX exceeded upon disaggregation3...", ixxrt,jyyrt,krt,&
                        SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
-                       call hydro_stop("disaggregateDomain")
+                      call hydro_stop("In disaggregateDomain() - SMCMAX exceeded upon disaggregation3")
                ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
-                       print *, "Warning SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
+                       print *, "FATAL ERROR: SMCRT fully depleted upon disaggregation...", ixxrt,jyyrt,krt,&
                        "SMCRT=",SMCRT(IXXRT,JYYRT,KRT),"SH2OWGT=",SH2OWGT(IXXRT,JYYRT,KRT),&
                        "SH2O=",SH2OX(I,J,KRT)
                        print*, "SMC=", SMC(i,j,KRT), "SICE =", sice(i,j,KRT)
@@ -2442,7 +2460,7 @@
                        IF (SMC(i,j,KRT).EQ.sice(i,j,KRT)) THEN
                                print *, "SMC = SICE, soil layer totally frozen, proceeding..."
                        ELSE
-                               call hydro_stop("disaggregateDomain SMCRT depleted")
+                               call hydro_stop("In disaggregateDomain() - SMCRT depleted")
                        END IF
                END IF
              end do !debug loop

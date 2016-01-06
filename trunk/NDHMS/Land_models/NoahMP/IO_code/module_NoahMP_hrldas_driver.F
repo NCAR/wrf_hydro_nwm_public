@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_NoahMP_hrldas_driver
 
   USE module_hrldas_netcdf_io
@@ -452,24 +472,48 @@ module module_NoahMP_hrldas_driver
   output_timestep         = -999
   restart_frequency_hours = -999
 
+#ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
   read(30, NML=NOAHLSM_OFFLINE, iostat=ierr)
+#else
+   open(11, form="FORMATTED")
+   read(11, NML=NOAHLSM_OFFLINE, iostat=ierr)
+#endif
   if (ierr /= 0) then
      write(*,'(/," ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE",/)')
+#ifndef NCEP_WCOSS
      rewind(30)
      read(30, NOAHLSM_OFFLINE)
-     stop " ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE"
+#else
+     rewind(11)
+     read(11, NOAHLSM_OFFLINE)
+#endif
+     stop "FATAL ERROR: Problem reading namelist NOAHLSM_OFFLINE"
   endif
 #ifdef WRF_HYDRO
+#ifndef NCEP_WCOSS
   read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#else
+  read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#endif
   if (ierr /= 0) then
      write(*,'(/," ***** ERROR: Problem reading namelist WRF_HYDRO_OFFLINE",/)')
+#ifndef NCEP_WCOSS
      rewind(30)
      read(30, NOAHLSM_OFFLINE)
-     call hydro_stop (" ***** ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
+#else
+     rewind(11)
+     read(11, NOAHLSM_OFFLINE)
+#endif
+     call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
   endif
 #endif
+
+#ifndef NCEP_WCOSS
   close(30)
+#else
+  close(11)
+#endif
 
   dtbl = real(noah_timestep)
   num_soil_layers = nsoil      ! because surface driver uses the long form
@@ -506,26 +550,31 @@ module module_NoahMP_hrldas_driver
     update_veg = .true.
 
   if (nsoil < 0) then
-     stop " ***** ERROR: NSOIL must be set in the namelist."
+     stop "FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini()"// &
+          " - NSOIL must be set in the namelist."
   endif
 
   if ((khour < 0) .and. (kday < 0)) then
-     write(*, '(" ***** Namelist error: ************************************")')
+#ifdef HYDRO_D
+     write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                "Namelist error.")')
      write(*, '(" ***** ")')
      write(*, '(" *****      Either KHOUR or KDAY must be defined.")')
      write(*, '(" ***** ")')
+#endif
      stop
   else if (( khour < 0 ) .and. (kday > 0)) then
      khour = kday * 24
   else if ((khour > 0) .and. (kday > 0)) then
-     write(*, '("Namelist warning:  KHOUR and KDAY both defined.")')
+     write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
   else
      ! all is well.  KHOUR defined
   endif
 
   if (forcing_timestep < 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: *****************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini()- "// &
+                   "Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       FORCING_TIMESTEP needs to be set greater than zero.")')
         write(*, '(" ***** ")')
@@ -535,7 +584,8 @@ module module_NoahMP_hrldas_driver
 
   if (noah_timestep < 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: *****************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini()"// &
+                   " - Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       NOAH_TIMESTEP needs to be set greater than zero.")')
         write(*, '(" *****                     900 seconds is recommended.       ")')
@@ -550,7 +600,8 @@ module module_NoahMP_hrldas_driver
   if (output_timestep /= 0) then
      if (mod(output_timestep, noah_timestep) > 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: *********************************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                   "Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       OUTPUT_TIMESTEP should set to an integer multiple of NOAH_TIMESTEP.")')
         write(*, '(" *****            OUTPUT_TIMESTEP = ", I12, " seconds")') output_timestep
@@ -567,8 +618,8 @@ module module_NoahMP_hrldas_driver
   if (restart_frequency_hours /= 0) then
      if (mod(restart_frequency_hours*3600, noah_timestep) > 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
-        write(*, '(" ***** ")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                   "Namelist error.")')
         write(*, '(" *****       RESTART_FREQUENCY_HOURS (converted to seconds) should set to an ")')
         write(*, '(" *****       integer multiple of NOAH_TIMESTEP.")')
         write(*, '(" *****            RESTART_FREQUENCY_HOURS = ", I12, " hours:  ", I12, " seconds")') &
@@ -583,7 +634,8 @@ module module_NoahMP_hrldas_driver
   if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5 .or. dynamic_veg_option == 6) then
      if ( canopy_stomatal_resistance_option /= 1) then
         write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                   "Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       CANOPY_STOMATAL_RESISTANCE_OPTION must be 1 when DYNAMIC_VEG_OPTION == 2/5/6")')
         write(*, *)
@@ -1280,8 +1332,9 @@ module module_NoahMP_hrldas_driver
   
   NTIME=(KHOUR)*3600./nint(dtbl)
 
+#ifdef HYDRO_D
   print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
-  
+#endif
   call system_clock(count=clock_count_1)   ! Start a timer
 
 
@@ -1305,8 +1358,9 @@ module module_NoahMP_hrldas_driver
    do kk = 2, NSOIL
       zsoil(kk) = zsoil(kk-1)-soil_thick_input(kk)
    end do
-   
+#ifdef HYDRO_D
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
+#endif
 
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
@@ -1906,7 +1960,9 @@ end subroutine  ldas_output
 subroutine lsm_restart()
   implicit none 
   
+#ifdef HYDRO_D
   print*, 'Write restart at '//olddate(1:13)
+#endif
 
   call prepare_restart_file (trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
@@ -2012,8 +2068,10 @@ subroutine lsm_rst_bi_out()
    if(my_id .ge. i0 .and. my_id .lt. ie) then
 #endif
 
+#ifndef NCEP_WCOSS
   write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13),igrid
-  iunit = 901
+#endif
+  iunit =56 
 
 #ifdef MPP_LAND
              if(my_id .lt. 10) then
@@ -2117,15 +2175,15 @@ subroutine lsm_rst_bi_out()
   return
 101  continue
 #ifdef MPP_LAND
-  call fatal_error_stop("failed to write lsm restartfile")
+  call fatal_error_stop("FATAL ERROR: failed to write lsm restartfile")
 #else
   stop "failed to write lsm restart file"
 #endif
 102  continue
 #ifdef MPP_LAND
-  call fatal_error_stop("failed to open lsm restartfile")
+  call fatal_error_stop("FATAL ERROR: failed to open lsm restartfile")
 #else
-  stop "failed to open restart file"
+  stop "FATAL ERROR: failed to open restart file"
 #endif
 end subroutine lsm_rst_bi_out
 
@@ -2135,7 +2193,7 @@ subroutine lsm_rst_bi_in()
   character(len=256):: str_tmp
   integer  :: i0,ie, i, istep
 
-  iunit = 901
+  iunit = 56
 #ifdef MPP_LAND
  i0 = 0
  istep = 64
@@ -2245,10 +2303,10 @@ subroutine lsm_rst_bi_in()
 
 101  continue
 #ifdef MPP_LAND
-  call fatal_error_stop("failed to read in lsm restartfile "   &
+  call fatal_error_stop("FATAL ERROR: failed to read in lsm restartfile "   &
           //trim(restart_filename_requested)//"."//trim(str_tmp))
 #else
-  stop "failed to read lsm restart file"
+  stop "FATAL ERROR: failed to read lsm restart file"
 #endif
 end subroutine lsm_rst_bi_in
 

@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 program create_forcing
   use module_grib
   use module_geo_em
@@ -246,7 +266,7 @@ program create_forcing
   write(*,'(A)') 'geo_em_flnm    = "'//trim(geo_em_flnm)//'"'
 
   call read_geo_em_file(trim(geo_em_flnm), geo_em, ierr)
-  if (ierr /= 0) stop "Problem reading geo_em file"
+  if (ierr /= 0) stop "FATAL ERROR: Problem reading geo_em file"
   write(hgrid,'(I1)') geo_em%grid_id
 
   nullify(gvfmin%field)
@@ -623,7 +643,7 @@ contains
     !
     do
        read(12, '(A255)', iostat=ierr) string
-       if (ierr /= 0) stop "Problem searching for <VTABLE>"
+       if (ierr /= 0) stop "FATAL ERROR: Problem searching for <VTABLE>"
        if (string == "<VTABLE>") exit
     enddo
 
@@ -634,7 +654,7 @@ contains
     vcount = 0
     VLOOP : do
        read(12, '(A255)', iostat=ierr) string
-       if (ierr /= 0) stop "Problem reading Variable Table"
+       if (ierr /= 0) stop "FATAL ERROR: Problem reading Variable Table"
        if (string == "</VTABLE>") exit
        if (string(1:1) == "-") cycle
        if (string(1:1) == "#") cycle
@@ -645,9 +665,8 @@ contains
        jstart = 1
        vcount = vcount + 1
        if (vcount > size(vtable)) then
-          write(*,'(/," ***** ERROR *****")')
-          write(*,'(" *****       Parameterized size of vtable (",I4,") is too small.")') size(vtable)
-          write(*,'(" *****       Change the dimensions of vtable and recompile.",/)')
+          write(*,'("FATAL ERROR:      Parameterized size of vtable (",I4,") is too small.")') size(vtable)
+          write(*,'("FATAL ERROR:      Change the dimensions of vtable and recompile.",/)')
           stop
        endif
 
@@ -661,19 +680,19 @@ contains
              read(val,*,iostat=ierr) vtable(vcount)%g1_parm
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           case (2)
              read(val,*,iostat=ierr) vtable(vcount)%g1_levtyp
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           case (3)
              read(val,*,iostat=ierr) vtable(vcount)%level1
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           case (4)
              if (val == " ") then
@@ -682,7 +701,7 @@ contains
                 read(val,*,iostat=ierr) vtable(vcount)%level2
                 if (ierr /= 0) then
                    write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                   stop
+                   stop "FATAL ERROR: Vtable read problem entry"
                 endif
              endif
           case (5)
@@ -695,25 +714,25 @@ contains
              read(val,*,iostat=ierr) vtable(vcount)%g2_discp
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           case (9)
              read(val,*,iostat=ierr) vtable(vcount)%g2_cat
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           case (10)
              read(val,*,iostat=ierr) vtable(vcount)%g2_parm
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           case (11)
              read(val,*,iostat=ierr) vtable(vcount)%g2_levtyp
              if (ierr /= 0) then
                 write(*,'("Vtable read problem, entry ", I4, " column ", I4)') vcount, j
-                stop
+                stop "FATAL ERROR: Vtable read problem entry"
              endif
           end select
 
@@ -910,7 +929,7 @@ contains
           current%layer2 = 2.0
        case default
           write(*,'("Constant field not allowed for field ",A)') trim(current%label)
-          stop
+          stop "FATAL ERROR: Constant field not allowed for field"
        end select
 
        return
@@ -933,11 +952,11 @@ contains
           Zcurrent%hdate = current%hdate
           call grib_file_search_now(Zcurrent, Zdatastruct, ierr)
           if (ierr /= 0) then
-             stop "Source model terrain data not found"
+             stop "FATAL ERROR: Source model terrain data not found"
           endif
 
           if ( .not. check_if_same_map(datastruct, Zdatastruct) ) then
-             stop "1) Source model terrain dimensions do not match source model temperature dimensions"
+             stop "FATAL ERROR: 1) Source model terrain dimensions do not match source model temperature dimensions"
           endif
 	  where(Zdatastruct%data < 0.0) Zdatastruct%data = 0.0   ! Barlage 20140529
           datastruct%data = datastruct%data - ( -0.0065 * Zdatastruct%data )
@@ -1022,7 +1041,7 @@ contains
 
        write(*,'("Field label= ",A)') trim(current%label)
        write(*,'("No previous data.")') 
-       stop
+       stop "FATAL ERROR: No previous data"
     endif
 
     ! The "prev" buffer must be recent.  Check that
@@ -1043,7 +1062,7 @@ contains
        endif
 
        write(*,'("Previous data is out of date.")')
-       stop
+       stop "FATAL ERROR: Previous data is out of date"
     endif
 
     ! Check for a "post" buffer.
@@ -1101,7 +1120,7 @@ contains
        endif
 
        write(*,'("We could not find later data to interpolate")')
-       stop
+       stop "FATAL ERROR: Could not find later data to interpolate"
     endif
 
     ! If this is air temperature data, we need to adjust to sea-level:
@@ -1111,10 +1130,10 @@ contains
        Zcurrent%hdate = post%hdate
        call grib_file_search_now(Zcurrent, Zdatastruct, ierr)
        if (ierr /= 0) then
-          stop "Source model terrain data not found"
+          stop "FATAL ERROR: Source model terrain data not found"
        endif
        if ( .not. check_if_same_map(datastruct, Zdatastruct) ) then
-          stop "2) Source model terrain dimensions do not match source model temperature dimensions"
+          stop "FATAL ERROR: 2) Source model terrain dimensions do not match source model temperature dimensions"
        endif
        where(Zdatastruct%data < 0.0) Zdatastruct%data = 0.0   ! Barlage 20140529
        datastruct%data = datastruct%data - ( -0.0065 * Zdatastruct%data )
@@ -1229,7 +1248,7 @@ contains
 	                                 etax(i,j), etay(i,j),-1E+36,-1E+36)
           else
              print*, "'"//trim(buff%remap_type)//"'"
-             stop "remap type"
+             stop "FATAL ERROR: remap type"
           endif
 
        enddo
@@ -1444,7 +1463,7 @@ contains
           write(*, '("Undetermined problem opening file: ", A)') trim(flnm)
        endif
        return
-       stop "get_single_datastruct_from_grib"
+       stop "FATAL ERROR: get_single_datastruct_from_grib"
     endif
     if (associated(datastruct%data)) then
        deallocate(datastruct%data)
@@ -1546,7 +1565,7 @@ contains
              write(*,'(/," ***** ERROR *****")')
              write(*,'(" *****       GRIB Edition 1 data does not match a Vtable entry")')
              print*, grib%g1sec1%parameter, grib%g1sec1%leveltyp, grib%g1sec1%levelval, grib%g1sec1%level2val
-             stop "Edition 1"
+             stop "FATAL ERROR: GRIB Edition 1 data does not match a Vtable entry"
           endif
        enddo G1SEARCH
     else if (grib%edition == 2) then
@@ -1573,7 +1592,7 @@ contains
              write(*,'(" *****       GRIB Edition 2 data does not match a Vtable entry")')
              print*, grib%discipline, grib%sec4%parameter_category, grib%sec4%parameter_number, &
                   grib%sec4%ltype1, grib%sec4%lvalue1, grib%sec4%lvalue2
-             stop "Edition 2"
+             stop "FATAL ERROR: GRIB Edition 2 data does not match a Vtable entry"
           endif
        enddo G2SEARCH
     endif
@@ -1632,7 +1651,7 @@ contains
     else
 
        write(*,'("Unrecognized grib%mapinfo%hproj:  ", A2)') grib%mapinfo%hproj
-       stop
+       stop "FATAL ERROR: Unrecognized grib mapinfo hproj"
 
     endif
 
@@ -1641,7 +1660,7 @@ contains
        nullify(datastruct%data)
     endif
     allocate(datastruct%data(datastruct%nx,datastruct%ny), stat=astat)
-    if (astat /= 0) stop "Problem (A) allocating datastruct%data"
+    if (astat /= 0) stop "FATAL ERROR: Problem (A) allocating datastruct%data"
 
     call gribdata(grib)
     datastruct%data = grib%array
@@ -1714,12 +1733,12 @@ contains
              ! Change the units to mm/s, reflecting the rescaling we just did.
              datastruct%units = "mm/s"
           else 
-             stop "Precip Problem A?"
+             stop "FATAL ERROR: Precip Problem A?"
           endif
        elseif ( (datastruct%units == "kg/m^2/s") ) then ! For example, GLDAS; MB v3.7
           datastruct%units = "mm/s"
        else
-          stop "Precip Problem B?"
+          stop "FATAL ERROR: Precip Problem B?"
        endif
     endif
 
@@ -2517,13 +2536,13 @@ subroutine another_interp_rainfall(datastruct, newarr, mix, mjx, geo_em)
 
   if (.not. allocated(mxa)) then
      allocate(mxa(datastruct%nx,datastruct%ny), stat=astat)
-     if (astat /= 0) stop "Problem allocating MXA"
+     if (astat /= 0) stop "FATAL ERROR: Problem allocating MXA"
      allocate(mya(datastruct%nx,datastruct%ny), stat=astat)
-     if (astat /= 0) stop "Problem allocating MYA"
+     if (astat /= 0) stop "FATAL ERROR: Problem allocating MYA"
      allocate(x2(datastruct%nx,datastruct%ny,nsub,nsub), stat=astat)
-     if (astat /= 0) stop "Problem allocating X2"
+     if (astat /= 0) stop "FATAL ERROR: Problem allocating X2"
      allocate(y2(datastruct%nx,datastruct%ny,nsub,nsub), stat=astat)
-     if (astat /= 0) stop "Problem allocating Y2"
+     if (astat /= 0) stop "FATAL ERROR: Problem allocating Y2"
      ILOOP1 : do i = 1, datastruct%nx
         JLOOP1 : do j = 1, datastruct%ny
            ! Compute (x,y) in WRF grid of point (gx,gy) in precip grid.

@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module kwm_date_utilities
 contains
   subroutine geth_newdate (ndate, odate, idt)
@@ -153,35 +173,35 @@ contains
 !  Check that the month of ODATE makes sense.
 
     if ((moold.gt.12).or.(moold.lt.1)) then
-       write(*,*) 'GETH_NEWDATE:  Month of ODATE = ', moold
+       write(*,*) 'WARNING: GETH_NEWDATE:  Month of ODATE = ', moold
        opass = .FALSE.
     end if
 
 !  Check that the day of ODATE makes sense.
 
     if ((dyold.gt.mday(moold)).or.(dyold.lt.1)) then
-       write(*,*) 'GETH_NEWDATE:  Day of ODATE = ', dyold
+       write(*,*) 'WARNING: GETH_NEWDATE:  Day of ODATE = ', dyold
        opass = .FALSE.
     end if
 
 !  Check that the hour of ODATE makes sense.
 
     if ((hrold.gt.23).or.(hrold.lt.0)) then
-       write(*,*) 'GETH_NEWDATE:  Hour of ODATE = ', hrold
+       write(*,*) 'WARNING: GETH_NEWDATE:  Hour of ODATE = ', hrold
        opass = .FALSE.
     end if
 
 !  Check that the minute of ODATE makes sense.
 
     if ((miold.gt.59).or.(miold.lt.0)) then
-       write(*,*) 'GETH_NEWDATE:  Minute of ODATE = ', miold
+       write(*,*) 'WARNING: GETH_NEWDATE:  Minute of ODATE = ', miold
        opass = .FALSE.
     end if
 
 !  Check that the second of ODATE makes sense.
 
     if ((scold.gt.59).or.(scold.lt.0)) then
-       write(*,*) 'GETH_NEWDATE:  Second of ODATE = ', scold
+       write(*,*) 'WARNING: GETH_NEWDATE:  Second of ODATE = ', scold
        opass = .FALSE.
     end if
 
@@ -193,7 +213,7 @@ contains
 !KWM      END IF
 
     if (.not.opass) then
-       write(*,*) 'Crazy ODATE: ', odate(1:olen), olen
+       write(*,*) 'WARNING: Crazy ODATE: ', odate(1:olen), olen
        call abort()
     end if
 
@@ -243,7 +263,7 @@ contains
        nsec   = 0
        nfrac  = 0
     else
-       write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
+       write(*,'(''WARNING: GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             olen
        write(*,*) odate(1:olen)
        call abort()
@@ -392,7 +412,7 @@ contains
 8         format(i4,i2.2,i2.2)
 
        else
-          stop "DATELEN PROBLEM"
+          stop "FATAL ERROR: In module kwm_date_utilities.F -- DATELEN PROBLEM"
        end if
     endif
 
@@ -447,7 +467,7 @@ contains
     olen = len(olddate)
     nlen = len(newdate)
     if (nlen.ne.olen) then
-       write(*,'("GETH_IDTS: NLEN /= OLEN: ", A, 3x, A)') newdate(1:nlen), olddate(1:olen)
+       write(*,'("WARNING: GETH_IDTS: NLEN /= OLEN: ", A, 3x, A)') newdate(1:nlen), olddate(1:olen)
        call abort
     endif
 

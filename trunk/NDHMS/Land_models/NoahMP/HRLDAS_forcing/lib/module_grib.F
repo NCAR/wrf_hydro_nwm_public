@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_grib
   use module_grib1
   use module_grib2
@@ -118,8 +138,8 @@ contains
     !
     call gbyte(grib%buffer, seventest, (grib%size-4)*8, 32)
     if (seventest /= string_sevens) then
-       write(*,'("Cannot find marker (7777) for end of GRIB record")')
-       stop "Problem finding end of GRIB record"
+       write(*,'("WARNING: Cannot find marker (7777) for end of GRIB record")')
+       stop "FATAL ERROR: In module_grib.F -- Problem finding end of GRIB record"
     endif
 
     ! Read grib tables.
@@ -226,8 +246,8 @@ contains
     else if (grib%edition == 1) then
        call gbyte(buf12, grib%size, 0, 24)
     else
-       write(*, '("Grib Edition:  ", I10)') grib%edition
-       stop "Grib Edition."
+       write(*, '("WARNING: Grib Edition:  ", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- Grib Edition."
     endif
     ! write(*, '("Grib Edition:  ", I10, "  Record size:  ", I10)') grib%edition, grib%size
 
@@ -240,8 +260,8 @@ contains
     extra = 4 - mod(grib%size,4)
     allocate(grib%buffer(grib%size + extra), stat=ierr)
     if (ierr /= 0) then
-       write(*,'("Problem allocating buffer for GRIB data in subroutine GETGRIB")')
-       stop
+       write(*,'("WARNING: Problem allocating buffer for GRIB data in subroutine GETGRIB")')
+       stop "FATAL ERROR: In module_grib.F -- Problem allocating buffer for GRIB data in subroutine GETGRIB"
     endif
     do i = 1, 4
        grib%buffer(i) = h4(i:i)
@@ -315,8 +335,8 @@ contains
        select case (grib%edition)
        case default
 
-          write(*, '("MODULE_GRIB:  GRIB_NEXT_FIELD:  Unrecognized edition = ", I10)') grib%edition
-          stop
+          write(*, '("WARNING: MODULE_GRIB:  GRIB_NEXT_FIELD:  Unrecognized edition = ", I10)') grib%edition
+          stop "FATAL ERROR: In module_grib.F -- GRIB_NEXT_FIELD: Unrecognized edition"
 
        case (1)
           ! print*, 'Unpacking section 0'
@@ -362,8 +382,8 @@ contains
 
     select case (grib%edition)
     case default
-       write(*,'("MODULE_GRIB:  GRIBDATA:  Unrecognized grib%edition", I10)') grib%edition
-       stop
+       write(*,'("WARNING: MODULE_GRIB:  GRIBDATA:  Unrecognized grib%edition", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- GRIBDATA : Unrecognized grib%edition"
     case (1)
        call grib1_gribdata(grib)
     case (2)
@@ -384,8 +404,8 @@ contains
 
     select case (grib%edition)
     case default
-       write(*,'("MODULE_GRIB:  GRIB_PARAMETER_TEXT_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
-       stop
+       write(*,'("WARNING: MODULE_GRIB:  GRIB_PARAMETER_TEXT_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- GRIB_PARAMETER_TEXT_INFORMATION: Unrecognized grib%edition"
     case (1)
        call grib1_parameter_text_information(grib%g1sec1, name, units, description)
     case (2)
@@ -406,8 +426,8 @@ contains
 
     select case (grib%edition)
     case default
-       write(*,'("MODULE_GRIB:  GRIB_LEVEL_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
-       stop
+       write(*,'("WARNING: MODULE_GRIB:  GRIB_LEVEL_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- GRIB_LEVE_INFORMATION: Unrecognized grib%edition"
     case (1)
        call grib1_level_information(grib, level_type, level_units, level_value, level2_value)
     case (2)
@@ -431,8 +451,8 @@ contains
     
     select case (grib%edition)
     case default
-       write(*,'("MODULE_GRIB:  GRIB_TIME_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
-       stop
+       write(*,'("WARNING: MODULE_GRIB:  GRIB_TIME_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- GRIB_TIME_INFORMATION: Unrecognized grib%edition"
     case (1)
        call grib1_time_information(grib, reference_date, valid_date, process, processing, p1_seconds, p2_seconds)
     case (2)
@@ -455,8 +475,8 @@ contains
 
     select case (grib%edition)
     case default
-       write(*,'("MODULE_GRIB:  GRIB_VALID_DATE:  Unrecognized grib%edition", I10)') grib%edition
-       stop
+       write(*,'("WARNING: MODULE_GRIB:  GRIB_VALID_DATE:  Unrecognized grib%edition", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- GRIB_VALID_DATE: Unrecognized grib%edition"
     case (1)
        call grib1_valid_date(grib%g1sec1, validdate)
     case (2)
@@ -472,8 +492,8 @@ contains
     type(GribStruct), intent(inout) :: grib
     select case (grib%edition)
     case default
-       write(*,'("MODULE_GRIB:  GRIB_MAP_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
-       stop
+       write(*,'("WARNING: MODULE_GRIB:  GRIB_MAP_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
+       stop "FATAL ERROR: In module_grib.F -- GRIB_MAP_INFORMATION: Unrecognized grib%edition"
     case (1)
        call grib1_map_information(grib%g1sec2, grib%mapinfo)
     case (2)

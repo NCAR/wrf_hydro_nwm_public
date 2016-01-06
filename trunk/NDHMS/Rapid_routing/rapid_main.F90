@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 !*******************************************************************************
 !RAPID main program
 !*******************************************************************************
@@ -112,20 +132,28 @@ CONTAINS
      integer NTIME
      namelist_file='./rapid_namelist' 
 
+#ifdef HYDRO_D
 print *,'!!!LPR!!!!!!!!!!!!!!!!! initialized = ',initialized
+#endif
       if(initialized)  return
 
       call rapid_init(initialized)
       Qout_nc_dir   = Qout_nc_file  !first time finalize the Qout_nc_dir from RAPID namelist LPR
       initialized = .True.
 
+#ifdef HYDRO_D
       print *, '******** check before PetscLogStageRegister *****'
+#endif
       call PetscLogStageRegister('Read Comp Write',stage,ierr)
+#ifdef HYDRO_D
       print *,'***LPR PASS CALL PetscLogStageRegister******'
       print *,'stage = ',stage
       print *,'ierr = ',ierr
+#endif
       call PetscLogStagePush(stage,ierr)
+#ifdef HYDRO_D
       print *,'***LPR PASS CALL PetscLogStagePush****'
+#endif
 
   end subroutine rapid_ini
 
@@ -173,7 +201,9 @@ if (IS_opt_run==1) then
   
 !endif
 
+#ifdef HYDRO_D
 print *,'***LPR*** Qout_nc_file = ',trim(Qout_nc_file)
+#endif
 !-------------------------------------------------------------------------------
 !Create Qout file
 !-------------------------------------------------------------------------------
@@ -392,7 +422,7 @@ call PetscLogStagePop(ierr)
 !-------------------------------------------------------------------------------
 #else
 if (rank==0)                                         print '(a70)',            &
-        'ERROR: The optimization mode requires RAPID to be compiled with TAO   '
+        'FATAL ERROR: The optimization mode requires RAPID to be compiled with TAO   '
 #endif
 end if
 
@@ -429,14 +459,16 @@ end subroutine rapid_main_exe
                             IV_i_index(JS_reachtot),IV_j_index(JS_reachtot)
         end do
         close(10)
+#ifdef HYDRO_D
 print *,'****LPR RAPID read coupling file successfully************'
+#endif
         !print *,IV_basin_id(IS_reachtot),ZV_areakm(IS_reachtot),                      &
         !        IV_i_index(IS_reachtot),IV_j_index(IS_reachtot) 
 
 	!----------tease out weird runoff values-----------
         if (rank==0) then
-        if (maxval(ZM_runoff)>1000) stop 'Runoff exceeds 1000'
-        if (minval(ZM_runoff)<0) stop 'Negative runoff'
+        if (maxval(ZM_runoff)>1000) stop 'FATAL ERROR: In rapid_runoff_to_inflow() - Runoff exceeds 1000'
+        if (minval(ZM_runoff)<0) stop 'FATAL ERROR: In rapid_runoff_to_inflow() - Negative runoff'
         !print *, 'Maximum value for ZM_runoff is:', maxval(ZM_runoff)
         end if
 
@@ -469,19 +501,27 @@ print *, '************************************************************'
 	
 	!------write to PETSC vector---------------------------
 	if (rank==0) then
+#ifdef HYDRO_D
 print *,'LPR: IS_reachbas = ',IS_reachbas
 print *,'LPR: IV_basin_loc = ',size(IV_basin_loc)
 print *,'LPR: IV_basin_index = ',size(IV_basin_index) !,' ZV_read_reachtot(IV_basin_index) = ',ZV_read_reachtot(IV_basin_index)
+#endif
         call VecSetValues(ZV_Vlat,IS_reachbas,IV_basin_loc,                       &
              ZV_read_reachtot(IV_basin_index),INSERT_VALUES,ierr)
+#ifdef HYDRO_D
 print *, 'PASS Call VecSetValue'
+#endif
 	end if
 
 	call VecAssemblyBegin(ZV_Vlat,ierr)
+#ifdef HYDRO_D
 print *, 'PASS Call VecAssemblyBegin'
+#endif
 	call VecAssemblyEnd(ZV_Vlat,ierr)
+#ifdef HYDRO_D
 print *, 'PASS Call VecAssemblyEnd'
 
+#endif
   end subroutine rapid_runoff_to_inflow
   
 

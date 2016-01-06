@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_grib2_tables 
 
   type table_entry_struct
@@ -37,25 +57,34 @@ contains
 
     call getenv("GRIB_ROOT", grib_root)
     if (trim(grib_root)==" ") then
-       write(*,'("Not finding environment variable GRIB_ROOT.")')
-       write(*,'("Program does not know where to find GRIB parameter tables")')
-       stop
+       write(*,'("WARNING: Not finding environment variable GRIB_ROOT.")')
+       write(*,'("WARNING: Program does not know where to find GRIB parameter tables")')
+       stop "FATAL ERROR: In module module_grib2_tables.F -- Unable to find the environment varaible GRIB_ROOT"
     endif
     table_filename = trim(grib_root)//"/GRIB2_PARAMETER_TABLE"
 
     iunit = get_unused_unit()
     nullify(table%next)
 
+    #ifndef NCEP_WCOSS
+
+    #else
     open(iunit, file=trim(table_filename), status='old', form='formatted', action='read', iostat=ierr)
+    #endif
+     
     if (ierr /= 0) then
        write(*,'(/," ***** ERROR *****",/)')
        write(*,'(" ***** Problem opening file ''", A, "''")') trim(table_filename)
        write(*,'(" ***** Does file exist?  Is file readable?",/)')
-       stop
+       stop "FATAL ERROR: In module module_grib2_tables.F -- Problem opening file"
     endif
 
     READ_TABLE : do
+       #ifndef NCEP_WCOSS
+       
+       #else
        read(iunit, '(A200)', iostat=ierr) string
+       #endif
        if (ierr /= 0) exit READ_TABLE
        if (string(1:1) == "#") cycle READ_TABLE
        if (string(1:1) == "+") then
@@ -82,7 +111,10 @@ contains
 
        endif
     enddo READ_TABLE
+    #ifndef NCEP_WCOSS
+    #else
     close(iunit)
+    #endif
 
   end subroutine grib2_read_parameter_tables
 

@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_nudging_utils
 
 real :: totalNudgeTime
@@ -236,7 +256,9 @@ if(clockType.eq.'wall') then
    diff=diff/sysClockCountRate
 endif
 if (accumLocal) totalNudgeTime = totalNudgeTime + diff
+
 print*,'Ndg: Timing: ' // sectionLabel // ' (' // trim(clockType) // ' time, seconds):', diff
+
 if(accumLocal) print*,'Ndg: Timing: accum totalNudgeTime: ',totalNudgeTime
 end subroutine accum_nudging_time
 
