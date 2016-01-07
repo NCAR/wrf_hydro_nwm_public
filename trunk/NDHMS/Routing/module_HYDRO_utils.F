@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_HYDRO_utils
   use module_RT_data, only: rt_domain
   use module_namelist, only: nlst_rt
@@ -27,7 +47,7 @@ contains
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if (iret .ne. 0) then
 #ifdef HYDRO_D
-            print*,"failed to open the netcdf file: ",trim(fileName)
+            print*,"Failed to open the netcdf file: ",trim(fileName)
 #endif
             out_buff = -9999.
             return

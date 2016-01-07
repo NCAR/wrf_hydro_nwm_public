@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
@@ -122,7 +142,11 @@ module module_HYDRO_drv
 #endif
       if(nlst_rt(did)%olddate(1:19) .eq. nlst_rt(did)%startdate(1:19) .and. rt_domain(did)%his_out_counts .eq. 0) then
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
          write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19), rt_domain(did)%his_out_counts
+#else
+         write(78,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19), rt_domain(did)%his_out_counts
+#endif
 #endif
          outflag = 99
       else
@@ -133,7 +157,11 @@ module module_HYDRO_drv
          endif
          if ( out_date(1:19) == nlst_rt(did)%olddate(1:19) ) then
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
              write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
+#else
+             write(78,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19)
+#endif
 #endif
              outflag = 99
          endif
@@ -163,7 +191,11 @@ module module_HYDRO_drv
    if(IO_id .eq. my_id) then
 #endif
        if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
+#ifndef NCEP_WCOSS
              print*, "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+#else
+             write(78,*) "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+#endif
              rtflag = 1
        endif
 #ifdef MPP_LAND
@@ -238,7 +270,11 @@ module module_HYDRO_drv
 ! BF end gw2d output section
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
           write(6,*) "before call output_chrt"
+#else
+          write(78,*) "before call output_chrt"
+#endif
 #endif
      
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
@@ -339,7 +375,11 @@ module module_HYDRO_drv
                endif   ! end if block of rNLAKES .gt. 0
         endif 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
            write(6,*) "end calling output functions"
+#else
+          write(78,*) "end calling output functions"
+#endif
 #endif
 
         endif  ! end of routing switch
@@ -375,7 +415,11 @@ module module_HYDRO_drv
      if(my_id.eq.IO_id) then
 #endif
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
         write(6,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
+#else
+        write(78,*) "*** read restart data: ",trim(nlst_rt(did)%restart_file)
+#endif
 #endif
 #ifdef MPP_LAND
      endif 
@@ -409,7 +453,11 @@ module module_HYDRO_drv
          call geth_newdate(newdate, nlst_rt(did)%olddate, nint( nlst_rt(did)%dt))
          nlst_rt(did)%olddate = newdate
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
          write(6,*) "current time is ",newdate
+#else
+         write(78,*) "current time is ",newdate
+#endif
 #endif
 #ifdef MPP_LAND
    endif
@@ -477,7 +525,11 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeSr = timeSr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+#ifndef NCEP_WCOSS
                 write(6,*) "Timing: Subsurface Routing  accumulated time--", timeSr
+#else
+                write(78,*) "Timing: Subsurface Routing  accumulated time--", timeSr
+#endif
 #endif
 		
 		! step 3) todo split
@@ -490,7 +542,11 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+#ifndef NCEP_WCOSS
                 write(6,*) "Timing: Overland Routing  accumulated time--", timeOr
+#else
+                write(78,*) "Timing: Overland Routing  accumulated time--", timeOr
+#endif
 #endif
 
               RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
@@ -507,7 +563,11 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeGw = timeGw     + float(clock_count_2-clock_count_1)/float(clock_rate)
+#ifndef NCEP_WCOSS
                 write(6,*) "Timing: GwBaseflow  accumulated time--", timeGw
+#else
+                write(78,*) "Timing: GwBaseflow  accumulated time--", timeGw
+#endif
 #endif
 	
 	
@@ -519,7 +579,11 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
                 timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+#ifndef NCEP_WCOSS
                 write(6,*) "Timing: Channel Routing  accumulated time--", timeCr
+#else
+                write(78,*) "Timing: Channel Routing  accumulated time--", timeCr
+#endif
 #endif
 	
 		! step 6) aggregate specific fields from Hydro to LSM grid
@@ -572,7 +636,11 @@ module module_HYDRO_drv
     If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) Then   ! Call simple bucket baseflow scheme
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
            write(6,*) "*****yw******start simp_gw_buck "
+#else
+          write(78,*) "*****yw******start simp_gw_buck " 
+#endif
 #endif
 
        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
@@ -611,7 +679,11 @@ module module_HYDRO_drv
 #endif
 
 #ifdef HYDRO_D 
+#ifndef NCEP_WCOSS
            write(6,*) "*****yw******end simp_gw_buck "
+#else
+          write(78,*) "*****yw******end simp_gw_buck " 
+#endif
 #endif
 
 !!!For parameter setup runs output the percolation for each basin,
@@ -619,7 +691,11 @@ module module_HYDRO_drv
     else if (nlst_rt(did)%gwBaseSwCRT .eq. 3) then
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
            write(6,*) "*****bf******start 2d_gw_model "
+#else
+          write(78,*) "*****bf******start 2d_gw_model " 
+#endif
 #endif
 
 	   ! 	   compute qsgwrt  between lsm and gw with namelist selected coupling method
@@ -656,7 +732,11 @@ module module_HYDRO_drv
           gw2d(did)%istep =  gw2d(did)%istep + 1
 	  
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
            write(6,*) "*****bf******end 2d_gw_model "
+#else
+           write(78,*) "*****bf******end 2d_gw_model "
+#endif
 #endif
       
     End if
@@ -690,7 +770,11 @@ module module_HYDRO_drv
        RT_DOMAIN(did)%QSTRMVOLRT_TS = 0.000001
        rt_domain(did)%restQSTRM = .false.
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
        write(6,*) "***** set QSTRMVOLRT_TS = 0.000001 *********"
+#else
+       write(78,*) "***** set QSTRMVOLRT_TS = 0.000001 *********" 
+#endif
        call flush(6)
 #endif
     endif 
@@ -778,7 +862,11 @@ endif
   endif
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
            write(6,*) "*****yw******end drive_CHANNEL "
+#else
+           write(78,*) "*****yw******end drive_CHANNEL " 
+#endif
 #endif
       
       end subroutine driveChannelRouting
@@ -794,7 +882,11 @@ endif
        integer :: i, j, krt, ixxrt, jyyrt, &
                   AGGFACYRT, AGGFACXRT
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
  	print *, "Beginning Aggregation..."
+#else
+       write(78,*) "Beginning Aggregation..."
+#endif
 #endif
 
 
@@ -883,25 +975,52 @@ endif
 
 !!!yw added for debug
                    if(RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .lt. 0) then
-                      print*, "Warning: negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#ifndef NCEP_WCOSS
+                      print*, "Error negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#else
+                      write(78,*) "WARNING: negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#endif
                    endif
                    if(RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) .lt. 0) then
-                      print *, "Warning: negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#ifndef NCEP_WCOSS
+                      print *, "Error negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#else
+                      write(78,*) "WARNING: negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#endif
                    endif
 
 !end 
                     IF (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .GT. &
                         RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
                       print *, "SMCMAX exceeded upon aggregation...", &
                            RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
-                      call hydro_stop("aggregateDomain")
+#else
+                     write(78,*) "FATAL ERROR: SMCMAX exceeded upon aggregation...", &
+                           RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
+                           RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT) 
+#endif
+#endif
+                      call hydro_stop("In module_HYDRO_drv.F aggregateDomain() - "// &
+                                      "SMCMAX exceeded upon aggregation.")
                     END IF
                     IF(RT_DOMAIN(did)%SH2OX(I,J,KRT).LT.0.) THEN
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
                       print *, "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
                       print *, "Error negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
-                      call hydro_stop("aggregateDomain")
+#else
+                     write(78,*) "Erroneous value of SH2O...", &
+                                RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
+                      write(78,*) "FATAL ERROR: negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#endif
+#endif
+                      call hydro_stop("In module_HYDRO_drv.F aggregateDomain() "// &
+                                      "- Error negative SH2OX")
                     END IF
                     RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
                                  = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
@@ -932,7 +1051,11 @@ endif
 !DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
 	RT_DOMAIN(did)%SMC = RT_DOMAIN(did)%SH2OX + RT_DOMAIN(did)%SICE
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
  	print *, "Finished Aggregation..."
+#else
+       write(78,*) "Finished Aggregation..."
+#endif
 #endif
 
 	
@@ -1038,12 +1161,21 @@ endif
       rt_domain(did)%jxrt = local_rt_ny
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
       write(6,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
       write(6,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
       write(6,*) "rt_domain(did)%ix, rt_domain(did)%jx "
       write(6,*) rt_domain(did)%ix, rt_domain(did)%jx 
       write(6,*) "global_nx, global_ny, local_nx, local_ny"
       write(6,*) global_nx, global_ny, local_nx, local_ny
+#else
+      write(78,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
+      write(78,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
+      write(78,*) "rt_domain(did)%ix, rt_domain(did)%jx "
+      write(78,*) rt_domain(did)%ix, rt_domain(did)%jx 
+      write(78,*) "global_nx, global_ny, local_nx, local_ny"
+      write(78,*) global_nx, global_ny, local_nx, local_ny
+#endif
 #endif
 #else
 ! sequential
@@ -1061,7 +1193,11 @@ endif
 
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
        write(6,*) "finish getChanDim "
+#else
+       write(78,*) "finish getChanDim "
+#endif
 #endif
 
       if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
@@ -1070,7 +1206,11 @@ endif
                              rt_domain(did)%jxrt,&
                              nlst_rt(did)%nsoil)
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
        write(6,*) "finish gw2d_allocate"
+#else
+       write(78,*) "finish gw2d_allocate"
+#endif
 #endif
       endif
 
@@ -1088,7 +1228,11 @@ endif
 
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
        write(6,*) "finish decomposion"
+#else
+       write(78,*) "finish decomposion"
+#endif
 #endif
 
 
@@ -1106,11 +1250,19 @@ endif
                         nlst_rt(did)%dt,&
                         nlst_rt(did)%dxrt0)
 #ifdef HYDRO_D                        
+#ifndef NCEP_WCOSS                      
           write(6,*) "finish gw2d_ini"      
+#else
+          write(78,*) "finish gw2d_ini" 
+#endif
 #endif
       endif
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
        write(6,*) "finish LandRT_ini"
+#else
+       write(78,*) "finish LandRT_ini" 
+#endif
 #endif
 
     
@@ -1181,7 +1333,11 @@ endif
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
 
 #ifdef HYDRO_D
+#ifndef NCEP_WCOSS
          write(6,*) RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx
+#else
+         write(78,*) RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx
+#endif
 #endif
 
          allocate(soltyp(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx) )
@@ -1232,6 +1388,7 @@ endif
        if(my_id .eq. IO_id) then
 #endif
 
+#ifndef NCEP_WCOSS
        open(71,file="HYDRO.TBL", form="formatted") 
 !read OV_ROUGH first
           read(71,*) nn
@@ -1246,6 +1403,22 @@ endif
              read(71,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
           end do 
        close(71)
+#else
+       open(13, form="formatted")
+!read OV_ROUGH first
+          read(13,*) nn
+          read(13,*)    
+          do i = 1, nn
+             read(13,*) RT_DOMAIN(did)%OV_ROUGH(i)
+          end do 
+!read parameter for LKSAT
+          read(13,*) nn
+          read(13,*)    
+          do i = 1, nn
+             read(13,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
+          end do 
+       close(13)
+#endif
 
 #ifdef MPP_LAND
        endif
@@ -1292,12 +1465,22 @@ end module module_HYDRO_drv
         character(len=*) :: msg
         integer :: ierr
         ierr = 1
-      write(6,*) "The job is stoped due to the FATAL ERROR: ", trim(msg)
+#ifndef NCEP_WCOSS
+#ifdef HYDRO_D
+      write(6,*) "The job is stopped due to the fatal error. ", trim(msg)
       call flush(6)
+#endif
+#else
+     write(78,*) "FATAL ERROR: ", trim(msg)
+      call flush(78)
+      close(78)
+#endif
 #ifdef MPP_LAND
+#ifndef HYDRO_D
       print*, "---"
       print*, "FATAL ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
       print*, ""
+#endif
 
 !        call mpp_land_sync()
 !        write(my_id+90,*) msg
@@ -1306,7 +1489,7 @@ end module module_HYDRO_drv
          call mpp_land_abort()
          call MPI_finalize(ierr)
 #else
-         stop "FATAL ERROR"
+         stop "FATAL ERROR: Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
 #endif
 
      return
@@ -1327,11 +1510,19 @@ end module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
         call finish_stream_nudging
 #endif
-
+#ifndef NCEP_WCOSS
         print*, "The model finished successfully......."
+#else
+        write(78,*) "The model finished successfully......."
+#endif
 #ifdef MPP_LAND
 !         call mpp_land_abort()
+#ifndef NCEP_WCOSS
          call flush(6)
+#else
+         call flush(78)
+         close(78)
+#endif
          call mpp_land_sync()
          call MPI_finalize(ierr)
 #else

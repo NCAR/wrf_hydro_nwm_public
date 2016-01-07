@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_HYDRO_io
 #ifdef MPP_LAND
      use module_mpp_land
@@ -94,7 +114,9 @@ module module_HYDRO_io
          real,allocatable, dimension(:,:) :: buff_g
 
 
+#ifdef HYDRO_D
          write(6,*) "start to read variable ", var_name
+#endif
          if(my_id .eq. IO_id) then
             allocate(buff_g (global_nx,global_ny) )
             status = get2d_real(var_name,buff_g,global_nx,global_ny,fileName)
@@ -141,19 +163,17 @@ module module_HYDRO_io
               if (iret /= 0) then
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
-                 call hydro_stop("get2d_lsm_vegtyp")
+                 call hydro_stop("In get2d_lsm_vegtyp() - Problem opening geo_static file")
               endif
 
             iret = nf_inq_dimid(ncid, "land_cat", dimid)
             if (iret /= 0) then
-              print*, "nf_inq_dimid:  land_cat"
-              call hydro_stop("get2d_lsm_vegtyp")
+              call hydro_stop("In get2d_lsm_vegtyp() - nf_inq_dimid:  land_cat problem ")
              endif
 
             iret = nf_inq_dimlen(ncid, dimid, land_cat)
             if (iret /= 0) then
-               print*, "nf_inq_dimlen:  land_cat"
-               call hydro_stop("get2d_lsm_vegtyp")
+               call hydro_stop("In get2d_lsm_vegtyp() - nf_inq_dimlen:  land_cat problem")
             endif
 
 #ifdef MPP_LAND
@@ -193,32 +213,28 @@ module module_HYDRO_io
             if (iret /= 0) then
                write(*,'("Problem opening geo_static file: ''", A, "''")') &
                     trim(fileName)
-               call hydro_stop("get_file_dimension")
+               call hydro_stop("In get_file_dimension() - Problem opening geo_static file")
             endif
         
             iret = nf_inq_dimid(ncid, "west_east", dimid)
         
             if (iret /= 0) then
-               print*, "nf_inq_dimid:  west_east"
-               call hydro_stop("get_file_dimension")
+               call hydro_stop("In get_file_dimension() - nf_inq_dimid:  west_east problem")
             endif
         
             iret = nf_inq_dimlen(ncid, dimid, ix)
             if (iret /= 0) then
-               print*, "nf_inq_dimlen:  west_east"
-               call hydro_stop("get_file_dimension")
+               call hydro_stop("In get_file_dimension() - nf_inq_dimlen:  west_east problem")
             endif
         
             iret = nf_inq_dimid(ncid, "south_north", dimid)
             if (iret /= 0) then
-                       print*, "nf_inq_dimid:  south_north"
-                       call hydro_stop("get_file_dimension")
+               call hydro_stop("In get_file_dimension() - nf_inq_dimid:  south_north problem.")
             endif
         
             iret = nf_inq_dimlen(ncid, dimid, jx)
             if (iret /= 0) then
-               print*, "nf_inq_dimlen:  south_north"
-               call hydro_stop("get_file_dimension")
+               call hydro_stop("In get_file_dimension() - nf_inq_dimlen:  south_north problem")
             endif
             iret = nf_close(ncid)
 #ifdef MPP_LAND
@@ -256,19 +272,17 @@ module module_HYDRO_io
               if (iret /= 0) then
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
-                 call hydro_stop("get2d_lsm_soltyp")
+                 call hydro_stop("In get2d_lsm_soltyp() - problem to open geo_static file.")
               endif
 
             iret = nf_inq_dimid(ncid, "soil_cat", dimid)
             if (iret /= 0) then
-                print*, "nf_inq_dimid:  soil_cat"
-                call hydro_stop("get2d_lsm_soltyp")
+                call hydro_stop("In get2d_lsm_soltyp() - nf_inq_dimid:  soil_cat problem")
             endif
 
             iret = nf_inq_dimlen(ncid, dimid, land_cat)
             if (iret /= 0) then
-               print*, "nf_inq_dimlen:  soil_cat"
-               call hydro_stop("get2d_lsm_soltyp")
+               call hydro_stop("In get2d_lsm_soltyp() - nf_inq_dimlen:  soil_cat problem")
             endif
 
 #ifdef MPP_LAND
@@ -307,15 +321,13 @@ module module_HYDRO_io
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_inq_varid"
-       call hydro_stop("get_landuse_netcdf")
+       call hydro_stop("In get_landuse_netcdf() - nf_inq_varid problem")
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_landuse_netcdf:  nf_get_var_real"
-       call hydro_stop("get_landuse_netcdf")
+       call hydro_stop("In get_landuse_netcdf() - nf_get_var_real problem")
     endif
 
     do i = 1, idim
@@ -351,15 +363,13 @@ module module_HYDRO_io
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_inq_varid"
-       call hydro_stop("get_soilcat_netcdf")
+       call hydro_stop("In get_soilcat_netcdf() - nf_inq_varid problem")
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_soilcat_netcdf:  nf_get_var_real"
-       call hydro_stop("get_soilcat_netcdf")
+       call hydro_stop("In get_soilcat_netcdf() - nf_get_var_real problem")
     endif
 
     do i = 1, idim
@@ -398,15 +408,13 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
-       call hydro_stop("get_greenfrac_netcdf")
+       call hydro_stop("In get_greenfrac_netcdf() - nf_inq_varid problem")
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
-       call hydro_stop("get_greenfrac_netcdf")
+       call hydro_stop("In get_greenfrac_netcdf() - nf_get_var_real problem")
     endif
 
 
@@ -427,8 +435,10 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
           ddfrac = float(dd)/float(daytot)
           if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
 
+#ifdef HYDRO_D
     print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
 
+#endif
     do i = 1, idim
        do j = 1, jdim
           array(i,j) = xtmp(i,j,mm)   !GREENFRAC in geogrid in units of fraction from month 1
@@ -465,15 +475,13 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
     iret = nf_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_inq_varid"
-       call hydro_stop("get_albedo12m_netcdf")
+       call hydro_stop("In get_albedo12m_netcdf() - nf_inq_varid problem")
     endif
 
     iret = nf_get_var_real(ncid, varid, xtmp)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_albedo12m_netcdf:  nf_get_var_real"
-       call hydro_stop("get_albedo12m_netcdf")
+       call hydro_stop("In get_albedo12m_netcdf() - nf_get_var_real problem")
     endif
 
     if (mm.lt.12) then 
@@ -534,8 +542,7 @@ end subroutine get_albedo12m_netcdf
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_inq_varid"
-          call hydro_stop("get_2d_netcdf")
+          call hydro_stop("In get_2d_netcdf() - nf_inq_varid problem")
        else
           ierr = iret
           return
@@ -547,8 +554,7 @@ end subroutine get_albedo12m_netcdf
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_2d_netcdf:  nf_get_var_real"
-          call hydro_stop("get_2d_netcdf")
+          call hydro_stop("In get_2d_netcdf() - nf_get_var_real problem")
        else
           ierr = iret
           return
@@ -578,8 +584,7 @@ end subroutine get_albedo12m_netcdf
 
       if (iret /= 0) then
         if (fatal_IF_ERROR) then
-           print*, "MODULE_NOAHLSM_HRLDAS_INPUT: get_2d_netcdf_cows:nf_inq_varid"
-           call hydro_stop("get_2d_netcdf_cows")
+           call hydro_stop("In get_2d_netcdf_cows() - nf_inq_varid problem")
         else
           ierr = iret
           return
@@ -658,7 +663,9 @@ end subroutine get_albedo12m_netcdf
 !-- new link id variable to handle link routing
          var_name = "LINKID"
 #ifdef MPP_LAND
+#ifdef HYDRO_D
     write(6,*) "read LINKID for CH_LNKRT from ", trim(geo_finegrid_flnm)
+#endif
 #endif
 !!!! LINKID is used for reach based method.  ?
      IF(channel_option.ne.3 .and. UDMP_OPT.ne.1) then  !get maxnodes and links from grid
@@ -921,15 +928,15 @@ end subroutine get_albedo12m_netcdf
           NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
                                    'READ_ROUTEDIM', fatalErr=.true.) 
        else 
-          open(unit=79,file=trim(route_link_f),          & !link
+          open(unit=17,file=trim(route_link_f),          & !link
                form='formatted',status='old')
 
-1011      read(79,*,end= 1999) InputLine
+1011      read(17,*,end= 1999) InputLine
           NLINKSL = NLINKSL + 1
           goto 1011
 1999      continue
           NLINKSL = NLINKSL - 1 !-- first line is a comment 
-          close(79)
+          close(17)
        end if ! routeLinkNetcdf
 
 #ifdef HYDRO_D
@@ -1168,14 +1175,14 @@ end subroutine get_albedo12m_netcdf
     gw_strm_msk = -9999
 
 !Open files...
-    open(unit=91,file=trim(gwbasmskfil),          &
+    open(unit=18,file=trim(gwbasmskfil),          &
             form='formatted',status='old')
 
 !Read in sub-basin mask...
     do j=jx,1,-1
-          read (91,*) (GWSUBBASMSK(i,j),i=1,ix)
+          read (18,*) (GWSUBBASMSK(i,j),i=1,ix)
     end do
-    close(91)
+    close(18)
 
 
 !Loop through to count number of basins and assign basin indices to chan grid
@@ -1304,11 +1311,17 @@ end subroutine get_albedo12m_netcdf
    if(my_id .eq. IO_id) then
 #endif
 !Read in GW bucket params and Zinit from input file in Run directory...
+#ifndef NCEP_WCOSS
      OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
      read(81,811) header
+#else
+     OPEN(24, FORM='FORMATTED',STATUS='OLD')
+     read(24,811) header
+#endif
 811   FORMAT(A19)
 
 
+#ifndef NCEP_WCOSS
      do bas = 1,gnumbasns
 
 ! commented out the new GWBUCKPARM.TBL used for Caralina domain
@@ -1324,6 +1337,15 @@ end subroutine get_albedo12m_netcdf
 
      end do
      close(81)
+#else
+     do bas = 1,gnumbasns
+         read(24,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
+             jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
+812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
+
+     end do
+     close(24)
+#endif
 
 #ifdef MPP_LAND
    endif
@@ -1603,10 +1625,16 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then
 #endif
+#ifdef NCEP_WCOSS
+       open (unit=54, form='formatted', status='unknown', position='append')
+        write (54,713) chan_in
+       close (54)
+#else
        open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
              status='unknown',position='append')
         write (46,713) chan_in
        close (46)
+#endif
 #ifdef MPP_LAND
     endif
 #endif
@@ -1700,8 +1728,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 #endif
        if (iret /= 0) then
-         print*, "Problem nf_create"
-         call hydro_stop("output_rt")
+         call hydro_finish("In output_rt() - Problem nf_create")
        endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
@@ -2215,8 +2242,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
        if (iret /= 0) then
-         print*, "Problem nf_create"
-         call hydro_stop("output_gw_spinup")
+         call hydro_stop("In output_gw_spinup() - Problem nf_create")
        endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
@@ -2558,8 +2584,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
 
        if (iret /= 0) then
-         print*, "Problem nf_create"
-         call hydro_stop("sub_output_gw")
+         call hydro_stop("In output_gw_spinup() - Problem nf_create")
        endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
@@ -2985,8 +3010,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
 #endif
         if (iret /= 0) then
-           print*,  "Problem nf_create points"
-           call hydro_stop("output_chrt")
+           call hydro_stop("In output_chrt() - Problem nf_create points")
         endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
@@ -2995,8 +3019,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
 #endif
         if (iret /= 0) then
-            print*, "Problem nf_create observation"
-            call hydro_stop("output_chrt")
+            call hydro_stop("In output_chrt() - Problem nf_create observation")
         endif
 
        do i=1,nlk
@@ -3299,7 +3322,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
      output_count = output_count + 1
 
-     open (unit=999,file='frxst_pts_out.txt',status='unknown',position='append')
+     open (unit=55, &
+#ifndef NCEP_WCOSS
+     file='frxst_pts_out.txt', &
+#endif
+     status='unknown',position='append')
 
      cnt=0
      do i=1,nlk   
@@ -3372,11 +3399,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
              start_posO = (cnt+1)+(nobs * (output_count-1))
              !Write frxst_pts to text file...
-             !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
+             !yw          write(55,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 118          FORMAT(I8,",",A10,1X,A8,", ",A15,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
-             !write(999,118) seconds_since, date(1:10), date(12:19), &
+             !write(55,118) seconds_since, date(1:10), date(12:19), &
 #ifndef HYDRO_REALTIME
-             write(999,118) seconds_since, hydroTime(1:10), hydroTime(12:19), &
+             write(55,118) seconds_since, hydroTime(1:10), hydroTime(12:19), &
                   gages(i), chlon(i), chlat(i),                               &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
 #endif
@@ -3430,14 +3457,14 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
           if(STRMFRXSTPTS(i) .ne. -9999) then 
              start_posO = (cnt+1)+(nobs * (output_count-1))
              !Write frxst_pts to text file...
-             !yw          write(999,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
+             !yw          write(55,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 117          FORMAT(I8,",",A10,1X,A8,",",I7,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
-             !write(999,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
+             !write(55,117) seconds_since,date(1:10),date(12:19),cnt,chlon(i),chlat(i), &
              !     qlink(i,1), qlink(i,1)*35.315,hlink(i)
              ! JLM: makes more sense to output the value in frxstpts incase they have meaning,
              ! as below, but I'm not going to make this change until I'm working with gridded
              ! streamflow again.
-             write(999,117) seconds_since, hydroTime(1:10), hydroTime(12:19), &
+             write(55,117) seconds_since, hydroTime(1:10), hydroTime(12:19), &
                   strmfrxstpts(i), chlon(i), chlat(i),                        &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
 
@@ -3480,7 +3507,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
        endif
 
     enddo
-    close(999) 
+    close(55) 
 
       !-- lastChild variable gives the record number of the most recent report for the station
       iret = nf_inq_varid(ncid,"lastChild", varid)
@@ -3833,8 +3860,7 @@ end subroutine mpp_output_chrt
 #endif
 
       if (iret /= 0) then
-          print*, "Problem nf_create"
-          call hydro_stop("output_lakes")
+          call hydro_stop("In output_lakes() - Problem nf_create")
       endif
 
       do i=1,NLAKES
@@ -4260,8 +4286,7 @@ end subroutine mpp_output_chrt
 #endif
 
         if (iret /= 0) then
-            print*, "Problem nf_create"
-            call hydro_stop("output_chrtgrd")
+            call hydro_stop("In output_chrtgrd() - Problem nf_create ")
         endif
 
         iret = nf_def_dim(ncid, "time", NF_UNLIMITED, timedim)
@@ -4371,7 +4396,7 @@ end subroutine mpp_output_chrt
 #endif
     if (ierr /= 0) then
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
-       call hydro_stop("read_chan_forcing")
+       call hydro_stop("In read_chan_forcing() - Problem opening netcdf file")
     endif
 
 !DJG read data...
@@ -4640,8 +4665,7 @@ end subroutine mpp_output_chrt
 #endif
 
        if (iret /= 0) then
-          print*, "Problem nf_create"
-          call hydro_stop("output_lsm")
+          call hydro_stop("In output_lsm() - Problem nf_create")
        endif
 
 
@@ -4734,12 +4758,16 @@ end subroutine mpp_output_chrt
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
        iret = nf_create(trim(outFile), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#ifdef HYDRO_D
        write(6,*) "yyywww using large netcdf file definition. "
        call flush(6)
+#endif
 #else
        iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
+#ifdef HYDRO_D
        write(6,*) "yyywww do not use large netcdf file definition. "
        call flush(6)
+#endif
 #endif
 
 
@@ -4748,8 +4776,7 @@ end subroutine mpp_output_chrt
 #endif
 
        if (iret /= 0) then
-          print*, "Problem nf_create"
-          call hydro_stop("RESTART_OUT_nc")
+          call hydro_stop("In RESTART_OUT_nc() - Problem nf_create")
        endif
 
 #ifdef MPP_LAND
@@ -5071,7 +5098,7 @@ end subroutine mpp_output_chrt
     call mpp_land_sync()
 
 
-    iunit = 801
+    iunit = 81
  istep = 64
  i0 = 0
  ie = istep
@@ -5124,7 +5151,7 @@ end subroutine mpp_output_chrt
 
         return
 101     continue
-        call hydro_stop("failed to output the hydro restart file.")
+        call hydro_stop("FATAL ERROR: failed to output the hydro restart file.")
         end subroutine RESTART_OUT_bi
 
    subroutine RESTART_in_bi(inFileTmp,did)
@@ -5142,7 +5169,7 @@ end subroutine mpp_output_chrt
     logical :: fexist
     integer  :: i0,ie, i, istep
 
-    iunit = 801
+    iunit = 81
 
              if(my_id .lt. 10) then
                 write(str_tmp,'(I1)') my_id
@@ -5160,7 +5187,7 @@ end subroutine mpp_output_chrt
 
     inquire (file=trim(inFile), exist=fexist)
     if(.not. fexist) then
-        call hydro_stop("could not find restart file "//trim(inFile))
+        call hydro_stop("In RESTART_in_bi()- Could not find restart file "//trim(inFile))
     endif
 
  istep = 64
@@ -5216,7 +5243,7 @@ end subroutine mpp_output_chrt
 
         return
 101     continue
-        call hydro_stop("failed to read the hydro restart file "//trim(inFile))
+        call hydro_stop("In RESTART_in_bi() - failed to read the hydro restart file "//trim(inFile))
         end subroutine RESTART_in_bi
 #endif
 
@@ -5498,7 +5525,7 @@ end subroutine mpp_output_chrt
     if (iret /= 0) then
        write(*,'("Problem opening file: ''", A, "''")') &
             trim(inFile)
-       call hydro_stop("RESTART_IN_NC") 
+       call hydro_stop("In RESTART_IN_NC() - Problem opening file") 
     endif
 
 #ifdef MPP_LAND
@@ -6891,12 +6918,14 @@ end subroutine mpp_output_chrt
 
           else
 
-             open(unit=79,file=trim(route_link_f),form='formatted',status='old')
-             read(79,*)  header
+             open(unit=17,file=trim(route_link_f),form='formatted',status='old')
+             read(17,*)  header
+#ifdef HYDRO_D
              print *, "header ", header, "NLINKSL = ", NLINKSL, GNLINKSL
+#endif
              call flush(6)
              do i=1,GNLINKSL
-                read (79,*) tmpLINKID(i),   tmp_from_node,   tmpTO_NODE(i), tmpCHLON(i),    &
+                read (17,*) tmpLINKID(i),   tmp_from_node,   tmpTO_NODE(i), tmpCHLON(i),    &
                             tmpCHLAT(i),    tmpZELEV(i),     tmpTYPEL(i),   tmpORDER(i),    &
                             tmpQLINK(i,1),  tmpMUSK(i),      tmpMUSX(i),    tmpCHANLEN(i),  &
                             tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i)
@@ -6904,7 +6933,8 @@ end subroutine mpp_output_chrt
                 ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
                 if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
              end do
-             close(79)
+             close(17)
+          
           end if  ! routeLinkNetcdf 
 
           if(routeLakeNetcdf) then
@@ -6987,18 +7017,20 @@ end subroutine mpp_output_chrt
            
         else 
 
-          open(unit=79,file=trim(route_link_f),form='formatted',status='old')
-          read(79,*)  header
+          open(unit=17,file=trim(route_link_f),form='formatted',status='old')
+          read(17,*)  header
+#ifdef HYDRO_D
           print *, "header ", header, "NLINKSL = ", NLINKSL
+#endif
           do i=1,NLINKSL
-              read (79,*) LINKID(i), tmp_from_node, TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
+              read (17,*) LINKID(i), tmp_from_node, TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
                    TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
                    MannN(i), So(i), ChSSlp(i), Bw(i)
 
               ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
               if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
           end do
-          close(79)
+          close(17)
 
         end if  ! routeLinkNetcdf 
 
@@ -7022,9 +7054,11 @@ end subroutine mpp_output_chrt
            So(i) = max(So(i), 0.00001)
         end do
 
+#ifdef HYDRO_D
        write(6,*) "finish read readLinkSL "
        call flush(6) 
 
+#endif
    end subroutine readLinkSL
 
 
@@ -7245,16 +7279,16 @@ end subroutine mpp_output_chrt
            call write_chanel_real(RT_DOMAIN(did)%CHLAT,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,chlat)
 
 
-           open (unit=95,file=outFile,status='unknown',position='append')
+           open (unit=75,file=outFile,status='unknown',position='append')
            cnt = 0
            do i = 1, rt_domain(did)%gnlinks
               if(STRMFRXSTPTS(i) .gt. 0) then
-                   write(95,114) nlst_rt(did)%olddate(1:4),nlst_rt(did)%olddate(6:7),nlst_rt(did)%olddate(9:10), nlst_rt(did)%olddate(12:13), &
+                   write(75,114) nlst_rt(did)%olddate(1:4),nlst_rt(did)%olddate(6:7),nlst_rt(did)%olddate(9:10), nlst_rt(did)%olddate(12:13), &
                          cnt,chlon(i),chlat(i),g_dayMean(i) 
                    cnt = cnt + 1
               endif
            end do
-           close(95)
+           close(75)
 114 FORMAT(1x,A4,A2,A2,A2,",",I7,", ",F10.5,",",F10.5,",",F12.3)
        end subroutine out_obs_crt
 #endif
@@ -7619,12 +7653,12 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        iret = nf_open(trim(infile), NF_NOWRITE, ncid)
 #ifdef MPP_LAND
        if(iret .ne. 0) then
-           call hydro_stop("Error: failed to open GWBUCKET Parameter file.")
+           call hydro_stop("Failed to open GWBUCKET Parameter file.")
        endif
        iret = nf_inq_dimid(ncid, "BasinDim", dimid)
        if (iret /= 0) then
-               print*, "nf_inq_dimid:  BasinDim"
-               call hydro_stop("read GBUCKETPARM")
+               !print*, "nf_inq_dimid:  BasinDim"
+               call hydro_stop("Failed read GBUCKETPARM - nf_inq_dimid:  BasinDim")
        endif
        iret = nf_inq_dimlen(ncid, dimid, gnid)
     endif
@@ -7641,28 +7675,28 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           iret = nf_inq_varid(ncid,"Coeff",  varid)
           if(iret /= 0) then
                print * , "could not find Coeff from ", infile
-               call hydro_stop("failed to read BUCKETPARM")
+               call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf_get_var_real(ncid, varid, tmpCoeff)
 
           iret = nf_inq_varid(ncid,"Expon",  varid)
           if(iret /= 0) then
                print * , "could not find Expon from ", infile
-               call hydro_stop("failed to read BUCKETPARM")
+               call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf_get_var_real(ncid, varid, tmpExp)
 
           iret = nf_inq_varid(ncid,"Zmax",  varid)
           if(iret /= 0) then
                print * , "could not find Zmax from ", infile
-               call hydro_stop("failed to read BUCKETPARM")
+               call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf_get_var_real(ncid, varid, tmpz_max)
 
           iret = nf_inq_varid(ncid, "ComID",  varid)
           if(iret /= 0) then
                print * , "could not find ComID from ", infile
-               call hydro_stop("failed to read BUCKETPARM")
+               call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf_get_var_int(ncid, varid, tmpLinkid)
 #ifdef MPP_LAND
@@ -7968,7 +8002,7 @@ end subroutine mpp_output_chrt2
      endif
 
        if(split_output_count .ne. 1 ) then
-            write(6,*) "Warning: split_output_count need to be 1 for this output option."
+            write(6,*) "WARNING: split_output_count need to be 1 for this output option."
        endif
 !-- have moved sec_since_date from above here..
         sec_since_date = 'seconds since '//startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10) &
@@ -7991,7 +8025,7 @@ end subroutine mpp_output_chrt2
 #endif
         if (iret /= 0) then
            print*,  "Problem nf_create points"
-           call hydro_stop("output_chrt")
+           call hydro_stop("In output_chrt2() - Problem nf_create points.")
         endif
 
        iret = nf_def_dim(ncid, "station", nstations, stationdim)

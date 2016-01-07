@@ -1,3 +1,24 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!  <brief list of changes to this source file>
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_HRLDAS_HYDRO
 
 ! NDHMS  module   
@@ -113,7 +134,9 @@ CONTAINS
         if(my_id .eq. IO_id) then
            call  time_seconds(t2)
            dact = dact + t2 - t1
+#ifdef HYDRO_D
            write(6,*) "accumulated time (s): ",dact
+#endif
         endif
 #endif
 
@@ -171,8 +194,8 @@ CONTAINS
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
             if(nlst_rt(did)%sys_cpl .ne. 1) then
-               write(6,*) "Error: sys_cpl should be 1."
-               call hydro_stop()
+               call hydro_stop("In module_hrldas_HYDRO.F hrldas_cpl_HYDRO_ini()"// &
+                               " - sys_cpl should be 1. Check hydro.namelist file.")
             endif
 
            RT_DOMAIN(did)%initialized = .true.
@@ -213,15 +236,45 @@ CONTAINS
      subroutine open_print_mpp(iunit)
        implicit none
        integer iunit
-       character(len=16) fileout
+       character(len=48) fileout
+!#ifdef NCEP_WCOSS
+       character(len=32) diag_prefix
+       integer len, status 
+!#endif
 
        if(open_unit_status == 999) return
        open_unit_status = 999 
 
-#ifdef MPP_LAND  
-       write(fileout,'(a11,i0.5)') "diag_hydro.",my_id    
+#ifdef NCEP_WCOSS
+       CALL GET_ENVIRONMENT_VARIABLE('FORT78',diag_prefix, len, status, .true.)
+       if (status .ge. 2) then
+          write (*,*) 'get_environment_variable failed: status = ', status
+          call hydro_stop("In module_hrldas_HYDRO.F open_print_mpp() - "// &
+                          "GET_ENVIRONMENT_VARIABLE(FORT78) Failed.")
+       end if
+       if (status .eq. 1) then
+          write (*,*) 'env var does not exist'
+          call hydro_stop("In module_hrldas_HYDRO.F open_print_mpp() - "// &
+                          "FORT78 environment variable does not exist.")
+
+       end if
+       if (status .eq. -1) then
+          write (*,*) 'env var length = ', len, ' truncated to 32'
+          len = 32
+       end if
+       if (len .eq. 0) then
+         write (*,*) 'env var exists  but has no value'
+         call hydro_stop("In module_hrldas_HYDRO.F open_print_mpp() - "// &
+                         "FORT78 environment variable exists but has no value.")
+       end if
 #else
-       write(fileout,'(a11,i0.5)') "diag_hydro.",0    
+       diag_prefix = 'diag_hydro.'
+#endif
+
+#ifdef MPP_LAND  
+       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),my_id    
+#else
+       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),0    
 #endif
        open(iunit,file=fileout,form="formatted")
      endsubroutine open_print_mpp

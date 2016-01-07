@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_grib2
   use module_mapinfo
   use module_grib2_tables
@@ -34,20 +54,20 @@ contains
 
     select case (grib%sec1%srt) ! Check the "significance of reference time"
     case default
-       write(*,'("Unrecognized ''Significance of Reference Time'' (GRIB2, section 1, octet 12):  ", I10)') grib%sec1%srt
-       stop
+       write(*,'("WARNING: Unrecognized ''Significance of Reference Time'' (GRIB2, section 1, octet 12):  ", I10)') grib%sec1%srt
+       stop "FATAL ERROR: In module module_grib2.F -- Unrecognized Significance of Reference Time"
 
     case (0:1)  ! <grib%sec1%hdate> refers to the analysis time(0) or forecast start time (1)
 
        select case (grib%sec4%product_template_number) ! Check the product template number
        case default
-          write(*,'("Unrecognized Product Definition Template: ", I8)') grib%sec4%product_template_number
+          write(*,'("WARNING: Unrecognized Product Definition Template: ", I8)') grib%sec4%product_template_number
        case (0) ! Analysis or forecast at a point in time
           fcst_time = grib%sec4%time
           select case (grib%sec4%time_range_indicator) ! Check the units on the time
           case default
-             write(*,'("Unrecognized time range indicator: ", I8)') grib%sec4%time_range_indicator
-             stop
+             write(*,'("WARNING: Unrecognized time range indicator: ", I8)') grib%sec4%time_range_indicator
+             stop "FATAL ERROR: In module module_grib2.F -- Unrecognized time range indicator"
           case (0) ! Time in minutes
              time_factor = 60
              call geth_newdate(validdate(1:19), refdate(1:19), fcst_time*time_factor)
@@ -69,8 +89,8 @@ contains
 
     select case (grib%sec3%grid_template_number)
     case default
-       write(*, '("Unrecognized GRIB 2 grid template number:  ", I12)') grib%sec3%grid_template_number
-       stop "GRIB2_MAP_INFORMATION:  Unrecognized grid template number."
+       write(*, '("WARNING: Unrecognized GRIB 2 grid template number:  ", I12)') grib%sec3%grid_template_number
+       stop "FATAL ERROR: In module module_grib2.F -- GRIB2_MAP_INFORMATION:  Unrecognized grid template number."
     case (0)
        ! call print_sec3(grib, 10000)
        grib%mapinfo%hproj = "CE"
@@ -136,8 +156,8 @@ contains
 
     allocate(decoded(width*height), stat=allocation_status)
     if (allocation_status /= 0) then
-       write(*,'("Problem allocating space in FORTRAN_DECODE_JPEG2000.")')
-       stop "MODULE_GRIB2"
+       write(*,'("WARNING: Problem allocating space in FORTRAN_DECODE_JPEG2000.")')
+       stop "FATAL ERROR: In module module_grib2.F -- Problem allocating space in FORTRAN_DECODE_JPEG2000"
     endif
 
     call decode_jpeg2000(image_pointer, stream_pointer, width, height, decoded)
@@ -254,7 +274,7 @@ contains
           select case (grib%sec4%time_range_indicator)
           case default
              write(processing,'("Unrecognized time range indicator for accumulation:", I8)') grib%sec4%time_range_indicator
-             stop
+             stop "FATAL ERROR: In module module_grib2.F -- Unrecognized time range indicator for accumulation"
           case (0)
              p1_seconds = grib%sec4%time*60
           case (1)
@@ -268,7 +288,7 @@ contains
           select case (grib%sec4%PDT_4_8%time_range_unit)
           case default
              write(processing,'("Unrecognized time range unit for accumulation:", I8)') grib%sec4%PDT_4_8%time_range_unit
-             stop
+             stop "FATAL ERROR: In module module_grib2.F -- Unrecognized time range unit for accumulation"
           case (0)
              p2_seconds = p1_seconds + (grib%sec4%PDT_4_8%length_of_time_range) * 60
           case (1)
@@ -371,9 +391,9 @@ contains
     level2_value = -1.E36
     select case (grib%sec4%product_template_number)
     case default
-       write(*,'("MODULE_GRIB2:  GRIB2_LEVEL_INFORMATION:  Unrecognized product_template_number: ", I4)') &
+       write(*,'("WARNING: MODULE_GRIB2:  GRIB2_LEVEL_INFORMATION:  Unrecognized product_template_number: ", I4)') &
             grib%sec4%product_template_number
-       stop "Problem"
+       stop "FATAL ERROR: In module module_grib2.F -- GRIB2_LEVEL_INFORMATION: Unrecognized product_template_number"
     case (0)
        call get_level_string(grib%sec4%ltype1, level_type, level_units)
        level_value  = grib%sec4%level1
@@ -428,7 +448,7 @@ contains
        gribsizeA  = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
        gribsizeB  = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
        if (gribsizeA /= 0) then
-          stop "UNPACK_NEXT_GRIB2_SECTION:  Large size.  Despair!"
+          stop "FATAL ERROR: In module module_grib2.F -- UNPACK_NEXT_GRIB2_SECTION:  Large size.  Despair!"
        endif
        gribsize = gribsizeB
        return
@@ -463,8 +483,8 @@ contains
           call unpack_sec7(grib);
           ! call print_sec7(grib);
        case default
-          write(*,'("Section?  ", I10)') isection
-          stop "Section?"
+          write(*,'("WARNING: Section?  ", I10)') isection
+          stop "FATAL ERROR: In module module_grib2.F -- Section?"
        end select
     endif
 
@@ -632,8 +652,8 @@ contains
     section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
 
     if (section /= 3) then
-       write(*,'("Section 3:  We are lost!  ",I4)') section
-       stop "Problem"
+       write(*,'("WARNING: Section 3:  We are lost!  ",I4)') section
+       stop "FATAL ERROR: In module module_grib2.F -- Section 3: We are lost"
     endif
 
     sec3%grid_definition_source   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
@@ -813,8 +833,8 @@ contains
        nullify(GT_3_30)
 
     case default
-       write(*,'("Unknown grid_template_number: ",I4)') sec3%grid_template_number
-       stop "Problem."
+       write(*,'("WARNING: Unknown grid_template_number: ",I4)') sec3%grid_template_number
+       stop "FATAL ERROR: In module module_grib2.F -- Unknown grid_template_number."
     end select
 
     nullify(sec3)
@@ -958,8 +978,8 @@ contains
     sec4%size = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
     section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)  
     if (section /= 4) then
-       write(*,'("Section 4:  We are lost!  ", I4)') section
-       stop "Problem"
+       write(*,'("WARNING: Section 4:  We are lost!  ", I4)') section
+       stop "FATAL ERROR: In module module_grib2.F -- Section 4: Problem"
     endif
 
     sec4%number_of_coord_values  = unpack_unsigned_integer(grib%buffer, 2, grib%iskip)
@@ -1017,8 +1037,8 @@ contains
        PDT_4_8%end_second                        = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
        select case (sec4%time_range_indicator)
        case default
-          write(*,'("sec4%time_range_indicator = ", I4)') sec4%time_range_indicator
-          stop "time conversion?"
+          write(*,'("WARNING: sec4%time_range_indicator = ", I4)') sec4%time_range_indicator
+          stop "FATAL ERROR: In module module_grib2.F -- time conversion error"
        case (0)
           time_conversion_to_seconds = 60
        case (1)
@@ -1041,13 +1061,13 @@ contains
        PDT_4_8%time_increment                       = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
 
        if (PDT_4_8%number_of_time_range_specifications > 1) then
-          write(*,'("Hmmmm.  number of time range specifications = ", I8)') PDT_4_8%number_of_time_range_specifications
-          stop "Problem"
+          write(*,'("WARNING: Hmmmm.  number of time range specifications = ", I8)') PDT_4_8%number_of_time_range_specifications
+          stop "FATAL ERROR: In module module_grib2.F -- number of time range specifications"
        endif
 
     case default
-       write(*,'("Unrecognized product_template_number: ", I4)') sec4%product_template_number
-       stop "Problem"
+       write(*,'("WARNING: Unrecognized product_template_number: ", I4)') sec4%product_template_number
+       stop "FATAL ERROR: In module module_grib2.F -- Unrecognized product_template_number"
     end select
 
   end subroutine unpack_sec4
@@ -1125,8 +1145,8 @@ contains
        write(*,'("      time increment unit:              ",I8)') sec4%PDT_4_8%time_increment_unit
        write(*,'("      time increment:                   ",I8)') sec4%PDT_4_8%time_increment
     case default
-       write(*,'("Unrecognized product_template_number: ",I8)') sec4%product_template_number
-       stop "Problem."
+       write(*,'("WARNING: Unrecognized product_template_number: ",I8)') sec4%product_template_number
+       stop "FATAL ERROR: Unrecognized product_template_number."
     end select
   end subroutine print_sec4
 
@@ -1152,8 +1172,8 @@ contains
     sec5%size = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
     section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
     if (section /= 5) then
-       write(*,'("Section 5:  We are lost!  ", I8)') section
-       stop "Problem"
+       write(*,'("WARNING: Section 5:  We are lost!  ", I8)') section
+       stop "FATAL ERROR: In module module_grib2.F -- Section 5 Problem"
     endif
 
     sec5%nval                 = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
@@ -1200,8 +1220,8 @@ contains
        sec5%DRT_5_40%compression_type = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
        sec5%DRT_5_40%target_compression_ratio = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
     case default
-       write(*,'("Unrecognized Data Representation Template Number: ", I8)') sec5%data_template_number
-       stop "Problem"
+       write(*,'("WARNING: Unrecognized Data Representation Template Number: ", I8)') sec5%data_template_number
+       stop "FATAL ERROR: In module module_grib2.F -- Unrecognized Data Representation Template Number"
     end select
 
   end subroutine unpack_sec5
@@ -1249,8 +1269,8 @@ contains
        write(*,'("     compression type:              ", I8)') sec5%DRT_5_40%compression_type
        write(*,'("     target compression ratio:      ", I8)') sec5%DRT_5_40%target_compression_ratio
     case default
-       write(*,'("Unrecognized Data Representation Template Number: ",I8)') sec5%data_template_number
-       stop "Problem"
+       write(*,'("WARNING: Unrecognized Data Representation Template Number: ",I8)') sec5%data_template_number
+       stop "FATAL ERROR: In module in module_grib2.F -- Problem"
     end select
   end subroutine print_sec5
 
@@ -1274,15 +1294,15 @@ contains
     sec6%size = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
     section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)  
     if (section /= 6) then
-       write(*,'("Section 6:  We are lost!  ", I8)') section
-       stop "Problem"
+       write(*,'("WARNING: Section 6:  We are lost!  ", I8)') section
+       stop "FATAL ERROR: In module module_grib2.F -- Section 6"
     endif
 
     sec6%bit_map_indicator = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)  
     select case (sec6%bit_map_indicator)
     case default
-       write(*,'("Oooooh, bit mapped field:  ",I8)')  sec6%bit_map_indicator
-       stop "Unrecognized bit_map_indicator"
+       write(*,'("WARNING: Oooooh, bit mapped field:  ",I8)')  sec6%bit_map_indicator
+       stop "FATAL ERROR: In module module_grib2.F -- Unrecognized bit_map_indicator"
     case (255)
        ! No bitmap.
        ! No action needed here.
@@ -1372,14 +1392,14 @@ contains
     sec7%size = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
     section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
     if (section /= 7) then
-       write(*,'("Section 7:  We are lost!  ", I8)') section
-       stop
+       write(*,'("WARNING: Section 7:  We are lost!  ", I8)') section
+       stop "FATAL ERROR: In module module_grib2.F -- Section 7"
     endif
 
     select case (sec5%data_template_number)
     case default
-       write(*, '("Unrecognized Data Representation Template Number: ", I8)') sec5%data_template_number
-       stop "Problem"
+       write(*, '("WARNING: Unrecognized Data Representation Template Number: ", I8)') sec5%data_template_number
+       stop "FATAL ERROR: In module module_grib2.F -- Unrecognized Data Representation Template Number"
     case (2)
        ! Grid-point data -- complex packing
        ng = sec5%DRT_5_2%ng
@@ -1455,7 +1475,7 @@ contains
              nullify(sec7%floated)
           endif
           allocate(sec7%floated(grib%sec3%nx * grib%sec3%ny), stat=allostat)
-          if (allostat /= 0) stop "Allocation problem 1"
+          if (allostat /= 0) stop "FATAL ERROR: In module module_grib2.F -- Allocation problem 1"
           do i = 1, ( grib%sec3%nx * grib%sec3%ny )
              sec7%floated(i) = sec5%DRT_5_40%reference_value * (10.0 ** (-sec5%DRT_5_40%decimal_scale_factor))
           enddo

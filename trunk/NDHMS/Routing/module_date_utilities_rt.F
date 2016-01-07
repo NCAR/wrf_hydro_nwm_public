@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module Module_Date_utilities_rt
 contains
   subroutine geth_newdate (ndate, odate, idt)
@@ -110,7 +130,7 @@ contains
           units = 8
        case default
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
-          call hydro_stop("geth_newdate")
+          call hydro_stop("In geth_newdate() odd length")
        end select
 
        if (oldlen.ge.11) then
@@ -162,7 +182,7 @@ contains
           units = 8
        case default
           write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
-          call hydro_stop("geth_newdate")
+          call hydro_stop("In geth_newdate() - odd length")
        end select
     endif
 
@@ -244,7 +264,7 @@ contains
     if (.not.opass) then
 #ifdef HYDRO_D
        write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
-       call hydro_stop(" Crazy ODATE")
+       call hydro_stop("In geth_newdate() - Crazy ODATE")
 #endif
     end if
 
@@ -293,7 +313,7 @@ contains
        write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
             oldlen
        write(*,*) '#'//odate(1:oldlen)//'#'
-       call hydro_stop("geth_newdate")
+       call hydro_stop("In geth_newdate()")
     end if
 
     if (idt.ge.0) then
@@ -497,7 +517,7 @@ contains
     newlen = len(newdate)
     if (newlen.ne.oldlen) then
        write(*,'("GETH_IDTS: NEWLEN /= OLDLEN: ", A, 3x, A)') newdate(1:newlen), olddate(1:oldlen)
-       call hydro_stop("geth_newdate")
+       call hydro_stop("In geth_idts() - NEWLEN /= OLDLEN")
     endif
 
     if (olddate.gt.newdate) then
@@ -523,14 +543,14 @@ contains
        if (ndate(5:5) /= "-") then
           write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
                ndate(1:newlen), odate(1:oldlen)
-          call hydro_stop("geth_idts")
+          call hydro_stop("In geth_idts() - Dates appear to be different formats")
        endif
     else
        punct = .FALSE.
        if (ndate(5:5) == "-") then
           write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
                ndate(1:newlen), odate(1:oldlen)
-          call hydro_stop("geth_idts")
+          call hydro_stop("In geth_idts() - Dates appear to be different formats")
        endif
     endif
 
@@ -575,7 +595,7 @@ contains
           units = 8
        case default
           write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
-          call hydro_stop("geth_idts")
+          call hydro_stop("In geth_idts() - odd length")
        end select
     else
 
@@ -620,7 +640,7 @@ contains
           units = 8
        case default
           write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
-          call hydro_stop("geth_idts")
+          call hydro_stop("In geth_idts() - odd length")
        end select
     endif
 
@@ -788,12 +808,12 @@ contains
 
     if (.not. npass) then
        print*, 'Screwy NDATE: ', ndate(1:newlen)
-       call hydro_stop("geth_idts")
+       call hydro_stop("In geth_idts() - Screwy NDATE ")
     end if
 
     if (.not. opass) then
        print*, 'Screwy ODATE: ', odate(1:oldlen)
-       call hydro_stop("geth_idts")
+       call hydro_stop("In geth_idts() - Screwy ODATE ")
     end if
 
     !  Date Checks are completed.  Continue.
@@ -932,7 +952,7 @@ contains
     else
        write(*, '("Function monthabbr_to_mm:  mon = <",A,">")') mon
        print*,  "Function monthabbr_to_mm:  Unrecognized mon"
-       call hydro_stop("monthabbr_to_mm")
+       call hydro_stop("In monthabbr_to_mm() - Unrecognized mon")
     endif
   end function monthabbr_to_mm
 
@@ -964,7 +984,7 @@ contains
                indate(18:19)//indate(21:inlen)
        case default
           write(*,'("Unrecognized length: <", A,">")') indate
-         call hydro_stop("swap_date_format")
+         call hydro_stop("In swap_date_format() - Unrecognized length")
        end select
     else
        select case (inlen)
@@ -989,7 +1009,7 @@ contains
                indate(9:10)//":"//indate(11:12)//":"//indate(13:14)//"."//indate(15:inlen)
        case default
           write(*,'("Unrecognized length: <", A,">")') indate
-          call hydro_stop("swap_date_format")
+          call hydro_stop("In swap_date_format() - Unrecognized length")
        end select
     endif
 
@@ -1004,8 +1024,8 @@ contains
     if (ii > 0 .and. ii < 13 ) then
        mon = month(ii)
     else
-       print*, "mm_to_monthabbr"
-       call hydro_stop("mm_to_monthabbr")
+!       print*, "mm_to_monthabbr"
+       call hydro_stop("In mm_to_monthabbr() - mm_to_monthabbr")
     endif
   end function mm_to_monthabbr
 

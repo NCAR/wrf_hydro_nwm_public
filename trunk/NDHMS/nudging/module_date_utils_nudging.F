@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_date_utils_nudging
 contains
 
@@ -138,10 +158,10 @@ if (punct) then
       ! Ten thousandths
       units = 8
    case default
-#ifdef HYDRO_D
-      write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
+
+      write(*,*) 'FATAL ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
       call hydro_stop("geth_newdate")
-#endif
+
    end select
 
    if (oldlen.ge.11) then
@@ -192,10 +212,10 @@ else
       ! Ten thousandths
       units = 8
    case default
-#ifdef HYDRO_D
-      write(*,*) 'ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
+
+      write(*,*) 'FATAL ERROR: geth_newdate:  odd length: #'//trim(odate)//'#'
       call hydro_stop("geth_newdate")
-#endif
+
    end select
 endif
 
@@ -275,10 +295,10 @@ end if
 
 
 if (.not.opass) then
-#ifdef HYDRO_D
-   write(*,*) 'Crazy ODATE: ', odate(1:oldlen), oldlen
+
+   write(*,*) 'FATAL ERROR: Crazy ODATE: ', odate(1:oldlen), oldlen
    stop
-#endif
+
 end if
 
 !  Date Checks are completed.  Continue.
@@ -323,12 +343,12 @@ else if (units.eq.1) then !idt should be in days
    nsec   = 0
    nfrac  = 0
 else
-#ifdef HYDRO_D
+
    write(*,'(''GETH_NEWDATE: Strange length for ODATE: '', i3)') &
         oldlen
    write(*,*) '#'//odate(1:oldlen)//'#'
    call hydro_stop("geth_newdate")
-#endif
+
 end if
 
 if (idt.ge.0) then
@@ -584,20 +604,20 @@ end if
 if (odate(5:5) == "-") then
    punct = .TRUE.
    if (ndate(5:5) /= "-") then
-#ifdef HYDRO_D
+
       write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
            ndate(1:newlen), odate(1:oldlen)
       call hydro_stop("geth_idts")
-#endif
+
    endif
 else
    punct = .FALSE.
    if (ndate(5:5) == "-") then
-#ifdef HYDRO_D
+
       write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
            ndate(1:newlen), odate(1:oldlen)
       call hydro_stop("geth_idts")
-#endif
+
    endif
 endif
 
@@ -641,10 +661,10 @@ if (punct) then
       ! Ten thousandths
       units = 8
    case default
-#ifdef HYDRO_D
+
       write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
       call hydro_stop("geth_idts")
-#endif
+
    end select
 else
 
@@ -688,10 +708,10 @@ else
       ! Ten thousandths
       units = 8
    case default
-#ifdef HYDRO_D
+
       write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
       call hydro_stop("geth_idts")
-#endif
+
    end select
 endif
 
@@ -866,7 +886,7 @@ end if
 
 if (.not. opass) then
 #ifdef HYDRO_D
-   print*, 'Screwy ODATE: ', odate(1:oldlen)
+   print*, 'FATAL ERROR: Screwy ODATE: ', odate(1:oldlen)
    call hydro_stop("geth_idts")
 #endif
 end if
@@ -1083,11 +1103,11 @@ elseif (mon == "Nov") then
 elseif (mon == "Dec") then
    mm = 12
 else
-#ifdef HYDRO_D
+
    write(*, '("Function monthabbr_to_mm:  mon = <",A,">")') mon
-   print*,  "Function monthabbr_to_mm:  Unrecognized mon"
+   print*,  "FATAL ERROR: Function monthabbr_to_mm:  Unrecognized mon"
    call hydro_stop("monthabbr_to_mm")
-#endif
+
 endif
 end function monthabbr_to_mm
 
@@ -1171,10 +1191,10 @@ else
       outdate = indate(1:4)//"-"//indate(5:6)//"-"//indate(7:8)//"_"//&
            indate(9:10)//":"//indate(11:12)//":"//indate(13:14)//"."//indate(15:inlen)
    case default
-#ifdef HYDRO_D
-      write(*,'("Unrecognized length: <", A,">")') indate
+
+      write(*,'("FATAL ERROR: Unrecognized length: <", A,">")') indate
       call hydro_stop("swap_date_format")
-#endif
+
    end select
 endif
 
@@ -1215,10 +1235,10 @@ character(len=3), parameter, dimension(12) :: month = (/ &
 if (ii > 0 .and. ii < 13 ) then
    mon = month(ii)
 else
-#ifdef HYDRO_D
-   print*, "mm_to_monthabbr"
+
+   print*, "FATAL ERROR: mm_to_monthabbr"
    call hydro_stop("mm_to_monthabbr")
-#endif
+
 endif
 end function mm_to_monthabbr
 

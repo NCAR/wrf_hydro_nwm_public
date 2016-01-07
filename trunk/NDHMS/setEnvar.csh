@@ -20,3 +20,5 @@ if(! $?WRFIO_NCD_LARGE_FILE_SUPPORT) setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
 ### running in REALTIME mode (with reduced output).
 if(! $?HYDRO_REALTIME) setenv HYDRO_REALTIME 1
 
+###
+# setenv WRF_HYDRO_NUDGING 1

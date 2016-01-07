@@ -1,3 +1,24 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!  <brief list of changes to this source file>
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_WRF_HYDRO
 
 #ifdef MPP_LAND
@@ -65,7 +86,7 @@ CONTAINS
         jx = jte - jts + 1
 
         if(HYDRO_dt .le. 0) then
-             write(6,*) "Warning: HYDRO_dt <= 0 from land input. set it to be 1 seconds."
+             write(6,*) "WARNING: HYDRO_dt <= 0 from land input. set it to be 1 seconds."
              HYDRO_dt = 1
         endif
 
@@ -116,8 +137,8 @@ CONTAINS
 
 
             if(nlst_rt(did)%sys_cpl .ne. 2) then
-               write(6,*) "Error: sys_cpl should be 2."
-               call hydro_stop()
+               call hydro_stop("In module_wrf_HYDRO.F wrf_cpl_HYDRO() - "// &
+                               "sys_cpl should be 2.  Check hydro.namelist file.")
             endif
 
 
@@ -140,7 +161,7 @@ CONTAINS
                nlst_rt(did)%dtrt_ch = HYDRO_dt
                mm0 = 1
             else
-               mm = HYDRO_dt/nlst_rt(did)%dtrt_ch
+               mm = HYDRO_dt/nlst_rt(did)%dtrt_ch_
                if(mm*nlst_rt(did)%dtrt_ch.lt. HYDRO_dt) nlst_rt(did)%dtrt_ch = HYDRO_dt/mm
                mm0 = mm
             endif
@@ -322,6 +343,7 @@ CONTAINS
        if(my_id .eq. IO_id) then
 #endif
 
+#ifndef NCEP_WCOSS
        open(71,file="HYDRO.TBL", form="formatted")
 !read OV_ROUGH first
           read(71,*) nn
@@ -337,6 +359,22 @@ CONTAINS
           end do
        close(71)
 
+#else
+      open(13, form="formatted") 
+!read OV_ROUGH first
+          read(13,*) nn
+          read(13,*)
+          do i = 1, nn
+             read(13,*) RT_DOMAIN(did)%OV_ROUGH(i)
+          end do
+!read parameter for LKSAT
+          read(13,*) nn
+          read(13,*)
+          do i = 1, nn
+             read(13,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
+          end do
+       close(13)
+#endif
 #ifdef MPP_LAND
        endif
        call mpp_land_bcast_real(leng,RT_DOMAIN(did)%OV_ROUGH)

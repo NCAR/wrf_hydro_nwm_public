@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 MODULE module_channel_routing
 #ifdef MPP_LAND
   USE module_mpp_land
@@ -202,9 +222,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !end 
 
         if (n.le.0.0.or.Cs.le.0.or.Bw.le.0) then
-         print *, "error in Diffusion function ->channel coefficients"
+         print *, "Error in Diffusion function ->channel coefficients"
          print *, "nod, n, Cs, Bw", nod, n, Cs, Bw 
-         call hydro_stop("in DIFFUSION")
+         call hydro_stop("In DIFFUSION() - Error channel coefficients.")
         endif
 
 !        Sf = ((z1+h1)-(z2+h2))/dx  !-- compute the friction slope
@@ -217,7 +237,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 !modifieed by Wei Yu for false geography data
          if(abs(z1-z2) .gt. 1.0E5) then
 #ifdef HYDRO_D
-             print*, "Warning: huge slope rest to 0 for channel grid.", z1,z2
+             print*, "WARNING: huge slope rest to 0 for channel grid.", z1,z2
 #endif
              Sf = ((h1-h2))/dx  !-- compute the friction slope
          else
@@ -332,8 +352,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         !qC = quc + ql !current upstream in reach
 
         if (n .le.0 .or. So .le. 0 .or. z .le. 0 .or. Bw .le. 0) then
-          print*, "error in channel coefficients -> Muskingum cunge",n,So,z,Bw
-          call hydro_stop("in MUSKINGCUNGE")
+          print*, "Error in channel coefficients -> Muskingum cunge",n,So,z,Bw
+          call hydro_stop("In MUSKINGCUNGE() - Error in channel coefficients")
         end if
 
         error   = 1.0
@@ -379,8 +399,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
   
            D = (Km*(1 - X) + dt/2)              !--seconds
             if(D .eq. 0.0) then 
-              print *, "D is 0 in MUSKINGCUNGE", Km, X, dt,D
-              call hydro_stop("in MUSKINGCUNGE")
+              print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
+              call hydro_stop("In MUSKINGCUNGE() - D is 0.")
            endif 
   
            C1 =  (Km*X + dt/2)/D
@@ -428,8 +448,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
   
            D = (Km*(1 - X) + dt/2)              !--seconds
             if(D .eq. 0.0) then 
-              print *, "D is 0 in MUSKINGCUNGE", Km, X, dt,D
-              call hydro_stop("in MUSKINGCUNGE")
+              print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
+              call hydro_stop("In MUSKINGCUNGE() - D is 0.")
            endif 
   
            C1 =  (Km*X + dt/2)/D
@@ -474,13 +494,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
       if((maxiter .ge. 100 .and. error .gt. 0.05) .or. h .gt. 100) then 
 
-         print*, "Warning message:"
+         print*, "WARNING:"
          print*, "id,err,iters,h", idx, error, maxiter, h
          print*, "n,z,B,So,dx,X,dt,Km",n,z,Bw,So,dx,X,dt,Km
          print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
          if(h.gt.100) then
-              print*, "Water Elevation Calculation is Diverging"
-              call hydro_stop("in MUSKINGCUNGE")
+              print*, "FATAL ERROR: Water Elevation Calculation is Diverging"
+              call hydro_stop("In MUSKINGCUNGE() - Water Elevation Calculation is Diverging")
          endif
       endif
 
@@ -743,8 +763,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                  ! QLINK(k,2) = 1/MannN(k) * AREA * WP**(2./3.) * sqrt(So(k))
 
               else
-                  print *, "No channel option selected"
-                  call hydro_stop("drive_CHANNEL") 
+                  print *, "FATAL ERROR: No channel option selected"
+                  call hydro_stop("In drive_CHANNEL() -No channel option selected ") 
               endif
            endif
         end do
@@ -809,8 +829,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
                     ! tmpQLINK(k,2) = ((1/MannN(k)) * AREA * WP**(2./3.) * sqrt(So(k)))
 
                    else
-                    print *, " no channel option selected"
-                    call hydro_stop("drive_CHANNEL") 
+                    print *, "FATAL ERROR: no channel option selected"
+                    call hydro_stop("In drive_CHANNEL() - no channel option selected") 
                    endif
             endif !!! order(1) .ne. 1
          end do       !--k links
@@ -890,8 +910,8 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 #endif
           
            if(node_area(i) .eq. 0) then
-               write(6,*) "Error: node_area(i) is zero. i=", i
-               call hydro_stop("drive_CHANNEL") 
+               write(6,*) "FATAL ERROR: node_area(i) is zero. i=", i
+               call hydro_stop("In drive_CHANNEL() - Error node_area") 
            endif
 
            
@@ -1108,7 +1128,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) )* DTCT
               if((CVOLTMP(i) .lt. 0) .and. (gwChanCondSw == 0)) then 
 #ifdef HYDRO_D
-                print *, "warning! channel volume less than 0:i,CVOL,QSUM,QLat", &
+                print *, "WARNING! channel volume less than 0:i,CVOL,QSUM,QLat", &
                                i, CVOLTMP(i),QSUM(i),QLateral(i),HLINK(i)
 #endif
                 CVOLTMP(i) =0 
@@ -1146,8 +1166,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
               QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
 
             else
-              print *, "this node does not have a type.. error TYPEL =", TYPEL(i)
-              call hydro_stop("drive_CHANNEL") 
+              print *, "FATAL ERROR: This node does not have a type.. error TYPEL =", TYPEL(i)
+              call hydro_stop("In drive_CHANNEL() - error TYPEL") 
             endif
            
            if(TYPEL(i) == 0) then !-- regular channel node, finalize head and flow
@@ -1224,8 +1244,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
            HLINK = HLINKTMP                 !-- update head based on final solution in timestep
            CVOL  = CVOLTMP                  !-- update volume
         else                                !-- no channel option apparently selected
-         print *, "no channel option selected"
-         call hydro_stop("drive_CHANNEL") 
+         print *, "FATAL ERROR: no channel option selected"
+         call hydro_stop("In drive_CHANNEL() - no channel option selected") 
         endif
 
 #ifdef HYDRO_D
@@ -1248,8 +1268,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
      REAL FUNCTION CDf(Q,Bw,h,z)
      REAL :: Q, Bw, z, h
        if(h .le. 0) then
-         print *, "head is zero, will get division by zero error"
-         call hydro_stop("in AREAf") 
+         print *, "FATAL ERROR: head is zero, will get division by zero error"
+         call hydro_stop("In CDf() - head is zero") 
        else
        CDf = (Q/((Bw+z*h)*h))/(sqrt(9.81*(((Bw+z*h)*h)/(Bw+2*z*h))))-1  !--critical depth function
        endif
@@ -1346,7 +1366,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         print *, "interval won't work to find CD of lnk ", lnk
         print *, "Q, hl, hu", Q, hl, hu
         print *, "cd lwr, upr", CDf(Q,BW,hl,z), CDf(Q,BW,hu,z)
-        ! call hydro_stop("in CRITICALDEPTH") 
+        ! call hydro_stop("In CRITICALDEPTH()") 
         CRITICALDEPTH = -9999
         return
 #endif

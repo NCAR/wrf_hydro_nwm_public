@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module kwm_grid_utilities
   private :: oned
 contains
@@ -134,8 +154,8 @@ contains
     implicit none
     real, intent(in) :: X, A, B, C, D
 
-    if (B < -1.E25) stop "Point B in ONED"
-    if (C < -1.E25) stop "Point C in ONED"
+    if (B < -1.E25) stop "FATAL ERROR: In kwm_grid_utilities.F -- Point B in ONED"
+    if (C < -1.E25) stop "FATAL ERROR: In kwm_grid_utilities.F -- Point C in ONED"
 
     IF (abs(X) < 1.E-5) then
        val = B

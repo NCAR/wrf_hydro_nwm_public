@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_nudging_io
 
 use netcdf
@@ -611,7 +631,9 @@ if(my_id .eq. io_id) then
    ! Open the  finemesh static files to obtain projection information
    ! jlm: this seems optional, might be nice if output is used for plotting/GIS.
    ! jlm: set did:=1 in nlst_rt
+#ifdef HYDRO_D
    write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt(1)%geo_finegrid_flnm)
+#endif
 
    iret = nf_open(trim(nlst_rt(1)%geo_finegrid_flnm), NF_NOWRITE, ncstatic)
    
@@ -638,7 +660,10 @@ if(my_id .eq. io_id) then
    
    
    ! Create the channel connectivity file
+#ifdef HYDRO_D
    print*,'Ndg: output_flnm = "'//trim(output_flnm)//'"'
+#endif
+
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
    write(6,*) "using large netcdf file for CHANNEL_CONNECTIVITY"
    iret = nf_create(trim(output_flnm), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
@@ -653,8 +678,9 @@ if(my_id .eq. io_id) then
    endif
 
    nStreamCells=size(CHLON,1)
+#ifdef HYDRO_D
    print*,'Ndg: jlm: nStreamCells:', nStreamCells
-
+#endif
    ! Dimension definitions
    iret = nf_def_dim(ncid, "nStreamCells", nStreamCells, streamCellDimID)  
 
@@ -777,9 +803,9 @@ deallocate(chLat, chLon, chanLen, from_node, to_node, chanXI, chanYJ, typeL, lak
 
 if(my_id .eq. io_id) then
 #endif
-
+#ifdef HYDRO_D
    write(6,*) "end of output_chan_connectivity" 
-
+#endif
 #ifdef MPP_LAND
 endif
 #endif
@@ -916,8 +942,9 @@ implicit none
 integer :: get_netcdf_dim  !! return value
 character(len=*), intent(in)   :: file, dimName, callingRoutine
 integer :: ncId, dimId, iRet
-
+#ifdef HYDRO_D
 write(*,'("getting dimension from file: ''", A, "''")') trim(file)
+#endif
 iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem opening file: ''", A, "''")') trim(file)

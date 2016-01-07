@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_wrfinputfile
   use netcdf
   use module_llxy
@@ -168,7 +188,7 @@ contains
             knowni=1.0, knownj=1.0, lat0=pole_lat, lon0=pole_lon, stdlon=stdlon)
 
     else if (map_proj == PROJ_LATLON) then
-       stop "PROJ_LATLON is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_wrfinputfile.F -- PROJ_LATLON is not a valid map projection for WRF."
 
        ! iret = nf90_get_att(ncid, NF90_GLOBAL, "DX" , dx)
        ! call error_handler(iret, "STOP:  nf90_get_att:  DX")
@@ -182,24 +202,24 @@ contains
        !      latinc=latinc, loninc=loninc, knowni=1.0, knownj=1.0)
 
     else if (map_proj == PROJ_PS_WGS84) then
-       stop "PROJ_PS_WGS84 is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_wrfinputfile.F -- PROJ_PS_WGS84 is not a valid map projection for WRF."
        ! call map_set(PROJ_PS_WGS84, wrfinput%proj, lat1=wrfinput%la1, lon1=wrfinput%lo1, knowni=1.0, knownj=1.0, &
        !     stdlon=wrfinput%lov, dx=wrfinput%dx)
     else if (map_proj == PROJ_GAUSS) then
-       stop "PROJ_GAUSS is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_wrfinputfile.F -- PROJ_GAUSS is not a valid map projection for WRF."
        ! call map_set(PROJ_GAUSS, wrfinput%proj, lat1=, lon1=, nlat=, loninc=)
     else if (map_proj == PROJ_CYL) then
-       stop "PROJ_CYL is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_wrfinputfile.F -- PROJ_CYL is not a valid map projection for WRF."
        ! call map_set(PROJ_CYL, wrfinput%proj, latinc=, loninc=, stdlon=)
     else if (map_proj == PROJ_ALBERS_NAD83) then
-       stop "PROJ_ALBERS_NAD83 is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_wrfinputfile.F -- PROJ_ALBERS_NAD83 is not a valid map projection for WRF."
        !call map_set(PROJ_ALBERS_NAD83, wrfinput%proj, lat1=, lon1=, knowni=, knownj=, truelat1=, truelat2=, stdlon=, dx=)
     else if (map_proj == PROJ_ROTLL) then
-       stop "PROJ_ROTLL is not a valid map projection for WRF."
+       stop "FATAL ERROR: In module_wrfinputfile.F -- PROJ_ROTLL is not a valid map projection for WRF."
        ! call map_set(PROJ_ROTLL, wrfinput%proj, lat1=wrfinput%lat1, lon1=wrfinput%lon1, ixdim=, jydim=, phi=, lambda=)
     else
-       write(*,'("Unknown wrfinput map projection:  map_proj = ", I10)') map_proj
-       stop
+       write(*,'("WARNING: In module_wrfinputfile.F -- Unknown wrfinput map projection:  map_proj = ", I10)') map_proj
+       stop "FATAL ERROR: In module_wrfinputfile.F -- Unknown wrfinput map projection"
     endif
 
     iret = nf90_get_att(ncid, NF90_GLOBAL, "ISWATER" , wrfinput%iswater)
@@ -279,7 +299,7 @@ contains
           write(*,'(/," ***** ", A)') failure
        endif
        write(*,'(" ***** ",A,/)') nf90_strerror(status)
-       stop 'Stopped'
+       stop 'FATAL ERROR: In module_wrfinputfile.F -- Stopped'
     endif
 
     if (present(success)) then

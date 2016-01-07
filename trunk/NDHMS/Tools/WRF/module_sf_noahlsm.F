@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 MODULE module_sf_noahlsm
   USE module_model_constants
 
@@ -487,7 +507,8 @@ CONTAINS
          ELSE
             SNDENS = SNEQV / SNOWH
             IF(SNDENS > 1.0) THEN
-             CALL wrf_error_fatal ( 'Physical snow depth is less than snow water equiv.' )
+             CALL wrf_error_fatal ( 'In module_sf_noahlsm.F SFLX() - '// &
+                  'Physical snow depth is less than snow water equiv.' )
             ENDIF
             CALL CSNOW (SNCOND,SNDENS)
          END IF
@@ -1535,7 +1556,9 @@ CONTAINS
 ! APPLY PHYSICAL BOUNDS TO FLERCHINGER SOLUTION
 ! ----------------------------------------------------------------------
          IF (KCOUNT == 0) THEN
+#ifdef HYDRO_D
              PRINT *,'Flerchinger USEd in NEW version. Iterations=',NLOG
+#endif
                   FK = ( ( (HLICE / (GS * ( - PSIS)))*                    &
                        ( (TKELV - T0)/ TKELV))** ( -1/ BX))* SMCMAX
 !            FRH2O = MIN (FK, SMC)
@@ -2414,13 +2437,13 @@ CONTAINS
 ! ----------------------------------------------------------------------
 !
                IF (SOILTYP .gt. SLCATS) THEN
-                        CALL wrf_error_fatal ( 'Warning: too many input soil types' )
+                        CALL wrf_error_fatal ( "FATAL ERROR: too many input soil types' )
                END IF
                IF (VEGTYP .gt. LUCATS) THEN
-                     CALL wrf_error_fatal ( 'Warning: too many input landuse types' )
+                     CALL wrf_error_fatal ( 'FATAL ERROR: too many input landuse types' )
                END IF
                IF (SLOPETYP .gt. SLPCATS) THEN
-                     CALL wrf_error_fatal ( 'Warning: too many input slope types' )
+                     CALL wrf_error_fatal ( 'FATAL ERROR: too many input slope types' )
                END IF
 
 ! ----------------------------------------------------------------------
@@ -2483,8 +2506,8 @@ CONTAINS
 
                IF (VEGTYP .eq. BARE) SHDFAC = 0.0
                IF (NROOT .gt. NSOIL) THEN
-                  WRITE (err_message,*) 'Error: too many root layers ',  &
-                                                 NSOIL,NROOT
+                  WRITE (err_message,*) 'In module_sf_noahlsm.F REDPRM() - '// & 
+                                        'too many root layers ',NSOIL,NROOT
                   CALL wrf_error_fatal ( err_message )
 ! ----------------------------------------------------------------------
 ! CALCULATE ROOT DISTRIBUTION.  PRESENT VERSION ASSUMES UNIFORM

@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_grib1
   use module_mapinfo
   use kwm_date_utilities
@@ -50,10 +70,10 @@ contains
 
     select case (grib%g1sec1%tri) ! Time Range Indicator
     case default
-       write(process,'("MODULE_GRIB1:  GRIB1_TIME_INFORMATION:  Unrecognized GRIB1 Time Range Indicator ", I10)') grib%g1sec1%tri
-       write(processing,'("MODULE_GRIB1:  GRIB1_TIME_INFORMATION:  Unrecognized GRIB1 Time Range Indicator ", I10)') grib%g1sec1%tri
+       write(process,'("WARNING: MODULE_GRIB1:  GRIB1_TIME_INFORMATION:  Unrecognized GRIB1 Time Range Indicator ", I10)') grib%g1sec1%tri
+       write(processing,'("WARNING: MODULE_GRIB1:  GRIB1_TIME_INFORMATION:  Unrecognized GRIB1 Time Range Indicator ", I10)') grib%g1sec1%tri
        print*, trim(process)
-       stop
+       stop "FATAL ERROR: In module module_grib1.F -- GRIB1_TIME_INFORMATION: Unrecognized GRIB1 Time Range Indicator"
     case (0)
        process = "Forecast product"
        processing = "Forecast product"
@@ -70,8 +90,8 @@ contains
 
     select case (grib%g1sec1%ftu) ! Forecast Time Units
     case default
-       write(*,'("Unrecognized GRIB1 forecast time units:  ",I10)') grib%g1sec1%ftu
-       stop
+       write(*,'("WARNING: Unrecognized GRIB1 forecast time units:  ",I10)') grib%g1sec1%ftu
+       stop "FATAL ERROR: In module module_grib1.F -- Unrecognized GRIB1 forecast time units"
     case (0) ! Minute
        p1_seconds = grib%g1sec1%p1 * 60
        p2_seconds = grib%g1sec1%p2 * 60
@@ -325,8 +345,8 @@ contains
 
     select case (gdsbms)
     case default
-       write(*,'("GRIB1_UNPACK_SEC1:  GRIB1 Section 1:  Unrecognized GDS/BMS flag: ", I10)') gdsbms
-       stop
+       write(*,'("WARNING: GRIB1_UNPACK_SEC1:  GRIB1 Section 1:  Unrecognized GDS/BMS flag: ", I10)') gdsbms
+       stop "FATAL ERROR: In module module_grib1.F -- GRIB1 Section 1: Unrecognized GDS/BMS flag"
     case (0)
        sec1%ifgds = .FALSE.
        sec1%ifbms = .FALSE.
@@ -522,8 +542,8 @@ contains
 
     case default
 
-       write(*,'("GRIB1_UNPACK_SEC2:  Unrecognized GRIB1 grid type (drt):  ", I10)') sec2%drt
-       stop
+       write(*,'("WARNING: GRIB1_UNPACK_SEC2:  Unrecognized GRIB1 grid type (drt):  ", I10)') sec2%drt
+       stop "FATAL ERROR: In module module_grib1.F -- Unrecognized GRIB1 grid type (drt)"
 
     end select
 
@@ -622,8 +642,8 @@ contains
 
     test_sevens = unpack_unsigned_integer(buffer, 4, iskip)
     if (test_sevens /= string_sevens) then
-       write(*, '(" MODULE_GRIB1:  GRIB1_UNPACK_SEC5:  Problem:  Lost the way in GRIB1 record.")')
-       stop
+       write(*, '("WARNING:  MODULE_GRIB1:  GRIB1_UNPACK_SEC5:  Problem:  Lost the way in GRIB1 record.")')
+       stop "FATAL ERROR: In module module_grib1.F -- Problem: Lost the way in GRIB1 record."
     endif
 
   end subroutine grib1_unpack_sec5
@@ -651,16 +671,16 @@ contains
                    call grib1_sgup_nobitmap(grib, grib%array, grib%mapinfo%nx, grib%mapinfo%ny)
                 endif
              else
-                stop "GRIB1:  Section 4:  Additional flags in octed 14"
+                stop "FATAL ERROR: In module module_grib1.F -- GRIB1:  Section 4:  Additional flags in octed 14"
              endif
           else
-             stop "GRIB1:  Section 4:  Original field held integer values."
+             stop "FATAL ERROR: In module module_grib1.F -- GRIB1:  Section 4:  Original field held integer values."
           endif
        else
-          stop "GRIB1:  Section 4:  Complex packing"
+          stop "FATAL ERROR: In module module_grib1.F -- GRIB1:  Section 4:  Complex packing"
        endif
     else
-       stop "GRIB1:  Section 4:  Spherical Harmonic coefficients"
+       stop "FATAL ERROR: In module module_grib1.F -- GRIB1:  Section 4:  Spherical Harmonic coefficients"
     endif
 
   end subroutine grib1_gribdata
@@ -674,8 +694,8 @@ contains
     type(MapInfoStruct), intent(out)   :: mapinfo
     select case (sec2%drt)
     case default
-       write(*, '("Unrecognized GRIB1 grid data representation type:  ", I12)') sec2%drt
-       stop "GRIB1_MAP_INFORMATION:  Unrecognized grid data representation type."
+       write(*, '("WARNING: Unrecognized GRIB1 grid data representation type:  ", I12)') sec2%drt
+       stop "FATAL ERROR: In module module_grib1.F -- GRIB1_MAP_INFORMATION:  Unrecognized grid data representation type."
     case (0) ! Cylindrical Equidistant
        mapinfo%hproj = "CE"
        mapinfo%supmap_jproj = 8
@@ -760,20 +780,20 @@ contains
           ! We're good.  Fortran(i,j)
        elseif (grib%g1sec2%orientation == -1) then
           write(*,'("grib%g1sec2%orientation = ", I12)') grib%g1sec2%orientation
-          stop "TODO:  GRIB1_SGUP_NOBITMAP:  grib%g1sec2%orientation = -1"
+          stop "FATAL ERROR: In module module_grib1.F -- TODO:  GRIB1_SGUP_NOBITMAP:  grib%g1sec2%orientation = -1"
        else
           write(*,'("grib%g1sec2%orientation = ", I12)') grib%g1sec2%orientation
-          stop "TODO:  GRIB1_SGUP_NOBITMAP:  Problem recognizing grib%g1sec2%orientation"
+          stop "FATAL ERROR: In module module_grib1.F -- TODO:  GRIB1_SGUP_NOBITMAP:  Problem recognizing grib%g1sec2%orientation"
        endif
 
        if (grib%g1sec2%i_scan_direction == 1) then
           ! We're good.
        elseif (grib%g1sec2%i_scan_direction == -1) then
           write(*,'("grib%g1sec2%i_scan_direction = ", I12)') grib%g1sec2%i_scan_direction
-          stop "TODO:  GRIB1_SGUP_NOBITMAP:  grib%g1sec2%i_scan_direction = -1"
+          stop "FATAL ERROR: In module module_grib1.F -- TODO:  GRIB1_SGUP_NOBITMAP:  grib%g1sec2%i_scan_direction = -1"
        else
           write(*,'("grib%g1sec2%i_scan_direction = ", I12)') grib%g1sec2%i_scan_direction
-          stop "GRIB1_SGUP_NOBITMAP:   Problem recognizing grib%g1sec2%i_scan_direction"
+          stop "FATAL ERROR: In module module_grib1.F -- GRIB1_SGUP_NOBITMAP:   Problem recognizing grib%g1sec2%i_scan_direction"
        endif
        
        if (grib%g1sec2%j_scan_direction == 1) then
@@ -788,7 +808,7 @@ contains
           enddo
        else
           write(*,'("grib%g1sec2%j_scan_direction = ", I12)') grib%g1sec2%j_scan_direction
-          stop "GRIB1_SGUP_NOBITMAP:  Problem recognizing grib%g1sec2%j_scan_direction"
+          stop "FATAL ERROR: In module module_grib1.F -- GRIB1_SGUP_NOBITMAP:  Problem recognizing grib%g1sec2%j_scan_direction"
        endif
     endif
 
@@ -846,8 +866,8 @@ contains
     allocate(bmdat(nbm))
     if (nbm /= count(bitmap==1)) then
        print*, "NBM, count(bitmap==1):  ", nbm, count(bitmap==1)
-       write(*,'("GRIB1_SGUP_BITMAP:  Problem with the number of data values in the bitmap.")')
-       stop
+       write(*,'("WARNING: GRIB1_SGUP_BITMAP:  Problem with the number of data values in the bitmap.")')
+       stop "FATAL ERROR: In module module_grib1.F -- Problem with the number of data values in the bitmap"
     endif
 
 ! grib%g1sec4%nbits is the number of bits used per datum value.
@@ -861,10 +881,10 @@ contains
        ! We're good.  Fortran(i,j)
     elseif (grib%g1sec2%orientation == -1) then
        write(*,'("grib%g1sec2%orientation = ", I12)') grib%g1sec2%orientation
-       stop "TODO:  GRIB1_SGUP_BITMAP:  grib%g1sec2%orientation = -1"
+       stop "FATAL ERROR: In module module_grib1.F -- TODO:  GRIB1_SGUP_BITMAP:  grib%g1sec2%orientation = -1"
     else
        write(*,'("grib%g1sec2%orientation = ", I12)') grib%g1sec2%orientation
-       stop "TODO:  GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%orientation"
+       stop "FATAL ERROR: In module module_grib1.F -- TODO:  GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%orientation"
     endif
 
 ! Check the i scan direction:
@@ -872,10 +892,10 @@ contains
        ! We're good.
     elseif (grib%g1sec2%i_scan_direction == -1) then
        write(*,'("grib%g1sec2%i_scan_direction = ", I12)') grib%g1sec2%i_scan_direction
-       stop "TODO:  GRIB1_SGUP_BITMAP:  grib%g1sec2%i_scan_direction = -1"
+       stop "FATAL ERROR: In module module_grib1.F -- TODO:  GRIB1_SGUP_BITMAP:  grib%g1sec2%i_scan_direction = -1"
     else
        write(*,'("grib%g1sec2%i_scan_direction = ", I12)') grib%g1sec2%i_scan_direction
-       stop "GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%i_scan_direction"
+       stop "FATAL ERROR: In module module_grib1.F -- GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%i_scan_direction"
     endif
 
 ! Check the j scan direction:
@@ -886,7 +906,7 @@ contains
        ! stop "TODO:  GRIB1_SGUP_BITMAP:  grib%g1sec2%j_scan_direction = -1"
     else
        write(*,'("grib%g1sec2%j_scan_direction = ", I12)') grib%g1sec2%j_scan_direction
-       stop "GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%j_scan_direction"
+       stop "FATAL ERROR: In module module_grib1.F -- GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%j_scan_direction"
     endif
        
 
@@ -936,14 +956,14 @@ contains
     case (254)
        tfac = 1
     case default
-       write(*, '("Unrecognized GRIB1 Forecast Time Unit: ", I6)') sec1%ftu
-       stop
+       write(*, '("WARNING: Unrecognized GRIB1 Forecast Time Unit: ", I6)') sec1%ftu
+       stop "FATAL ERROR: In module module_grib1.F -- Unrecognized GRIB1 Forecast Time Unit"
     end select
 
     select case (sec1%tri) ! "Time Range Indicator"
     case default
-       write(*, '("Unrecognized GRIB1 Time Range Indicator: ", I6)') sec1%tri
-       stop
+       write(*, '("WARNING: Unrecognized GRIB1 Time Range Indicator: ", I6)') sec1%tri
+       stop "FATAL ERROR: In module module_grib1.F -- Unrecognized GRIB1 Time Range Indicator"
     case (3) ! Average
        ! Average from (reference_time + p1) to (reference time + p2)
        call geth_newdate(validdate, refdate, tfac*(sec1%p1+sec1%p2)/2)
@@ -984,24 +1004,32 @@ contains
 
     call getenv("GRIB_ROOT", grib_root)
     if (trim(grib_root)==" ") then
-       write(*,'("Not finding environment variable GRIB_ROOT.")')
-       write(*,'("Program does not know where to find GRIB parameter tables")')
-       stop
+       write(*,'("WARNING: Not finding environment variable GRIB_ROOT.")')
+       write(*,'("WARNING: Program does not know where to find GRIB parameter tables")')
+       stop "FATAL ERROR: In module module_grib1.F -- Not finding environment variable GRIB_ROOT"
     endif
     table_filename = trim(grib_root)//"/GRIB1_PARAMETER_TABLE"
 
     iunit = get_unused_unit()
 
+    #ifndef NCEP_WCOSS
+
+    #else
     open(iunit, file=trim(table_filename), status='old', form='formatted', action='read', iostat=ierr)
+    #endif
     if (ierr /= 0) then
-       write(*,'(/," ***** ERROR *****",/)')
-       write(*,'(" ***** Problem opening file ''", A, "''")') trim(table_filename)
-       write(*,'(" ***** Does file exist?  Is file readable?",/)')
-       stop
+       write(*,'(/,"WARNING:  ***** ERROR *****",/)')
+       write(*,'("WARNING:  ***** Problem opening file ''", A, "''")') trim(table_filename)
+       write(*,'("WARNING:  ***** Does file exist?  Is file readable?",/)')
+       stop "FATAL ERROR: In module module_grib1.F -- Unable to open file"
     endif
 
     READ_TABLE : do
+       #ifndef NCEP_WCOSS
+       
+       #else
        read(iunit, '(A200)', iostat=ierr) string
+       #endif
        if (ierr /= 0) exit READ_TABLE
        if (string(1:1) == "#") cycle READ_TABLE
 
@@ -1018,7 +1046,11 @@ contains
        grib1_parameter_table(parameter_index)%abbr  = trim(parameter_abbr)
 
     enddo READ_TABLE
+    #ifndef NCEP_WCOSS
+    
+    #else
     close(iunit)
+    #endif
   end subroutine grib1_read_parameter_tables
 
 !=================================================================================

@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 Module module_namelist
 
 #ifdef MPP_LAND
@@ -100,12 +120,16 @@ CONTAINS
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif
+#ifndef NCEP_WCOSS
           open(30, file="hydro.namelist", form="FORMATTED")
+#else
+          open(30, form="FORMATTED")
+#endif
           read(30, HYDRO_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst")
 
 #ifdef WRF_HYDRO_NUDGING          
-          open(30, file="hydro.namelist", form="FORMATTED")
+#          open(30, file="hydro.namelist", form="FORMATTED")
           read(30, NUDGING_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
 #endif
