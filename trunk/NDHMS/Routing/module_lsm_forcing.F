@@ -907,8 +907,9 @@ Contains
 !!!DJG HRLDAS Format Forcing with hour format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.1) then
 !!Create forcing data filename...
+        call geth_newdate(out_date,olddate,nint(dt))
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             out_date(1:4)//out_date(6:7)//out_date(9:10)//out_date(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
 
         inquire (file=trim(inflnm), exist=fexist)
@@ -927,9 +928,10 @@ Contains
 !!!DJG HRLDAS Forcing with minute format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.2) then
 !!Create forcing data filename...
+        call geth_newdate(out_date,olddate,nint(dt))
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             olddate(15:16)//".LDASIN_DOMAIN"//hgrid
+             out_date(1:4)//out_date(6:7)//out_date(9:10)//out_date(12:13)//&
+             out_date(15:16)//".LDASIN_DOMAIN"//hgrid
         inquire (file=trim(inflnm), exist=fexist)
         if ( .not. fexist ) then
            print*, "no forcing data found", inflnm
@@ -1100,10 +1102,15 @@ Contains
         inquire (file=trim(inflnm), exist=fexist)
 
         if ( .not. fexist ) then
+          do i_forcing = 1, nint(12*3600/dt)
+           call geth_newdate(out_date,olddate,nint(i_forcing*dt))
            inflnm = trim(indir)//"/"//&
               olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
               olddate(15:16)//".LDASIN_DOMAIN"//hgrid
            inquire (file=trim(inflnm), exist=fexist)
+            if(fexist) goto 201
+          end do
+201       continue
         endif
 
 
@@ -2252,8 +2259,9 @@ Contains
 !!!DJG HRLDAS Format Forcing with hour format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.1) then
 !!Create forcing data filename...
+        call geth_newdate(out_date,olddate,nint(dt))
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             out_date(1:4)//out_date(6:7)//out_date(9:10)//out_date(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
 
         inquire (file=trim(inflnm), exist=fexist)
@@ -2266,7 +2274,9 @@ Contains
            call hydro_stop("In read_hydro_forcing_mpp1() - no forcing data found")
         endif
 
-
+#ifdef HYDRO_D
+          print*, "read forcing data at ", OLDDATE,  trim(inflnm)
+#endif
       CALL READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
    end if
@@ -2277,9 +2287,10 @@ Contains
 !!!DJG HRLDAS Forcing with minute format filename (NOTE: precip must be in mm/s!!!)
    if(FORC_TYP.eq.2) then
 !!Create forcing data filename...
+        call geth_newdate(out_date,olddate,nint(dt))
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-             olddate(15:16)//".LDASIN_DOMAIN"//hgrid
+             out_date(1:4)//out_date(6:7)//out_date(9:10)//out_date(12:13)//&
+             out_date(15:16)//".LDASIN_DOMAIN"//hgrid
         inquire (file=trim(inflnm), exist=fexist)
 #ifdef MPP_LAND
         call mpp_land_bcast_logical(fexist)
@@ -2458,21 +2469,40 @@ Contains
    if(FORC_TYP.eq.6) then
 
 !!Create forcing data filename...
+
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) then
+#endif
+     do i_forcing = 1, nint(3600*12/dt)
+        call geth_newdate(out_date,olddate,nint(dt*i_forcing))
         inflnm = trim(indir)//"/"//&
-             olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
+             out_date(1:4)//out_date(6:7)//out_date(9:10)//out_date(12:13)//&
              ".LDASIN_DOMAIN"//hgrid
 
         inquire (file=trim(inflnm), exist=fexist)
+        if(fexist) goto 101
+     enddo
+101  continue
 #ifdef MPP_LAND
+   endif
         call mpp_land_bcast_logical(fexist)
 #endif
 
         if ( .not. fexist ) then
-           inflnm = trim(indir)//"/"//&
-              olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
-              olddate(15:16)//".LDASIN_DOMAIN"//hgrid
-           inquire (file=trim(inflnm), exist=fexist)
 #ifdef MPP_LAND
+   if(my_id .eq. io_id) then
+#endif
+     do i_forcing = 1, nint(3600*12/dt)
+           call geth_newdate(out_date,olddate,nint(dt*i_forcing))
+           inflnm = trim(indir)//"/"//&
+              out_date(1:4)//out_date(6:7)//out_date(9:10)//out_date(12:13)//&
+              out_date(15:16)//".LDASIN_DOMAIN"//hgrid
+           inquire (file=trim(inflnm), exist=fexist)
+        if(fexist) goto 102
+     end do
+102 continue 
+#ifdef MPP_LAND
+   endif
         call mpp_land_bcast_logical(fexist)
 #endif
         endif

@@ -1324,9 +1324,6 @@ module module_NoahMP_hrldas_driver
 
       TAUSSXY = 0.0   ! Need to be added to _INIT later
 
-#ifdef WRF_HYDRO
-      call ldas_output()
-#endif
 
   endif  ! end of restart if block
   
@@ -1411,6 +1408,12 @@ module module_NoahMP_hrldas_driver
 #endif
 
    NTIME_out = NTIME 
+
+#ifdef WRF_HYDRO
+  if (restart_filename_requested == " ") then
+      call ldas_output()
+  endif
+#endif
    
 end subroutine land_driver_ini
 
