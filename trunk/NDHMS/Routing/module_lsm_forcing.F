@@ -2279,6 +2279,10 @@ Contains
 #endif
       CALL READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+
+       where(PRCP1 .lt. 0) PRCP1= 0  ! set minimum to be 0
+       where(PRCP1 .gt. 0.138889) PRCP1= 0.138889 ! set maximum to be 500 mm/h
+
    end if
 
 
@@ -2301,6 +2305,9 @@ Contains
         endif
       CALL READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
           PRES,XLONG,SHORT,PRCP1,LAI,FPAR)
+
+       where(PRCP1 .lt. 0) PRCP1= 0  ! set minimum to be 0
+       where(PRCP1 .gt. 0.138889) PRCP1= 0.138889 ! set maximum to be 500 mm/h
    end if
 
 
