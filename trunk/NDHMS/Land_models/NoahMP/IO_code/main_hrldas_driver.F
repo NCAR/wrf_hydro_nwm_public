@@ -63,7 +63,7 @@ program Noah_hrldas_driver
 #endif
 
 #ifdef WRF_HYDRO_NUDGING
-!#ifdef HYDRO_D JLM Temp un-ifdef to get timing results
+#ifdef HYDRO_D /* un-ifdef to get timing results */
 #ifdef MPP_LAND
    if(my_id .eq. io_id) then 
 #endif 
@@ -73,7 +73,7 @@ program Noah_hrldas_driver
 #ifdef MPP_LAND
    endif
 #endif 
-!#endif JLM Temp un-ifdef to get timing results
+#endif /* HYDRO_D :: un-ifdef to get timing results */
 #endif
 
 END 

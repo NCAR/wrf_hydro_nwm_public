@@ -103,8 +103,11 @@ subroutine read_timeslice_file(  &
      gageId,                     &  !! OUT: integer, the USGS gage ID. 
      gageTime,                   &  !! OUT: output converted for comparision to model time??
      gageQC,                     &  !! OUT: quality control flag for discharge
-     gageDischarge               &  !! OUT: real, the m3/s observed discharge
-)
+     gageDischarge,              &  !! OUT: real, the m3/s observed discharge
+     fatalErr,                   &  !! IN:  logical, are IO errors fatal?
+     errStatus                   &  !! OUT: count of errors encountered
+                                 )
+
 implicit none
 character(len=256), intent(in)                :: timeSliceFile
 logical,            intent(in)                :: sanityQcDischarge
@@ -115,9 +118,11 @@ character(len=15),  intent(out), dimension(:) :: gageId
 character(len=19),  intent(out), dimension(:) :: gageTime
 real,               intent(out), dimension(:) :: gageQC
 real,               intent(out), dimension(:) :: gageDischarge
+logical,            intent(in)                :: fatalErr
+integer,            intent(out)               :: errStatus
 
 integer*2, allocatable, dimension(:) :: gageQCIn
-integer :: iRet, ncId, fileNameLen
+integer :: iRet, ncId, fileNameLen, errStatusOut
 character(len=19) :: caller
 real, parameter :: zero = 0.0000000000000
 real, parameter :: oneHundred = 100.0000000000000
@@ -129,26 +134,39 @@ write(*,'("Ndg: read_timeslice_file: ''", A, "''")') trim(timeSliceFile)
 #endif
 
 caller = 'read_timeslice_file'
+errStatus=0
 
 iRet = nf90_open(trim(timeSliceFile), nf90_nowrite, ncid)
 if (iRet /= nf90_NoErr) then
    write(*,'("Problem opening timeSliceFile: ''", A, "''")') trim(timeSliceFile)
-   call hydro_stop('read_timeslice_file')
+   if(fatalErr) call hydro_stop('read_timeslice_file')
+   errStatus=errStatus+1
 endif
 
 !! global atts
 iRet = nf90_get_att(ncid, nf90_global, 'sliceCenterTimeUTC',         sliceTime)
+if (iRet /= nf90_NoErr) errStatus=errStatus+1
 iRet = nf90_get_att(ncid, nf90_global, 'fileUpdateTimeUTC',          updateTime)
+if (iRet /= nf90_NoErr) errStatus=errStatus+1
 iRet = nf90_get_att(ncid, nf90_global, 'sliceTimeResolutionMinutes', sliceResolution)
+if (iRet /= nf90_NoErr) errStatus=errStatus+1
 
 ! variables
-call get_1d_netcdf_text(ncid, 'stationId', gageId,        caller, .TRUE.)
-call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, .TRUE.)
-call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, .TRUE.)
+call get_1d_netcdf_text(ncid, 'stationId', gageId,        caller, &
+                        fatalErr, errStatusOut)
+errStatus=errStatus+errStatusOut
+call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, &
+                        fatalErr, errStatusOut)
+errStatus=errStatus+errStatusOut
+call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, &
+                        fatalErr, errStatusOut)
+errStatus=errStatus+errStatusOut
 
 !! the quality short integer needs scaled
 allocate(gageQCIn(size(gageQC))) 
-call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, .TRUE.)
+call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, &
+                        fatalErr, errStatusOut)
+errStatus=errStatus+errStatusOut
 gageQC=gageQCIn/oneHundred
 deallocate(gageQCIn)
 
@@ -167,7 +185,8 @@ endif
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then
    write(*,'("Problem closing timeSliceFile: ''", A, "''")') trim(timeSliceFile)
-   call hydro_stop('read_timeslice_file')
+   if(fatalErr) call hydro_stop('read_timeslice_file')
+   errStatus=errStatus+1
 endif
 
 #ifdef HYDRO_D
@@ -376,7 +395,7 @@ real,               intent(out), dimension(:) :: gageR
 real,               intent(out), dimension(:) :: gageG
 real,               intent(out), dimension(:) :: gageTau
 
-integer :: iRet, ncId, varId, dimId, fileNameLen
+integer :: iRet, ncId, varId, dimId, fileNameLen, errStatus
 character(len=23) :: caller
 
 #ifdef HYDRO_D
@@ -392,10 +411,10 @@ if (iRet /= nf90_NoErr) then
    call hydro_stop("read_nudging_param_file")
 endif
 
-call get_1d_netcdf_text(ncid, 'stationId', gageId,  caller, .TRUE.)
-call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE.)
-call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE.)
-call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE.)
+call get_1d_netcdf_text(ncid, 'stationId', gageId,  caller, .TRUE., errStatus)
+call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
+call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
+call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then
@@ -479,7 +498,7 @@ integer*4, dimension(:), intent(out) :: downStart
 integer*4, dimension(:), intent(out) :: downEnd
 
 character(len=25) :: subroutineName
-integer :: iRet, ncid
+integer :: iRet, ncid, errStatus
 #ifdef HYDRO_D
 print*,"Ndg: start read_network_reexpression"
 #endif
@@ -492,12 +511,12 @@ if (iRet /= nf90_noerr) then
    call hydro_stop(subroutineName // ": Problem opening file: " // file)
 endif
 
-call get_1d_netcdf_int4(ncid, 'upGo',      upGo,      subroutineName, .TRUE.)
-call get_1d_netcdf_int4(ncid, 'upStart',   upStart,   subroutineName, .TRUE.)
-call get_1d_netcdf_int4(ncid, 'upEnd',     upEnd,     subroutineName, .TRUE.)
-call get_1d_netcdf_int4(ncid, 'downGo',    downGo,    subroutineName, .TRUE.)
-call get_1d_netcdf_int4(ncid, 'downStart', downStart, subroutineName, .TRUE.)
-call get_1d_netcdf_int4(ncid, 'downEnd',   downEnd,   subroutineName, .TRUE.)
+call get_1d_netcdf_int4(ncid, 'upGo',      upGo,      subroutineName, .TRUE., errStatus)
+call get_1d_netcdf_int4(ncid, 'upStart',   upStart,   subroutineName, .TRUE., errStatus)
+call get_1d_netcdf_int4(ncid, 'upEnd',     upEnd,     subroutineName, .TRUE., errStatus)
+call get_1d_netcdf_int4(ncid, 'downGo',    downGo,    subroutineName, .TRUE., errStatus)
+call get_1d_netcdf_int4(ncid, 'downStart', downStart, subroutineName, .TRUE., errStatus)
+call get_1d_netcdf_int4(ncid, 'downEnd',   downEnd,   subroutineName, .TRUE., errStatus)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_noerr) then
@@ -835,82 +854,98 @@ end subroutine output_chan_connectivity
 ! Notes: 
 !   Could define an interface for these. 
 
-subroutine get_1d_netcdf_int2(ncid, varName, var, callingRoutine, fatal_if_error)
+subroutine get_1d_netcdf_int2(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
 integer*4,               intent(in)  :: ncid !! the file identifier
 character(len=*),        intent(in)  :: varName
 integer*2, dimension(:), intent(out) :: var
 character(len=*),        intent(in)  :: callingRoutine
 logical,                 intent(in)  :: fatal_if_error
+integer,                 intent(out) :: errStatus
 integer :: varid, iret
+errStatus=0
 iRet = nf90_inq_varid(ncid, varName, varid)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_int2: variable: " // trim(varName)
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int2")
+   errStatus=errStatus+1
 end if
 iRet = nf90_get_var(ncid, varid, var)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_int2: values: " // trim(varName)   
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int2")
+   errStatus=errStatus+1
 end if
 end subroutine get_1d_netcdf_int2
 
 
-subroutine get_1d_netcdf_int4(ncid, varName, var, callingRoutine, fatal_if_error)
+subroutine get_1d_netcdf_int4(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
 integer*4,             intent(in)  :: ncid !! the file identifier
 character(len=*),      intent(in)  :: varName
 integer, dimension(:), intent(out) :: var
 character(len=*),      intent(in)  :: callingRoutine
 logical,               intent(in)  :: fatal_if_error
+integer,               intent(out) :: errStatus
 integer :: varid, iret
+errStatus=0
 iRet = nf90_inq_varid(ncid, varName, varid)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_int4: variable: " // trim(varName)
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int4")
+   errStatus=errStatus+1
 end if
 iRet = nf90_get_var(ncid, varid, var)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_int4: values: " // trim(varName)   
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int4")
+   errStatus=errStatus+1
 end if
 end subroutine get_1d_netcdf_int4
 
 
-subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error)
+subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
 integer,            intent(in)  :: ncid !! the file identifier
 character(len=*),   intent(in)  :: varName
 real, dimension(:), intent(out) :: var
 character(len=*),   intent(in)  :: callingRoutine
 logical,            intent(in)  :: fatal_if_error
+integer,            intent(out) :: errStatus
 integer :: varId, iRet
+errStatus=0
 iRet = nf90_inq_varid(ncid, varName, varid)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
+   errStatus=errStatus+1
 end if
 iRet = nf90_get_var(ncid, varid, var)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_real: values: " // trim(varName)
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
+   errStatus=errStatus+1
 end if
 end subroutine get_1d_netcdf_real
 
 
-subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error)
+subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
 character(len=*), dimension(:), intent(out) :: var
 integer,                        intent(in)  :: ncid !! the file identifier
 character(len=*),               intent(in)  :: varName
 character(len=*),               intent(in)  :: callingRoutine
 logical,                        intent(in)  :: fatal_if_error
+integer,                        intent(out) :: errStatus
 integer :: varId, iRet
+errStatus=0
 iRet = nf90_inq_varid(ncid, varName, varid)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_text: variable: " // trim(varName)
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+   errStatus=errStatus+1
 end if
 iRet = nf90_get_var(ncid, varid, var)
 if (iret /= nf90_NoErr) then
    print*, trim(callingRoutine) // ": get_1d_netcdf_text: values: " // trim(varName)
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+   errStatus=errStatus+1
 end if
 end subroutine get_1d_netcdf_text
 
@@ -937,36 +972,50 @@ end subroutine get_1d_netcdf_text
 ! User controllable options:
 ! Notes: 
 
-function get_netcdf_dim(file, dimName, callingRoutine) 
+function get_netcdf_dim(file, dimName, callingRoutine, fatalErr) 
 implicit none
-integer :: get_netcdf_dim  !! return value
+integer :: get_netcdf_dim  !! return value, zero if failure
 character(len=*), intent(in)   :: file, dimName, callingRoutine
+logical, optional, intent(in) :: fatalErr
+logical :: fatalErr_local
 integer :: ncId, dimId, iRet
+
+fatalErr_local = .false.
+if(present(fatalErr)) fatalErr_local=fatalErr
+
 #ifdef HYDRO_D
 write(*,'("getting dimension from file: ''", A, "''")') trim(file)
 #endif
 iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem opening file: ''", A, "''")') trim(file)
-   call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   get_netcdf_dim = 0
+   return
 endif
 
 iRet = nf90_inq_dimid(ncId, trim(dimName), dimId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem getting the dimension ID: ''", A, "''")') trim(file)
-   call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   get_netcdf_dim = 0
+   return
 endif
 
 iRet = nf90_inquire_dimension(ncId, dimId, len= get_netcdf_dim)
 if (iret /= nf90_noerr) then
    write(*,'("Problem getting the dimension length: ''", A, "''")') trim(file)
-   call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   get_netcdf_dim = 0
+   return
 endif
 
 iRet = nf90_close(ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem closing file: ''", A, "''")') trim(file)
-   call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   get_netcdf_dim = 0
+   return
 endif
 end function get_netcdf_dim
 

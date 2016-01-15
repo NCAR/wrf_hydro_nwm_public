@@ -129,7 +129,6 @@ CONTAINS
           if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst")
 
 #ifdef WRF_HYDRO_NUDGING          
-#          open(30, file="hydro.namelist", form="FORMATTED")
           read(30, NUDGING_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
 #endif
