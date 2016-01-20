@@ -834,7 +834,7 @@ end subroutine get_albedo12m_netcdf
               if( (j - 1 .EQ. 0))  then            !-- 4's can only flow due south
                  cnt = cnt + 1
                  CH_NETLNK(i,j) = cnt
-              elseif (CH_NETRT(i, j - 1) ) then !due south
+              elseif (CH_NETRT(i, j - 1) .lt. 0) then !due south
                  cnt = cnt + 1
                  CH_NETLNK(i,j) = cnt
 #ifdef HYDRO_D
