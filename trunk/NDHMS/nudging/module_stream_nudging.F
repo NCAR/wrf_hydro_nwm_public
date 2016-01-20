@@ -127,6 +127,7 @@ character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
 logical,            parameter :: sanityQcDischarge = .FALSE.
+logical,            parameter :: readTimesliceErrFatal = .FALSE.
 
 ! these are in the namelist currently
 !character(len=256), parameter :: nudgingParamFile = "DOMAIN/nudgingParams.nc"
@@ -184,12 +185,12 @@ use module_nudging_utils, only: totalNudgeTime,    &
 totalNudgeTime = 0. ! Nudging time accumulation init.
 call system_clock(count_rate=sysClockCountRate, count_max=sysClockCountMax)
 clockType = trim(nudgingClockType)
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 print*,'Ndg: totalNudgeTime: ', totalNudgeTime
 print*,'Ndg: sysClockCountRate: ', sysClockCountRate
 print*,'Ndg: sysClockCountMax: ', sysClockCountMax
 print*,'Ndg: clockType: ', trim(nudgingClockType)
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */  /* un-ifdef to get timing results */
 end subroutine init_stream_nudging_clock
 
 
@@ -241,14 +242,14 @@ integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) ::  whParamsDom
 integer :: downSize, upSize, baseSize
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTimeAcc, endCodeTimeAcc
 
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif
      call nudging_timer(startCodeTimeAcc)
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 #ifdef HYDRO_D
 print*, "Ndg: Start init_stream_nudging"
@@ -576,7 +577,7 @@ call obs_static_to_struct()
 print*, "Ndg: Finish init_stream_nudging"
 #endif
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then
 #endif 
@@ -585,7 +586,7 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 end if
 #endif 
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 end subroutine init_stream_nudging
 
@@ -639,7 +640,7 @@ integer :: nWhObsMiss
 integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 #endif
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTime, endCodeTime
 
 real :: startCodeTimeOuter
@@ -648,7 +649,7 @@ real :: startCodeTimeOuter
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTimeOuter)
-!#endif
+#endif  /* HYDRO_D :: un-ifdef to get timing results */
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -1113,7 +1114,7 @@ character(len=256) :: fileName  !! the corresponding obs file.
 integer :: nGages
 integer, allocatable, dimension(:) :: whSliceInDom
 integer :: nWhSliceInDom
-integer :: count, ww
+integer :: count, ww, errStatus
 
 character(len=19)  :: timeIn, updateTimeIn  !! the time of file/slice and when it was updated
 character(len=2)   :: sliceResoIn           !! the temporal resolution of the slice
@@ -1141,7 +1142,17 @@ print*,'Ndg: timeSlice: ',thisTime
 print*,'Ndg: timeSliceFile:',trim(fileName), my_id
 #endif
 
-nGages=get_netcdf_dim(fileName, 'stationIdInd', 'timeslice_file_to_struct')
+nGages=get_netcdf_dim(fileName, 'stationIdInd',   &
+                      'timeslice_file_to_struct', &
+                      readTimesliceErrFatal       )
+! If the dimension comes back zero, there's an issue with the file. 
+! If the error is not fatal, then handle the file as missing & print an
+! additional message
+if(nGages .eq. 0) then
+   obsTimeStr(structIndex)%updateTime='no file'
+   print*,'Ndg: WARNING: issues with skipped timeSliceFile : ', thisTime
+   return 
+end if
 
 !! Reduce to just the observations in the domain or not?
 if(filterObsToDom) then 
@@ -1154,15 +1165,24 @@ if(filterObsToDom) then
             gageQCIn(nGages),       & 
             gageDischargeIn(nGages) )
    
-   call read_timeslice_file(fileName,            &
-                            sanityQcDischarge,   &
-                            timeIn,              &
-                            updateTimeIn,        &
-                            sliceResoIn,         &
-                            usgsIdIn,            & 
-                            gageTimeIn,          & 
-                            gageQCIn,            & 
-                            gageDischargeIn      )
+   call read_timeslice_file(fileName,             &
+                            sanityQcDischarge,    &
+                            timeIn,               &
+                            updateTimeIn,         &
+                            sliceResoIn,          &
+                            usgsIdIn,             & 
+                            gageTimeIn,           & 
+                            gageQCIn,             & 
+                            gageDischargeIn,      &
+                            readTimesliceErrFatal,&
+                            errStatus             )
+
+   if(errStatus .ne. 0) then
+      obsTimeStr(structIndex)%updateTime='no file'
+      print*,'Ndg: WARNING: issues with skipped timeSliceFile : ', thisTime
+      deallocate(usgsIdIn, gageTimeIn, gageQCIn, gageDischargeIn)
+      return 
+   end if
 
    if(timeIn .NE. obsTimeStr(structIndex)%time) &
         call hydro_stop('timeslice_file_to_struct: file time does not match structure')
@@ -1227,7 +1247,16 @@ else ! dont filterObsToDom
                             obsTimeStr(structIndex)%obsStr(:)%usgsId,       &
                             obsTimeStr(structIndex)%obsStr(:)%obsTime,      &
                             obsTimeStr(structIndex)%obsStr(:)%obsQC,        &
-                            obsTimeStr(structIndex)%obsStr(:)%obsDischarge  ) 
+                            obsTimeStr(structIndex)%obsStr(:)%obsDischarge, &
+                            readTimesliceErrFatal,                          &
+                            errStatus                                       ) 
+
+   if(errStatus .ne. 0) then
+      obsTimeStr(structIndex)%updateTime='no file'
+      print*,'Ndg: WARNING: issues with skipped timeSliceFile : ', thisTime
+      deallocate(obsTimeStr(structIndex)%obsStr)
+      return 
+   end if 
 
    if(timeIn .NE. obsTimeStr(structIndex)%time) &
         call hydro_stop('timeslice_file_to_struct: file time does not match that in obsTimeStr')
@@ -1769,13 +1798,13 @@ real, allocatable, dimension(:) :: global_discharge !! modeled discharge (m3/s)
 integer :: ll, startInd, endInd, checkInd
 real :: theNudge
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTimeAcc, endCodeTimeAcc
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
      call nudging_timer(startCodeTimeAcc)
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 #ifdef MPP_LAND
 !! get global discharge. This is only needed if spatial interpolation.
@@ -1816,7 +1845,7 @@ nudgeAdj=discharge(:,2)-discharge(:,1)
 discharge(:,1)=discharge(:,2)
 deallocate(global_discharge)
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then
 #endif
@@ -1825,7 +1854,7 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 endif
 #endif
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 end subroutine nudge_term_all
 
@@ -2014,13 +2043,13 @@ character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
 integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
 integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTimeAcc, endCodeTimeAcc
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTimeAcc)
-!#endif
+#endif  /* un-ifdef to get timing results */
 
 !! accumulate_nwis_not_in_RLAndParams
 !! because of parallel IO,  accumulation is happening on 
@@ -2030,7 +2059,7 @@ nwisNotRLAndParamsCountVector(my_id+1) = nwisNotRLAndParamsCount
 do ii=0,numprocs-1
    call mpp_land_bcast_int1_root(nwisNotRLAndParamsCountVector(ii+1), ii)
 end do
-print*,'nwisNotRLAndParamsCountVector',nwisNotRLAndParamsCountVector
+!print*,'nwisNotRLAndParamsCountVector',nwisNotRLAndParamsCountVector
 call flush(6)
 
 allocate(nwisNotRLAndParamsGathered(sum(nwisNotRLAndParamsCountVector)))
@@ -2050,7 +2079,7 @@ if(my_id .eq. io_id) then
                                               nwisNotRLAndParamsCountConsolidated, &
                                               nwisNotRLAndParamsGathered(gg)       )
    end do
-   print*,'Ndg: nwisNotRLAndParamsCount: ', nwisNotRLAndParamsCountConsolidated
+   !print*,'Ndg: nwisNotRLAndParamsCount: ', nwisNotRLAndParamsCountConsolidated
    if(nwisNotRLAndParamsCountConsolidated .gt. 0) &
         call write_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,     &
                                            nwisNotRLAndParamsCountConsolidated )
@@ -2085,6 +2114,7 @@ if(allocated(chanlen_image0))          deallocate(chanlen_image0)
 
 !! print ouf the full timing results here.
 !! dont i need to make another accumultion call here?
+#ifdef HYDRO_D
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then
 #endif 
@@ -2094,6 +2124,7 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 end if
 #endif 
+#endif /* HYDRO_D */
 
 end subroutine finish_stream_nudging
 
