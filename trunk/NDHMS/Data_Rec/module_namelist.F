@@ -244,8 +244,24 @@ CONTAINS
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
 
-    if(nlst%DT/DTRT_CH .ne. real(int(nlst%DT) / int(DTRT_CH)) ) &
-         call hydro_stop("driveChannelRouting: DT not a multiple of DTRT_CH")
+    if(nlst%DT .lt. DTRT_CH) then 
+          print*, "nlst%DT,  DTRT_CH = ",nlst%DT,  DTRT_CH
+          print*, "reset DTRT_CH=nlst%DT "
+          DTRT_CH=nlst%DT
+    endif
+    if(nlst%DT .lt. DTRT_TER) then 
+          print*, "nlst%DT,  DTRT_TER = ",nlst%DT,  DTRT_TER
+          print*, "reset DTRT_TER=nlst%DT "
+          DTRT_TER=nlst%DT
+    endif
+    if(nlst%DT/DTRT_TER .ne. real(int(nlst%DT) / int(DTRT_TER)) ) then 
+         print*, "nlst%DT,  DTRT_TER = ",nlst%DT,  DTRT_TER
+         call hydro_stop("module_namelist: DT not a multiple of DTRT_TER")
+    endif
+    if(nlst%DT/DTRT_CH .ne. real(int(nlst%DT) / int(DTRT_CH)) ) then 
+         print*, "nlst%DT,  DTRT_CH = ",nlst%DT,  DTRT_CH
+         call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
+    endif
 
     nlst%SUBRTSWCRT = SUBRTSWCRT
     nlst%OVRTSWCRT = OVRTSWCRT
