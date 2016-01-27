@@ -137,6 +137,7 @@ module module_NoahMP_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:,:,:)     ::  quartz_3D  ! Soil quartz content
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  refdk_2D   ! Reference Soil Conductivity
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  refkdt_2D  ! Soil Infiltration Parameter
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  slope_2D   ! Soil Drainage Parameter
 #endif
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
@@ -760,6 +761,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( quartz_3D  (XSTART:XEND,1:NSOIL,YSTART:YEND) )    ! Soil quartz content
   ALLOCATE ( refdk_2D   (XSTART:XEND,YSTART:YEND) )            ! Reference Soil Conductivity
   ALLOCATE ( refkdt_2D  (XSTART:XEND,YSTART:YEND) )            ! Soil Infiltration Parameter
+  ALLOCATE ( slope_2D   (XSTART:XEND,YSTART:YEND) )            ! Soil Drainage Parameter
 #endif
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
@@ -1090,7 +1092,7 @@ module module_NoahMP_hrldas_driver
 #ifdef SPATIAL_SOIL
     CALL READ_3D_SOIL(SPATIAL_FILENAME, XSTART, XEND, YSTART, YEND, &
                       NSOIL,BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,  &
-		      DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,REFDK_2D,REFKDT_2D)
+		      DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,REFDK_2D,REFKDT_2D,SLOPE_2D)
 #endif
   
 !------------------------------------------------------------------------
@@ -1410,9 +1412,14 @@ module module_NoahMP_hrldas_driver
    NTIME_out = NTIME 
 
 #ifdef WRF_HYDRO
+
+#ifdef HYDRO_REALTIME
+      call ldas_output()
+#else
   if (restart_filename_requested == " ") then
       call ldas_output()
   endif
+#endif
 #endif
    
 end subroutine land_driver_ini
@@ -1583,7 +1590,7 @@ end subroutine land_driver_ini
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
-		 REFDK_2D,REFKDT_2D,                                          &
+		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
 #endif
 #ifdef WRF_HYDRO
                  sfcheadrt,INFXSRT,soldrain,                          &    !O

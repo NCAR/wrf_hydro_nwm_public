@@ -66,11 +66,11 @@ contains
     iunit = get_unused_unit()
     nullify(table%next)
 
-    #ifndef NCEP_WCOSS
+#ifndef NCEP_WCOSS
 
-    #else
+#else
     open(iunit, file=trim(table_filename), status='old', form='formatted', action='read', iostat=ierr)
-    #endif
+#endif
      
     if (ierr /= 0) then
        write(*,'(/," ***** ERROR *****",/)')
@@ -80,11 +80,11 @@ contains
     endif
 
     READ_TABLE : do
-       #ifndef NCEP_WCOSS
+#ifndef NCEP_WCOSS
        
-       #else
+#else
        read(iunit, '(A200)', iostat=ierr) string
-       #endif
+#endif
        if (ierr /= 0) exit READ_TABLE
        if (string(1:1) == "#") cycle READ_TABLE
        if (string(1:1) == "+") then
@@ -111,10 +111,10 @@ contains
 
        endif
     enddo READ_TABLE
-    #ifndef NCEP_WCOSS
-    #else
+#ifndef NCEP_WCOSS
+#else
     close(iunit)
-    #endif
+#endif
 
   end subroutine grib2_read_parameter_tables
 

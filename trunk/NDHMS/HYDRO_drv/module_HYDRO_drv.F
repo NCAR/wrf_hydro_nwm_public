@@ -176,6 +176,7 @@ module module_HYDRO_drv
      if (outflag .lt. 0) return
 
      rt_domain(did)%out_counts = rt_domain(did)%out_counts + 1
+
      rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
 
      if(nlst_rt(did)%out_dt*60 .gt. nlst_rt(did)%DT) then
@@ -207,7 +208,9 @@ module module_HYDRO_drv
 !yw keep the initial time otuput for debug
       if(rtflag == 1) then 
           rt_domain(did)%restQSTRM = .false.   !!! do not reset QSTRM.. at initial time.
+#ifndef HYDRO_REALTIME
           return ! jump the initial time output for routing restart
+#endif
       endif
 
 
@@ -472,7 +475,7 @@ module module_HYDRO_drv
         integer:: rst_out
 
 
-        call HYDRO_out(did)
+!       call HYDRO_out(did)
 
 
 ! running land surface model
@@ -595,10 +598,13 @@ module module_HYDRO_drv
            end if
 
 
-       ! advance to next time step
-           call HYDRO_time_adv(did)
-
+!yw  if (nlst_rt(did)%sys_cpl .eq. 2) then
+      ! advance to next time step
+!          call HYDRO_time_adv(did)
       ! output for history 
+!          call HYDRO_out(did)
+!yw  endif
+           call HYDRO_time_adv(did)
            call HYDRO_out(did)
 
 
@@ -1314,9 +1320,16 @@ endif
 
        call HYDRO_rst_in(did)
 
+#ifdef HYDRO_REALTIME
+       call HYDRO_out(did)
+#else
+  if (trim(nlst_rt(did)%restart_file) == "") then
+! output at the initial time
+         call HYDRO_out(did)
+         return
+  endif
+#endif
 
-
-!      call HYDRO_out(did)
 
 
       end subroutine HYDRO_ini

@@ -744,7 +744,7 @@ contains
 
   subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
                           nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &
-		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d)
+		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d,slope_2d)
     implicit none
     character(len=*),          intent(in)  :: spatial_filename
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -760,6 +760,7 @@ contains
     real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: quartz_3d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: refdk_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: refkdt_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: slope_2d
     
     character(len=24)  :: name
     character(len=256) :: units
@@ -918,6 +919,16 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, refkdt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+    
+    name = "slope"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, slope_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
     
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
