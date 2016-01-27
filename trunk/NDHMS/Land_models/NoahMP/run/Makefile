@@ -39,14 +39,14 @@ hrldas.exe: $(OBJS)
 	@echo ""
 	echo "${TAO_FORTRAN_LIB} ${TAO_LIB} ${PETSC_LIB} ${PHDF5_INC} -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB} -lhdf5 -lz"
 # We have to include the modules built in ../IO_code 
-	$(COMPILERF90) -o $(@) -I../IO_code -I../phys $(OBJS) $(OBJS_NoahMP) $(LDFLAGS) $(HYDRO_LIB) $(RAPID_LIB) $(NETCDFLIB) $(RAPID_MACRO)
+	$(COMPILERF90) -o $(@) -I../IO_code -I../phys $(OBJS) $(OBJS_NoahMP) $(HYDRO_LIB) $(RAPID_LIB) $(NETCDFLIB) $(RAPID_MACRO)
 
 	@echo ""
 
 # Template to create the exe file based on different land model. Such as NoahMP
 NoahMP: $(OBJS)
 	@echo ""
-	$(COMPILERF90) -o hrldas.exe -I../IO_code -I../phys $(OBJS) $(OBJS_NoahMP) $(LDFLAGS) $(HYDRO_LIB) $(NETCDFLIB)
+	$(COMPILERF90) -o hrldas.exe -I../IO_code -I../phys $(OBJS) $(OBJS_NoahMP)  $(HYDRO_LIB) $(NETCDFLIB)
 	@echo ""
 
 # This command cleans up

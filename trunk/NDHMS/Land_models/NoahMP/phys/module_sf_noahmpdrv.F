@@ -60,7 +60,7 @@ CONTAINS
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
-		 REFDK_2D,REFKDT_2D,                                          &
+		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
@@ -151,6 +151,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, 1:nsoil, jms:jme ), INTENT(IN) ::  QUARTZ_3D ! Soil quartz content
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  REFDK_2D  ! Reference Soil Conductivity
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  REFKDT_2D ! Soil Infiltration Parameter
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SLOPE_2D  ! Soil Drainage Parameter
 #endif
 
 ! INOUT (with generic LSM equivalent)
@@ -629,6 +630,7 @@ CONTAINS
        parameters%quartz = QUARTZ_3D(I,1:NSOIL,J) ! Soil quartz content
        parameters%refdk  = REFDK_2D (I,J)         ! Reference Soil Conductivity
        parameters%refkdt = REFKDT_2D(I,J)         ! Soil Infiltration Parameter
+       parameters%slope  = SLOPE_2D (I,J)         ! Soil Drainage Parameter
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters)
 ! Initialized local
@@ -1047,6 +1049,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
     parameters%SMCWLT = SMCWLT_TABLE (SOILTYPE)
     parameters%REFDK  = REFDK_TABLE
     parameters%REFKDT = REFKDT_TABLE
+    parameters%SLOPE  = SLOPE_TABLE(SLOPETYPE)
 #endif
 
 ! ----------------------------------------------------------------------
@@ -1058,7 +1061,6 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
 
     FRZK   = FRZK_TABLE
     parameters%KDT    = parameters%REFKDT * parameters%DKSAT(1) / parameters%REFDK
-    parameters%SLOPE  = SLOPE_TABLE(SLOPETYPE)
 
     IF(parameters%URBAN_FLAG)THEN  ! Hardcoding some urban parameters for soil
        parameters%SMCMAX = 0.45 
