@@ -56,6 +56,7 @@
        character(len=256) :: nudgingParamFile
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
+       logical            :: temporalPersistence
 #endif
 
 

@@ -1079,6 +1079,23 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_real2
 
+  subroutine mpp_land_bcast_real3d(inout)
+      integer j, k, length1, length2, length3
+      real inout(:,:,:)
+      integer ierr
+      length1 = size(inout,1)
+      length2 = size(inout,2)
+      length3 = size(inout,3)
+      do k = 1, length3
+         do j = 1, length2
+            call mpi_bcast(inout(:,j,k), length1, MPI_real, &
+                 IO_id, MPI_COMM_WORLD, ierr)
+         end do
+      end do
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_real3d
+  
   subroutine mpp_land_bcast_rd(size,inout)
       integer size
       real*8 inout(size)
