@@ -386,7 +386,8 @@ subroutine read_nudging_param_file(  &
      gageId,                         &  !! OUT: integer, the USGS gage ID. 
      gageR,                          &  !! OUT: output converted for comparision to model time??
      gageG,                          &  !! OUT: quality control flag for discharge
-     gageTau                         &  !! OUT: real, the m3/s observed discharge
+     gageTau,                        &  !! OUT: real the half-window for NN/IDW interp
+     gageAcf                         &  !! OUT: real, params for ACF-based temporal persistence
 )
 implicit none
 character(len=256), intent(in)                    :: paramFile
@@ -417,8 +418,8 @@ call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
-if(size(gageAcf(2)) .ne. 0 .and. size(gageAcf(3)). ne. 0) &
-     call get_1d_netcdf_real(ncid, 'acf', gageAcf, caller, .true., errStatus)
+if(size(gageAcf,2) .ne. 0 .and. size(gageAcf,3) .ne. 0) &
+     call get_3d_netcdf_real(ncid, 'acf', gageAcf, caller, .true., errStatus)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then
