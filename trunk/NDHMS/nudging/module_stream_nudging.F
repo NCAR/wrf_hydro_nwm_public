@@ -416,14 +416,14 @@ if(my_id .eq. IO_id) then
    allocate(nudgingParamsTmp%usgsId(nParamGages),                        &
             nudgingParamsTmp%R(nParamGages),                             &
             nudgingParamsTmp%G(nParamGages),                             &
-            nudgingParamsTmp%tau(nParamGages)                            &
+            nudgingParamsTmp%tau(nParamGages),                           &
             nudgingParamsTmp%acf(nParamGages, nParamMonth, nParamThresh) )
 
    call read_nudging_param_file(nudgingParamFile,        &
                                 nudgingParamsTmp%usgsId, &
                                 nudgingParamsTmp%R,      &
                                 nudgingParamsTmp%G,      &
-                                nudgingParamsTmp%tau     &
+                                nudgingParamsTmp%tau,    &
                                 nudgingParamsTmp%acf     )
 
    ! Reduce the parameters to just the gages in the domain
@@ -453,7 +453,7 @@ if(my_id .eq. IO_id) then
          nudgingParamsStr%G(count)      = nudgingParamsTmp%G(kk)
          nudgingParamsStr%tau(count)    = nudgingParamsTmp%tau(kk)
          if(temporalPersistence) &
-            nudgingParamsStr%acf(count) = nudgingParamsStr%acf(kk,:,:)
+            nudgingParamsStr%acf(count,:,:) = nudgingParamsStr%acf(kk,:,:)
          count=count+1
       end if
    end do
@@ -469,7 +469,7 @@ if(my_id .eq. IO_id) then
    print*,'Ndg: nudgingParamsStr%G',      nudgingParamsStr%G(size(nudgingParamsStr%G))
    print*,'Ndg: nudgingParamsStr%tau',    nudgingParamsStr%tau(size(nudgingParamsStr%tau))
    if(temporalPersistence) & 
-        print*,'Ndg: nudgingParamsStr%acf',    nudgingParamsStr%k(size(nudgingParamsStr%tau),1,1)
+        print*,'Ndg: nudgingParamsStr%acf',    nudgingParamsStr%acf(size(nudgingParamsStr%tau),1,1)
 #endif
 
 #ifdef MPP_LAND
@@ -1947,6 +1947,7 @@ integer, parameter :: sixty=60
 real,    parameter :: smallestNudge=1.e-10
 real,    parameter :: zero=1.e-37
 
+logical :: whPrstParams
 logical, allocatable, dimension(:) :: theMask
 #ifdef MPP_LAND
 integer :: whImage, checkInd
@@ -2091,10 +2092,10 @@ else
    if(obsStaticStr(whGageId)%lastObsTime .eq. missingLastObsTime) return
 
    !! 3) are there parameters for this link? no -> return
-   if(.not. any(nudgingParamsStr(:)%usgsId .eq. prstGageId)) return
+   if(.not. any(nudgingParamsStr%usgsId .eq. prstGageId)) return
    !! 4) what is the index of this link/gage in nudgingParamsStr?
-   allocate(theMask(size(nudgingParamsStr(:)%usgsId)))
-   theMask = nudgingParamsStr(:)%usgsId .eq. prstGageId
+   allocate(theMask(size(nudgingParamsStr%usgsId)))
+   theMask = nudgingParamsStr%usgsId .eq. prstGageId
    whPrstParams = whUniLoop(theMask)
    deallocate(theMask)
 
