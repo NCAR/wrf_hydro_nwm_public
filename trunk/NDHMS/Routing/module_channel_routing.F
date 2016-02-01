@@ -63,7 +63,7 @@ MODULE module_channel_routing
 !   SUBROUTINE LEVELPOOL
 ! ------------------------------------------------
 
-SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
+SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 
     !! ----------------------------  argument variables
     !! All elevations should be relative to a common base (often belev(k))
@@ -81,6 +81,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
     real, intent(IN)    :: oe      ! orifice elevation
     real, intent(IN)    :: oc      ! orifice coeff.
     real, intent(IN)    :: oa      ! orifice area (m^2)
+    real, intent(IN)    :: maxh    !                      
     integer, intent(IN) :: ln      ! lake number
 
     !! ----------------------------  local variables
@@ -89,20 +90,25 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
     real :: tmp1, tmp2
     real :: dh, dh1, dh2, dh3      ! height function and 3 order RK
     real :: It, Itdt_3, Itdt_2_3
-
+    real :: maxWeirDepth           !maximum capacity of weir
     !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
     !! -- determine from inflow hydrograph
 
     It = qi0
     Itdt_3   = (qi0 + (qi1 + ql))/3
     Itdt_2_3 = (qi0 + (qi1 + ql))/3 + Itdt_3
+    maxWeirDepth =  maxh - we   
 
     !-- determine Q(dh) from elevation-discharge relationship
     !-- and dh1
     dh = H - we
+    if (dh .gt. maxWeirDepth) then 
+       dh = maxWeirDepth 
+    endif
+
     if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        tmp2 = wc * wl * dh * sqrt(dh)
+        tmp2 = wc * wl * (dh ** 2./3.)
         discharge = tmp1 + tmp2
         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
@@ -117,9 +123,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
     !-- determine Q(H + dh1/3) from elevation-discharge relationship
     !-- dh2
     dh = (H+dh1/3) - we
+    if (dh .gt. maxWeirDepth) then 
+       dh = maxWeirDepth 
+    endif
+
     if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        tmp2 = wc * wl * dh * sqrt(dh)
+        tmp2 = wc * wl * (dh ** 2./3.) 
         discharge = tmp1 + tmp2
         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
@@ -134,9 +144,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
     !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
     !-- dh3
     dh = (H + (0.667*dh2)) - we
+    if (dh .gt. maxWeirDepth) then 
+       dh = maxWeirDepth 
+    endif
+
     if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        tmp2 = wc * wl * dh * sqrt(dh)
+        tmp2 = wc * wl * (dh ** 2./3.) 
         discharge = tmp1 + tmp2
         sap = (ar * 1.0E6       ) * (1 + (H - we) / H)
     else if ( H .gt. oe ) then     !! only orifice flow,not full
@@ -154,10 +168,12 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
 
     !-- compute final discharge
     dh = H - we
-
+    if (dh .gt. maxWeirDepth) then 
+       dh = maxWeirDepth 
+    endif
     if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-        tmp2 = wc * wl * dh * sqrt(dh)
+        tmp2 = wc * wl * (dh ** 2./3.)
         discharge = tmp1 + tmp2
         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
 
@@ -173,6 +189,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         discharge = 0.0
         sap = ar * 1.0E6
     !   print *, "-Hltoe H oe", H, oe
+    endif
+
+    if(H .gt. maxh) then  ! overtop condition
+     discharge = qi1
     endif
 
     qo1  = discharge  ! return the flow rate from reservoir
@@ -550,7 +570,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, CH_LNKRT, &
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, &
-       RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+       RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
        ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area  &
@@ -621,6 +641,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,wc,wl,oe,oc,oa)
         !-- lake params
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRH    !-- lake depth  (m^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
@@ -1201,7 +1222,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
             if(lake_index(i) .gt. 0)  then
 #endif
               CALL LEVELPOOL(i,QLAKEIP(i), QLAKEI(i), QLAKEO(i), QLLAKE(i), &
-                DTCT, RESHT(i), HRZAREA(i), LAKEMAXH(i), WEIRC(i), &
+                DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
                 WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
                 QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 #ifdef MPP_LAND
@@ -1554,7 +1575,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
         CHANLEN, MannN, So, ChSSlp, Bw, &
-        RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+        RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
         ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
         nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
@@ -1632,6 +1653,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRH    !--  lake depth  (m^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
@@ -1860,7 +1882,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
              lakeid = LAKEIDX(k)
 !            goto 105
              CALL LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
-               QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), LAKEMAXH(lakeid), &
+               QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
                WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
 
                QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
