@@ -389,11 +389,12 @@ subroutine read_nudging_param_file(  &
      gageTau                         &  !! OUT: real, the m3/s observed discharge
 )
 implicit none
-character(len=256), intent(in)                :: paramFile
-character(len=15),  intent(out), dimension(:) :: gageId
-real,               intent(out), dimension(:) :: gageR
-real,               intent(out), dimension(:) :: gageG
-real,               intent(out), dimension(:) :: gageTau
+character(len=256), intent(in)                    :: paramFile
+character(len=15),  intent(out), dimension(:)     :: gageId
+real,               intent(out), dimension(:)     :: gageR
+real,               intent(out), dimension(:)     :: gageG
+real,               intent(out), dimension(:)     :: gageTau
+real,               intent(out), dimension(:,:,:) :: gageAcf
 
 integer :: iRet, ncId, varId, dimId, fileNameLen, errStatus
 character(len=23) :: caller
@@ -415,6 +416,9 @@ call get_1d_netcdf_text(ncid, 'stationId', gageId,  caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
+
+if(size(gageAcf(2)) .ne. 0 .and. size(gageAcf(3)). ne. 0) &
+     call get_1d_netcdf_real(ncid, 'acf', gageAcf, caller, .true., errStatus)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then
@@ -949,6 +953,31 @@ if (iret /= nf90_NoErr) then
 end if
 end subroutine get_1d_netcdf_text
 
+
+!==============================================================================
+! 3D real 
+subroutine get_3d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+integer,                intent(in)  :: ncid !! the file identifier
+character(len=*),       intent(in)  :: varName
+real, dimension(:,:,:), intent(out) :: var
+character(len=*),       intent(in)  :: callingRoutine
+logical,                intent(in)  :: fatal_if_error
+integer,                intent(out) :: errStatus
+integer :: varId, iRet
+errStatus=0
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_3d_netcdf_real: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_3d_netcdf_real")
+   errStatus=errStatus+1
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_3d_netcdf_real: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_3d_netcdf_real")
+   errStatus=errStatus+1
+end if
+end subroutine get_3d_netcdf_real
 
 !===================================================================================================
 ! Program Names: 
