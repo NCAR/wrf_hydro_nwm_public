@@ -193,6 +193,7 @@
 !-- lake params
   REAL, allocatable, DIMENSION(:)    :: LAKEMAXH   !maximum depth (m)
   REAL, allocatable, DIMENSION(:)    :: WEIRC      !coeff of overtop weir
+  REAL, allocatable, DIMENSION(:)    :: WEIRH      !depth of Lake coef
 
 
 

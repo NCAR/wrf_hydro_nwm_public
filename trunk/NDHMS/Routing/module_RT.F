@@ -256,6 +256,7 @@ CONTAINS
      allocate( rt_domain(did)%LAKEIDM(NLAKES) )
      allocate( rt_domain(did)%HRZAREA(NLAKES) )
      allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+     allocate( rt_domain(did)%WEIRH(NLAKES) )
      allocate( rt_domain(did)%WEIRC(NLAKES) )
      allocate( rt_domain(did)%WEIRL(NLAKES) )
      allocate( rt_domain(did)%ORIFICEC(NLAKES) )
@@ -333,6 +334,7 @@ CONTAINS
       rt_domain(did)%LAKEIDX = 0
 
       rt_domain(did)%LAKEMAXH = 0.0        
+      rt_domain(did)%WEIRH = 0.0        
       rt_domain(did)%WEIRC = 0.0        
       rt_domain(did)%WEIRL = 0.0        
       rt_domain(did)%ORIFICEC = 0.0        
@@ -583,7 +585,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%NLAKES, rt_domain(did)%MUSK, rt_domain(did)%MUSX, rt_domain(did)%QLINK,&
                rt_domain(did)%CHANLEN, rt_domain(did)%MannN, rt_domain(did)%So, rt_domain(did)%ChSSlp, rt_domain(did)%Bw, &
                rt_domain(did)%LAKEIDA, &
-               rt_domain(did)%HRZAREA, rt_domain(did)%LAKEMAXH, rt_domain(did)%WEIRC, rt_domain(did)%WEIRL, rt_domain(did)%ORIFICEC, &
+               rt_domain(did)%HRZAREA, rt_domain(did)%LAKEMAXH, rt_domain(did)%WEIRH, rt_domain(did)%WEIRC, &
+               rt_domain(did)%WEIRL, rt_domain(did)%ORIFICEC, &
                rt_domain(did)%ORIFICEA,  rt_domain(did)%ORIFICEE, rt_domain(did)%LATLAKE, rt_domain(did)%LONLAKE, &
                rt_domain(did)%ELEVLAKE, rt_domain(did)%LAKEIDM, rt_domain(did)%LAKEIDX, &
                nlst_rt(did)%route_link_f,nlst_rt(did)%route_lake_f, &
