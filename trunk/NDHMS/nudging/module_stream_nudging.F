@@ -102,7 +102,7 @@ type nudgingParamStructure
    real,              allocatable, dimension(:)     :: G
    real,              allocatable, dimension(:)     :: tau
    real,              allocatable, dimension(:,:,:) :: qThresh  !! gage, month, nThresh
-   real,              allocatable, dimension(:,:,:) :: acf      !! gage, month, nThresh
+   real,              allocatable, dimension(:,:,:) :: expCoeff !! gage, month, nThresh
 end type nudgingParamStructure
 type(nudgingParamStructure) :: nudgingParamsTmp, nudgingParamsStr
 
@@ -257,7 +257,7 @@ integer                    :: nLinks, nLinksL
 !integer, dimension(nlinks) :: strmFrxstPts
 integer :: did=1
 integer :: ii, kk, ll, count, toSize, fromSize
-integer :: nParamGages, nParamMonth, nParamThresh, nGgDists, nGgDistsKeep
+integer :: nParamGages, nParamMonth, nParamThresh, nParamThreshCat, nGgDists, nGgDistsKeep
 integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) ::  whParamsDom
 integer :: downSize, upSize, baseSize, nLastObs
@@ -406,28 +406,37 @@ if(my_id .eq. IO_id) then
 #endif
    nParamGages  = get_netcdf_dim(nudgingParamFile, 'stationIdInd', 'init_stream_nudging')
 
-   nParamMonth  = get_netcdf_dim(nudgingParamFile, 'monthInd', 'init_stream_nudging') 
-   nParamThresh = get_netcdf_dim(nudgingParamFile, 'threshInd', 'init_stream_nudging')   
-   if(nParamMonth .eq. 0 .or. nParamThresh .eq. 0) temporalPersistence = .false.  
+   if(temporalPersistence) then 
+      nParamMonth     = get_netcdf_dim(nudgingParamFile, 'monthInd',     'init_stream_nudging') 
+      nParamThresh    = get_netcdf_dim(nudgingParamFile, 'threshInd',    'init_stream_nudging')
+      nParamThreshCat = get_netcdf_dim(nudgingParamFile, 'threshCatInd', 'init_stream_nudging')   
+      if(nParamMonth     .eq. 0 .or. &
+         nParamThresh    .eq. 0 .or. &
+         nParamThreshCat .eq. 0       ) then
+         temporalPersistence = .false.
+      else 
+         if((nParamThresh+1) .ne. nParamThreshCat) temporalPersistence = .false.
+      end if
+   endif !temporal persistence
    
 #ifdef HYDRO_D
    print*,'Ndg: nParamGages: ',nParamGages
 #endif
 
-   allocate(nudgingParamsTmp%usgsId(nParamGages),                             &
-            nudgingParamsTmp%R(nParamGages),                                  &
-            nudgingParamsTmp%G(nParamGages),                                  &
-            nudgingParamsTmp%tau(nParamGages),                                &
-            nudgingParamsTmp%qThresh(nParamGages, nParamMonth, nParamThresh), &
-            nudgingParamsTmp%acf(    nParamGages, nParamMonth, nParamThresh)      )
+   allocate(nudgingParamsTmp%usgsId(  nParamGages))
+   allocate(nudgingParamsTmp%R(       nParamGages))
+   allocate(nudgingParamsTmp%G(       nParamGages))
+   allocate(nudgingParamsTmp%tau(     nParamGages))
+   allocate(nudgingParamsTmp%qThresh( nParamGages, nParamMonth, nParamThresh  ))
+   allocate(nudgingParamsTmp%expCoeff(nParamGages, nParamMonth, nParamThresh+1))
 
-   call read_nudging_param_file(nudgingParamFile,        &
-                                nudgingParamsTmp%usgsId, &
-                                nudgingParamsTmp%R,      &
-                                nudgingParamsTmp%G,      &
-                                nudgingParamsTmp%tau,    &
-                                nudgingParamsTmp%qThresh,&
-                                nudgingParamsTmp%acf     )
+   call read_nudging_param_file(nudgingParamFile,         &
+                                nudgingParamsTmp%usgsId,  &
+                                nudgingParamsTmp%R,       &
+                                nudgingParamsTmp%G,       &
+                                nudgingParamsTmp%tau,     &
+                                nudgingParamsTmp%qThresh, &
+                                nudgingParamsTmp%expCoeff )
 
    ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
@@ -446,8 +455,8 @@ if(my_id .eq. IO_id) then
             nudgingParamsStr%G(nGagesWParamsDom),       &
             nudgingParamsStr%tau(nGagesWParamsDom)      )
    if(temporalPersistence) then
-      allocate(nudgingParamsStr%qThresh(nGagesWParamsDom, nParamMonth, nParamThresh))
-      allocate(nudgingParamsStr%acf(    nGagesWParamsDom, nParamMonth, nParamThresh))
+      allocate(nudgingParamsStr%qThresh( nGagesWParamsDom, nParamMonth, nParamThresh  ))
+      allocate(nudgingParamsStr%expCoeff(nGagesWParamsDom, nParamMonth, nParamThresh+1))
    end if
    
    count=1
@@ -458,8 +467,8 @@ if(my_id .eq. IO_id) then
          nudgingParamsStr%G(count)      = nudgingParamsTmp%G(kk)
          nudgingParamsStr%tau(count)    = nudgingParamsTmp%tau(kk)
          if(temporalPersistence) then
-            nudgingParamsStr%qThresh(count,:,:) = nudgingParamsStr%qThresh(kk,:,:)
-            nudgingParamsStr%acf(count,:,:)     = nudgingParamsStr%acf(    kk,:,:)
+            nudgingParamsStr%qThresh( count,:,:) = nudgingParamsStr%qThresh( kk,:,:)
+            nudgingParamsStr%expCoeff(count,:,:) = nudgingParamsStr%expCoeff(kk,:,:)
          endif
          count=count+1
       end if
@@ -470,7 +479,7 @@ if(my_id .eq. IO_id) then
    deallocate(nudgingParamsTmp%G,       nudgingParamsTmp%tau)
    if(temporalPersistence) then
       deallocate(nudgingParamsTmp%qThresh)
-      deallocate(nudgingParamsTmp%acf)
+      deallocate(nudgingParamsTmp%expCoeff)
    end if
 
 #ifdef HYDRO_D
@@ -480,7 +489,7 @@ if(my_id .eq. IO_id) then
    print*,'Ndg: nudgingParamsStr%tau',    nudgingParamsStr%tau(size(nudgingParamsStr%tau))
    if(temporalPersistence) then
       print*,'Ndg: nudgingParamsStr%qThresh', nudgingParamsStr%qThresh(size(nudgingParamsStr%tau),1,1)
-      print*,'Ndg: nudgingParamsStr%acf',     nudgingParamsStr%acf(    size(nudgingParamsStr%tau),1,1)
+      print*,'Ndg: nudgingParamsStr%expCoeff',nudgingParamsStr%expCoeff(size(nudgingParamsStr%tau),1,1)
    end if
 #endif
 
@@ -499,20 +508,20 @@ call mpp_land_bcast_real_1d(nudgingParamsStr%G)
 call mpp_land_bcast_real_1d(nudgingParamsStr%tau)
 call mpp_land_bcast_logical(temporalPersistence)
 if(temporalPersistence) then
-   allocate(nudgingParamsStr%qThresh(nGagesWParamsDom, nParamMonth, nParamThresh))
-   allocate(nudgingParamsStr%acf(    nGagesWParamsDom, nParamMonth, nParamThresh))
+   allocate(nudgingParamsStr%qThresh( nGagesWParamsDom, nParamMonth, nParamThresh  ))
+   allocate(nudgingParamsStr%expCoeff(nGagesWParamsDom, nParamMonth, nParamThresh+1))
    call mpp_land_bcast_real3d(nudgingParamsStr%qThresh)
-   call mpp_land_bcast_real3d(nudgingParamsStr%acf)
+   call mpp_land_bcast_real3d(nudgingParamsStr%expCoeff)
 #ifdef HYDRO_D
    print*,'Ndg: JLM do the following qThresh check?'
    if(my_id .eq. io_id) print*,nudgingParamsStr%qThresh(1,2,:)
    print*,'Ndg: and'
    if(my_id .eq. 2)     print*,nudgingParamsStr%qThresh(1,2,:)
    print*,'Ndg: ----------- ?'
-   print*,'Ndg: JLM do the following acf check?'
-   if(my_id .eq. io_id) print*,nudgingParamsStr%acf(1,2,:)
+   print*,'Ndg: JLM do the following expCoeff check?'
+   if(my_id .eq. io_id) print*,nudgingParamsStr%expCoeff(1,2,:)
    print*,'Ndg: and'
-   if(my_id .eq. 2)     print*,nudgingParamsStr%acf(1,2,:)
+   if(my_id .eq. 2)     print*,nudgingParamsStr%expCoeff(1,2,:)
    print*,'Ndg: ----------- ?'
 #endif
 endif
@@ -2149,13 +2158,13 @@ else if (temporalPersistence) then
 
    !! 6) what thereshold is the flow?
    whThresh=1
-   do tt=1,(size(nudgingParamsStr%qThresh,3)-1)
+   do tt=1,(size(nudgingParamsStr%qThresh,3))
       if(discharge(obsInd) .gt. nudgingParamsStr%qThresh(whPrstParams, flowMonth, tt)) &
            whThresh=tt+1
    end do
 
    !!7) get the parameter of the exponential
-   prstB=nudgingParamsStr%acf(whPrstParams, flowMonth, whThresh)
+   prstB=nudgingParamsStr%expCoeff(whPrstParams, flowMonth, whThresh)
 
    !! --- Deal with the last ob ---
    !! 9) what is the time difference with the last ob?
@@ -2313,29 +2322,29 @@ if(allocated(nwisNotRLAndParamsGathered))     deallocate(nwisNotRLAndParamsGathe
 if(allocated(nwisNotRLAndParamsConsolidated)) deallocate(nwisNotRLAndParamsConsolidated)
 
 !! deallocate module variables here and time this
-if(allocated(obsTimeStr))               deallocate(obsTimeStr)
-if(allocated(obsStaticStr))             deallocate(obsStaticStr)
-if(allocated(nodeGageTmp%nodeId))       deallocate(nodeGageTmp%nodeId)
-if(allocated(nodeGageTmp%usgsId))       deallocate(nodeGageTmp%usgsId) !redundant
-if(allocated(nodeGageStr%nodeId))       deallocate(nodeGageStr%nodeId)
-if(allocated(nodeGageStr%usgsId))       deallocate(nodeGageStr%usgsId)
-if(allocated(nudgingParamsTmp%usgsId))  deallocate(nudgingParamsTmp%usgsId) !redundant
-if(allocated(nudgingParamsTmp%R))       deallocate(nudgingParamsTmp%R)      !redundant
-if(allocated(nudgingParamsTmp%G))       deallocate(nudgingParamsTmp%G)      !redundant
-if(allocated(nudgingParamsTmp%tau))     deallocate(nudgingParamsTmp%tau)    !redundant
-if(allocated(nudgingParamsStr%usgsId))  deallocate(nudgingParamsStr%usgsId)
-if(allocated(nudgingParamsStr%R))       deallocate(nudgingParamsStr%R)
-if(allocated(nudgingParamsStr%G))       deallocate(nudgingParamsStr%G)
-if(allocated(nudgingParamsStr%tau))     deallocate(nudgingParamsStr%tau)
-if(allocated(nudgingParamsStr%qThresh)) deallocate(nudgingParamsStr%qThresh)
-if(allocated(nudgingParamsStr%acf))     deallocate(nudgingParamsStr%acf)
-if(allocated(upNetwkStr%go))            deallocate(upNetwkStr%go)
-if(allocated(upNetwkStr%start))         deallocate(upNetwkStr%start)
-if(allocated(upNetwkStr%end))           deallocate(upNetwkStr%end)
-if(allocated(downNetwkStr%go))          deallocate(downNetwkStr%go)
-if(allocated(downNetwkStr%start))       deallocate(downNetwkStr%start)
-if(allocated(downNetwkStr%end))         deallocate(downNetwkStr%end)
-if(allocated(chanlen_image0))           deallocate(chanlen_image0)
+if(allocated(obsTimeStr))                deallocate(obsTimeStr)
+if(allocated(obsStaticStr))              deallocate(obsStaticStr)
+if(allocated(nodeGageTmp%nodeId))        deallocate(nodeGageTmp%nodeId)
+if(allocated(nodeGageTmp%usgsId))        deallocate(nodeGageTmp%usgsId) !redundant
+if(allocated(nodeGageStr%nodeId))        deallocate(nodeGageStr%nodeId)
+if(allocated(nodeGageStr%usgsId))        deallocate(nodeGageStr%usgsId)
+if(allocated(nudgingParamsTmp%usgsId))   deallocate(nudgingParamsTmp%usgsId) !redundant
+if(allocated(nudgingParamsTmp%R))        deallocate(nudgingParamsTmp%R)      !redundant
+if(allocated(nudgingParamsTmp%G))        deallocate(nudgingParamsTmp%G)      !redundant
+if(allocated(nudgingParamsTmp%tau))      deallocate(nudgingParamsTmp%tau)    !redundant
+if(allocated(nudgingParamsStr%usgsId))   deallocate(nudgingParamsStr%usgsId)
+if(allocated(nudgingParamsStr%R))        deallocate(nudgingParamsStr%R)
+if(allocated(nudgingParamsStr%G))        deallocate(nudgingParamsStr%G)
+if(allocated(nudgingParamsStr%tau))      deallocate(nudgingParamsStr%tau)
+if(allocated(nudgingParamsStr%qThresh))  deallocate(nudgingParamsStr%qThresh)
+if(allocated(nudgingParamsStr%expCoeff)) deallocate(nudgingParamsStr%expCoeff)
+if(allocated(upNetwkStr%go))             deallocate(upNetwkStr%go)
+if(allocated(upNetwkStr%start))          deallocate(upNetwkStr%start)
+if(allocated(upNetwkStr%end))            deallocate(upNetwkStr%end)
+if(allocated(downNetwkStr%go))           deallocate(downNetwkStr%go)
+if(allocated(downNetwkStr%start))        deallocate(downNetwkStr%start)
+if(allocated(downNetwkStr%end))          deallocate(downNetwkStr%end)
+if(allocated(chanlen_image0))            deallocate(chanlen_image0)
 
 !! print ouf the full timing results here.
 !! dont i need to make another accumultion call here?

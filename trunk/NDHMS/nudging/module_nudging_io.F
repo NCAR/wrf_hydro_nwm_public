@@ -388,7 +388,7 @@ subroutine read_nudging_param_file(  &
      gageG,                          &  !! OUT: quality control flag for discharge
      gageTau,                        &  !! OUT: real the half-window for NN/IDW interp
      gageQThresh,                    &  !! OUT: real the half-window for NN/IDW interp
-     gageAcf                         &  !! OUT: real, params for ACF-based temporal persistence
+     gageExpCoeff                    &  !! OUT: real, params for exponent-based temporal persistence
 )
 implicit none
 character(len=256), intent(in)                    :: paramFile
@@ -397,7 +397,7 @@ real,               intent(out), dimension(:)     :: gageR
 real,               intent(out), dimension(:)     :: gageG
 real,               intent(out), dimension(:)     :: gageTau
 real,               intent(out), dimension(:,:,:) :: gageQThresh
-real,               intent(out), dimension(:,:,:) :: gageAcf
+real,               intent(out), dimension(:,:,:) :: gageExpCoeff
 
 integer :: iRet, ncId, varId, dimId, fileNameLen, errStatus
 character(len=23) :: caller
@@ -420,12 +420,12 @@ call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
-print*,'Ndg: JLM FOOBAR1:', size(gageAcf,2)
-print*,'Ndg: JLM FOOBAR3:', size(gageAcf,3)
+print*,'Ndg: JLM FOOBAR1:', size(gageExpCoeff,2)
+print*,'Ndg: JLM FOOBAR3:', size(gageExpCoeff,3)
 
-if(size(gageAcf,2) .ne. 0 .and. size(gageAcf,3) .ne. 0) then
-   call get_3d_netcdf_real(ncid, 'qThresh', gageQThresh, caller, .true., errStatus)
-   call get_3d_netcdf_real(ncid, 'acf',     gageAcf,     caller, .true., errStatus)
+if(size(gageExpCoeff,2) .ne. 0 .and. size(gageExpCoeff,3) .ne. 0) then
+   call get_3d_netcdf_real(ncid, 'qThresh',  gageQThresh,  caller, .true., errStatus)
+   call get_3d_netcdf_real(ncid, 'expCoeff', gageExpCoeff, caller, .true., errStatus)
 end if
   
 iRet = nf90_close(ncId)
