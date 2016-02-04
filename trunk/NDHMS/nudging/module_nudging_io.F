@@ -387,6 +387,7 @@ subroutine read_nudging_param_file(  &
      gageR,                          &  !! OUT: output converted for comparision to model time??
      gageG,                          &  !! OUT: quality control flag for discharge
      gageTau,                        &  !! OUT: real the half-window for NN/IDW interp
+     gageQThresh,                    &  !! OUT: real the half-window for NN/IDW interp
      gageAcf                         &  !! OUT: real, params for ACF-based temporal persistence
 )
 implicit none
@@ -395,6 +396,7 @@ character(len=15),  intent(out), dimension(:)     :: gageId
 real,               intent(out), dimension(:)     :: gageR
 real,               intent(out), dimension(:)     :: gageG
 real,               intent(out), dimension(:)     :: gageTau
+real,               intent(out), dimension(:,:,:) :: gageQThresh
 real,               intent(out), dimension(:,:,:) :: gageAcf
 
 integer :: iRet, ncId, varId, dimId, fileNameLen, errStatus
@@ -418,9 +420,14 @@ call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
-if(size(gageAcf,2) .ne. 0 .and. size(gageAcf,3) .ne. 0) &
-     call get_3d_netcdf_real(ncid, 'acf', gageAcf, caller, .true., errStatus)
+print*,'Ndg: JLM FOOBAR1:', size(gageAcf,2)
+print*,'Ndg: JLM FOOBAR3:', size(gageAcf,3)
 
+if(size(gageAcf,2) .ne. 0 .and. size(gageAcf,3) .ne. 0) then
+   call get_3d_netcdf_real(ncid, 'qThresh', gageQThresh, caller, .true., errStatus)
+   call get_3d_netcdf_real(ncid, 'acf',     gageAcf,     caller, .true., errStatus)
+end if
+  
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then
    write(*,'("Problem closing paramFile: ''", A, "''")') trim(paramFile)
@@ -434,8 +441,8 @@ end subroutine read_nudging_param_file
 
 
 !===================================================================================================
-! Function Name: 
-!   function write_nwis_not_in_RLAndParams
+! Subroutine Name: 
+!   subroutine write_nwis_not_in_RLAndParams
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: 
@@ -463,6 +470,148 @@ do cc=1,count
 end do
 close(919) 
 end subroutine write_nwis_not_in_RLAndParams
+
+
+!===================================================================================================
+! Subroutine Name: 
+!   subroutine write_nudging_last_obs
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract:
+!   Write out the last observations collected over time.
+! History Log: 
+!   02/03/16 -Created, JLM.
+! Usage:
+! Parameters: 
+! Input Files: 
+! Output Files: 
+! Condition codes: 
+! User controllable options: None. 
+! Notes:  Needs better error handling... 
+
+subroutine write_nudging_last_obs( gageId, discharge, obsTimes, quality, modelTime )
+character(len=15), dimension(:),  intent(in) :: gageId
+real,              dimension(:),  intent(in) :: discharge
+character(len=19), dimension(:),  intent(in) :: obsTimes
+real,              dimension(:),  intent(in) :: quality
+character(len=19),                intent(in) :: modelTime
+
+integer*2, allocatable, dimension(:) :: qualityInt2
+character(len=36) :: outFileName
+integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNStn
+
+allocate(qualityInt2(size(quality)))
+qualityInt2 = nint(100*quality, kind=2)
+
+!           !123456789112345678921234567893123456
+outFileName='nudgingLastObsYYYY-mm-dd_HH:MM:SS.nc'
+! create file
+iret = nf90_create(outFileName, nf90_clobber, ncid)
+!if (status /= nf90_noerr) call handle_err(status)
+! create dimensions
+iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
+iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
+iret = nf90_def_dim(ncid, "stationIdStrLen", nf90_unlimited, dimIdNStn)
+
+!! gageId def var
+iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 15")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! discharge def var
+iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! time def var
+iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "UTC")
+iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! discharge quality def var
+iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "-")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! global attributes
+iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
+!! end definition
+iret = nf90_enddef(ncid)
+
+!! gageId write var
+iret = nf90_inq_varid(ncid, "stationId", varid)
+iret = nf90_put_var(ncid, varid, gageId) 
+
+!! discharge write var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_put_var(ncid, varid, discharge) 
+
+!! time write var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_put_var(ncid, varid, obsTimes) 
+
+!! discharge_quality write var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_put_var(ncid, varid, qualityInt2) 
+
+!! close
+iret= nf90_close(ncid)
+
+deallocate(qualityInt2)
+
+end subroutine write_nudging_last_obs
+
+
+!===================================================================================================
+! Subroutine Name: 
+!   subroutine read_nudging_last_obs
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract:
+!   read in the last observations collected over time.
+! History Log: 
+!   02/03/16 -Created, JLM.
+! Usage:
+! Parameters: 
+! Input Files: 
+! Output Files: 
+! Condition codes: 
+! User controllable options: None. 
+! Notes: Needs better error handling... 
+
+subroutine read_nudging_last_obs(fileName, gageId, discharge, obsTimes, quality)
+character(len=*),                 intent(in)  :: fileName
+character(len=15), dimension(:),  intent(out) :: gageId
+real,              dimension(:),  intent(out) :: discharge
+character(len=19), dimension(:),  intent(out) :: obsTimes
+real,              dimension(:),  intent(out) :: quality
+
+integer:: ncid, iret, varid
+integer*2, allocatable, dimension(:) :: qualityInt2
+
+allocate(qualityInt2(size(quality)))
+
+iret = nf90_open(fileName, nf90_nowrite, ncid)
+
+iret = nf90_inq_varid(ncid, "stationId", varid)
+iret = nf90_get_var(ncid, varid, gageId)
+
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_get_var(ncid, varid, discharge)
+
+iret = nf90_inq_varid(ncid, "time", varid)
+iret = nf90_get_var(ncid, varid, obsTimes)
+
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+iret = nf90_get_var(ncid, varid, qualityInt2)
+quality = qualityInt2/100.
+
+deallocate(qualityInt2)
+
+end subroutine read_nudging_last_obs
 
 
 !===================================================================================================

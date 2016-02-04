@@ -2296,13 +2296,44 @@ MODULE MODULE_MPP_LAND
     end subroutine match1dLake
 
 
-        subroutine mpp_land_abort()
-            implicit none
-            integer ierr, status
-            CALL MPI_ABORT(MPI_COMM_WORLD,status,IERR)
-        end subroutine mpp_land_abort  ! mpp_land_abort
+    subroutine mpp_land_abort()
+      implicit none
+      integer ierr, status
+      call MPI_ABORT(MPI_COMM_WORLD,status,IERR)
+    end subroutine mpp_land_abort  ! mpp_land_abort
 
 
+    subroutine mpp_comm_scalar_real(scalar, fromImage, toImage)
+    implicit none
+    real,    intent(inout) :: scalar
+    integer, intent(in)    :: fromImage, toImage
+    integer:: ierr, tag
+    tag=2   
+    if(my_id .eq. fromImage) &
+         call mpi_send(scalar, 1, MPI_REAL, &
+                       toImage, tag, MPI_COMM_WORLD, ierr)
+    if(my_id .eq. toImage) &
+         call mpi_recv(scalar, 1, MPI_REAL, &
+                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+    end subroutine mpp_comm_scalar_real
+
+    subroutine mpp_comm_scalar_char(scalar, fromImage, toImage)
+    implicit none
+    character(len=*), intent(inout) :: scalar
+    integer,          intent(in)    :: fromImage, toImage
+    integer:: ierr, tag, length
+    tag=2
+    length=len(scalar)
+    if(my_id .eq. fromImage) &
+         call mpi_send(scalar, length, MPI_REAL, &
+                       toImage, tag, MPI_COMM_WORLD, ierr)
+    if(my_id .eq. toImage) &
+         call mpi_recv(scalar, length, MPI_REAL, &
+                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+    end subroutine mpp_comm_scalar_char
+
+    
+    
 END MODULE MODULE_MPP_LAND
 
 
