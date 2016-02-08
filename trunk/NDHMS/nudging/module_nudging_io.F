@@ -490,6 +490,7 @@ end subroutine write_nwis_not_in_RLAndParams
 ! Notes:  Needs better error handling... 
 
 subroutine write_nudging_last_obs( gageId, discharge, obsTimes, quality, modelTime )
+implicit none
 character(len=15), dimension(:),  intent(in) :: gageId
 real,              dimension(:),  intent(in) :: discharge
 character(len=19), dimension(:),  intent(in) :: obsTimes
@@ -504,14 +505,15 @@ allocate(qualityInt2(size(quality)))
 qualityInt2 = nint(100*quality, kind=2)
 
 !           !123456789112345678921234567893123456
-outFileName='nudgingLastObsYYYY-mm-dd_HH:MM:SS.nc'
+outFileName='nudgingLastObs' // modelTime // '.nc'
+
 ! create file
 iret = nf90_create(outFileName, nf90_clobber, ncid)
 !if (status /= nf90_noerr) call handle_err(status)
 ! create dimensions
 iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
 iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
-iret = nf90_def_dim(ncid, "stationIdStrLen", nf90_unlimited, dimIdNStn)
+iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
 
 !! gageId def var
 iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
@@ -550,17 +552,22 @@ iret = nf90_inq_varid(ncid, "discharge", varid)
 iret = nf90_put_var(ncid, varid, discharge) 
 
 !! time write var
-iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_inq_varid(ncid, "time", varid)
 iret = nf90_put_var(ncid, varid, obsTimes) 
 
 !! discharge_quality write var
-iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
 iret = nf90_put_var(ncid, varid, qualityInt2) 
 
 !! close
 iret= nf90_close(ncid)
 
 deallocate(qualityInt2)
+
+#ifdef HYDRO_D
+print*,'Ndg: end write_nudging_last_obs'
+flush(6)
+#endif
 
 end subroutine write_nudging_last_obs
 
@@ -583,6 +590,7 @@ end subroutine write_nudging_last_obs
 ! Notes: Needs better error handling... 
 
 subroutine read_nudging_last_obs(fileName, gageId, discharge, obsTimes, quality)
+implicit none
 character(len=*),                 intent(in)  :: fileName
 character(len=15), dimension(:),  intent(out) :: gageId
 real,              dimension(:),  intent(out) :: discharge

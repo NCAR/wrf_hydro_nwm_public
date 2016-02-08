@@ -1522,7 +1522,7 @@ end module module_HYDRO_drv
         integer :: ierr
 
 #ifdef WRF_HYDRO_NUDGING
-        call finish_stream_nudging
+        call finish_stream_nudging()
 #endif
 #ifndef NCEP_WCOSS
         print*, "The model finished successfully......."
