@@ -107,7 +107,7 @@ end type nudgingParamStructure
 type(nudgingParamStructure) :: nudgingParamsTmp, nudgingParamsStr
 
 !========================
-! lastObs structure, corresponding to nudgingLastObs.nc
+! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
 type lastObsStructure
    character(len=15) :: gageId
    real              :: discharge
@@ -146,6 +146,7 @@ character(len=4),   parameter :: nudgingClockType = 'wall'
 logical,            parameter :: sanityQcDischarge = .false.
 logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .false.
+logical,            parameter :: futureLastObsZero  = .false.
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
@@ -165,7 +166,7 @@ real    :: maxTau
 integer :: nObsTimes
 character(len=19) :: lsmTime
 integer :: lsmDt
-character, parameter :: missingLastObsTime='1234567890123456789'
+character(len=19), parameter :: missingLastObsTime='9999999999999999999'
 character(len=2) :: obsResolution   
 
 
@@ -250,6 +251,7 @@ use module_nudging_io,    only: get_netcdf_dim,                      &
                                 read_reach_gage_collocation,         &
                                 read_nudging_param_file,             &
                                 read_network_reexpression,           &
+                                find_nudging_last_obs_file,          &
                                 read_nudging_last_obs
 
 implicit none
@@ -261,6 +263,7 @@ integer :: nParamGages, nParamMonth, nParamThresh, nParamThreshCat, nGgDists, nG
 integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) ::  whParamsDom
 integer :: downSize, upSize, baseSize, nLastObs
+character(len=256) :: lastObsFile
 
 #ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTimeAcc, endCodeTimeAcc
@@ -283,7 +286,8 @@ print*, 'Ndg: PARALLEL NUDGING!'
 nudgingParamFile      = nlst_rt(did)%nudgingParamFile
 netwkReExFile         = nlst_rt(did)%netwkReExFile
 readTimesliceParallel = nlst_rt(did)%readTimesliceParallel
-temporalPersistence = nlst_rt(did)%temporalPersistence
+temporalPersistence   = nlst_rt(did)%temporalPersistence
+nudgingLastObsFile    = nlst_rt(did)%nudgingLastObsFile
 #endif 
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
@@ -384,7 +388,7 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
       print*,&
      'Ndg: nodeGageStr%usgsId((size(nodeGageStr%nodeId)-nGagesDomain+1):(size(nodeGageStr%nodeId))):',&
            nodeGageStr%usgsId((size(nodeGageStr%nodeId)-nGagesDomain+1):(size(nodeGageStr%nodeId)))
-      print*, 'Ndg: Finish initializing reach gages (netcdf)'
+      print*,'Ndg: Finish initializing reach gages (netcdf)'
 #endif
 
 #ifdef MPP_LAND
@@ -417,11 +421,11 @@ if(my_id .eq. IO_id) then
       nParamThreshCat = get_netcdf_dim(nudgingParamFile, 'threshCatInd', 'init_stream_nudging')   
 
 #ifdef HYDRO_D
-      print*,'Ndg: nParamGages: ',nParamGages
+      print*,'Ndg: nParamGages: ',   nParamGages
       print*,'Ndg: nParamGages',     nParamGages
       print*,'Ndg: nParamMonth',     nParamMonth
       print*,'Ndg: nParamThresh',    nParamThresh
-      print*,'Ndg: nParamThreshCat',    nParamThreshCat
+      print*,'Ndg: nParamThreshCat', nParamThreshCat
 #endif
 
       if(nParamMonth.eq.0 .or. nParamThresh.eq.0 .or. nParamThreshCat.eq.0) then
@@ -436,10 +440,10 @@ if(my_id .eq. IO_id) then
    endif !temporal persistence
    
 #ifdef HYDRO_D
-   print*,'Ndg: nParamGages: ',nParamGages
-   print*,'Ndg: nParamMonth',     nParamMonth
-   print*,'Ndg: nParamThresh',    nParamThresh
-   print*,'Ndg: nParamThreshCat',    nParamThreshCat
+   print*,'Ndg: nParamGages: ',         nParamGages
+   print*,'Ndg: nParamMonth',           nParamMonth
+   print*,'Ndg: nParamThresh',          nParamThresh
+   print*,'Ndg: nParamThreshCat',       nParamThreshCat
    print*,'Ndg: temporalPersistence: ', temporalPersistence
 #endif
 
@@ -475,7 +479,7 @@ if(my_id .eq. IO_id) then
    allocate(nudgingParamsStr%G(     nGagesWParamsDom))
    allocate(nudgingParamsStr%tau(   nGagesWParamsDom))
    if(temporalPersistence) then
-      
+      print*,'jlm foo magic too',nudgingParamsTmp%qThresh(1,1,1)
       allocate(nudgingParamsStr%qThresh( nParamThresh,   nParamMonth, nGagesWParamsDom))
       allocate(nudgingParamsStr%expCoeff(nParamThresh+1, nParamMonth, nGagesWParamsDom))
    end if
@@ -488,8 +492,8 @@ if(my_id .eq. IO_id) then
          nudgingParamsStr%G(count)      = nudgingParamsTmp%G(kk)
          nudgingParamsStr%tau(count)    = nudgingParamsTmp%tau(kk)
          if(temporalPersistence) then
-            nudgingParamsStr%qThresh( :,:,count) = nudgingParamsStr%qThresh( :,:,kk)
-            nudgingParamsStr%expCoeff(:,:,count) = nudgingParamsStr%expCoeff(:,:,kk)
+            nudgingParamsStr%qThresh( :,:,count) = nudgingParamsTmp%qThresh( :,:,kk)
+            nudgingParamsStr%expCoeff(:,:,count) = nudgingParamsTmp%expCoeff(:,:,kk)
          endif
          count=count+1
       end if
@@ -542,21 +546,17 @@ if(temporalPersistence) then
 #ifdef HYDRO_D
    if(my_id .eq. io_id) then
       print*,'Ndg: JLM do the following qThresh check?'
-      print*,nudgingParamsStr%qThresh(:,2,1)
-      print*,'Ndg: and'
+      print*,'image0 nudgingParamsStr%qThresh(:,2,1): ',nudgingParamsStr%qThresh(:,2,1)
    end if
    if(my_id .eq. 2) then
-      print*,nudgingParamsStr%qThresh(:,2,1)
-      print*,'Ndg: ----------- ?'
+      print*,'image2 nudgingParamsStr%qThresh(:,2,1): ',nudgingParamsStr%qThresh(:,2,1)
    endif
    if(my_id .eq. io_id) then
       print*,'Ndg: JLM do the following expCoeff check?'
-      print*,nudgingParamsStr%expCoeff(:,2,1)
-      print*,'Ndg: and'
+      print*,'image0 nudgingParamsStr%expCoeff(:,2,1): ',nudgingParamsStr%expCoeff(:,2,1)
    endif
    if(my_id .eq. 2) then
-      print*,nudgingParamsStr%expCoeff(:,2,1)
-      print*,'Ndg: ----------- ?'
+      print*,'image2 nudgingParamsStr%expCoeff(:,2,1): ',nudgingParamsStr%expCoeff(:,2,1)
    endif
 #endif
 end if ! temporalPersistence
@@ -566,15 +566,25 @@ end if ! temporalPersistence
 ! 4. Read in 'nudgingLastObs.nc' file (initialization and broadcasint come later)
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then
-   if(temporalPersistence) then   
-      nLastObs = get_netcdf_dim(nudgingLastObsFile, 'stationId', 'init_stream_nudging')
-      if(nLastObs .gt. 0) then
-         allocate(lastObsStr(nLastObs))
-         call read_nudging_last_obs(nudgingLastObsFile,                            &
-                                    lastObsStr(:)%gageId, lastObsStr(:)%discharge, &
-                                    lastObsStr(:)%time,   lastObsStr(:)%quality    )
-      end if ! nLastObs .gt. 0 -> read the file
-   endif ! temporalPersistence
+   if(temporalPersistence) then
+
+      !! if blank, look for file at the current/init time
+      if(trim(nudgingLastObsFile) .eq. '') &
+           nudgingLastObsFile = 'nudgingLastObs.' // nlst_rt(did)%olddate // '.nc'
+      lastObsFile = find_nudging_last_obs_file(nudgingLastObsFile)
+      if(trim(lastObsFile) .ne. '') then
+         nLastObs = get_netcdf_dim(nudgingLastObsFile, 'stationIdInd', 'init_stream_nudging')
+         if(nLastObs .gt. 0) then
+#ifdef HYDRO_D
+            print*,'Reading in nudgingLastObsFile: ', trim(nudgingLastObsFile)
+#endif
+            allocate(lastObsStr(nLastObs))
+            call read_nudging_last_obs(nudgingLastObsFile,                            &
+                                       lastObsStr(:)%gageId, lastObsStr(:)%discharge, &
+                                       lastObsStr(:)%time,   lastObsStr(:)%quality    )
+         end if ! nLastObs .gt. 0 -> read the file
+      endif! trim(lastObsFile).ne.''
+   end if ! temporalPersistence
 endif
 #endif
 
@@ -1284,12 +1294,6 @@ if(filterObsToDom) then
             obsTimeStr(structIndex)%obsStr(count)%obsTime      = gageTimeIn(ww)
             obsTimeStr(structIndex)%obsStr(count)%obsQC        = gageQCIn(ww)
             obsTimeStr(structIndex)%obsStr(count)%obsDischarge = gageDischargeIn(ww)
-#ifdef HYDRO_D
-            print*,obsTimeStr(structIndex)%obsStr(count)%usgsId
-            print*,obsTimeStr(structIndex)%obsStr(count)%obsTime
-            print*,obsTimeStr(structIndex)%obsStr(count)%obsQC
-            print*,obsTimeStr(structIndex)%obsStr(count)%obsDischarge
-#endif
             count=count+1
          else 
             !! the gage is not in the domain/parameter file, record that this 
@@ -1504,7 +1508,7 @@ if(my_id .eq. io_id) then
 
          if(.not. setLastObsInfo) then ! the gage did not have a last observation
             obsStaticStr(ll)%lastObsDischarge = real(0) !! dosent mater if quality is zero
-            obsStaticStr(ll)%lastObsTime(:)   = missingLastObsTime
+            obsStaticStr(ll)%lastObsTime      = missingLastObsTime
             obsStaticStr(ll)%lastObsQuality   = real(0)
          end if
       end if !temporalPersistence
@@ -1551,7 +1555,7 @@ if(nudgeSpatial) then
          allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)))
          allocate(obsStaticStr(ll)%dist(nCellsInR(ll)))
          allocate(obsStaticStr(ll)%ws(nCellsInR(ll)))
-        endif
+      endif
       call mpp_land_bcast_int1d(obsStaticStr(ll)%cellsAffected)
       call mpp_land_bcast_real_1d(obsStaticStr(ll)%dist)
       call mpp_land_bcast_real_1d(obsStaticStr(ll)%ws)
@@ -2080,6 +2084,7 @@ do tt=1,size(obsTimeStr)
             obsStaticStr(staticInd)%lastObsDischarge = obsTimeStr(tt)%obsStr(oo)%obsDischarge
             obsStaticStr(staticInd)%lastObsQuality   = obsTimeStr(tt)%obsStr(oo)%obsQC
          end if
+
       endif
 
 
@@ -2219,9 +2224,9 @@ else if (temporalPersistence) then
    ! could happen if lastOb file was written out after current model start time/cycle... 
    if(prstDtErr .lt. zero) then
       print*,'Ndg: WARNING: lastObs times are in the future of the model time.'
-      if(futureLastObsFatal) &
+      if(futureLastObsFatal)&
            call hydro_stop('nudge_term_link: negative prstDtErrInt: last obs in future')
-      return      
+      if(.not. futureLastObsZero) prstDtErr=abs(prstDtErr)
    endif
 
    !! 10) what is the error ?
@@ -2231,6 +2236,8 @@ else if (temporalPersistence) then
    nudge_term_link = &
         obsStaticStr(whGageId)%lastObsQuality * prstErr * exp(real(-1)*prstDtErr/prstB)
 
+   if((prstDtErr .lt. zero) .and. futureLastObsZero) nudge_term_link = zero
+   
 !#ifdef HYDRO_D
    print*,'-------------------'
    print*,'Ndg: pst: prstGageId: ',      prstGageId
@@ -2257,6 +2264,7 @@ endif
 print*,'Ndg: finish nudge_term_link'
 flush(6)
 #endif
+
 
 end function nudge_term_link
 
@@ -2359,20 +2367,13 @@ use module_nudging_utils, only: totalNudgeTime,  &
                                 nudging_timer,   &
                                 accum_nudging_time, &
                                 whUniLoop
-use module_nudging_io,    only: write_nwis_not_in_RLAndParams, write_nudging_last_obs
-#ifdef MPP_LAND 
-use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
-#endif
+use module_nudging_io,    only: write_nwis_not_in_RLAndParams
 implicit none
 
 character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsGathered
 character(len=15), allocatable, dimension(:) :: nwisNotRLAndParamsConsolidated
 integer, dimension(numprocs) :: nwisNotRLAndParamsCountVector
 integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
-#ifdef MPP_LAND
-logical, allocatable, dimension(:) :: theMask
-integer :: whImage, oo
-#endif
 
 #ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTimeAcc, endCodeTimeAcc
@@ -2384,37 +2385,6 @@ if(my_id .eq. io_id) &
      call nudging_timer(startCodeTimeAcc)
 #endif  /* un-ifdef to get timing results */
 
-
-if(temporalPersistence) then 
-#ifdef MPP_LAND
-   !! if MPP: last obs are being written on different processors,
-   !! get them back to image0 for output.
-   !! 1. loop over obsStaticStr.
-   !! 2. find the image holding obsCellInd
-   !! 3. communicate it's last ob back to image0.
-   allocate(theMask(size(linkls_s)))
-   do oo=1, size(obsStaticStr(:)%obsCellInd)
-      theMask = ( obsStaticStr(oo)%obsCellInd .ge. linkls_s .and. &
-                  obsStaticStr(oo)%obsCellInd .le. linkls_e       )
-      whImage = whUniLoop(theMask) - 1
-      if(whImage .eq. io_id) continue
-      call mpp_comm_scalar_real(obsStaticStr(oo)%lastObsDischarge, whImage, io_id)
-      call mpp_comm_scalar_char(obsStaticStr(oo)%lastObstime,      whImage, io_id)
-      call mpp_comm_scalar_real(obsStaticStr(oo)%lastObsQuality,   whImage, io_id)
-   end do
-   deallocate(theMask)      
-
-   if(my_id .eq. io_id) &
-#endif /* MPP_LAND */
-   !! write out the last obs to file
-        call write_nudging_last_obs(obsStaticStr(:)%usgsId,           &
-                                    obsStaticStr(:)%lastObsDischarge, &
-                                    obsStaticStr(:)%lastObstime,      &
-                                    obsStaticStr(:)%lastObsQuality,   &
-                                    lsmTime                           )
-end if
-
-
 !! accumulate_nwis_not_in_RLAndParams
 !! because of parallel IO,  accumulation is happening on 
 !! multiple images and these need to be consolidated before outputting.
@@ -2423,8 +2393,6 @@ nwisNotRLAndParamsCountVector(my_id+1) = nwisNotRLAndParamsCount
 do ii=0,numprocs-1
    call mpp_land_bcast_int1_root(nwisNotRLAndParamsCountVector(ii+1), ii)
 end do
-!print*,'nwisNotRLAndParamsCountVector',nwisNotRLAndParamsCountVector
-!call flush(6)
 
 allocate(nwisNotRLAndParamsGathered(sum(nwisNotRLAndParamsCountVector)))
 
@@ -2443,7 +2411,6 @@ if(my_id .eq. io_id) then
                                               nwisNotRLAndParamsCountConsolidated, &
                                               nwisNotRLAndParamsGathered(gg)       )
    end do
-   !print*,'Ndg: nwisNotRLAndParamsCount: ', nwisNotRLAndParamsCountConsolidated
    if(nwisNotRLAndParamsCountConsolidated .gt. 0) &
         call write_nwis_not_in_RLAndParams(nwisNotRLAndParamsConsolidated,     &
                                            nwisNotRLAndParamsCountConsolidated )
@@ -2455,10 +2422,7 @@ if(allocated(nwisNotRLAndParamsConsolidated)) deallocate(nwisNotRLAndParamsConso
 
 !! deallocate module variables here and time this
 if(allocated(obsTimeStr))                deallocate(obsTimeStr)
-
-!! PGI seg faults on the following line. This is completely to spec AFAIK.
-if(allocated(obsStaticStr))              deallocate(obsStaticStr)
-
+if(allocated(obsStaticStr))              deallocate(obsStaticStr)   
 if(allocated(nodeGageTmp%nodeId))        deallocate(nodeGageTmp%nodeId)
 if(allocated(nodeGageTmp%usgsId))        deallocate(nodeGageTmp%usgsId) !redundant
 if(allocated(nodeGageStr%nodeId))        deallocate(nodeGageStr%nodeId)

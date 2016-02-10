@@ -2325,10 +2325,10 @@ MODULE MODULE_MPP_LAND
     tag=2
     length=len(scalar)
     if(my_id .eq. fromImage) &
-         call mpi_send(scalar, length, MPI_REAL, &
+         call mpi_send(scalar, length, MPI_CHARACTER, &
                        toImage, tag, MPI_COMM_WORLD, ierr)
     if(my_id .eq. toImage) &
-         call mpi_recv(scalar, length, MPI_REAL, &
+         call mpi_recv(scalar, length, MPI_CHARACTER, &
                        fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
     end subroutine mpp_comm_scalar_char
 
