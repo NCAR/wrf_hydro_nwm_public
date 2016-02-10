@@ -1835,7 +1835,7 @@ end subroutine tally_affected_links
 
 !===================================================================================================
 ! program name: 
-!   x
+!   time_wt
 ! author(s)/contact(s): 
 !   James McCreight 
 ! abstract: 
@@ -2142,7 +2142,6 @@ do tt=1,size(obsTimeStr)
             obsStaticStr(staticInd)%lastObsDischarge = obsTimeStr(tt)%obsStr(oo)%obsDischarge
             obsStaticStr(staticInd)%lastObsQuality   = obsTimeStr(tt)%obsStr(oo)%obsQC
          end if
-
       endif
 
 
@@ -2250,7 +2249,7 @@ else if (temporalPersistence) then
    obsInd     = obsStaticStr(whGageId)%obsCellInd
    
    !! 2) is there a last observation for this link/gage? no = return
-   if(obsStaticStr(whGageId)%lastObsTime(:) .eq. missingLastObsTime) return
+   if(obsStaticStr(whGageId)%lastObsTime .eq. missingLastObsTime) return
 
    !! 3) are there parameters for this link? no -> return
    if(.not. any(nudgingParamsStr%usgsId .eq. prstGageId)) return
@@ -2277,7 +2276,13 @@ else if (temporalPersistence) then
 
    !! --- Deal with the last ob ---
    !! 9) what is the time difference with the last ob?
+print*,'jlm mega foo magic 1'
+flush(6)
    call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime, prstDtErrInt)
+
+print*,'jlm mega foo magic'
+flush(6)
+
    prstDtErr = real(prstDtErrInt)/real(sixty)  !! second -> minutes
    ! could happen if lastOb file was written out after current model start time/cycle... 
    if(prstDtErr .lt. zero) then
