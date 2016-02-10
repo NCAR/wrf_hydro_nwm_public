@@ -28,7 +28,6 @@ implicit none
 #include <netcdf.inc>
 
 ! JLM: timeSlicePath is hardcoded/hardwired for now, should go in name list eventually
-!character(len=256), parameter :: timeSlicePath="/home/jamesmcc/usgsStreamData/timeSliceData/"
 character(len=256), parameter :: timeSlicePath="./nudgingTimeSliceObs/"
 
 contains
@@ -170,7 +169,7 @@ errStatus=errStatus+errStatusOut
 gageQC=gageQCIn/oneHundred
 deallocate(gageQCIn)
 
-!! JLM fix temporary hardwire QC sanity checks
+!! JLM TODO fix temporary hardwire QC sanity checks
 if (sanityQcDischarge) then
    where(gageDischarge .le. 0.000) gageQC=0
    !! peak flow on MS river *2
@@ -265,7 +264,6 @@ if(routeLinkNetcdf) then
    end if
 
 else   
-   print*,'Ndg: jlm foo',trim(route_link_f)
    call hydro_stop('read_reach_gage_collocation: csv not currently supported.')
    !! here's some code to start from if/when we do want to support csv for this.
    !open(unit=79,file=trim(route_link_f),form='formatted',status='old')
@@ -420,11 +418,10 @@ call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
-print*,'Ndg: JLM FOOBAR1:', size(gageExpCoeff,2)
-print*,'Ndg: JLM FOOBAR3:', size(gageExpCoeff,3)
-
 if(size(gageExpCoeff,2) .ne. 0 .and. size(gageExpCoeff,3) .ne. 0) then
+   print*,'jlm foo magic doo'
    call get_3d_netcdf_real(ncid, 'qThresh',  gageQThresh,  caller, .true., errStatus)
+   print*,'jlm foo magic boo:',gageQThresh(1,1,1)
    call get_3d_netcdf_real(ncid, 'expCoeff', gageExpCoeff, caller, .true., errStatus)
 end if
   
@@ -474,6 +471,65 @@ end subroutine write_nwis_not_in_RLAndParams
 
 !===================================================================================================
 ! Subroutine Name: 
+!   subroutine output_nudging_last_obs
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract:
+!   Collect and Write out the last observations collected over time.
+! History Log: 
+!   02/09/16 -Created, JLM.
+! Usage:
+! Parameters: 
+! Input Files: 
+! Output Files: 
+! Condition codes: 
+! User controllable options: None. 
+! Notes:  Needs better error handling... 
+
+subroutine output_nudging_last_obs()
+use module_stream_nudging, only: obsStaticStr, did, temporalPersistence
+use module_nudging_utils,  only: whUniLoop
+
+#ifdef MPP_LAND
+use module_mpp_land
+use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
+logical, allocatable, dimension(:) :: theMask
+integer :: whImage, oo
+#endif
+
+if(.not. temporalPersistence) return
+
+#ifdef MPP_LAND
+!! if MPP: last obs are being written on different processors,
+!! get them back to image0 for output.
+!! 1. loop over obsStaticStr.
+!! 2. find the image holding obsCellInd
+!! 3. communicate it's last ob back to image0.
+allocate(theMask(size(linkls_s)))
+do oo=1, size(obsStaticStr(:)%obsCellInd)
+   theMask = ( obsStaticStr(oo)%obsCellInd .ge. linkls_s .and. &
+               obsStaticStr(oo)%obsCellInd .le. linkls_e       )
+   whImage = whUniLoop(theMask) - 1
+   if(whImage .eq. io_id) continue
+   call mpp_comm_scalar_real(obsStaticStr(oo)%lastObsDischarge, whImage, io_id)
+   call mpp_comm_scalar_char(obsStaticStr(oo)%lastObstime,      whImage, io_id)
+   call mpp_comm_scalar_real(obsStaticStr(oo)%lastObsQuality,   whImage, io_id)
+end do
+deallocate(theMask)      
+
+if(my_id .eq. io_id) &
+#endif /* MPP_LAND */
+     !! write out the last obs to file
+     call write_nudging_last_obs(obsStaticStr(:)%usgsId,           &
+                                 obsStaticStr(:)%lastObsDischarge, &
+                                 obsStaticStr(:)%lastObstime,      &
+                                 obsStaticStr(:)%lastObsQuality,   &
+                                 nlst_rt(did)%olddate              )
+
+end subroutine output_nudging_last_obs
+
+!===================================================================================================
+! Subroutine Name: 
 !   subroutine write_nudging_last_obs
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
@@ -498,14 +554,14 @@ real,              dimension(:),  intent(in) :: quality
 character(len=19),                intent(in) :: modelTime
 
 integer*2, allocatable, dimension(:) :: qualityInt2
-character(len=36) :: outFileName
+character(len=37) :: outFileName
 integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNStn
 
 allocate(qualityInt2(size(quality)))
 qualityInt2 = nint(100*quality, kind=2)
 
-!           !123456789112345678921234567893123456
-outFileName='nudgingLastObs' // modelTime // '.nc'
+!           !1234567891123456789212345678931234567
+outFileName='nudgingLastObs.' // modelTime // '.nc'
 
 ! create file
 iret = nf90_create(outFileName, nf90_clobber, ncid)
@@ -520,16 +576,16 @@ iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), 
 iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 15")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
-!! discharge def var
-iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
-iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
-iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
-iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
-
 !! time def var
 iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
 iret = nf90_put_att(ncid, varid, 'units', "UTC")
 iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! discharge def var
+iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! discharge quality def var
@@ -547,13 +603,14 @@ iret = nf90_enddef(ncid)
 iret = nf90_inq_varid(ncid, "stationId", varid)
 iret = nf90_put_var(ncid, varid, gageId) 
 
+!! time write var
+iret = nf90_inq_varid(ncid, "time", varid)
+iret = nf90_put_var(ncid, varid, obsTimes) 
+
 !! discharge write var
 iret = nf90_inq_varid(ncid, "discharge", varid)
 iret = nf90_put_var(ncid, varid, discharge) 
 
-!! time write var
-iret = nf90_inq_varid(ncid, "time", varid)
-iret = nf90_put_var(ncid, varid, obsTimes) 
 
 !! discharge_quality write var
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
@@ -570,6 +627,46 @@ flush(6)
 #endif
 
 end subroutine write_nudging_last_obs
+
+
+!===================================================================================================
+! Program Name: 
+!   subroutine find_nudging_last_obs_file
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract: 
+!   Return a single file path/names of nudging last obs file given a single date.
+! History Log: 
+!   2/9/16 - Created,
+! Usage:
+! Parameters: 
+!   date
+! Input Files:  nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
+! Output Files: 
+! Condition codes: 
+! User controllable options:
+! Notes: 
+
+function find_nudging_last_obs_file(fileName)
+implicit none
+character(len=256) :: find_nudging_last_obs_file  ! Output
+character(len=256), intent(in) :: fileName
+!Internals
+logical :: fileExists
+#ifdef HYDRO_D
+print*,'Ndg: start find_nudging_last_obs_file'
+#endif 
+find_nudging_last_obs_file=''
+! is there a file with this name?
+! note files are not resolved below minutes.
+inquire(FILE=fileName, EXIST=fileExists)
+if (fileExists) find_nudging_last_obs_file = trim(fileName)
+#ifdef HYDRO_D
+print*,'Ndg: last obs file: ', trim(fileName)
+print*,'Ndg: file found: ', fileExists
+print*,'Ndg: finish find_nudging_last_obs_file'
+#endif
+end function find_nudging_last_obs_file
 
 
 !===================================================================================================
@@ -737,7 +834,7 @@ integer, dimension(:),  intent(in) :: inFROM_NODE, inTO_NODE, inCHANXI, inCHANYJ
 integer            :: nStreamCells, streamCellDimID
 integer            :: iret, projInfo_flag
 integer            :: ncid, ncstatic, varid
-integer, parameter :: did=1 ! JLM, this should be fine...?
+integer, parameter :: did=1 ! JLM TODO, this should be fine...? could be picked up from mod_stream_nudg
 
 real               :: long_cm, lat_po, fe, fn
 real, dimension(2) :: sp
@@ -860,7 +957,7 @@ if(my_id .eq. io_id) then
 
    nStreamCells=size(CHLON,1)
 #ifdef HYDRO_D
-   print*,'Ndg: jlm: nStreamCells:', nStreamCells
+   print*,'Ndg: nStreamCells:', nStreamCells
 #endif
    ! Dimension definitions
    iret = nf_def_dim(ncid, "nStreamCells", nStreamCells, streamCellDimID)  

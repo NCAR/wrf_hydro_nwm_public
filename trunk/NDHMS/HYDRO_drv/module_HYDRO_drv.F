@@ -62,6 +62,9 @@ module module_HYDRO_drv
 
    contains
    subroutine HYDRO_rst_out(did)
+#ifdef WRF_HYDRO_NUDGING
+      use module_nudging_io, only: output_nudging_last_obs
+#endif
       implicit none
       integer:: rst_out  
       integer did, outflag
@@ -117,6 +120,10 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
       endif
 #endif
+
+#ifdef WRF_HYDRO_NUDGING
+      call output_nudging_last_obs  !! only does something if temporalPersistence==TRUE
+#endif      
    endif
 
 
