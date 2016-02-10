@@ -1580,6 +1580,64 @@ end subroutine obs_static_to_struct
 
 
 !===================================================================================================
+! Subroutine Name: 
+!   subroutine output_nudging_last_obs
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract:
+!   Collect and Write out the last observations collected over time.
+! History Log: 
+!   02/09/16 -Created, JLM.
+! Usage:
+! Parameters: 
+! Input Files: 
+! Output Files: 
+! Condition codes: 
+! User controllable options: None. 
+! Notes:  Needs better error handling... 
+
+subroutine output_nudging_last_obs()
+use module_nudging_utils,  only: whUniLoop
+use module_nudging_io,     only: write_nudging_last_obs
+#ifdef MPP_LAND
+use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
+logical, allocatable, dimension(:) :: theMask
+integer :: whImage, oo
+#endif
+
+if(.not. temporalPersistence) return
+
+#ifdef MPP_LAND
+!! if MPP: last obs are being written on different processors,
+!! get them back to image0 for output.
+!! 1. loop over obsStaticStr.
+!! 2. find the image holding obsCellInd
+!! 3. communicate it's last ob back to image0.
+allocate(theMask(size(linkls_s)))
+do oo=1, size(obsStaticStr(:)%obsCellInd)
+   theMask = ( obsStaticStr(oo)%obsCellInd .ge. linkls_s .and. &
+               obsStaticStr(oo)%obsCellInd .le. linkls_e       )
+   whImage = whUniLoop(theMask) - 1
+   if(whImage .eq. io_id) continue
+   call mpp_comm_scalar_real(obsStaticStr(oo)%lastObsDischarge, whImage, io_id)
+   call mpp_comm_scalar_char(obsStaticStr(oo)%lastObstime,      whImage, io_id)
+   call mpp_comm_scalar_real(obsStaticStr(oo)%lastObsQuality,   whImage, io_id)
+end do
+deallocate(theMask)      
+
+if(my_id .eq. io_id) &
+#endif /* MPP_LAND */
+     !! write out the last obs to file
+     call write_nudging_last_obs(obsStaticStr(:)%usgsId,           &
+                                 obsStaticStr(:)%lastObsDischarge, &
+                                 obsStaticStr(:)%lastObstime,      &
+                                 obsStaticStr(:)%lastObsQuality,   &
+                                 nlst_rt(did)%olddate              )
+
+end subroutine output_nudging_last_obs
+
+
+!===================================================================================================
 ! Program Name: 
 !   accumulate_nwis_not_in_RLAndParams
 ! Author(s)/Contact(s): 

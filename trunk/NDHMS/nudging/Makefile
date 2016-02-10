@@ -36,7 +36,7 @@ all:	$(OBJS)
 # Dependencies:
 #
 module_nudging_io.o: ../Data_Rec/module_namelist.o \
-	        module_date_utils_nudging.o
+	             module_date_utils_nudging.o
 
 module_stream_nudging.o: module_nudging_utils.o \
 	      		 module_nudging_io.o
