@@ -57,6 +57,7 @@
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
+       character(len=256) :: nudgingLastObsFile
 #endif
 
 
