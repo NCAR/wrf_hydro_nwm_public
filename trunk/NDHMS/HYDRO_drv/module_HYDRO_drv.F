@@ -63,7 +63,7 @@ module module_HYDRO_drv
    contains
    subroutine HYDRO_rst_out(did)
 #ifdef WRF_HYDRO_NUDGING
-      use module_nudging_io, only: output_nudging_last_obs
+      use module_stream_nudging, only: output_nudging_last_obs
 #endif
       implicit none
       integer:: rst_out  
