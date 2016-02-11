@@ -1489,11 +1489,10 @@ if(my_id .eq. io_id) then
                allocate(theMask(size(lastObsStr(:)%gageId)))
                theMask = lastObsStr(:)%gageId .eq. obsStaticStr(ll)%usgsId
                whLastObsStr = whUniLoop(theMask)
-               deallocate(theMask)     
-               
+               deallocate(theMask)                    
                obsStaticStr(ll)%lastObsDischarge = lastObsStr(whLastObsStr)%discharge
                obsStaticStr(ll)%lastObsTime      = lastObsStr(whLastObsStr)%time
-               obsStaticStr(ll)%lastObsQuality   = lastObsStr(whLastObsStr)%quality/real(100)
+               obsStaticStr(ll)%lastObsQuality   = lastObsStr(whLastObsStr)%quality
                setLastObsInfo = .true.
             endif
          endif
@@ -1508,8 +1507,10 @@ if(my_id .eq. io_id) then
       ! diagnostics
 #ifdef HYDRO_D
       !if (my_id .eq. -5) then
-      if( any( (/ 981, 2242, 2845, 2946, 3014, 3066, 3068, 3072, 3158, 3228, 3325, 3328, 3330, 3353, &
-           3374, 3398, 3416, 3445, 3487, 3536, 3621, 3667, 13554, 13651, 15062, 15311, 17450, 17394 /) &
+      !             1    2       3     4      5      6     7     8     9     10
+      if( any( (/ 981, 2242,  2845,  2946,  3014,  3066,  3068,  3072, 3158, 3228, &
+                 3325, 3328,  3330,  3353,  3374,  3398,  3416,  3445, 3487, 3536, &
+                 3621, 3667, 13554, 13651, 15062, 15311, 17450, 17394 /) &
            .eq. obsStaticStr(ll)%obsCellInd ) )then
          print*,'Ndg: '
          print*,'Ndg: !----------------------------------'
