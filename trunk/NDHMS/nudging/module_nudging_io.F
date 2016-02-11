@@ -419,9 +419,7 @@ call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
 if(size(gageExpCoeff,2) .ne. 0 .and. size(gageExpCoeff,3) .ne. 0) then
-   print*,'jlm foo magic doo'
    call get_3d_netcdf_real(ncid, 'qThresh',  gageQThresh,  caller, .true., errStatus)
-   print*,'jlm foo magic boo:',gageQThresh(1,1,1)
    call get_3d_netcdf_real(ncid, 'expCoeff', gageExpCoeff, caller, .true., errStatus)
 end if
   
@@ -499,8 +497,8 @@ integer*2, allocatable, dimension(:) :: qualityInt2
 character(len=37) :: outFileName
 integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNStn
 
-allocate(qualityInt2(size(quality)))
-qualityInt2 = nint(100*quality, kind=2)
+!allocate(qualityInt2(size(quality)))
+!qualityInt2 = nint(100*quality, kind=2)
 
 !           !1234567891123456789212345678931234567
 outFileName='nudgingLastObs.' // modelTime // '.nc'
@@ -509,58 +507,69 @@ outFileName='nudgingLastObs.' // modelTime // '.nc'
 iret = nf90_create(outFileName, nf90_clobber, ncid)
 !if (status /= nf90_noerr) call handle_err(status)
 ! create dimensions
-iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
+!iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
 iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
-iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
+iret = nf90_def_dim(ncid, "stationIdInd",    3, dimIdNStn)
+!iret = nf90_def_dim(ncid, "stationIdInd",    size(discharge), dimIdNStn)
+!iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
 
 !! gageId def var
 iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
 iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 15")
-iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! time def var
-iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
-iret = nf90_put_att(ncid, varid, 'units', "UTC")
-iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
-iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+!iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
+!iret = nf90_put_att(ncid, varid, 'units', "UTC")
+!iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
+!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! discharge def var
-iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
-iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
-iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
-iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+!iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
+!iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
+!iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
+!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! discharge quality def var
-iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
-iret = nf90_put_att(ncid, varid, 'units', "-")
-iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
-iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+!iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
+!iret = nf90_put_att(ncid, varid, 'units', "-")
+!iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
+!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! global attributes
-iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
+!iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
 !! end definition
 iret = nf90_enddef(ncid)
 
 !! gageId write var
 iret = nf90_inq_varid(ncid, "stationId", varid)
-iret = nf90_put_var(ncid, varid, gageId, start=(/1,1/), count=(/15,size(discharge)/))
+!print*,'jlm foo iret 1: ', iret
+!iret = nf90_put_var(ncid, varid, '123456789012345', start=(/1,1/), count=(/15,1/))
+iret = nf90_put_var(ncid, varid, gageId(2:3), start=(/1,2/), count=(/15,2/))
+!iret = nf90_put_var(ncid, varid, gageId)
+!iret = nf90_put_var(ncid, varid, gageId, start=(/1,1/), count=(/15,size(discharge)/))
+!         12345678901234
+!print*,'jlm foo iret 2: ', iret
+!print*,'jlm foo gageId(2): ', gageId(2)
+!print*,'jlm foo shape gageId', shape(gageId)
+!print*,'jlm foo shape discharge', shape(discharge)
 
 !! time write var
-iret = nf90_inq_varid(ncid, "time", varid)
-iret = nf90_put_var(ncid, varid, obsTimes, start=(/1,1/), count=(/19,size(discharge)/))
+!iret = nf90_inq_varid(ncid, "time", varid)
+!iret = nf90_put_var(ncid, varid, obsTimes, start=(/1,1/), count=(/19,size(discharge)/))
 
 !! discharge write var
-iret = nf90_inq_varid(ncid, "discharge", varid)
-iret = nf90_put_var(ncid, varid, discharge) 
+!iret = nf90_inq_varid(ncid, "discharge", varid)
+!iret = nf90_put_var(ncid, varid, discharge) 
 
 !! discharge_quality write var
-iret = nf90_inq_varid(ncid, "discharge_quality", varid)
-iret = nf90_put_var(ncid, varid, qualityInt2) 
+!iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+!iret = nf90_put_var(ncid, varid, qualityInt2) 
 
 !! close
 iret= nf90_close(ncid)
 
-deallocate(qualityInt2)
+!deallocate(qualityInt2)
 
 #ifdef HYDRO_D
 print*,'Ndg: end write_nudging_last_obs'
@@ -653,7 +662,7 @@ iret = nf90_get_var(ncid, varid, obsTimes)
 
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
 iret = nf90_get_var(ncid, varid, qualityInt2)
-quality = qualityInt2/100.
+quality = qualityInt2/real(100)
 
 deallocate(qualityInt2)
 
