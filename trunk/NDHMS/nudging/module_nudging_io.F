@@ -543,16 +543,15 @@ iret = nf90_enddef(ncid)
 
 !! gageId write var
 iret = nf90_inq_varid(ncid, "stationId", varid)
-iret = nf90_put_var(ncid, varid, gageId) 
+iret = nf90_put_var(ncid, varid, gageId, start=(/1,1/), count=(/15,size(discharge)/))
 
 !! time write var
 iret = nf90_inq_varid(ncid, "time", varid)
-iret = nf90_put_var(ncid, varid, obsTimes) 
+iret = nf90_put_var(ncid, varid, obsTimes, start=(/1,1/), count=(/19,size(discharge)/))
 
 !! discharge write var
 iret = nf90_inq_varid(ncid, "discharge", varid)
 iret = nf90_put_var(ncid, varid, discharge) 
-
 
 !! discharge_quality write var
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)

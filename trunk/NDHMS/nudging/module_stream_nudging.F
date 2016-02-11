@@ -461,7 +461,18 @@ if(my_id .eq. IO_id) then
                                 nudgingParamsTmp%tau,     &
                                 nudgingParamsTmp%qThresh, &
                                 nudgingParamsTmp%expCoeff )
-
+   
+#ifdef HYDRO_D
+   do ii=1,nParamThresh
+      print*,'Ndg: minval( nudgingParamsTmp%qThresh(ii,:,:)), ii=', ii,': ', &
+           minval( nudgingParamsTmp%qThresh(ii,:,:))
+   end do
+   do ii=1,nParamThreshCat
+      print*,'Ndg: minval( nudgingParamsTmp%expCoeff(ii,:,:)), ii=', ii,': ', &
+           minval( nudgingParamsTmp%expCoeff(ii,:,:))
+   end do
+#endif 
+   
    ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
 
@@ -479,7 +490,6 @@ if(my_id .eq. IO_id) then
    allocate(nudgingParamsStr%G(     nGagesWParamsDom))
    allocate(nudgingParamsStr%tau(   nGagesWParamsDom))
    if(temporalPersistence) then
-      print*,'jlm foo magic too',nudgingParamsTmp%qThresh(1,1,1)
       allocate(nudgingParamsStr%qThresh( nParamThresh,   nParamMonth, nGagesWParamsDom))
       allocate(nudgingParamsStr%expCoeff(nParamThresh+1, nParamMonth, nGagesWParamsDom))
    end if
@@ -543,22 +553,6 @@ if(temporalPersistence) then
 
    call mpp_land_bcast_real3d(nudgingParamsStr%qThresh)
    call mpp_land_bcast_real3d(nudgingParamsStr%expCoeff)
-#ifdef HYDRO_D
-   if(my_id .eq. io_id) then
-      print*,'Ndg: JLM do the following qThresh check?'
-      print*,'image0 nudgingParamsStr%qThresh(:,2,1): ',nudgingParamsStr%qThresh(:,2,1)
-   end if
-   if(my_id .eq. 2) then
-      print*,'image2 nudgingParamsStr%qThresh(:,2,1): ',nudgingParamsStr%qThresh(:,2,1)
-   endif
-   if(my_id .eq. io_id) then
-      print*,'Ndg: JLM do the following expCoeff check?'
-      print*,'image0 nudgingParamsStr%expCoeff(:,2,1): ',nudgingParamsStr%expCoeff(:,2,1)
-   endif
-   if(my_id .eq. 2) then
-      print*,'image2 nudgingParamsStr%expCoeff(:,2,1): ',nudgingParamsStr%expCoeff(:,2,1)
-   endif
-#endif
 end if ! temporalPersistence
 #endif /* MPP_LAND */
 
@@ -751,7 +745,6 @@ if(my_id .eq. io_id) &
 #ifdef MPP_LAND
 !update and broadcast the lsm time
 if(my_id .eq. io_id) lsmTime = nlst_rt(did)%olddate
-!! JLM - why broadcast this? is it not the same on all processors?
 call mpp_land_bcast_char(19, lsmTime)
 # else
 lsmTime = nlst_rt(did)%olddate
@@ -790,7 +783,6 @@ if(all(obsTimeStr(:)%time .eq. '')) obsTimeStr(:)%time = obsTimes
 ! If there are existing observations older than the first obsTime for this 
 ! nudging window, shift them left. This should just shift one position left 
 ! with each advance in time resolution.
-!print*,'Ndg: JLM : obsTimes(1):', obsTimes(1)
 call geth_idts(obsTimeStr(1)%time, obsTimes(1), oldDiff)
 !print*,"Ndg: olddiff:", oldDiff
 if(oldDiff .eq. 0) then 
@@ -2272,16 +2264,11 @@ else if (temporalPersistence) then
    end do
 
    !!7) get the parameter of the exponential
-   prstB=nudgingParamsStr%expCoeff(whPrstParams, flowMonth, whThresh)
+   prstB=nudgingParamsStr%expCoeff(whThresh, flowMonth, whPrstParams)
 
    !! --- Deal with the last ob ---
    !! 9) what is the time difference with the last ob?
-print*,'jlm mega foo magic 1'
-flush(6)
    call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime, prstDtErrInt)
-
-print*,'jlm mega foo magic'
-flush(6)
 
    prstDtErr = real(prstDtErrInt)/real(sixty)  !! second -> minutes
    ! could happen if lastOb file was written out after current model start time/cycle... 
@@ -2302,7 +2289,7 @@ flush(6)
    if((prstDtErr .lt. zero) .and. futureLastObsZero) nudge_term_link = zero
    
 !#ifdef HYDRO_D
-   print*,'-------------------'
+   print*,'Ndg: pst: -------------------'
    print*,'Ndg: pst: prstGageId: ',      prstGageId
    print*,'Ndg: pst: obsInd: ',          obsInd
    print*,'Ndg: pst: hydroTime: ',       hydroTime
@@ -2317,7 +2304,8 @@ flush(6)
    print*,'Ndg: pst: quality coeff: ', obsStaticStr(whGageId)%lastObsQuality
    print*,'Ndg: pst: discharge difference:', prstErr      
    print*,'Ndg: pst: prstB:', prstB
-   print*,'Ndg: pst: time difference mins: ', prstDtErr
+   print*,'Ndg: pst: time difference mins prstDtErr: ', prstDtErr
+   print*,'Ndg: pst: exponent term: ', exp(real(-1)*prstDtErr/prstB)
    print*,'Ndg: pst: nudge_term_link: ', nudge_term_link
 !!$#endif
 
