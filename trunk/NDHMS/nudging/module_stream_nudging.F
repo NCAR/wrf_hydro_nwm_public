@@ -1495,7 +1495,9 @@ if(my_id .eq. io_id) then
                obsStaticStr(ll)%lastObsQuality   = lastObsStr(whLastObsStr)%quality
                setLastObsInfo = .true.
             endif
+            deallocate(lastObsStr)
          endif
+
 
          if(.not. setLastObsInfo) then ! the gage did not have a last observation
             obsStaticStr(ll)%lastObsDischarge = real(0) !! dosent mater if quality is zero
@@ -2475,7 +2477,7 @@ if(allocated(nwisNotRLAndParamsConsolidated)) deallocate(nwisNotRLAndParamsConso
 !! deallocate module variables here and time this
 if(allocated(obsTimeStr))                deallocate(obsTimeStr)
 if(allocated(obsStaticStr))              deallocate(obsStaticStr)   
-if(allocated(nodeGageTmp%nodeId))        deallocate(nodeGageTmp%nodeId)
+!if(allocated(nodeGageTmp%nodeId))        deallocate(nodeGageTmp%nodeId)
 if(allocated(nodeGageTmp%usgsId))        deallocate(nodeGageTmp%usgsId) !redundant
 if(allocated(nodeGageStr%nodeId))        deallocate(nodeGageStr%nodeId)
 if(allocated(nodeGageStr%usgsId))        deallocate(nodeGageStr%usgsId)

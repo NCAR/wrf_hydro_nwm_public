@@ -496,80 +496,79 @@ character(len=19),                intent(in) :: modelTime
 integer*2, allocatable, dimension(:) :: qualityInt2
 character(len=37) :: outFileName
 integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNStn
+character(len=15), allocatable, dimension(:) :: charArr15
+character(len=19), allocatable, dimension(:) :: charArr19
 
-!allocate(qualityInt2(size(quality)))
-!qualityInt2 = nint(100*quality, kind=2)
+
+allocate(qualityInt2(size(quality)))
+qualityInt2 = nint(100*quality, kind=2)
 
 !           !1234567891123456789212345678931234567
 outFileName='nudgingLastObs.' // modelTime // '.nc'
 
 ! create file
 iret = nf90_create(outFileName, nf90_clobber, ncid)
-!if (status /= nf90_noerr) call handle_err(status)
+
 ! create dimensions
-!iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
+iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
 iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
-iret = nf90_def_dim(ncid, "stationIdInd",    3, dimIdNStn)
-!iret = nf90_def_dim(ncid, "stationIdInd",    size(discharge), dimIdNStn)
-!iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
+iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
 
 !! gageId def var
 iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
 iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 15")
-!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! time def var
-!iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
-!iret = nf90_put_att(ncid, varid, 'units', "UTC")
-!iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
-!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "UTC")
+iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
-!! discharge def var
-!iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
-!iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
-!iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
-!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+! discharge def var
+iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
-!! discharge quality def var
-!iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
-!iret = nf90_put_att(ncid, varid, 'units', "-")
-!iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
-!iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+! discharge quality def var
+iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "-")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! global attributes
-!iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
+iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
+
 !! end definition
 iret = nf90_enddef(ncid)
 
 !! gageId write var
 iret = nf90_inq_varid(ncid, "stationId", varid)
-!print*,'jlm foo iret 1: ', iret
-!iret = nf90_put_var(ncid, varid, '123456789012345', start=(/1,1/), count=(/15,1/))
-iret = nf90_put_var(ncid, varid, gageId(2:3), start=(/1,2/), count=(/15,2/))
-!iret = nf90_put_var(ncid, varid, gageId)
-!iret = nf90_put_var(ncid, varid, gageId, start=(/1,1/), count=(/15,size(discharge)/))
-!         12345678901234
-!print*,'jlm foo iret 2: ', iret
-!print*,'jlm foo gageId(2): ', gageId(2)
-!print*,'jlm foo shape gageId', shape(gageId)
-!print*,'jlm foo shape discharge', shape(discharge)
+allocate(charArr15(size(discharge)))
+charArr15=gageId
+iret = nf90_put_var(ncid, varid, charArr15)
+deallocate(charArr15)
 
-!! time write var
-!iret = nf90_inq_varid(ncid, "time", varid)
-!iret = nf90_put_var(ncid, varid, obsTimes, start=(/1,1/), count=(/19,size(discharge)/))
+! time write var
+iret = nf90_inq_varid(ncid, "time", varid)
+allocate(charArr19(size(discharge)))
+charArr19=obsTimes
+iret = nf90_put_var(ncid, varid, charArr19)
+deallocate(charArr19)
 
-!! discharge write var
-!iret = nf90_inq_varid(ncid, "discharge", varid)
-!iret = nf90_put_var(ncid, varid, discharge) 
+! discharge write var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_put_var(ncid, varid, discharge) 
 
-!! discharge_quality write var
-!iret = nf90_inq_varid(ncid, "discharge_quality", varid)
-!iret = nf90_put_var(ncid, varid, qualityInt2) 
+! discharge_quality write var
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+iret = nf90_put_var(ncid, varid, qualityInt2) 
 
 !! close
 iret= nf90_close(ncid)
 
-!deallocate(qualityInt2)
+deallocate(qualityInt2)
 
 #ifdef HYDRO_D
 print*,'Ndg: end write_nudging_last_obs'
@@ -799,20 +798,20 @@ integer, allocatable, dimension(:) :: FROM_NODE, TO_NODE, CHANXI, CHANYJ, TYPEL,
 #ifdef MPP_LAND
 
 if(my_id .eq. io_id) then
-   allocate(   chlat(rt_domain(did)%gnlinks),     chlon(rt_domain(did)%gnlinks),  &
-             chanlen(rt_domain(did)%gnlinks), from_node(rt_domain(did)%gnlinks),  &
-             to_node(rt_domain(did)%gnlinks),    chanxi(rt_domain(did)%gnlinks),  &
-              chanyj(rt_domain(did)%gnlinks),     typel(rt_domain(did)%gnlinks),  &
-            lakenode(rt_domain(did)%gnlinks) )
+   allocate( chLat(rt_domain(did)%gnlinks),    chLon(rt_domain(did)%gnlinks)     )
+   allocate( chanLen(rt_domain(did)%gnlinks),  from_node(rt_domain(did)%gnlinks) )
+   allocate( to_node(rt_domain(did)%gnlinks),  chanXI(rt_domain(did)%gnlinks)    )
+   allocate( chanYJ(rt_domain(did)%gnlinks),   typeL(rt_domain(did)%gnlinks)     )
+   allocate( lakeNode(rt_domain(did)%gnlinks) )
 else 
-   allocate(chlat(1),  chlon(1),  chanlen(1), from_node(1), to_node(1), &
-            chanxi(1), chanyj(1), typel(1),  lakenode(1))
+   allocate(chLat(1),  chLon(1),  chanLen(1), from_node(1), to_node(1) )
+   allocate(chanXI(1), chanYJ(1), typeL(1),  lakeNode(1))
 end if
 
 call write_chanel_real(inChLat,     rt_domain(did)%map_l2g, &
-                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chlat)
+                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chLat)
 call write_chanel_real(inChLon,     rt_domain(did)%map_l2g, &
-                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chlon)
+                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chLon)
 call write_chanel_real(inChanLen,   rt_domain(did)%map_l2g, &
                        rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chanLen)
 call write_chanel_int(inFrom_node, rt_domain(did)%map_l2g, &
@@ -830,14 +829,14 @@ call write_chanel_int(inLakeNode,  rt_domain(did)%map_l2g, &
 
 #else
 
-allocate(   chlat(rt_domain(did)%nlinks),     chlon(rt_domain(did)%nlinks),  &
-          chanlen(rt_domain(did)%nlinks), from_node(rt_domain(did)%nlinks),  &
-          to_node(rt_domain(did)%nlinks),    chanxi(rt_domain(did)%nlinks),  &
-           chanyj(rt_domain(did)%nlinks),     typel(rt_domain(did)%nlinks),  &
-         lakenode(rt_domain(did)%nlinks) )
+allocate( chLat(rt_domain(did)%nlinks),    chLon(rt_domain(did)%nlinks)      )
+allocate( chanLen(rt_domain(did)%nlinks),  from_node(rt_domain(did)%nlinks)  )
+allocate( to_node(rt_domain(did)%nlinks),  chanXI(rt_domain(did)%nlinks)     )
+allocate( chanYJ(rt_domain(did)%nlinks),   typeL(rt_domain(did)%nlinks)      )
+allocate( lakeNode(rt_domain(did)%nlinks) )
 
-chlat     = inChlat
-chlon     = inChlon
+chLat     = inChLat
+chLon     = inChLon
 chanlen     = inChanlen
 from_node = inFrom_node
 to_node   = inTo_node
