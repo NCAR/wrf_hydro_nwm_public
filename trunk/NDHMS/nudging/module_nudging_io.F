@@ -58,9 +58,12 @@ character(len=2),  intent(in) :: obsResolution ! Input
 !Internals
 character(len=256) :: tmpTimeSlice 
 logical :: fileExists
+
 #ifdef HYDRO_D
 print*,'Ndg: start find_timeslice_file'
+call flush(6)
 #endif 
+
 find_timeslice_file=''
 ! is there a file with this name?
 ! note files are not resolved below minutes.
@@ -68,11 +71,14 @@ tmpTimeSlice = trim(timeSlicePath) // date // "." // &
                      obsResolution // 'min.usgsTimeSlice.ncdf'
 inquire(FILE=tmpTimeSlice, EXIST=fileExists)
 if (fileExists) find_timeslice_file = trim(tmpTimeSlice)
+
 #ifdef HYDRO_D
 print*,'Ndg: timeSlice file: ', tmpTimeSlice
 print*,'Ndg: file found: ', fileExists
 print*,'Ndg: finish find_timeslice_file'
+call flush(6)
 #endif
+
 end function find_timeslice_file
 
 !===================================================================================================
@@ -129,7 +135,7 @@ real, parameter :: oneHundred = 100.0000000000000
 #ifdef HYDRO_D
 print*,'Ndg: start read_timeslice_file'
 write(*,'("Ndg: read_timeslice_file: ''", A, "''")') trim(timeSliceFile)
-!call flush(6)
+call flush(6)
 #endif
 
 caller = 'read_timeslice_file'
@@ -215,7 +221,7 @@ end subroutine read_timeslice_file
 
 subroutine read_reach_gage_collocation(gageIds)
 use module_namelist, only: nlst_rt
-
+implicit none
 character(len=15), dimension(:), intent(out) :: gageIds
 !integer, dimension(:), intent(out) :: gageIds
 
@@ -285,6 +291,7 @@ end if ! routeLinkNetcdf
 
 #ifdef HYDRO_D
 print*,'Ndg: Finish read_reach_gage_collocation'
+call flush(6)
 #endif 
 
 end subroutine read_reach_gage_collocation
@@ -317,9 +324,9 @@ integer,                         intent(out) :: nGages
 character(len=5000) :: line
 integer :: ii, colCount, lineCount, lastCommaPos, tmpInt
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
 print*,'Ndg: start read_gridded_nudging_frxst_gage_csv'
-!#endif
+#endif
 frxstId=-9999
 
 lineCount = 0
@@ -352,13 +359,14 @@ end do
 
 200 continue
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
 nGages = lineCount
 print*,"Ndg: nGages: ",  nGages
 print*,"Ndg: frxstId: ", frxstId(1:nGages)
 print*,"Ndg: gageId:",   gageId(1:nGages)
 print*,'Ndg: finish read_gridded_nudging_frxst_gage_csv'
-!#endif 
+call flush(6)
+#endif 
 
 end subroutine read_gridded_nudging_frxst_gage_csv
 
@@ -403,6 +411,7 @@ character(len=23) :: caller
 #ifdef HYDRO_D
 print*,'Ndg: start read_nudging_param_file'
 write(*,'("Ndg: paramFile: ''", A, "''")') trim(paramFile)
+call flush(6)
 #endif
 
 caller='read_nudging_param_file'
@@ -431,7 +440,9 @@ endif
 
 #ifdef HYDRO_D
 print*,'Ndg: finish read_nudging_param_file' 
+call flush(6)
 #endif
+
 end subroutine read_nudging_param_file
 
 
@@ -456,6 +467,7 @@ end subroutine read_nudging_param_file
 ! Notes:
 
 subroutine write_nwis_not_in_RLAndParams( gageId, count )
+implicit none
 character(len=15), dimension(:),  intent(in) :: gageId
 integer,                          intent(in) :: count
 integer :: cc
@@ -500,8 +512,10 @@ character(len=15), allocatable, dimension(:) :: charArr15
 character(len=19), allocatable, dimension(:) :: charArr19
 
 
-allocate(qualityInt2(size(quality)))
-qualityInt2 = nint(100*quality, kind=2)
+#ifdef HYDRO_D
+print*,'Ndg: start write_nudging_last_obs'
+flush(6)
+#endif
 
 !           !1234567891123456789212345678931234567
 outFileName='nudgingLastObs.' // modelTime // '.nc'
@@ -547,14 +561,16 @@ iret = nf90_enddef(ncid)
 iret = nf90_inq_varid(ncid, "stationId", varid)
 allocate(charArr15(size(discharge)))
 charArr15=gageId
-iret = nf90_put_var(ncid, varid, charArr15)
+!iret = nf90_put_var(ncid, varid, charArr15)
+iret = nf90_put_var(ncid, varid, gageId)
 deallocate(charArr15)
 
 ! time write var
 iret = nf90_inq_varid(ncid, "time", varid)
 allocate(charArr19(size(discharge)))
 charArr19=obsTimes
-iret = nf90_put_var(ncid, varid, charArr19)
+!iret = nf90_put_var(ncid, varid, charArr19)
+iret = nf90_put_var(ncid, varid, obsTimes)
 deallocate(charArr19)
 
 ! discharge write var
@@ -563,12 +579,14 @@ iret = nf90_put_var(ncid, varid, discharge)
 
 ! discharge_quality write var
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+allocate(qualityInt2(size(quality)))
+qualityInt2 = nint(100*quality, kind=2)
 iret = nf90_put_var(ncid, varid, qualityInt2) 
+deallocate(qualityInt2)
 
 !! close
 iret= nf90_close(ncid)
 
-deallocate(qualityInt2)
 
 #ifdef HYDRO_D
 print*,'Ndg: end write_nudging_last_obs'
@@ -604,17 +622,22 @@ character(len=256), intent(in) :: fileName
 logical :: fileExists
 #ifdef HYDRO_D
 print*,'Ndg: start find_nudging_last_obs_file'
+flush(6)
 #endif 
+
 find_nudging_last_obs_file=''
 ! is there a file with this name?
 ! note files are not resolved below minutes.
 inquire(FILE=fileName, EXIST=fileExists)
 if (fileExists) find_nudging_last_obs_file = trim(fileName)
+
 #ifdef HYDRO_D
 print*,'Ndg: last obs file: ', trim(fileName)
 print*,'Ndg: file found: ', fileExists
 print*,'Ndg: finish find_nudging_last_obs_file'
+flush(6)
 #endif
+
 end function find_nudging_last_obs_file
 
 
@@ -709,6 +732,7 @@ character(len=25) :: subroutineName
 integer :: iRet, ncid, errStatus
 #ifdef HYDRO_D
 print*,"Ndg: start read_network_reexpression"
+flush(6)
 #endif
 
 subroutineName = 'read_network_reexpression'
@@ -734,6 +758,7 @@ end if
 
 #ifdef HYDRO_D
 print*,"Ndg: finish read_network_reexpression"
+flush(6)
 #endif
 
 end subroutine read_network_reexpression
@@ -859,7 +884,7 @@ if(my_id .eq. io_id) then
    ! jlm: this seems optional, might be nice if output is used for plotting/GIS.
    ! jlm: set did:=1 in nlst_rt
 #ifdef HYDRO_D
-   write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt(1)%geo_finegrid_flnm)
+   write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt(did)%geo_finegrid_flnm)
 #endif
 
    iret = nf_open(trim(nlst_rt(1)%geo_finegrid_flnm), NF_NOWRITE, ncstatic)
@@ -889,6 +914,7 @@ if(my_id .eq. io_id) then
    ! Create the channel connectivity file
 #ifdef HYDRO_D
    print*,'Ndg: output_flnm = "'//trim(output_flnm)//'"'
+   flush(6)
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
@@ -907,7 +933,9 @@ if(my_id .eq. io_id) then
    nStreamCells=size(CHLON,1)
 #ifdef HYDRO_D
    print*,'Ndg: nStreamCells:', nStreamCells
+   flush(6)
 #endif
+
    ! Dimension definitions
    iret = nf_def_dim(ncid, "nStreamCells", nStreamCells, streamCellDimID)  
 
@@ -1032,6 +1060,7 @@ if(my_id .eq. io_id) then
 #endif
 #ifdef HYDRO_D
    write(6,*) "end of output_chan_connectivity" 
+   flush(6)
 #endif
 #ifdef MPP_LAND
 endif
@@ -1063,6 +1092,7 @@ end subroutine output_chan_connectivity
 !   Could define an interface for these. 
 
 subroutine get_1d_netcdf_int2(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer*4,               intent(in)  :: ncid !! the file identifier
 character(len=*),        intent(in)  :: varName
 integer*2, dimension(:), intent(out) :: var
@@ -1087,6 +1117,7 @@ end subroutine get_1d_netcdf_int2
 
 
 subroutine get_1d_netcdf_int4(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer*4,             intent(in)  :: ncid !! the file identifier
 character(len=*),      intent(in)  :: varName
 integer, dimension(:), intent(out) :: var
@@ -1111,6 +1142,7 @@ end subroutine get_1d_netcdf_int4
 
 
 subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer,            intent(in)  :: ncid !! the file identifier
 character(len=*),   intent(in)  :: varName
 real, dimension(:), intent(out) :: var
@@ -1135,6 +1167,7 @@ end subroutine get_1d_netcdf_real
 
 
 subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 character(len=*), dimension(:), intent(out) :: var
 integer,                        intent(in)  :: ncid !! the file identifier
 character(len=*),               intent(in)  :: varName
@@ -1161,6 +1194,7 @@ end subroutine get_1d_netcdf_text
 !==============================================================================
 ! 3D real 
 subroutine get_3d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer,                intent(in)  :: ncid !! the file identifier
 character(len=*),       intent(in)  :: varName
 real, dimension(:,:,:), intent(out) :: var
@@ -1218,7 +1252,9 @@ if(present(fatalErr)) fatalErr_local=fatalErr
 
 #ifdef HYDRO_D
 write(*,'("getting dimension from file: ''", A, "''")') trim(file)
+flush(6)
 #endif
+
 iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem opening file: ''", A, "''")') trim(file)

@@ -23,6 +23,7 @@ module module_nudging_utils
 real :: totalNudgeTime
 integer :: sysClockCountRate, sysClockCountMax
 character(len=4) :: clockType
+
 contains
 
 !===================================================================================================
@@ -222,7 +223,7 @@ end subroutine whichInLoop2
 
 !===================================================================================================
 ! Program Names: 
-!   accum_nudging_cpu_time
+!   accum_nudging_time
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: 

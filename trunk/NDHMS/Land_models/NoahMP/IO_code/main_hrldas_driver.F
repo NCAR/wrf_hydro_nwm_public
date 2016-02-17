@@ -29,10 +29,27 @@ program Noah_hrldas_driver
    use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
 #endif
 
+#ifdef WRF_HYDRO_NUDGING
+#ifdef HYDRO_D /* Temp un-ifdef to get timing results */
+   use module_stream_nudging, only: init_stream_nudging_clock
+   use module_nudging_utils, only: accum_nudging_time, nudging_timer
+#ifdef MPP_LAND
+   use module_mpp_land, only: my_id, io_id
+#endif /* MPP_LAND */
+#endif /* HYDRO_D Temp un-ifdef to get timing results */
+#endif
 
    implicit none
    integer :: ITIME, NTIME
 
+#ifdef WRF_HYDRO_NUDGING
+#ifdef HYDRO_D /* JLM Temp un-ifdef to get timing results */
+   !! no mpp defined here... so this happens on all processors... 
+   real :: startcodeTime, endCodeTime
+   call init_stream_nudging_clock()
+   call nudging_timer(startCodeTime)
+#endif /* HYDRO_D Temp un-ifdef to get timing results */
+#endif
 
    call land_driver_ini(NTIME)
 #ifdef WRF_HYDRO   
@@ -44,6 +61,20 @@ program Noah_hrldas_driver
    end do
 #ifdef WRF_HYDRO
    call hydro_finish() 
+#endif
+
+#ifdef WRF_HYDRO_NUDGING
+#ifdef HYDRO_D /* un-ifdef to get timing results */
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) then 
+#endif 
+      call nudging_timer(endCodeTime)
+      call accum_nudging_time(startCodeTime, endCodeTime,  &
+                              'Entire model time', .false.)
+#ifdef MPP_LAND
+   endif
+#endif 
+#endif /* HYDRO_D :: un-ifdef to get timing results */
 #endif
 
 

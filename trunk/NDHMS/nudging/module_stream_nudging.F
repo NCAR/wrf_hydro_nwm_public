@@ -169,6 +169,10 @@ integer :: lsmDt
 character(len=19), parameter :: missingLastObsTime='9999999999999999999'
 character(len=2) :: obsResolution   
 
+#ifdef HYDRO_D
+integer, parameter :: flushUnit=6
+logical, parameter :: flushAll=.true.
+#endif
 
 #ifdef MPP_LAND
 !========================
@@ -193,7 +197,7 @@ contains
 ! Parameters:  
 ! Input Files: 
 ! Output Files: None.
-! Condition codes: 
+! Condition codes: this only gets called if #ifdef HYDRO_D?
 ! User controllable options: None. 
 ! Notes:
 
@@ -202,7 +206,7 @@ use module_nudging_utils, only: totalNudgeTime,    &
                                 sysClockCountRate, &
                                 sysClockCountMax,  &
                                 clockType
-
+implicit none
 totalNudgeTime = 0. ! Nudging time accumulation init.
 call system_clock(count_rate=sysClockCountRate, count_max=sysClockCountMax)
 clockType = trim(nudgingClockType)
@@ -211,7 +215,8 @@ print*,'Ndg: totalNudgeTime: ', totalNudgeTime
 print*,'Ndg: sysClockCountRate: ', sysClockCountRate
 print*,'Ndg: sysClockCountMax: ', sysClockCountMax
 print*,'Ndg: clockType: ', trim(nudgingClockType)
-#endif /* HYDRO_D */  /* un-ifdef to get timing results */
+if(flushAll) flush(flushUnit)
+#endif /* HYDRO_D un-ifdef to get timing results */
 end subroutine init_stream_nudging_clock
 
 
@@ -240,10 +245,6 @@ subroutine init_stream_nudging
 
 use module_RT_data,  only: rt_domain
 use module_nudging_utils, only: whichInLoop2,       &
-                                totalNudgeTime,     &
-                                sysClockCountRate,  &
-                                sysClockCountMax,   &
-                                clockType,          &
                                 nudging_timer,      &
                                 accum_nudging_time        
 use module_nudging_io,    only: get_netcdf_dim,                      & 
@@ -279,7 +280,8 @@ print*, "Ndg: Start init_stream_nudging"
 #ifdef MPP_LAND
 print*, 'Ndg: PARALLEL NUDGING!'
 #endif
-#endif
+if(flushAll) flush(flushUnit)
+#endif /* HYDRO_D */
 
 !! this ifdef is bizarre problem with pgf compiler
 #ifdef WRF_HYDRO_NUDGING
@@ -360,6 +362,7 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
 
 #ifdef HYDRO_D
       print*, 'Ndg: Start initializing reach gages (netcdf)'
+      if(flushAll) flush(flushUnit)
 #endif
 
       allocate(nodeGageTmp%usgsId(nLinksL))
@@ -389,6 +392,7 @@ if (nlst_rt(did)%channel_option .eq. 1 .or. &
      'Ndg: nodeGageStr%usgsId((size(nodeGageStr%nodeId)-nGagesDomain+1):(size(nodeGageStr%nodeId))):',&
            nodeGageStr%usgsId((size(nodeGageStr%nodeId)-nGagesDomain+1):(size(nodeGageStr%nodeId)))
       print*,'Ndg: Finish initializing reach gages (netcdf)'
+      if(flushAll) flush(flushUnit)
 #endif
 
 #ifdef MPP_LAND
@@ -426,6 +430,7 @@ if(my_id .eq. IO_id) then
       print*,'Ndg: nParamMonth',     nParamMonth
       print*,'Ndg: nParamThresh',    nParamThresh
       print*,'Ndg: nParamThreshCat', nParamThreshCat
+      if(flushAll) flush(flushUnit)
 #endif
 
       if(nParamMonth.eq.0 .or. nParamThresh.eq.0 .or. nParamThreshCat.eq.0) then
@@ -445,6 +450,7 @@ if(my_id .eq. IO_id) then
    print*,'Ndg: nParamThresh',          nParamThresh
    print*,'Ndg: nParamThreshCat',       nParamThreshCat
    print*,'Ndg: temporalPersistence: ', temporalPersistence
+   if(flushAll) flush(flushUnit)
 #endif
 
    allocate(nudgingParamsTmp%usgsId(  nParamGages))
@@ -471,17 +477,20 @@ if(my_id .eq. IO_id) then
       print*,'Ndg: minval( nudgingParamsTmp%expCoeff(ii,:,:)), ii=', ii,': ', &
            minval( nudgingParamsTmp%expCoeff(ii,:,:))
    end do
+   if(flushAll) flush(flushUnit)
 #endif 
    
    ! Reduce the parameters to just the gages in the domain
    allocate(whParamsDom(nParamGages))
 
    call whichInLoop2(nudgingParamsTmp%usgsId, nodeGageStr%usgsId, whParamsDom, nGagesWParamsDom)
+
 #ifdef HYDRO_D
    if(nGagesWParamsDom .ne. nGagesDomain) then
       print*,'Ndg: WARNING Gages are apparently missing from the nudgingParams.nc file'
       print*,'Ndg: WARNING nGagesWParamsDom: ', nGagesWParamsDom
       print*,'Ndg: WARNING nGagesDomain: ', nGagesDomain
+      if(flushAll) flush(flushUnit)
    end if
 #endif
 
@@ -526,7 +535,8 @@ if(my_id .eq. IO_id) then
       print*,'Ndg: nudgingParamsStr%qThresh', nudgingParamsStr%qThresh(1,1,size(nudgingParamsStr%tau))
       print*,'Ndg: nudgingParamsStr%expCoeff',nudgingParamsStr%expCoeff(1,1,size(nudgingParamsStr%tau))
    end if
-#endif
+if(flushAll) flush(flushUnit)
+#endif /* HYDRO_D */
 #ifdef MPP_LAND
 endif ! my_id .eq. io_id
 
@@ -571,6 +581,7 @@ if(my_id .eq. io_id) then
          if(nLastObs .gt. 0) then
 #ifdef HYDRO_D
             print*,'Reading in nudgingLastObsFile: ', trim(nudgingLastObsFile)
+            if(flushAll) flush(flushUnit)
 #endif
             allocate(lastObsStr(nLastObs))
             call read_nudging_last_obs(nudgingLastObsFile,                            &
@@ -627,6 +638,7 @@ nObsTimes  = 2*ceiling(maxTau/obsResolutionInt) + ceiling(real(lsmDt)/(60.*obsRe
 print*,'Ndg: obsResolution:',obsResolution
 print*,'Ndg: maxTau: ', maxTau
 print*,'Ndg: nObsTimes: ', nObsTimes
+if(flushAll) flush(flushUnit)
 #endif 
 
 allocate(obsTimeStr(nObsTimes))
@@ -650,6 +662,7 @@ call obs_static_to_struct()
 !=================================================
 #ifdef HYDRO_D
 print*, "Ndg: Finish init_stream_nudging"
+if(flushAll) flush(flushUnit)
 #endif
 
 #ifdef HYDRO_D  /* un-ifdef to get timing results */
@@ -661,6 +674,7 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 end if
 #endif 
+if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 end subroutine init_stream_nudging
@@ -717,13 +731,13 @@ integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 
 #ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTime, endCodeTime
-
 real :: startCodeTimeOuter
 
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTimeOuter)
+if(flushAll) flush(flushUnit)
 #endif  /* HYDRO_D :: un-ifdef to get timing results */
 
 #ifdef HYDRO_D
@@ -731,6 +745,7 @@ if(my_id .eq. io_id) &
 if(my_id .eq. io_id) &
 #endif
    print*,'Ndg: start setup_stream_nudging'
+if(flushAll) flush(flushUnit)
 #endif  /* HYDRO_D */
 
 #ifdef HYDRO_D
@@ -738,6 +753,7 @@ if(my_id .eq. io_id) &
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTime)
+if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */
 
 !#ifdef MPP_LAND - just do this section on all images. There is no IO.
@@ -760,6 +776,7 @@ call geth_newdate(hydroTime, lsmTime, hydroDT)
 obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
 #ifdef HYDRO_D
 print*,'Ndg: obsHydroTime: ', obsHydroTime
+if(flushAll) flush(flushUnit)
 #endif
 
 ! Now solve all of the observation times in the current nudging window.
@@ -862,6 +879,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup1: prelim', .false.)
    call nudging_timer(startCodeTime)
+if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -901,6 +919,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup2.0: timeslice_file_to_struct before bcast', .false.)
    !call nudging_timer(startCodeTime) ! skip this b/c there's no mpi sync till after next section
+   if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -942,6 +961,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup2.1: timeslice_file_to_struct after bcast', .false.)
    call nudging_timer(startCodeTime) ! images are synched so reset timer
+   if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -985,6 +1005,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup3: obs_static_to_struct', .false.)
    call nudging_timer(startCodeTime) 
+   if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -1033,6 +1054,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup4: bcast obs_static_struct', .false.)
    call nudging_timer(startCodeTime) 
+   if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -1054,6 +1076,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup5: tally_affected_links', .false.)
    call nudging_timer(startCodeTime) 
+   if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -1085,6 +1108,7 @@ if(my_id .eq. io_id) then
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup6: after bcast tally_aff', .false.)
    call nudging_timer(startCodeTime) 
+   if(flushAll) flush(flushUnit)
 endif
 #endif
 
@@ -1111,7 +1135,7 @@ if(my_id .eq. -5) then
    print*,'Ndg: !-------------------------------------------------'
    print*,'Ndg: '
 #ifdef MPP_LAND
-!if(my_id .eq. io_id) then 
+if(flushAll) flush(flushUnit)
 end if
 #endif          
 #endif /* HYDRO_D */
@@ -1123,6 +1147,7 @@ if(my_id .eq. io_id) then
    call nudging_timer(endCodeTime)
    call accum_nudging_time(startCodeTime, endCodeTime, &
         'setup6: diagnostics at end', .false.)
+   if(flushAll) flush(flushUnit)
 #ifdef MPP_LAND
 endif
 #endif
@@ -1146,6 +1171,7 @@ if(my_id .eq. io_id) then
 endif
 
 #endif 
+if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */
 
 end subroutine setup_stream_nudging
@@ -1206,6 +1232,7 @@ if(fileName .eq. '') then
    obsTimeStr(structIndex)%updateTime='no file'
 #ifdef HYDRO_D
    print*,'Ndg: no timeSliceFile at this time: ', thisTime
+   if(flushAll) flush(flushUnit)
 #endif
    return 
 end if
@@ -1214,6 +1241,7 @@ end if
 print*,'Ndg: Found file:', fileName
 print*,'Ndg: timeSlice: ',thisTime
 print*,'Ndg: timeSliceFile:',trim(fileName), my_id
+if(flushAll) flush(flushUnit)
 #endif
 
 nGages=get_netcdf_dim(fileName, 'stationIdInd',   &
@@ -1272,6 +1300,7 @@ if(filterObsToDom) then
 !   print*,'Ndg: usgsIdIn: ',         usgsIdIn
 !   print*,'Ndg: nodeGageStr%usgsId', nodeGageStr%usgsId
    print*,'Ndg: nWhSliceInDom:',      nWhSliceInDom
+   if(flushAll) flush(flushUnit)
 #endif
    allocate(obsTimeStr(structIndex)%obsStr(nWhSliceInDom))
    !! because these dont get set here, give them default values.
@@ -1335,7 +1364,7 @@ endif !filterObsToDom
 
 #ifdef HYDRO_D
 print*,'Ndg: finish timeslice_file_to_struct'
-call flush(6)
+if(flushAll) flush(flushUnit)
 #endif 
 
 end subroutine timeslice_file_to_struct
@@ -1372,7 +1401,7 @@ logical :: setLastObsInfo
 
 #ifdef HYDRO_D
 print*,'Ndg: start obs_static_to_struct'
-call flush(6)
+if(flushAll) flush(flushUnit)
 #endif
   
 ! nudgingParamsStr was already reduced to the intersection of all the 
@@ -1537,7 +1566,8 @@ if(my_id .eq. io_id) then
          print*,'Ndg: !----------------------------------'
          print*,'Ndg: '
       endif ! any of these diag inds
-#endif
+      if(flushAll) flush(flushUnit)
+#endif /* HYDRO_D */
    end do ! ll
 #ifdef MPP_LAND
 end if  !! my_id
@@ -1563,12 +1593,12 @@ if(temporalPersistence) then
    call mpp_land_bcast_char1d( obsStaticStr(:)%lastObsTime)
    call mpp_land_bcast_real_1d(obsStaticStr(:)%lastObsQuality)
 endif
-#endif
+#endif /* MPP_LAND */
 
 
 #ifdef HYDRO_D
 print*,'Fisnish obs_static_to_struct'
-call flush(6)
+if(flushAll) flush(flushUnit)
 #endif
 
 end subroutine obs_static_to_struct
@@ -1596,6 +1626,7 @@ use module_nudging_utils,  only: whUniLoop
 use module_nudging_io,     only: write_nudging_last_obs
 #ifdef MPP_LAND
 use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
+implicit none
 logical, allocatable, dimension(:) :: theMask
 integer :: whImage, oo
 #endif
@@ -1654,6 +1685,7 @@ end subroutine output_nudging_last_obs
 subroutine accumulate_nwis_not_in_RLAndParams(nwisNotRLAndParams_local,      &
                                               nwisNotRLAndParamsCount_local, &
                                               gageId )
+implicit none
 character(len=15), dimension(:), intent(inout) :: nwisNotRLAndParams_local
 integer,                         intent(inout) :: nwisNotRLAndParamsCount_local
 character(len=15),               intent(in)    :: gageId
@@ -1722,7 +1754,8 @@ real    :: newDist
 integer, parameter :: did=1
 
 #ifdef HYDRO_D
-!print*,'Ndg: start distance_along_channel'
+print*,'Ndg: start distance_along_channel'
+if(flushAll) flush(flushUnit)
 #endif
 
 if(direction%end(startInd) .eq. 0) return ! a pour point (downstream) or a 1st order link (upstream)
@@ -1754,6 +1787,7 @@ end do
 
 #ifdef HYDRO_D
 print*,'Ndg: end distance_along_channel'
+if(flushAll) flush(flushUnit)
 #endif
 
 end subroutine distance_along_channel
@@ -1823,6 +1857,7 @@ deallocate(affectedInds, nGageAffect)
 
 #ifdef HYDRO_D
 print*,'Ndg: end tally_affected_links'
+if(flushAll) flush(flushUnit)
 #endif
 
 end subroutine tally_affected_links
@@ -1989,6 +2024,7 @@ real :: startCodeTimeAcc, endCodeTimeAcc
 if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
      call nudging_timer(startCodeTimeAcc)
+if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 #ifdef MPP_LAND
@@ -2013,6 +2049,7 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
       print*,'Ndg: checkInd: -------------------------'
       print*,"Ndg: checkInd: checkInd: ",checkInd
       print*,'Ndg: checkInd: discharge(ll,2) before:',discharge(ll-startInd+1,2)
+      if(flushAll) flush(flushUnit)
    end if
 #endif 
    theNudge = nudge_term_link(ll-startInd+1, hydroAdv, global_discharge)
@@ -2021,6 +2058,7 @@ do ll=startInd, endInd  ! ll is in the index of the global Route_Link
    if(ll .eq. checkInd) then
       print*,'Ndg: checkInd: theNudge:',theNudge
       print*,'Ndg: checkInd: discharge(ll,2) after:',discharge(ll-startInd+1,2)
+      if(flushAll) flush(flushUnit)
    endif
 #endif
 end do
@@ -2039,7 +2077,7 @@ if(my_id .eq. io_id) then
 endif
 #endif
 print*,'Ndg: finish nudge_term_all'
-flush(6)
+if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */  /* un-ifdef to get timing results */
 
 end subroutine nudge_term_all
@@ -2113,6 +2151,7 @@ weighting = zero
 if(linkInd .eq. checkInd) then
    print*,'Ndg: checkInd: hydroTime: ',hydroTime      
    print*,'Ndg: checkInd: linkInd', linkInd
+   if(flushAll) flush(flushUnit)
 end if
 #endif
 
@@ -2200,8 +2239,9 @@ do tt=1,size(obsTimeStr)
          print*,'Ndg: checkInd: ws: ',      obsStaticStr(staticInd)%ws(ll)
          print*,'Ndg: checkInd: nudge_term_link: ', nudge_term_link
          print*,'Ndg: checkInd: weighting: ', weighting
+         if(flushAll) flush(flushUnit)
       endif
-#endif
+#endif /* HYDRO_D */
       
    enddo ! oo
 
@@ -2225,6 +2265,7 @@ else if (temporalPersistence) then
 
 #ifdef HYDRO_D
    print*,'Ndg: Persistence nudging execution'
+   if(flushAll) flush(flushUnit)
 #endif
    !! PERSISTENCE
    !! if no nudge was applied then fall back on to persistence of last observation
@@ -2291,7 +2332,7 @@ else if (temporalPersistence) then
 
    if((prstDtErr .lt. zero) .and. futureLastObsZero) nudge_term_link = zero
    
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
    print*,'Ndg: pst: -------------------'
    print*,'Ndg: pst: prstGageId: ',      prstGageId
    print*,'Ndg: pst: obsInd: ',          obsInd
@@ -2310,13 +2351,14 @@ else if (temporalPersistence) then
    print*,'Ndg: pst: time difference mins prstDtErr: ', prstDtErr
    print*,'Ndg: pst: exponent term: ', exp(real(-1)*prstDtErr/prstB)
    print*,'Ndg: pst: nudge_term_link: ', nudge_term_link
-!!$#endif
+   if(flushAll) flush(flushUnit)
+#endif
 
 endif
 
 #ifdef HYDRO_D
 print*,'Ndg: finish nudge_term_link'
-flush(6)
+if(flushAll) flush(flushUnit)
 #endif
 
 
@@ -2343,6 +2385,8 @@ end function nudge_term_link
 subroutine get_netwk_reexpression
 use module_RT_data,   only: rt_domain
 use module_nudging_io,only: read_network_reexpression, get_netcdf_dim
+
+implicit none
 integer :: downSize, upSize, baseSize, nLinksL
 
 #ifdef MPP_LAND
@@ -2432,12 +2476,12 @@ integer :: nwisNotRLAndParamsCountConsolidated, gg, ii
 #ifdef HYDRO_D  /* un-ifdef to get timing results */
 real :: startCodeTimeAcc, endCodeTimeAcc
 print*,'Ndg: start finish_stream_nudging'
-flush(6)
+if(flushAll) flush(flushUnit)
 #ifdef MPP_LAND
 if(my_id .eq. io_id) &
 #endif 
      call nudging_timer(startCodeTimeAcc)
-#endif  /* un-ifdef to get timing results */
+#endif  /* HYDRO_D un-ifdef to get timing results */
 
 !! accumulate_nwis_not_in_RLAndParams
 !! because of parallel IO,  accumulation is happening on 
@@ -2511,7 +2555,7 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 end if
 print*,'Ndg: end of finish_stream_nudging'
-flush(6)  
+if(flushAll) flush(flushUnit)  
 #endif
 #endif /* HYDRO_D */
 
