@@ -311,8 +311,13 @@ contains
                 write(*, '(" *****       but no restart file was found.")')
                 write(*, '(" ***** ")')
                 write(*, *)
+#ifdef MPP_LAND
+                call hydro_stop( "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
+                     " - Cannot find a restart file.")
+#else
                 stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
                      " - Cannot find a restart file."
+#endif
              endif
           else
              exit RLOOP
@@ -321,19 +326,27 @@ contains
 
     else
 
-       restart_flnm = restart_filename_requested
-       inquire (file=trim(restart_flnm), exist=lexist)
-       if ( .not. lexist ) then
-          write(*, *)
-          write(*, '(" ***** RESTART error: **************************************************")')
-          write(*, '(" ***** ")')
-          write(*, '(" *****       You have requested to restart from a file that cannot be found.")')
-          write(*, '(" *****       Specified restart file = ''", A, "''")') trim(restart_flnm)
-          write(*, '(" ***** ")')
-          write(*, *)
-          stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
+      restart_flnm = restart_filename_requested
+      inquire (file=trim(restart_flnm), exist=lexist)
+      if ( .not. lexist ) then
+         inquire (file=trim(restart_flnm)//".0", exist=lexist)
+         if ( .not. lexist ) then
+           write(*, *)
+           write(*, '(" ***** RESTART error: **************************************************")')
+           write(*, '(" ***** ")')
+           write(*, '(" *****       You have requested to restart from a file that cannot be found.")')
+           write(*, '(" *****       Specified restart file = ''", A, "''")') trim(restart_flnm)
+           write(*, '(" ***** ")')
+           write(*, *)
+#ifdef MPP_LAND
+           call hydro_stop( "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
+               " - Cannot find restart file.")
+#else
+           stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
                " - Cannot find restart file."
-       endif
+#endif
+         endif
+      endif
 
     endif
 

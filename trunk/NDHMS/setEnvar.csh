@@ -6,10 +6,11 @@
 if(! $?WRF_HYDRO) setenv WRF_HYDRO 1
 
 ### turn on output information during running time.
-if(! $?HYDRO_D) setenv HYDRO_D 0
+# if(! $?HYDRO_D) 
+setenv HYDRO_D 1
 
 ### turn on distributed parameters for NoahMP
-if(! $?SPATIAL_SOIL) setenv SPATIAL_SOIL 1  
+#if(! $?SPATIAL_SOIL) setenv SPATIAL_SOIL 1  
 
 ### turn on RAPID model
 # if(! $?WRF_HYDRO_RAPID) setenv WRF_HYDRO_RAPID 1

@@ -434,21 +434,26 @@
               IF (SATLYRCHK(I,J).ne.0) then
                 IF (SATLYRCHK(I,J).ne.1) then  ! soil column is partially sat.
                   ZWATTABLRT(I,J) = -ZSOIL(SATLYRCHK(I,J)-1)
-                  DO KK=SATLYRCHK(I,J),NSOIL
+!DJG 2/16/2016 fix                  DO KK=SATLYRCHK(I,J),NSOIL
 !old                   CWATAVAIL(I,J) = (SMCRT(I,J,SATLYRCHK(I,J))-&
 !old                                    SMCREFRT(I,J,SATLYRCHK(I,J))) * &
 !old                                    (ZSOIL(SATLYRCHK(I,J)-1)-ZSOIL(NSOIL))
-                    CWATAVAIL(I,J) = CWATAVAIL(I,J)+(SMCRT(I,J,KK)- &
-                                     SMCREFRT(I,J,KK))*SLDPTH(KK)
-                  END DO
+!DJG 2/16/2016 fix                    CWATAVAIL(I,J) = CWATAVAIL(I,J)+(SMCRT(I,J,KK)- &
+!DJG 2/16/2016 fix                                     SMCREFRT(I,J,KK))*SLDPTH(KK)
+!DJG 2/16/2016 fix                  END DO
 
 
                 ELSE  ! soil column is fully saturated to sfc.
                   ZWATTABLRT(I,J) = 0.
-                  DO KK=SATLYRCHK(I,J),NSOIL
-                    CWATAVAIL(I,J) = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
-                  END DO
+!DJG 2/16/2016 fix                  DO KK=SATLYRCHK(I,J),NSOIL
+!DJG 2/16/2016 fix                    CWATAVAIL(I,J) = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
+!DJG 2/16/2016 fix                  END DO
                 END IF
+!DJG 2/16/2016 fix accumulation of CWATAVAIL...
+                  DO KK=SATLYRCHK(I,J),NSOIL
+                    CWATAVAIL(I,J) = CWATAVAIL(I,J)+(SMCRT(I,J,KK)- &
+                                     SMCREFRT(I,J,KK))*SLDPTH(KK)
+                  END DO
               ELSE  ! no saturated layers...
                 ZWATTABLRT(I,J) = -ZSOIL(NSOIL)
                 SATLYRCHK(I,J) = NSOIL + 1
@@ -1295,9 +1300,10 @@
             if(dist(i,j,9) .le. 0) then
                call hydro_stop("In ROUTE_SUBSURFACE1() - dist(i,j,9) is <= zero")
             endif
-            if(CWATAVAIL(i,j).lt.ABS(qsub(i,j))/dist(i,j,9)*SUBDT) THEN
-              qsub(i,j) = -1.0*CWATAVAIL(i,j)
-            end if
+!DJG Feb 16, 2016...comment out to debug...line is identical to line 255
+!            if(CWATAVAIL(i,j).lt.ABS(qsub(i,j))/dist(i,j,9)*SUBDT) THEN
+!              qsub(i,j) = -1.0*CWATAVAIL(i,j)
+!            end if
           end do
         end do
 #ifdef MPP_LAND

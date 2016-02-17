@@ -5662,6 +5662,9 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') i
                  endif
            iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
+#ifdef HYDRO_D
+           print*, "in read_rst_nc3 read restart variable ", varStr//trim(tmpStr)
+#endif
 #ifdef MPP_LAND
          endif
          call mpp_land_bcast_int1(iret)
@@ -5673,9 +5676,6 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr//trim(tmpStr)
-#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5696,11 +5696,14 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
 #ifdef MPP_LAND
          real,dimension(global_nx,global_ny) :: xtmp 
-         if(my_id .eq. IO_id) & 
+         if(my_id .eq. IO_id) then
 #endif
            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
-
+#ifdef HYDRO_D
+           print*, "in read_rst_nc2 read restart variable ", trim(varStr)
+#endif
 #ifdef MPP_LAND
+         endif
          call mpp_land_bcast_int1(iret)
 #endif
 
@@ -5710,9 +5713,6 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5742,10 +5742,11 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') i
                  endif
 #ifdef MPP_LAND
-         if(my_id .eq. IO_id) & 
+         if(my_id .eq. IO_id) then
 #endif
             iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
 #ifdef MPP_LAND
+         endif
          call mpp_land_bcast_int1(iret)
 #endif
          if (iret /= 0) then
@@ -5754,9 +5755,6 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr//trim(tmpStr)
-#endif
 #ifdef MPP_LAND
          iret = nf_get_var_real(ncid, varid, xtmp)
             call decompose_RT_real(xtmp(:,:),var(:,:,i),global_rt_nx,global_rt_ny,ix,jx)
@@ -5774,6 +5772,7 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp 
+         if(my_id .eq. IO_id) &   
 #endif
          iret = nf_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
@@ -5785,9 +5784,6 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) &   
              iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5807,6 +5803,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp
          xtmp = 0.0
+         if(my_id .eq. IO_id) &
 #endif
             iret = nf_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
@@ -5818,9 +5815,6 @@ end subroutine mpp_output_chrt
 #endif
                return
             endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5852,9 +5846,6 @@ end subroutine mpp_output_chrt
 #endif
                return
             endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
 #endif
@@ -5895,9 +5886,6 @@ end subroutine mpp_output_chrt
 #endif
                return
             endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
 #endif
@@ -5957,10 +5945,6 @@ end subroutine mpp_output_chrt
                deallocate(var)
                return
             endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-         call flush(6)
-#endif
          if(my_id .eq. IO_id) then
             var = 0.0
             iret = nf_get_var_real(ncid, varid, var)
@@ -5976,9 +5960,6 @@ end subroutine mpp_output_chrt
                deallocate(var)
                return
             endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-#endif   
          iret = nf_get_var_real(ncid, varid, var_out)
          deallocate(var)
 #endif
