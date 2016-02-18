@@ -191,8 +191,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
     !   print *, "-Hltoe H oe", H, oe
     endif
 
-    if(H .gt. maxh) then  ! overtop condition
+    if(H .ge. maxh) then  ! overtop condition
      discharge = qi1
+     H = maxh
     endif
 
     qo1  = discharge  ! return the flow rate from reservoir

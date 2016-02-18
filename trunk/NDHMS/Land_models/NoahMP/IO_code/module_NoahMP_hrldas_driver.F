@@ -1117,7 +1117,7 @@ module module_NoahMP_hrldas_driver
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
-  if(rst_bi_out .eq. 0) then
+  if(rst_bi_in .eq. 0) then
 
 #ifdef WRF_HYDRO
       tmpdate = olddate
