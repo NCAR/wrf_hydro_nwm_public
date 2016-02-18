@@ -1443,8 +1443,10 @@ call mpp_land_bcast_logical(nudgeSpatial)
 call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
 #endif
 
-nudgeSpatial=.true.  !! hardwiring this for now... 
+!nudgeSpatial=.true.  !! hardwiring this for now...
+print*,'Ndg: nudgeSpatial = ', nudgeSpatial
 !! get the requsite files if necessary
+!! this solves/allocates upNetwkStr and downNetwkStr
 if(nudgeSpatial) call get_netwk_reexpression()
 
 ! loop over the entire structure and solve 
@@ -1507,6 +1509,18 @@ if(my_id .eq. io_id) then
               ( obsStaticStr(ll)%R**2 - obsStaticStr(ll)%dist**2 ) / &
               ( obsStaticStr(ll)%R**2 + obsStaticStr(ll)%dist**2 )       
 
+      else
+
+         ! Collect the up and down stream cells
+         nCellsInR(ll) = 1
+         allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)))
+         allocate(obsStaticStr(ll)%dist(nCellsInR(ll)))
+         allocate(obsStaticStr(ll)%ws(nCellsInR(ll)))
+         
+         obsStaticStr(ll)%cellsAffected(1) = obsStaticStr(ll)%obsCellInd
+         obsStaticStr(ll)%dist(1)          = 0         
+         obsStaticStr(ll)%ws = 1
+         
       end if ! nudgeSpatial
 
       if(temporalPersistence) then 
@@ -1551,13 +1565,9 @@ if(my_id .eq. io_id) then
          print*,'Ndg: obsStaticStr(ll)%R: ',             obsStaticStr(ll)%R
          print*,'Ndg: obsStaticStr(ll)%G: ',             obsStaticStr(ll)%G
          print*,'Ndg: obsStaticStr(ll)%tau: ',           obsStaticStr(ll)%tau
-         if(nudgeSpatial) then 
-            print*,'Ndg: obsStaticStr(ll)%cellsAffected: ', obsStaticStr(ll)%cellsAffected
-            print*,'Ndg: obsStaticStr(ll)%dist: ',          obsStaticStr(ll)%dist
-            print*,'Ndg: obsStaticStr(ll)%ws: ',            obsStaticStr(ll)%ws
-         else 
-            print*,'Ndg: nudgeSpatial=F, no spatial information to show.'
-         end if
+         print*,'Ndg: obsStaticStr(ll)%cellsAffected: ', obsStaticStr(ll)%cellsAffected
+         print*,'Ndg: obsStaticStr(ll)%dist: ',          obsStaticStr(ll)%dist
+         print*,'Ndg: obsStaticStr(ll)%ws: ',            obsStaticStr(ll)%ws
          if(temporalPersistence) then
             print*,'Ndg: obsStaticStr(ll)%lastObsDischarge: ', obsStaticStr(ll)%lastObsDischarge
             print*,'Ndg: obsStaticStr(ll)%lastObsTime: ',      obsStaticStr(ll)%lastObsTime
@@ -1573,19 +1583,17 @@ if(my_id .eq. io_id) then
 end if  !! my_id
 
 !broadcast  %cellsAffected, %dist, %ws
-if(nudgeSpatial) then 
-   do ll=1,size(obsStaticStr%usgsId)
-      call mpp_land_bcast_int1(nCellsInR(ll))
-      if(my_id .ne. io_id) then
-         allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)))
-         allocate(obsStaticStr(ll)%dist(nCellsInR(ll)))
-         allocate(obsStaticStr(ll)%ws(nCellsInR(ll)))
-      endif
-      call mpp_land_bcast_int1d(obsStaticStr(ll)%cellsAffected)
-      call mpp_land_bcast_real_1d(obsStaticStr(ll)%dist)
-      call mpp_land_bcast_real_1d(obsStaticStr(ll)%ws)
-   end do
-end if
+do ll=1,size(obsStaticStr%usgsId)
+   call mpp_land_bcast_int1(nCellsInR(ll))
+   if(my_id .ne. io_id) then
+      allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)))
+      allocate(obsStaticStr(ll)%dist(nCellsInR(ll)))
+      allocate(obsStaticStr(ll)%ws(nCellsInR(ll)))
+   endif
+   call mpp_land_bcast_int1d(obsStaticStr(ll)%cellsAffected)
+   call mpp_land_bcast_real_1d(obsStaticStr(ll)%dist)
+   call mpp_land_bcast_real_1d(obsStaticStr(ll)%ws)
+end do
 deallocate(nCellsInR)
 
 if(temporalPersistence) then
@@ -2381,7 +2389,7 @@ end function nudge_term_link
 ! Output Files: 
 ! Condition codes: 
 ! User controllable options: 
-! Notes: 
+! Notes: Sets module derived type strs: upNetwkStr and downNetwkStr
 subroutine get_netwk_reexpression
 use module_RT_data,   only: rt_domain
 use module_nudging_io,only: read_network_reexpression, get_netcdf_dim
