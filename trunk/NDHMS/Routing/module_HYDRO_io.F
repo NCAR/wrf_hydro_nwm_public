@@ -631,13 +631,11 @@ end subroutine get_albedo12m_netcdf
 
 
         CHARACTER(len=*)         :: route_chan_f, route_link_f,route_direction_f
-        CHARACTER(len=256)       :: InputLine
         CHARACTER(len=256)       :: geo_finegrid_flnm
         CHARACTER(len=256)       :: var_name
 
         ! variables for handling netcdf dimensions
-        character(len=256) :: route_link_f_r
-        integer :: lenRouteLinkFR, iRet, ncid, dimId
+        integer :: iRet, ncid, dimId
         logical :: routeLinkNetcdf
      
         NLINKS = 0
@@ -659,6 +657,7 @@ end subroutine get_albedo12m_netcdf
          var_name = "CHANNELGRID"
          call readRT2d_int(var_name,CH_NETRT,ixrt,jxrt,&
                    trim(geo_finegrid_flnm))
+
 
 !-- new link id variable to handle link routing
          var_name = "LINKID"
@@ -705,12 +704,16 @@ end subroutine get_albedo12m_netcdf
 !               if (CH_NETRT(i,j) .ge.0.AND.CH_NETRT(i,j).lt.100) then 
                 if (CH_NETRT(i,j) .ge.0) then
                  NLINKS = NLINKS + 1
+                 if( UDMP_OPT .eq. 1) CH_NETLNK(i,j) = 2
                endif
             end do 
          end do 
 #ifdef HYDRO_D
          print *, "NLINKS IS ", NLINKS 
 #endif
+     if( UDMP_OPT .eq. 1) then 
+         return
+     endif
 
 !DJG inv         DO j = JXRT,1,-1  !rows
          DO j = 1,JXRT  !rows
@@ -910,44 +913,54 @@ end subroutine get_albedo12m_netcdf
 
 
 !-- don't return here--!  return
-    if (channel_option.ne.3) then  ! overwrite the NLINKS
-!-IF is now commented above   else  ! get nlinks from the ascii file of links
-#ifdef HYDRO_D
-       write(6,*) "read file to get NLINKSL",route_link_f
-       call flush(6)
-#endif
-       !! is RouteLink file netcdf (*.nc) or csv (*.csv)
-       route_link_f_r = adjustr(route_link_f)
-       lenRouteLinkFR = len(route_link_f_r)
-       routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq. '.nc'
-
-       if(routeLinkNetcdf) then 
-#ifdef HYDRO_D
-          write(6,'("getting NLINKS from: ''", A, "''")') trim(route_link_f)
-#endif
-          NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
-                                   'READ_ROUTEDIM', fatalErr=.true.) 
-       else 
-          open(unit=17,file=trim(route_link_f),          & !link
-               form='formatted',status='old')
-
-1011      read(17,*,end= 1999) InputLine
-          NLINKSL = NLINKSL + 1
-          goto 1011
-1999      continue
-          NLINKSL = NLINKSL - 1 !-- first line is a comment 
-          close(17)
-       end if ! routeLinkNetcdf
-
-#ifdef HYDRO_D
-        print *, "Number of Segments or Links on sparse network", NLINKSL
-        write(6,*) "NLINKSL = ", NLINKSL
-        call flush(6)
-#endif
-        
-      end if !end-if is now for channel_option just above, not IF from further up
 
      END SUBROUTINE READ_ROUTEDIM
+
+!!! This subroutine gets the NLINKSL
+     subroutine get_NLINKSL(NLINKSL, channel_option, route_link_f)
+        implicit none
+        CHARACTER(len=*)         :: route_link_f
+        integer :: NLINKSL, channel_option
+        CHARACTER(len=256)         :: route_link_f_r
+        integer :: lenRouteLinkFR
+        logical :: routeLinkNetcdf
+        CHARACTER(len=256)       :: InputLine
+        if (channel_option.ne.3) then  ! overwrite the NLINKS
+!-IF is now commented above   else  ! get nlinks from the ascii file of links
+#ifdef HYDRO_D
+           write(6,*) "read file to get NLINKSL from", trim(route_link_f)
+           call flush(6)
+#endif
+       !! is RouteLink file netcdf (*.nc) or csv (*.csv)
+           route_link_f_r = adjustr(route_link_f)
+           lenRouteLinkFR = len(route_link_f_r)
+           routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq.  '.nc'
+
+           if(routeLinkNetcdf) then
+              NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
+                                   'READ_ROUTEDIM', fatalErr=.true.)
+           else
+              open(unit=17,file=trim(route_link_f),          & !link
+                   form='formatted',status='old')
+
+1011          read(17,*,end= 1999) InputLine
+              NLINKSL = NLINKSL + 1
+              goto 1011
+1999          continue
+              NLINKSL = NLINKSL - 1 !-- first line is a comment 
+              close(17)
+           end if ! routeLinkNetcdf
+
+#ifdef HYDRO_D
+            print *, "Number of Segments or Links on sparse network", NLINKSL
+            write(6,*) "NLINKSL = ", NLINKSL
+            call flush(6)
+#endif
+
+      end if !end-if is now for channel_option just above, not IF from further up
+
+          return
+     end subroutine get_NLINKSL
 
      subroutine nreadRT2d_real(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
          implicit none
@@ -4503,10 +4516,10 @@ end subroutine mpp_output_chrt
            CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, GNLINKS, &
               g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL, UDMP_OPT)
+           call get_NLINKSL(NLINKSL, channel_option, route_link_f)
         else
            allocate(g_CH_NETLNK(1,1))
         endif
-     
 
         call mpp_land_bcast_int1(GNLINKS)
         call mpp_land_bcast_int1(NLINKSL)
@@ -5662,9 +5675,6 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') i
                  endif
            iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
-#ifdef HYDRO_D
-           print*, "in read_rst_nc3 read restart variable ", varStr//trim(tmpStr)
-#endif
 #ifdef MPP_LAND
          endif
          call mpp_land_bcast_int1(iret)
@@ -5676,6 +5686,9 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr//trim(tmpStr)
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5696,14 +5709,11 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
 #ifdef MPP_LAND
          real,dimension(global_nx,global_ny) :: xtmp 
-         if(my_id .eq. IO_id) then
+         if(my_id .eq. IO_id) & 
 #endif
            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
-#ifdef HYDRO_D
-           print*, "in read_rst_nc2 read restart variable ", trim(varStr)
-#endif
+
 #ifdef MPP_LAND
-         endif
          call mpp_land_bcast_int1(iret)
 #endif
 
@@ -5713,6 +5723,9 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) & 
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5742,11 +5755,10 @@ end subroutine mpp_output_chrt
                     write(tmpStr, '(i2)') i
                  endif
 #ifdef MPP_LAND
-         if(my_id .eq. IO_id) then
+         if(my_id .eq. IO_id) & 
 #endif
             iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
 #ifdef MPP_LAND
-         endif
          call mpp_land_bcast_int1(iret)
 #endif
          if (iret /= 0) then
@@ -5755,6 +5767,9 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr//trim(tmpStr)
+#endif
 #ifdef MPP_LAND
          iret = nf_get_var_real(ncid, varid, xtmp)
             call decompose_RT_real(xtmp(:,:),var(:,:,i),global_rt_nx,global_rt_ny,ix,jx)
@@ -5772,7 +5787,6 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp 
-         if(my_id .eq. IO_id) &   
 #endif
          iret = nf_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
@@ -5784,6 +5798,9 @@ end subroutine mpp_output_chrt
 #endif
             return
          endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) &   
              iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5803,7 +5820,6 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp
          xtmp = 0.0
-         if(my_id .eq. IO_id) &
 #endif
             iret = nf_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
@@ -5815,6 +5831,9 @@ end subroutine mpp_output_chrt
 #endif
                return
             endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
             iret = nf_get_var_real(ncid, varid, xtmp)
@@ -5846,6 +5865,9 @@ end subroutine mpp_output_chrt
 #endif
                return
             endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
 #endif
@@ -5886,6 +5908,9 @@ end subroutine mpp_output_chrt
 #endif
                return
             endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
 #endif
@@ -5945,6 +5970,10 @@ end subroutine mpp_output_chrt
                deallocate(var)
                return
             endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+         call flush(6)
+#endif
          if(my_id .eq. IO_id) then
             var = 0.0
             iret = nf_get_var_real(ncid, varid, var)
@@ -5960,6 +5989,9 @@ end subroutine mpp_output_chrt
                deallocate(var)
                return
             endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif   
          iret = nf_get_var_real(ncid, varid, var_out)
          deallocate(var)
 #endif
@@ -5982,7 +6014,7 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID, GNLINKSL     &
+            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID, GNLINKSL,UDMP_OPT     &
 #ifdef MPP_LAND
             ,Link_Location &
 #endif
@@ -5991,7 +6023,7 @@ end subroutine mpp_output_chrt
         use module_mpp_land, only:  my_id, io_id
 #endif
 #include <netcdf.inc>
-        INTEGER, INTENT(IN)                          :: IXRT,JXRT
+        INTEGER, INTENT(IN)                          :: IXRT,JXRT, UDMP_OPT
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL, GNLINKSL
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)       :: fgDEM
         INTEGER, DIMENSION(IXRT,JXRT)                :: DIRECTION
@@ -6099,7 +6131,6 @@ end subroutine mpp_output_chrt
         print *, "route lake",route_lake_f
 #endif
 
-
 !DJG Edited code here to retrieve data from hires netcdf file....
 
 !!-- read regardless; commented out on 7/21/14
@@ -6161,6 +6192,7 @@ end subroutine mpp_output_chrt
    Bw = 0.0
    ChSSlp = 0.0
 
+        if (UDMP_OPT .eq. 1) goto 299
 
 !DJG inv       DO j = JXRT,1,-1  !rows
        DO j = 1,JXRT  !rows
@@ -6733,6 +6765,8 @@ end subroutine mpp_output_chrt
      call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,TYPEL,NLINKS,99) 
 #endif
 
+! jump to here if UDMP_OPT .eq. 1
+299    continue
 
 !---- read in link routing data if not routing on grid, but on link network
    IF (channel_option .eq. 3) THEN
@@ -7063,11 +7097,11 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,&
-            LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,NLINKSL, LINKID, GNLINKSL,g_ixrt,g_jxrt, &
+            LONVAL,STRMFRXSTPTS,geo_finegrid_flnm,NLINKSL, LINKID, GNLINKSL,UDMP_OPT,g_ixrt,g_jxrt, &
             gnlinks,GCH_NETLNK, map_l2g, link_location,yw_mpp_nlinks, &
             lake_index, nlinks_index, gages, gageMiss)
         implicit none
-        INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS
+        INTEGER, INTENT(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS, UDMP_OPT
         INTEGER                                      :: CHANRTSWCRT, NLINKS, NLAKES, NLINKSL
         INTEGER                                      :: I,J,channel_option
         CHARACTER(len=28)                            :: dir
@@ -7142,7 +7176,7 @@ end subroutine mpp_output_chrt
             CHANRTSWCRT,dist, ZELEV, LAKENODE, CH_NETLNK, &
             CHANXI, CHANYJ, CHLAT, CHLON,  &
             channel_option,LATVAL,LONVAL, &
-            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID, GNLINKSL  &
+            STRMFRXSTPTS,geo_finegrid_flnm , NLINKSL, LINKID, GNLINKSL,UDMP_OPT  &
 #ifdef MPP_LAND
            ,Link_Location  &
 #endif

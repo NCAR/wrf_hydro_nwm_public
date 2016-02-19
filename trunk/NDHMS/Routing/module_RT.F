@@ -467,6 +467,10 @@ CONTAINS
               rt_domain(did)%NLINKS, &
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
               rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
+#ifndef MPP_LAND
+        call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+#endif
+
 
 #ifdef HYDRO_D
         write(6,*) "before rt_allocate after READ_ROUTEDIM"
@@ -596,6 +600,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%CHLAT, rt_domain(did)%CHLON, nlst_rt(did)%channel_option,&
                rt_domain(did)%latval, rt_domain(did)%lonval,&
                rt_domain(did)%STRMFRXSTPTS,nlst_rt(did)%geo_finegrid_flnm, rt_domain(did)%NLINKSL, rt_domain(did)%LINKID, rt_domain(did)%GNLINKSL &
+               ,nlst_rt(did)%UDMP_OPT  &
+               
 #ifdef MPP_LAND
                ,rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT   &
                ,rt_domain(did)%gnlinks,rt_domain(did)%GCH_NETLNK, rt_domain(did)%map_l2g &
