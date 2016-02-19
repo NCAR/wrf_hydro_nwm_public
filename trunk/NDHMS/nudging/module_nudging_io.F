@@ -561,16 +561,16 @@ iret = nf90_enddef(ncid)
 iret = nf90_inq_varid(ncid, "stationId", varid)
 allocate(charArr15(size(discharge)))
 charArr15=gageId
-!iret = nf90_put_var(ncid, varid, charArr15)
-iret = nf90_put_var(ncid, varid, gageId)
+iret = nf90_put_var(ncid, varid, charArr15)
+!iret = nf90_put_var(ncid, varid, gageId)
 deallocate(charArr15)
 
 ! time write var
 iret = nf90_inq_varid(ncid, "time", varid)
 allocate(charArr19(size(discharge)))
 charArr19=obsTimes
-!iret = nf90_put_var(ncid, varid, charArr19)
-iret = nf90_put_var(ncid, varid, obsTimes)
+iret = nf90_put_var(ncid, varid, charArr19)
+!iret = nf90_put_var(ncid, varid, obsTimes)
 deallocate(charArr19)
 
 ! discharge write var
