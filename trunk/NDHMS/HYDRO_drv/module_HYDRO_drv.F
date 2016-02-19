@@ -1487,10 +1487,10 @@ end module module_HYDRO_drv
         integer :: ierr
         ierr = 1
 #ifndef NCEP_WCOSS
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
       write(6,*) "The job is stopped due to the fatal error. ", trim(msg)
       call flush(6)
-#endif
+!#endif
 #else
      write(78,*) "FATAL ERROR: ", trim(msg)
       call flush(78)
