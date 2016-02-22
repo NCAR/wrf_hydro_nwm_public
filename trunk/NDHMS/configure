@@ -43,7 +43,6 @@
      print "   6. Linux gfort compiler dmpar        \n";
      print "   7. Linux ifort compiler sequential   \n";
      print "   8. Linux ifort compiler dmpar        \n";
-     print "   9. Linux mpiifort compiler dmpar     \n";
      print "   0. exit only \n";
 
      printf "\nEnter selection [%d-%d] : ",1,9 ;
@@ -99,12 +98,6 @@
                system "cp arc/macros.mpp.ifort macros"; 
                system "cp arc/Makefile.mpp Makefile.comm"; 
              }
-      case 9 {
-               # mpiifort dmpar only
-               system "cp arc/macros.mpp.mpiifort macros";
-               system "cp arc/Makefile.mpp Makefile.comm";
-             }
-
      else   {print "no selection $response\n"; last} 
   }
   if(! (-e lib)) {mkdir lib;}

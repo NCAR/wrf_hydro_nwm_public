@@ -5357,12 +5357,21 @@ end subroutine mpp_output_chrt
      Bw = 0.0
      ChSSlp = 0.0
 
+! ROCKY DUNLAP (rocky.dunlap@noaa.gov)
+!
+! Many if statements below depended on short-ciruit evaluation, e.g.,
+! (j+1 < JXRT) .AND. CH_NETRT(i,j+1) ...
+! However, the Fortran standard does not guarantee short-circuit
+! evaluation like the C language, so this is failing in some
+! cases with newer Intel compilers.  Rocky separated if statements
+! into two below to ensure correct behavior.
+
 !DJG inv       DO j = JXRT,1,-1  !rows
        DO j = 1,JXRT  !rows
         DO i = 1 ,IXRT   !colsumns
          If (CH_NETRT(i, j) .ge. 0) then !get its direction and assign its elevation and order
-          If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT) .AND. &
-               (CH_NETRT(i,j+1).ge.0) ) then !North
+          If ((DIRECTION(i, j) .EQ. 64) .AND. (j + 1 .LE. JXRT)) then
+          IF (CH_NETRT(i,j+1).ge.0)  then !North
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5384,8 +5393,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+          ENDIF
           else if ((DIRECTION(i, j) .EQ. 128) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i+1,j+1).ge.0) ) then !North East
+                    .AND. (j + 1 .LE. JXRT)) then
+          IF (CH_NETRT(i+1,j+1).ge.0)  then !North East
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5407,8 +5418,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
-          else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (CH_NETRT(i+1,j).ge.0) ) then !East
+          ENDIF
+          else if ((DIRECTION(i, j) .EQ. 1) .AND. (i + 1 .LE. IXRT)) then
+          IF (CH_NETRT(i+1,j).ge.0)  then !East
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5430,8 +5442,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+          ENDIF
           else if ((DIRECTION(i, j) .EQ. 2) .AND. (i + 1 .LE. IXRT) &
-                    .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i+1,j-1).ge.0) ) then !south east
+                    .AND. (j - 1 .NE. 0)) then
+          IF (CH_NETRT(i+1,j-1).ge.0) then !south east
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5453,7 +5467,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
-          else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0).AND.(CH_NETRT(i,j-1).ge.0) ) then !due south
+          ENDIF
+          else if ((DIRECTION(i, j) .EQ. 4) .AND. (j - 1 .NE. 0)) then
+          IF (CH_NETRT(i,j-1).ge.0) then !due south
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5475,8 +5491,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+          ENDIF
           else if ((DIRECTION(i, j) .EQ. 8) .AND. (i - 1 .GT. 0) &
-               .AND. (j - 1 .NE. 0) .AND. (CH_NETRT(i-1,j-1).ge.0)) then !south west
+               .AND. (j - 1 .NE. 0)) then
+          IF (CH_NETRT(i-1,j-1).ge.0) then !south west
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5498,7 +5516,9 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
-          else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0).AND.(CH_NETRT(i-1,j).ge.0) ) then !West
+          ENDIF
+          else if ((DIRECTION(i, j) .EQ. 16) .AND. (i - 1 .GT. 0)) then
+          IF (CH_NETRT(i-1,j).ge.0) then !West
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5520,8 +5540,10 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+          ENDIF
           else if ((DIRECTION(i, j) .EQ. 32) .AND. (i - 1 .GT. 0) &
-                    .AND. (j + 1 .LE. JXRT) .AND. (CH_NETRT(i-1,j+1).ge.0) ) then !North West
+                    .AND. (j + 1 .LE. JXRT)) then
+          IF (CH_NETRT(i-1,j+1).ge.0) then !North West
 #ifdef MPP_LAND
              cnt = CH_NETLNK(i,j)
 #else
@@ -5543,6 +5565,7 @@ end subroutine mpp_output_chrt
 #ifdef MPP_LAND
              Link_Location(i,j) = cnt
 #endif
+          ENDIF
           else 
 #ifdef HYDRO_D
              print *, "NO MATCH", i,j,CH_NETLNK(i,j),DIRECTION(i,j),i + 1,j - 1 !south east
@@ -5565,6 +5588,9 @@ end subroutine mpp_output_chrt
        DO j = 1,JXRT
          DO i = 1 ,IXRT
           If (CH_NETRT(i, j) .ge. 0) then !get its direction
+
+! RSD - Rocky temp to avoid array indexing runtime errors
+           if ( i+1 > ixrt .or. j+1 > jxrt .or. i <=1 .or. j <=1 ) cycle ! just skip for now
 
            If (((DIRECTION(i, j).EQ. 64) .AND. (j + 1 .GT. JXRT)) .OR. &        !-- 64's can only flow north
               ((DIRECTION(i, j) .EQ. 64) .and. (j < jxrt) .AND. (CH_NETRT(i,j+1) .lt. 0))) then !North

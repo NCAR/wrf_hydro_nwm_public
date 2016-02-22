@@ -72,6 +72,9 @@ $(WRFHYDRO_FILES):
 	$(call checkfile, $(WRFHYDRO_DIR)/macros)
 	(cd $(WRFHYDRO_DIR); make -f Makefile.comm)
 	
+$(WRFHYDRO_LIB): $(addprefix $(WRFHYDRO_DIR)/$(WRFHYDRO_LIBDIR)/,$(WRFHYDRO_LIB))
+	cp $^ $@
+	
 # ##############
 # Build Settings
 # ##############
@@ -113,8 +116,8 @@ WRFHYDRO_F90COMPILEPATHS =-I$(WRFHYDRO_DIR)/$(WRFHYDRO_MPPDIR) -I$(WRFHYDRO_DIR)
 	@echo >> $@
 	@echo "ESMF_DEP_FRONT     = $(WRFHYDRONUOPC_DEP_FRONT)"                  >> $@
 	@echo "ESMF_DEP_INCPATH   = $(WRFHYDRONUOPC_DIR)"                  >> $@
-	@echo "ESMF_DEP_CMPL_OBJS = $(WRFHYDRONUOPC_DIR)/$(WRFHYDRONUOPC_LIB) $(WRFHYDRO_DIR)/$(WRFHYDRO_LIBDIR)/$(WRFHYDRO_LIB)" >> $@
-	@echo "ESMF_DEP_LINK_OBJS = $(WRFHYDRONUOPC_DIR)/$(WRFHYDRONUOPC_LIB) $(WRFHYDRO_DIR)/$(WRFHYDRO_LIBDIR)/$(WRFHYDRO_LIB)" >> $@
+	@echo "ESMF_DEP_CMPL_OBJS = $(WRFHYDRONUOPC_DIR)/$(WRFHYDRONUOPC_LIB)" >> $@
+	@echo "ESMF_DEP_LINK_OBJS = $(WRFHYDRONUOPC_DIR)/$(WRFHYDRONUOPC_LIB)" >> $@
 	@echo "ESMF_DEP_SHRD_PATH = "                       >> $@
 	@echo "ESMF_DEP_SHRD_LIBS = "                       >> $@
 
@@ -126,14 +129,21 @@ WRFHYDRO_F90COMPILEPATHS =-I$(WRFHYDRO_DIR)/$(WRFHYDRO_MPPDIR) -I$(WRFHYDRO_DIR)
 
 build_wrfhydro_nuopc: $(WRFHYDRONUOPC_FILES)
 
-$(WRFHYDRONUOPC_LIB): wrfhydro_nuopc.o
+$(WRFHYDRONUOPC_LIB): $(WRFHYDRO_LIB) wrfhydro_nuopc_cap.o wrfhydro_nuopc_gluecode.o wrfhydro_nuopc_addonutils.o
 	@echo $(HR)
-	@echo "Building static library $@..."
+	@echo "Copying static library $@..."
 	@echo
-	ar rc $@ $^
+	mv -f $(WRFHYDRO_LIB) $@
+	ar rc $@ *.o
 
-wrfhydro_nuopc.mod: wrfhydro_nuopc.o
-wrfhydro_nuopc.o: $(WRFHYDRO_FILES)
+# Dependencies
+wrfhydro_nuopc.mod: wrfhydro_nuopc_cap.o
+wrfhydro_nuopc_cap.o: wrfhydro_nuopc_gluecode.mod \
+	wrfhydro_nuopc_addonutils.mod
+wrfhydro_nuopc_gluecode.mod: wrfhydro_nuopc_gluecode.o
+wrfhydro_nuopc_gluecode.o: wrfhydro_nuopc_addonutils.mod \
+	$(WRFHYDRO_FILES)
+wrfhydro_nuopc_addonutils.mod: wrfhydro_nuopc_addonutils.o
 
 # ###########
 # Check Build
@@ -227,14 +237,12 @@ endif
 install:
 	@mkdir -p $(DESTDIR)/$(INSTDIR)
 	@cp $(WRFHYDRONUOPC_FILES) $(DESTDIR)/$(INSTDIR)
-	@mkdir -p $(DESTDIR)/$(INSTDIR)/$(WRFHYDRO_TDIR)/$(WRFHYDRO_LIBDIR)
-	@cp $(WRFHYDRO_DIR)/$(WRFHYDRO_LIBDIR)/$(WRFHYDRO_LIB) $(DESTDIR)/$(INSTDIR)/$(WRFHYDRO_TDIR)/$(WRFHYDRO_LIBDIR)
 	@echo "# ESMF self-describing build dependency makefile fragment" > $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
 	@echo >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
 	@echo "ESMF_DEP_FRONT     = $(WRFHYDRONUOPC_DEP_FRONT)" >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
 	@echo "ESMF_DEP_INCPATH   = $(DESTDIR)/$(INSTDIR)" >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
-	@echo "ESMF_DEP_CMPL_OBJS = $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_LIB) $(DESTDIR)/$(INSTDIR)/$(WRFHYDRO_TDIR)/$(WRFHYDRO_LIBDIR)/$(WRFHYDRO_LIB)" >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
-	@echo "ESMF_DEP_LINK_OBJS = $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_LIB) $(DESTDIR)/$(INSTDIR)/$(WRFHYDRO_TDIR)/$(WRFHYDRO_LIBDIR)/$(WRFHYDRO_LIB)" >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
+	@echo "ESMF_DEP_CMPL_OBJS = $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_LIB)" >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
+	@echo "ESMF_DEP_LINK_OBJS = $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_LIB)" >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
 	@echo "ESMF_DEP_SHRD_PATH = " >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
 	@echo "ESMF_DEP_SHRD_LIBS = " >> $(DESTDIR)/$(INSTDIR)/$(WRFHYDRONUOPC_MK)
 
