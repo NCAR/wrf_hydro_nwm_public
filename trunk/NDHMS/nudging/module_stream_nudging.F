@@ -658,7 +658,13 @@ call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
 ! 9. Solve obsStaticStr once and for all on image 0 (could parallelize)
 !    This also solves nudgeSpatial: is spatial nudging active? Needed in 10.
 call obs_static_to_struct()
-
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   if(allocated(lastObsStr)) deallocate(lastObsStr)
+#ifdef MPP_LAND
+endif
+#endif
 !=================================================
 #ifdef HYDRO_D
 print*, "Ndg: Finish init_stream_nudging"
@@ -1538,7 +1544,6 @@ if(my_id .eq. io_id) then
                obsStaticStr(ll)%lastObsQuality   = lastObsStr(whLastObsStr)%quality
                setLastObsInfo = .true.
             endif
-            deallocate(lastObsStr)
          endif
 
 
