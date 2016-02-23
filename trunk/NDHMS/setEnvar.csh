@@ -3,10 +3,9 @@
 ### or compile_offline_Noah.csh
 
 ### turn on WRF_HYDRO for NoahMP
-if(! $?WRF_HYDRO) setenv WRF_HYDRO 1
+setenv WRF_HYDRO 1
 
 ### turn on output information during running time.
-# if(! $?HYDRO_D) 
 setenv HYDRO_D 1
 
 ### turn on distributed parameters for NoahMP
@@ -16,10 +15,10 @@ setenv HYDRO_D 1
 # if(! $?WRF_HYDRO_RAPID) setenv WRF_HYDRO_RAPID 1
 
 ### using large netcdf file definition.
-if(! $?WRFIO_NCD_LARGE_FILE_SUPPORT) setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
+setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
 
 ### running in REALTIME mode (with reduced output).
-if(! $?HYDRO_REALTIME) setenv HYDRO_REALTIME 1
+setenv HYDRO_REALTIME 1
 
 ###
 # setenv WRF_HYDRO_NUDGING 1
