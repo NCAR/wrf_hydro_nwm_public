@@ -2067,7 +2067,7 @@ subroutine lsm_rst_bi_out()
          !! JLM TODO: ? try creating the directory more than just once if it fails?
         if(mkdirStatus .ne. 0) & 
              call hydro_stop("FATAL ERROR: lsm_rst_bi_out failed to create the restart/ directory.")
-        print*, "created restart/ directory and outputting restart files there.")
+        print*, "created restart/ directory and outputting restart files there."
      end if
 
 #ifdef MPP_LAND
