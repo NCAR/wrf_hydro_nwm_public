@@ -668,20 +668,31 @@ real,              dimension(:),  intent(out) :: quality
 
 integer:: ncid, iret, varid
 integer*2, allocatable, dimension(:) :: qualityInt2
+character(len=15), allocatable, dimension(:) :: charArr15
+character(len=19), allocatable, dimension(:) :: charArr19
 
-allocate(qualityInt2(size(quality)))
+
 
 iret = nf90_open(fileName, nf90_nowrite, ncid)
 
+allocate(charArr15(size(gageId)))
 iret = nf90_inq_varid(ncid, "stationId", varid)
-iret = nf90_get_var(ncid, varid, gageId)
+!iret = nf90_get_var(ncid, varid, gageId)
+iret = nf90_get_var(ncid, varid, charArr15)
+gageId=charArr15
+deallocate(charArr15)
 
 iret = nf90_inq_varid(ncid, "discharge", varid)
 iret = nf90_get_var(ncid, varid, discharge)
 
+allocate(charArr19(size(obsTimes)))
 iret = nf90_inq_varid(ncid, "time", varid)
-iret = nf90_get_var(ncid, varid, obsTimes)
+!iret = nf90_get_var(ncid, varid, obsTimes)
+iret = nf90_get_var(ncid, varid, charArr19)
+obsTimes=charArr19
+deallocate(charArr19)
 
+allocate(qualityInt2(size(quality)))
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
 iret = nf90_get_var(ncid, varid, qualityInt2)
 quality = qualityInt2/real(100)

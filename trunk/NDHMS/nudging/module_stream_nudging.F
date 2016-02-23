@@ -579,10 +579,10 @@ if(my_id .eq. io_id) then
       if(trim(lastObsFile) .ne. '') then
          nLastObs = get_netcdf_dim(nudgingLastObsFile, 'stationIdInd', 'init_stream_nudging')
          if(nLastObs .gt. 0) then
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
             print*,'Reading in nudgingLastObsFile: ', trim(nudgingLastObsFile)
-            if(flushAll) flush(flushUnit)
-#endif
+!            if(flushAll) flush(flushUnit)
+!#endif
             allocate(lastObsStr(nLastObs))
             call read_nudging_last_obs(nudgingLastObsFile,                            &
                                        lastObsStr(:)%gageId, lastObsStr(:)%discharge, &
@@ -1449,8 +1449,14 @@ call mpp_land_bcast_logical(nudgeSpatial)
 call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
 #endif
 
-!nudgeSpatial=.true.  !! hardwiring this for now...
-print*,'Ndg: nudgeSpatial = ', nudgeSpatial
+
+!#ifdef HYDRO_D
+#ifdef MPP_LAND
+if(my_id .eq. io_id) &
+#endif
+     print*,'Ndg: nudgeSpatial = ', nudgeSpatial
+!#endif
+
 !! get the requsite files if necessary
 !! this solves/allocates upNetwkStr and downNetwkStr
 if(nudgeSpatial) call get_netwk_reexpression()
@@ -1460,11 +1466,11 @@ if(nudgeSpatial) call get_netwk_reexpression()
 ! 2) the lastObs info: %lastObsDischarge, %lastObsTime, %lastObsQuality
 ! 3) print diagnostics with or witout spatial info
 
-allocate(nCellsInR(size(obsStaticStr%usgsId)))
+allocate(nCellsInR(size(obsStaticStr(:)%usgsId)))
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then 
 #endif
-   do ll=1,size(obsStaticStr%usgsId)
+   do ll=1,size(obsStaticStr(:)%usgsId)
 
       !! spatial static info
       if(nudgeSpatial) then 
@@ -1554,8 +1560,8 @@ if(my_id .eq. io_id) then
          end if
       end if !temporalPersistence
       
-      ! diagnostics
 #ifdef HYDRO_D
+      ! diagnostics
       !if (my_id .eq. -5) then
       !             1    2       3     4      5      6     7     8     9     10
       if( any( (/ 981, 2242,  2845,  2946,  3014,  3066,  3068,  3072, 3158, 3228, &
@@ -1583,9 +1589,10 @@ if(my_id .eq. io_id) then
       endif ! any of these diag inds
       if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */
+
    end do ! ll
 #ifdef MPP_LAND
-end if  !! my_id
+end if  !! my_id .eq. io_id
 
 !broadcast  %cellsAffected, %dist, %ws
 do ll=1,size(obsStaticStr%usgsId)
@@ -1610,7 +1617,7 @@ endif
 
 
 #ifdef HYDRO_D
-print*,'Fisnish obs_static_to_struct'
+print*,'Finnish obs_static_to_struct'
 if(flushAll) flush(flushUnit)
 #endif
 

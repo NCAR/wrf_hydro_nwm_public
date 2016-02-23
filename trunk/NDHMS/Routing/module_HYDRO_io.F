@@ -6964,7 +6964,7 @@ end subroutine mpp_output_chrt
 !!- initialize channel  if missing in input
            do i=1,GNLINKSL
               if(tmpQLINK(i,1) .le. 1e-3) then
-                tmpQLINK(i,1) = 20.0 * (1.0/(float(MAXORDER+1) - float(tmpORDER(i))))**3
+                 tmpQLINK(i,1) = 20.0 * (1.0/(float(MAXORDER+1) - float(tmpORDER(i))))**3
                 tmpQLINK(i,2) = tmpQLINK(i,1) !## initialize the current flow at each link
               endif
            end do
