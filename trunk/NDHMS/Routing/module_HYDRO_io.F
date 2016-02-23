@@ -5105,11 +5105,12 @@ end subroutine mpp_output_chrt
        if (dir_e) then
           print*, "output restart files to restart/."
        else
-         call system('mkdir restart', mkdirStatus)
+         call system('mkdir restart')
+         !call system('mkdir restart', mkdirStatus)
          !! JLM TODO: ? try creating the directory more than just once if it fails?
-         if(mkdirStatus .ne. 0) & 
-              call hydro_stop("FATAL ERROR: restart_out_bi failed to create the restart/ directory.")
-         print*, "created restart/ directory and outputting restart files there."
+         !if(mkdirStatus .ne. 0) & 
+         !     call hydro_stop("FATAL ERROR: restart_out_bi failed to create the restart/ directory.")
+         !print*, "created restart/ directory and outputting restart files there."
        end if
     endif
     call mpp_land_sync()

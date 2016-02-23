@@ -1606,7 +1606,6 @@ do ll=1,size(obsStaticStr%usgsId)
    call mpp_land_bcast_real_1d(obsStaticStr(ll)%dist)
    call mpp_land_bcast_real_1d(obsStaticStr(ll)%ws)
 end do
-deallocate(nCellsInR)
 
 if(temporalPersistence) then
    call mpp_land_bcast_real_1d(obsStaticStr(:)%lastObsDischarge)
@@ -1614,7 +1613,7 @@ if(temporalPersistence) then
    call mpp_land_bcast_real_1d(obsStaticStr(:)%lastObsQuality)
 endif
 #endif /* MPP_LAND */
-
+deallocate(nCellsInR)
 
 #ifdef HYDRO_D
 print*,'Finnish obs_static_to_struct'
