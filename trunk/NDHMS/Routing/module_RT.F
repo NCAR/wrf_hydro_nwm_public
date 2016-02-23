@@ -258,15 +258,25 @@ CONTAINS
      allocate( rt_domain(did)%LAKEIDA(nsizes) )
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
-     allocate( rt_domain(did)%LAKEIDM(NLAKES) )
-     allocate( rt_domain(did)%HRZAREA(NLAKES) )
-     allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
-     allocate( rt_domain(did)%WEIRH(NLAKES) )
-     allocate( rt_domain(did)%WEIRC(NLAKES) )
-     allocate( rt_domain(did)%WEIRL(NLAKES) )
-     allocate( rt_domain(did)%ORIFICEC(NLAKES) )
-     allocate( rt_domain(did)%ORIFICEA(NLAKES) )
-     allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+     if(NLAKES .gt. 0) then
+        allocate( rt_domain(did)%LAKEIDM(NLAKES) )
+        allocate( rt_domain(did)%HRZAREA(NLAKES) )
+        allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+        allocate( rt_domain(did)%WEIRH(NLAKES) )
+        allocate( rt_domain(did)%WEIRC(NLAKES) )
+        allocate( rt_domain(did)%WEIRL(NLAKES) )
+        allocate( rt_domain(did)%ORIFICEC(NLAKES) )
+        allocate( rt_domain(did)%ORIFICEA(NLAKES) )
+        allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+         rt_domain(did)%HRZAREA = 0.0        
+         rt_domain(did)%WEIRH = 0.0        
+         rt_domain(did)%WEIRC = 0.0        
+         rt_domain(did)%WEIRL = 0.0        
+         rt_domain(did)%LAKEMAXH = 0.0        
+         rt_domain(did)%ORIFICEC = 0.0        
+         rt_domain(did)%ORIFICEA = 0.0        
+         rt_domain(did)%ORIFICEE = 0.0        
+     endif
 
 
 !    allocate( rt_domain(did)%LAKEMAXH(nsizes) )
@@ -334,17 +344,9 @@ CONTAINS
       rt_domain(did)%Bw = 0.0        
       rt_domain(did)%ZELEV = 0.0        
       rt_domain(did)%CVOL = 0.0        
-      rt_domain(did)%HRZAREA = 0.0        
       rt_domain(did)%LAKEIDA = 0
       rt_domain(did)%LAKEIDX = 0
 
-      rt_domain(did)%LAKEMAXH = 0.0        
-      rt_domain(did)%WEIRH = 0.0        
-      rt_domain(did)%WEIRC = 0.0        
-      rt_domain(did)%WEIRL = 0.0        
-      rt_domain(did)%ORIFICEC = 0.0        
-      rt_domain(did)%ORIFICEA = 0.0        
-      rt_domain(did)%ORIFICEE = 0.0        
       rt_domain(did)%LATLAKE = 0.0        
       rt_domain(did)%LONLAKE = 0.0        
       rt_domain(did)%ELEVLAKE = 0.0        
