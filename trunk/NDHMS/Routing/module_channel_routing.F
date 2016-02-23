@@ -1914,17 +1914,15 @@ gwOption:   if(gwBaseSwCRT == 3) then
              
              lakeid = LAKEIDX(k)
 !            goto 105
-             if(lakeid .ge. 0 ) then 
+           if(lakeid .ge. 0) then
              CALL LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
                QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
                WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
              
                QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
                QLAKEI(lakeid)  = Quc           !save inflow to lake
-             endif
-
+           endif
 105  continue
-                print *, "Qco ht", nt, Quc,tmpQLINK(k,2),RESHT(lakeid)
             
 
         elseif (channel_option .eq. 1) then  !muskingum routing
