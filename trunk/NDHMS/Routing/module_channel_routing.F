@@ -75,13 +75,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
     real, intent(OUT)   :: qo1     ! outflow at current timestep
     real, intent(IN)    :: ql      ! lateral inflow
     real, intent(IN)    :: ar      ! area of reservoir (km^2)
-    real, intent(IN)    :: we      ! weir elevation, max depth of reservoir before overtop (m)
+    real, intent(IN)    :: we      ! bottom of weir elevation
     real, intent(IN)    :: wc      ! weir coeff.
     real, intent(IN)    :: wl      ! weir length (m)
     real, intent(IN)    :: oe      ! orifice elevation
     real, intent(IN)    :: oc      ! orifice coeff.
     real, intent(IN)    :: oa      ! orifice area (m^2)
-    real, intent(IN)    :: maxh    !                      
+    real, intent(IN)    :: maxh    ! max depth of reservoir before overtop (m)                     
     integer, intent(IN) :: ln      ! lake number
 
     !! ----------------------------  local variables
@@ -110,7 +110,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * (dh ** 2./3.)
         discharge = tmp1 + tmp2
-        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+
+        if (H .gt. 0.0) then
+          sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+        else
+          sap  = 0.0
+        endif
+
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         sap = ar * 1.0E6
@@ -118,7 +124,12 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         discharge = 0.0
         sap = ar * 1.0E6
     endif
-    dh1 = ((It - discharge)/sap)*dt
+
+    if (sap .gt. 0) then 
+      dh1 = ((It - discharge)/sap)*dt
+    else
+      dh1 = 0.0
+    endif
 
     !-- determine Q(H + dh1/3) from elevation-discharge relationship
     !-- dh2
@@ -131,7 +142,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * (dh ** 2./3.) 
         discharge = tmp1 + tmp2
-        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+
+        if (H .gt. 0.0) then 
+         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+        else
+         sap  = 0.0
+        endif
+
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         sap = ar * 1.0E6
@@ -139,7 +156,12 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         discharge = 0.0
         sap = ar * 1.0E6
     endif
-    dh2 = ((Itdt_3 - discharge)/sap)*dt
+
+    if (sap .gt. 0.0) then 
+     dh2 = ((Itdt_3 - discharge)/sap)*dt
+    else
+     dh2 = 0.0
+    endif
 
     !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
     !-- dh3
@@ -152,7 +174,13 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * (dh ** 2./3.) 
         discharge = tmp1 + tmp2
-        sap = (ar * 1.0E6       ) * (1 + (H - we) / H)
+
+        if (H .gt. 0.0) then
+         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+        else
+         sap = 0.0
+        endif 
+
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         sap = ar * 1.0E6
@@ -160,7 +188,12 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         discharge = 0.0
         sap = ar * 1.0E6
     endif
-    dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+    
+    if (sap .gt. 0.0) then 
+      dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+    else
+      dh3 = 0.0
+    endif
 
     !-- determine dh and H
     dh = (dh1/4.) + (0.75*dh3)
@@ -175,20 +208,19 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
         tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         tmp2 = wc * wl * (dh ** 2./3.)
         discharge = tmp1 + tmp2
-        sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
 
-    !   print *, "-hg0", dh, H, discharge
+        if (H .gt. 0.0) then 
+         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+        else
+         sap = 0.0
+        endif
 
     else if ( H .gt. oe ) then     !! only orifice flow,not full
         discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
         sap = ar * 1.0E6
-
-    !   print *, "-Hgt oe", discharge, H
-
     else
         discharge = 0.0
         sap = ar * 1.0E6
-    !   print *, "-Hltoe H oe", H, oe
     endif
 
     if(H .ge. maxh) then  ! overtop condition
@@ -1882,12 +1914,15 @@ gwOption:   if(gwBaseSwCRT == 3) then
              
              lakeid = LAKEIDX(k)
 !            goto 105
+             if(lakeid .ge. 0 ) then 
              CALL LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
                QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
                WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
-
+             
                QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
                QLAKEI(lakeid)  = Quc           !save inflow to lake
+             endif
+
 105  continue
                 print *, "Qco ht", nt, Quc,tmpQLINK(k,2),RESHT(lakeid)
             
