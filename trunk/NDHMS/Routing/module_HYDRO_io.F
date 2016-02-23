@@ -3674,6 +3674,8 @@ end subroutine output_chrt
         allocate(g_gages(1))
      endif
 
+     call mpp_land_sync()
+
      if(channel_option .eq. 1 .or. channel_option .eq. 2) then
         g_qlink = 0
         g_gages = gageMiss
@@ -3722,6 +3724,7 @@ end subroutine output_chrt
           )
 
     end if
+     call mpp_land_sync()
 
     deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_gages)
 #ifdef WRF_HYDRO_NUDGING
@@ -3752,6 +3755,7 @@ end subroutine mpp_output_chrt
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
      integer lake_index(nlakes)
+     
 
      call write_lake_real(latlake,lake_index,nlakes)
      call write_lake_real(lonlake,lake_index,nlakes)
@@ -3764,6 +3768,7 @@ end subroutine mpp_output_chrt
            startdate, date, latlake, lonlake, elevlake, &
            qlakei,qlakeo, resht,dtrt_ch,K)
      end if
+     call mpp_land_sync()
      return
      end subroutine mpp_output_lakes
 
@@ -3798,6 +3803,7 @@ end subroutine mpp_output_chrt
            startdate, date, latlake, lonlake, elevlake, &
            qlakei,qlakeo, resht,dtrt_ch,K, LAKEIDM)
      end if
+     call mpp_land_sync()
      return
      end subroutine mpp_output_lakes2
 #endif
@@ -7862,6 +7868,7 @@ end subroutine readBucket_nhd
         allocate(g_linkid(1))
      endif
 
+     call mpp_land_sync()
      if(channel_option .eq. 1 .or. channel_option .eq. 2) then
         g_qlink = 0
         call ReachLS_write_io(qlink(:,1), g_qlink(:,1))
@@ -7896,7 +7903,8 @@ end subroutine readBucket_nhd
         call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
      endif
 
-     call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
+     !yw call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
+     call  ReachLS_write_io(hlink,g_hlink)
 
      if(my_id .eq. IO_id) then
        call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
@@ -7910,6 +7918,7 @@ end subroutine readBucket_nhd
 #endif
 	  )
      end if
+     call mpp_land_sync()
 
     deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_linkid )
 #ifdef WRF_HYDRO_NUDGING

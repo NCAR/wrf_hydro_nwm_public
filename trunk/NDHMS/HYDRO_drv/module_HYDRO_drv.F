@@ -282,6 +282,7 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
           write(6,*) "before call output_chrt"
+          call flush(6)
 #else
           write(78,*) "before call output_chrt"
 #endif
