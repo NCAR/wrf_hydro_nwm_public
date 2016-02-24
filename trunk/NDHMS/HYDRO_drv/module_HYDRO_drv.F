@@ -507,7 +507,7 @@ module module_HYDRO_drv
 
 
                 ! step 1) disaggregate specific fields from LSM to Hydro grid
-                if(nlst_rt(did)%SUBRTSWCRT .NE.0 .and. nlst_rt(did)%OVRTSWCRT .NE. 0) then
+                if(nlst_rt(did)%SUBRTSWCRT .NE.0 .or. nlst_rt(did)%OVRTSWCRT .NE. 0) then
                     call disaggregateDomain_drv(did)
                 endif
                 if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
@@ -542,6 +542,9 @@ module module_HYDRO_drv
 #endif
                 if(nlst_rt(did)%OVRTSWCRT .NE. 0) then
   		    call OverlandRouting_drv(did)
+                else
+                    RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%INFXSUBRT
+                    RT_DOMAIN(did)%INFXSUBRT = 0.
                 endif
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -591,7 +594,7 @@ module module_HYDRO_drv
 #endif
 	
 		! step 6) aggregate specific fields from Hydro to LSM grid
-               if (nlst_rt(did)%SUBRTSWCRT .NE.0  .and. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
+               if (nlst_rt(did)%SUBRTSWCRT .NE.0  .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
 		      call aggregateDomain(did)
                endif
 
@@ -883,12 +886,24 @@ endif
  
 !------------------------------------------------ 
       subroutine aggregateDomain(did)
-       
+      
+#ifdef MPP_LAND
+        use module_mpp_land, only:  sum_real1
+#endif
+ 
        implicit none
        integer, intent(in) :: did
 
        integer :: i, j, krt, ixxrt, jyyrt, &
                   AGGFACYRT, AGGFACXRT
+
+#ifdef HYDRO_D
+! ADCHANGE: Water balance variables
+       integer :: kk
+       real    :: smcrttot1,smctot2,sicetot2
+       real    :: suminfxsrt1,suminfxs2
+#endif
+
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
  	print *, "Beginning Aggregation..."
@@ -897,6 +912,28 @@ endif
 #endif
 #endif
 
+#ifdef HYDRO_D
+! ADCHANGE: START Initial water balance variables
+! ALL VARS in MM
+        suminfxsrt1 = 0.
+        smcrttot1 = 0.
+        do i=1,RT_DOMAIN(did)%IXRT
+         do j=1,RT_DOMAIN(did)%JXRT
+            suminfxsrt1 = suminfxsrt1 + RT_DOMAIN(did)%SFCHEADSUBRT(I,J) &
+                               / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
+            do kk=1,nlst_rt(did)%NSOIL
+                smcrttot1 = smcrttot1 + RT_DOMAIN(did)%SMCRT(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+                               / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
+            end do
+         end do
+        end do
+#ifdef MPP_LAND
+! not tested
+        CALL sum_real1(suminfxsrt1)
+        CALL sum_real1(smcrttot1)
+#endif
+! END Initial water balance variables
+#endif
 
         do J=1,RT_DOMAIN(did)%JX
           do I=1,RT_DOMAIN(did)%IX
@@ -1058,6 +1095,45 @@ endif
 
 !DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
 	RT_DOMAIN(did)%SMC = RT_DOMAIN(did)%SH2OX + RT_DOMAIN(did)%SICE
+
+#ifdef HYDRO_D
+! ADCHANGE: START Final water balance variables
+! ALL VARS in MM
+        suminfxs2 = 0.
+        smctot2 = 0.
+        sicetot2 = 0.
+        do i=1,RT_DOMAIN(did)%IX
+         do j=1,RT_DOMAIN(did)%JX
+            suminfxs2 = suminfxs2 + RT_DOMAIN(did)%SFCHEADRT(I,J) &
+                               / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
+            do kk=1,nlst_rt(did)%NSOIL
+                smctot2 = smctot2 + RT_DOMAIN(did)%SMC(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+                               / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
+               sicetot2 = sicetot2 + RT_DOMAIN(did)%SICE(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+                                / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
+            end do
+         end do
+        end do
+
+#ifdef MPP_LAND
+! not tested
+        CALL sum_real1(suminfxs2)
+        CALL sum_real1(smctot2)
+#endif
+
+        print *, "Agg Mass Bal: "
+        print *, "WB_AGG!InfxsDiff", suminfxs2-suminfxsrt1
+        print *, "WB_AGG!Infxs1", suminfxsrt1
+        print *, "WB_AGG!Infxs2", suminfxs2
+        print *, "WB_AGG!SMCDiff", smctot2-smcrttot1-sicetot2
+        print *, "WB_AGG!SMC1", smcrttot1
+        print *, "WB_AGG!SMC2", smctot2
+        print *, "WB_AGG!SICE2", sicetot2
+        print *, "WB_AGG!Residual", (suminfxs2-suminfxsrt1) + &
+                         (smctot2-smcrttot1-sicetot2)
+! END Final water balance variables
+#endif
+
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
  	print *, "Finished Aggregation..."
