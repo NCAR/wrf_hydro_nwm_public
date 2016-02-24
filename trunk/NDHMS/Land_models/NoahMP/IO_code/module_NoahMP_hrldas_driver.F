@@ -2051,26 +2051,11 @@ end subroutine lsm_restart
 subroutine lsm_rst_bi_out()
   implicit none 
   integer :: iunit, ierr
-  logical :: dir_e
   character(len=256) :: output_flnm, str_tmp
   integer  :: i0,ie, i, istep, mkdirStatus
 
 
 #ifdef MPP_LAND
-  if(my_id .eq. io_id) then
-#endif
-     inquire(file='restart', exist=dir_e)
-     if ( dir_e ) then
-        print*, "output restart files to restart/."
-     else
-        call system('mkdir restart', mkdirStatus)
-         !! JLM TODO: ? try creating the directory more than just once if it fails?
-        if(mkdirStatus .ne. 0) & 
-             call hydro_stop("FATAL ERROR: lsm_rst_bi_out failed to create the restart/ directory.")
-     end if
-
-#ifdef MPP_LAND
-  endif
   call mpp_land_sync()
 
 
