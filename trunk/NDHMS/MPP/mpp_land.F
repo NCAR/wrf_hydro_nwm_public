@@ -82,7 +82,7 @@ MODULE MODULE_MPP_LAND
       call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr ) 
 
       call getNX_NY(numprocs, left_right_np,up_down_np)
-      if(my_id.eq.IO_id) then 
+      if(my_id.eq.IO_id) then
 #ifdef HYDRO_D
             write(6,*) ""
             write(6,*) "total process:",numprocs

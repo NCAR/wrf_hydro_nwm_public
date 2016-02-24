@@ -2120,6 +2120,8 @@ contains
     integer :: iret
     character(len=256) :: output_flnm
     character(len=19)  :: date19
+    integer :: sec_valid_date ! Seconds since the beginning of the model run
+    character(len=34)  :: date340
 
     integer :: ierr
 
@@ -2149,7 +2151,7 @@ contains
        ncid_remember = ncid
        define_mode_remember = .TRUE.
 
-       iret = nf90_def_dim(ncid, "Time", NF90_UNLIMITED, dimid_times)
+       iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, dimid_times)
        iret = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)
        ! Dimensions reflect the full size of the subwindow (not the strip known by this particular process).
        iret = nf90_def_dim(ncid, "west_east", ixfull, dimid_ix)
@@ -2168,7 +2170,9 @@ contains
        date19(1:19) = "0000-00-00_00:00:00"
        date19(1:len_trim(startdate)) = startdate
 
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "START_DATE", date19)
+       date340(1:34) = "seconds since " // trim(startdate(1:10)) // " " // trim(startdate(12:16)) // " UTC"
+       call geth_idts(trim(date),trim(startdate),sec_valid_date)
+
        iret = nf90_put_att(ncid, NF90_GLOBAL, "MAP_PROJ", mapproj)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "LAT1", lat1)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "LON1", lon1)
@@ -2184,9 +2188,21 @@ contains
 ! Now define and describe our "Times" variable.
 !
 
-       iret = nf90_def_var(ncid,  "Times",  NF90_CHAR, (/dimid_datelen,dimid_times/), varid)
+       iret = nf90_def_var(ncid, "forecast_reference_time", NF90_INT, (/dimid_times/), varid)
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                                         " - Problem nf90_def_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, varid, "long_name", "valid model time")  
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, varid, "units", trim(date340))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(startdate))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(date))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
 
        iret = nf90_enddef(ncid)
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
@@ -2211,11 +2227,11 @@ contains
 
     date19(1:19) = "0000-00-00_00:00:00"
     date19(1:len_trim(date)) = date
-    iret = nf90_inq_varid(ncid_remember, "Times", varid)
+    iret = nf90_inq_varid(ncid_remember, "forecast_reference_time", varid)
     call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                              " - Problem inquiring on 'Times'")
 
-    iret = nf90_put_var(ncid_remember, varid, date, (/1,output_count_remember+1/), (/19,1/))
+    iret = nf90_put_var(ncid_remember, varid, sec_valid_date)
     call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                              " - Problem writing variable 'Times'")
 
