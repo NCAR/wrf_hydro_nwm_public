@@ -147,7 +147,7 @@ CONTAINS
 #endif
 
 #ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 1) .or. (iocflag .eq. 4) ) RTOUT_DOMAIN = 0
+   if ( iocflag .eq. 4 ) RTOUT_DOMAIN = 0
    if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 2
 #endif
 

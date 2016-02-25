@@ -2152,12 +2152,12 @@ contains
        define_mode_remember = .TRUE.
 
        iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, dimid_times)
-       iret = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)
+       !iret = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)
        ! Dimensions reflect the full size of the subwindow (not the strip known by this particular process).
        iret = nf90_def_dim(ncid, "west_east", ixfull, dimid_ix)
        iret = nf90_def_dim(ncid, "south_north", jxfull, dimid_jx)
-       iret = nf90_def_dim(ncid, "west_east_stag", ixfull+1, dimid_dum)
-       iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
+       !iret = nf90_def_dim(ncid, "west_east_stag", ixfull+1, dimid_dum)
+       !iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
        iret = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
        iret = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
 
@@ -2173,15 +2173,15 @@ contains
        date340(1:34) = "seconds since " // trim(startdate(1:10)) // " " // trim(startdate(12:16)) // " UTC"
        call geth_idts(trim(date),trim(startdate),sec_valid_date)
 
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "MAP_PROJ", mapproj)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "LAT1", lat1)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "LON1", lon1)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "DX", dx)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "DY", dy)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT1", truelat1)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT2", truelat2)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "STAND_LON", cen_lon)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "MAP_PROJ", mapproj)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "LAT1", lat1)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "LON1", lon1)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "DX", dx)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "DY", dy)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT1", truelat1)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT2", truelat2)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "STAND_LON", cen_lon)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
 
 !
 ! Done with dimensions and global attributes.
@@ -2500,8 +2500,8 @@ contains
     iret = nf90_put_att(ncid, varid, "units", varunits)
     call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding units attribute '"//trim(varunits)//"' to variable "//trim(varname))
 
-    iret = nf90_put_att(ncid, varid, "stagger", "-")
-    call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding stagger attribute to variable "//trim(varname))
+    !iret = nf90_put_att(ncid, varid, "stagger", "-")
+    !call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding stagger attribute to variable "//trim(varname))
 
   end subroutine make_var_att_2d
 
@@ -2537,8 +2537,8 @@ contains
     iret = nf90_put_att(ncid, varid, "units", varunits)
     call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding units attribute '"//trim(varunits)//"' to variable "//trim(varname))
 
-    iret = nf90_put_att(ncid, varid, "stagger", "Z")
-    call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding stagger attribute to variable "//trim(varname))
+    !iret = nf90_put_att(ncid, varid, "stagger", "Z")
+    !call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding stagger attribute to variable "//trim(varname))
 
   end subroutine make_var_att_3d
 

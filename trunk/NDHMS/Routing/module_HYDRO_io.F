@@ -3951,7 +3951,7 @@ end subroutine mpp_output_chrt
 !     !- water surface elevation
       iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/dimdata/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-      iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake Elevation')
+      iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
 
 !     !- inflow to lake
       iret = nf_def_var(ncid, "inflow", NF_FLOAT, 1, (/dimdata/), varid)
@@ -4177,7 +4177,7 @@ end subroutine mpp_output_chrt
 !     !- water surface elevation
       iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-      iret = nf_put_att_text(ncid,varid,'long_name',14,'Water Surface Elevation')
+      iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
 
 !     !- inflow to lake
       iret = nf_def_var(ncid, "inflow", NF_FLOAT, 1, (/stationdim/), varid)
@@ -4235,7 +4235,6 @@ end subroutine mpp_output_chrt
 
         !-- write lake id
         iret = nf_inq_varid(ncid,"lake_id", varid)
-        iret = nf_inq_varid(ncid,"LAKE_ID", varid)
         iret = nf_put_vara_int(ncid, varid, (/1/), (/NLAKES/), LAKEIDM)
 
      endif
@@ -8213,7 +8212,7 @@ end subroutine mpp_output_chrt2
 	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
 	        iret = nf_def_var(ncid, "QLateral", NF_FLOAT, 1, (/stationdim/), varid)
        		iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        	iret = nf_put_att_text(ncid,varid,'long_name',10,'Runoff into channel from land and gw bucket')
+                iret = nf_put_att_text(ncid,varid,'long_name',25,'Runoff into channel reach')
 	endif
 
         !-- NEW velocity definition, var
