@@ -1812,7 +1812,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 
 #ifdef HYDRO_REALTIME
-	if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+	if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #endif
           iret = nf_def_var(ncid,"ZWATTABLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
           iret = nf_put_att_text(ncid,varid,'units',1,'m')
@@ -1996,7 +1996,7 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #endif
 
 #ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+   if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #endif
 #ifdef MPP_LAND
           call write_IO_rt_real(ZWATTABLRT,xdumd)
@@ -2046,7 +2046,7 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #endif
  
 #ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 0) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+   if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #endif
 #ifdef MPP_LAND
           call write_IO_rt_real(SFCHEADSUBRT,xdumd)
