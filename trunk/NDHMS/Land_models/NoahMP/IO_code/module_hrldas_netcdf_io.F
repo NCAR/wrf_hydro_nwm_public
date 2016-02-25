@@ -2130,7 +2130,7 @@ contains
        !   We have to create a new file, do dimension initializations, and write global attributes to the file.
        !   Then we get out of define mode.
        if (mod(output_timestep,3600) == 0) then
-          write(output_flnm, '(A,"/",A10,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13), igrid
+          write(output_flnm, '(A,"/",A12,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
        elseif (mod(output_timestep,60) == 0) then
           write(output_flnm, '(A,"/",A12,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
        else
@@ -2188,10 +2188,10 @@ contains
 ! Now define and describe our "Times" variable.
 !
 
-       iret = nf90_def_var(ncid, "forecast_reference_time", NF90_INT, (/dimid_times/), varid)
+       iret = nf90_def_var(ncid, "time", NF90_INT, (/dimid_times/), varid)
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                                         " - Problem nf90_def_var for "//trim(output_flnm))
-       iret = nf90_put_att(ncid, varid, "long_name", "valid model time")  
+       iret = nf90_put_att(ncid, varid, "long_name", "valid output time")  
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                                         " - Problem nf90_put_var for "//trim(output_flnm))
        iret = nf90_put_att(ncid, varid, "units", trim(date340))
@@ -2227,7 +2227,7 @@ contains
 
     date19(1:19) = "0000-00-00_00:00:00"
     date19(1:len_trim(date)) = date
-    iret = nf90_inq_varid(ncid_remember, "forecast_reference_time", varid)
+    iret = nf90_inq_varid(ncid_remember, "time", varid)
     call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                              " - Problem inquiring on 'Times'")
 

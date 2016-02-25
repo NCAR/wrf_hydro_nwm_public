@@ -1756,8 +1756,8 @@ end subroutine get_albedo12m_netcdf
 
 !--- define variables
 !     !- time definition, timeObs
-	 iret = nf_def_var(ncid,"forecast_reference_time",NF_INT, 1, (/dimid_times/), varid)
-         iret = nf_put_att_text(ncid,varid,'long_name',16,'valid model time')
+	 iret = nf_def_var(ncid,"time",NF_INT, 1, (/dimid_times/), varid)
+         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
          iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
 
 #ifndef HYDRO_REALTIME
@@ -1814,7 +1814,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_REALTIME
 	if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #endif
-          iret = nf_def_var(ncid,"ZWATTABLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+          iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
           iret = nf_put_att_text(ncid,varid,'units',1,'m')
           iret = nf_put_att_text(ncid,varid,'long_name',17,'water table depth')
           iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
@@ -1835,7 +1835,7 @@ end subroutine get_albedo12m_netcdf
 !       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
 !       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
-       iret = nf_def_var(ncid,"SFCHEADSUBRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf_def_var(ncid,"sfcheadsubrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
        iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
@@ -1919,7 +1919,7 @@ end subroutine get_albedo12m_netcdf
     endif
 #endif
 
-iret = nf_inq_varid(ncid,"forecast_reference_time", varid)
+iret = nf_inq_varid(ncid,"time", varid)
 iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
 #ifndef HYDRO_REALTIME
@@ -2006,7 +2006,7 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then
 #endif
-        iret = nf_inq_varid(ncid,  "ZWATTABLRT", varid)
+        iret = nf_inq_varid(ncid,  "zwattablrt", varid)
         iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 #ifdef MPP_LAND
      endif
@@ -2056,7 +2056,7 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then
 #endif
-     iret = nf_inq_varid(ncid,  "SFCHEADSUBRT", varid)
+     iret = nf_inq_varid(ncid,  "sfcheadsubrt", varid)
      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 #ifdef MPP_LAND
      endif
@@ -3254,13 +3254,13 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 
 !     !- time definition, timeObs
-	 iret = nf_def_var(ncid,"forecast_reference_time",NF_INT, 1, (/timedim/), varid)
+	 iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
 	 iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid,varid,'long_name',16,'valid model time')
+         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
 
-	 iret = nf_def_var(ncid2,"forecast_reference_time",NF_INT, 1, (/timedim2/), varid)
+	 iret = nf_def_var(ncid2,"time",NF_INT, 1, (/timedim2/), varid)
          iret = nf_put_att_text(ncid2,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid2,varid,'long_name',16,'valid model time')
+         iret = nf_put_att_text(ncid2,varid,'long_name',17,'valid output time')
 
          iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
@@ -3275,9 +3275,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
 #endif
          iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "stationDimension",7, "station")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream order output",NF_INT,1,order_to_write)
+         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream_order_output",NF_INT,1,order_to_write)
 
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "cdm_datatype",7, "Station")
@@ -3288,9 +3288,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
 #endif
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "stationDimension",7, "station")
+         iret = nf_put_att_text(ncid2, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid2, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid2, NF_GLOBAL, "stream order output",NF_INT,1,order_to_write)
+         iret = nf_put_att_int(ncid2, NF_GLOBAL, "stream_order_output",NF_INT,1,order_to_write)
 
          iret = nf_enddef(ncid)
          iret = nf_enddef(ncid2)
@@ -3361,7 +3361,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          start_pos = (cnt+1)+(nstations*(output_count-1))
 
          !!--time in seconds since startdate
-          iret = nf_inq_varid(ncid,"forecast_reference_time", varid)
+          iret = nf_inq_varid(ncid,"time", varid)
           iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since) 
 
 #ifndef HYDRO_REALTIME
@@ -3439,7 +3439,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 
              !!--time in seconds since startdate
-             iret = nf_inq_varid(ncid2,"forecast_reference_time", varid)
+             iret = nf_inq_varid(ncid2,"time", varid)
              iret = nf_put_vara_int(ncid2, varid, (/1/), (/1/), seconds_since)
 
              iret = nf_inq_varid(ncid2,"streamflow", varid)
@@ -3499,7 +3499,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
 
              !!--time in seconds since startdate  
-             iret = nf_inq_varid(ncid2,"forecast_reference_time", varid)
+             iret = nf_inq_varid(ncid2,"time", varid)
              iret = nf_put_vara_int(ncid2, varid, (/1/), (/1/), seconds_since)
 
              iret = nf_inq_varid(ncid2,"streamflow", varid)
@@ -3970,9 +3970,9 @@ end subroutine mpp_output_chrt
          iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
 
 !     !- time definition, timeObs
-         iret = nf_def_var(ncid,"forecast_reference_time", NF_INT, 1, (/timedim/), varid) 
+         iret = nf_def_var(ncid,"time", NF_INT, 1, (/timedim/), varid) 
          iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid,varid,'long_name',16,'valid model time')
+         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
 
 !       date19(1:19) = "0000-00-00_00:00:00"
 !       date19(1:len_trim(startdate)) = startdate
@@ -3990,8 +3990,8 @@ end subroutine mpp_output_chrt
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
 #endif
         iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "stationDimension",7, "station")
-!!       iret = nf_put_att_text(ncid, NF_GLOBAL, "observationDimension",6, "recNum")
+        iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
+!!       iret = nf_put_att_text(ncid, NF_GLOBAL, "observation_dimension",6, "recNum")
 !!        iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coordinate",16,"time_observation")
         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
         iret = nf_enddef(ncid)
@@ -4022,7 +4022,7 @@ end subroutine mpp_output_chrt
 
      endif
 
-     iret = nf_inq_varid(ncid,"forecast_reference_time", varid)
+     iret = nf_inq_varid(ncid,"time", varid)
      iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
      output_count = output_count + 1
@@ -4160,7 +4160,7 @@ end subroutine mpp_output_chrt
 
       !- station location definition,  LAKEIDM
       iret = nf_def_var(ncid,"lake_id",NF_INT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake COMMON ID')
+      iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake COMMON ID')
 
 #ifndef HYDRO_REALTIME
       !- station location definition,  long
@@ -4188,9 +4188,9 @@ end subroutine mpp_output_chrt
       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
 
       ! Time variable
-      iret = nf_def_var(ncid, "forecast_reference_time", NF_INT, 1, (/timeDim/), varid)
+      iret = nf_def_var(ncid, "time", NF_INT, 1, (/timeDim/), varid)
       iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-      iret = nf_put_att_text(ncid,varid,'long_name',16,'valid model time')
+      iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
 
         date19(1:19) = "0000-00-00_00:00:00"
         date19(1:len_trim(startdate)) = startdate
@@ -4204,7 +4204,7 @@ end subroutine mpp_output_chrt
         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
         iret = nf_enddef(ncid)
 
-        iret = nf_inq_varid(ncid,"forecast_reference_time", varid)
+        iret = nf_inq_varid(ncid,"time", varid)
         iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
 #ifndef HYDRO_REALTIME
@@ -4396,8 +4396,8 @@ end subroutine mpp_output_chrt
         iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
         iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
         iret = nf_def_var(ncid,"index",NF_INT, 2, (/ixlondim,jxlatdim/), varid)
-        iret = nf_def_var(ncid, "forecast_reference_time", NF_INT, 1, (/timedim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'valid model time')
+        iret = nf_def_var(ncid, "time", NF_INT, 1, (/timedim/), varid)
+        iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
         iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
 
 
@@ -4414,7 +4414,7 @@ end subroutine mpp_output_chrt
 
       iret = nf_enddef(ncid)
 
-      iret = nf_inq_varid(ncid,"forecast_reference_time", varid)
+      iret = nf_inq_varid(ncid,"time", varid)
       iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
 !!-- write latitude and longitude locations
@@ -4915,7 +4915,7 @@ end subroutine mpp_output_chrt
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
             iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
-            iret = nf_def_var(ncid,"SFCHEADSUBRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf_def_var(ncid,"sfcheadsubrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
           do n = 1, nlst_rt(did)%nsoil
              if( n .lt. 10) then
                 write(tmpStr, '(i1)') n
@@ -8175,9 +8175,9 @@ end subroutine mpp_output_chrt2
 !       endif
 !#endif
 
-        iret = nf_def_var(ncid,"forecast_reference_time",NF_INT, 1, (/timedim/), varid)
+        iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
         iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'valid model time')
+        iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
 
         !- flow definition, var
         iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/stationdim/), varid)
@@ -8210,17 +8210,17 @@ end subroutine mpp_output_chrt2
 #ifdef HYDRO_REALTIME
 	!-- NEW lateral inflow definition, var
 	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
-	        iret = nf_def_var(ncid, "QLateral", NF_FLOAT, 1, (/stationdim/), varid)
+	        iret = nf_def_var(ncid, "q_lateral", NF_FLOAT, 1, (/stationdim/), varid)
        		iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
                 iret = nf_put_att_text(ncid,varid,'long_name',25,'Runoff into channel reach')
 	endif
 
         !-- NEW velocity definition, var
-	!if ( (channel_option .ne. 3) .and. ((iocflag .eq. 2) .or. (iocflag .eq. 3)) ) then
-        !	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
-        !	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
-        !	iret = nf_put_att_text(ncid,varid,'long_name',11,'River Velocity')
-	!endif
+        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+        	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
+        	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
+        	iret = nf_put_att_text(ncid,varid,'long_name',14,'River Velocity')
+	endif
 #endif
 
 #ifndef HYDRO_REALTIME
@@ -8245,14 +8245,14 @@ end subroutine mpp_output_chrt2
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
 #endif
          iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "stationDimension",7, "station")
+         iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream order output",NF_INT,1,1)
+         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream_order_output",NF_INT,1,1)
 
 
          iret = nf_enddef(ncid)
 
-         iret = nf_inq_varid(ncid,"forecast_reference_time", varid)
+         iret = nf_inq_varid(ncid,"time", varid)
          iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #ifndef HYDRO_REALTIME        
         !-- write latitudes
@@ -8298,15 +8298,15 @@ end subroutine mpp_output_chrt2
 #ifdef HYDRO_REALTIME
         !-- write lateral inflow
 	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
-	        iret = nf_inq_varid(ncid,"QLateral", varid)
+	        iret = nf_inq_varid(ncid,"q_lateral", varid)
        		iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), QLateral)
         endif
 
-        !-- write velocity (dummy value for now)
-	!if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
-        !	iret = nf_inq_varid(ncid,"velocity", varid)
-        ! 	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
-	!endif
+        !-- writelvelocity (dummy value for now)
+	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+        	iret = nf_inq_varid(ncid,"velocity", varid)
+         	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
+	endif
 #endif
 
 	!-- write id
