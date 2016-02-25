@@ -62,6 +62,9 @@ module module_HYDRO_drv
 
    contains
    subroutine HYDRO_rst_out(did)
+#ifdef WRF_HYDRO_NUDGING
+      use module_stream_nudging, only: output_nudging_last_obs
+#endif
       implicit none
       integer:: rst_out  
       integer did, outflag
@@ -117,6 +120,10 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
       endif
 #endif
+
+#ifdef WRF_HYDRO_NUDGING
+      call output_nudging_last_obs  !! only does something if temporalPersistence==TRUE
+#endif      
    endif
 
 
@@ -1557,10 +1564,10 @@ end module module_HYDRO_drv
         integer :: ierr
         ierr = 1
 #ifndef NCEP_WCOSS
-#ifdef HYDRO_D
+!#ifdef HYDRO_D  !! PLEASE NEVER UNCOMMENT THIS IFDEF, it's just one incredibly useful string.
       write(6,*) "The job is stopped due to the fatal error. ", trim(msg)
       call flush(6)
-#endif
+!#endif
 #else
      write(78,*) "FATAL ERROR: ", trim(msg)
       call flush(78)
@@ -1599,7 +1606,7 @@ end module module_HYDRO_drv
         integer :: ierr
 
 #ifdef WRF_HYDRO_NUDGING
-        call finish_stream_nudging
+        call finish_stream_nudging()
 #endif
 #ifndef NCEP_WCOSS
         print*, "The model finished successfully......."

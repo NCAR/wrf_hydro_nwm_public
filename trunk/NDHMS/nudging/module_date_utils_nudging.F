@@ -607,7 +607,7 @@ if (odate(5:5) == "-") then
 
       write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
            ndate(1:newlen), odate(1:oldlen)
-      call hydro_stop("geth_idts")
+      call hydro_stop("geth_idts utils_nudging -1")
 
    endif
 else
@@ -616,7 +616,7 @@ else
 
       write(*,'("GETH_IDTS: Dates appear to be different formats: ", A, 3x, A)') &
            ndate(1:newlen), odate(1:oldlen)
-      call hydro_stop("geth_idts")
+      call hydro_stop("geth_idts utils_nudging 0")
 
    endif
 endif
@@ -663,7 +663,7 @@ if (punct) then
    case default
 
       write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
-      call hydro_stop("geth_idts")
+      call hydro_stop("geth_idts utils_nudging 1")
 
    end select
 else
@@ -710,7 +710,7 @@ else
    case default
 
       write(*,*) 'ERROR: geth_idts:  odd length: #'//trim(odate)//'#'
-      call hydro_stop("geth_idts")
+      call hydro_stop("geth_idts nudging_utils 2")
 
    end select
 endif
@@ -880,14 +880,14 @@ end if
 if (.not. npass) then
 #ifdef HYDRO_D
    print*, 'Screwy NDATE: ', ndate(1:newlen)
-   call hydro_stop("geth_idts")
+   call hydro_stop("geth_idts nudging_utils 3")
 #endif
 end if
 
 if (.not. opass) then
 #ifdef HYDRO_D
    print*, 'FATAL ERROR: Screwy ODATE: ', odate(1:oldlen)
-   call hydro_stop("geth_idts")
+   call hydro_stop("geth_idts nudging_utils 4")
 #endif
 end if
 

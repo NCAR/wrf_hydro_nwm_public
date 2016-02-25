@@ -84,9 +84,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
     real, intent(IN)    :: maxh    ! max depth of reservoir before overtop (m)                     
     integer, intent(IN) :: ln      ! lake number
 
-!!DJG Add lake option switch here...move up to namelist in future versions...
-    integer :: LAKE_OPT ! Lake model option (move to namelist later)
-    real :: Htmp                   ! Temporary assign of incoming lake el. (m)
+    !!DJG Add lake option switch here...move up to namelist in future versions...
+    integer :: LAKE_OPT            ! Lake model option (move to namelist later)
+    real    :: Htmp                ! Temporary assign of incoming lake el. (m)
 
     !! ----------------------------  local variables
     real :: sap                    ! local surface area values
@@ -99,25 +99,21 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
     !! -- determine from inflow hydrograph
 
 
-!!DJG Set hardwire for LAKE_OPT...move specification of this to namelist in
-!future versions...
+    !!DJG Set hardwire for LAKE_OPT...move specification of this to namelist in
+    !future versions...
     LAKE_OPT = 2
     Htmp = H   !temporary set of incoming lake water elevation...
-
-
-!!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
-!pool, .....
-    IF (LAKE_OPT.eq.1) THEN     ! If-block for simple pass through scheme....
-
-      qo1 = qi1                 ! Set outflow equal to inflow at current time
-
-      H = Htmp                  ! Set new lake water elevation to incoming lake el.
-
-
-    ELSE IF (LAKE_OPT.eq.2) THEN   ! If-block for Chow et al level pool scheme
-
-
-
+    
+    
+    !!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
+    !pool, .....
+    if (LAKE_OPT.eq.1) then     ! If-block for simple pass through scheme....
+       
+       qo1 = qi1                 ! Set outflow equal to inflow at current time      
+       H = Htmp                  ! Set new lake water elevation to incoming lake el.
+       
+    else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
+ 
     It = qi0
     Itdt_3   = (qi0 + (qi1 + ql))/3
     Itdt_2_3 = (qi0 + (qi1 + ql))/3 + Itdt_3
@@ -257,10 +253,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
 24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
 
-
-    ELSE   ! ELSE for LAKE_OPT....
-    ENDIF  ! ENDIF for LAKE_OPT....
-
+ 
+     ELSE   ! ELSE for LAKE_OPT....
+     ENDIF  ! ENDIF for LAKE_OPT....
+ 
   RETURN
 
 ! ----------------------------------------------------------------

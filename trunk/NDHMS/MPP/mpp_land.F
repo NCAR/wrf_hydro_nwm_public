@@ -1079,6 +1079,23 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_real2
 
+  subroutine mpp_land_bcast_real3d(inout)
+      integer j, k, length1, length2, length3
+      real inout(:,:,:)
+      integer ierr
+      length1 = size(inout,1)
+      length2 = size(inout,2)
+      length3 = size(inout,3)
+      do k = 1, length3
+         do j = 1, length2
+            call mpi_bcast(inout(:,j,k), length1, MPI_real, &
+                 IO_id, MPI_COMM_WORLD, ierr)
+         end do
+      end do
+      call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_real3d
+  
   subroutine mpp_land_bcast_rd(size,inout)
       integer size
       real*8 inout(size)
@@ -2279,13 +2296,44 @@ MODULE MODULE_MPP_LAND
     end subroutine match1dLake
 
 
-        subroutine mpp_land_abort()
-            implicit none
-            integer ierr, status
-            CALL MPI_ABORT(MPI_COMM_WORLD,status,IERR)
-        end subroutine mpp_land_abort  ! mpp_land_abort
+    subroutine mpp_land_abort()
+      implicit none
+      integer ierr, status
+      call MPI_ABORT(MPI_COMM_WORLD,status,IERR)
+    end subroutine mpp_land_abort  ! mpp_land_abort
 
 
+    subroutine mpp_comm_scalar_real(scalar, fromImage, toImage)
+    implicit none
+    real,    intent(inout) :: scalar
+    integer, intent(in)    :: fromImage, toImage
+    integer:: ierr, tag
+    tag=2   
+    if(my_id .eq. fromImage) &
+         call mpi_send(scalar, 1, MPI_REAL, &
+                       toImage, tag, MPI_COMM_WORLD, ierr)
+    if(my_id .eq. toImage) &
+         call mpi_recv(scalar, 1, MPI_REAL, &
+                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+    end subroutine mpp_comm_scalar_real
+
+    subroutine mpp_comm_scalar_char(scalar, fromImage, toImage)
+    implicit none
+    character(len=*), intent(inout) :: scalar
+    integer,          intent(in)    :: fromImage, toImage
+    integer:: ierr, tag, length
+    tag=2
+    length=len(scalar)
+    if(my_id .eq. fromImage) &
+         call mpi_send(scalar, length, MPI_CHARACTER, &
+                       toImage, tag, MPI_COMM_WORLD, ierr)
+    if(my_id .eq. toImage) &
+         call mpi_recv(scalar, length, MPI_CHARACTER, &
+                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+    end subroutine mpp_comm_scalar_char
+
+    
+    
 END MODULE MODULE_MPP_LAND
 
 

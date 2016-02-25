@@ -86,6 +86,8 @@ CONTAINS
        character(len=256) :: nudgingParamFile
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
+       logical            :: temporalPersistence
+       character(len=256) :: nudgingLastObsFile
 #endif 
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
@@ -111,10 +113,15 @@ CONTAINS
 
 
 #ifdef WRF_HYDRO_NUDGING
-       namelist /NUDGING_nlist/ nudgingParamFile, netwkReExFile, readTimesliceParallel
-       nudgingParamFile = "DOMAIN/nudgingParams.nc"
-       netwkReExFile    = "DOMAIN/netwkReExFile.nc"
-       readTimesliceParallel = .true.
+   namelist /NUDGING_nlist/ nudgingParamFile,      netwkReExFile,       &
+                            readTimesliceParallel, temporalPersistence, &
+                            nudgingLastObsFile
+   ! Default values... 
+   nudgingParamFile = "DOMAIN/nudgingParams.nc"
+   netwkReExFile    = "DOMAIN/netwkReExFile.nc"
+   readTimesliceParallel = .true.
+   temporalPersistence   = .true.
+   nudgingLastObsFile = ""
 #endif 
 
                     
@@ -233,9 +240,11 @@ CONTAINS
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
   call mpp_land_bcast_int1(UDMP_OPT)
 #ifdef WRF_HYDRO_NUDGING
-  call mpp_land_bcast_char(256, nudgingParamFile)
-  call mpp_land_bcast_char(256, netwkReExFile   )
+  call mpp_land_bcast_char(256, nudgingParamFile  )
+  call mpp_land_bcast_char(256, netwkReExFile     )
+  call mpp_land_bcast_char(256, nudgingLastObsFile)
   call mpp_land_bcast_log1(readTimesliceParallel)
+  call mpp_land_bcast_log1(temporalPersistence)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -310,6 +319,8 @@ CONTAINS
     nlst%nudgingParamFile      = nudgingParamFile
     nlst%netWkReExFile         = netWkReExFile
     nlst%readTimesliceParallel = readTimesliceParallel
+    nlst%temporalPersistence   = temporalPersistence
+    nlst%nudgingLastObsFile    = nudgingLastObsFile
 #endif
 
 #ifdef MPP_LAND
@@ -353,9 +364,11 @@ CONTAINS
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
 #ifdef WRF_HYDRO_NUDGING
-    write(6,*) " nlst%nudgingParamFile",       nudgingParamFile
-    write(6,*) " nlst%netWkReExFile",          netWkReExFile
+    write(6,*) " nlst%nudgingParamFile",       trim(nudgingParamFile)
+    write(6,*) " nlst%netWkReExFile",          trim(netWkReExFile)
     write(6,*) " nlst%readTimesliceParallel",  readTimesliceParallel
+    write(6,*) " nlst%temporalPersistence",    temporalPersistence
+    write(6,*) " nlst%nudgingLastObsFile",     trim(nudgingLastObsFile)
 #endif
 #endif /* HYDRO_D */
 #ifdef MPP_LAND

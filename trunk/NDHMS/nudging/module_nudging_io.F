@@ -28,7 +28,6 @@ implicit none
 #include <netcdf.inc>
 
 ! JLM: timeSlicePath is hardcoded/hardwired for now, should go in name list eventually
-!character(len=256), parameter :: timeSlicePath="/home/jamesmcc/usgsStreamData/timeSliceData/"
 character(len=256), parameter :: timeSlicePath="./nudgingTimeSliceObs/"
 
 contains
@@ -59,9 +58,12 @@ character(len=2),  intent(in) :: obsResolution ! Input
 !Internals
 character(len=256) :: tmpTimeSlice 
 logical :: fileExists
+
 #ifdef HYDRO_D
 print*,'Ndg: start find_timeslice_file'
+call flush(6)
 #endif 
+
 find_timeslice_file=''
 ! is there a file with this name?
 ! note files are not resolved below minutes.
@@ -69,11 +71,14 @@ tmpTimeSlice = trim(timeSlicePath) // date // "." // &
                      obsResolution // 'min.usgsTimeSlice.ncdf'
 inquire(FILE=tmpTimeSlice, EXIST=fileExists)
 if (fileExists) find_timeslice_file = trim(tmpTimeSlice)
+
 #ifdef HYDRO_D
 print*,'Ndg: timeSlice file: ', tmpTimeSlice
 print*,'Ndg: file found: ', fileExists
 print*,'Ndg: finish find_timeslice_file'
+call flush(6)
 #endif
+
 end function find_timeslice_file
 
 !===================================================================================================
@@ -130,7 +135,7 @@ real, parameter :: oneHundred = 100.0000000000000
 #ifdef HYDRO_D
 print*,'Ndg: start read_timeslice_file'
 write(*,'("Ndg: read_timeslice_file: ''", A, "''")') trim(timeSliceFile)
-!call flush(6)
+call flush(6)
 #endif
 
 caller = 'read_timeslice_file'
@@ -170,7 +175,7 @@ errStatus=errStatus+errStatusOut
 gageQC=gageQCIn/oneHundred
 deallocate(gageQCIn)
 
-!! JLM fix temporary hardwire QC sanity checks
+!! JLM TODO fix temporary hardwire QC sanity checks
 if (sanityQcDischarge) then
    where(gageDischarge .le. 0.000) gageQC=0
    !! peak flow on MS river *2
@@ -216,7 +221,7 @@ end subroutine read_timeslice_file
 
 subroutine read_reach_gage_collocation(gageIds)
 use module_namelist, only: nlst_rt
-
+implicit none
 character(len=15), dimension(:), intent(out) :: gageIds
 !integer, dimension(:), intent(out) :: gageIds
 
@@ -265,7 +270,6 @@ if(routeLinkNetcdf) then
    end if
 
 else   
-   print*,'Ndg: jlm foo',trim(route_link_f)
    call hydro_stop('read_reach_gage_collocation: csv not currently supported.')
    !! here's some code to start from if/when we do want to support csv for this.
    !open(unit=79,file=trim(route_link_f),form='formatted',status='old')
@@ -287,6 +291,7 @@ end if ! routeLinkNetcdf
 
 #ifdef HYDRO_D
 print*,'Ndg: Finish read_reach_gage_collocation'
+call flush(6)
 #endif 
 
 end subroutine read_reach_gage_collocation
@@ -319,9 +324,9 @@ integer,                         intent(out) :: nGages
 character(len=5000) :: line
 integer :: ii, colCount, lineCount, lastCommaPos, tmpInt
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
 print*,'Ndg: start read_gridded_nudging_frxst_gage_csv'
-!#endif
+#endif
 frxstId=-9999
 
 lineCount = 0
@@ -354,13 +359,14 @@ end do
 
 200 continue
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
 nGages = lineCount
 print*,"Ndg: nGages: ",  nGages
 print*,"Ndg: frxstId: ", frxstId(1:nGages)
 print*,"Ndg: gageId:",   gageId(1:nGages)
 print*,'Ndg: finish read_gridded_nudging_frxst_gage_csv'
-!#endif 
+call flush(6)
+#endif 
 
 end subroutine read_gridded_nudging_frxst_gage_csv
 
@@ -386,14 +392,18 @@ subroutine read_nudging_param_file(  &
      gageId,                         &  !! OUT: integer, the USGS gage ID. 
      gageR,                          &  !! OUT: output converted for comparision to model time??
      gageG,                          &  !! OUT: quality control flag for discharge
-     gageTau                         &  !! OUT: real, the m3/s observed discharge
+     gageTau,                        &  !! OUT: real the half-window for NN/IDW interp
+     gageQThresh,                    &  !! OUT: real the half-window for NN/IDW interp
+     gageExpCoeff                    &  !! OUT: real, params for exponent-based temporal persistence
 )
 implicit none
-character(len=256), intent(in)                :: paramFile
-character(len=15),  intent(out), dimension(:) :: gageId
-real,               intent(out), dimension(:) :: gageR
-real,               intent(out), dimension(:) :: gageG
-real,               intent(out), dimension(:) :: gageTau
+character(len=256), intent(in)                    :: paramFile
+character(len=15),  intent(out), dimension(:)     :: gageId
+real,               intent(out), dimension(:)     :: gageR
+real,               intent(out), dimension(:)     :: gageG
+real,               intent(out), dimension(:)     :: gageTau
+real,               intent(out), dimension(:,:,:) :: gageQThresh
+real,               intent(out), dimension(:,:,:) :: gageExpCoeff
 
 integer :: iRet, ncId, varId, dimId, fileNameLen, errStatus
 character(len=23) :: caller
@@ -401,6 +411,7 @@ character(len=23) :: caller
 #ifdef HYDRO_D
 print*,'Ndg: start read_nudging_param_file'
 write(*,'("Ndg: paramFile: ''", A, "''")') trim(paramFile)
+call flush(6)
 #endif
 
 caller='read_nudging_param_file'
@@ -416,6 +427,11 @@ call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
 
+if(size(gageExpCoeff,2) .ne. 0 .and. size(gageExpCoeff,3) .ne. 0) then
+   call get_3d_netcdf_real(ncid, 'qThresh',  gageQThresh,  caller, .true., errStatus)
+   call get_3d_netcdf_real(ncid, 'expCoeff', gageExpCoeff, caller, .true., errStatus)
+end if
+  
 iRet = nf90_close(ncId)
 if (iRet /= nf90_NoErr) then
    write(*,'("Problem closing paramFile: ''", A, "''")') trim(paramFile)
@@ -424,13 +440,15 @@ endif
 
 #ifdef HYDRO_D
 print*,'Ndg: finish read_nudging_param_file' 
+call flush(6)
 #endif
+
 end subroutine read_nudging_param_file
 
 
 !===================================================================================================
-! Function Name: 
-!   function write_nwis_not_in_RLAndParams
+! Subroutine Name: 
+!   subroutine write_nwis_not_in_RLAndParams
 ! Author(s)/Contact(s): 
 !   James L McCreight <jamesmcc><ucar><edu>
 ! Abstract: 
@@ -449,6 +467,7 @@ end subroutine read_nudging_param_file
 ! Notes:
 
 subroutine write_nwis_not_in_RLAndParams( gageId, count )
+implicit none
 character(len=15), dimension(:),  intent(in) :: gageId
 integer,                          intent(in) :: count
 integer :: cc
@@ -458,6 +477,229 @@ do cc=1,count
 end do
 close(919) 
 end subroutine write_nwis_not_in_RLAndParams
+
+
+
+!===================================================================================================
+! Subroutine Name: 
+!   subroutine write_nudging_last_obs
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract:
+!   Write out the last observations collected over time.
+! History Log: 
+!   02/03/16 -Created, JLM.
+! Usage:
+! Parameters: 
+! Input Files: 
+! Output Files: 
+! Condition codes: 
+! User controllable options: None. 
+! Notes:  Needs better error handling... 
+
+subroutine write_nudging_last_obs( gageId, discharge, obsTimes, quality, modelTime )
+implicit none
+character(len=15), dimension(:),  intent(in) :: gageId
+real,              dimension(:),  intent(in) :: discharge
+character(len=19), dimension(:),  intent(in) :: obsTimes
+real,              dimension(:),  intent(in) :: quality
+character(len=19),                intent(in) :: modelTime
+
+integer*2, allocatable, dimension(:) :: qualityInt2
+character(len=37) :: outFileName
+integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNStn
+character(len=15), allocatable, dimension(:) :: charArr15
+character(len=19), allocatable, dimension(:) :: charArr19
+
+
+#ifdef HYDRO_D
+print*,'Ndg: start write_nudging_last_obs'
+flush(6)
+#endif
+
+!           !1234567891123456789212345678931234567
+outFileName='nudgingLastObs.' // modelTime // '.nc'
+
+! create file
+iret = nf90_create(outFileName, nf90_clobber, ncid)
+
+! create dimensions
+iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
+iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
+iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
+
+!! gageId def var
+iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 15")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! time def var
+iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "UTC")
+iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+! discharge def var
+iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+! discharge quality def var
+iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "-")
+iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+!! global attributes
+iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
+
+!! end definition
+iret = nf90_enddef(ncid)
+
+!! gageId write var
+iret = nf90_inq_varid(ncid, "stationId", varid)
+allocate(charArr15(size(discharge)))
+charArr15=gageId
+iret = nf90_put_var(ncid, varid, charArr15)
+!iret = nf90_put_var(ncid, varid, gageId)
+deallocate(charArr15)
+
+! time write var
+iret = nf90_inq_varid(ncid, "time", varid)
+allocate(charArr19(size(discharge)))
+charArr19=obsTimes
+iret = nf90_put_var(ncid, varid, charArr19)
+!iret = nf90_put_var(ncid, varid, obsTimes)
+deallocate(charArr19)
+
+! discharge write var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_put_var(ncid, varid, discharge) 
+
+! discharge_quality write var
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+allocate(qualityInt2(size(quality)))
+qualityInt2 = nint(100*quality, kind=2)
+iret = nf90_put_var(ncid, varid, qualityInt2) 
+deallocate(qualityInt2)
+
+!! close
+iret= nf90_close(ncid)
+
+
+#ifdef HYDRO_D
+print*,'Ndg: end write_nudging_last_obs'
+flush(6)
+#endif
+
+end subroutine write_nudging_last_obs
+
+
+!===================================================================================================
+! Program Name: 
+!   subroutine find_nudging_last_obs_file
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract: 
+!   Return a single file path/names of nudging last obs file given a single date.
+! History Log: 
+!   2/9/16 - Created,
+! Usage:
+! Parameters: 
+!   date
+! Input Files:  nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
+! Output Files: 
+! Condition codes: 
+! User controllable options:
+! Notes: 
+
+function find_nudging_last_obs_file(fileName)
+implicit none
+character(len=256) :: find_nudging_last_obs_file  ! Output
+character(len=256), intent(in) :: fileName
+!Internals
+logical :: fileExists
+#ifdef HYDRO_D
+print*,'Ndg: start find_nudging_last_obs_file'
+flush(6)
+#endif 
+
+find_nudging_last_obs_file=''
+! is there a file with this name?
+! note files are not resolved below minutes.
+inquire(FILE=fileName, EXIST=fileExists)
+if (fileExists) find_nudging_last_obs_file = trim(fileName)
+
+#ifdef HYDRO_D
+print*,'Ndg: last obs file: ', trim(fileName)
+print*,'Ndg: file found: ', fileExists
+print*,'Ndg: finish find_nudging_last_obs_file'
+flush(6)
+#endif
+
+end function find_nudging_last_obs_file
+
+
+!===================================================================================================
+! Subroutine Name: 
+!   subroutine read_nudging_last_obs
+! Author(s)/Contact(s): 
+!   James L McCreight <jamesmcc><ucar><edu>
+! Abstract:
+!   read in the last observations collected over time.
+! History Log: 
+!   02/03/16 -Created, JLM.
+! Usage:
+! Parameters: 
+! Input Files: 
+! Output Files: 
+! Condition codes: 
+! User controllable options: None. 
+! Notes: Needs better error handling... 
+
+subroutine read_nudging_last_obs(fileName, gageId, discharge, obsTimes, quality)
+implicit none
+character(len=*),                 intent(in)  :: fileName
+character(len=15), dimension(:),  intent(out) :: gageId
+real,              dimension(:),  intent(out) :: discharge
+character(len=19), dimension(:),  intent(out) :: obsTimes
+real,              dimension(:),  intent(out) :: quality
+
+integer:: ncid, iret, varid
+integer*2, allocatable, dimension(:) :: qualityInt2
+character(len=15), allocatable, dimension(:) :: charArr15
+character(len=19), allocatable, dimension(:) :: charArr19
+
+
+
+iret = nf90_open(fileName, nf90_nowrite, ncid)
+
+allocate(charArr15(size(gageId)))
+iret = nf90_inq_varid(ncid, "stationId", varid)
+!iret = nf90_get_var(ncid, varid, gageId)
+iret = nf90_get_var(ncid, varid, charArr15)
+gageId=charArr15
+deallocate(charArr15)
+
+iret = nf90_inq_varid(ncid, "discharge", varid)
+iret = nf90_get_var(ncid, varid, discharge)
+
+allocate(charArr19(size(obsTimes)))
+iret = nf90_inq_varid(ncid, "time", varid)
+!iret = nf90_get_var(ncid, varid, obsTimes)
+iret = nf90_get_var(ncid, varid, charArr19)
+obsTimes=charArr19
+deallocate(charArr19)
+
+allocate(qualityInt2(size(quality)))
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+iret = nf90_get_var(ncid, varid, qualityInt2)
+quality = qualityInt2/real(100)
+
+deallocate(qualityInt2)
+
+end subroutine read_nudging_last_obs
 
 
 !===================================================================================================
@@ -501,6 +743,7 @@ character(len=25) :: subroutineName
 integer :: iRet, ncid, errStatus
 #ifdef HYDRO_D
 print*,"Ndg: start read_network_reexpression"
+flush(6)
 #endif
 
 subroutineName = 'read_network_reexpression'
@@ -526,6 +769,7 @@ end if
 
 #ifdef HYDRO_D
 print*,"Ndg: finish read_network_reexpression"
+flush(6)
 #endif
 
 end subroutine read_network_reexpression
@@ -575,7 +819,7 @@ integer, dimension(:),  intent(in) :: inFROM_NODE, inTO_NODE, inCHANXI, inCHANYJ
 integer            :: nStreamCells, streamCellDimID
 integer            :: iret, projInfo_flag
 integer            :: ncid, ncstatic, varid
-integer, parameter :: did=1 ! JLM, this should be fine...?
+integer, parameter :: did=1 ! JLM TODO, this should be fine...? could be picked up from mod_stream_nudg
 
 real               :: long_cm, lat_po, fe, fn
 real, dimension(2) :: sp
@@ -590,20 +834,20 @@ integer, allocatable, dimension(:) :: FROM_NODE, TO_NODE, CHANXI, CHANYJ, TYPEL,
 #ifdef MPP_LAND
 
 if(my_id .eq. io_id) then
-   allocate(   chlat(rt_domain(did)%gnlinks),     chlon(rt_domain(did)%gnlinks),  &
-             chanlen(rt_domain(did)%gnlinks), from_node(rt_domain(did)%gnlinks),  &
-             to_node(rt_domain(did)%gnlinks),    chanxi(rt_domain(did)%gnlinks),  &
-              chanyj(rt_domain(did)%gnlinks),     typel(rt_domain(did)%gnlinks),  &
-            lakenode(rt_domain(did)%gnlinks) )
+   allocate( chLat(rt_domain(did)%gnlinks),    chLon(rt_domain(did)%gnlinks)     )
+   allocate( chanLen(rt_domain(did)%gnlinks),  from_node(rt_domain(did)%gnlinks) )
+   allocate( to_node(rt_domain(did)%gnlinks),  chanXI(rt_domain(did)%gnlinks)    )
+   allocate( chanYJ(rt_domain(did)%gnlinks),   typeL(rt_domain(did)%gnlinks)     )
+   allocate( lakeNode(rt_domain(did)%gnlinks) )
 else 
-   allocate(chlat(1),  chlon(1),  chanlen(1), from_node(1), to_node(1), &
-            chanxi(1), chanyj(1), typel(1),  lakenode(1))
+   allocate(chLat(1),  chLon(1),  chanLen(1), from_node(1), to_node(1) )
+   allocate(chanXI(1), chanYJ(1), typeL(1),  lakeNode(1))
 end if
 
 call write_chanel_real(inChLat,     rt_domain(did)%map_l2g, &
-                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chlat)
+                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chLat)
 call write_chanel_real(inChLon,     rt_domain(did)%map_l2g, &
-                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chlon)
+                       rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chLon)
 call write_chanel_real(inChanLen,   rt_domain(did)%map_l2g, &
                        rt_domain(did)%gnlinks, rt_domain(did)%nlinks, chanLen)
 call write_chanel_int(inFrom_node, rt_domain(did)%map_l2g, &
@@ -621,14 +865,14 @@ call write_chanel_int(inLakeNode,  rt_domain(did)%map_l2g, &
 
 #else
 
-allocate(   chlat(rt_domain(did)%nlinks),     chlon(rt_domain(did)%nlinks),  &
-          chanlen(rt_domain(did)%nlinks), from_node(rt_domain(did)%nlinks),  &
-          to_node(rt_domain(did)%nlinks),    chanxi(rt_domain(did)%nlinks),  &
-           chanyj(rt_domain(did)%nlinks),     typel(rt_domain(did)%nlinks),  &
-         lakenode(rt_domain(did)%nlinks) )
+allocate( chLat(rt_domain(did)%nlinks),    chLon(rt_domain(did)%nlinks)      )
+allocate( chanLen(rt_domain(did)%nlinks),  from_node(rt_domain(did)%nlinks)  )
+allocate( to_node(rt_domain(did)%nlinks),  chanXI(rt_domain(did)%nlinks)     )
+allocate( chanYJ(rt_domain(did)%nlinks),   typeL(rt_domain(did)%nlinks)      )
+allocate( lakeNode(rt_domain(did)%nlinks) )
 
-chlat     = inChlat
-chlon     = inChlon
+chLat     = inChLat
+chLon     = inChLon
 chanlen     = inChanlen
 from_node = inFrom_node
 to_node   = inTo_node
@@ -651,7 +895,7 @@ if(my_id .eq. io_id) then
    ! jlm: this seems optional, might be nice if output is used for plotting/GIS.
    ! jlm: set did:=1 in nlst_rt
 #ifdef HYDRO_D
-   write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt(1)%geo_finegrid_flnm)
+   write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt(did)%geo_finegrid_flnm)
 #endif
 
    iret = nf_open(trim(nlst_rt(1)%geo_finegrid_flnm), NF_NOWRITE, ncstatic)
@@ -681,6 +925,7 @@ if(my_id .eq. io_id) then
    ! Create the channel connectivity file
 #ifdef HYDRO_D
    print*,'Ndg: output_flnm = "'//trim(output_flnm)//'"'
+   flush(6)
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
@@ -698,8 +943,10 @@ if(my_id .eq. io_id) then
 
    nStreamCells=size(CHLON,1)
 #ifdef HYDRO_D
-   print*,'Ndg: jlm: nStreamCells:', nStreamCells
+   print*,'Ndg: nStreamCells:', nStreamCells
+   flush(6)
 #endif
+
    ! Dimension definitions
    iret = nf_def_dim(ncid, "nStreamCells", nStreamCells, streamCellDimID)  
 
@@ -824,6 +1071,7 @@ if(my_id .eq. io_id) then
 #endif
 #ifdef HYDRO_D
    write(6,*) "end of output_chan_connectivity" 
+   flush(6)
 #endif
 #ifdef MPP_LAND
 endif
@@ -855,6 +1103,7 @@ end subroutine output_chan_connectivity
 !   Could define an interface for these. 
 
 subroutine get_1d_netcdf_int2(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer*4,               intent(in)  :: ncid !! the file identifier
 character(len=*),        intent(in)  :: varName
 integer*2, dimension(:), intent(out) :: var
@@ -879,6 +1128,7 @@ end subroutine get_1d_netcdf_int2
 
 
 subroutine get_1d_netcdf_int4(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer*4,             intent(in)  :: ncid !! the file identifier
 character(len=*),      intent(in)  :: varName
 integer, dimension(:), intent(out) :: var
@@ -903,6 +1153,7 @@ end subroutine get_1d_netcdf_int4
 
 
 subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 integer,            intent(in)  :: ncid !! the file identifier
 character(len=*),   intent(in)  :: varName
 real, dimension(:), intent(out) :: var
@@ -927,6 +1178,7 @@ end subroutine get_1d_netcdf_real
 
 
 subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
 character(len=*), dimension(:), intent(out) :: var
 integer,                        intent(in)  :: ncid !! the file identifier
 character(len=*),               intent(in)  :: varName
@@ -949,6 +1201,32 @@ if (iret /= nf90_NoErr) then
 end if
 end subroutine get_1d_netcdf_text
 
+
+!==============================================================================
+! 3D real 
+subroutine get_3d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
+integer,                intent(in)  :: ncid !! the file identifier
+character(len=*),       intent(in)  :: varName
+real, dimension(:,:,:), intent(out) :: var
+character(len=*),       intent(in)  :: callingRoutine
+logical,                intent(in)  :: fatal_if_error
+integer,                intent(out) :: errStatus
+integer :: varId, iRet
+errStatus=0
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_3d_netcdf_real: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_3d_netcdf_real")
+   errStatus=errStatus+1
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_3d_netcdf_real: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_3d_netcdf_real")
+   errStatus=errStatus+1
+end if
+end subroutine get_3d_netcdf_real
 
 !===================================================================================================
 ! Program Names: 
@@ -985,7 +1263,9 @@ if(present(fatalErr)) fatalErr_local=fatalErr
 
 #ifdef HYDRO_D
 write(*,'("getting dimension from file: ''", A, "''")') trim(file)
+flush(6)
 #endif
+
 iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem opening file: ''", A, "''")') trim(file)

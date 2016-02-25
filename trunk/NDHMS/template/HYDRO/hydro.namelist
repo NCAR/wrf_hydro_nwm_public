@@ -125,7 +125,18 @@ udmap_file = "DOMAIN/spatialweights_geo_em.d02._100m_fixedj.nc"
 /
 
 &NUDGING_nlist
+
 nudgingParamFile = "DOMAIN/nudgingParams.nc"
 netwkReExFile    = "DOMAIN/netwkReExFile.nc"
+
+!! Parallel input of nudging timeslice observation files?
 readTimesliceParallel = .TRUE.
+
+! temporalPersistence defaults to true, only runs if necessary params present.
+temporalPersistence   = .FALSE.
+
+! nudgingLastObsFile defaults to '', which will look for nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
+!   **AT THE INITALIZATION TIME OF THE RUN**. Set to a missing file to use no restart.
+nudgingLastObsFile   = 'notAFile.junk'
+
 /
