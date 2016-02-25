@@ -2130,6 +2130,7 @@ contains
        !   We have to create a new file, do dimension initializations, and write global attributes to the file.
        !   Then we get out of define mode.
        if (mod(output_timestep,3600) == 0) then
+	  ! LK - Temp for NWC IOC
           write(output_flnm, '(A,"/",A12,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
        elseif (mod(output_timestep,60) == 0) then
           write(output_flnm, '(A,"/",A12,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
