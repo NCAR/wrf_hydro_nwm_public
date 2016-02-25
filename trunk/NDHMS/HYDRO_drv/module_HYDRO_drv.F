@@ -895,7 +895,7 @@ endif
       subroutine aggregateDomain(did)
       
 #ifdef MPP_LAND
-        use module_mpp_land, only:  sum_real1
+        use module_mpp_land, only:  sum_real1, my_id, io_id, numprocs
 #endif
  
        implicit none
@@ -938,6 +938,8 @@ endif
 ! not tested
         CALL sum_real1(suminfxsrt1)
         CALL sum_real1(smcrttot1)
+        suminfxsrt1 = suminfxsrt1/float(numprocs)
+        smcrttot1 = smcrttot1/float(numprocs)
 #endif
 ! END Initial water balance variables
 #endif
@@ -1126,18 +1128,28 @@ endif
 ! not tested
         CALL sum_real1(suminfxs2)
         CALL sum_real1(smctot2)
+        CALL sum_real1(sicetot2)
+        suminfxs2 = suminfxs2/float(numprocs)
+        smctot2 = smctot2/float(numprocs)
+        sicetot2 = sicetot2/float(numprocs)
 #endif
 
-        print *, "Agg Mass Bal: "
-        print *, "WB_AGG!InfxsDiff", suminfxs2-suminfxsrt1
-        print *, "WB_AGG!Infxs1", suminfxsrt1
-        print *, "WB_AGG!Infxs2", suminfxs2
-        print *, "WB_AGG!SMCDiff", smctot2-smcrttot1-sicetot2
-        print *, "WB_AGG!SMC1", smcrttot1
-        print *, "WB_AGG!SMC2", smctot2
-        print *, "WB_AGG!SICE2", sicetot2
-        print *, "WB_AGG!Residual", (suminfxs2-suminfxsrt1) + &
+#ifdef MPP_LAND   
+       if (my_id .eq. IO_id) then
+#endif
+         print *, "Agg Mass Bal: "
+         print *, "WB_AGG!InfxsDiff", suminfxs2-suminfxsrt1
+         print *, "WB_AGG!Infxs1", suminfxsrt1
+         print *, "WB_AGG!Infxs2", suminfxs2
+         print *, "WB_AGG!SMCDiff", smctot2-smcrttot1-sicetot2
+         print *, "WB_AGG!SMC1", smcrttot1
+         print *, "WB_AGG!SMC2", smctot2
+         print *, "WB_AGG!SICE2", sicetot2
+         print *, "WB_AGG!Residual", (suminfxs2-suminfxsrt1) + &
                          (smctot2-smcrttot1-sicetot2)
+#ifdef MPP_LAND 
+	endif
+#endif
 ! END Final water balance variables
 #endif
 

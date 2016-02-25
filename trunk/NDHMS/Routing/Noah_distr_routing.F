@@ -120,7 +120,8 @@
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
 !            my_id
 #ifdef MPP_LAND
-        use module_mpp_land, only: MPP_LAND_COM_REAL, sum_real1
+        use module_mpp_land, only: MPP_LAND_COM_REAL, sum_real1, &
+		my_id, io_id, numprocs
 #endif
 	IMPLICIT NONE
 
@@ -221,6 +222,10 @@
        CALL sum_real1(qbdry1)
        CALL sum_real1(sumqsubrt1)
        CALL sum_real1(smctot1)
+       suminfxsrt1 = suminfxsrt1/float(numprocs)
+       qbdry1 = qbdry1/float(numprocs)
+       sumqsubrt1 = sumqsubrt1/float(numprocs)
+       smctot1 = smctot1/float(numprocs)
 #endif
 ! END Initial water balance variables
 #endif
@@ -427,8 +432,15 @@
         CALL sum_real1(qbdry2)
         CALL sum_real1(sumqsubrt2)
         CALL sum_real1(smctot2)
+        suminfxsrt2 = suminfxsrt2/float(numprocs)
+        qbdry2 = qbdry2/float(numprocs)
+        sumqsubrt2 = sumqsubrt2/float(numprocs)
+        smctot2 = smctot2/float(numprocs)
 #endif
 
+#ifdef MPP_LAND   
+       if (my_id .eq. IO_id) then
+#endif
        print *, "SUBSFC Routing Mass Bal: "
        print *, "WB_SUB!QsubDiff", sumqsubrt2-sumqsubrt1
        print *, "WB_SUB!Qsub1", sumqsubrt1
@@ -442,8 +454,11 @@
        print *, "WB_SUB!SMCDiff", smctot2-smctot1
        print *, "WB_SUB!SMC1", smctot1
        print *, "WB_SUB!SMC2", smctot2
-       print *, "WB_SUB!Residual", sumqsubrt1 - ( (suminfxsrt2-suminfxsrt1) + &
-                       (qbdry2-qbdry1) + (smctot2-smctot1) )
+       print *, "WB_SUB!Residual", sumqsubrt1 - ( (suminfxsrt2-suminfxsrt1) &
+                       + (smctot2-smctot1) )
+#ifdef MPP_LAND
+       endif
+#endif
 ! END Final water balance variables
 #endif
 
@@ -2398,9 +2413,9 @@
             )
 #ifdef MPP_LAND
         use module_mpp_land, only: left_id,down_id,right_id, &
-              up_id,mpp_land_com_real, my_id, &
+              up_id,mpp_land_com_real, my_id, io_id, numprocs, &
              mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1, &
-            sum_double, sum_real1
+             sum_real1
 #endif
      implicit none
         integer,INTENT(IN) :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT
@@ -2474,6 +2489,9 @@
         CALL sum_real1(suminfxs1)
         CALL sum_real1(smctot1)
         CALL sum_real1(sicetot1)
+        suminfxs1 = suminfxs1/float(numprocs)
+        smctot1 = smctot1/float(numprocs)
+        sicetot1 = sicetot1/float(numprocs)
 #endif
 ! END Initial water balance variables
 #endif
@@ -2661,8 +2679,12 @@
 ! not tested
         CALL sum_real1(suminfxsrt2)
         CALL sum_real1(smcrttot2)
+       suminfxsrt2 = suminfxsrt2/float(numprocs)
+       smcrttot2 = smcrttot2/float(numprocs)
 #endif
-
+#ifdef MPP_LAND   
+       if(my_id .eq. IO_id) then
+#endif
         print *, "Disagg Mass Bal: "
         print *, "WB_DISAG!InfxsDiff", suminfxsrt2-suminfxs1
         print *, "WB_DISAG!Infxs1", suminfxs1
@@ -2673,6 +2695,9 @@
         print *, "WB_DISAG!SMC2", smcrttot2
         print *, "WB_DISAG!Residual", (suminfxsrt2-suminfxs1) + &
                          (smcrttot2-(smctot1-sicetot1))
+#ifdef MPP_LAND
+       endif
+#endif
 ! END Final water balance variables
 #endif
 
@@ -2811,7 +2836,7 @@
                   dist, SO8RT, SO8RT_D, &
                   SMCTOT2,suminfxs1,suminfxsrt,smctot1,dsmctot )
 #ifdef MPP_LAND
-        use module_mpp_land, only:  mpp_land_max_int1,  sum_double
+        use module_mpp_land, only:  mpp_land_max_int1,  sum_real1, my_id, io_id, numprocs
 #endif
        implicit none
 
@@ -2833,13 +2858,12 @@
        integer  :: i,j
       
 
-       INTEGER, PARAMETER :: double1=8
-       real (KIND=double1)                     :: smctot2,smctot1,dsmctot
-       real (KIND=double1)                     :: suminfxsrt,suminfxs1
+       real            :: smctot2,smctot1,dsmctot
+       real            :: suminfxsrt,suminfxs1
 ! local variable
-       real (KIND=double1)                     :: chan_in1,chan_in2
-       real (KIND=double1)                     :: lake_in1,lake_in2
-       real (KIND=double1)                     :: qbdry1,qbdry2
+       real            :: chan_in1,chan_in2
+       real            :: lake_in1,lake_in2
+       real            :: qbdry1,qbdry2
        integer :: sfcrt_flag
 
 
@@ -2866,10 +2890,14 @@
 
 #ifdef MPP_LAND
 ! not tested
-        CALL sum_double(suminfxs1)
-        CALL sum_double(chan_in1)
-        CALL sum_double(lake_in1)
-        CALL sum_double(qbdry1)
+        CALL sum_real1(suminfxs1)
+        CALL sum_real1(chan_in1)
+        CALL sum_real1(lake_in1)
+        CALL sum_real1(qbdry1)
+        suminfxs1 = suminfxs1/float(numprocs)
+        chan_in1 = chan_in1/float(numprocs)
+        lake_in1 = lake_in1/float(numprocs)
+        qbdry1 = qbdry1/float(numprocs)
 #endif
 
 
@@ -2930,13 +2958,20 @@
         end do
 #ifdef MPP_LAND
 ! not tested
-        CALL sum_double(suminfxsrt)
-        CALL sum_double(chan_in2)
-        CALL sum_double(lake_in2)
-        CALL sum_double(qbdry2)
+        CALL sum_real1(suminfxsrt)
+        CALL sum_real1(chan_in2)
+        CALL sum_real1(lake_in2)
+        CALL sum_real1(qbdry2)
+        suminfxsrt = suminfxsrt/float(numprocs)
+        chan_in2 = chan_in2/float(numprocs)
+        lake_in2 = lake_in2/float(numprocs)
+        qbdry2 = qbdry2/float(numprocs)
 #endif
 
 #ifdef HYDRO_D
+#ifdef MPP_LAND   
+       if(my_id .eq. IO_id) then
+#endif
 	print *, "OV Routing Mass Bal: "
         print *, "WB_OV!InfxsDiff", suminfxsrt-suminfxs1
         print *, "WB_OV!Infxs1", suminfxs1
@@ -2952,6 +2987,9 @@
         print *, "WB_OV!Qbdry2", qbdry2
         print *, "WB_OV!Residual", (suminfxs1-suminfxsrt)-(chan_in2-chan_in1) &
                       -(lake_in2-lake_in1)-(qbdry2-qbdry1)
+#ifdef MPP_LAND
+       endif
+#endif
 #endif
 
 
