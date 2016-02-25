@@ -709,7 +709,7 @@ module module_NoahMP_hrldas_driver
   jme = yend
   kms = 1
   kme = 2
-  
+
 !---------------------------------------------------------------------
 !  Allocate multi-dimension fields for subwindow calculation
 !---------------------------------------------------------------------
@@ -1375,8 +1375,8 @@ module module_NoahMP_hrldas_driver
    if (iocflag .eq. 2) then 
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
-   if (iocflag .eq. 3) then 
-        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET'
+   if (iocflag .eq. 3) then
+        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET,CANWAT' 
    endif
    if (iocflag .eq. 4) then 
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
@@ -1421,7 +1421,7 @@ module module_NoahMP_hrldas_driver
   endif
 #endif
 #endif
-   
+
 end subroutine land_driver_ini
 
 !===============================================================================

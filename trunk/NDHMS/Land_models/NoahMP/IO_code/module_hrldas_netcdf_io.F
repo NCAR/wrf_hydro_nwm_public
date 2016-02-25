@@ -2120,6 +2120,8 @@ contains
     integer :: iret
     character(len=256) :: output_flnm
     character(len=19)  :: date19
+    integer :: sec_valid_date ! Seconds since the beginning of the model run
+    character(len=34)  :: date340
 
     integer :: ierr
 
@@ -2128,7 +2130,8 @@ contains
        !   We have to create a new file, do dimension initializations, and write global attributes to the file.
        !   Then we get out of define mode.
        if (mod(output_timestep,3600) == 0) then
-          write(output_flnm, '(A,"/",A10,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13), igrid
+	  ! LK - Temp for NWC IOC
+          write(output_flnm, '(A,"/",A12,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
        elseif (mod(output_timestep,60) == 0) then
           write(output_flnm, '(A,"/",A12,".LDASOUT_DOMAIN",I1)') outdir, date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
        else
@@ -2149,13 +2152,13 @@ contains
        ncid_remember = ncid
        define_mode_remember = .TRUE.
 
-       iret = nf90_def_dim(ncid, "Time", NF90_UNLIMITED, dimid_times)
-       iret = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)
+       iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, dimid_times)
+       !iret = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)
        ! Dimensions reflect the full size of the subwindow (not the strip known by this particular process).
        iret = nf90_def_dim(ncid, "west_east", ixfull, dimid_ix)
        iret = nf90_def_dim(ncid, "south_north", jxfull, dimid_jx)
-       iret = nf90_def_dim(ncid, "west_east_stag", ixfull+1, dimid_dum)
-       iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
+       !iret = nf90_def_dim(ncid, "west_east_stag", ixfull+1, dimid_dum)
+       !iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
        iret = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
        iret = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
 
@@ -2168,25 +2171,39 @@ contains
        date19(1:19) = "0000-00-00_00:00:00"
        date19(1:len_trim(startdate)) = startdate
 
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "START_DATE", date19)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "MAP_PROJ", mapproj)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "LAT1", lat1)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "LON1", lon1)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "DX", dx)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "DY", dy)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT1", truelat1)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT2", truelat2)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "STAND_LON", cen_lon)
-       iret = nf90_put_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
+       date340(1:34) = "seconds since " // trim(startdate(1:10)) // " " // trim(startdate(12:16)) // " UTC"
+       call geth_idts(trim(date),trim(startdate),sec_valid_date)
+
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "MAP_PROJ", mapproj)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "LAT1", lat1)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "LON1", lon1)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "DX", dx)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "DY", dy)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT1", truelat1)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "TRUELAT2", truelat2)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "STAND_LON", cen_lon)
+       !iret = nf90_put_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
 
 !
 ! Done with dimensions and global attributes.
 ! Now define and describe our "Times" variable.
 !
 
-       iret = nf90_def_var(ncid,  "Times",  NF90_CHAR, (/dimid_datelen,dimid_times/), varid)
+       iret = nf90_def_var(ncid, "time", NF90_INT, (/dimid_times/), varid)
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                                         " - Problem nf90_def_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, varid, "long_name", "valid output time")  
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, varid, "units", trim(date340))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(startdate))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(date))
+       call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
+                                        " - Problem nf90_put_var for "//trim(output_flnm))
 
        iret = nf90_enddef(ncid)
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
@@ -2211,11 +2228,11 @@ contains
 
     date19(1:19) = "0000-00-00_00:00:00"
     date19(1:len_trim(date)) = date
-    iret = nf90_inq_varid(ncid_remember, "Times", varid)
+    iret = nf90_inq_varid(ncid_remember, "time", varid)
     call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                              " - Problem inquiring on 'Times'")
 
-    iret = nf90_put_var(ncid_remember, varid, date, (/1,output_count_remember+1/), (/19,1/))
+    iret = nf90_put_var(ncid_remember, varid, sec_valid_date)
     call error_handler(iret, "In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                              " - Problem writing variable 'Times'")
 
@@ -2484,8 +2501,8 @@ contains
     iret = nf90_put_att(ncid, varid, "units", varunits)
     call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding units attribute '"//trim(varunits)//"' to variable "//trim(varname))
 
-    iret = nf90_put_att(ncid, varid, "stagger", "-")
-    call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding stagger attribute to variable "//trim(varname))
+    !iret = nf90_put_att(ncid, varid, "stagger", "-")
+    !call error_handler(iret, "MAKE_VAR_ATT_2D: Failure adding stagger attribute to variable "//trim(varname))
 
   end subroutine make_var_att_2d
 
@@ -2521,8 +2538,8 @@ contains
     iret = nf90_put_att(ncid, varid, "units", varunits)
     call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding units attribute '"//trim(varunits)//"' to variable "//trim(varname))
 
-    iret = nf90_put_att(ncid, varid, "stagger", "Z")
-    call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding stagger attribute to variable "//trim(varname))
+    !iret = nf90_put_att(ncid, varid, "stagger", "Z")
+    !call error_handler(iret, "MAKE_VAR_ATT_3D: Failure adding stagger attribute to variable "//trim(varname))
 
   end subroutine make_var_att_3d
 

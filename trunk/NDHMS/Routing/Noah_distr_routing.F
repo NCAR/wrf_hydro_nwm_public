@@ -253,8 +253,8 @@
          
 
 
-!DJG debug variable...
 
+!DJG debug variable...
 
 !DJG Courant check temp variable setup...
          ZWATTABLRTTMP = ZWATTABLRT !-- temporary storage of water table level

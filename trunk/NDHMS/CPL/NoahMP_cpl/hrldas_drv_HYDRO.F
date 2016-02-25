@@ -60,8 +60,8 @@
               STC(:,:,k) = STC_io(:,k,:)
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
-          end do 
-             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)  
+          end do
+             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
 
            do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)

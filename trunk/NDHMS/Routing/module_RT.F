@@ -705,12 +705,12 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            deallocate(buf)
 
      endif  ! end if block for UDMP_OPT
-     
+      
            do k = 1, rt_domain(did)%LNLINKSL
                do j = 1, rt_domain(did)%jxrt
                   do i = 1, rt_domain(did)%ixrt
                      if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then
                             if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
                                rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
                             endif
