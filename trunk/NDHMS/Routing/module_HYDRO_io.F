@@ -5102,25 +5102,10 @@ end subroutine mpp_output_chrt
    character(len=*) outFile
 
     integer :: iunit
-    logical :: dir_e
     integer  :: i0,ie, i, istep, mkdirStatus
     
-    if(my_id .eq. io_id) then
-       inquire(directory='restart', exist=dir_e)
-       if (dir_e) then
-          print*, "output restart files to restart/."
-       else
-          call system('mkdir restart')
-          !call execute_command_line('mkdir restart', exitstat=mkdirStatus)
-          !call system('mkdir restart', mkdirStatus)
-          !!JLM TODO: ? try creating the directory more than just once if it fails?
-          !if(mkdirStatus .ne. 0) & 
-          !     call hydro_stop("FATAL ERROR: restart_out_bi failed to create the restart/ directory.")
-          !print*, "restart_out_bi: created restart/ directory and outputting restart files there."
-       end if
-    endif
-    call mpp_land_sync()
 
+    call mpp_land_sync()
 
     iunit = 81
  istep = 64

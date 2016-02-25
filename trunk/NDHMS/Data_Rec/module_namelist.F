@@ -81,6 +81,7 @@ CONTAINS
        integer  :: NSOIL
        real :: ZSOIL8(8)
 
+       logical            :: dir_e
 #ifdef WRF_HYDRO_NUDGING
        character(len=256) :: nudgingParamFile
        character(len=256) :: netwkReExFile
@@ -192,6 +193,14 @@ CONTAINS
 
 
   if(RESTART_FILE .eq. "") rst_typ = 0
+
+  if(rst_bi_out .eq. 1) then
+     inquire(file='restart', exist=dir_e)
+     if(.not. dir_e) then
+        call system('mkdir restart')
+     endif
+  endif
+
 
 #ifdef MPP_LAND
   !bcast namelist variable.
