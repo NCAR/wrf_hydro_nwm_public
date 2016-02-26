@@ -2177,10 +2177,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !using mapping index
            do n = 1, gtoNODE(k,1)
               m = gtoNODE(k,n+1)
-              if(TYPEL(m) .ne. 2) then
                 if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                 if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-              endif
            end do ! do i
 #else
            do m = 1, NLINKSL
