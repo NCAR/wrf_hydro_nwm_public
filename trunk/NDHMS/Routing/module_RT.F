@@ -299,6 +299,8 @@ CONTAINS
 #else
 	allocate( rt_domain(did)%QLateral(nsizes) )
 	rt_domain(did)%QLateral  = 0
+	allocate( rt_domain(did)%velocity(nsizes) )
+	rt_domain(did)%velocity  = 0
 #endif
      endif
 

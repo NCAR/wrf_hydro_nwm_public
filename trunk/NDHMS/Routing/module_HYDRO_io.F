@@ -7827,7 +7827,7 @@ end subroutine readBucket_nhd
         , nudge                                     &
 #endif
 #ifdef HYDRO_REALTIME
-        , QLateral, iocflag   &
+        , QLateral, iocflag ,velocity  &
 #endif
 	)
 
@@ -7866,9 +7866,9 @@ end subroutine readBucket_nhd
 !     real,allocatable,dimension(:) :: g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket
 !     real,dimension(:) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket
 !#endif
-      real,allocatable,dimension(:) :: g_QLateral
 #ifdef HYDRO_REALTIME
-      real,dimension(:) :: QLateral
+      real,allocatable,dimension(:) :: g_QLateral, g_velocity
+      real,dimension(:) :: QLateral, velocity
       integer, intent(in) :: iocflag
 #endif
 
@@ -7894,6 +7894,7 @@ end subroutine readBucket_nhd
 !#endif
 #ifdef HYDRO_REALTIME
 	allocate(g_QLateral(gsize  ))
+	allocate(g_velocity(gsize  ))
 #endif
 
      else
@@ -7906,6 +7907,7 @@ end subroutine readBucket_nhd
 !#endif
 #ifdef HYDRO_REALTIME
 	allocate(g_QLateral(1))
+	allocate(g_velocity(1))
 #endif
 
         allocate(g_chlon(1))
@@ -7943,6 +7945,7 @@ end subroutine readBucket_nhd
 !#endif
 #ifdef HYDRO_REALTIME
 	call ReachLS_write_io(QLateral, g_QLateral)
+	call ReachLS_write_io(velocity, g_velocity)
 #endif
 
      else
@@ -7966,7 +7969,7 @@ end subroutine readBucket_nhd
           , g_nudge                                     &
 #endif
 #ifdef HYDRO_REALTIME
-          , g_QLateral, iocflag   &
+          , g_QLateral, iocflag,g_velocity   &
 #endif
 	  )
      end if
@@ -7980,7 +7983,7 @@ end subroutine readBucket_nhd
 !   deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
 !#endif
 #ifdef HYDRO_REALTIME
-    deallocate(g_QLateral)
+    deallocate(g_QLateral, g_velocity)
 #endif
 
 end subroutine mpp_output_chrt2
@@ -8002,7 +8005,7 @@ end subroutine mpp_output_chrt2
         , nudge                                     &
 #endif
 #ifdef HYDRO_REALTIME
-        , QLateral, iocflag   &
+        , QLateral, iocflag, velocity   &
 #endif
         )
      
@@ -8077,7 +8080,7 @@ end subroutine mpp_output_chrt2
 !    real,dimension(nlinks) :: accLndRunOff, accQLateral, accStrmvolrt, accBucket  
 !#endif
 #ifdef HYDRO_REALTIME
-     real,dimension(:) :: QLateral
+     real,dimension(:) :: QLateral, velocity
      integer,  intent(in) :: iocflag
 #endif
 

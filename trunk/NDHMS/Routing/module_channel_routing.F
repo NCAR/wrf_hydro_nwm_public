@@ -598,7 +598,267 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 
 
 ! ----------------------------------------------------------------
+
   END FUNCTION MUSKINGCUNGE
+
+
+  SUBROUTINE SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
+
+        IMPLICIT NONE
+
+        REAL, intent(IN)       :: dt         !routing period in  seconds
+        REAL, intent(IN)       :: qup        !flow upstream previous timestep
+        REAL, intent(IN)       :: quc        !flow upstream current timestep
+        REAL, intent(IN)       :: qdp        !flow downstream previous timestep
+        REAL, intent(INOUT)    :: qdc        !flow downstream current timestep
+        REAL, intent(IN)       :: ql         !lateral inflow through reach (m^3/sec)
+        REAL, intent(IN)       :: Bw         ! bottom width (meters)
+        REAL, intent(IN)       :: Cs         ! Channel side slope slope
+        REAL, intent(IN)       :: So         ! Channel bottom slope %
+        REAL, intent(IN)       :: dx         ! channel lngth (m)
+        REAL, intent(IN)       :: n          ! mannings coefficient
+        REAL, intent(INOUT)    :: vel        ! mannings coefficient
+        INTEGER, intent(IN)    :: idx        ! channel id
+
+!--local variables
+        REAL    :: C1, C2, C3, C4
+        REAL    :: Km          !K travel time in hrs in reach
+        REAL    :: X           !weighting factors 0<=X<=0.5
+        REAL    :: Ck          ! wave celerity (m/s)
+
+!-- channel geometry and characteristics
+        REAL    :: Tw         ! top width at peak flow
+        REAL    :: AREA       ! Cross sectional area m^2
+        REAL    :: Z          ! trapezoid distance (m)
+        REAL    :: R          ! Hydraulic radius
+        REAL    :: WP         ! wetted perimmeter
+        REAL    :: h          ! depth of flow
+        REAL    :: h_0,h_1    ! secant method estimates
+        REAL    :: Qj_0       ! secant method estimates
+        REAL    :: Qj         ! intermediate flow estimate
+        REAL    :: D,D1       ! diffusion coeff
+        REAL    :: dtr        ! required timestep, minutes
+        REAL    :: error
+        REAL    :: hp         !courant, previous height
+        INTEGER :: maxiter    !maximum number of iterations
+
+!-- local variables.. needed if channel is sub-divded
+        REAL    :: a,b,c
+        INTEGER :: i          !-- channel segment counter
+
+!yw add
+        goto 101
+        C1   = 0
+        C2   = 0
+        C3   = 0
+        C4   = 0
+        Km   = 0
+        X    = 0        !weighting factors 0<=X<=0.5
+        Ck   = 0
+        Tw   = 0       ! top width at peak flow
+        AREA = 0      ! Cross sectional area m^2
+        Z    = 0         ! trapezoid distance (m)
+        R    = 0         ! Hydraulic radius
+        WP   = 0         ! wetted perimmeter
+         h   = 0        ! depth of flow
+        h_0  = 0
+        h_1  = 0       ! secant method estimates
+        Qj_0 = 0      ! secant method estimates
+        D    = 0
+        D1   = 0        ! diffusion coeff
+        dtr   = 0       ! required timestep, minutes
+        error = 1.0
+        hp    = 0        !courant, previous height
+        maxiter = 0
+        a = 0
+101     continue
+!end yw
+
+        c = 0.52    !-- coefficnets for finding dx/Ckdt
+        b = 1.15
+        
+        if(Cs .eq.0) then 
+         z = 1.0 
+        else 
+         z = 1/Cs              !channel side distance (m)
+        endif
+
+        !qC = quc + ql !current upstream in reach
+
+        if (n .le.0 .or. So .le. 0 .or. z .le. 0 .or. Bw .le. 0) then
+          print*, "Error in channel coefficients -> Muskingum cunge",n,So,z,Bw
+          call hydro_stop("In MUSKINGCUNGE() - Error in channel coefficients")
+        end if
+
+        error   = 1.0
+        maxiter = 0
+        a = 0.0
+
+        if ((quc+ql) .lt. 100) then 
+          b=5 
+        else 
+         b= 20
+        endif
+
+!-------------  Secant Method
+        h    =  (a+b)/2  !- upper interval
+        h_0  = 0.0       !- lower interval
+        Qj_0 = 0.0       !- initial flow of lower interval
+
+        do while ((error .gt. 0.05 .and. maxiter .le. 100 .and. h .gt. 0.01))  
+
+          !----- lower interval  --------------------
+           Tw = Bw + 2*z*h_0                    !--top width of the channel inflow
+           Ck = (sqrt(So)/n)*(5./3.)*(h_0**0.667)   !-- pg 287 Chow, Mdt, Mays
+           if(Ck .gt. 0.0) then
+             Km = dx/Ck                       !-- seconds Muskingum Param
+             if(Km .lt. dt) then           
+               Km = dt
+             endif
+           else 
+             Km = dt
+           endif
+ 
+           if(Tw*So*Ck*dx .eq. 0.0) then 
+             X = 0.25
+           else
+             X = 0.5-(Qj_0/(2*Tw*So*Ck*dx))
+           endif
+  
+           if(X .le. 0.0) then 
+             X = 0.25
+           elseif(X .gt. 0.35) then
+             X = 0.35
+           endif
+  
+           D = (Km*(1 - X) + dt/2)              !--seconds
+            if(D .eq. 0.0) then 
+              print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
+              call hydro_stop("In MUSKINGCUNGE() - D is 0.")
+           endif 
+  
+           C1 =  (Km*X + dt/2)/D
+           C2 =  (dt/2 - Km*X)/D
+           C3 =  (Km*(1-X)-dt/2)/D
+           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
+
+           if(h_0 .le. 0.0) then 
+             AREA= 0.0
+             WP = 0.0
+           else
+            AREA = (Bw * h_0 + z * (h_0*h_0) )
+            WP   = (Bw * h_0 + z * (h_0*h_0)) / (Bw + 2 * h_0 * sqrt(1+z*z))
+           endif
+           
+           if(WP .le. 0.0) then 
+              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
+           else 
+              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * (WP**(2./3.)) * sqrt(So)) !f(x)
+           endif
+           
+           !--upper interval -----------
+           Tw = Bw + 2*z*h                    !--top width of the channel inflow
+           Ck = (sqrt(So)/n)*(5./3.)*(h**0.667)   !-- pg 287 Chow, Mdt, Mays
+           if(Ck .gt. 0.0) then
+             Km = dx/Ck                       !-- seconds Muskingum Param
+             if(Km .lt. dt) then           
+               Km = dt
+             endif
+           else 
+             Km = dt
+           endif
+ 
+           if(Tw*So*Ck*dx .eq. 0.0) then 
+             X = 0.25
+           else
+             X = 0.5-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*Tw*So*Ck*dx))
+           endif
+  
+           if(X .le. 0.0) then 
+             X = 0.25
+           elseif(X .gt. 0.35) then
+             X = 0.35
+           endif
+  
+           D = (Km*(1 - X) + dt/2)              !--seconds
+            if(D .eq. 0.0) then 
+              print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
+              call hydro_stop("In MUSKINGCUNGE() - D is 0.")
+           endif 
+  
+           C1 =  (Km*X + dt/2)/D
+           C2 =  (dt/2 - Km*X)/D
+           C3 =  (Km*(1-X)-dt/2)/D
+           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
+
+           if(h .le. 0) then 
+            AREA = 0.0
+            WP   = 0.0
+           else
+            AREA = (Bw * h + z * (h*h) )
+            WP   = (Bw * h + z * (h*h)) / (Bw + 2 * h * sqrt(1+z*z))
+           endif 
+           
+           if(WP .le. 0.0) then 
+             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
+           else
+             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * (WP**(2./3.)) * sqrt(So))
+           endif
+
+           if(Qj_0-Qj .ne. 0.0) then
+             h_1 = h - ((Qj * (h_0 - h))/(Qj_0 - Qj)) !update h, 3rd estimate
+              if(h_1 .lt. 0.0) then
+                h_1 = h
+              endif
+           else
+             h_1 = h
+           endif
+
+           error = abs((h_1 - h)/h) !error is new estatimate and 2nd estimate
+
+!           if(idx .eq. 626) then 
+!             write(6,*) h_0,h,h_1,error
+!           endif
+
+           h_0  = h 
+           h    = h_1
+           maxiter = maxiter + 1
+
+      end do
+
+      if((maxiter .ge. 100 .and. error .gt. 0.05) .or. h .gt. 100) then 
+
+         print*, "WARNING:"
+         print*, "id,err,iters,h", idx, error, maxiter, h
+         print*, "n,z,B,So,dx,X,dt,Km",n,z,Bw,So,dx,X,dt,Km
+         print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
+         if(h.gt.100) then
+              print*, "FATAL ERROR: Water Elevation Calculation is Diverging"
+              call hydro_stop("In MUSKINGCUNGE() - Water Elevation Calculation is Diverging")
+         endif
+      endif
+
+!     MUSKINGCUNGE =  h 
+!yw      MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+
+!yw added for test
+
+      if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
+!       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+        qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+
+
+      else
+!       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+        qdc =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+
+      endif
+
+        vel =  1/n * (AREA/WP **(2./3.)) * sqrt(So)  ! average velocity in m3/s
+
+! ----------------------------------------------------------------
+!END FUNCTION MUSKINGCUNGE
+END SUBROUTINE SUBMUSKINGCUNGE
 ! ----------------------------------------------------------------
 
 ! ------------------------------------------------
@@ -1627,6 +1887,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 !   SUBROUTINE drive_CHANNEL for NHDPLUS
 ! ------------------------------------------------
+
      Subroutine drive_CHANNEL_RSL(UDMP_OPT,KT, IXRT,JXRT,  &
         LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
@@ -1651,7 +1912,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
        ,  accLndRunOff, accQLateral, accStrmvolrt, accBucket   &
 #endif
 #ifdef HYDRO_REALTIME
-       , QLateral &
+       , QLateral, velocity &
 #endif
        ,nsize , OVRTSWCRT, SUBRTSWCRT      )
 
@@ -1728,7 +1989,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         INTEGER, INTENT(IN), DIMENSION(:)   :: LAKEIDA  !--  (don't need) NHDPLUS lakeid for all lakes in domain
         INTEGER, INTENT(IN), DIMENSION(:)   :: LAKEIDX  !--  the sequential index of the lakes id by com id
 
-        REAL, DIMENSION(NLINKSL)                  :: QLateral !--lateral flow
+        REAL, DIMENSION(NLINKSL)                  :: QLateral, velocity !--lateral flow
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
         REAL, DIMENSION(NLAKES)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
         integer :: nsize
@@ -1916,8 +2177,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !using mapping index
            do n = 1, gtoNODE(k,1)
               m = gtoNODE(k,n+1)
+              if(TYPEL(m) .ne. 2) then
                 if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                 if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+              endif
            end do ! do i
 #else
            do m = 1, NLINKSL
@@ -1955,9 +2218,14 @@ gwOption:   if(gwBaseSwCRT == 3) then
                tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
 
         elseif (channel_option .eq. 2) then ! muskingum cunge, don't process internal lake nodes TYP=2
-               tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
-                   QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
+!              tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
+!                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
+!                  MannN(k), ChSSlp(k), Bw(k) )
+
+              CALL SUBMUSKINGCUNGE(tmpQLINK(k,2),velocity(k), k,Qup, Quc, QLINK(k,1), &
+                   QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
                    MannN(k), ChSSlp(k), Bw(k) )
+                
         else
 #ifdef HYDRO_D
                     print *, " no channel option selected"

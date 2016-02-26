@@ -334,7 +334,7 @@ module module_HYDRO_drv
                      , RT_DOMAIN(did)%nudge                                     &
 #endif
 #ifdef HYDRO_REALTIME
-		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag             & 
+		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &          
 #endif
 		     )
                  endif
@@ -827,7 +827,7 @@ module module_HYDRO_drv
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
 #endif
 #ifdef HYDRO_REALTIME
-       , rt_domain(did)%QLateral &
+       , rt_domain(did)%QLateral, rt_domain(did)%velocity &
 #endif
        , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT)
 else
