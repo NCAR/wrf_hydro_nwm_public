@@ -8308,7 +8308,7 @@ end subroutine mpp_output_chrt2
         !-- writelvelocity (dummy value for now)
 	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
         	iret = nf_inq_varid(ncid,"velocity", varid)
-         	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
+         	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), velocity)
 	endif
 #endif
 
