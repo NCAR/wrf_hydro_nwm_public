@@ -1635,6 +1635,7 @@ end module module_HYDRO_drv
 #endif
          call mpp_land_sync()
          call MPI_finalize(ierr)
+         stop
 #else
 
 #ifndef WRF_HYDRO_NUDGING

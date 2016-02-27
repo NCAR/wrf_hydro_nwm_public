@@ -4273,7 +4273,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS,ixrt,jxrt
      real,                                     intent(in) :: dt
-     real, dimension(NLINKS,2),                intent(in) :: qlink
+     real, dimension(:,:),                intent(in) :: qlink
      integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK_in
      character(len=*),          intent(in)     :: geo_finegrid_flnm
      character(len=*),                         intent(in) :: startdate
@@ -4317,7 +4317,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLINKS,ixrt,jxrt
      real,                                     intent(in) :: dt
-     real, dimension(NLINKS,2),                intent(in) :: qlink
+     real, dimension(:,:),                intent(in) :: qlink
      integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK
      character(len=*),          intent(in)     :: geo_finegrid_flnm
      character(len=*),                         intent(in) :: startdate
@@ -6117,7 +6117,7 @@ end subroutine mpp_output_chrt
 
         INTEGER, INTENT(INOUT)                       :: MAXORDER
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: MUSK, MUSX !muskingum
-        REAL, INTENT(INOUT),  DIMENSION(NLINKS,2)    :: QLINK  !channel flow
+        REAL, INTENT(INOUT),  DIMENSION(:,:)    :: QLINK  !channel flow
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: CHANLEN   !channel length
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: MannN, So !mannings N
         INTEGER, INTENT(INOUT),  DIMENSION(NLINKS)   :: LAKENODE,LINKID   ! identifies which nodes pour into which lakes
@@ -6932,7 +6932,7 @@ end subroutine mpp_output_chrt
         INTEGER, INTENT(INOUT)                   :: MAXORDER
         INTEGER, intent(out), dimension(:) :: LAKEIDA, LINKID, TO_NODE, TYPEL, ORDER 
 
-        real  :: QLINK(NLINKSL,2)
+        real,dimension(:,:)  :: QLINK
         REAL, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, latlake, lonlake
 
@@ -7052,6 +7052,7 @@ end subroutine mpp_output_chrt
         call ReachLS_decomp(tmpSo,       So     )
         call ReachLS_decomp(tmpChSSlp,   ChSSlp )
         call ReachLS_decomp(tmpBw,       Bw     )
+
 
 !       call ReachLS_decomp(tmpHRZAREA,  HRZAREA)
 !       call ReachLS_decomp(tmpLAKEMAXH, LAKEMAXH)
@@ -7183,7 +7184,7 @@ end subroutine mpp_output_chrt
 
         INTEGER, INTENT(INOUT)                       :: MAXORDER
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: MUSK, MUSX !muskingum
-        REAL, INTENT(INOUT),  DIMENSION(NLINKS,2)    :: QLINK  !channel flow
+        REAL, INTENT(INOUT),  DIMENSION(:,:)    :: QLINK  !channel flow
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: CHANLEN   !channel length
         REAL, INTENT(INOUT),  DIMENSION(NLINKS)      :: MannN, So !mannings N
         INTEGER, INTENT(INOUT),  DIMENSION(NLINKS)   :: LAKENODE,LINKID  ! identifies which nodes pour into which lakes
@@ -7452,12 +7453,13 @@ fatal_if_error = .TRUE.  !! was thinking this would be a global variable...could
 #ifdef HYDRO_D
 print*,"start read_route_link_netcdf"
 #endif
-   
+
 iRet = nf90_open(trim(route_link_file), nf90_nowrite, ncid)
 if (iRet /= nf90_noErr) then
    write(*,'("read_route_link_netcdf: Problem opening: ''", A, "''")') trim(route_link_file)
    if (fatal_IF_ERROR) call hydro_stop("read_route_link_netcdf: Problem opening file.")
 endif
+
 
 call get_1d_netcdf_int(ncid,  'link',     LINKID,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_int(ncid,  'NHDWaterbodyComID',  LAKEIDA, 'read_route_link_netcdf', .FALSE.)
@@ -8794,16 +8796,22 @@ end subroutine output_chrt2
                     tmplakeida, tmpoutlakeid, tmpTO_NODE, gLAKEIDA
         integer, allocatable, dimension(:,:) :: gtonodeout
     
-        integer,allocatable, dimension(:) ::  gto , tmpLAKELINKID
+        integer,allocatable, dimension(:) ::  gto , tmpLAKELINKID, gtoLakeId_g, gtoLakeId
 
 !       integer tmpBuf(GNLINKSL)
+        integer, dimension(nlakes) :: lakemask
+        integer ii
 
       allocate (gto(GNLINKSL))
+      allocate (gtoLakeId_g(GNLINKSL))
+      allocate (gtoLakeId(NLINKSL))
       if(my_id .eq. io_id) then
          allocate(tmpLAKELINKID(nlakes))
       else
          allocate(tmpLAKELINKID(1))
       endif
+
+      gtoLakeId_g=-999
  
       call gBcastValue(TO_NODE,gto)   
       maxNum = 0
@@ -8812,6 +8820,7 @@ end subroutine output_chrt2
           num = 0
           do k = 1, gnlinksl
              if(gto(k) .eq. LINKID(m) ) then
+                 gtoLakeId_g(k) = lakeida(m)
                  kk = kk +1
                  num = num + 1
              endif
@@ -8863,7 +8872,7 @@ end subroutine output_chrt2
                      if(LAKELINKID(i) .gt. 0) then
                          LAKELINKID(i) = -999
 #ifdef HYDRO_D
-                         write(6,*) "get rid of LAKEIDM(i) ", i, LAKEIDM(i)
+                         write(6,*) "remove the lake  LAKEIDM(i) ", i, LAKEIDM(i)
                          call flush(6)
 #endif
                      endif
@@ -8873,6 +8882,48 @@ end subroutine output_chrt2
           END DO
        END DO
 !yw        call match1dLake(LAKELINKID, NLAKES, -999) 
+
+!yw double check
+      call combine_int1d(gtoLakeId_g,gnlinksl, -999) 
+      call ReachLS_decomp(gtoLakeId_g,gtoLakeId)
+
+       lakemask = 0
+       DO k = 1, NLINKSL
+          if(LAKEIDA(k) .gt. 0) then
+             DO i = 1, NLAKES
+                if(gtoLakeId(k) .eq. LAKEIDM(i) )  then
+                    goto 992
+                endif
+             enddo
+             DO i = 1, NLAKES
+                if(LAKEIDA(k) .eq. LAKEIDM(i) )  then
+                     lakemask(i) = lakemask(i) + 1
+                      goto 992
+                endif
+             enddo
+992          continue
+          endif
+       enddo
+
+       deallocate(gtoLakeId_g,gtoLakeId)
+       call sum_int1d(lakemask, NLAKES) 
+
+       do i = 1, nlakes
+           if(lakemask(i) .gt. 1) then
+               LAKELINKID(i) = -999
+#ifdef HYDRO_D
+               if(my_id .eq. IO_id) then
+                  write(6,*) "double check remove the lake : ",LAKEIDM(i)
+                  call flush(6)
+               endif
+#endif
+           endif
+       enddo
+
+
+!end double check
+
+
        call updateLake_seqInt(LAKELINKID,nlakes,tmpLAKELINKID)
 
 !      if(my_id .eq. 0) then

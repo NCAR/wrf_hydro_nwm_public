@@ -854,7 +854,7 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 
       endif
 
-        vel =  1/n * (AREA/WP **(2./3.)) * sqrt(So)  ! average velocity in m3/s
+        vel =  (1.0/n) * (AREA/WP **(2./3.)) * sqrt(So)  ! average velocity in m3/s
 
 ! ----------------------------------------------------------------
 !END FUNCTION MUSKINGCUNGE
@@ -932,7 +932,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: So, MannN
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChSSlp,Bw  !--properties of nodes or links
         REAL                                      :: Km, X
-        REAL , INTENT(INOUT), DIMENSION(NLINKS,2) :: QLINK
+        REAL , INTENT(INOUT), DIMENSION(:,:) :: QLINK
         REAL ,  DIMENSION(NLINKS,2) :: tmpQLINK
         REAL , INTENT(INOUT), DIMENSION(NLINKS)   :: HLINK
         REAL, INTENT(IN)                          :: DT    !-- model timestep
@@ -1050,7 +1050,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 
 !   assign LQLATERAL to QLATERAL
-       call updateLinkV(LQLateral, QLateral)
+       call updateLinkV(LQLateral, QLateral(1:NLINKSL))
 
 #else
          LQLateral = 0          !-- initial lateral flow to 0 for this reach
@@ -1942,16 +1942,16 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
         INTEGER, INTENT(IN), DIMENSION(:)         :: ORDER, TYPEL !--link
-        INTEGER, INTENT(IN), DIMENSION(nsize)     :: TO_NODE, FROM_NODE
-        INTEGER, INTENT(IN), DIMENSION(nsize)     :: CHANXI, CHANYJ
-        REAL, INTENT(IN), DIMENSION(nsize)        :: MUSK, MUSX
-        REAL, INTENT(IN), DIMENSION(nsize)        :: CHANLEN
-        REAL, INTENT(IN), DIMENSION(nsize)        :: So, MannN
-        REAL, INTENT(IN), DIMENSION(nsize)        :: ChSSlp,Bw  !--properties of nodes or links
+        INTEGER, INTENT(IN), DIMENSION(:)     :: TO_NODE, FROM_NODE
+        INTEGER, INTENT(IN), DIMENSION(:)     :: CHANXI, CHANYJ
+        REAL, INTENT(IN), DIMENSION(:)        :: MUSK, MUSX
+        REAL, INTENT(IN), DIMENSION(:)        :: CHANLEN
+        REAL, INTENT(IN), DIMENSION(:)        :: So, MannN
+        REAL, INTENT(IN), DIMENSION(:)        :: ChSSlp,Bw  !--properties of nodes or links
         REAL                                      :: Km, X
-        REAL , INTENT(INOUT), DIMENSION(nsize,2)  :: QLINK
+        REAL , INTENT(INOUT), DIMENSION(:,:)  :: QLINK
 #ifdef WRF_HYDRO_NUDGING
-        real, intent(out),    dimension(nsize)    :: nudge
+        real, intent(out),    dimension(:)    :: nudge
 #endif
 
         REAL ,  DIMENSION(NLINKSL,2) :: tmpQLINK
@@ -1960,7 +1960,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         REAL, INTENT(INOUT)                       :: DTCT
         real                                      :: minDTCT !BF minimum routing timestep
         INTEGER, INTENT(IN)                       :: MAXORDER
-        REAL , INTENT(IN), DIMENSION(nsize)   :: node_area
+        REAL , INTENT(IN), DIMENSION(:)   :: node_area
 
 !DJG GW-chan coupling variables...
         REAL, DIMENSION(NLINKS)                   :: dzGwChanHead
@@ -1969,18 +1969,18 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
         !-- lake params
 
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRH    !--  lake depth  (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
-        INTEGER, INTENT(IN), DIMENSION(NLAKES)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
+        REAL, INTENT(IN), DIMENSION(:)       :: HRZAREA  !-- horizontal area (km^2)
+        REAL, INTENT(IN), DIMENSION(:)       :: LAKEMAXH !-- maximum lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(:)       :: WEIRH    !--  lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(:)       :: WEIRC    !-- weir coefficient
+        REAL, INTENT(IN), DIMENSION(:)       :: WEIRL    !-- weir length (m)
+        REAL, INTENT(IN), DIMENSION(:)       :: ORIFICEC !-- orrifice coefficient
+        REAL, INTENT(IN), DIMENSION(:)       :: ORIFICEA !-- orrifice area (m^2)
+        REAL, INTENT(IN), DIMENSION(:)       :: ORIFICEE !-- orrifce elevation (m)
+        INTEGER, INTENT(IN), DIMENSION(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
-        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
-        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
+        REAL, INTENT(INOUT), DIMENSION(:)    :: RESHT    !-- reservoir height (m)
+        REAL, INTENT(INOUT), DIMENSION(:)    :: QLAKEI   !-- lake inflow (cms)
         REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
 
@@ -1989,7 +1989,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
         INTEGER, INTENT(IN), DIMENSION(:)   :: LAKEIDA  !--  (don't need) NHDPLUS lakeid for all lakes in domain
         INTEGER, INTENT(IN), DIMENSION(:)   :: LAKEIDX  !--  the sequential index of the lakes id by com id
 
-        REAL, DIMENSION(NLINKSL)                  :: QLateral, velocity !--lateral flow
+#ifdef HYDRO_REALTIME
+        REAL, DIMENSION(:)                        :: QLateral, velocity !--lateral flow
+#else
+        REAL, DIMENSION(nsize)                        :: QLateral, velocity !--lateral flow
+#endif
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
         REAL, DIMENSION(NLAKES)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
         integer :: nsize
@@ -2003,7 +2007,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         REAL ,DIMENSION(NLINKS)                          :: CD    !-- critical depth
         real, DIMENSION(IXRT,JXRT)                       :: tmp
         real, dimension(nlinks)                          :: tmp2
-        REAL, INTENT(INOUT), DIMENSION(NLINKS)           :: CVOL
+        REAL, INTENT(INOUT), DIMENSION(:)           :: CVOL
 
 #ifdef MPP_LAND
         real*8,  dimension(LNLINKSL) :: LQLateral
@@ -2011,7 +2015,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
         real*8,  dimension(LNLINKSL) :: tmpLQLateral
         real,  dimension(NLINKSL)    :: tmpQLateral
 #endif
-        integer nlinks_index(nlinks)
+        integer nlinks_index(:)
         integer  iyw, yw_mpp_nlinks, mpp_nlinks
         real     ywtmp(ixrt,jxrt)
         integer LNLINKSL
@@ -2121,7 +2125,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
 #ifdef MPP_LAND
-       call updateLinkV(LQLateral, QLateral)
+       call updateLinkV(LQLateral, QLateral(1:NLINKSL))
 #else
        call hydro_stop("fatal error: NHDPlus only works for parallel now.")
        QLateral = LQLateral
@@ -2162,6 +2166,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
        endif
 #endif
 
+
        DO k = 1,NLINKSL
 
         Quc  = 0
@@ -2198,7 +2203,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
         if(TYPEL(k) .eq. 1 ) then   !--link is a reservoir
              
              lakeid = LAKEIDX(k)
-!            goto 105
            if(lakeid .ge. 0) then
              CALL LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
                QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
@@ -2265,6 +2269,24 @@ gwOption:   if(gwBaseSwCRT == 3) then
    if (KT .eq. 1) KT = KT + 1
 
  END SUBROUTINE drive_CHANNEL_RSL
+
 ! ----------------------------------------------------------------
 
 END MODULE module_channel_routing
+
+ subroutine checkReach(ii,  inVar)
+   use module_mpp_land
+   use module_RT_data, only: rt_domain
+   use MODULE_mpp_ReachLS, only : updatelinkv,                   &
+                                 ReachLS_write_io, gbcastvalue, &
+                                 gbcastreal2
+   implicit none
+   integer :: ii
+   real,dimension(rt_domain(1)%nlinksl) :: inVar
+   real:: g_var(rt_domain(1)%gnlinksl)
+   call ReachLS_write_io(inVar, g_var)
+   if(my_id .eq. io_id) then
+      write(ii,*) g_var
+      call flush(ii)
+   endif
+ end subroutine checkReach
