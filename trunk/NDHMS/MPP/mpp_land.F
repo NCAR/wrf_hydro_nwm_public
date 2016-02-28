@@ -1927,6 +1927,33 @@ MODULE MODULE_MPP_LAND
        return
     end subroutine sum_int1d
 
+    subroutine combine_int1d(vin,nsize, flag)
+       implicit none
+       integer nsize,i,j,tag,ierr, flag, k
+       integer, dimension(nsize):: vin,recv
+       tag = 319
+       if(nsize .le. 0) return
+       if(my_id .eq. IO_id) then
+          do i = 0, numprocs - 1
+             if(i .ne. my_id) then
+               call mpi_recv(recv,nsize,MPI_INTEGER,i,  &
+                    tag,MPI_COMM_WORLD,mpp_status,ierr)
+               do k = 1, nsize
+                  if(recv(k) .ne. flag) then
+                     vin(k) = recv(k)
+                  endif
+               enddo
+             endif
+          end do
+       else
+             call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
+                  tag,MPI_COMM_WORLD,ierr)
+       endif
+       call mpp_land_bcast_int1d(vin)
+       return
+    end subroutine combine_int1d
+
+
 
     subroutine sum_real8(vin,nsize)
        implicit none
