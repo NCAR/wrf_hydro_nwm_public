@@ -838,15 +838,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
          endif
       endif
 
-!     MUSKINGCUNGE =  h 
-!yw      MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
-
 !yw added for test
-
       if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
         qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
-
 
       else
 !       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
@@ -854,7 +849,9 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 
       endif
 
-        vel =  (1.0/n) * (AREA/WP **(2./3.)) * sqrt(So)  ! average velocity in m3/s
+      Tw = Bw + (2*z*h)
+      R = (h*(Bw + Tw) / 2) / (Bw + 2*(((Tw - Bw) / 2)**2 + h**2)**0.5)    
+      vel =  (1./n) * (R **(2./3.)) * sqrt(So)  ! average velocity in m/s
 
 ! ----------------------------------------------------------------
 !END FUNCTION MUSKINGCUNGE
