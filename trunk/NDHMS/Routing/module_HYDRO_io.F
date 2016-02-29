@@ -8909,7 +8909,7 @@ end subroutine output_chrt2
        call sum_int1d(lakemask, NLAKES) 
 
        do i = 1, nlakes
-           if(lakemask(i) .gt. 1) then
+           if(lakemask(i) .ne. 1) then
                LAKELINKID(i) = -999
 #ifdef HYDRO_D
                if(my_id .eq. IO_id) then
