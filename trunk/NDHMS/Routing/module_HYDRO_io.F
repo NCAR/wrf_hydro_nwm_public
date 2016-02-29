@@ -7542,7 +7542,7 @@ if (iRet /= nf90_noErr) then
    if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem opening file.")
 endif
 
-call get_1d_netcdf_int(ncid,  'lake',     LAKEIDM,   'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'lake_id',     LAKEIDM,   'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirH',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
@@ -8431,7 +8431,7 @@ end subroutine output_chrt2
 
        if(routeLakeNetcdf) then
           write(6,'("getting NLAKES from: ''", A, "''")') trim(route_lake_f)
-          NLAKES = get_netcdf_dim(trim(route_lake_f), 'lake',  &
+          NLAKES = get_netcdf_dim(trim(route_lake_f), 'nlakes',  &
                                    'read_NSIMLAKES', fatalErr=.true.)
         else
 !yw for IOC reach based routing, if netcdf lake file is not set from the hydro.namelist, 
