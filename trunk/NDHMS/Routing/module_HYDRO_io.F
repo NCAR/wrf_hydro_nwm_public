@@ -8948,6 +8948,113 @@ end subroutine output_chrt2
     end subroutine nhdLakeMap_scan
 #endif
   
+!ADCHANGE: New output lake types routine
+    subroutine output_lake_types( inNLINKS, inLINKID, inTYPEL )
+
+#ifdef MPP_LAND
+    use module_mpp_land
+#endif
+
+    implicit none
+#include <netcdf.inc>
+
+    integer, dimension(:),  intent(in) :: inLINKID, inTYPEL
+    integer, intent(in) :: inNLINKS
+
+    integer            :: iret
+    integer            :: ncid, varid
+    integer, parameter :: did=1
+    integer            :: linkdim
+    character(len=256), parameter :: output_flnm = "LAKE_TYPES.nc"
+
+    integer, allocatable, dimension(:) :: linkId, typeL
+
+#ifdef MPP_LAND
+
+    if(my_id .eq. io_id) then
+       allocate( linkId(inNLINKS)  )
+       allocate( typeL(inNLINKS)   )
+    else
+       allocate(linkId(1), typeL(1))
+    end if
+
+    call mpp_land_sync()
+    call ReachLS_write_io(inLINKID, linkId)
+    call ReachLS_write_io(inTYPEL, typeL)
+
+#else
+
+    allocate( linkId(inNLINKS) )
+    allocate( typeL(inNLINKS)  )
+
+    linkId    = inLINKID
+    typeL     = inTYPEL
+
+#endif
+
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
+
+       ! Create the channel connectivity file
+#ifdef HYDRO_D
+       print*,'Lakes: output_flnm = "'//trim(output_flnm)//'"'
+       flush(6)
+#endif
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       write(6,*) "using large netcdf file for LAKE TYPES"
+       iret = nf_create(trim(output_flnm), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       write(6,*) "using normal netcdf file for LAKE TYPES"
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+
+       if (iret /= 0) then
+          print*,"Lakes: Problem nf_create"
+          call hydro_finish("output_lake_types")
+       endif
+
+       iret = nf_def_dim(ncid, "link", inNLINKS, linkdim)
+
+       !-- link  id
+       iret = nf_def_var(ncid, "LINKID", NF_INT, 1, (/linkdim/), varid)
+       iret = nf_put_att_text(ncid,varid,'long_name',10,'Link ID')
+
+       !- lake reach type, var
+       iret = nf_def_var(ncid, "TYPEL", NF_INT, 1, (/linkdim/), varid)
+       iret = nf_put_att_text(ncid,varid,'long_name',15,'Lake reach type')
+
+       iret = nf_enddef(ncid)
+
+       !-- write id
+       iret = nf_inq_varid(ncid,"LINKID", varid)
+       iret = nf_put_vara_int(ncid, varid, (/1/), (/inNLINKS/), linkId)
+
+       !-- write type
+       iret = nf_inq_varid(ncid,"TYPEL", varid)
+       iret = nf_put_vara_int(ncid, varid, (/1/), (/inNLINKS/), typeL)
+
+       iret = nf_close(ncid)
+
+#ifdef MPP_LAND
+    endif
+#endif
+
+    deallocate(linkId, typeL)
+
+#ifdef MPP_LAND
+    if(my_id .eq. io_id) then
+#endif
+#ifdef HYDRO_D
+    write(6,*) "end of output_lake_types"
+    flush(6)
+#endif
+#ifdef MPP_LAND
+    endif
+#endif
+
+end subroutine output_lake_types
 
 
 end module module_HYDRO_io
