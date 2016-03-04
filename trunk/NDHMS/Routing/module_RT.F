@@ -533,9 +533,6 @@ use module_noah_chan_param_init_rt
 use module_namelist, only:  nlst_rt
 use module_RT_data, only: rt_domain
 use module_gw_gw2d_data, only: gw2d
-#ifdef HYDRO_D
-use module_HYDRO_io, only: output_lake_types
-#endif
 
 #ifdef OUTPUT_CHAN_CONN
 use module_nudging_io,        only: output_chan_connectivity
@@ -621,10 +618,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 #endif
                ,rt_domain(did)%gages, rt_domain(did)%gageMiss )
 
-!ADCHANGE: Add lake reach output
-#ifdef HYDRO_D
-       call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
-#endif
 
 #ifdef OUTPUT_CHAN_CONN      
 #ifdef MPP_LAND
