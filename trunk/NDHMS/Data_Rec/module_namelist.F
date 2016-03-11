@@ -258,6 +258,16 @@ CONTAINS
   call mpp_land_bcast_log1(temporalPersistence)
 #endif 
 #endif /* MPP_LAND */
+
+
+ 
+! run Rapid 
+    if(channel_option .eq. 4) then
+       CHANRTSWCRT = 0
+       OVRTSWCRT = 0
+       SUBRTSWCRT = 0
+    endif
+
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
     nlst%output_gw      = output_gw
     nlst%outlake      = outlake

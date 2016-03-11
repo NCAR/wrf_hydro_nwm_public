@@ -652,6 +652,10 @@ end subroutine get_albedo12m_netcdf
        print *, "Channel Option in Routedim is ", channel_option
 #endif
 
+
+        if (channel_option .eq. 4) return  ! it will run Rapid
+
+
 !-- will always read channel grid       IF(channel_option.eq.3) then  !get maxnodes and links from grid
 
          var_name = "CHANNELGRID"
@@ -5300,6 +5304,7 @@ end subroutine mpp_output_chrt
         integer :: ywcount
 
 
+
         if(my_id .eq. IO_id) then
            allocate(g_CH_NETLNK(g_IXRT,g_JXRT))
            g_CH_NETLNK = -9999
@@ -5328,6 +5333,7 @@ end subroutine mpp_output_chrt
            end do
         end do
         NLINKS = ywcount
+
 
 !ywcheck
 !        CH_NETLNK = GCH_NETLNK

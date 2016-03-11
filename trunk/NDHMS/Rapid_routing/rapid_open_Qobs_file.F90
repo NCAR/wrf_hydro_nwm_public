@@ -1,38 +1,43 @@
 !*******************************************************************************
-!Subroutine - rapid_read_namelist
+!Subroutine - rapid_open_Qobs
 !*******************************************************************************
-subroutine rapid_read_namelist
+subroutine rapid_open_Qobs_file(Qobs_file) 
 
 !Purpose:
-!This subroutine allows to read the RAPID namelist and hence to run the model
-!multiple times without ever have to recompile.  Some information on the options
-!used is also printed in the stdout.
+!Open Qobs_file from Fortran.
 !Author: 
-!Cedric H. David, 2011-2015. 
+!Cedric H. David, 2013-2015.
 
 
 !*******************************************************************************
-!Declaration of variables
+!Global variables
 !*******************************************************************************
 use rapid_var, only :                                                          &
-                     NL_namelist,namelist_file
-
+                   rank
 
 implicit none
 
 
 !*******************************************************************************
-!Read namelist file 
+!Includes
 !*******************************************************************************
-open(88,file=namelist_file,status='old',form='formatted')
-read(88, NL_namelist)
-close(88)
 
 
 !*******************************************************************************
-!Optional prints what was read 
+!Intent (in/out), and local variables 
 !*******************************************************************************
-!print *, namelist_file
+character(len=100), intent(in):: Qobs_file
 
 
-end subroutine rapid_read_namelist
+!*******************************************************************************
+!Open file
+!*******************************************************************************
+if (rank==0) open(33,file=Qobs_file,status='old')
+
+
+!*******************************************************************************
+!End 
+!*******************************************************************************
+
+end subroutine rapid_open_Qobs_file
+
