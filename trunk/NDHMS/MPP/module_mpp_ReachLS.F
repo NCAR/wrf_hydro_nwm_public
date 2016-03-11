@@ -103,7 +103,7 @@ MODULE MODULE_mpp_ReachLS
               call mpi_send(LLINKIDINDX,LLINKLEN,MPI_INTEGER, IO_id,     &
                     tag,MPI_COMM_WORLD,ierr)
               tag = 103
-              call mpi_send(LinkV,LLINKLEN,MPI_DOUBLE, IO_id,     &
+              call mpi_send(LinkV,LLINKLEN,MPI_DOUBLE_PRECISION, IO_id,     &
                    tag,MPI_COMM_WORLD,ierr)
           endif
       else   
@@ -120,7 +120,7 @@ MODULE MODULE_mpp_ReachLS
                             tag,MPI_COMM_WORLD,mpp_status,ierr)
                       tag = 103
                       call mpi_recv(tmpBuf,lsize,&
-                            MPI_DOUBLE,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                            MPI_DOUBLE_PRECISION,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
                       do k = 1, lsize
                           gLinkV_r8(lindex(k)) = gLinkV_r8(lindex(k)) + tmpBuf(k)
                       end do
@@ -218,7 +218,7 @@ MODULE MODULE_mpp_ReachLS
 
      if(my_id .ne. IO_id) then
           tag = 102
-          call mpi_send(gLinkV,gnlinksl,MPI_DOUBLE, IO_id,     &
+          call mpi_send(gLinkV,gnlinksl,MPI_DOUBLE_PRECISION, IO_id,     &
                 tag,MPI_COMM_WORLD,ierr)
       else
           gLinkV_r = gLinkV 
@@ -226,7 +226,7 @@ MODULE MODULE_mpp_ReachLS
             if(i .ne. IO_id) then
                tag = 102
                call mpi_recv(gLinkV,gnlinksl,&
-                   MPI_DOUBLE,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                   MPI_DOUBLE_PRECISION,i,tag,MPI_COMM_WORLD,mpp_status,ierr)
                gLinkV_r = gLinkV_r + gLinkV
             end if
           end do
@@ -994,7 +994,7 @@ MODULE MODULE_mpp_ReachLS
           tag = 72
           if(lnsizes(my_id + 1) .gt. 0) then
              call mpi_recv(bufid,lnsizes(my_id + 1),&
-                   MPI_DOUBLE,io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                   MPI_DOUBLE_PRECISION,io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
           endif
       else
           do i = 0, numprocs - 1
@@ -1002,7 +1002,7 @@ MODULE MODULE_mpp_ReachLS
                tag = 72
                if(lnsizes(i+1) .gt. 0) then
                   call mpi_send(buf(istart(i+1):istart(i+1)+lnsizes(i+1)-1),  &
-                      lnsizes(i+1),MPI_DOUBLE,i, tag,MPI_COMM_WORLD,ierr)
+                      lnsizes(i+1),MPI_DOUBLE_PRECISION,i, tag,MPI_COMM_WORLD,ierr)
                endif
             else
                 if(lnsizes(my_id + 1) .gt. 0) then

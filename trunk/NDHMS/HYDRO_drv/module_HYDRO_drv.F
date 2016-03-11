@@ -341,6 +341,15 @@ module module_HYDRO_drv
 
               endif
 
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
+          write(6,*) "before call output_chrt"
+          call flush(6)
+#else
+          write(78,*) "before call output_chrt"
+#endif
+#endif
+
       
 #ifdef MPP_LAND
               if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
@@ -588,6 +597,7 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
+
 		! step 5) river channel physics
 		  call driveChannelRouting(did)
 #ifdef HYDRO_D

@@ -1744,7 +1744,7 @@ end subroutine get_albedo12m_netcdf
 #endif
 #endif
        if (iret /= 0) then
-         call hydro_finish("In output_rt() - Problem nf_create")
+         call hydro_stop("In output_rt() - Problem nf_create")
        endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
@@ -3097,18 +3097,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
-#ifdef HYDRO_D
-       write(6,*) "iret 2.1,  ", iret, stationdim
-#endif
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
-#ifdef HYDRO_D
-       write(6,*) "iret 2.2", iret
-#endif
-        iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
-#ifdef HYDRO_D
-       write(6,*) "iret 2.3", iret
-#endif
 
+        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
+        iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
 
       !- station location definition obs,  lat
         iret = nf_def_var(ncid2,"latitude",NF_FLOAT, 1, (/obsdim/), varid)
@@ -3716,6 +3707,8 @@ end subroutine output_chrt
         call ReachLS_write_io(accStrmvolrt, g_accStrmvolrt)
         call ReachLS_write_io(accBucket, g_accBucket)
 #endif
+        call ReachLS_write_io(STRMFRXSTPTS, g_STRMFRXSTPTS)
+        call ReachLS_write_io(hlink, g_hlink)
 
      else
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
@@ -3724,10 +3717,10 @@ end subroutine output_chrt
         call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
         call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
         call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
+        call write_chanel_int(STRMFRXSTPTS,map_l2g,gnlinks,nlinks,g_STRMFRXSTPTS)
+        call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
      endif
 
-     call write_chanel_int(STRMFRXSTPTS,map_l2g,gnlinks,nlinks,g_STRMFRXSTPTS)
-     call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
 
      if(my_id .eq. IO_id) then
        call output_chrt(igrid, split_output_count, GNLINKS, g_ORDER,                &
@@ -7950,7 +7943,9 @@ end subroutine readBucket_nhd
 	call ReachLS_write_io(velocity, g_velocity)
 #endif
 
+        call  ReachLS_write_io(hlink,g_hlink)
      else
+
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
         call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
         call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
@@ -7958,10 +7953,8 @@ end subroutine readBucket_nhd
         call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
         call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
         call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
+        call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
      endif
-
-     !yw call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
-     call  ReachLS_write_io(hlink,g_hlink)
 
      if(my_id .eq. IO_id) then
        call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
@@ -8094,6 +8087,7 @@ end subroutine mpp_output_chrt2
      else
         nstations = NLINKS
      endif
+
 
        if(split_output_count .ne. 1 ) then
             write(6,*) "WARNING: split_output_count need to be 1 for this output option."
@@ -8516,7 +8510,6 @@ end subroutine output_chrt2
 !     close(61)
 !     close(62)
 !     close(63)
-!     call hydro_finish()
 
 !   write(60,*) TYPEL
 !   write(63,*) LAKELINKID, LAKEIDX
@@ -8528,7 +8521,6 @@ end subroutine output_chrt2
 !   close(62)
 !   close(63)
 !   close(64)
-!   call hydro_finish()
 
 
     end subroutine nhdLakeMap
@@ -8756,7 +8748,6 @@ end subroutine output_chrt2
 !       write(73,*) tmpBuf
 !       call flush(73)
 !     endif
-!     call hydro_finish()
 
 !     DO i = 1, NLINKSL
 !        write(61,*) i,LAKEIDX(i), TYPEL(i)
@@ -8779,7 +8770,6 @@ end subroutine output_chrt2
 !   close(62)
 !   close(63)
 !   close(64)
-!   call hydro_finish()
 
     end subroutine nhdLakeMap_mpp
 
@@ -9012,7 +9002,7 @@ end subroutine output_chrt2
 
        if (iret /= 0) then
           print*,"Lakes: Problem nf_create"
-          call hydro_finish("output_lake_types")
+          call hydro_stop("output_lake_types")
        endif
 
        iret = nf_def_dim(ncid, "link", inNLINKS, linkdim)
