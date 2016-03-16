@@ -3096,18 +3096,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
-#ifdef HYDRO_D
-       write(6,*) "iret 2.1,  ", iret, stationdim
-#endif
         iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
-#ifdef HYDRO_D
-       write(6,*) "iret 2.2", iret
-#endif
         iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
-#ifdef HYDRO_D
-       write(6,*) "iret 2.3", iret
-#endif
-
 
       !- station location definition obs,  lat
         iret = nf_def_var(ncid2,"latitude",NF_FLOAT, 1, (/obsdim/), varid)
