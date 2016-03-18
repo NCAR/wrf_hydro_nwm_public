@@ -2066,8 +2066,9 @@ subroutine lsm_rst_bi_out()
    if(my_id .ge. i0 .and. my_id .lt. ie) then
 #endif
 
+#ifndef NCEP_WCOSS
   write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13),igrid
-
+#endif
   iunit =56 
 
 #ifdef MPP_LAND
