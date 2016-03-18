@@ -195,7 +195,8 @@ CONTAINS
   if(RESTART_FILE .eq. "") rst_typ = 0
 
   if(rst_bi_out .eq. 1) then
-     inquire(file='restart', exist=dir_e)
+!     inquire(directory='restart', exist=dir_e)
+     inquire(file='restart/.', exist=dir_e)
      if(.not. dir_e) then
         call system('mkdir restart')
      endif

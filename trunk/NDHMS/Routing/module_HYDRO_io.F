@@ -5329,12 +5329,18 @@ end subroutine mpp_output_chrt
            character(len=*) varName
            real, dimension(ix,jx):: inVar
 #ifdef MPP_LAND
-           real, dimension(global_rt_nx, global_rt_ny):: varTmp
+           real, allocatable, dimension(:,:) :: varTmp 
+           if(my_id .eq. io_id ) then
+               allocate(varTmp(global_rt_nx, global_rt_ny))
+           else
+               allocate(varTmp(1,1))
+           endif
            call write_IO_rt_real(inVar,varTmp) 
            if(my_id .eq. IO_id) then
               iret = nf_inq_varid(ncid,varName, varid)
               iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_rt_nx,global_rt_ny/),varTmp)
            endif
+           deallocate(varTmp)
 #else
            iret = nf_inq_varid(ncid,varName, varid)
            if(iret .eq. 0) then
@@ -5881,7 +5887,13 @@ end subroutine mpp_output_chrt
          character(len=*) :: varStr
 
 #ifdef MPP_LAND
-         real,dimension(global_rt_nx,global_rt_ny) :: xtmp
+         real,allocatable, dimension(:,:) :: xtmp
+!yw         real,dimension(global_rt_nx,global_rt_ny) :: xtmp
+         if(my_id .eq. io_id ) then
+             allocate(xtmp(global_rt_nx,global_rt_ny))
+         else
+             allocate(xtmp(1,1))
+         endif
          xtmp = 0.0
 #endif
             iret = nf_inq_varid(ncid,  trim(varStr),  varid)
@@ -5902,6 +5914,9 @@ end subroutine mpp_output_chrt
             iret = nf_get_var_real(ncid, varid, xtmp)
          endif
          call decompose_RT_real(xtmp,var,global_rt_nx,global_rt_ny,ix,jx)
+
+         deallocate(xtmp)
+
 #else
             iret = nf_get_var_real(ncid, varid, var)
 #endif
