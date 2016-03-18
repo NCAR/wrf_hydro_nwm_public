@@ -2604,7 +2604,7 @@
                        !IF (SMC(i,j,KRT).EQ.sice(i,j,KRT)) THEN
                        IF (ABS(SMC(i,j,KRT) - sice(i,j,KRT)) .LE. 0.00001) THEN
                                print *, "SMC = SICE, soil layer totally frozen, proceeding..."
-			       SMCRT(IXXRT,JYYRT,KRT) = 0.0
+			       SMCRT(IXXRT,JYYRT,KRT) = 0.001
 			       sice(i,j,KRT) = SMC(i,j,KRT)
                        ELSE
                                call hydro_stop("In disaggregateDomain() - SMCRT depleted")

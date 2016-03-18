@@ -1076,11 +1076,19 @@ endif
                       call hydro_stop("In module_HYDRO_drv.F aggregateDomain() "// &
                                       "- Error negative SH2OX")
                     END IF
-                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
+
+		    IF ( RT_DOMAIN(did)%SH2OX(I,J,KRT) .gt. 0 ) THEN
+                    	RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
                                  = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
                                  / RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                    ELSE
+#ifdef HYDRO_D
+                         print *, "Error zero SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#endif
+                         RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = 0.0
+                    ENDIF
 !?yw
-                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = max(1.0E-30, RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT))
+                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = max(1.0E-05, RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT))
                   end do
 
                 end do
