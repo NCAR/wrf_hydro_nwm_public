@@ -129,18 +129,18 @@ CONTAINS
        if(IO_id .eq. my_id) then
 #endif
 #ifndef NCEP_WCOSS
-          open(30, file="hydro.namelist", form="FORMATTED")
+          open(12, file="hydro.namelist", form="FORMATTED")
 #else
-          open(30, form="FORMATTED")
+          open(12, form="FORMATTED")
 #endif
-          read(30, HYDRO_nlist, iostat=ierr)
+          read(12, HYDRO_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst")
 
 #ifdef WRF_HYDRO_NUDGING          
-          read(30, NUDGING_nlist, iostat=ierr)
+          read(12, NUDGING_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
 #endif
-          close(30)
+          close(12)
 
 #ifdef MPP_LAND
        endif
