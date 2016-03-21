@@ -129,29 +129,18 @@ CONTAINS
        if(IO_id .eq. my_id) then
 #endif
 #ifndef NCEP_WCOSS
-          open(30, file="hydro.namelist", form="FORMATTED")
-          read(30, HYDRO_nlist, iostat=ierr)
+          open(12, file="hydro.namelist", form="FORMATTED")
 #else
           open(12, form="FORMATTED")
-          read(12, HYDRO_nlist, iostat=ierr)
 #endif
+          read(12, HYDRO_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst")
 
 #ifdef WRF_HYDRO_NUDGING          
-#ifndef NCEP_WCOSS
-          read(30, NUDGING_nlist, iostat=ierr)
-#else
           read(12, NUDGING_nlist, iostat=ierr)
-#endif
           if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
 #endif
-
-#ifndef NCEP_WCOSS
-          close(30)
-#else
           close(12)
-#endif
-          if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
 
 #ifdef MPP_LAND
        endif
@@ -206,7 +195,8 @@ CONTAINS
   if(RESTART_FILE .eq. "") rst_typ = 0
 
   if(rst_bi_out .eq. 1) then
-     inquire(file='restart', exist=dir_e)
+!     inquire(directory='restart', exist=dir_e)
+     inquire(file='restart/.', exist=dir_e)
      if(.not. dir_e) then
         call system('mkdir restart')
      endif

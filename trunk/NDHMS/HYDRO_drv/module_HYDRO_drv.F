@@ -341,15 +341,6 @@ module module_HYDRO_drv
 
               endif
 
-#ifdef HYDRO_D
-#ifndef NCEP_WCOSS
-          write(6,*) "before call output_chrt"
-          call flush(6)
-#else
-          write(78,*) "before call output_chrt"
-#endif
-#endif
-
       
 #ifdef MPP_LAND
               if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
@@ -597,7 +588,6 @@ module module_HYDRO_drv
 #ifdef HYDRO_D
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
-
 		! step 5) river channel physics
 		  call driveChannelRouting(did)
 #ifdef HYDRO_D
@@ -1086,11 +1076,19 @@ endif
                       call hydro_stop("In module_HYDRO_drv.F aggregateDomain() "// &
                                       "- Error negative SH2OX")
                     END IF
-                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
+
+		    IF ( RT_DOMAIN(did)%SH2OX(I,J,KRT) .gt. 0 ) THEN
+                    	RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
                                  = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
                                  / RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                    ELSE
+#ifdef HYDRO_D
+                         print *, "Error zero SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+#endif
+                         RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = 0.0
+                    ENDIF
 !?yw
-                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = max(1.0E-30, RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT))
+                    RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = max(1.0E-05, RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT))
                   end do
 
                 end do
@@ -1426,8 +1424,6 @@ endif
 
 
        call HYDRO_rst_in(did)
-
-
 
 #ifdef HYDRO_REALTIME
        call HYDRO_out(did)
