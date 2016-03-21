@@ -54,10 +54,7 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 # Dependencies:
 #
 
-main_hrldas_driver.o:	$(OBJS_NoahMP) \
-		        ../../../nudging/module_nudging_utils.o \
-		        ../../../nudging/module_stream_nudging.o \
-			../../../MPP/mpp_land.o
+main_hrldas_driver.o:	$(OBJS_NoahMP) 
 $(OBJS_NoahMP):	module_hrldas_netcdf_io.o
 
 # This command cleans up object files, etc.

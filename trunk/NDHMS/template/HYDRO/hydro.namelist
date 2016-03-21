@@ -92,7 +92,7 @@
 
 !Switch to activate channel routing:
  CHANRTSWCRT = 1
-!Specify channel routing option: 1=Muskingam-reach, 2=Musk.-Cunge-reach, 3=Diff.Wave-gridded
+!Specify channel routing option: 1=Muskingam-reach, 2=Musk.-Cunge-reach, 3=Diff.Wave-gridded, 4=Rapid routing.
  channel_option = 2
 
 !Specify the reach file for reach-based routing options...

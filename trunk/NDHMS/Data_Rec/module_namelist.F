@@ -195,11 +195,12 @@ CONTAINS
   if(RESTART_FILE .eq. "") rst_typ = 0
 
   if(rst_bi_out .eq. 1) then
+! This part works for intel not pgi
 !     inquire(directory='restart', exist=dir_e)
-     inquire(file='restart/.', exist=dir_e)
-     if(.not. dir_e) then
-        call system('mkdir restart')
-     endif
+      inquire(file='restart/.', exist=dir_e)
+      if(.not. dir_e) then
+         call system('mkdir restart')
+      endif
   endif
 
 
@@ -248,6 +249,16 @@ CONTAINS
   call mpp_land_bcast_log1(temporalPersistence)
 #endif 
 #endif /* MPP_LAND */
+
+
+ 
+! run Rapid 
+    if(channel_option .eq. 4) then
+       CHANRTSWCRT = 0
+       OVRTSWCRT = 0
+       SUBRTSWCRT = 0
+    endif
+
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
     nlst%output_gw      = output_gw
     nlst%outlake      = outlake

@@ -19,7 +19,7 @@ setenv HYDRO_D 1
 setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
 
 ### running in REALTIME mode (with reduced output).
-setenv HYDRO_REALTIME 1
+# setenv HYDRO_REALTIME 1
 
 ### use streamflow nudging?
 # setenv WRF_HYDRO_NUDGING 0
