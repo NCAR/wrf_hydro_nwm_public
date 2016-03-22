@@ -192,7 +192,6 @@ module module_HYDRO_drv
         kt = rt_domain(did)%his_out_counts
      endif
 
-
 ! jump the ouput for the initial time when it has restart file from routing.
    rtflag = -99
 #ifdef MPP_LAND
@@ -1425,17 +1424,7 @@ endif
 
        call HYDRO_rst_in(did)
 
-#ifdef HYDRO_REALTIME
        call HYDRO_out(did)
-#else
-  if (trim(nlst_rt(did)%restart_file) == "") then
-! output at the initial time
-         call HYDRO_out(did)
-         return
-  endif
-#endif
-
-
 
       end subroutine HYDRO_ini
 
