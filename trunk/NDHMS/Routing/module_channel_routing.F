@@ -2024,6 +2024,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifndef HYDRO_REALTIME
         real*8,  dimension(NLINKS) :: tmpLQLateral
         real,  dimension(NLINKSL) :: tmpQLateral
+        real,  dimension(NLINKSL) :: LQLateral
 #endif
 #endif
         integer flag
@@ -2090,7 +2091,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
              end do
         end do
 #ifndef HYDRO_REALTIME
+#ifdef MPP_LAND
         call updateLinkV(tmpLQLateral, tmpQLateral)
+#endif
         if(NLINKSL .gt. 0) then
             accLndRunOff(1:NLINKSL) = accLndRunOff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
         endif
@@ -2113,7 +2116,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
               end do
         end do
 #ifndef HYDRO_REALTIME
+#ifdef MPP_LAND
         call updateLinkV(tmpLQLateral, tmpQLateral)
+#endif
         if(NLINKSL .gt. 0) then
             accStrmvolrt(1:NLINKSL) = accStrmvolrt(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
         endif
@@ -2234,9 +2239,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
        END DO        !--k links
 
+#ifdef MPP_LAND
        call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
        call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
        call updateLake_seq(RESHT,nlakes,tmpRESHT)
+#endif
 
        do k = 1, NLINKSL !tmpQLINK?
           if(TYPEL(k) .ne. 2) then !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
@@ -2271,6 +2278,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 END MODULE module_channel_routing
 
+#ifdef MPP_LAND
  subroutine checkReach(ii,  inVar)
    use module_mpp_land
    use module_RT_data, only: rt_domain
@@ -2287,3 +2295,4 @@ END MODULE module_channel_routing
       call flush(ii)
    endif
  end subroutine checkReach
+#endif

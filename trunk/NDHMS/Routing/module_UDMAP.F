@@ -37,6 +37,10 @@ use MODULE_mpp_ReachLS, only : updatelinkv, ReachLS_write_io, com_write1dInt, &
 
 implicit none
 
+#ifndef MPP_LAND
+    integer, parameter :: numprocs=1
+#endif
+
 #include <netcdf.inc>
 
 type userDefineMapping
@@ -88,7 +92,7 @@ contains
         did = 1
         call get_dimension(trim(nlst_rt(did)%UDMAP_FILE), ndata, npid) 
 
-
+#ifdef MPP_LAND
         gnpid = npid
         allocate (lnsizes(numprocs))
         if(my_id .eq. io_id) then
@@ -217,7 +221,9 @@ contains
         endif
         lnsize = lnsizes(my_id + 1)
         deallocate(lnsizes)
-
+#else
+       call hydro_stop("FATAL ERROR in UDMP : sequential not defined.")
+#endif
 
     end subroutine readUDMP
 
@@ -260,6 +266,7 @@ contains
         gridflag = 0
         lndflag = 0
       
+#ifdef MPP_LAND
         k = 0
         do i = 1, lnsize
            if(bufid(i) .gt. 0) then
@@ -374,6 +381,11 @@ contains
         end do
 
         call cleanBuf()
+
+#else
+        call hydro_stop("FATAL ERROR in UDMP: Sequential not work.")
+#endif
+   
     end subroutine UDMP2LOCAL
 
     subroutine cleanBuf()
@@ -510,6 +522,7 @@ contains
           integer, allocatable,dimension(:,:) :: gmask
 
         integer :: i,j,k, starti,startj, endi,endj, ii,jj, npid, kk
+#ifdef MPP_LAND
            
           mask = my_id + 1
           if(my_id .eq. IO_id) allocate(gmask(global_rt_nx, global_rt_ny))
@@ -533,6 +546,10 @@ contains
 
              deallocate(gmask)
           endif
+#else
+        call hydro_stop("FATAL ERROR in UDMP: Sequential not work.")
+#endif
+
 
       end subroutine get_nprocs_map
 

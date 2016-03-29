@@ -29,7 +29,7 @@ MODULE module_Routing
    use module_mpp_GWBUCKET, only : collectSizeInd
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
-   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw
+   use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw, get_nlinksl
 #endif
    use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd, read_NSIMLAKES
    use module_HYDRO_utils 
@@ -1091,10 +1091,14 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
 #endif
        end if
      if (nlst_rt(did)%channel_option .ne. 3) then
+#ifdef MPP_LAND
         if(my_id .eq. io_id) then
+#endif
            allocate(tmpRESHT(rt_domain(did)%nlakes))
            tmpRESHT = rt_domain(did)%RESHT
+#ifdef MPP_LAND
         endif
+#endif
         do j=1,rt_domain(did)%NLINKSL
            do k = 1, rt_domain(did)%NLAKES
             if(rt_domain(did)%LAKEIDM(k) .eq. rt_domain(did)%LINKID(j)) then

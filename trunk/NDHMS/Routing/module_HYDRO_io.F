@@ -7822,7 +7822,7 @@ end subroutine mpp_output_chrt
                  LINKID,     TO_NODE, CHLON,                &
                  CHLAT,      ZELEV,     TYPEL,    ORDER,    &
                  QLINK(:,1), MUSK,      MUSX,     CHANLEN,  &
-                 MannN,      So,        ChSSlp,   Bw, 
+                 MannN,      So,        ChSSlp,   Bw,       &
                  gages, LAKEIDA)
            
         else 
@@ -9187,7 +9187,9 @@ end subroutine output_chrt2
         TYPEL = -999
 
 !! find the links that flow into lakes (e.g. TYPEL = 3), and update the TO_NODE, so that links flow into the lake reach
+#ifdef MPP_LAND
      call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, gTO_NODE,LINKID, LAKEIDM, LAKEIDA,NLINKSL)
+#endif
 
         OUTLAKEID = gTO_NODE
         DO i = 1, NLAKES
@@ -9289,7 +9291,9 @@ end subroutine output_chrt2
 
 
 !     prescan the data and remove the LAKEIDM which point to two links.
+#ifdef MPP_LAND
      call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
+#endif
 
    
       call gBcastValue(TO_NODE,gto)   
