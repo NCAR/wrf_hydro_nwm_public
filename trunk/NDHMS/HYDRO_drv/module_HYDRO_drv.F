@@ -1556,7 +1556,7 @@ endif
 
        rt_domain(did)%soiltyp = soltyp
        
-       deallocate(soltyp)
+       if(allocated(soltyp)) deallocate(soltyp)
 
 
       end subroutine lsm_input

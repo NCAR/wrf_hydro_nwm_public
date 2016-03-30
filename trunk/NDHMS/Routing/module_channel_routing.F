@@ -2267,7 +2267,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
     if (KT .eq. 1) KT = KT + 1
 
 #ifdef MPP_LAND
-    if(my_id .eq. io_id)       deallocate(tmpQLAKEO,tmpQLAKEI, tmpRESHT)
+    if(my_id .eq. io_id)      then 
+       if(allocated(tmpQLAKEO))  deallocate(tmpQLAKEO)
+       if(allocated(tmpQLAKEI))  deallocate(tmpQLAKEI)
+       if(allocated(tmpRESHT))  deallocate(tmpRESHT)
+    endif
 #endif        
 
    if (KT .eq. 1) KT = KT + 1

@@ -137,13 +137,15 @@ contains
       if(lnsizes(my_id+1) .gt. 0)  allocate(bufi(lnsizes(my_id+1) ))
       call pack_decomp_int(gbufi, ndata, nprocs_map, lnsizes, istart,bufi)
       if(my_id .eq. io_id) then 
-            deallocate(gbufi)
+           if(allocated(gbufi))  deallocate(gbufi)
       endif
 
       
       if(lnsizes(my_id+1) .gt. 0) allocate(bufj(lnsizes(my_id+1) ))
       call pack_decomp_int(gbufj, ndata, nprocs_map, lnsizes, istart,bufj)
-      if(my_id .eq. io_id)  deallocate(gbufj)
+      if(my_id .eq. io_id)  then 
+         if(allocated(gbufj)) deallocate(gbufj)
+      endif
 
 
 ! check bufid
@@ -179,8 +181,8 @@ contains
       call com_write1dInt(bufidflag,ix_bufid,gbufid,npid)
 #endif
       if(ix_bufid .gt. 0) then
-          deallocate(bufidflag)
-          deallocate(bufid_tmp)
+          if(allocated(bufidflag)) deallocate(bufidflag)
+          if(allocated(bufid_tmp)) deallocate(bufid_tmp)
       endif
       if(allocated(linkid)) deallocate(linkid)
       if(my_id .eq. io_id) then
@@ -195,16 +197,20 @@ contains
                  i = i + 1 
                end do
           enddo
-          deallocate(bufsize)
+          if(allocated(bufsize))  deallocate(bufsize)
       endif
 
 
-      if(my_id .eq. io_id) deallocate(gbufid)
+      if(my_id .eq. io_id) then 
+           if(allocated(gbufid)) deallocate(gbufid)
+      endif
 
 
       if(lnsizes(my_id+1) .gt. 0) allocate(bufid(lnsizes(my_id+1) ))
       call pack_decomp_int(g1bufid, ndata, nprocs_map, lnsizes, istart,bufid)
-      if(my_id .eq. io_id) deallocate(g1bufid)
+      if(my_id .eq. io_id) then 
+            if(allocated(g1bufid)) deallocate(g1bufid)
+      endif
 
 
       if(my_id .eq. io_id) then
@@ -213,14 +219,17 @@ contains
       endif
       if(lnsizes(my_id+1) .gt. 0) allocate(bufw(lnsizes(my_id+1) ))
       call pack_decomp_real8(gbufw, ndata, nprocs_map, lnsizes, istart,bufw)
-      if(my_id .eq. io_id) deallocate(gbufw)
+      if(my_id .eq. io_id) then 
+          if(allocated(gbufw))     deallocate(gbufw)
+      endif
 
 
         if(my_id .eq. io_id) then
-           deallocate (nprocs_map, istart)
+           if(allocated(nprocs_map)) deallocate (nprocs_map)
+           if(allocated(istart)) deallocate (istart)
         endif
         lnsize = lnsizes(my_id + 1)
-        deallocate(lnsizes)
+        if(allocated(lnsizes)) deallocate(lnsizes)
 #else
        call hydro_stop("FATAL ERROR in UDMP : sequential not defined.")
 #endif
@@ -389,7 +398,10 @@ contains
     end subroutine UDMP2LOCAL
 
     subroutine cleanBuf()
-        if(lnsize .gt. 0) deallocate(bufi,bufj,bufw, bufid)
+        if(allocated(bufi))  deallocate(bufi)
+        if(allocated(bufj))  deallocate(bufj)
+        if(allocated(bufw))  deallocate(bufw)
+        if(allocated(bufid))  deallocate(bufid)
     end subroutine cleanBuf
 
      subroutine get_dimension(fileName, ndata,npid)
@@ -544,7 +556,7 @@ contains
                   endif
              end do
 
-             deallocate(gmask)
+             if(allocated(gmask)) deallocate(gmask)
           endif
 #else
         call hydro_stop("FATAL ERROR in UDMP: Sequential not work.")

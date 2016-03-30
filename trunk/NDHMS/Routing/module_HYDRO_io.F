@@ -124,7 +124,7 @@ module module_HYDRO_io
             allocate(buff_g (1,1) )
          end if
          call decompose_data_real(buff_g,out_buff)     
-         deallocate(buff_g)
+         if(allocated(buff_g)) deallocate(buff_g)
 #endif
 #else         
          status = get2d_real(var_name,out_buff,ix,jx,fileName)
@@ -181,7 +181,7 @@ module module_HYDRO_io
             call get_landuse_netcdf(ncid, buff_g, units, global_nx ,global_ny, land_cat)
          end if
          call decompose_data_real(buff_g,xdum)     
-         deallocate(buff_g)
+         if(allocated(buff_g)) deallocate(buff_g)
 #else
           call get_landuse_netcdf(ncid, xdum,   units, ix, jx, land_cat)
 #endif
@@ -290,7 +290,9 @@ module module_HYDRO_io
             call get_soilcat_netcdf(ncid, buff_g, units, global_nx ,global_ny, land_cat)
          end if
          call decompose_data_real(buff_g,xdum)     
-         if(my_id .eq. io_id) deallocate(buff_g)
+         if(my_id .eq. io_id) then 
+           if(allocated(buff_g)) deallocate(buff_g)
+         endif
 #else
           call get_soilcat_netcdf(ncid, xdum,   units, ix, jx, land_cat)
 #endif
@@ -1001,12 +1003,12 @@ end subroutine get_albedo12m_netcdf
                    jj=global_rt_ny-j
                  end do
               end do
-              deallocate(g_inv_tmp)
+              if(allocated(g_inv_tmp)) deallocate(g_inv_tmp)
          else
               allocate(g_inv(1,1))
          endif 
          call decompose_RT_real(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
-         deallocate(g_inv)
+         if(allocated(g_inv)) deallocate(g_inv)
 #else
          inv_tmp = -9999.9
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
@@ -1057,7 +1059,8 @@ end subroutine get_albedo12m_netcdf
               allocate(g_inv(1,1))
          endif
          call decompose_RT_int(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
-         deallocate(g_inv_tmp, g_inv)
+         if(allocated(g_inv_tmp)) deallocate(g_inv_tmp)
+         if(allocated(g_inv)) deallocate(g_inv)
 #else
          call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
                      trim(fileName), fatalErr=fatalErr_local)
@@ -1163,9 +1166,9 @@ end subroutine get_albedo12m_netcdf
           global_rt_nx, global_rt_ny,ixrt,jxrt)
      call mpp_land_bcast_int1(numbasns)
 
-     deallocate(g_gw_strm_msk)
-     deallocate(g_ch_netrt)
-     deallocate(g_GWSUBBASMSK)
+     if(allocated(g_gw_strm_msk))  deallocate(g_gw_strm_msk)
+     if(allocated(g_ch_netrt)) deallocate(g_ch_netrt)
+     if(allocated(g_GWSUBBASMSK))  deallocate(g_GWSUBBASMSK)
 
   return
   end subroutine MPP_READ_SIMP_GW
@@ -1517,7 +1520,11 @@ end subroutine get_albedo12m_netcdf
      call decompose_rt_real(gIHEAD,ihead,global_rt_nx, global_rt_ny, ix, jx)
      call decompose_rt_real(gBOTELV,botelv,global_rt_nx, global_rt_ny, ix, jx)
      call decompose_rt_real(gPOR,por,global_rt_nx, global_rt_ny, ix, jx)
-     deallocate(gLtype, gHC, gIHEAD, gBOTELV, gPOR)
+     if(allocated(gLtype)) deallocate(gLtype)
+     if(allocated(gHC)) deallocate(gHC)
+     if(allocated(gIHEAD)) deallocate(gIHEAD)
+     if(allocated(gBOTELV)) deallocate(gBOTELV)
+     if(allocated(gPOR)) deallocate(gPOR)
 #endif
 #endif
  
@@ -2084,10 +2091,10 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
      call mpp_land_bcast_int1(output_count)
 #endif
 
-     deallocate(xdumd)
-     deallocate(xcoord_d)
-     deallocate(ycoord_d)
-     deallocate(ycoord)
+     if(allocated(xdumd))  deallocate(xdumd)
+     if(allocated(xcoord_d))  deallocate(xcoord_d)
+     if(allocated(ycoord_d)) deallocate(ycoord_d)
+     if(allocated(ycoord))  deallocate(ycoord)
     
 #ifdef HYDRO_D 
      write(6,*) "end of output_rt" 
@@ -2416,11 +2423,11 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
         iret = nf_close(ncid)
       endif
 
-     deallocate(xdumd)
-     deallocate(xcoord_d)
-     deallocate(xcoord)
-     deallocate(ycoord_d)
-     deallocate(ycoord)
+     if(allocated(xdumd))  deallocate(xdumd)
+     if(allocated(xcoord_d)) deallocate(xcoord_d)
+     if(allocated(xcoord)) deallocate(xcoord)
+     if(allocated(ycoord_d)) deallocate(ycoord_d)
+     if(allocated(ycoord)) deallocate(ycoord)
     
 #ifdef MPP_LAND
     endif
@@ -2843,11 +2850,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_close(ncid)
       endif
 
-     deallocate(xdumd)
-     deallocate(xcoord_d)
-     deallocate(xcoord)
-     deallocate(ycoord_d)
-     deallocate(ycoord)
+     if(allocated(xdumd)) deallocate(xdumd)
+     if(allocated(xcoord_d)) deallocate(xcoord_d)
+     if(allocated(xcoord)) deallocate(xcoord)
+     if(allocated(ycoord_d)) deallocate(ycoord_d)
+     if(allocated(ycoord)) deallocate(ycoord)
     
 #ifdef HYDRO_D 
      write(6,*) "end of output_ge" 
@@ -3546,21 +3553,21 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_close(ncid2)
      endif
 
-     deallocate(chanlat)
-     deallocate(chanlon)
-     deallocate(elevation)
-     deallocate(station_id)
-     deallocate(lOrder)
-     deallocate(rec_num_of_station)
-     deallocate(stname)
+     if(allocated(chanlat)) deallocate(chanlat)
+     if(allocated(chanlon)) deallocate(chanlon)
+     if(allocated(elevation)) deallocate(elevation)
+     if(allocated(station_id)) deallocate(station_id)
+     if(allocated(lOrder)) deallocate(lOrder)
+     if(allocated(rec_num_of_station)) deallocate(rec_num_of_station)
+     if(allocated(stname)) deallocate(stname)
 
-     deallocate(chanlatO)
-     deallocate(chanlonO)
-     deallocate(elevationO)
-     deallocate(station_idO)
-     deallocate(lOrderO)
-     deallocate(rec_num_of_stationO)
-     deallocate(stnameO)
+     if(allocated(chanlatO)) deallocate(chanlatO)
+     if(allocated(chanlonO)) deallocate(chanlonO)
+     if(allocated(elevationO)) deallocate(elevationO)
+     if(allocated(station_idO)) deallocate(station_idO)
+     if(allocated(lOrderO)) deallocate(lOrderO)
+     if(allocated(rec_num_of_stationO)) deallocate(rec_num_of_stationO)
+     if(allocated(stnameO)) deallocate(stnameO)
 #ifdef HYDRO_D
      print *, "Exited Subroutine output_chrt"
 #endif
@@ -4277,21 +4284,21 @@ end subroutine output_chrt
         iret = nf_close(ncid2)
      endif
 
-     deallocate(chanlat)
-     deallocate(chanlon)
-     deallocate(elevation)
-     deallocate(station_id)
-     deallocate(lOrder)
-     deallocate(rec_num_of_station)
-     deallocate(stname)
+     if(allocated(chanlat))  deallocate(chanlat)
+     if(allocated(chanlon))  deallocate(chanlon)
+     if(allocated(elevation))  deallocate(elevation)
+     if(allocated(station_id))  deallocate(station_id)
+     if(allocated(lOrder))  deallocate(lOrder)
+     if(allocated(rec_num_of_station))  deallocate(rec_num_of_station)
+     if(allocated(stname))  deallocate(stname)
 
-     deallocate(chanlatO)
-     deallocate(chanlonO)
-     deallocate(elevationO)
-     deallocate(station_idO)
-     deallocate(lOrderO)
-     deallocate(rec_num_of_stationO)
-     deallocate(stnameO)
+     if(allocated(chanlatO))  deallocate(chanlatO)
+     if(allocated(chanlonO))  deallocate(chanlonO)
+     if(allocated(elevationO))  deallocate(elevationO)
+     if(allocated(station_idO))  deallocate(station_idO)
+     if(allocated(lOrderO))  deallocate(lOrderO)
+     if(allocated(rec_num_of_stationO))  deallocate(rec_num_of_stationO)
+     if(allocated(stnameO))  deallocate(stnameO)
 #ifdef HYDRO_D
      print *, "Exited Subroutine output_chrt"
 #endif
@@ -4454,13 +4461,22 @@ end subroutine output_chrt_bak
 
     end if
      call mpp_land_sync()
-
-    deallocate(g_order, g_STRMFRXSTPTS, g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_gages)
+    if(allocated(g_order)) deallocate(g_order)
+    if(allocated(g_STRMFRXSTPTS)) deallocate(g_STRMFRXSTPTS)
+    if(allocated(g_chlon)) deallocate(g_chlon)
+    if(allocated(g_chlat)) deallocate(g_chlat)
+    if(allocated(g_hlink)) deallocate(g_hlink)
+    if(allocated(g_zelev)) deallocate(g_zelev)
+    if(allocated(g_qlink)) deallocate(g_qlink)
+    if(allocated(g_gages)) deallocate(g_gages)
 #ifdef WRF_HYDRO_NUDGING
-    deallocate(g_nudge)
+    if(allocated(g_nudge)) deallocate(g_nudge)
 #endif
 #ifndef HYDRO_REALTIME
-    deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
+    if(allocated(g_accLndRunOff)) deallocate(g_accLndRunOff)
+    if(allocated(g_accQLateral)) deallocate(g_accQLateral)
+    if(allocated(g_accStrmvolrt)) deallocate(g_accStrmvolrt)
+    if(allocated(g_accBucket)) deallocate(g_accBucket)
 #endif
 
 end subroutine mpp_output_chrt
@@ -4790,9 +4806,9 @@ end subroutine mpp_output_chrt
         iret = nf_close(ncid)
      endif
 
-     deallocate(station_id)
-     deallocate(rec_num_of_lake)
-     deallocate(stname)
+     if(allocated(station_id)) deallocate(station_id)
+     if(allocated(rec_num_of_lake)) deallocate(rec_num_of_lake)
+     if(allocated(stname)) deallocate(stname)
 #ifdef HYDRO_D
      print *, "Exited Subroutine output_lakes"
 #endif
@@ -5012,8 +5028,9 @@ end subroutine mpp_output_chrt
            GNLINKS, CH_NETLNK, startdate, date, &
            g_qlink, dt, geo_finegrid_flnm)
     endif
-
-     deallocate(g_qlink, CH_NETLNK)  
+    
+     if(allocated(g_qlink)) deallocate(g_qlink)
+     if(allocated(CH_NETLNK)) deallocate(CH_NETLNK)
      return
      end subroutine mpp_output_chrtgrd
 #endif
@@ -5310,7 +5327,7 @@ end subroutine mpp_output_chrt
 
 
         call decompose_RT_int(g_CH_NETLNK,GCH_NETLNK,g_IXRT,g_JXRT,ixrt,jxrt)
-        deallocate(g_CH_NETLNK)
+        if(allocated(g_CH_NETLNK)) deallocate(g_CH_NETLNK)
         ywcount = 0 
         CH_NETLNK = -9999
         do j = 1, jxrt
@@ -5363,9 +5380,9 @@ end subroutine mpp_output_chrt
 
         integer         :: I,J, iret, jj, channel_option, UDMP_OPT
         CHARACTER(len=256)        :: var_name
-        CHARACTER(len=256)       :: route_topo_f
-        CHARACTER(len=256)       :: route_chan_f
-        CHARACTER(len=256)       :: geo_finegrid_flnm
+        CHARACTER(len=*)       :: route_topo_f
+        CHARACTER(len=*)       :: route_chan_f
+        CHARACTER(len=*)       :: geo_finegrid_flnm
 
         var_name = "TOPOGRAPHY"
 
@@ -6052,7 +6069,7 @@ end subroutine mpp_output_chrt
               iret = nf_inq_varid(ncid,varName, varid)
               iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_rt_nx,global_rt_ny/),varTmp)
            endif
-           deallocate(varTmp)
+           if(allocated(varTmp))  deallocate(varTmp)
 #else
            iret = nf_inq_varid(ncid,varName, varid)
            if(iret .eq. 0) then
@@ -6206,7 +6223,7 @@ end subroutine mpp_output_chrt
               iret = nf_inq_varid(ncid,varName, varid)
               iret = nf_put_vara_real(ncid, varid, (/1/), (/gnlinksl/),g_var)
            endif
-           deallocate(g_var)
+           if(allocated(g_var)) deallocate(g_var)
 #else
            n = size(inVar,1) 
            iret = nf_inq_varid(ncid,varName, varid)
@@ -6280,7 +6297,7 @@ end subroutine mpp_output_chrt
       end do
 #endif
       call w_rst_crt_nc1g(ncid,gnumbasns,buf,vName)
-      deallocate(buf)
+      if(allocated(buf)) deallocate(buf)
    end subroutine w_rst_gwbucket_real
 
    subroutine read_rst_gwbucket_real(ncid,outV,numbasns,&
@@ -6627,7 +6644,7 @@ end subroutine mpp_output_chrt
          endif
          call decompose_RT_real(xtmp,var,global_rt_nx,global_rt_ny,ix,jx)
 
-         deallocate(xtmp)
+         if(allocated(xtmp)) deallocate(xtmp)
 
 #else
             iret = nf_get_var_real(ncid, varid, var)
@@ -6757,7 +6774,7 @@ end subroutine mpp_output_chrt
                print*, 'variable not found: name = "', trim(varStr)//'"'
 #endif
 
-               deallocate(var)
+              if(allocated(var))  deallocate(var)
                return
             endif
 #ifdef HYDRO_D
@@ -6769,21 +6786,21 @@ end subroutine mpp_output_chrt
             iret = nf_get_var_real(ncid, varid, var)
          endif
          call ReachLS_decomp(var,   var_out)
-         deallocate(var)
+         if(allocated(var)) deallocate(var)
 #else
             iret = nf_inq_varid(ncid,  trim(varStr),  varid)
            if (iret /= 0) then
 #ifdef HYDRO_D
                print*, 'variable not found: name = "', trim(varStr)//'"'
 #endif
-               deallocate(var)
+               if(allocated(var)) deallocate(var)
                return
             endif
 #ifdef HYDRO_D
          print*, "read restart variable ", varStr
 #endif   
          iret = nf_get_var_real(ncid, varid, var_out)
-         deallocate(var)
+         if(allocated(var)) deallocate(var)
 #endif
 
 
@@ -7806,8 +7823,16 @@ end subroutine mpp_output_chrt
 
 
         if(my_id .eq. io_id ) then
-           deallocate( tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
-                   tmpMannN, tmpSo, tmpChSSlp, tmpBw ) 
+           if(allocated(tmpCHLON)) deallocate(tmpCHLON)
+           if(allocated(tmpCHLAT)) deallocate(tmpCHLAT)
+           if(allocated(tmpZELEV)) deallocate(tmpZELEV)
+           if(allocated(tmpMUSK)) deallocate(tmpMUSK)
+           if(allocated(tmpMUSX)) deallocate(tmpMUSX)
+           if(allocated(tmpCHANLEN)) deallocate(tmpCHANLEN)
+           if(allocated(tmpMannN)) deallocate(tmpMannN)
+           if(allocated(tmpSo)) deallocate(tmpSo)
+           if(allocated(tmpChSSlp)) deallocate(tmpChSSlp)
+           if(allocated(tmpBw)) deallocate(tmpBw)
 !, tmpHRZAREA,&
 !                  tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
 !                  tmpORIFICEA,tmpORIFICEE)
@@ -8536,7 +8561,10 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 301     continue
     end do 
 
-    deallocate(tmpCoeff, tmpExp, tmpz_max, tmpLinkid)
+    if(allocated(tmpCoeff)) deallocate(tmpCoeff)
+    if(allocated(tmpExp)) deallocate(tmpExp)
+    if(allocated(tmpz_max)) deallocate(tmpz_max)
+    if(allocated(tmpLinkid)) deallocate(tmpLinkid)
 end subroutine readBucket_nhd
 
 !-- output the channel routine for fast output.
@@ -8703,16 +8731,19 @@ end subroutine readBucket_nhd
 	  )
      end if
      call mpp_land_sync()
-
-    deallocate(g_order,  g_chlon, g_chlat, g_hlink , g_zelev, g_qlink, g_linkid )
+    if(allocated(g_order)) deallocate(g_order)
+    if(allocated(g_chlon)) deallocate(g_chlon)
+    if(allocated(g_chlat)) deallocate(g_chlat)
+    if(allocated(g_hlink)) deallocate(g_hlink)
+    if(allocated(g_zelev)) deallocate(g_zelev)
+    if(allocated(g_qlink)) deallocate(g_qlink)
+    if(allocated(g_linkid)) deallocate(g_linkid)
 #ifdef WRF_HYDRO_NUDGING
-    deallocate(g_nudge)
+    if(allocated(g_nudge)) deallocate(g_nudge)
 #endif
-!#ifndef HYDRO_REALTIME
-!   deallocate(g_accLndRunOff, g_accQLateral, g_accStrmvolrt, g_accBucket )
-!#endif
 #ifdef HYDRO_REALTIME
-    deallocate(g_QLateral, g_velocity)
+    if(allocated(g_QLateral)) deallocate(g_QLateral)
+    if(allocated(g_velocity)) deallocate(g_velocity)
 #endif
 
 end subroutine mpp_output_chrt2
@@ -9083,6 +9114,10 @@ end subroutine output_chrt2
                allocate(g_qout_gwsubbas(rt_domain(did)%gnlinksl))
                allocate(g_z_gwsubbas(rt_domain(did)%gnlinksl))
           endif
+       else
+               allocate(g_qin_gwsubbas(1))
+               allocate(g_qout_gwsubbas(1))
+               allocate(g_z_gwsubbas(1))
        endif 
      
        if(nlst_rt(did)%channel_option .ne. 3) then
@@ -9113,9 +9148,11 @@ end subroutine output_chrt2
           close(51)
           close(52)
           close(53)
-          deallocate(g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas)
-         
        endif
+          if(allocated(g_qin_gwsubbas))  deallocate(g_qin_gwsubbas)
+          if(allocated(g_qout_gwsubbas))  deallocate(g_qout_gwsubbas)
+          if(allocated(g_z_gwsubbas))  deallocate(g_z_gwsubbas)
+         
 # else
        open (unit=51,file='GW_inflow.txt',form='formatted',&
              status='unknown',position='append')
@@ -9344,7 +9381,7 @@ end subroutine output_chrt2
           end do
       end do
       size = kk
-      deallocate (gto)
+      if(allocated(gto)) deallocate (gto)
     
       allocate(gLINKID(gnlinksl))
       call gBcastValue(LINKID,gLINKID)   
@@ -9359,12 +9396,12 @@ end subroutine output_chrt2
             k = ind(i)
             tmpLAKEIDA(i) = gLAKEIDA(k)
       enddo
-      deallocate(gLAKEIDA)
+      if(allocated(gLAKEIDA)) deallocate(gLAKEIDA)
 
 !yw LAKELINKID = 0
       tmpLAKELINKID = LAKELINKID
       tmpOUTLAKEID  = tmpTO_NODE
-      OUTLAKEID  = TO_NODE
+      OUTLAKEID(1:NLINKSL)  = TO_NODE(1:NLINKSL)
 
  !! find the links that flow into lakes (e.g. TYPEL = 3), and update the TO_NODE, so that links flow into the lake reach
         DO i = 1, NLAKES
@@ -9397,7 +9434,7 @@ end subroutine output_chrt2
 !yw       call sum_int1d(LAKELINKID, NLAKES) 
        call updateLake_seqInt(LAKELINKID,nlakes,tmpLAKELINKID)
 
-       deallocate(tmpLAKELINKID)
+       if(allocated(tmplakelinkid))  deallocate(tmpLAKELINKID)
 
        if(gNLINKSL .gt. 0) then
           if(my_id .eq. 0) then
@@ -9412,7 +9449,7 @@ end subroutine output_chrt2
               allocate(gLAKEIDX(1))
           endif
           call ReachLS_decomp(gLAKEIDX, LAKEIDX)
-          deallocate(gLAKEIDX)
+          if(allocated(gLAKEIDX)) deallocate(gLAKEIDX)
        endif
 
 !     do k = 1, size   
@@ -9453,11 +9490,14 @@ end subroutine output_chrt2
             endif
         ENDDO
        ENDDO
-      deallocate(gLINKID)
-      deallocate(gTYPEL)
-      deallocate(gOUTLAKEID)
-
-      deallocate(tmpTYPEL,tmpLINKID, tmpTO_NODE, tmpLAKEIDA, tmpOUTLAKEID)
+      if(allocated(gLINKID)) deallocate(gLINKID)
+      if(allocated(gTYPEL)) deallocate(gTYPEL)
+      if(allocated(gOUTLAKEID)) deallocate(gOUTLAKEID)
+      if(allocated(tmpTYPEL)) deallocate(tmpTYPEL)
+      if(allocated(tmpLINKID)) deallocate(tmpLINKID)
+      if(allocated(tmpTO_NODE)) deallocate(tmpTO_NODE)
+      if(allocated(tmpLAKEIDA)) deallocate(tmpLAKEIDA)
+      if(allocated(tmpOUTLAKEID)) deallocate(tmpOUTLAKEID)
 
 
 !     do k = 1, NLINKSL
@@ -9581,7 +9621,7 @@ end subroutine output_chrt2
           end do
       end do
       size = kk
-      deallocate (gto)
+      if(allocated(gto)) deallocate (gto)
     
 
       allocate(gLAKEIDA(gnlinksl))
@@ -9590,7 +9630,7 @@ end subroutine output_chrt2
             k = ind(i)
             tmpLAKEIDA(i) = gLAKEIDA(k)
       enddo
-      deallocate(gLAKEIDA)
+      if(allocated(gLAKEIDA)) deallocate(gLAKEIDA)
 
         tmpLAKELINKID = LAKELINKID
 !       LAKELINKID = 0
@@ -9636,7 +9676,8 @@ end subroutine output_chrt2
           endif
        enddo
 
-       deallocate(gtoLakeId_g,gtoLakeId)
+       if(allocated(gtoLakeId_g)) deallocate(gtoLakeId_g)
+       if(allocated(gtoLakeId)) deallocate(gtoLakeId)
        call sum_int1d(lakemask, NLAKES) 
 
        do i = 1, nlakes
@@ -9674,7 +9715,9 @@ end subroutine output_chrt2
 !      endif
 
        close(65)
-      deallocate(tmpTO_NODE, tmpLAKEIDA, tmpLAKELINKID)
+      if(allocated(tmpTO_NODE)) deallocate(tmpTO_NODE)
+      if(allocated(tmpLAKEIDA)) deallocate(tmpLAKEIDA)
+      if(allocated(tmplakelinkid)) deallocate(tmplakelinkid)
 
     end subroutine nhdLakeMap_scan
 #endif
@@ -9771,8 +9814,8 @@ end subroutine output_chrt2
 #ifdef MPP_LAND
     endif
 #endif
-
-    deallocate(linkId, typeL)
+    if(allocated(linkId)) deallocate(linkId)
+    if(allocated(typeL)) deallocate(typeL)
 
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then

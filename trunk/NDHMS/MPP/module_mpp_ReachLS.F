@@ -124,8 +124,8 @@ MODULE MODULE_mpp_ReachLS
                       do k = 1, lsize
                           gLinkV_r8(lindex(k)) = gLinkV_r8(lindex(k)) + tmpBuf(k)
                       end do
-                      deallocate(lindex)
-                      deallocate(tmpBuf)
+                      if(allocated(lindex)) deallocate(lindex)
+                      if(allocated(tmpBuf)) deallocate(tmpBuf)
                endif
             end if
           end do
@@ -136,7 +136,7 @@ MODULE MODULE_mpp_ReachLS
       call ReachLS_decompReal(gLinkV_r4,outV)
 
       if(my_id .eq. io_id) then
-          deallocate(gLinkV_r4)
+         if(allocated(gLinkV_r4))  deallocate(gLinkV_r4)
       endif
   end subroutine updateLinkV8_mem
 
@@ -188,8 +188,8 @@ MODULE MODULE_mpp_ReachLS
                       do k = 1, lsize
                           gLinkV_r4(lindex(k)) = gLinkV_r4(lindex(k)) + tmpBuf(k)
                       end do
-                      deallocate(lindex)
-                      deallocate(tmpBuf)
+                      if(allocated(lindex)) deallocate(lindex)
+                      if(allocated(tmpBuf)) deallocate(tmpBuf)
                endif
             end if
           end do
@@ -198,7 +198,7 @@ MODULE MODULE_mpp_ReachLS
       call ReachLS_decompReal(gLinkV_r4,outV)
 
       if(my_id .eq. io_id) then
-          deallocate(gLinkV_r4)
+          if(allocated(gLinkV_r4)) deallocate(gLinkV_r4)
       endif
   end subroutine updateLinkV4_mem
 
@@ -530,7 +530,7 @@ MODULE MODULE_mpp_ReachLS
               if(aLinksl(i) .gt. 0) then
                  ! The mpi_send takes what you give it and THEN treats each caracter as an array element.
                  call mpi_send(inV(linkls_s(i):linkls_e(i)),       &
-                      strLen*aLinksl(i),                           &
+                      aLinksl(i),                           &
                       MPI_CHARACTER, i-1, tag, MPI_COMM_WORLD, ierr)
               endif
            endif
@@ -538,8 +538,8 @@ MODULE MODULE_mpp_ReachLS
      else
         if(aLinksl(my_id+1) .gt. 0) then
            ! The mpi_recv treats each caracter as an array element.
-           call mpi_recv(outV(1 : (strLen*(linkls_e(my_id+1)-linkls_s(my_id+1)+1)) ), &  !jlm should have +1
-                strLen*alinksl(my_id+1),                                              &
+           call mpi_recv(outV(1 : ((linkls_e(my_id+1)-linkls_s(my_id+1)+1)) ), &  !jlm should have +1
+                alinksl(my_id+1),                                              &
                 MPI_CHARACTER, io_id, tag, MPI_COMM_WORLD, mpp_status,ierr            )
         endif
      endif
@@ -841,7 +841,7 @@ MODULE MODULE_mpp_ReachLS
                 endif
             else
                 if(ssize .gt. 0 ) then  
-                   call mpi_send(inV(start:start+ssize), ssize,       &
+                   call mpi_send(inV(start:start+ssize-1), ssize,       &
                       MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,ierr)
                 endif
             endif
@@ -893,7 +893,7 @@ MODULE MODULE_mpp_ReachLS
                 endif
             else
                 if(rsize .gt. 0 ) then  
-                  call mpi_recv(outV(start:start+rsize), rsize,          &
+                  call mpi_recv(outV(start:start+rsize-1), rsize,          &
                         MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
                 endif
             endif
@@ -965,7 +965,9 @@ MODULE MODULE_mpp_ReachLS
             end if
           end do
        end if
-     if(my_id .eq. io_id) deallocate(buf)
+     if(my_id .eq. io_id) then 
+        if(allocated(buf)) deallocate(buf)
+     endif
   end subroutine pack_decomp_int
 
   subroutine pack_decomp_real8(g1bufid, ndata, nprocs_map, lnsizes, istart,bufid)
@@ -1011,7 +1013,9 @@ MODULE MODULE_mpp_ReachLS
             end if
           end do
        end if
-     if(my_id .eq. io_id) deallocate(buf)
+     if(my_id .eq. io_id) then 
+         if(allocated(buf))  deallocate(buf)
+     endif
   end subroutine pack_decomp_real8
 
 ! this is used for nhdPlus with Lake. 
@@ -1058,7 +1062,8 @@ MODULE MODULE_mpp_ReachLS
                              gvar(tmpInd(k)) = buf(k)
                          endif
                       end do
-                      deallocate(buf,tmpInd)
+                      if(allocated(buf))  deallocate(buf)
+                      if(allocated(tmpInd)) deallocate(tmpInd)
                   endif
             endif
          end do
@@ -1075,7 +1080,7 @@ MODULE MODULE_mpp_ReachLS
           endif
       endif 
       call ReachLS_decomp(gvar, ioVar)
-      deallocate(gvar)
+      if(allocated(gvar)) deallocate(gvar)
   end subroutine TONODE2RSL 
 
 

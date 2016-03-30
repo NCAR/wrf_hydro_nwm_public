@@ -521,8 +521,8 @@ CONTAINS
         rt_domain(did)%GCH_NETLNK = GCH_NETLNK
       endif
 
-       deallocate(CH_NETLNK)
-       deallocate(GCH_NETLNK)
+       if(allocated(CH_NETLNK)) deallocate(CH_NETLNK)
+       if(allocated(GCH_NETLNK)) deallocate(GCH_NETLNK)
 
    end subroutine getChanDim
 
@@ -713,7 +713,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                 endif
            end do
 
-           deallocate(buf)
+           if(allocated(buf)) deallocate(buf)
 
      endif  ! end if block for UDMP_OPT
       
@@ -1110,7 +1110,9 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
         end do
 #ifdef MPP_LAND
         call updateLake_seq(rt_domain(did)%RESHT, rt_domain(did)%NLAKES,tmpRESHT)
-        if(my_id .eq. io_id) deallocate(tmpRESHT)
+        if(my_id .eq. io_id) then 
+            if(allocated(tmpRESHT)) deallocate(tmpRESHT)
+        endif
 #endif
 
      else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
