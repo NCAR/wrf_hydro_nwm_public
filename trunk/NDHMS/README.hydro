@@ -18,7 +18,8 @@ environment variable ("setenv WRF_HYDRO 1"), and then follow the standard WRF mo
 configure and compiling process.
 
 2) Environment settings
-The following environment variables need to be set before configuring and compiling the WRF-HYDRO model:
+The following environment variables need to be set before configuring and compiling the WRF-HYDRO model, 
+(those are defined in setEnvar.csh for offline). The compiling scripts will automatic source setEnvar.csh.
 
 setenv WRF_HYDRO 1
 "1" is to activate WRF-Hydro. "0" or no definition will default to the WRF model only.
@@ -50,10 +51,10 @@ Notes:  If you are going to create model output file that is more than 2Gb,
 
 3) Configuring and compiling
 On the following platforms, the configuring and compiling commands are the same as WRF model 
-after the user has set up the above four environment variables. The default supported platform 
-is Linux with the PGI (Portland Group) compiler.  The compiler options IBM AIX with xlf fortran, 
-Linux with GFORTRAN and Intel are not fully tested yet and may not readily work.  As stated above, 
-the WRF-Hydro system is called as a function inside the WRF model and thus only one executable 
+after the user has set up the above four environment variables. 
+The compiler options IBM AIX with xlf fortran are not fully tested. 
+Other three pgi, gfortran and intel are tested.
+As stated above, the WRF-Hydro system is called as a function inside the WRF model and thus only one executable 
 is created when WRF-Hydro is compiled with WRF.  If user compiles the system successfully, 
 only a single "wrf.exe" file will be created.
 
