@@ -698,8 +698,8 @@ MODULE MODULE_mpp_ReachLS
                  tag = 12
                  ! ? seems asymmetric with ReachLS_decompChar
                  call mpi_recv(outV( linkls_s(i) : linkls_e(i) ), &
-!                 call mpi_recv(outV( (strLen*(linkls_s(i)-1)+1) : (strLen*linkls_e(i)) ), &
-                      strLen*aLinksl(i),                                                  &
+!                 call mpi_recv(outV( ((linkls_s(i)-1)+1) : (linkls_e(i)) ), &
+                      aLinksl(i),                                                  &
                       MPI_CHARACTER, i-1, tag, MPI_COMM_WORLD, mpp_status, ierr           )
               endif
            endif
@@ -709,7 +709,7 @@ MODULE MODULE_mpp_ReachLS
            tag = 12
            ! The mpi_send takes what you give it and THEN treats each caracter as an array element.
            call mpi_send(inV(1:aLinksl(my_id+1)),              &
-                strLen*aLinksl(my_id+1),                       &
+                aLinksl(my_id+1),                       &
                 MPI_CHARACTER, io_id, tag, MPI_COMM_WORLD, ierr)
         endif
      endif
