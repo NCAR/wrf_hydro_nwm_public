@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 !------------------------------------------------------------------------------
 ! Benjamin Fersch  2d groundwater model
 !------------------------------------------------------------------------------
@@ -79,7 +99,7 @@ module module_gw_gw2d
                             nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,     &
                             RT_DOMAIN(did)%LATVAL,        &
                             RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,          &
-                            nlst_rt(did)%HIRES_OUT)
+                            nlst_rt(did)%output_gw)
 	   end if
 	  
   
@@ -1096,8 +1116,7 @@ real, dimension(9,12) :: &
 0.0127, 6.6836, 0.1725, 3.7512, 0.0703, 8.5200, -63.00, 0.4760, 0.0147,&
 0.0530, 9.2423, 0.1859, 3.3688, 0.0728, 10.400, -15.30, 0.4260, 0.0130,&
 0.0165, 5.3972, 0.2479, 3.5549, 0.0641, 10.400, -49.00, 0.4920, 0.0062,&
-0.0200, 6.0106, 0.2474, 3.4788, 0.0622, 11.400, -40.50, 0.4820, 0.0077/&
-),(/9,12/))
+0.0200, 6.0106, 0.2474, 3.4788, 0.0622, 11.400, -40.50, 0.4820, 0.0077/),(/9,12/))
 
 
 

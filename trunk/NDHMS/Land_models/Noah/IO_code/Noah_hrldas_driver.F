@@ -1,3 +1,23 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 program Noah_hrldas_driver
 
   USE module_hrldas_netcdf_io
@@ -1210,8 +1230,6 @@ program Noah_hrldas_driver
 
   allocate ( qsgw (ix,jx))
 
-  allocate ( qsgw (ix,jx))
-
   if(rank .ne. 0) then
     allocate(smc (ix,jx,nsoil))
     allocate(stc (ix,jx,nsoil))
@@ -1241,6 +1259,16 @@ program Noah_hrldas_driver
 ! so that upon restart, we're ready to go on this time step.
 !--------------------------------------------------------------------------------
 
+  if(forc_typ .eq. 8 ) then
+       if(rank == 0) then
+          call read_forc_ldasout_seq(olddate,hgrid, indir, FORCING_TIMESTEP, ix,jx,infxsrt,soldrain)
+       endif
+
+          call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL), &
+                        infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,               &
+			qsgw)
+          goto 1003 
+  endif
 
   if(rank .eq. 0) then
 
@@ -1328,6 +1356,7 @@ program Noah_hrldas_driver
      JLOOP : DO J=subwindow_ystart,subwindow_yend
         ILOOP : DO I=parallel_xstart, parallel_xend
 !yw           if (gvfmin(i,j) < -1.E25) cycle ILOOP
+           if(abs(u(i,j)) .lt. 200 .and. abs(v(i,j)) .lt. 200) then   !! do not run for missing data
 
            IF((VEGTYP(I,J).GT.0).AND.(VEGTYP(I,J).NE.ISWATER)) THEN
               VEGTYPX=VEGTYP(I,J)
@@ -1887,6 +1916,7 @@ program Noah_hrldas_driver
                    SMCWLT,SMCDRY,SMCREF,SMCMAX,NROOT,               &
                    sfcheadrt(i,j),INFXSRT(i,j),ETPND1,              &
 		   gwsoilcpl, qsgw(i,j))           !P  
+         
 
 #if _DEBUG_PRINT_
               ETPND(i,j) = ETPND(i,j) + etpnd1
@@ -2314,6 +2344,8 @@ program Noah_hrldas_driver
 ! ***  endif of the land-point
            ENDIF
 
+       endif  !!!   if(abs(u) .lt. 200) then   !! do not run for missing data
+
         ENDDO ILOOP
      ENDDO JLOOP
 !-------------------------------------------------------------------
@@ -2532,6 +2564,8 @@ program Noah_hrldas_driver
            call finalize_restart_file()
         endif
   endif !!! rank if block
+
+1003   continue
 
   ENDDO KLOOP
 

@@ -1,3 +1,24 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!  <brief list of changes to this source file>
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_WRF_HYDRO
 
 #ifdef MPP_LAND
@@ -355,6 +376,7 @@ end subroutine finegrid2wrf
        if(my_id .eq. IO_id) then
 #endif
 
+#ifndef NCEP_WCOSS
        open(71,file="HYDRO.TBL", form="formatted")
 !read OV_ROUGH first
           read(71,*) nn
@@ -369,6 +391,23 @@ end subroutine finegrid2wrf
              read(71,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
           end do
        close(71)
+#else
+
+       open(13, form="formatted")
+!read OV_ROUGH first
+          read(13,*) nn
+          read(13,*)
+          do i = 1, nn
+             read(13,*) RT_DOMAIN(did)%OV_ROUGH(i)
+          end do
+!read parameter for LKSAT
+          read(13,*) nn
+          read(13,*)
+          do i = 1, nn
+             read(13,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
+          end do
+       close(13)
+#endif
 
 #ifdef MPP_LAND
        endif

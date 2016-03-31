@@ -1,9 +1,9 @@
 !*******************************************************************************
-!Subroutine rapid_init 
+!Subroutine - rapid_init 
 !*******************************************************************************
-subroutine rapid_init(initialized)
+subroutine rapid_init
 
-!PURPOSE
+!Purpose:
 !This subroutine allows to initialize RAPID for both regular runs and 
 !optimization runs, by performing slightly different tasks depending on what 
 !option is chosen.  
@@ -14,6 +14,7 @@ subroutine rapid_init(initialized)
 !     -Create all PETSc and TAO objects 
 !     -Print information and warnings
 !     -Determine IDs for various computing cores
+!     -Compute helpful arrays 
 !     -Compute the network matrix
 !     -Initialize values of flow and volume for main procedure
 !Initialization tasks specific to Option 1
@@ -25,40 +26,47 @@ subroutine rapid_init(initialized)
 !     -Compute the observation matrix
 !     -Read kfac and Qobsbarrec
 !     -Set initial values for the vector pnorm
-!Author: Cedric H. David, 2012 
+!Author: 
+!Cedric H. David, 2012-2015. 
 
 
 !*******************************************************************************
 !Declaration of variables
 !*******************************************************************************
-!use netcdf
 use rapid_var, only :                                                          &
-                   IS_reachtot,IS_reachbas,                                    &
-                   IV_basin_id,IV_basin_index,IV_basin_loc,IV_connect_id,      &
+                   IS_riv_tot,IS_riv_bas,                                      &
+                   IV_riv_bas_id,IV_riv_index,IV_riv_loc1,IV_riv_tot_id,       &
                    IV_down,IV_nbup,IM_up,IM_index_up,IS_max_up,                &
                    IV_nz,IV_dnz,IV_onz,                                        &
-                   BS_opt_Qinit,BS_opt_Qfinal,BS_opt_forcing,BS_opt_influence, &
+                   BS_opt_Qinit,BS_opt_Qfinal,BS_opt_influence,                & 
+                   BS_opt_dam,BS_opt_for,BS_opt_hum,                           &
                    IS_opt_run,IS_opt_routing,IS_opt_phi,                       &
-                   ZV_read_reachtot,ZV_read_forcingtot,ZV_read_gagetot,        &
-                   ZS_TauM,ZS_TauO,ZS_TauR,ZS_dtO,ZS_dtR,ZS_dtM,               &
-                   IS_gagetot,IS_gageuse,IS_gagebas,                           &
-                   IV_gagetot_id,IV_gageuse_id,                                &
-                   IV_gage_index,IV_gage_loc,                                  &
-                   IS_forcingtot,IS_forcinguse,IS_forcingbas,                  &
-                   IV_forcingtot_id,IV_forcinguse_id,                          &
-                   IV_forcing_index,IV_forcing_loc,                            &
+                   ZV_read_riv_tot,ZV_read_obs_tot,ZV_read_hum_tot,            &
+                   ZV_read_for_tot,ZV_read_dam_tot,                            &
+                   ZS_TauM,ZS_TauO,ZS_TauR,ZS_dtO,ZS_dtR,ZS_dtM,ZS_dtF,ZS_dtH, &
+                   IS_obs_tot,IS_obs_use,IS_obs_bas,                           &
+                   IV_obs_tot_id,IV_obs_use_id,                                &
+                   IV_obs_index,IV_obs_loc1,                                   &
+                   IS_hum_tot,IS_hum_use,                                      &
+                   IV_hum_tot_id,IV_hum_use_id,                                &
+                   IS_for_tot,IS_for_use,                                      &
+                   IV_for_tot_id,IV_for_use_id,                                &
+                   IS_dam_tot,IS_dam_use,                                      &
+                   IV_dam_tot_id,IV_dam_use_id,                                &
+                   ZV_Qin_dam,ZV_Qout_dam,ZV_Qin_dam_prev,ZV_Qout_dam_prev,    &
+                   ZV_Qin_dam0,ZV_Qout_dam0,                                   &
                    ZV_QoutinitM,ZV_QoutinitO,ZV_QoutinitR,                     &
                    ZV_VinitM,ZV_VinitR,                                        &
                    ZV_babsmax,ZV_QoutRabsmin,ZV_QoutRabsmax,                   &
-                   IS_M,IS_O,IS_R,IS_RpO,IS_RpM,                               &
-                   kfac_file,xfac_file,x_file,k_file,m3_nc_file,Qinit_file,    &
+                   IS_M,IS_O,IS_R,IS_RpO,IS_RpM,IS_RpF,IS_RpH,                 &
+                   kfac_file,x_file,k_file,Vlat_file,Qinit_file,               &
                    Qobsbarrec_file,                                            &
                    ZS_Qout0,ZS_V0,                                             &
                    ZV_Qobsbarrec,                                              &
                    ZV_k,ZV_x,ZV_kfac,ZV_p,ZV_pnorm,ZV_pfac,                    &
                    ZS_knorm_init,ZS_xnorm_init,ZS_kfac,ZS_xfac,                &
                    ZV_C1,ZV_C2,ZV_C3,ZM_A,                                     &
-                   ierr,ksp,pc,rank,IS_one,ZS_one
+                   ierr,ksp,rank,ncore,IS_one,ZS_one
 
 
 implicit none
@@ -83,8 +91,6 @@ implicit none
 #include "finclude/petsclog.h" 
 !PETSc log
 
-logical :: initialized
-
 !*******************************************************************************
 !Initialization procedure common to all options
 !*******************************************************************************
@@ -92,40 +98,66 @@ logical :: initialized
 !-------------------------------------------------------------------------------
 !Read name list, allocate Fortran arrays
 !-------------------------------------------------------------------------------
-if(initialized) return
-initialized = .True.
-print *,'First time allocation of variables..........'
-
 call rapid_read_namelist
-print *,'******PASS CALL rapid_read_namelist********************'
 
-allocate(IV_basin_id(IS_reachbas))
-allocate(IV_basin_index(IS_reachbas))
-allocate(IV_basin_loc(IS_reachbas))
+print *,'!!!LPR enter rapid_init'
 
-allocate(IV_connect_id(IS_reachtot))
-allocate(IV_down(IS_reachtot))
-allocate(IV_nbup(IS_reachtot))
-allocate(IM_up(IS_reachtot,IS_max_up))
-allocate(IM_index_up(IS_reachtot,IS_max_up))
+allocate(IV_riv_bas_id(IS_riv_bas))
+allocate(IV_riv_index(IS_riv_bas))
+allocate(IV_riv_loc1(IS_riv_bas))
 
-allocate(IV_nz(IS_reachbas))
-allocate(IV_dnz(IS_reachbas))
-allocate(IV_onz(IS_reachbas))
+allocate(IV_riv_tot_id(IS_riv_tot))
+allocate(IV_down(IS_riv_tot))
+allocate(IV_nbup(IS_riv_tot))
+allocate(IM_up(IS_riv_tot,IS_max_up))
+allocate(IM_index_up(IS_riv_tot,IS_max_up))
 
-allocate(ZV_read_reachtot(IS_reachtot))
+allocate(IV_nz(IS_riv_bas))
+allocate(IV_dnz(IS_riv_bas))
+allocate(IV_onz(IS_riv_bas))
+
+allocate(ZV_read_riv_tot(IS_riv_tot))
+
+print *,'!!!LPR passed several allocation'
 
 if (IS_opt_run==2) then
-     allocate(IV_gagetot_id(IS_gagetot))
-     allocate(IV_gageuse_id(IS_gageuse))
-     allocate(ZV_read_gagetot(IS_gagetot))
+     allocate(IV_obs_tot_id(IS_obs_tot))
+     allocate(IV_obs_use_id(IS_obs_use))
+     allocate(ZV_read_obs_tot(IS_obs_tot))
 end if
 
-if (BS_opt_forcing) then
-     allocate(IV_forcingtot_id(IS_forcingtot))
-     allocate(IV_forcinguse_id(IS_forcinguse))
-     allocate(ZV_read_forcingtot(IS_forcingtot))
+if (BS_opt_hum) then
+     allocate(IV_hum_tot_id(IS_hum_tot))
+     allocate(IV_hum_use_id(IS_hum_use))
+     allocate(ZV_read_hum_tot(IS_hum_tot))
 end if
+
+if (BS_opt_for) then
+     allocate(IV_for_tot_id(IS_for_tot))
+     allocate(IV_for_use_id(IS_for_use))
+     allocate(ZV_read_for_tot(IS_for_tot))
+end if
+
+if (BS_opt_dam) then
+     allocate(IV_dam_tot_id(IS_dam_tot))
+     allocate(IV_dam_use_id(IS_dam_use))
+     allocate(ZV_read_dam_tot(IS_dam_tot))
+     allocate(ZV_Qin_dam(IS_dam_tot))
+     allocate(ZV_Qin_dam_prev(IS_dam_tot))
+     allocate(ZV_Qout_dam(IS_dam_tot))
+     allocate(ZV_Qout_dam_prev(IS_dam_tot))
+     allocate(ZV_Qin_dam0(IS_dam_tot))
+     allocate(ZV_Qout_dam0(IS_dam_tot))
+end if
+
+!-------------------------------------------------------------------------------
+!Make sure some Fortran arrays are initialized to zero
+!-------------------------------------------------------------------------------
+if (BS_opt_dam) then
+     ZV_Qin_dam0 =0
+     ZV_Qout_dam0=0
+end if
+!These are not populated anywhere before being used and hold meaningless values
 
 !-------------------------------------------------------------------------------
 !Compute number of time steps
@@ -135,18 +167,16 @@ IS_O=int(ZS_TauO/ZS_dtO)
 IS_R=int(ZS_TauR/ZS_dtR)
 IS_RpO=int(ZS_dtO/ZS_TauR)
 IS_RpM=int(ZS_dtM/ZS_TauR)
+IS_RpF=int(ZS_dtF/ZS_TauR)
+IS_RpH=int(ZS_dtH/ZS_TauR)
 
 !-------------------------------------------------------------------------------
 !Initialize libraries and create objects common to all options
 !-------------------------------------------------------------------------------
+print *,'!!!LPR before create obj'
 call rapid_create_obj
+print *,'!!!LPR after create obj'
 !Initialize libraries and create PETSc and TAO objects (Mat,Vec,taoapp...)
-print *,'****PASS CALL rapid_create_obj********'
-
-
-call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
-!Determine number associated with each processor
-print *,'****PASS CALL MPI_Comm_rank********'
 
 !-------------------------------------------------------------------------------
 !Prints information about current model run based on info from namelist
@@ -159,14 +189,20 @@ if (rank==0 .and. .not. BS_opt_Qfinal .and. IS_opt_run==1) print '(a70)',      &
        'Not writing final flows into a file                                    '
 if (rank==0 .and. BS_opt_Qfinal .and. IS_opt_run==1)       print '(a70)',      &
        'Writing final flows into a file                                        '
-if (rank==0 .and. .not. BS_opt_forcing)                    print '(a70)',      &
+if (rank==0 .and. .not. BS_opt_for)                        print '(a70)',      &
        'Not using forcing                                                      '
-if (rank==0 .and. BS_opt_forcing)                          print '(a70)',      &
+if (rank==0 .and. BS_opt_for)                              print '(a70)',      &
        'Using forcing                                                          '
+if (rank==0 .and. .not. BS_opt_hum)                        print '(a70)',      &
+       'Not using human-induced flows                                          '
+if (rank==0 .and. BS_opt_hum)                              print '(a70)',      &
+       'Using human-induced flows                                              '
 if (rank==0 .and. IS_opt_routing==1)                       print '(a70)',      &
        'Routing with matrix-based Muskingum method                             '
 if (rank==0 .and. IS_opt_routing==2)                       print '(a70)',      &
        'Routing with traditional Muskingum method                              '
+if (rank==0 .and. IS_opt_routing==3)                       print '(a70)',      &
+       'Routing with matrix-based Muskingum method using transboundary matrix  '
 if (rank==0 .and. IS_opt_run==1)                           print '(a70)',      &
        'RAPID mode: computing flowrates                                        '
 if (rank==0 .and. IS_opt_run==2 .and. IS_opt_phi==1)       print '(a70)',      &
@@ -174,7 +210,7 @@ if (rank==0 .and. IS_opt_run==2 .and. IS_opt_phi==1)       print '(a70)',      &
 if (rank==0 .and. IS_opt_run==2 .and. IS_opt_phi==2)       print '(a70)',      &
        'RAPID mode: optimizing parameters, using phi2                          ' 
 if (rank==0)                                               print '(a10,a60)',  &
-       'Using    :', m3_nc_file 
+       'Using    :', Vlat_file 
 if (rank==0 .and. IS_opt_run==1)                           print '(a10,a60)',  &
        'Using    :',k_file 
 if (rank==0 .and. IS_opt_run==1)                           print '(a10,a60)',  &
@@ -184,33 +220,21 @@ if (rank==0 .and. IS_opt_run==2)                           print '(a10,a60)',  &
 call PetscPrintf(PETSC_COMM_WORLD,'--------------------------'//char(10),ierr)
 
 !-------------------------------------------------------------------------------
-!Calculate Network matrix
+!Calculate helpful arrays  !--LPR: hash-table used to increase efficiency-------
 !-------------------------------------------------------------------------------
-!LPR add 2014-07-27
-!if(initialized .ne. .True.) then
-!print *,'***LPR*** First time initialization: need to initialize river matrix'
-  call rapid_net_mat
-!Create network matrix
-!end if
+call rapid_arrays   
+!print *,'!!!LPR after rapid_arrays'
 
 !-------------------------------------------------------------------------------
-!Print warning when forcing is used (needs be after rapid_net_mat)
+!Calculate Network matrix
 !-------------------------------------------------------------------------------
-if (BS_opt_forcing) then
-if (rank==0) print *, 'IS_forcingbas      =', IS_forcingbas
-if (rank==0 .and. IS_forcingbas>0) then
-     call PetscPrintf(PETSC_COMM_WORLD,'WARNING: Forcing option used: '        &
-                 //'measured flow replaced computed flows '                    &
-                 //'for stations located on reach ID:'//char(10),ierr)
-     !print *, 'IV_forcingtot_id   =', IV_forcingtot_id
-     print *, 'IV_forcinguse_id   =', IV_forcinguse_id
-     print *, 'IS_forcingbas      =', IS_forcingbas
-     print *, 'IV_forcing_index   =', IV_forcing_index
-     print *, 'IV_forcing_loc     =', IV_forcing_loc
-end if
-call PetscPrintf(PETSC_COMM_WORLD,'--------------------------'//char(10),ierr)
-end if
-!Warning about forcing downstream basins
+call rapid_net_mat
+!print *,'!!!LPR after rapid_net_mat'
+
+!-------------------------------------------------------------------------------
+!Breaks connections in Network matrix
+!-------------------------------------------------------------------------------
+if (BS_opt_for .or. BS_opt_dam) call rapid_net_mat_brk
 
 !-------------------------------------------------------------------------------
 !calculates or set initial flows and volumes
@@ -220,15 +244,16 @@ call VecSet(ZV_QoutinitM,ZS_Qout0,ierr)
 end if
 
 if (BS_opt_Qinit) then
+print *, 'LPR: RAPID reading its own initialization file ......'
 open(30,file=Qinit_file,status='old')
-read(30,*) ZV_read_reachtot
+read(30,*) ZV_read_riv_tot
 close(30)
-call VecSetValues(ZV_QoutinitM,IS_reachbas,IV_basin_loc,                       &
-                  ZV_read_reachtot(IV_basin_index),INSERT_VALUES,ierr)
+call VecSetValues(ZV_QoutinitM,IS_riv_bas,IV_riv_loc1,                          &
+                  ZV_read_riv_tot(IV_riv_index),INSERT_VALUES,ierr)
                   !here we use the output of a simulation as the intitial 
                   !flow rates.  The simulation has to be made on the entire
                   !domain, the initial value is taken only for the considered
-                  !basin thanks to the vector IV_basin_index
+                  !basin thanks to the vector IV_riv_index
 call VecAssemblyBegin(ZV_QoutinitM,ierr)
 call VecAssemblyEnd(ZV_QoutinitM,ierr)  
 end if
@@ -245,6 +270,7 @@ call VecSet(ZV_QoutRabsmin,ZS_one*999999999,ierr)
 call VecSet(ZV_QoutRabsmax,ZS_one*0        ,ierr)
 end if
 
+
 !*******************************************************************************
 !Initialization procedure for OPTION 1
 !*******************************************************************************
@@ -260,18 +286,18 @@ call VecCopy(ZV_VinitM,ZV_VinitR,ierr)
 !Read/set k and x
 !-------------------------------------------------------------------------------
 open(20,file=k_file,status='old')
-read(20,*) ZV_read_reachtot
-call VecSetValues(ZV_k,IS_reachbas,IV_basin_loc,                               &
-                  ZV_read_reachtot(IV_basin_index),INSERT_VALUES,ierr)
+read(20,*) ZV_read_riv_tot
+call VecSetValues(ZV_k,IS_riv_bas,IV_riv_loc1,                                 &
+                  ZV_read_riv_tot(IV_riv_index),INSERT_VALUES,ierr)
 call VecAssemblyBegin(ZV_k,ierr)
 call VecAssemblyEnd(ZV_k,ierr)
 close(20)
 !get values for k in a file and create the corresponding ZV_k vector
 
 open(21,file=x_file,status='old')
-read(21,*) ZV_read_reachtot
-call VecSetValues(ZV_x,IS_reachbas,IV_basin_loc,                               &
-                  ZV_read_reachtot(IV_basin_index),INSERT_VALUES,ierr)
+read(21,*) ZV_read_riv_tot
+call VecSetValues(ZV_x,IS_riv_bas,IV_riv_loc1,                                 &
+                  ZV_read_riv_tot(IV_riv_index),INSERT_VALUES,ierr)
 call VecAssemblyBegin(ZV_x,ierr)
 call VecAssemblyEnd(ZV_x,ierr)
 close(21)
@@ -288,6 +314,7 @@ call KSPSetType(ksp,KSPRICHARDSON,ierr)                    !default=richardson
 !call KSPSetInitialGuessNonZero(ksp,PETSC_TRUE,ierr)
 !call KSPSetInitialGuessKnoll(ksp,PETSC_TRUE,ierr)
 call KSPSetFromOptions(ksp,ierr)                           !if runtime options
+if (IS_opt_routing==3) call KSPSetType(ksp,KSPPREONLY,ierr)!default=preonly
 
 !-------------------------------------------------------------------------------
 !End of initialization procedure for OPTION 1
@@ -317,10 +344,10 @@ call VecCopy(ZV_QoutinitM,ZV_QoutinitO,ierr)
 !Read/set kfac, xfac and Qobsbarrec
 !-------------------------------------------------------------------------------
 open(22,file=kfac_file,status='old')
-read(22,*) ZV_read_reachtot
+read(22,*) ZV_read_riv_tot
 close(22)
-call VecSetValues(ZV_kfac,IS_reachbas,IV_basin_loc,                            &
-                  ZV_read_reachtot(IV_basin_index),INSERT_VALUES,ierr)
+call VecSetValues(ZV_kfac,IS_riv_bas,IV_riv_loc1,                              &
+                  ZV_read_riv_tot(IV_riv_index),INSERT_VALUES,ierr)
                   !only looking at basin, doesn't have to be whole domain here 
 call VecAssemblyBegin(ZV_kfac,ierr)
 call VecAssemblyEnd(ZV_kfac,ierr)  
@@ -328,10 +355,10 @@ call VecAssemblyEnd(ZV_kfac,ierr)
 
 if (IS_opt_phi==2) then
 open(35,file=Qobsbarrec_file,status='old')
-read(35,*) ZV_read_gagetot
+read(35,*) ZV_read_obs_tot
 close(35)
-call VecSetValues(ZV_Qobsbarrec,IS_gagebas,IV_gage_loc,                        &
-                  ZV_read_gagetot(IV_gage_index),INSERT_VALUES,ierr)
+call VecSetValues(ZV_Qobsbarrec,IS_obs_bas,IV_obs_loc1,                        &
+                  ZV_read_obs_tot(IV_obs_index),INSERT_VALUES,ierr)
                   !here we only look at the observations within the basin
                   !studied
 call VecAssemblyBegin(ZV_Qobsbarrec,ierr)
@@ -362,6 +389,7 @@ call VecAssemblyEnd(ZV_pnorm,ierr)
 !-------------------------------------------------------------------------------
 #endif
 end if
+
 
 !*******************************************************************************
 !End of subroutine

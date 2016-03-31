@@ -1,4 +1,26 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!  <brief list of changes to this source file>
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 !2345678
+       
        subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
@@ -38,8 +60,8 @@
               STC(:,:,k) = STC_io(:,k,:)
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
-          end do 
-             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)  
+          end do
+             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
 
            do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)
@@ -134,29 +156,26 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
-#ifdef HYDRO_D
-              write(6,*) "Error: failed to open file in get_greenfrac: ", trim(fileName)
-              call hydro_stop("in get_greenfrac_netcdf") 
-#endif
+              write(6,*) "FATAL ERROR: failed to open file in get_greenfrac: ", trim(fileName)
+              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// & 
+                              "Failed to open file.") 
           endif 
             
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
-             call hydro_stop("in get_greenfrac_netcdf")
-#endif
+             call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
+                             "Failed to call nf_inq_varid.")
           endif
       
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
 
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
-             call hydro_stop("in get_greenfrac_netcdf")
-#endif
+             call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
+                             "Faile to call nf_get_var_real")
           endif
       
       
@@ -206,29 +225,26 @@
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
-#ifdef HYDRO_D
-              write(6,*) "Error: failed to open file in get_maxgreenfrac: ", trim(fileName)
-              call hydro_stop("in get_maxgreenfrac_netcdf") 
-#endif
+              write(6,*) "FATAL ERROR: failed to open file in get_maxgreenfrac: ", trim(fileName)
+              call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
+                              "Failed to open file.") 
           endif 
             
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_inq_varid"
-             call hydro_stop("in get_maxgreenfrac_netcdf")
-#endif
+             call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
+                             "Faile to call nf_inq_varid.")
           endif
       
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
 
-#ifdef HYDRO_D
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_get_var_real"
-             call hydro_stop("in get_maxgreenfrac_netcdf")
-#endif
+             call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
+                             "Failed to call lnf_get_var_real.")
           endif
       
           array3 = maxval(xtmp,3)
@@ -257,16 +273,16 @@
 
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
-#ifdef HYDRO_D
           if(iret /= 0) then
-              write(6,*) "Error: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
-              call hydro_stop("HYDRO_HRLDAS_ini") 
+              write(6,*) "FATAL ERROR: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
+              call hydro_stop("In hrldas_drv_HYDRO.F HYDRO_HRLDAS_ini() - "// &
+                              "Failed to open wrf input/output file.") 
           else
-        
+#ifdef HYDRO_D
               write(6,*) "initialization from the file  : ", trim(fileName)
 
-          endif 
 #endif
+          endif 
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
            if (iret == 0) then 
@@ -375,3 +391,10 @@
            
       end subroutine HYDRO_HRLDAS_ini_mpp
 #endif
+      subroutine get_iocflag(did, iocflag) 
+         use module_namelist, only:nlst_rt
+         implicit none
+         integer :: did, iocflag
+         iocflag = nlst_rt(did)%iocflag
+      end subroutine get_iocflag
+ 

@@ -1,3 +1,24 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!  <brief list of changes to this source file>
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_WRF_HYDRO
 
 #ifdef MPP_LAND
@@ -28,7 +49,7 @@ module module_WRF_HYDRO
 #endif
 !
 ! added to consider the adaptive time step from WRF model. 
-    real    :: dtrt0  
+    real    :: dtrt_ter0  , dtrt_ch0
     integer ::  mm0
 
 
@@ -37,11 +58,12 @@ module module_WRF_HYDRO
 CONTAINS
 
 !wrf_cpl_HYDRO will not call the off-line lsm 
-    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid, config_flags, its,ite,jts,jte)
+!ywGW subroutine wrf_cpl_HYDRO(HYDRO_dt,grid, config_flags, its,ite,jts,jte)
+    subroutine wrf_cpl_HYDRO(HYDRO_dt,grid,its,ite,jts,jte)
 
        implicit none
        TYPE ( domain ), INTENT(INOUT) :: grid
-       TYPE ( grid_config_rec_type ), INTENT(IN) :: config_flags
+!ywGW       TYPE ( grid_config_rec_type ), INTENT(IN) :: config_flags
        integer its, ite, jts, jte, ij
        real :: HYDRO_dt
 
@@ -58,11 +80,13 @@ CONTAINS
 !output flux and state variable
 
         did = 1
+
+
         ix = ite - its + 1
         jx = jte - jts + 1
 
         if(HYDRO_dt .le. 0) then
-             write(6,*) "Warning: HYDRO_dt <= 0 from land input. set it to be 1 seconds."
+             write(6,*) "WARNING: HYDRO_dt <= 0 from land input. set it to be 1 seconds."
              HYDRO_dt = 1
         endif
 
@@ -113,8 +137,8 @@ CONTAINS
 
 
             if(nlst_rt(did)%sys_cpl .ne. 2) then
-               write(6,*) "Error: sys_cpl should be 2."
-               call hydro_stop()
+               call hydro_stop("In module_wrf_HYDRO.F wrf_cpl_HYDRO() - "// &
+                               "sys_cpl should be 2.  Check hydro.namelist file.")
             endif
 
 
@@ -122,25 +146,47 @@ CONTAINS
             nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
 
             nlst_rt(did)%dt = HYDRO_dt
-            if(nlst_rt(did)%dtrt .lt. HYDRO_dt) then
-               nlst_rt(did)%dtrt = HYDRO_dt
+            if(nlst_rt(did)%dtrt_ter .ge. HYDRO_dt) then
+               nlst_rt(did)%dtrt_ter = HYDRO_dt
                mm0 = 1
             else
-               mm = HYDRO_dt/nlst_rt(did)%dtrt
-               if(mm*nlst_rt(did)%dtrt .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+               mm = HYDRO_dt/nlst_rt(did)%dtrt_ter
+               if(mm*nlst_rt(did)%dtrt_ter.lt. HYDRO_dt) nlst_rt(did)%dtrt_ter = HYDRO_dt/mm
                mm0 = mm
             endif
 
-            dtrt0 = nlst_rt(did)%dtrt  
+            dtrt_ter0 = nlst_rt(did)%dtrt_ter  
+
+            if(nlst_rt(did)%dtrt_ch .ge. HYDRO_dt) then
+               nlst_rt(did)%dtrt_ch = HYDRO_dt
+               mm0 = 1
+            else
+               mm = HYDRO_dt/nlst_rt(did)%dtrt_ch
+               if(mm*nlst_rt(did)%dtrt_ch.lt. HYDRO_dt) nlst_rt(did)%dtrt_ch = HYDRO_dt/mm
+               mm0 = mm
+            endif
+
+            dtrt_ch0 = nlst_rt(did)%dtrt_ch  
         endif
 
-            if((mm0*nlst_rt(did)%dtrt) .ne. HYDRO_dt) then   ! WRF model time step changed.
-               if(dtrt0 .lt. HYDRO_dt) then
-                  nlst_rt(did)%dtrt = HYDRO_dt
+            if((mm0*nlst_rt(did)%dtrt_ter) .ne. HYDRO_dt) then   ! WRF model time step changed.
+               if(dtrt_ter0 .ge. HYDRO_dt) then
+                  nlst_rt(did)%dtrt_ter = HYDRO_dt
                   mm0 = 1
                else
-                  mm = HYDRO_dt/dtrt0
-                  if(mm*dtrt0 .lt. HYDRO_dt) nlst_rt(did)%dtrt = HYDRO_dt/mm
+                  mm = HYDRO_dt/dtrt_ter0
+                  if(mm*dtrt_ter0 .lt. HYDRO_dt) nlst_rt(did)%dtrt_ter = HYDRO_dt/mm
+                  mm0 = mm
+               endif
+            endif
+
+            if((mm0*nlst_rt(did)%dtrt_ch) .ne. HYDRO_dt) then   ! WRF model time step changed.
+               if(dtrt_ch0 .ge. HYDRO_dt) then
+                  nlst_rt(did)%dtrt_ch = HYDRO_dt
+                  mm0 = 1
+               else
+                  mm = HYDRO_dt/dtrt_ch0
+                  if(mm*dtrt_ch0 .lt. HYDRO_dt) nlst_rt(did)%dtrt_ch = HYDRO_dt/mm
                   mm0 = mm
                endif
             endif
@@ -149,12 +195,13 @@ CONTAINS
         write(6,*) "mm, nlst_rt(did)%dt = ",mm, nlst_rt(did)%dt
 #endif
 
-        if(nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 .and. nlst_rt(did)%GWBASESWCRT .eq. 0) return
+        if(nlst_rt(did)%rtFlag .eq. 0) return
+
 
         nn = nlst_rt(did)%nsoil
 
         ! get the data from WRF 
+
 
 
        if((.not. RT_DOMAIN(did)%initialized) .and. (nlst_rt(did)%rst_typ .eq. 1) ) then
@@ -296,6 +343,7 @@ CONTAINS
        if(my_id .eq. IO_id) then
 #endif
 
+#ifndef NCEP_WCOSS
        open(71,file="HYDRO.TBL", form="formatted")
 !read OV_ROUGH first
           read(71,*) nn
@@ -311,6 +359,22 @@ CONTAINS
           end do
        close(71)
 
+#else
+      open(13, form="formatted") 
+!read OV_ROUGH first
+          read(13,*) nn
+          read(13,*)
+          do i = 1, nn
+             read(13,*) RT_DOMAIN(did)%OV_ROUGH(i)
+          end do
+!read parameter for LKSAT
+          read(13,*) nn
+          read(13,*)
+          do i = 1, nn
+             read(13,*) xdum1(i), MAXSMC(i),refsmc(i),wltsmc(i)
+          end do
+       close(13)
+#endif
 #ifdef MPP_LAND
        endif
        call mpp_land_bcast_real(leng,RT_DOMAIN(did)%OV_ROUGH)

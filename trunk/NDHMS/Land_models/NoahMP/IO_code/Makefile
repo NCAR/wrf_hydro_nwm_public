@@ -19,43 +19,44 @@ NoahMP : $(OBJS_NoahMP) $(OBJS)
 
 module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
+	$(RM) $(*).f90
+	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG) -I. \
-	-I../Noah -I../Utility_routines $(NETCDFMOD) $(*).f
+	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
 
 main_hrldas_driver.o: main_hrldas_driver.F
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
-	-I../Noah -I../Utility_routines $(NETCDFMOD) $(*).f
+	$(RM) $(*).f90
+	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
+	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP $(NETCDFMOD) $(*).f90
+#	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
+#	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(NETCDFMOD) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(NETCDFMOD)  $(*).f
+	$(RM) $(*).f90
+	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(NETCDFMOD) $(*).F > $(*).f90
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(NETCDFMOD)  $(*).f90
 	@echo ""
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f
+	$(RM) $(*).f90
+	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f90
 	@echo ""
-
 
 
 #
 # Dependencies:
 #
 
-main_hrldas_driver.o:	$(OBJS_NoahMP)
+main_hrldas_driver.o:	$(OBJS_NoahMP) 
 $(OBJS_NoahMP):	module_hrldas_netcdf_io.o
 
 # This command cleans up object files, etc.
 clean:
-	$(RM) *.o *.mod *.stb *~ *.f
+	$(RM) *.o *.mod *.stb *~ *.f90

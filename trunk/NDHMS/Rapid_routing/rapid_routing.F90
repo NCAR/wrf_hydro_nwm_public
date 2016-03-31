@@ -5,11 +5,12 @@ subroutine rapid_routing(ZV_C1,ZV_C2,ZV_C3,ZV_Qext,                            &
                          ZV_QoutinitR,ZV_VinitR,                               &
                          ZV_QoutR,ZV_QoutbarR,ZV_VR,ZV_VbarR)
 
-!PURPOSE
+!Purpose:
 !Performs flow calculation in each reach of a river network using the Muskingum
 !method (McCarthy 1938).  Also calculates the volume of each reach using a
 !simple first order approximation
-!Author: Cedric H. David, 2008 
+!Author: 
+!Cedric H. David, 2008-2015. 
 
 
 !*******************************************************************************
@@ -18,17 +19,18 @@ subroutine rapid_routing(ZV_C1,ZV_C2,ZV_C3,ZV_Qext,                            &
 use netcdf
 use rapid_var, only :                                                          &
                    ZS_dtR,IS_R,JS_R,                                           &
-                   ZM_Net,                                                     &
-                   ZV_b,ZV_babsmax,                                            &
+                   ZM_Net,ZM_TC1,                                              &
+                   ZV_b,ZV_babsmax,ZV_bhat,                                    &
                    ZV_QoutprevR,ZV_VprevR,ZV_QoutRabsmin,ZV_QoutRabsmax,       &
+                   ZV_QoutRhat,                                                &
                    ZV_VoutR,ZV_Vext,                                           &
                    ierr,ksp,                                                   &
                    ZS_one,IS_ksp_iter,IS_ksp_iter_max,                         &
                    vecscat,ZV_SeqZero,ZV_pointer,rank,                         &
                    IS_nc_status,IS_nc_id_fil_Qout,IS_nc_id_var_Qout,           &
                    IV_nc_start,IV_nc_count2,                                   &
-                   IS_reachbas,JS_reachbas,IM_index_up,                        &
-                   IS_opt_routing,IV_nbup,IV_basin_index,                      &
+                   IS_riv_bas,JS_riv_bas,IM_index_up,                          &
+                   IS_opt_routing,IV_nbup,IV_riv_index,                        &
                    BS_opt_influence
 
 
@@ -94,7 +96,7 @@ call VecGetArrayF90(ZV_C2,ZV_C2_p,ierr)
 call VecGetArrayF90(ZV_C3,ZV_C3_p,ierr)
 call VecGetArrayF90(ZV_Qext,ZV_Qext_p,ierr)
 
-do JS_R=1,IS_R  !*************LPR the routing is done every 15min----------------
+do JS_R=1,IS_R
 !-------------------------------------------------------------------------------
 !Update mean
 !-------------------------------------------------------------------------------
@@ -142,11 +144,11 @@ call VecGetArrayF90(ZV_QoutR,ZV_QoutR_p,ierr)
 call VecGetArrayF90(ZV_QoutprevR,ZV_QoutprevR_p,ierr)
 call VecGetArrayF90(ZV_b,ZV_b_p,ierr)
 
-do JS_reachbas=1,IS_reachbas
-     ZV_QoutR_p(JS_reachbas)=ZV_b_p(JS_reachbas)                               &
-                            +sum(ZV_C1_p(JS_reachbas)                          &
-                                  *ZV_QoutR_p(IM_index_up(JS_reachbas,1:       &
-                                   IV_nbup(IV_basin_index(JS_reachbas))))) 
+do JS_riv_bas=1,IS_riv_bas
+     ZV_QoutR_p(JS_riv_bas)=ZV_b_p(JS_riv_bas)                                 &
+                            +sum(ZV_C1_p(JS_riv_bas)                           &
+                                  *ZV_QoutR_p(IM_index_up(JS_riv_bas,1:        &
+                                   IV_nbup(IV_riv_index(JS_riv_bas))))) 
 end do
 !Taking into account the knowledge of how many upstream locations exist.
 !Similar to exact preallocation of network matrix
@@ -155,6 +157,25 @@ call VecRestoreArrayF90(ZV_QoutR,ZV_QoutR_p,ierr)
 call VecRestoreArrayF90(ZV_QoutprevR,ZV_QoutprevR_p,ierr)
 call VecRestoreArrayF90(ZV_b,ZV_b_p,ierr)
 end if
+
+!-------------------------------------------------------------------------------
+!Routing with PETSc using a matrix method with transboundary matrix
+!-------------------------------------------------------------------------------
+if (IS_opt_routing==3) then
+
+call KSPSolve(ksp,ZV_b,ZV_QoutRhat,ierr)                     !solves A*Qouthat=b
+call KSPGetIterationNumber(ksp,IS_ksp_iter,ierr)
+if (IS_ksp_iter>IS_ksp_iter_max) IS_ksp_iter_max=IS_ksp_iter
+
+call MatMult(ZM_TC1,ZV_QoutRhat,ZV_bhat,ierr)
+call VecAYPX(ZV_bhat,ZS_one,ZV_b,ierr)
+
+call KSPSolve(ksp,ZV_bhat,ZV_QoutR,ierr)                     !solves A*Qout=bhat
+call KSPGetIterationNumber(ksp,IS_ksp_iter,ierr)
+if (IS_ksp_iter>IS_ksp_iter_max) IS_ksp_iter_max=IS_ksp_iter
+
+end if
+
 
 !-------------------------------------------------------------------------------
 !Calculation of babsmax, QoutRabsmin and QoutRabsmax

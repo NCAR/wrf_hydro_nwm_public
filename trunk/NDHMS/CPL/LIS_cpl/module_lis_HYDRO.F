@@ -1,3 +1,24 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!  <brief list of changes to this source file>
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_lis_HYDRO
     use noah271_lsmMod, only : noah271_struc 
 !   use LIS_coreMod, only : LIS_rc, LIS_domain, LIS_masterproc, &
@@ -34,6 +55,7 @@ module module_lis_HYDRO
 
 
         did = 1
+
         ntime = 1
 
 !           write(6,*) "yyyywww step 2, n =", n
@@ -48,8 +70,8 @@ module module_lis_HYDRO
         call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
 #endif
         if(nlst_rt(did)%nsoil < 1) then
-           write(6,*) "Error: nsoil is less than 1"
-           call hydro_stop 
+           write(6,*) "FATAL ERROR: nsoil is less than 1"
+           call hydro_stop("In module_lis_HYDRO.F module_lis_HYDRO() - nsoil is less than 1") 
         endif
         allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
         nlst_rt(did)%zsoil8(1) = -noah271_struc(n)%lyrthk(1)
@@ -57,8 +79,10 @@ module module_lis_HYDRO
            nlst_rt(did)%zsoil8(KZ) = -noah271_struc(n)%lyrthk(KZ)+nlst_rt(did)%zsoil8(KZ-1)
         END DO
 !!! ----------
+#ifdef HYDRO_D
         write(6,*) "zsoil8 = ",nlst_rt(did)%zsoil8
 
+#endif
 
         CALL mpi_initialized( mpi_inited, ierr )
         if ( .NOT. mpi_inited ) then
@@ -68,6 +92,7 @@ module module_lis_HYDRO
         call MPI_COMM_SIZE( MPI_COMM_WORLD, numprocs, ierr )
       endif
 
+        if(nlst_rt(did)%rtFlag .eq. 0) return
 
         write(cpl_outdate(1:5),'(I4,"-")') LIS_rc%yr
 
@@ -119,6 +144,7 @@ module module_lis_HYDRO
 
         if(.not. RT_DOMAIN(did)%initialized) then
 !           write(6,*) "yyyywww step 3"
+#ifdef HYDRO_D
             write(6,*) "ix,jx, cpl_land_dt",ix,jx, LIS_rc%ts  
 
 !           write(6,*) "yyyywww step 4 before HYDRO_ini= "
@@ -126,6 +152,7 @@ module module_lis_HYDRO
             write(6,*) "noah271_struc(n)%nslay=", noah271_struc(n)%nslay
             write(6,*) "noah271_struc(n)%lyrthk=", noah271_struc(n)%lyrthk
 
+#endif
             nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
 
             call CPL_LAND_INIT(its,ite,jts,jte)
@@ -137,8 +164,9 @@ module module_lis_HYDRO
             call HYDRO_ini(ntime,did=did,ix0=1,jx0=1)
 
             if(nlst_rt(did)%sys_cpl .ne. 3) then
-               write(6,*) "Error: sys_cpl should be 3."
-               call hydro_stop()
+               write(6,*) "FATAL ERROR: sys_cpl should be 3."
+               call hydro_stop("In module_lis_HYDRO.F lis_cpl_HYDRO() - "// &
+                               "sys_cpl should be 3. Check hydro.namelist file")
             endif
 !           write(6,*) "yyyywww step 5 my_id= ", my_id
 
@@ -171,8 +199,9 @@ module module_lis_HYDRO
                 call lis2HYDRO(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
             enddo
        
-       
+#ifdef HYDRO_D       
         write(6,*) "NDHMS lis date ", LIS_rc%yr, LIS_rc%mo, LIS_rc%da, LIS_rc%hr, LIS_rc%mn, LIS_rc%ss 
+#endif
 !       write(11,*) "RT_DOMAIN(did)%stc",RT_DOMAIN(did)%stc(:,:,1)
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
