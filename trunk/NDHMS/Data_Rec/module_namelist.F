@@ -274,6 +274,9 @@ CONTAINS
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
 
+#ifdef MPP_LAND
+  if(my_id .eq. IO_id) then
+#endif
     if(nlst%DT .lt. DTRT_CH) then 
           print*, "nlst%DT,  DTRT_CH = ",nlst%DT,  DTRT_CH
           print*, "reset DTRT_CH=nlst%DT "
@@ -292,6 +295,9 @@ CONTAINS
          print*, "nlst%DT,  DTRT_CH = ",nlst%DT,  DTRT_CH
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
+#ifdef MPP_LAND
+  endif
+#endif
 
     nlst%SUBRTSWCRT = SUBRTSWCRT
     nlst%OVRTSWCRT = OVRTSWCRT
