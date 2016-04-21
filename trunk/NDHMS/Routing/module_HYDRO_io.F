@@ -3151,24 +3151,20 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      !-- prevChild
         iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',57,'record number of the previous record for the same station')
-!ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
         iret = nf_def_var(ncid2,"prevChild",NF_INT,1,(/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',57,'record number of the previous record for the same station')
-!ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
 
      !-- lastChild
         iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
-!ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
         iret = nf_def_var(ncid2,"lastChild",NF_INT,1,(/obsdim/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',30,'latest report for this station')
-!ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
 
 !     !- flow definition, var
 
@@ -3225,11 +3221,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
         iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
