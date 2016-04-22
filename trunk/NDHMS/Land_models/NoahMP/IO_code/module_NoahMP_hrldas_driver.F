@@ -1646,6 +1646,8 @@ end subroutine land_driver_ini
      OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
         if (mod(ITIME*noah_timestep, output_timestep) == 0) then
 
+           ! convert RAINRATE back to mm/s for output
+           RAINBL = RAINBL_tmp
            call ldas_output()
 
 
