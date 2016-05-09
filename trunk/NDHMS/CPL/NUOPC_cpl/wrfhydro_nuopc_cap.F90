@@ -1,7 +1,10 @@
 #define ESMF_STDERRORCHECK(rc) ESMF_LogFoundError(rcToCheck=rc,msg=ESMF_LOGERR_PASSTHRU,line=__LINE__,file=__FILE__)
-#ifndef DEBUG_LVL
-#define DEBUG_LVL 3
-#endif
+#define FILENAME "wrfhydro_nuopc_cap"
+#define MODNAME "wrfhydro_nuopc"
+
+#define VERBOSITY_MIN 0
+#define VERBOSITY_MAX 255
+#define VERBOSITY_DBG 1023
 
 module wrfhydro_nuopc
 ! !MODULE: wrfhydro_nuopc
@@ -30,7 +33,18 @@ module wrfhydro_nuopc
     WRFHYDRO_soilarrayspec, &
     WRFHYDRO_nsoil
   use wrfhydro_nuopc_addonutils, only: &
-    state_reset
+    mode_Unknown, &
+    mode_Offline, &
+    mode_Coupled, &
+    mode_Hybrid, &
+    type_FieldDesc, &
+    type_InternalStateStruct, &
+    type_InternalState, &
+    label_InternalState, &
+    state_reset, &
+    field_list_add, &
+    field_list_print, &
+    set_runmode
 
   implicit none
 
@@ -38,27 +52,8 @@ module wrfhydro_nuopc
 
   public SetServices
 
-  integer   :: import_slice = 0
-  integer   :: export_slice = 0
-
-  type fld_list_type
-    character(len=64)   :: stdname =" "
-    character(len=64)   :: shortname = " "
-    character(len=64)   :: transferOffer = " "
-    logical             :: import = .FALSE.
-    logical             :: export = .FALSE.
-    logical             :: assoc = .FALSE. ! is the farrayPtr associated with internal data
-    real(ESMF_KIND_R8), dimension(:,:,:), pointer :: farrayPtr
-  end type fld_list_type
-
-  integer,parameter     :: nest = 1
-  integer,parameter     :: fldsMax = 100
-  integer               :: fldsHyd_num = 0
-  type (fld_list_type)  :: fldsHyd(fldsMax)
-
   ! some temporary debug variables
-  character(len=256) :: msgString
-  integer, parameter :: dbug_flag = DEBUG_LVL
+  character(len=ESMF_MAXSTR) :: logMsg
 
   !-----------------------------------------------------------------------------
   contains
@@ -69,13 +64,23 @@ module wrfhydro_nuopc
     integer, intent(out) :: rc
 
     ! local variables
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:SetServices)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    integer                    :: stat
+    type(type_InternalState)   :: is
+    CHARACTER(LEN=*),PARAMETER :: SUBNAME='SetServices'
 
     rc = ESMF_SUCCESS
+
+    ! allocate memory for this internal state and set it in the component
+    allocate(is%wrap, stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of internal state memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call ESMF_UserCompSetInternalState(hydroGridComp, label_InternalState, is, rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
+    endif
 
     ! the NUOPC model component will register the generic methods
     call NUOPC_CompDerive(hydroGridComp, model_routine_SS, rc=rc)
@@ -109,8 +114,8 @@ module wrfhydro_nuopc
       specRoutine=ModelFinalize, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
 
@@ -123,21 +128,41 @@ module wrfhydro_nuopc
     integer, intent(out)  :: rc
 
     ! local variables
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:InitializeP0)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    type(type_InternalState)   :: is
+    character(len=10)          :: value
+    CHARACTER(LEN=*),PARAMETER :: SUBNAME='InitializeP0'
 
     rc = ESMF_SUCCESS
+
+    ! query Component for its internal State
+    nullify(is%wrap)
+    call ESMF_UserCompGetInternalState(hydroGridComp, label_InternalState, is, rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    call ESMF_AttributeGet(hydroGridComp, name="Verbosity", value=value, defaultValue="max", &
+      convention="NUOPC", purpose="Instance", rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    is%wrap%verbosity = ESMF_UtilString2Int(value, &
+      specialStringList=(/"min","max","debug"/), &
+      specialValueList=(/VERBOSITY_MIN,VERBOSITY_MAX,VERBOSITY_DBG/), rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if (is%wrap%verbosity >= VERBOSITY_MIN) then
+      write(logMsg,'(A,I0)') 'Verbosity: ',is%wrap%verbosity
+      call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
 
     ! Switch to IPDv01 by filtering all other phaseMap entries
     call NUOPC_CompFilterPhaseMap(hydroGridComp, ESMF_METHOD_INITIALIZE, &
       acceptStringList=(/"IPDv01p"/), rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
 
@@ -150,126 +175,106 @@ module wrfhydro_nuopc
     integer, intent(out) :: rc
 
     ! local variables
+    type(type_InternalState)    :: is
     integer                     :: fieldIndex
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:InitializeAdvertise)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='InitializeAdvertise'
 
     rc = ESMF_SUCCESS
 
+    ! query Component for its internal State
+    nullify(is%wrap)
+    call ESMF_UserCompGetInternalState(hydroGridComp, label_InternalState, is, rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
+
     !! Land surface forcing fields
     !! liquid_water_content_of_soil_layer also feedback to land
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="moisture_content_of_soil_layer_1", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="moisture_content_of_soil_layer_2", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="moisture_content_of_soil_layer_3", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="moisture_content_of_soil_layer_4", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="temperature_of_soil_layer_1", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="temperature_of_soil_layer_2", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="temperature_of_soil_layer_3", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="temperature_of_soil_layer_4", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="liquid_water_content_of_soil_layer_1", &
-      transferOffer="will provide", import=.TRUE., export=.TRUE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="liquid_water_content_of_soil_layer_2", &
-      transferOffer="will provide", import=.TRUE., export=.TRUE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="liquid_water_content_of_soil_layer_3", &
-      transferOffer="will provide", import=.TRUE., export=.TRUE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="liquid_water_content_of_soil_layer_4", &
-      transferOffer="will provide", import=.TRUE., export=.TRUE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="surface_runoff_flux", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="subsurface_runoff_flux", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
+    call field_list_add(is,stdname="moisture_content_of_soil_layer_1", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="moisture_content_of_soil_layer_2", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="moisture_content_of_soil_layer_3", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="moisture_content_of_soil_layer_4", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="temperature_of_soil_layer_1", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="temperature_of_soil_layer_2", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="temperature_of_soil_layer_3", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="temperature_of_soil_layer_4", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="liquid_water_content_of_soil_layer_1", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.TRUE.)
+    call field_list_add(is,stdname="liquid_water_content_of_soil_layer_2", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.TRUE.)
+    call field_list_add(is,stdname="liquid_water_content_of_soil_layer_3", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.TRUE.)
+    call field_list_add(is,stdname="liquid_water_content_of_soil_layer_4", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.TRUE.)
+    call field_list_add(is,stdname="surface_runoff_flux", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="subsurface_runoff_flux", &
+      transferOffer="will provide",forcing=.TRUE.,import=.TRUE.,export=.FALSE.)
 
     !! Feedback to land
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="volume_fraction_of_total_water_in_soil", &
-      transferOffer="will provide", import=.FALSE., export=.TRUE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="surface_snow_thickness", &
-      transferOffer="will provide", import=.FALSE., export=.TRUE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="liquid_water_content_of_surface_snow", &
-      transferOffer="will provide", import=.FALSE., export=.TRUE.)
+    call field_list_add(is,stdname="volume_fraction_of_total_water_in_soil", &
+      transferOffer="will provide",forcing=.FALSE.,import=.FALSE.,export=.TRUE.)
+    call field_list_add(is,stdname="surface_snow_thickness", &
+      transferOffer="will provide",forcing=.FALSE.,import=.FALSE.,export=.TRUE.)
+    call field_list_add(is,stdname="liquid_water_content_of_surface_snow", &
+      transferOffer="will provide",forcing=.FALSE.,import=.FALSE.,export=.TRUE.)
 
     !! Meterological forcing fields
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_down_lw_flx", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_down_sw_flx", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_merid_wind_height_lowest", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_pres_height_surface", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_spec_humid_height_lowest", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_temp_height_lowest", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="inst_zonal_wind_height_lowest", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
-    call fld_list_add(fldsHyd_num, fldsHyd, &
-      stdname="mean_prec_rate", &
-      transferOffer="will provide", import=.TRUE., export=.FALSE.)
+    call field_list_add(is,stdname="inst_down_lw_flx", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="inst_down_sw_flx", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="inst_merid_wind_height_lowest", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="inst_pres_height_surface", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="inst_spec_humid_height_lowest", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="inst_temp_height_lowest", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="inst_zonal_wind_height_lowest", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
+    call field_list_add(is,stdname="mean_prec_rate", &
+      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
 
 !    !! Feedback to atmosphere
-!    call fld_list_add(fldsHyd_num, fldsHyd, &
-!      stdname="dummyfield", &
-!      transferOffer="will provide", import=.TRUE., export=.FALSE.)
+!    call field_list_add(is,stdname="dummyfield", &
+!      transferOffer="will provide",forcing=.FALSE.,import=.TRUE.,export=.FALSE.)
 
 !    !! Other fields
-!    call fld_list_add(fldsHyd_num, fldsHyd, &
-!      stdname="water_surface_height_above_reference_datum", &
-!      transferOffer="will provide", import=.FALSE., export=.TRUE.)
+!    call field_list_add(is,stdname="water_surface_height_above_reference_datum", &
+!      transferOffer="will provide",forcing=.FALSE.,import=.FALSE.,export=.TRUE.)
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call field_list_print(is,rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    endif
 
     !!
     !! advertise import and export fields
     !!
-    do fieldIndex = 1, fldsHyd_num
-      if (fldsHyd(fieldIndex)%import) then
-        call ESMF_LogWrite(SUBNAME//': Advertise IMPORT '//trim(fldsHyd(fieldIndex)%stdname), &
-          ESMF_LOGMSG_INFO, rc=rc)
+    do fieldIndex = 1, is%wrap%fields_total
+      if (is%wrap%field_list(fieldIndex)%import) then
         call NUOPC_Advertise(importState, &
-          standardName=trim(fldsHyd(fieldIndex)%stdname), &
-          name=trim(fldsHyd(fieldIndex)%shortname), &
+          standardName=trim(is%wrap%field_list(fieldIndex)%stdname), &
+          name=trim(is%wrap%field_list(fieldIndex)%shortname), &
           rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
-      if (fldsHyd(fieldIndex)%export) then
-        call ESMF_LogWrite(SUBNAME//': Advertise EXPORT '//trim(fldsHyd(fieldIndex)%stdname), &
-          ESMF_LOGMSG_INFO, rc=rc)
+      if (is%wrap%field_list(fieldIndex)%export) then
         call NUOPC_Advertise(exportState, &
-          standardName=trim(fldsHyd(fieldIndex)%stdname), &
-          name=trim(fldsHyd(fieldIndex)%shortname), &
+          standardName=trim(is%wrap%field_list(fieldIndex)%stdname), &
+          name=trim(is%wrap%field_list(fieldIndex)%shortname), &
           rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
@@ -279,8 +284,8 @@ module wrfhydro_nuopc
     call ESMF_GridCompSet(hydroGridComp, name="WRFHYDRO", rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
 
@@ -293,66 +298,68 @@ module wrfhydro_nuopc
     integer, intent(out)        :: rc
 
     ! local variables
-    type(ESMF_Field)            :: field
-    integer                     :: importCount, exportCount
-    type(ESMF_VM)               :: vm
-    logical                     :: importConnected, exportConnected
-    character(len=256)          :: msgString
-    character(len=10)           :: numString
-    integer                     :: fieldIndex
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:InitializeRealize)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    type(type_InternalState)   :: is
+    type(ESMF_Field)           :: field
+    type(ESMF_VM)              :: vm
+    logical                    :: importConnected, exportConnected
+    integer                    :: importCount, exportCount
+    integer                    :: fieldIndex
+    CHARACTER(LEN=*),PARAMETER :: SUBNAME='InitializeRealize'
 
     rc = ESMF_SUCCESS
+
+    ! query Component for its internal State
+    nullify(is%wrap)
+    call ESMF_UserCompGetInternalState(hydroGridComp, label_InternalState, is, rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
 
     call ESMF_GridCompGet(hydroGridComp, vm=vm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    call wrfhydro_nuopc_ini(vm, rc )
+    call wrfhydro_nuopc_ini(is,vm, rc )
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    do fieldIndex = 1, fldsHyd_num
-      if (fldsHyd(fieldIndex)%import) then
+    do fieldIndex = 1, is%wrap%fields_total
+      if (is%wrap%field_list(fieldIndex)%import) then
         importConnected = NUOPC_IsConnected(importState, &
-          fieldName=fldsHyd(fieldIndex)%stdname)
+          fieldName=is%wrap%field_list(fieldIndex)%stdname)
       else
         importConnected = .FALSE.
       endif
-      if (fldsHyd(fieldIndex)%export) then
+      if (is%wrap%field_list(fieldIndex)%export) then
         exportConnected = NUOPC_IsConnected(exportState, &
-          fieldName=fldsHyd(fieldIndex)%stdname)
+          fieldName=is%wrap%field_list(fieldIndex)%stdname)
       else
         exportConnected = .FALSE.
       endif
 
       if (importConnected .or. exportConnected) then
-        if (fldsHyd(fieldIndex)%assoc) then
-          write(msgString,"(A)") "Boundaries: ("
-          write(numString, "(I10)") lbound(fldsHyd(fieldIndex)%farrayPtr,1)
-          write(msgString,"(A)") trim(msgString)//trim(adjustl(numString))//":"
-          write(numString, "(I10)") ubound(fldsHyd(fieldIndex)%farrayPtr,1)
-          write(msgString,"(A)") trim(msgString)//trim(adjustl(numString))//","
-          write(numString, "(I10)") lbound(fldsHyd(fieldIndex)%farrayPtr,2)
-          write(msgString,"(A)") trim(msgString)//trim(adjustl(numString))//":"
-          write(numString, "(I10)") ubound(fldsHyd(fieldIndex)%farrayPtr,2)
-          write(msgString,"(A)") trim(msgString)//trim(adjustl(numString))//","
-          write(numString, "(I10)") lbound(fldsHyd(fieldIndex)%farrayPtr,3)
-          write(msgString,"(A)") trim(msgString)//trim(adjustl(numString))//":"
-          write(numString, "(I10)") ubound(fldsHyd(fieldIndex)%farrayPtr,3)
-          write(msgString,"(A)") trim(msgString)//trim(adjustl(numString))//")"
-          call ESMF_LogWrite(SUBNAME//": Create field from existing array: "// &
-            trim(fldsHyd(fieldIndex)%shortname)//": "//trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-          field = ESMF_FieldCreate(name=fldsHyd(fieldIndex)%shortname, &
-            grid=WRFHYDRO_grid, farray=fldsHyd(fieldIndex)%farrayPtr, &
+        if (is%wrap%field_list(fieldIndex)%assoc) then
+          if(is%wrap%verbosity >= VERBOSITY_MAX) then
+            write(logMsg,"(3A,6(I0,A))") "Create field: ",trim(is%wrap%field_list(fieldIndex)%shortname), &
+              " from exiting array with boundaries: (", &
+              lbound(is%wrap%field_list(fieldIndex)%farrayPtr,1),":", &
+              ubound(is%wrap%field_list(fieldIndex)%farrayPtr,1),",", &
+              lbound(is%wrap%field_list(fieldIndex)%farrayPtr,2),":", &
+              ubound(is%wrap%field_list(fieldIndex)%farrayPtr,2),",", &
+              lbound(is%wrap%field_list(fieldIndex)%farrayPtr,3),":", &
+              ubound(is%wrap%field_list(fieldIndex)%farrayPtr,3),")"
+            call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
+          endif
+          field = ESMF_FieldCreate(name=is%wrap%field_list(fieldIndex)%shortname, &
+            grid=WRFHYDRO_grid, farray=is%wrap%field_list(fieldIndex)%farrayPtr, &
             indexflag=ESMF_INDEX_DELOCAL, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         else
-          call ESMF_LogWrite(SUBNAME//": Create field from new array: "// &
-            trim(fldsHyd(fieldIndex)%shortname), ESMF_LOGMSG_INFO, rc=rc)
-          field = ESMF_FieldCreate(name=fldsHyd(fieldIndex)%shortname, &
+          if(is%wrap%verbosity >= VERBOSITY_MAX) then
+            call ESMF_LogWrite("Create field from new array: "// &
+              trim(is%wrap%field_list(fieldIndex)%shortname),ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
+          endif
+          field = ESMF_FieldCreate(name=is%wrap%field_list(fieldIndex)%shortname, &
             grid=WRFHYDRO_grid, typekind=ESMF_TYPEKIND_R8, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !         Create Soil Field with ungridded soil layer dimension
@@ -364,54 +371,83 @@ module wrfhydro_nuopc
       endif
 
       if (importConnected) then
-        call ESMF_LogWrite(SUBNAME//': Realizing IMPORT: '//trim(fldsHyd(fieldIndex)%stdname), &
-          ESMF_LOGMSG_INFO, rc=rc)
+        if(is%wrap%verbosity >= VERBOSITY_MIN) then
+          call ESMF_LogWrite('Realizing IMPORT: '//trim(is%wrap%field_list(fieldIndex)%stdname), &
+            ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+        endif
         call NUOPC_Realize(importState, field=field, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-      elseif(fldsHyd(fieldIndex)%import) then
-        call ESMF_LogWrite(SUBNAME//': Removing IMPORT: '//trim(fldsHyd(fieldIndex)%stdname), &
-          ESMF_LOGMSG_INFO, rc=rc)
-        call ESMF_StateRemove(importState, (/trim(fldsHyd(fieldIndex)%stdname)/), &
+      elseif(is%wrap%field_list(fieldIndex)%import) then
+        if(is%wrap%verbosity >= VERBOSITY_MIN) then
+          call ESMF_LogWrite('Removing IMPORT: '//trim(is%wrap%field_list(fieldIndex)%stdname), &
+            ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
+        endif
+        call ESMF_StateRemove(importState, (/trim(is%wrap%field_list(fieldIndex)%stdname)/), &
           relaxedflag=.true.,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
       endif
 
       if (exportConnected) then
-        call ESMF_LogWrite(SUBNAME//': Realizing EXPORT: '//trim(fldsHyd(fieldIndex)%stdname), &
-          ESMF_LOGMSG_INFO, rc=rc)
+        if(is%wrap%verbosity >= VERBOSITY_MIN) then
+          call ESMF_LogWrite('Realizing EXPORT: '//trim(is%wrap%field_list(fieldIndex)%stdname), &
+            ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
+        endif
         call NUOPC_Realize(exportState, field=field,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-      elseif(fldsHyd(fieldIndex)%export) then
-        call ESMF_LogWrite(SUBNAME//': Removing EXPORT: '//trim(fldsHyd(fieldIndex)%stdname), &
-          ESMF_LOGMSG_INFO, rc=rc)
-        call ESMF_StateRemove(exportState,(/trim(fldsHyd(fieldIndex)%stdname)/), &
+      elseif(is%wrap%field_list(fieldIndex)%export) then
+        if(is%wrap%verbosity >= VERBOSITY_MIN) then
+          call ESMF_LogWrite('Removing EXPORT: '//trim(is%wrap%field_list(fieldIndex)%stdname), &
+            ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
+        endif
+        call ESMF_StateRemove(exportState,(/trim(is%wrap%field_list(fieldIndex)%stdname)/), &
           relaxedflag=.true.,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
       endif
 
       ! TODO: Initialize the value in the pointer to 0 after proper restart is setup
-      !if(associated(fldsHyd(fieldIndex)%farrayPtr) ) fldsHyd(fieldIndex)%farrayPtr = 0.0
+      !if(associated(is%wrap%field_list(fieldIndex)%farrayPtr) ) is%wrap%field_list(fieldIndex)%farrayPtr = 0.0
       ! remove a not connected Field from State
 
     enddo
 
-    call ESMF_StateGet(importState, itemCount=importCount, rc=rc)
+    if (is%wrap%verbosity >= VERBOSITY_MAX) then
+      call ESMF_StateGet(importState, itemCount=importCount, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      call ESMF_StateGet(exportState, itemCount=exportCount, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      write (logMsg, "(A,I0)") "Connected IMPORT fields: ", importCount
+      call ESMF_LogWrite(trim(logMsg), &
+        ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+      write (logMsg, "(A,I0)") "Connected EXPORT fields: ", exportCount
+      call ESMF_LogWrite(trim(logMsg), &
+        ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
+
+    call set_runmode(is,importState,rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    write (numString, "(I10)") importCount
-    call ESMF_LogWrite(SUBNAME//": Connected IMPORT fields: " // trim(adjustl(numString)), ESMF_LOGMSG_INFO)
 
-    call ESMF_StateGet(exportState, itemCount=exportCount, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    write (numString, "(I10)") exportCount
-    call ESMF_LogWrite(SUBNAME//": Connected EXPORT fields: " // trim(adjustl(numString)), ESMF_LOGMSG_INFO)
+    if (is%wrap%verbosity >= VERBOSITY_MAX) then
+      select case (is%wrap%mode)
+        case(mode_Offline)
+          write (logMsg,"(A)") "WRF-Hydro coupled mode: Offline"
+        case (mode_Coupled)
+          write (logMsg,"(A)") "WRF-Hydro coupled mode: Coupled"
+        case (mode_Hybrid)
+          write (logMsg,"(A)") "WRF-Hydro coupled mode: Hybrid"
+        case default
+          write (logMsg,"(A)") "WRF-Hydro coupled mode: Unknown"
+      end select
+      call ESMF_LogWrite(trim(logMsg), &
+        ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
 
-    call state_reset(importState,rc=rc)
+    call state_reset(is,importState,rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call state_reset(exportState,rc=rc)
+    call state_reset(is,exportState,rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
 
@@ -422,15 +458,21 @@ module wrfhydro_nuopc
     integer, intent(out) :: rc
 
     ! local variables
+    type(type_InternalState)    :: is
     type(ESMF_Clock)            :: clock
     type(ESMF_State)            :: importState, exportState
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:ModelAdvance)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='ModelAdvance'
 
     rc = ESMF_SUCCESS
+
+    ! query Component for its internal State
+    nullify(is%wrap)
+    call ESMF_UserCompGetInternalState(hydroGridComp, label_InternalState, is, rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
 
     ! query the Component for its clock, importState and exportState
     call ESMF_GridCompGet(hydroGridComp, clock=clock, importState=importState, &
@@ -451,24 +493,24 @@ module wrfhydro_nuopc
       preString="--------------------------------> to: ", rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+    is%wrap%slice = is%wrap%slice + 1
+
     ! write out the Fields in the importState
-    import_slice = import_slice + 1
     call NUOPC_Write(importState, fileNamePrefix="field_wrfhydro_import_", &
-      timeslice=import_slice, relaxedFlag=.true., rc=rc)
+      timeslice=is%wrap%slice, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! Gluecode ModelAdvance
-    call wrfhydro_nuopc_run(clock,importState,exportState, rc )
+    call wrfhydro_nuopc_run(is,clock,importState,exportState,rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     ! write out the Fields in the importState
-    export_slice = export_slice + 1
     call NUOPC_Write(exportState, fileNamePrefix="field_wrfhydro_export_", &
-      timeslice=export_slice, relaxedFlag=.true., rc=rc)
+      timeslice=is%wrap%slice, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
 
@@ -479,19 +521,25 @@ module wrfhydro_nuopc
     integer, intent(out) :: rc
 
     ! Local Variables
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:ModelFinalize)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    type(type_InternalState)   :: is
+    CHARACTER(LEN=*),PARAMETER :: SUBNAME='ModelFinalize'
 
     rc = ESMF_SUCCESS
 
-    call wrfhydro_nuopc_fin(rc)
+    ! query Component for its internal State
+    nullify(is%wrap)
+    call ESMF_UserCompGetInternalState(hydroGridComp, label_InternalState, is, rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
+
+    call wrfhydro_nuopc_fin(is,rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
 
@@ -502,15 +550,21 @@ module wrfhydro_nuopc
     integer, intent(out) :: rc
 
     ! local variables
-    type(ESMF_Clock)            :: clock
-    type(ESMF_TimeInterval)     :: stabilityTimeStep, timestep
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:SetClock)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
+    type(type_InternalState)   :: is
+    type(ESMF_Clock)           :: clock
+    type(ESMF_TimeInterval)    :: stabilityTimeStep, timestep
+    CHARACTER(LEN=*),PARAMETER :: SUBNAME='SetClock'
 
     rc = ESMF_SUCCESS
+
+    ! query Component for its internal State
+    nullify(is%wrap)
+    call ESMF_UserCompGetInternalState(hydroGridComp, label_InternalState, is, rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
 
     ! query the Component for its clock, importState and exportState
     call ESMF_GridCompGet(hydroGridComp, clock=clock, rc=rc)
@@ -529,65 +583,9 @@ module wrfhydro_nuopc
     call NUOPC_CompSetClock(hydroGridComp, clock, stabilityTimeStep, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
+    if ( is%wrap%verbosity >= VERBOSITY_MAX ) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
     endif
   end subroutine
-
-  !-----------------------------------------------------------------------------
-
-  subroutine fld_list_add(num, fldlist, stdname, transferOffer, import, export, shortname, data, rc)
-    ! ----------------------------------------------
-    ! Set up a list of field information
-    ! ----------------------------------------------
-    integer,             intent(inout)  :: num
-    type(fld_list_type), intent(inout)  :: fldlist(:)
-    character(len=*),    intent(in)     :: stdname
-    character(len=*),    intent(in)     :: transferOffer
-    logical,             intent(in)     :: import
-    logical,             intent(in)     :: export
-    character(len=*),    intent(in),optional :: shortname
-    real(ESMF_KIND_R8), dimension(:,:,:), optional, target :: data
-    integer, optional,   intent(out)    :: rc
-
-    ! local variables
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='(wrfhydro_nuopc:fld_list_add)'
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": called", ESMF_LOGMSG_INFO)
-    endif
-
-    if(present(rc)) rc = ESMF_SUCCESS
-
-    ! fill in the new entry
-
-    num = num + 1
-    if (num > fldsMax) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
-         msg=SUBNAME//": fld_list_add ERROR num gt fldsMax "//trim(stdname), &
-         rcToReturn=rc)
-      return  ! bail out
-    endif
-
-    fldlist(num)%stdname            = trim(stdname)
-        fldlist(num)%transferOffer  = trim(transferOffer)
-    fldlist(num)%import             = import
-    fldlist(num)%export             = export
-    if (present(shortname)) then
-       fldlist(num)%shortname   = trim(shortname)
-    else
-       fldlist(num)%shortname   = trim(stdname)
-    endif
-    if (present(data)) then
-      fldlist(num)%assoc        = .true.
-      fldlist(num)%farrayPtr    => data
-    else
-      fldlist(num)%assoc        = .false.
-    endif
-
-    if ( dbug_flag > 2) then
-      call ESMF_LogWrite(SUBNAME//": done", ESMF_LOGMSG_INFO)
-    endif
-  end subroutine fld_list_add
 
 end module
