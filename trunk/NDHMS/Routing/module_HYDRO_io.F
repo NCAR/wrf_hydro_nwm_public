@@ -9103,7 +9103,7 @@ end subroutine output_chrt2
 #ifdef MPP_LAND
        real, allocatable, dimension(:) :: g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas
        if(my_id .eq. io_id) then
-          if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+          if(nlst_rt(did)%GWBASESWCRT <= 2) then
                allocate(g_qin_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_qout_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_z_gwsubbas(rt_domain(did)%gnumbasns))
