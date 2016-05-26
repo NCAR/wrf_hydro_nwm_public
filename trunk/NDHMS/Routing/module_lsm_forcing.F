@@ -2735,7 +2735,10 @@ Contains
     else
         allocate(buf2(1,1))
     endif
-    ierr = nf_open(trim(flnm), NF_NOWRITE, ncid)
+    if(my_id .eq. io_id) then
+        ierr = nf_open(trim(flnm), NF_NOWRITE, ncid)
+    endif
+    call mpp_land_bcast_int1(ierr)
     if (ierr /= 0) then
        write(*,'("READFORC Problem opening netcdf file: ''", A, "''")') trim(flnm)
        call hydro_stop("In READFORC_HRLDAS_mpp() - Problem opening netcdf file")
