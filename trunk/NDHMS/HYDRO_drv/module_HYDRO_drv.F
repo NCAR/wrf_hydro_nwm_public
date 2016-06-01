@@ -134,7 +134,9 @@ module module_HYDRO_drv
       implicit none
       integer did, outflag, rtflag
       character(len=19) out_date
-      integer :: Kt, ounit
+      integer :: Kt, ounit, i
+      real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
+      real, dimension(RT_DOMAIN(did)%NLINKS) :: vel_out
 
 !    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
 !           runoff1x_tmp, runoff2x_tmp, runoff3x_tmp,etax_tmp, &
@@ -289,6 +291,24 @@ module module_HYDRO_drv
      
            if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then 
 
+!ADCHANGE: Change values for within lake reaches to NA
+             str_out = RT_DOMAIN(did)%QLINK
+#ifdef HYDRO_REALTIME
+             vel_out = RT_DOMAIN(did)%velocity
+#endif
+
+#ifdef HYDRO_REALTIME
+             if (RT_DOMAIN(did)%NLAKES .gt. 0)  then
+                    do i=1,RT_DOMAIN(did)%NLINKS
+                        if (RT_DOMAIN(did)%TYPEL(i) .eq. 2) then
+                            str_out(i,1) = -9.E15
+                            vel_out(i) = -9.E15
+                        endif
+                    end do
+             endif
+#endif
+!ADCHANGE: End
+
              if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
 #ifdef MPP_LAND
                  call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
@@ -300,7 +320,8 @@ module module_HYDRO_drv
                    nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
                    RT_DOMAIN(did)%CHLAT,                                      &
                    RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-                   RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+                   !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+                   str_out, nlst_rt(did)%DT,Kt,                               &
                    RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
                    RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
                    rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
@@ -326,14 +347,16 @@ module module_HYDRO_drv
                      nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
                      RT_DOMAIN(did)%CHLAT,                                      &
                      RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-                     RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+                     !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+                     str_out, nlst_rt(did)%DT,Kt,                               &
                      RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
                      rt_domain(did)%linkid                                      &
 #ifdef WRF_HYDRO_NUDGING
                      , RT_DOMAIN(did)%nudge                                     &
 #endif
 #ifdef HYDRO_REALTIME
-		     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &          
+		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &          
+                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
 #endif
 		     )
                  endif
@@ -347,7 +370,8 @@ module module_HYDRO_drv
                   RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
                   RT_DOMAIN(did)%GCH_NETLNK, &
                   nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                  RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                  !RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                  str_out, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
                   RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
                   RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
