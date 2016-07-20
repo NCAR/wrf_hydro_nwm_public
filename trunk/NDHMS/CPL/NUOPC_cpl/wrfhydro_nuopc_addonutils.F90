@@ -73,8 +73,12 @@ module wrfhydro_nuopc_addonutils
   type type_InternalStateStruct
     integer               :: verbosity = VERBOSITY_MAX
     integer               :: mode = mode_Unknown
+    logical               :: coldstart = .FALSE.
+    logical               :: statewrite_flag = .FALSE.
+    logical               :: profile_memory = .FALSE.
     integer               :: slice = 0
     integer               :: nest = 1
+    real                  :: timestep = 0.0
     integer               :: fields_total = 0
     integer               :: fields_forcing = 0
     integer               :: fields_import = 0
@@ -98,6 +102,7 @@ contains
     type(ESMF_State), intent(in)            :: state
     integer, intent(out), optional          :: rc
     ! LOCAL VARIABLES
+    integer                                 :: stat
     character(len=ESMF_MAXSTR), allocatable :: fieldNameList(:)
     integer                                 :: i, itemCount
     CHARACTER(LEN=*),PARAMETER :: SUBNAME='print_connected_fields'
@@ -110,7 +115,10 @@ contains
 
     call ESMF_StateGet(state, itemCount=itemCount, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    allocate(fieldNameList(itemCount))
+    allocate(fieldNameList(itemCount),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of fieldNameList memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
     call ESMF_StateGet(state, itemNameList=fieldNameList, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -123,6 +131,11 @@ contains
           ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
       endif
     enddo
+
+    deallocate(fieldNameList,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of fieldNameList memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
@@ -141,6 +154,7 @@ contains
     integer               , intent(out)   :: rc
 
     ! local variables
+    integer                     :: stat
     real(ESMF_KIND_R8)          :: lvalue
     integer                     :: n
     integer                     :: itemCount
@@ -165,8 +179,10 @@ contains
 
     call ESMF_StateGet(state, itemCount=itemCount, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    allocate(itemNameList(itemCount))
-    allocate(itemTypeList(itemCount))
+    allocate(itemNameList(itemCount),itemTypeList(itemCount),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of itemList memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
     call ESMF_StateGet(state, itemNameList=itemNameList, itemTypeList=itemTypeList, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
     do n = 1, itemCount
@@ -187,8 +203,10 @@ contains
         endif
       endif
     enddo
-    deallocate(itemNameList)
-    deallocate(itemTypeList)
+    deallocate(itemNameList,itemTypeList,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of itemList memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
@@ -250,7 +268,7 @@ contains
     ! LOCAL VARIABLES
     character (len=256)     :: tmpstr = ''
     integer                         :: strlen
-    CHARACTER(LEN=*),PARAMETER :: SUBNAME='clock_to_string'
+    CHARACTER(LEN=*),PARAMETER :: SUBNAME='time_to_string'
 
     if(present(rc)) rc = ESMF_SUCCESS  ! Initialize
     timestr = '' ! clear string
@@ -274,6 +292,7 @@ contains
     timestr(11:11) = '_'
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
+      call ESMF_LogWrite("Time string: "//trim(timestr), ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
   end subroutine
@@ -418,6 +437,7 @@ contains
     character(len=*), intent(in)  :: label
     integer         , intent(out) :: rc
     ! LOCAL VARIABLES
+    integer                     :: stat
     character(len=256)          :: msgString
     type(ESMF_DistGrid)         :: distgrid
     character(ESMF_MAXSTR)      :: transferAction
@@ -451,7 +471,10 @@ contains
 
     ! allocate minIndexPTile and maxIndexPTile accord. to dimCount and tileCount
     allocate(minIndexPTile(dimCount, tileCount), &
-      maxIndexPTile(dimCount, tileCount))
+      maxIndexPTile(dimCount, tileCount),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of indexPTile memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
 
     ! get minIndex and maxIndex arrays
     call ESMF_DistGridGet(distgrid, minIndexPTile=minIndexPTile, &
@@ -468,7 +491,10 @@ contains
     enddo
     enddo
 
-    deallocate(minIndexPTile, maxIndexPTile)
+    deallocate(minIndexPTile, maxIndexPTile,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of indexPTile memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
@@ -963,6 +989,16 @@ subroutine fortran_array_print_R1D(is, label, array, rc)
       call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
 
+    if (is%wrap%verbosity >= VERBOSITY_DBG) then
+      if (stateType .eq. 'i') then
+        call ESMF_LogWrite("Copying field data to array from NUOPC%"//trim(fieldName), &
+          ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+      elseif (stateType .eq. 'e') then
+        call ESMF_LogWrite("Copying field data from array to NUOPC%"//trim(fieldName), &
+          ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+      endif
+    endif
+
     call ESMF_StateGet(state, itemName=fieldName, itemType=itemType, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
@@ -978,13 +1014,13 @@ subroutine fortran_array_print_R1D(is, label, array, rc)
         if (stateType .eq. 'e') then
           farrayPtr = modelArray(:,:,layer)
           if (is%wrap%verbosity >= VERBOSITY_DBG) then
-            call ESMF_LogWrite("Field data copied to NUOPC: "//trim(fieldName), &
+            call ESMF_LogWrite("Field data copied from model array to NUOPC%"//trim(fieldName), &
               ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
           endif
         else
           modelArray(:,:,layer) = farrayPtr
           if (is%wrap%verbosity >= VERBOSITY_DBG) then
-            call ESMF_LogWrite("Field data copied to model: "//trim(fieldName), &
+            call ESMF_LogWrite("Field data copied to model array from NUOPC%"//trim(fieldName), &
               ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
           endif
         endif

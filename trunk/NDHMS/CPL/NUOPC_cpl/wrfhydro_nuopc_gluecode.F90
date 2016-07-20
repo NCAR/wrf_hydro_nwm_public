@@ -55,18 +55,6 @@ module wrfhydro_nuopc_gluecode
 !    config_flags
 !  use module_configure, only: &
 !    model_config_rec
-  use module_mpp_land, only: &
-    HYDRO_COMM_WORLD, &
-    global_nx, &
-    global_ny, &
-    decompose_data_real, &
-    write_io_real, &
-    my_id, &
-    mpp_land_bcast_real1, &
-    IO_id, &
-    mpp_land_bcast_real, &
-    mpp_land_bcast_int1, &
-    MPP_LAND_INIT
 
   implicit none
 
@@ -75,10 +63,8 @@ module wrfhydro_nuopc_gluecode
   public :: wrfhydro_nuopc_ini
   public :: wrfhydro_nuopc_run
   public :: wrfhydro_nuopc_fin
-  public :: WRFHYDRO_distgrid
-  public :: WRFHYDRO_grid
-  public :: WRFHYDRO_soilarrayspec
-  public :: WRFHYDRO_nsoil
+  public :: WRFHYDRO_GridCreate
+  public :: WRFHYDRO_get_timestep
 
   ! HRLDAS Configuration
   character(len=ESMF_MAXPATHLEN) :: hrldasConfigFile = "namelist.hrldas"
@@ -105,25 +91,19 @@ module wrfhydro_nuopc_gluecode
 
   ! Configuration
   type(WRFHYDRO_ConfigFile) :: configFile
-  integer               :: num_nests = UNINITIALIZED
-  integer               :: num_tiles = UNINITIALIZED
-  integer               :: nx_global = UNINITIALIZED
-  integer               :: ny_global = UNINITIALIZED
-  integer               :: x_start = UNINITIALIZED
-  integer               :: x_end = UNINITIALIZED
-  integer               :: y_start = UNINITIALIZED
-  integer               :: y_end = UNINITIALIZED
-  integer               :: nx_local = UNINITIALIZED
-  integer               :: ny_local = UNINITIALIZED
-  integer               :: sf_surface_physics = UNINITIALIZED
-  real,dimension(:),allocatable       :: zs ! zoil layer depths
-  integer,dimension(:,:), allocatable :: IVGTYP, isltyp
-
-  ! Public State
-  type(ESMF_DistGrid)   :: WRFHYDRO_distgrid
-  type(ESMF_Grid)       :: WRFHYDRO_grid
-  type(ESMF_ArraySpec)  :: WRFHYDRO_soilarrayspec
-  integer               :: WRFHYDRO_nsoil = UNINITIALIZED
+  integer                   :: num_nests = UNINITIALIZED
+  integer                   :: num_tiles
+  integer                   :: nx_global
+  integer                   :: ny_global
+  integer                   :: x_start
+  integer                   :: x_end
+  integer                   :: y_start
+  integer                   :: y_end
+  integer                   :: nx_local
+  integer                   :: ny_local
+  integer                   :: sf_surface_physics = UNINITIALIZED
+  real,dimension(:),allocatable      :: zs ! zoil layer depths
+  integer,dimension(:,:),allocatable :: IVGTYP, isltyp
 
   ! added to consider the adaptive time step from driver.
   real                  :: dt0 = UNINITIALIZED
@@ -135,7 +115,7 @@ module wrfhydro_nuopc_gluecode
   ! added to track the driver clock
   character(len=19)     :: start_time = "0000-00-00_00:00:00"
 
-  ! some temporary debug variables
+  type(ESMF_DistGrid)   :: WRFHYDRO_DistGrid ! One DistGrid created with ConfigFile dimensions
   character(len=ESMF_MAXSTR)  :: logMsg
 
   !-----------------------------------------------------------------------------
@@ -149,6 +129,7 @@ contains
     integer, intent(out)                    :: rc
 
     ! local variables
+    integer                     :: stat
     type(ESMF_DistGridConnection), allocatable :: connectionList(:)
     integer                     :: ntime
     integer                     :: i
@@ -170,9 +151,6 @@ contains
     call config_file_read(is,rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    call config_file_print(is,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
     ! Check number of soil layers
     if(configFile%nsoil .lt. 1) then
       call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
@@ -186,7 +164,10 @@ contains
       return  ! bail out
     endif
     ! Allocate Memory & Initialize Soil Layer Depths
-    allocate(zs(configFile%nsoil))
+    allocate(zs(configFile%nsoil),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of soil layer depths memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
     zs(1) = 0-configFile%soil_thick_input(1)
     do i=2,configFile%nsoil
       zs(i) = zs(i-1)-configFile%soil_thick_input(i)
@@ -195,8 +176,11 @@ contains
     ! Set Model Soil Depths (Must be negative)
     nlst_rt(is%wrap%nest)%nsoil = configFile%nsoil
     call mpp_land_bcast_int1 (nlst_rt(is%wrap%nest)%nsoil)
-    allocate(nlst_rt(is%wrap%nest)%zsoil8(nlst_rt(is%wrap%nest)%nsoil))
-    if(zs(1) <  0) then
+    allocate(nlst_rt(is%wrap%nest)%zsoil8(nlst_rt(is%wrap%nest)%nsoil),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of model soil depths memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    if(zs(1) < 0) then
       if (is%wrap%verbosity >= VERBOSITY_MAX) then
         call ESMF_LogWrite("zs(1) negative - no change", &
           ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
@@ -209,47 +193,47 @@ contains
       endif
       nlst_rt(is%wrap%nest)%zsoil8(1:nlst_rt(is%wrap%nest)%nsoil) = -1*zs(1:nlst_rt(is%wrap%nest)%nsoil)
     endif
-    ! Set Soil Layer Value
-    WRFHYDRO_nsoil = configFile%nsoil
-
-    ! Set Soil Array Spec
-    call ESMF_ArraySpecSet(WRFHYDRO_soilarrayspec, rank=3, typekind=ESMF_TYPEKIND_R8, rc=rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     call MPP_LAND_INIT()  ! required before get_file_dimension
     call get_file_dimension(fileName=configFile%GEO_STATIC_FLNM,ix=nx_global,jx=ny_global)
 
-    allocate(connectionList(1))
-    call ESMF_DistGridConnectionSet(connectionList(1), tileIndexA=1, &
-      tileIndexB=1, positionVector=(/nx_global, 0/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+!    allocate(connectionList(1),stat=stat)
+!    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+!      msg='Allocation of connection list memory failed.', &
+!      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+!    call ESMF_DistGridConnectionSet(connectionList(1), tileIndexA=1, &
+!      tileIndexB=1, positionVector=(/nx_global, 0/), rc=rc)
+!    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! Create DistGrid based on WRFHDYRO Config NX,NY
-    WRFHYDRO_distgrid = ESMF_DistGridCreate(minIndex=(/1,1/), maxIndex=(/nx_global,ny_global/), &
-!      indexflag = ESMF_INDEX_DELOCAL, &
-!      deBlockList=deBlockList, &
-!      deLabelList=deLabelList, &
-!      delayout=delayout, &
-!      connectionList=connectionList, &
+    WRFHYDRO_distgrid = ESMF_DistGridCreate( &
+      minIndex=(/1,1/), maxIndex=(/nx_global,ny_global/), &
+!     indexflag = ESMF_INDEX_DELOCAL, &
+!     deBlockList=deBlockList, &
+!     deLabelList=deLabelList, &
+!     delayout=delayout, &
+!     connectionList=connectionList, &
       rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+!   deallocate(connectionList,stat=stat)
+!   if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+!     msg='Deallocation of connection list memory failed.', &
+!     method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
+
     ! Get the Local Decomp Incides
-    call set_local_indices(is,WRFHYDRO_distgrid,x_start,x_end, &
-      y_start,y_end,nx_local,ny_local,rc)
+    call set_local_indices(is,rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     ! Allocate Memory & Initialize Vegetation Type and Soil Type
     ! To be implemented - Replace with read from config file read or coupling
-    allocate(IVGTYP(x_start:x_end,y_start:y_end))
-    allocate(isltyp(x_start:x_end,y_start:y_end))
+    allocate(IVGTYP(x_start:x_end,y_start:y_end), &
+      isltyp(x_start:x_end,y_start:y_end),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of initial vegetation and soil type memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
     IVGTYP = 0
     isltyp = 0
-
-    ! Create Grid using DistGrid and Set Local Decomp Coordinates
-    WRFHYDRO_grid = create_grid(is,WRFHYDRO_distgrid, &
-      configFile%GEO_STATIC_FLNM,nx_local,ny_local,x_start,y_start,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     ! Initialize the time using WRFHYDRO Config File
     call ESMF_TimeSet(startTime, &
@@ -267,9 +251,14 @@ contains
     nlst_rt(is%wrap%nest)%startdate(1:19) = cpl_outdate(1:19)
     nlst_rt(is%wrap%nest)%olddate(1:19) = cpl_outdate(1:19)
 
-    ! Initialize the timestep using WRFHYDRO Config File
-    ! TBD pass in timestep from driver
-    nlst_rt(is%wrap%nest)%dt = real(configFile%NOAH_TIMESTEP)
+    ! Initialize the timestep from driver unless driver is 0
+    ! If driver is 0 initialize timestep from WRF-Hydro Config File
+    
+    if ( is%wrap%timestep /= 0.0 ) then
+      nlst_rt(is%wrap%nest)%dt = is%wrap%timestep
+    else
+      nlst_rt(is%wrap%nest)%dt = real(configFile%NOAH_TIMESTEP)
+    endif
 
     if(nlst_rt(is%wrap%nest)%dt .le. 0) then
       call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
@@ -316,17 +305,11 @@ contains
       call config_print(is,rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-      call grid_print(is, WRFHYDRO_grid,'wrfhydro',rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-
       call nlst_rt_print(is,rc)
       if (ESMF_STDERRORCHECK(rc)) return
 
       call rt_domain_print(is,"Initial",rc)
       if (ESMF_STDERRORCHECK(rc)) return
-
-      call grid_write(is,WRFHYDRO_grid, 'array_wrfhydro', rc=rc)
-      if(ESMF_STDERRORCHECK(rc)) return ! bail out
     endif
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
@@ -487,6 +470,7 @@ contains
     integer, intent(out)                    :: rc
 
     ! LOCAL VARIABLES
+    integer                     :: stat
     CHARACTER(LEN=*),PARAMETER  :: SUBNAME='nuopc_cpl_HYDRO_fin'
 
     rc = ESMF_SUCCESS
@@ -495,9 +479,19 @@ contains
       call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
 
-    deallocate(zs)
-    deallocate(IVGTYP)
-    deallocate(isltyp)
+    ! WRF-Hydro finish routine cannot be called because it stops MPI
+
+    deallocate(zs,IVGTYP,isltyp,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of soil layer depths, initial vegetation type, '// &
+        'and initial soil type memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
+
+!    DCR - Turned off to let the model deallocate memory
+!    deallocate(nlst_rt(is%wrap%nest)%zsoil8)
+!    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+!      msg='Deallocation of model soil depth memory failed.', &
+!      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
 
     RT_DOMAIN(is%wrap%nest)%initialized = .false.
 
@@ -569,6 +563,9 @@ contains
     integer,          intent(out)           :: rc
 
     ! LOCAL VARIABLES
+    integer                    :: fieldCount
+    integer                    :: fieldIndex
+    character(len=64), pointer :: fieldNameList(:)
     CHARACTER(LEN=*),PARAMETER  :: SUBNAME='copy_import_fields'
 
     rc = ESMF_SUCCESS
@@ -577,75 +574,179 @@ contains
       call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
 
-    !! Land forcing fields
-    call copy_data(is,importState,"temperature_of_soil_layer_1", &
-      rt_domain(is%wrap%nest)%STC,'i',1,.true.,rc)
+    call ESMF_StateGet(importState, itemCount=fieldCount, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"temperature_of_soil_layer_2", &
-      rt_domain(is%wrap%nest)%STC,'i',2,.true.,rc)
+    allocate(fieldNameList(fieldCount))
+    call ESMF_StateGet(importState, itemNameList=fieldNameList, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"temperature_of_soil_layer_3", &
-      rt_domain(is%wrap%nest)%STC,'i',3,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"temperature_of_soil_layer_4", &
-      rt_domain(is%wrap%nest)%STC,'i',4,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"moisture_content_of_soil_layer_1", &
-      rt_domain(is%wrap%nest)%smc,'i',1,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"moisture_content_of_soil_layer_2", &
-      rt_domain(is%wrap%nest)%smc,'i',2,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"moisture_content_of_soil_layer_3", &
-      rt_domain(is%wrap%nest)%smc,'i',3,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"moisture_content_of_soil_layer_4", &
-      rt_domain(is%wrap%nest)%smc,'i',4,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"liquid_water_content_of_soil_layer_1", &
-      rt_domain(is%wrap%nest)%sh2ox,'i',1,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"liquid_water_content_of_soil_layer_2", &
-      rt_domain(is%wrap%nest)%sh2ox,'i',2,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"liquid_water_content_of_soil_layer_3", &
-      rt_domain(is%wrap%nest)%sh2ox,'i',3,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"liquid_water_content_of_soil_layer_4", &
-      rt_domain(is%wrap%nest)%sh2ox,'i',4,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"surface_runoff_flux", &
-      rt_domain(is%wrap%nest)%infxsrt,'i',.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,importState,"subsurface_runoff_flux", &
-      rt_domain(is%wrap%nest)%soldrain,'i',.true.,rc)
-    if (ESMF_STDERRORCHECK(rc)) return
 
-    !! Meterological forcing fields
-!    call copy_data(is,importState,"inst_down_lw_flx", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"inst_down_sw_flx", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"inst_merid_wind_height_lowest", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"inst_pres_height_surface", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"inst_spec_humid_height_lowest", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"inst_temp_height_lowest", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"inst_zonal_wind_height_lowest", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
-!    call copy_data(is,importState,"mean_prec_rate", &
-!      UNKNOWN,'i',.true.,rc)
-!    if (ESMF_STDERRORCHECK(rc)) return
+    do fieldIndex = 1, fieldCount
+      SELECT CASE (fieldNameList(fieldIndex))
+!        CASE ('aerodynamic_roughness_length')
+!          call copy_data(is,importState,'aerodynamic_roughness_length', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('canopy_moisture_storage')
+!          call copy_data(is,importState,'canopy_moisture_storage', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('carbon_dioxide')
+!          call copy_data(is,importState,'carbon_dioxide', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('cosine_zenith_angle')
+!          call copy_data(is,importState,'cosine_zenith_angle', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('exchange_coefficient_heat')
+!          call copy_data(is,importState,'exchange_coefficient_heat', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('exchange_coefficient_heat_height2m')
+!          call copy_data(is,importState,'exchange_coefficient_heat_height2m', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('exchange_coefficient_moisture_height2m')
+!          call copy_data(is,importState,'exchange_coefficient_moisture_height2m', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('ice_mask')
+!          call copy_data(is,importState,'ice_mask', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_down_lw_flx')
+!          call copy_data(is,importState,'inst_down_lw_flx', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_down_sw_flx')
+!          call copy_data(is,importState,'inst_down_sw_flx', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_height_lowest')
+!          call copy_data(is,importState,'inst_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_merid_wind_height_lowest')
+!          call copy_data(is,importState,'inst_merid_wind_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_pres_height_lowest')
+!          call copy_data(is,importState,'inst_pres_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_pres_height_surface')
+!          call copy_data(is,importState,'inst_pres_height_surface', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_spec_humid_height_lowest')
+!          call copy_data(is,importState,'inst_spec_humid_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_temp_height_lowest')
+!          call copy_data(is,importState,'inst_temp_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_temp_height_surface')
+!          call copy_data(is,importState,'inst_temp_height_surface', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_wind_speed_height_lowest')
+!          call copy_data(is,importState,'inst_wind_speed_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('inst_zonal_wind_height_lowest')
+!          call copy_data(is,importState,'inst_zonal_wind_height_lowest', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+        CASE ('liquid_water_content_of_soil_layer_1')
+          call copy_data(is,importState,'liquid_water_content_of_soil_layer_1', &
+            rt_domain(is%wrap%nest)%sh2ox,'i',1,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('liquid_water_content_of_soil_layer_2')
+          call copy_data(is,importState,'liquid_water_content_of_soil_layer_2', &
+            rt_domain(is%wrap%nest)%sh2ox,'i',2,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('liquid_water_content_of_soil_layer_3')
+          call copy_data(is,importState,'liquid_water_content_of_soil_layer_3', &
+            rt_domain(is%wrap%nest)%sh2ox,'i',3,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('liquid_water_content_of_soil_layer_4')
+          call copy_data(is,importState,'liquid_water_content_of_soil_layer_4', &
+            rt_domain(is%wrap%nest)%sh2ox,'i',4,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+!        CASE ('mean_cprec_rate')
+!          call copy_data(is,importState,'mean_cprec_rate', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('mean_down_lw_flx')
+!          call copy_data(is,importState,'mean_down_lw_flx', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('mean_down_sw_flx')
+!          call copy_data(is,importState,'mean_down_sw_flx', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('mean_fprec_rate')
+!          call copy_data(is,importState,'mean_fprec_rate', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('mean_prec_rate')
+!          call copy_data(is,importState,'mean_prec_rate', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+!        CASE ('mean_surface_albedo')
+!          call copy_data(is,importState,'mean_surface_albedo', &
+!            UNKNOWN,'i',.true.,rc)
+!          if (ESMF_STDERRORCHECK(rc)) return
+        CASE ('moisture_content_of_soil_layer_1')
+          call copy_data(is,importState,'moisture_content_of_soil_layer_1', &
+            rt_domain(is%wrap%nest)%smc,'i',1,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('moisture_content_of_soil_layer_2')
+          call copy_data(is,importState,'moisture_content_of_soil_layer_2', &
+            rt_domain(is%wrap%nest)%smc,'i',2,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('moisture_content_of_soil_layer_3')
+          call copy_data(is,importState,'moisture_content_of_soil_layer_3', &
+            rt_domain(is%wrap%nest)%smc,'i',3,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('moisture_content_of_soil_layer_4')
+          call copy_data(is,importState,'moisture_content_of_soil_layer_4', &
+            rt_domain(is%wrap%nest)%smc,'i',4,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('subsurface_runoff_flux')
+          call copy_data(is,importState,'subsurface_runoff_flux', &
+            rt_domain(is%wrap%nest)%soldrain,'i',.true.,rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+        CASE ('surface_runoff_flux')
+          call copy_data(is,importState,'surface_runoff_flux', &
+            rt_domain(is%wrap%nest)%infxsrt,'i',.true.,rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+        CASE ('temperature_of_soil_layer_1')
+          call copy_data(is,importState,'temperature_of_soil_layer_1', &
+            rt_domain(is%wrap%nest)%stc,'i',1,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_2')
+          call copy_data(is,importState,'temperature_of_soil_layer_2', &
+            rt_domain(is%wrap%nest)%stc,'i',2,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_3')
+          call copy_data(is,importState,'temperature_of_soil_layer_3', &
+            rt_domain(is%wrap%nest)%stc,'i',3,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_4')
+          call copy_data(is,importState,'temperature_of_soil_layer_4', &
+            rt_domain(is%wrap%nest)%stc,'i',4,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE DEFAULT
+          if (is%wrap%verbosity >= VERBOSITY_MAX) then
+            call ESMF_LogWrite("Field hookup missing. Skipping import copy: "//trim(fieldNameList(fieldIndex)), &
+              ESMF_LOGMSG_WARNING, file=FILENAME, method=SUBNAME)
+          endif
+          cycle
+      END SELECT
+    enddo
+    deallocate(fieldNameList)
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
@@ -661,6 +762,9 @@ contains
     integer,          intent(out)           :: rc
 
     ! LOCAL VARIABLES
+    integer                    :: fieldCount
+    integer                    :: fieldIndex
+    character(len=64), pointer :: fieldNameList(:)
     CHARACTER(LEN=*),PARAMETER  :: SUBNAME='copy_export_fields'
 
     rc = ESMF_SUCCESS
@@ -669,38 +773,79 @@ contains
       call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
 
-    !! Feedback for land
-    call copy_data(is,exportState,"liquid_water_content_of_soil_layer_1", &
-      rt_domain(is%wrap%nest)%sh2ox,'e',1,.true.,rc)
+    call ESMF_StateGet(exportState, itemCount=fieldCount, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,exportState,"liquid_water_content_of_soil_layer_2", &
-      rt_domain(is%wrap%nest)%sh2ox,'e',2,.true.,rc)
+    allocate(fieldNameList(fieldCount))
+    call ESMF_StateGet(exportState, itemNameList=fieldNameList, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,exportState,"liquid_water_content_of_soil_layer_3", &
-      rt_domain(is%wrap%nest)%sh2ox,'e',3,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call copy_data(is,exportState,"liquid_water_content_of_soil_layer_4", &
-      rt_domain(is%wrap%nest)%sh2ox,'e',4,.true.,rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-!    call copy_data(is,exportState,"volume_fraction_of_total_water_in_soil", &
-!      UNKNOWN,'e',.true.,rc)
-!    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-!    call copy_data(is,exportState,"surface_snow_thickness", &
-!      UNKNOWN,'e',.true.,rc)
-!    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-!    call copy_data(is,exportState,"liquid_water_content_of_surface_snow", &
-!      UNKNOWN,'e',.true.,rc)
-!    if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    !! Feedback for atmosphere
-!    call copy_data(is,exportState,"dummyfield", &
-!      UNKNOWN,'e',.true.,rc)
-!    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
-    !! Other export fields
-!    call copy_data(is,exportState,"water_surface_height_above_reference_datum", &
-!      rt_domain(is%wrap%nest)%sfcheadrt,'e',.true.,rc)
-!    if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    do fieldIndex = 1, fieldCount
+      SELECT CASE (fieldNameList(fieldIndex))
+        CASE ('liquid_water_content_of_soil_layer_1')
+          call copy_data(is,exportState,'liquid_water_content_of_soil_layer_1', &
+            rt_domain(is%wrap%nest)%sh2ox,'e',1,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('liquid_water_content_of_soil_layer_2')
+          call copy_data(is,exportState,'liquid_water_content_of_soil_layer_2', &
+            rt_domain(is%wrap%nest)%sh2ox,'e',2,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('liquid_water_content_of_soil_layer_3')
+          call copy_data(is,exportState,'liquid_water_content_of_soil_layer_3', &
+            rt_domain(is%wrap%nest)%sh2ox,'e',3,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('liquid_water_content_of_soil_layer_4')
+          call copy_data(is,exportState,'liquid_water_content_of_soil_layer_4', &
+            rt_domain(is%wrap%nest)%sh2ox,'e',4,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+!        CASE ('liquid_water_content_of_surface_snow')
+!          call copy_data(is,exportState,'liquid_water_content_of_surface_snow', &
+!            UNKNOWN,'e',.true.,rc)
+!          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('subsurface_runoff_flux')
+          call copy_data(is,exportState,'subsurface_runoff_flux', &
+            rt_domain(is%wrap%nest)%soldrain,'e',.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('surface_runoff_flux')
+          call copy_data(is,exportState,'surface_runoff_flux', &
+            rt_domain(is%wrap%nest)%infxsrt,'e',.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+!        CASE ('surface_snow_thickness')
+!          call copy_data(is,exportState,'surface_snow_thickness', &
+!            UNKNOWN,'e',.true.,rc)
+!          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_1')
+          call copy_data(is,exportState,'temperature_of_soil_layer_1', &
+            rt_domain(is%wrap%nest)%stc,'e',1,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_2')
+          call copy_data(is,exportState,'temperature_of_soil_layer_2', &
+            rt_domain(is%wrap%nest)%stc,'e',2,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_3')
+          call copy_data(is,exportState,'temperature_of_soil_layer_3', &
+            rt_domain(is%wrap%nest)%stc,'e',3,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('temperature_of_soil_layer_4')
+          call copy_data(is,exportState,'temperature_of_soil_layer_4', &
+            rt_domain(is%wrap%nest)%stc,'e',4,.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+!        CASE ('volume_fraction_of_total_water_in_soil')
+!          call copy_data(is,exportState,'volume_fraction_of_total_water_in_soil', &
+!            UNKNOWN,'e',.true.,rc)
+!          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('water_surface_height_above_reference_datum')
+          call copy_data(is,exportState,'water_surface_height_above_reference_datum', &
+            rt_domain(is%wrap%nest)%sfcheadrt,'e',.true.,rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE DEFAULT
+          if (is%wrap%verbosity >= VERBOSITY_MAX) then
+            call ESMF_LogWrite("Field hookup missing. Skipping export copy: "//trim(fieldNameList(fieldIndex)), &
+              ESMF_LOGMSG_WARNING, file=FILENAME, method=SUBNAME)
+          endif
+          cycle
+      END SELECT
+    enddo 
+    deallocate(fieldNameList)
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
       call ESMF_LogWrite("Done",ESMF_LOGMSG_INFO,file=FILENAME,method=SUBNAME)
@@ -825,25 +970,23 @@ contains
     configFile%soil_thick_input = soil_thick_input
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
+      call config_file_print(is,rc)
+      if(ESMF_STDERRORCHECK(rc)) return ! bail out
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
   end subroutine
 
   !-----------------------------------------------------------------------------
 
-  function create_grid(is,distgrid,GEO_STATIC_FLNM,nx_local,ny_local,x_start,y_start,rc)
+  function WRFHYDRO_GridCreate(is,rc)
     ! RETURN VALUE
-    type(ESMF_Grid) :: create_grid
+    type(ESMF_Grid) :: WRFHYDRO_GridCreate
     ! ARGUMENTS
     type(type_InternalState), intent(inout) :: is
-    type(ESMF_DistGrid),intent(in)          :: distgrid
-    character(len=*),intent(in)             :: GEO_STATIC_FLNM
-    integer,intent(in)                      :: nx_local
-    integer,intent(in)                      :: ny_local
-    integer,intent(in)                      :: x_start
-    integer,intent(in)                      :: y_start
     integer, intent(out)                    :: rc
     ! LOCAL VARIABLES
+    integer                     :: stat
+    character(len=10)           :: nestID
     real(ESMF_KIND_R8)          :: min_lat, max_lat, min_lon, max_lon
     real, allocatable           :: latitude(:,:), longitude(:,:)
     integer                     :: lbnd(2),ubnd(2)
@@ -852,7 +995,7 @@ contains
     real(ESMF_KIND_R8), pointer :: coordXcorner(:,:)
     real(ESMF_KIND_R8), pointer :: coordYcorner(:,:)
     integer                     :: i,j, i1,j1
-    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='create_grid'
+    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='WRFHYDRO_GridCreate'
 
     rc = ESMF_SUCCESS
 
@@ -860,8 +1003,9 @@ contains
       call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
 
-    create_grid = ESMF_GridCreate(name='WRFHYDRO_Grid', &
-      distgrid=distgrid, coordSys = ESMF_COORDSYS_SPH_DEG, &
+    write (nestID,"(I0)") is%wrap%nest
+    WRFHYDRO_GridCreate = ESMF_GridCreate(name='WRFHYDRO_Grid_'//trim(nestID), &
+      distgrid=WRFHYDRO_DistGrid, coordSys = ESMF_COORDSYS_SPH_DEG, &
 !      gridEdgeLWidth=(/0,0/), gridEdgeUWidth=(/0,1/), &
       rc = rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -869,14 +1013,20 @@ contains
     ! CENTERS
 
     ! Get Local Latitude (lat)
-    allocate(latitude(nx_local,ny_local))
-    call get_geostatic_array(is,"XLAT_M", GEO_STATIC_FLNM, latitude, &
+    allocate(latitude(nx_local,ny_local),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of latitude memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call get_geostatic_array(is,"XLAT_M",configFile%GEO_STATIC_FLNM, latitude, &
       x_start, y_start, nx_local, ny_local, rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     ! Get Local Longitude (lon)
-    allocate(longitude(nx_local,ny_local))
-    call get_geostatic_array(is,"XLONG_M", GEO_STATIC_FLNM, longitude, &
+    allocate(longitude(nx_local,ny_local),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of longitude memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call get_geostatic_array(is,"XLONG_M",configFile%GEO_STATIC_FLNM, longitude, &
       x_start, y_start, nx_local, ny_local, rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -894,15 +1044,15 @@ contains
       call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
     ! Add Center Coordinates to Grid
-    call ESMF_GridAddCoord(create_grid, staggerLoc=ESMF_STAGGERLOC_CENTER, rc=rc)
+    call ESMF_GridAddCoord(WRFHYDRO_GridCreate, staggerLoc=ESMF_STAGGERLOC_CENTER, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    call ESMF_GridGetCoord(create_grid, coordDim=1, localDE=0, &
+    call ESMF_GridGetCoord(WRFHYDRO_GridCreate, coordDim=1, localDE=0, &
       staggerloc=ESMF_STAGGERLOC_CENTER, &
       computationalLBound=lbnd, computationalUBound=ubnd, &
       farrayPtr=coordXcenter, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_GridGetCoord(create_grid, coordDim=2, localDE=0, &
+    call ESMF_GridGetCoord(WRFHYDRO_GridCreate, coordDim=2, localDE=0, &
       staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordYcenter, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
@@ -919,20 +1069,28 @@ contains
     enddo
     enddo
 
-    deallocate(latitude)
-    deallocate(longitude)
+    deallocate(latitude,longitude,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of longitude and latitude memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
 
     ! CORNERS
 
     ! Get Local Latitude (lat)
-    allocate(latitude(nx_local+1,ny_local+1))
-    call get_geostatic_array(is,"XLAT_CORNER", GEO_STATIC_FLNM, latitude, &
+    allocate(latitude(nx_local+1,ny_local+1),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of corner latitude memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call get_geostatic_array(is,"XLAT_CORNER",configFile%GEO_STATIC_FLNM, latitude, &
       x_start, y_start, nx_local+1, ny_local+1, rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     ! Get Local Longitude (lon)
-    allocate(longitude(nx_local+1,ny_local+1))
-    call get_geostatic_array(is,"XLONG_CORNER", GEO_STATIC_FLNM, longitude, &
+    allocate(longitude(nx_local+1,ny_local+1),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+     msg='Allocation of corner longitude memory failed.', &
+     method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call get_geostatic_array(is,"XLONG_CORNER",configFile%GEO_STATIC_FLNM, longitude, &
       x_start, y_start, nx_local+1, ny_local+1, rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -951,15 +1109,15 @@ contains
     endif
 
     ! Add Corner Coordinates to Grid
-    call ESMF_GridAddCoord(create_grid, staggerLoc=ESMF_STAGGERLOC_CORNER, rc=rc)
+    call ESMF_GridAddCoord(WRFHYDRO_GridCreate, staggerLoc=ESMF_STAGGERLOC_CORNER, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    call ESMF_GridGetCoord(create_grid, coordDim=1, localDE=0, &
+    call ESMF_GridGetCoord(WRFHYDRO_GridCreate, coordDim=1, localDE=0, &
       staggerloc=ESMF_STAGGERLOC_CORNER, &
       computationalLBound=lbnd, computationalUBound=ubnd, &
       farrayPtr=coordXcorner, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_GridGetCoord(create_grid, coordDim=2, localDE=0, &
+    call ESMF_GridGetCoord(WRFHYDRO_GridCreate, coordDim=2, localDE=0, &
       staggerloc=ESMF_STAGGERLOC_CORNER, farrayPtr=coordYcorner, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
@@ -976,10 +1134,12 @@ contains
     enddo
     enddo
 
-    deallocate(latitude)
-    deallocate(longitude)
+    deallocate(latitude,longitude,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of corner longitude and latitude memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
 
-    call add_area(is,create_grid, rc=rc)
+    call add_area(is,WRFHYDRO_GridCreate, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
@@ -1043,19 +1203,13 @@ contains
 
   !-----------------------------------------------------------------------------
 
-  subroutine set_local_indices(is,distgrid,x_start,x_end,y_start,y_end,nx_local,ny_local,rc)
+  subroutine set_local_indices(is,rc)
     ! ARGUMENTS
     type(type_InternalState), intent(inout) :: is
-    type(ESMF_DistGrid),intent(in)          :: distgrid
-    integer, intent(out)                    :: x_start
-    integer, intent(out)                    :: x_end
-    integer, intent(out)                    :: y_start
-    integer, intent(out)                    :: y_end
-    integer, intent(out)                    :: nx_local
-    integer, intent(out)                    :: ny_local
     integer, intent(out)                    :: rc
 
     ! LOCAL VARIABLES
+    integer                     :: stat
     type(ESMF_VM)               :: currentVM
     integer                     :: localPet
     integer                     :: petCount
@@ -1077,18 +1231,27 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     !! Get the grid distribution for this pet
-    allocate(dimExtent(2, 0:(petCount - 1))) ! (dimCount, deCount)
-    call ESMF_DistGridGet(distgrid, delayout=delayout, &
+    allocate(dimExtent(2, 0:(petCount - 1)),stat=stat) ! (dimCount, deCount)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of indexCountPDe memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call ESMF_DistGridGet(WRFHYDRO_DistGrid, delayout=delayout, &
       indexCountPDe=dimExtent, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    allocate(iIndexList(dimExtent(1, localPet)))
-    call ESMF_DistGridGet(distgrid, localDe=0, dim=1, &
+    allocate(iIndexList(dimExtent(1, localPet)),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of iIndexList memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call ESMF_DistGridGet(WRFHYDRO_DistGrid, localDe=0, dim=1, &
       indexList=iIndexList, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    allocate(jIndexList(dimExtent(2, localPet)))
-    call ESMF_DistGridGet(distgrid, localDe=0, dim=2, &
+    allocate(jIndexList(dimExtent(2, localPet)),stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+      msg='Allocation of jIndexList memory failed.', &
+      method=SUBNAME, file=FILENAME, rcToReturn=rc)) return ! bail out
+    call ESMF_DistGridGet(WRFHYDRO_DistGrid, localDe=0, dim=2, &
       indexList=jIndexList, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -1100,12 +1263,51 @@ contains
     nx_local = x_end - x_start + 1
     ny_local = y_end - y_start + 1
 
+    deallocate(iIndexList,jIndexList,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of IndexList memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
+
+    deallocate(dimExtent,stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+      msg='Deallocation of indexCountPDeo memory failed.', &
+      method=SUBNAME,file=FILENAME,rcToReturn=rc)) return ! bail out
+
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
+      write (logMsg,"(2A,6(I0,A))") "Local indices ", &
+        "(x_start:x_end,y_start:y_end) - (nx,ny): (", &
+        x_start,":",x_end,",",y_start,":",y_end,") - (",nx_local,",",ny_local,")"
+      call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
       call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
     endif
   end subroutine
 
-subroutine config_file_print(is,rc)
+  !-----------------------------------------------------------------------------
+
+  function WRFHYDRO_get_timestep(is,rc)
+    ! RETURN VALUE
+    real :: WRFHYDRO_get_timestep
+    ! ARGUMENTS
+    type(type_InternalState), intent(inout) :: is
+    integer, intent(out)                    :: rc
+    CHARACTER(LEN=*),PARAMETER  :: SUBNAME='WRFHYDRO_get_timestep'
+
+    rc = ESMF_SUCCESS
+
+    if (is%wrap%verbosity >= VERBOSITY_DBG) then
+      call ESMF_LogWrite("Called", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
+
+    WRFHYDRO_get_timestep = nlst_rt(is%wrap%nest)%dt
+
+    if (is%wrap%verbosity >= VERBOSITY_DBG) then
+      call ESMF_LogWrite("Done", ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
+    endif
+  end function
+
+  !-----------------------------------------------------------------------------
+
+  subroutine config_file_print(is,rc)
     ! ARGUMENTS
     type(type_InternalState), intent(inout) :: is
     integer, intent(out)                    :: rc
