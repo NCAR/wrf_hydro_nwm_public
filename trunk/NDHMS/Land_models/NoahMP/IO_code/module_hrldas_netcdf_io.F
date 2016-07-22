@@ -63,6 +63,12 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
 
+#ifdef WRF_HYDRO
+  interface define_rst_var
+     module procedure define_3d_real,define_2d_real,define_2d_int
+  end interface
+#endif
+
   interface prepare_output_file
 #ifdef MPP_LAND
      module procedure prepare_output_file_mpp
@@ -2856,35 +2862,37 @@ contains
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
 #ifdef MPP_LAND
-  subroutine add_to_restart_2d_float_mpp(array, name, units, description)
+  subroutine add_to_restart_2d_float_mpp(ncid,array, name, units, description)
     implicit none
     real,            dimension(:,:),                              intent(in) :: array
     real,            dimension(global_nx,global_ny) :: garray
     character(len=*),                                             intent(in) :: name
     character(len=*), optional,                                   intent(in) :: units
     character(len=*), optional,                                   intent(in) :: description
+    integer :: ncid
     call write_io_real(array,garray)
     if(my_id .eq. IO_id) then
-         call add_to_restart_2d_float(garray, name, units, description)
+         call add_to_restart_2d_float(ncid,garray, name, units, description)
     endif
     call mpp_land_sync()
   end subroutine add_to_restart_2d_float_mpp
 
-  subroutine add_to_restart_2d_integer_mpp(array, name, units, description)
+  subroutine add_to_restart_2d_integer_mpp(ncid,array, name, units, description)
     implicit none
     integer,            dimension(:,:),                              intent(in) :: array
     integer,            dimension(global_nx,global_ny) :: garray
     character(len=*),                                             intent(in) :: name
     character(len=*), optional,                                   intent(in) :: units
     character(len=*), optional,                                   intent(in) :: description
+    integer :: ncid
     call write_io_int(array,garray)
     if(my_id .eq. IO_id) then
-         call add_to_restart_2d_integer(garray, name, units, description)
+         call add_to_restart_2d_integer(ncid,garray, name, units, description)
     endif
     call mpp_land_sync()
   end subroutine add_to_restart_2d_integer_mpp
 
-  subroutine add_to_restart_3d_mpp(array, name, units, description, layers)
+  subroutine add_to_restart_3d_mpp(ncid,array, name, units, description, layers)
     implicit none
     real,            dimension(:,:,:),                            intent(in) :: array
     character(len=*),                                             intent(in) :: name
@@ -2892,6 +2900,7 @@ contains
     character(len=*), optional,                                   intent(in) :: description
     character(len=4), optional,                                   intent(in) :: layers
     integer  :: k, klevel
+    integer :: ncid
 
     real, allocatable, dimension(:,:,:) :: garray
     klevel = size(array,2)
@@ -2900,7 +2909,7 @@ contains
        call write_io_real3d(array,garray,klevel)
 
     if(my_id .eq. IO_id) then
-         call add_to_restart_3d(garray, name, units, description, layers)
+         call add_to_restart_3d(ncid,garray, name, units, description, layers)
     endif
     deallocate(garray)
 
@@ -2910,7 +2919,7 @@ contains
 
 #endif
 
-  subroutine add_to_restart_2d_float(array, name, units, description)
+  subroutine add_to_restart_2d_float(ncid,array, name, units, description)
     implicit none
     real,            dimension(:,:),                              intent(in) :: array
     character(len=*),                                             intent(in) :: name
@@ -2950,48 +2959,14 @@ contains
        local_description = "-"
     endif
     
-#ifdef _PARALLEL_
-    ierr = nf90_open_par(trim(output_flnm), NF90_WRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
-    ierr = nf90_open(trim(output_flnm), NF90_WRITE, ncid)
-#endif
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                             "Problem nf90_open")
-
-    ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                       "Problem nf90_inq_dimid for 'west_east'")
-
-    ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                             "Problem nf90_inq_dimid for 'south_north'")
-
-    ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                             "Problem nf90_inq_dimid for 'Time'")
-
-    ierr = nf90_redef(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                             "Problem nf90_redef")
-
-    call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, name, trim(local_description), trim(local_units))
-
-    ierr = nf90_enddef(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                             "Problem nf90_enddef")
-
     call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array, .true.)
-
-    ierr = nf90_close(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
-                             "Problem nf90_close")
 
   end subroutine add_to_restart_2d_float
 
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
 
-  subroutine add_to_restart_2d_integer(array, name, units, description)
+  subroutine add_to_restart_2d_integer(ncid,array, name, units, description)
     implicit none
     integer,         dimension(:,:),                              intent(in) :: array
     character(len=*),                                             intent(in) :: name
@@ -3030,49 +3005,16 @@ contains
     else
        local_description = "-"
     endif
-    
-#ifdef _PARALLEL_
-    ierr = nf90_open_par(trim(output_flnm), NF90_WRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
-    ierr = nf90_open(trim(output_flnm), NF90_WRITE, ncid)
-#endif
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem  nf90_open")
 
-    ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem nf90_inq_dimid for 'west_east'")
+     call put_var_int(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array)
 
-    ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem nf90_inq_dimid for 'south_north'")
-
-    ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem nf90_inq_dimid for 'Time'")
-
-    ierr = nf90_redef(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem nf90_redef")
-
-    call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_INT, name, trim(local_description), trim(local_units))
-
-    ierr = nf90_enddef(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem nf90_enddef")
-
-    call put_var_int(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array)
-
-    ierr = nf90_close(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
-                             "Problem nf90_close")
 
   end subroutine add_to_restart_2d_integer
 
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
 
-  subroutine add_to_restart_3d(array, name, units, description, layers)
+  subroutine add_to_restart_3d(ncid,array, name, units, description, layers)
     implicit none
     real,            dimension(:,:,:),                            intent(in) :: array
     character(len=*),                                             intent(in) :: name
@@ -3111,69 +3053,8 @@ contains
     kxpar = size(array,2)
     jxpar = size(array,3)
 
-    if (present(units)) then
-       local_units = units
-    else
-       local_units = "-"
-    endif
-
-    if (present(description)) then
-       local_description = description
-    else
-       local_description = "-"
-    endif
-    
-#ifdef _PARALLEL_
-    ierr = nf90_open_par(trim(output_flnm), NF90_WRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
-    ierr = nf90_open(trim(output_flnm), NF90_WRITE, ncid)
-#endif
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_open")
-
-    ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_inq_dimid for 'west_east'")
-
-    ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_inq_dimid for 'south_north'")
-
-    if (output_layers == "SOIL") then
-       ierr = nf90_inq_dimid(ncid, "soil_layers_stag", dimid_kx)
-       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                                "Problem nf90_inq_dimid for 'soil_layers_stag'")
-    else if (output_layers == "SNOW") then
-       ierr = nf90_inq_dimid(ncid, "snow_layers", dimid_kx)
-       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                                "Problem nf90_inq_dimid for 'snow_layers'")
-    else if (output_layers == "SOSN") then
-       ierr = nf90_inq_dimid(ncid, "sosn_layers", dimid_kx)
-       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                                "Problem nf90_inq_dimid for 'sosn_layers'")
-    else
-       stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_restart_3d() - PANIC!"
-    endif
-
-    ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_inq_dimid for 'Time'")
-
-    ierr = nf90_redef(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_redef")
-
-    call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, trim(local_description), trim(local_units))
-
-    ierr = nf90_enddef(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_enddef")
-
     call put_var_3d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, kxpar, name, array)
 
-    ierr = nf90_close(ncid)
-    call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
-                             "Problem nf90_close")
 
   end subroutine add_to_restart_3d
 
@@ -3656,5 +3537,101 @@ contains
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
+
+#ifdef WRF_HYDRO
+
+   subroutine define_2d_real(ncid, array,name,description, units)
+       implicit none
+       real,         dimension(:,:),                              intent(in) :: array
+       character(len=*),                                             intent(in) :: name
+       character(len=*), optional,                                   intent(in) :: units
+       character(len=*), optional,                                   intent(in) :: description
+       integer :: ierr, ncid, dimid_ix, dimid_jx, dimid_times
+       ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'west_east'")
+
+       ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'south_north'")
+
+       ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_inq_dimid for 'Time'")
+
+       call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, name, trim(description), trim(units))
+   end subroutine define_2d_real
+
+   subroutine define_2d_int(ncid, array,name,description, units)
+       implicit none
+       integer,         dimension(:,:),                              intent(in) :: array
+       character(len=*),                                             intent(in) :: name
+       character(len=*), optional,                                   intent(in) :: units
+       character(len=*), optional,                                   intent(in) :: description
+       integer :: ierr, ncid, dimid_ix, dimid_jx, dimid_times
+
+       ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'west_east'")
+
+       ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'south_north'")
+
+       ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_inq_dimid for 'Time'")
+
+       call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_INT, name, trim(description), trim(units))
+   end subroutine define_2d_int
+  
+   subroutine define_3d_real(ncid, array,name,units,description, layers)
+       implicit none
+       real,         dimension(:,:,:),                              intent(in) :: array
+       character(len=*),                                             intent(in) :: name
+       character(len=*), optional,                                   intent(in) :: units
+       character(len=*), optional,                                   intent(in) :: description
+       character(len=4), optional,                                   intent(in) :: layers
+
+       integer :: ierr, ncid, dimid_ix, dimid_jx, dimid_times, dimid_kx
+       character(len=4) :: output_layers
+
+       if (present(layers)) then
+          output_layers = layers
+       else
+          output_layers = "SOIL"
+       endif
+
+       ierr = nf90_inq_dimid(ncid, "west_east", dimid_ix)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'west_east'")
+
+       ierr = nf90_inq_dimid(ncid, "south_north", dimid_jx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_integer() - "// &
+                             "Problem nf90_inq_dimid for 'south_north'")
+
+       ierr = nf90_inq_dimid(ncid, "Time", dimid_times)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_inq_dimid for 'Time'")
+
+       if (output_layers == "SOIL") then
+       ierr = nf90_inq_dimid(ncid, "soil_layers_stag", dimid_kx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'soil_layers_stag'")
+    else if (output_layers == "SNOW") then
+       ierr = nf90_inq_dimid(ncid, "snow_layers", dimid_kx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'snow_layers'")
+    else if (output_layers == "SOSN") then
+       ierr = nf90_inq_dimid(ncid, "sosn_layers", dimid_kx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'sosn_layers'")
+    else
+       stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_restart_3d() - PANIC!"
+    endif
+        call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, trim(description), trim(units))
+   end subroutine define_3d_real
+
+#endif
 
  end module module_hrldas_netcdf_io

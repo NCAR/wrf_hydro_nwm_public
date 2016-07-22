@@ -1971,6 +1971,8 @@ end subroutine  ldas_output
 !!===============================================================================
 subroutine lsm_restart()
   implicit none 
+  character(len=256):: tmpStr
+  integer :: ncid
   
 #ifdef HYDRO_D
   print*, 'Write restart at '//olddate(1:13)
@@ -1980,72 +1982,91 @@ subroutine lsm_restart()
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
        cen_lon, iswater, ivgtyp)
+
+   write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+
+
+#ifdef MPP_LAND
+  if(my_id .eq. io_id) then
+#endif
+     ierr = nf90_open(trim(tmpStr),  NF90_WRITE, ncid)
+     call define_rst_variables(ncid)
+#ifdef MPP_LAND
+  endif
+#endif
   
-  call add_to_restart(TSLB      , "SOIL_T", layers="SOIL")
-  call add_to_restart(TSNOXY    , "SNOW_T", layers="SNOW")
-  call add_to_restart(SMOIS     , "SMC"   , layers="SOIL")
-  call add_to_restart(SH2O      , "SH2O"  , layers="SOIL")
-  call add_to_restart(ZSNSOXY   , "ZSNSO" , layers="SOSN")
-  call add_to_restart(SNICEXY   , "SNICE" , layers="SNOW")
-  call add_to_restart(SNLIQXY   , "SNLIQ" , layers="SNOW")
-  call add_to_restart(QSNOWXY   , "QSNOW" )
-  call add_to_restart(FWETXY    , "FWET"  )
-  call add_to_restart(SNEQVOXY  , "SNEQVO")
-  call add_to_restart(EAHXY     , "EAH"   )
-  call add_to_restart(TAHXY     , "TAH"   )
-  call add_to_restart(ALBOLDXY  , "ALBOLD")
-  call add_to_restart(CMXY      , "CM"    )
-  call add_to_restart(CHXY      , "CH"    )
-  call add_to_restart(ISNOWXY   , "ISNOW" )
-  call add_to_restart(CANLIQXY  , "CANLIQ")
-  call add_to_restart(CANICEXY  , "CANICE")
-  call add_to_restart(SNOW      , "SNEQV" )
-  call add_to_restart(SNOWH     , "SNOWH" )
-  call add_to_restart(TVXY      , "TV"    )
-  call add_to_restart(TGXY      , "TG"    )
-  call add_to_restart(ZWTXY     , "ZWT"   )
-  call add_to_restart(WAXY      , "WA"    )
-  call add_to_restart(WTXY      , "WT"    )
-  call add_to_restart(WSLAKEXY  , "WSLAKE")
-  call add_to_restart(LFMASSXY  , "LFMASS")
-  call add_to_restart(RTMASSXY  , "RTMASS")
-  call add_to_restart(STMASSXY  , "STMASS")
-  call add_to_restart(WOODXY    , "WOOD"  )
-  call add_to_restart(STBLCPXY  , "STBLCP")
-  call add_to_restart(FASTCPXY  , "FASTCP")
-  call add_to_restart(LAI       , "LAI"   )
-  call add_to_restart(XSAIXY    , "SAI"   )
-  call add_to_restart(VEGFRA    , "VEGFRA")
-  call add_to_restart(GVFMIN    , "GVFMIN")
-  call add_to_restart(GVFMAX    , "GVFMAX")
-  call add_to_restart(ACSNOM    , "ACMELT")
-  call add_to_restart(ACSNOW    , "ACSNOW")
-  call add_to_restart(TAUSSXY   , "TAUSS" )
-  call add_to_restart(QSFC      , "QSFC"  )
-  call add_to_restart(SFCRUNOFF , "SFCRUNOFF")
-  call add_to_restart(UDRUNOFF  , "UDRUNOFF" )
+  call add_to_restart(ncid,TSLB      , "SOIL_T", layers="SOIL")
+  call add_to_restart(ncid,TSNOXY    , "SNOW_T", layers="SNOW")
+  call add_to_restart(ncid,SMOIS     , "SMC"   , layers="SOIL")
+  call add_to_restart(ncid,SH2O      , "SH2O"  , layers="SOIL")
+  call add_to_restart(ncid,ZSNSOXY   , "ZSNSO" , layers="SOSN")
+  call add_to_restart(ncid,SNICEXY   , "SNICE" , layers="SNOW")
+  call add_to_restart(ncid,SNLIQXY   , "SNLIQ" , layers="SNOW")
+  call add_to_restart(ncid,QSNOWXY   , "QSNOW" )
+  call add_to_restart(ncid,FWETXY    , "FWET"  )
+  call add_to_restart(ncid,SNEQVOXY  , "SNEQVO")
+  call add_to_restart(ncid,EAHXY     , "EAH"   )
+  call add_to_restart(ncid,TAHXY     , "TAH"   )
+  call add_to_restart(ncid,ALBOLDXY  , "ALBOLD")
+  call add_to_restart(ncid,CMXY      , "CM"    )
+  call add_to_restart(ncid,CHXY      , "CH"    )
+  call add_to_restart(ncid,ISNOWXY   , "ISNOW" )
+  call add_to_restart(ncid,CANLIQXY  , "CANLIQ")
+  call add_to_restart(ncid,CANICEXY  , "CANICE")
+  call add_to_restart(ncid,SNOW      , "SNEQV" )
+  call add_to_restart(ncid,SNOWH     , "SNOWH" )
+  call add_to_restart(ncid,TVXY      , "TV"    )
+  call add_to_restart(ncid,TGXY      , "TG"    )
+  call add_to_restart(ncid,ZWTXY     , "ZWT"   )
+  call add_to_restart(ncid,WAXY      , "WA"    )
+  call add_to_restart(ncid,WTXY      , "WT"    )
+  call add_to_restart(ncid,WSLAKEXY  , "WSLAKE")
+  call add_to_restart(ncid,LFMASSXY  , "LFMASS")
+  call add_to_restart(ncid,RTMASSXY  , "RTMASS")
+  call add_to_restart(ncid,STMASSXY  , "STMASS")
+  call add_to_restart(ncid,WOODXY    , "WOOD"  )
+  call add_to_restart(ncid,STBLCPXY  , "STBLCP")
+  call add_to_restart(ncid,FASTCPXY  , "FASTCP")
+  call add_to_restart(ncid,LAI       , "LAI"   )
+  call add_to_restart(ncid,XSAIXY    , "SAI"   )
+  call add_to_restart(ncid,VEGFRA    , "VEGFRA")
+  call add_to_restart(ncid,GVFMIN    , "GVFMIN")
+  call add_to_restart(ncid,GVFMAX    , "GVFMAX")
+  call add_to_restart(ncid,ACSNOM    , "ACMELT")
+  call add_to_restart(ncid,ACSNOW    , "ACSNOW")
+  call add_to_restart(ncid,TAUSSXY   , "TAUSS" )
+  call add_to_restart(ncid,QSFC      , "QSFC"  )
+  call add_to_restart(ncid,SFCRUNOFF , "SFCRUNOFF")
+  call add_to_restart(ncid,UDRUNOFF  , "UDRUNOFF" )
 #ifdef WRF_HYDRO
-  call add_to_restart(ACCPRCP   , "ACCPRCP" )
-  call add_to_restart(ACCECAN   , "ACCECAN" )
-  call add_to_restart(ACCEDIR   , "ACCEDIR" )
-  call add_to_restart(ACCETRAN  , "ACCETRAN" )
+  call add_to_restart(ncid,ACCPRCP   , "ACCPRCP" )
+  call add_to_restart(ncid,ACCECAN   , "ACCECAN" )
+  call add_to_restart(ncid,ACCEDIR   , "ACCEDIR" )
+  call add_to_restart(ncid,ACCETRAN  , "ACCETRAN" )
 #endif
 ! below for opt_run = 5
-  call add_to_restart(SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
-  call add_to_restart(AREAXY    , "AREAXY"     )
-  call add_to_restart(SMCWTDXY  , "SMCWTDXY"   )
-  call add_to_restart(DEEPRECHXY, "DEEPRECHXY" )
-  call add_to_restart(QSLATXY   , "QSLATXY"    )
-  call add_to_restart(QRFSXY    , "QRFSXY"     )
-  call add_to_restart(QSPRINGSXY, "QSPRINGSXY" )
-  call add_to_restart(RECHXY    , "RECHXY"     )
-  call add_to_restart(QRFXY     , "QRFXY"      )
-  call add_to_restart(QSPRINGXY , "QSPRINGXY"  )
-  call add_to_restart(FDEPTHXY , "FDEPTHXY"  )
-  call add_to_restart(RIVERCONDXY , "RIVERCONDXY"  )
-  call add_to_restart(RIVERBEDXY , "RIVERBEDXY"  )
-  call add_to_restart(EQZWT , "EQZWT"  )
-  call add_to_restart(PEXPXY , "PEXPXY"  )
+  call add_to_restart(ncid,SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
+  call add_to_restart(ncid,AREAXY    , "AREAXY"     )
+  call add_to_restart(ncid,SMCWTDXY  , "SMCWTDXY"   )
+  call add_to_restart(ncid,DEEPRECHXY, "DEEPRECHXY" )
+  call add_to_restart(ncid,QSLATXY   , "QSLATXY"    )
+  call add_to_restart(ncid,QRFSXY    , "QRFSXY"     )
+  call add_to_restart(ncid,QSPRINGSXY, "QSPRINGSXY" )
+  call add_to_restart(ncid,RECHXY    , "RECHXY"     )
+  call add_to_restart(ncid,QRFXY     , "QRFXY"      )
+  call add_to_restart(ncid,QSPRINGXY , "QSPRINGXY"  )
+  call add_to_restart(ncid,FDEPTHXY , "FDEPTHXY"  )
+  call add_to_restart(ncid,RIVERCONDXY , "RIVERCONDXY"  )
+  call add_to_restart(ncid,RIVERBEDXY , "RIVERBEDXY"  )
+  call add_to_restart(ncid,EQZWT , "EQZWT"  )
+  call add_to_restart(ncid,PEXPXY , "PEXPXY"  )
+
+#ifdef MPP_LAND
+  if(my_id .eq. io_id) then
+     ierr = nf90_close(ncid)
+  endif
+#endif
+
   call finalize_restart_file()
 
 end subroutine lsm_restart
@@ -2307,6 +2328,94 @@ subroutine lsm_rst_bi_in()
   stop "FATAL ERROR: failed to read lsm restart file"
 #endif
 end subroutine lsm_rst_bi_in
+
+
+#ifdef WRF_HYDRO
+   subroutine define_rst_variables(ncid)
+      implicit none
+      integer ncid
+!      character(len=*) :: tmpStr
+
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_open")
+      ierr = nf90_redef(ncid)
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// & 
+                             "Problem nf90_redef")
+! add the variables
+
+  call define_rst_var(ncid,TSLB      , "SOIL_T", layers="SOIL")
+  call define_rst_var(ncid,TSNOXY    , "SNOW_T", layers="SNOW")
+  call define_rst_var(ncid,SMOIS     , "SMC"   , layers="SOIL")
+  call define_rst_var(ncid,SH2O      , "SH2O"  , layers="SOIL")
+  call define_rst_var(ncid,ZSNSOXY   , "ZSNSO" , layers="SOSN")
+  call define_rst_var(ncid,SNICEXY   , "SNICE" , layers="SNOW")
+  call define_rst_var(ncid,SNLIQXY   , "SNLIQ" , layers="SNOW")
+  call define_rst_var(ncid,QSNOWXY   , "QSNOW" )
+  call define_rst_var(ncid,FWETXY    , "FWET"  )
+  call define_rst_var(ncid,SNEQVOXY  , "SNEQVO")
+  call define_rst_var(ncid,EAHXY     , "EAH"   )
+  call define_rst_var(ncid,TAHXY     , "TAH"   )
+  call define_rst_var(ncid,ALBOLDXY  , "ALBOLD")
+  call define_rst_var(ncid,CMXY      , "CM"    )
+  call define_rst_var(ncid,CHXY      , "CH"    )
+  call define_rst_var(ncid,ISNOWXY   , "ISNOW" )
+  call define_rst_var(ncid,CANLIQXY  , "CANLIQ")
+  call define_rst_var(ncid,CANICEXY  , "CANICE")
+  call define_rst_var(ncid,SNOW      , "SNEQV" )
+  call define_rst_var(ncid,SNOWH     , "SNOWH" )
+  call define_rst_var(ncid,TVXY      , "TV"    )
+  call define_rst_var(ncid,TGXY      , "TG"    )
+  call define_rst_var(ncid,ZWTXY     , "ZWT"   )
+  call define_rst_var(ncid,WAXY      , "WA"    )
+  call define_rst_var(ncid,WTXY      , "WT"    )
+  call define_rst_var(ncid,WSLAKEXY  , "WSLAKE")
+  call define_rst_var(ncid,LFMASSXY  , "LFMASS")
+  call define_rst_var(ncid,RTMASSXY  , "RTMASS")
+  call define_rst_var(ncid,STMASSXY  , "STMASS")
+  call define_rst_var(ncid,WOODXY    , "WOOD"  )
+  call define_rst_var(ncid,STBLCPXY  , "STBLCP")
+  call define_rst_var(ncid,FASTCPXY  , "FASTCP")
+  call define_rst_var(ncid,LAI       , "LAI"   )
+  call define_rst_var(ncid,XSAIXY    , "SAI"   )
+  call define_rst_var(ncid,VEGFRA    , "VEGFRA")
+  call define_rst_var(ncid,GVFMIN    , "GVFMIN")
+  call define_rst_var(ncid,GVFMAX    , "GVFMAX")
+  call define_rst_var(ncid,ACSNOM    , "ACMELT")
+  call define_rst_var(ncid,ACSNOW    , "ACSNOW")
+  call define_rst_var(ncid,TAUSSXY   , "TAUSS" )
+  call define_rst_var(ncid,QSFC      , "QSFC"  )
+  call define_rst_var(ncid,SFCRUNOFF , "SFCRUNOFF")
+  call define_rst_var(ncid,UDRUNOFF  , "UDRUNOFF" )
+#ifdef WRF_HYDRO
+  call define_rst_var(ncid,ACCPRCP   , "ACCPRCP" )
+  call define_rst_var(ncid,ACCECAN   , "ACCECAN" )
+  call define_rst_var(ncid,ACCEDIR   , "ACCEDIR" )
+  call define_rst_var(ncid,ACCETRAN  , "ACCETRAN" )
+#endif
+! below for opt_run = 5
+  call define_rst_var(ncid,SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
+  call define_rst_var(ncid,AREAXY    , "AREAXY"     )
+  call define_rst_var(ncid,SMCWTDXY  , "SMCWTDXY"   )
+  call define_rst_var(ncid,DEEPRECHXY, "DEEPRECHXY" )
+  call define_rst_var(ncid,QSLATXY   , "QSLATXY"    )
+  call define_rst_var(ncid,QRFSXY    , "QRFSXY"     )
+  call define_rst_var(ncid,QSPRINGSXY, "QSPRINGSXY" )
+  call define_rst_var(ncid,RECHXY    , "RECHXY"     )
+  call define_rst_var(ncid,QRFXY     , "QRFXY"      )
+  call define_rst_var(ncid,QSPRINGXY , "QSPRINGXY"  )
+  call define_rst_var(ncid,FDEPTHXY , "FDEPTHXY"  )
+  call define_rst_var(ncid,RIVERCONDXY , "RIVERCONDXY"  )
+  call define_rst_var(ncid,RIVERBEDXY , "RIVERBEDXY"  )
+  call define_rst_var(ncid,EQZWT , "EQZWT"  )
+  call define_rst_var(ncid,PEXPXY , "PEXPXY"  )
+      ierr = nf90_enddef(ncid)
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_enddef")
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_close")
+
+   end subroutine define_rst_variables
+#endif
 
 end module module_NoahMP_hrldas_driver
 
