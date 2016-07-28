@@ -52,11 +52,7 @@ module module_HYDRO_io
 
           get2d_real = -1
 
-#ifdef PARALLELIO
-          iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
-#endif
           if (iret .ne. 0) then
              errMsg = "get2d_real: failed to open the netcdf file: " // trim(fileName)
              print*, trim(errMsg)
@@ -155,11 +151,7 @@ module module_HYDRO_io
 #endif
 #endif
                 ! Open the NetCDF file.
-#ifdef PARALLELIO
-              iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
               iret = nf_open(fileName, NF_NOWRITE, ncid)
-#endif
               if (iret /= 0) then
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
@@ -205,11 +197,7 @@ module module_HYDRO_io
             if(my_id .eq. IO_id) then
 #endif
 #endif
-#ifdef PARALLELIO
-            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
             iret = nf_open(fileName, NF_NOWRITE, ncid)
-#endif
             if (iret /= 0) then
                write(*,'("Problem opening geo_static file: ''", A, "''")') &
                     trim(fileName)
@@ -264,11 +252,7 @@ module module_HYDRO_io
 #endif
 #endif
                 ! Open the NetCDF file.
-#ifdef PARALLELIO
-            iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
             iret = nf_open(fileName, NF_NOWRITE, ncid)
-#endif
               if (iret /= 0) then
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
@@ -1748,11 +1732,7 @@ end subroutine get_albedo12m_netcdf
        iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
 #else
        write(6,*) "using normal netcdf file for RTOUT_DOMAIN"
-#ifdef PARALLELIO
-      iret = nf90_open_par(trim(geo_finegrid_flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
        iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
 #endif
        if (iret /= 0) then
          call hydro_stop("In output_rt() - Problem nf_create")
@@ -5199,11 +5179,7 @@ end subroutine mpp_output_chrt
 
 
 !DJG Open NetCDF file...
-#ifdef PARALLELIO
-    iret = nf90_open_par(trim(inflnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
     ierr = nf_open(inflnm, NF_NOWRITE, ncid)
-#endif
     if (ierr /= 0) then
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
        call hydro_stop("In read_chan_forcing() - Problem opening netcdf file")
@@ -5234,11 +5210,7 @@ end subroutine mpp_output_chrt
     fatalErr_local = .false.
     if(present(fatalErr)) fatalErr_local=fatalErr
     
-#ifdef PARALLELIO
-    iret = nf90_open_par(trim(fileName), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
-#else
     iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
-#endif
     if (iret .ne. 0) then
        errMsg = "get2d_int: failed to open the netcdf file: " // trim(fileName)
        print*, trim(errMsg)
