@@ -69,7 +69,7 @@ module module_HYDRO_io
           if(ivar .ne. 0) then
              ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
              if(ivar .ne. 0) then
-                errMsg = "get2d_real: failed to find the variables: " //      &
+                errMsg = "WARNING: get2d_real: failed to find the variables: " //      &
                          trim(var_name) // ' and ' // trim(var_name//"_M") // &
                          ' in ' // trim(fileName)
                 write(6,*) errMsg
@@ -80,7 +80,7 @@ module module_HYDRO_io
 
           iret = nf_get_var_real(ncid, varid, out_buff)
           if(iret .ne. 0) then
-             errMsg = "get2d_real: failed to read the variable: " // &
+             errMsg = "WARNING: get2d_real: failed to read the variable: " // &
                       trim(var_name) // ' or ' // trim(var_name//"_M") // &
                       ' in ' // trim(fileName)
              print*,trim(errMsg)
@@ -90,7 +90,7 @@ module module_HYDRO_io
 
           iret = nf_close(ncid)
           if(iret .ne. 0) then
-             errMsg = "get2d_real: failed to close the file: " // &
+             errMsg = "WARNING: get2d_real: failed to close the file: " // &
                       trim(fileName)
              print*,trim(errMsg)
              if(fatalErr_local) call hydro_stop(trim(errMsg))
@@ -1593,7 +1593,7 @@ end subroutine get_albedo12m_netcdf
 
     integer :: seconds_since, decimation, ixrtd,jxrtd, hires_flag
     sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
-    seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
     sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                   //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
 
@@ -2158,7 +2158,7 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
      
 
 #endif
-    seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
     sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
     sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                   //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
@@ -2503,7 +2503,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      
 
 #endif
-    seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
     sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
     sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                   //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
@@ -2954,7 +2954,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      !call geth_newdate(hydroTime, date, nint(lsmDt))
      hydroTime=date
 
-     seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
      sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                    //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
 
@@ -3873,7 +3873,7 @@ end subroutine mpp_output_chrt
 
 !    sec_since_date = 'seconds since '//date(1:4)//'-'//date(6:7)//'-'//date(9:10)//' '//date(12:13)//':'//date(15:16)//' UTC'
 !    seconds_since = int(dtrt_ch)*output_count
-     seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
      sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                      //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
 
@@ -4123,8 +4123,7 @@ end subroutine mpp_output_chrt
      sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                          //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
 
-
-     seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
 
      if (output_count == 0) then
 
@@ -4344,7 +4343,7 @@ end subroutine mpp_output_chrt
 
     integer :: seconds_since
 
-    seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
     sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                  //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
 
@@ -8101,7 +8100,7 @@ end subroutine mpp_output_chrt2
      integer,  intent(in) :: iocflag
 #endif
 
-     seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
 
 
      if(channel_option .ne. 3) then
@@ -8120,7 +8119,7 @@ end subroutine mpp_output_chrt2
         date19start(1:len_trim(startdate)) = startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10)//'_' &
                   //startdate(12:13)//':'//startdate(15:16)//':00'
 
-        seconds_since = int(nlst_rt(1)%dt*(rt_domain(1)%out_counts-1))
+        seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
         sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
                       //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
 

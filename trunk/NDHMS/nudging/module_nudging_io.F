@@ -330,9 +330,18 @@ print*,'Ndg: start read_gridded_nudging_frxst_gage_csv'
 frxstId=-9999
 
 lineCount = 0
+
+#ifndef NCEP_WCOSS
 open(117, file = 'Nudging_frxst_gage.csv' )
+#else
+open(26)
+#endif
 do
+#ifndef NCEP_WCOSS
    read(117, '( a )', end = 200 ) line
+#else
+   read(26, '( a )', end = 200 ) line
+#endif
    if( line( 1:1 ) == '!' ) cycle     
    colCount = 1
    lastCommaPos = 0
@@ -356,6 +365,12 @@ do
 
    end do
 end do
+
+#ifndef NCEP_WCOSS
+close(117)
+#else
+close(26)
+#endif
 
 200 continue
 
@@ -471,11 +486,29 @@ implicit none
 character(len=15), dimension(:),  intent(in) :: gageId
 integer,                          intent(in) :: count
 integer :: cc
+
+#ifndef NCEP_WCOSS
 open (unit=919,file='NWIS_gages_not_in_RLAndParams.txt',status='unknown',position='append')
+#else
+open (unit=27,status='unknown',position='append')
+#endif
+
 do cc=1,count
+
+#ifndef NCEP_WCOSS
    write(919,'(A15)') gageId(cc)
+#else
+   write(27,'(A15)') gageId(cc)
+#endif
+
 end do
+
+#ifndef NCEP_WCOSS
 close(919) 
+#else
+close(27) 
+#endif
+
 end subroutine write_nwis_not_in_RLAndParams
 
 

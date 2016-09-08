@@ -2326,6 +2326,7 @@ MODULE MODULE_MPP_LAND
     subroutine mpp_land_abort()
       implicit none
       integer ierr, status
+      IERR = 1
       call MPI_ABORT(MPI_COMM_WORLD,status,IERR)
     end subroutine mpp_land_abort  ! mpp_land_abort
 

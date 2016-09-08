@@ -21,7 +21,7 @@ all:	$(CMD)
 Noah_hrldas_beta: $(OBJS)
 	@echo ""
 # We have to include the modules built in ../IO_code 
-	$(COMPILERF90) -o $(@) $(MODFLAG) -I ../IO_code $(OBJS) $(NETCDFLIB) $(HDF5LIB) -L../../../lib  -lHYDRO $(NETCDFLIB)
+	$(COMPILERF90) -o $(@) $(MODFLAG) -I ../IO_code $(OBJS) $(NETCDFLIB) $(HDF5LIB) -L../../../lib  -lHYDRO $(NETCDFLIB) $(LDFLAGS) $(LIBS)
 	@echo ""
 
 # This command cleans up
