@@ -224,7 +224,7 @@ module module_HYDRO_drv
       endif
 
 
-     if(nlst_rt(did)%LSMOUT_DOMAN .eq. 1)  &
+     if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  &
      call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
                  //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
                  ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
