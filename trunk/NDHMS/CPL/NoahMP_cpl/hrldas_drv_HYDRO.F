@@ -311,7 +311,8 @@
              print*, "read snow for initialization ...."
 #endif
              iret = nf_get_var_real(ncid, varid, weasd)
-             weasd = weasd * 1.0E-3    ! transfer the unit from mm to m
+             !ADCHANGE: NoahMP is looking for snow in mm
+             !weasd = weasd * 1.0E-3    ! transfer the unit from mm to m
           endif  
          
           

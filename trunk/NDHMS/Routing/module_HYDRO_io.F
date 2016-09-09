@@ -4924,7 +4924,8 @@ end subroutine mpp_output_chrt
              iret = nf_def_var(ncid,"sh2owgt"//trim(tmpStr),NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
           end do
             iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
-            iret = nf_def_var(ncid,"RETDEPRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            !AD_CHANGE: Not needed in RESTART
+            !iret = nf_def_var(ncid,"RETDEPRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
 
 
 
@@ -5001,7 +5002,8 @@ end subroutine mpp_output_chrt
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT, "SFCHEADSUBRT" )
             call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT, "qstrmvolrt" )
-            call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT, "RETDEPRT" )
+            !AD_CHANGE: Not needed in RESTART
+            !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT, "RETDEPRT" )
 
 !yw test
 
@@ -5213,7 +5215,8 @@ end subroutine mpp_output_chrt
                     write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
                     write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
-                    write(iunit,ERR=101) rt_domain(did)%RETDEPRT
+                    !AD_CHANGE: Not needed in RESTART
+                    !write(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 endif
           end if  
 
@@ -5305,7 +5308,9 @@ end subroutine mpp_output_chrt
                    read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
                    read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
-                   read(iunit,ERR=101) rt_domain(did)%RETDEPRT
+                   !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
+                   !No need to have in restart since live calculated.
+                   !read(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 endif
           end if  
 
@@ -5652,7 +5657,9 @@ end subroutine mpp_output_chrt
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT,"SFCHEADSUBRT")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT,"qstrmvolrt")
-            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT,"RETDEPRT")
+            !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
+            !No need to have in restart since live calculated.
+            !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT,"RETDEPRT")
             call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
 
 
