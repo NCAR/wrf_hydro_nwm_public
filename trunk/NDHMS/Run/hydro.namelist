@@ -49,7 +49,7 @@
 !Routing output netcdf file control...(=0 no files written, =1 files are written)
  CHRTOUT_DOMAIN = 1           ! Netcdf and ASCII point timeseries output at all channel points and at user-define points (frxst_pts)
  CHRTOUT_GRID = 1             ! Netcdf grid of channel streamflow values
- LSMOUT_DOMAN = 0             ! Netcdf grid of variables passed between LSM and routing components
+ LSMOUT_DOMAIN = 0             ! Netcdf grid of variables passed between LSM and routing components
  RTOUT_DOMAIN = 1             ! Netcdf grid of terrain routing variables on routing grid
  output_gw = 0                ! Netcdf grid of groundwater-baseflow bucket information
  outlake  = 0                 ! Netcdf point timeseries output of lake information
