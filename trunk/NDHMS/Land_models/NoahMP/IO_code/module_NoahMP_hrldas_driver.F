@@ -2340,7 +2340,6 @@ subroutine lsm_rst_bi_in()
 end subroutine lsm_rst_bi_in
 
 
-#ifdef WRF_HYDRO
    subroutine define_rst_variables(ncid)
       implicit none
       integer ncid
@@ -2425,7 +2424,6 @@ end subroutine lsm_rst_bi_in
                              "Problem nf90_close")
 
    end subroutine define_rst_variables
-#endif
 
 end module module_NoahMP_hrldas_driver
 

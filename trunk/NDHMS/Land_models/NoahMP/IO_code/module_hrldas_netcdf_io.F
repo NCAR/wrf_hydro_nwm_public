@@ -63,11 +63,9 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
 
-#ifdef WRF_HYDRO
   interface define_rst_var
      module procedure define_3d_real,define_2d_real,define_2d_int
   end interface
-#endif
 
   interface prepare_output_file
 #ifdef MPP_LAND
@@ -318,8 +316,10 @@ contains
                 write(*, '(" ***** ")')
                 write(*, *)
 #ifdef MPP_LAND
+#ifdef WRF_HYDRO
                 call hydro_stop( "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
                      " - Cannot find a restart file.")
+#endif
 #else
                 stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
                      " - Cannot find a restart file."
@@ -345,8 +345,10 @@ contains
            write(*, '(" ***** ")')
            write(*, *)
 #ifdef MPP_LAND
+#ifdef WRF_HYDRO
            call hydro_stop( "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
                " - Cannot find restart file.")
+#endif
 #else
            stop "FATAL ERROR: In module_hrldas_netcdf_io.F find_restart_file()"// &
                " - Cannot find restart file."
@@ -3538,7 +3540,6 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
-#ifdef WRF_HYDRO
 
    subroutine define_2d_real(ncid, array,name,description, units)
        implicit none
@@ -3632,6 +3633,5 @@ contains
         call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, trim(description), trim(units))
    end subroutine define_3d_real
 
-#endif
 
  end module module_hrldas_netcdf_io
