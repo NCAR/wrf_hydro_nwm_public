@@ -293,9 +293,7 @@ module module_HYDRO_drv
 
 !ADCHANGE: Change values for within lake reaches to NA
              str_out = RT_DOMAIN(did)%QLINK
-#ifdef HYDRO_REALTIME
              vel_out = RT_DOMAIN(did)%velocity
-#endif
 
 #ifdef HYDRO_REALTIME
              if (RT_DOMAIN(did)%NLAKES .gt. 0)  then
@@ -329,11 +327,9 @@ module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
                    , RT_DOMAIN(did)%nudge                                     &
 #endif
-#ifndef HYDRO_REALTIME
                    , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
                    RT_DOMAIN(did)%accStrmvolrt,                               &
                    RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
-#endif
                    )
               else
                 if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
@@ -354,10 +350,13 @@ module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
                      , RT_DOMAIN(did)%nudge                                     &
 #endif
-#ifdef HYDRO_REALTIME
 		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &          
                      , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
-#endif
+                     , RT_DOMAIN(did)%accLndRunOff,                             &
+                     RT_DOMAIN(did)%accQLateral,                                &
+                     RT_DOMAIN(did)%accStrmvolrt,                               &
+                     RT_DOMAIN(did)%accBucket,                                  &
+                     nlst_rt(did)%UDMP_OPT            &
 		     )
                  endif
 
@@ -714,9 +713,10 @@ module module_HYDRO_drv
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
         endif
 
-#ifndef HYDRO_REALTIME
-        call output_GW_Diag(did)
-#endif
+        if(nlst_rt(did)%GWBASESWCRT .gt. 0 .and. nlst_rt(did)%output_gw .eq. 2) then
+           ! ouput of bucket information for NCAR GW option.
+            call output_GW_Diag(did)
+        endif
 
 #ifdef HYDRO_D 
 #ifndef NCEP_WCOSS
@@ -846,12 +846,8 @@ module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
        , RT_DOMAIN(did)%nudge &
 #endif
-#ifndef HYDRO_REALTIME
        , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
-#endif
-#ifdef HYDRO_REALTIME
        , rt_domain(did)%QLateral, rt_domain(did)%velocity &
-#endif
        , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT)
 else
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
