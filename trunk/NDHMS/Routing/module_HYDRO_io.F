@@ -6378,6 +6378,10 @@ end subroutine mpp_output_chrt
             rt_domain(did)%INFXSRT=0.
             rt_domain(did)%LAKE_INFLORT=0.
             rt_domain(did)%QSTRMVOLRT=0.
+            rt_domain(did)%accLndRunOff = 0.
+            rt_domain(did)%accQLateral = 0.
+            rt_domain(did)%accStrmvolrt = 0.
+            rt_domain(did)%accBucket = 0.
           end if
 
       
