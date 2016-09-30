@@ -1210,17 +1210,6 @@ module module_NoahMP_hrldas_driver
      call lsm_rst_bi_in()
   endif
 
-#ifdef WRF_HYDRO
-#ifdef HYDRO_REALTIME
-     call get_iocflag(1, iocflag)
-     if (iocflag .gt. -1) then
-        SFCRUNOFF = 0.0
-        UDRUNOFF = 0.0
-        ACSNOM = 0.0
-     endif
-#endif
-#endif
-
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
 
@@ -1449,9 +1438,19 @@ end subroutine land_driver_ini
 #endif
 
 #ifdef WRF_HYDRO
+!      if(forc_typ .eq. 8) then
+!          call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
+!          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+!          return
+!      endif
+#endif
+
+#ifdef WRF_HYDRO
       if(forc_typ .eq. 8) then
           call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
           call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call geth_newdate(newdate, olddate, nint(dtbl))
+          olddate = newdate
           return
       endif
 #endif
@@ -2341,7 +2340,6 @@ subroutine lsm_rst_bi_in()
 end subroutine lsm_rst_bi_in
 
 
-#ifdef WRF_HYDRO
    subroutine define_rst_variables(ncid)
       implicit none
       integer ncid
@@ -2426,7 +2424,6 @@ end subroutine lsm_rst_bi_in
                              "Problem nf90_close")
 
    end subroutine define_rst_variables
-#endif
 
 end module module_NoahMP_hrldas_driver
 

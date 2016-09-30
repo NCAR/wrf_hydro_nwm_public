@@ -774,8 +774,20 @@ CONTAINS
    ENDIF ! glacial split ends 
 
 #ifdef WRF_HYDRO
+
+!---LPR Attention: lpr added this part 2013-09-04 below to avoid restart NaN values----
+!----------------- which may cause the RAPID crash--------------------------
+!yw    if(isnan(RUNSF)) then 
+     if((RUNSF+1.0) .eq. RUNSF) then
+         RUNSF   = 0
+         RUNSB   = 0
+     endif
+
+!----lpr add end------------------------------------------------------------------------
+
 !AD_CHANGE: Glacier cells can produce small negative subsurface runoff for mass balance.
 !           This will crash channel routing, so only pass along positive runoff.
+
      if((RUNSF+1.0) .eq. RUNSF) then
          RUNSF   = 0
          RUNSB   = 0
@@ -783,8 +795,10 @@ CONTAINS
         print*, "Warning: NAN found from RUNSF and set to 0."
 #endif
      endif
+
             soldrain(i,j) = max(RUNSB*dt, 0.)        !mm , underground runoff
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
+
 #endif
 
 
