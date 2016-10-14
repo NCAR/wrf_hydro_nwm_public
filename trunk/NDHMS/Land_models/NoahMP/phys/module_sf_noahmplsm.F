@@ -1660,7 +1660,7 @@ contains
 
   REAL, PARAMETER                   :: MPE    = 1.E-6
   REAL, PARAMETER                   :: PSIWLT = -150.  !metric potential for wilting point (m)
-  REAL, PARAMETER                   :: Z0     = 0.01   ! Bare-soil roughness length (m) (i.e., under the canopy)
+  REAL, PARAMETER                   :: Z0     = 0.002   ! Bare-soil roughness length (m) (i.e., under the canopy)
 
 ! ---------------------------------------------------------------------------------------------------
 ! initialize fluxes from veg. fraction
