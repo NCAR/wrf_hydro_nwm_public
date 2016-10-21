@@ -765,7 +765,8 @@ contains
 
   subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
                           nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &
-		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d,slope_2d)
+		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d,slope_2d,&
+			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d)
     implicit none
     character(len=*),          intent(in)  :: spatial_filename
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -782,7 +783,12 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: refdk_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: refkdt_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: slope_2d
-    
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: cwpvt_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: vcmx25_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mp_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: hvt_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mfsno_2d    
+
     character(len=24)  :: name
     character(len=256) :: units
     integer :: ierr,iret, varid,isoil
@@ -950,11 +956,60 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, slope_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!    
+    name = "cwpvt"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, cwpvt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!    
+    name = "vcmx25"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, vcmx25_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!    
+    name = "mp"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, mp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!    
+    name = "hvt"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, hvt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!    
+    name = "mfsno"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, mfsno_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
     
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
     if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_3d_soil() -  NF90_CLOSE"
-
 
   end subroutine read_3d_soil
 

@@ -61,6 +61,7 @@ CONTAINS
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
+		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,                    &
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
@@ -152,6 +153,11 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  REFDK_2D  ! Reference Soil Conductivity
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  REFKDT_2D ! Soil Infiltration Parameter
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SLOPE_2D  ! Soil Drainage Parameter
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  CWPVT_2D  ! Canopy wind parameter
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  VCMX25_2D ! VCmax at 25C
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  MP_2D     ! Slope of Ball-Berry rs-P relationship
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  HVT_2D    ! Canopy Height
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  MFSNO_2D  ! Snow cover m parameter
 #endif
 
 ! INOUT (with generic LSM equivalent)
@@ -631,6 +637,11 @@ CONTAINS
        parameters%refdk  = REFDK_2D (I,J)         ! Reference Soil Conductivity
        parameters%refkdt = REFKDT_2D(I,J)         ! Soil Infiltration Parameter
        parameters%slope  = SLOPE_2D (I,J)         ! Soil Drainage Parameter
+       parameters%cwpvt  = CWPVT_2D(I,J)          ! Canopy wind parameter
+       parameters%vcmx25 = VCMX25_2D(I,J)         ! VCmax at 25C
+       parameters%mp     = MP_2D(I,J)             ! Slope of Ball-Berry rs-P relationship
+       parameters%hvt    = HVT_2D(I,J)            ! Canopy Height
+       parameters%mfsno  = MFSNO_2D(I,J)          ! Snow cover m parameter
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters)
 ! Initialized local
@@ -976,11 +987,11 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   parameters%CH2OP  =  CH2OP_TABLE(VEGTYPE)       !maximum intercepted h2o per unit lai+sai (mm)
   parameters%DLEAF  =  DLEAF_TABLE(VEGTYPE)       !characteristic leaf dimension (m)
   parameters%Z0MVT  =  Z0MVT_TABLE(VEGTYPE)       !momentum roughness length (m)
-  parameters%HVT    =    HVT_TABLE(VEGTYPE)       !top of canopy (m)
+!  parameters%HVT    =    HVT_TABLE(VEGTYPE)       !top of canopy (m)
   parameters%HVB    =    HVB_TABLE(VEGTYPE)       !bottom of canopy (m)
   parameters%DEN    =    DEN_TABLE(VEGTYPE)       !tree density (no. of trunks per m2)
   parameters%RC     =     RC_TABLE(VEGTYPE)       !tree crown radius (m)
-  parameters%MFSNO  =  MFSNO_TABLE(VEGTYPE)       !snowmelt m parameter ()
+!  parameters%MFSNO  =  MFSNO_TABLE(VEGTYPE)       !snowmelt m parameter ()
   parameters%SAIM   =   SAIM_TABLE(VEGTYPE,:)     !monthly stem area index, one-sided
   parameters%LAIM   =   LAIM_TABLE(VEGTYPE,:)     !monthly leaf area index, one-sided
   parameters%SLA    =    SLA_TABLE(VEGTYPE)       !single-side leaf area per Kg [m2/kg]
@@ -994,10 +1005,10 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   parameters%AKC    =    AKC_TABLE(VEGTYPE)       !q10 for kc25
   parameters%KO25   =   KO25_TABLE(VEGTYPE)       !o2 michaelis-menten constant at 25c (pa)
   parameters%AKO    =    AKO_TABLE(VEGTYPE)       !q10 for ko25
-  parameters%VCMX25 = VCMX25_TABLE(VEGTYPE)       !maximum rate of carboxylation at 25c (umol co2/m**2/s)
+!  parameters%VCMX25 = VCMX25_TABLE(VEGTYPE)       !maximum rate of carboxylation at 25c (umol co2/m**2/s)
   parameters%AVCMX  =  AVCMX_TABLE(VEGTYPE)       !q10 for vcmx25
   parameters%BP     =     BP_TABLE(VEGTYPE)       !minimum leaf conductance (umol/m**2/s)
-  parameters%MP     =     MP_TABLE(VEGTYPE)       !slope of conductance-to-photosynthesis relationship
+!  parameters%MP     =     MP_TABLE(VEGTYPE)       !slope of conductance-to-photosynthesis relationship
   parameters%QE25   =   QE25_TABLE(VEGTYPE)       !quantum efficiency at 25c (umol co2 / umol photon)
   parameters%AQE    =    AQE_TABLE(VEGTYPE)       !q10 for qe25
   parameters%RMF25  =  RMF25_TABLE(VEGTYPE)       !leaf maintenance respiration at 25c (umol co2/m**2/s)
@@ -1014,7 +1025,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   parameters%TAUS   =   TAUS_TABLE(VEGTYPE,:)     !stem transmittance: 1=vis, 2=nir
 
   parameters%MRP    =    MRP_TABLE(VEGTYPE)       !microbial respiration parameter (umol co2 /kg c/ s)
-  parameters%CWPVT  =  CWPVT_TABLE(VEGTYPE)       !empirical canopy wind parameter
+!  parameters%CWPVT  =  CWPVT_TABLE(VEGTYPE)       !empirical canopy wind parameter
 
   parameters%WRRAT  =  WRRAT_TABLE(VEGTYPE)       !wood to non-wood ratio
   parameters%WDPOOL = WDPOOL_TABLE(VEGTYPE)       !wood pool (switch 1 or 0) depending on woody or not [-]
@@ -1071,6 +1082,11 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
     parameters%REFDK  = REFDK_TABLE
     parameters%REFKDT = REFKDT_TABLE
     parameters%SLOPE  = SLOPE_TABLE(SLOPETYPE)
+    parameters%CWPVT  =  CWPVT_TABLE(VEGTYPE)       !empirical canopy wind parameter
+    parameters%VCMX25 = VCMX25_TABLE(VEGTYPE)       !maximum rate of carboxylation at 25c (umol co2/m**2/s)
+    parameters%MFSNO  =  MFSNO_TABLE(VEGTYPE)       !snowmelt m parameter ()
+    parameters%HVT    =    HVT_TABLE(VEGTYPE)       !top of canopy (m)
+    parameters%MP     =     MP_TABLE(VEGTYPE)       !slope of conductance-to-photosynthesis relationship
 #endif
 
 ! ----------------------------------------------------------------------
