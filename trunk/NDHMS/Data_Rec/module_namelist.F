@@ -58,7 +58,7 @@ CONTAINS
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
        integer :: SOLVEG_INITSWC
-       real out_dt, rst_dt
+       real*8 :: out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
@@ -156,8 +156,8 @@ CONTAINS
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
   call mpp_land_bcast_int1(iocflag)
-  call mpp_land_bcast_real1(out_dt)
-  call mpp_land_bcast_real1(rst_dt)
+  call mpp_land_bcast_real1_double(out_dt)
+  call mpp_land_bcast_real1_double(rst_dt)
   call mpp_land_bcast_int1(DEEPGWSPIN)
   call mpp_land_bcast_int1(SOLVEG_INITSWC)
 #endif

@@ -2,7 +2,8 @@
       
        integer :: nsoil, SOLVEG_INITSWC
        real,allocatable,dimension(:) :: ZSOIL8
-       real out_dt, rst_dt, dt
+       real*8 :: out_dt, rst_dt
+       real   :: dt
        integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
        character(len=256)  :: restart_file = ""
        integer            :: split_output_count

@@ -22,4 +22,4 @@ setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
 setenv HYDRO_REALTIME 1
 
 ### use streamflow nudging?
-setenv WRF_HYDRO_NUDGING 1
+setenv WRF_HYDRO_NUDGING 0
