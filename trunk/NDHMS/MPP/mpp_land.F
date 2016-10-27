@@ -58,6 +58,7 @@ MODULE MODULE_MPP_LAND
      module procedure mpp_land_bcast_real_1d
      module procedure mpp_land_bcast_real8_1d
      module procedure mpp_land_bcast_real1
+     module procedure mpp_land_bcast_real1_double
      module procedure mpp_land_bcast_char1d 
      module procedure mpp_land_bcast_char1
      module procedure mpp_land_bcast_int1 
@@ -1002,6 +1003,15 @@ MODULE MODULE_MPP_LAND
       call mpp_land_sync()
     return 
   end subroutine mpp_land_bcast_real1
+
+  subroutine mpp_land_bcast_real1_double(inout)
+      real*8 inout
+      integer ierr
+      call mpi_bcast(inout,1,MPI_REAL8, &
+                     IO_id,MPI_COMM_WORLD,ierr)
+      call mpp_land_sync()
+      return
+  end subroutine mpp_land_bcast_real1_double
 
   subroutine mpp_land_bcast_real_1d(inout)
       integer len
