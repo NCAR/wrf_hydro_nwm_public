@@ -1210,17 +1210,6 @@ module module_NoahMP_hrldas_driver
      call lsm_rst_bi_in()
   endif
 
-#ifdef WRF_HYDRO
-#ifdef HYDRO_REALTIME
-     call get_iocflag(1, iocflag)
-     if (iocflag .gt. -1) then
-        SFCRUNOFF = 0.0
-        UDRUNOFF = 0.0
-        ACSNOM = 0.0
-     endif
-#endif
-#endif
-
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
 
@@ -1380,33 +1369,20 @@ module module_NoahMP_hrldas_driver
    call get_iocflag(1, iocflag)
 
    !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
-   ! Analysis/Assimilation
-   if (iocflag .eq. 1) then
-        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET,ACCPRCP,SOIL_M,SOILSAT'
+   if (iocflag .eq. 1) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
-   ! Short-Range Forecast
-   if (iocflag .eq. 2) then
-        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET,ACCPRCP,SOIL_M,SOILSAT'
+   if (iocflag .eq. 2) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
-   ! Medium-Range Forecast
    if (iocflag .eq. 3) then
-        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET,CANWAT'
+        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET,CANWAT' 
    endif
-   ! Long-Range Forecast (no terrain routing)
-   if (iocflag .eq. 4) then
+   if (iocflag .eq. 4) then 
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
    endif
-   ! Diagnostics (all of the above)
    if (iocflag .eq. 0) then
-        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
-   endif
-   ! Long-Term Retrospective
-   if (iocflag .eq. 5) then
-        VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
-   endif
-   ! Warm-Season Flood Forecast
-   if (iocflag .eq. 6) then
-        VARLIST = 'ACCPRCP,ACCET,SOILSAT,SOILSAT_TOP'
+	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
    endif
 
    !!--- Parse into character array. Constructor not valid with uneven 
