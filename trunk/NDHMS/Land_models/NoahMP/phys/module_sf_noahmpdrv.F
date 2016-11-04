@@ -80,7 +80,7 @@ CONTAINS
 !----------------------------------------------------------------
     USE MODULE_SF_NOAHMPLSM
     USE module_sf_noahmp_glacier
-    USE NOAHMP_TABLES, ONLY: ISICE_TABLE, CO2_TABLE, O2_TABLE
+    USE NOAHMP_TABLES, ONLY: ISICE_TABLE, CO2_TABLE, O2_TABLE, HVB_TABLE, HVT_TABLE
 !----------------------------------------------------------------
     IMPLICIT NONE
 !----------------------------------------------------------------
@@ -644,6 +644,13 @@ CONTAINS
        parameters%mfsno  = MFSNO_2D(I,J)          ! Snow cover m parameter
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters)
+       
+       if (HVT_TABLE(VEGTYP) > 0.0) then
+         parameters%hvb = parameters%hvt * HVB_TABLE(VEGTYP) / HVT_TABLE(VEGTYP)
+       else
+         parameters%hvb = 0.0
+       endif
+       
 ! Initialized local
 
        FICEOLD = 0.0
