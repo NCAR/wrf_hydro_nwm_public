@@ -2400,7 +2400,7 @@
              RT_DOMAIN(did)%SMCRT, &
              RT_DOMAIN(did)%OVROUGHRT, RT_DOMAIN(did)%LAKE_MSKRT, &
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH,RT_DOMAIN(did)%SLDPTH, &
-	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp)
+	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT)
 
       end subroutine disaggregateDomain_drv
 
@@ -2409,7 +2409,7 @@
                SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
                LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
                SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT,OV_ROUGH,  &
-               SLDPTH, soiltypRT, soiltyp                               &
+               SLDPTH, soiltypRT, soiltyp, elrt                               &
             )
 #ifdef MPP_LAND
         use module_mpp_land, only: left_id,down_id,right_id, &
@@ -2427,7 +2427,7 @@
 
         real,INTENT(IN),DIMENSION(IXRT,JXRT,9)::dist
         real,INTENT(IN),DIMENSION(IXRT,JXRT)::INFXSWGT,OVROUGHRTFAC, &
-               LKSATFAC
+               LKSATFAC, elrt
         integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)     ::CH_NETRT, soiltypRT
         real,INTENT(IN),DIMENSION(IXRT,JXRT,NSOIL)::SH2OWGT
         real,INTENT(OUT),DIMENSION(IXRT,JXRT,NSOIL)::SMCREFRT, SMCMAXRT, &
@@ -2444,6 +2444,8 @@
 
         integer :: i, j, AGGFACYRT, AGGFACXRT, IXXRT, JYYRT,KRT, KF
         REAL  ::  LSMVOL,SMCEXCS, WATHOLDCAP
+
+        REAL, DIMENSION(IXRT,JXRT) :: OCEAN_INFXSUBRT
 
 #ifdef HYDRO_D
 ! ADCHANGE: Water balance variables
@@ -2495,6 +2497,10 @@
 #endif
 ! END Initial water balance variables
 #endif
+
+! ADCHANGE: Initialize ocean infxsubrt var to 0. Currently just a dump
+! variable but could be used for future ocean model coupling
+     OCEAN_INFXSUBRT = 0.0 
 
 !DJG Weighting alg. alteration...(prescribe wghts if time = 1)
 
@@ -2660,6 +2666,13 @@
 
           end do
         end do
+
+! ADCHANGE: Add new zeroing out of -9999 elevation cells which are ocean
+     where (ELRT .lt. -9998)
+        OCEAN_INFXSUBRT = INFXSUBRT 
+        INFXSUBRT = 0.0
+     endwhere
+! END ADCHANGE
 
 #ifdef HYDRO_D
 ! ADCHANGE: START Final water balance variables
