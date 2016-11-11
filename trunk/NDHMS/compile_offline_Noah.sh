@@ -1,6 +1,6 @@
-#!/bin/csh -f
+#!/bin/sh -f
 
-source setEnvar.csh
+./setEnvar.csh
 
 rm -f LandModel LandModel_cpl
 cp arc/Makefile.Noah Makefile
