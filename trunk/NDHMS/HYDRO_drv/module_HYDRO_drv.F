@@ -88,13 +88,18 @@ module module_HYDRO_drv
 ! restart every month automatically.
      if ( (nlst_rt(did)%olddate(9:10) == "01") .and. (nlst_rt(did)%olddate(12:13) == "00") .and. &
           (nlst_rt(did)%olddate(15:16) == "00").and. (nlst_rt(did)%olddate(18:19) == "00") .and. &
-          (nlst_rt(did)%rst_dt .le. 0)  ) rst_out = 99
+          (nlst_rt(did)%rst_dt .le. 0)  ) then 
+           if(nlst_rt(did)%startdate(1:16) .ne. nlst_rt(did)%olddate(1:16) ) then
+               rst_out = 99
+           endif
+     endif
 
 #ifdef MPP_LAND
    endif
      call mpp_land_bcast_int1(rst_out)
 #endif
     if(rst_out .gt. 0) then 
+      write(6,*) "yw check output restart at ",nlst_rt(did)%olddate(1:16)
 #ifdef MPP_LAND
       if(nlst_rt(did)%rst_bi_out .eq. 1) then
              if(my_id .lt. 10) then
