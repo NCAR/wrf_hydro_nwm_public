@@ -631,7 +631,7 @@ end subroutine get_albedo12m_netcdf
 
 
         CHARACTER(len=*)         :: route_chan_f, route_link_f,route_direction_f
-        CHARACTER(len=256)       :: geo_finegrid_flnm
+        CHARACTER(len=*)       :: geo_finegrid_flnm
         CHARACTER(len=256)       :: var_name
 
         ! variables for handling netcdf dimensions
@@ -1129,7 +1129,7 @@ end subroutine get_albedo12m_netcdf
     integer, intent(out), dimension(IX,JX)  :: GWSUBBASMSK
     integer, intent(out), dimension(IXRT,JXRT)  :: gw_strm_msk
     integer, intent(in), dimension(IXRT,JXRT)  :: ch_netrt
-    character(len=256)                      :: gwbasmskfil
+    character(len=*)                      :: gwbasmskfil
     !integer,dimension(global_nX,global_ny) ::  g_GWSUBBASMSK
     !yw integer,dimension(global_rt_nx, global_rt_ny) ::  g_gw_strm_msk,g_ch_netrt
 
@@ -1181,7 +1181,7 @@ end subroutine get_albedo12m_netcdf
     integer, intent(out)                    :: numbasns
     integer, intent(out), dimension(IX,JX)  :: GWSUBBASMSK
     integer, intent(out), dimension(IXRT,JXRT)  :: gw_strm_msk
-    character(len=256)                      :: gwbasmskfil
+    character(len=*)                      :: gwbasmskfil
     integer                                 :: i,j,aggfacxrt,aggfacyrt,ixxrt,jyyrt
 
     numbasns = 0
@@ -4574,8 +4574,8 @@ end subroutine mpp_output_chrt
         INTEGER, INTENT(IN)                          :: UDMP_OPT
         integer:: i,j
 
-        CHARACTER(len=256)       :: route_chan_f, route_link_f,route_direction_f
-        CHARACTER(len=256)       :: geo_finegrid_flnm
+        CHARACTER(len=*)       :: route_chan_f, route_link_f,route_direction_f
+        CHARACTER(len=*)       :: geo_finegrid_flnm
 !       CHARACTER(len=*)       :: geo_finegrid_flnm
 
 !       integer, allocatable, dimension(:) :: tmp_int
@@ -4650,9 +4650,9 @@ end subroutine mpp_output_chrt
 
         integer         :: I,J, iret, jj, channel_option, UDMP_OPT
         CHARACTER(len=256)        :: var_name
-        CHARACTER(len=256)       :: route_topo_f
-        CHARACTER(len=256)       :: route_chan_f
-        CHARACTER(len=256)       :: geo_finegrid_flnm
+        CHARACTER(len=*  )       :: route_topo_f
+        CHARACTER(len=*  )       :: route_chan_f
+        CHARACTER(len=*  )       :: geo_finegrid_flnm
 
         var_name = "TOPOGRAPHY"
 
@@ -6181,11 +6181,11 @@ end subroutine mpp_output_chrt
         character(len=15), intent(inout), dimension(nlinks) :: gages  !! need to respect the default values
         character(len=15), intent(in)                :: gageMiss
 
-        CHARACTER(len=256)                           :: route_link_f
-        CHARACTER(len=256)                           :: route_lake_f
-        CHARACTER(len=256)                           :: route_direction_f
-        CHARACTER(len=256)                           :: route_order_f
-        CHARACTER(len=256)                           :: geo_finegrid_flnm
+        CHARACTER(len=*  )                           :: route_link_f
+        CHARACTER(len=*  )                           :: route_lake_f
+        CHARACTER(len=*  )                           :: route_direction_f
+        CHARACTER(len=*  )                           :: route_order_f
+        CHARACTER(len=*  )                           :: geo_finegrid_flnm
         CHARACTER(len=256)                           :: var_name
 
         INTEGER                                      :: tmp, cnt, ncid, iret, jj,ct
@@ -7235,11 +7235,11 @@ end subroutine mpp_output_chrt
         character(len=15), intent(inout), dimension(nlinks) :: gages
         character(len=15), intent(in)                :: gageMiss
 
-        CHARACTER(len=256)                           :: route_link_f
-        CHARACTER(len=256)                           :: route_lake_f
-        CHARACTER(len=256)                           :: route_direction_f
-        CHARACTER(len=256)                           :: route_order_f
-        CHARACTER(len=256)                           :: geo_finegrid_flnm
+        CHARACTER(len=*  )                           :: route_link_f
+        CHARACTER(len=*  )                           :: route_lake_f
+        CHARACTER(len=*  )                           :: route_direction_f
+        CHARACTER(len=*  )                           :: route_order_f
+        CHARACTER(len=*  )                           :: geo_finegrid_flnm
         CHARACTER(len=256)                           :: var_name
 
         INTEGER                                      :: tmp, cnt, ncid
@@ -8437,7 +8437,7 @@ end subroutine output_chrt2
 
     subroutine read_NSIMLAKES(NLAKES,route_lake_f)
         integer                     :: NLAKES
-        CHARACTER(len=256)          :: route_lake_f
+        CHARACTER(len=*  )          :: route_lake_f
 
         character(len=256)          :: route_lake_f_r
         integer                     :: lenRouteLakeFR, iRet, ncid, dimId
@@ -8569,8 +8569,9 @@ end subroutine output_chrt2
         integer, dimension(:),   intent(in) :: LINKID, LAKEIDA
         integer, dimension(:),   intent(inout) :: LAKEIDM
         integer, intent(in) :: NLAKES, NLINKSL ,GNLINKSL
-        integer, dimension(NLINKSL) :: OUTLAKEID
-        integer :: i,size ,j,k, kk, num, maxNum, m, mm
+!yw        integer, dimension(NLINKSL) :: OUTLAKEID
+        integer, allocatable, dimension(:) :: OUTLAKEID
+        integer :: i,size2 ,j,k, kk, num, maxNum, m, mm, tmpSize
         integer, allocatable, dimension(:) :: gLINKID, tmpTYPEL, tmpLINKID, ind,  &
                     tmplakeida, tmpoutlakeid, tmpTO_NODE, gLAKEIDA, gLAKEIDX
         integer, allocatable, dimension(:,:) :: gtonodeout
@@ -8578,6 +8579,9 @@ end subroutine output_chrt2
         integer,allocatable, dimension(:) ::  gto, tmpLAKELINKID, gTYPEL, gOUTLAKEID
 
       integer tmpBuf(GNLINKSL)
+
+      tmpSize = size(TO_NODE,1)
+      allocate(OUTLAKEID(tmpSize))
 
       allocate (gto(GNLINKSL))
 
@@ -8639,19 +8643,19 @@ end subroutine output_chrt2
              endif
           end do
       end do
-      size = kk
+      size2 = kk
       deallocate (gto)
     
       allocate(gLINKID(gnlinksl))
       call gBcastValue(LINKID,gLINKID)   
-      do i = 1, size
+      do i = 1, size2
             k = ind(i)
             tmpLINKID(i) = gLINKID(k)
       enddo
 
       allocate(gLAKEIDA(gnlinksl))
       call gBcastValue(LAKEIDA(1:NLINKSL),gLAKEIDA(1:gnlinksl) )   
-      do i = 1, size
+      do i = 1, size2
             k = ind(i)
             tmpLAKEIDA(i) = gLAKEIDA(k)
       enddo
@@ -8716,8 +8720,8 @@ end subroutine output_chrt2
 !         call flush(70+my_id)
 !     end do
        
-       call TONODE2RSL(ind,tmpTYPEL,size,gNLINKSL,NLINKSL,TYPEL(1:NLINKSL), -999 )
-       call TONODE2RSL(ind,tmpOUTLAKEID,size,gNLINKSL,NLINKSL,OUTLAKEID(1:NLINKSL), -999 )
+       call TONODE2RSL(ind,tmpTYPEL,size2,gNLINKSL,NLINKSL,TYPEL(1:NLINKSL), -999 )
+       call TONODE2RSL(ind,tmpOUTLAKEID,size2,gNLINKSL,NLINKSL,OUTLAKEID(1:NLINKSL), -999 )
 
 
  ! assign the the inflow nodes to the lank with a new TO_NODE id, which is the outflow link
@@ -8753,7 +8757,7 @@ end subroutine output_chrt2
       deallocate(gTYPEL)
       deallocate(gOUTLAKEID)
 
-      deallocate(tmpTYPEL,tmpLINKID, tmpTO_NODE, tmpLAKEIDA, tmpOUTLAKEID)
+      deallocate(tmpTYPEL,tmpLINKID, tmpTO_NODE, tmpLAKEIDA, tmpOUTLAKEID,OUTLAKEID)
 
 
 !     do k = 1, NLINKSL

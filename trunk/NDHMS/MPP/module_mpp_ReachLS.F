@@ -538,7 +538,8 @@ MODULE MODULE_mpp_ReachLS
      else
         if(aLinksl(my_id+1) .gt. 0) then
            ! The mpi_recv treats each caracter as an array element.
-           call mpi_recv(outV(1 : (strLen*(linkls_e(my_id+1)-linkls_s(my_id+1)+1)) ), &  !jlm should have +1
+           !yw call mpi_recv(outV(1 : (strLen*(linkls_e(my_id+1)-linkls_s(my_id+1)+1)) ), &  !jlm should have +1
+           call mpi_recv(outV(1 : (linkls_e(my_id+1)-linkls_s(my_id+1)+1) ), &  !jlm should have +1
                 strLen*alinksl(my_id+1),                                              &
                 MPI_CHARACTER, io_id, tag, MPI_COMM_WORLD, mpp_status,ierr            )
         endif
@@ -841,7 +842,7 @@ MODULE MODULE_mpp_ReachLS
                 endif
             else
                 if(ssize .gt. 0 ) then  
-                   call mpi_send(inV(start:start+ssize), ssize,       &
+                   call mpi_send(inV(start:start+ssize-1), ssize,       &
                       MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,ierr)
                 endif
             endif
@@ -893,7 +894,7 @@ MODULE MODULE_mpp_ReachLS
                 endif
             else
                 if(rsize .gt. 0 ) then  
-                  call mpi_recv(outV(start:start+rsize), rsize,          &
+                  call mpi_recv(outV(start:start+rsize-1), rsize,          &
                         MPI_INTEGER, i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
                 endif
             endif
