@@ -5,6 +5,8 @@ EXECnwm=`pwd`/../../exec
 MODULEFILESnwm=`pwd`/../../modulefiles
 export MODULEPATH=$MODULEPATH:$MODULEFILESnwm
 
+if [ ! -e $EXECnwm ]; then mkdir $EXECnwm; fi
+
 . $MODULESHOME/etc/modules.sh
 module purge
 module load nwm/v1.1 
