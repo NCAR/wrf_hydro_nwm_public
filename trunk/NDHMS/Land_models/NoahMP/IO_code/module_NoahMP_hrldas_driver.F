@@ -1224,6 +1224,17 @@ module module_NoahMP_hrldas_driver
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
 
+#ifdef HYDRO_REALTIME
+     ACCPRCP = 0.0
+     ACCECAN = 0.0
+     ACCEDIR = 0.0
+     ACCETRAN = 0.0
+     SFCRUNOFF = 0.0
+     UDRUNOFF = 0.0
+     ACSNOM = 0.0
+     ACSNOW = 0.0
+#endif
+
 ! Must still call NOAHMP_INIT even in restart to set up parameter arrays (also done in WRF)
 
      CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
