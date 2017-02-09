@@ -3560,7 +3560,7 @@ contains
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                              "Problem nf90_inq_dimid for 'Time'")
 
-       call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, name, trim(description), trim(units))
+       call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, name, "", "")
    end subroutine define_2d_real
 
    subroutine define_2d_int(ncid, array,name,description, units)
@@ -3583,7 +3583,7 @@ contains
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                              "Problem nf90_inq_dimid for 'Time'")
 
-       call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_INT, name, trim(description), trim(units))
+       call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_INT, name, "", "")
    end subroutine define_2d_int
   
    subroutine define_3d_real(ncid, array,name,units,description, layers)
@@ -3630,7 +3630,7 @@ contains
     else
        stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_restart_3d() - PANIC!"
     endif
-        call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, trim(description), trim(units))
+        call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, "", "" )
    end subroutine define_3d_real
 
 
