@@ -3,7 +3,7 @@
        integer :: nsoil, SOLVEG_INITSWC
        real,allocatable,dimension(:) :: ZSOIL8
        real*8 :: out_dt, rst_dt
-       real   :: dt
+       real   :: dt  !! dt is NOAH_TIMESTEP
        integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
        character(len=256)  :: restart_file = ""
        integer            :: split_output_count
@@ -23,7 +23,8 @@
        character(len=19) :: sincedate="123456"
 
        integer :: iocflag  ! used for NCEP REALTIME OUTPUT
-
+       integer :: channel_only, channelBucket_only
+       integer :: output_channelBucket_influx ! used for FORCE_TYPE 9 and 10
 
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
                   SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &

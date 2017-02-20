@@ -25,7 +25,7 @@ module module_HRLDAS_HYDRO
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
-                 mpp_land_bcast_int1
+                 mpp_land_bcast_int1, mpp_land_sync
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
@@ -108,7 +108,8 @@ CONTAINS
 
         IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+               .and. nlst_rt(did)%OVRTSWCRT .eq. 0  &
+               .and. nlst_rt(did)%channel_only .eq. 0 ) return
 
 
 

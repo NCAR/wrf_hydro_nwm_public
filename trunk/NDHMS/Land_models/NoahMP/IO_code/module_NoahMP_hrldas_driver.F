@@ -335,8 +335,8 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
   character(len=19)  :: olddate, newdate, startdate
-  character          :: hgrid
-  integer            :: igrid
+  character          :: hgrid, hgrid_hydro
+  integer            :: igrid, igrid_hydro
   logical            :: lexist
   integer            :: imode
   integer            :: ixfull
@@ -513,6 +513,12 @@ module module_NoahMP_hrldas_driver
 #endif
      call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
   endif
+
+  call updateNameList("channel_only",0)
+  if(forc_typ .eq. 9)  call updateNameList("channel_only",1)
+  call updateNameList("channelBucket_only",0)
+  if(forc_typ .eq. 10) call updateNameList("channelBucket_only",1)
+
 #endif
 
 #ifndef NCEP_WCOSS
@@ -1448,6 +1454,7 @@ end subroutine land_driver_ini
 
 !===============================================================================
   subroutine land_driver_exe(itime)
+  use module_hydro_io, only: read_channel_only
      implicit  none
      integer :: itime          ! timestep loop
 
@@ -1470,6 +1477,21 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
       if(forc_typ .eq. 8) then
           call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call geth_newdate(newdate, olddate, nint(dtbl))
+          olddate = newdate
+          return
+      endif
+      if(forc_typ .eq. 9 .or. forc_typ .eq. 10) then
+         !! JLM:: fix hgrid: This becomes 1 eventhough 3 is specified in hydro.namelist
+         !! JLM: This is initalized by read_hrldas_hdrinfo
+         !! JLM: Appears that we should differentiate the LSM and HYDRO igrids, define a local 
+         !! JLM: igrid for this purpose.
+         !! JLM: ?*?* hrldas_drv_HYDRO.F should be made a module *?*?
+         !! JLM:  Simple modification which forces type, rank and kind checking...
+          call getNameList('igrid', igrid_hydro)  !! get hydro namelist info :: case sensitive
+          write(hgrid_hydro,'(I1)') igrid_hydro
+          call read_channel_only(olddate, hgrid_hydro, indir, forcing_timestep)
           call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
           call geth_newdate(newdate, olddate, nint(dtbl))
           olddate = newdate
