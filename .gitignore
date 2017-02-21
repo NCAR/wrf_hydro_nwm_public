@@ -5,4 +5,5 @@
 trunk/NDHMS/lib/*
 trunk/NDHMS/macros
 trunk/NDHMS/HRLDAS/user_build_options
+*exe
 /.project
