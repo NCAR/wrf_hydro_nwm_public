@@ -23,7 +23,7 @@ module module_HYDRO_io
      use module_mpp_land
      use module_mpp_reachls,  only: ReachLS_decomp, reachls_wreal, ReachLS_write_io, &
                                     ReachLS_wInt, reachls_wreal2, TONODE2RSL, gbcastvalue
-     use MODULE_mpp_GWBUCKET, only: gw_write_io_real
+     use MODULE_mpp_GWBUCKET, only: gw_write_io_real, gw_write_io_int
 #endif
    use Module_Date_utilities_rt, only: geth_newdate
    use module_HYDRO_utils, only: get_dist_ll
@@ -8802,19 +8802,24 @@ end subroutine output_chrt2
 
    subroutine output_GW_Diag(did)
        implicit none
-       integer :: i , did
+       integer :: i , did, gnbasns
 
 #ifdef MPP_LAND
        real, allocatable, dimension(:) :: g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas
+       integer, allocatable, dimension(:) :: g_basnsInd
        if(my_id .eq. io_id) then
           if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                allocate(g_qin_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_qout_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_z_gwsubbas(rt_domain(did)%gnumbasns))
+               allocate(g_basnsInd(rt_domain(did)%gnumbasns))
+               gnbasns = rt_domain(did)%gnumbasns
           else
                allocate(g_qin_gwsubbas(rt_domain(did)%gnlinksl))
                allocate(g_qout_gwsubbas(rt_domain(did)%gnlinksl))
                allocate(g_z_gwsubbas(rt_domain(did)%gnlinksl))
+               allocate(g_basnsInd(rt_domain(did)%gnlinksl))
+               gnbasns = rt_domain(did)%gnlinksl 
           endif
        endif 
      
@@ -8822,6 +8827,7 @@ end subroutine output_chrt2
           call ReachLS_write_io(rt_domain(did)%qin_gwsubbas,g_qin_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%qout_gwsubbas,g_qout_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%z_gwsubbas,g_z_gwsubbas)
+          call ReachLS_write_io(rt_domain(did)%linkid,g_basnsInd)
        else
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qin_gwsubbas)
@@ -8829,44 +8835,192 @@ end subroutine output_chrt2
                  rt_domain(did)%basnsInd,g_qout_gwsubbas)
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,  & 
                  rt_domain(did)%basnsInd,g_z_gwsubbas)
+          call gw_write_io_int(rt_domain(did)%numbasns,rt_domain(did)%basnsInd,  &
+                 rt_domain(did)%basnsInd,g_basnsInd)
        endif
        if(my_id .eq. io_id) then
-          open (unit=51,file='GW_inflow.txt',form='formatted',&
-                status='unknown',position='append')
-          open (unit=52,file='GW_outflow.txt',form='formatted',&
-                status='unknown',position='append')
-          open (unit=53,file='GW_zlev.txt',form='formatted',&
-                status='unknown',position='append')
-          do i=1,RT_DOMAIN(did)%gnumbasns
-             write (51,951) i,nlst_rt(did)%olddate,g_qin_gwsubbas(i)
+!          open (unit=51,file='GW_inflow.txt',form='formatted',&
+!                status='unknown',position='append')
+!          open (unit=52,file='GW_outflow.txt',form='formatted',&
+!                status='unknown',position='append')
+!          open (unit=53,file='GW_zlev.txt',form='formatted',&
+!                status='unknown',position='append')
+!          do i=1,RT_DOMAIN(did)%gnumbasns
+!             write (51,951) i,nlst_rt(did)%olddate,g_qin_gwsubbas(i)
 951        FORMAT(I3,1X,A19,1X,F11.3)
-             write (52,951) i,nlst_rt(did)%olddate,g_qout_gwsubbas(i)
-             write (53,951) i,nlst_rt(did)%olddate,g_z_gwsubbas(i)
-          end do  
-          close(51)
-          close(52)
-          close(53)
-          deallocate(g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas)
+!            write (52,951) i,nlst_rt(did)%olddate,g_qout_gwsubbas(i)
+!            write (53,951) i,nlst_rt(did)%olddate,g_z_gwsubbas(i)
+!         end do  
+!         close(51)
+!         close(52)
+!         close(53)
+
+          call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, gnbasns, &
+                  trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                  g_basnsInd,g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas )
+          deallocate(g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas, g_basnsInd)
          
        endif
 # else
-       open (unit=51,file='GW_inflow.txt',form='formatted',&
-             status='unknown',position='append')
-       open (unit=52,file='GW_outflow.txt',form='formatted',&
-             status='unknown',position='append')
-       open (unit=53,file='GW_zlev.txt',form='formatted',&
-             status='unknown',position='append')
-       do i=1,RT_DOMAIN(did)%numbasns
-          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
+!       open (unit=51,file='GW_inflow.txt',form='formatted',&
+!             status='unknown',position='append')
+!       open (unit=52,file='GW_outflow.txt',form='formatted',&
+!             status='unknown',position='append')
+!       open (unit=53,file='GW_zlev.txt',form='formatted',&
+!             status='unknown',position='append')
+!       do i=1,RT_DOMAIN(did)%numbasns
+!          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
 951        FORMAT(I3,1X,A19,1X,F11.3)
-          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
-          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
-       end do  
-       close(51)
-       close(52)
-       close(53)
+!          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
+!          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
+!       end do  
+!       close(51)
+!       close(52)
+!       close(53)
+        if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+          call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%numbasns, &
+                  trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                  rt_domain(did)%basnsInd,rt_domain(did)%qin_gwsubbas, &
+                  rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+        else
+          call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%nlinksl, &
+                  trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                  rt_domain(did)%linkid,rt_domain(did)%qin_gwsubbas, &
+                  rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+        endif
 #endif
     end subroutine output_GW_Diag
+
+
+!----------------------------------- gw netcdf output
+
+   subroutine output_gw_netcdf(igrid, split_output_count, nbasns, &
+        startdate, date, &
+        gw_id_var, gw_in_var, gw_out_var, gw_z_var)
+
+     integer,                                  intent(in) :: igrid
+     integer,                                  intent(in) :: split_output_count
+     integer,                                  intent(in) :: nbasns
+     real, dimension(:),                  intent(in) :: gw_in_var, gw_out_var, gw_z_var
+     integer, dimension(:),               intent(in) :: gw_id_var
+
+     character(len=*),                         intent(in) :: startdate
+     character(len=*),                         intent(in) :: date
+
+
+     integer, save  :: output_count
+     integer, save :: ncid
+
+     integer :: basindim, varid,  n, nstations
+     integer :: iret,i    !-- 
+     character(len=256) :: output_flnm
+     character(len=19)  :: date19, date19start
+     character(len=32)  :: convention
+     integer :: timedim
+     integer :: seconds_since
+     character(len=34)  :: sec_since_date
+     character(len=34)  :: sec_valid_date
+
+     if(split_output_count .ne. 1 ) then
+            write(6,*) "WARNING: split_output_count need to be 1 for this output option."
+     endif
+
+     sec_since_date = 'seconds since '//startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10) &
+                  //' '//startdate(12:13)//':'//startdate(15:16)//' UTC'
+
+     date19start(1:len_trim(startdate)) = startdate(1:4)//'-'//startdate(6:7)//'-'//startdate(9:10)//'_' &
+                  //startdate(12:13)//':'//startdate(15:16)//':00'
+
+     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+     
+     sec_valid_date = 'seconds since '//nlst_rt(1)%startdate(1:4)//'-'//nlst_rt(1)%startdate(6:7)//'-'//nlst_rt(1)%startdate(9:10) &
+                      //' '//nlst_rt(1)%startdate(12:13)//':'//nlst_rt(1)%startdate(15:16)//' UTC'
+
+     write(output_flnm, '(A12,".GWOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
+
+#ifdef HYDRO_D
+      print*, 'output_flnm = "'//trim(output_flnm)//'"'
+#endif
+
+#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+#else
+       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+#endif
+
+      if (iret /= 0) then
+          print*, "Problem nf_create" 
+          call hydro_stop("output_gw_netcdf") 
+      endif 
+
+!!! Define dimensions
+
+        nstations =nbasns
+
+      iret = nf_def_dim(ncid, "basin", nstations, basindim)
+
+      iret = nf_def_dim(ncid, "time", 1, timedim)
+
+!!! Define variables
+
+
+      !- gw basin ID
+      iret = nf_def_var(ncid,"gwbas_id",NF_INT, 1, (/basindim/), varid)
+      iret = nf_put_att_text(ncid,varid,'long_name',11,'GW basin ID')
+
+      !- gw inflow
+      iret = nf_def_var(ncid, "gw_inflow", NF_FLOAT, 1, (/basindim/), varid)
+      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+
+      !- gw outflow
+      iret = nf_def_var(ncid, "gw_outflow", NF_FLOAT, 1, (/basindim/), varid)
+      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+
+      !- depth in gw bucket
+      iret = nf_def_var(ncid, "gw_zlev", NF_FLOAT, 1, (/basindim/), varid)
+      iret = nf_put_att_text(ncid,varid,'units',2,'mm')
+
+      ! Time variable
+      iret = nf_def_var(ncid, "time", NF_INT, 1, (/timeDim/), varid)
+      iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
+      iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+
+      date19(1:19) = "0000-00-00_00:00:00"
+      date19(1:len_trim(startdate)) = startdate
+
+      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
+      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
+      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
+
+      iret = nf_enddef(ncid)
+
+!!! Input variables
+
+        !-- write lake id
+        iret = nf_inq_varid(ncid,"gwbas_id", varid)
+        iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), gw_id_var)
+
+        !-- write gw inflow
+        iret = nf_inq_varid(ncid,"gw_inflow", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), gw_in_var  )
+
+        !-- write elevation  of inflow
+        iret = nf_inq_varid(ncid,"gw_outflow", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), gw_out_var  )
+
+        !-- write elevation  of inflow
+        iret = nf_inq_varid(ncid,"gw_zlev", varid)
+        iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), gw_z_var  )
+
+        !-- write time variable
+        iret = nf_inq_varid(ncid,"time", varid)
+        iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+
+        iret = nf_close(ncid)
+
+    end subroutine output_gw_netcdf
+
+!------------------------------- end gw netcdf output
 
     subroutine read_NSIMLAKES(NLAKES,route_lake_f)
         integer                     :: NLAKES
