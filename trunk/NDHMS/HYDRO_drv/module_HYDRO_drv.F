@@ -268,7 +268,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 
 
    !! JLM This seems like a more logical place?
-   if(nlst_rt(did)%GWBASESWCRT .eq. 1) call output_GW_Diag(did)
+   if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
+      if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
+   end if
 
 
    if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
