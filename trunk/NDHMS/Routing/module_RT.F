@@ -193,10 +193,6 @@ CONTAINS
      !! Variables (formerly?) needed for channel_only
      allocate( rt_domain(did)%ELRT   	(IXRT,JXRT) )
      rt_domain(did)%ELRT   	= 0.0                
-     allocate( rt_domain(did)%CH_NETRT   	(IXRT,JXRT) )
-     rt_domain(did)%CH_NETRT   	= 0.0                
-     allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
-     rt_domain(did)%CH_LNKRT = 0.0
      allocate( rt_domain(did)%LAKE_MSKRT 	(IXRT,JXRT) )
      rt_domain(did)%LAKE_MSKRT 	= -9999              
      allocate( rt_domain(did)%LAKE_INFLORT(IXRT,JXRT) )
@@ -213,9 +209,21 @@ CONTAINS
   end if ! neither channel_only nor channelBucket_only
 
 
+  !! needed regardless
   rt_domain(did)%timestep_flag = 1    ! default is cold start
   allocate( rt_domain(did)%dist (ixrt,jxrt,9) )
   rt_domain(did)%dist = -999  
+
+  !! This is needed for channelBucket_only 
+  !! because the bucket area (basns_area) depends on the initialization of the
+  !! UDMP code, this is a required variable.
+  !! JLM: could these be deallocated under channel_only
+  if(nlst_rt(did)%channel_only       .eq. 0) then
+     allocate( rt_domain(did)%CH_NETRT   	(IXRT,JXRT) )
+     rt_domain(did)%CH_NETRT   	= 0.0                
+     allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
+     rt_domain(did)%CH_LNKRT = 0.0
+  endif
 
 
   if (CHANRTSWCRT.eq.1 .or. CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
@@ -682,56 +690,60 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
-      call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
+   call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
 #endif
 
 #ifdef OUTPUT_CHAN_CONN      
 #ifdef MPP_LAND
-      connCalcTimeEnd = MPI_Wtime()
+   connCalcTimeEnd = MPI_Wtime()
 #else
-      call cpu_time(connCalcTimeEnd)
+   call cpu_time(connCalcTimeEnd)
 #endif
-      if (nlst_rt(did)%channel_option .eq. 3) then 
-         call output_chan_connectivity(       &
-              rt_domain(did)%CHLAT,     &   !! Channel grid lat
-              rt_domain(did)%CHLON,     &   !! Channel grid lat
-              rt_domain(did)%CHANLEN,   &   !! The distance between channel grid centers in m.
-              rt_domain(did)%FROM_NODE, &   !! Index of a given cell and ...
-              rt_domain(did)%TO_NODE,   &   !!   ... the index which it flows to.
-              rt_domain(did)%CHANXI,    &   !! Index on fine/routing 
-              rt_domain(did)%CHANYJ,    &   !!   grid of grid cells.
-              rt_domain(did)%TYPEL,     &   !! Link type
-              rt_domain(did)%LAKENODE   &   !! Lake indexing
-              )
-      end if
-      
-      !if(my_id .eq. io_id) &
-      print '("Time to calculate channel connectivity= ",f6.3," seconds.")', &
-           connCalcTimeEnd-connCalcTimeStart        
-      call exit(17)  !! bail if you're just calculating output connectivity.
+   if (nlst_rt(did)%channel_option .eq. 3) then 
+      call output_chan_connectivity(       &
+           rt_domain(did)%CHLAT,     &   !! Channel grid lat
+           rt_domain(did)%CHLON,     &   !! Channel grid lat
+           rt_domain(did)%CHANLEN,   &   !! The distance between channel grid centers in m.
+           rt_domain(did)%FROM_NODE, &   !! Index of a given cell and ...
+           rt_domain(did)%TO_NODE,   &   !!   ... the index which it flows to.
+           rt_domain(did)%CHANXI,    &   !! Index on fine/routing 
+           rt_domain(did)%CHANYJ,    &   !!   grid of grid cells.
+           rt_domain(did)%TYPEL,     &   !! Link type
+           rt_domain(did)%LAKENODE   &   !! Lake indexing
+           )
+   end if
+   
+   !if(my_id .eq. io_id) &
+   print '("Time to calculate channel connectivity= ",f6.3," seconds.")', &
+        connCalcTimeEnd-connCalcTimeStart        
+   call exit(17)  !! bail if you're just calculating output connectivity.
 #endif 
 ! end OUTPUT_CHAN_CONN
 
 
-   if(nlst_rt(did)%channel_only       .eq. 0 .and. & 
-      nlst_rt(did)%channelBucket_only .eq. 0        ) then
-
+   ! The UDMP_ini effectively sets the nhd gw bucket area (that field is not used from the file)
+   !   this may be the only dependence of the nhd_routing on the UDMAPING in channelBucket_only
+   if(nlst_rt(did)%channel_only .eq. 0) then
+      
       if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
          ! get NHDPLUS mapping function. 
          !          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
-         call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_NETRT , &
-              nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%dist(:,:,9) )
+         call UDMP_ini( rt_domain(did)%GNLINKSL, rt_domain(did)%ixrt,      &
+              rt_domain(did)%jxrt,     rt_domain(did)%CH_NETRT , &
+              nlst_rt(did)%OVRTSWCRT,  nlst_rt(did)%SUBRTSWCRT,  &
+              rt_domain(did)%dist(:,:,9)                         )
 #ifdef HYDRO_D
          write(6,*) "after UDMP_ini "
          call flush(6)
 #endif
       endif
 
-   end if ! end of neither channel_only nor channelBucket_only
+   end if ! end not channel_only
 
 
     if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
 #ifdef MPP_LAND
+
       if(nlst_rt(did)%UDMP_OPT .eq. 1) then
            ! NHDPLUS
            rt_domain(did)%LNLINKSL = LNUMRSL
@@ -739,7 +751,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            do k = 1,LNUMRSL
                rt_domain(did)%LLINKID(k) = LUDRSL(k)%myid
            end do
+
       else
+
            allocate (buf(rt_domain(did)%GNLINKS) )
            buf = -99
            do j = 1, rt_domain(did)%jxrt
@@ -778,7 +792,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
          if(allocated(buf)) deallocate(buf)
 
-     endif  ! end if block for UDMP_OPT
+      endif  ! end if block for UDMP_OPT
       
            do k = 1, rt_domain(did)%LNLINKSL
                do j = 1, rt_domain(did)%jxrt
@@ -1027,6 +1041,7 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
            rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
            rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
            rt_domain(did)%nhdBuckMask )     
+
 #ifdef HYDRO_D
       write(6,*) "finish readBucket_nhd "
       call flush(6)

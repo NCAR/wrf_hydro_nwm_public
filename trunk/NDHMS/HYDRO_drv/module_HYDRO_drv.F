@@ -221,6 +221,7 @@ module module_HYDRO_drv
 !yw keep the initial time otuput for debug
       if(rtflag == 1) then 
           rt_domain(did)%restQSTRM = .false.   !!! do not reset QSTRM.. at initial time.
+          if(nlst_rt(did)%t0OutputFlag .eq. 0) return
 #ifndef HYDRO_REALTIME
           return ! jump the initial time output for routing restart
 #endif
@@ -266,9 +267,11 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 		 )
 
 
+   !! JLM This seems like a more logical place?
+   if(nlst_rt(did)%GWBASESWCRT .eq. 1) call output_GW_Diag(did)
 
 
-           if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
+   if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
 	     
               if(nlst_rt(did)%output_gw  .eq. 1)  &
               call sub_output_gw(    &
@@ -745,7 +748,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
 
 !! JLM:: PUT THIS BACK BEFORE CHECKING/MERGING INTO MASTER
 !#ifndef HYDRO_REALTIME
-        call output_GW_Diag(did)
+!        call output_GW_Diag(did)
 !#endif
 
 #ifdef HYDRO_D 

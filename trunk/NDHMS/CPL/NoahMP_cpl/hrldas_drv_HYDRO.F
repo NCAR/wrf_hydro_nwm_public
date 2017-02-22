@@ -399,6 +399,14 @@
          iocflag = nlst_rt(did)%iocflag
       end subroutine get_iocflag
 
+      subroutine get_t0OutputFlag(did, t0OutputFlag) 
+         use module_namelist, only:nlst_rt
+         implicit none
+         integer :: did, t0OutputFlag
+         t0OutputFlag = nlst_rt(did)%t0OutputFlag
+      end subroutine get_t0OutputFlag
+
+
       subroutine getNameList(varName,pVar)
           use module_namelist, only:nlst_rt
           implicit none

@@ -8651,7 +8651,9 @@ end subroutine mpp_output_chrt2
            end if
 
            !! Bucket influx
-           if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+           !! In channel_only mode, there are not valie qBtmVertRunoff values
+           if(nlst_rt(did)%output_channelBucket_influx .eq. 2 .and. &
+              nlst_rt(did)%channel_only                .eq. 0         ) then
               iret = nf_def_var(ncid, "qBtmVertRunoff", NF_FLOAT, 1, (/stationdim/), varid)
               iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
               !                                                 123456789112345678921234567893123456
@@ -8763,7 +8765,8 @@ end subroutine mpp_output_chrt2
              end if
 
              !! Bucket model influxes
-             if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+             if(nlst_rt(did)%output_channelBucket_influx .eq. 2 .and. &
+                nlst_rt(did)%channel_only                .eq. 0         ) then
                 iret = nf_inq_varid(ncid,"qBtmVertRunoff", varid)
                 iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qBtmVertRunoff)
              endif

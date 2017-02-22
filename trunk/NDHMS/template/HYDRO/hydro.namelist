@@ -117,6 +117,9 @@ route_lake_f = "../DOMAIN/LAKEPARM.nc"
 ! Realtime IOC run configuration option: 0=diagnostic, 1=analysis, 2=short-range, 3=medium-range, 4=long-range
 iocflag=1
 
+! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes
+t0OutputFlag = 0
+
 ! Options to output channel & bucket influxes to drive FORCE_TYPE 9.
 ! Nonzero choice requires that out_dt above matches NOAH_TIMESTEP in namelist.hrldas.
 ! 0=None, 1=channel influxes (qSfcLatRunoff, qBucket)

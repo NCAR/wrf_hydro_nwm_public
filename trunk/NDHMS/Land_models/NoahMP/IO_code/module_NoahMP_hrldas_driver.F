@@ -53,6 +53,7 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
 #ifdef HYDRO_REALTIME
    integer :: iocflag=0
+   integer :: t0OutputFlag=0   
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
@@ -1440,12 +1441,13 @@ module module_NoahMP_hrldas_driver
    NTIME_out = NTIME 
 
 #ifdef WRF_HYDRO
-
+   call get_t0OutputFlag(1, t0OutputFlag)
+   print*, "t0OutputFlag: ", t0OutputFlag  
 #ifdef HYDRO_REALTIME
-      call ldas_output()
+   if(t0OutputFlag .eq. 1) call ldas_output()
 #else
   if (restart_filename_requested == " ") then
-      call ldas_output()
+     if(t0OutputFlag .eq. 1) call ldas_output()
   endif
 #endif
 #endif
