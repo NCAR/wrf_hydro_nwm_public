@@ -5691,6 +5691,12 @@ end subroutine mpp_output_chrt
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accQLateral,"accQLateral",rt_domain(did)%GNLINKSL)
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accStrmvolrt,"accStrmvolrt",rt_domain(did)%GNLINKSL)
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accBucket,"accBucket",rt_domain(did)%GNLINKS)
+                       if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+                            rt_domain(did)%accLndRunOff = 0
+                            rt_domain(did)%accQLateral  = 0
+                            rt_domain(did)%accStrmvolrt = 0
+                            rt_domain(did)%accBucket    = 0
+                       endif
                     endif
 #endif
                 endif
@@ -5720,14 +5726,14 @@ end subroutine mpp_output_chrt
 	    end if
         end if
 
-          if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
-#ifdef HYDRO_D
-            print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
-#endif
-            rt_domain(did)%INFXSRT=0.
-            rt_domain(did)%LAKE_INFLORT=0.
-            rt_domain(did)%QSTRMVOLRT=0.
-          end if
+!          if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+!#ifdef HYDRO_D
+!            print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
+!#endif
+!           rt_domain(did)%INFXSRT=0.
+!            rt_domain(did)%LAKE_INFLORT=0.
+!           rt_domain(did)%QSTRMVOLRT=0.
+!          end if
 
       
 #ifdef MPP_LAND
@@ -7984,6 +7990,8 @@ end subroutine readBucket_nhd
 	call ReachLS_write_io(QLateral, g_QLateral)
 	call ReachLS_write_io(velocity, g_velocity)
 #endif
+     !yw call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
+        call  ReachLS_write_io(hlink,g_hlink)
 
      else
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
@@ -7993,10 +8001,9 @@ end subroutine readBucket_nhd
         call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
         call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
         call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
+        call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
      endif
 
-     !yw call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
-     call  ReachLS_write_io(hlink,g_hlink)
 
      if(my_id .eq. IO_id) then
        call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
