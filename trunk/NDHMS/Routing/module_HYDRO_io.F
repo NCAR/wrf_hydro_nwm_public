@@ -8390,8 +8390,11 @@ end subroutine readBucket_nhd
            
 	call ReachLS_write_io(QLateral, g_QLateral)
 	call ReachLS_write_io(velocity, g_velocity)
+       !yw call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
+       call  ReachLS_write_io(hlink,g_hlink)
 
      else
+
         call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
         call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
         call write_chanel_int(order,map_l2g,gnlinks,nlinks,g_order)
@@ -8399,10 +8402,9 @@ end subroutine readBucket_nhd
         call write_chanel_real(chlon,map_l2g,gnlinks,nlinks,g_chlon)
         call write_chanel_real(chlat,map_l2g,gnlinks,nlinks,g_chlat)
         call write_chanel_real(zelev,map_l2g,gnlinks,nlinks,g_zelev)
+        call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
      endif
 
-     !yw call write_chanel_real(hlink,map_l2g,gnlinks,nlinks,g_hlink)
-     call  ReachLS_write_io(hlink,g_hlink)
 
      if(my_id .eq. IO_id) then
        call output_chrt2(igrid, split_output_count, GNLINKS, g_ORDER,                &
