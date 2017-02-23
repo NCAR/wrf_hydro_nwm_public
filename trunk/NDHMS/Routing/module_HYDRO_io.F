@@ -46,7 +46,8 @@ module module_HYDRO_io
    end interface
 
    integer, parameter :: did=1
-
+   integer :: logUnit
+   
      contains
 
         integer function get2d_real(var_name,out_buff,ix,jx,fileName, fatalErr)
@@ -5794,27 +5795,74 @@ endif
 #ifdef MPP_LAND
 if(IO_id .eq. my_id) then
 #endif
+   
+   !! Dont use a restart from a channel_only run if you're not running channel_only
+   iret = nf_get_att_int(ncid, NF_GLOBAL, "channel_only", channel_only_in)
+   if(iret .eq. 0) then !! If channel_only attribute prsent, then proceed with this logic
+
+      iret = nf_get_att_int(ncid, NF_GLOBAL, "channelBucket_only", channelBucket_only_in)
+
+      iret=0 ! borrow the variable for our own error flagging
+      !! Hierarchy of model restarting ability.
+      !! 1) Full model restarts: all model runs (full, channel_only and channelBucket_only)
+      !! No test needed here.
+      
+      !! 2) channelBucket_only restarts: channelBucket_only and channel_only runs
+      if(channelBucket_only_in .eq. 1) then
+         if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) iret=1
+      end if
+
+      !! 3) channel_only restarts: only channel_only runs
+      if(channel_only_in .eq. 1) then
+         if(nlst_rt(did)%channel_only .eq. 0) iret=1
+      end if
+
+      if(iret .eq. 1) then
+         
+         !! JLM Why dont we adopt this strategy elsewhere, e.g. define logUnit as a module variable.
+         !! JLM Would massively cut down on #ifdefs and repetitive code in certain parts of the code.
+#ifdef NCEP_WCOSS
+         logUnit=78
+#else 
+         logUnit=6
+#endif
+
+         write(logUnit,*) 'Restart is not respecting the hierarchy of model restarting ability:'
+         write(logUnit,*) '1) Full model restarts: all model runs (full, channel_only and channelBucket_only),'
+         write(logUnit,*) '2) channelBucket_only restarts: channelBucket_only and channel_only runs,'
+         write(logUnit,*) '3) channel_only restarts: only channel_only runs.'
+         write(logUnit,*) 'Diagnostics:'
+         write(logUnit,*) 'channel_only restart present:', channel_only_in
+         write(logUnit,*) 'channel_only run:', nlst_rt(did)%channel_only
+         write(logUnit,*) 'channelBucket_only restart present:', channelBucket_only_in
+         write(logUnit,*) 'channelBucket_only run:', nlst_rt(did)%channelBucket_only
+         call flush(logUnit)         
+
+         call hydro_stop('Channel Only: Restart file in consistent with forcing type.')
+      end if
+   end if
+
    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
    iret = NF_GET_ATT_REAL(ncid, NF_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
    iret = nf_get_att_text(ncid,NF_GLOBAL,"Since_Date",nlst_rt(did)%sincedate(1:19))
+   if( nlst_rt(did)%channel_only       .eq. 1 .or. &
+       nlst_rt(did)%channelBucket_only .eq. 1         ) &
+       iret = nf_get_att_text(ncid,NF_GLOBAL,"Restart_Time",nlst_rt(did)%olddate(1:19))
    if(iret /= 0) nlst_rt(did)%sincedate = nlst_rt(did)%startdate
    if(nlst_rt(did)%DTCT .gt. 0) then
       nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH)
    else
       nlst_rt(did)%DTCT = nlst_rt(did)%DTRT_CH
    endif
-   
-   !! Dont use a restart from a channel_only run if you're not running channel_only
-   iret = nf_get_att_int(ncid, NF_GLOBAL, "channel_only", channel_only_in)
-   iret = nf_get_att_int(ncid, NF_GLOBAL, "channelBucket_only", channelBucket_only_in)
-   if( (nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) .and. &
-        (channel_only_in           .eq. 1 .or.            channelBucket_only_in .eq. 1)        ) &
-        call hydro_stop('Channel Only: Restart file in consistent with forcing type.')
-   
+
 #ifdef MPP_LAND
 endif
 call mpp_land_bcast_int1(rt_domain(did)%out_counts)
 call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
+if( nlst_rt(did)%channel_only       .eq. 1 .or. &
+    nlst_rt(did)%channelBucket_only .eq. 1         ) &
+    call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
+!! call mpp_land_bcast_char(19, nlst_rt(did)%sincedate) ! why not? we read it in.
 #endif
 
 #ifdef HYDRO_D
