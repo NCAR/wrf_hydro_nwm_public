@@ -5683,6 +5683,12 @@ end subroutine mpp_output_chrt
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accQLateral,"accQLateral",rt_domain(did)%GNLINKSL)
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accStrmvolrt,"accStrmvolrt",rt_domain(did)%GNLINKSL)
                        call read_rst_crt_reach_nc(ncid,rt_domain(did)%accBucket,"accBucket",rt_domain(did)%GNLINKS)
+                       if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+                            rt_domain(did)%accLndRunOff = 0
+                            rt_domain(did)%accQLateral  = 0
+                            rt_domain(did)%accStrmvolrt = 0
+                            rt_domain(did)%accBucket    = 0
+                       endif
                     endif
 #endif
                 endif
@@ -5712,14 +5718,14 @@ end subroutine mpp_output_chrt
 	    end if
         end if
 
-          if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
-#ifdef HYDRO_D
-            print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
-#endif
-            rt_domain(did)%INFXSRT=0.
-            rt_domain(did)%LAKE_INFLORT=0.
-            rt_domain(did)%QSTRMVOLRT=0.
-          end if
+!          if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+!#ifdef HYDRO_D
+!            print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
+!#endif
+!           rt_domain(did)%INFXSRT=0.
+!            rt_domain(did)%LAKE_INFLORT=0.
+!           rt_domain(did)%QSTRMVOLRT=0.
+!          end if
 
       
 #ifdef MPP_LAND
