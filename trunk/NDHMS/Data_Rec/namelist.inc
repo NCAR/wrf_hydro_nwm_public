@@ -58,6 +58,7 @@
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
+       logical            :: persistBias
        character(len=256) :: nudgingLastObsFile
 #endif
 

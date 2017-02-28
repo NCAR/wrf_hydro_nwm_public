@@ -135,6 +135,10 @@ readTimesliceParallel = .TRUE.
 ! temporalPersistence defaults to true, only runs if necessary params present.
 temporalPersistence   = .FALSE.
 
+! If using temporalPersistence the last observation persists by default. 
+! This option instead persists the bias in some period before the last observation. 
+persistBias = .FALSE.
+
 ! nudgingLastObsFile defaults to '', which will look for nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
 !   **AT THE INITALIZATION TIME OF THE RUN**. Set to a missing file to use no restart.
 nudgingLastObsFile   = 'notAFile.junk'

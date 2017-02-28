@@ -87,6 +87,7 @@ CONTAINS
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
+       logical            :: persistBias
        character(len=256) :: nudgingLastObsFile
 #endif 
 
@@ -115,15 +116,21 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING
    namelist /NUDGING_nlist/ nudgingParamFile,      netwkReExFile,       &
                             readTimesliceParallel, temporalPersistence, &
-                            nudgingLastObsFile
-   ! Default values... 
+                            persistBias,           nudgingLastObsFile
+   ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"
    readTimesliceParallel = .true.
    temporalPersistence   = .true.
+   persistBias           = .false.
    nudgingLastObsFile = ""
 #endif 
 
+   !! default  values for HYDRO_nlist
+   UDMP_OPT = 0
+   rst_bi_in = 0
+   rst_bi_out = 0
+   iocflag = 0
                     
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
@@ -246,6 +253,7 @@ CONTAINS
   call mpp_land_bcast_char(256, nudgingLastObsFile)
   call mpp_land_bcast_log1(readTimesliceParallel)
   call mpp_land_bcast_log1(temporalPersistence)
+  call mpp_land_bcast_log1(persistBias)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -321,6 +329,7 @@ CONTAINS
     nlst%netWkReExFile         = netWkReExFile
     nlst%readTimesliceParallel = readTimesliceParallel
     nlst%temporalPersistence   = temporalPersistence
+    nlst%persistBias           = persistBias
     nlst%nudgingLastObsFile    = nudgingLastObsFile
 #endif
 
@@ -369,6 +378,7 @@ CONTAINS
     write(6,*) " nlst%netWkReExFile",          trim(netWkReExFile)
     write(6,*) " nlst%readTimesliceParallel",  readTimesliceParallel
     write(6,*) " nlst%temporalPersistence",    temporalPersistence
+    write(6,*) " nlst%persistBias",            persistBias
     write(6,*) " nlst%nudgingLastObsFile",     trim(nudgingLastObsFile)
 #endif
 #endif /* HYDRO_D */

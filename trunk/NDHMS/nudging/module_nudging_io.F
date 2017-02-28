@@ -27,6 +27,19 @@ use module_RT_data,  only: rt_domain
 implicit none
 #include <netcdf.inc>
 
+!========================
+! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
+! How observations from the past are carried forward.
+! This type is extended in module_stream_nudging
+integer, parameter :: nTimesLastObs=960
+type lastObsStructure
+   character(len=15)                           :: usgsId
+   real,              dimension(nTimesLastObs) :: lastObsDischarge
+   real,              dimension(nTimesLastObs) :: lastObsModelDischarge
+   character(len=19), dimension(nTimesLastObs) :: lastObsTime
+   real,              dimension(nTimesLastObs) :: lastObsQuality
+end type lastObsStructure
+
 ! JLM: timeSlicePath is hardcoded/hardwired for now, should go in name list eventually
 character(len=256), parameter :: timeSlicePath="./nudgingTimeSliceObs/"
 
@@ -512,7 +525,6 @@ close(27)
 end subroutine write_nwis_not_in_RLAndParams
 
 
-
 !===================================================================================================
 ! Subroutine Name: 
 !   subroutine write_nudging_last_obs
@@ -530,25 +542,28 @@ end subroutine write_nwis_not_in_RLAndParams
 ! User controllable options: None. 
 ! Notes:  Needs better error handling... 
 
-subroutine write_nudging_last_obs( gageId, discharge, obsTimes, quality, modelTime )
+subroutine write_nudging_last_obs(lastObsStr, modelTime)
+
 implicit none
-character(len=15), dimension(:),  intent(in) :: gageId
-real,              dimension(:),  intent(in) :: discharge
-character(len=19), dimension(:),  intent(in) :: obsTimes
-real,              dimension(:),  intent(in) :: quality
+
+type(lastObsStructure), intent(inout), dimension(:) :: lastObsStr
 character(len=19),                intent(in) :: modelTime
 
-integer*2, allocatable, dimension(:) :: qualityInt2
 character(len=37) :: outFileName
-integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNStn
+integer :: nSpace, nTime, tt, ss
+integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNTime, dimIdNStn
 character(len=15), allocatable, dimension(:) :: charArr15
-character(len=19), allocatable, dimension(:) :: charArr19
-
+character(len=19), allocatable, dimension(:,:) :: charArr19
+real,      allocatable, dimension(:,:) :: tmpFloat
+integer*2, allocatable, dimension(:,:) :: qualityInt2
 
 #ifdef HYDRO_D
 print*,'Ndg: start write_nudging_last_obs'
 flush(6)
 #endif
+
+nSpace = size(lastObsStr)
+nTime  = size(lastObsStr(1)%lastObsDischarge)
 
 !           !1234567891123456789212345678931234567
 outFileName='nudgingLastObs.' // modelTime // '.nc'
@@ -558,6 +573,7 @@ iret = nf90_create(outFileName, nf90_clobber, ncid)
 
 ! create dimensions
 iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
+iret = nf90_def_dim(ncid, "timeInd",         nTime,          dimIdNTime)
 iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
 iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
 
@@ -567,19 +583,25 @@ iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! time def var
-iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNStn /), varid)
+iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNTime, dimIdNStn /), varid)
 iret = nf90_put_att(ncid, varid, 'units', "UTC")
 iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 ! discharge def var
-iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNstn /), varid)
+iret = nf90_def_var(ncid, "discharge", nf90_float, (/ dimIdNTime, dimIdNstn /), varid)
 iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
 iret = nf90_put_att(ncid, varid, 'long_name', "Discharge.cubic_meters_per_second")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
+! model discharge def var
+iret = nf90_def_var(ncid, "model_discharge", nf90_float, (/ dimIdNTime, dimIdNstn /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "m^3/s")
+iret = nf90_put_att(ncid, varid, 'long_name', "modelDischarge.cubic_meters_per_second")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
 ! discharge quality def var
-iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNstn /), varid)
+iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNTime, dimIdNstn /), varid)
 iret = nf90_put_att(ncid, varid, 'units', "-")
 iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
@@ -592,34 +614,50 @@ iret = nf90_enddef(ncid)
 
 !! gageId write var
 iret = nf90_inq_varid(ncid, "stationId", varid)
-allocate(charArr15(size(discharge)))
-charArr15=gageId
+allocate(charArr15(nSpace))
+charArr15=lastObsStr(:)%usgsId
+
 iret = nf90_put_var(ncid, varid, charArr15)
-!iret = nf90_put_var(ncid, varid, gageId)
 deallocate(charArr15)
 
 ! time write var
 iret = nf90_inq_varid(ncid, "time", varid)
-allocate(charArr19(size(discharge)))
-charArr19=obsTimes
+allocate(charArr19(nTime,nSpace))
+do tt=1,nTime
+      charArr19(tt,:) = lastObsStr(:)%lastObsTime(tt)
+end do
 iret = nf90_put_var(ncid, varid, charArr19)
-!iret = nf90_put_var(ncid, varid, obsTimes)
 deallocate(charArr19)
 
 ! discharge write var
 iret = nf90_inq_varid(ncid, "discharge", varid)
-iret = nf90_put_var(ncid, varid, discharge) 
+allocate(tmpFloat(nTime,nSpace))
+do tt=1,nTime
+   tmpFloat(tt,:) = lastObsStr(:)%lastObsDischarge(tt)
+end do
+iret = nf90_put_var(ncid, varid, tmpFloat)
+deallocate(tmpFloat)
+
+! model discharge write var
+iret = nf90_inq_varid(ncid, "model_discharge", varid)
+allocate(tmpFloat(nTime,nSpace))
+do tt=1,nTime
+   tmpFloat(tt,:) = lastObsStr(:)%lastObsModelDischarge(tt)
+end do
+iret = nf90_put_var(ncid, varid, tmpFloat)
+deallocate(tmpFloat)
 
 ! discharge_quality write var
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
-allocate(qualityInt2(size(quality)))
-qualityInt2 = nint(100*quality, kind=2)
+allocate(qualityInt2(nTime,nSpace))
+do tt=1,nTime
+   qualityInt2(tt,:) = nint(100*lastObsStr(:)%lastObsQuality(tt), kind=2)
+end do
 iret = nf90_put_var(ncid, varid, qualityInt2) 
 deallocate(qualityInt2)
 
 !! close
 iret= nf90_close(ncid)
-
 
 #ifdef HYDRO_D
 print*,'Ndg: end write_nudging_last_obs'
@@ -691,46 +729,76 @@ end function find_nudging_last_obs_file
 ! User controllable options: None. 
 ! Notes: Needs better error handling... 
 
-subroutine read_nudging_last_obs(fileName, gageId, discharge, obsTimes, quality)
+subroutine read_nudging_last_obs(fileName, lastObsStr)
+
 implicit none
-character(len=*),                 intent(in)  :: fileName
-character(len=15), dimension(:),  intent(out) :: gageId
-real,              dimension(:),  intent(out) :: discharge
-character(len=19), dimension(:),  intent(out) :: obsTimes
-real,              dimension(:),  intent(out) :: quality
+character(len=*),       intent(in)                  :: fileName
+type(lastObsStructure), intent(inout), dimension(:) :: lastObsStr
 
+integer :: nSpace, nTime, tt
 integer:: ncid, iret, varid
-integer*2, allocatable, dimension(:) :: qualityInt2
-character(len=15), allocatable, dimension(:) :: charArr15
-character(len=19), allocatable, dimension(:) :: charArr19
+real,              allocatable, dimension(:,:) :: tmpFloat
+integer*2,         allocatable, dimension(:,:) :: qualityInt2
+character(len=19), allocatable, dimension(:,:) :: charArr19
+character(len=15), allocatable, dimension(:)   :: charArr15
 
+print*,'read_nudging_last_obs'
 
+nSpace = size(lastObsStr)
+nTime  = size(lastObsStr(1)%lastObsDischarge)
 
 iret = nf90_open(fileName, nf90_nowrite, ncid)
 
-allocate(charArr15(size(gageId)))
+!! gageId read var
+allocate(charArr15(nSpace))
 iret = nf90_inq_varid(ncid, "stationId", varid)
-!iret = nf90_get_var(ncid, varid, gageId)
 iret = nf90_get_var(ncid, varid, charArr15)
-gageId=charArr15
+lastObsStr(:)%usgsId=charArr15
 deallocate(charArr15)
 
-iret = nf90_inq_varid(ncid, "discharge", varid)
-iret = nf90_get_var(ncid, varid, discharge)
-
-allocate(charArr19(size(obsTimes)))
+! time read var
 iret = nf90_inq_varid(ncid, "time", varid)
-!iret = nf90_get_var(ncid, varid, obsTimes)
+allocate(charArr19(nTime,nSpace))
 iret = nf90_get_var(ncid, varid, charArr19)
-obsTimes=charArr19
+do tt=1,nTime
+   lastObsStr(:)%lastObsTime(tt)=charArr19(tt,:)
+end do
 deallocate(charArr19)
 
-allocate(qualityInt2(size(quality)))
-iret = nf90_inq_varid(ncid, "discharge_quality", varid)
-iret = nf90_get_var(ncid, varid, qualityInt2)
-quality = qualityInt2/real(100)
+! discharge read var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+allocate(tmpFloat(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, tmpFloat)
+do tt=1,nTime
+   lastObsStr(:)%lastObsDischarge(tt) = tmpFloat(tt,:)
+end do
+deallocate(tmpFloat)
 
+! model discharge read var
+iret = nf90_inq_varid(ncid, "model_discharge", varid)
+allocate(tmpFloat(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, tmpFloat)
+do tt=1,nTime
+   lastObsStr(:)%lastObsModelDischarge(tt) = tmpFloat(tt,:)
+end do
+deallocate(tmpFloat)
+
+!discharge _quality read var
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+allocate(qualityInt2(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, qualityInt2)
+do tt=1,nTime
+   lastObsStr(:)%lastObsQuality(tt) = qualityInt2(tt,:)/real(100)
+end do
 deallocate(qualityInt2)
+
+!! close
+iret= nf90_close(ncid)
+
+#ifdef HYDRO_D
+print*,'Ndg: end read_nudging_last_obs'
+flush(6)
+#endif
 
 end subroutine read_nudging_last_obs
 
