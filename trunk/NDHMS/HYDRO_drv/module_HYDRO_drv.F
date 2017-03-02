@@ -718,9 +718,10 @@ module module_HYDRO_drv
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
         endif
 
-#ifndef HYDRO_REALTIME
+!! JLM:: PUT THIS BACK BEFORE CHECKING/MERGING INTO MASTER
+!#ifndef HYDRO_REALTIME
         call output_GW_Diag(did)
-#endif
+!#endif
 
 #ifdef HYDRO_D 
 #ifndef NCEP_WCOSS
