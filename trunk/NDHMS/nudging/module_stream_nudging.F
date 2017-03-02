@@ -147,6 +147,8 @@ logical,            parameter :: sanityQcDischarge = .false.
 logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.
+integer,            parameter :: minNumPairsBiasPersist = 10
+!integer,            parameter :: maxAgePairsBiasPersist = 
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
@@ -2380,7 +2382,7 @@ else if (temporalPersistence) then
       biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                 .AND. &
                 obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .AND.  &
                 obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero  
-      if(count(biasMask) .lt. 10 ) then
+      if(count(biasMask) .lt. minNumPairsBiasPersist ) then
          persistBias_local = .false.
          !! JLM move this to hydro_d
          print*,'JLM: Ndg: not enough observations for bias persistence, using obs persistence', &
