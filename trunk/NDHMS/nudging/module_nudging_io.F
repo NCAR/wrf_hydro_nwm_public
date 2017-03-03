@@ -31,17 +31,15 @@ implicit none
 ! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
 ! How observations from the past are carried forward.
 ! This type is extended in module_stream_nudging
-integer, parameter :: nTimesLastObs=960
 type lastObsStructure
-   character(len=15)                           :: usgsId
-   real,              dimension(nTimesLastObs) :: lastObsDischarge
-   real,              dimension(nTimesLastObs) :: lastObsModelDischarge
-   character(len=19), dimension(nTimesLastObs) :: lastObsTime
-   real,              dimension(nTimesLastObs) :: lastObsQuality
+   character(len=15)                            :: usgsId
+   real,              allocatable, dimension(:) :: lastObsDischarge
+   real,              allocatable, dimension(:) :: lastObsModelDischarge
+   character(len=19), allocatable, dimension(:) :: lastObsTime
+   real,              allocatable, dimension(:) :: lastObsQuality
 end type lastObsStructure
 
-! JLM: timeSlicePath is hardcoded/hardwired for now, should go in name list eventually
-character(len=256), parameter :: timeSlicePath="./nudgingTimeSliceObs/"
+integer, parameter :: did = 1
 
 contains
 
@@ -60,7 +58,7 @@ contains
 ! Input Files:  
 ! Output Files: 
 ! Condition codes: 
-! User controllable options: (eventual) namelist option for timeSlicePath
+! User controllable options: namelist option for nlst_rt(did)%timeSlicePath
 ! Notes: 
 
 function find_timeslice_file(date, obsResolution)            
@@ -80,8 +78,8 @@ call flush(6)
 find_timeslice_file=''
 ! is there a file with this name?
 ! note files are not resolved below minutes.
-tmpTimeSlice = trim(timeSlicePath) // date // "." // &
-                     obsResolution // 'min.usgsTimeSlice.ncdf'
+tmpTimeSlice = trim(nlst_rt(did)%timeSlicePath) // date // "." // &
+                    obsResolution // 'min.usgsTimeSlice.ncdf'
 inquire(FILE=tmpTimeSlice, EXIST=fileExists)
 if (fileExists) find_timeslice_file = trim(tmpTimeSlice)
 
@@ -109,7 +107,7 @@ end function find_timeslice_file
 ! Input Files:  
 ! Output Files: 
 ! Condition codes: 
-! User controllable options: (eventual) namelist option for timeSlicePath
+! User controllable options: namelist option for nlst_rt(did)%timeSlicePath
 ! Notes: 
  
 subroutine read_timeslice_file(  &
@@ -243,7 +241,7 @@ logical               :: fatal_if_error
 character(len=256) :: route_link_f_r, route_link_f, varName
 integer :: lenRouteLinkFR ! so the preceeding var chan be changed without changing code
 logical :: routeLinkNetcdf
-integer, parameter :: did=1
+
 #ifdef HYDRO_D
 print*,'Ndg: Starting read_reach_gage_collocation'
 #endif 
@@ -920,7 +918,7 @@ integer, dimension(:),  intent(in) :: inFROM_NODE, inTO_NODE, inCHANXI, inCHANYJ
 integer            :: nStreamCells, streamCellDimID
 integer            :: iret, projInfo_flag
 integer            :: ncid, ncstatic, varid
-integer, parameter :: did=1 ! JLM TODO, this should be fine...? could be picked up from mod_stream_nudg
+
 
 real               :: long_cm, lat_po, fe, fn
 real, dimension(2) :: sp

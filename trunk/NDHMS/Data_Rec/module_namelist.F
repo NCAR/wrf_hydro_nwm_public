@@ -89,6 +89,10 @@ CONTAINS
        logical            :: temporalPersistence
        logical            :: persistBias
        character(len=256) :: nudgingLastObsFile
+       character(len=256) :: timeSlicePath
+       integer            :: nLastObs
+       integer            :: minNumPairsBiasPersist
+       integer            :: maxAgePairsBiasPersist
 #endif 
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
@@ -114,9 +118,11 @@ CONTAINS
 
 
 #ifdef WRF_HYDRO_NUDGING
-   namelist /NUDGING_nlist/ nudgingParamFile,      netwkReExFile,       &
-                            readTimesliceParallel, temporalPersistence, &
-                            persistBias,           nudgingLastObsFile
+   namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,        &
+                            readTimesliceParallel,  temporalPersistence,  &
+                            persistBias,            nudgingLastObsFile,   &
+                            timeSlicePath,          nLastObs,             &
+                            minNumPairsBiasPersist, maxAgePairsBiasPersist
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"
@@ -124,6 +130,10 @@ CONTAINS
    temporalPersistence   = .true.
    persistBias           = .false.
    nudgingLastObsFile = ""
+   timeSlicePath = "./nudgingTimeSliceObs/"
+   nLastObs = 960
+   minNumPairsBiasPersist = 8
+   maxAgePairsBiasPersist = 960
 #endif 
 
    !! default  values for HYDRO_nlist
@@ -254,6 +264,10 @@ CONTAINS
   call mpp_land_bcast_log1(readTimesliceParallel)
   call mpp_land_bcast_log1(temporalPersistence)
   call mpp_land_bcast_log1(persistBias)
+  call mpp_land_bcast_char(256, timeSlicePath)
+  call mpp_land_bcast_int1(nLastObs)
+  call mpp_land_bcast_int1(minNumPairsBiasPersist)
+  call mpp_land_bcast_int1(maxAgePairsBiasPersist)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -325,12 +339,16 @@ CONTAINS
     nlst%UDMP_OPT = UDMP_OPT
     nlst%GWBUCKPARM_file =  GWBUCKPARM_file
 #ifdef WRF_HYDRO_NUDGING
-    nlst%nudgingParamFile      = nudgingParamFile
-    nlst%netWkReExFile         = netWkReExFile
-    nlst%readTimesliceParallel = readTimesliceParallel
-    nlst%temporalPersistence   = temporalPersistence
-    nlst%persistBias           = persistBias
-    nlst%nudgingLastObsFile    = nudgingLastObsFile
+    nlst%nudgingParamFile       = nudgingParamFile
+    nlst%netWkReExFile          = netWkReExFile
+    nlst%readTimesliceParallel  = readTimesliceParallel
+    nlst%temporalPersistence    = temporalPersistence
+    nlst%persistBias            = persistBias
+    nlst%nudgingLastObsFile     = nudgingLastObsFile
+    nlst%timeSlicePath          = timeSlicePath
+    nlst%nLastObs               = nLastObs
+    nlst%minNumPairsBiasPersist = minNumPairsBiasPersist
+    nlst%maxAgePairsBiasPersist = maxAgePairsBiasPersist
 #endif
 
 #ifdef MPP_LAND
@@ -380,6 +398,10 @@ CONTAINS
     write(6,*) " nlst%temporalPersistence",    temporalPersistence
     write(6,*) " nlst%persistBias",            persistBias
     write(6,*) " nlst%nudgingLastObsFile",     trim(nudgingLastObsFile)
+    write(6,*) " timeSlicePath         ",      trim(timeSlicePath)
+    write(6,*) " nLastObs              ",      nLastObs
+    write(6,*) " minNumPairsBiasPersist",      minNumPairsBiasPersist
+    write(6,*) " maxAgePairsBiasPersist",      maxAgePairsBiasPersist
 #endif
 #endif /* HYDRO_D */
 #ifdef MPP_LAND

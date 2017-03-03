@@ -21,7 +21,7 @@
 module module_stream_nudging
 
 use module_namelist,      only: nlst_rt
-use module_nudging_io,    only: lastObsStructure, nTimesLastObs
+use module_nudging_io,    only: lastObsStructure
 #ifdef MPP_LAND
      use module_mpp_land
      use module_mpp_reachls,  only: ReachLS_write_io
@@ -68,10 +68,10 @@ type(lastObsStructure), allocatable, dimension(:) :: lastObsStr
 type, extends(lastObsStructure) :: obsStaticStructure
    !! Inherited components
    !!character(len=15) :: usgsId        ! the 15 char USGS identifier.                             
-   !!real              :: lastObsDischarge       ! last observed discharge
-   !!character(len=19) :: lastObsTime            ! time of last obs discharge (.le.hydroTime)
-   !!real              :: lastObsQuality         ! quality of the last obs discharge
-   !!real              :: lastObsModelDischarge  ! the modeled discharge value at the time of the last obs
+   !!real              :: lastObsDischarge(:)       ! last observed discharge
+   !!character(len=19) :: lastObsTime(:)            ! time of last obs discharge (.le.hydroTime)
+   !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
+   !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
    !! New components
    integer :: obsCellInd    ! index of obs on model channel network, for distance calc 
    real    :: R, G, tau     ! the nudging parameters at this gage.                     
@@ -147,8 +147,6 @@ logical,            parameter :: sanityQcDischarge = .false.
 logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.
-integer,            parameter :: minNumPairsBiasPersist = 10
-!integer,            parameter :: maxAgePairsBiasPersist = 
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
@@ -157,6 +155,9 @@ character(len=256) :: nudgingLastObsFile
 logical            :: readTimesliceParallel
 logical            :: temporalPersistence
 logical            :: persistBias
+integer            :: nTimesLastObs   !! aka nlst_rt(did)%nLastObs
+integer            :: minNumPairsBiasPersist
+integer            :: maxAgePairsBiasPersist
 
 !========================
 ! Space book keeping
@@ -171,6 +172,7 @@ character(len=19) :: lsmTime
 integer :: lsmDt                                   !1234567890123456789
 character(len=19), parameter :: missingLastObsTime='9999999999999999999'
 character(len=2) :: obsResolution   
+
 
 #ifdef HYDRO_D
 integer, parameter :: flushUnit=6
@@ -265,7 +267,7 @@ integer :: ii, kk, ll, tt, count, toSize, fromSize
 integer :: nParamGages, nParamMonth, nParamThresh, nParamThreshCat, nGgDists, nGgDistsKeep
 integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) ::  whParamsDom
-integer :: downSize, upSize, baseSize, nLastObs
+integer :: downSize, upSize, baseSize, nStnLastObs
 character(len=256) :: lastObsFile
 
 !!$#ifdef HYDRO_D  /* un-ifdef to get timing results */
@@ -287,12 +289,15 @@ character(len=256) :: lastObsFile
 
 !! this ifdef is bizarre problem with pgf compiler
 #ifdef WRF_HYDRO_NUDGING
-nudgingParamFile      = nlst_rt(did)%nudgingParamFile
-netwkReExFile         = nlst_rt(did)%netwkReExFile
-readTimesliceParallel = nlst_rt(did)%readTimesliceParallel
-temporalPersistence   = nlst_rt(did)%temporalPersistence
-persistBias           = nlst_rt(did)%persistBias
-nudgingLastObsFile    = nlst_rt(did)%nudgingLastObsFile
+nudgingParamFile       = nlst_rt(did)%nudgingParamFile
+netwkReExFile          = nlst_rt(did)%netwkReExFile
+readTimesliceParallel  = nlst_rt(did)%readTimesliceParallel
+temporalPersistence    = nlst_rt(did)%temporalPersistence
+persistBias            = nlst_rt(did)%persistBias
+nudgingLastObsFile     = nlst_rt(did)%nudgingLastObsFile
+nTimesLastObs          = nlst_rt(did)%nLastObs
+minNumPairsBiasPersist = nlst_rt(did)%minNumPairsBiasPersist
+maxAgePairsBiasPersist = nlst_rt(did)%maxAgePairsBiasPersist
 #endif 
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
@@ -591,14 +596,20 @@ if(my_id .eq. io_id) then
            nudgingLastObsFile = 'nudgingLastObs.' // nlst_rt(did)%olddate // '.nc'
       lastObsFile = find_nudging_last_obs_file(nudgingLastObsFile)
       if(trim(lastObsFile) .ne. '') then
-         nLastObs = get_netcdf_dim(nudgingLastObsFile, 'stationIdInd', 'init_stream_nudging')
-         if(nLastObs .gt. 0) then
+         nStnLastObs = get_netcdf_dim(nudgingLastObsFile, 'stationIdInd', 'init_stream_nudging')
+         if(nStnLastObs .gt. 0) then
             print*,'Reading in nudgingLastObsFile: ', trim(nudgingLastObsFile)
-            allocate(lastObsStr(nLastObs))
+            allocate(lastObsStr(nStnLastObs))
+            do ll=1,nStnLastObs
+               allocate(lastObsStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsModelDischarge(nlst_rt(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsTime(          nlst_rt(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
+            end do
 
             call read_nudging_last_obs(nudgingLastObsFile, lastObsStr)      
 
-         end if ! nLastObs .gt. 0 -> read the file
+         end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
    end if ! temporalPersistence
 endif
@@ -1453,6 +1464,13 @@ obsStaticStr(:)%R      = nudgingParamsStr%R
 obsStaticStr(:)%G      = nudgingParamsStr%G
 obsStaticStr(:)%tau    = nudgingParamsStr%tau
 obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
+do ll=1,size(nudgingParamsStr%usgsId)
+   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsTime(          nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
+end do
+
 
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then 
@@ -1581,7 +1599,6 @@ if(my_id .eq. io_id) then
             endif
          endif
 
-
          if(.not. setLastObsInfo) then ! the gage did not have a last observation
             obsStaticStr(ll)%lastObsDischarge      = real(-9999) 
             obsStaticStr(ll)%lastObsModelDischarge = real(-9999) 
@@ -1591,7 +1608,7 @@ if(my_id .eq. io_id) then
             obsStaticStr(ll)%lastObsQuality        = real(0) !! keep this zero
          end if
       end if !temporalPersistence
-      
+
 #ifdef HYDRO_D
       ! diagnostics
       !if (my_id .eq. -5) then
@@ -1638,17 +1655,16 @@ do ll=1,size(obsStaticStr%usgsId)
    call mpp_land_bcast_int1d(obsStaticStr(ll)%cellsAffected)
    call mpp_land_bcast_real_1d(obsStaticStr(ll)%dist)
    call mpp_land_bcast_real_1d(obsStaticStr(ll)%ws)
-end do
 
-if(temporalPersistence) then
-   do tt=1,size(obsStaticStr(1)%lastObsDischarge(:))
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%lastObsDischarge(tt))
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%lastObsModelDischarge(tt))
-      call mpp_land_bcast_char1d( obsStaticStr(:)%lastObsTime(tt))
-      call mpp_land_bcast_real_1d(obsStaticStr(:)%lastObsQuality(tt))
-   end do
-endif
+   if(temporalPersistence) then 
+      call mpp_land_bcast_real_1d(obsStaticStr(ll)%lastObsDischarge(:))
+      call mpp_land_bcast_real_1d(obsStaticStr(ll)%lastObsModelDischarge(:))
+      call mpp_land_bcast_char1d( obsStaticStr(ll)%lastObsTime(:))
+      call mpp_land_bcast_real_1d(obsStaticStr(ll)%lastObsQuality(:))
+   endif
+end do
 #endif /* MPP_LAND */
+
 deallocate(nCellsInR)
 
 #ifdef HYDRO_D
