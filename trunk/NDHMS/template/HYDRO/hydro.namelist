@@ -149,16 +149,14 @@ temporalPersistence   = .FALSE.
 persistBias = .FALSE.
 
 ! If persistBias: The total number of last (obs, modeled) pairs to save in nudgingLastObs for 
-! removal of bias. Currently obs are every 15 min (hardwired param), so 4/hour. 10 days = 960.
+! removal of bias. This is the maximum array length.
 nLastObs = 960
 
-! If persistBias: The minimum number of last (obs, modeled) pairs required to apply a bias correction.
-! minNumPairsBias is set to the minimum of nLastObs, minNumPairsBiasPersis, & maxAgePairsBiasPersist
-minNumPairsBiasPersist = 8
+! If persistBias: Only use last (obs, modeled) pairs no older than this number of hours.
+maxAgePairsBiasPersist = 240
 
-! If persistBias: Only use last (obs, modeled) pairs no less recent than this.
-! Units=count. Convert to minutes by multiplying by 15min (hardwired observation resolution)
-! maxAgePairsBiasPersist is set to the minimum of nLastObs & maxAgePairsBiasPersist
-maxAgePairsBiasPersist = 960
+! If persistBias: The minimum number of last (obs, modeled) pairs, with age less than
+! maxAgePairsBiasPersist, required to apply a bias correction.
+minNumPairsBiasPersist = 8
 
 /

@@ -2200,7 +2200,7 @@ real :: theInnov, weighting, theBias
 integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd
 real,    parameter :: smallestWeight=1.e-8
 !! persistence related variables in following block
-integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt
+integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt
 integer, dimension(nTimesLastObs) :: prstDtErrInt_ts
 real,    dimension(nTimesLastObs) :: prstDtErr_ts
 logical, dimension(nTimesLastObs) :: biasMask
@@ -2236,7 +2236,9 @@ if(linkInd .eq. checkInd) then
 end if
 #endif
 
-!! JLM: document what is this loop doing? Moving the observation structure in to nudginLastObs struct.
+!! JLM: document what is this loop doing? 
+!! 1) Moving the observation structure in to nudginLastObs struct.
+!! 2) Calculating the nudging terms & weights at different positions along the assim window.
 do tt=1,size(obsTimeStr)
 
    if(.not. allocated(obsTimeStr(tt)%allCellInds)) cycle
@@ -2251,9 +2253,19 @@ do tt=1,size(obsTimeStr)
       if(.not. any(obsStaticStr(staticInd)%cellsAffected .eq. linkInd)) cycle
 
       if(temporalPersistence) then
-         ! If the model time is greater than or at the obs time: write to last obs.
+         ! If the model time is greater than or at the obs time AND
+         ! the obs time is greater than the last written obs: then write to last obs.
          call geth_idts(hydroTime, obsTimeStr(tt)%obsStr(oo)%obsTime, prstDtErrInt)
-         if(prstDtErrInt .ge. 0) then
+
+         if(missingLastObsTime .eq.                           &
+            obsStaticStr(staticInd)%lastObsTime(nTimesLastObs)) then
+            obsDtInt=1
+         else 
+            call geth_idts(obsTimeStr(tt)%obsStr(oo)%obsTime,                          & 
+                           obsStaticStr(staticInd)%lastObsTime(nTimesLastObs), obsDtInt)
+         end if
+
+         if(prstDtErrInt .ge. 0 .and. obsDtInt .gt. 0) then
             !! shift (note cshift does not work for all these)
             obsStaticStr(staticInd)%lastObsTime(1:(nTimesLastObs-1))           = &
                  obsStaticStr(staticInd)%lastObsTime(2:nTimesLastObs)
@@ -2263,7 +2275,7 @@ do tt=1,size(obsTimeStr)
                  obsStaticStr(staticInd)%lastObsModelDischarge(2:nTimesLastObs)
             obsStaticStr(staticInd)%lastObsQuality(1:(nTimesLastObs-1))        = &
                  obsStaticStr(staticInd)%lastObsQuality(2:nTimesLastObs)
-
+            
             obsStaticStr(staticInd)%lastObsTime(nTimesLastObs)           = &
                  obsTimeStr(tt)%obsStr(oo)%obsTime
             obsStaticStr(staticInd)%lastObsDischarge(nTimesLastObs)      = &
@@ -2502,7 +2514,7 @@ else if (temporalPersistence) then
            theBias * (1.0 - exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB) )
 
       !                   123456789012345
-      if(prstGageId .eq. '    ---CLAFTCCO') then
+      if(prstGageId .eq. '       CLAFTCCO') then
          print*,'JLM: Ndg: usgsId: ', prstGageId
          print*,'JLM: Ndg: theBias:', theBias
          !! JLM: make sure that the bias is NOT greater than the current discharge: below.
