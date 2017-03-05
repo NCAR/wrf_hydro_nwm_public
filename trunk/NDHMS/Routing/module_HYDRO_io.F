@@ -5845,9 +5845,9 @@ if(IO_id .eq. my_id) then
    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
    iret = NF_GET_ATT_REAL(ncid, NF_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
    iret = nf_get_att_text(ncid,NF_GLOBAL,"Since_Date",nlst_rt(did)%sincedate(1:19))
-   if( nlst_rt(did)%channel_only       .eq. 1 .or. &
-       nlst_rt(did)%channelBucket_only .eq. 1         ) &
-       iret = nf_get_att_text(ncid,NF_GLOBAL,"Restart_Time",nlst_rt(did)%olddate(1:19))
+!   if( nlst_rt(did)%channel_only       .eq. 1 .or. &
+!       nlst_rt(did)%channelBucket_only .eq. 1         ) &
+!       iret = nf_get_att_text(ncid,NF_GLOBAL,"Restart_Time",nlst_rt(did)%olddate(1:19))
    if(iret /= 0) nlst_rt(did)%sincedate = nlst_rt(did)%startdate
    if(nlst_rt(did)%DTCT .gt. 0) then
       nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH)
@@ -5859,9 +5859,9 @@ if(IO_id .eq. my_id) then
 endif
 call mpp_land_bcast_int1(rt_domain(did)%out_counts)
 call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
-if( nlst_rt(did)%channel_only       .eq. 1 .or. &
-    nlst_rt(did)%channelBucket_only .eq. 1         ) &
-    call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
+!if( nlst_rt(did)%channel_only       .eq. 1 .or. &
+!    nlst_rt(did)%channelBucket_only .eq. 1         ) &
+!    call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
 !! call mpp_land_bcast_char(19, nlst_rt(did)%sincedate) ! why not? we read it in.
 #endif
 
