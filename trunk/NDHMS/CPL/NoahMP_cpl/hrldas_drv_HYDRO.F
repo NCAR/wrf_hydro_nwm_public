@@ -398,4 +398,64 @@
          integer :: did, iocflag
          iocflag = nlst_rt(did)%iocflag
       end subroutine get_iocflag
+
+      subroutine get_t0OutputFlag(did, t0OutputFlag) 
+         use module_namelist, only:nlst_rt
+         implicit none
+         integer :: did, t0OutputFlag
+         t0OutputFlag = nlst_rt(did)%t0OutputFlag
+      end subroutine get_t0OutputFlag
+
+
+      subroutine getNameList(varName,pVar)
+          use module_namelist, only:nlst_rt
+          implicit none
+          integer :: pVar
+          integer :: did
+          character(len=*) :: varName
+          did = 1
+          if(varName .eq. "GWSPINCYCLES") then
+               pVar = nlst_rt(did)%gwSpinCycles
+          elseif(varName .eq. "GWBASESWCRT") then
+               pVar = nlst_rt(did)%GWBASESWCRT
+          elseif(varName .eq. "GWSOILCPL") then
+               pVar = nlst_rt(did)%gwsoilcpl
+          elseif(varName .eq. "channel_only") then
+               pVar = nlst_rt(did)%channel_only
+          elseif(varName .eq. "channelBucket_only") then
+               pVar = nlst_rt(did)%channelBucket_only
+          elseif(varName .eq. "igrid") then
+               pVar = nlst_rt(did)%igrid
+          else
+               pVar = 0
+          endif
+     end subroutine getNameList
+
+      subroutine updateNameList(varName,pVarIn)
+          use module_namelist, only:nlst_rt
+#ifdef MPP_LAND
+          use module_mpp_land, only: mpp_land_bcast_int1
+#endif
+          implicit none
+          integer :: did
+          character (len=*) :: varName
+          integer :: pVar, pVarIn
+          pVar = pVarIn
+          did = 1
+          if(varName .eq. "channel_only") then
+#ifdef MPP_LAND
+             call mpp_land_bcast_int1(pVar)
+#endif
+             nlst_rt(did)%channel_only = pVar
+          endif
+          if(varName .eq. "channelBucket_only") then
+#ifdef MPP_LAND
+             call mpp_land_bcast_int1(pVar)
+#endif
+             nlst_rt(did)%channelBucket_only = pVar
+          endif
+
+     end subroutine updateNameList
+ 
+
  
