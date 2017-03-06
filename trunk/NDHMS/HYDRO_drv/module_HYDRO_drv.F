@@ -748,10 +748,9 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
         endif
 
-!! JLM:: PUT THIS BACK BEFORE CHECKING/MERGING INTO MASTER
-!#ifndef HYDRO_REALTIME
-!        call output_GW_Diag(did)
-!#endif
+#ifndef HYDRO_REALTIME
+        call output_GW_Diag(did)
+#endif
 
 #ifdef HYDRO_D 
 #ifndef NCEP_WCOSS
