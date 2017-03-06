@@ -5995,13 +5995,12 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !#ifdef HYDRO_D
 !            print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
 !#endif
-!rt_domain(did)%INFXSRT=0.
-!rt_domain(did)%LAKE_INFLORT=0.
-!rt_domain(did)%QSTRMVOLRT=0.
-!rt_domain(did)%accSfcLatRunoff = 0.
-!rt_domain(did)%accQLateral = 0.
-!rt_domain(did)%qSfcLatRunoff = 0.
-!rt_domain(did)%accBucket = 0.
+!! JLM: 
+!! Reset of accumulation variables move to end of subroutine 
+!!   Routing/module_HYDRO_drv.F: HYDRO_ini
+!! See comments there.
+!! Conensed, commented code:
+!! rt_domain(did)%INFXSRT=0.!rt_domain(did)%LAKE_INFLORT=0.!rt_domain(did)%QSTRMVOLRT=0.
 !end if
 
       
