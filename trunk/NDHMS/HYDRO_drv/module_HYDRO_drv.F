@@ -266,11 +266,12 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #endif
 		 )
 
-
+   
+   !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
-   if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
-      if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
-   end if
+   !if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
+   !   if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
+   !end if
 
 
    if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
@@ -748,9 +749,11 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
         endif
 
-#ifndef HYDRO_REALTIME
-        call output_GW_Diag(did)
-#endif
+!! JLM: There's *perhaps* a better location for this output above.
+!! If above is better, remove this when runtime output options are avail. 
+!#ifndef HYDRO_REALTIME
+!        call output_GW_Diag(did)
+!#endif
 
 #ifdef HYDRO_D 
 #ifndef NCEP_WCOSS
