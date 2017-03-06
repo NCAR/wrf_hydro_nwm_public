@@ -60,7 +60,12 @@
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
+       logical            :: persistBias
        character(len=256) :: nudgingLastObsFile
+       character(len=256) :: timeSlicePath
+       integer            :: nLastObs
+       integer            :: minNumPairsBiasPersist
+       integer            :: maxAgePairsBiasPersist
 #endif
 
 

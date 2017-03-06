@@ -87,7 +87,12 @@ CONTAINS
        character(len=256) :: netwkReExFile
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
+       logical            :: persistBias
        character(len=256) :: nudgingLastObsFile
+       character(len=256) :: timeSlicePath
+       integer            :: nLastObs
+       integer            :: minNumPairsBiasPersist
+       integer            :: maxAgePairsBiasPersist
 #endif 
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
@@ -114,17 +119,29 @@ CONTAINS
    output_channelBucket_influx = 0
 
 #ifdef WRF_HYDRO_NUDGING
-   namelist /NUDGING_nlist/ nudgingParamFile,      netwkReExFile,       &
-                            readTimesliceParallel, temporalPersistence, &
-                            nudgingLastObsFile
-   ! Default values... 
+   namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,        &
+                            readTimesliceParallel,  temporalPersistence,  &
+                            persistBias,            nudgingLastObsFile,   &
+                            timeSlicePath,          nLastObs,             &
+                            minNumPairsBiasPersist, maxAgePairsBiasPersist
+   ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"
    readTimesliceParallel = .true.
    temporalPersistence   = .true.
+   persistBias           = .false.
    nudgingLastObsFile = ""
+   timeSlicePath = "./nudgingTimeSliceObs/"
+   nLastObs = 960
+   minNumPairsBiasPersist = 8
+   maxAgePairsBiasPersist = -99999
 #endif 
 
+   !! default  values for HYDRO_nlist
+   UDMP_OPT = 0
+   rst_bi_in = 0
+   rst_bi_out = 0
+   iocflag = 0
                     
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
@@ -140,6 +157,8 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING          
           read(12, NUDGING_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
+          !! Conditional default values for nuding_nlist
+          if(maxAgePairsBiasPersist .eq. -99999) maxAgePairsBiasPersist = -1*nLastObs
 #endif
           close(12)
 
@@ -259,6 +278,11 @@ CONTAINS
   call mpp_land_bcast_char(256, nudgingLastObsFile)
   call mpp_land_bcast_log1(readTimesliceParallel)
   call mpp_land_bcast_log1(temporalPersistence)
+  call mpp_land_bcast_log1(persistBias)
+  call mpp_land_bcast_char(256, timeSlicePath)
+  call mpp_land_bcast_int1(nLastObs)
+  call mpp_land_bcast_int1(minNumPairsBiasPersist)
+  call mpp_land_bcast_int1(maxAgePairsBiasPersist)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -330,11 +354,16 @@ CONTAINS
     nlst%UDMP_OPT = UDMP_OPT
     nlst%GWBUCKPARM_file =  GWBUCKPARM_file
 #ifdef WRF_HYDRO_NUDGING
-    nlst%nudgingParamFile      = nudgingParamFile
-    nlst%netWkReExFile         = netWkReExFile
-    nlst%readTimesliceParallel = readTimesliceParallel
-    nlst%temporalPersistence   = temporalPersistence
-    nlst%nudgingLastObsFile    = nudgingLastObsFile
+    nlst%nudgingParamFile       = nudgingParamFile
+    nlst%netWkReExFile          = netWkReExFile
+    nlst%readTimesliceParallel  = readTimesliceParallel
+    nlst%temporalPersistence    = temporalPersistence
+    nlst%persistBias            = persistBias
+    nlst%nudgingLastObsFile     = nudgingLastObsFile
+    nlst%timeSlicePath          = timeSlicePath
+    nlst%nLastObs               = nLastObs
+    nlst%minNumPairsBiasPersist = minNumPairsBiasPersist
+    nlst%maxAgePairsBiasPersist = maxAgePairsBiasPersist
 #endif
 
 #ifdef MPP_LAND
@@ -382,7 +411,12 @@ CONTAINS
     write(6,*) " nlst%netWkReExFile",          trim(netWkReExFile)
     write(6,*) " nlst%readTimesliceParallel",  readTimesliceParallel
     write(6,*) " nlst%temporalPersistence",    temporalPersistence
+    write(6,*) " nlst%persistBias",            persistBias
     write(6,*) " nlst%nudgingLastObsFile",     trim(nudgingLastObsFile)
+    write(6,*) " timeSlicePath         ",      trim(timeSlicePath)
+    write(6,*) " nLastObs              ",      nLastObs
+    write(6,*) " minNumPairsBiasPersist",      minNumPairsBiasPersist
+    write(6,*) " maxAgePairsBiasPersist",      maxAgePairsBiasPersist
 #endif
 #endif /* HYDRO_D */
 #ifdef MPP_LAND

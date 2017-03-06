@@ -2370,6 +2370,36 @@ MODULE MODULE_MPP_LAND
     end subroutine mpp_comm_scalar_char
 
     
+    subroutine mpp_comm_1d_real(vector, fromImage, toImage)
+    implicit none
+    real,    dimension(:), intent(inout) :: vector
+    integer,               intent(in)    :: fromImage, toImage
+    integer:: ierr, tag
+    tag=2   
+    if(my_id .eq. fromImage) &
+         call mpi_send(vector, size(vector), MPI_REAL, &
+                       toImage, tag, MPI_COMM_WORLD, ierr)
+    if(my_id .eq. toImage) &
+         call mpi_recv(vector, size(vector), MPI_REAL, &
+                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+    end subroutine mpp_comm_1d_real
+
+
+    subroutine mpp_comm_1d_char(vector, fromImage, toImage)
+    implicit none
+    character(len=*), dimension(:), intent(inout) :: vector
+    integer,                        intent(in)    :: fromImage, toImage
+    integer:: ierr, tag, totalLength
+    tag=2
+    totalLength=len(vector(1))*size(vector,1)
+    if(my_id .eq. fromImage) &
+         call mpi_send(vector, totalLength, MPI_CHARACTER, &
+                       toImage, tag, MPI_COMM_WORLD, ierr)
+    if(my_id .eq. toImage) &
+         call mpi_recv(vector, totalLength, MPI_CHARACTER, &
+                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+    end subroutine mpp_comm_1d_char
+
     
 END MODULE MODULE_MPP_LAND
 

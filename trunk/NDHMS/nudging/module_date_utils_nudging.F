@@ -953,6 +953,33 @@ end subroutine geth_idts
 
 
 !===================================================================================================
+! Function Name: get_idts_elemental
+! Author(s)/Contact(s): 
+!   James L McCreight, jamesmcc><ucar><edu
+! Abstract: 
+!   get_idts on a vector.
+!
+! History Log: 
+!   10/11/16 -Header Created, JLM
+! Usage: 
+!
+! Parameters: 
+!
+! Input Files: 
+!   None.
+! Output Files: 
+!   None.
+! Condition codes: 
+!
+! User controllable options: 
+!   None. 
+! Notes: 
+!elemental subroutine geth_idts_elemental(newdate, olddate, idt)
+!end
+
+
+
+!===================================================================================================
 ! Function Name: nfeb
 ! Author(s)/Contact(s): 
 !   Wei Yu? or NoahMP developers?
