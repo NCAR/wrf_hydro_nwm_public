@@ -17,6 +17,7 @@
 !        appropriate error code
 ! 
 !  User controllable options: <if applicable>
+!
 
 module module_HYDRO_io
 #ifdef MPP_LAND
@@ -534,47 +535,54 @@ end subroutine get_albedo12m_netcdf
 
   subroutine get_2d_netcdf(name, ncid, array, units, idim, jdim, &
        fatal_if_error, ierr)
+
     implicit none
-#include <netcdf.inc>
+
     character(len=*), intent(in) :: name
     integer, intent(in) :: ncid
     integer, intent(in) :: idim, jdim
     real, dimension(idim,jdim), intent(out) :: array
     character(len=256), intent(out) :: units
-    integer :: iret, varid
-    ! .TRUE._IF_ERROR:  an input code value:
+    ! fatal_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
     logical, intent(in) :: fatal_if_error 
     integer, intent(out) :: ierr
 
+    integer :: iret, varid
+    real    :: scale_factor,   add_offset
+
     units = ""
 
-    iret = nf_inq_varid(ncid,  name,  varid)
-
+    iret = nf90_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          call hydro_stop("In get_2d_netcdf() - nf_inq_varid problem")
+          call hydro_stop("In get_2d_netcdf() - nf90_inq_varid problem")
        else
           ierr = iret
           return
        endif
     endif
 
-
-    iret = nf_get_var_real(ncid, varid, array)
+    iret = nf90_get_var(ncid, varid, array)
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          call hydro_stop("In get_2d_netcdf() - nf_get_var_real problem")
+          call hydro_stop("In get_2d_netcdf() - nf90_get_var_real problem")
        else
           ierr = iret
           return
        endif
     endif
+
+    iret = nf90_get_att(ncid, varid, 'scale_factor', scale_factor)
+    if(iret .eq. 0) array = array * scale_factor
+    iret = nf90_get_att(ncid, varid, 'add_offset', add_offset)
+    if(iret .eq. 0) array = array + add_offset
 
     ierr = 0;
+
   end subroutine get_2d_netcdf
 
 
