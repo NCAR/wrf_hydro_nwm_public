@@ -133,7 +133,7 @@ CONTAINS
    timeSlicePath = "./nudgingTimeSliceObs/"
    nLastObs = 960
    minNumPairsBiasPersist = 8
-   maxAgePairsBiasPersist = 960
+   maxAgePairsBiasPersist = -99999
 #endif 
 
    !! default  values for HYDRO_nlist
@@ -156,6 +156,8 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING          
           read(12, NUDGING_nlist, iostat=ierr)
           if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
+          !! Conditional default values for nuding_nlist
+          if(maxAgePairsBiasPersist .eq. -99999) maxAgePairsBiasPersist = -1*nLastObs
 #endif
           close(12)
 

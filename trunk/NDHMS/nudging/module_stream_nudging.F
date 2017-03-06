@@ -2200,10 +2200,10 @@ real :: theInnov, weighting, theBias
 integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd
 real,    parameter :: smallestWeight=1.e-8
 !! persistence related variables in following block
-integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt
+integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt, pairCount
 integer, dimension(nTimesLastObs) :: prstDtErrInt_ts
 real,    dimension(nTimesLastObs) :: prstDtErr_ts
-logical, dimension(nTimesLastObs) :: biasMask
+logical, dimension(nTimesLastObs) :: biasMask, whObsTooOld
 real :: prstB, prstDtErr, prstErr
 character(len=15) :: prstGageId
 integer, parameter :: sixty=60
@@ -2397,26 +2397,72 @@ else if (temporalPersistence) then
    
    !! 2) minimum number of observations
    if(persistBias_local) then
-      !! JLM JLM JLM
-      !! A threshold for the minimum number of obs/days required to estimate/use bias.
-      !! If not enough obs for bias persistence, use obs persistence.
-      !! One could set a percentage of nTimesLastObs or a minimum number of unique days.
-      !! For simplicity, I'll just go with at least 10 observations to
-      !! to start. I think a minimum number of days with obs is probably better but will 
-      !! require some coding.
-      !! Probably also want to impose that the time difference with the model is not 
-      !! greater than some threshold since we are only accumulating the available obs.
-      !! A mask of usable values to use in the bias calculation
-      biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                 .AND. &
-                obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .AND.  &
-                obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero  
-      if(count(biasMask) .lt. minNumPairsBiasPersist ) then
+      !! This section creates a mask of usable values to use in the bias calculation
+      !! subject to two parameters of the method.
+
+      !!-----------------------------------
+      !! maxAgePairsBiasPersist
+      !! if greater than 0: apply an age-based filter
+      !! if zero          : apply no additional use all available obs.
+      !! if less than zero: apply an count-based filter
+      
+      if(maxAgePairsBiasPersist .gt. 0) then
+         !! assume the obs are all too old, find the not so old ones
+         whObsTooOld = .true.
+         do tt=nTimesLastObs,1,-1
+            !! missing obs are not mixed with good obs. The first missing obs means the rest are missing.
+            if(obsStaticStr(whGageId)%lastObsTime(tt) .eq. missingLastObsTime) exit
+            call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)
+            if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
+            whObsTooOld(tt) = .false. 
+            !! Put the times in minutes ofr ease of reading
+            !print*,'JLM foo obsDtInt (mins):', maxAgePairsBiasPersist*60, obsDtInt/60, &
+            !       hydroTime, ' ',  obsStaticStr(whGageId)%lastObsTime(tt)
+         end do
+         biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
+                   obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
+                   obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero               .and. &
+                   (.not. whObsTooOld)
+      end if
+
+      if(maxAgePairsBiasPersist .eq. 0) then
+         biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
+                   obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
+                   obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero               
+      endif
+
+      if(maxAgePairsBiasPersist .lt. 0) then
+         biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
+                   obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
+                   obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero
+         !if((-1*maxAgePairs) .ge. nTimesLastObs) then there's nothing to do.
+         if((-1*maxAgePairsBiasPersist) .lt. nTimesLastObs) then
+            pairCount=0
+            do tt=nTimesLastObs,1,-1
+               if(biasMask(tt)) pairCount = pairCount + 1
+               if(pairCount .gt. (-1*maxAgePairsBiasPersist)) biasMask(tt) = .false.
+            end do
+         end if
+      end if
+
+
+      !!-----------------------------------
+      !! minNumPairsBiasPersist
+      !! If the pair count starts to dwindle during the forecast period, how does the transition 
+      !! happen from bias correction to open loop? 
+      !! Looks like it would get switched instantaneously. Avoid this problem with the 
+      !! negative maxAgePairsBiasPersist which always use the last maxAgePairsBiasPersist count 
+      !! of obs available. If there enough obs for bias correction at a site, this will ensure 
+      !! that there's no transition away from bias correction in the forecast. If there are not
+      !! enough obs for bias correction, then observation persistence+decay will be applied as 
+      !! in v1.0.
+      if(count(biasMask) .lt. minNumPairsBiasPersist) then
          persistBias_local = .false.
          !! JLM move this to hydro_d
          print*,'JLM: Ndg: not enough observations for bias persistence, using obs persistence', &
               prstGageId
       end if
-   end if
+   end if ! if(persistBias_local)
 
    !! Must check this for both cases obs and persistance nudging
    !! JLM: currently not also checking the quality. May be ok, but not ideal.
