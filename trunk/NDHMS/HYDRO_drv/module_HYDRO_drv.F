@@ -1485,17 +1485,24 @@ call HYDRO_rst_in(did)
 
 #ifdef HYDRO_REALTIME
 call HYDRO_out(did)
-!! Only reset the AFTER outputing the accumulations from the initial time
+!! JLM: This is only currently part 1/2 of a better accumulation tracking strategy. 
+!! The parts:
+!! 1) (this) zero accumulations on restart/init after any t=0 outputs are written.
+!! 2) introduce a variable in the output files which indicates if accumulations are 
+!!    reset after this output.
+!! Here we move zeroing to after AFTER outputing the accumulations at the initial time.
 !! This was previously done in HYDRO_rst_in and so output accumulations at time 
-!! zero were getting destroyed by re-outputting with HYDRO_out above.
-!! nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
+!! zero were getting zeroed and then writtent to file, which looses information. 
+!! Note that nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    !#endif
-   rt_domain(did)%INFXSRT      = zeroFlt
-   rt_domain(did)%LAKE_INFLORT = zeroFlt
-   rt_domain(did)%QSTRMVOLRT   = zeroFlt
+!   This change corresponds to Wei's restart fix 6ec975870ba871d6322cfc3927810252169afe58
+!   just in  a different place (these are conflicts not identified by git, manually merged).
+!   rt_domain(did)%INFXSRT      = zeroFlt
+!   rt_domain(did)%LAKE_INFLORT = zeroFlt
+!   rt_domain(did)%QSTRMVOLRT   = zeroFlt
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if
