@@ -143,7 +143,6 @@ module module_HYDRO_drv
       real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
       real, dimension(RT_DOMAIN(did)%NLINKS) :: vel_out 
 
-
 !    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
 !           runoff1x_tmp, runoff2x_tmp, runoff3x_tmp,etax_tmp, &
 !           EDIRX_tmp,ECX_tmp,ETTX_tmp,RCX_tmp,HX_tmp,acrain_tmp, &
@@ -200,7 +199,6 @@ module module_HYDRO_drv
         kt = rt_domain(did)%his_out_counts
      endif
 
-
 ! jump the ouput for the initial time when it has restart file from routing.
    rtflag = -99
 #ifdef MPP_LAND
@@ -223,6 +221,7 @@ module module_HYDRO_drv
 !yw keep the initial time otuput for debug
       if(rtflag == 1) then 
           rt_domain(did)%restQSTRM = .false.   !!! do not reset QSTRM.. at initial time.
+          if(nlst_rt(did)%t0OutputFlag .eq. 0) return
 #ifndef HYDRO_REALTIME
           return ! jump the initial time output for routing restart
 #endif
@@ -237,13 +236,16 @@ module module_HYDRO_drv
 
     
 
-        if(nlst_rt(did)%SUBRTSWCRT .gt. 0 &
-             .or. nlst_rt(did)%OVRTSWCRT .gt. 0 &
-             .or. nlst_rt(did)%GWBASESWCRT .gt. 0 ) then
+if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
+   nlst_rt(did)%OVRTSWCRT          .gt. 0 .or. &
+   nlst_rt(did)%GWBASESWCRT        .gt. 0 .or. &
+   nlst_rt(did)%channel_only       .gt. 0 .or. & 
+   nlst_rt(did)%channelBucket_only .gt. 0      ) then
+          
 
-           
-
-              if(nlst_rt(did)%RTOUT_DOMAIN .eq. 1)  &
+   if(nlst_rt(did)%RTOUT_DOMAIN       .eq. 1 .and. &
+      nlst_rt(did)%channel_only       .eq. 0 .and. &
+      nlst_rt(did)%channelBucket_only .eq. 0       ) &
               call output_rt(    &
                 nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                 RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
@@ -264,10 +266,15 @@ module module_HYDRO_drv
 #endif
 		 )
 
+   
+   !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
+   !! JLM This seems like a more logical place?
+   !if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
+   !   if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
+   !end if
 
 
-
-           if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
+   if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
 	     
               if(nlst_rt(did)%output_gw  .eq. 1)  &
               call sub_output_gw(    &
@@ -301,6 +308,7 @@ module module_HYDRO_drv
 !ADCHANGE: Change values for within lake reaches to NA
              str_out = RT_DOMAIN(did)%QLINK
              vel_out = RT_DOMAIN(did)%velocity
+
 #ifdef HYDRO_REALTIME
              if (RT_DOMAIN(did)%NLAKES .gt. 0)  then
                     do i=1,RT_DOMAIN(did)%NLINKS
@@ -315,7 +323,8 @@ module module_HYDRO_drv
 
              if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
 #ifdef MPP_LAND
-                 call mpp_output_chrt(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+                 call mpp_output_chrt( &
+                      rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
 #else
                  call output_chrt(  &
 #endif
@@ -333,35 +342,36 @@ module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
                    , RT_DOMAIN(did)%nudge                                     &
 #endif
-#ifndef HYDRO_REALTIME
-                   , RT_DOMAIN(did)%accLndRunOff, RT_DOMAIN(did)%accQLateral, &
-                   RT_DOMAIN(did)%accStrmvolrt,                               &
-                   RT_DOMAIN(did)%accBucket, nlst_rt(did)%UDMP_OPT            &
-#endif
+                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
+                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
+                   , RT_DOMAIN(did)%qin_gwsubbas                              &
+                   , nlst_rt(did)%UDMP_OPT                                    &
                    )
               else
                 if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
 #ifdef MPP_LAND
-                     call mpp_output_chrt2(rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+                     call mpp_output_chrt2(&
+                          rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
 #else
                      call output_chrt2(  &
 #endif
                      nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                     RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-                     nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
-                     RT_DOMAIN(did)%CHLAT,                                      &
-                     RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-                     !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
-                     str_out, nlst_rt(did)%DT,Kt,                   &
-                     RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                     rt_domain(did)%linkid                                      &
+                     RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER,          &
+                     nlst_rt(did)%sincedate,nlst_rt(did)%olddate,         &
+                     RT_DOMAIN(did)%CHLON, RT_DOMAIN(did)%CHLAT,          &
+                     RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,          &
+                     !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,             &
+                     str_out, nlst_rt(did)%DT,Kt,                         &
+                     RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,  &
+                     rt_domain(did)%linkid                                &
 #ifdef WRF_HYDRO_NUDGING
                      , RT_DOMAIN(did)%nudge                                     &
 #endif
-#ifdef HYDRO_REALTIME
-		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &          
+		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &
                      , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
-#endif
+                     , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket       &
+                     , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket         &
+                     , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT          &
 		     )
                  endif
 
@@ -530,110 +540,125 @@ module module_HYDRO_drv
 
 
 
-           if (nlst_rt(did)%GWBASESWCRT .ne. 0     &
-               .or. nlst_rt(did)%SUBRTSWCRT .NE.0  &
-               .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
+if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
+    nlst_rt(did)%SUBRTSWCRT         .ne. 0 .or. &
+    nlst_rt(did)%OVRTSWCRT          .ne. 0 .or. &
+    nlst_rt(did)%channel_only       .ne. 0 .or. &
+    nlst_rt(did)%channelBucket_only .ne. 0      ) then
 
+   ! step 1) disaggregate specific fields from LSM to Hydro grid
+   if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
-              RT_DOMAIN(did)%QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
-              RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
+      RT_DOMAIN(did)%QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
-
-
-                ! step 1) disaggregate specific fields from LSM to Hydro grid
-                if(nlst_rt(did)%SUBRTSWCRT .NE.0 .or. nlst_rt(did)%OVRTSWCRT .NE. 0) then
-                    call disaggregateDomain_drv(did)
-                endif
-                if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
-                   if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-                      call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
-                          rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%dist(:,:,9), &
-                          RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
-                   endif
-                endif
-
+      if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
+         call disaggregateDomain_drv(did)
+      endif
+      if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
+         if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
+                 rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%dist(:,:,9), &
+                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
+         endif
+      endif
 
 #ifdef HYDRO_D
-                call system_clock(count=clock_count_1, count_rate=clock_rate)
+      call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
-               ! step 2)
-                if(nlst_rt(did)%SUBRTSWCRT .NE.0) then
-                    call SubsurfaceRouting_drv(did)
-                endif
+   endif !! channel_only & channelBucket_only == 0
+
+
+   ! step 2)
+   if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+      if(nlst_rt(did)%SUBRTSWCRT .ne.0) then
+         call SubsurfaceRouting_drv(did)
+      endif
 #ifdef HYDRO_D
-                call system_clock(count=clock_count_2, count_rate=clock_rate)
-                timeSr = timeSr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+      call system_clock(count=clock_count_2, count_rate=clock_rate)
+      timeSr = timeSr     + float(clock_count_2-clock_count_1)/float(clock_rate)
 #ifndef NCEP_WCOSS
-                write(6,*) "Timing: Subsurface Routing  accumulated time--", timeSr
+      write(6,*) "Timing: Subsurface Routing  accumulated time--", timeSr
 #else
-                write(78,*) "Timing: Subsurface Routing  accumulated time--", timeSr
+      write(78,*) "Timing: Subsurface Routing  accumulated time--", timeSr
 #endif
 #endif
-		
-		! step 3) todo split
+   end if !! channel_only & channelBucket_only == 0				
+
+
+   ! step 3) todo split
+   if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 #ifdef HYDRO_D
-                call system_clock(count=clock_count_1, count_rate=clock_rate)
+      call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
-                if(nlst_rt(did)%OVRTSWCRT .NE. 0) then
-  		    call OverlandRouting_drv(did)
-                else
-                    RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%INFXSUBRT
-                    RT_DOMAIN(did)%INFXSUBRT = 0.
-                endif
+      if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
+         call OverlandRouting_drv(did)
+      else
+         RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%INFXSUBRT
+         RT_DOMAIN(did)%INFXSUBRT = 0.
+      endif
 #ifdef HYDRO_D
-                call system_clock(count=clock_count_2, count_rate=clock_rate)
-                timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+      call system_clock(count=clock_count_2, count_rate=clock_rate)
+      timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
 #ifndef NCEP_WCOSS
-                write(6,*) "Timing: Overland Routing  accumulated time--", timeOr
+      write(6,*) "Timing: Overland Routing  accumulated time--", timeOr
 #else
-                write(78,*) "Timing: Overland Routing  accumulated time--", timeOr
+      write(78,*) "Timing: Overland Routing  accumulated time--", timeOr
 #endif
 #endif
 
-              RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
-              RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
-
+      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
+      RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 			
 #ifdef HYDRO_D
-                call system_clock(count=clock_count_1, count_rate=clock_rate)
+      call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
-		! step 4) baseflow or groundwater physics
-                if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
-		     call driveGwBaseflow(did)
-                endif
-#ifdef HYDRO_D
-                call system_clock(count=clock_count_2, count_rate=clock_rate)
-                timeGw = timeGw     + float(clock_count_2-clock_count_1)/float(clock_rate)
-#ifndef NCEP_WCOSS
-                write(6,*) "Timing: GwBaseflow  accumulated time--", timeGw
-#else
-                write(78,*) "Timing: GwBaseflow  accumulated time--", timeGw
-#endif
-#endif
-	
-	
-#ifdef HYDRO_D
-                call system_clock(count=clock_count_1, count_rate=clock_rate)
-#endif
-		! step 5) river channel physics
-		  call driveChannelRouting(did)
-#ifdef HYDRO_D
-                call system_clock(count=clock_count_2, count_rate=clock_rate)
-                timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
-#ifndef NCEP_WCOSS
-                write(6,*) "Timing: Channel Routing  accumulated time--", timeCr
-#else
-                write(78,*) "Timing: Channel Routing  accumulated time--", timeCr
-#endif
-#endif
-	
-		! step 6) aggregate specific fields from Hydro to LSM grid
-               if (nlst_rt(did)%SUBRTSWCRT .NE.0  .or. nlst_rt(did)%OVRTSWCRT .NE. 0 ) THEN
-		      call aggregateDomain(did)
-               endif
+   end if !! channel_only & channelBucket_only == 0
 
 
-           end if
+   ! step 4) baseflow or groundwater physics
+   !! channelBucket_only can be anything: the only time you dont run this is if channel_only=1
+   if(nlst_rt(did)%channel_only .eq. 0) then  
+      if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
+         call driveGwBaseflow(did)
+      endif
+#ifdef HYDRO_D
+      call system_clock(count=clock_count_2, count_rate=clock_rate)
+      timeGw = timeGw     + float(clock_count_2-clock_count_1)/float(clock_rate)
+#ifndef NCEP_WCOSS
+      write(6,*) "Timing: GwBaseflow  accumulated time--", timeGw
+#else
+      write(78,*) "Timing: GwBaseflow  accumulated time--", timeGw
+#endif
+#endif	
+#ifdef HYDRO_D
+      call system_clock(count=clock_count_1, count_rate=clock_rate)
+#endif
+   end if !! channel_only == 0
+
+   ! step 5) river channel physics
+   call driveChannelRouting(did)
+#ifdef HYDRO_D
+   call system_clock(count=clock_count_2, count_rate=clock_rate)
+   timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
+#ifndef NCEP_WCOSS
+   write(6,*) "Timing: Channel Routing  accumulated time--", timeCr
+#else
+   write(78,*) "Timing: Channel Routing  accumulated time--", timeCr
+#endif
+#endif
+
+   !! if not channel_only
+   if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+	
+      ! step 6) aggregate specific fields from Hydro to LSM grid
+      if (nlst_rt(did)%SUBRTSWCRT .ne.0  .or. nlst_rt(did)%OVRTSWCRT .ne. 0 ) then
+         call aggregateDomain(did)
+      endif
+
+   end if !! channel_only & channelBucket_only == 0
+
+end if
 
 
 !yw  if (nlst_rt(did)%sys_cpl .eq. 2) then
@@ -662,45 +687,51 @@ module module_HYDRO_drv
       
       
 !----------------------------------------------------      
-      subroutine driveGwBaseflow(did)
+subroutine driveGwBaseflow(did)
        
-       implicit none
-       integer, intent(in) :: did
+implicit none
+integer, intent(in) :: did
        
-       integer :: i, jj, ii
+integer :: i, jj, ii
 
 !------------------------------------------------------------------
 !DJG Begin GW/Baseflow Routines
 !-------------------------------------------------------------------
 
-  IF (nlst_rt(did)%GWBASESWCRT.GE.1) THEN     ! Switch to activate/specify GW/Baseflow
+if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Baseflow
 
 !  IF (nlst_rt(did)%GWBASESWCRT.GE.1000) THEN     ! Switch to activate/specify GW/Baseflow
 
-    If (nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.EQ.2) Then   ! Call simple bucket baseflow scheme
+   if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then   ! Call simple bucket baseflow scheme
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-           write(6,*) "*****yw******start simp_gw_buck "
+      write(6,*) "*****yw******start simp_gw_buck "
 #else
-          write(78,*) "*****yw******start simp_gw_buck " 
+      write(78,*) "*****yw******start simp_gw_buck " 
 #endif
 #endif
 
-       if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-          call simp_gw_buck_nhd(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt,  &
-             RT_DOMAIN(did)%numbasns,nlst_rt(did)%AGGFACTRT, nlst_rt(did)%DT, RT_DOMAIN(did)%INFXSWGT,      &
-             RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%SOLDRAIN, RT_DOMAIN(did)%dist(:,:,9),rt_domain(did)%dist_lsm(:,:,9), &
-             RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp, RT_DOMAIN(did)%z_max,     &
-             RT_DOMAIN(did)%z_gwsubbas, RT_DOMAIN(did)%qout_gwsubbas,RT_DOMAIN(did)%qin_gwsubbas,    &
-             nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT,          & 
+      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+         call simp_gw_buck_nhd(                                             &
+              RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
+              RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
+              RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
+              nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
+              RT_DOMAIN(did)%INFXSRT,       RT_DOMAIN(did)%SOLDRAIN,        &
+              RT_DOMAIN(did)%dist(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
+              RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
+              RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
+              RT_DOMAIN(did)%qout_gwsubbas, RT_DOMAIN(did)%qin_gwsubbas,    &
+              nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         & 
 #ifdef MPP_LAND
-             RT_DOMAIN(did)%LNLINKSL &
+              RT_DOMAIN(did)%LNLINKSL,                                      &
 #else
-             RT_DOMAIN(did)%numbasns &
+              RT_DOMAIN(did)%numbasns,                                      &
 #endif
-             , rt_domain(did)%basns_area, rt_domain(did)%nhdBuckMask &
-             )
+              rt_domain(did)%basns_area,                                    &
+              rt_domain(did)%nhdBuckMask,   nlst_rt(did)%channelBucket_only )
+
        else
           call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
              RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,& 
@@ -718,9 +749,10 @@ module module_HYDRO_drv
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
         endif
 
-!! JLM:: PUT THIS BACK BEFORE CHECKING/MERGING INTO MASTER
+!! JLM: There's *perhaps* a better location for this output above.
+!! If above is better, remove this when runtime output options are avail. 
 !#ifndef HYDRO_REALTIME
-        call output_GW_Diag(did)
+!        call output_GW_Diag(did)
 !#endif
 
 #ifdef HYDRO_D 
@@ -731,8 +763,8 @@ module module_HYDRO_drv
 #endif
 #endif
 
-!!!For parameter setup runs output the percolation for each basin,
-!!!otherwise comment out this output...
+    !!!For parameter setup runs output the percolation for each basin,
+    !!!otherwise comment out this output...
     else if (nlst_rt(did)%gwBaseSwCRT .eq. 3) then
 
 #ifdef HYDRO_D
@@ -750,8 +782,7 @@ module module_HYDRO_drv
 	     call gwSoilFlux(did)
 	     
 	   end if
-           
-	   
+           	   
 	   gw2d(did)%excess = 0.
 	   
            call gwstep(gw2d(did)%ix, gw2d(did)%jx, gw2d(did)%dx, &
@@ -761,15 +792,12 @@ module module_HYDRO_drv
 			gw2d(did)%excess, &
 			gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
 			gw2d(did)%istep)
-           
-           
+                      
 	  gw2d(did)%ho = gw2d(did)%h
  
-          
-          
 	  ! put surface exceeding groundwater to surface routing inflow
           RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%SFCHEADSUBRT &
-	                              + gw2d(did)%excess*1000. ! convert to mm
+                                        + gw2d(did)%excess*1000. ! convert to mm
 	  
 	  ! aggregate  qsgw from routing to lsm grid
 	  call aggregateQsgw(did)
@@ -784,15 +812,13 @@ module module_HYDRO_drv
 #endif
 #endif
       
-    End if
+        end if
 
-  END IF    !DJG (End if for RTE SWC activation)
+     end if    !DJG (End if for RTE SWC activation)
 !------------------------------------------------------------------
 !DJG End GW/Baseflow Routines
 !-------------------------------------------------------------------
-       
-      
-      end subroutine driveGwBaseflow
+     end subroutine driveGwBaseflow
       
       
       
@@ -808,7 +834,7 @@ module module_HYDRO_drv
 !DJG,DNY  Begin Channel and Lake Routing Routines
 !-------------------------------------------------------------------
 
-  IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT.EQ.2) THEN
+if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
 
 
     if(rt_domain(did)%restQSTRM) then
@@ -851,14 +877,16 @@ module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
        , RT_DOMAIN(did)%nudge &
 #endif
-#ifndef HYDRO_REALTIME
-       , rt_domain(did)%accLndRunOff, rt_domain(did)%accQLateral, rt_domain(did)%accStrmvolrt, rt_domain(did)%accBucket &
-#endif
-#ifdef HYDRO_REALTIME
-       , rt_domain(did)%QLateral, rt_domain(did)%velocity &
-#endif
-       , rt_domain(did)%nlinksize, nlst_rt(did)%OVRTSWCRT, nlst_rt(did)%SUBRTSWCRT)
+       , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
+       , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
+       , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
+       ,                                     nlst_rt(did)%SUBRTSWCRT &
+       , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
+       )             
+
 else
+
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
@@ -1231,127 +1259,131 @@ endif
       end subroutine RunOffDisag
       
 
-      subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
-        implicit none
-        integer ntime, did
-        integer rst_out, ix,jx
+subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
+implicit none
+integer ntime, did
+integer rst_out, ix,jx
 !        integer, OPTIONAL:: ix0,jx0
-        integer:: ix0,jx0
-        integer, dimension(ix0,jx0),OPTIONAL :: vegtyp, soltyp
+integer:: ix0,jx0
+integer, dimension(ix0,jx0),optional :: vegtyp, soltyp
 
+integer, parameter :: r4 = selected_real_kind(4)
+real,    parameter :: zeroFlt=0.0000000000000000000_r4
+integer, parameter :: r8 = selected_real_kind(8)
+real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
 
 #ifdef MPP_LAND
-    call  MPP_LAND_INIT()
+call  MPP_LAND_INIT()
 #endif
 
 
 ! read the namelist
 ! the lsm namelist will be read by rtland sequentially again.
-     call read_rt_nlst(nlst_rt(did) )
+call read_rt_nlst(nlst_rt(did) )
 
-     if(nlst_rt(did)%rtFlag .eq. 0) return
+if(nlst_rt(did)%rtFlag .eq. 0) return
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! get the dimension 
-     call get_file_dimension(trim(nlst_rt(did)%geo_static_flnm), ix,jx)
-   
-       
+call get_file_dimension(trim(nlst_rt(did)%geo_static_flnm), ix,jx)
+
+
 #ifdef MPP_LAND
 
-  if (nlst_rt(did)%sys_cpl .eq. 1 .or. nlst_rt(did)%sys_cpl .eq. 4) then
-!sys_cpl: 1-- coupling with HRLDAS but running offline lsm; 
-!         2-- coupling with WRF but do not run offline lsm  
-!         3-- coupling with LIS and do not run offline lsm  
-!         4:  coupling with CLM
-
-! create 2 dimensiaon logical mapping of the CPUs for coupling with CLM or HRLDAS.
-         call log_map2d()
-
-         global_nx = ix  ! get from land model
-         global_ny = jx  ! get from land model
-
-         call mpp_land_bcast_int1(global_nx)
-         call mpp_land_bcast_int1(global_ny)
-
+if (nlst_rt(did)%sys_cpl .eq. 1 .or. nlst_rt(did)%sys_cpl .eq. 4) then
+   !sys_cpl: 1-- coupling with HRLDAS but running offline lsm; 
+   !         2-- coupling with WRF but do not run offline lsm  
+   !         3-- coupling with LIS and do not run offline lsm  
+   !         4:  coupling with CLM
+   
+   ! create 2 dimensiaon logical mapping of the CPUs for coupling with CLM or HRLDAS.
+   call log_map2d()
+   
+   global_nx = ix  ! get from land model
+   global_ny = jx  ! get from land model
+   
+   call mpp_land_bcast_int1(global_nx)
+   call mpp_land_bcast_int1(global_ny)
+   
 !!! temp set global_nx to ix 
-         rt_domain(did)%ix = global_nx
-         rt_domain(did)%jx = global_ny
+   rt_domain(did)%ix = global_nx
+   rt_domain(did)%jx = global_ny
+   
+   ! over write the ix and jx
+   call MPP_LAND_PAR_INI(1,rt_domain(did)%ix,rt_domain(did)%jx,&
+        nlst_rt(did)%AGGFACTRT)
+else  
+   !  coupled with WRF, LIS
+   numprocs = node_info(1,1)
+   
+   call wrf_LAND_set_INIT(node_info,numprocs,nlst_rt(did)%AGGFACTRT)
+   
+   
+   rt_domain(did)%ix = local_nx
+   rt_domain(did)%jx = local_ny
+endif
 
-! over write the ix and jx
-         call MPP_LAND_PAR_INI(1,rt_domain(did)%ix,rt_domain(did)%jx,&
-              nlst_rt(did)%AGGFACTRT)
-   else  
-!  coupled with WRF, LIS
-         numprocs = node_info(1,1)
-
-         call wrf_LAND_set_INIT(node_info,numprocs,nlst_rt(did)%AGGFACTRT)
 
 
-         rt_domain(did)%ix = local_nx
-         rt_domain(did)%jx = local_ny
-   endif
-
-     
-
-      rt_domain(did)%g_IXRT=global_rt_nx
-      rt_domain(did)%g_JXRT=global_rt_ny
-      rt_domain(did)%ixrt = local_rt_nx
-      rt_domain(did)%jxrt = local_rt_ny
+rt_domain(did)%g_IXRT=global_rt_nx
+rt_domain(did)%g_JXRT=global_rt_ny
+rt_domain(did)%ixrt = local_rt_nx
+rt_domain(did)%jxrt = local_rt_ny
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-      write(6,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
-      write(6,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
-      write(6,*) "rt_domain(did)%ix, rt_domain(did)%jx "
-      write(6,*) rt_domain(did)%ix, rt_domain(did)%jx 
-      write(6,*) "global_nx, global_ny, local_nx, local_ny"
-      write(6,*) global_nx, global_ny, local_nx, local_ny
+write(6,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
+write(6,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
+write(6,*) "rt_domain(did)%ix, rt_domain(did)%jx "
+write(6,*) rt_domain(did)%ix, rt_domain(did)%jx 
+write(6,*) "global_nx, global_ny, local_nx, local_ny"
+write(6,*) global_nx, global_ny, local_nx, local_ny
 #else
-      write(78,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
-      write(78,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
-      write(78,*) "rt_domain(did)%ix, rt_domain(did)%jx "
-      write(78,*) rt_domain(did)%ix, rt_domain(did)%jx 
-      write(78,*) "global_nx, global_ny, local_nx, local_ny"
-      write(78,*) global_nx, global_ny, local_nx, local_ny
+write(78,*) "rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt"
+write(78,*)  rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
+write(78,*) "rt_domain(did)%ix, rt_domain(did)%jx "
+write(78,*) rt_domain(did)%ix, rt_domain(did)%jx 
+write(78,*) "global_nx, global_ny, local_nx, local_ny"
+write(78,*) global_nx, global_ny, local_nx, local_ny
 #endif
 #endif
 #else
 ! sequential
-      rt_domain(did)%ix = ix
-      rt_domain(did)%jx = jx
-      rt_domain(did)%ixrt = ix*nlst_rt(did)%AGGFACTRT 
-      rt_domain(did)%jxrt = jx*nlst_rt(did)%AGGFACTRT
+rt_domain(did)%ix = ix
+rt_domain(did)%jx = jx
+rt_domain(did)%ixrt = ix*nlst_rt(did)%AGGFACTRT 
+rt_domain(did)%jxrt = jx*nlst_rt(did)%AGGFACTRT
 #endif
 
       
 !      allocate rt arrays
 
 
-       call getChanDim(did)
+call getChanDim(did)
 
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-       write(6,*) "finish getChanDim "
+write(6,*) "finish getChanDim "
 #else
-       write(78,*) "finish getChanDim "
+write(78,*) "finish getChanDim "
 #endif
 #endif
 
-      if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
-          call gw2d_allocate(did,&
-                             rt_domain(did)%ixrt,&
-                             rt_domain(did)%jxrt,&
-                             nlst_rt(did)%nsoil)
+if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
+   call gw2d_allocate(did,&
+        rt_domain(did)%ixrt,&
+        rt_domain(did)%jxrt,&
+        nlst_rt(did)%nsoil)
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-       write(6,*) "finish gw2d_allocate"
+   write(6,*) "finish gw2d_allocate"
 #else
-       write(78,*) "finish gw2d_allocate"
+   write(78,*) "finish gw2d_allocate"
 #endif
 #endif
-      endif
+endif
 
 ! calculate the distance between grids for routing.
 ! decompose the land parameter/data 
@@ -1359,82 +1391,82 @@ endif
 
 !      ix0= rt_domain(did)%ix
 !      jx0= rt_domain(did)%jx
-      if(present(vegtyp)) then
-           call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
-      else
-           call lsm_input(did,ix0=ix0,jx0=jx0)
-      endif
+if(present(vegtyp)) then
+   call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
+else
+   call lsm_input(did,ix0=ix0,jx0=jx0)
+endif
 
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-       write(6,*) "finish decomposion"
+write(6,*) "finish decomposion"
 #else
-       write(78,*) "finish decomposion"
+write(78,*) "finish decomposion"
 #endif
 #endif
 
 
-     call get_dist_lsm(did) 
-     call get_dist_lrt(did)
+call get_dist_lsm(did) 
+call get_dist_lrt(did)
 
 
 ! rt model initilization
-      call LandRT_ini(did)
+call LandRT_ini(did)
 
-       
-      if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
-	
-          call gw2d_ini(did,&
-                        nlst_rt(did)%dt,&
-                        nlst_rt(did)%dxrt0)
+
+if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
+   
+   call gw2d_ini(did,&
+        nlst_rt(did)%dt,&
+        nlst_rt(did)%dxrt0)
 #ifdef HYDRO_D                        
 #ifndef NCEP_WCOSS                      
-          write(6,*) "finish gw2d_ini"      
+   write(6,*) "finish gw2d_ini"      
 #else
-          write(78,*) "finish gw2d_ini" 
+   write(78,*) "finish gw2d_ini" 
 #endif
 #endif
-      endif
+endif
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-       write(6,*) "finish LandRT_ini"
+write(6,*) "finish LandRT_ini"
 #else
-       write(78,*) "finish LandRT_ini" 
+write(78,*) "finish LandRT_ini" 
 #endif
 #endif
 
     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     IF (nlst_rt(did)%TERADJ_SOLAR.EQ.1 .and. nlst_rt(did)%CHANRTSWCRT.NE.2) THEN   ! Perform ter rain adjustment of incoming solar
+if (nlst_rt(did)%TERADJ_SOLAR.eq.1 .and. nlst_rt(did)%CHANRTSWCRT.ne.2) then   ! Perform ter rain adjustment of incoming solar
 #ifdef MPP_LAND
-          call MPP_seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
-             rt_domain(did)%TERRAIN, rt_domain(did)%dist_lsm,&
-             rt_domain(did)%ix,rt_domain(did)%jx,global_nx,global_ny)
+   call MPP_seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
+        rt_domain(did)%TERRAIN, rt_domain(did)%dist_lsm,&
+        rt_domain(did)%ix,rt_domain(did)%jx,global_nx,global_ny)
 #else
-          call seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
-                   rt_domain(did)%TERRAIN,rt_domain(did)%dist_lsm,&
-                   rt_domain(did)%ix,rt_domain(did)%jx)
+   call seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
+        rt_domain(did)%TERRAIN,rt_domain(did)%dist_lsm,&
+        rt_domain(did)%ix,rt_domain(did)%jx)
 #endif
-    endif
+endif
 
 
-     IF (nlst_rt(did)%GWBASESWCRT .gt. 0) then
-        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-            call get_basn_area_nhd(rt_domain(did)%basns_area)
-        else
-            call get_basn_area(did)
-        endif
-     endif
+if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
+   if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+      call get_basn_area_nhd(rt_domain(did)%basns_area)
+   else
+      call get_basn_area(did)
+   endif
+endif
 
-     IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 ) then
-        call get_node_area(did)
-     endif
+if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 ) then
+   call get_node_area(did)
+endif
      
 
 #ifdef WRF_HYDRO_NUDGING
-     if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
+if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 #endif
 
 
@@ -1451,21 +1483,40 @@ endif
 !        rt_domain(did)%his_out_counts = rt_domain(did)%his_out_counts + 1
 
 
-       call HYDRO_rst_in(did)
+call HYDRO_rst_in(did)
 
 #ifdef HYDRO_REALTIME
-       call HYDRO_out(did)
+call HYDRO_out(did)
+!! JLM: This is only currently part 1/2 of a better accumulation tracking strategy. 
+!! The parts:
+!! 1) (this) zero accumulations on restart/init after any t=0 outputs are written.
+!! 2) introduce a variable in the output files which indicates if accumulations are 
+!!    reset after this output.
+!! Here we move zeroing to after AFTER outputing the accumulations at the initial time.
+!! This was previously done in HYDRO_rst_in and so output accumulations at time 
+!! zero were getting zeroed and then writtent to file, which looses information. 
+!! Note that nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
+if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+   !#ifdef HYDRO_D
+   print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
+   !#endif
+!   This change corresponds to Wei's restart fix 6ec975870ba871d6322cfc3927810252169afe58
+!   just in  a different place (these are conflicts not identified by git, manually merged).
+!   rt_domain(did)%INFXSRT      = zeroFlt
+!   rt_domain(did)%LAKE_INFLORT = zeroFlt
+!   rt_domain(did)%QSTRMVOLRT   = zeroFlt
+   rt_domain(did)%accSfcLatRunoff = zeroDbl
+   rt_domain(did)%accBucket    = zeroDbl
+end if
 #else
-  if (trim(nlst_rt(did)%restart_file) == "") then
-! output at the initial time
-         call HYDRO_out(did)
-         return
-  endif
+if (trim(nlst_rt(did)%restart_file) == "") then
+   ! output at the initial time
+   call HYDRO_out(did)
+   return
+endif
 #endif
 
-
-
-      end subroutine HYDRO_ini
+end subroutine HYDRO_ini
 
       subroutine lsm_input(did,ix0,jx0,vegtyp0,soltyp0)
          implicit none

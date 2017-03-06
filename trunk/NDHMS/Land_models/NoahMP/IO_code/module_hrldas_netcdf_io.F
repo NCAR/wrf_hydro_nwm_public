@@ -805,7 +805,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -819,7 +819,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -833,7 +833,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -847,7 +847,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil(): Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil(): Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -861,7 +861,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -875,7 +875,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -889,7 +889,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -903,7 +903,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -917,7 +917,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -931,7 +931,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -941,7 +941,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -951,7 +951,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -961,7 +961,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -971,7 +971,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -981,7 +981,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -991,7 +991,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 
@@ -1001,7 +1001,7 @@ contains
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
       print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file."
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
       stop
     endif
 

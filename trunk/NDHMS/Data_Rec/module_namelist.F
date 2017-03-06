@@ -62,7 +62,7 @@ CONTAINS
        character(len=256)  :: RESTART_FILE = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
-       integer :: igrid, iocflag
+       integer :: igrid, iocflag, t0OutputFlag, output_channelBucket_influx
        character(len=256) :: geo_static_flnm = ""
        integer  :: DEEPGWSPIN
 
@@ -109,13 +109,14 @@ CONTAINS
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT, GWBUCKPARM_file, iocflag
+                    UDMP_OPT, GWBUCKPARM_file, iocflag, t0OutputFlag, output_channelBucket_influx
 
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
    iocflag = 0
-
+   t0OutputFlag = 0
+   output_channelBucket_influx = 0
 
 #ifdef WRF_HYDRO_NUDGING
    namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,        &
@@ -170,11 +171,20 @@ CONTAINS
    if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 2
 #endif
 
+   if(output_channelBucket_influx .ne. 0) then
+      if(nlst%dt .ne. out_dt*60) &
+           call hydro_stop("read_rt_nlst:: output_channelBucket_influx =! 0 inconsistent with out_dt and NOAH_TIMESTEP choices.")
+      if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1) &
+           call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1.")
+   end if
+
 #ifdef MPP_LAND
 !  call mpp_land_bcast_real1(DT)
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
   call mpp_land_bcast_int1(iocflag)
+  call mpp_land_bcast_int1(t0OutputFlag)
+  call mpp_land_bcast_int1(output_channelBucket_influx)
   call mpp_land_bcast_real1_double(out_dt)
   call mpp_land_bcast_real1_double(rst_dt)
   call mpp_land_bcast_int1(DEEPGWSPIN)
@@ -193,11 +203,14 @@ CONTAINS
 #endif
 #endif
 
-!  nlst%DT = DT
+  !  nlst%DT = DT !!JLM: Note that %dt is set in the Land/WRF initialization, 
+  !               !!JLM: e.g. CPL/NoahMP_cpl/module_hrldas_HYDRO.F:hrldas_cpl_HYDRO_ini
   nlst%RESTART_FILE = RESTART_FILE
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
   nlst%iocflag = iocflag
+  nlst%t0OutputFlag = t0OutputFlag
+  nlst%output_channelBucket_influx = output_channelBucket_influx
   nlst%geo_static_flnm = geo_static_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt

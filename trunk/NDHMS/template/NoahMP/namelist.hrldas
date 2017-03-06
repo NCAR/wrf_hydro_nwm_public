@@ -63,7 +63,9 @@
 /
 
 &WRF_HYDRO_OFFLINE
- !Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format, 3=WRF, 4=Idealized, 5=Ideal w/ Spec.Precip., 6=HRLDAS-hrl y fomat w/ Spec. Precip 
+ !Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format, 3=WRF, 
+ ! 4=Idealized, 5=Ideal w/ Spec.Precip., 6=HRLDAS-hrl y fomat w/ Spec. Precip, 
+ ! 9=Channel-only forcing, see hydro.namelist output_channelBucket_influxes
  FORC_TYP = 3
  !HRLDAS_ini_typ 1: initial and parameters from frocing; 0: from wrfinput.
  HRLDAS_ini_typ = 0

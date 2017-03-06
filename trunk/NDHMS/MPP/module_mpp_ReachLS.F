@@ -34,6 +34,7 @@ MODULE MODULE_mpp_ReachLS
 
   interface ReachLS_decomp
      module procedure ReachLS_decompReal
+     module procedure ReachLS_decompReal8
      module procedure ReachLS_decompInt 
      module procedure ReachLS_decompChar
   end interface
@@ -41,6 +42,7 @@ MODULE MODULE_mpp_ReachLS
   interface ReachLS_write_io
      module procedure ReachLS_wReal
      module procedure ReachLS_wReal2
+     module procedure ReachLS_wReal8
      module procedure ReachLS_wInt
      module procedure ReachLS_wInt2
      module procedure ReachLS_wChar
@@ -124,8 +126,8 @@ MODULE MODULE_mpp_ReachLS
                       do k = 1, lsize
                           gLinkV_r8(lindex(k)) = gLinkV_r8(lindex(k)) + tmpBuf(k)
                       end do
-                      deallocate(lindex)
-                      deallocate(tmpBuf)
+                      if(allocated(lindex)) deallocate(lindex)
+                      if(allocated(tmpBuf)) deallocate(tmpBuf)
                endif
             end if
           end do
@@ -136,7 +138,7 @@ MODULE MODULE_mpp_ReachLS
       call ReachLS_decompReal(gLinkV_r4,outV)
 
       if(my_id .eq. io_id) then
-          deallocate(gLinkV_r4)
+         if(allocated(gLinkV_r4))  deallocate(gLinkV_r4)
       endif
   end subroutine updateLinkV8_mem
 
@@ -188,8 +190,8 @@ MODULE MODULE_mpp_ReachLS
                       do k = 1, lsize
                           gLinkV_r4(lindex(k)) = gLinkV_r4(lindex(k)) + tmpBuf(k)
                       end do
-                      deallocate(lindex)
-                      deallocate(tmpBuf)
+                      if(allocated(lindex)) deallocate(lindex)
+                      if(allocated(tmpBuf)) deallocate(tmpBuf)
                endif
             end if
           end do
@@ -198,7 +200,7 @@ MODULE MODULE_mpp_ReachLS
       call ReachLS_decompReal(gLinkV_r4,outV)
 
       if(my_id .eq. io_id) then
-          deallocate(gLinkV_r4)
+          if(allocated(gLinkV_r4)) deallocate(gLinkV_r4)
       endif
   end subroutine updateLinkV4_mem
 
@@ -479,6 +481,36 @@ MODULE MODULE_mpp_ReachLS
       call mpp_land_sync()
   END subroutine ReachLS_decompReal
 
+  subroutine ReachLS_decompReal8(inV,outV)
+      implicit none
+      real*8,intent(in),dimension(:) :: inV
+      real*8,intent(out),dimension(:) :: outV
+      integer ::  i, ierr, tag
+      tag = 11
+      if(my_id .eq. io_id) then
+         do i = 1, numprocs
+            if(i-1 .eq. io_id) then
+                if(alinksl(i) .gt. 0) then
+                   outV(1:(linkls_e(i)-linkls_s(i)+1) ) = inV(linkls_s(i):linkls_e(i))
+                endif
+            else
+                if(aLinksl(i) .gt. 0) then
+                    call mpi_send(inV(linkls_s(i):linkls_e(i)), &
+                        aLinksl(i), &
+                        MPI_REAL8, i-1 ,tag,MPI_COMM_WORLD,ierr)
+                endif
+            endif
+         end do
+      else
+         if(aLinksl(my_id+1) .gt. 0) then
+             call mpi_recv(outV(1:(linkls_e(my_id+1)-linkls_s(my_id+1)+1) ), &  !! this one has +1!
+              aLinksl(my_id+1),                                        &
+              MPI_REAL8, io_id,tag,MPI_COMM_WORLD,mpp_status,ierr)
+         endif
+      endif
+      call mpp_land_sync()
+      end subroutine ReachLS_decompReal8
+
   subroutine ReachLS_decompInt(inV,outV)
       implicit none
       integer,INTENT(in),dimension(:) :: inV
@@ -581,6 +613,41 @@ MODULE MODULE_mpp_ReachLS
       endif
       call mpp_land_sync()
   END subroutine ReachLS_wReal
+
+  subroutine ReachLS_wReal8(inV,outV)
+      implicit none
+      real*8,intent(in),dimension(:)  :: inV
+      real*8,intent(out),dimension(:) :: outV
+      integer :: i, ierr, tag, ss  , mm
+      outV = 0
+      if(my_id .eq. io_id) then
+         do i = 1, numprocs
+            tag = 12
+            if(i-1 .eq. io_id) then
+                if(alinksl(i) .gt. 0) then
+                   outV(linkls_s(i):linkls_e(i)) = inV(1:linkls_e(i)-linkls_s(i)+1)
+                endif
+            else
+                if(aLinksl(i) .gt. 0) then
+
+                    call mpi_recv(outV(linkls_s(i):linkls_e(i)), &
+                         aLinksl(i),                            &
+                         MPI_REAL8,i-1,tag,MPI_COMM_WORLD,mpp_status,ierr)
+                endif
+            endif
+         end do
+      else
+          if(aLinksl(my_id+1) .gt. 0) then
+               tag = 12
+               ss = size(inv,1)
+               call mpi_send(inV(1:aLinksl(my_id+1) ), &
+                      aLinksl(my_id+1),                      &
+                      MPI_REAL8,io_id,tag,MPI_COMM_WORLD,ierr)
+          endif
+      endif
+      call mpp_land_sync()
+  END subroutine ReachLS_wReal8
+
 
   subroutine ReachLS_wInt(inV,outV)
       implicit none
@@ -966,7 +1033,9 @@ MODULE MODULE_mpp_ReachLS
             end if
           end do
        end if
-     if(my_id .eq. io_id) deallocate(buf)
+       if(my_id .eq. io_id) then 
+          if(allocated(buf)) deallocate(buf)
+       endif
   end subroutine pack_decomp_int
 
   subroutine pack_decomp_real8(g1bufid, ndata, nprocs_map, lnsizes, istart,bufid)
@@ -1012,7 +1081,9 @@ MODULE MODULE_mpp_ReachLS
             end if
           end do
        end if
-     if(my_id .eq. io_id) deallocate(buf)
+     if(my_id .eq. io_id) then 
+         if(allocated(buf))  deallocate(buf)
+     endif
   end subroutine pack_decomp_real8
 
 ! this is used for nhdPlus with Lake. 
@@ -1059,7 +1130,8 @@ MODULE MODULE_mpp_ReachLS
                              gvar(tmpInd(k)) = buf(k)
                          endif
                       end do
-                      deallocate(buf,tmpInd)
+                      if(allocated(buf))  deallocate(buf)
+                      if(allocated(tmpInd)) deallocate(tmpInd)
                   endif
             endif
          end do
@@ -1076,7 +1148,7 @@ MODULE MODULE_mpp_ReachLS
           endif
       endif 
       call ReachLS_decomp(gvar, ioVar)
-      deallocate(gvar)
+      if(allocated(gvar)) deallocate(gvar)
   end subroutine TONODE2RSL 
 
 

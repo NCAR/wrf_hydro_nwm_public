@@ -1773,8 +1773,8 @@ MODULE MODULE_MPP_LAND
                tag,MPI_COMM_WORLD,ierr)
 
         end if
-           deallocate(tmp_map)
-           deallocate(tmp_v)
+           if(allocated(tmp_map)) deallocate(tmp_map)
+           if(allocated(tmp_v)) deallocate(tmp_v)
      end subroutine write_chanel_real
 
      subroutine write_chanel_int(v,map_l2g,gnlinks,nlinks,g_v)   
@@ -1846,8 +1846,8 @@ MODULE MODULE_MPP_LAND
            call mpi_send(v,nlinks,MPI_INTEGER,IO_id,   &
                tag,MPI_COMM_WORLD,ierr)
         end if
-           deallocate(tmp_map)
-           deallocate(tmp_v)
+           if(allocated(tmp_map)) deallocate(tmp_map)
+           if(allocated(tmp_v)) deallocate(tmp_v)
      end subroutine write_chanel_int
 
 
@@ -1877,8 +1877,7 @@ MODULE MODULE_MPP_LAND
                        v(node) = recv(node)
                     endif
                  enddo
-              end if
-            
+              end if            
            end do
         else
            tag =  129
@@ -2208,7 +2207,7 @@ MODULE MODULE_MPP_LAND
                endif
             end if
           end do
-          deallocate(tmpBuf)
+          if(allocated(tmpBuf)) deallocate(tmpBuf)
        else 
            lsize = 0
            do k = 1, nlinks
