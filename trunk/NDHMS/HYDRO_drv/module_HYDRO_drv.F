@@ -1391,10 +1391,12 @@ endif
 
 !      ix0= rt_domain(did)%ix
 !      jx0= rt_domain(did)%jx
-if(present(vegtyp)) then
-   call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
-else
-   call lsm_input(did,ix0=ix0,jx0=jx0)
+if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+   if(present(vegtyp)) then
+      call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
+   else
+      call lsm_input(did,ix0=ix0,jx0=jx0)
+   endif
 endif
 
 

@@ -450,9 +450,12 @@ module module_NoahMP_hrldas_driver
   contains
 
   subroutine land_driver_ini(NTIME_out,wrfits,wrfite,wrfjts,wrfjte)
+     use module_HYDRO_drv, only: HYDRO_ini
+     use module_namelist, only: nlst_rt
+     use module_rt_data, only: rt_domain
      implicit  none
      integer:: NTIME_out
-
+     integer, parameter :: did=1
 
     ! initilization for stand alone parallel code.
     integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
@@ -515,11 +518,6 @@ module module_NoahMP_hrldas_driver
      call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
   endif
 
-  call updateNameList("channel_only",0)
-  if(forc_typ .eq. 9)  call updateNameList("channel_only",1)
-  call updateNameList("channelBucket_only",0)
-  if(forc_typ .eq. 10) call updateNameList("channelBucket_only",1)
-
 #endif
 
 #ifndef NCEP_WCOSS
@@ -544,6 +542,50 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = temp_time_scheme_option
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
+
+
+  !!----------------------------------------------------------------------------
+  !! channel_only
+  call updateNameList("channel_only",0)
+  if(forc_typ .eq. 9)  call updateNameList("channel_only",1)
+  call updateNameList("channelBucket_only",0)
+  if(forc_typ .eq. 10) call updateNameList("channelBucket_only",1)
+
+  if(forc_typ .eq. 9 .or. forc_typ .eq. 10) then
+     write(olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
+          start_year, start_month, start_day, start_hour, start_min, 0
+     forcdate = olddate
+     if ((khour < 0) .and. (kday < 0)) then
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+             "Namelist error: Either KHOUR or KDAY must be defined.")')
+        stop
+     else if (( khour < 0 ) .and. (kday > 0)) then
+        khour = kday * 24
+     else if ((khour > 0) .and. (kday > 0)) then
+        write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
+        stop
+     endif
+     NTIME=(KHOUR)*3600./nint(dtbl)
+     NTIME_out = NTIME 
+
+     if(.not. RT_DOMAIN(did)%initialized) then  
+        nlst_rt(did)%dt = real(noah_timestep)
+        nlst_rt(did)%olddate(1:19) = olddate(1:19)
+        nlst_rt(did)%startdate(1:19) = olddate(1:19)
+        nlst_rt(did)%nsoil = kk
+#ifdef MPP_LAND
+        call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+#endif
+        allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
+        nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)       
+        call HYDRO_ini(ntime,did,ix0=1,jx0=1)
+        RT_DOMAIN(did)%initialized = .true.
+     endif ! if .not. RT_DOMAIN(did)%initialized
+     return
+
+  endif
+  !!----------------------------------------------------------------------------
+  !! channel_only
 
 
 !---------------------------------------------------------------------
@@ -1492,7 +1534,9 @@ end subroutine land_driver_ini
          !! JLM: ?*?* hrldas_drv_HYDRO.F should be made a module *?*?
          !! JLM:  Simple modification which forces type, rank and kind checking...
           call getNameList('igrid', igrid_hydro)  !! get hydro namelist info :: case sensitive
+          print*,'JLM FOO igrid_hydro:', igrid_hydro
           write(hgrid_hydro,'(I1)') igrid_hydro
+          print*,'JLM FOO hgrid_hydro:', hgrid_hydro
           call read_channel_only(olddate, hgrid_hydro, indir, forcing_timestep)
           call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
           call geth_newdate(newdate, olddate, nint(dtbl))
