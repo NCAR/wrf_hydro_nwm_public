@@ -7479,7 +7479,7 @@ end subroutine read_routelink
         call ReachLS_decomp(tmpMUSK,    MUSK   )
         call ReachLS_decomp(tmpMUSX,     MUSX   )
         call ReachLS_decomp(tmpCHANLEN,  CHANLEN)
-        call ReachLS_decomp(tmpMannN,       MannN  )
+        call ReachLS_decomp(tmpMannN,    MannN  )
         call ReachLS_decomp(tmpSo,       So     )
         call ReachLS_decomp(tmpChSSlp,   ChSSlp )
         call ReachLS_decomp(tmpBw,       Bw     )

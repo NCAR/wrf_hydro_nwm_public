@@ -581,7 +581,7 @@ module module_NoahMP_hrldas_driver
         call HYDRO_ini(ntime,did,ix0=1,jx0=1)
         RT_DOMAIN(did)%initialized = .true.
      endif ! if .not. RT_DOMAIN(did)%initialized
-     return
+     return  !! no more init necessary if channel_only or channelBucket_only
 
   endif
   !!----------------------------------------------------------------------------
