@@ -2201,8 +2201,6 @@ integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd
 real,    parameter :: smallestWeight=1.e-8
 !! persistence related variables in following block
 integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt, pairCount
-integer, dimension(nTimesLastObs) :: prstDtErrInt_ts
-real,    dimension(nTimesLastObs) :: prstDtErr_ts
 logical, dimension(nTimesLastObs) :: biasMask, whObsTooOld
 real :: prstB, prstDtErr, prstErr
 character(len=15) :: prstGageId
@@ -2498,46 +2496,32 @@ else if (temporalPersistence) then
 
    !! --- Deal with the last ob ---
    !! 9) what is the time difference with the last ob/obs?
-   prstDtErrInt_ts = -9999*60  ! JLM: magic value? set as a parameter above
-   if(.not. persistBias_local) then 
-      call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(nTimesLastObs), & 
-                     prstDtErrInt_ts(nTimesLastObs))
-   else 
-      !! JLM:: make an elemental version of geth_idts? For now just loop. 
-      do tt=1,nTimesLastObs
-         if(biasMask(tt)) &
-              call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt_ts(tt))
-      end do
-   end if
-
-   prstDtErr_ts = real(prstDtErrInt_ts)/real(sixty)  !! second -> minutes
-
-   !! check for negative time differences.
-   !! could elim if-else by changing the tt counter to start with nTimesLastObs or 1.
-   if(.not. persistBias_local) then
-      ! Make sure that the time difference is not negative (ob after current model time).
-      ! could happen if lastOb file was written out after current model start time/cycle... 
-      if(prstDtErr_ts(nTimesLastObs) .lt. zero) then
+   prstDtErrInt = -9999*60  ! JLM: magic value? set as a parameter above
+   do tt=nTimesLastObs,1,-1
+      ! Conditons for rejecting obs
+      if(persistBias_local) then
+         if(.not. biasMask(tt)) continue
+      else 
+         !! Commenting the following reproduces the V1.1 NCAR_reforecast bug
+         !if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) continue
+      end if
+      call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt)
+      if(prstDtErrInt .lt. zero) then
          print*,'Ndg: WARNING: lastObs times are in the future of the model time.'
          if(futureLastObsFatal) then
             call hydro_stop('nudge_term_link: negative prstDtErrInt: last obs in future')
          else 
-            prstDtErr_ts(nTimesLastObs)=abs(prstDtErr_ts(nTimesLastObs))
+            prstDtErrInt=abs(prstDtErrInt)
          end if
-      endif
-   else 
-      !! check that all prstDtErr_ts values on biasMask are positive.
-      do tt=1,nTimesLastObs
-         if(biasMask(tt) .and. prstDtErr_ts(tt) .lt. zero) then
-            print*,'Ndg: WARNING: lastObs times are in the future of the model time.'
-            if(futureLastObsFatal) then
-                 call hydro_stop('nudge_term_link: negative prstDtErrInt: last obs in future')
-              else 
-                 prstDtErr_ts(nTimesLastObs)=abs(prstDtErr_ts(nTimesLastObs))
-              end if
-         end if
-      end do
-   end if    
+      end if
+      exit
+   end do
+   ! By design, should not get here
+   if(prstDtErrInt .eq. -9999*60) then 
+      persistBias_local=.false.
+      call hydro_stop('nudge_term_link: negative prstDtErrInt: still default value=-9999*60')
+   end if
+   prstDtErr = real(prstDtErrInt)/real(sixty)  !! second -> minutes
 
    !! 10) what is the error ?
    !! Always calculate the observation nudge error.
@@ -2552,29 +2536,39 @@ else if (temporalPersistence) then
    if(.not. persistBias_local) then
       nudge_term_link = &
            obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * & 
-           prstErr * exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB)
+           prstErr * exp(real(-1)*prstDtErr/prstB)
    else 
       nudge_term_link = &
            obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
-           prstErr * exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB) + &
-           theBias * (1.0 - exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB) )
+           prstErr * exp(real(-1)*prstDtErr/prstB) + &
+           theBias * (1.0 - exp(real(-1)*prstDtErr/prstB) )
 
       !                   123456789012345
-      if(prstGageId .eq. '       CLAFTCCO') then
+      !if(prstGageId .eq. '       07099060') then
+      if(.FALSE.) then
          print*,'JLM: Ndg: usgsId: ', prstGageId
          print*,'JLM: Ndg: theBias:', theBias
+         do tt=1,nTimesLastObs
+            if(biasMask(tt)) &
+                 print*,' ---- tt:', tt
+            print*,'Diff: ', obsStaticStr(whGageId)%lastObsDischarge(tt) -   &
+                             obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+            print*,'o - : ', obsStaticStr(whGageId)%lastObsDischarge(tt)
+            print*,'   m: ', obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+         end do
+
          !! JLM: make sure that the bias is NOT greater than the current discharge: below.
          print*,'JLM: prstErr:', prstErr
-         print*,'JLM: prstDtErr:', prstDtErr_ts(nTimesLastObs)
+         print*,'JLM: prstDtErr:', prstDtErr
          print*,'JLM: prstB:', prstB
-         print*,'JLM obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * prstErr * exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB)', obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * prstErr * exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB)
-         print*,'JLM theBias * (1-exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB)):', theBias * (1-exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB))
+         print*,'JLM obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * prstErr * exp(real(-1)*prstDtErr/prstB)', obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * prstErr * exp(real(-1)*prstDtErr/prstB)
+         print*,'JLM theBias * (1-exp(real(-1)*prstDtErr/prstB)):', theBias * (1-exp(real(-1)*prstDtErr/prstB))
          print*,'JLM nudge_term_link:', nudge_term_link
       end if
-   endif
+   endif !! if(.not. persistBias_local) then; else;
 
    !! Currently cant get here... 
-   if((prstDtErr_ts(nTimesLastObs) .lt. zero) .and. futureLastObsZero) nudge_term_link = zero
+   if((prstDtErr .lt. zero) .and. futureLastObsZero) nudge_term_link = zero
 
    !! Ensure the nudge does not make the streamflow less than zero.
    !! This is particularly important if persistBias
@@ -2593,7 +2587,7 @@ else if (temporalPersistence) then
       print*,'Ndg: checkInd pst: hydroTime: ',       hydroTime
       print*,'Ndg: checkInd pst: flowmonth: ',       flowMonth
       print*,'Ndg: checkInd pst: lastObsTime: ',     obsStaticStr(whGageId)%lastObsTime
-      print*,'Ndg: checkInd pst: time difference mins: ', prstDtErr_ts(nTimesLastObs)
+      print*,'Ndg: checkInd pst: time difference mins: ', prstDtErr
       print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality: ', &
            obsStaticStr(whGageId)%lastObsQuality   
       print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsDischarge: ', &
@@ -2604,8 +2598,8 @@ else if (temporalPersistence) then
       print*,'Ndg: checkInd pst: quality coeff: ', obsStaticStr(whGageId)%lastObsQuality
       print*,'Ndg: checkInd pst: discharge difference:', prstErr      
       print*,'Ndg: checkInd pst: prstB:', prstB
-      print*,'Ndg: checkInd pst: time difference mins prstDtErr_ts(nTimesLastObs): ', prstDtErr_ts(nTimesLastObs)
-      print*,'Ndg: checkInd pst: exponent term: ', exp(real(-1)*prstDtErr_ts(nTimesLastObs)/prstB)
+      print*,'Ndg: checkInd pst: time difference mins prstDtErr: ', prstDtErr
+      print*,'Ndg: checkInd pst: exponent term: ', exp(real(-1)*prstDtErr/prstB)
       print*,'Ndg: checkInd pst: nudge_term_link: ', nudge_term_link
 !      if(flushAll) flush(flushUnit)
    end if
