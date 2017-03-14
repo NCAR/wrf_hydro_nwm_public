@@ -2263,7 +2263,9 @@ do tt=1,size(obsTimeStr)
                            obsStaticStr(staticInd)%lastObsTime(nTimesLastObs), obsDtInt)
          end if
 
-         if(prstDtErrInt .ge. 0 .and. obsDtInt .gt. 0) then
+         if(prstDtErrInt .ge. 0 .and. &
+            obsDtInt     .gt. 0 .and. & 
+            obsTimeStr(tt)%obsStr(oo)%obsQC .eq. 1) then
             !! shift (note cshift does not work for all these)
             obsStaticStr(staticInd)%lastObsTime(1:(nTimesLastObs-1))           = &
                  obsStaticStr(staticInd)%lastObsTime(2:nTimesLastObs)
