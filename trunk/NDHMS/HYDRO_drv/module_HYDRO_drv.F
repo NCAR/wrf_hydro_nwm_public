@@ -22,6 +22,9 @@ module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
                                restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2
+   ! Logan add begin
+   use module_NWM_io, only: output_chrt_NWM
+   ! Logan add end
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
@@ -321,62 +324,65 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #endif
 !ADCHANGE: End
 
-             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
-#ifdef MPP_LAND
-                 call mpp_output_chrt( &
-                      rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
-#else
-                 call output_chrt(  &
-#endif
-                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                   RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-                   nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
-                   RT_DOMAIN(did)%CHLAT,                                      &
-                   RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-                   !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
-                   str_out, nlst_rt(did)%DT,Kt,                   &
-                   RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
-                   RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                   rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
-                   nlst_rt(did)%dt                                            &
-#ifdef WRF_HYDRO_NUDGING
-                   , RT_DOMAIN(did)%nudge                                     &
-#endif
-                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
-                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
-                   , RT_DOMAIN(did)%qin_gwsubbas                              &
-                   , nlst_rt(did)%UDMP_OPT                                    &
-                   )
-              else
-                if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
-#ifdef MPP_LAND
-                     call mpp_output_chrt2(&
-                          rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
-#else
-                     call output_chrt2(  &
-#endif
-                     nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                     RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER,          &
-                     nlst_rt(did)%sincedate,nlst_rt(did)%olddate,         &
-                     RT_DOMAIN(did)%CHLON, RT_DOMAIN(did)%CHLAT,          &
-                     RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,          &
-                     !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,             &
-                     str_out, nlst_rt(did)%DT,Kt,                         &
-                     RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,  &
-                     rt_domain(did)%linkid                                &
-#ifdef WRF_HYDRO_NUDGING
-                     , RT_DOMAIN(did)%nudge                                     &
-#endif
-		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &
-                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
-                     , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket       &
-                     , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket         &
-                     , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT          &
-		     )
-                 endif
-
-              endif
-
+! Logan change begin
+   if(nlst_rt(did)CHRTOUT_DOMAIN .ne. 0) then
+      call output_chrt_NWM(rt_domain,nlst_rt,did)
+!             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
+!#ifdef MPP_LAND
+!                 call mpp_output_chrt( &
+!                      rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+!#else
+!                 call output_chrt(  &
+!#endif
+!                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                   RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
+!                   nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
+!                   RT_DOMAIN(did)%CHLAT,                                      &
+!                   RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
+!                   !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+!                   str_out, nlst_rt(did)%DT,Kt,                   &
+!                   RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
+!                   RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
+!                   rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
+!                   nlst_rt(did)%dt                                            &
+!#ifdef WRF_HYDRO_NUDGING
+!                   , RT_DOMAIN(did)%nudge                                     &
+!#endif
+!                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
+!                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
+!                   , RT_DOMAIN(did)%qin_gwsubbas                              &
+!                   , nlst_rt(did)%UDMP_OPT                                    &
+!                   )
+!              else
+!                if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
+!#ifdef MPP_LAND
+!                     call mpp_output_chrt2(&
+!                          rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+!#else
+!                     call output_chrt2(  &
+!#endif
+!                     nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                     RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER,          &
+!                     nlst_rt(did)%sincedate,nlst_rt(did)%olddate,         &
+!                     RT_DOMAIN(did)%CHLON, RT_DOMAIN(did)%CHLAT,          &
+!                     RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,          &
+!                     !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,             &
+!                     str_out, nlst_rt(did)%DT,Kt,                         &
+!                     RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,  &
+!                     rt_domain(did)%linkid                                &
+!#ifdef WRF_HYDRO_NUDGING
+!                     , RT_DOMAIN(did)%nudge                                     &
+!#endif
+!		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &
+!                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
+!                     , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket       &
+!                     , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket         &
+!                     , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT          &
+!		     )
+!                 endif
+!
+!              endif
+! Logan change end
       
 #ifdef MPP_LAND
               if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
