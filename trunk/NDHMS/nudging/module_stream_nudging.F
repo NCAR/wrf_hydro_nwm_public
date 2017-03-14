@@ -2457,8 +2457,8 @@ else if (temporalPersistence) then
       if(count(biasMask) .lt. minNumPairsBiasPersist) then
          persistBias_local = .false.
          !! JLM move this to hydro_d
-         print*,'JLM: Ndg: not enough observations for bias persistence, using obs persistence', &
-              prstGageId
+         !print*,'JLM: Ndg: not enough observations for bias persistence, using obs persistence', &
+         !     prstGageId
       end if
    end if ! if(persistBias_local)
 
@@ -2503,7 +2503,7 @@ else if (temporalPersistence) then
          if(.not. biasMask(tt)) continue
       else 
          !! Commenting the following reproduces the V1.1 NCAR_reforecast bug
-         !if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) continue
+         if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) continue
       end if
       call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt)
       if(prstDtErrInt .lt. zero) then

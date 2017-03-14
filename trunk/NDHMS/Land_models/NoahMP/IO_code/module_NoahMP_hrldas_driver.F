@@ -1534,9 +1534,7 @@ end subroutine land_driver_ini
          !! JLM: ?*?* hrldas_drv_HYDRO.F should be made a module *?*?
          !! JLM:  Simple modification which forces type, rank and kind checking...
           call getNameList('igrid', igrid_hydro)  !! get hydro namelist info :: case sensitive
-          print*,'JLM FOO igrid_hydro:', igrid_hydro
           write(hgrid_hydro,'(I1)') igrid_hydro
-          print*,'JLM FOO hgrid_hydro:', hgrid_hydro
           call read_channel_only(olddate, hgrid_hydro, indir, forcing_timestep)
           call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
           call geth_newdate(newdate, olddate, nint(dtbl))
