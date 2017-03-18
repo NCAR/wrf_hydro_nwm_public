@@ -61,6 +61,7 @@
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
        logical            :: persistBias
+       logical            :: biasWindowBeforeT0
        character(len=256) :: nudgingLastObsFile
        character(len=256) :: timeSlicePath
        integer            :: nLastObs

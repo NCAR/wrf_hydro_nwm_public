@@ -163,6 +163,11 @@ nLastObs = 960
 ! This option instead persists the bias in some period before the last observation. 
 persistBias = .FALSE.
 
+! If persistBias: Does the window for calculating the bias end at model init time (=t0)?
+! FALSE = window ends at model time (moving), TRUE = window ends at init=t0(fcst) time. 
+! (If commented out, Default=FALSE)
+biasWindowBeforeT0 = .FALSE.
+
 ! If persistBias: Only use this many last (obs, modeled) pairs. (If Commented out, Default=-1*nLastObs)
 ! > 0: apply an age-based filter, units=hours.
 ! = 0: apply no additional filter, use all available/usable obs.

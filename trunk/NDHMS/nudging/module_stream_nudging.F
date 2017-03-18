@@ -155,6 +155,7 @@ character(len=256) :: nudgingLastObsFile
 logical            :: readTimesliceParallel
 logical            :: temporalPersistence
 logical            :: persistBias
+logical            :: biasWindowBeforeT0
 integer            :: nTimesLastObs   !! aka nlst_rt(did)%nLastObs
 integer            :: minNumPairsBiasPersist
 integer            :: maxAgePairsBiasPersist
@@ -168,7 +169,7 @@ integer,   parameter :: did=1     !! 1 for WRF-uncoupled runs...
 ! Time book keeping
 real    :: maxTau
 integer :: nObsTimes
-character(len=19) :: lsmTime
+character(len=19) :: lsmTime, initTime
 integer :: lsmDt                                   !1234567890123456789
 character(len=19), parameter :: missingLastObsTime='9999999999999999999'
 character(len=2) :: obsResolution   
@@ -294,6 +295,7 @@ netwkReExFile          = nlst_rt(did)%netwkReExFile
 readTimesliceParallel  = nlst_rt(did)%readTimesliceParallel
 temporalPersistence    = nlst_rt(did)%temporalPersistence
 persistBias            = nlst_rt(did)%persistBias
+biasWindowBeforeT0     = nlst_rt(did)%biasWindowBeforeT0
 nudgingLastObsFile     = nlst_rt(did)%nudgingLastObsFile
 nTimesLastObs          = nlst_rt(did)%nLastObs
 minNumPairsBiasPersist = nlst_rt(did)%minNumPairsBiasPersist
@@ -800,10 +802,13 @@ if(flushAll) flush(flushUnit)
 ! The hydro model time as a string.
 #ifdef MPP_LAND
 !update and broadcast the lsm time
-if(my_id .eq. io_id) lsmTime = nlst_rt(did)%olddate
-call mpp_land_bcast_char(19, lsmTime)
+if(my_id .eq. io_id) lsmTime  = nlst_rt(did)%olddate
+if(my_id .eq. io_id) initTime = nlst_rt(did)%startdate
+call mpp_land_bcast_char(19, lsmTime )
+call mpp_land_bcast_char(19, initTime)
 # else
 lsmTime = nlst_rt(did)%olddate
+initTime = nlst_rt(did)%startdate
 #endif
 
 ! This is apparently fixed so that olddate is lsmTime and not
@@ -1963,9 +1968,10 @@ real,              intent(in)  :: tau         ! tau half window (minutes)
 character(len=19), intent(in)  :: obsTime     ! observation time string
 ! local variables
 integer :: timeDiff
-real, parameter :: ten  = 10.000000000
-real, parameter :: one  =  1.000000000
-real, parameter :: zero =  0.000000000
+real,    parameter :: ten  = 10.000000000
+real,    parameter :: one  =  1.000000000
+real,    parameter :: zero =  0.000000000
+integer, parameter :: zeroInt = 0
 !! returned timeDiff is in seconds
 call geth_idts(obsTime, modelTime, timeDiff) 
 timeDiff = timeDiff / 60. ! minutes to match tau
@@ -2207,6 +2213,7 @@ character(len=15) :: prstGageId
 integer, parameter :: sixty=60
 real,    parameter :: smallestNudge=1.e-10
 real,    parameter :: zero=1.e-37
+real,    parameter :: zeroInt=0
 real,    parameter :: one= 1.00000000000000000000000
 
 integer :: whPrstParams
@@ -2412,7 +2419,13 @@ else if (temporalPersistence) then
          do tt=nTimesLastObs,1,-1
             !! missing obs are not mixed with good obs. The first missing obs means the rest are missing.
             if(obsStaticStr(whGageId)%lastObsTime(tt) .eq. missingLastObsTime) exit
-            call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)
+            if(biasWindowBeforeT0) then
+               !! use the init time to define the end of the bias window
+               call geth_idts(initTime,  obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)
+            else
+               !! use the hydro model time to define the end of the bias window
+               call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)               
+            endif
             if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
             whObsTooOld(tt) = .false. 
             !! Put the times in minutes ofr ease of reading
@@ -2508,7 +2521,10 @@ else if (temporalPersistence) then
          if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) continue
       end if
       call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt)
-      if(prstDtErrInt .lt. zero) then
+      if(prstDtErrInt .lt. zeroInt) then
+         print*,'initTime:', hydroTime
+         print*,'obsStaticStr(whGageId)%lastObsTime(tt):', obsStaticStr(whGageId)%lastObsTime(tt)
+         print*,'prstDtErrInt:',prstDtErrInt
          print*,'Ndg: WARNING: lastObs times are in the future of the model time.'
          if(futureLastObsFatal) then
             call hydro_stop('nudge_term_link: negative prstDtErrInt: last obs in future')
