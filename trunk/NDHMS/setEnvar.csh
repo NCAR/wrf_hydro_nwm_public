@@ -7,7 +7,7 @@
 setenv WRF_HYDRO 1
 
 ### turn on output information during running time.
-setenv HYDRO_D 1
+setenv HYDRO_D 0
 
 ### turn on distributed parameters for NoahMP
 setenv SPATIAL_SOIL 1  
@@ -22,4 +22,4 @@ setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
  setenv HYDRO_REALTIME 1
 
 ### use streamflow nudging?
-# setenv WRF_HYDRO_NUDGING 0
+setenv WRF_HYDRO_NUDGING 0
