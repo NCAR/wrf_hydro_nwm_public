@@ -325,8 +325,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !ADCHANGE: End
 
 ! Logan change begin
-   if(nlst_rt(did)CHRTOUT_DOMAIN .ne. 0) then
-      call output_chrt_NWM(rt_domain,nlst_rt,did)
+   if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
+      call output_chrt_NWM(did)
+   endif
 !             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
 !#ifdef MPP_LAND
 !                 call mpp_output_chrt( &
