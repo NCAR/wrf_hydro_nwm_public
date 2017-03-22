@@ -67,6 +67,7 @@ subroutine output_chrt_NWM(domainId)
    integer :: refTimeId ! Dimension ID for the reference time dimension.
    integer :: featureVarId
    integer :: varRange(2)
+   integer :: ierr, myId ! MPI return status, process ID
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:,:) :: varOutInt ! Array holding output variables after 
                                                      ! scale_factor/add_offset have been applied.
@@ -90,6 +91,120 @@ subroutine output_chrt_NWM(domainId)
    diagFlag = 0
 #endif
 
+   if(nlst_rt(domainId)%CHRTOUT_DOMAIN .eq. 0) then
+      ! No output requested here, return to parent calling program/subroutine.
+      return
+   endif
+
+   ! To keep things simple, only allow CHRTOUT_DOMAIN option of 2 since this is NWM output.
+   ! We don't write frxstpts, but that could easily be put in here in the future. 
+   if(nlst_rt(domainId)%CHRTOUT_DOMAIN .ne. 2) then
+      call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_DOMAIN value of 0 or 2 only allowed.')
+   endif
+
+   ! Also, we are only allowing a split_output_count of 1.
+   if(nlst_rt(domainId)%split_output_count .ne. 1) then
+      call nwmCheck(diagFlag,1,'ERROR: split_output_count of 1 only allowed.')
+   endif
+
+   ! Since this is NWM output, we are assuming only channel_option 2 is acceptable.
+   if(nlst_rt(domainId)%channel_option .ne. 2) then
+      call nwmCheck(diagFlag,1,'ERROR: Only channel_option of 2 allowed.')
+   endif
+
+   ! If we are running over MPI, determine which processor number we are on.
+   ! If not MPI, then default to 0, which is the I/O ID.
+   if(mppFlag .eq. 1) then
+      call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
+      call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.')
+   else
+      myId = 0
+   endif
+
+   ! First step is to collect and assemble all data that will be written to the 
+   ! NetCDF file. If we are not using MPI, we bypass the collection step through
+   ! MPI. 
+   if(mppFlag .eq. 1) then
+      gSize = rt_domain(domainId)%gnlinksl
+
+      ! Sync all processes up.
+      call mpp_land_sync()
+
+      if(myId .eq. 0) then
+         ! Allocate memory for output.
+         allocate(g_chlon(gsize))
+         allocate(g_chlat(gsize))
+         allocate(g_hlink(gsize))
+         allocate(g_zelev(gsize))
+         allocate(g_qlink(gsize))
+         allocate(g_order(gsize))
+         allocate(g_linkid(gsize,2))
+         allocate(g_QLateral(gsize))
+         allocate(g_velocity(gsize))
+         ! Handle optional output flags
+         if(nudgeFlag .eq. 1) then
+            allocate(nudge(gsize))
+         endif
+         if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
+            nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+            allocate(g_qSfcLatRunoff(gsize))
+            allocate(g_qBucket(gsize))
+        	end if
+        	if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+            allocate(g_qBtmVertRunoff(gsize))
+        	endif
+        	if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
+            allocate(g_accSfcLatRunoff(gsize))
+            allocate(g_accBucket(gsize))
+        	end if
+      else
+         allocate(g_chlon(1))
+         allocate(g_chlat(1))
+         allocate(g_hlink(1))
+         allocate(g_zelev(1))
+         allocate(g_qlink(1,2))
+         allocate(g_order(1))
+         allocate(g_linkid(1))
+         allocate(g_QLateral(1))
+         allocate(g_velocity(1))
+         ! Handle optional output flags
+         if(nudgeFlag .eq. 1) then
+            allocate(nudge(1))
+         endif
+         if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
+            nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+            allocate(g_qSfcLatRunoff(1))
+            allocate(g_qBucket(1))
+         end if
+         if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+            allocate(g_qBtmVertRunoff(1))
+         endif
+         if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
+            allocate(g_accSfcLatRunoff(1))
+            allocate(g_accBucket(1))
+         end if
+
+      ! Sync everything up before the next step.
+      call mpp_land_sync()
+
+      ! Collect arrays from various processors through MPI, and 
+      ! assemble into global arrays previously allocated.
+      g_qlink = 0
+      call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,1),g_qlink(:,1))
+      call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
+      call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%gages,g_linkid)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%ZELEV,g_zelev)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral,g_QLateral)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%velocity,g_velocity)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK,g_hlink)
+
+   else
+      gSize = rt_domain(domainId)%nlinksl
+
+   endif
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
    call initChrtDict(fileMeta) 
