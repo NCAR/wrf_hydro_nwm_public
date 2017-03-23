@@ -52,7 +52,8 @@ module_HYDRO_io.o:  module_HYDRO_utils.o \
 	            ../nudging/module_nudging_io.o \
                     ../Data_Rec/module_namelist.o \
 	 	    ../Data_Rec/module_RT_data.o 
-module_NWM_io: module_NWM_io_dict.o \
+module_NWM_io: module_HYDRO_utils.o \
+               module_NWM_io_dict.o \
                module_date_utilities_rt.o \
                ../Data_Rec/module_namelist.o \
                ../Data_Rec/module_RT_data.o

@@ -15,7 +15,7 @@ module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-integer, parameter :: numChVars=4
+integer, parameter :: numChVars=14
 integer :: i
 
 ! Declare public types that will hold metadata
@@ -74,6 +74,9 @@ subroutine initChrtDict(chrtOutDict)
 
    type(chrtMeta), intent(inout) :: chrtOutDict
    ! CHRTOUT FILES
+   ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
+   !            which means meta-data standards have yet to be determined 
+   !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files 
    chrtOutDict%fType = 'timeSeries'
    chrtOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
@@ -100,19 +103,41 @@ subroutine initChrtDict(chrtOutDict)
    chrtOutDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
    
    ! Now establish attributes for output variables.
-   chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity"/)
+   chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
+                               "Latitude","Longitude","Altitude","Order",&
+                               "Head","QSfcLatRunoff","QBucket",&
+                               "QBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
    chrtOutDict%longName(:) = (/"River Flow","Amount of stream flow alteration",&
-                               "Runoff into channel reach","River Velocity"/)
-   chrtOutDict%units(:) = (/"m3 s-1","m3 s-1","m3 s-1","m s-1"/)
+                               "Runoff into channel reach","River Velocity",&
+                               "PLC","PLC","PLC","PLC","PLC","PLC","PLC",&
+                               "PLC","PLC","PLC"/)
+   chrtOutDict%units(:) = (/"m3 s-1","m3 s-1","m3 s-1","m s-1",&
+                            "PLC","PLC","PLC","PLC","PLC","PLC","PLC",&
+                            "PLC","PLC","PLC"/)
    chrtOutDict%coordNames(:) = (/"latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"/)
-   chrtOutDict%scaleFactor(:) = [0.01,0.1,0.1,0.01]
-   chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0]
-   chrtOutDict%outFlag(:) = [0,0,0,0] ! All turned off by default. This will vary, depending on the IOC flag.
-   chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
-   chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
-   chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0]
-   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,10000.0]
+   chrtOutDict%scaleFactor(:) = [0.0001,0.1,0.1,0.01,-99.0,-99.0,-99.0,-99.0,&
+                                 -99.0,-99.0,-99.0,-99.0,-99.0,-99.0]
+   chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,-99.0,-99.0,-99.0,-99.0,-99.0,&
+                               -99.0,-99.0,-99.0,-99.0,-99.0]
+   ! Specify the outputflags. 0 - Do not output, 1 - Output. DO NOT MODIFY
+   ! WITHOUT CONSULTING WITH OWP AND NCAR!!!!!!!!!!!!!!
+   chrtOutDict%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,0,0,0,0] 
+   chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                              -9999.0,-9999.0]
+   chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0]
+   chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0]
+   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,10000.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChVars

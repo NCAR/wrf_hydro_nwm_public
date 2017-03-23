@@ -325,6 +325,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !ADCHANGE: End
 
 ! Logan change begin
+   print*, "TOP LEVEL STREAMFLOW = ",str_out
    if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
       call output_chrt_NWM(did)
    endif
