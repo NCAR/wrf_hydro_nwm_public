@@ -472,7 +472,7 @@ CONTAINS
               nlst_rt(did)%route_direction_f, &
               rt_domain(did)%NLINKS, &
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
-              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
+              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt , rt_domain(did)%nlakes)
 #ifndef MPP_LAND
         call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
 #endif

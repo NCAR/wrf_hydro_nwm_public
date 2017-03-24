@@ -10,7 +10,7 @@ setenv WRF_HYDRO 1
 setenv HYDRO_D 0
 
 ### turn on distributed parameters for NoahMP
-setenv SPATIAL_SOIL 1  
+setenv SPATIAL_SOIL 0  
 
 ### turn on RAPID model
 # if(! $?WRF_HYDRO_RAPID)  setenv WRF_HYDRO_RAPID 0
@@ -19,7 +19,7 @@ setenv SPATIAL_SOIL 1
 setenv WRFIO_NCD_LARGE_FILE_SUPPORT 1
 
 ### running in REALTIME mode (with reduced output).
- setenv HYDRO_REALTIME 1
+ setenv HYDRO_REALTIME 0
 
 ### use streamflow nudging?
 setenv WRF_HYDRO_NUDGING 0
