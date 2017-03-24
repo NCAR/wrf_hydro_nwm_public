@@ -1557,10 +1557,7 @@ end subroutine get_albedo12m_netcdf
        startdate, date, QSUBRT,ZWATTABLRT,SMCRT,SUB_RESID,       &
        q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,CHRTOUT_GRID,  &
-       QBDRYRT    &
-#ifdef HYDRO_REALTIME
-       , iocflag &
-#endif
+       QBDRYRT, iocflag &
        )
 
 !output the routing variables over routing grid.
@@ -1568,9 +1565,7 @@ end subroutine get_albedo12m_netcdf
 #include <netcdf.inc>
 
     integer,                                  intent(in) :: igrid
-#ifdef HYDRO_REALTIME
     integer,                                  intent(in) :: iocflag
-#endif
     integer,                                  intent(in) :: split_output_count
     integer,                                  intent(in) :: ixrt,jxrt
     real,                                     intent(in) :: dt
@@ -1667,10 +1662,12 @@ end subroutine get_albedo12m_netcdf
         write (54,713) chan_in
        close (54)
 #else
+#ifndef HYDRO_REALTIME
        open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
              status='unknown',position='append')
         write (46,713) chan_in
        close (46)
+#endif
 #endif
 #ifdef MPP_LAND
     endif
@@ -1832,40 +1829,37 @@ end subroutine get_albedo12m_netcdf
 !       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 #endif
 
-#ifdef HYDRO_REALTIME
-	if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
-#endif
-          iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-          iret = nf_put_att_text(ncid,varid,'units',1,'m')
-          iret = nf_put_att_text(ncid,varid,'long_name',17,'water table depth')
-          iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-          iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-          iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 
-!       iret = nf_def_var(ncid,"Q_SFCFLX_X",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-!       iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
-!       iret = nf_put_att_text(ncid,varid,'long_name',14,'surface flux x')
-!       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-!       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-!       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   iret = nf_put_att_text(ncid,varid,'units',1,'m')
+   iret = nf_put_att_text(ncid,varid,'long_name',17,'water table depth')
+   iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+   iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+   iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
-!       iret = nf_def_var(ncid,"Q_SFCFLX_Y",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-!       iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
-!       iret = nf_put_att_text(ncid,varid,'long_name',14,'surface flux y')
-!       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-!       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-!       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   !iret = nf_def_var(ncid,"Q_SFCFLX_X",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   !iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
+   !iret = nf_put_att_text(ncid,varid,'long_name',14,'surface flux x')
+   !iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+   !iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+   !iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
-       iret = nf_def_var(ncid,"sfcheadsubrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   !iret = nf_def_var(ncid,"Q_SFCFLX_Y",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   !iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
+   !iret = nf_put_att_text(ncid,varid,'long_name',14,'surface flux y')
+   !iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+   !iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+   !iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 
-#ifdef HYDRO_REALTIME
-        endif
-#endif
+   iret = nf_def_var(ncid,"sfcheadsubrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   iret = nf_put_att_text(ncid,varid,'units',2,'mm')
+   iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
+   iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
+   iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
+   iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+
+endif
 
 #ifndef HYDRO_REALTIME   
        iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
@@ -2016,25 +2010,21 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
     enddo !-n soils
 #endif
 
-#ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
-#endif
+if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #ifdef MPP_LAND
-          call write_IO_rt_real(ZWATTABLRT,xdumd)
+   call write_IO_rt_real(ZWATTABLRT,xdumd)
 #else
-          xdumd(:,:) = ZWATTABLRT(:,:)
+   xdumd(:,:) = ZWATTABLRT(:,:)
 #endif
 #ifdef MPP_LAND
-    if(my_id .eq. io_id) then
+   if (my_id .eq. io_id) then
 #endif
-        iret = nf_inq_varid(ncid,  "zwattablrt", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+      iret = nf_inq_varid(ncid,  "zwattablrt", varid)
+      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 #ifdef MPP_LAND
-     endif
-#endif
-#ifdef HYDRO_REALTIME
    endif
 #endif
+endif
 
 #ifndef HYDRO_REALTIME
 #ifdef MPP_LAND
@@ -2066,25 +2056,21 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #endif
 #endif
  
-#ifdef HYDRO_REALTIME
-   if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
-#endif
+if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
 #ifdef MPP_LAND
-          call write_IO_rt_real(SFCHEADSUBRT,xdumd)
+   call write_IO_rt_real(SFCHEADSUBRT,xdumd)
 #else
-          xdumd(:,:) = SFCHEADSUBRT(:,:)
+   xdumd(:,:) = SFCHEADSUBRT(:,:)
 #endif
 #ifdef MPP_LAND
-    if(my_id .eq. io_id) then
+   if (my_id .eq. io_id) then
 #endif
-     iret = nf_inq_varid(ncid,  "sfcheadsubrt", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+      iret = nf_inq_varid(ncid,  "sfcheadsubrt", varid)
+      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
 #ifdef MPP_LAND
-     endif
-#endif
-#ifdef HYDRO_REALTIME
    endif
 #endif
+endif
 
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then
@@ -9754,9 +9740,9 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
      if(my_id .eq. IO_id) then
 #endif
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f)//".nc", IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f)//".nc", NF_CLOBBER, ncid)
+       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f), NF_CLOBBER, ncid)
 #endif
 #ifdef MPP_LAND
      endif

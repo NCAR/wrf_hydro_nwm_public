@@ -1503,11 +1503,9 @@ if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    !#endif
-!   This change corresponds to Wei's restart fix 6ec975870ba871d6322cfc3927810252169afe58
-!   just in  a different place (these are conflicts not identified by git, manually merged).
-!   rt_domain(did)%INFXSRT      = zeroFlt
-!   rt_domain(did)%LAKE_INFLORT = zeroFlt
-!   rt_domain(did)%QSTRMVOLRT   = zeroFlt
+   rt_domain(did)%INFXSRT      = zeroFlt
+   rt_domain(did)%LAKE_INFLORT = zeroFlt
+   rt_domain(did)%QSTRMVOLRT   = zeroFlt
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if
@@ -1657,6 +1655,12 @@ end subroutine HYDRO_ini
                     rt_domain(did)%SMCMAX1(i,j) = MAXSMC(soltyp(I,J))
                     rt_domain(did)%SMCREF1(i,j) = refsmc(soltyp(I,J))
                     rt_domain(did)%SMCWLT1(i,j) = wltsmc(soltyp(I,J))
+                    !ADCHANGE: Add some sanity checks in case calibration knocks the order of these out of sequence.
+                    !The min diffs were pulled from the existing HYDRO.TBL defaults.
+                    !Currently water is 0, so enforcing 0 as the absolute min.
+                    rt_domain(did)%SMCMAX1(i,j) = min(rt_domain(did)%SMCMAX1(i,j), 1.0)
+                    rt_domain(did)%SMCREF1(i,j) = max(min(rt_domain(did)%SMCREF1(i,j), rt_domain(did)%SMCMAX1(i,j) - 0.01), 0.0)
+                    rt_domain(did)%SMCWLT1(i,j) = max(min(rt_domain(did)%SMCWLT1(i,j), rt_domain(did)%SMCREF1(i,j) - 0.01), 0.0)
                 ENDIF
                 IF(rt_domain(did)%VEGTYP(i,j) > 0 ) THEN   ! created 2d ov_rough
                     rt_domain(did)%OV_ROUGH2d(i,j) = RT_DOMAIN(did)%OV_ROUGH(rt_domain(did)%VEGTYP(I,J))
