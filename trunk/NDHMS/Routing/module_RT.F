@@ -425,6 +425,7 @@ CONTAINS
   allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
   allocate( rt_domain(did)%SMCREF1  (IX,JX) )
   allocate( rt_domain(did)%VEGTYP   (IX,JX) )
+  allocate( rt_domain(did)%OV_ROUGH2d   (IX,JX) )
   allocate( rt_domain(did)%SOILTYP   (IX,JX) )
   allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
   allocate( rt_domain(did)%SLDPTH(NSOIL) )

@@ -2399,7 +2399,7 @@
              RT_DOMAIN(did)%INFXSUBRT,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
              RT_DOMAIN(did)%SMCRT, &
              RT_DOMAIN(did)%OVROUGHRT, RT_DOMAIN(did)%LAKE_MSKRT, &
-             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH,RT_DOMAIN(did)%SLDPTH, &
+             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT)
 
       end subroutine disaggregateDomain_drv
@@ -2408,7 +2408,7 @@
                      SICE, SMC,SH2OX, INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
                SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
                LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
-               SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT,OV_ROUGH,  &
+               SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT, OV_ROUGH2d,  &
                SLDPTH, soiltypRT, soiltyp, elrt                               &
             )
 #ifdef MPP_LAND
@@ -2438,8 +2438,7 @@
                   
 
         real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
-        REAL    OV_ROUGH(*)
-
+        REAL,dimension(ix,jx) ::    OV_ROUGH2d
 
 
         integer :: i, j, AGGFACYRT, AGGFACXRT, IXXRT, JYYRT,KRT, KF
@@ -2626,7 +2625,7 @@
             IF (VEGTYP(I,J).LE.0) then
               OVROUGHRT(IXXRT,JYYRT) = 0.1     !COWS mask test
             ELSE
-               OVROUGHRT(IXXRT,JYYRT)=OV_ROUGH(VEGTYP(I,J))*OVROUGHRTFAC(IXXRT,JYYRT)  ! Distributed calibration...1/17/2012
+               OVROUGHRT(IXXRT,JYYRT) = OV_ROUGH2d(i,j)*OVROUGHRTFAC(IXXRT,JYYRT)  ! Distributed calibration...1/17/2012
             END IF
 
 
