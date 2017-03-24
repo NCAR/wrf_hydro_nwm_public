@@ -154,14 +154,14 @@ readTimesliceParallel = .TRUE.
 ! temporalPersistence defaults to true, only runs if necessary params present.
 temporalPersistence   = .FALSE.
 
+! The total number of last (obs, modeled) pairs to save in nudgingLastObs for 
+! removal of bias. This is the maximum array length. (This option is active when persistBias=FALSE)
+! (Default=960=10days @15min obs resolution, if all the obs are present and longer if not.)
+nLastObs = 960
+
 ! If using temporalPersistence the last observation persists by default. 
 ! This option instead persists the bias in some period before the last observation. 
 persistBias = .FALSE.
-
-! If persistBias: The total number of last (obs, modeled) pairs to save in nudgingLastObs for 
-! removal of bias. This is the maximum array length. 
-! (Default=960=10days @15min obs resolution, if all the obs are present and longer if not.)
-nLastObs = 960
 
 ! If persistBias: Only use this many last (obs, modeled) pairs. (If Commented out, Default=-1*nLastObs)
 ! > 0: apply an age-based filter, units=hours.
