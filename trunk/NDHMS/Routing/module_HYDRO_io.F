@@ -597,7 +597,7 @@ end subroutine get_albedo12m_netcdf
 
        SUBROUTINE READ_ROUTEDIM(IXRT,JXRT,route_chan_f,route_link_f, &
             route_direction_f, NLINKS, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT)
+            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT,NLAKES)
 
          implicit none
 #include <netcdf.inc>
@@ -612,6 +612,8 @@ end subroutine get_albedo12m_netcdf
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
         INTEGER, DIMENSION(IXRT,JXRT)                :: CH_LNKRT   !- link routing ID
         integer, INTENT(IN)                          :: UDMP_OPT                                
+        integer                                      :: NLAKES
+        
 
 !!Dummy read in grids for inverted y-axis
 
@@ -890,16 +892,20 @@ end subroutine get_albedo12m_netcdf
 
 !!-- no longer find the lakes from the 2-d hi res grid
 !DJG inv       do j=jxrt,1,-1
-!       do j=1,jxrt
-!          do i = 1,ixrt
-!           if (LAKE_MSKRT(i,j) .gt. NLAKES) then 
-!             NLAKES = LAKE_MSKRT(i,j)
-!           endif
-!        end do
-!       end do
-!#ifdef HYDRO_D
-!       write(6,*) "finish read_red ..  Total Number of Lakes in Domain = ", NLAKES
-!#endif
+! follwoing is modified by Wei Yu 03/24/2017
+     if(UDMP_OPT .eq. 0) then
+        NLAKES = 0
+        do j=1,jxrt
+           do i = 1,ixrt
+            if (LAKE_MSKRT(i,j) .gt. NLAKES) then
+              NLAKES = LAKE_MSKRT(i,j)
+            endif
+         end do
+        end do
+#ifdef HYDRO_D
+        write(6,*) "finish read_red ..  Total Number of Lakes in Domain = ", NLAKES
+#endif
+     endif
 
 
 !-- don't return here--!  return
@@ -5228,7 +5234,7 @@ end subroutine mpp_output_chrt
       SUBROUTINE MPP_READ_ROUTEDIM(did,g_IXRT,g_JXRT, GCH_NETLNK,GNLINKS,IXRT,JXRT, &
             route_chan_f,route_link_f, &
             route_direction_f, NLINKS, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT)
+            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT,NLAKES)
 
          USE module_mpp_land
 
@@ -5248,7 +5254,7 @@ end subroutine mpp_output_chrt
         INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
         INTEGER, INTENT(IN)                          :: UDMP_OPT
-        integer:: i,j
+        integer:: i,j, NLAKES
 
         CHARACTER(len=256)       :: route_chan_f, route_link_f,route_direction_f
         CHARACTER(len=256)       :: geo_finegrid_flnm
@@ -5264,7 +5270,7 @@ end subroutine mpp_output_chrt
            g_CH_NETLNK = -9999
            CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, GNLINKS, &
-              g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL, UDMP_OPT)
+              g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL, UDMP_OPT,nlakes)
            call get_NLINKSL(NLINKSL, channel_option, route_link_f)
         else
            allocate(g_CH_NETLNK(1,1))
@@ -5272,6 +5278,7 @@ end subroutine mpp_output_chrt
 
         call mpp_land_bcast_int1(GNLINKS)
         call mpp_land_bcast_int1(NLINKSL)
+        call mpp_land_bcast_int1(NLAKES)
 
 
         call decompose_RT_int(g_CH_NETLNK,GCH_NETLNK,g_IXRT,g_JXRT,ixrt,jxrt)
