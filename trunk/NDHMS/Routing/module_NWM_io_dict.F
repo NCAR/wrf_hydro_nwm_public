@@ -16,10 +16,13 @@ implicit none
 
 ! Declare parameter values for module.
 integer, parameter :: numChVars=14
+integer, parameter :: numLdasVars = 96
 integer :: i
 
 ! Declare public types that will hold metadata
 public :: chrtMeta ! Public CHRTOUT metadata for NWM output.
+public :: ldasMeta ! Public LDASOUT metadata for NWM output.
+
 
 ! Establish types for each output type
 type chrtMeta
@@ -34,14 +37,14 @@ type chrtMeta
    character (len=64), dimension(numChVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChVars) :: units ! Units for each variable.
    character (len=64), dimension(numChVars) :: coordNames ! Coordinate names for each variable. 
-   integer, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer*8, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
    real, dimension(numChVars) :: validMinReal ! Valid minimum (before conversion to integer)
    real, dimension(numChVars) :: validMaxReal ! Valid maximum (before converstion to integer)
-   integer, dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer*8, dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
-   integer, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
+   integer*8, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on 
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -66,6 +69,58 @@ type chrtMeta
    character (len=128) :: conventions ! Conventions string
 
 end type chrtMeta
+
+type ldasMeta
+   ! Variable names
+   character (len=64), dimension(numLdasVars) :: varNames
+   integer :: numVars = numLdasVars
+   ! Output variable attributes
+   real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
+                                                  ! variable to converte from
+                                                  ! real to
+                                                  ! integer.
+   real, dimension(numLdasVars)             :: addOffset   ! add_offset values for each variable.
+   character (len=64), dimension(numLdasVars) :: longName  ! Long names for each variable.
+   character (len=64), dimension(numLdasVars) :: units ! Units for each variable.
+   integer*8, dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numLdasVars) :: validMaxComp ! Valid max (after conversion to integer)
+   real, dimension(numLdasVars) :: validMinReal ! Valid minimum (before conversion to integer)
+   real, dimension(numLdasVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   integer*8, dimension(numLdasVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   real, dimension(numLdasVars) :: missingReal ! Missing value attribute (before conversion to integer)
+   real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
+   integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
+   integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   ! Time variable attribues
+   character (len=64) :: timeLName ! long_name - usually valid output time
+   character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
+   character (len=64) :: timeStName ! standard_name - usually time
+   ! Reference time attributes
+   character (len=64) :: rTimeLName ! long_name - usually model initialization time
+   character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
+   character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
+   ! Projection variable attributes
+   character (len=64) :: yLName,xLName ! long_name
+   character (len=64) :: yStName,xStName ! standard_name
+   character (len=64) :: yAxisType,xAxisType ! _CoordinateAxisType
+   character (len=64) :: yUnits,xUnits ! units
+   real :: yRes, xRes ! Resoltution in meters
+   ! Establish ProjectionCoordinateSystem variable attributes
+   character (len=64) :: projTransform,projTransformName
+   character (len=64) :: projGridMappingName,projCoordAxes
+   character (len=2048) :: projEsri
+   real, dimension(2) :: stParallel
+   real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
+   character (len=512) :: proj4
+   character (len=128) :: gridMapping
+
+   ! Global attributes
+   character (len=128) :: title ! File TITLE
+   character (len=128) :: initTime ! model_initialization_time attribute
+   character (len=128) :: validTime ! model_output_valid_time attribute
+   character (len=128) :: conventions ! Conventions string
+
+end type ldasMeta
 
 contains
 
@@ -148,5 +203,242 @@ subroutine initChrtDict(chrtOutDict)
    end do
 end subroutine initChrtDict
 
+subroutine initLdasDict(ldasOutDict)
+   implicit none
+
+   type(ldasMeta), intent(inout) :: ldasOutDict
+   ! LDASOUT FILES
+
+   ! First establish global attributes.
+   ldasOutDict%title = "OUTPUT FROM HRLDAS v20150506"
+   ldasOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
+   ldasOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
+   ldasOutDict%conventions = "CF-1.6"
+
+   ! Next establish time attributes
+   ldasOutDict%timeLName = "valid output time"
+   ldasOutDict%timeUnits = "minutes since 1970-01-01 00:00:00 UTC"
+   ldasOutDict%timeStName = "time"
+   ldasOutDict%rTimeLName = "model initialization time"
+   ldasOutDict%rTimeUnits = "minutes since 1970-01-01 00:00:00 UTC"
+   ldasOutDict%rTimeStName = "forecast_reference_time"
+
+   ! Establish attributes for coordinate variables.
+   ldasOutDict%xLName = "x coordinate of projection"
+   ldasOutDict%xStName = "projection_x_coordinate"
+   ldasOutDict%xAxisType = "GeoX"
+   ldasOutDict%xUnits = "m"
+   ldasOutDict%xRes = 1000.0
+   ldasOutDict%yLName = "y coordinate of projection"
+   ldasOutDict%yStName = "projection_y_coordinate"
+   ldasOutDict%yAxisType = "GeoY"
+   ldasOutDict%yUnits = "m"
+   ldasOutDict%yRes = 1000.0
+
+   ! Establish attributes for the ProjectionCoordinateSystem variable.
+   ldasOutDict%projTransform = "Projection"
+   ldasOutDict%projTransformName = "lambert_conformal_conic"
+   ldasOutDict%projGridMappingName= "lambert_conformal_conic"
+   ldasOutDict%projCoordAxes = "y x"
+   ldasOutDict%projEsri = 'PROJCS[\"Sphere_Lambert_Conformal_Conic\",GEOGCS[\"GCS_Sphere\",&
+                          &DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6370000.0,0.0]]&
+                          &,PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],&
+                          &PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"false_easting\",0.0],&
+                          &PARAMETER[\"false_northing\",0.0],PARAMETER[\"central_meridian\",-97.0],&
+                          &PARAMETER[\"standard_parallel_1\",30.0],PARAMETER[\"standard_parallel_2\",60.0],&
+                          &PARAMETER[\"latitude_of_origin\",40.0000076294],UNIT[\"Meter\",1.0]];&
+                          &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
+                          & 10000;0.001;0.001;0.001;IsHighPrecision'
+   ldasOutDict%stParallel = [30.0,60.0]
+   ldasOutDict%lonCtrlMer = -97.0
+   ldasOutDict%latOrig = 40.0000076294
+   ldasOutDict%falseEast = 0.0
+   ldasOutDict%falseNorth = 0.0
+   ldasOutDict%radius = 6370000.0
+   ldasOutDict%proj4 = '+proj=lcc +lat_1=30 +lat_2=60 +lat_0=40 +lon_0=-97 +x_0=0&
+                       & +y_0=0 +a=6370000 +b=6370000 +units=m +no_defs'
+   ldasOutDict%gridMapping = "ProjectionCoordinateSystem"
+
+   ! Now establish metadata attributes for variables. ESRI string is defined
+   ! above and applies to all gridded variables for LDASOUT.
+   ldasOutDict%varNames(:) = (/"IVGTYP","ISLTYP","FVEG","LAI","SAI","SWFORC",&
+                               "COSZ","LWFORC","RAINRATE","EMISS","FSA","FIRA",&
+                               "GRDFLX","HFX","LH","ECAN","EDIR","ALBEDO","ETRAN",&
+                               "UGDRNOFF","SFCRNOFF","CANLIQ","CANICE","ZWT","WA",&
+                               "WT","ACCPRCP","ACCECAN","ACCEDIR","ACCETRAN","SAV",&
+                               "TR","EVC","IRC","SHC","IRG","SHG","EVG","GHV","SAG",&
+                               "IRB","SHB","EVB","GHB","TRAD","TG","TV","TAH","TGV",&
+                               "TGB","T2MV","T2MB","Q2MV","Q2MB","EAH","FWET",&
+                               "ZSNSO_SN","SNICE","SNLIQ","SOIL_T","SOIL_W","SNOW_T",&
+                               "SOIL_M","SNOWH","SNEQV","QSNOW","ISNOW","FSNO",&
+                               "ACSNOW","ACSNOM","CM","CH","CHV","CHB","CHLEAF",&
+                               "CHUC","CHV2","CHB2","LFMASS","RTMASS","STMASS",&
+                               "WOOD","STBLCP","FASTCP","NEE","GPP","NPP","PSN",&
+                               "APAR","ACCET","CANWAT","SOILICE","SOILSAT_TOP",&
+                               "SOILSAT","SNOWT_AVG"/)
+   ldasOutDict%longName(:) = (/"Dominant vegetation category",&
+                               "Dominant soil category",&
+                               "Green Vegetation Fraction",&
+                               "Leaf area index",&
+                               "Stem area index",&
+                               "Shortwave forcing",&
+                               "Cosine of zenith angle",&
+                               "Longwave forcing",&
+                               "Precipitation rate",&
+                               "Grid emissivity",&
+                               "Total absorved SW radiation",&
+                               "Total net LW radiation to atmosphere",&
+                               "Heat flux into the soil",&
+                               "Total sensible heat to the atmosphere",&
+                               "Total latent heat to the atmosphere",&
+                               "Canopy water evaporation rate",&
+                               "Direct from soil evaporation rate",&
+                               "Surface albedo",&
+                               "Transpiration rate",&
+                               "Accumulated underground runoff",&
+                               "Accumulated surface runoff",&
+                               "Canopy liquid water content",&
+                               "Canopy ice water content",&
+                               "Depth to water table",&
+                               "Water in aquifer",&
+                               "Water in aquifer and saturated soil",&
+                               "Accumulated precip",&
+                               "Accumulated canopy evap",&
+                               "Accumulated direct soil evap",&
+                               "Accumulated transpiration",&
+                               "Solar radiative heat flux absorbed by vegetation",&
+                               "Transpiration heat",&
+                               "Canopy evap heat",&
+                               "Canopy net LW rad",&
+                               "Canopy sensible heat",&
+                               "Ground net LW rad",&
+                               "Ground sensible heat",&
+                               "Ground evap heat",&
+                               "Ground heat flux + to soil vegetated",&
+                               "Solar radiative heat flux absorbed by ground",&
+                               "Net LW rad to atm bare",&
+                               "Sensible heat atm bare",&
+                               "Evaporation heat to atm bare",&
+                               "Ground heat flux + to soil bare",&
+                               "Surface radiative temperature",&
+                               "Ground temperature",&
+                               "Vegetation temperature",&
+                               "Canopy air temperature",&
+                               "Ground surface Temp vegetated",&
+                               "Ground surface Temp bare",&
+                               "2m Air Temp vegetated",&
+                               "2m Air Temp bare",&
+                               "2m mixing ratio vegetated",&
+                               "2m mixing ratio bare",&
+                               "Canopy air vapor pressure",&
+                               "Wetted or snowed fraction of canopy",&
+                               "Snow layer depths from snow surface",&
+                               "Snow layer ice",&
+                               "Snow layer liquid water",&
+                               "soil temperature",&
+                               "liquid volumetric soil moisture",&
+                               "snow temperature",&
+                               "volumetric soil moisture",&
+                               "Snow depth",&
+                               "Snow water equivalent",&
+                               "Snowfall rate",&
+                               "Number of snow layers",&
+                               "Snow-cover fraction on the ground",&
+                               "accumulated snow fall",&
+                               "accumulated melting water out of snow bottom",&
+                               "Momentum drag coefficient",&
+                               "Sensible heat exchange coefficient",&
+                               "Exchange coefficient vegetated",&
+                               "Exchange coefficient bare",&
+                               "Exchange coefficient leaf",&
+                               "Exchange coefficient bare",&
+                               "Exchange coefficient 2-meter vegetated",&
+                               "Exchange coefficient 2-meter bare",&
+                               "Leaf mass",&
+                               "Mass of fine roots",&
+                               "Stem mass",&
+                               "Mass of wood and woody roots",&
+                               "Stable carbon in deep soil",&
+                               "Short-lived carbon in shallow soil",&
+                               "Net ecosystem exchange",&
+                               "Net instantaneous assimilation",&
+                               "Net primary productivity",&
+                               "Total photosynthesis",&
+                               "Photosynthesis active energy by canopy",&
+                               "Accumulated total ET",&
+                               "Total canopy water (liquid + ice)",&
+                               "fraction of soil moisture that is ice",&
+                               "fraction of soil saturation, top 2 layers",&
+                               "fraction of soil saturation, column integrated",&
+                               "average snow temperature (by layer mass)"/)
+   ldasOutDict%units(:) = (/"category","category","-","-","-",&
+                            "W m-2","W m-2","W m-2","kg m-2s-1",&
+                            "-","W m-2","W m-2","W m-2","W m-2","W m-2","kg m-2s-1","kg m-2s-1","-","kg m-2s-1",&
+                            "mm","mm","mm","mm","m","kg m-2","kg m-2",&
+                            "mm","mm","mm","mm",&
+                            "W m-2","W m-2","W m-2","W m-2","W m-2",&
+                            "W m-2","W m-2","W m-2","W m-2",&
+                            "W m-2","W m-2","W m-2","W m-2","W m-2",&
+                            "K","K","K","K","K","K","K","K",&
+                            "kg/kg","kg/kg","Pa","fraction",&
+                            "m","mm","mm","K","m3 m-3","K","m3 m-3",&
+                            "m","kg m-2","mm s-1","count","-","mm","mm",&
+                            "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
+                            "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
+                            "g m-2s-1 C","g m-2s-1 C","umol CO m-2 s-1","W m-2",&
+                            "mm","mm","-","-","-","K"/)
+   ldasOutDict%scaleFactor(:) = [0.1,0.1,0.1,0.1,0.1,0.01,0.01,0.01,0.01,&
+                                 0.1,0.001,0.1,0.1,0.1,0.01,0.001,0.1,&
+                                 1.0,0.001,0.1,0.01,0.01,0.01,0.001,0.001,0.1]
+   ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                               0.0,0.0]
+   ! Note that output flags will be set in the the output routine, and will vary
+   ! by the IOC flag specified in hydro.namelist.
+   ldasOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+   ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   ldasOutDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0]
+   ldasOutDict%validMaxReal(:) = 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0]
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numChVars
+      ldasOutDict%fillComp(i) = int((ldasOutDict%fillReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%missingComp(i) = int((ldasOutDict%missingReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%validMinComp(i) = int((ldasOutDict%validMinReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%validMaxComp(i) = int((ldasOutDict%validMaxReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+   end do
+
+end subroutine initLdasDict(ldasOutDict)
 
 end module module_NWM_io_dict
