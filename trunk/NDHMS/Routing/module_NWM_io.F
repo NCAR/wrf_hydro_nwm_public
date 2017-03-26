@@ -17,7 +17,12 @@ module module_NWM_io
 implicit none
 !include "mpif.h"
 
+! Module-wide variables
+integer, private :: ftnNoahMP ! Private NetCDF file handle since output routine
+                              ! called multiple times for one file.
+
 contains
+
 !==============================================================================
 ! Program Name: output_chrt_NWM
 ! Author(s)/Contact(s): Logan R Karsten <karsten><ucar><edu>
@@ -538,7 +543,7 @@ end subroutine output_chrt_NWM
 !
 ! User controllable options: None.
 
-subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
+subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixFull,jxFull,ixPar,jxPar,zNum,varReal,varInd)
    !use module_rt_data, only: rt_domain
    use module_namelist, only: nlst_rt
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
@@ -546,7 +551,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
    use netcdf
 #ifdef MPP_LAND
      use module_mpp_land
-     !use module_mpp_reachls,  only: ReachLS_write_io
 #endif
    implicit none
 
@@ -556,8 +560,11 @@ subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
    integer, intent(in) :: output_timestep
    character(len=19),intent(in) :: startdate
    character(len=19),intent(in) :: date
-   integer, intent(in) :: ixFull,jxFull,nSoil,nSnow
-   integer, intent(in) :: varInd
+   integer, intent(in) :: ixFull,jxFull ! I/J dimensions of global grid,
+   integer, intent(in) :: ixPar,jxPar ! I/J dimensions of local grid.
+   integer, intent(in) :: zNum ! Number of vertical layers (most of the time 1)
+   real, intent(in) :: varReal(ixPar,zNum,jxPar)
+   integer, intent(in) :: varInd ! Variable index used to extact meta-data from.
 
    ! Derived types.
    type(ldasMeta) :: fileMeta
@@ -574,7 +581,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
    integer :: coordVarId
    integer :: xVarId,yVarId
    integer :: ierr, myId
+   integer :: varRange(2)
+   integer :: iTmp,jTmp,zTmp
+   integer, allocatable, dimension(:,:) :: localCompTmp, globalCompTmp
+   integer, allocatable, dimension(:,:,:) :: globalOutComp
 
+   print*, "IXFULL = ",ixFull
+   print*, "JXFULL = ",jxFull
+   print*, "IXPAR = ",ixPar
+   print*, "JXPAR = ",jxPar
 #ifdef MPP_LAND
    mppFlag = 1
 #else
@@ -587,6 +602,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
    diagFlag = 0
 #endif
 
+   call mpp_land_sync()
+
+   print*, "NOAH OUTPUT ROUTINE: ",date
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
@@ -596,11 +614,55 @@ subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
       myId = 0
    endif
 
+   print*, "MPP FLAG = ",mppFlag
+   print*, "OUTPUT ID = ",myId
    ! Initialize NWM dictionary derived type containing all the necessary
    ! metadata for the output file.
    call initLdasDict(fileMeta)
 
-   if(varInd .eq. 0) then
+   ! Depending on the NWM forecast config, we will be outputting different
+   ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
+   ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   if(nlst_rt(1)%iocFlag .eq. 0) then
+      ! Diagnostics
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1]
+   else if(nlst_rt(1)%iocFlag .eq. 1) then
+      ! Analysis and Assimilation
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1]
+   else if(nlst_rt(1)%iocFlag .eq. 2) then
+      ! Short Range
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1]
+   else if(nlst_rt(1)%iocFlag .eq. 3) then
+      ! Medium Range
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
+                             0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
+                             0,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,1,1,1,0,1]
+   else if(nlst_rt(1)%iocFlag .eq. 4) then
+      ! Long Range
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,&
+                             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,1,0,1,1,0]
+   else
+      call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
+   endif
+
+   if(varInd .eq. 1) then
       ! We are on the first variable, we need to create the output file with
       ! attributes first.
       if(myId .eq. 0) then
@@ -615,240 +677,246 @@ subroutine output_NoahMP_NWM(outDir,iGrid,ixFull,jxFull,nSoil,nSnow,var,varInd)
             write(output_flnm, '(A,"/",A14,".LDASOUT_DOMAIN",I1)') outdir,date(1:4)//&
                   date(6:7)//date(9:10)//date(12:13)//date(15:16)//date(18:19), igrid
          endif
+
+         iret = nf90_create(trim(output_flnm),cmode=nf90_clobber .or. nf90_hdf5,ncid = ftn)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create LDASOUT NetCDF file.')
+         ftnNoahMP = ftn
+
+         ! Write global attributes
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LDASOUT file.')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_initialization_time','PLACEHOLDER')
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_output_time','PLACEHOLDER')
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'CF-1.6',trim(fileMeta%conventions))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
+
+         ! Create dimensions
+         iret = nf90_def_dim(ftnNoahMP,'time',NF90_UNLIMITED,dimId(1))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define time dimension')
+         iret = nf90_def_dim(ftnNoahMP,'x',ixFull,dimId(2))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define x dimension')
+         iret = nf90_def_dim(ftnNoahMP,'y',jxFull,dimId(3))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
+         iret = nf90_def_dim(ftnNoahMP,'soil_layers_stag',fileMeta%numSoilLayers,dimId(4))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define soil_layers_stag dimension')
+         iret = nf90_def_dim(ftnNoahMP,'snow_layers',fileMeta%numSnowLayers,dimId(5))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define snow_layers dimension')
+         iret = nf90_def_dim(ftnNoahMP,'reference_time',1,dimId(6))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
+
+         ! Create and populate reference_time and time variables.
+         iret = nf90_def_var(ftnNoahMP,"time",nf90_int,dimId(1),timeId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create time variable')
+         iret = nf90_put_att(ftnNoahMP,timeId,'long_name',trim(fileMeta%timeLName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into time variable')
+         iret = nf90_put_att(ftnNoahMP,timeId,'standard_name',trim(fileMeta%timeStName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
+         iret = nf90_put_att(ftnNoahMP,timeId,'units',trim(fileMeta%timeUnits))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+         iret = nf90_def_var(ftnNoahMP,"reference_time",nf90_int,dimId(6),refTimeId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
+         iret = nf90_put_att(ftnNoahMP,refTimeId,'long_name',trim(fileMeta%rTimeLName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into reference_time variable')
+         iret = nf90_put_att(ftnNoahMP,refTimeId,'standard_name',trim(fileMeta%rTimeStName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
+         iret = nf90_put_att(ftnNoahMP,refTimeId,'units',trim(fileMeta%rTimeUnits))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
+
+         ! Create x/y coordinate variables
+         iret = nf90_def_var(ftnNoahMP,'x',nf90_double,dimId(2),xVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,xVarId,'long_name',trim(fileMeta%xLName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,xVarId,'standard_name',trim(fileMeta%xStName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,xVarId,'units',trim(fileMeta%xUnits))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,xVarId,'resolution',fileMeta%xRes)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+         iret = nf90_def_var(ftnNoahMP,'y',nf90_double,dimId(3),yVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,yVarId,'long_name',trim(fileMeta%yLName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,yVarId,'standard_name',trim(fileMeta%yStName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,yVarId,'units',trim(fileMeta%yUnits))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
+         iret = nf90_put_att(ftnNoahMP,yVarId,'resolution',fileMeta%yRes)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+
+         ! Create ProjectionCoordinateSystem variable
+         iret = nf90_def_var(ftnNoahMP,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'transform_name',trim(fileMeta%projTransformName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'standard_parallel',fileMeta%stParallel)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'false_easting',fileMeta%falseEast)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'false_northing',fileMeta%falseNorth)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'earth_radius',fileMeta%radius)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
+         iret = nf90_put_att(ftnNoahMP,coordVarId,'proj4',trim(fileMeta%proj4))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+
+         ! Loop through all possible variables and create them, along with their
+         ! metadata attributes. 
+         do i=1,fileMeta%numVars
+            print*, "VAR NUM = ",i
+            if(fileMeta%outFlag(i) .eq. 1) then
+               print*, "OUT FLAG = 1"
+               if(fileMeta%numLev(i) .eq. fileMeta%numSoilLayers) then
+                  iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(i)),nf90_int,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
+               else if(fileMeta%numLev(i) .eq. fileMeta%numSnowLayers) then
+                  iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(i)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+               else if(fileMeta%numLev(i) .eq. 1) then
+                  iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(i)),nf90_int,(/dimId(2),dimId(3),dimId(1)/),varId)
+               endif
+               call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(i)))            
+            
+               ! Extract valid range into a 1D array for placement.
+               varRange(1) = fileMeta%validMinComp(i)
+               varRange(2) = fileMeta%validMaxComp(i)
+
+               ! Establish a compression level for the variables. For now we are
+               ! using a
+               ! compression level of 2. In addition, we are choosing to turn the
+               ! shuffle
+               ! filter off for now. Kelley Eicher did some testing with this and
+               ! determined that the benefit wasn't worth the extra time spent
+               ! writing
+               ! output.
+               iret = nf90_def_var_deflate(ftnNoahMP,varId,0,1,2)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(i)))
+
+               ! Create variable attributes
+               print*, "NOAHMP FILL = ",fileMeta%fillComp(i)
+               iret = nf90_put_att(ftnNoahMP,varId,'_FillValue',fileMeta%fillComp(i))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(i)))
+               print*, "MISSING = ",fileMeta%missingComp(i)
+               iret = nf90_put_att(ftnNoahMP,varId,'missing_value',fileMeta%missingComp(i))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place missing value attribute into variable '//trim(fileMeta%varNames(i)))
+               print*, "LONG NAME = ",trim(fileMeta%longName(i))
+               iret = nf90_put_att(ftnNoahMP,varId,'long_name',trim(fileMeta%longName(i)))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(i)))
+               print*, "UNITS = ",trim(fileMeta%units(i))
+               iret = nf90_put_att(ftnNoahMP,varId,'units',trim(fileMeta%units(i)))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(i)))
+               print*, "SCALE_FACTOR = ",fileMeta%scaleFactor(i)
+               iret = nf90_put_att(ftnNoahMP,varId,'scale_factor',fileMeta%scaleFactor(i))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place scale_factor attribute into variable '//trim(fileMeta%varNames(i)))
+               print*, "ADD_OFFSET = ",fileMeta%addOffset(i)
+               iret = nf90_put_att(ftnNoahMP,varId,'add_offset',fileMeta%addOffset(i))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place add_offset attribute into variable '//trim(fileMeta%varNames(i)))
+               print*, "VALID_RANGE = ",varRange
+               iret = nf90_put_att(ftnNoahMP,varId,'valid_range',varRange)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(i)))
+               iret = nf90_put_att(ftnNoahMP,varId,'proj4',trim(fileMeta%proj4))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(i)))
+               iret = nf90_put_att(ftnNoahMP,varId,'grid_mapping',trim(fileMeta%gridMapping))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(i)))
+               iret = nf90_put_att(ftnNoahMP,varId,'esri_pe_string',trim(fileMeta%projEsri))
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(i))) 
+            endif ! End if output flag is on
+         end do ! end looping through variable output list.
+
+         print*, "ENDING DEFINITION MODE FOR  NOAHMP OUTPUT FILE"
+         ! Remove NetCDF file from definition mode.
+         iret = nf90_enddef(ftnNoahMP)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to take LDASOUT file out of definition mode')
+
+      end if ! End if we are on the I/O processor.
+   endif ! End if we are on the first variable
+
+   print*, "SYNCING UP PROCESSES"
+   ! Sync up all processes
+   call mpp_land_sync()
+
+   ! Place data into NetCDF file. This involves a few steps:
+   ! 1.) Allocate an integer array of local grid size.
+   ! 2.) Allocate an integer array of global grid size.
+   ! 3.) Loop through real local grid, convert floating point
+   !     values to integer via scale_factor/add_offset. If
+   !     missing value found, assign FillValue caluclated 
+   !     in the dictionary. 
+   ! 4.) Use MPP utilities to collect local integer arrays
+   !     into global integer array. 
+   ! 5.) Write global integer array into output file.
+   if(fileMeta%outFlag(varInd) .eq. 1) then
+      ! Output flag on for this variable. 
+      ! Allocate memory
+      allocate(globalOutComp(ixFull,fileMeta%numLev(varInd),jxFull))
+      allocate(globalCompTmp(ixFull,jxFull))
+      allocate(localCompTmp(ixPar,jxPar))
+      globalOutComp = fileMeta%fillComp(varInd)
+
+      ! Sync up processes
+      call mpp_land_sync()
+
+      do zTmp = 1,fileMeta%numLev(varInd)
+         localCompTmp = fileMeta%fillComp(varInd)
+         globalCompTmp = fileMeta%fillComp(varInd)
+         do iTmp = 1,ixPar
+            do jTmp = 1,jxPar
+               localCompTmp(iTmp,jTmp) = int((varReal(iTmp,zTmp,jTmp)-fileMeta%addOffset(varInd))/fileMeta%scaleFactor(varInd))
+            end do
+         end do
+         call write_IO_int(localCompTmp,globalCompTmp)
+         globalOutComp(:,zTmp,:) = globalCompTmp
+      end do
+
+      if(fileMeta%numLev(varInd) .gt. 1) then
+         print*, "3D VAR = ", globalOutComp
+      endif
+      print*, "SHAPE = ",shape(globalOutComp)
+      ! Sync up processes
+      call mpp_land_sync()
+
+      if(myId .eq. 0) then
+         iret = nf90_inq_varid(ftnNoahMP,trim(fileMeta%varNames(varInd)),varId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(varInd)))
+         if(fileMeta%numLev(varInd) .eq. 1) then
+            iret = nf90_put_var(ftnNoahMP,varId,globalOutComp,(/1,1,1/),(/ixFull,jxFull,1/))
+         else
+            print*, "NUM VERT LEV FINAL = ",fileMeta%numLev(varInd)
+            iret = nf90_put_var(ftnNoahMP,varId,globalOutComp,(/1,1,1,1/),(/ixFull,fileMeta%numLev(varInd),jxFull,1/))
+         endif
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into output variable: '//trim(fileMeta%varNames(varInd)))
       endif
 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_clobber .or. nf90_hdf5,ncid = ftn)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create LDASOUT NetCDF file.')
+      deallocate(globalOutComp)
+      deallocate(globalCompTmp)
+      deallocate(localCompTmp)
+   
+   endif
 
-      ! Write global attributes
-      iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LDASOUT file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time','PLACEHOLDER')
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_time','PLACEHOLDER')
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,'CF-1.6',trim(fileMeta%conventions))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
-
-      ! Create dimensions
-      iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define time dimension')
-      iret = nf90_def_dim(ftn,'x',ixFull,dimId(2))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define x dimension')
-      iret = nf90_def_dim(ftn,'y',ijFull,dimId(3))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
-      iret = nf90_def_dim(ftn,'soil_layers_stag',nSoil,dimId(4))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define soil_layers_stag dimension')
-      iret = nf90_def_dim(ftn,'snow_layers',nSnow,dimId(5))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define snow_layers dimension')
-      iret = nf90_def_dim(ftn,'reference_time',1,dimId(6))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
-
-      ! Create and populate reference_time and time variables.
-      iret = nf90_def_var(ftn,"time",nf90_int,dimId(1),timeId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create time variable')
-      iret = nf90_put_att(ftn,timeId,'long_name',trim(fileMeta%timeLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into time variable')
-      iret = nf90_put_att(ftn,timeId,'standard_name',trim(fileMeta%timeStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
-      iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
-      iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(6),refTimeId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
-      iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into reference_time variable')
-      iret = nf90_put_att(ftn,refTimeId,'standard_name',trim(fileMeta%rTimeStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
-      iret = nf90_put_att(ftn,refTimeId,'units',trim(fileMeta%rTimeUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
-
-      ! Create x/y coordinate variables
-      iret = nf90_def_var(ftn,'x',nf90_double,dimId(2),xVarId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'long_name',trim(fileMeta%xLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'standard_name',trim(fileMeta%xStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'units',trim(fileMeta%xUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'resolution',fileMeta%xRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
-      iret = nf90_def_var(ftn,'y',nf90_double,dimId(3),yVarId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'long_name',trim(fileMeta%yLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'standard_name',trim(fileMeta%yStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'units',trim(fileMeta%yUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
-
-      ! Create ProjectionCoordinateSystem variable
-      iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'transform_name',trim(fileMeta%projTransformName))
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'standard_parallel',fileMeta%stParallel)
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_easting',fileMeta%falseEast)
-      call nwmCheck(diagFlag,iret'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_northing',fileMeta%falseNorth)
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'earth_radius',fileMeta%radius)
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'proj4',trim(fileMeta%proj4))
-      call nwmCheck(diagFlag,iret'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
-
-      ! Loop through all possible variables and create them, along with their
-      ! metadata attributes. 
-      do i=1,fileMeta%numVars
-         if(fileMeta%outFlag(i) .eq. 1) then
-            iret = nf90_def_var(ftn,trim(fileMeta%varNames(i)),nf90_int,(/dimId(1),dimId(2),dimId(3)/,varId))
-            call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(i)))            
-            
-            ! Extract valid range into a 1D array for placement.
-            varRange(1) = fileMeta%validMinComp(i)
-            varRange(2) = fileMeta%validMaxComp(i)
-
-            ! Establish a compression level for the variables. For now we are
-            ! using a
-            ! compression level of 2. In addition, we are choosing to turn the
-            ! shuffle
-            ! filter off for now. Kelley Eicher did some testing with this and
-            ! determined that the benefit wasn't worth the extra time spent
-            ! writing
-            ! output.
-            iret = nf90_def_var_deflate(ftn,varId,0,1,2)
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(i)))
-
-            ! Create variable attributes
-            print*, "FILL = ",fileMeta%fillComp(i)
-            iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(i))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(i)))
-            print*, "MISSING = ",fileMeta%missingComp(i)
-            iret = nf90_put_att(ftn,varId,'missing_value',fileMeta%missingComp(i))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place missing value attribute into variable '//trim(fileMeta%varNames(i)))
-            print*, "LONG NAME = ",trim(fileMeta%longName(i))
-            iret = nf90_put_att(ftn,varId,'long_name',trim(fileMeta%longName(i)))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(i)))
-            print*, "UNITS = ",trim(fileMeta%units(i))
-            iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(i)))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(i)))
-            print*, "SCALE_FACTOR = ",fileMeta%scaleFactor(i)
-            iret = nf90_put_att(ftn,varId,'scale_factor',fileMeta%scaleFactor(i))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place scale_factor attribute into variable '//trim(fileMeta%varNames(i)))
-            print*, "ADD_OFFSET = ",fileMeta%addOffset(i)
-            iret = nf90_put_att(ftn,varId,'add_offset',fileMeta%addOffset(i))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place add_offset attribute into variable '//trim(fileMeta%varNames(i)))
-            print*, "VALID_RANGE = ",varRange
-            iret = nf90_put_att(ftn,varId,'valid_range',varRange)
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(i)))
-            iret = nf90_put_att(ftn,varId,'proj4',trim(fileMeta%proj4))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(i)))
-            iret = nf90_put_att(ftn,varId,'grid_mapping',trim(fileMeta%gridMapping))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(i)))
-            iret = nf90_put_att(ftn,varId,'esri_pe_string',trim(fileMeta%projEsri))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(i))) 
-         endif
-      end do
-
-      ! Remove NetCDF file from definition mode.
-      iret = nf90_enddef(ftn)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to take LDASOUT file out of definition mode')
-      do i=1,fileMeta%numVars
-         print*, "VARID = ",i
-         print*, "OUT FLAT = ",fileMeta%outFlag(i)
-         if(fileMeta%outFlag(i) .eq. 1) then
-            ! We are outputing this variable.
-            ! First assign local real array values passed in, depending on which
-            ! variable we are on. This is different than with CHRTOUT as the
-            ! data isn't stored in an object that can easily be accessed.
-            if(i .eq. 1) then
-               varReal = fsa
-            else if(i .eq. 2) then
-               varReal = fira
-            else if(i .eq. 3) then
-               varReal = grdflx
-            else if(i .eq. 4) then
-               varReal = hfx         
-            else if(i .eq. 5) then
-               varReal = lh  
-            else if(i .eq. 6) then
-               varReal = ugdrnoff  
-            else if(i .eq. 7) then
-               varReal = accecan
-            else if(i .eq. 8) then
-               varReal = accedir
-            else if(i .eq. 9) then 
-               varReal = accetran
-            else if(i .eq. 10) then
-               varReal = snowtAvg
-            else if(i .eq. 11) then
-               varReal = sfcrnoff
-            else if(i .eq. 12) then
-               varReal = trad
-            else if(i .eq. 13) then
-               varRealSnow = snliq
-            else if(i .eq. 14) then
-               varRealSoil = soilT
-            else if(i .eq. 15) then
-               varRealSoil = soilM
-            else if(i .eq. 16) then
-               varReal = snowh
-            else if(i .eq. 17) then
-               varReal = sneqv
-            else if(i .eq. 18) then
-               varReal = isnow
-            else if(i .eq. 19) then
-               varReal = fsno
-            else if(i .eq. 20) then
-               varReal = acsnom
-            else if(i .eq. 21) then
-               varReal = accet
-            else if(i .eq. 22) then
-               varReal = canwat
-            else if(i .eq. 23) then
-               varReal = soilice
-            else if(i .eq. 24) then
-               varReal = soilSatTop
-            else if(i .eq. 25) then
-               varReal = soilSat
-            else if(i .eq. 26) then
-               varReal = snowt
-            else if(i .eq. 27) then
-               varReal = snowtAvg
-            endif
-
-            ! Convert reals to integer
-            if(i .eq. 13) then
-               varInt = 
-            else if(i .eq. 14) then
-
-            else if(i .eq. 15) then
-
-            else
-
-            endif
-
-         endif
-      end do
-
+   if(myId .eq. 0) then
+      if(varInd .eq. fileMeta%numVars) then
+         ! Close the output file
+         print*, "CLOSING NOAHMP OUTPUT FILE"
+         iret = nf90_close(ftnNoahMP)
+         print*, "IRET = ",iret
+         print*, "VAR ID = ", varInd
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close CHRTOUT file.')
+      endif
    endif
 
 end subroutine output_NoahMP_NWM
@@ -878,6 +946,7 @@ subroutine nwmCheck(diagFlag,iret,msg)
    ! Check status. If status of command is not 0, then post the error message
    ! if WRF_HYDRO_D was set to be 1.
    if (iret .ne. 0) then
+      print*, "IRET = ",iret
       call hydro_stop(trim(msg))
    end if
 
