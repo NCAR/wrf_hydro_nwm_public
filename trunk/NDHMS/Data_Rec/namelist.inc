@@ -63,11 +63,11 @@
        logical            :: persistBias
        logical            :: biasWindowBeforeT0
        character(len=256) :: nudgingLastObsFile
-       character(len=256) :: timeSlicePath
-       integer            :: nLastObs
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
 #endif
+       character(len=256) :: timeSlicePath
+       integer            :: nLastObs
 
 
    END TYPE namelist_rt_field 
