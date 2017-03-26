@@ -2123,7 +2123,7 @@ endInd  =RT_DOMAIN(did)%NLINKSL
 do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 
 #ifdef HYDRO_D
-   checkInd = 24668 ! 2211014 ! see below as well
+   checkInd = 213095 ! 2211014 ! see below as well
    if(ll .eq. checkInd) then
       print*,'Ndg: checkInd: -------------------------'
       print*,"Ndg: checkInd: checkInd: ",checkInd
@@ -2226,7 +2226,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = 24668!2211014  ! see above
+checkInd = 213095!2211014  ! see above
 
 call geth_newdate(hydroTime, lsmTime, hydroAdv)
 
@@ -2458,7 +2458,7 @@ else if (temporalPersistence) then
          end if
       end if
 
-
+      
       !!-----------------------------------
       !! minNumPairsBiasPersist
       !! If the pair count starts to dwindle during the forecast period, how does the transition 
@@ -2545,8 +2545,8 @@ else if (temporalPersistence) then
    !! Always calculate the observation nudge error.
    prstErr = obsStaticStr(whGageId)%lastObsDischarge(nTimesLastObs) - discharge(obsInd)
    if(persistBias_local) then
-      theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                  &
-                     obsStaticStr(whGageId)%lastObsModelDischarge, biasMask ) / &
+      theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
+                     obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
                 max( 1, count(biasMask) )    
    end if
 
@@ -2557,32 +2557,15 @@ else if (temporalPersistence) then
            prstErr * exp(real(-1)*prstDtErr/prstB)
    else 
       nudge_term_link = &
-           obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
-           prstErr * exp(real(-1)*prstDtErr/prstB) + &
+           obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) *   &
+           prstErr * exp(real(-1)*prstDtErr/prstB)                + &
            theBias * (1.0 - exp(real(-1)*prstDtErr/prstB) )
 
       !                   123456789012345
       !if(prstGageId .eq. '       07099060') then
-      if(.FALSE.) then
-         print*,'JLM: Ndg: usgsId: ', prstGageId
-         print*,'JLM: Ndg: theBias:', theBias
-         do tt=1,nTimesLastObs
-            if(biasMask(tt)) &
-                 print*,' ---- tt:', tt
-            print*,'Diff: ', obsStaticStr(whGageId)%lastObsDischarge(tt) -   &
-                             obsStaticStr(whGageId)%lastObsModelDischarge(tt)
-            print*,'o - : ', obsStaticStr(whGageId)%lastObsDischarge(tt)
-            print*,'   m: ', obsStaticStr(whGageId)%lastObsModelDischarge(tt)
-         end do
-
-         !! JLM: make sure that the bias is NOT greater than the current discharge: below.
-         print*,'JLM: prstErr:', prstErr
-         print*,'JLM: prstDtErr:', prstDtErr
-         print*,'JLM: prstB:', prstB
-         print*,'JLM obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * prstErr * exp(real(-1)*prstDtErr/prstB)', obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * prstErr * exp(real(-1)*prstDtErr/prstB)
-         print*,'JLM theBias * (1-exp(real(-1)*prstDtErr/prstB)):', theBias * (1-exp(real(-1)*prstDtErr/prstB))
-         print*,'JLM nudge_term_link:', nudge_term_link
+      if(linkInd .eq. checkInd) then 
       end if
+
    endif !! if(.not. persistBias_local) then; else;
 
    !! Currently cant get here... 
@@ -2593,35 +2576,60 @@ else if (temporalPersistence) then
    !! Is this OK as ZERO?? Musk-cunge allows it (in theory). 
    if (discharge(obsInd)+nudge_term_link .lt. zero) then
       nudge_term_link = zero - discharge(obsInd) + smallestNudge
-      print*,'JLM setting nudge_term_link + observed discharge to zero (or very small)', prstGageId
+      !print*,'JLM setting nudge_term_link + observed discharge to zero (or very small)', prstGageId
    endif
 
 
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
    if(linkInd .eq. checkInd) then 
+      print*,'Ndg: checkInd pst: -------------------'
+      print*,'Ndg: checkInd pst: usgsId: ', prstGageId
       print*,'Ndg: checkInd pst: -------------------'
       print*,'Ndg: checkInd pst: prstGageId: ',      prstGageId
       print*,'Ndg: checkInd pst: obsInd: ',          obsInd
       print*,'Ndg: checkInd pst: hydroTime: ',       hydroTime
       print*,'Ndg: checkInd pst: flowmonth: ',       flowMonth
-      print*,'Ndg: checkInd pst: lastObsTime: ',     obsStaticStr(whGageId)%lastObsTime
+      print*,'Ndg: checkInd pst: lastObsTime: ',     obsStaticStr(whGageId)%lastObsTime(nTimesLastObs)
       print*,'Ndg: checkInd pst: time difference mins: ', prstDtErr
       print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality: ', &
-           obsStaticStr(whGageId)%lastObsQuality   
+           obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs)
       print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsDischarge: ', &
-           obsStaticStr(whGageId)%lastObsDischarge
+           obsStaticStr(whGageId)%lastObsDischarge(nTimesLastObs)
       print*,'Ndg: checkInd pst: modeled discharge(obsInd): ', discharge(obsInd)
       print*,'Ndg: checkInd pst: qThresh: ',  nudgingParamsStr%qThresh(:, flowMonth, whPrstParams)
       print*,'Ndg: checkInd pst: whThresh: ',  whThresh
-      print*,'Ndg: checkInd pst: quality coeff: ', obsStaticStr(whGageId)%lastObsQuality
       print*,'Ndg: checkInd pst: discharge difference:', prstErr      
       print*,'Ndg: checkInd pst: prstB:', prstB
       print*,'Ndg: checkInd pst: time difference mins prstDtErr: ', prstDtErr
       print*,'Ndg: checkInd pst: exponent term: ', exp(real(-1)*prstDtErr/prstB)
+
+      if(persistBias_local) then
+         print*,'Ndg: checkInd pst: BIAS PERSISTENCE INFO'
+         do tt=1,nTimesLastObs
+            if(biasMask(tt)) then
+               print*,' ---- tt:', tt
+               print*,'Diff: ', obsStaticStr(whGageId)%lastObsDischarge(tt) -   &
+                    obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+               print*,'o - : ', obsStaticStr(whGageId)%lastObsDischarge(tt)
+               print*,'   m: ', obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+            end if
+         end do
+         print*, 'max( 1, count(biasMask) ): ',max( 1, count(biasMask) )
+         print*,'Ndg: checkInd pst: Ndg: theBias:', theBias
+         print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) *'
+         print*,' prstErr * exp(real(-1)*prstDtErr/prstB)', &
+              obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
+              prstErr * exp(real(-1)*prstDtErr/prstB)
+         print*,'Ndg: checkInd pst: theBias * (1-exp(real(-1)*prstDtErr/prstB)):', &
+              theBias * (1-exp(real(-1)*prstDtErr/prstB))
+      endif
+
       print*,'Ndg: checkInd pst: nudge_term_link: ', nudge_term_link
-!      if(flushAll) flush(flushUnit)
+
+      !if(flushAll) flush(flushUnit)
+      flush(6)
    end if
-#endif
+!#endif
 
 endif
 

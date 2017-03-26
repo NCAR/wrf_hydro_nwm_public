@@ -604,6 +604,7 @@ end function MUSKINGCUNGE
 
 subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
 
+use module_RT_data, only: rt_domain  !! JLM FOO REMOVE THIS AFTER TESTING
         IMPLICIT NONE
 
         REAL, intent(IN)       :: dt         !routing period in  seconds
@@ -841,8 +842,12 @@ subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
 
 !! JLM: print to diagnose the magnitues of C3 
 !! JLM: would be good to conditonally print this 
-!!print*,'JLM submuskcunge idx, C3, C, D:', idx, C3, dt/(2*Km), X
-
+      !if(rt_domain(1)%gages(idx + linkls_s(my_id+1) - 1) .ne. rt_domain(1)%gageMiss) then
+      !   print*, rt_domain(1)%gages(idx+linkls_s(my_id+1)-1)
+      if(rt_domain(1)%gages(idx) .ne. rt_domain(1)%gageMiss) then
+         print*, rt_domain(1)%gages(idx)
+         print*,'JLM submuskcunge idx, C3, C, D:', idx + linkls_s(my_id+1) - 1, C3, dt/(2*Km), X
+      end if
 !yw added for test
       if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
