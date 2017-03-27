@@ -23,7 +23,7 @@ module module_HYDRO_drv
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
                                restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2
    ! Logan add begin
-   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM
+   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM
    ! Logan add end
    USE module_mpp_land
 #else
@@ -249,27 +249,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    if(nlst_rt(did)%RTOUT_DOMAIN       .eq. 1 .and. &
       nlst_rt(did)%channel_only       .eq. 0 .and. &
       nlst_rt(did)%channelBucket_only .eq. 0       ) &
-              call output_rt_NWM(did)
-              !call output_rt(    &
-              !  nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-              !  RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
-              !  nlst_rt(did)%nsoil, &
-!               nlst_rt(did)%startdate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
-              !  nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
-              !  RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
-              !  RT_DOMAIN(did)%SUB_RESID,       &
-              !     RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
-              !  RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
-              !  RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
-              !  nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
-              !  RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-              !  RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-              !  RT_DOMAIN(did)%QBDRYRT &
-!#ifdef HYDRO_REALTIME
-!		, nlst_rt(did)%iocflag &
-!#endif
-!		 )
-
+              ! Output gridded routing variables on National Water Model
+              ! high-res routing grid 
+              call output_rt_NWM(did,nlst_rt(did)%igrid)
    
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
@@ -325,67 +307,10 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #endif
 !ADCHANGE: End
 
-! Logan change begin
-   print*, "TOP LEVEL STREAMFLOW = ",str_out
+   ! Call National Water Model output routine for output on NHD forecast points.
    if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
       call output_chrt_NWM(did)
    endif
-!             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
-!#ifdef MPP_LAND
-!                 call mpp_output_chrt( &
-!                      rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
-!#else
-!                 call output_chrt(  &
-!#endif
-!                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-!                   RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-!                   nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
-!                   RT_DOMAIN(did)%CHLAT,                                      &
-!                   RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-!                   !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
-!                   str_out, nlst_rt(did)%DT,Kt,                   &
-!                   RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
-!                   RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-!                   rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
-!                   nlst_rt(did)%dt                                            &
-!#ifdef WRF_HYDRO_NUDGING
-!                   , RT_DOMAIN(did)%nudge                                     &
-!#endif
-!                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
-!                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
-!                   , RT_DOMAIN(did)%qin_gwsubbas                              &
-!                   , nlst_rt(did)%UDMP_OPT                                    &
-!                   )
-!              else
-!                if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
-!#ifdef MPP_LAND
-!                     call mpp_output_chrt2(&
-!                          rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
-!#else
-!                     call output_chrt2(  &
-!#endif
-!                     nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-!                     RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER,          &
-!                     nlst_rt(did)%sincedate,nlst_rt(did)%olddate,         &
-!                     RT_DOMAIN(did)%CHLON, RT_DOMAIN(did)%CHLAT,          &
-!                     RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,          &
-!                     !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,             &
-!                     str_out, nlst_rt(did)%DT,Kt,                         &
-!                     RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,  &
-!                     rt_domain(did)%linkid                                &
-!#ifdef WRF_HYDRO_NUDGING
-!                     , RT_DOMAIN(did)%nudge                                     &
-!#endif
-!		     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, RT_DOMAIN(did)%velocity &
-!                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
-!                     , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket       &
-!                     , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket         &
-!                     , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT          &
-!		     )
-!                 endif
-!
-!              endif
-! Logan change end
       
 #ifdef MPP_LAND
               if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
@@ -400,35 +325,36 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
-                      if(nlst_rt(did)%outlake .eq. 1) then
-#ifdef MPP_LAND
-                          call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
-#else
-                          call output_lakes(  &
-#endif
-                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                               RT_DOMAIN(did)%NLAKES, &
-                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
-                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
-                               RT_DOMAIN(did)%QLAKEO, &
-                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
-                      endif
-                      if(nlst_rt(did)%outlake .eq. 2) then
-#ifdef MPP_LAND
-                          call mpp_output_lakes2( RT_DOMAIN(did)%lake_index, &
-#else
-                          call output_lakes2(  &
-#endif
-                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                               RT_DOMAIN(did)%NLAKES, &
-                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
-                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
-                               RT_DOMAIN(did)%QLAKEO, &
-                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
-                      endif
-
+                      if(nlst_rt(did)%outlake .ne. 0) then
+                         call output_lakes_NWM(did,nlst_rt(did)%igrid)
+!#ifdef MPP_LAND
+!                          call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
+!#else
+!                          call output_lakes(  &
+!#endif
+!                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                               RT_DOMAIN(did)%NLAKES, &
+!                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+!                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
+!                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
+!                               RT_DOMAIN(did)%QLAKEO, &
+!                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
+!                      endif
+!                      if(nlst_rt(did)%outlake .eq. 2) then
+!#ifdef MPP_LAND
+!                          call mpp_output_lakes2( RT_DOMAIN(did)%lake_index, &
+!#else
+!                          call output_lakes2(  &
+!#endif
+!                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                               RT_DOMAIN(did)%NLAKES, &
+!                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+!                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
+!                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
+!                               RT_DOMAIN(did)%QLAKEO, &
+!                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
+!                      endif
+!
                endif   ! end if block of rNLAKES .gt. 0
         endif 
 #ifdef HYDRO_D

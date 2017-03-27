@@ -15,15 +15,17 @@ module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-integer, parameter :: numChVars=14
+integer, parameter :: numChVars=10
 integer, parameter :: numLdasVars = 95
 integer, parameter :: numRtDomainVars = 4
+integer, parameter :: numLakeVars = 2
 integer :: i
 
 ! Declare public types that will hold metadata
 public :: chrtMeta ! Public CHRTOUT metadata for NWM output.
 public :: ldasMeta ! Public LDASOUT metadata for NWM output.
 public :: rtDomainMeta ! Public RT_DOMAIN metadata for NWM output. 
+public :: lakeMeta ! Public lake metadata for NWM output
 
 ! Establish types for each output type
 type chrtMeta
@@ -58,6 +60,21 @@ type chrtMeta
    ! feature_id attributes
    character (len=64) :: featureIdLName ! long_name - usually Reach ID
    character (len=256) :: featureIdComment ! Comment attribute
+   ! latitude variable attributes
+   character (len=64) :: latLName ! long_name
+   character (len=64) :: latUnits ! units
+   character (len=64) :: latStName ! Standard Name
+   ! longitude variable attributes
+   character (len=64) :: lonLName ! long_name
+   character (len=64) :: lonUnits ! units
+   character (len=64) :: lonStName ! Standard Name
+   ! Elevation variable attributes
+   character (len=64) :: elevLName ! long_name
+   character (len=64) :: elevUnits ! units
+   character (len=64) :: elevStName ! Standard Name
+   ! Order variable attributes
+   character (len=64) :: orderLName ! long_name
+   character (len=64) :: orderStName ! Standard Name
    ! Global attributes
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
@@ -137,7 +154,7 @@ type rtDomainMeta
                                                   ! integer.
    real, dimension(numRtDomainVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numRtDomainVars) :: longName  ! Long names for each variable.
-   character (len=64), dimension(numRtDomainars) :: units ! Units for each variable.
+   character (len=64), dimension(numRtDomainVars) :: units ! Units for each variable.
    character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
@@ -180,6 +197,62 @@ type rtDomainMeta
 
 end type rtDomainMeta
 
+type lakeMeta
+   ! Variable names
+   character (len=64), dimension(numLakeVars) :: varNames
+   integer :: numVars = numLakeVars
+   ! Output variable attributes
+   real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
+                                               ! variable to converte from
+                                               ! real to
+                                               ! integer.
+   real, dimension(numLakeVars)             :: addOffset   ! add_offset values for each variable.
+   character (len=64), dimension(numLakeVars) :: longName  ! Long names for each variable.
+   character (len=64), dimension(numLakeVars) :: units ! Units for each variable.
+   character (len=64), dimension(numLakeVars) :: coordNames ! Coordinate names for each variable. 
+   integer*8, dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
+   real, dimension(numLakeVars) :: validMinReal ! Valid minimum (before conversion to integer)
+   real, dimension(numLakeVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   integer*8, dimension(numLakeVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   real, dimension(numLakeVars) :: missingReal ! Missing value attribute (before conversion to integer)
+   real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
+   integer*8, dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
+   integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   ! Time variable attribues
+   character (len=64) :: timeLName ! long_name - usually valid output time
+   character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
+   character (len=64) :: timeStName ! standard_name - usually time
+   ! Reference time attributes
+   character (len=64) :: rTimeLName ! long_name - usually model initialization time
+   character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
+   character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
+   ! lake_id attributes
+   character (len=64) :: lakeIdLName ! long_name - usually Lake COMMON ID
+   character (len=256) :: LakeIdComment ! Comment attribute
+   ! feature_id attributes
+   character (len=64) :: featureIdLName ! long_name - usually lake COMMON ID
+   character (len=256) :: featureIdComment ! Comment attribute
+   ! latitude variable attributes
+   character (len=64) :: latLName ! long_name
+   character (len=64) :: latUnits ! units
+   character (len=64) :: latStName ! Standard Name
+   ! longitude variable attributes
+   character (len=64) :: lonLName ! long_name
+   character (len=64) :: lonUnits ! units
+   character (len=64) :: lonStName ! Standard Name
+   ! Global attributes
+   character (len=128) :: fType ! featureType attribute
+   character (len=128) :: proj4 ! proj4 attribute
+   character (len=128) :: initTime ! model_initialization_time attribute
+   character (len=128) :: validTime ! model_output_valid_time attribute
+   character (len=128) :: lakeDim ! lake_dimension attribute
+   character (len=128) :: cdm ! cdm_datatype attribute
+   character (len=1024) :: esri ! esri_pe_string attribute
+   character (len=128) :: conventions ! Conventions string
+
+end type lakeMeta
+
 contains
 
 subroutine initChrtDict(chrtOutDict)
@@ -195,7 +268,7 @@ subroutine initChrtDict(chrtOutDict)
    chrtOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
    chrtOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chrtOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
-   chrtOutDict%stDim = 'station'
+   chrtOutDict%stDim = 'feature_id'
    chrtOutDict%stOrder = 1
    chrtOutDict%cdm = 'Station'
    chrtOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
@@ -210,47 +283,59 @@ subroutine initChrtDict(chrtOutDict)
    chrtOutDict%rTimeLName = 'model initialization time'
    chrtOutDict%rTimeStName = 'forecast_reference_time'
    chrtOutDict%rTimeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
-   
+
+   ! Esatablish lat/lon attributes
+   chrtOutDict%latLName = "Feature latitude"
+   chrtOutDict%latUnits = "degrees_north"
+   chrtOutDict%latStName = "latitude"
+   chrtOutDict%lonLName = "Feature longitude"
+   chrtOutDict%lonUnits = "degrees_east"
+   chrtOutDict%lonStName = "longitude"
+  
+   ! Establish streamflw order attributes
+   chrtOutDict%orderLName = "Streamflow Order"
+   chrtOutDict%StName = "order"
+
+   ! Establish point elevation attributes
+   chrtOutDict%elevLName = "Feature Elevation"
+   chrtOutDict%elevUnits = "meters"
+   chrtOutDict%elevStName = "Elevation"
+ 
    ! Next establish feature_id attributes
    chrtOutDict%featureIdLName = 'Reach ID'
    chrtOutDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
    
    ! Now establish attributes for output variables.
    chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
-                               "Latitude","Longitude","Altitude","Order",&
                                "Head","QSfcLatRunoff","QBucket",&
                                "QBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
    chrtOutDict%longName(:) = (/"River Flow","Amount of stream flow alteration",&
                                "Runoff into channel reach","River Velocity",&
-                               "PLC","PLC","PLC","PLC","PLC","PLC","PLC",&
+                               "PLC","PLC","PLC",&
                                "PLC","PLC","PLC"/)
    chrtOutDict%units(:) = (/"m3 s-1","m3 s-1","m3 s-1","m s-1",&
-                            "PLC","PLC","PLC","PLC","PLC","PLC","PLC",&
+                            "PLC","PLC","PLC",&
                             "PLC","PLC","PLC"/)
    chrtOutDict%coordNames(:) = (/"latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
-                                 "latitude longitude","latitude longitude",&
-                                 "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"/)
    chrtOutDict%scaleFactor(:) = [0.0001,0.1,0.1,0.01,-99.0,-99.0,-99.0,-99.0,&
-                                 -99.0,-99.0,-99.0,-99.0,-99.0,-99.0]
+                                 -99.0,-99.0]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,-99.0,-99.0,-99.0,-99.0,-99.0,&
-                               -99.0,-99.0,-99.0,-99.0,-99.0]
+                               -99.0]
    ! Specify the outputflags. 0 - Do not output, 1 - Output. DO NOT MODIFY
    ! WITHOUT CONSULTING WITH OWP AND NCAR!!!!!!!!!!!!!!
-   chrtOutDict%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,0,0,0,0] 
+   chrtOutDict%outFlag(:) = [1,0,1,1,0,0,0,0,0,0] 
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0]
+                              -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0]
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0]
+                                  0.0,0.0]
    chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,10000.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+                                  0.0,0.0,0.0,0.0,0.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChVars
@@ -586,13 +671,13 @@ subroutine initRtDomainDict(rtDomainDict)
 
    rtDomainDict%varNames(:) = (/"zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
                                 "QBDRYRT"/)
-   rtDomainDict%longNames(:) = (/"water table depth","surface head",&
+   rtDomainDict%longName(:) = (/"water table depth","surface head",&
                                  "channel inflow",&
                                  "accumulated value of the boundary flux, + into domain - out of domain"/)
    rtDomainDict%units(:) = (/"m","mm","mm","mm"/)
    rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0]
    rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0]
-   rtDomainDict%outFlag(:) = [0,0,0,0,0,0]
+   rtDomainDict%outFlag(:) = [0,0,0,0]
    rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0]
@@ -608,5 +693,72 @@ subroutine initRtDomainDict(rtDomainDict)
    end do
 
 end subroutine initRtDomainDict
+
+subroutine initLakeDict(lakeOutDict)
+   implicit none
+
+   type(lakeMeta), intent(inout) :: lakeOutDict
+   ! LAKE FILES
+   ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
+   !            which means meta-data standards have yet to be determined 
+   !            for these variables. Fill in if it's desired to output....
+   ! First establish global attributes for the channel output files 
+   lakeOutDict%fType = 'timeSeries'
+   lakeOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
+   lakeOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   lakeOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   lakeOutDict%stDim = 'lake_id'
+   lakeOutDict%cdm = 'PLACEHOLDER'
+   lakeOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
+                      &SPHEROID[GRS_1980,6378137.0,298.257222101]],&
+                      &PRIMEM[Greenwich,0.0],UNIT[Degree,0.017453292519943295]]'
+   lakOutDict%conventions = 'CF-1.6'
+
+   ! Next establish time attribues
+   lakOutDict%timeLName = 'valid output time'
+   lakOutDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+   lakeOutDict%timeStName = 'time'
+   lakeOutDict%rTimeLName = 'model initialization time'
+   lakeOutDict%rTimeStName = 'forecast_reference_time'
+   lakeOutDict%rTimeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+
+   ! Establish elevation variable attributes
+   lakeOutDict%elevLName = "Water Surface Elevation"
+   lakeOutDict%elevUnits = "meters"
+
+   ! Establish feature_id attributes
+   lakeOutDict%featureIdLName = "Lake COMMOND ID"
+   lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
+
+   ! Esatablish lat/lon attributes
+   lakeOutDict%latLName = "Lake latitude"
+   lakeOutDict%latUnits = "degrees_north"
+   lakeOutDict%latStName = "latitude"
+   lakeOutDict%lonLName = "Lake longitude"
+   lakeOutDict%lonUnits = "degrees_east"
+   lakeOutDict%lonStName = "longitude"
+
+   lakeOutDict%varNames(:) = (/'inflow','outflow'/)
+   lakeOutDict%longNames(:) = (/'Lake Inflow','Lake Outflow'/)
+   lakeOutDict%units(:) = (/'m3 s-1','m3 s-1'/)
+   lakeOutDict%coordNames(:) = (/'latitude longitude','latitude longitude'/)
+   lakeOutDict%scaleFactor(:) = [0.01,0.01]
+   lakeOutDict%addOffset(:) = [0.0,0.0]
+   lakeOutDict%outFlag(:) = [0,0]
+   lakeOutDict%fillReal(:) = [-9999.0,-9999.0]
+   lakeOutDict%missingReal(:) = [-9999.0,-9999.0]
+   lakeOutDict%validMinReal(:) = [-10000.0,-10000.0]
+   lakeOutDict%validMaxreal(:) = [10000.0,10000.0]
+
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numLakeVars
+      lakeOutDict%fillComp(i) = int((lakeOutDict%fillReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%missingComp(i) = int((lakeOutDict%missingReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%validMinComp(i) = int((lakeOutDict%validMinReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%validMaxComp(i) = int((lakeOutDict%validMaxReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+   end do
+
+end subroutine initLakeDict
 
 end module module_NWM_io_dict
