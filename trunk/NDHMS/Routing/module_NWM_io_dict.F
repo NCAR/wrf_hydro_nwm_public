@@ -17,12 +17,13 @@ implicit none
 ! Declare parameter values for module.
 integer, parameter :: numChVars=14
 integer, parameter :: numLdasVars = 95
+integer, parameter :: numRtDomainVars = 4
 integer :: i
 
 ! Declare public types that will hold metadata
 public :: chrtMeta ! Public CHRTOUT metadata for NWM output.
 public :: ldasMeta ! Public LDASOUT metadata for NWM output.
-
+public :: rtDomainMeta ! Public RT_DOMAIN metadata for NWM output. 
 
 ! Establish types for each output type
 type chrtMeta
@@ -124,6 +125,60 @@ type ldasMeta
    character (len=128) :: conventions ! Conventions string
 
 end type ldasMeta
+
+type rtDomainMeta
+   ! Variable names
+   character (len=64), dimension(numRtDomainVars) :: varNames
+   integer :: numVars = numRtDomainVars
+   ! Output variable attributes
+   real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
+                                                  ! variable to converte from
+                                                  ! real to
+                                                  ! integer.
+   real, dimension(numRtDomainVars)             :: addOffset   ! add_offset values for each variable.
+   character (len=64), dimension(numRtDomainVars) :: longName  ! Long names for each variable.
+   character (len=64), dimension(numRtDomainars) :: units ! Units for each variable.
+   character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable. 
+   integer*8, dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
+   real, dimension(numRtDomainVars) :: validMinReal ! Valid minimum (before conversion to integer)
+   real, dimension(numRtDomainVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   integer*8, dimension(numRtDomainVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   real, dimension(numRtDomainVars) :: missingReal ! Missing value attribute (before conversion to integer)
+   real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
+   integer*8, dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
+   integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   ! Time variable attribues
+   character (len=64) :: timeLName ! long_name - usually valid output time
+   character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
+   character (len=64) :: timeStName ! standard_name - usually time
+   ! Reference time attributes
+   character (len=64) :: rTimeLName ! long_name - usually model initialization time
+   character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
+   character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
+
+   ! Projection variable attributes
+   character (len=64) :: yLName,xLName ! long_name
+   character (len=64) :: yStName,xStName ! standard_name
+   character (len=64) :: yAxisType,xAxisType ! _CoordinateAxisType
+   character (len=64) :: yUnits,xUnits ! units
+   real :: yRes, xRes ! Resoltution in meters
+   ! Establish ProjectionCoordinateSystem variable attributes
+   character (len=64) :: projTransform,projTransformName
+   character (len=64) :: projGridMappingName,projCoordAxes
+   character (len=2048) :: projEsri
+   real, dimension(2) :: stParallel
+   real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
+   character (len=512) :: proj4
+   character (len=128) :: gridMapping
+
+   ! Global attributes
+   integer :: decimation ! Decimation factor
+   character (len=128) :: initTime ! model_initialization_time attribute
+   character (len=128) :: validTime ! model_output_valid_time attribute
+   character (len=128) :: conventions ! Conventions string
+
+end type rtDomainMeta
 
 contains
 
@@ -472,5 +527,86 @@ subroutine initLdasDict(ldasOutDict)
    end do
 
 end subroutine initLdasDict
+
+subroutine initRtDomainDict(rtDomainDict)
+   implicit none
+
+   type(rtDomainMeta), intent(inout) :: rtDomainDict
+   ! RT_DOMAIN files
+
+   ! First establish global attributes.
+   rtDomainDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
+   rtDomainDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
+   rtDomainDict%decimation = 1
+   rtDomainDict%conventions = "CF-1.6"
+
+   ! Next establish time attributes
+   rtDomainDict%timeLName = "valid output time"
+   rtDomainDict%timeUnits = "minutes since 1970-01-01 00:00:00 UTC"
+   rtDomainDict%timeStName = "time"
+   rtDomainDict%rTimeLName = "model initialization time"
+   rtDomainDict%rTimeUnits = "minutes since 1970-01-01 00:00:00 UTC"
+   rtDomainDict%rTimeStName = "forecast_reference_time"
+
+   ! Establish attributes for coordinate variables.
+   rtDomainDict%xLName = "x coordinate of projection"
+   rtDomainDict%xStName = "projection_x_coordinate"
+   rtDomainDict%xAxisType = "GeoX"
+   rtDomainDict%xUnits = "m"
+   rtDomainDict%xRes = 250.0
+   rtDomainDict%yLName = "y coordinate of projection"
+   rtDomainDict%yStName = "projection_y_coordinate"
+   rtDomainDict%yAxisType = "GeoY"
+   rtDomainDict%yUnits = "m"
+   rtDomainDict%yRes = 250.0
+
+   ! Establish attributes for the ProjectionCoordinateSystem variable.
+   rtDomainDict%projTransform = "Projection"
+   rtDomainDict%projTransformName = "lambert_conformal_conic"
+   rtDomainDict%projGridMappingName= "lambert_conformal_conic"
+   rtDomainDict%projCoordAxes = "y x"
+   rtDomainDict%projEsri = 'PROJCS[\"Sphere_Lambert_Conformal_Conic\",GEOGCS[\"GCS_Sphere\",&
+                            &DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6370000.0,0.0]]&
+                            &,PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],&
+                            &PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"false_easting\",0.0],&
+                            &PARAMETER[\"false_northing\",0.0],PARAMETER[\"central_meridian\",-97.0],&
+                            &PARAMETER[\"standard_parallel_1\",30.0],PARAMETER[\"standard_parallel_2\",60.0],&
+                            &PARAMETER[\"latitude_of_origin\",40.0000076294],UNIT[\"Meter\",1.0]];&
+                            &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
+                            & 10000;0.001;0.001;0.001;IsHighPrecision'
+   rtDomainDict%stParallel = [30.0,60.0]
+   rtDomainDict%lonCtrlMer = -97.0
+   rtDomainDict%latOrig = 40.0000076294
+   rtDomainDict%falseEast = 0.0
+   rtDomainDict%falseNorth = 0.0
+   rtDomainDict%radius = 6370000.0
+   rtDomainDict%proj4 = '+proj=lcc +lat_1=30 +lat_2=60 +lat_0=40 +lon_0=-97 +x_0=0&
+                         & +y_0=0 +a=6370000 +b=6370000 +units=m +no_defs'
+   rtDomainDict%gridMapping = "ProjectionCoordinateSystem"
+
+   rtDomainDict%varNames(:) = (/"zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
+                                "QBDRYRT"/)
+   rtDomainDict%longNames(:) = (/"water table depth","surface head",&
+                                 "channel inflow",&
+                                 "accumulated value of the boundary flux, + into domain - out of domain"/)
+   rtDomainDict%units(:) = (/"m","mm","mm","mm"/)
+   rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0]
+   rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0]
+   rtDomainDict%outFlag(:) = [0,0,0,0,0,0]
+   rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
+   rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
+   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0]
+   rtDomainDict%validMaxReal(:) = [10.0,1000000.0,1000.0,1000.0]
+
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numRtDomainVars
+      rtDomainDict%fillComp(i) = int((rtDomainDict%fillReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%missingComp(i) = int((rtDomainDict%missingReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%validMinComp(i) = int((rtDomainDict%validMinReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%validMaxComp(i) = int((rtDomainDict%validMaxReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+   end do
+
+end subroutine initRtDomainDict
 
 end module module_NWM_io_dict

@@ -23,7 +23,7 @@ module module_HYDRO_drv
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
                                restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2
    ! Logan add begin
-   use module_NWM_io, only: output_chrt_NWM
+   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM
    ! Logan add end
    USE module_mpp_land
 #else
@@ -249,25 +249,26 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    if(nlst_rt(did)%RTOUT_DOMAIN       .eq. 1 .and. &
       nlst_rt(did)%channel_only       .eq. 0 .and. &
       nlst_rt(did)%channelBucket_only .eq. 0       ) &
-              call output_rt(    &
-                nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
-                nlst_rt(did)%nsoil, &
+              call output_rt_NWM(did)
+              !call output_rt(    &
+              !  nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+              !  RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
+              !  nlst_rt(did)%nsoil, &
 !               nlst_rt(did)%startdate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
-                nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
-                RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
-                RT_DOMAIN(did)%SUB_RESID,       &
-                   RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
-                RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
-                RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
-                nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
-                RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                RT_DOMAIN(did)%QBDRYRT &
-#ifdef HYDRO_REALTIME
-		, nlst_rt(did)%iocflag &
-#endif
-		 )
+              !  nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
+              !  RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
+              !  RT_DOMAIN(did)%SUB_RESID,       &
+              !     RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
+              !  RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
+              !  RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
+              !  nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
+              !  RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
+              !  RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
+              !  RT_DOMAIN(did)%QBDRYRT &
+!#ifdef HYDRO_REALTIME
+!		, nlst_rt(did)%iocflag &
+!#endif
+!		 )
 
    
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
