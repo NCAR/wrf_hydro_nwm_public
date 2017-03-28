@@ -2413,10 +2413,13 @@ else if (temporalPersistence) then
       !! if greater than 0: apply an age-based filter
       !! if zero          : apply no additional use all available obs.
       !! if less than zero: apply an count-based filter
-      
+
+
       if(maxAgePairsBiasPersist .gt. 0) then
          !! assume the obs are all too old, find the not so old ones
          whObsTooOld = .true.
+         !! assume all weights are bad
+         if(persistBias_local) biasWeights = -9999
          do tt=nTimesLastObs,1,-1
             !! missing obs are not mixed with good obs. The first missing obs means the rest are missing.
             if(obsStaticStr(whGageId)%lastObsTime(tt) .eq. missingLastObsTime) exit
@@ -2427,11 +2430,9 @@ else if (temporalPersistence) then
                !! use the hydro model time to define the end of the bias window
                call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)               
             endif
+            if(persistBias_local) biasWeights(tt) = real(obsDtInt + nlst_rt(did)%dtrt_ch)
             if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
             whObsTooOld(tt) = .false. 
-            !! Put the times in minutes ofr ease of reading
-            !print*,'JLM foo obsDtInt (mins):', maxAgePairsBiasPersist*60, obsDtInt/60, &
-            !       hydroTime, ' ',  obsStaticStr(whGageId)%lastObsTime(tt)
          end do
          biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
                    obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
@@ -2513,17 +2514,14 @@ else if (temporalPersistence) then
    !! --- Deal with the last ob ---
    !! 9) what is the time difference with the last ob/obs?
    prstDtErrInt = -9999*60  ! JLM: magic value? set as a parameter above
-   if(persistBias_local) biasWeights(tt) = zero
    do tt=nTimesLastObs,1,-1
       ! Conditons for rejecting obs
       if(persistBias_local) then
          if(.not. biasMask(tt)) continue
       else 
-         !! Commenting the following reproduces the V1.1 NCAR_reforecast bug
          if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) continue
       end if
       call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt)
-      if(persistBias_local) biasWeights(tt) = prstDtErrInt
       if(prstDtErrInt .lt. zeroInt) then
          print*,'initTime:', hydroTime
          print*,'obsStaticStr(whGageId)%lastObsTime(tt):', obsStaticStr(whGageId)%lastObsTime(tt)
@@ -2547,22 +2545,27 @@ else if (temporalPersistence) then
    !! 10) what is the error ?
    !! Always calculate the observation nudge error.
    prstErr = obsStaticStr(whGageId)%lastObsDischarge(nTimesLastObs) - discharge(obsInd)
-   if(persistBias_local) then
 
-      biasWeightSum=sum(biasWeights, mask=biasMask)
-      if(biasWeightSum .ge. one) then
-         !! normalize to the latest value. Could normalize to 15*60=900
-         biasWeights=1./(biasWeights/minval(biasWeights, mask=biasMask)) 
-         theBias = sum( biasWeights *                                     &
-                        (obsStaticStr(whGageId)%lastObsDischarge -        &
-                        obsStaticStr(whGageId)%lastObsModelDischarge), mask=biasMask) / &
-                        biasWeightSum
-      else
-         theBias=zero
+   if(persistBias_local) then
+      if(count(biasMask .and. (biasWeights.gt.zero)) .lt. minNumPairsBiasPersist) then
+         !persistBias_local=.false.
+      else 
+         !! normalize to the latest (least) time difference and invert.
+         biasWeights=1./(biasWeights/minval(biasWeights, &
+                                            mask=biasMask .and. (biasWeights.gt.zero) ))
+         biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
+         theBias = sum( biasWeights *                                              &
+                        (obsStaticStr(whGageId)%lastObsDischarge -                 &
+                         obsStaticStr(whGageId)%lastObsModelDischarge),            &
+                                      mask=biasMask .and. (biasWeights.gt.zero)) / &
+              biasWeightSum
       endif
+
+      !! Simple, straight average / unweighted,  way of calculating bias
       !theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
       !               obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
-      !          max( 1, count(biasMask) )    
+      !          max( 1, count(biasMask) )
+      
    end if
 
    !! 11) solution
@@ -2576,7 +2579,7 @@ else if (temporalPersistence) then
            prstErr * exp(real(-1)*prstDtErr/prstB)                + &
            theBias * (1.0 - exp(real(-1)*prstDtErr/prstB) )
 
-      !                   123456789012345
+      !                    123456789012345
       !if(prstGageId .eq. '       07099060') then
       if(linkInd .eq. checkInd) then 
       end if
@@ -2595,7 +2598,7 @@ else if (temporalPersistence) then
    endif
 
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
    if(linkInd .eq. checkInd) then 
       print*,'Ndg: checkInd pst: -------------------'
       print*,'Ndg: checkInd pst: usgsId: ', prstGageId
@@ -2622,17 +2625,19 @@ else if (temporalPersistence) then
          print*,'Ndg: checkInd pst: BIAS PERSISTENCE INFO'
          do tt=1,nTimesLastObs
             if(biasMask(tt)) then
-               print*,' ---- tt:', tt
-               print*,'Diff: ', obsStaticStr(whGageId)%lastObsDischarge(tt) -   &
+               print*,'checkInd:  ---- tt:', tt
+               print*,'checkInd: Diff: ', obsStaticStr(whGageId)%lastObsDischarge(tt) -   &
                     obsStaticStr(whGageId)%lastObsModelDischarge(tt)
-               print*,'o - : ', obsStaticStr(whGageId)%lastObsDischarge(tt)
-               print*,'   m: ', obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+               print*,'checkInd: o - : ', obsStaticStr(whGageId)%lastObsDischarge(tt)
+               print*,'checkInd:    m: ', obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+               print*,'checkInd: biasWeights: ', biasWeights(tt)
             end if
          end do
-         print*, 'max( 1, count(biasMask) ): ',max( 1, count(biasMask) )
-         print*,'Ndg: checkInd pst: Ndg: theBias:', theBias
+         print*,'Ndg: checkInd pst: max( 1, count(biasMask) ): ',max( 1, count(biasMask) )
+         print*,'Ndg: checkInd pst: biasWeightSum: ', biasWeightSum
+         print*,'Ndg: checkInd pst: theBias:', theBias
          print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) *'
-         print*,' prstErr * exp(real(-1)*prstDtErr/prstB)', &
+         print*,'Ndg: checkInd pst:  prstErr * exp(real(-1)*prstDtErr/prstB)', &
               obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
               prstErr * exp(real(-1)*prstDtErr/prstB)
          print*,'Ndg: checkInd pst: theBias * (1-exp(real(-1)*prstDtErr/prstB)):', &
@@ -2644,9 +2649,8 @@ else if (temporalPersistence) then
       !if(flushAll) flush(flushUnit)
       flush(6)
    end if
-!#endif
-
-endif
+#endif
+endif !! if(abs(weighting) .gt. smallestWeight) then  !! 1.e-10
 
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
