@@ -15,6 +15,7 @@
        integer  :: DEEPGWSPIN
        integer ::  order_to_write, rst_typ
        character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
+       character(len=256)  :: hydrotbl_f = ""    ! hydrotbl file
        
 !      additional character
        character :: hgrid

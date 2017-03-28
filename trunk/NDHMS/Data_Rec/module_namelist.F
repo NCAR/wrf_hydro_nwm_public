@@ -60,6 +60,7 @@ CONTAINS
        integer :: SOLVEG_INITSWC
        real*8 :: out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
+       character(len=256)  :: hydrotbl_f   = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
        integer :: igrid, iocflag, t0OutputFlag, output_channelBucket_influx
@@ -109,13 +110,13 @@ CONTAINS
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT, GWBUCKPARM_file, iocflag, t0OutputFlag, output_channelBucket_influx
+                    UDMP_OPT, GWBUCKPARM_file, iocflag, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
 
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
    iocflag = 0
-   t0OutputFlag = 0
+   t0OutputFlag = 1
    output_channelBucket_influx = 0
 
 #ifdef WRF_HYDRO_NUDGING
@@ -206,6 +207,7 @@ CONTAINS
   !  nlst%DT = DT !!JLM: Note that %dt is set in the Land/WRF initialization, 
   !               !!JLM: e.g. CPL/NoahMP_cpl/module_hrldas_HYDRO.F:hrldas_cpl_HYDRO_ini
   nlst%RESTART_FILE = RESTART_FILE
+  nlst%hydrotbl_f = trim(hydrotbl_f) 
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
   nlst%iocflag = iocflag
@@ -219,6 +221,7 @@ CONTAINS
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
+  call mpp_land_bcast_char(256,nlst%hydrotbl_f)
 #endif
 
   write(nlst%hgrid,'(I1)') igrid

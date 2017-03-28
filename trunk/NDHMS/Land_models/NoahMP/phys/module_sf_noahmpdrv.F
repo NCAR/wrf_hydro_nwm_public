@@ -651,6 +651,14 @@ CONTAINS
          parameters%hvb = 0.0
        endif
        
+       !ADCHANGE: Add some sanity checks in case calibration knocks the order of these out of sequence.
+       !The min diffs were pulled from the existing SOILPARM.TBL defaults.
+       !Currently water is 0, so enforcing 0 as the absolute min.
+       parameters%smcmax = min(parameters%smcmax, 1.0)
+       parameters%smcref = max(min(parameters%smcref, parameters%smcmax - 0.01), 0.0)
+       parameters%smcwlt = max(min(parameters%smcwlt, parameters%smcref - 0.01), 0.0)
+       parameters%smcdry = max(min(parameters%smcdry, parameters%smcref - 0.01), 0.0)
+
 ! Initialized local
 
        FICEOLD = 0.0
