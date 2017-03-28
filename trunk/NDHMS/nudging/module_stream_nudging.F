@@ -2209,7 +2209,7 @@ real,    parameter :: smallestWeight=1.e-8
 integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt, pairCount
 logical, dimension(nTimesLastObs) :: biasMask, whObsTooOld
 real,    dimension(nTimesLastObs) :: biasWeights
-real :: prstB, prstDtErr, prstErr, biasWeightSum
+real :: prstB, prstDtErr, prstErr, biasWeightSum, coefVarX, coefVarY
 character(len=15) :: prstGageId
 integer :: nCorr
 real    :: corr, sumx, sumx2, sumxy, sumy, sumy2, xCorr, yCorr
@@ -2452,6 +2452,7 @@ else if (temporalPersistence) then
          biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
                    obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
                    obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero
+
          !if((-1*maxAgePairs) .ge. nTimesLastObs) then there's nothing to do.
          if((-1*maxAgePairsBiasPersist) .lt. nTimesLastObs) then
             pairCount=0
@@ -2550,7 +2551,7 @@ else if (temporalPersistence) then
 
    if(persistBias_local) then
       if(count(biasMask .and. (biasWeights.gt.zero)) .lt. minNumPairsBiasPersist) then
-         !persistBias_local=.false.
+         persistBias_local=.false.
       else 
 
          !! calculate the correlation coefficient
@@ -2561,20 +2562,33 @@ else if (temporalPersistence) then
          sumy =zero
          sumy2=zero
          do tt=nTimesLastObs,1,-1
-            if(.not. biasMask(tt)) continue
-            xCorr = obsStaticStr(whGageId)%lastObsDischarge(tt)
-            yCorr = obsStaticStr(whGageId)%lastObsModelDischarge(tt)
-            nCorr = nCorr + one  
-            sumx  = sumx  + xCorr
-            sumy  = sumy  + yCorr
-            sumx2 = sumx2 + xCorr*xCorr
-            sumy2 = sumy2 + yCorr*yCorr
-            sumxy = sumxy + xCorr*yCorr
+            if(biasMask(tt)) then
+               xCorr = obsStaticStr(whGageId)%lastObsDischarge(tt)
+               yCorr = obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+               nCorr = nCorr + one  
+               sumx  = sumx  + xCorr
+               sumy  = sumy  + yCorr
+               sumx2 = sumx2 + xCorr*xCorr
+               sumy2 = sumy2 + yCorr*yCorr
+               sumxy = sumxy + xCorr*yCorr
+            end if
          end do
-         corr = (nCorr*sumxy - sumx*sumy) /                       &
+         corr = (nCorr*sumxy - sumx*sumy) /                           &
                 sqrt((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2))
 
-         
+         if ( nCorr .eq. 0 ) corr = zero
+         if ( ((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2)) .le. 10e-8 ) then
+            !! If one of the standard deviations is zero => one of the timeseries is constant.
+            !! Still may be correlated.
+            !! If both have coefficients of variation under 1%, set corr=1, else corr=0
+            coefVarY=&
+                 sqrt((sumy2-2*(sumy/nCorr)*sumy+((sumy/nCorr)**2)*nCorr)/(nCorr-1))/(sumy/nCorr)
+            coefVarX=&
+                 sqrt((sumx2-2*(sumx/nCorr)*sumx+((sumx/nCorr)**2)*nCorr)/(nCorr-1))/(sumx/nCorr)
+            corr=zero !! assume not
+            if( (abs(coefVarX) .lt. .01) .and. (abs(coefVarY) .lt. .01)) corr=one
+         end if
+                     
          !! normalize to the latest (least) time difference and invert.
          biasWeights=1./(biasWeights/minval(biasWeights, &
                                             mask=biasMask .and. (biasWeights.gt.zero) ))
@@ -2585,7 +2599,7 @@ else if (temporalPersistence) then
                                       mask=biasMask .and. (biasWeights.gt.zero)) / &
                    biasWeightSum
 
-         if(corr .le. zero) theBias=0
+         if(corr .le. zero) theBias=zero
          if(corr .gt. zero) theBias=corr*theBias
       endif
 
@@ -2607,11 +2621,6 @@ else if (temporalPersistence) then
            prstErr * exp(real(-1)*prstDtErr/prstB)                + &
            theBias * (1.0 - exp(real(-1)*prstDtErr/prstB) )
 
-      !                    123456789012345
-      !if(prstGageId .eq. '       07099060') then
-      if(linkInd .eq. checkInd) then 
-      end if
-
    endif !! if(.not. persistBias_local) then; else;
 
    !! Currently cant get here... 
@@ -2626,7 +2635,7 @@ else if (temporalPersistence) then
    endif
 
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
    if(linkInd .eq. checkInd) then 
       print*,'Ndg: checkInd pst: -------------------'
       print*,'Ndg: checkInd pst: usgsId: ', prstGageId
@@ -2663,7 +2672,10 @@ else if (temporalPersistence) then
          end do
          print*,'Ndg: checkInd pst: max( 1, count(biasMask) ): ',max( 1, count(biasMask) )
          print*,'Ndg: checkInd pst: biasWeightSum: ', biasWeightSum
-         print*,'Ndg: checkInd pst: theBias:', theBias
+         print*,'Ndg: checkInd pst: corr: ', corr
+         print*,'Ndg: checkInd pst: nCorr: ', nCorr
+         print*,'Ndg: checkInd pst: theBias:', theBias                  
+         print*,'Ndg: checkInd pst: theBias/corr:', theBias/corr
          print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) *'
          print*,'Ndg: checkInd pst:  prstErr * exp(real(-1)*prstDtErr/prstB)', &
               obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
@@ -2677,7 +2689,7 @@ else if (temporalPersistence) then
       !if(flushAll) flush(flushUnit)
       flush(6)
    end if
-!#endif
+#endif /* HYDRO_D */
 endif !! if(abs(weighting) .gt. smallestWeight) then  !! 1.e-10
 
 #ifdef HYDRO_D

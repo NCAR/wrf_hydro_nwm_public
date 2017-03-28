@@ -604,7 +604,10 @@ end function MUSKINGCUNGE
 
 subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
 
-use module_RT_data, only: rt_domain  !! JLM FOO REMOVE THIS AFTER TESTING
+#ifdef HYDRO_D
+use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
+#endif
+
         IMPLICIT NONE
 
         REAL, intent(IN)       :: dt         !routing period in  seconds
@@ -840,14 +843,16 @@ use module_RT_data, only: rt_domain  !! JLM FOO REMOVE THIS AFTER TESTING
          endif
       endif
 
-!! JLM: print to diagnose the magnitues of C3 
-!! JLM: would be good to conditonally print this 
+#ifdef HYDRO_D
+      !! Getting information on c3.
       !if(rt_domain(1)%gages(idx + linkls_s(my_id+1) - 1) .ne. rt_domain(1)%gageMiss) then
       !   print*, rt_domain(1)%gages(idx+linkls_s(my_id+1)-1)
       if(rt_domain(1)%gages(idx) .ne. rt_domain(1)%gageMiss) then
          print*, rt_domain(1)%gages(idx)
          print*,'JLM submuskcunge idx, C3, C, D:', idx + linkls_s(my_id+1) - 1, C3, dt/(2*Km), X
       end if
+#endif
+      
 !yw added for test
       if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
@@ -2132,7 +2137,7 @@ else
          if (nlst_rt(1)%output_channelBucket_influx .eq. 3) &
               accSfcLatRunoff(1:NLINKSL) = accSfcLatRunoff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
       endif
-            tmpLQLateral = 0  !! JLM:: These lines imply that squeege runoff does not count towards 
+      tmpLQLateral = 0  !! JLM:: These lines imply that squeege runoff does not count towards 
       tmpQLateral = 0   !! JLM:: accumulated runoff to be output but it does for internal QLateral?
       !! JLM: But then the next accumulation is added to the amt before zeroing? result
       !! JLM: should be identical to LQLateral.... I'm totally mystified.
