@@ -2208,7 +2208,8 @@ real,    parameter :: smallestWeight=1.e-8
 !! persistence related variables in following block
 integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt, pairCount
 logical, dimension(nTimesLastObs) :: biasMask, whObsTooOld
-real :: prstB, prstDtErr, prstErr
+real,    dimension(nTimesLastObs) :: biasWeights
+real :: prstB, prstDtErr, prstErr, biasWeightSum
 character(len=15) :: prstGageId
 integer, parameter :: sixty=60
 real,    parameter :: smallestNudge=1.e-10
@@ -2512,6 +2513,7 @@ else if (temporalPersistence) then
    !! --- Deal with the last ob ---
    !! 9) what is the time difference with the last ob/obs?
    prstDtErrInt = -9999*60  ! JLM: magic value? set as a parameter above
+   if(persistBias_local) biasWeights(tt) = zero
    do tt=nTimesLastObs,1,-1
       ! Conditons for rejecting obs
       if(persistBias_local) then
@@ -2521,6 +2523,7 @@ else if (temporalPersistence) then
          if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) continue
       end if
       call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt)
+      if(persistBias_local) biasWeights(tt) = prstDtErrInt
       if(prstDtErrInt .lt. zeroInt) then
          print*,'initTime:', hydroTime
          print*,'obsStaticStr(whGageId)%lastObsTime(tt):', obsStaticStr(whGageId)%lastObsTime(tt)
@@ -2545,9 +2548,21 @@ else if (temporalPersistence) then
    !! Always calculate the observation nudge error.
    prstErr = obsStaticStr(whGageId)%lastObsDischarge(nTimesLastObs) - discharge(obsInd)
    if(persistBias_local) then
-      theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
-                     obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
-                max( 1, count(biasMask) )    
+
+      biasWeightSum=sum(biasWeights, mask=biasMask)
+      if(biasWeightSum .ge. one) then
+         !! normalize to the latest value. Could normalize to 15*60=900
+         biasWeights=1./(biasWeights/minval(biasWeights, mask=biasMask)) 
+         theBias = sum( biasWeights *                                     &
+                        (obsStaticStr(whGageId)%lastObsDischarge -        &
+                        obsStaticStr(whGageId)%lastObsModelDischarge), mask=biasMask) / &
+                        biasWeightSum
+      else
+         theBias=zero
+      endif
+      !theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
+      !               obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
+      !          max( 1, count(biasMask) )    
    end if
 
    !! 11) solution
