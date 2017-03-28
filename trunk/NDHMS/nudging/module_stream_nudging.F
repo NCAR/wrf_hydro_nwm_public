@@ -2211,6 +2211,8 @@ logical, dimension(nTimesLastObs) :: biasMask, whObsTooOld
 real,    dimension(nTimesLastObs) :: biasWeights
 real :: prstB, prstDtErr, prstErr, biasWeightSum
 character(len=15) :: prstGageId
+integer :: nCorr
+real    :: corr, sumx, sumx2, sumxy, sumy, sumy2, xCorr, yCorr
 integer, parameter :: sixty=60
 real,    parameter :: smallestNudge=1.e-10
 real,    parameter :: zero=1.e-37
@@ -2550,6 +2552,29 @@ else if (temporalPersistence) then
       if(count(biasMask .and. (biasWeights.gt.zero)) .lt. minNumPairsBiasPersist) then
          !persistBias_local=.false.
       else 
+
+         !! calculate the correlation coefficient
+         nCorr=zero
+         sumx =zero
+         sumx2=zero
+         sumxy=zero
+         sumy =zero
+         sumy2=zero
+         do tt=nTimesLastObs,1,-1
+            if(.not. biasMask(tt)) continue
+            xCorr = obsStaticStr(whGageId)%lastObsDischarge(tt)
+            yCorr = obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+            nCorr = nCorr + one  
+            sumx  = sumx  + xCorr
+            sumy  = sumy  + yCorr
+            sumx2 = sumx2 + xCorr*xCorr
+            sumy2 = sumy2 + yCorr*yCorr
+            sumxy = sumxy + xCorr*yCorr
+         end do
+         corr = (nCorr*sumxy - sumx*sumy) /                       &
+                sqrt((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2))
+
+         
          !! normalize to the latest (least) time difference and invert.
          biasWeights=1./(biasWeights/minval(biasWeights, &
                                             mask=biasMask .and. (biasWeights.gt.zero) ))
@@ -2558,7 +2583,10 @@ else if (temporalPersistence) then
                         (obsStaticStr(whGageId)%lastObsDischarge -                 &
                          obsStaticStr(whGageId)%lastObsModelDischarge),            &
                                       mask=biasMask .and. (biasWeights.gt.zero)) / &
-              biasWeightSum
+                   biasWeightSum
+
+         if(corr .le. zero) theBias=0
+         if(corr .gt. zero) theBias=corr*theBias
       endif
 
       !! Simple, straight average / unweighted,  way of calculating bias
@@ -2598,7 +2626,7 @@ else if (temporalPersistence) then
    endif
 
 
-#ifdef HYDRO_D
+!#ifdef HYDRO_D
    if(linkInd .eq. checkInd) then 
       print*,'Ndg: checkInd pst: -------------------'
       print*,'Ndg: checkInd pst: usgsId: ', prstGageId
@@ -2649,7 +2677,7 @@ else if (temporalPersistence) then
       !if(flushAll) flush(flushUnit)
       flush(6)
    end if
-#endif
+!#endif
 endif !! if(abs(weighting) .gt. smallestWeight) then  !! 1.e-10
 
 #ifdef HYDRO_D
