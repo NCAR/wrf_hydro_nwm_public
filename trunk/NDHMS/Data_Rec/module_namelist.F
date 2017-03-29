@@ -94,6 +94,8 @@ CONTAINS
        integer            :: nLastObs
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
+       logical            :: invDistTimeWeightBias
+       logical            :: correlationReduceBias
 #endif 
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
@@ -125,19 +127,22 @@ CONTAINS
                             persistBias,            nudgingLastObsFile,     &
                             timeSlicePath,          nLastObs,               &
                             minNumPairsBiasPersist, maxAgePairsBiasPersist, &
-                            biasWindowBeforeT0
+                            biasWindowBeforeT0,     invDistTimeWeightBias,  &
+                            correlationReduceBias
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"
-   readTimesliceParallel = .true.
-   temporalPersistence   = .true.
-   persistBias           = .false.
-   biasWindowBeforeT0    = .false.
-   nudgingLastObsFile = ""
-   timeSlicePath = "./nudgingTimeSliceObs/"
-   nLastObs = 960
+   readTimesliceParallel  = .true.
+   temporalPersistence    = .true.
+   persistBias            = .false.
+   biasWindowBeforeT0     = .false.
+   nudgingLastObsFile     = ""
+   timeSlicePath          = "./nudgingTimeSliceObs/"
+   nLastObs               = 960
    minNumPairsBiasPersist = 8
    maxAgePairsBiasPersist = -99999
+   invDistTimeWeightBias  = .false.
+   correlationReduceBias  = .false.
 #endif 
 
    !! default  values for HYDRO_nlist
@@ -287,6 +292,8 @@ CONTAINS
   call mpp_land_bcast_int1(nLastObs)
   call mpp_land_bcast_int1(minNumPairsBiasPersist)
   call mpp_land_bcast_int1(maxAgePairsBiasPersist)
+  call mpp_land_bcast_log1(invDistTimeWeightBias)
+  call mpp_land_bcast_log1(correlationReduceBias)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -369,6 +376,8 @@ CONTAINS
     nlst%nLastObs               = nLastObs
     nlst%minNumPairsBiasPersist = minNumPairsBiasPersist
     nlst%maxAgePairsBiasPersist = maxAgePairsBiasPersist
+    nlst%invDistTimeWeightBias  = invDistTimeWeightBias
+    nlst%correlationReduceBias  = correlationReduceBias
 #endif
 
 #ifdef MPP_LAND
@@ -412,17 +421,19 @@ CONTAINS
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
 #ifdef WRF_HYDRO_NUDGING
-    write(6,*) " nlst%nudgingParamFile",       trim(nudgingParamFile)
-    write(6,*) " nlst%netWkReExFile",          trim(netWkReExFile)
-    write(6,*) " nlst%readTimesliceParallel",  readTimesliceParallel
-    write(6,*) " nlst%temporalPersistence",    temporalPersistence
-    write(6,*) " nlst%persistBias",            persistBias
-    write(6,*) " nlst%biasWindowBeforeT0",     biasWindowBeforeT0
-    write(6,*) " nlst%nudgingLastObsFile",     trim(nudgingLastObsFile)
-    write(6,*) " timeSlicePath         ",      trim(timeSlicePath)
-    write(6,*) " nLastObs              ",      nLastObs
-    write(6,*) " minNumPairsBiasPersist",      minNumPairsBiasPersist
-    write(6,*) " maxAgePairsBiasPersist",      maxAgePairsBiasPersist
+    write(6,*) " nlst%nudgingParamFile      ",  trim(nudgingParamFile)
+    write(6,*) " nlst%netWkReExFile         ",  trim(netWkReExFile)
+    write(6,*) " nlst%readTimesliceParallel ",  readTimesliceParallel
+    write(6,*) " nlst%temporalPersistence   ",  temporalPersistence
+    write(6,*) " nlst%persistBias           ",  persistBias
+    write(6,*) " nlst%biasWindowBeforeT0    ",  biasWindowBeforeT0
+    write(6,*) " nlst%nudgingLastObsFile    ",  trim(nudgingLastObsFile)
+    write(6,*) " timeSlicePath              ",  trim(timeSlicePath)
+    write(6,*) " nLastObs                   ",  nLastObs
+    write(6,*) " minNumPairsBiasPersist     ",  minNumPairsBiasPersist
+    write(6,*) " maxAgePairsBiasPersist     ",  maxAgePairsBiasPersist
+    write(6,*) " invDistTimeWeightBias      ",  invDistTimeWeightBias
+    write(6,*) " correlationReduceBias      ",  correlationReduceBias
 #endif
 #endif /* HYDRO_D */
 #ifdef MPP_LAND

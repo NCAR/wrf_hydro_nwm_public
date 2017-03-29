@@ -159,6 +159,8 @@ logical            :: biasWindowBeforeT0
 integer            :: nTimesLastObs   !! aka nlst_rt(did)%nLastObs
 integer            :: minNumPairsBiasPersist
 integer            :: maxAgePairsBiasPersist
+logical            :: invDistTimeWeightBias
+logical            :: correlationReduceBias
 
 !========================
 ! Space book keeping
@@ -289,7 +291,7 @@ character(len=256) :: lastObsFile
 !!$#endif /* HYDRO_D */
 
 !! this ifdef is bizarre problem with pgf compiler
-#ifdef WRF_HYDRO_NUDGING
+!#ifdef WRF_HYDRO_NUDGING !JLM
 nudgingParamFile       = nlst_rt(did)%nudgingParamFile
 netwkReExFile          = nlst_rt(did)%netwkReExFile
 readTimesliceParallel  = nlst_rt(did)%readTimesliceParallel
@@ -300,7 +302,9 @@ nudgingLastObsFile     = nlst_rt(did)%nudgingLastObsFile
 nTimesLastObs          = nlst_rt(did)%nLastObs
 minNumPairsBiasPersist = nlst_rt(did)%minNumPairsBiasPersist
 maxAgePairsBiasPersist = nlst_rt(did)%maxAgePairsBiasPersist
-#endif 
+invDistTimeWeightBias  = nlst_rt(did)%invDistTimeWeightBias
+correlationReduceBias  = nlst_rt(did)%correlationReduceBias
+!#endif 
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
 #ifdef MPP_LAND
@@ -2421,7 +2425,7 @@ else if (temporalPersistence) then
          !! assume the obs are all too old, find the not so old ones
          whObsTooOld = .true.
          !! assume all weights are bad
-         if(persistBias_local) biasWeights = -9999
+         if(persistBias_local .and. invDistTimeWeightBias) biasWeights = -9999
          do tt=nTimesLastObs,1,-1
             !! missing obs are not mixed with good obs. The first missing obs means the rest are missing.
             if(obsStaticStr(whGageId)%lastObsTime(tt) .eq. missingLastObsTime) exit
@@ -2432,7 +2436,9 @@ else if (temporalPersistence) then
                !! use the hydro model time to define the end of the bias window
                call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)               
             endif
-            if(persistBias_local) biasWeights(tt) = real(obsDtInt + nlst_rt(did)%dtrt_ch)
+            !! JLM change dtrt_ch to obsResolutionInt
+            if(persistBias_local .and. invDistTimeWeightBias) &
+                 biasWeights(tt) = real(obsDtInt + nlst_rt(did)%dtrt_ch) 
             if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
             whObsTooOld(tt) = .false. 
          end do
@@ -2545,15 +2551,41 @@ else if (temporalPersistence) then
    end if
    prstDtErr = real(prstDtErrInt)/real(sixty)  !! second -> minutes
 
-   !! 10) what is the error ?
+   !! 10) what is the error or bias ?
+   
    !! Always calculate the observation nudge error.
    prstErr = obsStaticStr(whGageId)%lastObsDischarge(nTimesLastObs) - discharge(obsInd)
 
+   !! Bias term.
    if(persistBias_local) then
-      if(count(biasMask .and. (biasWeights.gt.zero)) .lt. minNumPairsBiasPersist) then
-         persistBias_local=.false.
-      else 
 
+      if(invDistTimeWeightBias) then
+
+         if(count(biasMask .and. (biasWeights.gt.zero)) .lt. minNumPairsBiasPersist) then
+            persistBias_local=.false.
+         else 
+
+            !! normalize to the latest (least) time difference and invert.
+            biasWeights=1./(biasWeights/minval(biasWeights, &
+                 mask=biasMask .and. (biasWeights.gt.zero) ))
+            biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
+            theBias = sum( biasWeights *                                              &
+                 (obsStaticStr(whGageId)%lastObsDischarge -                 &
+                 obsStaticStr(whGageId)%lastObsModelDischarge),            &
+                 mask=biasMask .and. (biasWeights.gt.zero)) / &
+                 biasWeightSum
+         endif
+
+      else 
+         
+         !! Simple, straight average / unweighted,  way of calculating bias
+         theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
+                        obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
+                   max( 1, count(biasMask) )
+         
+      end if
+            
+      if(correlationReduceBias) then
          !! calculate the correlation coefficient
          nCorr=zero
          sumx =zero
@@ -2574,13 +2606,14 @@ else if (temporalPersistence) then
             end if
          end do
          corr = (nCorr*sumxy - sumx*sumy) /                           &
-                sqrt((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2))
-
+              sqrt((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2))
+         
          if ( nCorr .eq. 0 ) corr = zero
          if ( ((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2)) .le. 10e-8 ) then
             !! If one of the standard deviations is zero => one of the timeseries is constant.
             !! Still may be correlated.
-            !! If both have coefficients of variation under 1%, set corr=1, else corr=0
+            !! If both have abs coefficients of variation under 1%, set corr=1, else corr=0
+            !! (A simple expansion of sqrt( 1/(N-1) * sum( x - xbar)**2 ))
             coefVarY=&
                  sqrt((sumy2-2*(sumy/nCorr)*sumy+((sumy/nCorr)**2)*nCorr)/(nCorr-1))/(sumy/nCorr)
             coefVarX=&
@@ -2588,28 +2621,13 @@ else if (temporalPersistence) then
             corr=zero !! assume not
             if( (abs(coefVarX) .lt. .01) .and. (abs(coefVarY) .lt. .01)) corr=one
          end if
-                     
-         !! normalize to the latest (least) time difference and invert.
-         biasWeights=1./(biasWeights/minval(biasWeights, &
-                                            mask=biasMask .and. (biasWeights.gt.zero) ))
-         biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
-         theBias = sum( biasWeights *                                              &
-                        (obsStaticStr(whGageId)%lastObsDischarge -                 &
-                         obsStaticStr(whGageId)%lastObsModelDischarge),            &
-                                      mask=biasMask .and. (biasWeights.gt.zero)) / &
-                   biasWeightSum
-
          if(corr .le. zero) theBias=zero
          if(corr .gt. zero) theBias=corr*theBias
-      endif
-
-      !! Simple, straight average / unweighted,  way of calculating bias
-      !theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
-      !               obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
-      !          max( 1, count(biasMask) )
+      end if
       
-   end if
+   endif ! if (persistBias_local)
 
+   
    !! 11) solution
    if(.not. persistBias_local) then
       nudge_term_link = &

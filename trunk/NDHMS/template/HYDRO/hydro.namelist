@@ -178,4 +178,10 @@ maxAgePairsBiasPersist = -960
 ! maxAgePairsBiasPersist, required to apply a bias correction. (Default=8)
 minNumPairsBiasPersist = 8
 
+! If persistBias: give more weight to observations closer in time? (default=FALSE)
+invDistTimeWeightBias = .TRUE.
+
+! If persistBias: use the correlation of the (obs, modeled) pairs to reduce the bias? (default=FALSE)
+correlationReducedBias = .FALSE.
+
 /

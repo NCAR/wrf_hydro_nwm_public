@@ -2077,9 +2077,11 @@ end subroutine drive_CHANNEL
 
 !---------------------------------------------
 if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
-   write(6,*), "channel_only or channelBucket_only is not zero."
+#ifdef HYDRO_D
+   write(6,*), "channel_only or channelBucket_only is not zero. Special flux calculations."
    call flush(6)
-
+#endif /* HYDRO_D */
+   
 !   if(nlst_rt(1)%output_channelBucket_influx .eq. 1 .or. &
 !        nlst_rt(1)%output_channelBucket_influx .eq. 2       ) &
 !        !! qScfLatRunoff = qLateral - qBucket
@@ -2100,7 +2102,6 @@ if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
    
    if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
         accSfcLatRunoff(1:NLINKSL) = qSfcLatRunoff * DT
-
 
 else
 
@@ -2192,8 +2193,10 @@ endif !! (channel_only .eq. 1 .or. channelBucket_only .eq. 1) then; else; endif
 !---------------------------------------------
 !! If not running channelOnly, here is where the bucket model is picked up
 if(channel_only .eq. 1) then
-   write(6,*), "channel_only is not zero."
-   call flush(6) 
+#ifdef HYDRO_D
+   write(6,*), "channel_only is not zero. No bucket."
+   call flush(6)
+#endif /* HYDRO_D */
 else
    !! REQUIRE BUCKET MODEL ON HERE?
    if(NLINKSL .gt. 0) QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)

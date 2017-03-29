@@ -9763,7 +9763,9 @@ if(my_id .eq. io_id) then
    fileName = trim(indir)//"/"//&
         olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
         olddate(15:16)//".CHRTOUT_DOMAIN"//hgrid
+#ifdef HYDRO_D
    print*, " Channel only input forcing file: ",trim(fileName)
+#endif /* HYDRO_D */
    iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
 endif
 
@@ -9884,7 +9886,9 @@ end if
 
 if(my_id .eq. io_id) then
    iret = nf_close(ncid)
+#ifdef HYDRO_D
    print*, "finish read channel only forcing "
+#endif /* HYDRO_D */
 endif
 call flush(6)
 

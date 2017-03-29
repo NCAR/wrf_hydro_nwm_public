@@ -65,6 +65,8 @@
        character(len=256) :: nudgingLastObsFile
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
+       logical            :: invDistTimeWeightBias
+       logical            :: correlationReduceBias  
 #endif
        character(len=256) :: timeSlicePath
        integer            :: nLastObs

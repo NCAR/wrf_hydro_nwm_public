@@ -36,7 +36,6 @@ program Noah_hrldas_driver
 
    call land_driver_ini(NTIME)
 #ifdef WRF_HYDRO   
-   print*,'JLM foo: ntime:', ntime
    do ITIME = 1, NTIME
 #else
    do ITIME = 0, NTIME
