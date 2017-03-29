@@ -182,6 +182,6 @@ minNumPairsBiasPersist = 8
 invDistTimeWeightBias = .TRUE.
 
 ! If persistBias: use the correlation of the (obs, modeled) pairs to reduce the bias? (default=FALSE)
-correlationReducedBias = .FALSE.
+correlationReduceBias = .FALSE.
 
 /
