@@ -49,6 +49,7 @@ type chrtMeta
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
@@ -112,6 +113,8 @@ type ldasMeta
    real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   real :: modelNdv ! NDV value represented within the model code
+   integer :: modelNdvInt ! NDV value represented in model as integer
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
@@ -165,6 +168,7 @@ type rtDomainMeta
    real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
@@ -219,6 +223,7 @@ type lakeMeta
    real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
@@ -241,6 +246,10 @@ type lakeMeta
    character (len=64) :: lonLName ! long_name
    character (len=64) :: lonUnits ! units
    character (len=64) :: lonStName ! Standard Name
+   ! elevation variable attributes
+   character (len=64) :: elevLName ! long_name
+   character (len=64) :: elevUnits ! units
+   character (len=64) :: elevStName ! Standard Name
    ! Global attributes
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
@@ -259,6 +268,8 @@ subroutine initChrtDict(chrtOutDict)
    implicit none
 
    type(chrtMeta), intent(inout) :: chrtOutDict
+
+   chrtOutDict%modelNdv = -9.E15
    ! CHRTOUT FILES
    ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
    !            which means meta-data standards have yet to be determined 
@@ -294,7 +305,7 @@ subroutine initChrtDict(chrtOutDict)
   
    ! Establish streamflw order attributes
    chrtOutDict%orderLName = "Streamflow Order"
-   chrtOutDict%StName = "order"
+   chrtOutDict%orderStName = "order"
 
    ! Establish point elevation attributes
    chrtOutDict%elevLName = "Feature Elevation"
@@ -321,10 +332,10 @@ subroutine initChrtDict(chrtOutDict)
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"/)
-   chrtOutDict%scaleFactor(:) = [0.0001,0.1,0.1,0.01,-99.0,-99.0,-99.0,-99.0,&
+   chrtOutDict%scaleFactor(:) = [0.0001,0.1,0.1,0.01,1.0,1.0,1.0,1.0,&
                                  -99.0,-99.0]
-   chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,-99.0,-99.0,-99.0,-99.0,-99.0,&
-                               -99.0]
+   chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                               0.0]
    ! Specify the outputflags. 0 - Do not output, 1 - Output. DO NOT MODIFY
    ! WITHOUT CONSULTING WITH OWP AND NCAR!!!!!!!!!!!!!!
    chrtOutDict%outFlag(:) = [1,0,1,1,0,0,0,0,0,0] 
@@ -334,8 +345,8 @@ subroutine initChrtDict(chrtOutDict)
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                   0.0,0.0]
-   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,10000.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0]
+   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,10000.0,100000.0,&
+                                  100000.0,100000.0,100000.0,100000.0,100000.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChVars
@@ -351,6 +362,9 @@ subroutine initLdasDict(ldasOutDict)
 
    type(ldasMeta), intent(inout) :: ldasOutDict
    ! LDASOUT FILES
+
+   ldasOutDict%modelNdv = 9.9692099683868690E36
+   ldasOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
    ldasOutDict%title = "OUTPUT FROM HRLDAS v20150506"
@@ -582,26 +596,26 @@ subroutine initLdasDict(ldasOutDict)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   ldasOutDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0]
-   ldasOutDict%validMaxReal(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0]
+   ldasOutDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0,-1000.0,-1500.0,-1500.0,0.0,-1500.0,&
+                                  -1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-100.0,-100.0,0.0,-100.0,-5.0,&
+                                  0.0,-5.0,-5.0,-1000.0,-1000.0,-1000.0,0.0,-5.0,-5.0,-5.0,&
+                                  -1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,&
+                                  -1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,&
+                                  -1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-5.0,-5.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,-10.0,0.0,0.0,0.0,&
+                                  -1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,-1000.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1000.0,&
+                                  -5.0,0.0,0.0,0.0,0.0]
+   ldasOutDict%validMaxReal(:) = [100.0,100.0,100.0,100.0,100.0,3000.0,1500.0,1500.0,1000.0,1500.0,&
+                                  1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,100.0,1500.0,30000.0,&
+                                  30000.0,30000.0,30000.0,1000.0,1000.0,1000.0,100000.0,30000.0,30000.0,30000.0,&
+                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,&
+                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,&
+                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,30000.0,30000.0,400.0,&
+                                  1.0,400.0,1.0,100000.0,100000.0,100000.0,10.0,1.0,100000.0,100000.0,&
+                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,&
+                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,&
+                                  30000.0,1.0,1.0,1.0,400.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
@@ -618,6 +632,8 @@ subroutine initRtDomainDict(rtDomainDict)
 
    type(rtDomainMeta), intent(inout) :: rtDomainDict
    ! RT_DOMAIN files
+
+   rtDomainDict%modelNdv = -9.E15
 
    ! First establish global attributes.
    rtDomainDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
@@ -698,6 +714,8 @@ subroutine initLakeDict(lakeOutDict)
    implicit none
 
    type(lakeMeta), intent(inout) :: lakeOutDict
+
+   lakeOutDict%modelNdv = -9.E15
    ! LAKE FILES
    ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
    !            which means meta-data standards have yet to be determined 
@@ -707,16 +725,16 @@ subroutine initLakeDict(lakeOutDict)
    lakeOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
    lakeOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    lakeOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
-   lakeOutDict%stDim = 'lake_id'
+   lakeOutDict%lakeDim = 'lake_id'
    lakeOutDict%cdm = 'PLACEHOLDER'
    lakeOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
                       &SPHEROID[GRS_1980,6378137.0,298.257222101]],&
                       &PRIMEM[Greenwich,0.0],UNIT[Degree,0.017453292519943295]]'
-   lakOutDict%conventions = 'CF-1.6'
+   lakeOutDict%conventions = 'CF-1.6'
 
    ! Next establish time attribues
-   lakOutDict%timeLName = 'valid output time'
-   lakOutDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+   lakeOutDict%timeLName = 'valid output time'
+   lakeOutDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
    lakeOutDict%timeStName = 'time'
    lakeOutDict%rTimeLName = 'model initialization time'
    lakeOutDict%rTimeStName = 'forecast_reference_time'
@@ -739,7 +757,7 @@ subroutine initLakeDict(lakeOutDict)
    lakeOutDict%lonStName = "longitude"
 
    lakeOutDict%varNames(:) = (/'inflow','outflow'/)
-   lakeOutDict%longNames(:) = (/'Lake Inflow','Lake Outflow'/)
+   lakeOutDict%longName(:) = (/'Lake Inflow','Lake Outflow'/)
    lakeOutDict%units(:) = (/'m3 s-1','m3 s-1'/)
    lakeOutDict%coordNames(:) = (/'latitude longitude','latitude longitude'/)
    lakeOutDict%scaleFactor(:) = [0.01,0.01]

@@ -252,7 +252,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
               ! Output gridded routing variables on National Water Model
               ! high-res routing grid 
               call output_rt_NWM(did,nlst_rt(did)%igrid)
-   
+   endif
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
    !if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 

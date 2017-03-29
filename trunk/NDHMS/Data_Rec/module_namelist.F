@@ -64,6 +64,7 @@ CONTAINS
        integer            :: split_output_count, order_to_write
        integer :: igrid, iocflag, t0OutputFlag, output_channelBucket_influx
        character(len=256) :: geo_static_flnm = ""
+       character(len=1024) :: land_spatial_meta_flnm = ""
        integer  :: DEEPGWSPIN
 
        integer :: i
@@ -98,6 +99,7 @@ CONTAINS
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
             RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
+            land_spatial_meta_flnm, &
             out_dt, rst_dt, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
@@ -212,6 +214,7 @@ CONTAINS
   nlst%t0OutputFlag = t0OutputFlag
   nlst%output_channelBucket_influx = output_channelBucket_influx
   nlst%geo_static_flnm = geo_static_flnm
+  nlst%land_spatial_meta_flnm = land_spatial_meta_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt
   nlst%DEEPGWSPIN = DEEPGWSPIN

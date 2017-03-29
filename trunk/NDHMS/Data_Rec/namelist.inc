@@ -12,6 +12,7 @@
        integer :: rst_bi_out   ! used for parallel io with large restart file.
                            ! each process will output the restart tile.
        character(len=256) :: geo_static_flnm = ""
+       character(len=1024) :: land_spatial_meta_flnm = ""
        integer  :: DEEPGWSPIN
        integer ::  order_to_write, rst_typ
        character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
