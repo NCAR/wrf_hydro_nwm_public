@@ -2568,6 +2568,7 @@ else if (temporalPersistence) then
             !! normalize to the latest (least) time difference and invert.
             biasWeights=1./(biasWeights/minval(biasWeights, &
                  mask=biasMask .and. (biasWeights.gt.zero) ))
+            biasWeights=biasWeights**5 !! JLM JLM
             biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
             theBias = sum( biasWeights *                                              &
                  (obsStaticStr(whGageId)%lastObsDischarge -                 &
