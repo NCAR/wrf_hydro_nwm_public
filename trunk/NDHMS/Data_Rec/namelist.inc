@@ -15,6 +15,7 @@
        integer  :: DEEPGWSPIN
        integer ::  order_to_write, rst_typ
        character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
+       character(len=256)  :: hydrotbl_f = ""    ! hydrotbl file
        
 !      additional character
        character :: hgrid
@@ -62,11 +63,11 @@
        logical            :: temporalPersistence
        logical            :: persistBias
        character(len=256) :: nudgingLastObsFile
-       character(len=256) :: timeSlicePath
-       integer            :: nLastObs
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
 #endif
+       character(len=256) :: timeSlicePath
+       integer            :: nLastObs
 
 
    END TYPE namelist_rt_field 
