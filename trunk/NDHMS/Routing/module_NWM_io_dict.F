@@ -322,31 +322,34 @@ subroutine initChrtDict(chrtOutDict)
                                "QBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
    chrtOutDict%longName(:) = (/"River Flow","Amount of stream flow alteration",&
                                "Runoff into channel reach","River Velocity",&
-                               "PLC","PLC","PLC",&
-                               "PLC","PLC","PLC"/)
+                               "River Stage","Runoff from terrain routing",&
+                               "Flux from gw bucket",&
+                               "Runoff from bottom of soil to bucket",&
+                               "Accumulated runoff from terrain routing",&
+                               "Accumulated runoff from gw bucket"/)
    chrtOutDict%units(:) = (/"m3 s-1","m3 s-1","m3 s-1","m s-1",&
-                            "PLC","PLC","PLC",&
-                            "PLC","PLC","PLC"/)
+                            "meter","m3","m3",&
+                            "m3","m3","m3"/)
    chrtOutDict%coordNames(:) = (/"latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"/)
-   chrtOutDict%scaleFactor(:) = [0.0001,0.1,0.1,0.01,1.0,1.0,1.0,1.0,&
-                                 -99.0,-99.0]
+   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,&
+                                 0.01,0.01]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0]
-   ! Specify the outputflags. 0 - Do not output, 1 - Output. DO NOT MODIFY
-   ! WITHOUT CONSULTING WITH OWP AND NCAR!!!!!!!!!!!!!!
-   chrtOutDict%outFlag(:) = [1,0,1,1,0,0,0,0,0,0] 
+   ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
+   ! output subroutine. 
+   chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0] 
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                   0.0,0.0]
-   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,10000.0,100000.0,&
-                                  100000.0,100000.0,100000.0,100000.0,100000.0]
+   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,500000.0,500000.0,&
+                                  500000.0,500000.0,500000.0,500000.0,500000.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChVars

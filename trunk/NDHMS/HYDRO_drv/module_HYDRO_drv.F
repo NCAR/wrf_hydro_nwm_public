@@ -327,34 +327,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
                       if(nlst_rt(did)%outlake .ne. 0) then
                          call output_lakes_NWM(did,nlst_rt(did)%igrid)
-!#ifdef MPP_LAND
-!                          call mpp_output_lakes( RT_DOMAIN(did)%lake_index, &
-!#else
-!                          call output_lakes(  &
-!#endif
-!                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-!                               RT_DOMAIN(did)%NLAKES, &
-!                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-!                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
-!                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
-!                               RT_DOMAIN(did)%QLAKEO, &
-!                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt)
-!                      endif
-!                      if(nlst_rt(did)%outlake .eq. 2) then
-!#ifdef MPP_LAND
-!                          call mpp_output_lakes2( RT_DOMAIN(did)%lake_index, &
-!#else
-!                          call output_lakes2(  &
-!#endif
-!                               nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-!                               RT_DOMAIN(did)%NLAKES, &
-!                               trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-!                               RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
-!                               RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
-!                               RT_DOMAIN(did)%QLAKEO, &
-!                               RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
-!                      endif
-!
                endif   ! end if block of rNLAKES .gt. 0
         endif 
 #ifdef HYDRO_D
