@@ -1829,7 +1829,8 @@ end subroutine get_albedo12m_netcdf
 !       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 #endif
 
-if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+! All but long range
+if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 
    iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
    iret = nf_put_att_text(ncid,varid,'units',1,'m')
@@ -2010,7 +2011,8 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
     enddo !-n soils
 #endif
 
-if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+! All but long range
+if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(ZWATTABLRT,xdumd)
 #else
@@ -2056,7 +2058,8 @@ endif
 #endif
 #endif
  
-if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+! All but long range
+if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(SFCHEADSUBRT,xdumd)
 #else
@@ -8645,7 +8648,7 @@ end subroutine mpp_output_chrt2
 	endif
 
         !-- NEW velocity definition, var
-        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
         	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
         	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',14,'River Velocity')
@@ -8789,7 +8792,7 @@ end subroutine mpp_output_chrt2
         endif
 
         !-- writelvelocity (dummy value for now)
-	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
         	iret = nf_inq_varid(ncid,"velocity", varid)
          	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), velocity)
 	endif

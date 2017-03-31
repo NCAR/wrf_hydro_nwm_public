@@ -1413,6 +1413,10 @@ module module_NoahMP_hrldas_driver
    if (iocflag .eq. 0) then
 	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
    endif
+   ! Long-Term Retrospective
+   if (iocflag .eq. 5) then
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
+   endif
 
    !!--- Parse into character array. Constructor not valid with uneven 
    !!--- strings in f90 so using brute force. 
