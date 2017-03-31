@@ -473,6 +473,8 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))
@@ -771,6 +773,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    integer, allocatable, dimension(:,:) :: localCompTmp, globalCompTmp
    integer, allocatable, dimension(:,:,:) :: globalOutComp
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
+   real, allocatable, dimension(:,:,:) :: varRealTmp
 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -915,6 +918,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
+         iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
 
          ! Create dimensions
          iret = nf90_def_dim(ftnNoahMP,'time',NF90_UNLIMITED,dimId(1))
@@ -1147,6 +1152,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          allocate(globalCompTmp(1,1))
       endif
       allocate(localCompTmp(ixPar,jxPar))
+      allocate(varRealTmp(ixPar,fileMeta%numLev(varInd),jxPar))
       globalOutComp = fileMeta%fillComp(varInd)
       
 
@@ -1155,20 +1161,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call mpp_land_sync()
       endif
 
+      varRealTmp = varReal
+      where ( varRealTmp .eq. fileMeta%modelNdv ) varRealTmp = fileMeta%fillReal(varInd)
       do zTmp = 1,fileMeta%numLev(varInd)
          localCompTmp = fileMeta%fillComp(varInd)
          globalCompTmp = fileMeta%fillComp(varInd)
-         do iTmp = 1,ixPar
-            do jTmp = 1,jxPar
-               if(vegTyp(iTmp,jTmp) .eq. waterVal) then
-                  localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(varInd))
-               else if(varReal(iTmp,zTmp,jTmp) .eq. fileMeta%modelNdv) then
-                  localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(varInd))
-               else
-                  localCompTmp(iTmp,jTmp) = NINT((varReal(iTmp,zTmp,jTmp)-fileMeta%addOffset(varInd))/fileMeta%scaleFactor(varInd))
-               endif
-            end do
-         end do
+         where ( vegTyp .eq. waterVal) varRealTmp(:,zTmp,:) = fileMeta%fillReal(varInd)
+         localCompTmp = NINT((varRealTmp(:,zTmp,:)-fileMeta%addOffset(varInd))/fileMeta%scaleFactor(varInd))
          ! Sync all processes up.
          if(mppFlag .eq. 1) then
             call mpp_land_sync()
@@ -1204,7 +1203,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       deallocate(globalOutComp)
       deallocate(globalCompTmp)
       deallocate(localCompTmp)
-   
+      deallocate(varRealTmp)
+
    endif
 
    ! Sync all processes up.
@@ -1382,6 +1382,8 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
@@ -1917,6 +1919,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))

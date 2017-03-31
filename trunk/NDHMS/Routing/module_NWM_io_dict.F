@@ -32,6 +32,7 @@ type chrtMeta
    ! Variable names
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
+   character (len=512) :: outVersion = "NWM 1.2"
    ! Output variable attributes
    real, dimension(numChVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from real to
@@ -95,6 +96,7 @@ type ldasMeta
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
+   character (len=512) :: outVersion = "NWM 1.2"
    ! Output variable attributes
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -150,6 +152,7 @@ type rtDomainMeta
    ! Variable names
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
+   character (len=512) :: outVersion = "NWM 1.2"
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -205,6 +208,7 @@ type lakeMeta
    ! Variable names
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
+   character (len=512) :: outVersion = "NWM 1.2"
    ! Output variable attributes
    real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -400,15 +404,15 @@ subroutine initLdasDict(ldasOutDict)
    ldasOutDict%projTransformName = "lambert_conformal_conic"
    ldasOutDict%projGridMappingName= "lambert_conformal_conic"
    ldasOutDict%projCoordAxes = "y x"
-   ldasOutDict%projEsri = 'PROJCS[\"Sphere_Lambert_Conformal_Conic\",GEOGCS[\"GCS_Sphere\",&
-                          &DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6370000.0,0.0]]&
-                          &,PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],&
-                          &PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"false_easting\",0.0],&
-                          &PARAMETER[\"false_northing\",0.0],PARAMETER[\"central_meridian\",-97.0],&
-                          &PARAMETER[\"standard_parallel_1\",30.0],PARAMETER[\"standard_parallel_2\",60.0],&
-                          &PARAMETER[\"latitude_of_origin\",40.0000076294],UNIT[\"Meter\",1.0]];&
-                          &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
-                          & 10000;0.001;0.001;0.001;IsHighPrecision'
+   ldasOutDict%projEsri = 'PROJCS["Sphere_Lambert_Conformal_Conic",GEOGCS["GCS_Sphere",&
+                           &DATUM["D_Sphere",SPHEROID["Sphere",6370000.0,0.0]]&
+                           &,PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],&
+                           &PROJECTION["Lambert_Conformal_Conic"],PARAMETER["false_easting",0.0],&
+                           &PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-97.0],&
+                           &PARAMETER["standard_parallel_1",30.0],PARAMETER["standard_parallel_2",60.0],&
+                           &PARAMETER["latitude_of_origin",40.0000076294],UNIT["Meter",1.0]];&
+                           &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
+                           & 10000;0.001;0.001;0.001;IsHighPrecision'
    ldasOutDict%stParallel = [30.0,60.0]
    ldasOutDict%lonCtrlMer = -97.0
    ldasOutDict%latOrig = 40.0000076294
@@ -546,7 +550,7 @@ subroutine initLdasDict(ldasOutDict)
                             "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
                             "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
                             "g m-2s-1 C","g m-2s-1 C","umol CO m-2 s-1","W m-2",&
-                            "mm","mm","-","-","-","K"/)
+                            "mm","mm","fraction","fraction","fraction","K"/)
    ldasOutDict%scaleFactor(:) = [1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,&
                                  0.1,0.1,0.1,0.1,0.1,1.0,1.0,1.0,1.0,0.01,&
                                  0.001,1.0,1.0,1.0,1.0,1.0,1.0,0.01,0.01,0.01,&
@@ -617,15 +621,15 @@ subroutine initLdasDict(ldasOutDict)
                                   1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,30000.0,30000.0,400.0,&
                                   1.0,400.0,1.0,100000.0,100000.0,100000.0,10.0,1.0,100000.0,100000.0,&
                                   1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,&
-                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,&
+                                  1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1000.0,10000.0,&
                                   30000.0,1.0,1.0,1.0,400.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
-      ldasOutDict%fillComp(i) = int((ldasOutDict%fillReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
-      ldasOutDict%missingComp(i) = int((ldasOutDict%missingReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
-      ldasOutDict%validMinComp(i) = int((ldasOutDict%validMinReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
-      ldasOutDict%validMaxComp(i) = int((ldasOutDict%validMaxReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%fillComp(i) = NINT((ldasOutDict%fillReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%missingComp(i) = NINT((ldasOutDict%missingReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%validMinComp(i) = NINT((ldasOutDict%validMinReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
+      ldasOutDict%validMaxComp(i) = NINT((ldasOutDict%validMaxReal(i)+ldasOutDict%addOffset(i))/ldasOutDict%scaleFactor(i))
    end do
 
 end subroutine initLdasDict
@@ -669,13 +673,13 @@ subroutine initRtDomainDict(rtDomainDict)
    rtDomainDict%projTransformName = "lambert_conformal_conic"
    rtDomainDict%projGridMappingName= "lambert_conformal_conic"
    rtDomainDict%projCoordAxes = "y x"
-   rtDomainDict%projEsri = 'PROJCS[\"Sphere_Lambert_Conformal_Conic\",GEOGCS[\"GCS_Sphere\",&
-                            &DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6370000.0,0.0]]&
-                            &,PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],&
-                            &PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"false_easting\",0.0],&
-                            &PARAMETER[\"false_northing\",0.0],PARAMETER[\"central_meridian\",-97.0],&
-                            &PARAMETER[\"standard_parallel_1\",30.0],PARAMETER[\"standard_parallel_2\",60.0],&
-                            &PARAMETER[\"latitude_of_origin\",40.0000076294],UNIT[\"Meter\",1.0]];&
+   rtDomainDict%projEsri = 'PROJCS["Sphere_Lambert_Conformal_Conic",GEOGCS["GCS_Sphere",&
+                            &DATUM["D_Sphere",SPHEROID["Sphere",6370000.0,0.0]]&
+                            &,PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],&
+                            &PROJECTION["Lambert_Conformal_Conic"],PARAMETER["false_easting",0.0],&
+                            &PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-97.0],&
+                            &PARAMETER["standard_parallel_1",30.0],PARAMETER["standard_parallel_2",60.0],&
+                            &PARAMETER["latitude_of_origin",40.0000076294],UNIT["Meter",1.0]];&
                             &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
                             & 10000;0.001;0.001;0.001;IsHighPrecision'
    rtDomainDict%stParallel = [30.0,60.0]
@@ -705,10 +709,10 @@ subroutine initRtDomainDict(rtDomainDict)
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numRtDomainVars
-      rtDomainDict%fillComp(i) = int((rtDomainDict%fillReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
-      rtDomainDict%missingComp(i) = int((rtDomainDict%missingReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
-      rtDomainDict%validMinComp(i) = int((rtDomainDict%validMinReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
-      rtDomainDict%validMaxComp(i) = int((rtDomainDict%validMaxReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%fillComp(i) = NINT((rtDomainDict%fillReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%missingComp(i) = NINT((rtDomainDict%missingReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%validMinComp(i) = NINT((rtDomainDict%validMinReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
+      rtDomainDict%validMaxComp(i) = NINT((rtDomainDict%validMaxReal(i)+rtDomainDict%addOffset(i))/rtDomainDict%scaleFactor(i))
    end do
 
 end subroutine initRtDomainDict
@@ -774,10 +778,10 @@ subroutine initLakeDict(lakeOutDict)
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLakeVars
-      lakeOutDict%fillComp(i) = int((lakeOutDict%fillReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
-      lakeOutDict%missingComp(i) = int((lakeOutDict%missingReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
-      lakeOutDict%validMinComp(i) = int((lakeOutDict%validMinReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
-      lakeOutDict%validMaxComp(i) = int((lakeOutDict%validMaxReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%fillComp(i) = NINT((lakeOutDict%fillReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%missingComp(i) = NINT((lakeOutDict%missingReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%validMinComp(i) = NINT((lakeOutDict%validMinReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
+      lakeOutDict%validMaxComp(i) = NINT((lakeOutDict%validMaxReal(i)+lakeOutDict%addOffset(i))/lakeOutDict%scaleFactor(i))
    end do
 
 end subroutine initLakeDict
