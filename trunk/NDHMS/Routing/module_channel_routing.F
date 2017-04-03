@@ -1498,8 +1498,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
                           DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
                              CD(i) ,CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
               !-- compute flow rate into lake from all contributing nodes (cms)
-              QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
-
+              !QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
+              !DNY change 03/2017, inserted here by LKR 3/14/2017 
+               QLAKEI(LAKENODE(TO_NODE(i))) = QLAKEI(LAKENODE(TO_NODE(i))) + QLINK(FROM_NODE(i),1)
             else
               print *, "FATAL ERROR: This node does not have a type.. error TYPEL =", TYPEL(i)
               call hydro_stop("In drive_CHANNEL() - error TYPEL") 
