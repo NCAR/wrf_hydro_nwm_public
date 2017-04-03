@@ -21,10 +21,15 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
+<<<<<<< HEAD
                                restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2
    ! Logan add begin
    use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM
    ! Logan add end
+=======
+                               restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2, &
+                               hdtbl_in_nc, hdtbl_out
+>>>>>>> 5490b097620fec5b19c04258c403ae5500d11669
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
@@ -50,6 +55,8 @@ module module_HYDRO_drv
    use module_UDMAP, only: get_basn_area_nhd
 
    implicit none
+
+#include <netcdf.inc>
 
 #ifdef HYDRO_D
   real :: timeOr = 0
@@ -1407,11 +1414,9 @@ if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    !#endif
-!   This change corresponds to Wei's restart fix 6ec975870ba871d6322cfc3927810252169afe58
-!   just in  a different place (these are conflicts not identified by git, manually merged).
-!   rt_domain(did)%INFXSRT      = zeroFlt
-!   rt_domain(did)%LAKE_INFLORT = zeroFlt
-!   rt_domain(did)%QSTRMVOLRT   = zeroFlt
+   rt_domain(did)%INFXSRT      = zeroFlt
+   rt_domain(did)%LAKE_INFLORT = zeroFlt
+   rt_domain(did)%QSTRMVOLRT   = zeroFlt
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if
@@ -1427,7 +1432,7 @@ end subroutine HYDRO_ini
 
       subroutine lsm_input(did,ix0,jx0,vegtyp0,soltyp0)
          implicit none
-         integer did, leng
+         integer did, leng, ncid, ierr_flg
          parameter(leng=100)
          integer :: i,j, nn
          integer, allocatable, dimension(:,:) :: soltyp
@@ -1487,6 +1492,21 @@ end subroutine HYDRO_ini
        enddo
        RT_DOMAIN(did)%SOLDEPRT = -1.0*RT_DOMAIN(did)%ZSOIL(nlst_rt(did)%NSOIL)
 
+       ierr_flg = 99
+       if(trim(nlst_rt(did)%hydrotbl_f) == "") then
+           call hydro_stop("FATAL ERROR: hydrotbl_f is empty. ")
+       endif
+
+#ifdef MPP_LAND
+       if(my_id .eq. IO_id) then
+#endif
+          ierr_flg = nf_open(trim(nlst_rt(did)%hydrotbl_f), NF_NOWRITE, ncid)
+#ifdef MPP_LAND
+       endif
+       call mpp_land_bcast_int1(ierr_flg)
+#endif
+       if( ierr_flg .ne. 0) then   
+          ! input from HYDRO.tbl FILE
 !      input OV_ROUGH from OVROUGH.TBL
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) then
@@ -1546,10 +1566,25 @@ end subroutine HYDRO_ini
                     rt_domain(did)%SMCMAX1(i,j) = MAXSMC(soltyp(I,J))
                     rt_domain(did)%SMCREF1(i,j) = refsmc(soltyp(I,J))
                     rt_domain(did)%SMCWLT1(i,j) = wltsmc(soltyp(I,J))
+                    !ADCHANGE: Add some sanity checks in case calibration knocks the order of these out of sequence.
+                    !The min diffs were pulled from the existing HYDRO.TBL defaults.
+                    !Currently water is 0, so enforcing 0 as the absolute min.
+                    rt_domain(did)%SMCMAX1(i,j) = min(rt_domain(did)%SMCMAX1(i,j), 1.0)
+                    rt_domain(did)%SMCREF1(i,j) = max(min(rt_domain(did)%SMCREF1(i,j), rt_domain(did)%SMCMAX1(i,j) - 0.01), 0.0)
+                    rt_domain(did)%SMCWLT1(i,j) = max(min(rt_domain(did)%SMCWLT1(i,j), rt_domain(did)%SMCREF1(i,j) - 0.01), 0.0)
                 ENDIF
+                IF(rt_domain(did)%VEGTYP(i,j) > 0 ) THEN   ! created 2d ov_rough
+                    rt_domain(did)%OV_ROUGH2d(i,j) = RT_DOMAIN(did)%OV_ROUGH(rt_domain(did)%VEGTYP(I,J))
+                endif
              end do
        end do
 
+       call hdtbl_out(did)
+    else
+       ! input from HYDRO.TBL.nc file
+       print*, "reading from hydrotbl_f(HYDRO.TBL.nc)  file ...."
+       call hdtbl_in_nc(did)
+    endif
 
        rt_domain(did)%soiltyp = soltyp
        

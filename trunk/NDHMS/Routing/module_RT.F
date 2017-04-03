@@ -425,6 +425,7 @@ CONTAINS
   allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
   allocate( rt_domain(did)%SMCREF1  (IX,JX) )
   allocate( rt_domain(did)%VEGTYP   (IX,JX) )
+  allocate( rt_domain(did)%OV_ROUGH2d   (IX,JX) )
   allocate( rt_domain(did)%SOILTYP   (IX,JX) )
   allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
   allocate( rt_domain(did)%SLDPTH(NSOIL) )
@@ -972,7 +973,9 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
    rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
    
-   
+   ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
+   rt_domain(did)%RETDEPRT = min(rt_domain(did)%RETDEPRT, 1.0)  
+ 
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
    if(right_id .lt. 0) rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)= &
