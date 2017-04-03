@@ -21,19 +21,13 @@
 module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
-<<<<<<< HEAD
-                               restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2
-   ! Logan add begin
-   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM
-   ! Logan add end
-=======
                                restart_out_bi, restart_in_bi, mpp_output_chrt2, mpp_output_lakes2, &
                                hdtbl_in_nc, hdtbl_out
->>>>>>> 5490b097620fec5b19c04258c403ae5500d11669
    USE module_mpp_land
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
 #endif
+   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
