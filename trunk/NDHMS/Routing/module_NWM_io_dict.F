@@ -62,6 +62,7 @@ type chrtMeta
    ! feature_id attributes
    character (len=64) :: featureIdLName ! long_name - usually Reach ID
    character (len=256) :: featureIdComment ! Comment attribute
+   character (len=64) :: cfRole ! cf_role attribute
    ! latitude variable attributes
    character (len=64) :: latLName ! long_name
    character (len=64) :: latUnits ! units
@@ -116,6 +117,7 @@ type ldasMeta
    integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on 
    real :: modelNdv ! NDV value represented within the model code
+   real :: modelNdv2 ! Alternative NDV value in NoahMP
    integer :: modelNdvInt ! NDV value represented in model as integer
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -242,6 +244,7 @@ type lakeMeta
    ! feature_id attributes
    character (len=64) :: featureIdLName ! long_name - usually lake COMMON ID
    character (len=256) :: featureIdComment ! Comment attribute
+   character (len=64) :: cfRole ! cf_role attribute
    ! latitude variable attributes
    character (len=64) :: latLName ! long_name
    character (len=64) :: latUnits ! units
@@ -319,7 +322,8 @@ subroutine initChrtDict(chrtOutDict)
    ! Next establish feature_id attributes
    chrtOutDict%featureIdLName = 'Reach ID'
    chrtOutDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
-   
+   chrtOutDict%cfRole = 'timeseries_id'   
+
    ! Now establish attributes for output variables.
    chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
                                "Head","QSfcLatRunoff","QBucket",&
@@ -371,6 +375,7 @@ subroutine initLdasDict(ldasOutDict)
    ! LDASOUT FILES
 
    ldasOutDict%modelNdv = 9.9692099683868690E36
+   ldasOutDict%modelNdv2 = -1.E33
    ldasOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
@@ -754,6 +759,7 @@ subroutine initLakeDict(lakeOutDict)
    ! Establish feature_id attributes
    lakeOutDict%featureIdLName = "Lake COMMOND ID"
    lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
+   lakeOutDict%cfRole = 'timeseries_id'
 
    ! Esatablish lat/lon attributes
    lakeOutDict%latLName = "Lake latitude"
