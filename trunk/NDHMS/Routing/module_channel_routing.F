@@ -1500,7 +1500,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
               !-- compute flow rate into lake from all contributing nodes (cms)
               !QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
               !DNY change 03/2017, inserted here by LKR 3/14/2017 
-               QLAKEI(LAKENODE(TO_NODE(i))) = QLAKEI(LAKENODE(TO_NODE(i))) + QLINK(FROM_NODE(i),1)
+           !    QLAKEI(LAKENODE(TO_NODE(i))) = QLAKEI(LAKENODE(TO_NODE(i))) + QLINK(FROM_NODE(i),1)
+           !   write(6,*) "yyww check",LAKENODE(TO_NODE(i)), FROM_NODE(i),i
+           !   call flush(6)
             else
               print *, "FATAL ERROR: This node does not have a type.. error TYPEL =", TYPEL(i)
               call hydro_stop("In drive_CHANNEL() - error TYPEL") 
@@ -1511,7 +1513,13 @@ gwOption:   if(gwBaseSwCRT == 3) then
            else
             HLINKTMP(i) = CD(i)  !!!   CRITICALDEPTH(i,QSUM(i)+QLateral(i), Bw(i), 1./ChSSlp(i)) !--critical depth is head
            endif 
-
+              if(TO_NODE(i) .gt. 0) then
+                 if(LAKENODE(TO_NODE(i)) .gt. 0) then
+!                     write(6,*) "yyww check",LAKENODE(TO_NODE(i)), to_node(i), FROM_NODE(i),QLINK(i,1)
+!                     call flush(6)
+                     QLAKEI(LAKENODE(TO_NODE(i))) = QLAKEI(LAKENODE(TO_NODE(i))) + QLINK(i,1)
+                 endif
+              endif
            END DO  !--- done processing all the links
 
 
