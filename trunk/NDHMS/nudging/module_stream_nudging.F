@@ -702,6 +702,17 @@ if(my_id .eq. io_id) then
 #ifdef MPP_LAND
 endif
 #endif
+
+!=================================================
+!10. Solve the bias terms for when biasWindowBeforeT0 = .TRUE. (in the forecast)
+
+!if(persistBias .and. biasWindowBeforeT0) then
+!   do gg=1,nGages.........
+!      ! solve the bias
+!   end do ! gg=1,nGages
+!end if ! if(persistBias) then
+
+
 !=================================================
 #ifdef HYDRO_D
 #ifdef MPP_LAND 
@@ -759,7 +770,7 @@ implicit none
 integer,           intent(in) :: hydroDT ! the number of seconds of hydro advance from lsmTime
 !integer :: ff
 integer :: ii, tt, oo
-character(len=19) :: hydroTime, obsHydroTime ! hydro model time and corresponding observation 
+character(len=19) :: hydroTime, obsHydroTime ! hydro model time and corresponding observation
 character(len=19), dimension(nObsTimes) :: obsTimes ! obs times in the current window
 integer :: oldDiff, nShiftLeft
 
@@ -2722,6 +2733,51 @@ if(flushAll) flush(flushUnit)
 
 end function nudge_term_link
 
+
+!===================================================================================================
+! Program Name: 
+!   nudge_apply_upstream_muskingumCunge
+! Author(s)/Contact(s): 
+!   James L McCreight, <jamesmcc><ucar><edu>
+! Abstract:
+!   Gets the previous nudge into the collected upstream current and previous fluxes.
+! History Log: 
+!   4/5/17 - Created, JLM
+! Usage:
+! Parameters: 
+! Input Files:  
+! Output Files: 
+! Condition codes: 
+! User controllable options: 
+! Notes: 
+subroutine nudge_apply_upstream_muskingumCunge( qup,  quc,  qdp,  np,  k )
+use module_RT_data,  only: rt_domain
+implicit none
+real,    intent(inout) :: qup ! previous upstream   inflows
+real,    intent(inout) :: quc ! current  upstream   inflows
+real,    intent(inout) :: qdp ! previous downstream inflows
+real,    intent(inout) :: np  ! previous nudge
+integer, intent(in)    :: k   ! index of flow on local image
+
+!! If not on a gage... get out.
+if(rt_domain(1)%gages(k) .eq. rt_domain(1)%gageMiss) return
+
+!! Upto some really opaque MPI (gbcastReal2), I have a suspicion that quc and qup are equal.
+print*,'JLM FOO trim(rt_domain(1)%gages(k)): quc==qup ?', trim(rt_domain(1)%gages(k)), quc .eq. qup
+
+if(.not. biasWindowBeforeT0) then
+   !! If not in forecast phase, then use nudging.
+   qup = qup + np !! I need the previous nudge here??
+   quc = quc + np
+!else
+   !! Else in forecast phase, use bias
+!   qup = qup + bias(k)  !! IS BIAS ON LOCAL IMAGE?
+!   quc = quc + bias(k)
+!   ! In forecast phase, seems that bias needs also to be applied to QLINK
+!   qdp = qdp + bias(k)
+endif
+
+end subroutine nudge_apply_upstream_muskingumCunge
 
 !===================================================================================================
 ! Program Name: 

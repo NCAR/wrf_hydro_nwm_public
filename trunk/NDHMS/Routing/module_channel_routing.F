@@ -1932,9 +1932,11 @@ end subroutine drive_CHANNEL
        use module_namelist, only:  nlst_rt 
 
 #ifdef WRF_HYDRO_NUDGING
-       use module_stream_nudging,  only: setup_stream_nudging,  & 
-                                         nudge_term_all,        &
-                                         nudgeWAdvance
+       use module_RT_data, only: rt_domain
+       use module_stream_nudging,  only: setup_stream_nudging,               & 
+                                         nudge_term_all,                     &
+                                         nudgeWAdvance,                      &
+                                         nudge_apply_upstream_muskingumCunge
 #endif 
 
 
@@ -1964,7 +1966,8 @@ end subroutine drive_CHANNEL
        real                                      :: Km, X
        real , intent(INOUT), dimension(:,:)  :: QLINK
 #ifdef WRF_HYDRO_NUDGING
-       real, intent(out),    dimension(:)    :: nudge
+       !! inout for applying previous nudge to upstream components of flow at gages
+       real, intent(inout),    dimension(:)    :: nudge
 #endif
 
        real, dimension(:), intent(inout)     :: QLateral !--lateral flow
@@ -2291,9 +2294,13 @@ if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
 !                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
 !                  MannN(k), ChSSlp(k), Bw(k) )
 
-              call SUBMUSKINGCUNGE(tmpQLINK(k,2),velocity(k), k,Qup, Quc, QLINK(k,1), &
-                   QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
-                   MannN(k), ChSSlp(k), Bw(k) )
+#ifdef WRF_HYDRO_NUDGING
+           call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  QLINK(k,1),  nudge(k),  k )
+#endif
+           
+           call SUBMUSKINGCUNGE(tmpQLINK(k,2),velocity(k), k,Qup, Quc, QLINK(k,1), &
+                QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
+                MannN(k), ChSSlp(k), Bw(k) )
                 
         else
 #ifdef HYDRO_D

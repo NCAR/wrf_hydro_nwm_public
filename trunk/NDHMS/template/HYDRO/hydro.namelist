@@ -163,6 +163,7 @@ nLastObs = 960
 ! This option instead persists the bias in some period before the last observation. 
 persistBias = .FALSE.
 
+! ** AnA vs Forecast bias persistence. **
 ! If persistBias: Does the window for calculating the bias end at model init time (=t0)?
 ! FALSE = window ends at model time (moving), TRUE = window ends at init=t0(fcst) time. 
 ! (If commented out, Default=FALSE)
