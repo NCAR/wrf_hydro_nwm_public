@@ -2749,7 +2749,8 @@ end function nudge_term_link
 ! Output Files: 
 ! Condition codes: 
 ! User controllable options: 
-! Notes: 
+! Notes:
+
 subroutine nudge_apply_upstream_muskingumCunge( qup,  quc,  qdp,  np,  k )
 use module_RT_data,  only: rt_domain
 implicit none
@@ -2757,7 +2758,7 @@ real,    intent(inout) :: qup ! previous upstream   inflows
 real,    intent(inout) :: quc ! current  upstream   inflows
 real,    intent(inout) :: qdp ! previous downstream inflows
 real,    intent(inout) :: np  ! previous nudge
-integer, intent(in)    :: k   ! index of flow on local image
+integer, intent(in)    :: k   ! index of flow/routlink on local image
 
 !! If not on a gage... get out.
 if(rt_domain(1)%gages(k) .eq. rt_domain(1)%gageMiss) return
@@ -2765,17 +2766,8 @@ if(rt_domain(1)%gages(k) .eq. rt_domain(1)%gageMiss) return
 !! Upto some really opaque MPI (gbcastReal2), I have a suspicion that quc and qup are equal.
 print*,'JLM FOO trim(rt_domain(1)%gages(k)): quc==qup ?', trim(rt_domain(1)%gages(k)), quc .eq. qup
 
-if(.not. biasWindowBeforeT0) then
-   !! If not in forecast phase, then use nudging.
-   qup = qup + np !! I need the previous nudge here??
-   quc = quc + np
-!else
-   !! Else in forecast phase, use bias
-!   qup = qup + bias(k)  !! IS BIAS ON LOCAL IMAGE?
-!   quc = quc + bias(k)
-!   ! In forecast phase, seems that bias needs also to be applied to QLINK
-!   qdp = qdp + bias(k)
-endif
+qup = qup + np
+quc = quc + np
 
 end subroutine nudge_apply_upstream_muskingumCunge
 
