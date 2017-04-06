@@ -1926,6 +1926,15 @@ MODULE MODULE_MPP_LAND
     end subroutine combine_int1d
 
 
+    subroutine sum_real1d(vin,nsize)
+       implicit none
+       integer  :: nsize
+       real,dimension(nsize) :: vin
+       real*8,dimension(nsize) :: vin8
+       vin8=vin
+       call sum_real8(vin8,nsize) 
+       vin=vin8
+    end subroutine sum_real1d
 
     subroutine sum_real8(vin,nsize)
        implicit none
