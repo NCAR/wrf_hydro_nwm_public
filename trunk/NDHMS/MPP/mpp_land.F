@@ -2269,6 +2269,42 @@ MODULE MODULE_MPP_LAND
      
      end subroutine updateLake_seq
 
+     subroutine updateLake_grid(in,nsize,lake_index)
+       implicit none
+       integer :: nsize
+       real, dimension(nsize) :: in
+       integer, dimension(nsize) :: lake_index
+       real, dimension(nsize) :: tmp
+       integer tag, i, status, ierr, k
+       if(nsize .le. 0) return
+
+       if(my_id .ne. IO_id) then
+          tag = 29
+          call mpi_send(in,nsize,MPI_REAL, IO_id,     &
+                tag,HYDRO_COMM_WORLD,ierr)
+          tag = 30
+          call mpi_send(lake_index,nsize,MPI_INTEGER, IO_id,     &
+                tag,HYDRO_COMM_WORLD,ierr)
+       else
+          do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+               tag = 29
+               call mpi_recv(tmp,nsize,&
+                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+               tag = 30
+               call mpi_recv(lake_index,nsize,&
+                   MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+               do k = 1, nsize 
+                  if(lake_index(k) .gt. 0) in(k) = tmp(k)
+               end do
+            end if
+          end do
+       end if
+       call mpp_land_bcast_real_1d(in)
+     
+     end subroutine updateLake_grid
+
+
 !subroutine match1dLake:
 !global lake. Find the same lake and mark as flag
 ! default of win is 0

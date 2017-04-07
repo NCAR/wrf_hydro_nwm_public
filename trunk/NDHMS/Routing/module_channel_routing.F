@@ -963,6 +963,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
 
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
+        REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
         REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
@@ -1006,6 +1007,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         integer :: n, kk2, nt, nsteps  ! tmp 
 
         QLAKEIP = 0
+        QLAKEI8 = 0
         HLINKTMP = 0
         CVOLTMP = 0
         CD = 0  
@@ -1331,7 +1333,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLateral,NLINKS,99)
     if(NLAKES .gt. 0) then
-       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+       !yw call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
+       call sum_real1d(QLLAKE,NLAKES)
     endif
 #endif
 
@@ -1517,7 +1520,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                  if(LAKENODE(TO_NODE(i)) .gt. 0) then
 !                     write(6,*) "yyww check",LAKENODE(TO_NODE(i)), to_node(i), FROM_NODE(i),QLINK(i,1)
 !                     call flush(6)
-                     QLAKEI(LAKENODE(TO_NODE(i))) = QLAKEI(LAKENODE(TO_NODE(i))) + QLINK(i,1)
+                     QLAKEI8(LAKENODE(TO_NODE(i))) = QLAKEI8(LAKENODE(TO_NODE(i))) + QLINK(i,1)
                  endif
               endif
            END DO  !--- done processing all the links
@@ -1528,6 +1531,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CD,NLINKS,99)
     if(NLAKES .gt. 0) then
 !       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+        QLAKEI = QLAKEI8
         call sum_real1d(QLAKEI,NLAKES)
     endif
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINKTMP,NLINKS,99)
@@ -1560,11 +1564,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
-         call updateLake_seq(QLLAKE,nlakes,QLLAKE)
-         call updateLake_seq(RESHT,nlakes,RESHT)
-         call updateLake_seq(QLAKEO,nlakes,QLAKEO)
-         call updateLake_seq(QLLAKE,nlakes,QLLAKE)
-         call updateLake_seq(QLAKEIP,nlakes,QLAKEIP)
+         call updateLake_grid(QLLAKE, nlakes,lake_index)
+         call updateLake_grid(RESHT,  nlakes,lake_index)
+         call updateLake_grid(QLAKEO, nlakes,lake_index)
+         call updateLake_grid(QLLAKE, nlakes,lake_index)
+         call updateLake_grid(QLAKEIP,nlakes,lake_index)
     endif
 #endif
 
