@@ -2751,20 +2751,19 @@ end function nudge_term_link
 ! User controllable options: 
 ! Notes:
 
-subroutine nudge_apply_upstream_muskingumCunge( qup,  quc,  qdp,  np,  k )
+subroutine nudge_apply_upstream_muskingumCunge( qup,  quc,  np,  k )
 use module_RT_data,  only: rt_domain
 implicit none
 real,    intent(inout) :: qup ! previous upstream   inflows
 real,    intent(inout) :: quc ! current  upstream   inflows
-real,    intent(inout) :: qdp ! previous downstream inflows
-real,    intent(inout) :: np  ! previous nudge
+real,    intent(in)    :: np  ! previous nudge
 integer, intent(in)    :: k   ! index of flow/routlink on local image
 
 !! If not on a gage... get out.
 if(rt_domain(1)%gages(k) .eq. rt_domain(1)%gageMiss) return
 
 !! Upto some really opaque MPI (gbcastReal2), I have a suspicion that quc and qup are equal.
-print*,'JLM FOO trim(rt_domain(1)%gages(k)): quc==qup ?', trim(rt_domain(1)%gages(k)), quc .eq. qup
+!print*,'JLM FOO trim(rt_domain(1)%gages(k)): quc==qup ?', trim(rt_domain(1)%gages(k)), quc .eq. qup
 
 qup = qup + np
 quc = quc + np
