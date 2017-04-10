@@ -133,6 +133,10 @@ character(len=15), dimension(maxNwisNotRLAndParamsCount) :: nwisNotRLAndParams
 integer :: nwisNotRLAndParamsCount
 
 !========================
+! Random data
+real, allocatable, dimension(:) :: t0Discharge
+
+!========================
 ! Control book keeping
 logical :: nudgeThisLsmTimeStep
 
@@ -175,7 +179,7 @@ character(len=19) :: lsmTime, initTime
 integer :: lsmDt                                   !1234567890123456789
 character(len=19), parameter :: missingLastObsTime='9999999999999999999'
 character(len=2) :: obsResolution   
-
+logical :: gotT0Discharge
 
 #ifdef HYDRO_D
 integer, parameter :: flushUnit=6
@@ -316,6 +320,7 @@ nLinksL      = RT_DOMAIN(did)%NLINKSL   ! For reach-based routing
 !Variable init
 nwisNotRLAndParams = missingGage
 nwisNotRLAndParamsCount=0
+gotT0Discharge = .false.
 
 !=================================================
 ! 0. This routine is called with condition that chanrtswcrt.ne.0 in module_HYDRO_drv
@@ -2135,6 +2140,12 @@ startInd=1
 endInd  =RT_DOMAIN(did)%NLINKSL
 #endif
 
+if(.not. gotT0Discharge) then
+   allocate(t0Discharge(size(discharge(:,1))))
+   t0Discharge = discharge(:,1)
+   gotT0Discharge = .true.
+end if
+
 do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 
 #ifdef HYDRO_D
@@ -2209,7 +2220,7 @@ use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
 #endif
 
 implicit none
-integer,              intent(in) :: linkIndIn !! stream cell index
+integer,              intent(in) :: linkIndIn !! stream cell index (local)
 integer,              intent(in) :: hydroAdv  !! number of seconds the channel model has advanced 
 real, dimension(:),   intent(in) :: discharge !! modeled discharge (m3/s)
 real :: nudge_term_link
@@ -2227,7 +2238,7 @@ real,    dimension(nTimesLastObs) :: biasWeights
 real :: prstB, prstDtErr, prstErr, biasWeightSum, coefVarX, coefVarY
 character(len=15) :: prstGageId
 integer :: nCorr
-real    :: corr, sumx, sumx2, sumxy, sumy, sumy2, xCorr, yCorr
+real    :: corr, sumx, sumx2, sumxy, sumy, sumy2, xCorr, yCorr, deltaT0Discharge
 integer, parameter :: sixty=60
 real,    parameter :: smallestNudge=1.e-10
 real,    parameter :: zero=1.e-37
@@ -2596,7 +2607,22 @@ else if (temporalPersistence) then
                    max( 1, count(biasMask) )
          
       end if
-            
+
+      !! Game to reduce bias issues.
+      !! Maybe make this an option later if it works.
+      !! do I need to stash the t0 flow? It is not the same as the last ob or the lastObsModelDischarge
+      deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn) 
+      if(theBias .lt. zero .and. deltaT0Discharge .lt. 0) then
+         theBias = theBias - .5*(deltaT0Discharge)  ! negative - negative
+         theBias = min( theBias, zero )             ! do not let the bias go positive
+         theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
+      end if
+      if(theBias .gt. zero .and. deltaT0Discharge .gt. 0) then
+         theBias = theBias - .5*(deltaT0Discharge)  ! positive - positive
+         theBias = max( theBias, zero )             ! do not let the bias go negative
+      end if
+
+      
       if(correlationReduceBias) then
          !! calculate the correlation coefficient
          nCorr=zero
