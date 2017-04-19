@@ -202,8 +202,8 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_qBtmVertRunoff(gsize))
          allocate(g_accSfcLatRunoff(gsize))
          allocate(g_accBucket(gsize))
-         !allocate(g_chlonOut(gsize))
-         !allocate(g_chlatOut(gsize))
+         allocate(g_chlonOut(gsize))
+         allocate(g_chlatOut(gsize))
          allocate(g_hlinkOut(gsize))
          !allocate(g_zelevOut(gsize))
          allocate(g_qlinkOut(gsize,2))
@@ -234,8 +234,8 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_qBtmVertRunoff(1))
          allocate(g_accSfcLatRunoff(1))
          allocate(g_accBucket(1))
-         !allocate(g_chlonOut(1))
-         !allocate(g_chlatOut(1))
+         allocate(g_chlonOut(1))
+         allocate(g_chlatOut(1))
          allocate(g_hlinkOut(1))
          !allocate(g_zelevOut(gsize))
          allocate(g_qlinkOut(1,2))
@@ -314,8 +314,8 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_qBtmVertRunoff(gsize))
       allocate(g_accSfcLatRunoff(gsize))
       allocate(g_accBucket(gsize))
-      !allocate(g_chlonOut(gsize))
-      !allocate(g_chlatOut(gsize))
+      allocate(g_chlonOut(gsize))
+      allocate(g_chlatOut(gsize))
       allocate(g_hlinkOut(gsize))
       !allocate(g_zelevOut(gsize))
       allocate(g_qlinkOut(gsize,2))
@@ -622,8 +622,13 @@ subroutine output_chrt_NWM(domainId)
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
             ! We are outputing this variable.
-            ! Convert reals to integer
-            varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
+            ! Convert reals to integer. If this is time zero, check to see if we
+            ! need to convert all data to NDV
+            if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
+               varOutInt(:) = fileMeta%fillComp(iTmp)
+            else
+               varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
+            endif
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
@@ -1188,7 +1193,14 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          localCompTmp = fileMeta%fillComp(varInd)
          globalCompTmp = fileMeta%fillComp(varInd)
          where ( vegTyp .eq. waterVal) varRealTmp(:,zTmp,:) = fileMeta%fillReal(varInd)
-         localCompTmp = NINT((varRealTmp(:,zTmp,:)-fileMeta%addOffset(varInd))/fileMeta%scaleFactor(varInd))
+         ! Check to see if we are on time 0. If the flag is set to 0 for time 0
+         ! outputs, convert all data to a fill. If we are time 0, make sure we
+         ! don't need to fill the grid in with NDV values. 
+         if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(varInd) .eq. 0) then
+            localCompTmp = fileMeta%fillComp(varInd)
+         else
+            localCompTmp = NINT((varRealTmp(:,zTmp,:)-fileMeta%addOffset(varInd))/fileMeta%scaleFactor(varInd))
+         endif
          ! Sync all processes up.
          if(mppFlag .eq. 1) then
             call mpp_land_sync()
@@ -1640,10 +1652,16 @@ subroutine output_rt_NWM(domainId,iGrid)
                else if(iTmp2 .eq. 4) then
                   varRealTmp = RT_DOMAIN(domainId)%QBDRYRT(iTmp,jTmp)
                endif
-               if(varRealTmp .eq. fileMeta%modelNdv) then
-                  localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
+               ! If we are on time 0, make sure we don't need to fill in the
+               ! grid with NDV values. 
+               if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp2) .eq. 0) then
+                  localCompTmp(iTmp,jTmp) = fileMeta%fillComp(iTmp2)
                else
-                  localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))/fileMeta%scaleFactor(iTmp2))
+                  if(varRealTmp .eq. fileMeta%modelNdv) then
+                     localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
+                  else
+                     localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))/fileMeta%scaleFactor(iTmp2))
+                  endif
                endif
             end do
          end do
@@ -2103,8 +2121,13 @@ subroutine output_lakes_NWM(domainId,iGrid)
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
             ! We are outputing this variable.
-            ! Convert reals to integer
-            varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
+            ! Convert reals to integer. If we are on time 0, make sure we don't
+            ! need to fill in with NDV values. 
+            if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
+               varOutInt(:) = fileMeta%fillComp(iTmp)
+            else
+               varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
+            endif
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))

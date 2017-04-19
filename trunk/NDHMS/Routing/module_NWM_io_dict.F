@@ -50,6 +50,9 @@ type chrtMeta
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numChVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                 ! the actual data. This was done because time 0 
+                                                 ! output does not all contain valid data. 
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -116,6 +119,9 @@ type ldasMeta
    real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numLdasVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                   ! the actual data. This was done because time 0 
+                                                   ! output does not all contain valid data. 
    real :: modelNdv ! NDV value represented within the model code
    real :: modelNdv2 ! Alternative NDV value in NoahMP
    integer :: modelNdvInt ! NDV value represented in model as integer
@@ -173,6 +179,9 @@ type rtDomainMeta
    real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numRtDomainVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                       ! the actual data. This was done because time 0 
+                                                       ! output does not all contain valid data. 
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -229,6 +238,9 @@ type lakeMeta
    real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numLakeVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                   ! the actual data. This was done because time 0 
+                                                   ! output does not all contain valid data. 
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -343,13 +355,14 @@ subroutine initChrtDict(chrtOutDict)
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"/)
-   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,&
+   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.01,0.01,0.01,&
                                  0.01,0.01]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0]
    ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
    ! output subroutine. 
-   chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0] 
+   chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0]
+   chrtOutDict%timeZeroFlag(:) = [1,0,0,0,0,0,0,0,0,0] 
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
@@ -415,7 +428,7 @@ subroutine initLdasDict(ldasOutDict)
                            &PROJECTION["Lambert_Conformal_Conic"],PARAMETER["false_easting",0.0],&
                            &PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-97.0],&
                            &PARAMETER["standard_parallel_1",30.0],PARAMETER["standard_parallel_2",60.0],&
-                           &PARAMETER["latitude_of_origin",40.0000076294],UNIT["Meter",1.0]];&
+                           &PARAMETER["latitude_of_origin",40.000008],UNIT["Meter",1.0]];&
                            &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
                            & 10000;0.001;0.001;0.001;IsHighPrecision'
    ldasOutDict%stParallel = [30.0,60.0]
@@ -583,6 +596,11 @@ subroutine initLdasDict(ldasOutDict)
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+   ldasOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
    ldasOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,4,&
@@ -684,7 +702,7 @@ subroutine initRtDomainDict(rtDomainDict)
                             &PROJECTION["Lambert_Conformal_Conic"],PARAMETER["false_easting",0.0],&
                             &PARAMETER["false_northing",0.0],PARAMETER["central_meridian",-97.0],&
                             &PARAMETER["standard_parallel_1",30.0],PARAMETER["standard_parallel_2",60.0],&
-                            &PARAMETER["latitude_of_origin",40.0000076294],UNIT["Meter",1.0]];&
+                            &PARAMETER["latitude_of_origin",40.000008],UNIT["Meter",1.0]];&
                             &-35691800 -29075200 126180232.640845;-100000 10000;-100000&
                             & 10000;0.001;0.001;0.001;IsHighPrecision'
    rtDomainDict%stParallel = [30.0,60.0]
@@ -706,6 +724,7 @@ subroutine initRtDomainDict(rtDomainDict)
    rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0]
    rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0]
    rtDomainDict%outFlag(:) = [0,0,0,0]
+   rtDomainDict%timeZeroFlag(:) = [0,0,0,0]
    rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0]
@@ -776,6 +795,7 @@ subroutine initLakeDict(lakeOutDict)
    lakeOutDict%scaleFactor(:) = [0.01,0.01]
    lakeOutDict%addOffset(:) = [0.0,0.0]
    lakeOutDict%outFlag(:) = [0,0]
+   lakeOutDict%timeZeroFlag(:) = [0,1]
    lakeOutDict%fillReal(:) = [-9999.0,-9999.0]
    lakeOutDict%missingReal(:) = [-9999.0,-9999.0]
    lakeOutDict%validMinReal(:) = [-10000.0,-10000.0]
