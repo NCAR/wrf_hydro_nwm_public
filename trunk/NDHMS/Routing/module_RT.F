@@ -460,9 +460,9 @@ CONTAINS
 
   END IF   !IF/then for channel routing
 
-   rt_domain(did)%out_counts = 0
-   rt_domain(did)%his_out_counts = 0
-   rt_domain(did)%rst_counts = 1
+  rt_domain(did)%out_counts = 0
+  rt_domain(did)%his_out_counts = 0
+  rt_domain(did)%rst_counts = 1
 
 #ifdef HYDRO_D
   write(6,*) "***** finish rt_allocate "
@@ -1001,7 +1001,9 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
    rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
    
-   
+   ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
+   rt_domain(did)%RETDEPRT = min(rt_domain(did)%RETDEPRT, 1.0)  
+ 
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
    if(right_id .lt. 0) rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)= &

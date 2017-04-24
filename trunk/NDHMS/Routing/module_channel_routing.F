@@ -1923,9 +1923,7 @@ end subroutine drive_CHANNEL
 #endif
        , accSfcLatRunoff, accBucket                  &
        , qSfcLatRunoff,     qBucket                  &
-!#ifdef HYDRO_REALTIME
        , QLateral, velocity &
-!#endif
        , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
 
        use module_UDMAP, only: LNUMRSL, LUDRSL
