@@ -182,7 +182,9 @@ subroutine output_chrt_NWM(domainId)
 
       ! Sync all processes up.
       if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
          call mpp_land_sync()
+#endif
       endif
 
       if(myId .eq. 0) then
@@ -254,7 +256,9 @@ subroutine output_chrt_NWM(domainId)
 
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
          call mpp_land_sync()
+#endif
       endif
 
       ! Collect arrays from various processors through MPI, and 
@@ -681,7 +685,9 @@ subroutine output_chrt_NWM(domainId)
   
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif
 
    ! Deallocate all memory.
@@ -806,7 +812,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
    ! Sync up processes. 
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif
 
    ! If we are running over MPI, determine which processor number we are on.
@@ -904,7 +912,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif
 
    if(varInd .eq. 1) then
@@ -1146,7 +1156,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
    ! Sync up all processes
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif
 
    ! Place data into NetCDF file. This involves a few steps:
@@ -1179,7 +1191,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
       ! Sync up processes
       if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
          call mpp_land_sync()
+#endif
       endif
 
       varRealTmp = varReal
@@ -1201,16 +1215,22 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          endif
          ! Sync all processes up.
          if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
             call mpp_land_sync()
+#endif
          endif
          if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
             call write_IO_int(localCompTmp,globalCompTmp)
+#endif
          else
             globalCompTmp = localCompTmp
          endif
          ! Sync all processes up.
          if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
             call mpp_land_sync()
+#endif
          endif
          ! Place output into global array to be written to NetCDF file.
          if(myId .eq. 0) then
@@ -1220,7 +1240,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
  
       ! Sync up processes
       if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
          call mpp_land_sync()
+#endif
       endif
 
       ! Write array out to NetCDF file.
@@ -1245,7 +1267,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif
 
    if(myId .eq. 0) then
@@ -1670,7 +1694,9 @@ subroutine output_rt_NWM(domainId,iGrid)
          ! Collect local integer arrays into the global integer grid to be
          ! written out. 
          if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
             call write_IO_rt_int(localCompTmp,globalOutComp)
+#endif
          else
             globalOutComp = localCompTmp
          endif
@@ -1834,7 +1860,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
       ! Sync all processes up.
       if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
          call mpp_land_sync()
+#endif
       endif
 
       allocate(g_lakeLon(gsize))
@@ -1862,7 +1890,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
          call mpp_land_sync()
+#endif
       endif
 
       ! Collect arrays from various processors through MPI, and 
@@ -1900,7 +1930,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif 
 
    ! Calculate datetime information.
@@ -2182,7 +2214,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
       call mpp_land_sync()
+#endif
    endif
 
    ! Deallocate all memory
