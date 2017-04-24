@@ -363,8 +363,6 @@ subroutine output_chrt_NWM(domainId)
          g_accSfcLatRunoff = RT_DOMAIN(domainId)%accSfcLatRunoff
          g_accBucket = RT_DOMAIN(domainId)%qBucket
       endif
-#endif
-      
    endif
 
    ! Calculate datetime information.
@@ -1615,8 +1613,10 @@ subroutine output_rt_NWM(domainId,iGrid)
    endif ! End if statement if on I/O ID
 
    ! Synce up processes.
-   if(mppFlag .eq. 1) then 
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND 
       call mpp_land_sync()
+#endif
    endif
 
    ! Loop through each variable, collect local routing grid variables into a
@@ -1636,7 +1636,9 @@ subroutine output_rt_NWM(domainId,iGrid)
 
          ! Sync up processes
          if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
             call mpp_land_sync()
+#endif
          endif
 
          ! Loop through output array and convert floating point values to
@@ -1675,7 +1677,9 @@ subroutine output_rt_NWM(domainId,iGrid)
 
          ! Sync up processes
          if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
             call mpp_land_sync()
+#endif
          endif
 
          ! Write output to NetCDF file. 

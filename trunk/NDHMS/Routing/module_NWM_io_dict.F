@@ -362,7 +362,8 @@ subroutine initChrtDict(chrtOutDict)
    ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
    ! output subroutine. 
    chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0]
-   chrtOutDict%timeZeroFlag(:) = [1,0,0,0,0,0,0,0,0,0] 
+   !chrtOutDict%timeZeroFlag(:) = [1,0,0,0,0,0,0,0,0,0] 
+   chrtOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1]
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
@@ -724,7 +725,8 @@ subroutine initRtDomainDict(rtDomainDict)
    rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0]
    rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0]
    rtDomainDict%outFlag(:) = [0,0,0,0]
-   rtDomainDict%timeZeroFlag(:) = [0,0,0,0]
+   !rtDomainDict%timeZeroFlag(:) = [0,0,0,0]
+   rtDomainDict%timeZeroFlag(:) = [1,1,1,1]
    rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0]
@@ -795,7 +797,8 @@ subroutine initLakeDict(lakeOutDict)
    lakeOutDict%scaleFactor(:) = [0.01,0.01]
    lakeOutDict%addOffset(:) = [0.0,0.0]
    lakeOutDict%outFlag(:) = [0,0]
-   lakeOutDict%timeZeroFlag(:) = [0,1]
+   !lakeOutDict%timeZeroFlag(:) = [0,1]
+   lakeOutDict%timeZeroFlag(:) = [1,1]
    lakeOutDict%fillReal(:) = [-9999.0,-9999.0]
    lakeOutDict%missingReal(:) = [-9999.0,-9999.0]
    lakeOutDict%validMinReal(:) = [-10000.0,-10000.0]
