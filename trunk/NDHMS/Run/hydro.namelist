@@ -13,6 +13,10 @@
 
 !Specify the static high-resolution routing terrain input data file...(e.g.: "Fulldom_hires_hydrofile.nc")
  GEO_FINEGRID_FLNM = "./DOMAIN/Fulldom_hires_netcdf_file_nhd_mask.nc"
+ hydrotbl_f = "./DOMAIN/HYDRO_TBL_2D_NWMv1.2_calib1.nc"
+
+! Specify spatial metadata file for land surface grid. (e.g.: "WRF_Hydro_NWM_v1.1_geospatial_data_template_land_GIS.nc")
+ LAND_SPATIAL_META_FLNM = "./DOMAIN/WRF_Hydro_NWM_v1.1_geospatial_data_template_land_GIS.nc"
 
 !Specify the name of the restart file if starting from restart...comment out with '!' if not...
 !RESTART_FILE  = 'HYDRO_RST.2013-09-11_02:00_DOMAIN3'
@@ -53,6 +57,8 @@
  RTOUT_DOMAIN = 1             ! Netcdf grid of terrain routing variables on routing grid
  output_gw = 0                ! Netcdf grid of groundwater-baseflow bucket information
  outlake  = 0                 ! Netcdf point timeseries output of lake information
+
+ nwmIo = 0 ! off/on (0/1) flag to either use NWM output routine, or traditional WRF-Hydro output routines.
 
 !Specify the minimum stream order to output to netcdf point file...(integer)
 !Note: lower value of stream order produces more output.
@@ -99,4 +105,7 @@
  GW_RESTART = 0
 !Groundwater/baseflow mask specified on land surface model grid...(Only required if baseflow bucket model is active)
  gwbasmskfil = ""
+
+! Options for outputting channel-only variables
+ output_channelBucket_influx = 0
 /

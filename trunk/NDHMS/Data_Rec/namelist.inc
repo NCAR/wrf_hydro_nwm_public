@@ -12,6 +12,7 @@
        integer :: rst_bi_out   ! used for parallel io with large restart file.
                            ! each process will output the restart tile.
        character(len=256) :: geo_static_flnm = ""
+       character(len=1024) :: land_spatial_meta_flnm = ""
        integer  :: DEEPGWSPIN
        integer ::  order_to_write, rst_typ
        character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
@@ -24,6 +25,7 @@
        character(len=19) :: sincedate="123456"
 
        integer :: iocflag  ! used for NCEP REALTIME OUTPUT
+       integer :: nwmIo ! Flag to turn on/off compressed CF_compliant output
        integer :: t0OutputFlag  
        integer :: channel_only, channelBucket_only
        integer :: output_channelBucket_influx ! used for FORCE_TYPE 9 and 10
