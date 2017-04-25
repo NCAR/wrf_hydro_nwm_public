@@ -11,6 +11,9 @@
 !Specify the high-resolution routing terrain input data file...(e.g.: "Fulldom_hires_hydrofile.nc"
  GEO_FINEGRID_FLNM = "../DOMAIN/Fulldom_hires_netcdf_file.nc"
 
+! Specify spatial metadata file for land surface grid. (e.g.: "WRF_Hydro_NWM_v1.1_geospatial_data_template_land_GIS.nc")
+ LAND_SPATIAL_META_FLNM = "../DOMAIN/WRF_Hydro_NWM_v1.2_geospatial_data_template_land_GIS.nc"
+
 !Specify the name of the restart file if starting from restart...comment out with '!' if not...
  RESTART_FILE  = 'HYDRO_RST.2013-09-12_04:00_DOMAIN3'
 
