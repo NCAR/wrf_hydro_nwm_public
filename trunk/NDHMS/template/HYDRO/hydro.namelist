@@ -176,13 +176,15 @@ biasWindowBeforeT0 = .FALSE.
 maxAgePairsBiasPersist = -960
 
 ! If persistBias: The minimum number of last (obs, modeled) pairs, with age less than
-! maxAgePairsBiasPersist, required to apply a bias correction. (Default=8)
+! maxAgePairsBiasPersist, required to apply a bias correction. (default=8)
 minNumPairsBiasPersist = 8
 
 ! If persistBias: give more weight to observations closer in time? (default=FALSE)
 invDistTimeWeightBias = .TRUE.
 
-! If persistBias: use the correlation of the (obs, modeled) pairs to reduce the bias? (default=FALSE)
-correlationReduceBias = .FALSE.
+! If persistBias: "No constructive interference in bias correction?", Reduce the bias adjustment
+! when the model and the bias adjustment have the same sign relative to the modeled flow at t0?
+! (default=FALSE)
+noConstInterfBias = .FALSE.
 
 /

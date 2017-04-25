@@ -96,7 +96,7 @@ CONTAINS
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
        logical            :: invDistTimeWeightBias
-       logical            :: correlationReduceBias
+       logical            :: noConstInterfBias
 #endif 
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
@@ -129,7 +129,7 @@ CONTAINS
                             timeSlicePath,          nLastObs,               &
                             minNumPairsBiasPersist, maxAgePairsBiasPersist, &
                             biasWindowBeforeT0,     invDistTimeWeightBias,  &
-                            correlationReduceBias
+                            noConstInterfBias
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"
@@ -143,7 +143,7 @@ CONTAINS
    minNumPairsBiasPersist = 8
    maxAgePairsBiasPersist = -99999
    invDistTimeWeightBias  = .false.
-   correlationReduceBias  = .false.
+   noConstInterfBias      = .false.
 #endif 
 
    !! default  values for HYDRO_nlist
@@ -296,7 +296,7 @@ CONTAINS
   call mpp_land_bcast_int1(minNumPairsBiasPersist)
   call mpp_land_bcast_int1(maxAgePairsBiasPersist)
   call mpp_land_bcast_log1(invDistTimeWeightBias)
-  call mpp_land_bcast_log1(correlationReduceBias)
+  call mpp_land_bcast_log1(noConstInterfBias)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -380,7 +380,7 @@ CONTAINS
     nlst%minNumPairsBiasPersist = minNumPairsBiasPersist
     nlst%maxAgePairsBiasPersist = maxAgePairsBiasPersist
     nlst%invDistTimeWeightBias  = invDistTimeWeightBias
-    nlst%correlationReduceBias  = correlationReduceBias
+    nlst%noConstInterfBias      = noConstInterfBias
 #endif
 
 #ifdef MPP_LAND
@@ -436,7 +436,7 @@ CONTAINS
     write(6,*) " minNumPairsBiasPersist     ",  minNumPairsBiasPersist
     write(6,*) " maxAgePairsBiasPersist     ",  maxAgePairsBiasPersist
     write(6,*) " invDistTimeWeightBias      ",  invDistTimeWeightBias
-    write(6,*) " correlationReduceBias      ",  correlationReduceBias
+    write(6,*) " noConstInterfBias          ",  noConstInterfBias
 #endif
 #endif /* HYDRO_D */
 #ifdef MPP_LAND

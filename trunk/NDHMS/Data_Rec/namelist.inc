@@ -67,7 +67,7 @@
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
        logical            :: invDistTimeWeightBias
-       logical            :: correlationReduceBias  
+       logical            :: noConstInterfBias  
 #endif
        character(len=256) :: timeSlicePath
        integer            :: nLastObs

@@ -151,6 +151,8 @@ logical,            parameter :: sanityQcDischarge = .false.
 logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.
+real,               parameter :: invDistTimeWeightExp = 5.000
+real,               parameter :: noConstInterfCoeff   = 0.500
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
@@ -164,7 +166,7 @@ integer            :: nTimesLastObs   !! aka nlst_rt(did)%nLastObs
 integer            :: minNumPairsBiasPersist
 integer            :: maxAgePairsBiasPersist
 logical            :: invDistTimeWeightBias
-logical            :: correlationReduceBias
+logical            :: noConstInterfBias
 
 !========================
 ! Space book keeping
@@ -307,7 +309,7 @@ nTimesLastObs          = nlst_rt(did)%nLastObs
 minNumPairsBiasPersist = nlst_rt(did)%minNumPairsBiasPersist
 maxAgePairsBiasPersist = nlst_rt(did)%maxAgePairsBiasPersist
 invDistTimeWeightBias  = nlst_rt(did)%invDistTimeWeightBias
-correlationReduceBias  = nlst_rt(did)%correlationReduceBias
+noConstInterfBias      = nlst_rt(did)%noConstInterfBias
 !#endif 
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
@@ -2590,7 +2592,8 @@ else if (temporalPersistence) then
             !! normalize to the latest (least) time difference and invert.
             biasWeights=1./(biasWeights/minval(biasWeights, &
                  mask=biasMask .and. (biasWeights.gt.zero) ))
-            biasWeights=biasWeights**5 !! JLM JLM
+            biasWeights=biasWeights**invDistTimeWeightExp !! = 5.000, hard coded above
+
             biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
             theBias = sum( biasWeights *                                              &
                  (obsStaticStr(whGageId)%lastObsDischarge -                 &
@@ -2608,59 +2611,21 @@ else if (temporalPersistence) then
          
       end if
 
-      !! Game to reduce bias issues.
-      !! Maybe make this an option later if it works.
-      !! do I need to stash the t0 flow? It is not the same as the last ob or the lastObsModelDischarge
-      deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn) 
-      if(theBias .lt. zero .and. deltaT0Discharge .lt. 0) then
-         theBias = theBias - .5*(deltaT0Discharge)  ! negative - negative
-         theBias = min( theBias, zero )             ! do not let the bias go positive
-         theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
-      end if
-      if(theBias .gt. zero .and. deltaT0Discharge .gt. 0) then
-         theBias = theBias - .5*(deltaT0Discharge)  ! positive - positive
-         theBias = max( theBias, zero )             ! do not let the bias go negative
-      end if
-
-      
-      if(correlationReduceBias) then
-         !! calculate the correlation coefficient
-         nCorr=zero
-         sumx =zero
-         sumx2=zero
-         sumxy=zero
-         sumy =zero
-         sumy2=zero
-         do tt=nTimesLastObs,1,-1
-            if(biasMask(tt)) then
-               xCorr = obsStaticStr(whGageId)%lastObsDischarge(tt)
-               yCorr = obsStaticStr(whGageId)%lastObsModelDischarge(tt)
-               nCorr = nCorr + one  
-               sumx  = sumx  + xCorr
-               sumy  = sumy  + yCorr
-               sumx2 = sumx2 + xCorr*xCorr
-               sumy2 = sumy2 + yCorr*yCorr
-               sumxy = sumxy + xCorr*yCorr
-            end if
-         end do
-         corr = (nCorr*sumxy - sumx*sumy) /                           &
-              sqrt((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2))
-         
-         if ( nCorr .eq. 0 ) corr = zero
-         if ( ((nCorr*sumx2 - sumx**2) * (nCorr*sumy2 - sumy**2)) .le. 10e-8 ) then
-            !! If one of the standard deviations is zero => one of the timeseries is constant.
-            !! Still may be correlated.
-            !! If both have abs coefficients of variation under 1%, set corr=1, else corr=0
-            !! (A simple expansion of sqrt( 1/(N-1) * sum( x - xbar)**2 ))
-            coefVarY=&
-                 sqrt((sumy2-2*(sumy/nCorr)*sumy+((sumy/nCorr)**2)*nCorr)/(nCorr-1))/(sumy/nCorr)
-            coefVarX=&
-                 sqrt((sumx2-2*(sumx/nCorr)*sumx+((sumx/nCorr)**2)*nCorr)/(nCorr-1))/(sumx/nCorr)
-            corr=zero !! assume not
-            if( (abs(coefVarX) .lt. .01) .and. (abs(coefVarY) .lt. .01)) corr=one
+      if(noConstInterfBias) then
+         !! Game to reduce bias issues.
+         !! Maybe make this an option later if it works.
+         !! do I need to stash the t0 flow? It is not the same as the last ob or the lastObsModelDischarge
+         deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn) 
+         if(theBias .lt. zero .and. deltaT0Discharge .lt. 0) then
+            theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
+            
+            theBias = min( theBias, zero )             ! do not let the bias go positive
+            theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
          end if
-         if(corr .le. zero) theBias=zero
-         if(corr .gt. zero) theBias=corr*theBias
+         if(theBias .gt. zero .and. deltaT0Discharge .gt. 0) then
+            theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
+            theBias = max( theBias, zero )             ! do not let the bias go negative
+         end if
       end if
       
    endif ! if (persistBias_local)
