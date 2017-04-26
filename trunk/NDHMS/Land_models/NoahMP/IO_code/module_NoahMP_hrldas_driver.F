@@ -1092,6 +1092,11 @@ module module_NoahMP_hrldas_driver
   CHSTARXY   = undefined_real
   Z0         = undefined_real
   ZNT        = undefined_real
+ 
+  SOILSAT_TOP = undefined_real 
+  SOILSAT     = undefined_real
+  SOILICE     = undefined_real
+  SNOWT_AVG   = undefined_real
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice

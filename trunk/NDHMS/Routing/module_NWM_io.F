@@ -170,6 +170,9 @@ subroutine output_chrt_NWM(domainId)
    else if (nlst_rt(1)%iocFlag .eq. 4) then
       ! Long Range
       fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+   else if (nlst_rt(1)%iocFlag .eq. 5) then
+      ! Retrospective
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -873,11 +876,11 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst_rt(1)%iocFlag .eq. 0) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
+                             1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
+                             0,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1]
    else if(nlst_rt(1)%iocFlag .eq. 1) then
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
@@ -906,6 +909,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,1,1,0,1,1,0]
+   else if(nlst_rt(1)%iocFlag .eq. 5) then
+      ! Retrospective
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,1,& !1-20
+                             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !21-40
+                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !41-60
+                             1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,& !61-80
+                             0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]            !81-95
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1392,6 +1402,9 @@ subroutine output_rt_NWM(domainId,iGrid)
    else if(nlst_rt(domainId)%iocFlag .eq. 4) then
       ! Long Range
       fileMeta%outFlag(:) = [1,1,0,0]
+   else if(nlst_rt(domainId)%iocFlag .eq. 5) then
+      ! Retrospective
+      fileMeta%outFlag(:) = [1,1,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1847,6 +1860,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
       fileMeta%outFlag(:) = [1,1]
    else if(nlst_rt(1)%iocFlag .eq. 4) then
       ! Long Range
+      fileMeta%outFlag(:) = [1,1]
+   else if(nlst_rt(1)%iocFlag .eq. 5) then
+      ! Retrospective
       fileMeta%outFlag(:) = [1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')

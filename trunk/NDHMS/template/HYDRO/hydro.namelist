@@ -11,6 +11,9 @@
 !Specify the high-resolution routing terrain input data file...(e.g.: "Fulldom_hires_hydrofile.nc"
  GEO_FINEGRID_FLNM = "../DOMAIN/Fulldom_hires_netcdf_file.nc"
 
+! Specify the spatial hydro parameters file. If you specify a filename and the file does not exist, it will be created for you.
+ HYDROTBL_F = "../DOMAIN/HYDRO_TBL_2D.nc"
+
 ! Specify spatial metadata file for land surface grid. (e.g.: "WRF_Hydro_NWM_v1.1_geospatial_data_template_land_GIS.nc")
  LAND_SPATIAL_META_FLNM = "../DOMAIN/WRF_Hydro_NWM_v1.2_geospatial_data_template_land_GIS.nc"
 
@@ -36,6 +39,23 @@
 ! rst_typ = 1 : overwrite the soil variables from routing restart file.
  rst_typ = 1
 
+! This is a 0/1 flag that will turn on the new I/O. NOTE this option is also in namelist.hrldas.
+! If the options are set to 1, then the code will use the new NWM I/O routines. If they are 0, they will default to the old I/O routines.
+ nwmIo = 1
+
+! Realtime IOC run configuration option: 0=diagnostic, 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective
+ iocflag=1
+
+! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes
+ t0OutputFlag = 0
+
+! Options to output channel & bucket influxes to drive FORCE_TYPE 9.
+! Nonzero choice requires that out_dt above matches NOAH_TIMESTEP in namelist.hrldas.
+! 0=None, 1=channel influxes (qSfcLatRunoff, qBucket)
+! 2=channel+bucket fluxes    (qSfcLatRunoff, qBucket, qBtmVertRunoff_toBucket)
+! 3=channel accumulations    (accSfcLatRunoff, accBucket) *** NOT TESTED ***
+ output_channelBucket_influx=0
+
 !Output netcdf file control
  CHRTOUT_DOMAIN = 1           ! 0: nooutput. 1: Netcdf point timeseries output at all channel points
                               ! 2 : for fast output of stream flow variable.
@@ -50,8 +70,6 @@
                      !1: use parallel io for reading multiple restart files by each core.
  rst_bi_out = 1      !0: use netcdf restart file.
                      !1: use parallel io for output multiple restart files.
-
-
 
 !Restart switch to set restart accumulation variables = 0 (0-no reset, 1-yes reset to 0.0)
  RSTRT_SWC = 0
@@ -116,19 +134,6 @@ route_lake_f = "../DOMAIN/LAKEPARM.nc"
 !Note: Only required if baseflow bucket model is active
  gwbasmskfil = "../DOMAIN/gw_basns_geogrid.txt"
  GWBUCKPARM_file = "DOMAIN/GWBUCKPARM_NHD.nc"
-
-! Realtime IOC run configuration option: 0=diagnostic, 1=analysis, 2=short-range, 3=medium-range, 4=long-range
-iocflag=1
-
-! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes
-t0OutputFlag = 0
-
-! Options to output channel & bucket influxes to drive FORCE_TYPE 9.
-! Nonzero choice requires that out_dt above matches NOAH_TIMESTEP in namelist.hrldas.
-! 0=None, 1=channel influxes (qSfcLatRunoff, qBucket)
-! 2=channel+bucket fluxes    (qSfcLatRunoff, qBucket, qBtmVertRunoff_toBucket)
-! 3=channel accumulations    (accSfcLatRunoff, accBucket) *** NOT TESTED ***
-output_channelBucket_influx=0
 
 ! User defined mapping, such NHDPlus
 !0: deafult none. 1: yes
