@@ -1952,7 +1952,7 @@ subroutine  ldas_output()
            enddo DEFINE_MODE_LOOP
 
            call finalize_output_file(split_output_count)
-#endif
+#endif /* HYDRO_REALTIME */
 
 #ifdef HYDRO_REALTIME
    ! Logan add begin
@@ -2190,7 +2190,6 @@ subroutine  ldas_output()
             call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"   , IOCVARS        )
             call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"   , IOCVARS        )
          ENDIF
-#endif
 
       enddo DEFINE_MODE_LOOP
 
@@ -2198,7 +2197,7 @@ subroutine  ldas_output()
 
    endif ! End check for nwmIo value
 
-#endif
+#endif /* HYDRO_REALTIME */
 
 end subroutine  ldas_output
 

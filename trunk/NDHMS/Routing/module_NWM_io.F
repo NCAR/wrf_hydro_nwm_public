@@ -350,7 +350,7 @@ subroutine output_chrt_NWM(domainId)
       if(nudgeFlag .eq. 1)then
 #ifdef WRF_HYDRO_NUDGING
          fileMeta%outFlag(2) = 1 ! Set output flag to on. 
-         g_nuge = RT_DOMAIN(domainID)%nudge
+         g_nudge = RT_DOMAIN(domainID)%nudge
 #endif
       endif
       if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
