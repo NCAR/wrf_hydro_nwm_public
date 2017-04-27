@@ -17,7 +17,7 @@ all:	$(OBJS_NoahMP) $(OBJS)
 
 NoahMP : $(OBJS_NoahMP) $(OBJS)
 
-module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F
+module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F ../../../HYDRO_drv/module_HYDRO_drv.o  ../../../Data_Rec/module_namelist.o ../../../Data_Rec/module_RT_data.o
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90

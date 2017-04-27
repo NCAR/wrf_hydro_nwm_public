@@ -64,9 +64,12 @@
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
        logical            :: persistBias
+       logical            :: biasWindowBeforeT0
        character(len=256) :: nudgingLastObsFile
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
+       logical            :: invDistTimeWeightBias
+       logical            :: noConstInterfBias  
 #endif
        character(len=256) :: timeSlicePath
        integer            :: nLastObs
