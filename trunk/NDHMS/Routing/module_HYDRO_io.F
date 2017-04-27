@@ -7468,7 +7468,7 @@ end subroutine read_routelink
         call ReachLS_decomp(tmpMUSK,    MUSK   )
         call ReachLS_decomp(tmpMUSX,     MUSX   )
         call ReachLS_decomp(tmpCHANLEN,  CHANLEN)
-        call ReachLS_decomp(tmpMannN,       MannN  )
+        call ReachLS_decomp(tmpMannN,    MannN  )
         call ReachLS_decomp(tmpSo,       So     )
         call ReachLS_decomp(tmpChSSlp,   ChSSlp )
         call ReachLS_decomp(tmpBw,       Bw     )
@@ -9894,7 +9894,9 @@ if(my_id .eq. io_id) then
    fileName = trim(indir)//"/"//&
         olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13)//&
         olddate(15:16)//".CHRTOUT_DOMAIN"//hgrid
+#ifdef HYDRO_D
    print*, " Channel only input forcing file: ",trim(fileName)
+#endif /* HYDRO_D */
    iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
 endif
 
@@ -10015,7 +10017,9 @@ end if
 
 if(my_id .eq. io_id) then
    iret = nf_close(ncid)
+#ifdef HYDRO_D
    print*, "finish read channel only forcing "
+#endif /* HYDRO_D */
 endif
 call flush(6)
 

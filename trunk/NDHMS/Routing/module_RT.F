@@ -22,10 +22,11 @@ MODULE module_Routing
 #ifdef MPP_LAND
    use module_gw_baseflow, only: pix_ct_1
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
-                              mpp_read_simp_gw, read_routelink
+                              mpp_read_simp_gw, read_routelink, get_nlinksl
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
-   USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, mpp_land_bcast_int, &
-                            updateLake_seq
+   USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, & 
+                               mpp_land_bcast_int, mpp_land_bcast_int1, &
+                               updateLake_seq
    use module_mpp_GWBUCKET, only : collectSizeInd
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
@@ -205,6 +206,63 @@ CONTAINS
      allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
      rt_domain(did)%LATVAL = 0.0                
 
+
+  !DJG Allocate routing and disaggregation arrays
+  allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
+  rt_domain(did)%qinflowbase = 0.0           
+  
+  allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
+           rt_domain(did)%gw_strm_msk   = 0         
+  allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
+
+  ! allocate land surface grid variables
+  allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
+            rt_domain(did)%SMC   = 0.25           
+  allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
+            rt_domain(did)%SICE  = 0.
+  ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
+  ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
+  ! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
+  allocate( rt_domain(did)%dist_lsm (ix,jx,9) )
+            rt_domain(did)%dist_lsm = 0.0 
+  allocate( rt_domain(did)%lat_lsm (ix,jx) )
+  allocate( rt_domain(did)%lon_lsm (ix,jx) )
+
+  ! allocate( rt_domain(did)%SICE  (IX,JX,NSOIL) )
+  allocate( rt_domain(did)%SMCMAX1  (IX,JX) )
+            rt_domain(did)%SMCMAX1   = 0.0
+           !rt_domain(did)%SMCMAX1   = 0.434          
+  allocate( rt_domain(did)%STC  (IX,JX,NSOIL) )
+            rt_domain(did)%STC   = 282.0          
+  allocate( rt_domain(did)%SH2OX(IX,JX,NSOIL) )
+            rt_domain(did)%SH2OX = rt_domain(did)%SMC   
+  allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
+            rt_domain(did)%SMCWLT1   = 0.0            
+  allocate( rt_domain(did)%SMCREF1  (IX,JX) )
+            rt_domain(did)%SMCREF1   = 0.0            
+  allocate( rt_domain(did)%VEGTYP   (IX,JX) )
+            rt_domain(did)%VEGTYP    = 0            
+
+  allocate( rt_domain(did)%SOILTYP   (IX,JX) )
+
+  allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
+            rt_domain(did)%GWSUBBASMSK    = 0              
+  allocate( rt_domain(did)%SLDPTH(NSOIL) )
+            rt_domain(did)%SLDPTH = 0.0           
+  allocate( rt_domain(did)%SO8LD_D   (IX,JX,3) )
+            rt_domain(did)%SO8LD_D    = 0.0           
+  allocate( rt_domain(did)%SO8LD_Vmax   (IX,JX) )
+            rt_domain(did)%SO8LD_Vmax    = 0.0            
+  allocate( rt_domain(did)%SFCHEADRT   (IX,JX) )
+            rt_domain(did)%SFCHEADRT    = 0.0
+  allocate( rt_domain(did)%INFXSRT   (IX,JX) )
+            rt_domain(did)%INFXSRT    = 0.0            
+  allocate( rt_domain(did)%TERRAIN   (IX,JX) )
+            rt_domain(did)%TERRAIN    = 0.0            
+  allocate( rt_domain(did)%LKSAT   (IX,JX) )
+            rt_domain(did)%LKSAT    = 0.0            
+  allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
+            rt_domain(did)%SOLDRAIN    = 0.0            
 
   end if ! neither channel_only nor channelBucket_only
 
@@ -402,104 +460,76 @@ CONTAINS
 
   END IF   !IF/then for channel routing
 
-
-  !DJG Allocate routing and disaggregation arrays
-  allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
-  allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
-  allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
-
-!!! allocate land surface grid variables
- allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
- allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
-! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
-! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
-! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
- allocate( rt_domain(did)%dist_lsm (ix,jx,9) )
- allocate( rt_domain(did)%lat_lsm (ix,jx) )
- allocate( rt_domain(did)%lon_lsm (ix,jx) )
-
-! allocate( rt_domain(did)%SICE  (IX,JX,NSOIL) )
- allocate( rt_domain(did)%SMCMAX1  (IX,JX) )
-  allocate( rt_domain(did)%STC  (IX,JX,NSOIL) )
-  allocate( rt_domain(did)%SH2OX(IX,JX,NSOIL) )
-  allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
-  allocate( rt_domain(did)%SMCREF1  (IX,JX) )
-  allocate( rt_domain(did)%VEGTYP   (IX,JX) )
-  allocate( rt_domain(did)%OV_ROUGH2d   (IX,JX) )
-  allocate( rt_domain(did)%SOILTYP   (IX,JX) )
-  allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
-  allocate( rt_domain(did)%SLDPTH(NSOIL) )
-  allocate( rt_domain(did)%SO8LD_D   (IX,JX,3) )
-  allocate( rt_domain(did)%SO8LD_Vmax   (IX,JX) )
-  allocate( rt_domain(did)%SFCHEADRT   (IX,JX) )
-  allocate( rt_domain(did)%INFXSRT   (IX,JX) )
-  allocate( rt_domain(did)%TERRAIN   (IX,JX) )
-  allocate( rt_domain(did)%LKSAT   (IX,JX) )
-  allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
-
-
-  rt_domain(did)%dist_lsm = 0.0 
-
-  rt_domain(did)%qinflowbase = 0.0           
-  rt_domain(did)%gw_strm_msk   = 0         
-  rt_domain(did)%SMC   = 0.25           
-  rt_domain(did)%SICE  = 0.
-! rt_domain(did)%SMCMAX1   = 0.434          
-  rt_domain(did)%SMCMAX1   = 0.0
-   rt_domain(did)%STC   = 282.0          
-   rt_domain(did)%SH2OX = rt_domain(did)%SMC   
-   rt_domain(did)%SMCWLT1   = 0.0            
-   rt_domain(did)%SMCREF1   = 0.0            
-   rt_domain(did)%VEGTYP    = 0            
-   rt_domain(did)%GWSUBBASMSK    = 0              
-   rt_domain(did)%SLDPTH = 0.0           
-   rt_domain(did)%SO8LD_D    = 0.0           
-   rt_domain(did)%SO8LD_Vmax    = 0.0            
-   rt_domain(did)%SFCHEADRT    = 0.0            
-   rt_domain(did)%INFXSRT    = 0.0            
-   rt_domain(did)%TERRAIN    = 0.0            
-   rt_domain(did)%LKSAT    = 0.0            
-   rt_domain(did)%SOLDRAIN    = 0.0            
-
-   rt_domain(did)%out_counts = 0
-   rt_domain(did)%his_out_counts = 0
-   rt_domain(did)%rst_counts = 1
+  rt_domain(did)%out_counts = 0
+  rt_domain(did)%his_out_counts = 0
+  rt_domain(did)%rst_counts = 1
 
 #ifdef HYDRO_D
   write(6,*) "***** finish rt_allocate "
 #endif
 
-   end subroutine rt_allocate
+end subroutine rt_allocate
 
-   subroutine getChanDim(did)
 
-  
-      use module_namelist, only:  nlst_rt 
-      use module_RT_data, only: rt_domain
-      implicit none
+subroutine getChanDim(did)
+use module_namelist, only:  nlst_rt 
+use module_RT_data, only: rt_domain
+implicit none
       
-      integer ixrt,jxrt, ix,jx, did, i,j
-      INTEGER, allocatable,dimension(:,:) :: CH_NETLNK, GCH_NETLNK
-!      INTEGER, dimension( rt_domain(did)%ixrt,GCH_NETLNK(ixrt,jxrt)) :: GCH_NETLNK, CH_NETLNK
+integer ixrt,jxrt, ix,jx, did, i,j
+integer, allocatable,dimension(:,:) :: CH_NETLNK, GCH_NETLNK
+!INTEGER, dimension( rt_domain(did)%ixrt,GCH_NETLNK(ixrt,jxrt)) :: GCH_NETLNK, CH_NETLNK
 
-      real :: Vmax
-     
-      ix = rt_domain(did)%ix 
-      jx = rt_domain(did)%jx 
-      ixrt = rt_domain(did)%ixrt 
-      jxrt = rt_domain(did)%jxrt 
+real :: Vmax
 
-       if(nlst_rt(did)%rtFlag .eq. 0) return
+ix = rt_domain(did)%ix 
+jx = rt_domain(did)%jx 
+ixrt = rt_domain(did)%ixrt 
+jxrt = rt_domain(did)%jxrt 
+
+if(nlst_rt(did)%rtFlag .eq. 0) return
+
+if(nlst_rt(did)%channel_only       .eq. 1 .or. & 
+   nlst_rt(did)%channelBucket_only .eq. 1        ) then
+
+   !! Try to avoid some of the 2-d initialization. 
+   !! if this is successful, it most likely will not work for gridded channel (opt 3)
+
+   if(my_id .eq. io_id) then
+      call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+   end if
+   call mpp_land_bcast_int1(rt_domain(did)%NLINKSL)
+
    
-       allocate(CH_NETLNK(ixrt,jxrt)) 
-       allocate(GCH_NETLNK(ixrt,jxrt)) 
+   if(nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
+      rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
 
-      IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
+      call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   & 
+           rt_domain(did)%linklsS, rt_domain(did)%linklsE )
+   else
+      rt_domain(did)%GNLINKSL = 1
+      rt_domain(did)%NLINKSL = 1
+   endif
+   if(nlst_rt(did)%UDMP_OPT .eq. 1) &
+        call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+
+   call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+        rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+
+   return
+   
+endif 
+
+
+allocate(CH_NETLNK(ixrt,jxrt)) 
+allocate(GCH_NETLNK(ixrt,jxrt)) 
+
+if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 #ifdef MPP_LAND
-        CALL MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
-                               GCH_NETLNK, rt_domain(did)%GNLINKS, &
+   call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
+                          GCH_NETLNK, rt_domain(did)%GNLINKS, &
 #else
-        CALL READ_ROUTEDIM( &
+   call READ_ROUTEDIM( &
 #endif
               IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
               nlst_rt(did)%route_direction_f, &
@@ -507,54 +537,52 @@ CONTAINS
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
               rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
 #ifndef MPP_LAND
-        call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+   call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
 #endif
-
 
 #ifdef HYDRO_D
-        write(6,*) "before rt_allocate after READ_ROUTEDIM"
+   write(6,*) "before rt_allocate after READ_ROUTEDIM"
 #endif
 
+   if(nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
 
-        if(nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
-            rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
+      rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
 
-#ifdef MPP_LAND
-         
-            call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   & 
-                         rt_domain(did)%linklsS, rt_domain(did)%linklsE )
+#ifdef MPP_LAND        
+      call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   & 
+           rt_domain(did)%linklsS, rt_domain(did)%linklsE )
 #else
-            rt_domain(did)%linklsS = 1
-            rt_domain(did)%linklsE = rt_domain(did)%NLINKSL
+      rt_domain(did)%linklsS = 1
+      rt_domain(did)%linklsE = rt_domain(did)%NLINKSL
 #endif
-        else
-            rt_domain(did)%GNLINKSL = 1
-            rt_domain(did)%NLINKSL = 1
-        endif
+   else
+      rt_domain(did)%GNLINKSL = 1
+      rt_domain(did)%NLINKSL = 1
+   endif
 
 #ifndef MPP_LAND
-         GCH_NETLNK = CH_NETLNK
+   GCH_NETLNK = CH_NETLNK
 #endif
 
-      endif
+endif
 
-  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-         call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
-  endif
+if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+   call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+endif
 
-        call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
-                   rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+     rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
 
 
-      IF (nlst_rt(did)%CHANRTSWCRT.EQ.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) THEN  !IF/then for channel routing
-        rt_domain(did)%CH_NETLNK = CH_NETLNK
-        rt_domain(did)%GCH_NETLNK = GCH_NETLNK
-      endif
+if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
+   rt_domain(did)%CH_NETLNK = CH_NETLNK
+   rt_domain(did)%GCH_NETLNK = GCH_NETLNK
+endif
 
-      if(allocated(CH_NETLNK)) deallocate(CH_NETLNK)
-      if(allocated(GCH_NETLNK)) deallocate(GCH_NETLNK)
+if(allocated(CH_NETLNK)) deallocate(CH_NETLNK)
+if(allocated(GCH_NETLNK)) deallocate(GCH_NETLNK)
 
-   end subroutine getChanDim
+end subroutine getChanDim
 
 !===================================================================================================   
 subroutine LandRT_ini(did)
@@ -604,7 +632,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
     nlst_rt(did)%GWBASESWCRT .ne. 0) then
 
    if(nlst_rt(did)%channel_only       .eq. 0 .and. & 
-        nlst_rt(did)%channelBucket_only .eq. 0        ) then
+      nlst_rt(did)%channelBucket_only .eq. 0        ) then
 
 #ifdef HYDRO_D
       print *, "Terrain routing initialization..."

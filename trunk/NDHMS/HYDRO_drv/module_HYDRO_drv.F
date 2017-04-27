@@ -1342,12 +1342,10 @@ else
    numprocs = node_info(1,1)
    
    call wrf_LAND_set_INIT(node_info,numprocs,nlst_rt(did)%AGGFACTRT)
-   
-   
+      
    rt_domain(did)%ix = local_nx
    rt_domain(did)%jx = local_ny
 endif
-
 
 
 rt_domain(did)%g_IXRT=global_rt_nx
@@ -1415,10 +1413,12 @@ endif
 
 !      ix0= rt_domain(did)%ix
 !      jx0= rt_domain(did)%jx
-if(present(vegtyp)) then
-   call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
-else
-   call lsm_input(did,ix0=ix0,jx0=jx0)
+if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+   if(present(vegtyp)) then
+      call lsm_input(did,ix0=ix0,jx0=jx0,vegtyp0=vegtyp,soltyp0=soltyp)
+   else
+      call lsm_input(did,ix0=ix0,jx0=jx0)
+   endif
 endif
 
 
@@ -1431,9 +1431,10 @@ write(78,*) "finish decomposion"
 #endif
 
 
-call get_dist_lsm(did) 
-call get_dist_lrt(did)
-
+if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+   call get_dist_lsm(did) 
+   call get_dist_lrt(did)
+end if
 
 ! rt model initilization
 call LandRT_ini(did)
@@ -1462,19 +1463,20 @@ write(78,*) "finish LandRT_ini"
 
     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
-if (nlst_rt(did)%TERADJ_SOLAR.eq.1 .and. nlst_rt(did)%CHANRTSWCRT.ne.2) then   ! Perform ter rain adjustment of incoming solar
+   if (nlst_rt(did)%TERADJ_SOLAR.eq.1 .and. nlst_rt(did)%CHANRTSWCRT.ne.2) then   ! Perform ter rain adjustment of incoming solar
 #ifdef MPP_LAND
-   call MPP_seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
-        rt_domain(did)%TERRAIN, rt_domain(did)%dist_lsm,&
-        rt_domain(did)%ix,rt_domain(did)%jx,global_nx,global_ny)
+      call MPP_seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
+           rt_domain(did)%TERRAIN, rt_domain(did)%dist_lsm,&
+           rt_domain(did)%ix,rt_domain(did)%jx,global_nx,global_ny)
 #else
-   call seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
-        rt_domain(did)%TERRAIN,rt_domain(did)%dist_lsm,&
-        rt_domain(did)%ix,rt_domain(did)%jx)
+      call seq_land_SO8(rt_domain(did)%SO8LD_D,rt_domain(did)%SO8LD_Vmax,&
+           rt_domain(did)%TERRAIN,rt_domain(did)%dist_lsm,&
+           rt_domain(did)%ix,rt_domain(did)%jx)
 #endif
+   endif
 endif
-
 
 if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
    if(nlst_rt(did)%UDMP_OPT .eq. 1) then
