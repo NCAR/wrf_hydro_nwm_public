@@ -44,7 +44,7 @@ CONTAINS
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-                    UDMP_OPT
+                    UDMP_OPT, nwmIo
           real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -65,6 +65,7 @@ CONTAINS
        integer            :: split_output_count, order_to_write
        integer :: igrid, iocflag, t0OutputFlag, output_channelBucket_influx
        character(len=256) :: geo_static_flnm = ""
+       character(len=1024) :: land_spatial_meta_flnm = ""
        integer  :: DEEPGWSPIN
 
        integer :: i
@@ -102,6 +103,7 @@ CONTAINS
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
             RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
+            land_spatial_meta_flnm, &
             out_dt, rst_dt, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
@@ -113,12 +115,13 @@ CONTAINS
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT, GWBUCKPARM_file, iocflag, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+                    UDMP_OPT, GWBUCKPARM_file, iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
 
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
    iocflag = 0
+   nwmIo = 0
    t0OutputFlag = 1
    output_channelBucket_influx = 0
 
@@ -192,6 +195,7 @@ CONTAINS
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
   call mpp_land_bcast_int1(iocflag)
+  call mpp_land_bcast_int1(nwmIo)
   call mpp_land_bcast_int1(t0OutputFlag)
   call mpp_land_bcast_int1(output_channelBucket_influx)
   call mpp_land_bcast_real1_double(out_dt)
@@ -219,9 +223,11 @@ CONTAINS
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
   nlst%iocflag = iocflag
+  nlst%nwmIo = nwmIo
   nlst%t0OutputFlag = t0OutputFlag
   nlst%output_channelBucket_influx = output_channelBucket_influx
   nlst%geo_static_flnm = geo_static_flnm
+  nlst%land_spatial_meta_flnm = land_spatial_meta_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt
   nlst%DEEPGWSPIN = DEEPGWSPIN
