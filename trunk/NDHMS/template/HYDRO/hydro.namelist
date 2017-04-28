@@ -11,6 +11,9 @@
 !Specify the high-resolution routing terrain input data file...(e.g.: "Fulldom_hires_hydrofile.nc"
  GEO_FINEGRID_FLNM = "../DOMAIN/Fulldom_hires_netcdf_file.nc"
 
+! Specify spatial metadata file for land surface grid. (e.g.: "WRF_Hydro_NWM_v1.1_geospatial_data_template_land_GIS.nc")
+ LAND_SPATIAL_META_FLNM = "../DOMAIN/WRF_Hydro_NWM_v1.2_geospatial_data_template_land_GIS.nc"
+
 !Specify the name of the restart file if starting from restart...comment out with '!' if not...
  RESTART_FILE  = 'HYDRO_RST.2013-09-12_04:00_DOMAIN3'
 
@@ -163,6 +166,12 @@ nLastObs = 960
 ! This option instead persists the bias in some period before the last observation. 
 persistBias = .FALSE.
 
+! ** AnA (FALSE)  vs Forecast (TRUE) bias persistence. **
+! If persistBias: Does the window for calculating the bias end at model init time (=t0)?
+! FALSE = window ends at model time (moving), TRUE = window ends at init=t0(fcst) time. 
+! (If commented out, Default=FALSE)
+biasWindowBeforeT0 = .FALSE.
+
 ! If persistBias: Only use this many last (obs, modeled) pairs. (If Commented out, Default=-1*nLastObs)
 ! > 0: apply an age-based filter, units=hours.
 ! = 0: apply no additional filter, use all available/usable obs.
@@ -170,7 +179,15 @@ persistBias = .FALSE.
 maxAgePairsBiasPersist = -960
 
 ! If persistBias: The minimum number of last (obs, modeled) pairs, with age less than
-! maxAgePairsBiasPersist, required to apply a bias correction. (Default=8)
+! maxAgePairsBiasPersist, required to apply a bias correction. (default=8)
 minNumPairsBiasPersist = 8
+
+! If persistBias: give more weight to observations closer in time? (default=FALSE)
+invDistTimeWeightBias = .TRUE.
+
+! If persistBias: "No constructive interference in bias correction?", Reduce the bias adjustment
+! when the model and the bias adjustment have the same sign relative to the modeled flow at t0?
+! (default=FALSE)
+noConstInterfBias = .FALSE.
 
 /

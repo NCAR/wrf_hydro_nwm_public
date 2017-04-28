@@ -17,7 +17,7 @@ all:	$(OBJS_NoahMP) $(OBJS)
 
 NoahMP : $(OBJS_NoahMP) $(OBJS)
 
-module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F
+module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F ../../../HYDRO_drv/module_HYDRO_drv.o  ../../../Data_Rec/module_namelist.o ../../../Data_Rec/module_RT_data.o
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
@@ -57,7 +57,8 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 main_hrldas_driver.o:	$(OBJS_NoahMP) \
 		        ../../../nudging/module_nudging_utils.o \
 		        ../../../nudging/module_stream_nudging.o \
-			../../../MPP/mpp_land.o
+			../../../MPP/mpp_land.o \
+                        ../../../Routing/module_NWM_io.o
 $(OBJS_NoahMP):	module_hrldas_netcdf_io.o
 
 # This command cleans up object files, etc.

@@ -604,6 +604,10 @@ end function MUSKINGCUNGE
 
 subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
 
+#ifdef HYDRO_D
+use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
+#endif
+
         IMPLICIT NONE
 
         REAL, intent(IN)       :: dt         !routing period in  seconds
@@ -839,10 +843,16 @@ subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
          endif
       endif
 
-!! JLM: print to diagnose the magnitues of C3 
-!! JLM: would be good to conditonally print this 
-!!print*,'JLM submuskcunge idx, C3, C, D:', idx, C3, dt/(2*Km), X
-
+#ifdef HYDRO_D
+      !! Getting information on c3.
+      !if(rt_domain(1)%gages(idx + linkls_s(my_id+1) - 1) .ne. rt_domain(1)%gageMiss) then
+      !   print*, rt_domain(1)%gages(idx+linkls_s(my_id+1)-1)
+      if(rt_domain(1)%gages(idx) .ne. rt_domain(1)%gageMiss) then
+         print*, rt_domain(1)%gages(idx)
+         print*,'JLM submuskcunge idx, C3, C, D:', idx + linkls_s(my_id+1) - 1, C3, dt/(2*Km), X
+      end if
+#endif
+      
 !yw added for test
       if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
@@ -1920,9 +1930,11 @@ end subroutine drive_CHANNEL
        use module_namelist, only:  nlst_rt 
 
 #ifdef WRF_HYDRO_NUDGING
-       use module_stream_nudging,  only: setup_stream_nudging,  & 
-                                         nudge_term_all,        &
-                                         nudgeWAdvance
+       use module_RT_data, only: rt_domain
+       use module_stream_nudging,  only: setup_stream_nudging,               & 
+                                         nudge_term_all,                     &
+                                         nudgeWAdvance,                      &
+                                         nudge_apply_upstream_muskingumCunge
 #endif 
 
 
@@ -1952,7 +1964,8 @@ end subroutine drive_CHANNEL
        real                                      :: Km, X
        real , intent(INOUT), dimension(:,:)  :: QLINK
 #ifdef WRF_HYDRO_NUDGING
-       real, intent(out),    dimension(:)    :: nudge
+       !! inout for applying previous nudge to upstream components of flow at gages
+       real, intent(inout),    dimension(:)    :: nudge
 #endif
 
        real, dimension(:), intent(inout)     :: QLateral !--lateral flow
@@ -2065,9 +2078,11 @@ end subroutine drive_CHANNEL
 
 !---------------------------------------------
 if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
-   write(6,*), "channel_only or channelBucket_only is not zero."
+#ifdef HYDRO_D
+   write(6,*), "channel_only or channelBucket_only is not zero. Special flux calculations."
    call flush(6)
-
+#endif /* HYDRO_D */
+   
 !   if(nlst_rt(1)%output_channelBucket_influx .eq. 1 .or. &
 !        nlst_rt(1)%output_channelBucket_influx .eq. 2       ) &
 !        !! qScfLatRunoff = qLateral - qBucket
@@ -2088,7 +2103,6 @@ if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
    
    if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
         accSfcLatRunoff(1:NLINKSL) = qSfcLatRunoff * DT
-
 
 else
 
@@ -2125,7 +2139,7 @@ else
          if (nlst_rt(1)%output_channelBucket_influx .eq. 3) &
               accSfcLatRunoff(1:NLINKSL) = accSfcLatRunoff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
       endif
-            tmpLQLateral = 0  !! JLM:: These lines imply that squeege runoff does not count towards 
+      tmpLQLateral = 0  !! JLM:: These lines imply that squeege runoff does not count towards 
       tmpQLateral = 0   !! JLM:: accumulated runoff to be output but it does for internal QLateral?
       !! JLM: But then the next accumulation is added to the amt before zeroing? result
       !! JLM: should be identical to LQLateral.... I'm totally mystified.
@@ -2180,8 +2194,10 @@ endif !! (channel_only .eq. 1 .or. channelBucket_only .eq. 1) then; else; endif
 !---------------------------------------------
 !! If not running channelOnly, here is where the bucket model is picked up
 if(channel_only .eq. 1) then
-   write(6,*), "channel_only is not zero."
-   call flush(6) 
+#ifdef HYDRO_D
+   write(6,*), "channel_only is not zero. No bucket."
+   call flush(6)
+#endif /* HYDRO_D */
 else
    !! REQUIRE BUCKET MODEL ON HERE?
    if(NLINKSL .gt. 0) QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
@@ -2197,136 +2213,144 @@ if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
 
 !---------------------------------------------
 !       QLateral = QLateral / nsteps
-   do nt = 1, nsteps
- 
+do nt = 1, nsteps
+   
 #ifdef MPP_LAND
-
-       gQLINK = 0
-       call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
-       call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1)) 
-      !---------- route other reaches, with upstream inflow
+   gQLINK = 0
+   call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
+   call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1)) 
+   !---------- route other reaches, with upstream inflow
 #endif
-
-       tmpQlink = 0
+   
+   tmpQlink = 0
 #ifdef MPP_LAND
-       if(my_id .eq. io_id) then
+   if(my_id .eq. io_id) then
 #endif
-          tmpQLAKEO = QLAKEO
-          tmpQLAKEI = QLAKEI
-          tmpRESHT = RESHT
+      tmpQLAKEO = QLAKEO
+      tmpQLAKEI = QLAKEI
+      tmpRESHT = RESHT
 #ifdef MPP_LAND
-       endif
+   endif
 #endif
-
-
-       do k = 1,NLINKSL
-
-        Quc  = 0
-        Qup  = 0
-
-        !process as standard link or a lake inflow link, or lake outflow link
-        ! link flowing out of lake, accumulate all the inflows with the revised TO_NODEs
-        ! TYPEL = -999 stnd; TYPEL=1 outflow from lake; TYPEL = 3 inflow to a lake
-
-        if(TYPEL(k) .ne. 2) then ! don't process internal lake links only
-
+   
+   
+   do k = 1,NLINKSL
+      
+      Quc  = 0
+      Qup  = 0
+      
+      !process as standard link or a lake inflow link, or lake outflow link
+      ! link flowing out of lake, accumulate all the inflows with the revised TO_NODEs
+      ! TYPEL = -999 stnd; TYPEL=1 outflow from lake; TYPEL = 3 inflow to a lake
+      
+      if(TYPEL(k) .ne. 2) then ! don't process internal lake links only
+         
 #ifdef MPP_LAND
-!using mapping index
-           do n = 1, gtoNODE(k,1)
-              m = gtoNODE(k,n+1)
-                if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-           end do ! do i
+         !using mapping index
+         do n = 1, gtoNODE(k,1)
+            m = gtoNODE(k,n+1)
+            !! JLM - I think gQLINK(,2) is actually previous. Global array never sees current. Seeing
+            !! current would require global communication at the end of each loop through k
+            !! (=kth reach). Additionally, how do you synchronize to make sure the upstream are all
+            !! done before doing the downstream?
+            if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)  
+            if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+         end do ! do i
 #else
-           do m = 1, NLINKSL
-
-               if (LINKID(k) .eq. TO_NODE(m)) then
-                 Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                 Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
-               endif
-           end do ! do m
+         do m = 1, NLINKSL                
+            if (LINKID(k) .eq. TO_NODE(m)) then
+               Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+               Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+            endif
+         end do ! do m
 #endif
-        endif !note that we won't process type 2 links, since they are internal to a lake
-
-
-!yw ### process each link k,
-!       There is a situation that different k point to the same LAKEIDX
-!        if(TYPEL(k) .eq. 1 .and. LAKEIDX(k) .gt. 0) then   !--link is a reservoir
-        if(TYPEL(k) .eq. 1 ) then   !--link is a reservoir
-             
-             lakeid = LAKEIDX(k)
-           if(lakeid .ge. 0) then
-              call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
-               QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
-               WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
-             
-               QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
-               QLAKEI(lakeid)  = Quc           !save inflow to lake
-           endif
-105  continue
+      endif !note that we won't process type 2 links, since they are internal to a lake
+      
+      
+      !yw ### process each link k,
+      !       There is a situation that different k point to the same LAKEIDX
+      !        if(TYPEL(k) .eq. 1 .and. LAKEIDX(k) .gt. 0) then   !--link is a reservoir
+      if(TYPEL(k) .eq. 1 ) then   !--link is a reservoir
+         
+         lakeid = LAKEIDX(k)
+         if(lakeid .ge. 0) then
+            call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
+                 QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
+                 WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
             
-
-        elseif (channel_option .eq. 1) then  !muskingum routing
-               Km = MUSK(k)
-               X = MUSX(k)
-               tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
-
-        elseif (channel_option .eq. 2) then ! muskingum cunge, don't process internal lake nodes TYP=2
-!              tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
-!                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
-!                  MannN(k), ChSSlp(k), Bw(k) )
-
-              call SUBMUSKINGCUNGE(tmpQLINK(k,2),velocity(k), k,Qup, Quc, QLINK(k,1), &
-                   QLateral(k), DTRT_CH, So(k), CHANLEN(k), &
-                   MannN(k), ChSSlp(k), Bw(k) )
-                
-        else
+            QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
+            QLAKEI(lakeid)  = Quc           !save inflow to lake
+         endif
+105      continue
+         
+         
+      elseif (channel_option .eq. 1) then  !muskingum routing
+         Km = MUSK(k)
+         X = MUSX(k)
+         tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
+         
+      elseif (channel_option .eq. 2) then ! muskingum cunge, don't process internal lake nodes TYP=2
+         !              tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
+         !                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
+         !                  MannN(k), ChSSlp(k), Bw(k) )
+         
+#ifdef WRF_HYDRO_NUDGING
+         call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
+#endif
+         
+         call SUBMUSKINGCUNGE(&
+              tmpQLINK(k,2), velocity(k), k,     Qup,        Quc, QLINK(k,1), &
+              QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
+              MannN(k),      ChSSlp(k),   Bw(k)                                )
+         
+      else
 #ifdef HYDRO_D
-                    print *, " no channel option selected"
+         print *, " no channel option selected"
 #endif
-                    call hydro_stop("drive_CHANNEL") 
-        endif
-
-       end do        !--k links
-
+         call hydro_stop("drive_CHANNEL") 
+      endif
+      
+   end do  !--k links
+   
+   
 #ifdef MPP_LAND
-       call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
-       call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
-       call updateLake_seq(RESHT,nlakes,tmpRESHT)
+   call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
+   call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
+   call updateLake_seq(RESHT,nlakes,tmpRESHT)
 #endif
-
-       do k = 1, NLINKSL !tmpQLINK?
-          if(TYPEL(k) .ne. 2) then !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
-             QLINK(k,2) = tmpQLINK(k,2)
-          endif
-            QLINK(k,1) = QLINK(k,2)    !assigng link flow of current to be previous for next time step
-       end do
-
-
+   
+   do k = 1, NLINKSL !tmpQLINK?
+      if(TYPEL(k) .ne. 2) then   !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
+         QLINK(k,2) = tmpQLINK(k,2)
+      endif
+      QLINK(k,1) = QLINK(k,2)    !assigng link flow of current to be previous for next time step
+   end do
+   
+   
 #ifdef WRF_HYDRO_NUDGING         
-         if(.not. nudgeWAdvance) call nudge_term_all(qlink, nudge, int(nt*dtrt_ch))
+   if(.not. nudgeWAdvance) call nudge_term_all(qlink, nudge, int(nt*dtrt_ch))
 #endif /* WRF_HYDRO_NUDGING */
-
-
+  
+   
 !#ifdef HYDRO_D
-!          print *, "END OF ALL REACHES...",KRT,DT_STEPS
+!   print *, "END OF ALL REACHES...",KRT,DT_STEPS
 !#endif
+   
+end do  ! nsteps
 
-    end do  ! nsteps
-
-    if (KT .eq. 1) KT = KT + 1
+if (KT .eq. 1) KT = KT + 1
 
 #ifdef MPP_LAND
-    if(my_id .eq. io_id)      then 
-       if(allocated(tmpQLAKEO))  deallocate(tmpQLAKEO)
-       if(allocated(tmpQLAKEI))  deallocate(tmpQLAKEI)
-       if(allocated(tmpRESHT))  deallocate(tmpRESHT)
-    endif
+if(my_id .eq. io_id)      then 
+   if(allocated(tmpQLAKEO))  deallocate(tmpQLAKEO)
+   if(allocated(tmpQLAKEI))  deallocate(tmpQLAKEI)
+   if(allocated(tmpRESHT))  deallocate(tmpRESHT)
+endif
 #endif        
 
-   if (KT .eq. 1) KT = KT + 1
+if (KT .eq. 1) KT = KT + 1  ! redundant?
 
-   end subroutine drive_CHANNEL_RSL
+end subroutine drive_CHANNEL_RSL
 
 ! ----------------------------------------------------------------
 

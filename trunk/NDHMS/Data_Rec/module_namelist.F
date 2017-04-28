@@ -44,7 +44,7 @@ CONTAINS
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-                    UDMP_OPT
+                    UDMP_OPT, nwmIo
           real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -65,6 +65,7 @@ CONTAINS
        integer            :: split_output_count, order_to_write
        integer :: igrid, iocflag, t0OutputFlag, output_channelBucket_influx
        character(len=256) :: geo_static_flnm = ""
+       character(len=1024) :: land_spatial_meta_flnm = ""
        integer  :: DEEPGWSPIN
 
        integer :: i
@@ -89,16 +90,20 @@ CONTAINS
        logical            :: readTimesliceParallel
        logical            :: temporalPersistence
        logical            :: persistBias
+       logical            :: biasWindowBeforeT0
        character(len=256) :: nudgingLastObsFile
        character(len=256) :: timeSlicePath
        integer            :: nLastObs
        integer            :: minNumPairsBiasPersist
        integer            :: maxAgePairsBiasPersist
+       logical            :: invDistTimeWeightBias
+       logical            :: noConstInterfBias
 #endif 
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
             RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
+            land_spatial_meta_flnm, &
             out_dt, rst_dt, &
             DEEPGWSPIN, SOLVEG_INITSWC, &
             RT_OPTION, CHANRTSWCRT, channel_option, &
@@ -110,32 +115,38 @@ CONTAINS
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT, GWBUCKPARM_file, iocflag, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+                    UDMP_OPT, GWBUCKPARM_file, iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
 
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
    iocflag = 0
+   nwmIo = 0
    t0OutputFlag = 1
    output_channelBucket_influx = 0
 
 #ifdef WRF_HYDRO_NUDGING
-   namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,        &
-                            readTimesliceParallel,  temporalPersistence,  &
-                            persistBias,            nudgingLastObsFile,   &
-                            timeSlicePath,          nLastObs,             &
-                            minNumPairsBiasPersist, maxAgePairsBiasPersist
+   namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
+                            readTimesliceParallel,  temporalPersistence,    &
+                            persistBias,            nudgingLastObsFile,     &
+                            timeSlicePath,          nLastObs,               &
+                            minNumPairsBiasPersist, maxAgePairsBiasPersist, &
+                            biasWindowBeforeT0,     invDistTimeWeightBias,  &
+                            noConstInterfBias
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"
-   readTimesliceParallel = .true.
-   temporalPersistence   = .true.
-   persistBias           = .false.
-   nudgingLastObsFile = ""
-   timeSlicePath = "./nudgingTimeSliceObs/"
-   nLastObs = 960
+   readTimesliceParallel  = .true.
+   temporalPersistence    = .true.
+   persistBias            = .false.
+   biasWindowBeforeT0     = .false.
+   nudgingLastObsFile     = ""
+   timeSlicePath          = "./nudgingTimeSliceObs/"
+   nLastObs               = 960
    minNumPairsBiasPersist = 8
    maxAgePairsBiasPersist = -99999
+   invDistTimeWeightBias  = .false.
+   noConstInterfBias      = .false.
 #endif 
 
    !! default  values for HYDRO_nlist
@@ -184,6 +195,7 @@ CONTAINS
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
   call mpp_land_bcast_int1(iocflag)
+  call mpp_land_bcast_int1(nwmIo)
   call mpp_land_bcast_int1(t0OutputFlag)
   call mpp_land_bcast_int1(output_channelBucket_influx)
   call mpp_land_bcast_real1_double(out_dt)
@@ -211,9 +223,11 @@ CONTAINS
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
   nlst%iocflag = iocflag
+  nlst%nwmIo = nwmIo
   nlst%t0OutputFlag = t0OutputFlag
   nlst%output_channelBucket_influx = output_channelBucket_influx
   nlst%geo_static_flnm = geo_static_flnm
+  nlst%land_spatial_meta_flnm = land_spatial_meta_flnm
   nlst%out_dt = out_dt
   nlst%rst_dt = rst_dt
   nlst%DEEPGWSPIN = DEEPGWSPIN
@@ -282,10 +296,13 @@ CONTAINS
   call mpp_land_bcast_log1(readTimesliceParallel)
   call mpp_land_bcast_log1(temporalPersistence)
   call mpp_land_bcast_log1(persistBias)
+  call mpp_land_bcast_log1(biasWindowBeforeT0)
   call mpp_land_bcast_char(256, timeSlicePath)
   call mpp_land_bcast_int1(nLastObs)
   call mpp_land_bcast_int1(minNumPairsBiasPersist)
   call mpp_land_bcast_int1(maxAgePairsBiasPersist)
+  call mpp_land_bcast_log1(invDistTimeWeightBias)
+  call mpp_land_bcast_log1(noConstInterfBias)
 #endif 
 #endif /* MPP_LAND */
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
@@ -362,11 +379,14 @@ CONTAINS
     nlst%readTimesliceParallel  = readTimesliceParallel
     nlst%temporalPersistence    = temporalPersistence
     nlst%persistBias            = persistBias
+    nlst%biasWindowBeforeT0     = biasWindowBeforeT0
     nlst%nudgingLastObsFile     = nudgingLastObsFile
     nlst%timeSlicePath          = timeSlicePath
     nlst%nLastObs               = nLastObs
     nlst%minNumPairsBiasPersist = minNumPairsBiasPersist
     nlst%maxAgePairsBiasPersist = maxAgePairsBiasPersist
+    nlst%invDistTimeWeightBias  = invDistTimeWeightBias
+    nlst%noConstInterfBias      = noConstInterfBias
 #endif
 
 #ifdef MPP_LAND
@@ -410,16 +430,19 @@ CONTAINS
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
 #ifdef WRF_HYDRO_NUDGING
-    write(6,*) " nlst%nudgingParamFile",       trim(nudgingParamFile)
-    write(6,*) " nlst%netWkReExFile",          trim(netWkReExFile)
-    write(6,*) " nlst%readTimesliceParallel",  readTimesliceParallel
-    write(6,*) " nlst%temporalPersistence",    temporalPersistence
-    write(6,*) " nlst%persistBias",            persistBias
-    write(6,*) " nlst%nudgingLastObsFile",     trim(nudgingLastObsFile)
-    write(6,*) " timeSlicePath         ",      trim(timeSlicePath)
-    write(6,*) " nLastObs              ",      nLastObs
-    write(6,*) " minNumPairsBiasPersist",      minNumPairsBiasPersist
-    write(6,*) " maxAgePairsBiasPersist",      maxAgePairsBiasPersist
+    write(6,*) " nlst%nudgingParamFile      ",  trim(nudgingParamFile)
+    write(6,*) " nlst%netWkReExFile         ",  trim(netWkReExFile)
+    write(6,*) " nlst%readTimesliceParallel ",  readTimesliceParallel
+    write(6,*) " nlst%temporalPersistence   ",  temporalPersistence
+    write(6,*) " nlst%persistBias           ",  persistBias
+    write(6,*) " nlst%biasWindowBeforeT0    ",  biasWindowBeforeT0
+    write(6,*) " nlst%nudgingLastObsFile    ",  trim(nudgingLastObsFile)
+    write(6,*) " timeSlicePath              ",  trim(timeSlicePath)
+    write(6,*) " nLastObs                   ",  nLastObs
+    write(6,*) " minNumPairsBiasPersist     ",  minNumPairsBiasPersist
+    write(6,*) " maxAgePairsBiasPersist     ",  maxAgePairsBiasPersist
+    write(6,*) " invDistTimeWeightBias      ",  invDistTimeWeightBias
+    write(6,*) " noConstInterfBias          ",  noConstInterfBias
 #endif
 #endif /* HYDRO_D */
 #ifdef MPP_LAND
