@@ -278,9 +278,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    endif
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
-   !if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
-   !   if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
-   !end if
+   if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
+      if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
+   end if
 
 
    if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
