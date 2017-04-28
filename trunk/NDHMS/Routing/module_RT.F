@@ -243,6 +243,8 @@ CONTAINS
   allocate( rt_domain(did)%VEGTYP   (IX,JX) )
             rt_domain(did)%VEGTYP    = 0            
 
+  allocate( rt_domain(did)%OV_ROUGH2d   (IX,JX) )
+            
   allocate( rt_domain(did)%SOILTYP   (IX,JX) )
 
   allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
