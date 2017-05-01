@@ -854,7 +854,7 @@ CONTAINS
 		if ( SUM(SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0)) .gt. 0 ) then
 		  SNOWT_AVG (I,J)  = SUM(STC(-NSNOW+1:0) * (SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0))) / SUM(SNICE(-NSNOW+1:0) + SNLIQ(-NSNOW+1:0))
 		else
-		  SNOWT_AVG (I,J) = -1.E33
+		  SNOWT_AVG (I,J) = undefined_value
 		endif
 	     endif
 #endif

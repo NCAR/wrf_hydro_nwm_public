@@ -393,9 +393,9 @@ module module_HYDRO_io
        enddo
     enddo
 
-     if(nlst_rt(did)%GWBASESWCRT .ne. 3) then
-        where (array == 14) array = 1   ! DJG remove all 'water' soils...
-     endif
+!     if(nlst_rt(did)%GWBASESWCRT .ne. 3) then
+!        where (array == 14) array = 1   ! DJG remove all 'water' soils...
+!     endif
 
   end subroutine get_soilcat_netcdf
 
@@ -1829,7 +1829,8 @@ end subroutine get_albedo12m_netcdf
 !       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
 #endif
 
-if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+! All but long range
+if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 
    iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
    iret = nf_put_att_text(ncid,varid,'units',1,'m')
@@ -2010,7 +2011,8 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
     enddo !-n soils
 #endif
 
-if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+! All but long range
+if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(ZWATTABLRT,xdumd)
 #else
@@ -2056,7 +2058,8 @@ endif
 #endif
 #endif
  
-if ( (iocflag .eq. 0) .or. (iocflag .eq. 1) .or. (iocflag .eq. 2) .or. (iocflag .eq. 3) ) then
+! All but long range
+if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(SFCHEADSUBRT,xdumd)
 #else
@@ -8645,7 +8648,7 @@ end subroutine mpp_output_chrt2
 	endif
 
         !-- NEW velocity definition, var
-        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
         	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
         	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',14,'River Velocity')
@@ -8789,7 +8792,7 @@ end subroutine mpp_output_chrt2
         endif
 
         !-- writelvelocity (dummy value for now)
-	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .lt. 4) ) then
+        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
         	iret = nf_inq_varid(ncid,"velocity", varid)
          	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), velocity)
 	endif
@@ -9756,7 +9759,7 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
      if(my_id .eq. IO_id) then
 #endif
        iret = nf_def_dim(ncid, "west_east", ix, ixd)  !-- make a decimated grid
-       iret = nf_def_dim(ncid, "north_south", jx, jxd)
+       iret = nf_def_dim(ncid, "south_north", jx, jxd)
 #ifdef MPP_LAND
      endif
 #endif

@@ -117,6 +117,7 @@ CONTAINS
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
                     UDMP_OPT, GWBUCKPARM_file, iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
 
+   ! Default values for HYDRO_nlist
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
@@ -149,12 +150,6 @@ CONTAINS
    noConstInterfBias      = .false.
 #endif 
 
-   !! default  values for HYDRO_nlist
-   UDMP_OPT = 0
-   rst_bi_in = 0
-   rst_bi_out = 0
-   iocflag = 0
-                    
 #ifdef MPP_LAND
        if(IO_id .eq. my_id) then
 #endif

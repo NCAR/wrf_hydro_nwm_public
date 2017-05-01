@@ -1134,6 +1134,11 @@ module module_NoahMP_hrldas_driver
   CHSTARXY   = undefined_real
   Z0         = undefined_real
   ZNT        = undefined_real
+ 
+  SOILSAT_TOP = undefined_real 
+  SOILSAT     = undefined_real
+  SOILICE     = undefined_real
+  SNOWT_AVG   = undefined_real
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
@@ -1458,6 +1463,10 @@ module module_NoahMP_hrldas_driver
    endif
    if (iocflag .eq. 0) then
 	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
+   endif
+   ! Long-Term Retrospective
+   if (iocflag .eq. 5) then
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
    endif
 
    !!--- Parse into character array. Constructor not valid with uneven 
