@@ -251,7 +251,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
       nlst_rt(did)%channelBucket_only .eq. 0       ) then 
               ! Output gridded routing variables on National Water Model
               ! high-res routing grid 
-              if(nlst_rt(did)%nwmIo .eq. 1) then
+              if(nlst_rt(did)%nwmIo .ne. 0) then
                  call output_rt_NWM(did,nlst_rt(did)%igrid)
               else
                  call output_rt(    &
@@ -279,7 +279,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
    if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
-      if(nlst_rt(did)%channel_only .eq. 0) call output_GW_Diag(did)
+      if(nlst_rt(did)%channel_only .eq. 0) then
+         if(nlst_rt(did)%output_gw  .eq. 1) call output_GW_Diag(did)
+      endif
    end if
 
 
@@ -330,7 +332,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #endif
 !ADCHANGE: End
 
-   if(nlst_rt(did)%nwmIo .eq. 1) then
+   if(nlst_rt(did)%nwmIo .ne. 0) then
       ! Call National Water Model output routine for output on NHD forecast points.
       if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
          call output_chrt_NWM(did)
@@ -408,7 +410,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #endif
 
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
-                      if(nlst_rt(did)%nwmIo .eq. 1) then
+                      if(nlst_rt(did)%nwmIo .ne. 0) then
                          ! Output lakes in NWM format
                          if(nlst_rt(did)%outlake .ne. 0) then
                             call output_lakes_NWM(did,nlst_rt(did)%igrid)
