@@ -558,21 +558,23 @@ subroutine output_chrt_NWM(domainId)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
 
       ! Define deflation levels for these meta-variables. For now, we are going to
-      ! default to a compression level of 2.  
-      iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
-      iret = nf90_def_var_deflate(ftn,featureVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
-      iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-      !iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
-      !iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.') 
-      !iret = nf90_def_var_deflate(ftn,orderVarId,0,1,2)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
-      !iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')  
+      ! default to a compression level of 2. Only compress if nwmIo is set to 1.
+      if(nlst_rt(1)%nwmIo .eq. 1) then
+         iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
+         iret = nf90_def_var_deflate(ftn,featureVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
+         iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+         !iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
+         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
+         !iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
+         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.') 
+         !iret = nf90_def_var_deflate(ftn,orderVarId,0,1,2)
+         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
+         !iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
+         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')  
+      endif
 
       ! Allocate memory for the output variables, then place the real output
       ! variables into a single array. This array will be accessed throughout the
@@ -593,9 +595,11 @@ subroutine output_chrt_NWM(domainId)
             ! compression level of 2. In addition, we are choosing to turn the shuffle
             ! filter off for now. Kelley Eicher did some testing with this and
             ! determined that the benefit wasn't worth the extra time spent writing
-            ! output.
-            iret = nf90_def_var_deflate(ftn,varId,0,1,2)
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            ! output. Only compress if nwmIo is set to 1.
+            if(nlst_rt(1)%nwmIo .eq. 1) then
+               iret = nf90_def_var_deflate(ftn,varId,0,1,2)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            endif
 
             ! Create variable attributes
             iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
@@ -745,7 +749,7 @@ end subroutine output_chrt_NWM
 !
 ! User controllable options: None.
 
-subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
+subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd,nwmIoLsm)
    use module_rt_data, only: rt_domain
    use module_namelist, only: nlst_rt
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
@@ -767,6 +771,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    real, intent(in) :: varReal(ixPar,zNum,jxPar) ! Variable data to be written. 
    integer, intent(inout) :: vegTyp(ixPar,jxPar) ! Vegetation type grid used to mask out variables.
    integer, intent(in) :: varInd ! Variable index used to extact meta-data from.
+   integer, intent(in) :: nwmIoLsm ! nwmIo flag specified in namelist.hrldas
 
    ! Derived types.
    type(ldasMeta) :: fileMeta
@@ -1017,15 +1022,18 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          iret = nf90_put_att(ftnNoahMP,yVarId,'resolution',fileMeta%yRes)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
 
-         ! Define compression for meta-variables
-         iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
-         iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-         iret = nf90_def_var_deflate(ftn,xVarId,0,1,2)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for x.')
-         iret = nf90_def_var_deflate(ftn,yVarId,0,1,2)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
+         ! Define compression for meta-variables. Only compress if nwmIo is set
+         ! to 1.
+         if(nwmIoLsm .eq. 1) then
+            iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
+            iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+            iret = nf90_def_var_deflate(ftn,xVarId,0,1,2)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for x.')
+            iret = nf90_def_var_deflate(ftn,yVarId,0,1,2)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
+         endif
 
          ! Create ProjectionCoordinateSystem variable
          iret = nf90_def_var(ftnNoahMP,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
@@ -1075,8 +1083,11 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                ! compression level of 2. In addition, we are choosing to turn the shuffle
                ! filter off for now. Kelley Eicher did some testing with this and
                ! determined that the benefit wasn't worth the extra time spent writing output.
-               iret = nf90_def_var_deflate(ftnNoahMP,varId,0,1,2)
-               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+               ! Only compress if nwmIo is set to 1.
+               if(nwmIoLsm .eq. 1) then
+                  iret = nf90_def_var_deflate(ftnNoahMP,varId,0,1,2)
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+               endif
 
                ! Create variable attributes
                iret = nf90_put_att(ftnNoahMP,varId,'_FillValue',fileMeta%fillComp(iTmp))
@@ -1517,15 +1528,17 @@ subroutine output_rt_NWM(domainId,iGrid)
       iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
  
-      ! Define compression for meta-variables
-      iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
-      iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-      iret = nf90_def_var_deflate(ftn,xVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for x.')
-      iret = nf90_def_var_deflate(ftn,yVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
+      ! Define compression for meta-variables only if nwmIo is set to 1.
+      if(nlst_rt(1)%nwmIo .eq. 1) then
+         iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
+         iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+         iret = nf90_def_var_deflate(ftn,xVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for x.')
+         iret = nf90_def_var_deflate(ftn,yVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
+      endif
 
       ! Create ProjectionCoordinateSystem variable
       iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
@@ -1569,8 +1582,11 @@ subroutine output_rt_NWM(domainId,iGrid)
             ! compression level of 2. In addition, we are choosing to turn the shuffle
             ! filter off for now. Kelley Eicher did some testing with this and
             ! determined that the benefit wasn't worth the extra time spent writing output.
-            iret = nf90_def_var_deflate(ftn,varId,0,1,2)
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            ! Only compress if nwmIo is set to 1.
+            if(nlst_rt(1)%nwmIo .eq. 1) then
+               iret = nf90_def_var_deflate(ftn,varId,0,1,2)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            endif
 
             ! Create variable attributes
             iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
@@ -2108,19 +2124,21 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
 
       ! Define deflation levels for these meta-variables. For now, we are going to
-      ! default to a compression level of 2.  
-      iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
-      iret = nf90_def_var_deflate(ftn,featureVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
-      iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-      iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
-      iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.')
-      iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')
+      ! default to a compression level of 2. Only compress if nwmIo is set to 1.
+      if(nlst_rt(1)%nwmIo .eq. 1) then 
+         iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
+         iret = nf90_def_var_deflate(ftn,featureVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
+         iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+         iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
+         iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.')
+         iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')
+      endif
 
       ! Allocate memory for the output variables, then place the real output
       ! variables into a single array. This array will be accessed throughout the
@@ -2141,8 +2159,11 @@ subroutine output_lakes_NWM(domainId,iGrid)
             ! compression level of 2. In addition, we are choosing to turn the shuffle
             ! filter off for now. Kelley Eicher did some testing with this and
             ! determined that the benefit wasn't worth the extra time spent writing output.
-            iret = nf90_def_var_deflate(ftn,varId,0,1,2)
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            ! Only compress if nwmIo is set to 1.
+            if(nlst_rt(1)%nwmIo .eq. 1) then
+               iret = nf90_def_var_deflate(ftn,varId,0,1,2)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            endif
 
             ! Create variable attributes
             iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))

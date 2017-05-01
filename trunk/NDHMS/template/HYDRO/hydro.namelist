@@ -61,7 +61,8 @@ order_to_write = 4
 
 !!!! -------------------- MODEL OUTPUT CONTROL -------------------- !!!!
 
-! Flag to turn on/off new I/O routines: 0 = old (default), 1 = new (with scale/offset/compression) 
+! Flag to turn on/off new I/O routines: 0 = old (default), 1 = new (with scale/offset/compression),
+! 2 = new (with scale/offset/NO compression)
 ! NOTE this option is also in namelist.hrldas.
 nwmIo = 1
 
