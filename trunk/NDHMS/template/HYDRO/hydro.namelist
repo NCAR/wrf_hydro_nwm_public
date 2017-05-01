@@ -52,6 +52,9 @@ rst_bi_out = 0      !0: use netcdf output restart file (default)
 ! Restart switch to set restart accumulation variables to 0 (0=no reset, 1=yes reset to 0.0)
 RSTRT_SWC = 0
 
+! Specify baseflow/bucket model initialization...(0=cold start from table, 1=restart file)
+GW_RESTART = 1
+
 ! Specify the minimum stream order to output to netcdf point file...(integer)
 ! Note: lower value of stream order produces more output.
 order_to_write = 4
@@ -138,9 +141,6 @@ route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
-
-! Specify baseflow/bucket model initialization...(0=cold start from table, 1=restart file)
-GW_RESTART = 1
 
 ! Groundwater/baseflow mask specified on land surface model grid (e.g.: "gw_basns.txt")
 ! Note: Only required if baseflow bucket model is active. Currently ascii grid format

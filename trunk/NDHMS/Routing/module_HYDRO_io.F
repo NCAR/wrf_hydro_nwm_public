@@ -393,9 +393,9 @@ module module_HYDRO_io
        enddo
     enddo
 
-     if(nlst_rt(did)%GWBASESWCRT .ne. 3) then
-        where (array == 14) array = 1   ! DJG remove all 'water' soils...
-     endif
+!     if(nlst_rt(did)%GWBASESWCRT .ne. 3) then
+!        where (array == 14) array = 1   ! DJG remove all 'water' soils...
+!     endif
 
   end subroutine get_soilcat_netcdf
 
@@ -9759,7 +9759,7 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
      if(my_id .eq. IO_id) then
 #endif
        iret = nf_def_dim(ncid, "west_east", ix, ixd)  !-- make a decimated grid
-       iret = nf_def_dim(ncid, "north_south", jx, jxd)
+       iret = nf_def_dim(ncid, "south_north", jx, jxd)
 #ifdef MPP_LAND
      endif
 #endif
