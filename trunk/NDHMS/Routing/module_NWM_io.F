@@ -75,6 +75,7 @@ subroutine output_chrt_NWM(domainId)
    ! Establish local, allocatable arrays
    ! These are used to hold global output arrays, and global output arrays after
    ! sorting has taken place by ascending feature_id value. 
+   real, allocatable, dimension(:) :: strFlowLocal,velocityLocal
    real, allocatable, dimension(:,:) :: g_qlink
    integer, allocatable, dimension(:) :: g_linkid,g_order
    real, allocatable, dimension(:) :: g_chlat,g_chlon,g_hlink,g_zelev
@@ -157,19 +158,19 @@ subroutine output_chrt_NWM(domainId)
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
    if(nlst_rt(1)%iocFlag .eq. 0) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 1) then
       ! Analysis and Assimilation 
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 5) then
       ! Retrospective
       fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
@@ -257,6 +258,14 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_linkidOut(1))
       endif
 
+      ! Allocate local streamflow and velocity arrays. We need to do a check to
+      ! for lake_type 2. However, we cannot set the values in the global array 
+      ! to missing as this causes the model to crash.
+      allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
+      allocate(velocityLocal(RT_DOMAIN(domainId)%NLINKS))
+      strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
+      velocityLocal = RT_DOMAIN(domainId)%velocity
+ 
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
@@ -264,10 +273,22 @@ subroutine output_chrt_NWM(domainId)
 #endif
       endif
 
+      ! Loop through all the local links on this processor. For lake_type
+      ! of 2, we need to manually set the streamflow and velocity values
+      ! to the model NDV value.
+      if (RT_DOMAIN(domainId)%NLAKES .gt. 0) then
+         do iTmp=1,RT_DOMAIN(domainId)%NLINKS
+            if (RT_DOMAIN(domainId)%TYPEL(iTmp) .eq. 2) then
+               strFlowLocal(iTmp) = fileMeta%modelNdv
+               velocityLocal(iTmp) = fileMeta%modelNdv
+            endif
+         end do
+      endif
+
       ! Collect arrays from various processors through MPI, and 
       ! assemble into global arrays previously allocated.
 #ifdef MPP_LAND
-      call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,1),g_qlink(:,1))
+      call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
       call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
       !call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
       call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
@@ -275,7 +296,7 @@ subroutine output_chrt_NWM(domainId)
       !call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
       !call ReachLS_write_io(RT_DOMAIN(domainId)%ZELEV,g_zelev)
       call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral,g_QLateral)
-      call ReachLS_write_io(RT_DOMAIN(domainId)%velocity,g_velocity)
+      call ReachLS_write_io(velocityLocal,g_velocity)
       call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK,g_hlink)
       ! Optional outputs
       if(nudgeFlag .eq. 1)then
@@ -732,6 +753,8 @@ subroutine output_chrt_NWM(domainId)
    deallocate(g_qBtmVertRunoff)
    deallocate(g_accSfcLatRunoff)
    deallocate(g_accBucket)
+   deallocate(strFlowLocal)
+   deallocate(velocityLocal)
 
 end subroutine output_chrt_NWM
 

@@ -338,8 +338,8 @@ subroutine initChrtDict(chrtOutDict)
 
    ! Now establish attributes for output variables.
    chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
-                               "Head","QSfcLatRunoff","QBucket",&
-                               "QBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
+                               "Head","qSfcLatRunoff","qBucket",&
+                               "qBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
    chrtOutDict%longName(:) = (/"River Flow","Amount of stream flow alteration",&
                                "Runoff into channel reach","River Velocity",&
                                "River Stage","Runoff from terrain routing",&
