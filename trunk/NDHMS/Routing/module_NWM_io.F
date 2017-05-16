@@ -508,6 +508,19 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
 
+      ! Create global attributes specific to running output through the
+      ! channel-only configuration of the model.
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"dev_OVRTSWCRT",nlst_rt(domainId)%OVRTSWCRT)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create dev_OVRTSWCRT attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"dev_NOAH_TIMESTEP",int(nlst_rt(domainId)%dt))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create dev_NOAH_TIMESTEP attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"dev_channel_only",nlst_rt(domainId)%channel_only)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create dev_channel_only attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"dev_channelBucket_only",nlst_rt(domainId)%channelBucket_only)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create dev_channelBucket_only attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'dev','dev_ prefix indicates development/internal meta data')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create dev attribute')
+
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create feature_id dimension')
