@@ -9919,21 +9919,25 @@ if(my_id .eq. io_id) then
    !! 1) overland routing v squeegee??
    !!if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
    iret = nf_get_att_int(ncid, NF_GLOBAL, 'OVRTSWCRT', ovrtswcrt_in)
-!   print*,'ovrtswcrt_in:', ovrtswcrt_in
-   if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'OVRTSWCRT not in ' // trim(fileName) )
+   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
+   if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'OVRTSWCRT & dev_OVRTSWCRT not in ' // trim(fileName) )
    if(nlst_rt(1)%ovrtswcrt .ne. ovrtswcrt_in) &
-        call hydro_stop('Channel only: OVRTSWCRT in forcing file does not match run config.')
+        call hydro_stop('Channel only: OVRTSWCRT or dev_OVRSWCRT in forcing file does not match run config.')
    
    !! 2) NOAH_TIMESTEP same?
    iret = nf_get_att_int(ncid, NF_GLOBAL, 'NOAH_TIMESTEP', noah_timestep_in)
-   if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'NOAH_TIMESTEP not in ' // trim(fileName) )
+   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_NOAH_TIMESTEP', noah_timestep_in)
+   if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'NOAH_TIMESTEP & dev_NOAH_TIMESTEP not in ' // trim(fileName) )
    if(nlst_rt(1)%dt .ne. noah_timestep_in) &
-        call hydro_stop('Channel only: NOAH_TIMESTEP in forcing file does not match run config.')
+        call hydro_stop('Channel only: NOAH_TIMESTEP or dev_NOAH_TIMESTEP in forcing file does not match run config.')
    
    !! 3) channel_only or channelBucket_only?
-   iret = nf_get_att_int(ncid, NF_GLOBAL,       "channel_only",       channel_only_in) 
+   iret = nf_get_att_int(ncid, NF_GLOBAL, "channel_only",       channel_only_in)
+   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, "dev_channel_only",       channel_only_in) 
    if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'channel_only not in ' // trim(fileName) )
-   iret = nf_get_att_int(ncid, NF_GLOBAL, "channelBucket_only", channelBucket_only_in) 
+   
+   iret = nf_get_att_int(ncid, NF_GLOBAL, "channelBucket_only", channelBucket_only_in)
+   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, "dev_channelBucket_only", channel_only_in) 
    if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'channelBucket_only not in ' // trim(fileName) )
    !! See table of fatal combinations on wiki: https://wiki.ucar.edu/display/wrfhydro/Channel+Only
    !! First row: Can it even get to this combination? NO.

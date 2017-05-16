@@ -1497,7 +1497,10 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
    call get_t0OutputFlag(1, t0OutputFlag)
-   print*, "t0OutputFlag: ", t0OutputFlag  
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) &
+#endif        
+       print*, "t0OutputFlag: ", t0OutputFlag  
 #ifdef HYDRO_REALTIME
    if(t0OutputFlag .eq. 1) call ldas_output()
 #else
