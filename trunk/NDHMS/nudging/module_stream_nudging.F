@@ -147,7 +147,7 @@ logical,            parameter :: filterObsToDom   = .TRUE.
 character(len=15),  parameter :: missingGage = '               '
 logical,            parameter :: nudgeWAdvance = .FALSE.
 character(len=4),   parameter :: nudgingClockType = 'wall'
-logical,            parameter :: sanityQcDischarge = .false.
+logical,            parameter :: sanityQcDischarge = .true.
 logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.

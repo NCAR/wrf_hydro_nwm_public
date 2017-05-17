@@ -31,14 +31,6 @@ IGRID = 3
 ! A value of -99999 will output restarts on the first day of the month only.
 rst_dt = 120
 
-! Specify the output file write frequency...(minutes)
-out_dt = 60
-
-! Specify the number of output times to be contained within each output history file...(integer)
-!   SET = 1 WHEN RUNNING CHANNEL ROUTING ONLY/CALIBRATION SIMS!!!
-!   SET = 1 WHEN RUNNING COUPLED TO WRF!!!
-SPLIT_OUTPUT_COUNT = 1
-
 ! Reset the LSM soil states from the high-res routing restart file (1=overwrite, 0=no overwrite)
 ! NOTE: Only turn this option on if overland or subsurface rotuing is active!
 rst_typ = 1
@@ -55,11 +47,19 @@ RSTRT_SWC = 0
 ! Specify baseflow/bucket model initialization...(0=cold start from table, 1=restart file)
 GW_RESTART = 1
 
+!!!! -------------------- MODEL OUTPUT CONTROL -------------------- !!!!
+
+! Specify the output file write frequency...(minutes)
+out_dt = 60
+
+! Specify the number of output times to be contained within each output history file...(integer)
+!   SET = 1 WHEN RUNNING CHANNEL ROUTING ONLY/CALIBRATION SIMS!!!
+!   SET = 1 WHEN RUNNING COUPLED TO WRF!!!
+SPLIT_OUTPUT_COUNT = 1
+
 ! Specify the minimum stream order to output to netcdf point file...(integer)
 ! Note: lower value of stream order produces more output.
 order_to_write = 4
-
-!!!! -------------------- MODEL OUTPUT CONTROL -------------------- !!!!
 
 ! Flag to turn on/off new I/O routines: 0 = old (default), 1 = new (with scale/offset/compression),
 ! 2 = new (with scale/offset/NO compression)
@@ -90,7 +90,7 @@ output_gw = 0                ! Netcdf GW output
                              !      0 = no output, 1 = coupled gw model output (2d, future feature),
                              !      2 = standard gw bucket output (1d)
 outlake  = 0                 ! Netcdf grid of lake values (1d)
-                             !      0 = no output, 1 = full point netcdf, 2 = fast output
+                             !      0 = no output, 1 = full point netcdf, 2 = with ComID
 
 !!!! ------------ PHYSICS OPTIONS AND RELATED SETTINGS ------------ !!!!
 
