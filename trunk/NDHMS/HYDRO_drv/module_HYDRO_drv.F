@@ -1432,9 +1432,9 @@ write(78,*) "finish decomposion"
 #endif
 #endif
 
+call get_dist_lsm(did) 
 
 if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
-   call get_dist_lsm(did) 
    call get_dist_lrt(did)
 end if
 
