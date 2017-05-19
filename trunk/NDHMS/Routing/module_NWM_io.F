@@ -312,11 +312,13 @@ subroutine output_chrt_NWM(domainId)
          call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
          call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
       endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
+         nlst_rt(domainId)%channel_only                .eq. 0         ) then
          fileMeta%outFlag(8) = 1
          call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
       endif
       if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
+         !! JLM: unsure the following will work... but this is caveated in namelist.
          fileMeta%outFlag(9) = 1
          fileMeta%outFlag(10) = 1
          call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
@@ -1258,6 +1260,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       where ( varRealTmp .eq. fileMeta%modelNdv ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdvInt ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdv2 ) varRealTmp = fileMeta%fillReal(varInd)
+      where ( varRealTmp .eq. fileMeta%modelNdv3 ) varRealTmp = fileMeta%fillReal(varInd)
       do zTmp = 1,fileMeta%numLev(varInd)
          localCompTmp = fileMeta%fillComp(varInd)
          globalCompTmp = fileMeta%fillComp(varInd)
