@@ -223,10 +223,6 @@ CONTAINS
   ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
   ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
   ! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
-  allocate( rt_domain(did)%dist_lsm (ix,jx,9) )
-            rt_domain(did)%dist_lsm = 0.0 
-  allocate( rt_domain(did)%lat_lsm (ix,jx) )
-  allocate( rt_domain(did)%lon_lsm (ix,jx) )
 
   ! allocate( rt_domain(did)%SICE  (IX,JX,NSOIL) )
   allocate( rt_domain(did)%SMCMAX1  (IX,JX) )
@@ -270,6 +266,10 @@ CONTAINS
 
 
   !! needed regardless
+  allocate( rt_domain(did)%dist_lsm (ix,jx,9) )
+            rt_domain(did)%dist_lsm = 0.0 
+  allocate( rt_domain(did)%lat_lsm (ix,jx) )
+  allocate( rt_domain(did)%lon_lsm (ix,jx) )
   rt_domain(did)%timestep_flag = 1    ! default is cold start
   allocate( rt_domain(did)%dist (ixrt,jxrt,9) )
   rt_domain(did)%dist = -999  
@@ -321,6 +321,7 @@ CONTAINS
      allocate( rt_domain(did)%TYPEL(nsizes) )
      allocate( rt_domain(did)%ORDER(nsizes) )
      allocate( rt_domain(did)%QLINK(nsizes,2) )
+
 #ifdef WRF_HYDRO_NUDGING
      allocate( rt_domain(did)%nudge(nsizes) )
 #endif

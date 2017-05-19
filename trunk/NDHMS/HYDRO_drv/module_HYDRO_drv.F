@@ -47,7 +47,8 @@ module module_HYDRO_drv
 #endif
 
    use module_UDMAP, only: get_basn_area_nhd
-
+   use netcdf
+   
    implicit none
 
 #include <netcdf.inc>
@@ -1297,6 +1298,7 @@ integer, parameter :: r4 = selected_real_kind(4)
 real,    parameter :: zeroFlt=0.0000000000000000000_r4
 integer, parameter :: r8 = selected_real_kind(8)
 real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
+integer            :: iret, ncid, ascIndId
 
 #ifdef MPP_LAND
 call  MPP_LAND_INIT()
@@ -1432,12 +1434,32 @@ write(78,*) "finish decomposion"
 #endif
 #endif
 
-call get_dist_lsm(did) 
 
-if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
-   call get_dist_lrt(did)
-end if
-
+if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
+     nlst_rt(1)%nwmIo .ne. 0) then
+   !! This is the "decoder ring" for reading channel-only forcing from nwmIo=1,2 CHRTOUT files.
+   !! Only needed on io_id
+   if(my_id .eq. io_id) then
+      allocate(rt_domain(did)%ascendIndex(rt_domain(did)%gnlinksl))
+      iret = nf90_open(trim(nlst_rt(1)%route_link_f),NF90_NOWRITE,ncid=ncid)
+      !if(iret .ne. 0) call hdyro_stop
+      if(iret .ne. 0) call hydro_stop('ERROR: Unable to open RouteLink file for index extraction')
+      iret = nf90_inq_varid(ncid,'ascendingIndex',ascIndId)
+      if(iret .ne. 0) call hydro_stop('ERROR: Unable to find ascendingIndex from RouteLink file.')
+      iret = nf90_get_var(ncid,ascIndId,rt_domain(did)%ascendIndex)
+      if(iret .ne. 0) call hydro_stop('ERROR: Unable to extract ascendingIndex from RouteLink file.')
+      iret = nf90_close(ncid)
+      if(iret .ne. 0) call hydro_stop('ERROR: Unable to close RouteLink file.')
+   else 
+      allocate(rt_domain(did)%ascendIndex(1))
+      rt_domain(did)%ascendIndex(1)=-9
+   endif
+endif
+  
+   
+call get_dist_lsm(did) !! always needed (channel_only and channelBucket_only)
+if(nlst_rt(did)%channel_only .ne. 1)  call get_dist_lrt(did) !! needed forchannelBucket_only
+  
 ! rt model initilization
 call LandRT_ini(did)
 

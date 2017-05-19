@@ -115,6 +115,7 @@
   REAL, allocatable, DIMENSION(:)      :: So         !link slope
   REAL, allocatable, DIMENSION(:)      :: ChSSlp, Bw !trapezoid link params
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
+  integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING
   REAL, allocatable, DIMENSION(:)      :: nudge      !difference between modeled and DA adj link flow
 #endif
