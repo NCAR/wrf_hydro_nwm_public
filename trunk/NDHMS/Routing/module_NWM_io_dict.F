@@ -124,6 +124,7 @@ type ldasMeta
                                                    ! output does not all contain valid data. 
    real :: modelNdv ! NDV value represented within the model code
    real :: modelNdv2 ! Alternative NDV value in NoahMP
+   real :: modelNdv3 ! Alternative NDV value in NoahMP
    integer :: modelNdvInt ! NDV value represented in model as integer
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -390,6 +391,7 @@ subroutine initLdasDict(ldasOutDict)
 
    ldasOutDict%modelNdv = 9.9692099683868690E36
    ldasOutDict%modelNdv2 = -1.E33
+   ldasOutDict%modelNdv3 = -1.E36
    ldasOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.

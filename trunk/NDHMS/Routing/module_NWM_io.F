@@ -1260,6 +1260,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       where ( varRealTmp .eq. fileMeta%modelNdv ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdvInt ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdv2 ) varRealTmp = fileMeta%fillReal(varInd)
+      where ( varRealTmp .eq. fileMeta%modelNdv3 ) varRealTmp = fileMeta%fillReal(varInd)
       do zTmp = 1,fileMeta%numLev(varInd)
          localCompTmp = fileMeta%fillComp(varInd)
          globalCompTmp = fileMeta%fillComp(varInd)
