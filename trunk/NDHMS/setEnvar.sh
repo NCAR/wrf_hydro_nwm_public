@@ -22,7 +22,7 @@ export WRFIO_NCD_LARGE_FILE_SUPPORT=1
 export HYDRO_REALTIME=1
 
 ### turn on wcoss flag 
-export NCEP_WCOSS=1
+export NCEP_WCOSS=0
 
 ### turn nudging off
 export WRF_HYDRO_NUDGING=0
