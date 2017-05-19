@@ -6308,10 +6308,10 @@ end subroutine RESTART_IN_nc
          integer :: l, g
          real, dimension(:) ::  var_out
          logical, optional, intent(in) :: fatalErr
-
          logical :: fatalErr_local
-
-         real,allocatable,dimension(:) ::  var
+         real :: scale_factor, add_offset
+         integer :: ovrtswcrt_in, ss
+         real,allocatable,dimension(:) ::  var, varTmp
 
          fatalErr_local = .false.
          if(present(fatalErr)) fatalErr_local=fatalErr
@@ -6336,26 +6336,49 @@ end subroutine RESTART_IN_nc
          call mpp_land_bcast_int1(iret)
          if (iret /= 0) then
 #ifdef HYDRO_D
-               print*, 'read_rst_crt_reach_nc: variable not found: name = "', trim(varStr)//'"'
+            print*, 'read_rst_crt_reach_nc: variable not found: name = "', trim(varStr)//'"'
 #endif
 
-              if(allocated(var))  deallocate(var)
-
-               !! JLM: is this desirable?
-               !! JLM I think so, maybe an option to this routine specifying if errors are fatal?
-               if (fatalErr_local) &
-                    call hydro_stop("read_rst_crt_reach_nc: variable not found: "//trim(varStr))
+            if(allocated(var))  deallocate(var)
+            
+            !! JLM: is this desirable?
+            !! JLM I think so, maybe an option to this routine specifying if errors are fatal?
+            if (fatalErr_local) &
+                 call hydro_stop("read_rst_crt_reach_nc: variable not found: "//trim(varStr))
               
-               return
-            endif
-#ifdef HYDRO_D
-         print*, "read restart variable ", varStr
-         call flush(6)
-#endif
+            return
+         endif
+
          if(my_id .eq. IO_id) then
+#ifdef HYDRO_D
+            print*, "read restart variable ", varStr
+            call flush(6)
+#endif
+            
             var = 0.0
             iret = nf_get_var_real(ncid, varid, var)
+            !! JLM: need a check here.
+
+            iret = nf90_get_att(ncid, varid, 'scale_factor', scale_factor)
+            if(iret .eq. 0) var = var * scale_factor           
+            iret = nf90_get_att(ncid, varid, 'add_offset', add_offset)
+            if(iret .eq. 0) var = var + add_offset
+            
+            !! NWM channel-only forcings have to be "decoded"/unshuffled.
+            !! As of NWM1.2 the following global attribute is different/identifiable
+            !! for files created when nwmIo=1,2 (not 0).
+            iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
+            if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
+               iret .eq. 0) then
+               allocate(varTmp(gnlinksl))
+               do ss=1,gnlinksl
+                  varTmp(rt_domain(did)%ascendIndex(ss)+1)=var(ss)
+               end do
+               var=varTmp
+               deallocate(varTmp)
+            end if               
          endif
+                           
          call ReachLS_decomp(var,   var_out)
          if(allocated(var)) deallocate(var)
 #else
@@ -6374,7 +6397,6 @@ end subroutine RESTART_IN_nc
          if(allocated(var)) deallocate(var)
 #endif
 
-
          return
          end subroutine read_rst_crt_reach_nc_real
 
@@ -6389,7 +6411,8 @@ end subroutine RESTART_IN_nc
          integer :: varid, n, iret, l, g
          logical :: fatalErr_local
          real*8,allocatable,dimension(:) ::  var
-
+         real :: scale_factor, add_offset
+         
          fatalErr_local = .false.
          if(present(fatalErr)) fatalErr_local=fatalErr
 
@@ -6430,6 +6453,13 @@ end subroutine RESTART_IN_nc
          if(my_id .eq. IO_id) then
             var = 0.0
             iret = nf_get_var_real(ncid, varid, var)
+            !! JLM need a check here... 
+            
+            iret = nf90_get_att(ncid, varid, 'scale_factor', scale_factor)           
+            if(iret .eq. 0) var = var * scale_factor
+            iret = nf90_get_att(ncid, varid, 'add_offset', add_offset)
+            if(iret .eq. 0) var = var + add_offset
+
          endif
          call ReachLS_decomp(var,   var_out)
          if(allocated(var)) deallocate(var)

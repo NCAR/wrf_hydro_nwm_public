@@ -116,7 +116,19 @@ CONTAINS
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
                     UDMP_OPT, GWBUCKPARM_file, iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+      
+#ifdef WRF_HYDRO_NUDGING
+   namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
+                            readTimesliceParallel,  temporalPersistence,    &
+                            persistBias,            nudgingLastObsFile,     &
+                            timeSlicePath,          nLastObs,               &
+                            minNumPairsBiasPersist, maxAgePairsBiasPersist, &
+                            biasWindowBeforeT0,     invDistTimeWeightBias,  &
+                            noConstInterfBias
+#endif
 
+   !! ---- End definitions ----
+   
    ! Default values for HYDRO_nlist
    UDMP_OPT = 0
    rst_bi_in = 0
@@ -127,13 +139,6 @@ CONTAINS
    output_channelBucket_influx = 0
 
 #ifdef WRF_HYDRO_NUDGING
-   namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
-                            readTimesliceParallel,  temporalPersistence,    &
-                            persistBias,            nudgingLastObsFile,     &
-                            timeSlicePath,          nLastObs,               &
-                            minNumPairsBiasPersist, maxAgePairsBiasPersist, &
-                            biasWindowBeforeT0,     invDistTimeWeightBias,  &
-                            noConstInterfBias
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
    netwkReExFile    = "DOMAIN/netwkReExFile.nc"

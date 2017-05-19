@@ -355,7 +355,7 @@ subroutine initChrtDict(chrtOutDict)
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"/)
-   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.01,0.01,0.01,&
+   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.001,0.001,0.001,&
                                  0.01,0.01]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0]
