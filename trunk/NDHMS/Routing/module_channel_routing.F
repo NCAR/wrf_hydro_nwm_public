@@ -2327,7 +2327,7 @@ do nt = 1, nsteps
    end do
    
    
-#ifdef WRF_HYDRO_NUDGING         
+#ifdef WRF_HYDRO_NUDGING
    if(.not. nudgeWAdvance) call nudge_term_all(qlink, nudge, int(nt*dtrt_ch))
 #endif /* WRF_HYDRO_NUDGING */
   
