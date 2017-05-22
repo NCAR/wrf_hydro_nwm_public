@@ -2257,7 +2257,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = 213095!2211014  ! see above
+checkInd = 2565959 !213095!2211014  ! see above
 
 call geth_newdate(hydroTime, lsmTime, hydroAdv)
 
@@ -2460,9 +2460,8 @@ else if (temporalPersistence) then
                !! use the hydro model time to define the end of the bias window
                call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)               
             endif
-            !! JLM change dtrt_ch to obsResolutionInt
             if(persistBias_local .and. invDistTimeWeightBias) &
-                 biasWeights(tt) = real(obsDtInt + nlst_rt(did)%dtrt_ch) 
+                 biasWeights(tt) = real(obsDtInt + obsResolutionInt) 
             if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
             whObsTooOld(tt) = .false. 
          end do
@@ -2591,15 +2590,19 @@ else if (temporalPersistence) then
 
             !! normalize to the latest (least) time difference and invert.
             biasWeights=1./(biasWeights/minval(biasWeights, &
-                 mask=biasMask .and. (biasWeights.gt.zero) ))
+                                               mask=biasMask .and. (biasWeights.gt.zero) ))
             biasWeights=biasWeights**invDistTimeWeightExp !! = 5.000, hard coded above
 
-            biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
+            !! The less than equal to one prevents division by huge/infinite
+            !! numbers which may result from zero time differences.
+            biasWeightSum=sum(biasWeights, mask=biasMask              .and. &
+                                                (biasWeights.gt.zero) .and. &
+                                                (biasWeights.le.one)         )
             theBias = sum( biasWeights *                                              &
-                 (obsStaticStr(whGageId)%lastObsDischarge -                 &
-                 obsStaticStr(whGageId)%lastObsModelDischarge),            &
-                 mask=biasMask .and. (biasWeights.gt.zero)) / &
-                 biasWeightSum
+                           (obsStaticStr(whGageId)%lastObsDischarge -                 &
+                            obsStaticStr(whGageId)%lastObsModelDischarge),            &
+                                         mask=biasMask .and. (biasWeights.gt.zero)) / &
+                                         biasWeightSum
          endif
 
       else 
