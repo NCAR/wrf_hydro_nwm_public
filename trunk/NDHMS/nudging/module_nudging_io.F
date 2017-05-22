@@ -188,6 +188,9 @@ deallocate(gageQCIn)
 
 !! JLM TODO fix temporary hardwire QC sanity checks
 if (sanityQcDischarge) then
+   !! First, quality check on the quality flag!
+   where(gageQC .lt. 0 .or. gageQC .gt. 1) gageQC=0
+   !! Now flow QC.
    where(gageDischarge .le. 0.000) gageQC=0
    !! peak flow on MS river *2
    !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
