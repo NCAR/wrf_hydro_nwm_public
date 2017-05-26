@@ -7,7 +7,7 @@
 setenv WRF_HYDRO 1
 
 ### turn on output information during running time.
-setenv HYDRO_D 0
+setenv HYDRO_D 1
 
 ### turn on distributed parameters for NoahMP
 setenv SPATIAL_SOIL 0  
