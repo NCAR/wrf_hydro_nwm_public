@@ -2644,7 +2644,7 @@ else if (temporalPersistence) then
             !! Tweaks
             !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
             !2
-            theBias = theBias * (1 - noConstInterfCoeff*(deltaT0Discharge/t0Discharge(linkIndIn)))
+            theBias = theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
 
             theBias = min( theBias, zero )             ! do not let the bias go positive
             theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
@@ -2659,7 +2659,7 @@ else if (temporalPersistence) then
 
             !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
             !2
-            theBias = theBias * (1 - noConstInterfCoeff*(deltaT0Discharge/t0Discharge(linkIndIn)))
+            theBias = theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
             theBias = max( theBias, zero )  ! do not let the bias go negative
 
             if(linkInd .eq. checkInd) then
