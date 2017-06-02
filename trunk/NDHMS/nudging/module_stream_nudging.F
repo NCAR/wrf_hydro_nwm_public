@@ -152,7 +152,7 @@ logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.
 real,               parameter :: invDistTimeWeightExp = 5.000
-real,               parameter :: noConstInterfCoeff   = 0.500
+real,               parameter :: noConstInterfCoeff   = 2.0 !0.500
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
