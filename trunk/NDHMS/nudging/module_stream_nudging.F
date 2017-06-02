@@ -152,7 +152,7 @@ logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.
 real,               parameter :: invDistTimeWeightExp = 5.000
-real,               parameter :: noConstInterfCoeff   = 2.0 !0.500
+real,               parameter :: noConstInterfCoeff   = 1.0 !0.500
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
@@ -2639,31 +2639,55 @@ else if (temporalPersistence) then
          !! Maybe make this an option later if it works.
          !! do I need to stash the t0 flow? It is not the same as the last ob or the lastObsModelDischarge
          deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn)
-         if(theBias .lt. zero .and. deltaT0Discharge .lt. 0) then
 
-            !! Tweaks
-            !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
-            !2
-            theBias = theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
+         if(theBias                .lt. zero .and. &
+            deltaT0Discharge       .lt. zero        ) then
 
+            if(t0Discharge(linkIndIn) .gt. .01) then
+               !! Tweaks
+               !1!theBias=theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
+               !2!theBias=theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
+               !3
+               theBias = theBias*&
+                    (1.0-(noConstInterfCoeff* &
+                    ( (abs(deltaT0Discharge)/t0Discharge(linkIndIn)+.25)**2.5 - .25**2.5) ) )
+            else
+               !! if the toDischarge is really small, zero out the bias.
+               theBias = zero
+            end if
             theBias = min( theBias, zero )             ! do not let the bias go positive
             theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
-
+          
             if(linkInd .eq. checkInd) then 
                print*,'JLM 2 the bias: ', theBias
                if(flushAll) flush(flushUnit)
             endif
-                        
+            
          end if
-         if(theBias .gt. zero .and. deltaT0Discharge .gt. 0) then
 
-            !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
-            !2
-            theBias = theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
+            
+         if(theBias                .gt. zero .and. &
+              deltaT0Discharge       .gt. zero        ) then
+            
+            if(t0Discharge(linkIndIn) .gt. .01) then
+               !! Tweaks
+               !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
+               !2!theBias=theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
+               !3
+               theBias = theBias*&
+                    (1.0-(noConstInterfCoeff* &
+                    ( (abs(deltaT0Discharge)/t0Discharge(linkIndIn)+.25)**2.5 - .25**2.5) ) )
+            else
+               !! if the toDischarge is really small, use a naminal t0Discharge of .01
+               theBias = theBias*&
+                    (1.0-(noConstInterfCoeff* &
+                    ( (abs(deltaT0Discharge)/.01+.25)**2.5 - .25**2.5) ) )
+            end if
             theBias = max( theBias, zero )  ! do not let the bias go negative
-
-            if(linkInd .eq. checkInd) then
-               print*,'JLM 3 the bias: ', theBias
+               
+               
+               if(linkInd .eq. checkInd) then
+                  print*,'JLM 3 the bias: ', theBias
                if(flushAll) flush(flushUnit)
             endif
 
