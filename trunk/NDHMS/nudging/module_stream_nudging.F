@@ -2638,10 +2638,14 @@ else if (temporalPersistence) then
          !! Game to reduce bias issues.
          !! Maybe make this an option later if it works.
          !! do I need to stash the t0 flow? It is not the same as the last ob or the lastObsModelDischarge
-         deltaT0Discharge = discharge(obsInd) - (t0Discharge(linkIndIn) + theBias)
+         deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn)
          if(theBias .lt. zero .and. deltaT0Discharge .lt. 0) then
-            theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
-            
+
+            !! Tweaks
+            !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
+            !2
+            theBias = theBias * (1 - noConstInterfCoeff*(deltaT0Discharge/t0Discharge(linkIndIn)))
+
             theBias = min( theBias, zero )             ! do not let the bias go positive
             theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
 
@@ -2652,7 +2656,10 @@ else if (temporalPersistence) then
                         
          end if
          if(theBias .gt. zero .and. deltaT0Discharge .gt. 0) then
-            theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
+
+            !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
+            !2
+            theBias = theBias * (1 - noConstInterfCoeff*(deltaT0Discharge/t0Discharge(linkIndIn)))
             theBias = max( theBias, zero )  ! do not let the bias go negative
 
             if(linkInd .eq. checkInd) then
