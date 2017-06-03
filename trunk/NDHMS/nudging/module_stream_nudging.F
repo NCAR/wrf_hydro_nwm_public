@@ -183,10 +183,10 @@ character(len=19), parameter :: missingLastObsTime='9999999999999999999'
 character(len=2) :: obsResolution   
 logical :: gotT0Discharge
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
 integer, parameter :: flushUnit=6
 logical, parameter :: flushAll=.true.
-!#endif
+#endif
 
 #ifdef MPP_LAND
 !========================
@@ -2264,13 +2264,13 @@ call geth_newdate(hydroTime, lsmTime, hydroAdv)
 nudge_term_link = zero
 weighting = zero
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
 if(linkInd .eq. checkInd) then
    print*,'Ndg: checkInd: hydroTime: ',hydroTime      
    print*,'Ndg: checkInd: linkInd', linkInd
    if(flushAll) flush(flushUnit)
 end if
-!#endif
+#endif
 
 !! JLM: document what is this loop doing? 
 !! 1) Moving the observation structure in to nudginLastObs struct.
@@ -2360,7 +2360,7 @@ do tt=1,size(obsTimeStr)
            *obsStaticStr(staticInd)%ws(ll)              &
            *obsStaticStr(staticInd)%ws(ll)     
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
       if(linkInd .eq. checkInd) then 
 !if( (obsTimeStr(tt)%time .eq. obsTimeStr(tt)%obsStr(oo)%obsTime) .and. &
 !    ( abs(discharge(obsInd)+theInnov - obsTimeStr(tt)%obsStr(oo)%obsDischarge) .gt. .01) ) then
@@ -2388,7 +2388,7 @@ do tt=1,size(obsTimeStr)
          print*,'Ndg: checkInd: weighting: ', weighting
          if(flushAll) flush(flushUnit)
       endif
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */
       
    enddo ! oo
 
@@ -2613,11 +2613,6 @@ else if (temporalPersistence) then
                                          mask=biasMask .and. (biasWeights.gt.zero)) / &
                                          biasWeightSum
 
-            if(linkInd .eq. checkInd) then 
-               print*,'JLM 0 the bias: ', theBias
-               if(flushAll) flush(flushUnit)
-            end if
-            
          endif
 
       else 
@@ -2626,11 +2621,6 @@ else if (temporalPersistence) then
          theBias = sum( obsStaticStr(whGageId)%lastObsDischarge -                       &
                         obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
                    max( 1, count(biasMask) )
-
-         if(linkInd .eq. checkInd) then 
-            print*,'JLM 1 the bias: ', theBias
-            if(flushAll) flush(flushUnit)
-         end if
          
       end if
 
@@ -2658,11 +2648,6 @@ else if (temporalPersistence) then
             theBias = min( theBias, zero )             ! do not let the bias go positive
             theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
           
-            if(linkInd .eq. checkInd) then 
-               print*,'JLM 2 the bias: ', theBias
-               if(flushAll) flush(flushUnit)
-            endif
-            
          end if
 
             
@@ -2684,13 +2669,7 @@ else if (temporalPersistence) then
                     ( (abs(deltaT0Discharge)/.01+.25)**2.5 - .25**2.5) ) )
             end if
             theBias = max( theBias, zero )  ! do not let the bias go negative
-               
-               
-               if(linkInd .eq. checkInd) then
-                  print*,'JLM 3 the bias: ', theBias
-               if(flushAll) flush(flushUnit)
-            endif
-
+                              
          end if
       end if
       
@@ -2722,7 +2701,7 @@ else if (temporalPersistence) then
    endif
 
 
-!#ifdef HYDRO_D
+#ifdef HYDRO_D
    if(linkInd .eq. checkInd) then 
       print*,'Ndg: checkInd pst: -------------------'
       print*,'Ndg: checkInd pst: usgsId: ', prstGageId
@@ -2776,7 +2755,7 @@ else if (temporalPersistence) then
 
       if(flushAll) flush(flushUnit)
    end if
-!#endif /* HYDRO_D */
+#endif /* HYDRO_D */
 endif !! if(abs(weighting) .gt. smallestWeight) then  !! 1.e-10
 
 #ifdef HYDRO_D
