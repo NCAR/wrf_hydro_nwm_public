@@ -152,7 +152,7 @@ logical,            parameter :: readTimesliceErrFatal = .false.
 logical,            parameter :: futureLastObsFatal = .true.
 logical,            parameter :: futureLastObsZero  = .false.
 real,               parameter :: invDistTimeWeightExp = 5.000
-real,               parameter :: noConstInterfCoeff   = 0.500
+real,               parameter :: noConstInterfCoeff   = 1.0 !0.500
 
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
@@ -2257,7 +2257,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = 2565959 !213095!2211014  ! see above
+checkInd = 2139306 !2565959 !213095!2211014  ! see above
 
 call geth_newdate(hydroTime, lsmTime, hydroAdv)
 
@@ -2461,7 +2461,11 @@ else if (temporalPersistence) then
                call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)               
             endif
             if(persistBias_local .and. invDistTimeWeightBias) &
-                 biasWeights(tt) = real(obsDtInt + obsResolutionInt) 
+                 !JLM OLD
+                 biasWeights(tt) = real(obsDtInt + nlst_rt(did)%dtrt_ch)
+                 !JLM NEW
+                 !biasWeights(tt) = real(obsDtInt + obsResolutionInt)
+            
             if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
             whObsTooOld(tt) = .false. 
          end do
@@ -2595,14 +2599,20 @@ else if (temporalPersistence) then
 
             !! The less than equal to one prevents division by huge/infinite
             !! numbers which may result from zero time differences.
-            biasWeightSum=sum(biasWeights, mask=biasMask              .and. &
-                                                (biasWeights.gt.zero) .and. &
-                                                (biasWeights.le.one)         )
+
+            ! JLM OLD 
+            biasWeightSum=sum(biasWeights, mask=biasMask .and. (biasWeights.gt.zero) )
+            ! JLM NEW
+            !biasWeightSum=sum(biasWeights, mask=biasMask              .and. &
+            !                                    (biasWeights.gt.zero) .and. &
+            !                                    (biasWeights.le.one)         )
+            
             theBias = sum( biasWeights *                                              &
                            (obsStaticStr(whGageId)%lastObsDischarge -                 &
                             obsStaticStr(whGageId)%lastObsModelDischarge),            &
                                          mask=biasMask .and. (biasWeights.gt.zero)) / &
                                          biasWeightSum
+
          endif
 
       else 
@@ -2618,16 +2628,48 @@ else if (temporalPersistence) then
          !! Game to reduce bias issues.
          !! Maybe make this an option later if it works.
          !! do I need to stash the t0 flow? It is not the same as the last ob or the lastObsModelDischarge
-         deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn) 
-         if(theBias .lt. zero .and. deltaT0Discharge .lt. 0) then
-            theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
-            
+         deltaT0Discharge = discharge(obsInd) - t0Discharge(linkIndIn)
+
+         if(theBias                .lt. zero .and. &
+            deltaT0Discharge       .lt. zero        ) then
+
+            if(t0Discharge(linkIndIn) .gt. .01) then
+               !! Tweaks
+               !1!theBias=theBias - noConstInterfCoeff*(deltaT0Discharge)  ! negative - negative
+               !2!theBias=theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
+               !3
+               theBias = theBias*&
+                    (1.0-(noConstInterfCoeff* &
+                    ( (abs(deltaT0Discharge)/t0Discharge(linkIndIn)+.25)**2.5 - .25**2.5) ) )
+            else
+               !! if the toDischarge is really small, zero out the bias.
+               theBias = zero
+            end if
             theBias = min( theBias, zero )             ! do not let the bias go positive
             theBias = max( theBias, -1*discharge(obsInd)/2. ) ! do not let the bias to remove be more than half the total flow.
+          
          end if
-         if(theBias .gt. zero .and. deltaT0Discharge .gt. 0) then
-            theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
-            theBias = max( theBias, zero )             ! do not let the bias go negative
+
+            
+         if(theBias                .gt. zero .and. &
+              deltaT0Discharge       .gt. zero        ) then
+            
+            if(t0Discharge(linkIndIn) .gt. .01) then
+               !! Tweaks
+               !1 !theBias = theBias - noConstInterfCoeff*(deltaT0Discharge)  ! positive - positive
+               !2!theBias=theBias*(1-(noConstInterfCoeff*abs(deltaT0Discharge)/t0Discharge(linkIndIn)))
+               !3
+               theBias = theBias*&
+                    (1.0-(noConstInterfCoeff* &
+                    ( (abs(deltaT0Discharge)/t0Discharge(linkIndIn)+.25)**2.5 - .25**2.5) ) )
+            else
+               !! if the toDischarge is really small, use a naminal t0Discharge of .01
+               theBias = theBias*&
+                    (1.0-(noConstInterfCoeff* &
+                    ( (abs(deltaT0Discharge)/.01+.25)**2.5 - .25**2.5) ) )
+            end if
+            theBias = max( theBias, zero )  ! do not let the bias go negative
+                              
          end if
       end if
       
@@ -2666,6 +2708,7 @@ else if (temporalPersistence) then
       print*,'Ndg: checkInd pst: -------------------'
       print*,'Ndg: checkInd pst: prstGageId: ',      prstGageId
       print*,'Ndg: checkInd pst: obsInd: ',          obsInd
+      print*,'Ndg: checkInd pst: initTime:',         initTime
       print*,'Ndg: checkInd pst: hydroTime: ',       hydroTime
       print*,'Ndg: checkInd pst: flowmonth: ',       flowMonth
       print*,'Ndg: checkInd pst: lastObsTime: ',     obsStaticStr(whGageId)%lastObsTime(nTimesLastObs)
@@ -2710,8 +2753,7 @@ else if (temporalPersistence) then
 
       print*,'Ndg: checkInd pst: nudge_term_link: ', nudge_term_link
 
-      !if(flushAll) flush(flushUnit)
-      flush(6)
+      if(flushAll) flush(flushUnit)
    end if
 #endif /* HYDRO_D */
 endif !! if(abs(weighting) .gt. smallestWeight) then  !! 1.e-10
