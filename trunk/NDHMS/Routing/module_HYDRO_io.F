@@ -6973,7 +6973,7 @@ do j = 1,JXRT
          else if ( DIRECTION(i, j) .eq. 128) then
 
             !-- 128's can flow out of the North or East edge
-            if ((i + 1 .gt. IXRT)  & .or.  (j + 1 .gt. JXRT))  then !   this is due north edge
+            if ((i + 1 .gt. IXRT)   .or.  (j + 1 .gt. JXRT))  then !   this is due north edge
                goto 201
             elseif (CH_NETRT(i + 1, j + 1).lt.0) then !North East
                goto 201
