@@ -625,7 +625,9 @@ deallocate(charArr15)
 iret = nf90_inq_varid(ncid, "time", varid)
 allocate(charArr19(nTime,nSpace))
 do tt=1,nTime
-      charArr19(tt,:) = lastObsStr(:)%lastObsTime(tt)
+   do ss=1,nSpace
+      charArr19(tt,ss) = lastObsStr(ss)%lastObsTime(tt)
+   end do
 end do
 iret = nf90_put_var(ncid, varid, charArr19)
 deallocate(charArr19)
@@ -634,7 +636,9 @@ deallocate(charArr19)
 iret = nf90_inq_varid(ncid, "discharge", varid)
 allocate(tmpFloat(nTime,nSpace))
 do tt=1,nTime
-   tmpFloat(tt,:) = lastObsStr(:)%lastObsDischarge(tt)
+   do ss=1,nSpace
+      tmpFloat(tt,ss) = lastObsStr(ss)%lastObsDischarge(tt)
+   end do
 end do
 iret = nf90_put_var(ncid, varid, tmpFloat)
 deallocate(tmpFloat)
@@ -643,7 +647,9 @@ deallocate(tmpFloat)
 iret = nf90_inq_varid(ncid, "model_discharge", varid)
 allocate(tmpFloat(nTime,nSpace))
 do tt=1,nTime
-   tmpFloat(tt,:) = lastObsStr(:)%lastObsModelDischarge(tt)
+   do ss=1,nSpace
+      tmpFloat(tt,ss) = lastObsStr(ss)%lastObsModelDischarge(tt)
+   end do
 end do
 iret = nf90_put_var(ncid, varid, tmpFloat)
 deallocate(tmpFloat)
@@ -652,7 +658,9 @@ deallocate(tmpFloat)
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
 allocate(qualityInt2(nTime,nSpace))
 do tt=1,nTime
-   qualityInt2(tt,:) = nint(100*lastObsStr(:)%lastObsQuality(tt), kind=2)
+   do ss=1,nSpace
+   qualityInt2(tt,ss) = nint(100*lastObsStr(ss)%lastObsQuality(tt), kind=2)
+end do
 end do
 iret = nf90_put_var(ncid, varid, qualityInt2) 
 deallocate(qualityInt2)
@@ -736,7 +744,7 @@ implicit none
 character(len=*),       intent(in)                  :: fileName
 type(lastObsStructure), intent(inout), dimension(:) :: lastObsStr
 
-integer :: nSpace, nTime, tt
+integer :: nSpace, nTime, tt, ss
 integer:: ncid, iret, varid
 real,              allocatable, dimension(:,:) :: tmpFloat
 integer*2,         allocatable, dimension(:,:) :: qualityInt2
@@ -762,7 +770,9 @@ iret = nf90_inq_varid(ncid, "time", varid)
 allocate(charArr19(nTime,nSpace))
 iret = nf90_get_var(ncid, varid, charArr19)
 do tt=1,nTime
-   lastObsStr(:)%lastObsTime(tt)=charArr19(tt,:)
+   do ss=1,nSpace
+      lastObsStr(ss)%lastObsTime(tt)=charArr19(tt,ss)
+   end do
 end do
 deallocate(charArr19)
 
@@ -771,7 +781,9 @@ iret = nf90_inq_varid(ncid, "discharge", varid)
 allocate(tmpFloat(nTime,nSpace))
 iret = nf90_get_var(ncid, varid, tmpFloat)
 do tt=1,nTime
-   lastObsStr(:)%lastObsDischarge(tt) = tmpFloat(tt,:)
+   do ss=1,nSpace
+      lastObsStr(ss)%lastObsDischarge(tt) = tmpFloat(tt,ss)
+   end do
 end do
 deallocate(tmpFloat)
 
@@ -780,7 +792,9 @@ iret = nf90_inq_varid(ncid, "model_discharge", varid)
 allocate(tmpFloat(nTime,nSpace))
 iret = nf90_get_var(ncid, varid, tmpFloat)
 do tt=1,nTime
-   lastObsStr(:)%lastObsModelDischarge(tt) = tmpFloat(tt,:)
+   do ss=1,nSpace
+      lastObsStr(ss)%lastObsModelDischarge(tt) = tmpFloat(tt,ss)
+   end do
 end do
 deallocate(tmpFloat)
 
@@ -789,7 +803,9 @@ iret = nf90_inq_varid(ncid, "discharge_quality", varid)
 allocate(qualityInt2(nTime,nSpace))
 iret = nf90_get_var(ncid, varid, qualityInt2)
 do tt=1,nTime
-   lastObsStr(:)%lastObsQuality(tt) = qualityInt2(tt,:)/real(100)
+   do ss=1,nSpace
+      lastObsStr(ss)%lastObsQuality(tt) = qualityInt2(tt,ss)/real(100)
+   end do
 end do
 deallocate(qualityInt2)
 
