@@ -1,57 +1,38 @@
-!  Program Name:
-!  Author(s)/Contact(s):
-!  Abstract:
-!  History Log:
-! 
-!  Usage:
-!  Parameters: <Specify typical arguments passed>
-!  Input Files:
-!        <list file names and briefly describe the data they include>
-!  Output Files:
-!        <list file names and briefly describe the information they include>
-! 
-!  Condition codes:
-!        <list exit condition or error codes returned >
-!        If appropriate, descriptive troubleshooting instructions or
-!        likely causes for failures could be mentioned here with the
-!        appropriate error code
-! 
-!  User controllable options: <if applicable>
-
 !*******************************************************************************
-!subroutine create_petsc_objects 
+!Subroutine - rapid_create_obj
 !*******************************************************************************
 subroutine rapid_create_obj 
 
-!PURPOSE
+!Purpose:
 !All PETSc and TAO objects need be created (requirement of both mathematical 
 !libraries).  PETSc and TAO also need be initialized.  This is what's done here.
-!Author: Cedric H. David, 2008 
+!Author: 
+!Cedric H. David, 2008-2015.
 
 
 !*******************************************************************************
 !Declaration of variables
 !*******************************************************************************
 use rapid_var, only :                                                          &
-                   IS_reachbas,                                                &
-                   ZM_Net,                                                     &
+                   IS_riv_bas,                                                 &
+                   ZM_hsh_tot,ZM_hsh_bas,IS_riv_id_max,                        &
+                   ZM_Net,ZM_A,ZM_T,ZM_TC1,                                    &
                    ZM_Obs,ZV_Qobs,ZV_temp1,ZV_temp2,ZV_kfac,                   &
-                   ZM_A,                                                       &
                    ZV_k,ZV_x,ZV_p,ZV_pnorm,ZV_pfac,                            &
                    ZV_C1,ZV_C2,ZV_C3,ZV_Cdenom,                                &
-                   ZV_b,ZV_babsmax,                                            &
-                   ZV_Qext,ZV_Qfor,ZV_Qlat,                                    &
+                   ZV_b,ZV_babsmax,ZV_bhat,                                    &
+                   ZV_Qext,ZV_Qfor,ZV_Qlat,ZV_Qhum,ZV_Qdam,                    &
                    ZV_Vext,ZV_Vfor,ZV_Vlat,                                    &
                    ZV_VinitM,ZV_QoutinitM,ZV_QoutinitO,ZV_QoutbarO,            &
-                   ZV_QoutR,ZV_QoutinitR,ZV_QoutprevR,ZV_QoutbarR,             &
-                   ZV_QoutRabsmin,ZV_QoutRabsmax,                              &
+                   ZV_QoutR,ZV_QoutinitR,ZV_QoutprevR,ZV_QoutbarR,ZV_QinbarR,  &
+                   ZV_QoutRabsmin,ZV_QoutRabsmax,ZV_QoutRhat,                  &
                    ZV_VR,ZV_VinitR,ZV_VprevR,ZV_VbarR,ZV_VoutR,                &
                    ZV_Qobsbarrec,                                              &
-                   ierr,ksp,vecscat,ZV_SeqZero,ZS_one,ZV_one,IS_one
+                   ierr,ksp,vecscat,ZV_SeqZero,ZS_one,ZV_one,IS_one,ncore,rank
 
 #ifndef NO_TAO
 use rapid_var, only :                                                          &
-                   tao,taoapp,reason,ZV_1stIndex,ZV_2ndIndex
+                   tao,reason,ZV_1stIndex,ZV_2ndIndex
 #endif
 
 implicit none
@@ -75,7 +56,7 @@ implicit none
 !viewers (allows writing results in file for example)
 
 #ifndef NO_TAO
-#include "finclude/tao_solver.h" 
+#include "finclude/taosolver.h" 
 !TAO solver
 #endif
 
@@ -86,62 +67,65 @@ implicit none
 
 !Initialize PETSc --------------------------------------------------------------
 call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-print *,'******LPR PASS CALL PetscInitialize'
+
+!Determine number associated with each processor -------------------------------
+call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
+
+!Determine total number of cores used ------------------------------------------
+call MPI_Comm_size(PETSC_COMM_WORLD,ncore,ierr)
 
 !Create PETSc object that manages all Krylov methods ---------------------------
 call KSPCreate(PETSC_COMM_WORLD,ksp,ierr)
-print *,'******LPR PASS CALL KSPCreate'
 
 !Matrices-----------------------------------------------------------------------
 call MatCreate(PETSC_COMM_WORLD,ZM_Net,ierr)
-print *,'******LPR PASS CALL MatCreate ZM_Net'
-call MatSetSizes(ZM_Net,PETSC_DECIDE,PETSC_DECIDE,IS_reachbas,IS_reachbas,ierr)
-!print *,'******LPR PASS CALL MatSetSizes'
-!call MatSetType(ZM_Net,MATMPIAIJ,ierr) !Unnecessary, the type is picked at runtime
+call MatSetSizes(ZM_Net,PETSC_DECIDE,PETSC_DECIDE,IS_riv_bas,IS_riv_bas,ierr)
 call MatSetFromOptions(ZM_Net,ierr)
-!print *,'******LPR PASS CALL MatSetFromOptions'
-!call MatSeqAIJSetPreallocation(ZM_Net,3*IS_one,PETSC_NULL_INTEGER,ierr)
-!call MatMPIAIJSetPreallocation(ZM_Net,3*IS_one,PETSC_NULL_INTEGER,2*IS_one,    &
-!                               PETSC_NULL_INTEGER,ierr)
-!Very basic preallocation assuming no more than 3 upstream elements anywhere
-!Not used here because proper preallocation is done within rapid_net_mat.F90
+call MatSetUp(ZM_Net,ierr)
 
 call MatCreate(PETSC_COMM_WORLD,ZM_A,ierr)
-!print *,'******LPR PASS CALL MatCreate ZM_A'
-call MatSetSizes(ZM_A,PETSC_DECIDE,PETSC_DECIDE,IS_reachbas,IS_reachbas,ierr)
-!call MatSetType(ZM_A,MATMPIAIJ,ierr) !Unnecessary, the type is picked at runtime
+call MatSetSizes(ZM_A,PETSC_DECIDE,PETSC_DECIDE,IS_riv_bas,IS_riv_bas,ierr)
 call MatSetFromOptions(ZM_A,ierr)
-!call MatSeqAIJSetPreallocation(ZM_A,4*IS_one,PETSC_NULL_INTEGER,ierr)
-!call MatMPIAIJSetPreallocation(ZM_A,4*IS_one,PETSC_NULL_INTEGER,2*IS_one,      &
-!                               PETSC_NULL_INTEGER,ierr)
-!Very basic preallocation assuming no more than 3 upstream elements anywhere
-!Not used here because proper preallocation is done within rapid_net_mat.F90
+call MatSetUp(ZM_A,ierr)
+
+call MatCreate(PETSC_COMM_WORLD,ZM_T,ierr)
+call MatSetSizes(ZM_T,PETSC_DECIDE,PETSC_DECIDE,IS_riv_bas,IS_riv_bas,ierr)
+call MatSetFromOptions(ZM_T,ierr)
+call MatSetUp(ZM_T,ierr)
+
+call MatCreate(PETSC_COMM_WORLD,ZM_TC1,ierr)
+call MatSetSizes(ZM_TC1,PETSC_DECIDE,PETSC_DECIDE,IS_riv_bas,IS_riv_bas,ierr)
+call MatSetFromOptions(ZM_TC1,ierr)
+call MatSetUp(ZM_TC1,ierr)
 
 call MatCreate(PETSC_COMM_WORLD,ZM_Obs,ierr)
-!print *,'******LPR PASS CALL MatCreate ZM_Obs'
-call MatSetSizes(ZM_Obs,PETSC_DECIDE,PETSC_DECIDE,IS_reachbas,IS_reachbas,ierr)
-!call MatSetType(ZM_Obs,MATMPIAIJ,ierr) !Unnecessary, the type is picked at runtime
+call MatSetSizes(ZM_Obs,PETSC_DECIDE,PETSC_DECIDE,IS_riv_bas,IS_riv_bas,ierr)
 call MatSetFromOptions(ZM_Obs,ierr)
-call MatSeqAIJSetPreallocation(ZM_Obs,1*IS_one,PETSC_NULL_INTEGER,ierr)
-call MatMPIAIJSetPreallocation(ZM_Obs,1*IS_one,PETSC_NULL_INTEGER,0*IS_one,    &
-                               PETSC_NULL_INTEGER,ierr)
-!Very basic preallocation assuming that all reaches have one gage.
-
-!These matrices are all square of size IS_reachbas.  PETSC_DECIDE allows PETSc 
+call MatSetUp(ZM_Obs,ierr)
+!These matrices are all square of size IS_riv_bas.  PETSC_DECIDE allows PETSc 
 !to determine the local sizes on its own. MatSetFromOptions allows to use many
 !different options at runtime, such as "-mat_type aijmumps".
 
+call MatCreate(PETSC_COMM_WORLD,ZM_hsh_tot,ierr)
+call MatSetSizes(ZM_hsh_tot,PETSC_DECIDE,PETSC_DECIDE,ncore,IS_riv_id_max,ierr)
+call MatSetFromOptions(ZM_hsh_tot,ierr)
+call MatSetUp(ZM_hsh_tot,ierr)
 
-!Vectors of size IS_reachbas----------------------------------------------------
-!call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,IS_reachbas,ZV_k,ierr)
+call MatCreate(PETSC_COMM_WORLD,ZM_hsh_bas,ierr)
+call MatSetSizes(ZM_hsh_bas,PETSC_DECIDE,PETSC_DECIDE,ncore,IS_riv_id_max,ierr)
+call MatSetFromOptions(ZM_hsh_bas,ierr)
+call MatSetUp(ZM_hsh_bas,ierr)
+!These matrices are all mostly flat with size IS_riv_id_max*ncore and will store
+!the same row over all columns
+
+!Vectors of size IS_riv_bas-----------------------------------------------------
+!call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,IS_riv_bas,ZV_k,ierr)
 call VecCreate(PETSC_COMM_WORLD,ZV_k,ierr)
-!print *,'******LPR PASS CALL MatCreate ZM_k'
-call VecSetSizes(ZV_k,PETSC_DECIDE,IS_reachbas,ierr)
+call VecSetSizes(ZV_k,PETSC_DECIDE,IS_riv_bas,ierr)
 call VecSetFromOptions(ZV_k,ierr)
 !same remarks as above for sizes
 
 call VecDuplicate(ZV_k,ZV_x,ierr)
-!print *,'******LPR PASS CALL VecDuplicate(ZV_k,ZV_x,ierr)'
 call VecDuplicate(ZV_k,ZV_C1,ierr)
 call VecDuplicate(ZV_k,ZV_C2,ierr)
 call VecDuplicate(ZV_k,ZV_C3,ierr)
@@ -149,10 +133,13 @@ call VecDuplicate(ZV_k,ZV_Cdenom,ierr)
 
 call VecDuplicate(ZV_k,ZV_b,ierr)
 call VecDuplicate(ZV_k,ZV_babsmax,ierr)
+call VecDuplicate(ZV_k,ZV_bhat,ierr)
 
 call VecDuplicate(ZV_k,ZV_Qext,ierr)
 call VecDuplicate(ZV_k,ZV_Qfor,ierr)
 call VecDuplicate(ZV_k,ZV_Qlat,ierr)
+call VecDuplicate(ZV_k,ZV_Qhum,ierr)
+call VecDuplicate(ZV_k,ZV_Qdam,ierr)
 call VecDuplicate(ZV_k,ZV_Vext,ierr)
 call VecDuplicate(ZV_k,ZV_Vfor,ierr)
 call VecDuplicate(ZV_k,ZV_Vlat,ierr)
@@ -165,8 +152,10 @@ call VecDuplicate(ZV_k,ZV_QoutR,ierr)
 call VecDuplicate(ZV_k,ZV_QoutinitR,ierr)
 call VecDuplicate(ZV_k,ZV_QoutprevR,ierr)
 call VecDuplicate(ZV_k,ZV_QoutbarR,ierr)
+call VecDuplicate(ZV_k,ZV_QinbarR,ierr)
 call VecDuplicate(ZV_k,ZV_QoutRabsmin,ierr)
 call VecDuplicate(ZV_k,ZV_QoutRabsmax,ierr)
+call VecDuplicate(ZV_k,ZV_QoutRhat,ierr)
 
 call VecDuplicate(ZV_k,ZV_VinitM,ierr)
 
@@ -209,13 +198,11 @@ call VecScatterCreateToZero(ZV_k,vecscat,ZV_SeqZero,ierr)
 #ifndef NO_TAO
 call TaoInitialize(PETSC_NULL_CHARACTER,ierr)
 !Initialize TAO
-!print *,'*****LPR PASS CALL TaoInitialize'
 
-call TaoCreate(PETSC_COMM_WORLD,'tao_nm',tao,ierr)
+call TaoCreate(PETSC_COMM_WORLD,tao,ierr)
+call TaoSetType(tao,'tao_nm',ierr)
 !Create TAO App 
 
-call TaoApplicationCreate(PETSC_COMM_WORLD,taoapp,ierr)
-!print *,'*****LPR PASS CALL TaoApplicationCreate'
 call VecDuplicate(ZV_p,ZV_1stIndex,ierr)
 call VecSetValues(ZV_1stIndex,IS_one,0*IS_one,ZS_one,INSERT_VALUES,ierr)
 call VecAssemblyBegin(ZV_1stIndex,ierr)

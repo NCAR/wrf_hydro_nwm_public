@@ -25,7 +25,7 @@ module module_HRLDAS_HYDRO
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
-                 mpp_land_bcast_int1
+                 mpp_land_bcast_int1, mpp_land_sync
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
@@ -258,8 +258,8 @@ CONTAINS
        implicit none
        integer iunit
        character(len=16) fileout
-#ifdef NCEP_WCOSS
        character(len=32) diag_prefix
+#ifdef NCEP_WCOSS
        integer len, status 
 #endif
 

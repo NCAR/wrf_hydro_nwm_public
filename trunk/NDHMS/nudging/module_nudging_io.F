@@ -1040,7 +1040,7 @@ if(my_id .eq. io_id) then
 
    if (iret /= 0) then
       print*,"Ndg: Problem nf_create"
-      call hydro_finish("output_channel_connectivity")
+      call hydro_stop("output_channel_connectivity")
    endif
 
    nStreamCells=size(CHLON,1)

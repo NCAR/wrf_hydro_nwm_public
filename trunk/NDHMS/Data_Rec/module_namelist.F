@@ -244,11 +244,12 @@ CONTAINS
   if(RESTART_FILE .eq. "") rst_typ = 0
 
   if(rst_bi_out .eq. 1) then
+! This part works for intel not pgi
 !     inquire(directory='restart', exist=dir_e)
-     inquire(file='restart/.', exist=dir_e)
-     if(.not. dir_e) then
-        call system('mkdir restart')
-     endif
+      inquire(file='restart/.', exist=dir_e)
+      if(.not. dir_e) then
+         call system('mkdir restart')
+      endif
   endif
 
 
@@ -305,6 +306,16 @@ CONTAINS
   call mpp_land_bcast_log1(noConstInterfBias)
 #endif 
 #endif /* MPP_LAND */
+
+
+ 
+! run Rapid 
+    if(channel_option .eq. 4) then
+       CHANRTSWCRT = 0
+       OVRTSWCRT = 0
+       SUBRTSWCRT = 0
+    endif
+
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
     nlst%output_gw      = output_gw
     nlst%outlake      = outlake
@@ -320,6 +331,9 @@ CONTAINS
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
 
+#ifdef MPP_LAND
+  if(my_id .eq. IO_id) then
+#endif
     if(nlst%DT .lt. DTRT_CH) then 
           print*, "nlst%DT,  DTRT_CH = ",nlst%DT,  DTRT_CH
           print*, "reset DTRT_CH=nlst%DT "
@@ -338,6 +352,9 @@ CONTAINS
          print*, "nlst%DT,  DTRT_CH = ",nlst%DT,  DTRT_CH
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
+#ifdef MPP_LAND
+  endif
+#endif
 
     nlst%SUBRTSWCRT = SUBRTSWCRT
     nlst%OVRTSWCRT = OVRTSWCRT
