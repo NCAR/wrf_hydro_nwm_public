@@ -4615,29 +4615,29 @@ end subroutine mpp_output_chrt
       iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
 
 !     !-- lake's phyical elevation
-      iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
-      iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+!     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
+!     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
 #endif
 
      !-- parent index
-      iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',33,'index of the lake for this record')
+!     iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',33,'index of the lake for this record')
 
      !-- prevChild
-      iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',54,'record number of the previous record for the same lake')
+!     iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',54,'record number of the previous record for the same lake')
 !ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-      iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!     iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
 
      !-- lastChild
-      iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',27,'latest report for this lake')
+!     iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',27,'latest report for this lake')
 !ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-      iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!     iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
 
 !     !- water surface elevation
-      iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/dimdata/), varid)
+      iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/dimdata/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
       iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
 
@@ -4694,8 +4694,8 @@ end subroutine mpp_output_chrt
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LONLAKE)
 
         !-- write physical height of lake
-        iret = nf_inq_varid(ncid,"altitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
+!       iret = nf_inq_varid(ncid,"altitude", varid)
+!       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
 #endif
 
         !-- write station id's 
@@ -4724,7 +4724,7 @@ end subroutine mpp_output_chrt
          iret = nf_inq_varid(ncid,"time_observation", varid)
          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), seconds_since)
 
-         iret = nf_inq_varid(ncid,"elevation", varid)
+         iret = nf_inq_varid(ncid,"wse", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), resht(i))
 
          iret = nf_inq_varid(ncid,"inflow", varid)
@@ -4734,15 +4734,15 @@ end subroutine mpp_output_chrt
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlakeo(i))
 
          !-- station index.. will repeat for every timesstep
-         iret = nf_inq_varid(ncid,"parent_index", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
+!        iret = nf_inq_varid(ncid,"parent_index", varid)
+!        iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
 
           !--record number of previous record for same station
-         prev_pos = cnt+(nlakes*(output_count-1))
-         if(output_count.ne.1) then !-- only write next set of records
-           iret = nf_inq_varid(ncid,"prevChild", varid)
-           iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
-         endif
+!        prev_pos = cnt+(nlakes*(output_count-1))
+!        if(output_count.ne.1) then !-- only write next set of records
+!          iret = nf_inq_varid(ncid,"prevChild", varid)
+!          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
+!        endif
 
          cnt=cnt+1  !--indices are 0 based
          rec_num_of_lake(cnt) = start_pos-1  !-- save position for last child, 0-based!!
@@ -4857,13 +4857,13 @@ end subroutine mpp_output_chrt
       iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
 
 !     !-- lake's phyical elevation
-      iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
-      iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+!     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
+!     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
 #endif
 
 !     !- water surface elevation
-      iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/stationdim/), varid)
+      iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
       iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
 
@@ -4905,12 +4905,12 @@ end subroutine mpp_output_chrt
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LONLAKE)
 
         !-- write physical height of lake
-        iret = nf_inq_varid(ncid,"altitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
+!       iret = nf_inq_varid(ncid,"altitude", varid)
+!       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
 #endif
 
         !-- write elevation  of lake
-        iret = nf_inq_varid(ncid,"elevation", varid)
+        iret = nf_inq_varid(ncid,"wse", varid)
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), resht   )
 
         !-- write elevation  of inflow
@@ -6836,7 +6836,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT),  DIMENSION(:)      :: HRZAREA
         INTEGER, INTENT(INOUT),  DIMENSION(:)   :: LAKEIDM    !lake id for LAKES_Modeled in the LAKEPARM table (.nc or .tbl)
 
-        REAL, INTENT(INOUT),  DIMENSION(:)           :: LAKEMAXH, WEIRH
+        REAL, INTENT(INOUT),  DIMENSION(:)      :: LAKEMAXH, WEIRH
         REAL, INTENT(INOUT),  DIMENSION(:)      :: WEIRC
         REAL, INTENT(INOUT),  DIMENSION(:)      :: WEIRL
         REAL, INTENT(INOUT),  DIMENSION(:)      :: ORIFICEC
@@ -6867,6 +6867,10 @@ end subroutine mpp_output_chrt
 
         real                                         :: gc,n
         integer :: did
+
+        character(len=256) :: route_lake_f_r
+        integer :: lenRouteLakeFR ! so the preceeding chan be changed without changing code
+        logical :: routeLakeNetcdf
 
         did = 1
         
@@ -7539,12 +7543,24 @@ end subroutine mpp_output_chrt
      if(my_id .eq. IO_id) then
 #endif
 
-        if (NLAKES.gt.0) then !read in only if there are lakes
-           open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
-           write(6,*) "before read(79)  header for LAKEPARM.TBL"
-           call flush(6)
-           read(79,*)  header  !-- read the lake file
-        endif
+     if (NLAKES.gt.0) then !read in only if there are lakes
+
+      !! is RouteLake file netcdf (*.nc) or .TBL
+       route_lake_f_r = adjustr(route_lake_f)
+       lenRouteLakeFR = len(route_lake_f_r)
+       routeLakeNetcdf = route_lake_f_r( (lenRouteLakeFR-2):lenRouteLakeFR) .eq. '.nc'
+
+        if(routeLakeNetcdf) then
+            call read_route_lake_netcdf(route_lake_f,HRZAREA, &
+                 LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC,  &
+                 ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
+
+        else  
+
+            open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
+            write(6,*) "before read(79)  header for LAKEPARM.TBL"
+            call flush(6)
+            read(79,*)  header  !-- read the lake file
 
            do i=1, NLAKES
              read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
@@ -7553,6 +7569,8 @@ end subroutine mpp_output_chrt
            enddo
 5101        continue
            close(79)
+        endif
+      endif
 #ifdef MPP_LAND
      endif
 
@@ -7580,7 +7598,7 @@ end subroutine mpp_output_chrt
                    MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
                    LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE, gages, gageMiss, &
-                   LAKEIDM,NLAKES, latlake, lonlake)
+                   LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
 !--- get the lake configuration here.
 #ifdef MPP_LAND
@@ -7624,7 +7642,7 @@ end subroutine mpp_output_chrt
                    MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE, gages, gageMiss,& 
-                   LAKEIDM,NLAKES, latlake, lonlake)
+                   LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
         implicit none
         character(len=*) :: route_link_f,route_lake_f
@@ -7643,7 +7661,7 @@ end subroutine mpp_output_chrt
 !NLAKES
         INTEGER, intent(out), dimension(:)  ::  LAKEIDM
         REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, ORIFICEC,WEIRH, &
-                   ORIFICEA, ORIFICEE
+                   ORIFICEA, ORIFICEE, ELEVLAKE
 !end NLAKES
 
         INTEGER, dimension(GNLINKSL) ::  tmpLAKEIDA, tmpLINKID,  tmpTO_NODE, tmpTYPEL, tmpORDER 
@@ -7722,7 +7740,7 @@ end subroutine mpp_output_chrt
           if(routeLakeNetcdf) then
              call read_route_lake_netcdf(route_lake_f,HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,    WEIRL, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake)
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
           endif
 
 !!- initialize channel  if missing in input
@@ -7777,6 +7795,7 @@ end subroutine mpp_output_chrt
            call mpp_land_bcast_real(NLAKES, ORIFICEA)
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
            call mpp_land_bcast_int(NLAKES, LAKEIDM)
+           call mpp_land_bcast_real(NLAKES, ELEVLAKE)
         endif
 
 
@@ -8230,13 +8249,15 @@ end subroutine read_route_link_netcdf
 subroutine read_route_lake_netcdf(route_lake_file,                         &
                                    HRZAREA,  LAKEMAXH, WEIRH,  WEIRC,    WEIRL,    &
                                    ORIFICEC, ORIFICEA,  ORIFICEE, LAKEIDM, &
-                                   lakelat, lakelon)
+                                   lakelat, lakelon, ELEVLAKE)
 
 implicit none
 character(len=*),        intent(in)  :: route_lake_file
 integer, dimension(:),   intent(out) :: LAKEIDM
 real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEIRH
 real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
+real,    dimension(:),   intent(out) :: ELEVLAKE
+
 
 integer :: iRet, ncid, ii, varid
 logical :: fatal_if_error
@@ -8252,17 +8273,18 @@ if (iRet /= nf90_noErr) then
    if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem opening file.")
 endif
 
-call get_1d_netcdf_int(ncid,  'lake_id',     LAKEIDM,   'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'lake_id',     LAKEIDM,'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'WeirH',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'WeirE',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'lat', lakelat,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'lon', lakelon,  'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,      'read_route_lake_netcdf', .TRUE.)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_noErr) then

@@ -247,6 +247,10 @@ SUBROUTINE LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
      discharge = qi1
      H = maxh
     endif
+    
+!   if(ln .eq. 9) then
+!    print*, ln,H,oe,we,maxh
+!   endif
 
     qo1  = discharge  ! return the flow rate from reservoir
 
@@ -1018,6 +1022,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 
 !yw      print *, "DRIVE_channel,option,nlinkl,nlinks!!", channel_option,NLINKSL,NLINKS
+!      print *, "DRIVE_channel, RESHT", RESHT
+
          
       dzGwChanHead = 0.
 
@@ -1222,17 +1228,18 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 !        call check_channel(77,HLINKTMP,1,nlinks)
 !        call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,ZELEV,NLINKS,99)
- crnt:    DO                      !-- loop on the courant condition
-         QSUM   = 0              !-- initialize the total flow out of each cell to zero
-         QLAKEI = 0              !-- set the lake inflow as zero
-         QLLAKE = 0              !-- initialize each lake's lateral inflow to zero  
-         DT_STEPS=INT(DT/DTCT)   !-- fix the timestep
-         QLateral = 0. 
+ crnt:   DO                      !-- loop on the courant condition
+          QSUM     = 0.              !-- initialize the total flow out of each cell to zero
+          QLAKEI8  = 0.              !-- set the lake inflow as zero
+          QLAKEI   = 0.              !-- set the lake inflow as zero
+          QLLAKE   = 0.              !-- initialize each lake's lateral inflow to zero  
+          DT_STEPS = INT(DT/DTCT)   !-- fix the timestep
+          QLateral = 0. 
 !DJG GW-chan coupling variables...
-         if(gwBaseSwCRT == 3) then
+          if(gwBaseSwCRT == 3) then
 	  Q_GW_CHAN_FLUX = 0.
 	  qgw_chanrt     = 0.
-         end if
+          end if
          
 !         ZWATTBLRT=1.0   !--HARDWIRE, remove this and pass in from subsfc/gw routing routines...
 
@@ -1308,25 +1315,32 @@ gwOption:   if(gwBaseSwCRT == 3) then
                 ((QSTRMVOLRT(CHANXI(i),CHANYJ(i))+&
                  QINFLOWBASE(CHANXI(i),CHANYJ(i))) &
                    /DT_STEPS*node_area(i)/1000/DTCT)
-	if((QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) .and. (gwChanCondSw == 0)) then
+	       if((QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))).lt.0.) .and. (gwChanCondSw == 0)) then
 #ifdef HYDRO_D
                print*, "i, CHANXI(i),CHANYJ(i) = ", i, CHANXI(i),CHANYJ(i)
                print *, "NEGATIVE Lat inflow...",QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i)), &
                          QINFLOWBASE(CHANXI(i),CHANYJ(i))
 #endif
-        end if
-            elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
+               elseif (QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) .gt. 1.0) then
+!#ifdef HYDRO_D
+!               print *, "LatIn(Ql,Qsub,Qstrmvol)..",i,QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))), &
+!                          QSUBRT(CHANXI(i),CHANYJ(i)),QSTRMVOLRT(CHANXI(i),CHANYJ(i))
+!#endif
+               end if
+
+         elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
               QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) = &
                  QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) + &
                  (LAKEINFLORT(CHANXI(i),CHANYJ(i))+ &
                  QINFLOWBASE(CHANXI(i),CHANYJ(i)) &
                  /DT_STEPS*node_area(i)/1000/DTCT)
-            elseif(CH_NETRT(CHANXI(i),CHANYJ(i)) .gt. 0) then  !pour out of lake
+         elseif(CH_NETRT(CHANXI(i),CHANYJ(i)) .gt. 0) then  !pour out of lake
                  QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
                    QLAKEO(CH_NETRT(CHANXI(i),CHANYJ(i)))  !-- previous timestep
-          endif nodeType
+         endif nodeType
+
         ENDDO
 
 
@@ -1462,7 +1476,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
          DO i = 1, NLINKS                                                !--- compute volume and depth at each node
 #endif
  
-            if(TYPEL(i) .eq. 0) then                   !--  regular channel grid point, compute volume
+           if(TYPEL(i) .eq. 0) then                   !--  regular channel grid point, compute volume
               CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) )* DTCT
               if((CVOLTMP(i) .lt. 0) .and. (gwChanCondSw == 0)) then 
 #ifdef HYDRO_D
@@ -1472,59 +1486,52 @@ gwOption:   if(gwBaseSwCRT == 3) then
                 CVOLTMP(i) =0 
               endif
 
-            elseif(TYPEL(i) .eq. 1) then               !-- pour point, critical depth downstream 
+           elseif(TYPEL(i) .eq. 1) then               !-- pour point, critical depth downstream 
 
               if (QSUM(i)+QLateral(i) .lt. 0) then
               else
 
 !DJG remove to have const. flux b.c....   CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
                   CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
-               endif
+              endif
 
                ! change in volume is inflow, lateral flow, and outflow 
                !yw DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*DXRT),HLINKTMP(i), &
                    CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) - &
                        DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
                        CD(i),CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
-            elseif (TYPEL(i) .eq. 2) then              !--- into a reservoir, assume critical depth
+          elseif (TYPEL(i) .eq. 2) then              !--- into a reservoir, assume critical depth
               if ((QSUM(i)+QLateral(i) .lt. 0) .and. (gwChanCondSw == 0)) then
 #ifdef HYDRO_D
                print *, i, 'CrtDpth Qsum+QLat into lake< 0',QSUM(i), QLateral(i)
 #endif
-              else
+             else
 !DJG remove to have const. flux b.c....    CD(i) =CRITICALDEPTH(i,abs(QSUM(i)+QLateral(i)), Bw(i), 1./ChSSlp(i))
                CD(i) = HLINKTMP(i)  !This is a temp hardwire for flow depth for the pour point...
-              endif
+             endif
  
               !-- compute volume in reach (m^3)
                    CVOLTMP(i) = CVOLTMP(i) + (QSUM(i) + QLateral(i) - &
                           DIFFUSION(i,ZELEV(i),ZELEV(i)-(So(i)*CHANLEN(i)),HLINKTMP(i), &
                              CD(i) ,CHANLEN(i), MannN(i), Bw(i), ChSSlp(i)) ) * DTCT
-              !-- compute flow rate into lake from all contributing nodes (cms)
-              !QLAKEI(LAKENODE(i)) = QLAKEI(LAKENODE(i)) + QLINK(FROM_NODE(i),1)
-              !DNY change 03/2017, inserted here by LKR 3/14/2017 
-           !    QLAKEI(LAKENODE(TO_NODE(i))) = QLAKEI(LAKENODE(TO_NODE(i))) + QLINK(FROM_NODE(i),1)
-           !   write(6,*) "yyww check",LAKENODE(TO_NODE(i)), FROM_NODE(i),i
-           !   call flush(6)
-            else
+          else
               print *, "FATAL ERROR: This node does not have a type.. error TYPEL =", TYPEL(i)
               call hydro_stop("In drive_CHANNEL() - error TYPEL") 
-            endif
+          endif
            
-           if(TYPEL(i) == 0) then !-- regular channel node, finalize head and flow
-            HLINKTMP(i) = HEAD(i, CVOLTMP(i)/CHANLEN(i),Bw(i),1/ChSSlp(i))  !--updated depth 
-           else
-            HLINKTMP(i) = CD(i)  !!!   CRITICALDEPTH(i,QSUM(i)+QLateral(i), Bw(i), 1./ChSSlp(i)) !--critical depth is head
-           endif 
-              if(TO_NODE(i) .gt. 0) then
-                 if(LAKENODE(TO_NODE(i)) .gt. 0) then
-!                     write(6,*) "yyww check",LAKENODE(TO_NODE(i)), to_node(i), FROM_NODE(i),QLINK(i,1)
-!                     call flush(6)
-                     QLAKEI8(LAKENODE(TO_NODE(i))) = QLAKEI8(LAKENODE(TO_NODE(i))) + QLINK(i,1)
-                 endif
-              endif
-           END DO  !--- done processing all the links
+          if(TYPEL(i) == 0) then !-- regular channel node, finalize head and flow
+              HLINKTMP(i) = HEAD(i, CVOLTMP(i)/CHANLEN(i),Bw(i),1/ChSSlp(i))  !--updated depth 
+          else
+              HLINKTMP(i) = CD(i)  !!!   CRITICALDEPTH(i,QSUM(i)+QLateral(i), Bw(i), 1./ChSSlp(i)) !--critical depth is head
+          endif 
 
+          if(TO_NODE(i) .gt. 0) then
+             if(LAKENODE(TO_NODE(i)) .gt. 0) then
+                  QLAKEI8(LAKENODE(TO_NODE(i))) = QLAKEI8(LAKENODE(TO_NODE(i))) + QLINK(i,1)
+             endif
+          endif
+
+        END DO  !--- done processing all the links
 
 #ifdef MPP_LAND
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CVOLTMP,NLINKS,99)
@@ -1541,10 +1548,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !   call check_channel(85,HLINKTMP,1,nlinks)
 !   call check_lake(86,QLAKEI,lake_index,nlakes)
 
-      
-
-
-
            do i = 1, NLAKES !-- mass balances of lakes
 #ifdef MPP_LAND
             if(lake_index(i) .gt. 0)  then
@@ -1553,6 +1556,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                 DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
                 WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
                 QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
+
 #ifdef MPP_LAND
             endif
 #endif
