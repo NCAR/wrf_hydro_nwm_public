@@ -338,24 +338,27 @@ subroutine initChrtDict(chrtOutDict)
    chrtOutDict%cfRole = 'timeseries_id'   
 
    ! Now establish attributes for output variables.
-   chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
-                               "Head","qSfcLatRunoff","qBucket",&
-                               "qBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
-   chrtOutDict%longName(:) = (/"River Flow","Amount of stream flow alteration",&
-                               "Runoff into channel reach","River Velocity",&
-                               "River Stage","Runoff from terrain routing",&
-                               "Flux from gw bucket",&
-                               "Runoff from bottom of soil to bucket",&
-                               "Accumulated runoff from terrain routing",&
-                               "Accumulated runoff from gw bucket"/)
-   chrtOutDict%units(:) = (/"m3 s-1","m3 s-1","m3 s-1","m s-1",&
-                            "meter","m3","m3",&
-                            "m3","m3","m3"/)
-   chrtOutDict%coordNames(:) = (/"latitude longitude","latitude longitude",&
+   !chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
+   !                            "Head","qSfcLatRunoff","qBucket",&
+   !                            "qBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
+   chrtOutDict%varNames(:) = [character(len=64) :: "streamflow","nudge","q_lateral","velocity",&
+                              "Head","qSfcLatRunoff","qBucket",&
+                              "qBtmVertRunoff","AccSfcLatRunoff","accBucket"]
+   chrtOutDict%longName(:) = [character(len=64) :: "River Flow","Amount of stream flow alteration",&
+                              "Runoff into channel reach","River Velocity",&
+                              "River Stage","Runoff from terrain routing",&
+                              "Flux from gw bucket",&
+                              "Runoff from bottom of soil to bucket",&
+                              "Accumulated runoff from terrain routing",&
+                              "Accumulated runoff from gw bucket"]
+   chrtOutDict%units(:) = [character(len=64) :: "m3 s-1","m3 s-1","m3 s-1","ms-1",&
+                                                "meter","m3","m3",&
+                                                "m3","m3","m3"]
+   chrtOutDict%units(:) = [character(len=64) :: "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
-                                 "latitude longitude","latitude longitude"/)
+                                 "latitude longitude","latitude longitude"]
    chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.001,0.001,0.001,&
                                  0.01,0.01]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
@@ -363,7 +366,6 @@ subroutine initChrtDict(chrtOutDict)
    ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
    ! output subroutine. 
    chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0]
-   !chrtOutDict%timeZeroFlag(:) = [1,0,0,0,0,0,0,0,0,0] 
    chrtOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1]
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0]
@@ -446,7 +448,7 @@ subroutine initLdasDict(ldasOutDict)
 
    ! Now establish metadata attributes for variables. ESRI string is defined
    ! above and applies to all gridded variables for LDASOUT.
-   ldasOutDict%varNames(:) = (/"IVGTYP","ISLTYP","FVEG","LAI","SAI","SWFORC",&
+   ldasOutDict%varNames(:) = [character(len=64) :: "IVGTYP","ISLTYP","FVEG","LAI","SAI","SWFORC",&
                                "COSZ","LWFORC","RAINRATE","EMISS","FSA","FIRA",&
                                "GRDFLX","HFX","LH","ECAN","EDIR","ALBEDO","ETRAN",&
                                "UGDRNOFF","SFCRNOFF","CANLIQ","CANICE","ZWT","WA",&
@@ -460,103 +462,103 @@ subroutine initLdasDict(ldasOutDict)
                                "CHUC","CHV2","CHB2","LFMASS","RTMASS","STMASS",&
                                "WOOD","STBLCP","FASTCP","NEE","GPP","NPP","PSN",&
                                "APAR","ACCET","CANWAT","SOILICE","SOILSAT_TOP",&
-                               "SOILSAT","SNOWT_AVG"/)
-   ldasOutDict%longName(:) = (/"Dominant vegetation category",&
-                               "Dominant soil category",&
-                               "Green Vegetation Fraction",&
-                               "Leaf area index",&
-                               "Stem area index",&
-                               "Shortwave forcing",&
-                               "Cosine of zenith angle",&
-                               "Longwave forcing",&
-                               "Precipitation rate",&
-                               "Grid emissivity",&
-                               "Total absorved SW radiation",&
-                               "Total net LW radiation to atmosphere",&
-                               "Heat flux into the soil",&
-                               "Total sensible heat to the atmosphere",&
-                               "Total latent heat to the atmosphere",&
-                               "Canopy water evaporation rate",&
-                               "Direct from soil evaporation rate",&
-                               "Surface albedo",&
-                               "Transpiration rate",&
-                               "Accumulated underground runoff",&
-                               "Accumulated surface runoff",&
-                               "Canopy liquid water content",&
-                               "Canopy ice water content",&
-                               "Depth to water table",&
-                               "Water in aquifer",&
-                               "Water in aquifer and saturated soil",&
-                               "Accumulated precip",&
-                               "Accumulated canopy evap",&
-                               "Accumulated direct soil evap",&
-                               "Accumulated transpiration",&
-                               "Solar radiative heat flux absorbed by vegetation",&
-                               "Transpiration heat",&
-                               "Canopy evap heat",&
-                               "Canopy net LW rad",&
-                               "Canopy sensible heat",&
-                               "Ground net LW rad",&
-                               "Ground sensible heat",&
-                               "Ground evap heat",&
-                               "Ground heat flux + to soil vegetated",&
-                               "Solar radiative heat flux absorbed by ground",&
-                               "Net LW rad to atm bare",&
-                               "Sensible heat atm bare",&
-                               "Evaporation heat to atm bare",&
-                               "Ground heat flux + to soil bare",&
-                               "Surface radiative temperature",&
-                               "Ground temperature",&
-                               "Vegetation temperature",&
-                               "Canopy air temperature",&
-                               "Ground surface Temp vegetated",&
-                               "Ground surface Temp bare",&
-                               "2m Air Temp vegetated",&
-                               "2m Air Temp bare",&
-                               "2m mixing ratio vegetated",&
-                               "2m mixing ratio bare",&
-                               "Canopy air vapor pressure",&
-                               "Wetted or snowed fraction of canopy",&
-                               "Snow layer depths from snow surface",&
-                               "Snow layer ice",&
-                               "Snow layer liquid water",&
-                               "soil temperature",&
-                               "liquid volumetric soil moisture",&
-                               "snow temperature",&
-                               "volumetric soil moisture",&
-                               "Snow depth",&
-                               "Snow water equivalent",&
-                               "Snowfall rate",&
-                               "Number of snow layers",&
-                               "Snow-cover fraction on the ground",&
-                               "accumulated snow fall",&
-                               "accumulated melting water out of snow bottom",&
-                               "Momentum drag coefficient",&
-                               "Sensible heat exchange coefficient",&
-                               "Exchange coefficient vegetated",&
-                               "Exchange coefficient bare",&
-                               "Exchange coefficient leaf",&
-                               "Exchange coefficient bare",&
-                               "Exchange coefficient 2-meter vegetated",&
-                               "Exchange coefficient 2-meter bare",&
-                               "Leaf mass",&
-                               "Mass of fine roots",&
-                               "Stem mass",&
-                               "Mass of wood and woody roots",&
-                               "Stable carbon in deep soil",&
-                               "Short-lived carbon in shallow soil",&
-                               "Net ecosystem exchange",&
-                               "Net instantaneous assimilation",&
-                               "Net primary productivity",&
-                               "Total photosynthesis",&
-                               "Photosynthesis active energy by canopy",&
-                               "Accumulated total ET",&
-                               "Total canopy water (liquid + ice)",&
-                               "fraction of soil moisture that is ice",&
-                               "fraction of soil saturation, top 2 layers",&
-                               "fraction of soil saturation, column integrated",&
-                               "average snow temperature (by layer mass)"/)
-   ldasOutDict%units(:) = (/"category","category","-","-","-",&
+                               "SOILSAT","SNOWT_AVG"]
+   ldasOutDict%longName(:) = [character(len=64) :: "Dominant vegetation category",&
+                              "Dominant soil category",&
+                              "Green Vegetation Fraction",&
+                              "Leaf area index",&
+                              "Stem area index",&
+                              "Shortwave forcing",&
+                              "Cosine of zenith angle",&
+                              "Longwave forcing",&
+                              "Precipitation rate",&
+                              "Grid emissivity",&
+                              "Total absorved SW radiation",&
+                              "Total net LW radiation to atmosphere",&
+                              "Heat flux into the soil",&
+                              "Total sensible heat to the atmosphere",&
+                              "Total latent heat to the atmosphere",&
+                              "Canopy water evaporation rate",&
+                              "Direct from soil evaporation rate",&
+                              "Surface albedo",&
+                              "Transpiration rate",&
+                              "Accumulated underground runoff",&
+                              "Accumulated surface runoff",&
+                              "Canopy liquid water content",&
+                              "Canopy ice water content",&
+                              "Depth to water table",&
+                              "Water in aquifer",&
+                              "Water in aquifer and saturated soil",&
+                              "Accumulated precip",&
+                              "Accumulated canopy evap",&
+                              "Accumulated direct soil evap",&
+                              "Accumulated transpiration",&
+                              "Solar radiative heat flux absorbed by vegetation",&
+                              "Transpiration heat",&
+                              "Canopy evap heat",&
+                              "Canopy net LW rad",&
+                              "Canopy sensible heat",&
+                              "Ground net LW rad",&
+                              "Ground sensible heat",&
+                              "Ground evap heat",&
+                              "Ground heat flux + to soil vegetated",&
+                              "Solar radiative heat flux absorbed by ground",&
+                              "Net LW rad to atm bare",&
+                              "Sensible heat atm bare",&
+                              "Evaporation heat to atm bare",&
+                              "Ground heat flux + to soil bare",&
+                              "Surface radiative temperature",&
+                              "Ground temperature",&
+                              "Vegetation temperature",&
+                              "Canopy air temperature",&
+                              "Ground surface Temp vegetated",&
+                              "Ground surface Temp bare",&
+                              "2m Air Temp vegetated",&
+                              "2m Air Temp bare",&
+                              "2m mixing ratio vegetated",&
+                              "2m mixing ratio bare",&
+                              "Canopy air vapor pressure",&
+                              "Wetted or snowed fraction of canopy",&
+                              "Snow layer depths from snow surface",&
+                              "Snow layer ice",&
+                              "Snow layer liquid water",&
+                              "soil temperature",&
+                              "liquid volumetric soil moisture",&
+                              "snow temperature",&
+                              "volumetric soil moisture",&
+                              "Snow depth",&
+                              "Snow water equivalent",&
+                              "Snowfall rate",&
+                              "Number of snow layers",&
+                              "Snow-cover fraction on the ground",&
+                              "accumulated snow fall",&
+                              "accumulated melting water out of snow bottom",&
+                              "Momentum drag coefficient",&
+                              "Sensible heat exchange coefficient",&
+                              "Exchange coefficient vegetated",&
+                              "Exchange coefficient bare",&
+                              "Exchange coefficient leaf",&
+                              "Exchange coefficient bare",&
+                              "Exchange coefficient 2-meter vegetated",&
+                              "Exchange coefficient 2-meter bare",&
+                              "Leaf mass",&
+                              "Mass of fine roots",&
+                              "Stem mass",&
+                              "Mass of wood and woody roots",&
+                              "Stable carbon in deep soil",&
+                              "Short-lived carbon in shallow soil",&
+                              "Net ecosystem exchange",&
+                              "Net instantaneous assimilation",&
+                              "Net primary productivity",&
+                              "Total photosynthesis",&
+                              "Photosynthesis active energy by canopy",&
+                              "Accumulated total ET",&
+                              "Total canopy water (liquid + ice)",&
+                              "fraction of soil moisture that is ice",&
+                              "fraction of soil saturation, top 2 layers",&
+                              "fraction of soil saturation, column integrated",&
+                              "average snow temperature (by layer mass)"]
+   ldasOutDict%units(:) = [character(len=64) :: "category","category","-","-","-",&
                             "W m-2","W m-2","W m-2","kg m-2s-1",&
                             "-","W m-2","W m-2","W m-2","W m-2","W m-2","kg m-2s-1","kg m-2s-1","-","kg m-2s-1",&
                             "mm","mm","mm","mm","m","kg m-2","kg m-2",&
@@ -571,7 +573,7 @@ subroutine initLdasDict(ldasOutDict)
                             "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
                             "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
                             "g m-2s-1 C","g m-2s-1 C","umol CO m-2 s-1","W m-2",&
-                            "mm","mm","fraction","fraction","fraction","K"/)
+                            "mm","mm","fraction","fraction","fraction","K"]
    ldasOutDict%scaleFactor(:) = [1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,&
                                  0.1,0.1,0.1,0.1,0.1,1.0,1.0,1.0,1.0,0.01,&
                                  0.001,1.0,1.0,1.0,1.0,1.0,1.0,0.01,0.01,0.01,&
@@ -718,16 +720,15 @@ subroutine initRtDomainDict(rtDomainDict)
                          & +y_0=0 +a=6370000 +b=6370000 +units=m +no_defs'
    rtDomainDict%gridMapping = "ProjectionCoordinateSystem"
 
-   rtDomainDict%varNames(:) = (/"zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
-                                "QBDRYRT"/)
-   rtDomainDict%longName(:) = (/"water table depth","surface head",&
-                                 "channel inflow",&
-                                 "accumulated value of the boundary flux, + into domain - out of domain"/)
-   rtDomainDict%units(:) = (/"m","mm","mm","mm"/)
+   rtDomainDict%varNames(:) = [character(len=64) :: "zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
+                               "QBDRYRT"]
+   rtDomainDict%longName(:) = [character(len=64) :: "water table depth","surface head",&
+                               "channel inflow",&
+                               "accumulated value of the boundary flux, + into domain - out of domain"]
+   rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm"]
    rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0]
    rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0]
    rtDomainDict%outFlag(:) = [0,0,0,0]
-   !rtDomainDict%timeZeroFlag(:) = [0,0,0,0]
    rtDomainDict%timeZeroFlag(:) = [1,1,1,1]
    rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
@@ -792,14 +793,13 @@ subroutine initLakeDict(lakeOutDict)
    lakeOutDict%lonUnits = "degrees_east"
    lakeOutDict%lonStName = "longitude"
 
-   lakeOutDict%varNames(:) = (/'inflow','outflow'/)
-   lakeOutDict%longName(:) = (/'Lake Inflow','Lake Outflow'/)
-   lakeOutDict%units(:) = (/'m3 s-1','m3 s-1'/)
-   lakeOutDict%coordNames(:) = (/'latitude longitude','latitude longitude'/)
+   lakeOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow']
+   lakeOutDict%longName(:) = [character(len=64) :: 'Lake Inflow','Lake Outflow']
+   lakeOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1']
+   lakeOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude']
    lakeOutDict%scaleFactor(:) = [0.01,0.01]
    lakeOutDict%addOffset(:) = [0.0,0.0]
    lakeOutDict%outFlag(:) = [0,0]
-   !lakeOutDict%timeZeroFlag(:) = [0,1]
    lakeOutDict%timeZeroFlag(:) = [1,1]
    lakeOutDict%fillReal(:) = [-9999.0,-9999.0]
    lakeOutDict%missingReal(:) = [-9999.0,-9999.0]

@@ -325,34 +325,50 @@ module module_HYDRO_io
     real, dimension(idim,jdim), intent(out) :: array
     character(len=256), intent(out) :: units
     integer :: iret, varid
-    real, dimension(idim,jdim,ldim) :: xtmp
-    integer, dimension(1) :: mp
-    integer :: i, j, l
-    character(len=24), parameter :: name = "LANDUSEF"
+!    real, dimension(idim,jdim,ldim) :: xtmp
+!    integer, dimension(1) :: mp
+!    integer :: i, j, l
+!    character(len=24), parameter :: name = "LANDUSEF"
+    character(len=24), parameter :: name = "LU_INDEX"
 
     units = ""
 
-    iret = nf_inq_varid(ncid,  trim(name),  varid)
+!    iret = nf_inq_varid(ncid,  trim(name),  varid)
+!    if (iret /= 0) then
+!       print*, 'name = "', trim(name)//'"'
+!       call hydro_stop("In get_landuse_netcdf() - nf_inq_varid problem")
+!    endif
+
+!    iret = nf_get_var_real(ncid, varid, xtp)
+!    if (iret /= 0) then
+!       print*, 'name = "', trim(name)//'"'
+!       call hydro_stop("In get_landuse_netcdf() - nf_get_var_real problem")
+!    endif
+!
+!    do i = 1, idim
+!       do j = 1, jdim
+!          mp = maxloc(xtmp(i,j,:))
+!          array(i,j) = mp(1)
+!          do l = 1,ldim
+!            if(xtmp(i,j,l).lt.0) array(i,j) = -9999.0
+!          enddo
+!       enddo
+!    enddo
+
+!!! START AD_CHANGE
+! Using LU_INDEX direct from WPS for consistency with the LSMs
+    iret = nf_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
        call hydro_stop("In get_landuse_netcdf() - nf_inq_varid problem")
     endif
 
-    iret = nf_get_var_real(ncid, varid, xtmp)
+    iret = nf_get_var_real(ncid, varid, array)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
        call hydro_stop("In get_landuse_netcdf() - nf_get_var_real problem")
     endif
-
-    do i = 1, idim
-       do j = 1, jdim
-          mp = maxloc(xtmp(i,j,:))
-          array(i,j) = mp(1)
-          do l = 1,ldim
-            if(xtmp(i,j,l).lt.0) array(i,j) = -9999.0
-          enddo
-       enddo
-    enddo
+!!! END AD_CHANGE
 
   end subroutine get_landuse_netcdf
 
@@ -366,36 +382,52 @@ module module_HYDRO_io
     real, dimension(idim,jdim), intent(out) :: array
     character(len=256), intent(out) :: units
     integer :: iret, varid
-    real, dimension(idim,jdim,ldim) :: xtmp
-    integer, dimension(1) :: mp
-    integer :: i, j, did
-    character(len=24), parameter :: name = "SOILCTOP"
+!    real, dimension(idim,jdim,ldim) :: xtmp
+!    integer, dimension(1) :: mp
+!    integer :: i, j, did
+!    character(len=24), parameter :: name = "SOILCTOP"
+    character(len=24), parameter :: name = "SCT_DOM"
 
-    did = 1
+!    did = 1
     units = ""
 
-    iret = nf_inq_varid(ncid,  trim(name),  varid)
+!    iret = nf_inq_varid(ncid,  trim(name),  varid)
+!    if (iret /= 0) then
+!       print*, 'name = "', trim(name)//'"'
+!       call hydro_stop("In get_soilcat_netcdf() - nf_inq_varid problem")
+!    endif
+!
+!    iret = nf_get_var_real(ncid, varid, xtmp)
+!    if (iret /= 0) then
+!       print*, 'name = "', trim(name)//'"'
+!       call hydro_stop("In get_soilcat_netcdf() - nf_get_var_real problem")
+!    endif
+!
+!    do i = 1, idim
+!       do j = 1, jdim
+!          mp = maxloc(xtmp(i,j,:))
+!          array(i,j) = mp(1)
+!       enddo
+!    enddo
+
+!     if(nlst_rt(did)%GWBASESWCRT .ne. 3) then
+!        where (array == 14) array = 1   ! DJG remove all 'water' soils...
+!     endif
+
+!!! START AD_CHANGE
+! Using SCT_DOM direct from WPS for consistency with the LSMs
+    iret = nf_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
        call hydro_stop("In get_soilcat_netcdf() - nf_inq_varid problem")
     endif
 
-    iret = nf_get_var_real(ncid, varid, xtmp)
+    iret = nf_get_var_real(ncid, varid, array)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
        call hydro_stop("In get_soilcat_netcdf() - nf_get_var_real problem")
     endif
-
-    do i = 1, idim
-       do j = 1, jdim
-          mp = maxloc(xtmp(i,j,:))
-          array(i,j) = mp(1)
-       enddo
-    enddo
-
-!     if(nlst_rt(did)%GWBASESWCRT .ne. 3) then
-!        where (array == 14) array = 1   ! DJG remove all 'water' soils...
-!     endif
+ !!! END AD_CHANGE
 
   end subroutine get_soilcat_netcdf
 
@@ -6973,7 +7005,7 @@ do j = 1,JXRT
          else if ( DIRECTION(i, j) .eq. 128) then
 
             !-- 128's can flow out of the North or East edge
-            if ((i + 1 .gt. IXRT)  & .or.  (j + 1 .gt. JXRT))  then !   this is due north edge
+            if ((i + 1 .gt. IXRT)   .or.  (j + 1 .gt. JXRT))  then !   this is due north edge
                goto 201
             elseif (CH_NETRT(i + 1, j + 1).lt.0) then !North East
                goto 201

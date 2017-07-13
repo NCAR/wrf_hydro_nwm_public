@@ -485,7 +485,7 @@ subroutine output_chrt_NWM(domainId)
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
       ! Open output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_clobber .or. nf90_hdf5, ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHRTOUT NetCDF file.')
 
       ! Write global attributes.
@@ -986,7 +986,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                   date(6:7)//date(9:10)//date(12:13)//date(15:16)//date(18:19), igrid
          endif
 
-         iret = nf90_create(trim(output_flnm),cmode=nf90_clobber .or. nf90_hdf5,ncid = ftn)
+         iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create LDASOUT NetCDF file.')
          ftnNoahMP = ftn
 
@@ -995,7 +995,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
-         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_output_time',trim(fileMeta%validTime))
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
@@ -1500,13 +1500,13 @@ subroutine output_rt_NWM(domainId,iGrid)
 
    if(myId .eq. 0) then
       ! Create output NetCDF file for writing. 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_clobber .or. nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_time',trim(fileMeta%validTime))
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
@@ -2079,7 +2079,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_clobber .or. nf90_hdf5, ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LAKEOUT NetCDF file.')
 
       ! Write global attributes.
