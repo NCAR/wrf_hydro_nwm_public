@@ -202,8 +202,8 @@ CONTAINS
      allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
      rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
      allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
-     rt_domain(did)%LONVAL = 0.0
      allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
+     rt_domain(did)%LONVAL = 0.0
      rt_domain(did)%LATVAL = 0.0                
 
 
