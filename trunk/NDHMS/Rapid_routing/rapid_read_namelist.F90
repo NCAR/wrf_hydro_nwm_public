@@ -1,30 +1,14 @@
-!  Program Name:
-!  Author(s)/Contact(s):
-!  Abstract:
-!  History Log:
-! 
-!  Usage:
-!  Parameters: <Specify typical arguments passed>
-!  Input Files:
-!        <list file names and briefly describe the data they include>
-!  Output Files:
-!        <list file names and briefly describe the information they include>
-! 
-!  Condition codes:
-!        <list exit condition or error codes returned >
-!        If appropriate, descriptive troubleshooting instructions or
-!        likely causes for failures could be mentioned here with the
-!        appropriate error code
-! 
-!  User controllable options: <if applicable>
-
+!*******************************************************************************
+!Subroutine - rapid_read_namelist
+!*******************************************************************************
 subroutine rapid_read_namelist
 
-!PURPOSE
+!Purpose:
 !This subroutine allows to read the RAPID namelist and hence to run the model
 !multiple times without ever have to recompile.  Some information on the options
-!used is also printed in the stdout
-!Author: Cedric H. David, 2011 
+!used is also printed in the stdout.
+!Author: 
+!Cedric H. David, 2011-2015. 
 
 
 !*******************************************************************************

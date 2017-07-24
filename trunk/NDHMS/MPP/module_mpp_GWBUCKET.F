@@ -128,8 +128,8 @@ MODULE MODULE_mpp_GWBUCKET
              end if
            end do
       end if
-      deallocate(ibuff)
-      deallocate(vbuff)
+      if(allocated(ibuff)) deallocate(ibuff)
+      if(allocated(vbuff)) deallocate(vbuff)
   end subroutine gw_write_io_real
 
   subroutine gw_write_io_int(numbasns,inV,ind,outV)
