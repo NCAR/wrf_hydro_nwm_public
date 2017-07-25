@@ -650,7 +650,7 @@ end subroutine get_albedo12m_netcdf
 
        SUBROUTINE READ_ROUTEDIM(IXRT,JXRT,route_chan_f,route_link_f, &
             route_direction_f, NLINKS, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT)
+            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT,NLAKES)
 
          implicit none
 #include <netcdf.inc>
@@ -665,6 +665,8 @@ end subroutine get_albedo12m_netcdf
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
         INTEGER, DIMENSION(IXRT,JXRT)                :: CH_LNKRT   !- link routing ID
         integer, INTENT(IN)                          :: UDMP_OPT                                
+        integer                                      :: NLAKES
+        
 
 !!Dummy read in grids for inverted y-axis
 
@@ -943,16 +945,20 @@ end subroutine get_albedo12m_netcdf
 
 !!-- no longer find the lakes from the 2-d hi res grid
 !DJG inv       do j=jxrt,1,-1
-!       do j=1,jxrt
-!          do i = 1,ixrt
-!           if (LAKE_MSKRT(i,j) .gt. NLAKES) then 
-!             NLAKES = LAKE_MSKRT(i,j)
-!           endif
-!        end do
-!       end do
-!#ifdef HYDRO_D
-!       write(6,*) "finish read_red ..  Total Number of Lakes in Domain = ", NLAKES
-!#endif
+! follwoing is modified by Wei Yu 03/24/2017
+     if(UDMP_OPT .eq. 0) then
+        NLAKES = 0
+        do j=1,jxrt
+           do i = 1,ixrt
+            if (LAKE_MSKRT(i,j) .gt. NLAKES) then
+              NLAKES = LAKE_MSKRT(i,j)
+            endif
+         end do
+        end do
+#ifdef HYDRO_D
+        write(6,*) "finish read_red ..  Total Number of Lakes in Domain = ", NLAKES
+#endif
+     endif
 
 
 !-- don't return here--!  return
@@ -2921,7 +2927,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
      real, dimension(:),                  intent(in) :: nudge
 #endif
      
-     integer  :: UDMP_OPT
+     integer, intent(in)  :: UDMP_OPT
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -3697,7 +3703,7 @@ end subroutine output_chrt
      real, dimension(:),                  intent(in) :: nudge
 #endif
      
-     integer  :: UDMP_OPT
+     integer, intent(in)  :: UDMP_OPT
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -4467,7 +4473,7 @@ end subroutine output_chrt_bak
      real, dimension(:),                  intent(in) :: nudge
 #endif
 
-     integer :: UDMP_OPT
+     integer, intent(in) :: UDMP_OPT
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -4670,8 +4676,8 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: igrid, K
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLAKES
-     real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
-     real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     real, dimension(NLAKES),                  intent(inout) :: latlake,lonlake,elevlake,resht
+     real, dimension(NLAKES),                  intent(inout) :: qlakei,qlakeo  !-- inflow and outflow of lake
      real,                                     intent(in) :: dtrt_ch
      integer, dimension(NLAKES),               intent(in) :: LAKEIDM     ! lake id
 
@@ -4796,29 +4802,29 @@ end subroutine mpp_output_chrt
       iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
 
 !     !-- lake's phyical elevation
-      iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
-      iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+!     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
+!     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
 #endif
 
      !-- parent index
-      iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',33,'index of the lake for this record')
+!     iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',33,'index of the lake for this record')
 
      !-- prevChild
-      iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',54,'record number of the previous record for the same lake')
+!     iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',54,'record number of the previous record for the same lake')
 !ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-      iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!     iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
 
      !-- lastChild
-      iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',27,'latest report for this lake')
+!     iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',27,'latest report for this lake')
 !ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-      iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!     iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
 
 !     !- water surface elevation
-      iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/dimdata/), varid)
+      iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/dimdata/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
       iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
 
@@ -4875,8 +4881,8 @@ end subroutine mpp_output_chrt
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LONLAKE)
 
         !-- write physical height of lake
-        iret = nf_inq_varid(ncid,"altitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
+!       iret = nf_inq_varid(ncid,"altitude", varid)
+!       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
 #endif
 
         !-- write station id's 
@@ -4905,7 +4911,7 @@ end subroutine mpp_output_chrt
          iret = nf_inq_varid(ncid,"time_observation", varid)
          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), seconds_since)
 
-         iret = nf_inq_varid(ncid,"elevation", varid)
+         iret = nf_inq_varid(ncid,"wse", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), resht(i))
 
          iret = nf_inq_varid(ncid,"inflow", varid)
@@ -4915,15 +4921,15 @@ end subroutine mpp_output_chrt
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlakeo(i))
 
          !-- station index.. will repeat for every timesstep
-         iret = nf_inq_varid(ncid,"parent_index", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
+!        iret = nf_inq_varid(ncid,"parent_index", varid)
+!        iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
 
           !--record number of previous record for same station
-         prev_pos = cnt+(nlakes*(output_count-1))
-         if(output_count.ne.1) then !-- only write next set of records
-           iret = nf_inq_varid(ncid,"prevChild", varid)
-           iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
-         endif
+!        prev_pos = cnt+(nlakes*(output_count-1))
+!        if(output_count.ne.1) then !-- only write next set of records
+!          iret = nf_inq_varid(ncid,"prevChild", varid)
+!          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
+!        endif
 
          cnt=cnt+1  !--indices are 0 based
          rec_num_of_lake(cnt) = start_pos-1  !-- save position for last child, 0-based!!
@@ -5037,13 +5043,13 @@ end subroutine mpp_output_chrt
       iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
 
 !     !-- lake's phyical elevation
-      iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
-      iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+!     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
+!     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
+!     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
 #endif
 
 !     !- water surface elevation
-      iret = nf_def_var(ncid, "elevation", NF_FLOAT, 1, (/stationdim/), varid)
+      iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'units',6,'meters')
       iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
 
@@ -5085,12 +5091,12 @@ end subroutine mpp_output_chrt
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LONLAKE)
 
         !-- write physical height of lake
-        iret = nf_inq_varid(ncid,"altitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
+!       iret = nf_inq_varid(ncid,"altitude", varid)
+!       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
 #endif
 
         !-- write elevation  of lake
-        iret = nf_inq_varid(ncid,"elevation", varid)
+        iret = nf_inq_varid(ncid,"wse", varid)
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), resht   )
 
         !-- write elevation  of inflow
@@ -5414,7 +5420,7 @@ end subroutine mpp_output_chrt
       SUBROUTINE MPP_READ_ROUTEDIM(did,g_IXRT,g_JXRT, GCH_NETLNK,GNLINKS,IXRT,JXRT, &
             route_chan_f,route_link_f, &
             route_direction_f, NLINKS, &
-            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT)
+            CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT,NLAKES)
 
          USE module_mpp_land
 
@@ -5434,7 +5440,7 @@ end subroutine mpp_output_chrt
         INTEGER, DIMENSION(IXRT,JXRT)                :: LAKE_MSKRT
         REAL, DIMENSION(IXRT,JXRT)                   :: LAT, LON
         INTEGER, INTENT(IN)                          :: UDMP_OPT
-        integer:: i,j
+        integer:: i,j, NLAKES
 
         CHARACTER(len=*)       :: route_chan_f, route_link_f,route_direction_f
         CHARACTER(len=*)       :: geo_finegrid_flnm
@@ -5450,7 +5456,7 @@ end subroutine mpp_output_chrt
            g_CH_NETLNK = -9999
            CALL READ_ROUTEDIM(g_IXRT, g_JXRT, route_chan_f, route_link_f, &
               route_direction_f, GNLINKS, &
-              g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL, UDMP_OPT)
+              g_CH_NETLNK, channel_option,geo_finegrid_flnm,NLINKSL, UDMP_OPT,nlakes)
            call get_NLINKSL(NLINKSL, channel_option, route_link_f)
         else
            allocate(g_CH_NETLNK(1,1))
@@ -5458,6 +5464,7 @@ end subroutine mpp_output_chrt
 
         call mpp_land_bcast_int1(GNLINKS)
         call mpp_land_bcast_int1(NLINKSL)
+        call mpp_land_bcast_int1(NLAKES)
 
 
         call decompose_RT_int(g_CH_NETLNK,GCH_NETLNK,g_IXRT,g_JXRT,ixrt,jxrt)
@@ -8124,7 +8131,7 @@ call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, &
      ORIFICEA, ORIFICEE, gages, gageMiss, &
-     LAKEIDM, NLAKES, latlake, lonlake)
+     LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
    
 !--- get the lake configuration here.
 #ifdef MPP_LAND
@@ -8164,7 +8171,7 @@ end subroutine read_routelink
                    MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE, gages, gageMiss,& 
-                   LAKEIDM,NLAKES, latlake, lonlake)
+                   LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
         implicit none
         character(len=*) :: route_link_f,route_lake_f
@@ -8183,7 +8190,7 @@ end subroutine read_routelink
 !NLAKES
         INTEGER, intent(out), dimension(:)  ::  LAKEIDM
         REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, ORIFICEC,WEIRH, &
-                   ORIFICEA, ORIFICEE
+                   ORIFICEA, ORIFICEE, ELEVLAKE
 !end NLAKES
 
         INTEGER, dimension(GNLINKSL) ::  tmpLAKEIDA, tmpLINKID,  tmpTO_NODE, tmpTYPEL, tmpORDER 
@@ -8262,7 +8269,7 @@ end subroutine read_routelink
           if(routeLakeNetcdf) then
              call read_route_lake_netcdf(route_lake_f,HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,    WEIRL, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake)
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
           endif
 
 !!- initialize channel  if missing in input
@@ -8317,6 +8324,7 @@ end subroutine read_routelink
            call mpp_land_bcast_real(NLAKES, ORIFICEA)
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
            call mpp_land_bcast_int(NLAKES, LAKEIDM)
+           call mpp_land_bcast_real(NLAKES, ELEVLAKE)
         endif
 
 
@@ -8759,13 +8767,15 @@ end subroutine read_route_link_netcdf
 subroutine read_route_lake_netcdf(route_lake_file,                         &
                                    HRZAREA,  LAKEMAXH, WEIRH,  WEIRC,    WEIRL,    &
                                    ORIFICEC, ORIFICEA,  ORIFICEE, LAKEIDM, &
-                                   lakelat, lakelon)
+                                   lakelat, lakelon, ELEVLAKE)
 
 implicit none
 character(len=*),        intent(in)  :: route_lake_file
 integer, dimension(:),   intent(out) :: LAKEIDM
 real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEIRH
 real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
+real,    dimension(:),   intent(out) :: ELEVLAKE
+
 
 integer :: iRet, ncid, ii, varid
 logical :: fatal_if_error
@@ -8781,17 +8791,21 @@ if (iRet /= nf90_noErr) then
    if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem opening file.")
 endif
 
-call get_1d_netcdf_int(ncid,  'lake_id',     LAKEIDM,   'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_int(ncid,  'lake_id',     LAKEIDM,'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
+!yw call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
+!yw call get_1d_netcdf_real(ncid, 'WeirE',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirH',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'lat', lakelat,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'lon', lakelon,  'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
+call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
+!yw call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,      'read_route_lake_netcdf', .FALSE.)
+call get_1d_netcdf_real(ncid, 'alt', ELEVLAKE,      'read_route_lake_netcdf', .TRUE.)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_noErr) then
@@ -9689,7 +9703,7 @@ end subroutine output_chrt2
        real, allocatable, dimension(:) :: g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas
        integer, allocatable, dimension(:) :: g_basnsInd
        if(my_id .eq. io_id) then
-          if(nlst_rt(did)%GWBASESWCRT <= 2) then
+          if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                allocate(g_qin_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_qout_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_z_gwsubbas(rt_domain(did)%gnumbasns))
@@ -9702,10 +9716,6 @@ end subroutine output_chrt2
                allocate(g_basnsInd(rt_domain(did)%gnlinksl))
                gnbasns = rt_domain(did)%gnlinksl 
           endif
-       else
-               allocate(g_qin_gwsubbas(1))
-               allocate(g_qout_gwsubbas(1))
-               allocate(g_z_gwsubbas(1))
        endif 
      
        if(nlst_rt(did)%channel_option .ne. 3) then
