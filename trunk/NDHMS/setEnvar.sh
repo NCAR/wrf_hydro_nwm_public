@@ -10,7 +10,7 @@ export WRF_HYDRO=1
 export HYDRO_D=1
 
 ### turn on distributed parameters for NoahMP
-export SPATIAL_SOIL=1  
+#export SPATIAL_SOIL=1  
 
 ### turn on RAPID model
 export WRF_HYDRO_RAPID=0
@@ -19,10 +19,10 @@ export WRF_HYDRO_RAPID=0
 export WRFIO_NCD_LARGE_FILE_SUPPORT=1
 
 ### running in REALTIME mode (with reduced output).
-export HYDRO_REALTIME=1
+export HYDRO_REALTIME=0
 
 ### turn on wcoss flag 
 export NCEP_WCOSS=0
 
 ### turn nudging off
-export WRF_HYDRO_NUDGING=1
+export WRF_HYDRO_NUDGING=0

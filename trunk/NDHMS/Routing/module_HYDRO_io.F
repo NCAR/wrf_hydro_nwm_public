@@ -1590,7 +1590,10 @@ end subroutine get_albedo12m_netcdf
        startdate, date, QSUBRT,ZWATTABLRT,SMCRT,SUB_RESID,       &
        q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,CHRTOUT_GRID,  &
-       QBDRYRT, iocflag &
+       QBDRYRT  & 
+#ifdef HYDRO_REALTIME
+       ,iocflag &
+#endif
        )
 
 !output the routing variables over routing grid.
@@ -1598,7 +1601,12 @@ end subroutine get_albedo12m_netcdf
 #include <netcdf.inc>
 
     integer,                                  intent(in) :: igrid
+
+#ifdef HYDRO_REALTIME
     integer,                                  intent(in) :: iocflag
+#else
+    integer                                              :: iocflag=0
+#endif
     integer,                                  intent(in) :: split_output_count
     integer,                                  intent(in) :: ixrt,jxrt
     real,                                     intent(in) :: dt
