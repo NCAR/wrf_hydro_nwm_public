@@ -202,8 +202,8 @@ CONTAINS
      allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
      rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
      allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
-     rt_domain(did)%LONVAL = 0.0
      allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
+     rt_domain(did)%LONVAL = 0.0
      rt_domain(did)%LATVAL = 0.0                
 
 
@@ -339,20 +339,24 @@ CONTAINS
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+        allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
         allocate( rt_domain(did)%WEIRH(NLAKES) )
         allocate( rt_domain(did)%WEIRC(NLAKES) )
         allocate( rt_domain(did)%WEIRL(NLAKES) )
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+
          rt_domain(did)%HRZAREA = 0.0        
          rt_domain(did)%WEIRH = 0.0        
          rt_domain(did)%WEIRC = 0.0        
          rt_domain(did)%WEIRL = 0.0        
          rt_domain(did)%LAKEMAXH = 0.0        
+         rt_domain(did)%ELEVLAKE= 0.0        
          rt_domain(did)%ORIFICEC = 0.0        
          rt_domain(did)%ORIFICEA = 0.0        
          rt_domain(did)%ORIFICEE = 0.0        
+
      endif
 
 
@@ -408,7 +412,7 @@ CONTAINS
      allocate( rt_domain(did)%CVOL(nsizes) )
      allocate( rt_domain(did)%LATLAKE(NLAKES) )
      allocate( rt_domain(did)%LONLAKE(NLAKES) )
-     allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
+!    allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
      allocate( rt_domain(did)%LAKENODE(nsizes) )
      allocate( rt_domain(did)%RESHT(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
@@ -443,7 +447,7 @@ CONTAINS
 
       rt_domain(did)%LATLAKE = 0.0        
       rt_domain(did)%LONLAKE = 0.0        
-      rt_domain(did)%ELEVLAKE = 0.0        
+!     rt_domain(did)%ELEVLAKE = 0.0        
       rt_domain(did)%LAKENODE = 0.0        
       rt_domain(did)%RESHT = 0.0                    
       rt_domain(did)%QLAKEI = 0.0                     
@@ -538,7 +542,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !I
               nlst_rt(did)%route_direction_f, &
               rt_domain(did)%NLINKS, &
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
-              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
+              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt , rt_domain(did)%nlakes)
 #ifndef MPP_LAND
    call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
 #endif
@@ -1202,8 +1206,9 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
 #else
       call CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #endif
-       end if
-     if (nlst_rt(did)%channel_option .ne. 3) then
+   end if
+
+   if (nlst_rt(did)%channel_option .ne. 3) then
 #ifdef MPP_LAND
         if(my_id .eq. io_id) then
 #endif
@@ -1216,7 +1221,10 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
            do k = 1, rt_domain(did)%NLAKES
             if(rt_domain(did)%LAKEIDM(k) .eq. rt_domain(did)%LINKID(j)) then
               if (rt_domain(did)%TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
-                rt_domain(did)%RESHT(k) = rt_domain(did)%LAKEMAXH(k) * 0.935  !-- assumes lake is ~90% MA, should put in Lake Parm
+                !-- assumes lake is ~90% max elev should put in Lake Parm
+                rt_domain(did)%RESHT(k) = rt_domain(did)%ORIFICEE(k) + &
+                   ((rt_domain(did)%LAKEMAXH(k) - rt_domain(did)%ORIFICEE(k) ) * rt_domain(did)%ELEVLAKE(k) )  
+!               rt_domain(did)%RESHT(k) = rt_domain(did)%LAKEMAXH(k)
               endif
             endif
            end do
@@ -1228,7 +1236,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
         endif
 #endif
 
-     else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
+   else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
                 !--  put condition within the if/then structure, which will assign a value if something is missing in hi res
 
         do j=1,rt_domain(did)%NLINKS

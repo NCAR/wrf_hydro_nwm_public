@@ -140,6 +140,8 @@
 !!! accumulated variables for reach beased rt
   Real*8, allocatable, DIMENSION(:)  :: accSfcLatRunoff, accBucket
   REAL  , allocatable, DIMENSION(:)  ::   qSfcLatRunoff,   qBucket, qBtmVertRunoff
+  REAL, allocatable, DIMENSION(:)    :: accLndRunOff, accQLateral, accStrmvolrt
+  !REAL, allocatable, DIMENSION(:)    :: qqLndRunOff, qqStrmvolrt, qqBucket
   REAL, allocatable, DIMENSION(:)    :: QLateral, velocity
 
 #ifdef MPP_LAND
