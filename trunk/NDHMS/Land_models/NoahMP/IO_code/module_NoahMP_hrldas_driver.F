@@ -55,7 +55,6 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
-#ifdef HYDRO_REALTIME
    integer :: iocflag=0
    integer :: t0OutputFlag=0   
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
@@ -63,7 +62,6 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K]
    character(len=15), DIMENSION(30)        ::  IOCVARS
-#endif
 #endif
 
   character(len=9), parameter :: version = "v20150506"
@@ -1135,10 +1133,12 @@ module module_NoahMP_hrldas_driver
   Z0         = undefined_real
   ZNT        = undefined_real
  
+#ifdef HYDRO_REALTIME
   SOILSAT_TOP = undefined_real 
   SOILSAT     = undefined_real
   SOILICE     = undefined_real
   SNOWT_AVG   = undefined_real
+#endif
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
@@ -1499,8 +1499,8 @@ module module_NoahMP_hrldas_driver
    call get_t0OutputFlag(1, t0OutputFlag)
 #ifdef MPP_LAND
    if(my_id .eq. io_id) &
-#endif        
        print*, "t0OutputFlag: ", t0OutputFlag  
+#endif        
 #ifdef HYDRO_REALTIME
    if(t0OutputFlag .eq. 1) call ldas_output()
 #else
