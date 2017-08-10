@@ -27,7 +27,8 @@ module module_HYDRO_drv
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
 #endif
-   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM
+   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM,&
+                            output_chrtout_grd_NWM, output_lsmOut_NWM
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
@@ -62,7 +63,7 @@ module module_HYDRO_drv
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
 #endif
-
+  integer :: rtout_factor
    
 
    contains
@@ -233,11 +234,16 @@ module module_HYDRO_drv
       endif
 
 
-     if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  &
-     call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
-                 //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
-                 ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
-                 did)
+     if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
+        if(nlst_rt(did)%nwmIo .eq. 0) then
+           call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
+                       //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
+                       ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
+                       did)
+           else
+           call output_lsmOut_NWM(did)
+        endif
+     endif
 
     
 if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
@@ -250,32 +256,35 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    if(nlst_rt(did)%RTOUT_DOMAIN       .eq. 1 .and. &
       nlst_rt(did)%channel_only       .eq. 0 .and. &
       nlst_rt(did)%channelBucket_only .eq. 0       ) then 
-              ! Output gridded routing variables on National Water Model
-              ! high-res routing grid 
-              if(nlst_rt(did)%nwmIo .ne. 0) then
-                 call output_rt_NWM(did,nlst_rt(did)%igrid)
-              else
-                 call output_rt(    &
-                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                   RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
-                   nlst_rt(did)%nsoil, &
-   !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,
-   !               RT_DOMAIN(did)%QSUBRT,&
-                   nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
-                   RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
-                   RT_DOMAIN(did)%SUB_RESID,       &
+              if(mod(rtout_factor,3) .eq. 0 .or. nlst_rt(did)%iocFlag .ne. 5) then
+                 ! Output gridded routing variables on National Water Model
+                 ! high-res routing grid 
+                 if(nlst_rt(did)%nwmIo .ne. 0) then
+                    call output_rt_NWM(did,nlst_rt(did)%igrid)
+                 else
+                    call output_rt(    &
+                      nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                      RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
+                      nlst_rt(did)%nsoil, &
+   !                  nlst_rt(did)%startdate, nlst_rt(did)%olddate,
+   !                  RT_DOMAIN(did)%QSUBRT,&
+                      nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
+                      RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
+                      RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
-                   RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
-                   RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
-                   nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
-                   RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                   RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                   RT_DOMAIN(did)%QBDRYRT &
+                      RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
+                      RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
+                      nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
+                      RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
+                      RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
+                      RT_DOMAIN(did)%QBDRYRT &
 #ifdef HYDRO_REALTIME
-                   , nlst_rt(did)%iocflag &
+                      , nlst_rt(did)%iocflag &
 #endif
-                    )
-              endif ! End check for nwmIo value
+                       )
+                 endif ! End check for nwmIo value
+              endif ! End check for rtout_factor
+           rtout_factor = rtout_factor + 1
    endif
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
@@ -399,17 +408,21 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    endif ! End of checking for nwmIo flag value      
       
 #ifdef MPP_LAND
-              if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
-              call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                  RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-                  RT_DOMAIN(did)%GCH_NETLNK, &
-                  nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                  !RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-                  str_out, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-                  RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
-                  RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
+              if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  then
+                 if(nlst_rt(did)%nwmIo .eq. 0) then
+                    call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                    RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
+                    RT_DOMAIN(did)%GCH_NETLNK, &
+                    nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+                    !RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                    str_out, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                    RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
+                    RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
-
+                 else
+                    call output_chrtout_grd_NWM(did,nlst_rt(did)%igrid)
+                 endif
+              endif
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
                       if(nlst_rt(did)%nwmIo .ne. 0) then
                          ! Output lakes in NWM format

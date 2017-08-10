@@ -60,6 +60,8 @@ module_HYDRO_io.o:  module_HYDRO_utils.o \
 	 	    ../Data_Rec/module_RT_data.o 
 endif
 
+module_NWM_io_dict: ../Data_Rec/module_namelist.o
+
 module_NWM_io: module_HYDRO_utils.o \
                module_NWM_io_dict.o \
                module_date_utilities_rt.o \
