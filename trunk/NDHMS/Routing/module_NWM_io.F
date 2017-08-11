@@ -193,8 +193,8 @@ subroutine output_chrt_NWM(domainId)
 
       if(myId .eq. 0) then
          ! Allocate memory for output.
-         !allocate(g_chlon(gsize))
-         !allocate(g_chlat(gsize))
+         allocate(g_chlon(gsize))
+         allocate(g_chlat(gsize))
          allocate(g_hlink(gsize))
          !allocate(g_zelev(gsize))
          allocate(g_qlink(gsize,2))
@@ -225,8 +225,8 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(gsize))
          allocate(g_linkidOut(gsize))
       else
-         !allocate(g_chlon(1))
-         !allocate(g_chlat(1))
+         allocate(g_chlon(1))
+         allocate(g_chlat(1))
          allocate(g_hlink(1))
          !allocate(g_zelev(1))
          allocate(g_qlink(1,2))
@@ -292,8 +292,8 @@ subroutine output_chrt_NWM(domainId)
       call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
       !call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
       call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
-      !call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
-      !call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
+      call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
       !call ReachLS_write_io(RT_DOMAIN(domainId)%ZELEV,g_zelev)
       call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral,g_QLateral)
       call ReachLS_write_io(velocityLocal,g_velocity)
@@ -329,8 +329,8 @@ subroutine output_chrt_NWM(domainId)
    else
       gSize = rt_domain(domainId)%nlinksl
       ! No MPI - We are running on a single processor
-      !allocate(g_chlon(gsize))
-      !allocate(g_chlat(gsize))
+      allocate(g_chlon(gsize))
+      allocate(g_chlat(gsize))
       allocate(g_hlink(gsize))
       !allocate(g_zelev(gsize))
       allocate(g_qlink(gsize,2))
@@ -360,8 +360,8 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_accBucketOut(gsize))
       allocate(chIndArray(gsize))
       allocate(g_linkidOut(gsize))
-      !g_chlon = RT_DOMAIN(domainId)%CHLON
-      !g_chlat = RT_DOMAIN(domainId)%CHLAT
+      g_chlon = RT_DOMAIN(domainId)%CHLON
+      g_chlat = RT_DOMAIN(domainId)%CHLAT
       g_zelev = RT_DOMAIN(domainId)%ZELEV
       g_order = RT_DOMAIN(domainId)%ORDER
       g_linkid = RT_DOMAIN(domainId)%linkid
@@ -465,8 +465,8 @@ subroutine output_chrt_NWM(domainId)
          g_qBtmVertRunoffOut(iTmp) = g_qBtmVertRunoff(indTmp)
          g_accSfcLatRunoffOut(iTmp) = g_accSfcLatRunoff(indTmp)
          g_accBucketOut(iTmp) = g_accBucket(indTmp)
-         !g_chlatOut(iTmp) = g_chlat(indTmp)
-         !g_chlonOut(iTmp) = g_chlon(indTmp)
+         g_chlatOut(iTmp) = g_chlat(indTmp)
+         g_chlonOut(iTmp) = g_chlon(indTmp)
          !g_orderOut(iTmp) = g_order(indTmp)
          !g_zelevOut(iTmp) = g_zelev(indTmp)
       end do
@@ -560,22 +560,22 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
       ! Create channel lat/lon variables
-      !iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
-      !iret = nf90_put_att(ftn,latVarId,'long_name',trim(fileMeta%latLName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into latitude variable')
-      !iret = nf90_put_att(ftn,latVarId,'standard_name',trim(fileMeta%latStName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into latitude variable')
-      !iret = nf90_put_att(ftn,latVarId,'units',trim(fileMeta%latUnits))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into latitude variable')
-      !iret = nf90_def_var(ftn,"longitude",nf90_float,dimId(1),lonVarId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create longitude variable.')
-      !iret = nf90_put_att(ftn,lonVarId,'long_name',trim(fileMeta%lonLName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into longitude variable')
-      !iret = nf90_put_att(ftn,lonVarId,'standard_name',trim(fileMeta%lonStName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into longitude variable')
-      !iret = nf90_put_att(ftn,lonVarId,'units',trim(fileMeta%lonUnits))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into longitude variable')
+      iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
+      iret = nf90_put_att(ftn,latVarId,'long_name',trim(fileMeta%latLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into latitude variable')
+      iret = nf90_put_att(ftn,latVarId,'standard_name',trim(fileMeta%latStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into latitude variable')
+      iret = nf90_put_att(ftn,latVarId,'units',trim(fileMeta%latUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into latitude variable')
+      iret = nf90_def_var(ftn,"longitude",nf90_float,dimId(1),lonVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create longitude variable.')
+      iret = nf90_put_att(ftn,lonVarId,'long_name',trim(fileMeta%lonLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into longitude variable')
+      iret = nf90_put_att(ftn,lonVarId,'standard_name',trim(fileMeta%lonStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into longitude variable')
+      iret = nf90_put_att(ftn,lonVarId,'units',trim(fileMeta%lonUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into longitude variable')
 
       ! Create channel order variable
       !iret = nf90_def_var(ftn,"order",nf90_int,dimId(1),orderVarId)
@@ -602,10 +602,10 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-         !iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
-         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
-         !iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
-         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.') 
+         iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
+         iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.') 
          !iret = nf90_def_var_deflate(ftn,orderVarId,0,1,2)
          !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
          !iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
@@ -690,15 +690,15 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_var(ftn,varId,g_linkidOut)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
       
-      !iret = nf90_inq_varid(ftn,'latitude',varId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
-      !iret = nf90_put_var(ftn,varId,g_chlatOut)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into latitude output variable.')
+      iret = nf90_inq_varid(ftn,'latitude',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
+      iret = nf90_put_var(ftn,varId,g_chlatOut)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into latitude output variable.')
 
-      !iret = nf90_inq_varid(ftn,'longitude',varId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to locate longitude in NetCDF file.')
-      !iret = nf90_put_var(ftn,varId,g_chlonOut)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into longitude output variable.')
+      iret = nf90_inq_varid(ftn,'longitude',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate longitude in NetCDF file.')
+      iret = nf90_put_var(ftn,varId,g_chlonOut)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into longitude output variable.')
 
       !iret = nf90_inq_varid(ftn,'order',varId)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to locate order in NetCDF file.')
@@ -738,8 +738,8 @@ subroutine output_chrt_NWM(domainId)
       deallocate(varOutReal)
       deallocate(varOutInt)
    endif
-   !deallocate(g_chlonOut)
-   !deallocate(g_chlatOut)
+   deallocate(g_chlonOut)
+   deallocate(g_chlatOut)
    deallocate(g_hlinkOut)
    !deallocate(g_zelevOut)
    deallocate(g_qlinkOut)
@@ -754,8 +754,8 @@ subroutine output_chrt_NWM(domainId)
    deallocate(g_accBucketOut)
    deallocate(chIndArray)
    deallocate(g_linkidOut)
-   !deallocate(g_chlon)
-   !deallocate(g_chlat)
+   deallocate(g_chlon)
+   deallocate(g_chlat)
    deallocate(g_hlink)
    !deallocate(g_zelev)
    deallocate(g_qlink)
@@ -880,7 +880,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
    ! Initialize NWM dictionary derived type containing all the necessary
    ! metadata for the output file.
-   call initLdasDict(fileMeta)
+   call initLdasDict(fileMeta,myId,diagFlag)
 
    ! Calculate necessary datetime information that will go into the output file.
    ! First compose strings of EPOCH and simulation start date.
@@ -1432,7 +1432,7 @@ subroutine output_rt_NWM(domainId,iGrid)
 
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
-   call initRtDomainDict(fileMeta)
+   call initRtDomainDict(fileMeta,myId,diagFlag)
 
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
@@ -2318,6 +2318,979 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
 
 end subroutine output_lakes_NWM
+
+!==================================================================
+! Program Name: output_chrtout_grd_NWM
+! Author(s)/Contact(s): Logan R Karsten <karsten><ucar><edu>
+! Abstract: Ouptut routine for gridden streamflow variables
+!           for non-reach based routing.
+! History Log:
+! 8/6/17 - Created, LRK.
+! Usage:
+! Parameters: None.
+! Input Files: None.
+! Output Files: None.
+! Condition codes: None.
+! 
+! User controllable options: None.
+
+subroutine output_chrtout_grd_NWM(domainId,iGrid)
+   use module_rt_data, only: rt_domain
+   use module_namelist, only: nlst_rt
+   use Module_Date_utilities_rt, only: geth_newdate, geth_idts
+   use module_NWM_io_dict
+   use netcdf
+#ifdef MPP_LAND
+   use module_mpp_land
+   use module_mpp_reachls,  only: ReachLS_write_io
+#endif
+   implicit none
+
+   ! subroutine arguments 
+   integer, intent(in) :: domainId
+   integer, intent(in) :: iGrid
+
+   ! Derived types.
+   type(chrtGrdMeta) :: fileMeta
+
+   ! Local variables
+   integer :: mppFlag, diagFlag
+   integer :: minSinceSim ! Number of minutes since beginning of simulation.
+   integer :: minSinceEpoch1 ! Number of minutes from EPOCH to the beginning of the model simulation.
+   integer :: minSinceEpoch ! Number of minutes from EPOCH to the current model valid time.
+   character(len=16) :: epochDate ! EPOCH represented as a string.
+   character(len=16) :: startDate ! Start of model simulation, represented as a string. 
+   character(len=256) :: output_flnm ! CHRTOUT_GRID filename
+   integer :: iret ! NetCDF return statuses
+   integer :: ftn ! NetCDF file handle 
+   character(len=256) :: validTime ! Global attribute time string
+   character(len=256) :: initTime ! Global attribute time string
+   integer :: dimId(4) ! Dimension ID values created during NetCDF created. 
+   integer :: varId ! Variable ID value created as NetCDF variables are created and populated.
+   integer :: timeId ! Dimension ID for the time dimension.
+   integer :: refTimeId ! Dimension ID for the reference time dimension.
+   integer :: xVarId,yVarId,coordVarId ! Coordinate variable NC ID values
+   integer :: varRange(2) ! Local storage for valid min/max ranges
+   integer :: ierr, myId ! MPI return status, process ID
+   integer :: ftnGeo,geoXVarId,geoYVarId
+   integer :: iTmp,jTmp,jTmp2,iTmp2
+   integer :: gNumLnks,lNumLnks
+   integer :: indexVarId
+   ! Allocatable array to hold temporary streamflow for checking
+   real, allocatable, dimension(:) :: strFlowLocal
+   ! Allocatable array to hold global qlink values
+   real, allocatable, dimension(:,:) :: g_qlink
+   ! Allocatable array to hold streamflow index values
+   integer, allocatable, dimension(:,:) :: CH_NETLNK
+   ! allocatable global array to hold grid of output streamflow values
+   integer, allocatable, dimension(:,:) :: tmpFlow
+   ! allocatable arrays to hold coordinate values
+   real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
+
+! Establish macro variables to hlep guide this subroutine. 
+#ifdef MPP_LAND
+   mppFlag = 1
+#else
+   mppFlag = 0
+#endif
+
+#ifdef HYDRO_D
+   diagFlag = 1
+#else
+   diagFlag = 0
+#endif
+
+   ! If we are running over MPI, determine which processor number we are on.
+   ! If not MPI, then default to 0, which is the I/O ID.
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+      call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
+      call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.')
+#endif
+   else
+      myId = 0
+   endif
+
+   ! Some sanity checking here. 
+   if(nlst_rt(domainId)%CHRTOUT_GRID .eq. 0) then
+      ! No output requested here. Return to the parent calling program.
+      return
+   endif
+
+   if(nlst_rt(domainId)%CHRTOUT_GRID .ne. 1) then
+      call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_GRID value of 0 or 1 only allowed.')
+   endif
+
+   ! We must assume gridded routing is in place on a channel grid for this
+   ! routine to be valid. 
+   !if(nlst_rt(domainId)%channel_option .ne. 3) then
+   !   call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_GRID only valid for channel_option of 3.')
+   !endif
+
+   ! Initialize qlink arrays and collect data from processors for output.
+   gNumLnks = rt_domain(domainId)%gnlinksl
+   lNumLnks = rt_domain(domainId)%NLINKS
+   if(myId .eq. 0) then
+      ! Channel index values
+      allocate(CH_NETLNK(RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt))
+      ! Global qlink values
+      allocate(g_qlink(gNumLnks,2) )
+      ! Grid of global streamflow values via scale_factor/add_offset
+      allocate(tmpFlow(RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt))
+   else
+      allocate(CH_NETLNK(1,1))
+      allocate(g_qlink(1,2) )
+      allocate(tmpFlow(1,1))
+   endif
+   ! Allocate local streamflow array. We need to do a check to
+   ! for lake_type 2. However, we cannot set the values in the global array 
+   ! to missing as this causes the model to crash.
+   allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
+   strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
+   ! Loop through all the local links on this processor. For lake_type
+   ! of 2, we need to manually set the streamflow values
+   ! to the model NDV value.
+   if (RT_DOMAIN(domainId)%NLAKES .gt. 0) then
+      do iTmp=1,RT_DOMAIN(domainId)%NLINKS
+         if (RT_DOMAIN(domainId)%TYPEL(iTmp) .eq. 2) then
+            strFlowLocal(iTmp) = fileMeta%modelNdv
+         endif
+      end do
+   endif
+   if(nlst_rt(domainId)%channel_option .eq. 3) then
+      call write_chanel_real(strFlowLocal,RT_DOMAIN(domainId)%map_l2g,gNumLnks,lNumLnks,g_qlink(:,1))
+      call write_chanel_real(RT_DOMAIN(domainId)%qlink(:,2),RT_DOMAIN(domainId)%map_l2g,gNumLnks,lNumLnks,g_qlink(:,2))
+   else
+      call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
+      call ReachLS_write_io(RT_DOMAIN(domainId)%qlink(:,2),g_qlink(:,2))
+   endif
+   call write_IO_rt_int(RT_DOMAIN(domainId)%GCH_NETLNK, CH_NETLNK)
+
+   ! Initialize NWM dictionary derived type containing all the necessary metadat
+   ! for the output file.
+   call initChrtGrdDict(fileMeta,myId,diagFlag)
+
+   ! For now, we will default to outputting all variables until further notice. 
+   fileMeta%outFlag(:) = [1]
+
+   ! Calculate datetime information.
+   ! First compose strings of EPOCH and simulation start date.
+   epochDate = trim("1970-01-01 00:00")
+   startDate = trim(nlst_rt(domainId)%startdate(1:4)//"-"//&
+                    nlst_rt(domainId)%startdate(6:7)//&
+                    &"-"//nlst_rt(domainId)%startdate(9:10)//" "//&
+                    nlst_rt(domainId)%startdate(12:13)//":"//&
+                    nlst_rt(domainId)%startdate(15:16))
+   ! Second, utilize NoahMP date utilities to calculate the number of minutes
+   ! from EPOCH to the beginning of the model simulation.
+   call geth_idts(startDate,epochDate,minSinceEpoch1)
+   ! Third, calculate the number of minutes since the beginning of the
+   ! simulation.
+   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+   ! Fourth, calculate the total number of minutes from EPOCH to the current
+   ! model time step.
+   minSinceEpoch = minSinceEpoch1 + minSinceSim
+   ! Fifth, compose global attribute time strings that will be used. 
+   validTime = trim(nlst_rt(domainId)%olddate(1:4)//'-'//&
+                    nlst_rt(domainId)%olddate(6:7)//'-'//&
+                    nlst_rt(domainId)%olddate(9:10)//'_'//&
+                    nlst_rt(domainId)%olddate(12:13)//&
+                    &':00:00')
+   initTime = trim(nlst_rt(domainId)%startdate(1:4)//'-'//&
+                  nlst_rt(domainId)%startdate(6:7)//'-'//&
+                  nlst_rt(domainId)%startdate(9:10)//'_'//&
+                  nlst_rt(domainId)%startdate(12:13)//&
+                  &':00:00')
+   ! Replace default values in the dictionary.
+   fileMeta%initTime = trim(initTime)
+   fileMeta%validTime = trim(validTime)
+
+   ! Create output filename
+   write(output_flnm, '(A12,".CHRTOUT_GRID",I1)') nlst_rt(domainId)%olddate(1:4)//&
+                       nlst_rt(domainId)%olddate(6:7)//&
+                       nlst_rt(domainId)%olddate(9:10)//&
+                       nlst_rt(domainId)%olddate(12:13)//&
+                       nlst_rt(domainId)%olddate(15:16), igrid
+
+   if(myId .eq. 0) then
+      ! Create output NetCDF file for writing. 
+      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
+  
+      ! Write global attributes
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into RT_DOMAIN file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+
+      ! Create dimensions
+      iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define time dimension')
+      iret = nf90_def_dim(ftn,'x',RT_DOMAIN(domainId)%g_ixrt,dimId(2))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define x dimension')
+      iret = nf90_def_dim(ftn,'y',RT_DOMAIN(domainId)%g_jxrt,dimId(3))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
+      iret = nf90_def_dim(ftn,'reference_time',1,dimId(4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
+
+      ! Create and populate reference_time and time variables.
+      iret = nf90_def_var(ftn,"time",nf90_int,dimId(1),timeId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create time variable')
+      iret = nf90_put_att(ftn,timeId,'long_name',trim(fileMeta%timeLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'standard_name',trim(fileMeta%timeStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
+      iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into reference_time variable')
+      iret = nf90_put_att(ftn,refTimeId,'standard_name',trim(fileMeta%rTimeStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
+      iret = nf90_put_att(ftn,refTimeId,'units',trim(fileMeta%rTimeUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
+
+      ! Create x/y coordinate variables
+      iret = nf90_def_var(ftn,'x',nf90_double,dimId(2),xVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'long_name',trim(fileMeta%xLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'standard_name',trim(fileMeta%xStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'units',trim(fileMeta%xUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'resolution',fileMeta%xRes)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+      iret = nf90_def_var(ftn,'y',nf90_double,dimId(3),yVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'long_name',trim(fileMeta%yLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'standard_name',trim(fileMeta%yStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'units',trim(fileMeta%yUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+
+      ! Define compression for meta-variables only if nwmIo is set to 1.
+      if(nlst_rt(1)%nwmIo .eq. 1) then
+         iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
+         iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+         iret = nf90_def_var_deflate(ftn,xVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for x.')
+         iret = nf90_def_var_deflate(ftn,yVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
+      endif
+
+      ! Create ProjectionCoordinateSystem variable
+      iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'transform_name',trim(fileMeta%projTransformName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'standard_parallel',fileMeta%stParallel)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'false_easting',fileMeta%falseEast)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'false_northing',fileMeta%falseNorth)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'earth_radius',fileMeta%radius)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'proj4',trim(fileMeta%proj4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+
+      ! Create channel index variable.
+      iret = nf90_def_var(ftn,'index',nf90_int,(/dimId(2),dimId(3)/),varid=indexVarId)
+      iret = nf90_put_att(ftn,indexVarId,'_FillValue',-9999)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable index')
+      iret = nf90_put_att(ftn,indexVarId,'missing_value',-9999)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place missing value attribute into variable index')
+      iret = nf90_put_att(ftn,indexVarId,'long_name','Streamflow Index Value')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable index')
+      iret = nf90_put_att(ftn,indexVarId,'units','-')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable index')
+      iret = nf90_put_att(ftn,indexVarId,'proj4',trim(fileMeta%proj4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: index')
+      iret = nf90_put_att(ftn,indexVarId,'grid_mapping',trim(fileMeta%gridMapping))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: index')
+      iret = nf90_put_att(ftn,indexVarId,'esri_pe_string',trim(fileMeta%projEsri))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: index')
+      ! Define compression for meta-variables only if nwmIo is set to 1.
+      if(nlst_rt(1)%nwmIo .eq. 1) then
+         iret = nf90_def_var_deflate(ftn,indexVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for index.')
+      endif
+
+      ! Loop through all possible variables and create them, along with their
+      ! metadata attributes. 
+      do iTmp=1,fileMeta%numVars
+         if(fileMeta%outFlag(iTmp) .eq. 1) then
+            iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(3),dimId(1)/),varId)
+            call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(iTmp)))
+
+            ! Extract valid range into a 1D array for placement.
+            varRange(1) = fileMeta%validMinComp(iTmp)
+            varRange(2) = fileMeta%validMaxComp(iTmp)
+
+            ! Establish a compression level for the variables. For now we are
+            ! using a
+            ! compression level of 2. In addition, we are choosing to turn the
+            ! shuffle
+            ! filter off for now. Kelley Eicher did some testing with this and
+            ! determined that the benefit wasn't worth the extra time spent
+            ! writing output.
+            ! Only compress if nwmIo is set to 1.
+            if(nlst_rt(1)%nwmIo .eq. 1) then
+               iret = nf90_def_var_deflate(ftn,varId,0,1,2)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            endif
+
+            ! Create variable attributes
+            iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'missing_value',fileMeta%missingComp(iTmp))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place missing value attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'long_name',trim(fileMeta%longName(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'scale_factor',fileMeta%scaleFactor(iTmp))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place scale_factor attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'add_offset',fileMeta%addOffset(iTmp))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place add_offset attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'valid_range',varRange)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'proj4',trim(fileMeta%proj4))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'grid_mapping',trim(fileMeta%gridMapping))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'esri_pe_string',trim(fileMeta%projEsri))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+         endif
+      end do ! end looping through variable output list.
+
+      ! Remove NetCDF file from definition mode.
+      iret = nf90_enddef(ftn)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to take RT_DOMAIN file out of definition mode')
+
+      ! Read in coordinates from FullDom file. These will be placed into the
+      ! output file coordinate variables. 
+      allocate(xCoord(RT_DOMAIN(domainId)%g_ixrt))
+      allocate(yCoord(RT_DOMAIN(domainId)%g_jxrt))
+      allocate(yCoord2(RT_DOMAIN(domainId)%g_jxrt))
+      iret = nf90_open(trim(nlst_rt(domainId)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to open FullDom file')
+      iret = nf90_inq_varid(ftnGeo,'x',geoXVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to find x coordinate in FullDom file')
+      iret = nf90_get_var(ftnGeo,geoXVarId,xCoord)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to extract x coordinate from FullDom file')
+      iret = nf90_inq_varid(ftnGeo,'y',geoYVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to find y coordinate in FullDom file')
+      iret = nf90_get_var(ftnGeo,geoYVarId,yCoord)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to extract y coordinate from FullDom file')
+      iret = nf90_close(ftnGeo)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to close geoGrid file.')
+
+      ! Reverse Y coordinates. They are read in reverse. 
+      jTmp2 = 0
+      do jTmp = RT_DOMAIN(domainId)%g_jxrt,1,-1
+         jTmp2 = jTmp2 + 1
+         yCoord2(jTmp2) = yCoord(jTmp)
+      end do
+      ! Place coordinate values into output file
+      iret = nf90_inq_varid(ftn,'x',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate x coordinate variable.')
+      iret = nf90_put_var(ftn,varId,xCoord)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into x coordinate variable')
+      iret = nf90_inq_varid(ftn,'y',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate y coordinate variable')
+      iret = nf90_put_var(ftn,varId,yCoord2)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into y coordinate variable')
+      deallocate(xCoord)
+      deallocate(yCoord)
+      deallocate(yCoord2)
+
+      ! Place streamflow index values into output file.
+      iret = nf90_inq_varid(ftn,'index',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate index variable.')
+      iret = nf90_put_var(ftn,varId,CH_NETLNK,(/1,1/),(/RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt/))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place CH_NETLNK values into index variable.')
+
+      ! Place time values into time variables.
+      iret = nf90_inq_varid(ftn,'time',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate time variable')
+      iret = nf90_put_var(ftn,varId,minSinceEpoch)
+      call nwmCheck(diagFlag,iret,'ERROR: Failure to place data into time variable')
+      iret = nf90_inq_varid(ftn,'reference_time',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate reference_time variable')
+      iret = nf90_put_var(ftn,varId,minSinceEpoch1)
+      call nwmCheck(diagFlag,iret,'ERROR: Failure to place data into reference_time variable')
+
+      ! Since the only variable we are "looping" over for output is streamflow,
+      ! handle below. If other variables are added later, we can modify this
+      ! section.
+      do jTmp=1,RT_DOMAIN(domainId)%g_jxrt
+         do iTmp=1,RT_DOMAIN(domainId)%g_ixrt
+            if(CH_NETLNK(iTmp,jTmp).GE.0) then
+               tmpflow(iTmp,jTmp) = NINT((g_qlink(CH_NETLNK(iTmp,jTmp),1)-fileMeta%addOffset(1))/fileMeta%scaleFactor(1))
+            else
+               tmpflow(iTmp,jTmp) = fileMeta%fillComp(1)
+            endif
+         enddo
+      enddo
+
+      ! Place streamflow grid into output file.
+      iret = nf90_inq_varid(ftn,'streamflow',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate streamflow variable.')
+      iret = nf90_put_var(ftn,varId,tmpFlow,(/1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt,1/))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place streamflow values into CHRTOUT_GRID')
+
+   endif ! End if statement if on I/O ID
+
+! Synce up processes.
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND 
+      call mpp_land_sync()
+#endif
+   endif
+
+   if(myId .eq. 0) then
+      ! Close the output file
+      iret = nf90_close(ftn)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to close RT_DOMAIN file.')
+   endif
+
+   ! Deallocate memory as needed
+   deallocate(g_qlink, CH_NETLNK, tmpFlow, strFlowLocal)
+
+end subroutine output_chrtout_grd_NWM
+
+!===============================================================================
+! Program Name: output_lsmOut_NWM
+! Author(s)/Contact(s): Logan R Karsten <karsten><ucar><edu>
+! Abstract: Output routine fro diagnostic LSM grids.
+! History Log:
+! 8/9/17 -Created, LRK.
+! Usage:
+! Parameters: None.
+! Input Files. None.
+! Output Files: None.
+! Condition codes: None.
+!
+! User controllable options: None.
+
+subroutine output_lsmOut_NWM(domainId)
+  use module_rt_data, only: rt_domain
+   use module_namelist, only: nlst_rt
+   use Module_Date_utilities_rt, only: geth_newdate, geth_idts
+   use module_NWM_io_dict
+   use netcdf
+#ifdef MPP_LAND
+     use module_mpp_land
+#endif
+   implicit none
+
+   ! Subroutine arguments
+   integer, intent(in) :: domainId
+
+   ! Derived types.
+   type(lsmMeta) :: fileMeta
+
+   ! Local variables
+   integer :: minSinceSim ! Number of minutes since beginning of simulation.
+   integer :: minSinceEpoch1 ! Number of minutes from EPOCH to the beginning of the model simulation.
+   integer :: minSinceEpoch ! Number of minutes from EPOCH to the current model valid time.
+   character(len=16) :: epochDate ! EPOCH represented as a string.
+   character(len=16) :: startDateTmp ! Start of model simulation, represented as a string. 
+   character(len=256) :: validTime ! Global attribute time string
+   character(len=256) :: initTime ! Global attribute time string
+   integer :: mppFlag, diagFlag
+   character(len=1024) :: output_flnm ! Output file name
+   integer :: iret ! NetCDF return status
+   integer :: ftn  ! NetCDF file handle
+   integer :: dimId(4) ! NetCDF dimension ID values
+   integer :: varId ! NetCDF variable ID value
+   integer :: timeId ! NetCDF time variable ID
+   integer :: refTimeId ! NetCDF reference_time variable ID
+   integer :: coordVarId ! NetCDF coordinate variable ID
+   integer :: xVarId,yVarId ! NetCDF x/y variable ID
+   integer :: ierr, myId ! MPI related values
+   !integer :: varRange(2) ! Local storage of valid min/max values
+   real :: varRange(2) ! Local storage of valid min/max values
+   integer :: iTmp,jTmp,iTmp2,jTmp2
+   integer :: ftnGeo,geoXVarId,geoYVarId
+   integer :: waterVal ! Value in HRLDAS in WRFINPUT file used to define water bodies for masking
+   real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
+   real :: varRealTmp
+   real, allocatable, dimension(:,:) :: localRealTmp, globalOutReal
+   !integer, allocatable, dimension(:,:) :: globalCompTmp, localCompTmp
+
+#ifdef MPP_LAND
+   mppFlag = 1
+#else
+   mppFlag = 0
+#endif
+
+#ifdef HYDRO_D
+   diagFlag = 1
+#else
+   diagFlag = 0
+#endif
+
+   ! Sync up processes. 
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+      call mpp_land_sync()
+#endif
+   endif
+
+   ! If we are running over MPI, determine which processor number we are on.
+   ! If not MPI, then default to 0, which is the I/O ID.
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+      call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
+      call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.')
+#endif
+   else
+      myId = 0
+   endif
+
+   ! Call routine to initialize metadata structure
+   call initLsmOutDict(fileMeta,myId,diagFlag)
+
+   ! Initialize water type to 16.
+   ! NOTE THIS MAY CHANGE IN THE FUTURE!!!!!
+   waterVal = 16
+
+   ! Calculate necessary datetime information that will go into the output file.
+   ! First compose strings of EPOCH and simulation start date.
+   epochDate = trim("1970-01-01 00:00")
+   startDateTmp = trim(nlst_rt(1)%startdate(1:4)//"-"//&
+                       nlst_rt(1)%startdate(6:7)//&
+                       &"-"//nlst_rt(1)%startdate(9:10)//" "//&
+                       nlst_rt(1)%startdate(12:13)//":"//&
+                       nlst_rt(1)%startdate(15:16))
+   ! Second, utilize NoahMP date utilities to calculate the number of minutes
+   ! from EPOCH to the beginning of the model simulation.
+   call geth_idts(startDateTmp,epochDate,minSinceEpoch1)
+   ! Third, calculate the number of minutes since the beginning of the
+   ! simulation.
+   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+   ! Fourth, calculate the total number of minutes from EPOCH to the current
+   ! model time step.
+   minSinceEpoch = minSinceEpoch1 + minSinceSim
+   ! Fifth, compose global attribute time strings that will be used. 
+   validTime = trim(nlst_rt(1)%olddate(1:4)//'-'//&
+                    nlst_rt(1)%olddate(6:7)//'-'//&
+                    nlst_rt(1)%olddate(9:10)//'_'//&
+                    nlst_rt(1)%olddate(12:13)//&
+                    &':00:00')
+   initTime = trim(nlst_rt(1)%startdate(1:4)//'-'//&
+                  nlst_rt(1)%startdate(6:7)//'-'//&
+                  nlst_rt(1)%startdate(9:10)//'_'//&
+                  nlst_rt(1)%startdate(12:13)//&
+                  &':00:00')
+   ! Replace default values in the dictionary.
+   fileMeta%initTime = trim(initTime)
+   fileMeta%validTime = trim(validTime)
+
+   ! For now, will always default to outputting all available
+   ! variables since the nature of this output file is
+   ! diagnostic in nature.
+   fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+   ! Sync all processes up.
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+      call mpp_land_sync()
+#endif
+   endif
+
+   if(myId .eq. 0) then
+      ! We are on the I/O node. Create output file.
+      write(output_flnm,'(A12,".LSMOUT_DOMAIN",I1)') nlst_rt(domainId)%olddate(1:4)//&
+            nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
+            nlst_rt(domainId)%olddate(12:13)//nlst_rt(domainId)%olddate(15:16)//  &
+            nlst_rt(domainId)%hgrid
+  
+      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create LSMOUT NetCDF file.')
+
+      ! Write global attributes
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LDASOUT file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+
+      ! Create dimensions
+      iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define time dimension')
+      iret = nf90_def_dim(ftn,'x',global_nx,dimId(2))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define x dimension')
+      iret = nf90_def_dim(ftn,'y',global_ny,dimId(3))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
+      iret = nf90_def_dim(ftn,'reference_time',1,dimId(4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
+
+      ! Create and populate reference_time and time variables.
+      iret = nf90_def_var(ftn,"time",nf90_int,dimId(1),timeId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create time variable')
+      iret = nf90_put_att(ftn,timeId,'long_name',trim(fileMeta%timeLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'standard_name',trim(fileMeta%timeStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
+      iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into reference_time variable')
+      iret = nf90_put_att(ftn,refTimeId,'standard_name',trim(fileMeta%rTimeStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
+      iret = nf90_put_att(ftn,refTimeId,'units',trim(fileMeta%rTimeUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
+
+      ! Create x/y coordinate variables
+      iret = nf90_def_var(ftn,'x',nf90_double,dimId(2),xVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'long_name',trim(fileMeta%xLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'standard_name',trim(fileMeta%xStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'units',trim(fileMeta%xUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
+      iret = nf90_put_att(ftn,xVarId,'resolution',fileMeta%xRes)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+      iret = nf90_def_var(ftn,'y',nf90_double,dimId(3),yVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'long_name',trim(fileMeta%yLName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'standard_name',trim(fileMeta%yStName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'units',trim(fileMeta%yUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
+      iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+
+      ! Define compression for meta-variables. Only compress if nwmIo is set
+      ! to 1.
+      if(nlst_rt(1)%nwmIo .eq. 1) then
+         iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
+         iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+         iret = nf90_def_var_deflate(ftn,xVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for x.')
+         iret = nf90_def_var_deflate(ftn,yVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
+      endif
+
+      ! Create ProjectionCoordinateSystem variable
+      iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'transform_name',trim(fileMeta%projTransformName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'standard_parallel',fileMeta%stParallel)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'false_easting',fileMeta%falseEast)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'false_northing',fileMeta%falseNorth)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'earth_radius',fileMeta%radius)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
+      iret = nf90_put_att(ftn,coordVarId,'proj4',trim(fileMeta%proj4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+
+      ! Loop through all possible variables and create them, along with their
+      ! metadata attributes. 
+      do iTmp=1,fileMeta%numVars
+         if(fileMeta%outFlag(iTmp) .eq. 1) then
+            !iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(3),dimId(1)/),varId)
+            iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(3),dimId(1)/),varId)
+            call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(iTmp)))
+
+            ! Extract valid range into a 1D array for placement.
+            !varRange(1) = fileMeta%validMinComp(iTmp)
+            !varRange(2) = fileMeta%validMaxComp(iTmp)
+            varRange(1) = fileMeta%validMinReal(iTmp)
+            varRange(2) = fileMeta%validMaxReal(iTmp)
+
+            ! Establish a compression level for the variables. For now we are using a
+            ! compression level of 2. In addition, we are choosing to turn the shuffle
+            ! filter off for now. Kelley Eicher did some testing with this and
+            ! determined that the benefit wasn't worth the extra time spent writing output.
+            ! Only compress if nwmIo is set to 1.
+            if(nlst_rt(1)%nwmIo .eq. 1) then
+               iret = nf90_def_var_deflate(ftn,varId,0,1,2)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
+            endif
+
+            ! Create variable attributes
+            !iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
+            iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillReal(iTmp))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            !iret = nf90_put_att(ftn,varId,'missing_value',fileMeta%missingComp(iTmp))
+            iret = nf90_put_att(ftn,varId,'missing_value',fileMeta%missingReal(iTmp))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place missing value attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'long_name',trim(fileMeta%longName(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            !iret = nf90_put_att(ftn,varId,'scale_factor',fileMeta%scaleFactor(iTmp))
+            !call nwmCheck(diagFlag,iret,'ERROR: Unable to place scale_factor attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            !iret = nf90_put_att(ftn,varId,'add_offset',fileMeta%addOffset(iTmp))
+            !call nwmCheck(diagFlag,iret,'ERROR: Unable to place add_offset attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            !iret = nf90_put_att(ftn,varId,'valid_range',varRange)
+            !call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'proj4',trim(fileMeta%proj4))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'grid_mapping',trim(fileMeta%gridMapping))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'esri_pe_string',trim(fileMeta%projEsri))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+         endif ! End if output flag is on
+      end do ! end looping through variable output list.
+
+      ! Remove NetCDF file from definition mode.
+      iret = nf90_enddef(ftn)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to take LSMOUT file out of definition mode')
+
+      ! Read in coordinates from GeoGrid file. These will be placed into the
+      ! output file coordinate variables. 
+      allocate(xCoord(global_nx))
+      allocate(yCoord(global_ny))
+      allocate(yCoord2(global_ny))
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      if(iret .ne. 0) then
+         ! Spatial metadata file not found for land grid. Warn the user no
+         ! file was found, and set x/y coordinates to -9999.0
+         call postDiagMsg(diagFlag,'WARNING: Unable to find LAND spatial metadata file')
+         xCoord = -9999.0
+         yCoord = -9999.0
+         yCoord2 = -9999.0
+      else
+         iret = nf90_inq_varid(ftnGeo,'x',geoXVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x coordinate in geoGrid file')
+         iret = nf90_get_var(ftnGeo,geoXVarId,xCoord)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to extract x coordinate from geoGrid file')
+         iret = nf90_inq_varid(ftnGeo,'y',geoYVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find y coordinate in geoGrid file')
+         iret = nf90_get_var(ftnGeo,geoYVarId,yCoord)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to extract y coordinate from geoGrid file')
+         iret = nf90_close(ftnGeo)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close geoGrid file.')
+         ! Reverse Y coordinates. They are read in reverse. 
+         jTmp2 = 0
+         do jTmp = global_ny,1,-1
+            jTmp2 = jTmp2 + 1
+            yCoord2(jTmp2) = yCoord(jTmp)
+         end do
+      endif
+
+      ! Place coordinate values into output file
+      iret = nf90_inq_varid(ftn,'x',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate x coordinate variable.')
+      iret = nf90_put_var(ftn,varId,xCoord)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into x coordinate variable')
+      iret = nf90_inq_varid(ftn,'y',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate y coordinate variable')
+      iret = nf90_put_var(ftn,varId,yCoord2)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into y coordinate variable')
+      deallocate(xCoord)
+      deallocate(yCoord)
+      deallocate(yCoord2)
+
+      ! Place time values into time variables.
+      iret = nf90_inq_varid(ftn,'time',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate time variable')
+      iret = nf90_put_var(ftn,varId,minSinceEpoch)
+      call nwmCheck(diagFlag,iret,'ERROR: Failure to place data into time variable')
+      iret = nf90_inq_varid(ftn,'reference_time',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate reference_time variable')
+      iret = nf90_put_var(ftn,varId,minSinceEpoch1)
+      call nwmCheck(diagFlag,iret,'ERROR: Failure to place data into reference_time variable')
+
+   end if ! End if we are on the I/O processor.
+
+   ! Sync up all processes
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+      call mpp_land_sync()
+#endif
+   endif
+
+   ! Allocate temporary local memory
+   !allocate(localCompTmp(rt_domain(domainId)%ix,rt_domain(domainId)%jx))
+   allocate(localRealTmp(rt_domain(domainId)%ix,rt_domain(domainId)%jx))
+
+   ! Loop through all possible variables to output. Collect the data to the
+   ! global grid and output to the necessary NetCDF variable.
+   do iTmp=1,fileMeta%numVars
+      if(fileMeta%outFlag(iTmp) .eq. 1) then
+         ! Allocate memory necessary
+         if(myId .eq. 0) then
+            !allocate(globalOutComp(global_nx,global_ny))
+            allocate(globalOutReal(global_nx,global_ny))
+         else
+            !allocate(globalOutComp(1,1))
+            allocate(globalOutReal(1,1))
+         endif
+
+         !globalOutComp = fileMeta%fillComp(iTmp)
+         !localCompTmp = fileMeta%fillComp(iTmp)
+
+         ! Sync up processes
+         if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+            call mpp_land_sync()
+#endif
+         endif
+
+         ! Loop through the local array and convert floating point values
+         ! to integer via scale_factor/add_offset. If the pixel value 
+         ! falls within a water class value, leave as ndv.
+         do iTmp2 = 1,rt_domain(domainId)%ix
+            do jTmp2 = 1,rt_domain(domainId)%jx
+               if(iTmp .eq. 1) then
+                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,1)
+               else if(iTmp .eq. 2) then
+                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,1)
+               else if(iTmp .eq. 3) then
+                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,1)
+               else if(iTmp .eq. 4) then
+                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,2)
+               else if(iTmp .eq. 5) then
+                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,2)
+               else if(iTmp .eq. 6) then
+                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,2)
+               else if(iTmp .eq. 7) then
+                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,3)
+               else if(iTmp .eq. 8) then
+                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,3)
+               else if(iTmp .eq. 9) then
+                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,3)
+               else if(iTmp .eq. 10) then
+                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,4)
+               else if(iTmp .eq. 11) then
+                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,4)
+               else if(iTmp .eq. 12) then
+                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,4)
+               else if(iTmp .eq. 13) then
+                  varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
+               else if(iTmp .eq. 14) then
+                  varRealTmp = rt_domain(domainId)%SFCHEADRT(iTmp2,jTmp2)
+               endif
+
+               ! For now, we are foregoing converting these variables to integer
+               ! via scale_factor/add_offset. This file is meant for diagnostic
+               ! purposes, so we want to keep full precision.
+               localRealTmp(iTmp2,jTmp2) = varRealTmp
+
+               ! If we are on time 0, make sure we don't need to fill in the
+               ! grid with NDV values. 
+               !if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
+               !   localCompTmp(iTmp2,jTmp2) = fileMeta%fillComp(iTmp)
+               !else
+               !   if(varRealTmp .eq. fileMeta%modelNdv) then
+               !      localCompTmp(iTmp2,jTmp2) = INT(fileMeta%fillComp(iTmp))
+               !   else
+               !      localCompTmp(iTmp2,jTmp2) = NINT((varRealTmp-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
+               !   endif
+               !   if(vegTyp(iTmp2,jTmp2) .eq. waterVal) then
+               !      localCompTmp(iTmp2,jTmp2) = INT(fileMeta%fillComp(iTmp))
+               !   endif
+               !endif
+            enddo
+         enddo
+         ! Collect local 2D arrays to global 2D array
+         ! Sync all processes up.
+         if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+            call mpp_land_sync()
+#endif
+         endif
+         if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+            !call write_IO_int(localCompTmp,globalCompTmp)
+            call write_IO_real(localRealTmp,globalOutReal)
+#endif
+         else
+            !globalCompTmp = localCompTmp
+            globalOutReal = localRealTmp
+         endif
+         ! Sync all processes up.
+         if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+            call mpp_land_sync()
+#endif
+         endif
+
+         ! Write array out to NetCDF file
+         if(myId .eq. 0) then
+            iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
+            !iret = nf90_put_var(ftn,varId,globalOutComp,(/1,1,1/),(/global_nx,global_ny,1/))
+            iret = nf90_put_var(ftn,varId,globalOutReal,(/1,1,1/),(/global_nx,global_ny,1/))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into output variable: '//trim(fileMeta%varNames(iTmp)))
+         endif
+
+         !deallocate(globalCompTmp)
+         deallocate(globalOutReal)
+      endif
+   enddo
+
+   if(myId .eq. 0) then
+      ! Close the output file
+      iret = nf90_close(ftn)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to close LSMOUT_DOMAIN file.')
+   endif
+
+   !deallocate(localCompTmp)
+   deallocate(localRealTmp)
+
+end subroutine output_lsmOut_NWM
 
 subroutine postDiagMsg(diagFlag,diagMsg)
    implicit none
