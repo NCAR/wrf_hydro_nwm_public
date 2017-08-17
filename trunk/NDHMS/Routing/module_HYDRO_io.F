@@ -6660,7 +6660,10 @@ if(IO_id .eq. my_id) then
 
 #ifdef MPP_LAND
 endif
-call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+!yw call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+! Not sure what caused the problem. added out_counts = 1 as a temporary fix for the hydro output.
+rt_domain(did)%out_counts = 1
+!
 call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 !if( nlst_rt(did)%channel_only       .eq. 1 .or. &
 !    nlst_rt(did)%channelBucket_only .eq. 1         ) &
