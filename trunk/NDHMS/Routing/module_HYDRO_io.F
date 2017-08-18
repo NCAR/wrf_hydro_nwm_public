@@ -1590,10 +1590,8 @@ end subroutine get_albedo12m_netcdf
        startdate, date, QSUBRT,ZWATTABLRT,SMCRT,SUB_RESID,       &
        q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,CHRTOUT_GRID,  &
-       QBDRYRT  & 
-#ifdef HYDRO_REALTIME
-       ,iocflag &
-#endif
+       QBDRYRT,  & 
+       iocflag &
        )
 
 !output the routing variables over routing grid.
@@ -1602,11 +1600,7 @@ end subroutine get_albedo12m_netcdf
 
     integer,                                  intent(in) :: igrid
 
-#ifdef HYDRO_REALTIME
     integer,                                  intent(in) :: iocflag
-#else
-    integer                                              :: iocflag=0
-#endif
     integer,                                  intent(in) :: split_output_count
     integer,                                  intent(in) :: ixrt,jxrt
     real,                                     intent(in) :: dt
@@ -1703,12 +1697,12 @@ end subroutine get_albedo12m_netcdf
         write (54,713) chan_in
        close (54)
 #else
-#ifndef HYDRO_REALTIME
-       open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
+       if (iocflag .le. 0) then
+         open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
              status='unknown',position='append')
-        write (46,713) chan_in
-       close (46)
-#endif
+         write (46,713) chan_in
+         close (46)
+       endif
 #endif
 #ifdef MPP_LAND
     endif
@@ -1772,8 +1766,7 @@ end subroutine get_albedo12m_netcdf
         endif
      enddo
 
-       
-#ifndef HYDRO_REALTIME
+   if (iocflag .le. 0) then  
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
       iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
@@ -1784,7 +1777,7 @@ end subroutine get_albedo12m_netcdf
       iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
      end if  !endif hires_georef 
       iret = nf_close(ncstatic)
-#endif
+   endif
 
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
@@ -1805,9 +1798,9 @@ end subroutine get_albedo12m_netcdf
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
        iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
-#ifndef HYDRO_REALTIME
+     if (iocflag .le. 0) then
        iret = nf_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
-#endif
+     endif
 
 !--- define variables
 !     !- time definition, timeObs
@@ -1815,7 +1808,7 @@ end subroutine get_albedo12m_netcdf
          iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
          iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
        !- x-coordinate in cartesian system
         iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
@@ -1864,10 +1857,10 @@ end subroutine get_albedo12m_netcdf
 !       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
 !       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
 !       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
-#endif
+endif
 
 ! All but long range
-if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
+if ( iocflag .ne. 4 ) then
 
    iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
    iret = nf_put_att_text(ncid,varid,'units',1,'m')
@@ -1899,7 +1892,7 @@ if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 
 endif
 
-#ifndef HYDRO_REALTIME   
+if (iocflag .le. 0) then 
        iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
        iret = nf_put_att_text(ncid,varid,'long_name',14,'channel inflow')
@@ -1941,7 +1934,7 @@ endif
       iret = nf_put_att_real(ncid,varid,'false_northing',NF_FLOAT,1,fn)
       iret = nf_put_att_real(ncid,varid,'standard_parallel',NF_FLOAT,2,sp)
      end if   !endif hires_georef
-#endif
+endif
 
 !      iret = nf_def_var(ncid,"Date",   NF_CHAR,  2, (/dimid_datelen,dimid_times/),     varid)
 
@@ -1959,14 +1952,14 @@ endif
 
       iret = nf_enddef(ncid)
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
 !!-- write latitude and longitude locations
          iret = nf_inq_varid(ncid,"x", varid)
          iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
 
          iret = nf_inq_varid(ncid,"y", varid)
          iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
-#endif
+endif
 
 #ifdef MPP_LAND
     endif
@@ -1975,7 +1968,7 @@ endif
 iret = nf_inq_varid(ncid,"time", varid)
 iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
 #ifdef MPP_LAND
         call write_IO_rt_real(LATVAL,xdumd)
     if( my_id .eq. io_id) then
@@ -2004,11 +1997,6 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
     if( my_id .eq. io_id) then
 #endif
 
-
-
-
-
-
        do n = 1,nsoil
         if(n == 1) then
          asldpth(n) = -sldpth(n)
@@ -2023,12 +2011,12 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 #ifdef MPP_LAND
     endif  ! end of my_id .eq. io_id
 #endif
-#endif
+endif
 
    endif !!! end of if block output_count == 0
     output_count = output_count + 1
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
 !-- 3-d soils
      do n = 1, nsoil
 #ifdef MPP_LAND
@@ -2046,7 +2034,7 @@ iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
     endif
 #endif
     enddo !-n soils
-#endif
+endif
 
 ! All but long range
 if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
@@ -2065,7 +2053,7 @@ if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 #endif
 endif
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
 #ifdef MPP_LAND
           call write_IO_rt_real(QBDRYRT,xdumd)
 #else
@@ -2093,10 +2081,10 @@ endif
 #ifdef MPP_LAND
      endif
 #endif
-#endif
+endif
  
 ! All but long range
-if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
+if ( iocflag .ne. 4 ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(SFCHEADSUBRT,xdumd)
 #else
@@ -3290,7 +3278,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
 !       iret = nf_put_att_text(ncid,varid,'long_name',14,'abs streamflow')
 
-#ifndef HYDRO_REALTIME 
 !     !- head definition, var
         iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'units',5,'meter')
@@ -3299,7 +3286,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         iret = nf_def_var(ncid2, "head", NF_FLOAT, 1, (/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
-#endif
 
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
@@ -3341,12 +3327,12 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          convention(1:32) = "Unidata Observation Dataset v1.0"
          iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
-#ifndef HYDRO_REALTIME
+
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+
          iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
          iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
@@ -3354,12 +3340,12 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "cdm_datatype",7, "Station")
-#ifndef HYDRO_REALTIME
+
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid2, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
@@ -3475,10 +3461,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
 !        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
 
-#ifndef HYDRO_REALTIME
          iret = nf_inq_varid(ncid,"head", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), hlink(i))
-#endif
 
          iret = nf_inq_varid(ncid,"order", varid)
          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), ORDER(i))
@@ -3514,11 +3498,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              !yw          write(55,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 118          FORMAT(I8,",",A10,1X,A8,", ",A15,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
              !write(55,118) seconds_since, date(1:10), date(12:19), &
-#ifndef HYDRO_REALTIME
+
              write(55,118) seconds_since, hydroTime(1:10), hydroTime(12:19), &
                   gages(i), chlon(i), chlat(i),                               &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
-#endif
+
              !yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 
@@ -3534,10 +3518,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), nudge(i))
 #endif
 
-#ifndef HYDRO_REALTIME
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
-#endif
 
              iret = nf_inq_varid(ncid,"order", varid)
              iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
@@ -3589,10 +3571,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              iret = nf_inq_varid(ncid2,"streamflow", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
 
-#ifndef HYDRO_REALTIME
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
-#endif
 
              iret = nf_inq_varid(ncid,"order", varid)
              iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
@@ -4056,7 +4036,6 @@ end subroutine output_chrt
 !       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
 !       iret = nf_put_att_text(ncid,varid,'long_name',14,'abs streamflow')
 
-#ifndef HYDRO_REALTIME 
 !     !- head definition, var
         iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/dimdata/), varid)
         iret = nf_put_att_text(ncid,varid,'units',5,'meter')
@@ -4065,7 +4044,6 @@ end subroutine output_chrt
         iret = nf_def_var(ncid2, "head", NF_FLOAT, 1, (/dimdataO/), varid)
         iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
         iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
-#endif
 
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
@@ -4107,12 +4085,12 @@ end subroutine output_chrt
          convention(1:32) = "Unidata Observation Dataset v1.0"
          iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
-#ifndef HYDRO_REALTIME
+
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+         
          iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
          iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
@@ -4120,12 +4098,12 @@ end subroutine output_chrt
 
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "cdm_datatype",7, "Station")
-#ifndef HYDRO_REALTIME
+
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
          iret = nf_put_att_text(ncid2, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid2, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
@@ -4241,10 +4219,8 @@ end subroutine output_chrt
 !        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
 !        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
 
-#ifndef HYDRO_REALTIME
          iret = nf_inq_varid(ncid,"head", varid)
          iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), hlink(i))
-#endif
 
          iret = nf_inq_varid(ncid,"order", varid)
          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), ORDER(i))
@@ -4280,11 +4256,11 @@ end subroutine output_chrt
              !yw          write(55,117) seconds_since,trim(date),cnt,chlon(i),chlat(i), &
 118          FORMAT(I8,",",A10,1X,A8,", ",A15,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
              !write(55,118) seconds_since, date(1:10), date(12:19), &
-#ifndef HYDRO_REALTIME
+
              write(55,118) seconds_since, hydroTime(1:10), hydroTime(12:19), &
                   gages(i), chlon(i), chlat(i),                               &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
-#endif
+
              !yw 117 FORMAT(I8,1X,A25,1X,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 
@@ -4300,10 +4276,8 @@ end subroutine output_chrt
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), nudge(i))
 #endif
 
-#ifndef HYDRO_REALTIME
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
-#endif
 
              iret = nf_inq_varid(ncid,"order", varid)
              iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
@@ -4355,10 +4329,8 @@ end subroutine output_chrt
              iret = nf_inq_varid(ncid2,"streamflow", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
 
-#ifndef HYDRO_REALTIME
              iret = nf_inq_varid(ncid2,"head", varid)
              iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
-#endif
 
              iret = nf_inq_varid(ncid,"order", varid)
              iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
@@ -4798,7 +4770,7 @@ end subroutine mpp_output_chrt
       iret = nf_def_dim(ncid, "station", nlakes, stationdim)
       iret = nf_def_dim(ncid, "time", 1, timedim)
 
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
       !- station location definition,  lat
       iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake latitude')
@@ -4813,7 +4785,7 @@ end subroutine mpp_output_chrt
 !     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
 !     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
 !     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-#endif
+!#endif
 
      !-- parent index
 !     iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
@@ -4866,12 +4838,12 @@ end subroutine mpp_output_chrt
         convention(1:32) = "Unidata Observation Dataset v1.0"
         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
         iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+!#endif
         iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
         iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
 !!       iret = nf_put_att_text(ncid, NF_GLOBAL, "observation_dimension",6, "recNum")
@@ -4879,7 +4851,7 @@ end subroutine mpp_output_chrt
         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
         iret = nf_enddef(ncid)
 
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
         !-- write latitudes
         iret = nf_inq_varid(ncid,"latitude", varid)
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LATLAKE)
@@ -4891,7 +4863,7 @@ end subroutine mpp_output_chrt
         !-- write physical height of lake
 !       iret = nf_inq_varid(ncid,"altitude", varid)
 !       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
-#endif
+!#endif
 
         !-- write station id's 
          do i=1,nlakes
@@ -5033,18 +5005,18 @@ end subroutine mpp_output_chrt
 
       iret = nf_def_dim(ncid, "time", 1, timedim)
 
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
       !- station location definition,  lat
       iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake latitude')
       iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
-#endif
+!#endif
 
       !- station location definition,  LAKEIDM
       iret = nf_def_var(ncid,"lake_id",NF_INT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake COMMON ID')
 
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
       !- station location definition,  long
       iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
       iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake longitude')
@@ -5054,7 +5026,7 @@ end subroutine mpp_output_chrt
 !     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
 !     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
 !     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-#endif
+!#endif
 
 !     !- water surface elevation
       iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/stationdim/), varid)
@@ -5076,12 +5048,12 @@ end subroutine mpp_output_chrt
 
         date19(1:19) = "0000-00-00_00:00:00"
         date19(1:len_trim(startdate)) = startdate
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+!#endif
         iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
         iret = nf_enddef(ncid)
@@ -5089,7 +5061,7 @@ end subroutine mpp_output_chrt
         iret = nf_inq_varid(ncid,"time", varid)
         iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
-#ifndef HYDRO_REALTIME
+!#ifndef HYDRO_REALTIME
         !-- write latitudes
         iret = nf_inq_varid(ncid,"latitude", varid)
         iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LATLAKE)
@@ -5101,7 +5073,7 @@ end subroutine mpp_output_chrt
         !-- write physical height of lake
 !       iret = nf_inq_varid(ncid,"altitude", varid)
 !       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
-#endif
+!#endif
 
         !-- write elevation  of lake
         iret = nf_inq_varid(ncid,"wse", varid)
@@ -9430,7 +9402,7 @@ end subroutine mpp_output_chrt2
        iret = nf_def_dim(ncid, "station", nstations, stationdim)
        iret = nf_def_dim(ncid, "time", 1, timedim)
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
@@ -9460,7 +9432,7 @@ end subroutine mpp_output_chrt2
 !        iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
 !        iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
 !        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
-#endif
+endif
 
         iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
         iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
@@ -9508,12 +9480,12 @@ end subroutine mpp_output_chrt2
         	iret = nf_put_att_text(ncid,varid,'long_name',14,'River Velocity')
 	endif
 
-#ifndef HYDRO_REALTIME
+if (iocflag .le. 0) then
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
         iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
-#endif
+endif
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
@@ -9581,12 +9553,13 @@ end subroutine mpp_output_chrt2
          convention(1:32) = "Unidata Observation Dataset v1.0"
          iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
-#ifndef HYDRO_REALTIME
+
+if (iocflag .le. 0) then 
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
-#endif
+endif
          iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
          iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
          iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
@@ -9598,7 +9571,8 @@ end subroutine mpp_output_chrt2
 
          iret = nf_inq_varid(ncid,"time", varid)
          iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
-#ifndef HYDRO_REALTIME        
+
+if (iocflag .le. 0) then
         !-- write latitudes
          iret = nf_inq_varid(ncid,"latitude", varid)
          iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlat)
@@ -9614,7 +9588,7 @@ end subroutine mpp_output_chrt2
         !-- write order
          iret = nf_inq_varid(ncid,"order", varid)
          iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), ORDER)
-#endif
+endif
 
         !-- write stream flow
          iret = nf_inq_varid(ncid,"streamflow", varid)

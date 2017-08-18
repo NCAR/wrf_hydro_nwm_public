@@ -2044,10 +2044,9 @@ end subroutine drive_CHANNEL
        
 #ifdef MPP_LAND
        real*8,  dimension(LNLINKSL) :: LQLateral
-!#ifndef HYDRO_REALTIME
        real*8,  dimension(LNLINKSL) :: tmpLQLateral
        real,  dimension(NLINKSL)    :: tmpQLateral
-!#endif
+
        integer nlinks_index(:)
        integer  iyw, yw_mpp_nlinks, mpp_nlinks
        real     ywtmp(ixrt,jxrt)
@@ -2057,10 +2056,8 @@ end subroutine drive_CHANNEL
        integer  :: nToNodeInd
        real, dimension(nToNodeInd,2) :: gQLINK
 #else
-!#ifndef HYDRO_REALTIME
        real*8,  dimension(NLINKS) :: tmpLQLateral
        real,  dimension(NLINKSL) :: tmpQLateral
-!#endif
        real,  dimension(NLINKSL) :: LQLateral
 #endif
        integer flag
@@ -2127,10 +2124,9 @@ else
 
    QLateral = 0 !! the variable solved in this section. Channel only knows this already.
    LQLateral = 0          !-- initial lateral flow to 0 for this reach
-!#ifndef HYDRO_REALTIME
+
    tmpQLateral = 0  !! WHY DOES THIS tmp variable EXIST?? Only for accumulations??
    tmpLQLateral = 0
-!#endif
 
    ! NHDPLUS maping
    if(OVRTSWCRT .eq. 0)      then
@@ -2141,13 +2137,11 @@ else
             jj =  LUDRSL(k)%cell_j(m)
             LQLateral(k) = LQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%cellweight(m)/1000 & 
                  *LUDRSL(k)%cellArea(m)/DT
-!#ifndef HYDRO_REALTIME
             tmpLQLateral(k) = tmpLQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%cellweight(m)/1000 & 
                  *LUDRSL(k)%cellArea(m)/DT
-!#endif
          end do
       end do
-!#ifndef HYDRO_REALTIME
+
 #ifdef MPP_LAND
       call updateLinkV(tmpLQLateral, tmpQLateral)
 #endif
@@ -2162,7 +2156,6 @@ else
       tmpQLateral = 0   !! JLM:: accumulated runoff to be output but it does for internal QLateral?
       !! JLM: But then the next accumulation is added to the amt before zeroing? result
       !! JLM: should be identical to LQLateral.... I'm totally mystified.
-!#endif
    endif
 
    !! JLM:: if ovrtswcrt=0 and subrtswcrt=1, then this accumulation is calculated twice for LQLateral???
@@ -2176,13 +2169,11 @@ else
             jj =  LUDRSL(k)%grid_j(m)
             LQLateral(k) = LQLateral(k) + QSTRMVOLRT(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
                  *LUDRSL(k)%nodeArea(m)/DT
-!#ifndef HYDRO_REALTIME
             tmpLQLateral(k) = tmpLQLateral(k) + QSTRMVOLRT(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
                  *LUDRSL(k)%nodeArea(m)/DT
-!#endif
          end do
       end do
-!#ifndef HYDRO_REALTIME
+
 #ifdef MPP_LAND
       call updateLinkV(tmpLQLateral, tmpQLateral)
 #endif
@@ -2196,7 +2187,6 @@ else
          if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
               accSfcLatRunoff(1:NLINKSL) = accSfcLatRunoff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
       end if
-!#endif
 
    endif
 

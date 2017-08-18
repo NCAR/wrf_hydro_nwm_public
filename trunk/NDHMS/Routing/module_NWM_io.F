@@ -156,9 +156,9 @@ subroutine output_chrt_NWM(domainId)
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-   if(nlst_rt(1)%iocFlag .eq. 0) then
-      ! Diagnostics
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+   if (nlst_rt(1)%iocFlag .eq. 0) then
+      ! All
+      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 1) then
       ! Analysis and Assimilation 
       fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
@@ -173,6 +173,9 @@ subroutine output_chrt_NWM(domainId)
       fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
    else if (nlst_rt(1)%iocFlag .eq. 5) then
       ! Retrospective
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+   else if (nlst_rt(1)%iocFlag .eq. 6) then
+      ! Diagnostics
       fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
@@ -918,12 +921,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst_rt(1)%iocFlag .eq. 0) then
-      ! Diagnostics
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
-                             1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             0,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1]
+      ! All
+      fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
+                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
    else if(nlst_rt(1)%iocFlag .eq. 1) then
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
@@ -959,6 +962,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                              0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !41-60
                              1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,& !61-80
                              0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]            !81-95
+   else if(nlst_rt(1)%iocFlag .eq. 6) then
+      ! Diagnostics
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
+                             1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
+                             1,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1438,8 +1448,8 @@ subroutine output_rt_NWM(domainId,iGrid)
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst_rt(domainId)%iocFlag .eq. 0) then
-      ! Diagnostics
-      fileMeta%outFlag(:) = [1,1,0,0]
+      ! All
+      fileMeta%outFlag(:) = [1,1,1,1]
    else if(nlst_rt(domainId)%iocFlag .eq. 1) then
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [1,1,0,0]
@@ -1454,6 +1464,9 @@ subroutine output_rt_NWM(domainId,iGrid)
       fileMeta%outFlag(:) = [1,1,0,0]
    else if(nlst_rt(domainId)%iocFlag .eq. 5) then
       ! Retrospective
+      fileMeta%outFlag(:) = [1,1,0,0]
+   else if(nlst_rt(domainId)%iocFlag .eq. 6) then
+      ! Diagnostics
       fileMeta%outFlag(:) = [1,1,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
@@ -1902,7 +1915,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst_rt(1)%iocFlag .eq. 0) then
-      ! Diagnostics
+      ! All
       fileMeta%outFlag(:) = [1,1] 
    else if(nlst_rt(1)%iocFlag .eq. 1) then
       ! Analysis and Assimilation
@@ -1918,6 +1931,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
       fileMeta%outFlag(:) = [1,1]
    else if(nlst_rt(1)%iocFlag .eq. 5) then
       ! Retrospective
+      fileMeta%outFlag(:) = [1,1]
+   else if(nlst_rt(1)%iocFlag .eq. 6) then
+      ! Diagnostics
       fileMeta%outFlag(:) = [1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
