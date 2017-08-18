@@ -6632,7 +6632,10 @@ if(IO_id .eq. my_id) then
 
 #ifdef MPP_LAND
 endif
-call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+!yw call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+! Not sure what caused the problem. added out_counts = 1 as a temporary fix for the hydro output.
+rt_domain(did)%out_counts = 1
+!
 call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 !if( nlst_rt(did)%channel_only       .eq. 1 .or. &
 !    nlst_rt(did)%channelBucket_only .eq. 1         ) &
@@ -7726,9 +7729,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(j+1 .gt. JXRT) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j+1).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j+1)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1 
             endif
@@ -7770,9 +7773,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j+1 .gt. JXRT))  then ! an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i+1,j+1).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i+1,j+1)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7812,9 +7815,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(i+1 .gt. IXRT) then  !an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i+1,j).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i+1,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7855,9 +7858,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j-1 .eq. 0)) then !an edge 
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i+1,j-1).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i+1,j-1)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7897,9 +7900,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(j-1 .eq. 0) then !- an edge
                TYPEL(cnt) =1
-            elseif(LAKE_MSKRT(i,j-1).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j-1)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7940,9 +7943,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j-1 .eq. 0) ) then !- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i-1,j-1).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i-1,j-1)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7982,9 +7985,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(i-1 .eq. 0) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i-1,j).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i-1,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -8025,9 +8028,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j+1 .gt. JXRT)) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i-1,j+1).gt.0) then 
+            elseif(LAKE_MSKRT(i,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i-1,j+1)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j)
             else
                TYPEL(cnt) = 1
             endif
