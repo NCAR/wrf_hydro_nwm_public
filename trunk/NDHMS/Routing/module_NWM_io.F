@@ -89,6 +89,7 @@ subroutine output_chrt_NWM(domainId)
    real, allocatable, dimension(:) :: g_QLateralOut,g_velocityOut
    real, allocatable, dimension(:) :: g_nudgeOut,g_qSfcLatRunoffOut
    real, allocatable, dimension(:) :: g_qBucketOut,g_qBtmVertRunoffOut,g_accBucketOut
+   integer, allocatable, dimension(:) :: g_strmFrxstPts
    real*8, allocatable, dimension(:) :: g_accSfcLatRunoffOut
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
@@ -224,6 +225,7 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_accBucketOut(gsize))
          allocate(chIndArray(gsize))
          allocate(g_linkidOut(gsize))
+         allocate(g_strmFrxstPts(gsize))
       else
          allocate(g_chlon(1))
          allocate(g_chlat(1))
@@ -256,6 +258,7 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_accBucketOut(1))
          allocate(chIndArray(1))
          allocate(g_linkidOut(1))
+         allocate(g_strmFrxstPts(1))
       endif
 
       ! Allocate local streamflow and velocity arrays. We need to do a check to
@@ -288,41 +291,52 @@ subroutine output_chrt_NWM(domainId)
       ! Collect arrays from various processors through MPI, and 
       ! assemble into global arrays previously allocated.
 #ifdef MPP_LAND
-      call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
-      call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
-      !call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
-      call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
-      call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
-      call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
-      !call ReachLS_write_io(RT_DOMAIN(domainId)%ZELEV,g_zelev)
-      call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral,g_QLateral)
-      call ReachLS_write_io(velocityLocal,g_velocity)
-      call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK,g_hlink)
-      ! Optional outputs
-      if(nudgeFlag .eq. 1)then
+      if(nlst_rt(domainId)%channel_option .eq. 3) then
+         call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
+         call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
+         !call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
+         call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
+         call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
+         call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
+         !call ReachLS_write_io(RT_DOMAIN(domainId)%ZELEV,g_zelev)
+         call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral,g_QLateral)
+         call ReachLS_write_io(velocityLocal,g_velocity)
+         call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK,g_hlink)
+         ! Optional outputs
+         if(nudgeFlag .eq. 1)then
 #ifdef WRF_HYDRO_NUDGING
-         fileMeta%outFlag(2) = 1 ! Set output flag to on. 
-         call ReachLS_write_io(RT_DOMAIN(domainID)%nudge,g_nudge)
+            fileMeta%outFlag(2) = 1 ! Set output flag to on. 
+            call ReachLS_write_io(RT_DOMAIN(domainID)%nudge,g_nudge)
 #endif
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
-         nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-         fileMeta%outFlag(6) = 1
-         fileMeta%outFlag(7) = 1
-         call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
-         call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
-         nlst_rt(domainId)%channel_only                .eq. 0         ) then
-         fileMeta%outFlag(8) = 1
-         call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
-         !! JLM: unsure the following will work... but this is caveated in namelist.
-         fileMeta%outFlag(9) = 1
-         fileMeta%outFlag(10) = 1
-         call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
-         call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_accBucket)
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
+            nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+            fileMeta%outFlag(6) = 1
+            fileMeta%outFlag(7) = 1
+            call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
+            call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
+            nlst_rt(domainId)%channel_only                .eq. 0         ) then
+            fileMeta%outFlag(8) = 1
+            call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
+            !! JLM: unsure the following will work... but this is caveated in namelist.
+            fileMeta%outFlag(9) = 1
+            fileMeta%outFlag(10) = 1
+            call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
+            call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_accBucket)
+         endif
+         if(nlst_rt(domainId)%CHRTOUT_DOMAIN .eq. 2) then
+            ! User has requested to output frxstpts
+            call ReachLS_write_io(RT_DOMAIN(domainId)%STRMFRXSTPTS,g_strmFrxstPts)
+         endif
+      else
+         if(nlst_rt(domainId)%CHRTOUT_DOMAIN .eq. 2) then
+            call write_chanel_int(RT_DOMAIN(domainId)%STRMFRXSTPTS,rt_domain(domainId)%map_l2g,&
+                 gsize,RT_DOMAIN(domainId)%NLINKS,g_strmFrxstPts)
+         endif
       endif
 #endif
 
@@ -360,6 +374,7 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_accBucketOut(gsize))
       allocate(chIndArray(gsize))
       allocate(g_linkidOut(gsize))
+      allocate(g_strmFrxstPts(gsize))
       g_chlon = RT_DOMAIN(domainId)%CHLON
       g_chlat = RT_DOMAIN(domainId)%CHLAT
       g_zelev = RT_DOMAIN(domainId)%ZELEV
@@ -369,6 +384,10 @@ subroutine output_chrt_NWM(domainId)
       g_qlink = RT_DOMAIN(domainId)%QLINK 
       g_QLateral = RT_DOMAIN(domainId)%QLateral
       g_velocity = RT_DOMAIN(domainId)%velocity
+      if(nlst_rt(domainId)%CHRTOUT_DOMAIN .eq. 2) then
+         ! User has requested to output frxstpts
+         g_strmFrxstPts = RT_DOMAIN(domainId)%STRMFRXSTPTS
+      endif
       ! Optional outputs
       if(nudgeFlag .eq. 1)then
 #ifdef WRF_HYDRO_NUDGING
@@ -768,6 +787,7 @@ subroutine output_chrt_NWM(domainId)
    deallocate(g_qBtmVertRunoff)
    deallocate(g_accSfcLatRunoff)
    deallocate(g_accBucket)
+   deallocate(g_strmFrxstPts)
    deallocate(strFlowLocal)
    deallocate(velocityLocal)
 
