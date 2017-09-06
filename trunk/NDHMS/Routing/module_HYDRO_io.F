@@ -7757,9 +7757,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(j+1 .gt. JXRT) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i,j+1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j+1)
             else
                TYPEL(cnt) = 1 
             endif
@@ -7801,9 +7801,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j+1 .gt. JXRT))  then ! an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i+1,j+1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i+1,j+1)
             else
                TYPEL(cnt) = 1
             endif
@@ -7843,9 +7843,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(i+1 .gt. IXRT) then  !an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i+1,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i+1,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7886,9 +7886,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j-1 .eq. 0)) then !an edge 
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i+1,j-1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i+1,j-1)
             else
                TYPEL(cnt) = 1
             endif
@@ -7928,9 +7928,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(j-1 .eq. 0) then !- an edge
                TYPEL(cnt) =1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i,j-1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j-1)
             else
                TYPEL(cnt) = 1
             endif
@@ -7971,9 +7971,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j-1 .eq. 0) ) then !- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i-1,j-1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i-1,j-1)
             else
                TYPEL(cnt) = 1
             endif
@@ -8013,9 +8013,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(i-1 .eq. 0) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i-1,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i-1,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -8056,9 +8056,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j+1 .gt. JXRT)) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i-1,j+1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i-1,j+1)
             else
                TYPEL(cnt) = 1
             endif
@@ -8088,6 +8088,7 @@ print*, "my_id=",my_id, "cnt = ", cnt
 #ifdef MPP_LAND
 Link_location = CH_NETLNK
 call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,TYPEL,NLINKS,99) 
+call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,LAKENODE,NLINKS,99) 
 #endif
 
 end subroutine READ_CHROUTING1
