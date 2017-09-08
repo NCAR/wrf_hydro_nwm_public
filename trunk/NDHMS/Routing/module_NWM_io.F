@@ -72,6 +72,7 @@ subroutine output_chrt_NWM(domainId)
    integer :: indVarId,ftnRt ! values related to extraction of ascending order index values from the RouteLink file.
    integer :: iTmp, indTmp ! Misc integer values. 
    integer :: ierr, myId ! MPI return status, process ID
+   integer :: ascFlag ! Flag for if ascendingIndex is present
    ! Establish local, allocatable arrays
    ! These are used to hold global output arrays, and global output arrays after
    ! sorting has taken place by ascending feature_id value. 
@@ -97,6 +98,9 @@ subroutine output_chrt_NWM(domainId)
    !each channel point. feature_id will need to be sorted in ascending order once
    !data is collected into the global array. From there, the index values are
    !re-sorted, and used to re-sort output arrays. 
+
+   ! Initialize the ascFlag to 1
+   ascFlag = 1
 
    ! Establish macro variables to hlep guide this subroutine. 
 #ifdef WRF_HYDRO_NUDGING
@@ -440,36 +444,59 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_open(trim(nlst_rt(1)%route_link_f),NF90_NOWRITE,ncid=ftnRt)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to open RouteLink file for index extraction')
       iret = nf90_inq_varid(ftnRt,'ascendingIndex',indVarId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to find ascendingIndex from RouteLink file.')
-      iret = nf90_get_var(ftnRt,indVarId,chIndArray)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to extract ascendingIndex from RouteLink file.')
+      if(iret .ne. 0) then
+         call postDiagMsg(diagFlag,'WARNING: ascendingIndex not found in RouteLink file. No resorting will take place.')
+         ascFlag = 0
+      endif
+      if(ascFlag .eq. 1) then 
+         iret = nf90_get_var(ftnRt,indVarId,chIndArray)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to extract ascendingIndex from RouteLink file.')
+      endif
       iret = nf90_close(ftnRt)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to close RouteLink file.')
       ! Place all output arrays into one real array that will be looped over
       ! during conversion to compressed integer format.
       allocate(varOutReal(fileMeta%numVars,gSize))
       allocate(varOutInt(gSize))
-      ! Sort feature_id values by ascending values using the index array
-      ! extracted from the RouteLink file. 
-      do iTmp=1,gSize
-         indTmp = chIndArray(iTmp)
-         indTmp = indTmp + 1 ! Python starts index values at 0, so we need to add one.
-         g_linkidOut(iTmp) = g_linkid(indTmp)
-         g_qlinkOut(iTmp,1) = g_qlink(indTmp,1)
-         g_nudgeOut(iTmp) = g_nudge(indTmp)
-         g_QLateralOut(iTmp) = g_QLateral(indTmp)
-         g_velocityOut(iTmp) = g_velocity(indTmp)
-         g_hlinkOut(iTmp) = g_hlink(indTmp)
-         g_qSfcLatRunoffOut(iTmp) = g_qSfcLatRunoff(indTmp)
-         g_qBucketOut(iTmp) = g_qBucket(indTmp)
-         g_qBtmVertRunoffOut(iTmp) = g_qBtmVertRunoff(indTmp)
-         g_accSfcLatRunoffOut(iTmp) = g_accSfcLatRunoff(indTmp)
-         g_accBucketOut(iTmp) = g_accBucket(indTmp)
-         g_chlatOut(iTmp) = g_chlat(indTmp)
-         g_chlonOut(iTmp) = g_chlon(indTmp)
-         !g_orderOut(iTmp) = g_order(indTmp)
-         !g_zelevOut(iTmp) = g_zelev(indTmp)
-      end do
+      if(ascFlag .eq. 1) then
+         ! Sort feature_id values by ascending values using the index array
+         ! extracted from the RouteLink file. 
+         do iTmp=1,gSize
+            indTmp = chIndArray(iTmp)
+            indTmp = indTmp + 1 ! Python starts index values at 0, so we need to add one.
+            g_linkidOut(iTmp) = g_linkid(indTmp)
+            g_qlinkOut(iTmp,1) = g_qlink(indTmp,1)
+            g_nudgeOut(iTmp) = g_nudge(indTmp)
+            g_QLateralOut(iTmp) = g_QLateral(indTmp)
+            g_velocityOut(iTmp) = g_velocity(indTmp)
+            g_hlinkOut(iTmp) = g_hlink(indTmp)
+            g_qSfcLatRunoffOut(iTmp) = g_qSfcLatRunoff(indTmp)
+            g_qBucketOut(iTmp) = g_qBucket(indTmp)
+            g_qBtmVertRunoffOut(iTmp) = g_qBtmVertRunoff(indTmp)
+            g_accSfcLatRunoffOut(iTmp) = g_accSfcLatRunoff(indTmp)
+            g_accBucketOut(iTmp) = g_accBucket(indTmp)
+            g_chlatOut(iTmp) = g_chlat(indTmp)
+            g_chlonOut(iTmp) = g_chlon(indTmp)
+            !g_orderOut(iTmp) = g_order(indTmp)
+            !g_zelevOut(iTmp) = g_zelev(indTmp)
+         end do
+      else
+         g_linkidOut = g_linkid
+         g_qlinkOut(:,1) = g_qlink(:,1)
+         g_nudgeOut = g_nudge
+         g_QLateralOut = g_QLateral
+         g_velocityOut = g_velocity
+         g_hlinkOut = g_hlink
+         g_qSfcLatRunoffOut = g_qSfcLatRunoff
+         g_qBucketOut = g_qBucket
+         g_qBtmVertRunoffOut = g_qBtmVertRunoff
+         g_accSfcLatRunoffOut = g_accSfcLatRunoff
+         g_accBucketOut = g_accBucket
+         g_chlatOut = g_chlat
+         g_chlonOut = g_chlon
+         !g_orderOut = g_order
+         !g_zelevOut = g_zelev
+      endif
       varOutReal(1,:) = g_qlinkOut(:,1)
       varOutReal(2,:) = g_nudgeOut
       varOutReal(3,:) = g_QLateralOut
@@ -1854,6 +1881,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
    integer :: iTmp
    integer :: ftnRt,indVarId,indTmp ! For the feature_id sorting process.
    integer :: ierr, myId ! MPI return status, process ID
+   integer :: ascFlag ! Flag for resorting timeseries output by feature_id.
    ! Allocatable arrays to hold output variables. 
    real, allocatable, dimension(:) :: g_lakeLat,g_lakeLon,g_lakeElev
    real, allocatable, dimension(:) :: g_lakeInflow,g_lakeOutflow
@@ -1869,6 +1897,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
    !each channel point. feature_id will need to be sorted in ascending order once
    !data is collected into the global array. From there, the index values are
    !re-sorted, and used to re-sort output arrays. 
+
+   ! Initialize the ascFlag.
+   ascFlag = 1
 
    ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
@@ -2051,9 +2082,14 @@ subroutine output_lakes_NWM(domainId,iGrid)
       iret = nf90_open(trim(nlst_rt(1)%route_lake_f),NF90_NOWRITE,ncid=ftnRt)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAKEPARM file for index extraction')
       iret = nf90_inq_varid(ftnRt,'ascendingIndex',indVarId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to find ascendingIndex from LAKEPARM file.')
-      iret = nf90_get_var(ftnRt,indVarId,chIndArray)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to extract ascendingIndex from LAKEPARM file.')
+      if(iret .ne. 0) then
+         call postDiagMsg(diagFlag,'WARNING: ascendingIndex not found in LAKEPARM file. No resorting will take place.')
+         ascFlag = 0
+      endif
+      if(ascFlag .eq. 1) then
+         iret = nf90_get_var(ftnRt,indVarId,chIndArray)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to extract ascendingIndex from LAKEPARM file.')
+      endif
       iret = nf90_close(ftnRt)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAKEPARM file.')
 
@@ -2061,18 +2097,27 @@ subroutine output_lakes_NWM(domainId,iGrid)
       ! during conversion to compressed integer format.
       allocate(varOutReal(fileMeta%numVars,gSize))
       allocate(varOutInt(gSize))
-      ! Sort feature_id values by ascending values using the index array
-      ! extracted from the RouteLink file. 
-      do iTmp=1,gSize
-         indTmp = chIndArray(iTmp)
-         indTmp = indTmp + 1 ! Python starts index values at 0, so we need to add one.
-         g_lakeInflowOut(iTmp) = g_lakeInflow(indTmp)
-         g_lakeOutflowOut(iTmp) = g_lakeOutflow(indTmp)
-         g_lakeLonOut(iTmp) = g_lakeLon(indTmp)
-         g_lakeLatOut(iTmp) = g_lakeLat(indTmp)
-         g_lakeElevOut(iTmp) = g_lakeElev(indTmp)
-         g_lakeidOut(iTmp) = g_lakeid(indTmp)
-      end do
+      if(ascFlag .eq. 1) then
+         ! Sort feature_id values by ascending values using the index array
+         ! extracted from the RouteLink file. 
+         do iTmp=1,gSize
+            indTmp = chIndArray(iTmp)
+            indTmp = indTmp + 1 ! Python starts index values at 0, so we need to add one.
+            g_lakeInflowOut(iTmp) = g_lakeInflow(indTmp)
+            g_lakeOutflowOut(iTmp) = g_lakeOutflow(indTmp)
+            g_lakeLonOut(iTmp) = g_lakeLon(indTmp)
+            g_lakeLatOut(iTmp) = g_lakeLat(indTmp)
+            g_lakeElevOut(iTmp) = g_lakeElev(indTmp)
+            g_lakeidOut(iTmp) = g_lakeid(indTmp)
+         end do
+      else
+         g_lakeInflowOut = g_lakeInflow
+         g_lakeOutflowOut = g_lakeOutflow
+         g_lakeLonOut = g_lakeLon
+         g_lakeLatOut = g_lakeLat
+         g_lakeElevOut = g_lakeElev
+         g_lakeidOut = g_lakeid
+      endif
       varOutReal(1,:) = g_lakeInflowOut(:)
       varOutReal(2,:) = g_lakeOutflowOut(:)
 
@@ -2428,7 +2473,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    !endif
 
    ! Initialize qlink arrays and collect data from processors for output.
-   gNumLnks = rt_domain(domainId)%gnlinksl
+   gNumLnks = rt_domain(domainId)%gnlinks
    lNumLnks = rt_domain(domainId)%NLINKS
    if(myId .eq. 0) then
       ! Channel index values
@@ -2753,9 +2798,9 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       do jTmp=1,RT_DOMAIN(domainId)%g_jxrt
          do iTmp=1,RT_DOMAIN(domainId)%g_ixrt
             if(CH_NETLNK(iTmp,jTmp).GE.0) then
-               tmpflow(iTmp,jTmp) = NINT((g_qlink(CH_NETLNK(iTmp,jTmp),1)-fileMeta%addOffset(1))/fileMeta%scaleFactor(1))
+               tmpFlow(iTmp,jTmp) = NINT((g_qlink(CH_NETLNK(iTmp,jTmp),1)-fileMeta%addOffset(1))/fileMeta%scaleFactor(1))
             else
-               tmpflow(iTmp,jTmp) = fileMeta%fillComp(1)
+                tmpFlow(iTmp,jTmp) = fileMeta%fillComp(1)
             endif
          enddo
       enddo
