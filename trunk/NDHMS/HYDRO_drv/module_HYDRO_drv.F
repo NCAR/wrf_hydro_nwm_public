@@ -1568,7 +1568,7 @@ if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#endif
    !rt_domain(did)%INFXSRT      = zeroFlt
    rt_domain(did)%LAKE_INFLORT = zeroFlt
-   !rt_domain(did)%QSTRMVOLRT   = zeroFlt
+   rt_domain(did)%QSTRMVOLRT   = zeroFlt
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if

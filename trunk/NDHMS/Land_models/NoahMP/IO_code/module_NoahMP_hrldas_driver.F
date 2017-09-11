@@ -61,7 +61,7 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K]
-   character(len=15), DIMENSION(30)        ::  IOCVARS
+   character(len=15), DIMENSION(100)        ::  IOCVARS
 #endif
 
   character(len=9), parameter :: version = "v20150506"
@@ -341,7 +341,7 @@ module module_NoahMP_hrldas_driver
   character          :: hgrid, hgrid_hydro
   integer            :: igrid, igrid_hydro
   logical            :: lexist
-  integer            :: imode
+  integer            :: imode, iimode
   integer            :: ixfull
   integer            :: jxfull
   integer            :: ixpar
@@ -423,7 +423,7 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
   character(len=19)  :: tmpdate
-  character(len=500) :: VARLIST
+  character(len=1000) :: VARLIST
   integer :: brkflag = 0
   integer :: varind = 1
   namelist /WRF_HYDRO_OFFLINE/ &
@@ -1446,9 +1446,17 @@ endif
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
 
-!AD moved to above:   call get_iocflag(1, iocflag)
+call get_iocflag(1, iocflag)
 
    !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
+   if (iocflag .eq. 0) then
+        VARLIST = 'IVGTYP,ISLTYP,FVEG,LAI,SAI,SWFORC,COSZ,LWFORC,RAINRATE,EMISS,FSA,FIRA,GRDFLX,HFX,LH,ECAN,EDIR,ALBEDO,' // &
+                  'ETRAN,UGDRNOFF,SFCRNOFF,CANLIQ,CANICE,ZWT,WA,WT,ACCPRCP,ACCECAN,ACCEDIR,ACCETRAN,SAV,TR,EVC,IRC,SHC,' // &
+                  'IRG,SHG,EVG,GHV,SAG,IRB,SHB,EVB,GHB,TRAD,TG,TV,TAH,TGV,TGB,T2MV,T2MB,Q2MV,Q2MB,EAH,FWET,ZSNSO_SN,SNICE,' // &
+                  'SNLIQ,SOIL_T,SOIL_W,SNOW_T,SOIL_M,SNOWH,SNEQV,QSNOW,ISNOW,FSNO,ACSNOW,ACSNOM,CM,CH,CHV,CHB,CHLEAF,CHUC,' // &
+                  'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
+                  'SOILSAT,SNOWT_AVG'
+   endif
    if (iocflag .eq. 1) then 
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
@@ -1461,12 +1469,11 @@ endif
    if (iocflag .eq. 4) then 
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
    endif
-!   if (iocflag .eq. 0) then
-!	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
-!   endif
-   ! Long-Term Retrospective
    if (iocflag .eq. 5) then
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
+   endif
+   if (iocflag .eq. 6) then
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
    endif
 
    !!--- Parse into character array. Constructor not valid with uneven 
@@ -1823,7 +1830,10 @@ end subroutine land_driver_exe
 !!===============================================================================
 subroutine  ldas_output()
 
-#ifndef WRF_HYDRO
+#ifdef WRF_HYDRO
+if ( (iocflag .eq. 0) .and. (nwmIo .eq. 0) ) then
+#endif
+!#ifndef WRF_HYDRO
            call prepare_output_file (trim(outdir), version, &
                 igrid, output_timestep, llanduse, split_output_count, hgrid,                &
                 ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
@@ -1947,7 +1957,10 @@ subroutine  ldas_output()
            enddo DEFINE_MODE_LOOP
 
            call finalize_output_file(split_output_count)
-#endif /* WRF_HYDRO */
+#ifdef WRF_HYDRO
+else
+#endif
+!#endif /* WRF_HYDRO */
 
 #ifdef WRF_HYDRO
    ! Logan add begin
@@ -2059,9 +2072,9 @@ subroutine  ldas_output()
                                 iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
                                 nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
 
-      DEFINE_MODE_LOOP : do imode = 1, 2
+      DEFINE_MODE_LOOP2 : do iimode = 1, 2
 
-         call set_output_define_mode(imode)
+         call set_output_define_mode(iimode)
 
          ! For 3D arrays, we need to know whether the Z dimension is snow
          ! layers, or soil layers.
@@ -2186,13 +2199,17 @@ subroutine  ldas_output()
             call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"   , IOCVARS        )
          ENDIF
 
-      enddo DEFINE_MODE_LOOP
+      enddo DEFINE_MODE_LOOP2
 
       call finalize_output_file(split_output_count)
 
    endif ! End check for nwmIo value
 
 #endif /* WRF_HYDRO */
+
+#ifdef WRF_HYDRO
+endif
+#endif
 
 end subroutine  ldas_output
 
