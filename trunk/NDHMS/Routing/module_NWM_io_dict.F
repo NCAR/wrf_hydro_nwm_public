@@ -483,7 +483,7 @@ subroutine initChrtDict(chrtOutDict)
    chrtOutDict%units(:) = [character(len=64) :: "m3 s-1","m3 s-1","m3 s-1","ms-1",&
                                                 "meter","m3","m3",&
                                                 "m3","m3","m3"]
-   chrtOutDict%units(:) = [character(len=64) :: "latitude longitude","latitude longitude",&
+   chrtOutDict%coordNames(:) = [character(len=64) :: "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&

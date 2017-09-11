@@ -987,6 +987,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flow
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
         REAL, DIMENSION(NLAKES)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
+        REAL*8, DIMENSION(NLAKES)                   :: QLLAKE8   !-- lateral inflow to lake in diffusion scheme
 
 !-- Local Variables
         INTEGER                     :: i,j,k,t,m,jj,kk,KRT,node
@@ -1246,6 +1247,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
           QLAKEI8  = 0.              !-- set the lake inflow as zero
           QLAKEI   = 0.              !-- set the lake inflow as zero
           QLLAKE   = 0.              !-- initialize each lake's lateral inflow to zero  
+          QLLAKE8   = 0.              !-- initialize each lake's lateral inflow to zero  
           DT_STEPS = INT(DT/DTCT)   !-- fix the timestep
           QLateral = 0. 
 !DJG GW-chan coupling variables...
@@ -1344,8 +1346,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
          elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
                (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
-              QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) = &
-                 QLLAKE(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) + &
+              QLLAKE8(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) = &
+                 QLLAKE8(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) + &
                  (LAKEINFLORT(CHANXI(i),CHANYJ(i))+ &
                  QINFLOWBASE(CHANXI(i),CHANYJ(i)) &
                  /DT_STEPS*node_area(i)/1000/DTCT)
@@ -1361,7 +1363,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLateral,NLINKS,99)
     if(NLAKES .gt. 0) then
        !yw call MPP_CHANNEL_COM_REAL(LAKE_MSKRT   ,ixrt,jxrt,QLLAKE,NLAKES,99)
-       call sum_real1d(QLLAKE,NLAKES)
+       call sum_real8(QLLAKE8,NLAKES)
+       QLLAKE = QLLAKE8
     endif
 #endif
 
@@ -1551,8 +1554,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,CD,NLINKS,99)
     if(NLAKES .gt. 0) then
 !       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
+        call sum_real8(QLAKEI8,NLAKES)
         QLAKEI = QLAKEI8
-        call sum_real1d(QLAKEI,NLAKES)
     endif
     call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,HLINKTMP,NLINKS,99)
 #endif 
