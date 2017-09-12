@@ -7757,9 +7757,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(j+1 .gt. JXRT) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i,j+1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j+1)
             else
                TYPEL(cnt) = 1 
             endif
@@ -7801,9 +7801,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j+1 .gt. JXRT))  then ! an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i+1,j+1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i+1,j+1)
             else
                TYPEL(cnt) = 1
             endif
@@ -7843,9 +7843,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(i+1 .gt. IXRT) then  !an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i+1,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i+1,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -7886,9 +7886,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j-1 .eq. 0)) then !an edge 
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i+1,j-1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i+1,j-1)
             else
                TYPEL(cnt) = 1
             endif
@@ -7928,9 +7928,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(j-1 .eq. 0) then !- an edge
                TYPEL(cnt) =1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i,j-1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i,j-1)
             else
                TYPEL(cnt) = 1
             endif
@@ -7971,9 +7971,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j-1 .eq. 0) ) then !- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i-1,j-1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i-1,j-1)
             else
                TYPEL(cnt) = 1
             endif
@@ -8013,9 +8013,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if(i-1 .eq. 0) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i-1,j).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i-1,j)
             else
                TYPEL(cnt) = 1
             endif
@@ -8056,9 +8056,9 @@ do j = 1,JXRT
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j+1 .gt. JXRT)) then !-- an edge
                TYPEL(cnt) = 1
-            elseif(LAKE_MSKRT(i,j).gt.0) then 
+            elseif(LAKE_MSKRT(i-1,j+1).gt.0) then 
                TYPEL(cnt) = 2
-               LAKENODE(cnt) = LAKE_MSKRT(i,j)
+               LAKENODE(cnt) = LAKE_MSKRT(i-1,j+1)
             else
                TYPEL(cnt) = 1
             endif
@@ -8088,6 +8088,7 @@ print*, "my_id=",my_id, "cnt = ", cnt
 #ifdef MPP_LAND
 Link_location = CH_NETLNK
 call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,TYPEL,NLINKS,99) 
+call MPP_CHANNEL_COM_INT(Link_location,ixrt,jxrt,LAKENODE,NLINKS,99) 
 #endif
 
 end subroutine READ_CHROUTING1
@@ -8804,10 +8805,10 @@ endif
 
 call get_1d_netcdf_int(ncid,  'lake_id',     LAKEIDM,'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
-!yw call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'LkMxH',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
-!yw call get_1d_netcdf_real(ncid, 'WeirE',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'WeirH',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
+!rename the LAKEPARM input vars for Elev instead of Ht, 08/23/17 LKR/DY 
+call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
+!rename WeirH to WeirE
+call get_1d_netcdf_real(ncid, 'WeirE',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
@@ -8815,8 +8816,8 @@ call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
-!yw call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,      'read_route_lake_netcdf', .FALSE.)
-call get_1d_netcdf_real(ncid, 'alt', ELEVLAKE,      'read_route_lake_netcdf', .TRUE.)
+!remove the alt var. and add initial fractional depth var. LKR/DY
+call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,      'read_route_lake_netcdf', .FALSE.)
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_noErr) then
