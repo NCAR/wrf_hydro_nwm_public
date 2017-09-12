@@ -1643,7 +1643,7 @@ end subroutine HYDRO_ini
 
        ierr_flg = 99
        if(trim(nlst_rt(did)%hydrotbl_f) == "") then
-           call hydro_stop("FATAL ERROR: hydrotbl_f is empty. ")
+           call hydro_stop("FATAL ERROR: hydrotbl_f is empty. Please input a netcdf file. ")
        endif
 
 #ifdef MPP_LAND
