@@ -7274,7 +7274,7 @@ subroutine READ_CHROUTING1( &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE, &
      CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,    & 
      CHLON,        channel_option,    LATVAL,    LONVAL,   &
-     STRMFRXSTPTS, geo_finegrid_flnm, UDMP_OPT             & !! no comma at end
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT    & !! no comma at end
 #ifdef MPP_LAND
     ,Link_Location                                         &
 #endif
@@ -7324,6 +7324,7 @@ real,  dimension(IXRT,JXRT)                  :: chanDepth, elrt
 
 !-- store the location x,y location of the channel element
 integer, intent(INOUT), dimension(NLINKS)   :: CHANXI, CHANYJ
+integer , dimension(:) ::  LAKEIDM
 
 !--reservoir/lake attributes
 real, intent(INOUT),  dimension(:)      :: HRZAREA
@@ -7337,7 +7338,7 @@ real, intent(INOUT),  dimension(:)      :: ORIFICEE
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(:)       :: ChSSlp, Bw
 
-character(len=*  )                           :: geo_finegrid_flnm
+character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
 
 integer                                      :: tmp, cnt, ncid, iret, jj,ct
@@ -7345,6 +7346,7 @@ integer 			             :: IOstatus, OUTLAKEID
 
 real                                         :: gc,n
 integer :: did
+logical :: fexist
 
 did = 1
         
@@ -7428,10 +7430,19 @@ if (channel_option .eq. 3) then
 #ifdef MPP_LAND
    if(my_id .eq. IO_id) then
 #endif
-      
+    inquire (file=trim(route_lake_f), exist=fexist)
+    if(fexist) then 
+       ! use netcdf lake file of LAKEPARM.nc
+         write(6,*) "before read LAKEPARM from ", trim(route_lake_f)
+         write(6,*) "NLAKES = ", NLAKES
+         call flush(6)
+         call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
+                LAKEMAXH, WEIRH, WEIRC,WEIRL, ORIFICEC,       &
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
+    else
       if (NLAKES.gt.0) then !read in only if there are lakes
+         write(6,*) "before LAKEPARM from  LAKEPARM.TBL, unit 79"
          open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
-         write(6,*) "before read(79)  header for LAKEPARM.TBL"
          call flush(6)
          read(79,*)  header  !-- read the lake file
       endif
@@ -7443,6 +7454,10 @@ if (channel_option .eq. 3) then
       enddo
 5101  continue
       close(79)
+
+
+    endif   !end if for checking existing of route_lake_f
+
 #ifdef MPP_LAND
    endif
    
@@ -8405,7 +8420,7 @@ subroutine MPP_READ_CHROUTING_new(&
 
      CH_NETLNK,    CHANXI,            CHANYJ,        CHLAT, &
      CHLON,        channel_option,    LATVAL,        LONVAL, &
-     STRMFRXSTPTS, geo_finegrid_flnm, UDMP_OPT,                  &
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT,                  &
      g_ixrt,       g_jxrt,            gnlinks,       GCH_NETLNK, &
      map_l2g,      link_location,     yw_mpp_nlinks, lake_index, &
      nlinks_index)
@@ -8444,7 +8459,7 @@ real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw
-character(len=*  )                           :: geo_finegrid_flnm
+character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
 
 integer                                      :: tmp, cnt, ncid
@@ -8457,7 +8472,7 @@ integer, intent(OUT), dimension(IXRT,JXRT) :: LAKE_MSKRT, link_location
 real, intent(OUT), dimension(IXRT,JXRT)    :: latval,lonval
 integer :: k
 integer, dimension(nlinks)            :: node_table, nlinks_index
-integer, dimension(nlakes)            :: lake_index
+integer, dimension(nlakes)            :: lake_index, LAKEIDM
 integer :: yw_mpp_nlinks , l, mpp_nlinks
 
 
@@ -8472,7 +8487,7 @@ call READ_CHROUTING1( &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
      CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,   &
      CHLON,        channel_option,    LATVAL,    LONVAL,  &
-     STRMFRXSTPTS, geo_finegrid_flnm, UDMP_OPT            &
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT            &
 #ifdef MPP_LAND
      ,Link_Location  &
 #endif
