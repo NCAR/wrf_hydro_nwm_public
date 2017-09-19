@@ -28,7 +28,8 @@ module module_HYDRO_drv
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
 #endif
    use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM,&
-                            output_chrtout_grd_NWM, output_lsmOut_NWM
+                            output_chrtout_grd_NWM, output_lsmOut_NWM, &
+                            output_frxstPts
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
@@ -346,6 +347,10 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
       ! Call National Water Model output routine for output on NHD forecast points.
       if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
          call output_chrt_NWM(did)
+      endif
+      ! Call the subroutine to output frxstPts.
+      if(nlst_rt(did)%frxst_pts_out .ne. 0) then
+         call output_frxstPts(did)
       endif
    else
       ! Call traditional output routines

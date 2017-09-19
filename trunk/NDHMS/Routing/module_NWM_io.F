@@ -155,7 +155,7 @@ subroutine output_chrt_NWM(domainId)
 
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
-   call initChrtDict(fileMeta)
+   call initChrtDict(fileMeta,diagFlag,myId)
   
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
@@ -186,7 +186,10 @@ subroutine output_chrt_NWM(domainId)
    ! NetCDF file. If we are not using MPI, we bypass the collection step through
    ! MPI. 
    if(mppFlag .eq. 1) then
-      gSize = rt_domain(domainId)%gnlinksl
+      gSize = rt_domain(domainId)%gnlinks
+      if(rt_domain(domainId)%gnlinksl .gt. rt_domain(domainId)%gnlinks) then
+         gSize = rt_domain(domainId)%gnlinksl
+      endif
 
       ! Sync all processes up.
       if(mppFlag .eq. 1) then
@@ -2468,9 +2471,9 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
 
    ! We must assume gridded routing is in place on a channel grid for this
    ! routine to be valid. 
-   !if(nlst_rt(domainId)%channel_option .ne. 3) then
-   !   call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_GRID only valid for channel_option of 3.')
-   !endif
+   if(nlst_rt(domainId)%channel_option .ne. 3) then
+      call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_GRID only valid for channel_option of 3.')
+   endif
 
    ! Initialize qlink arrays and collect data from processors for output.
    gNumLnks = rt_domain(domainId)%gnlinks
@@ -3336,6 +3339,267 @@ subroutine output_lsmOut_NWM(domainId)
    deallocate(localRealTmp)
 
 end subroutine output_lsmOut_NWM
+
+!==============================================================================
+! Program Name: output_frxstPts
+! Author(s)/Contact(s): Logan R Karsten <karsten><ucar><edu>
+! Abstract: Output frxstPts ASCII file from streamflow at forecast points
+! defined in the Fulldom file.
+! History Log:
+! 9/18/17 -Created, LRK.
+! Usage: 
+! Parameters: None.
+! Input Files: None.
+! Output Files: None.
+! Condition codes: None.
+!
+! User controllable options: None.
+subroutine output_frxstPts(domainId)
+   use module_rt_data, only: rt_domain
+   use module_namelist, only: nlst_rt
+   use Module_Date_utilities_rt, only: geth_newdate, geth_idts
+   use module_NWM_io_dict
+#ifdef MPP_LAND
+   use module_mpp_land
+#endif
+implicit none
+
+   ! Pass in "did" value from hydro driving program. 
+   integer, intent(in) :: domainId
+
+   ! Derived types.
+   !type(chrtMeta) :: fileMeta
+
+   ! Local variables
+   integer :: mppFlag, diagFlag, ierr, myId
+   integer :: seconds_since
+   integer :: gSize, iTmp, numPtsOut
+   integer, allocatable, dimension(:) :: g_STRMFRXSTPTS, g_outInd
+   real, allocatable, dimension(:,:) :: g_qlink, g_qlinkOut
+   real, allocatable, dimension(:) :: g_chlat, g_chlon, g_hlink, strFlowLocal
+   integer, allocatable, dimension(:) :: frxstPtsLocal, g_STRMFRXSTPTSOut
+   real, allocatable, dimension(:) :: g_chlatOut, g_chlonOut, g_hlinkOut
+
+#ifdef MPP_LAND
+   mppFlag = 1
+#else
+   mppFlag = 0
+#endif
+
+#ifdef HYDRO_D
+   diagFlag = 1
+#else
+   diagFlag = 0
+#endif
+
+   if(nlst_rt(domainId)%frxst_pts_out .eq. 0) then
+      ! No output requested here, return to parent calling program/subroutine.
+      return
+   endif
+
+   ! Also, we are only allowing a split_output_count of 1.
+   if(nlst_rt(domainId)%split_output_count .ne. 1) then
+      call nwmCheck(diagFlag,1,'ERROR: split_output_count of 1 only allowed.')
+   endif
+
+   ! For now, only allow frxstPts for gridded routing. 
+   if(nlst_rt(domainId)%channel_option .ne. 3) then
+      call nwmCheck(diagFlag,1,'ERROR: Only channel_option of 3 allowed.')
+   endif
+
+   ! If we are running over MPI, determine which processor number we are on.
+   ! If not MPI, then default to 0, which is the I/O ID.
+   if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+      call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
+      call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.')
+#endif
+   else
+      myId = 0
+   endif
+
+   ! Initialize NWM dictionary derived type containing all the necessary metadat
+   ! for the output file. A couple variables from this type are needed for
+   ! frxstPts.
+   !call initChrtDict(fileMeta,diagFlag,myId)
+
+   ! Calculate datetime information
+   seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+   
+   ! First step is to allocate a global array of index values. This "index"
+   ! array will be used to subset after collection has taken place. Also,
+   ! the sum of this array will be used to determine the size of the output 
+   ! arrays. 
+   if(mppFlag .eq. 1) then
+      gSize = rt_domain(domainId)%gnlinks
+      if(rt_domain(domainId)%gnlinksl .gt. rt_domain(domainId)%gnlinks) then
+         gSize = rt_domain(domainId)%gnlinksl
+      endif
+
+      ! Sync all processes up.
+      if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+         call mpp_land_sync()
+#endif
+      endif
+
+      if(myId .eq. 0) then
+         allocate(g_STRMFRXSTPTS(gSize))
+         allocate(g_outInd(gSize))
+         allocate(g_qlink(gSize,2))
+         allocate(g_chlat(gSize))
+         allocate(g_chlon(gSize))
+         allocate(g_hlink(gSize))
+      else
+         allocate(g_STRMFRXSTPTS(1))
+         allocate(g_outInd(1))
+         allocate(g_qlink(1,2))
+         allocate(g_chlat(1))
+         allocate(g_chlon(1))
+         allocate(g_hlink(1))
+      endif
+
+      ! Initialize the index array to 0
+      g_outInd = 0
+
+      ! Allocate local streamflow arrays. We need to do a check to
+      ! for lake_type 2. However, we cannot set the values in the global array 
+      ! to missing as this causes the model to crash.
+      allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
+      allocate(frxstPtsLocal(RT_DOMAIN(domainId)%NLINKS))
+      strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
+      frxstPtsLocal = rt_domain(domainId)%STRMFRXSTPTS
+
+      ! Sync everything up before the next step.
+      if(mppFlag .eq. 1) then
+#ifdef MPP_LAND
+         call mpp_land_sync()
+#endif
+      endif
+
+      ! Loop through all the local links on this processor. For lake_type
+      ! of 2, we need to manually set the streamflow values
+      ! to the model NDV value.
+      if (RT_DOMAIN(domainId)%NLAKES .gt. 0) then
+         do iTmp=1,RT_DOMAIN(domainId)%NLINKS
+            if (RT_DOMAIN(domainId)%TYPEL(iTmp) .eq. 2) then
+               !strFlowLocal(iTmp) = fileMeta%modelNdv
+               strFlowLocal(iTmp) = -9.E15
+               frxstPtsLocal(iTmp) = -9999
+            endif
+         end do
+      endif
+
+      ! Collect arrays from various processors
+      if(nlst_rt(domainId)%channel_option .eq. 3) then
+         call write_chanel_int(frxstPtsLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_STRMFRXSTPTS)
+         call write_chanel_real(strFlowLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,1))
+         call write_chanel_real(RT_DOMAIN(domainId)%QLINK(:,2),rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,2))
+         call write_chanel_real(RT_DOMAIN(domainId)%CHLAT,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlat)
+         call write_chanel_real(RT_DOMAIN(domainId)%CHLON,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlon)
+         call write_chanel_real(RT_DOMAIN(domainId)%HLINK,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_hlink)
+      endif
+      
+      deallocate(strFlowLocal)
+      deallocate(frxstPtsLocal)
+
+   else
+      ! Running sequentially on a single processor.
+      gSize = rt_domain(domainId)%nlinks
+      allocate(g_STRMFRXSTPTS(gSize))
+      allocate(g_outInd(gSize))
+      allocate(g_chlon(gSize))
+      allocate(g_chlat(gSize))
+      allocate(g_hlink(gSize))
+      allocate(g_qlink(gSize,2))
+
+      ! Initialize the index array to 0
+      g_outInd = 0
+
+      g_STRMFRXSTPTS = rt_domain(domainId)%STRMFRXSTPTS
+      g_chlon = RT_DOMAIN(domainId)%CHLON
+      g_chlat = RT_DOMAIN(domainId)%CHLAT
+      g_hlink = RT_DOMAIN(domainId)%HLINK
+      g_qlink = RT_DOMAIN(domainId)%QLINK
+   endif
+      
+   if(myId .eq. 0) then
+      ! Set index values to 1 where we have forecast points. 
+      if(nlst_rt(domainId)%channel_option .eq. 3) then
+         where(g_STRMFRXSTPTS .ne. -9999) g_outInd = 1
+      endif
+      ! PLUG FOR CHECK FOR GAGES IN ROUTELINK WITH CHANNEL ROUTING 
+
+      ! Allocate output arrays based on size of number of forecast points.
+      numPtsOut = SUM(g_outInd)
+
+      if(numPtsOut .eq. 0) then
+         ! Write warning message to user showing there are NO forecast points to
+         ! write. Simply return to the main calling function.
+         call postDiagMsg(diagFlag,"WARNING: No forecast points found for frxstPtsOut.")
+         return
+      endif
+
+      ! Allocate output arrays based on number of output forecast points. 
+      allocate(g_STRMFRXSTPTSOut(numPtsOut))
+      allocate(g_chlonOut(numPtsOut))
+      allocate(g_chlatOut(numPtsOut))
+      allocate(g_hlinkOut(numPtsOut))
+      allocate(g_qlinkOut(numPtsOut,2))
+
+      ! Subset global arrays for forecast points.
+      g_STRMFRXSTPTSOut = PACK(g_STRMFRXSTPTS,g_outInd == 1)
+      g_chlonOut = PACK(g_chlon,g_outInd == 1)
+      g_chlatOut = PACK(g_chlat,g_outInd == 1)
+      g_hlinkOut = PACK(g_hlink,g_outInd == 1)
+      g_qlinkOut(:,1) = PACK(g_qlink(:,1),g_outInd == 1)
+      g_qlinkOut(:,2) = PACK(g_qlink(:,2),g_outInd == 1)
+
+      ! Open the output file.
+      open (unit=55,file='frxst_pts_out.txt',status='unknown',position='append')
+   
+      ! Loop through forecast points and write output.
+      do iTmp=1,numPtsOut
+         if(nlst_rt(domainId)%channel_option .eq. 3) then 
+            ! Instead of a gage ID, we are simply going to output the forecast
+            ! point number assigned during the pre-processing.
+117         FORMAT(I8,",",A10,1X,A8,",",I7,",",F10.5,",",F8.5,",",F9.3,",",F12.3,",",F6.3)
+            write(55,117) seconds_since, nlst_rt(domainId)%olddate(1:18),&
+                          nlst_rt(domainId)%olddate(12:19),&
+                          g_STRMFRXSTPTSOut(iTmp),g_chlonOut(iTmp),&
+                          g_chlatOut(iTmp),g_qlinkOut(iTmp,1),&
+                          g_qlinkOut(iTmp,1)*35.314666711511576,&
+                          g_hlinkOut(iTmp)
+         else
+            ! PLUG FOR CHANNEL ROUTING
+            numPtsOut = numPtsOut
+         endif
+      end do  
+
+      ! Close the output file
+      close(55) 
+   else
+      allocate(g_STRMFRXSTPTSOut(1))
+      allocate(g_chlonOut(1))
+      allocate(g_chlatOut(1))
+      allocate(g_hlinkOut(1))
+      allocate(g_qlinkOut(1,2)) 
+   endif
+
+   ! Deallocate memory
+   deallocate(g_STRMFRXSTPTS)
+   deallocate(g_STRMFRXSTPTSOut)
+   deallocate(g_chlonOut)
+   deallocate(g_chlatOut)
+   deallocate(g_hlinkOut)
+   deallocate(g_qlinkOut)
+   deallocate(g_chlat)
+   deallocate(g_chlon)
+   deallocate(g_hlink)
+   deallocate(g_qlink)
+   deallocate(g_outInd)
+
+end subroutine output_frxstPts
 
 subroutine postDiagMsg(diagFlag,diagMsg)
    implicit none
