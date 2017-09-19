@@ -152,12 +152,10 @@ MODULE MODULE_MPP_LAND
       CALL mpi_initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
            call MPI_INIT( ierr )  ! stand alone land model.
+      endif
            HYDRO_COMM_WORLD = MPI_COMM_WORLD
-      else 
            call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
            call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
-           return
-      endif
 !     create 2d logical mapping of the CPU.
       call log_map2d()
       return
@@ -981,7 +979,7 @@ MODULE MODULE_MPP_LAND
       real*8 inout
       integer ierr
       call mpi_bcast(inout,1,MPI_REAL8, &
-                     IO_id,MPI_COMM_WORLD,ierr)
+                     IO_id,HYDRO_COMM_WORLD,ierr)
       call mpp_land_sync()
       return
   end subroutine mpp_land_bcast_real1_double
@@ -2401,10 +2399,10 @@ MODULE MODULE_MPP_LAND
     tag=2   
     if(my_id .eq. fromImage) &
          call mpi_send(vector, size(vector), MPI_REAL, &
-                       toImage, tag, MPI_COMM_WORLD, ierr)
+                       toImage, tag, HYDRO_COMM_WORLD, ierr)
     if(my_id .eq. toImage) &
          call mpi_recv(vector, size(vector), MPI_REAL, &
-                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+                       fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
     end subroutine mpp_comm_1d_real
 
 
@@ -2417,10 +2415,10 @@ MODULE MODULE_MPP_LAND
     totalLength=len(vector(1))*size(vector,1)
     if(my_id .eq. fromImage) &
          call mpi_send(vector, totalLength, MPI_CHARACTER, &
-                       toImage, tag, MPI_COMM_WORLD, ierr)
+                       toImage, tag, HYDRO_COMM_WORLD, ierr)
     if(my_id .eq. toImage) &
          call mpi_recv(vector, totalLength, MPI_CHARACTER, &
-                       fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+                       fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
     end subroutine mpp_comm_1d_char
 
     

@@ -684,7 +684,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%CHLON,        nlst_rt(did)%channel_option,    &
              rt_domain(did)%latval,       rt_domain(did)%lonval,          &
              rt_domain(did)%STRMFRXSTPTS, nlst_rt(did)%geo_finegrid_flnm, &
-             nlst_rt(did)%UDMP_OPT                                        & !! no comma
+             nlst_rt(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst_rt(did)%UDMP_OPT   & !! no comma
 #ifdef MPP_LAND
              ,rt_domain(did)%g_IXRT,      rt_domain(did)%g_JXRT      &
              ,rt_domain(did)%gnlinks,     rt_domain(did)%GCH_NETLNK  &

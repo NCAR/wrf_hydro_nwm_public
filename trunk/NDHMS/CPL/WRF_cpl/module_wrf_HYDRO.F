@@ -97,7 +97,8 @@ CONTAINS
 
   
         if(.not. RT_DOMAIN(did)%initialized) then
-
+           
+           call MPP_LAND_INIT()
 
            !yw nlst_rt(did)%nsoil = config_flags%num_soil_layers
            !nlst_rt(did)%nsoil = model_config_rec%num_metgrid_soil_levels
