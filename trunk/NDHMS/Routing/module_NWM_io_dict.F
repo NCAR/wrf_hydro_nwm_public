@@ -418,10 +418,10 @@ type chObsMeta
    integer :: numVars = numChObsVars
    character (len=512) :: outVersion = "NWM 1.2"
    ! Output variable attributes
-   real, dimension(numChObsVars) :: scale_factor ! scale_factor values used for
+   real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
                                                  ! each variable to convert 
                                                  ! from real to integer
-      real, dimension(numChObsVars)             :: addOffset   ! add_offset values for each variable.
+   real, dimension(numChObsVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numChObsVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChObsVars) :: units ! Units for each variable.
    character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable. 
@@ -558,9 +558,9 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    chrtOutDict%elevUnits = "meters"
    chrtOutDict%elevStName = "Elevation"
  
-   ! Next establish feature_id attributes
+   ! Next establish feature_id attributes. Given this is merged community, we
    chrtOutDict%featureIdLName = 'Reach ID'
-   chrtOutDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
+   chrtOutDict%featureIdComment = 'Gage Points Specified by User in Routelink file'
    chrtOutDict%cfRole = 'timeseries_id'   
 
    ! Now establish attributes for output variables.
@@ -1456,13 +1456,107 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
 
 end subroutine initLsmOutDict
 
-subroutine initChanObsDict(chObsDict)
+subroutine initChanObsDict(chObsDict,diagFlag,procId)
+   use module_namelist, only : nlst_rt
+   use netcdf
    implicit none
    
    type(chObsMeta), intent(inout) :: chObsDict
+   integer, intent(inout) :: diagFlag
+   integer, intent(inout) :: procId
+
+   ! Local variables
+   integer :: ftnMeta, iret
+   integer :: projVarId
 
    chObsDict%modelNdv = -9.E15
+   !CHANOBS FILES
+
+   ! Pull spatial metadata information about the modeling domain from the land
+   ! spatial metadata file. 
+   if(procId .eq. 0) then
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      if(iret .ne. 0) then
+         ! Spatial metadata file not found for land grid.
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+      else
+         ! First pull metadata on coordinate system.
+         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
+         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chObsDict%esri)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
+         iret = nf90_get_att(ftnMeta,projVarId,'proj4',chObsDict%proj4)
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            chObsDict%proj4 = ''
+         endif
+         ! Close the file
+         iret = nf90_close(ftnMeta)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
+      endif
+   endif   
+
+   chObsDict%fType = 'timeSeries'
+   chObsDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   chObsDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   chObsDict%stDim = 'feature_id'
+   chObsDict%stOrder = 1
+   chObsDict%cdm = 'Station'
+   chObsDict%conventions = 'CF-1.6'
    
+   ! Next establish time attribues
+   chObsDict%timeLName = 'valid output time'
+   chObsDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+   chObsDict%timeStName = 'time'
+   chObsDict%rTimeLName = 'model initialization time'
+   chObsDict%rTimeStName = 'forecast_reference_time'
+   chObsDict%rTimeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+
+   ! Esatablish lat/lon attributes
+   chObsDict%latLName = "Feature latitude"
+   chObsDict%latUnits = "degrees_north"
+   chObsDict%latStName = "latitude"
+   chObsDict%lonLName = "Feature longitude"
+   chObsDict%lonUnits = "degrees_east"
+   chObsDict%lonStName = "longitude"
+  
+   ! Establish streamflw order attributes
+   chObsDict%orderLName = "Streamflow Order"
+   chObsDict%orderStName = "order"
+
+   ! Establish point elevation attributes
+   chObsDict%elevLName = "Feature Elevation"
+   chObsDict%elevUnits = "meters"
+   chObsDict%elevStName = "Elevation"
+ 
+   ! Next establish feature_id attributes
+   chObsDict%featureIdLName = 'Reach ID'
+   chObsDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
+   chObsDict%cfRole = 'timeseries_id' 
+
+   chObsDict%varNames(:) = [character(len=64) :: "streamflow"]
+   chObsDict%longName(:) = [character(len=64) :: "River Flow"]
+   chObsDict%units(:) = [character(len=64) :: "m3 s-1"]
+   chObsDict%coordNames(:) = [character(len=64) :: "latitude longitude"]
+   chObsDict%scaleFactor(:) = [0.01]
+   chObsDict%addOffset(:) = [0.0]
+   ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
+   ! output subroutine. 
+   chObsDict%outFlag(:) = [0]
+   chObsDict%timeZeroFlag(:) = [1]
+   chObsDict%fillReal(:) = [-9999.0]
+   chObsDict%missingReal(:) = [-9999.0]
+   chObsDict%validMinReal(:) = [0.0]
+   chObsDict%validMaxReal(:) = [500000.0]
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numChObsVars
+      chObsDict%fillComp(i) = int((chObsDict%fillReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+      chObsDict%missingComp(i) = int((chObsDict%missingReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+      chObsDict%validMinComp(i) = int((chObsDict%validMinReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+      chObsDict%validMaxComp(i) = int((chObsDict%validMaxReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+   end do
 
 end subroutine initChanObsDict
 

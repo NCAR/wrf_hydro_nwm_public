@@ -29,7 +29,7 @@ module module_HYDRO_drv
 #endif
    use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM,&
                             output_chrtout_grd_NWM, output_lsmOut_NWM, &
-                            output_frxstPts
+                            output_frxstPts, output_chanObs_NWM
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
@@ -351,6 +351,10 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
       ! Call the subroutine to output frxstPts.
       if(nlst_rt(did)%frxst_pts_out .ne. 0) then
          call output_frxstPts(did)
+      endif
+      ! Call the subroutine to output CHANOBS
+      if(nlst_rt(did)%CHANOBS_DOMAIN .ne. 0) then
+         call output_chanObs_NWM(did)
       endif
    else
       ! Call traditional output routines
