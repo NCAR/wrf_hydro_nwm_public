@@ -1488,7 +1488,6 @@ call get_iocflag(1, iocflag)
                 varind = varind + 1
         endif
    end do
-#endif
 
    if(finemesh .ne. 0 ) then
        if(restart_flag) then
