@@ -29,7 +29,7 @@ module module_NoahMP_hrldas_driver
   use module_mpp_land, only: check_land, node_info, fatal_error_stop, numprocs
   use module_cpl_land, only: cpl_land_init
 #endif
-#ifdef HYDRO_REALTIME
+#ifdef WRF_HYDRO
   use module_NWM_io, only: output_NoahMP_NWM
 #endif
 
@@ -61,7 +61,7 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K]
-   character(len=15), DIMENSION(30)        ::  IOCVARS
+   character(len=15), DIMENSION(100)        ::  IOCVARS
 #endif
 
   character(len=9), parameter :: version = "v20150506"
@@ -341,7 +341,7 @@ module module_NoahMP_hrldas_driver
   character          :: hgrid, hgrid_hydro
   integer            :: igrid, igrid_hydro
   logical            :: lexist
-  integer            :: imode
+  integer            :: imode, iimode
   integer            :: ixfull
   integer            :: jxfull
   integer            :: ixpar
@@ -423,11 +423,9 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
   character(len=19)  :: tmpdate
-#ifdef HYDRO_REALTIME
-  character(len=500) :: VARLIST
+  character(len=1000) :: VARLIST
   integer :: brkflag = 0
   integer :: varind = 1
-#endif
   namelist /WRF_HYDRO_OFFLINE/ &
        finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, nwmIo
 #endif
@@ -971,12 +969,12 @@ module module_NoahMP_hrldas_driver
    ALLOCATE ( ACCECAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated canopy evap [mm]
    ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
    ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
-#ifdef HYDRO_REALTIME
+
    ALLOCATE ( SOILSAT_TOP  (XSTART:XEND,YSTART:YEND) )  ! top 2 layer soil saturation [fraction]
    ALLOCATE ( SOILSAT  (XSTART:XEND,YSTART:YEND) )  ! column integrated soil saturation [fraction]
    ALLOCATE ( SOILICE  (XSTART:XEND,YSTART:YEND) )  ! fraction of soil moisture that is ice [fraction]
    ALLOCATE ( SNOWT_AVG  (XSTART:XEND,YSTART:YEND) )  ! snowpack average temperature (by layer mass) [K]
-#endif
+
  ! Initialize accumulator variables to 0
    ACCPRCP = 0.0
    ACCECAN = 0.0
@@ -1133,7 +1131,7 @@ module module_NoahMP_hrldas_driver
   Z0         = undefined_real
   ZNT        = undefined_real
  
-#ifdef HYDRO_REALTIME
+#ifdef WRF_HYDRO
   SOILSAT_TOP = undefined_real 
   SOILSAT     = undefined_real
   SOILICE     = undefined_real
@@ -1282,7 +1280,9 @@ module module_NoahMP_hrldas_driver
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
 
-#ifdef HYDRO_REALTIME
+#ifdef WRF_HYDRO
+call get_iocflag(1, iocflag)
+if (iocflag .gt. 0) then
      ACCPRCP = 0.0
      ACCECAN = 0.0
      ACCEDIR = 0.0
@@ -1291,6 +1291,7 @@ module module_NoahMP_hrldas_driver
      UDRUNOFF = 0.0
      ACSNOM = 0.0
      ACSNOW = 0.0
+endif
 #endif
 
 ! Must still call NOAHMP_INIT even in restart to set up parameter arrays (also done in WRF)
@@ -1445,10 +1446,17 @@ module module_NoahMP_hrldas_driver
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
 
-#ifdef HYDRO_REALTIME
-   call get_iocflag(1, iocflag)
+call get_iocflag(1, iocflag)
 
    !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
+   if (iocflag .eq. 0) then
+        VARLIST = 'IVGTYP,ISLTYP,FVEG,LAI,SAI,SWFORC,COSZ,LWFORC,RAINRATE,EMISS,FSA,FIRA,GRDFLX,HFX,LH,ECAN,EDIR,ALBEDO,' // &
+                  'ETRAN,UGDRNOFF,SFCRNOFF,CANLIQ,CANICE,ZWT,WA,WT,ACCPRCP,ACCECAN,ACCEDIR,ACCETRAN,SAV,TR,EVC,IRC,SHC,' // &
+                  'IRG,SHG,EVG,GHV,SAG,IRB,SHB,EVB,GHB,TRAD,TG,TV,TAH,TGV,TGB,T2MV,T2MB,Q2MV,Q2MB,EAH,FWET,ZSNSO_SN,SNICE,' // &
+                  'SNLIQ,SOIL_T,SOIL_W,SNOW_T,SOIL_M,SNOWH,SNEQV,QSNOW,ISNOW,FSNO,ACSNOW,ACSNOM,CM,CH,CHV,CHB,CHLEAF,CHUC,' // &
+                  'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
+                  'SOILSAT,SNOWT_AVG'
+   endif
    if (iocflag .eq. 1) then 
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
@@ -1461,12 +1469,11 @@ module module_NoahMP_hrldas_driver
    if (iocflag .eq. 4) then 
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
    endif
-   if (iocflag .eq. 0) then
-	VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
-   endif
-   ! Long-Term Retrospective
    if (iocflag .eq. 5) then
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
+   endif
+   if (iocflag .eq. 6) then
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
    endif
 
    !!--- Parse into character array. Constructor not valid with uneven 
@@ -1481,7 +1488,6 @@ module module_NoahMP_hrldas_driver
                 varind = varind + 1
         endif
    end do
-#endif
 
    if(finemesh .ne. 0 ) then
        if(restart_flag) then
@@ -1501,13 +1507,13 @@ module module_NoahMP_hrldas_driver
    if(my_id .eq. io_id) &
        print*, "t0OutputFlag: ", t0OutputFlag  
 #endif        
-#ifdef HYDRO_REALTIME
+!#ifdef HYDRO_REALTIME
    if(t0OutputFlag .eq. 1) call ldas_output()
-#else
-  if (restart_filename_requested == " ") then
-     if(t0OutputFlag .eq. 1) call ldas_output()
-  endif
-#endif
+!#else
+!  if (restart_filename_requested == " ") then
+!     if(t0OutputFlag .eq. 1) call ldas_output()
+!  endif
+!#endif
 #endif
 
 end subroutine land_driver_ini
@@ -1718,9 +1724,7 @@ end subroutine land_driver_ini
 		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
-#ifdef HYDRO_REALTIME
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
-#endif
 #endif
                 )
 
@@ -1825,7 +1829,10 @@ end subroutine land_driver_exe
 !!===============================================================================
 subroutine  ldas_output()
 
-#ifndef HYDRO_REALTIME
+#ifdef WRF_HYDRO
+if ( (iocflag .eq. 0) .and. (nwmIo .eq. 0) ) then
+#endif
+!#ifndef WRF_HYDRO
            call prepare_output_file (trim(outdir), version, &
                 igrid, output_timestep, llanduse, split_output_count, hgrid,                &
                 ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
@@ -1868,12 +1875,6 @@ subroutine  ldas_output()
               call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
               call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
               call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
-#ifdef WRF_HYDRO
-              call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip"                   , "mm"                    )
-              call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"                    )
-              call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"                    )
-              call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"                    )
-#endif
         ! Additional needed to close the canopy energy budget
               call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
               call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
@@ -1955,9 +1956,12 @@ subroutine  ldas_output()
            enddo DEFINE_MODE_LOOP
 
            call finalize_output_file(split_output_count)
-#endif /* HYDRO_REALTIME */
+#ifdef WRF_HYDRO
+else
+#endif
+!#endif /* WRF_HYDRO */
 
-#ifdef HYDRO_REALTIME
+#ifdef WRF_HYDRO
    ! Logan add begin
    if (nwmIo .ne. 0) then
       ! Go through each variable. For the first time the NWM output routine is
@@ -2067,9 +2071,9 @@ subroutine  ldas_output()
                                 iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
                                 nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
 
-      DEFINE_MODE_LOOP : do imode = 1, 2
+      DEFINE_MODE_LOOP2 : do iimode = 1, 2
 
-         call set_output_define_mode(imode)
+         call set_output_define_mode(iimode)
 
          ! For 3D arrays, we need to know whether the Z dimension is snow
          ! layers, or soil layers.
@@ -2103,12 +2107,12 @@ subroutine  ldas_output()
          call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table", "m"                          , IOCVARS            )
          call add_to_output(WAXY       , "WA"      , "Water in aquifer", "kg m{-2}"                       , IOCVARS            )
          call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"  , IOCVARS            )
-#ifdef WRF_HYDRO
+
          call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip", "mm"                           , IOCVARS            )
          call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"        , IOCVARS            )
          call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"        , IOCVARS            )
          call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"        , IOCVARS            )
-#endif
+
          ! Additional needed to close the canopy energy budget
          call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}" , IOCVARS   )
          call add_to_output(TRXY       , "TR"      , "Transpiration heat" , "W m{-2}"                              , IOCVARS   )
@@ -2194,13 +2198,17 @@ subroutine  ldas_output()
             call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"   , IOCVARS        )
          ENDIF
 
-      enddo DEFINE_MODE_LOOP
+      enddo DEFINE_MODE_LOOP2
 
       call finalize_output_file(split_output_count)
 
    endif ! End check for nwmIo value
 
-#endif /* HYDRO_REALTIME */
+#endif /* WRF_HYDRO */
+
+#ifdef WRF_HYDRO
+endif
+#endif
 
 end subroutine  ldas_output
 

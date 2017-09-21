@@ -72,9 +72,7 @@ CONTAINS
                MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL  &    
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
-#ifdef HYDRO_REALTIME 
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
-#endif
 #endif
                )
 !----------------------------------------------------------------
@@ -278,12 +276,10 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
-#ifdef HYDRO_REALTIME
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT_TOP ! soil saturation in the top layer [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILICE     ! fraction of soil moisture that is ice [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWT_AVG   ! average snowpack temperature (by layer mass) [K]
-#endif
 #endif
 
 ! 1D equivalent of 2D/3D fields
@@ -842,7 +838,7 @@ CONTAINS
              if(present(ACCECAN)) ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
              if(present(ACCETRAN)) ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
              if(present(ACCEDIR)) ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
-#ifdef HYDRO_REALTIME
+
 	     ! Top 2 layer soil saturation
              if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)           = SUM(SMC(1:2) * DZS(1:2)) / SUM(parameters%smcmax(1:2) * DZS(1:2))
 	     ! Soil column integrated soil saturation
@@ -857,7 +853,6 @@ CONTAINS
 		  SNOWT_AVG (I,J) = undefined_value
 		endif
 	     endif
-#endif
 #endif
              IF ( SALB > -999 ) THEN
                 ALBEDO(I,J)                = SALB
