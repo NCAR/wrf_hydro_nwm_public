@@ -141,10 +141,11 @@ module module_HYDRO_drv
 
    end subroutine HYDRO_rst_out
 
-   subroutine HYDRO_out(did)
+   subroutine HYDRO_out(did, rstflag)
    
       implicit none
-      integer did, outflag, rtflag
+      integer did, outflag, rtflag, iniflag
+      integer rstflag
       character(len=19) out_date
       integer :: Kt, ounit, i
       real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
@@ -192,7 +193,7 @@ module module_HYDRO_drv
      call mpp_land_bcast_int1(outflag)
 #endif
 
-     call HYDRO_rst_out(did) 
+     if (rstflag .eq. 1) call HYDRO_rst_out(did) 
 
      if (outflag .lt. 0) return
 
@@ -208,17 +209,19 @@ module module_HYDRO_drv
 
 ! jump the ouput for the initial time when it has restart file from routing.
    rtflag = -99
+   iniflag = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-       if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
-#ifndef NCEP_WCOSS
-             print*, "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
-#else
-             write(78,*) "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
-#endif
-             rtflag = 1
-       endif
+!       if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
+!#ifndef NCEP_WCOSS
+!             print*, "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+!#else
+!             write(78,*) "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+!#endif
+          if ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) iniflag = 1
+          if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) rtflag = 1
+!       endif
 #ifdef MPP_LAND
    endif  
    call mpp_land_bcast_int1(rtflag)
@@ -229,11 +232,11 @@ module module_HYDRO_drv
       if(rtflag == 1) then 
           rt_domain(did)%restQSTRM = .false.   !!! do not reset QSTRM.. at initial time.
           if(nlst_rt(did)%t0OutputFlag .eq. 0) return
-#ifndef HYDRO_REALTIME
-          return ! jump the initial time output for routing restart
-#endif
       endif
 
+      if (iniflag == 1) then
+         if(nlst_rt(did)%t0OutputFlag .eq. 0) return
+      endif
 
      if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
         if(nlst_rt(did)%nwmIo .eq. 0) then
@@ -278,10 +281,8 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                       RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                      RT_DOMAIN(did)%QBDRYRT &
-#ifdef HYDRO_REALTIME
-                      , nlst_rt(did)%iocflag &
-#endif
+                      RT_DOMAIN(did)%QBDRYRT, &
+                      nlst_rt(did)%iocflag &
                        )
                  endif ! End check for nwmIo value
               endif ! End check for rtout_factor
@@ -341,7 +342,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
              str_out = RT_DOMAIN(did)%QLINK
              vel_out = RT_DOMAIN(did)%velocity
 
-#ifdef HYDRO_REALTIME
              if (RT_DOMAIN(did)%NLAKES .gt. 0)  then
                     do i=1,RT_DOMAIN(did)%NLINKS
                         if (RT_DOMAIN(did)%TYPEL(i) .eq. 2) then
@@ -350,7 +350,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                         endif
                     end do
              endif
-#endif
 !ADCHANGE: End
 
    if(nlst_rt(did)%nwmIo .ne. 0) then
@@ -727,7 +726,7 @@ end if
 !          call HYDRO_out(did)
 !yw  endif
            call HYDRO_time_adv(did)
-           call HYDRO_out(did)
+           call HYDRO_out(did, 1)
 
 
 !           write(90 + my_id,*) "finish calling hydro_exe"
@@ -1567,8 +1566,12 @@ if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 
 call HYDRO_rst_in(did)
 
-#ifdef HYDRO_REALTIME
-call HYDRO_out(did)
+!#ifdef HYDRO_REALTIME
+if (trim(nlst_rt(did)%restart_file) == "") then
+  call HYDRO_out(did, 0)
+else
+  call HYDRO_out(did, 1)
+endif
 !! JLM: This is only currently part 1/2 of a better accumulation tracking strategy. 
 !! The parts:
 !! 1) (this) zero accumulations on restart/init after any t=0 outputs are written.
@@ -1582,19 +1585,19 @@ if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    !#endif
-   rt_domain(did)%INFXSRT      = zeroFlt
+   !rt_domain(did)%INFXSRT      = zeroFlt
    rt_domain(did)%LAKE_INFLORT = zeroFlt
    rt_domain(did)%QSTRMVOLRT   = zeroFlt
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if
-#else
-if (trim(nlst_rt(did)%restart_file) == "") then
-   ! output at the initial time
-   call HYDRO_out(did)
-   return
-endif
-#endif
+!#else
+!if (trim(nlst_rt(did)%restart_file) == "") then
+!   ! output at the initial time
+!   call HYDRO_out(did)
+!   return
+!endif
+!#endif
 
 end subroutine HYDRO_ini
 
