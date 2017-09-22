@@ -22,6 +22,7 @@ integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
 integer, parameter :: numLsmVars = 14
 integer, parameter :: numChObsVars = 1
+integer, parameter :: numGwVars = 3
 integer :: i
 
 ! Declare public types that will hold metadata
@@ -32,6 +33,7 @@ public :: lakeMeta ! Public lake metadata for NWM output
 public :: chrtGrdMeta ! Public CHRTOUT_GRID metadata for NWM output.
 public :: lsmMeta ! Public metadata for LSMOUT output.
 public :: chObsMeta ! Public CHANOBS metadata for NWM output.
+public :: gwMeta ! Public groundwater metadata.
 
 ! Establish types for each output type
 type chrtMeta
@@ -478,6 +480,75 @@ type chObsMeta
    character (len=128) :: conventions ! Conventions string
 
 end type chObsMeta
+
+type gwMeta
+   ! Variable names
+   character (len=64), dimension(numGwVars) :: varNames
+   integer :: numVars = numGwVars
+   character (len=512) :: outVersion = "NWM 1.2"
+   ! Output variable attributes
+   real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
+                                               ! variable to converte from
+                                               ! real to
+                                               ! integer.
+   real, dimension(numGwVars)             :: addOffset   ! add_offset values for each variable.
+   character (len=64), dimension(numGwVars) :: longName  ! Long names for each variable.
+   character (len=64), dimension(numGwVars) :: units ! Units for each variable.
+   !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable. 
+   integer*8, dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
+   real, dimension(numGwVars) :: validMinReal ! Valid minimum (before conversion to integer)
+   real, dimension(numGwVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   integer*8, dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   real, dimension(numGwVars) :: missingReal ! Missing value attribute (before conversion to integer)
+   real, dimension(numGwVars) :: fillReal ! Fill value (before conversion to integer)
+   integer*8, dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
+   integer, dimension(numGwVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numGwVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                   ! the actual data. This was
+                                                   ! done because time 0 
+                                                   ! output does not all contain
+                                                   ! valid data. 
+   real :: modelNdv ! NDV value represented within the model code
+   ! Time variable attribues
+   character (len=64) :: timeLName ! long_name - usually valid output time
+   character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
+   character (len=64) :: timeStName ! standard_name - usually time
+   ! Reference time attributes
+   character (len=64) :: rTimeLName ! long_name - usually model initialization time
+   character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
+   character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
+   ! lake_id attributes
+   character (len=64) :: gwIdLName ! long_name - usually gw bucket ID
+   character (len=256) :: gwIdComment ! Comment attribute
+   ! feature_id attributes
+   character (len=64) :: featureIdLName ! long_name - usually gw bucket ID
+   character (len=256) :: featureIdComment ! Comment attribute
+   character (len=64) :: cfRole ! cf_role attribute
+   ! latitude variable attributes
+   !character (len=64) :: latLName ! long_name
+   !character (len=64) :: latUnits ! units
+   !character (len=64) :: latStName ! Standard Name
+   ! longitude variable attributes
+   !character (len=64) :: lonLName ! long_name
+   !character (len=64) :: lonUnits ! units
+   !character (len=64) :: lonStName ! Standard Name
+   ! elevation variable attributes
+   !character (len=64) :: elevLName ! long_name
+   !character (len=64) :: elevUnits ! units
+   !character (len=64) :: elevStName ! Standard Name
+   ! Global attributes
+   character (len=128) :: fType ! featureType attribute
+   !character (len=128) :: proj4 ! proj4 attribute
+   character (len=128) :: initTime ! model_initialization_time attribute
+   character (len=128) :: validTime ! model_output_valid_time attribute
+   character (len=128) :: gwDim ! gw_dimension attribute
+   !character (len=128) :: cdm ! cdm_datatype attribute
+   !character (len=1024) :: esri ! esri_pe_string attribute
+   character (len=128) :: conventions ! Conventions string
+
+end type gwMeta
+
 contains
 
 subroutine initChrtDict(chrtOutDict,diagFlag,procId)
@@ -1559,6 +1630,73 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    end do
 
 end subroutine initChanObsDict
+
+subroutine initGwDict(gwOutDict)
+   implicit none
+
+   type(gwMeta), intent(inout) :: gwOutDict
+
+   gwOutDict%modelNdv = -9.E15
+
+   gwOutDict%fType = 'timeSeries'
+   !gwOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
+   gwOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   gwOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   gwOutDict%gwDim = 'gw_id'
+   !gwOutDict%cdm = 'PLACEHOLDER'
+   !gwOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
+   !                   &SPHEROID[GRS_1980,6378137.0,298.257222101]],&
+   !                   &PRIMEM[Greenwich,0.0],UNIT[Degree,0.017453292519943295]]'
+   gwOutDict%conventions = 'CF-1.6'
+
+   ! Next establish time attribues
+   gwOutDict%timeLName = 'valid output time'
+   gwOutDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+   gwOutDict%timeStName = 'time'
+   gwOutDict%rTimeLName = 'model initialization time'
+   gwOutDict%rTimeStName = 'forecast_reference_time'
+   gwOutDict%rTimeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+
+   ! Establish elevation variable attributes
+   !gwOutDict%elevLName = "Water Surface Elevation"
+   !gwOutDict%elevUnits = "meters"
+
+   ! Establish feature_id attributes
+   gwOutDict%featureIdLName = "Groundwater Bucket ID"
+   gwOutDict%featureIdComment = "Groundwater Bucket ID"
+   gwOutDict%cfRole = 'timeseries_id'
+
+   ! Esatablish lat/lon attributes
+   !gwOutDict%latLName = "Groundwater Bucket latitude"
+   !gwOutDict%latUnits = "degrees_north"
+   !gwOutDict%latStName = "latitude"
+   !gwOutDict%lonLName = "Groundwater Bucket longitude"
+   !gwOutDict%lonUnits = "degrees_east"
+   !gwOutDict%lonStName = "longitude"
+
+   gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth']
+   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth']
+   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm']
+   !gwOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude','latitude longitude']
+   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1]
+   gwOutDict%addOffset(:) = [0.0,0.0,0.0]
+   gwOutDict%outFlag(:) = [0,0,0]
+   gwOutDict%timeZeroFlag(:) = [1,1,1]
+   gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0]
+   gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0]
+   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0]
+   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0]
+
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numLakeVars
+      gwOutDict%fillComp(i) = NINT((gwOutDict%fillReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+      gwOutDict%missingComp(i) = NINT((gwOutDict%missingReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+      gwOutDict%validMinComp(i) = NINT((gwOutDict%validMinReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+      gwOutDict%validMaxComp(i) = NINT((gwOutDict%validMaxReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+end do
+
+end subroutine initGwDict
 
 subroutine postDiagMsg(diagFlag,diagMsg)
    implicit none
