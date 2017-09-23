@@ -81,16 +81,24 @@ t0OutputFlag = 0
 output_channelBucket_influx = 1
 
 ! Output netcdf file control
-CHRTOUT_DOMAIN = 2           ! Netcdf point timeseries output at all channel points (1d)
-                             !      0 = no output, 1 = full output, 2 = fast (limited variables) output
+CHRTOUT_DOMAIN = 0           ! Netcdf point timeseries output at all channel points (1d)
+                             !      0 = no output, 1 = output
+CHANOBS_DOMAIN = 0           ! Netcdf point timeseries at forecast points or gage points (defined in Routelink)
+                             !      0 = no output, 1 = output at forecast points or gage points.
 CHRTOUT_GRID = 0             ! Netcdf grid of channel streamflow values (2d)
+                                    0 = no output, 1 = output
+                                    ! NOTE: Not available with reach-based routing
 LSMOUT_DOMAIN = 0            ! Netcdf grid of variables passed between LSM and routing components (2d)
+                                    0 = no output, 1 = output
+                                    ! NOTE: No scale_factor/add_offset available
 RTOUT_DOMAIN = 1             ! Netcdf grid of terrain routing variables on routing grid (2d)
+                                    0 = no output, 1 = output
 output_gw = 0                ! Netcdf GW output
-                             !      0 = no output, 1 = coupled gw model output (2d, future feature),
-                             !      2 = standard gw bucket output (1d)
+                                    0 = no output, 1 = output
 outlake  = 0                 ! Netcdf grid of lake values (1d)
-                             !      0 = no output, 1 = full point netcdf, 2 = with ComID
+                                    0 = no output, 1 = output
+frxst_pts_out = 0            ! ASCII text file of forecast points or gage points (defined in Routelink) 
+                             !      0 = no output, 1 = output 
 
 !!!! ------------ PHYSICS OPTIONS AND RELATED SETTINGS ------------ !!!!
 
