@@ -1198,7 +1198,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
 
          ! Define compression for meta-variables. Only compress if nwmIo is set
          ! to 1.
-         if((nwmIoLsm .eq. 1) .or. (nlst_rt(1)%nwmIo .eq. 3)) then
+         if((nlst_rt(1)%nwmIo .eq. 1) .or. (nlst_rt(1)%nwmIo .eq. 3)) then
             iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
             iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
@@ -1270,7 +1270,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                ! filter off for now. Kelley Eicher did some testing with this and
                ! determined that the benefit wasn't worth the extra time spent writing output.
                ! Only compress if nwmIo is set to 1.
-               if((nwmIoLsm .eq. 1) .or. (nlst_rt(1)%nwmIo .eq. 3)) then
+               if((nlst_rt(1)%nwmIo .eq. 1) .or. (nlst_rt(1)%nwmIo .eq. 3)) then
                   iret = nf90_def_var_deflate(ftnNoahMP,varId,0,1,2)
                   call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression for: '//trim(fileMeta%varNames(iTmp)))
                endif
@@ -3771,7 +3771,6 @@ implicit none
 
       ! Allocate output arrays based on size of number of forecast points.
       numPtsOut = SUM(g_outInd)
-      print*, "NUMPOINTS = ",numPtsOut
 
       if(numPtsOut .eq. 0) then
          ! Write warning message to user showing there are NO forecast points to
@@ -3818,9 +3817,6 @@ implicit none
                           g_chlatOut(iTmp),g_qlinkOut(iTmp,1),&
                           g_qlinkOut(iTmp,1)*35.314666711511576,&
                           g_hlinkOut(iTmp)
-            if(g_linkidOut(iTmp) .eq. 7098257) then
-               print*, "TEST = ",g_qlinkOut(iTmp,1)
-            endif
          endif
       end do  
 
@@ -4601,7 +4597,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    call initGwDict(fileMeta)
 
    if(nlst_rt(1)%iocFlag .eq. 0) then
-      ! Diagnostics
+      ! All
       fileMeta%outFlag(:) = [1,1,1] 
    else if(nlst_rt(1)%iocFlag .eq. 1) then
       ! Analysis and Assimilation
@@ -4618,6 +4614,9 @@ subroutine output_gw_NWM(domainId,iGrid)
    else if(nlst_rt(1)%iocFlag .eq. 5) then
       ! Retrospective
       fileMeta%outFlag(:) = [1,1,1]
+   else if(nlst_rt(1)%iocFlag .eq. 6) then
+      ! Diagnostics 
+      fileMeta%outFlag(:) = [1,1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -4625,7 +4624,8 @@ subroutine output_gw_NWM(domainId,iGrid)
    if(nlst_rt(domainId)%GWBASESWCRT .eq. 1) then
       gnbasns = rt_domain(domainId)%gnumbasns
    else
-      gnbasns = rt_domain(domainId)%gnlinksl
+      gnbasns = rt_domain(domainId)%gnumbasns
+      !gnbasns = rt_domain(domainId)%gnlinksl
    endif
    gSize = gnbasns
 
@@ -5038,8 +5038,6 @@ subroutine checkRouteGages(diagFlag,nElements,indexArray)
 
    ! Loop over gages. If a non-empty string is found, then change the indexArray
    ! value for that element from 0 to 1.
-   print*, "NELEMENTS = ",nElements
-   print*, "NGAGES = ",SHAPE(gages)
    where(gages .ne. '               ') indexArray = 1
 
    iret = nf90_close(ftnRt)
