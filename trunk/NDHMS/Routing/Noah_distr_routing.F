@@ -2403,7 +2403,8 @@
              RT_DOMAIN(did)%SMCRT, &
              RT_DOMAIN(did)%OVROUGHRT, RT_DOMAIN(did)%LAKE_MSKRT, &
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
-	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT)
+	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
+             RT_DOMAIN(did)%iswater)
 
       end subroutine disaggregateDomain_drv
 
@@ -2412,7 +2413,7 @@
                SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
                LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
                SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT, OV_ROUGH2d,  &
-               SLDPTH, soiltypRT, soiltyp, elrt                               &
+               SLDPTH, soiltypRT, soiltyp, elrt, iswater                        &
             )
 #ifdef MPP_LAND
         use module_mpp_land, only: left_id,down_id,right_id, &
@@ -2421,7 +2422,7 @@
              sum_real1
 #endif
      implicit none
-        integer,INTENT(IN) :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT
+        integer,INTENT(IN) :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, iswater
         real, INTENT(OUT), DIMENSION(IX,JX,NSOIL) :: SICE
         real, INTENT(IN),  DIMENSION(IX,JX,NSOIL) :: SMC,SH2OX
         real, INTENT(IN),  DIMENSION(IX,JX) :: INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
@@ -2652,7 +2653,7 @@
 !DJG set up lake mask...
 !--- modify to make lake mask large here, but not one of the routed lakes!!!
 !--            IF (VEGTYP(I,J).eq.16) then
-               IF (VEGTYP(I,J).eq.16 .and. &
+               IF (VEGTYP(I,J) .eq. iswater .and. &
                         CH_NETRT(IXXRT,JYYRT).le.0) then
                  !--LAKE_MSKRT(IXXRT,JYYRT) = 1
 !yw                 LAKE_MSKRT(IXXRT,JYYRT) = 9999

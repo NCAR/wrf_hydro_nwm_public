@@ -249,6 +249,64 @@ module module_HYDRO_io
 
      end subroutine get_file_dimension
 
+subroutine get_file_globalatts(fileName, iswater, isurban, isoilwater)
+  implicit none
+  character(len=*) fileName
+  integer iswater, isurban, isoilwater
+  integer ncid, iret, istmp
+#ifdef MPP_LAND
+#ifndef PARALLELIO
+if (my_id .eq. IO_id) then
+#endif
+#endif
+
+  iret = nf_open(fileName, nf_nowrite, ncid)
+  if (iret /= NF_NOERR) then
+    write(*,'("Problem opening geo file: ''", A, "''")') trim(fileName)
+    write(*,*) "Using default (USGS) values for urban and water land use types."
+  else
+    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISWATER', istmp)
+    if (iret .eq. NF_NOERR) then
+      iswater = istmp
+    else
+      write(*,*) "Using default (USGS) values for water land use types."
+      iswater = 16
+    endif
+    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISURBAN', istmp)
+    if (iret .eq. NF_NOERR) then
+      isurban = istmp
+    else
+      write(*,*) "Using default (USGS) values for urban land use types."
+      isurban = 1
+    endif
+    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISOILWATER', istmp)
+    if (iret .eq. NF_NOERR) then
+      isoilwater = istmp
+    else
+      write(*,*) "Using default (USGS) values for water soil types."
+      isoilwater = 14
+    endif
+    iret = nf_close(ncid)
+  endif
+
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
+  write(6, *) "get_file_globalatts: ISWATER ISURBAN ISOILWATER", iswater, isurban, isoilwater
+#endif
+#endif
+
+#ifdef MPP_LAND
+#ifndef PARALLELIO
+endif
+call mpp_land_bcast_int1(iswater)
+call mpp_land_bcast_int1(isurban)
+call mpp_land_bcast_int1(isoilwater)
+#endif
+#endif
+
+end subroutine get_file_globalatts
+
+
      subroutine get2d_lsm_soltyp(out_buff,ix,jx,fileName)
          implicit none
          integer ix,jx, status,land_cat, iret, dimid,ncid

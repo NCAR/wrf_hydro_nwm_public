@@ -179,7 +179,7 @@ Contains
     integer, dimension(ix,jx) :: vegtyp_inv, soiltyp_inv,xdum_int
     integer flag ! flag = 1 from wrfsi, flag =2 from WPS.
     CHARACTER(len=256)       :: var_name
-
+    integer :: istmp, iswater, isoilwater, isother
 
     ! Open the NetCDF file.
     ierr = nf_open(geo_static_flnm, NF_NOWRITE, ncid)
@@ -256,7 +256,15 @@ Contains
 
     endif
 
-
+! Default values based on USGS
+iswater = 16
+isoilwater = 14
+isother = 28 ! what is this??
+  
+ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISWATER', istmp)
+if (ierr .eq. NF_NOERR) iswater = istmp
+ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISOILWATER', istmp)
+if (ierr .eq. NF_NOERR) isoilwater = istmp
 
     ! Close the NetCDF file
     ierr = nf_close(ncid)
@@ -265,12 +273,14 @@ Contains
        call hydro_stop("In readland_hrldas() - NF_CLOSE problem")
     endif
 
+ write(6, *) "readland_hrldas: ISWATER ISOILWATER", iswater, isoilwater
+
     ! Make sure vegtyp and soltyp are consistent when it comes to water points,
     ! by setting soil category to water when vegetation category is water, and
     ! vice-versa.
-    where (vegtyp == 28) vegtyp = 16
-    where (vegtyp == 16) soltyp = 14
-    where (soltyp == 14) vegtyp = 16
+    where (vegtyp == isother) vegtyp = iswater
+    where (vegtyp == iswater) soltyp = isoilwater
+    where (soltyp == isoilwater) vegtyp = iswater
 
 !DJG test for deep gw function...
 !    where (soltyp <> 14) soltyp = 1
