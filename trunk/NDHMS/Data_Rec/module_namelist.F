@@ -77,6 +77,8 @@ CONTAINS
           integer ::RTOUT_DOMAIN                ! Netcdf grid of terrain routing variables on routing grid
           integer  :: output_gw
           integer  :: outlake
+          integer :: frxst_pts_out            ! ASCII text file of streamflow at forecast points
+          integer :: CHANOBS_DOMAIN           ! NetCDF point timeseries output at forecast points. 
 
 
 !!! add the following two dummy variables 
@@ -114,8 +116,10 @@ CONTAINS
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
-                    CHRTOUT_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,RTOUT_DOMAIN, output_gw, outlake, udmap_file, &
-                    UDMP_OPT, GWBUCKPARM_file, iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+                    CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
+                    RTOUT_DOMAIN, output_gw, outlake, &
+                    frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, &
+                    iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
       
 #ifdef WRF_HYDRO_NUDGING
    namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
@@ -135,6 +139,8 @@ CONTAINS
    rst_bi_out = 0
    iocflag = 0
    nwmIo = 0
+   frxst_pts_out = 0
+   CHANOBS_DOMAIN = 0
    t0OutputFlag = 1
    output_channelBucket_influx = 0
 
@@ -283,8 +289,10 @@ if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3)
   call mpp_land_bcast_int1(rst_bi_out)
   call mpp_land_bcast_int1(order_to_write)
   call mpp_land_bcast_int1(CHRTOUT_DOMAIN)
+  call mpp_land_bcast_int1(CHANOBS_DOMAIN)
   call mpp_land_bcast_int1(output_gw)
   call mpp_land_bcast_int1(outlake)
+  call mpp_land_bcast_int1(frxst_pts_out)
   call mpp_land_bcast_int1(CHRTOUT_GRID)
   call mpp_land_bcast_int1(LSMOUT_DOMAIN)
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
@@ -316,8 +324,10 @@ if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3)
     endif
 
     nlst%CHRTOUT_DOMAIN = CHRTOUT_DOMAIN
+    nlst%CHANOBS_DOMAIN = CHANOBS_DOMAIN
     nlst%output_gw      = output_gw
     nlst%outlake      = outlake
+    nlst%frxst_pts_out = frxst_pts_out
     nlst%CHRTOUT_GRID = CHRTOUT_GRID
     nlst%LSMOUT_DOMAIN = LSMOUT_DOMAIN
     nlst%RTOUT_DOMAIN = RTOUT_DOMAIN

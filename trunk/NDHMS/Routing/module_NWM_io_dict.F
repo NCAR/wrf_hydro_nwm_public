@@ -21,6 +21,8 @@ integer, parameter :: numRtDomainVars = 4
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
 integer, parameter :: numLsmVars = 14
+integer, parameter :: numChObsVars = 1
+integer, parameter :: numGwVars = 3
 integer :: i
 
 ! Declare public types that will hold metadata
@@ -30,6 +32,8 @@ public :: rtDomainMeta ! Public RT_DOMAIN metadata for NWM output.
 public :: lakeMeta ! Public lake metadata for NWM output
 public :: chrtGrdMeta ! Public CHRTOUT_GRID metadata for NWM output.
 public :: lsmMeta ! Public metadata for LSMOUT output.
+public :: chObsMeta ! Public CHANOBS metadata for NWM output.
+public :: gwMeta ! Public groundwater metadata.
 
 ! Establish types for each output type
 type chrtMeta
@@ -400,6 +404,7 @@ type lsmMeta
    real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
    character (len=512) :: proj4
    character (len=128) :: gridMapping
+   
 
    ! Global attributes
    character (len=128) :: title ! File TITLE
@@ -409,31 +414,194 @@ type lsmMeta
 
 end type lsmMeta
 
+type chObsMeta
+   ! Variable names
+   character (len=64), dimension(numChObsVars) :: varNames
+   integer :: numVars = numChObsVars
+   character (len=512) :: outVersion = "NWM 1.2"
+   ! Output variable attributes
+   real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
+                                                 ! each variable to convert 
+                                                 ! from real to integer
+   real, dimension(numChObsVars)             :: addOffset   ! add_offset values for each variable.
+   character (len=64), dimension(numChObsVars) :: longName  ! Long names for each variable.
+   character (len=64), dimension(numChObsVars) :: units ! Units for each variable.
+   character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable. 
+   integer*8, dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
+   real, dimension(numChObsVars) :: validMinReal ! Valid minimum (before conversion to integer)
+   real, dimension(numChObsVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   integer*8, dimension(numChObsVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   real, dimension(numChObsVars) :: missingReal ! Missing value attribute (before conversion to integer)
+   real, dimension(numChObsVars) :: fillReal ! Fill value (before conversion to integer)
+   integer*8, dimension(numChObsVars) :: fillComp ! Fill value (after conversion to integer)
+   integer, dimension(numChObsVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numChObsVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                 ! the actual data. This was
+                                                 ! done because time 0 
+                                                 ! output does not all contain valid data. 
+   real :: modelNdv ! NDV value represented within the model code
+   ! Time variable attribues
+   character (len=64) :: timeLName ! long_name - usually valid output time
+   character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
+   character (len=64) :: timeStName ! standard_name - usually time
+   ! Reference time attributes
+   character (len=64) :: rTimeLName ! long_name - usually model initialization time
+   character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
+   character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
+   ! feature_id attributes
+   character (len=64) :: featureIdLName ! long_name - usually Reach ID
+   character (len=256) :: featureIdComment ! Comment attribute
+   character (len=64) :: cfRole ! cf_role attribute
+   ! latitude variable attributes
+   character (len=64) :: latLName ! long_name
+   character (len=64) :: latUnits ! units
+   character (len=64) :: latStName ! Standard Name
+   ! longitude variable attributes
+   character (len=64) :: lonLName ! long_name
+   character (len=64) :: lonUnits ! units
+   character (len=64) :: lonStName ! Standard Name
+   ! Elevation variable attributes
+   character (len=64) :: elevLName ! long_name
+   character (len=64) :: elevUnits ! units
+   character (len=64) :: elevStName ! Standard Name
+   ! Order variable attributes
+   character (len=64) :: orderLName ! long_name
+   character (len=64) :: orderStName ! Standard Name
+   ! Global attributes
+   character (len=128) :: fType ! featureType attribute
+   character (len=128) :: proj4 ! proj4 attribute
+   character (len=128) :: initTime ! model_initialization_time attribute
+   character (len=128) :: validTime ! model_output_valid_time attribute
+   character (len=128) :: stDim ! station_dimension attribute
+   integer :: stOrder ! stream_order_output attribute
+   character (len=128) :: cdm ! cdm_datatype attribute
+   character (len=1024) :: esri ! esri_pe_string attribute
+   character (len=128) :: conventions ! Conventions string
+
+end type chObsMeta
+
+type gwMeta
+   ! Variable names
+   character (len=64), dimension(numGwVars) :: varNames
+   integer :: numVars = numGwVars
+   character (len=512) :: outVersion = "NWM 1.2"
+   ! Output variable attributes
+   real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
+                                               ! variable to converte from
+                                               ! real to
+                                               ! integer.
+   real, dimension(numGwVars)             :: addOffset   ! add_offset values for each variable.
+   character (len=64), dimension(numGwVars) :: longName  ! Long names for each variable.
+   character (len=64), dimension(numGwVars) :: units ! Units for each variable.
+   !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable. 
+   integer*8, dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer*8, dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
+   real, dimension(numGwVars) :: validMinReal ! Valid minimum (before conversion to integer)
+   real, dimension(numGwVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   integer*8, dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   real, dimension(numGwVars) :: missingReal ! Missing value attribute (before conversion to integer)
+   real, dimension(numGwVars) :: fillReal ! Fill value (before conversion to integer)
+   integer*8, dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
+   integer, dimension(numGwVars) :: outFlag ! 0/1 flag to turn outputting off/on 
+   integer, dimension(numGwVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+                                                   ! the actual data. This was
+                                                   ! done because time 0 
+                                                   ! output does not all contain
+                                                   ! valid data. 
+   real :: modelNdv ! NDV value represented within the model code
+   ! Time variable attribues
+   character (len=64) :: timeLName ! long_name - usually valid output time
+   character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
+   character (len=64) :: timeStName ! standard_name - usually time
+   ! Reference time attributes
+   character (len=64) :: rTimeLName ! long_name - usually model initialization time
+   character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
+   character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
+   ! lake_id attributes
+   character (len=64) :: gwIdLName ! long_name - usually gw bucket ID
+   character (len=256) :: gwIdComment ! Comment attribute
+   ! feature_id attributes
+   character (len=64) :: featureIdLName ! long_name - usually gw bucket ID
+   character (len=256) :: featureIdComment ! Comment attribute
+   character (len=64) :: cfRole ! cf_role attribute
+   ! latitude variable attributes
+   !character (len=64) :: latLName ! long_name
+   !character (len=64) :: latUnits ! units
+   !character (len=64) :: latStName ! Standard Name
+   ! longitude variable attributes
+   !character (len=64) :: lonLName ! long_name
+   !character (len=64) :: lonUnits ! units
+   !character (len=64) :: lonStName ! Standard Name
+   ! elevation variable attributes
+   !character (len=64) :: elevLName ! long_name
+   !character (len=64) :: elevUnits ! units
+   !character (len=64) :: elevStName ! Standard Name
+   ! Global attributes
+   character (len=128) :: fType ! featureType attribute
+   !character (len=128) :: proj4 ! proj4 attribute
+   character (len=128) :: initTime ! model_initialization_time attribute
+   character (len=128) :: validTime ! model_output_valid_time attribute
+   character (len=128) :: gwDim ! gw_dimension attribute
+   !character (len=128) :: cdm ! cdm_datatype attribute
+   !character (len=1024) :: esri ! esri_pe_string attribute
+   character (len=128) :: conventions ! Conventions string
+
+end type gwMeta
+
 contains
 
-subroutine initChrtDict(chrtOutDict)
-   !use module_namelist, only: nlst_rt
-   !use netcdf
+subroutine initChrtDict(chrtOutDict,diagFlag,procId)
+   use module_namelist, only: nlst_rt
+   use netcdf
    implicit none
 
    type(chrtMeta), intent(inout) :: chrtOutDict
-
+   integer, intent(inout) :: diagFlag
+   integer, intent(inout) :: procId
+  
+   ! Local variables
+   integer :: ftnMeta,iret
+   integer :: projVarId
+ 
    chrtOutDict%modelNdv = -9.E15
    ! CHRTOUT FILES
+
+   ! Pull spatial metadata information about the modeling domain from the land
+   ! spatial metadata file. 
+   if(procId .eq. 0) then
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      if(iret .ne. 0) then
+         ! Spatial metadata file not found for land grid.
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+      else
+         ! First pull metadata on coordinate system.
+         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
+         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chrtOutDict%esri)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
+         iret = nf90_get_att(ftnMeta,projVarId,'proj4',chrtOutDict%proj4)
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            chrtOutDict%proj4 = ''
+         endif
+         ! Close the file
+         iret = nf90_close(ftnMeta)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
+      endif
+   endif
+
    ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
    !            which means meta-data standards have yet to be determined 
    !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files 
    chrtOutDict%fType = 'timeSeries'
-   chrtOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
    chrtOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chrtOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chrtOutDict%stDim = 'feature_id'
    chrtOutDict%stOrder = 1
    chrtOutDict%cdm = 'Station'
-   chrtOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
-                      &SPHEROID[GRS_1980,6378137.0,298.257222101]],&
-                      &PRIMEM[Greenwich,0.0],UNIT[Degree,0.017453292519943295]]'
    chrtOutDict%conventions = 'CF-1.6'
    
    ! Next establish time attribues
@@ -461,9 +629,9 @@ subroutine initChrtDict(chrtOutDict)
    chrtOutDict%elevUnits = "meters"
    chrtOutDict%elevStName = "Elevation"
  
-   ! Next establish feature_id attributes
+   ! Next establish feature_id attributes. Given this is merged community, we
    chrtOutDict%featureIdLName = 'Reach ID'
-   chrtOutDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
+   chrtOutDict%featureIdComment = 'Gage Points Specified by User in Routelink file'
    chrtOutDict%cfRole = 'timeseries_id'   
 
    ! Now establish attributes for output variables.
@@ -580,7 +748,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
          iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',ldasOutDict%projEsri)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
          iret = nf90_get_att(ftnMeta,projVarId,'proj4',ldasOutDict%proj4)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find proj4 in LAND spatial metadata file.')
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            ldasOutDict%proj4 = ''
+         endif
          ! Next pull metadata on x coordinate.
          iret = nf90_inq_varid(ftnMeta,'x',xVarId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
@@ -894,7 +1066,11 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
          iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',rtDomainDict%projEsri)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
          iret = nf90_get_att(ftnMeta,projVarId,'proj4',rtDomainDict%proj4)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find proj4 in LAND spatial metadata file.')
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            rtDomainDict%proj4 = ''
+         endif
          ! Next, get the number of columns on the land grid
          iret = nf90_inq_dimid(ftnMeta,'x',xDimId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find the x dimension in the LAND spatial metadata file')
@@ -1115,7 +1291,11 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
          iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chrtGrdDict%projEsri)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
          iret = nf90_get_att(ftnMeta,projVarId,'proj4',chrtGrdDict%proj4)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find proj4 in LAND spatial metadata file.')
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            chrtGrdDict%proj4 = ''
+         endif
          ! Next, get the number of columns on the land grid
          iret = nf90_inq_dimid(ftnMeta,'x',xDimId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find the x dimension in the LAND spatial metadata file')
@@ -1263,7 +1443,11 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
          iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',lsmOutDict%projEsri)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
          iret = nf90_get_att(ftnMeta,projVarId,'proj4',lsmOutDict%proj4)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find proj4 in LAND spatial metadata file.')
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            lsmOutDict%proj4 = ''
+         endif
          ! Next pull metadata on x coordinate.
          iret = nf90_inq_varid(ftnMeta,'x',xVarId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
@@ -1342,6 +1526,192 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    end do
 
 end subroutine initLsmOutDict
+
+subroutine initChanObsDict(chObsDict,diagFlag,procId)
+   use module_namelist, only : nlst_rt
+   use netcdf
+   implicit none
+   
+   type(chObsMeta), intent(inout) :: chObsDict
+   integer, intent(inout) :: diagFlag
+   integer, intent(inout) :: procId
+
+   ! Local variables
+   integer :: ftnMeta, iret
+   integer :: projVarId
+
+   chObsDict%modelNdv = -9.E15
+   !CHANOBS FILES
+
+   ! Pull spatial metadata information about the modeling domain from the land
+   ! spatial metadata file. 
+   if(procId .eq. 0) then
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      if(iret .ne. 0) then
+         ! Spatial metadata file not found for land grid.
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+      else
+         ! First pull metadata on coordinate system.
+         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
+         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chObsDict%esri)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
+         iret = nf90_get_att(ftnMeta,projVarId,'proj4',chObsDict%proj4)
+         ! We are going to put a relaxed constraint on the proj4 string. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            chObsDict%proj4 = ''
+         endif
+         ! Close the file
+         iret = nf90_close(ftnMeta)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
+      endif
+   endif   
+
+   chObsDict%fType = 'timeSeries'
+   chObsDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   chObsDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   chObsDict%stDim = 'feature_id'
+   chObsDict%stOrder = 1
+   chObsDict%cdm = 'Station'
+   chObsDict%conventions = 'CF-1.6'
+   
+   ! Next establish time attribues
+   chObsDict%timeLName = 'valid output time'
+   chObsDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+   chObsDict%timeStName = 'time'
+   chObsDict%rTimeLName = 'model initialization time'
+   chObsDict%rTimeStName = 'forecast_reference_time'
+   chObsDict%rTimeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+
+   ! Esatablish lat/lon attributes
+   chObsDict%latLName = "Feature latitude"
+   chObsDict%latUnits = "degrees_north"
+   chObsDict%latStName = "latitude"
+   chObsDict%lonLName = "Feature longitude"
+   chObsDict%lonUnits = "degrees_east"
+   chObsDict%lonStName = "longitude"
+  
+   ! Establish streamflw order attributes
+   chObsDict%orderLName = "Streamflow Order"
+   chObsDict%orderStName = "order"
+
+   ! Establish point elevation attributes
+   chObsDict%elevLName = "Feature Elevation"
+   chObsDict%elevUnits = "meters"
+   chObsDict%elevStName = "Elevation"
+ 
+   ! Next establish feature_id attributes
+   chObsDict%featureIdLName = 'Reach ID'
+   chObsDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
+   chObsDict%cfRole = 'timeseries_id' 
+
+   chObsDict%varNames(:) = [character(len=64) :: "streamflow"]
+   chObsDict%longName(:) = [character(len=64) :: "River Flow"]
+   chObsDict%units(:) = [character(len=64) :: "m3 s-1"]
+   chObsDict%coordNames(:) = [character(len=64) :: "latitude longitude"]
+   chObsDict%scaleFactor(:) = [0.01]
+   chObsDict%addOffset(:) = [0.0]
+   ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
+   ! output subroutine. 
+   chObsDict%outFlag(:) = [0]
+   chObsDict%timeZeroFlag(:) = [1]
+   chObsDict%fillReal(:) = [-9999.0]
+   chObsDict%missingReal(:) = [-9999.0]
+   chObsDict%validMinReal(:) = [0.0]
+   chObsDict%validMaxReal(:) = [500000.0]
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numChObsVars
+      chObsDict%fillComp(i) = int((chObsDict%fillReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+      chObsDict%missingComp(i) = int((chObsDict%missingReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+      chObsDict%validMinComp(i) = int((chObsDict%validMinReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+      chObsDict%validMaxComp(i) = int((chObsDict%validMaxReal(i)+chObsDict%addOffset(i))/chObsDict%scaleFactor(i))
+   end do
+
+end subroutine initChanObsDict
+
+subroutine initGwDict(gwOutDict)
+   implicit none
+
+   type(gwMeta), intent(inout) :: gwOutDict
+
+   gwOutDict%modelNdv = -9.E15
+
+   gwOutDict%fType = 'timeSeries'
+   !gwOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
+   gwOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   gwOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
+   gwOutDict%gwDim = 'gw_id'
+   !gwOutDict%cdm = 'PLACEHOLDER'
+   !gwOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
+   !                   &SPHEROID[GRS_1980,6378137.0,298.257222101]],&
+   !                   &PRIMEM[Greenwich,0.0],UNIT[Degree,0.017453292519943295]]'
+   gwOutDict%conventions = 'CF-1.6'
+
+   ! Next establish time attribues
+   gwOutDict%timeLName = 'valid output time'
+   gwOutDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+   gwOutDict%timeStName = 'time'
+   gwOutDict%rTimeLName = 'model initialization time'
+   gwOutDict%rTimeStName = 'forecast_reference_time'
+   gwOutDict%rTimeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
+
+   ! Establish elevation variable attributes
+   !gwOutDict%elevLName = "Water Surface Elevation"
+   !gwOutDict%elevUnits = "meters"
+
+   ! Establish feature_id attributes
+   gwOutDict%featureIdLName = "Groundwater Bucket ID"
+   gwOutDict%featureIdComment = "Groundwater Bucket ID"
+   gwOutDict%cfRole = 'timeseries_id'
+
+   ! Esatablish lat/lon attributes
+   !gwOutDict%latLName = "Groundwater Bucket latitude"
+   !gwOutDict%latUnits = "degrees_north"
+   !gwOutDict%latStName = "latitude"
+   !gwOutDict%lonLName = "Groundwater Bucket longitude"
+   !gwOutDict%lonUnits = "degrees_east"
+   !gwOutDict%lonStName = "longitude"
+
+   gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth']
+   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth']
+   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm']
+   !gwOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude','latitude longitude']
+   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1]
+   gwOutDict%addOffset(:) = [0.0,0.0,0.0]
+   gwOutDict%outFlag(:) = [0,0,0]
+   gwOutDict%timeZeroFlag(:) = [1,1,1]
+   gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0]
+   gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0]
+   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0]
+   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0]
+
+   ! Loop through and calculate missing/fill/min/max values that will be placed
+   ! into the NetCDF attributes after scale_factor/add_offset are applied.
+   do i=1,numLakeVars
+      gwOutDict%fillComp(i) = NINT((gwOutDict%fillReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+      gwOutDict%missingComp(i) = NINT((gwOutDict%missingReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+      gwOutDict%validMinComp(i) = NINT((gwOutDict%validMinReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+      gwOutDict%validMaxComp(i) = NINT((gwOutDict%validMaxReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
+end do
+
+end subroutine initGwDict
+
+subroutine postDiagMsg(diagFlag,diagMsg)
+   implicit none
+
+   ! Subroutine arguments.
+   integer, intent(in) :: diagFlag
+   character(len=*), intent(in) :: diagMsg
+
+   ! Only write out message if the diagnostic WRF_HYDRO_D flag was
+   ! set to 1
+   if (diagFlag .eq. 1) then
+      print*, trim(diagMsg)
+   end if
+
+end subroutine postDiagMsg
 
 subroutine nwmCheck(diagFlag,iret,msg)
    implicit none

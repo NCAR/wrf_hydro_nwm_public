@@ -28,7 +28,8 @@ module module_HYDRO_drv
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
 #endif
    use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM,&
-                            output_chrtout_grd_NWM, output_lsmOut_NWM
+                            output_chrtout_grd_NWM, output_lsmOut_NWM, &
+                            output_frxstPts, output_chanObs_NWM, output_gw_NWM
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
         get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
@@ -289,11 +290,21 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    endif
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
-   if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
-      if(nlst_rt(did)%channel_only .eq. 0) then
-         if(nlst_rt(did)%output_gw  .eq. 1) call output_GW_Diag(did)
+   if(nlst_rt(did)%nwmIo .ne. 0) then
+      if(nlst_rt(did)%GWBASESWCRT .ne. 0) then
+         if(nlst_rt(did)%channel_only .eq. 0) then
+            if(nlst_rt(did)%output_gw .ne. 0) then
+               call output_gw_NWM(did,nlst_rt(did)%igrid)
+            endif
+         endif
       endif
-   end if
+   else
+      if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
+         if(nlst_rt(did)%channel_only .eq. 0) then
+            if(nlst_rt(did)%output_gw  .eq. 1) call output_GW_Diag(did)
+         endif
+      end if
+   endif
 
 
    if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
@@ -345,6 +356,14 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
       ! Call National Water Model output routine for output on NHD forecast points.
       if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
          call output_chrt_NWM(did)
+      endif
+      ! Call the subroutine to output frxstPts.
+      if(nlst_rt(did)%frxst_pts_out .ne. 0) then
+         call output_frxstPts(did)
+      endif
+      ! Call the subroutine to output CHANOBS
+      if(nlst_rt(did)%CHANOBS_DOMAIN .ne. 0) then
+         call output_chanObs_NWM(did)
       endif
    else
       ! Call traditional output routines
