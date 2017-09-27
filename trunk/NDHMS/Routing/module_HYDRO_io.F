@@ -1233,46 +1233,62 @@ end subroutine get_albedo12m_netcdf
     integer, intent(out), dimension(IXRT,JXRT)  :: gw_strm_msk
     character(len=*)                      :: gwbasmskfil
     integer                                 :: i,j,aggfacxrt,aggfacyrt,ixxrt,jyyrt
+    integer :: iret, ncid
+    logical :: fexist
+    integer, allocatable, dimension(:,:)  :: GWSUBBASMSK_tmp
 
     numbasns = 0
     gw_strm_msk = -9999
 
-!Open files...
-    open(unit=18,file=trim(gwbasmskfil),          &
+    inquire (file=trim(gwbasmskfil), exist=fexist)
+    if(.not. fexist) then
+        call hydro_stop("Cound not find file : "//trim(gwbasmskfil))
+    endif
+
+    iret = nf_open(trim(gwbasmskfil), NF_NOWRITE, ncid)
+    if( iret .eq. 0 ) then
+       iret = nf_close(ncid)
+       print*, "read gwbasmskfil as nc format: ", trim(gwbasmskfil)
+         allocate(GWSUBBASMSK_tmp(ix,jx))
+         call get2d_int("BASIN",GWSUBBASMSK_tmp,ix,jx,trim(gwbasmskfil), .true.)
+         do j = jx, 1, -1
+              GWSUBBASMSK(:,j) = GWSUBBASMSK_tmp (:,jx-j+1)
+         end do
+         deallocate(GWSUBBASMSK_tmp)
+    else
+       print*, "read gwbasmskfil as txt format: ", trim(gwbasmskfil)
+       open(unit=18,file=trim(gwbasmskfil),          &
             form='formatted',status='old')
-
-!Read in sub-basin mask...
-    do j=jx,1,-1
-          read (18,*) (GWSUBBASMSK(i,j),i=1,ix)
-    end do
-    close(18)
-
+       do j=jx,1,-1
+             read (18,*) (GWSUBBASMSK(i,j),i=1,ix)
+       end do
+       close(18)
+    endif
 
 !Loop through to count number of basins and assign basin indices to chan grid
-     do J=1,JX
-       do I=1,IX
-
+        do J=1,JX
+          do I=1,IX
 !Determine max number of basins...(assumes basins are numbered
 !   sequentially from 1 to max number of basins...)
-        if (GWSUBBASMSK(i,j).gt.numbasns) then
-          numbasns = GWSUBBASMSK(i,j)   ! get count of basins...
-        end if
+           if (GWSUBBASMSK(i,j).gt.numbasns) then
+             numbasns = GWSUBBASMSK(i,j)   ! get count of basins...
+           end if
 
 !Assign gw basin index values to channel grid...
-        do AGGFACYRT=AGGFACTRT-1,0,-1
-          do AGGFACXRT=AGGFACTRT-1,0,-1
+           do AGGFACYRT=AGGFACTRT-1,0,-1
+             do AGGFACXRT=AGGFACTRT-1,0,-1
 
-             IXXRT=I*AGGFACTRT-AGGFACXRT
-             JYYRT=J*AGGFACTRT-AGGFACYRT
-             IF(ch_netrt(IXXRT,JYYRT).ge.0) then  !If channel grid cell
-               gw_strm_msk(IXXRT,JYYRT) = GWSUBBASMSK(i,j)  ! assign coarse grid basn indx to chan grid
-             END IF
+                IXXRT=I*AGGFACTRT-AGGFACXRT
+                JYYRT=J*AGGFACTRT-AGGFACYRT
+                IF(ch_netrt(IXXRT,JYYRT).ge.0) then  !If channel grid cell
+                  gw_strm_msk(IXXRT,JYYRT) = GWSUBBASMSK(i,j)  ! assign coarse grid basn indx to chan grid
+                END IF
 
-           end do !AGGFACXRT
-         end do !AGGFACYRT
+              end do !AGGFACXRT
+            end do !AGGFACYRT
 
-      end do   !I-ix
-    end do    !J-jx
+         end do   !I-ix
+       end do    !J-jx
 
 #ifdef HYDRO_D
       write(6,*) "numbasns = ", numbasns
@@ -1352,7 +1368,7 @@ end subroutine get_albedo12m_netcdf
   end subroutine SIMP_GW_IND
 
 !Wei Yu
-  subroutine read_GWBUCKPARM (numbasns,gnumbasns, basnsInd, &
+  subroutine read_GWBUCKPARM (inFile,numbasns,gnumbasns, basnsInd, &
                  gw_buck_coeff, gw_buck_exp, z_max, &
                  z_gwsubbas, bas_id,basns_area)
 ! read GWBUCKPARM file
@@ -1368,48 +1384,59 @@ end subroutine get_albedo12m_netcdf
    integer, dimension(gnumbasns) :: tmp_bas_id
    CHARACTER(len=100)                     :: header 
    CHARACTER(len=1)                       :: jnk
+   character(len=*) :: inFile
    integer :: bas,k
+   integer :: iret, ncid
+   logical :: fexist
 
 #ifdef MPP_LAND
    if(my_id .eq. IO_id) then
 #endif
-!Read in GW bucket params and Zinit from input file in Run directory...
+     inquire (file=trim(inFile), exist=fexist)
+     if(.not. fexist) then
+        call hydro_stop("Cound not find file : "//trim(inFile))
+     endif
+     iret = nf_open(trim(inFile), NF_NOWRITE, ncid)
+     if(iret .eq. 0 ) then
+        print*, "read GWBUCKPARM file as nc format: " , trim(inFile)
+        call get_1d_netcdf_int(ncid, "Basin", tmp_bas_id, "read GWBUCKPARM", .true.)
+!        call get_1d_netcdf_int(ncid, "ComID", tmp_bas_id, "read GWBUCKPARM", .true.)
+        call get_1d_netcdf_real(ncid, "Coeff",tmp_buck_coeff , "read GWBUCKPARM", .true.)
+        call get_1d_netcdf_real(ncid, "Expon",tmp_buck_exp   , "read GWBUCKPARM", .true.)
+        call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
+        call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
+        call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
+     else
+        iret = nf_close(ncid)
+        print*, "read GWBUCKPARM.TBL file : " 
 #ifndef NCEP_WCOSS
-     OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
-     read(81,811) header
+!yw        OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
+        OPEN(81, FILE=trim(inFile),FORM='FORMATTED',STATUS='OLD')
+        read(81,811) header
 #else
-     OPEN(24, FORM='FORMATTED',STATUS='OLD')
-     read(24,811) header
+        OPEN(24, FORM='FORMATTED',STATUS='OLD')
+        read(24,811) header
 #endif
-811   FORMAT(A19)
+811      FORMAT(A19)
 
 
 #ifndef NCEP_WCOSS
-     do bas = 1,gnumbasns
+        do bas = 1,gnumbasns
+           read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
+                 jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
 
-! commented out the new GWBUCKPARM.TBL used for Caralina domain
-!new        read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
-!new              jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas),jnk,tmp_basns_area(bas)
-!new 812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4,A1,F11.3)
-
-!DJG...change bucket units to mm.... 812   FORMAT(I3,A1,F6.4,A1,F6.3,A1,F6.3,A1,F7.4)
-! following is old GWBUCKPARM.TBL
-       read(81,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
-             jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
-812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
-
-     end do
-     close(81)
+        end do
+812       FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
+        close(81)
 #else
-     do bas = 1,gnumbasns
-         read(24,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
-             jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
-812   FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
-
-     end do
-     close(24)
+        do bas = 1,gnumbasns
+            read(24,812) tmp_bas_id(bas),jnk,tmp_buck_coeff(bas),jnk,tmp_buck_exp(bas) , & 
+                jnk,tmp_z_max(bas), jnk,tmp_z_gwsubbas(bas)
+        end do
+812      FORMAT(I8,A1,F6.4,A1,F6.3,A1,F6.2,A1,F7.4)
+        close(24)
 #endif
-
+     endif
 #ifdef MPP_LAND
    endif
 
