@@ -20,6 +20,10 @@
 
   INTEGER :: GNLINKSL, linklsS, linklsE , nlinksize  !## for reach based channel routing
 
+  INTEGER :: iswater     !id for water in vegtyp
+  INTEGER :: isurban     !id for urban in vegtyp
+  INTEGER :: isoilwater  !id for water in soiltyp
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETRT !-- keeps track of the 0-1 channel network

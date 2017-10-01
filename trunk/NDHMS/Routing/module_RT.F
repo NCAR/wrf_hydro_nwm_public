@@ -93,6 +93,10 @@ CONTAINS
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
       if(rt_domain(did)%NLINKSL .eq. 0) NLINKSL = 1
 
+      rt_domain(did)%iswater = 0
+      rt_domain(did)%isurban = 0
+      rt_domain(did)%isoilwater = 0
+
 !DJG Allocate routing and disaggregation arrays
 
 #ifdef HYDRO_D
