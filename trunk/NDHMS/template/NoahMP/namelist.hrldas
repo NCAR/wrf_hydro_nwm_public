@@ -74,9 +74,4 @@ HRLDAS_ini_typ = 1
 ! Specify geogrid file for extract greenfrac
 GEO_STATIC_FLNM = "./DOMAIN/geo_em.d03.nc"
 
-! Flag to turn on/off new I/O routines: 0 = old (default), 1 = new (with scale/offset/compression),
-! 2 = new (with scale/offset/NO compression)
-! NOTE this option is also in hydro.namelist.
-nwmIo = 1
-
 /

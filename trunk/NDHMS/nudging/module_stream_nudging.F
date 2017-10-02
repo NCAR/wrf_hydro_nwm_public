@@ -587,6 +587,28 @@ if(temporalPersistence) then
 end if ! temporalPersistence
 #endif /* MPP_LAND */
 
+#ifdef MPP_LAND
+!=================================================
+! 8. MPP: Keep a copy of the full chanlen on image 0 
+!! only necessary if doing spatial nudging interpolation
+if(my_id .eq. io_id) allocate(chanlen_image0(nLinksL))
+if(my_id .ne. io_id) allocate(chanlen_image0(1)) !! memory fix, the next call modifies it's second arg
+call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
+#endif
+
+
+!=================================================
+! 9. Solve obsStaticStr once and for all on image 0 (could parallelize)
+!    This also solves nudgeSpatial: is spatial nudging active? Needed in 10.
+call obs_static_to_struct()
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   if(allocated(lastObsStr)) deallocate(lastObsStr)
+#ifdef MPP_LAND
+endif
+#endif
+
 !=================================================
 ! 4. Read in 'nudgingLastObs.nc' file (initialization and broadcasting come later)
 #ifdef MPP_LAND
@@ -687,28 +709,6 @@ allocate(obsTimeStr(nObsTimes))
 obsTimeStr(:)%time     = ''
 obsTimeStr(:)%updateTime = 'none'
 
-
-#ifdef MPP_LAND
-!=================================================
-! 8. MPP: Keep a copy of the full chanlen on image 0 
-!! only necessary if doing spatial nudging interpolation
-if(my_id .eq. io_id) allocate(chanlen_image0(nLinksL))
-if(my_id .ne. io_id) allocate(chanlen_image0(1)) !! memory fix, the next call modifies it's second arg
-call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
-#endif
-
-
-!=================================================
-! 9. Solve obsStaticStr once and for all on image 0 (could parallelize)
-!    This also solves nudgeSpatial: is spatial nudging active? Needed in 10.
-call obs_static_to_struct()
-#ifdef MPP_LAND
-if(my_id .eq. io_id) then
-#endif 
-   if(allocated(lastObsStr)) deallocate(lastObsStr)
-#ifdef MPP_LAND
-endif
-#endif
 
 !=================================================
 !10. Solve the bias terms for when biasWindowBeforeT0 = .TRUE. (in the forecast)
@@ -882,17 +882,29 @@ end if
 
 if(nShiftLeft .gt. 0 .and. nShiftLeft .lt. nObsTimes) then 
    do tt=1,nObsTimes-nShiftLeft
+
       obsTimeStr(tt)%time = obsTimeStr(tt+nShiftLeft)%time
       obsTimeStr(tt)%updateTime = obsTimeStr(tt+nShiftLeft)%updateTime
+
       if(allocated(obsTimeStr(tt)%allCellInds)) deallocate(obsTimeStr(tt)%allCellInds)
       if(allocated(obsTimeStr(tt)%nGageCell))   deallocate(obsTimeStr(tt)%nGageCell)
       if(allocated(obsTimeStr(tt)%obsStr))      deallocate(obsTimeStr(tt)%obsStr)
-      allocate(obsTimeStr(tt)%allCellInds(size(obsTimeStr(tt+nShiftLeft)%allCellInds)))
-      allocate(obsTimeStr(tt)%nGageCell(size(obsTimeStr(tt+nShiftLeft)%nGageCell)))
-      allocate(obsTimeStr(tt)%obsStr(size(obsTimeStr(tt+nShiftLeft)%obsStr)))
-      obsTimeStr(tt)%allCellInds = obsTimeStr(tt+nShiftLeft)%allCellInds
-      obsTimeStr(tt)%nGageCell = obsTimeStr(tt+nShiftLeft)%nGageCell
-      obsTimeStr(tt)%obsStr = obsTimeStr(tt+nShiftLeft)%obsStr
+
+      if(allocated(obsTimeStr(tt+nShiftLeft)%allCellInds)) then
+         allocate(obsTimeStr(tt)%allCellInds(size(obsTimeStr(tt+nShiftLeft)%allCellInds)))
+         obsTimeStr(tt)%allCellInds = obsTimeStr(tt+nShiftLeft)%allCellInds
+      end if
+
+      if(allocated(obsTimeStr(tt+nShiftLeft)%nGageCell))   then
+         allocate(obsTimeStr(tt)%nGageCell(size(obsTimeStr(tt+nShiftLeft)%nGageCell)))
+         obsTimeStr(tt)%nGageCell = obsTimeStr(tt+nShiftLeft)%nGageCell
+      end if
+
+      if(allocated(obsTimeStr(tt+nShiftLeft)%obsStr))      then
+         allocate(obsTimeStr(tt)%obsStr(size(obsTimeStr(tt+nShiftLeft)%obsStr)))
+         obsTimeStr(tt)%obsStr = obsTimeStr(tt+nShiftLeft)%obsStr
+      end if
+
    end do
 endif
 if(nShiftLeft .gt. 0) then 
