@@ -913,7 +913,7 @@ end subroutine output_chrt_NWM
 !
 ! User controllable options: None.
 
-subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd,nwmIoLsm)
+subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
    use module_rt_data, only: rt_domain
    use module_namelist, only: nlst_rt
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
@@ -935,7 +935,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    real, intent(in) :: varReal(ixPar,zNum,jxPar) ! Variable data to be written. 
    integer, intent(inout) :: vegTyp(ixPar,jxPar) ! Vegetation type grid used to mask out variables.
    integer, intent(in) :: varInd ! Variable index used to extact meta-data from.
-   integer, intent(in) :: nwmIoLsm ! nwmIo flag specified in namelist.hrldas
 
    ! Derived types.
    type(ldasMeta) :: fileMeta

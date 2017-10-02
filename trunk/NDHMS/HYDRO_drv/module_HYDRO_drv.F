@@ -734,9 +734,10 @@ end if
 !          call mpp_land_sync()
 
 
-            
-           RT_DOMAIN(did)%SOLDRAIN = 0
-           RT_DOMAIN(did)%QSUBRT = 0
+
+           !! Under channel-only, these variables are not allocated
+           if(allocated(RT_DOMAIN(did)%SOLDRAIN)) RT_DOMAIN(did)%SOLDRAIN = 0
+           if(allocated(RT_DOMAIN(did)%QSUBRT))   RT_DOMAIN(did)%QSUBRT   = 0            
 
 
 
@@ -1584,10 +1585,12 @@ endif
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
+   call flush(6)
    !#endif
-   !rt_domain(did)%INFXSRT      = zeroFlt
-   rt_domain(did)%LAKE_INFLORT = zeroFlt
-   rt_domain(did)%QSTRMVOLRT   = zeroFlt
+   ! Under channel-only , these first three variables are not allocated.
+   !if(allocated(rt_domain(did)%INFXSRT)) rt_domain(did)%INFXSRT      = zeroFlt
+   if(allocated(rt_domain(did)%LAKE_INFLORT)) rt_domain(did)%LAKE_INFLORT = zeroFlt
+   if(allocated(rt_domain(did)%QSTRMVOLRT)) rt_domain(did)%QSTRMVOLRT   = zeroFlt
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if

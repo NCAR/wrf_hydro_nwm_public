@@ -41,8 +41,9 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
-   integer :: forc_typ, snow_assim, HRLDAS_ini_typ
-   integer :: nwmIo
+   !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
+   !integer :: forc_typ, snow_assim, HRLDAS_ini_typ
+   integer :: forc_typ, snow_assim
    REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
    real :: etpnd1
    character(len=19) :: forcDate
@@ -427,7 +428,9 @@ module module_NoahMP_hrldas_driver
   integer :: brkflag = 0
   integer :: varind = 1
   namelist /WRF_HYDRO_OFFLINE/ &
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, nwmIo
+       !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
+       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM
+       !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
 #endif
   namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
@@ -1326,27 +1329,32 @@ endif
      SNOW      =  undefined_real
      SNOWH     =  undefined_real
 
-#ifdef WRF_HYDRO
-  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
+! LRK - Remove HRLDAS_ini_typ for WRF-Hydro. Originally, there was a fork 
+!       for difference forcing types, or if the user desired a different
+!       reading from wrfinput. However, for WRF-Hydro uses, we only use
+!       option 1 at this point, so removing all other potential options,
+!       which was 0 before. 
+!#ifdef WRF_HYDRO
+!  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
 
-  if(HRLDAS_ini_typ .eq. 1) then
-     ! read initial parameters and conditions from the HRLDAS forcing data
-     if(forc_typ .eq. 2) then
-          inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
-     else
-          inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          ".LDASIN_DOMAIN"//hgrid
-     endif
+!  if(HRLDAS_ini_typ .eq. 1) then
+!     ! read initial parameters and conditions from the HRLDAS forcing data
+!     if(forc_typ .eq. 2) then
+!          inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
+!     else
+!          inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          ".LDASIN_DOMAIN"//hgrid
+!     endif
 
-#else
-
-     inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          ".LDASIN_DOMAIN"//hgrid
-#endif
+!#else
+!
+!     inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          ".LDASIN_DOMAIN"//hgrid
+!#endif
 
      CALL READINIT_HRLDAS(HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
@@ -1360,29 +1368,29 @@ endif
      CALL READVEG_HRLDAS(HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           OLDDATE, IVGTYP, VEGFRA, LAI, GVFMIN, GVFMAX)
 
-#ifdef WRF_HYDRO
-  else   !  HRLDAS_ini_typ        
+!#ifdef WRF_HYDRO
+!  else   !  HRLDAS_ini_typ        
 
-#ifdef MPP_LAND
-    call HYDRO_HRLDAS_ini_mpp   &
-#else
-    call HYDRO_HRLDAS_ini   &
-#endif
-       (trim(hrldas_setup_file), xend-xstart+1,yend-ystart+1, &
-       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
-       if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
+!#ifdef MPP_LAND
+!    call HYDRO_HRLDAS_ini_mpp   &
+!#else
+!    call HYDRO_HRLDAS_ini   &
+!#endif
+!       (trim(hrldas_setup_file), xend-xstart+1,yend-ystart+1, &
+!       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
+!       if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
 
-       greenfrac = 0.0
-#ifdef MPP_LAND
-        call get_greenfrac_mpp &
-#else
-      call get_greenfrac &
-#endif
-         (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
-        !yw GVFMAX = maxval(greenfrac)
-	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
-  endif   ! initialization type
-#endif
+!       greenfrac = 0.0
+!#ifdef MPP_LAND
+!        call get_greenfrac_mpp &
+!#else
+!      call get_greenfrac &
+!#endif
+!         (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
+!        !yw GVFMAX = maxval(greenfrac)
+!	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
+!  endif   ! initialization type
+!#endif
 
 !     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
 
@@ -1829,386 +1837,244 @@ end subroutine land_driver_exe
 !!===============================================================================
 subroutine  ldas_output()
 
-#ifdef WRF_HYDRO
-if ( (iocflag .eq. 0) .and. (nwmIo .eq. 0) ) then
-#endif
+!#ifdef WRF_HYDRO
+!if ( (iocflag .eq. 0) ) then
+!#endif
 !#ifndef WRF_HYDRO
-           call prepare_output_file (trim(outdir), version, &
-                igrid, output_timestep, llanduse, split_output_count, hgrid,                &
-                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
-                iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
-                nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
-
-           DEFINE_MODE_LOOP : do imode = 1, 2
-
-              call set_output_define_mode(imode)
-
-              ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
-
-        ! Properties - Assigned or predicted
-              call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
-              call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
-              call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
-              call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"                     )
-              call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
-        ! Forcing
-              call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
-              call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"                    , "W m{-2}"               )
-              call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"               )
-              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
-        ! Grid energy budget terms
-              call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
-              call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
-              call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
-              call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
-              call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
-              call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
-              call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
-              call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
-              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
-              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
-        ! Grid water budget terms - in addition to above
-              call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
-              call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
-              call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
-              call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
-              call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
-              call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
-              call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
-        ! Additional needed to close the canopy energy budget
-              call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
-              call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
-              call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat"                       , "W m{-2}"             )
-              call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad"                      , "W m{-2}"             )
-              call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat"                   , "W m{-2}"             )
-        ! Additional needed to close the under canopy ground energy budget
-              call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad"                      , "W m{-2}"             )
-              call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat"                   , "W m{-2}"             )
-              call add_to_output(EVGXY      , "EVG"     , "Ground evap heat"                       , "W m{-2}"             )
-              call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}"             )
-        ! Needed to close the bare ground energy budget
-              call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}"        )
-              call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}"             )
-              call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}"             )
-              call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
-              call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
-        ! Above-soil temperatures
-              call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
-              call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
-              call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
-              call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
-              call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"                   )
-              call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"                   )
-              call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"                   )
-              call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare"                       , "K"                   )
-        ! Above-soil moisture
-              call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"               )
-              call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare"                   , "kg/kg"               )
-              call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"                    )
-              call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"              )
-        ! Snow and soil - 3D terms
-              call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
-              call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
-              call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
-              call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
-              call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
-              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
-              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
-        ! Snow - 2D terms
-              call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
-              call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
-              call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
-              call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
-              call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
-              call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
-              call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
-        ! Exchange coefficients
-              call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
-              call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
-              call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"             )
-              call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"             )
-              call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"             )
-              call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"             )
-              call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"             )
-              call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"             )
-        ! Carbon allocation model
-              call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass"                            , "g m{-2}"               )
-              call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots"                   , "g m{-2}"               )
-              call add_to_output(STMASSXY   , "STMASS"  , "Stem mass"                            , "g m{-2}"               )
-              call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"               )
-              call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"               )
-              call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"               )
-              call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2"   )
-              call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"     )
-              call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"     )
-              call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis"                   , "umol CO@ m{-2} s{-1}")
-              call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"             )
-
-        ! Carbon allocation model
-	    IF(RUNOFF_OPTION == 5) THEN
-              call add_to_output(SMCWTDXY   , "SMCWTD"   , "Leaf mass"                            , "g m{-2}"               )
-              call add_to_output(RECHXY     , "RECH"     , "Mass of fine roots"                   , "g m{-2}"               )
-              call add_to_output(QRFSXY     , "QRFS"     , "Stem mass"                            , "g m{-2}"               )
-              call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"               )
-              call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"               )
-	    ENDIF
-
-           enddo DEFINE_MODE_LOOP
-
-           call finalize_output_file(split_output_count)
-#ifdef WRF_HYDRO
-else
-#endif
+!           call prepare_output_file (trim(outdir), version, &
+!                igrid, output_timestep, llanduse, split_output_count, hgrid,                &
+!                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
+!                iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
+!                nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
+!
+!           DEFINE_MODE_LOOP : do imode = 1, 2
+!
+!              call set_output_define_mode(imode)
+!
+!              ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
+!
+!        ! Properties - Assigned or predicted
+!              call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
+!              call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
+!              call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
+!              call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"                     )
+!              call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
+!        ! Forcing
+!              call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
+!              call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"                    , "W m{-2}"               )
+!              call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"               )
+!              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
+!        ! Grid energy budget terms
+!              call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
+!              call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
+!              call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
+!              call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
+!              call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
+!              call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
+!              call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
+!              call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
+!              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
+!              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
+!        ! Grid water budget terms - in addition to above
+!              call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
+!              call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
+!              call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
+!              call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
+!              call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
+!              call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
+!              call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
+!        ! Additional needed to close the canopy energy budget
+!              call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
+!              call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
+!              call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat"                       , "W m{-2}"             )
+!              call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad"                      , "W m{-2}"             )
+!              call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat"                   , "W m{-2}"             )
+!        ! Additional needed to close the under canopy ground energy budget
+!              call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad"                      , "W m{-2}"             )
+!              call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat"                   , "W m{-2}"             )
+!              call add_to_output(EVGXY      , "EVG"     , "Ground evap heat"                       , "W m{-2}"             )
+!              call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}"             )
+!        ! Needed to close the bare ground energy budget
+!              call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}"        )
+!              call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}"             )
+!              call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}"             )
+!              call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
+!              call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
+!        ! Above-soil temperatures
+!              call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
+!              call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
+!              call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
+!              call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
+!              call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"                   )
+!              call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"                   )
+!              call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"                   )
+!              call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare"                       , "K"                   )
+!        ! Above-soil moisture
+!              call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"               )
+!              call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare"                   , "kg/kg"               )
+!              call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"                    )
+!              call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"              )
+!        ! Snow and soil - 3D terms
+!              call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
+!              call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
+!              call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
+!              call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
+!              call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
+!              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
+!              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
+!        ! Snow - 2D terms
+!              call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
+!              call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
+!              call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
+!              call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
+!              call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
+!              call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
+!              call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
+!        ! Exchange coefficients
+!              call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
+!              call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
+!              call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"             )
+!              call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"             )
+!              call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"             )
+!              call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"             )
+!              call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"             )
+!              call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"             )
+!        ! Carbon allocation model
+!              call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass"                            , "g m{-2}"               )
+!              call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots"                   , "g m{-2}"               )
+!              call add_to_output(STMASSXY   , "STMASS"  , "Stem mass"                            , "g m{-2}"               )
+!              call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"               )
+!              call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"               )
+!              call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"               )
+!              call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2"   )
+!              call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"     )
+!              call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"     )
+!              call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis"                   , "umol CO@ m{-2} s{-1}")
+!              call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"             )
+!
+!        ! Carbon allocation model
+!	    IF(RUNOFF_OPTION == 5) THEN
+!              call add_to_output(SMCWTDXY   , "SMCWTD"   , "Leaf mass"                            , "g m{-2}"               )
+!              call add_to_output(RECHXY     , "RECH"     , "Mass of fine roots"                   , "g m{-2}"               )
+!              call add_to_output(QRFSXY     , "QRFS"     , "Stem mass"                            , "g m{-2}"               )
+!              call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"               )
+!              call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"               )
+!	    ENDIF
+!
+!           enddo DEFINE_MODE_LOOP
+!
+!           call finalize_output_file(split_output_count)
+!#ifdef WRF_HYDRO
+!else
+!#endif
 !#endif /* WRF_HYDRO */
 
 #ifdef WRF_HYDRO
    ! Logan add begin
-   if (nwmIo .ne. 0) then
-      ! Go through each variable. For the first time the NWM output routine is
-      ! called, the file is created and all output variables (desired per flags),
-      ! are created in define mode. 
+   ! Go through each variable. For the first time the NWM output routine is
+   ! called, the file is created and all output variables (desired per flags),
+   ! are created in define mode. 
 
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(IVGTYP),IVGTYP,1,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(ISLTYP),IVGTYP,2,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FVEGXY,IVGTYP,3,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,LAI,IVGTYP,4,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,XSAIXY,IVGTYP,5,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SWDOWN,IVGTYP,6,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,COSZEN,IVGTYP,7,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GLW,IVGTYP,8,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,RAINBL,IVGTYP,9,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EMISS,IVGTYP,10,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FSAXY,IVGTYP,11,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FIRAXY,IVGTYP,12,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GRDFLX,IVGTYP,13,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,HFX,IVGTYP,14,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,LH,IVGTYP,15,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ECANXY,IVGTYP,16,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EDIRXY,IVGTYP,17,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ALBEDO,IVGTYP,18,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ETRANXY,IVGTYP,19,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,UDRUNOFF,IVGTYP,20,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SFCRUNOFF,IVGTYP,21,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CANLIQXY,IVGTYP,22,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CANICEXY,IVGTYP,23,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ZWTXY,IVGTYP,24,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,WAXY,IVGTYP,25,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,WTXY,IVGTYP,26,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCPRCP,IVGTYP,27,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCECAN,IVGTYP,28,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCEDIR,IVGTYP,29,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCETRAN,IVGTYP,30,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SAVXY,IVGTYP,31,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TRXY,IVGTYP,32,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EVCXY,IVGTYP,33,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,IRCXY,IVGTYP,34,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SHCXY,IVGTYP,35,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,IRGXY,IVGTYP,36,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SHGXY,IVGTYP,37,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EVGXY,IVGTYP,38,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GHVXY,IVGTYP,39,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SAGXY,IVGTYP,40,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,IRBXY,IVGTYP,41,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SHBXY,IVGTYP,42,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EVBXY,IVGTYP,43,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GHBXY,IVGTYP,44,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TRADXY,IVGTYP,45,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TGXY,IVGTYP,46,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TVXY,IVGTYP,47,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TAHXY,IVGTYP,48,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TGVXY,IVGTYP,49,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TGBXY,IVGTYP,50,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,T2MVXY,IVGTYP,51,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,T2MBXY,IVGTYP,52,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,Q2MVXY,IVGTYP,53,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,Q2MBXY,IVGTYP,54,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EAHXY,IVGTYP,55,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FWETXY,IVGTYP,56,nwmIo)
-      !call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(ZSNOXY(:,-nsnow+1:0,:)),IVGTYP,57,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,3,SNICEXY,IVGTYP,58,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,3,SNLIQXY,IVGTYP,59,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,4,TSLB,IVGTYP,60,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,4,SH2O,IVGTYP,61,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,3,TSNOXY,IVGTYP,62,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,4,SMOIS,IVGTYP,63,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SNOWH,IVGTYP,64,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SNOW,IVGTYP,65,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,QSNOWXY,IVGTYP,66,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(ISNOWXY),IVGTYP,67,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SNOWC,IVGTYP,68,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACSNOW,IVGTYP,69,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACSNOM,IVGTYP,70,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CMXY,IVGTYP,71,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHXY,IVGTYP,72,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHVXY,IVGTYP,73,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHBXY,IVGTYP,74,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHLEAFXY,IVGTYP,75,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHUCXY,IVGTYP,76,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHV2XY,IVGTYP,77,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHB2XY,IVGTYP,78,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,LFMASSXY,IVGTYP,79,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,RTMASSXY,IVGTYP,80,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,STMASSXY,IVGTYP,81,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,WOODXY,IVGTYP,82,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,STBLCPXY,IVGTYP,83,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FASTCPXY,IVGTYP,84,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,NEEXY,IVGTYP,85,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GPPXY,IVGTYP,86,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,NPPXY,IVGTYP,87,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,PSNXY,IVGTYP,88,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,APARXY,IVGTYP,89,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(ACCECAN+ACCEDIR+ACCETRAN),IVGTYP,90,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(CANLIQXY+CANICEXY),IVGTYP,91,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SOILICE),IVGTYP,92,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SOILSAT_TOP),IVGTYP,93,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SOILSAT),IVGTYP,94,nwmIo)
-      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SNOWT_AVG),IVGTYP,95,nwmIo)
-   else
-      ! Output in old format
-      call prepare_output_file (trim(outdir), version, &
-                                igrid, output_timestep, llanduse, split_output_count, hgrid, &
-                                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,&
-                                iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
-                                nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
-
-      DEFINE_MODE_LOOP2 : do iimode = 1, 2
-
-         call set_output_define_mode(iimode)
-
-         ! For 3D arrays, we need to know whether the Z dimension is snow
-         ! layers, or soil layers.
-         ! Properties - Assigned or predicted
-         call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category" , IOCVARS             )
-         call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category" , IOCVARS             )
-         call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"      , IOCVARS             )
-         call add_to_output(LAI        , "LAI"     , "Leaf area index", "-"                              , IOCVARS             )
-         call add_to_output(XSAIXY     , "SAI"     , "Stem area index", "-"                              , IOCVARS             )
-         ! Forcing
-         call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing", "W m{-2}"                      , IOCVARS             )
-         call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"               , "W m{-2}"  , IOCVARS             )
-         call add_to_output(GLW        , "LWFORC"  , "Longwave forcing", "W m{-2}"                       , IOCVARS             )
-         call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate", "kg m{-2} s{-1}"              , IOCVARS             )
-         ! Grid energy budget terms
-         call add_to_output(EMISS      , "EMISS"   , "Grid emissivity", ""                               , IOCVARS             )
-         call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"  , IOCVARS             )
-         call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"  , IOCVARS             )
-         call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"  , IOCVARS             )
-         call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"  , IOCVARS             )
-         call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"    , IOCVARS             )
-         call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}" , IOCVARS       )
-         call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}" , IOCVARS       )
-         call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo", "-"                                     , IOCVARS       )
-         call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate", "kg m{-2} s{-1}"                    , IOCVARS       )
-         ! Grid water budget terms - in addition to above
-         call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"  , IOCVARS                  )
-         call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"  , IOCVARS                  )
-         call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"        , IOCVARS            )
-         call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"        , IOCVARS            )
-         call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table", "m"                          , IOCVARS            )
-         call add_to_output(WAXY       , "WA"      , "Water in aquifer", "kg m{-2}"                       , IOCVARS            )
-         call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"  , IOCVARS            )
-
-         call add_to_output(ACCPRCP    , "ACCPRCP" , "Accumulated precip", "mm"                           , IOCVARS            )
-         call add_to_output(ACCECAN    , "ACCECAN" , "Accumulated canopy evap"              , "mm"        , IOCVARS            )
-         call add_to_output(ACCEDIR    , "ACCEDIR" , "Accumulated direct soil evap"         , "mm"        , IOCVARS            )
-         call add_to_output(ACCETRAN   , "ACCETRAN", "Accumulated transpiration"            , "mm"        , IOCVARS            )
-
-         ! Additional needed to close the canopy energy budget
-         call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}" , IOCVARS   )
-         call add_to_output(TRXY       , "TR"      , "Transpiration heat" , "W m{-2}"                              , IOCVARS   )
-         call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat", "W m{-2}"                                 , IOCVARS   )
-         call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad", "W m{-2}"                                , IOCVARS   )
-         call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat", "W m{-2}"                             , IOCVARS   )
-         ! Additional needed to close the under canopy ground energy budget
-         call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad", "W m{-2}"                                , IOCVARS   )
-         call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat", "W m{-2}"                             , IOCVARS   )
-         call add_to_output(EVGXY      , "EVG"     , "Ground evap heat", "W m{-2}"                                 , IOCVARS   )
-         call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}" , IOCVARS            )
-         ! Needed to close the bare ground energy budget
-         call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}" , IOCVARS       )
-         call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}" , IOCVARS            )
-         call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}" , IOCVARS            )
-         call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}" , IOCVARS            )
-         call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}" , IOCVARS            )
-         ! Above-soil temperatures
-         call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"         , IOCVARS            )
-         call add_to_output(TGXY       , "TG"      , "Ground temperature", "K"                            , IOCVARS            )
-         call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"         , IOCVARS            )
-         call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"         , IOCVARS            )
-         call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"       , IOCVARS            )
-         call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"       , IOCVARS            )
-         call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"       , IOCVARS            )
-         call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare", "K"                              , IOCVARS            )
-         ! Above-soil moisture
-         call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"   , IOCVARS            )
-         call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare", "kg/kg"                      , IOCVARS            )
-         call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"        , IOCVARS            )
-         call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"  , IOCVARS            )
-         ! Snow and soil - 3D terms
-         call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW"  , IOCVARS)
-         call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice", "mm"             , "SNOW"                       , IOCVARS)
-         call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW", IOCVARS)
-         call add_to_output(TSLB       , "SOIL_T"  , "soil temperature", "K"              , "SOIL"                     , IOCVARS)
-         call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL", IOCVARS)
-         call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature", "K"              , "SNOW"                     , IOCVARS)
-         call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL", IOCVARS)
-         ! Snow - 2D terms
-         call add_to_output(SNOWH      , "SNOWH"   , "Snow depth", "m"                                     , IOCVARS           )
-         call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"   , IOCVARS           )
-         call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate", "mm s{-1}"                           , IOCVARS           )
-         call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"      , IOCVARS           )
-         call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""         , IOCVARS           )
-         call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"       , IOCVARS           )
-         call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm" , IOCVARS           )
-         ! Exchange coefficients
-         call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""           , IOCVARS           )
-         call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""           , IOCVARS           )
-         call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"  , IOCVARS           )
-         call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"  , IOCVARS           )
-         call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"  , IOCVARS           )
-         call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"  , IOCVARS           )
-         call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"  , IOCVARS           )
-         call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"  , IOCVARS           )
-         ! Carbon allocation model
-         call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass", "g m{-2}"                                , IOCVARS           )
-         call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots", "g m{-2}"                       , IOCVARS           )
-         call add_to_output(STMASSXY   , "STMASS"  , "Stem mass", "g m{-2}"                                , IOCVARS           )
-         call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"    , IOCVARS           )
-         call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"    , IOCVARS           )
-         call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"    , IOCVARS           )
-         call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2" , IOCVARS  )
-         call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"   , IOCVARS  )
-         call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"   , IOCVARS  )
-         call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis", "umol CO@ m{-2} s{-1}"                 , IOCVARS  )
-         call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"  , IOCVARS           )
-         ! New realtime summary variables
-         call add_to_output(ACCECAN+ACCEDIR+ACCETRAN, "ACCET", "Accumulated total ET"       , "mm"        , IOCVARS            )
-         call add_to_output(CANLIQXY+CANICEXY, "CANWAT", "Total canopy water (liquid + ice)", "mm"        , IOCVARS            )
-         call add_to_output(SOILICE    , "SOILICE", "fraction of soil miosture that is ice", "fraction"               , IOCVARS)
-         call add_to_output(SOILSAT_TOP, "SOILSAT_TOP" , "fraction of soil saturation, top 2 layers", "fraction"      , IOCVARS)
-         call add_to_output(SOILSAT    , "SOILSAT"  , "fraction of soil saturation, column integrated", "fraction"    , IOCVARS)
-         call add_to_output(SNOWT_AVG  , "SNOWT_AVG", "average snow temperature (by layer mass)",  "K"                , IOCVARS)
-
-         ! Carbon allocation model
-         IF(RUNOFF_OPTION == 5) THEN
-            call add_to_output(SMCWTDXY   , "SMCWTD"   , "Leaf mass", "g m{-2}"                            , IOCVARS           )
-            call add_to_output(RECHXY     , "RECH"     , "Mass of fine roots", "g m{-2}"                   , IOCVARS           )
-            call add_to_output(QRFSXY     , "QRFS"     , "Stem mass", "g m{-2}"                            , IOCVARS           )
-            call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"   , IOCVARS        )
-            call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"   , IOCVARS        )
-         ENDIF
-
-      enddo DEFINE_MODE_LOOP2
-
-      call finalize_output_file(split_output_count)
-
-   endif ! End check for nwmIo value
-
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(IVGTYP),IVGTYP,1)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(ISLTYP),IVGTYP,2)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FVEGXY,IVGTYP,3)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,LAI,IVGTYP,4)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,XSAIXY,IVGTYP,5)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SWDOWN,IVGTYP,6)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,COSZEN,IVGTYP,7)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GLW,IVGTYP,8)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,RAINBL,IVGTYP,9)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EMISS,IVGTYP,10)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FSAXY,IVGTYP,11)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FIRAXY,IVGTYP,12)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GRDFLX,IVGTYP,13)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,HFX,IVGTYP,14)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,LH,IVGTYP,15)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ECANXY,IVGTYP,16)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EDIRXY,IVGTYP,17)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ALBEDO,IVGTYP,18)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ETRANXY,IVGTYP,19)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,UDRUNOFF,IVGTYP,20)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SFCRUNOFF,IVGTYP,21)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CANLIQXY,IVGTYP,22)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CANICEXY,IVGTYP,23)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ZWTXY,IVGTYP,24)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,WAXY,IVGTYP,25)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,WTXY,IVGTYP,26)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCPRCP,IVGTYP,27)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCECAN,IVGTYP,28)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCEDIR,IVGTYP,29)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACCETRAN,IVGTYP,30)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SAVXY,IVGTYP,31)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TRXY,IVGTYP,32)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EVCXY,IVGTYP,33)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,IRCXY,IVGTYP,34)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SHCXY,IVGTYP,35)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,IRGXY,IVGTYP,36)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SHGXY,IVGTYP,37)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EVGXY,IVGTYP,38)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GHVXY,IVGTYP,39)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SAGXY,IVGTYP,40)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,IRBXY,IVGTYP,41)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SHBXY,IVGTYP,42)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EVBXY,IVGTYP,43)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GHBXY,IVGTYP,44)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TRADXY,IVGTYP,45)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TGXY,IVGTYP,46)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TVXY,IVGTYP,47)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TAHXY,IVGTYP,48)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TGVXY,IVGTYP,49)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,TGBXY,IVGTYP,50)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,T2MVXY,IVGTYP,51)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,T2MBXY,IVGTYP,52)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,Q2MVXY,IVGTYP,53)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,Q2MBXY,IVGTYP,54)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,EAHXY,IVGTYP,55)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FWETXY,IVGTYP,56)
+   !call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(ZSNOXY(:,-nsnow+1:0,:)),IVGTYP,57)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,3,SNICEXY,IVGTYP,58)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,3,SNLIQXY,IVGTYP,59)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,4,TSLB,IVGTYP,60)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,4,SH2O,IVGTYP,61)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,3,TSNOXY,IVGTYP,62)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,4,SMOIS,IVGTYP,63)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SNOWH,IVGTYP,64)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SNOW,IVGTYP,65)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,QSNOWXY,IVGTYP,66)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,float(ISNOWXY),IVGTYP,67)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,SNOWC,IVGTYP,68)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACSNOW,IVGTYP,69)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,ACSNOM,IVGTYP,70)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CMXY,IVGTYP,71)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHXY,IVGTYP,72)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHVXY,IVGTYP,73)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHBXY,IVGTYP,74)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHLEAFXY,IVGTYP,75)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHUCXY,IVGTYP,76)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHV2XY,IVGTYP,77)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,CHB2XY,IVGTYP,78)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,LFMASSXY,IVGTYP,79)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,RTMASSXY,IVGTYP,80)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,STMASSXY,IVGTYP,81)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,WOODXY,IVGTYP,82)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,STBLCPXY,IVGTYP,83)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,FASTCPXY,IVGTYP,84)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,NEEXY,IVGTYP,85)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,GPPXY,IVGTYP,86)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,NPPXY,IVGTYP,87)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,PSNXY,IVGTYP,88)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,APARXY,IVGTYP,89)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(ACCECAN+ACCEDIR+ACCETRAN),IVGTYP,90)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(CANLIQXY+CANICEXY),IVGTYP,91)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SOILICE),IVGTYP,92)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SOILSAT_TOP),IVGTYP,93)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SOILSAT),IVGTYP,94)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,startdate,olddate,ixpar,jxpar,1,(SNOWT_AVG),IVGTYP,95)
 #endif /* WRF_HYDRO */
 
-#ifdef WRF_HYDRO
-endif
-#endif
+!#ifdef WRF_HYDRO
+!endif
+!#endif
 
 end subroutine  ldas_output
 

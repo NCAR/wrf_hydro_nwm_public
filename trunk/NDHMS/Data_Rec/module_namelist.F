@@ -480,6 +480,15 @@ if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3)
       call mpp_land_bcast_real1(nlst%dt)
 #endif
 
+! LRK - Add checking subroutine for hydro.namelist options
+#ifdef MPP_LAND
+       if(IO_id .eq. my_id) then
+#endif
+          call rt_nlst_check(nlst)
+#ifdef MPP_LAND
+       endif
+#endif
+
 ! derive rtFlag
       nlst%rtFlag = 1
       if(channel_option .eq. 4) nlst%rtFlag = 0
@@ -488,5 +497,181 @@ if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3)
       return
     end subroutine read_rt_nlst
 
+subroutine rt_nlst_check(nlst)
+   ! Subroutine to check namelist options specified by the user.
+   implicit none
+  
+   type(namelist_rt_field) nlst
+
+   ! Local variables
+   logical :: fileExists = .false.
+   integer :: i
+
+   ! Go through and make some logical checks for each hydro.namelist option.
+   ! Some of these checks will depend on specific options chosen by the user. 
+  
+   if( (nlst%sys_cpl .lt. 1) .or. (nlst%sys_cpl .gt. 4) ) then
+      call hydro_stop("hydro.namelist ERROR: Invalid sys_cpl value specified.")
+   endif
+   if(len(trim(nlst%geo_static_flnm)) .eq. 0) then
+      call hydro_stop("hydro.namelist ERROR: Please specify a GEO_STATIC_FLNM file.")
+   else
+      inquire(file=trim(nlst%geo_static_flnm),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GEO_STATIC_FLNM not found.')
+   endif
+   if(len(trim(nlst%geo_finegrid_flnm)) .eq. 0) then
+      call hydro_stop("hydro.namelist ERROR: Please specify a GEO_FINEGRID_FLNM file.")
+   else
+      inquire(file=trim(nlst%geo_finegrid_flnm),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GEO_FINEGRID_FLNM not found.')
+   endif
+   if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
+      call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
+   else
+      inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
+   endif   
+   if(len(trim(nlst%RESTART_FILE)) .ne. 0) then
+      inquire(file=trim(nlst%RESTART_FILE),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR:= Hydro RESTART_FILE not found.')
+   endif   
+   if(nlst%igrid .le. 0) call hydro_stop('hydro.namelist ERROR: Invalid IGRID specified.') 
+   if(nlst%out_dt .le. 0) call hydro_stop('hydro_namelist ERROR: Invalid out_dt specified.') 
+   if( (nlst%split_output_count .lt. 0 ) .or. (nlst%split_output_count .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid SPLIT_OUTPUT_COUNT specified')
+   endif  
+   if( (nlst%rst_typ .lt. 0 ) .or. (nlst%rst_typ .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid rst_typ specified')
+   endif   
+   if( (nlst%rst_bi_in .lt. 0 ) .or. (nlst%rst_bi_in .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid rst_bi_in specified')
+   endif    
+   if( (nlst%rst_bi_out .lt. 0 ) .or. (nlst%rst_bi_out .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid rst_bi_out specified')
+   endif
+   if( (nlst%RSTRT_SWC .lt. 0 ) .or. (nlst%RSTRT_SWC .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid RSTRT_SWC specified')
+   endif   
+   if( (nlst%GW_RESTART .lt. 0 ) .or. (nlst%GW_RESTART .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid GW_RESTART specified')
+   endif
+   if( (nlst%order_to_write .lt. 1 ) .or. (nlst%order_to_write .gt. 12) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid order_to_write specified')
+   endif   
+   if( (nlst%nwmIo .lt. 1 ) .or. (nlst%nwmIo .gt. 4) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid nwmIo specified')
+   endif   
+   if( (nlst%iocflag .lt. 0 ) .or. (nlst%iocflag .gt. 6) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid iocflag specified')
+   endif
+   if( (nlst%t0OutputFlag .lt. 0 ) .or. (nlst%t0OutputFlag .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid t0OutputFlag specified')
+   endif
+   if( (nlst%output_channelBucket_influx .lt. 0 ) .or. (nlst%output_channelBucket_influx .gt. 3) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid output_channelBucket_influx specified')
+   endif   
+   if( (nlst%CHRTOUT_DOMAIN .lt. 0 ) .or. (nlst%CHRTOUT_DOMAIN .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid CHRTOUT_DOMAIN specified')
+   endif   
+   if( (nlst%CHANOBS_DOMAIN .lt. 0 ) .or. (nlst%CHANOBS_DOMAIN .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid CHANOBS_DOMAIN specified')
+   endif
+   if( (nlst%CHRTOUT_GRID .lt. 0 ) .or. (nlst%CHRTOUT_GRID .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid CHRTOUT_GRID specified')
+   endif
+   if( (nlst%LSMOUT_DOMAIN .lt. 0 ) .or. (nlst%LSMOUT_DOMAIN .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid LSMOUT_DOMAIN specified')
+   endif
+   if( (nlst%RTOUT_DOMAIN .lt. 0 ) .or. (nlst%RTOUT_DOMAIN .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid RTOUT_DOMAIN specified')
+   endif
+   if( (nlst%output_gw .lt. 0 ) .or. (nlst%output_gw .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid output_gw specified')
+   endif   
+   if( (nlst%outlake .lt. 0 ) .or. (nlst%outlake .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid outlake specified')
+   endif
+   if( (nlst%frxst_pts_out .lt. 0 ) .or. (nlst%frxst_pts_out .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid frxst_pts_out specified')
+   endif
+   if(nlst%TERADJ_SOLAR .ne. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid TERADJ_SOLAR specified')
+   endif
+   if(nlst%NSOIL .le. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
+   endif
+   do i = 1,nlst%NSOIL
+      if(nlst%ZSOIL8(i) .gt. 0) then
+          call hydro_stop('hydro.namelist ERROR: Invalid ZSOIL layer depth specified.')
+      endif
+      if(i .gt. 1) then
+         if(nlst%ZSOIL8(i) .ge. nlst%ZSOIL8(i-1)) then
+            call hydro_stop('hydro.namelist ERROR: Invalid ZSOIL layer depth specified.')
+         endif
+      endif
+   end do
+   if(nlst%dxrt0 .le. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid DXRT specified.')
+   endif
+   if(nlst%AGGFACTRT .le. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid AGGFACTRT specified.') 
+   endif   
+   if(nlst%DTRT_CH .le. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid DTRT_CH specified.') 
+   endif
+   if(nlst%DTRT_TER .le. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid DTRT_TER specified.') 
+   endif
+   if( (nlst%SUBRTSWCRT .lt. 0 ) .or. (nlst%SUBRTSWCRT .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid SUBRTSWCRT specified')
+   endif
+   if( (nlst%OVRTSWCRT .lt. 0 ) .or. (nlst%OVRTSWCRT .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid OVRTSWCRT specified')
+   endif
+   if( (nlst%OVRTSWCRT .eq. 1 ) .or. (nlst%SUBRTSWCRT .eq. 1) ) then
+      if( (nlst%rt_option .lt. 1 ) .or. (nlst%rt_option .gt. 2) ) then
+         call hydro_stop('hydro.namelist ERROR: Invalid rt_option specified')
+      endif
+   endif
+   if( (nlst%CHANRTSWCRT .lt. 0 ) .or. (nlst%CHANRTSWCRT .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid CHANRTSWCRT specified')
+   endif
+   if(nlst%CHANRTSWCRT .eq. 1) then
+      if( (nlst%channel_option .lt. 1 ) .or. (nlst%channel_option .gt. 3) ) then
+         call hydro_stop('hydro.namelist ERROR: Invalid channel_option specified')
+      endif
+   endif
+   if( (nlst%CHANRTSWCRT .eq. 1) .or. (nlst%CHANRTSWCRT .eq. 2) ) then
+      if(len(trim(nlst%route_link_f)) .eq. 0) then
+         call hydro_stop("hydro.namelist ERROR: Please specify a route_link_f file.")
+      else
+         inquire(file=trim(nlst%route_link_f),exist=fileExists)
+         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_link_f not found.')
+      endif
+   endif
+   if( (nlst%GWBASESWCRT .lt. 0 ) .or. (nlst%GWBASESWCRT .gt. 2) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid GWBASESWCRT specified')
+   endif
+   if(nlst%GWBASESWCRT .gt. 0) then
+      if(len(trim(nlst%GWBUCKPARM_file)) .eq. 0) then
+         call hydro_stop("hydro.namelist ERROR: Please specify a GWBUCKPARM_file file.")
+      else
+         inquire(file=trim(nlst%GWBUCKPARM_file),exist=fileExists)
+         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GWBUCKPARM_file not found.')
+      endif
+   endif
+   if( (nlst%UDMP_OPT .lt. 0 ) .or. (nlst%UDMP_OPT .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid UDMP_OPT specified')
+   endif
+   if(nlst%UDMP_OPT .gt. 0) then
+      if(len(trim(nlst%udmap_file)) .eq. 0) then
+         call hydro_stop("hydro.namelist ERROR: Please specify a udmap_file file.")
+      else
+         inquire(file=trim(nlst%udmap_file),exist=fileExists)
+         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: udmap_file not found.')
+      endif
+   endif
+
+end subroutine rt_nlst_check
 
 end module module_namelist

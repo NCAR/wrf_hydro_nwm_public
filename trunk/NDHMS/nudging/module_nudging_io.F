@@ -547,7 +547,7 @@ subroutine write_nudging_last_obs(lastObsStr, modelTime)
 
 implicit none
 
-type(lastObsStructure), intent(inout), dimension(:) :: lastObsStr
+type(lastObsStructure), intent(in), dimension(:) :: lastObsStr
 character(len=19),                intent(in) :: modelTime
 
 character(len=37) :: outFileName
