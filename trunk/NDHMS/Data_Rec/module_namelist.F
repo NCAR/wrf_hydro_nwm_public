@@ -670,6 +670,9 @@ subroutine rt_nlst_check(nlst)
          inquire(file=trim(nlst%udmap_file),exist=fileExists)
          if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: udmap_file not found.')
       endif
+   endif 
+   if( (nlst%output_channelBucket_influx .lt. 0 ) .or. (nlst%output_channelBucket_influx .gt. 3) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid UDMP_OPT specified')
    endif
 
 end subroutine rt_nlst_check
