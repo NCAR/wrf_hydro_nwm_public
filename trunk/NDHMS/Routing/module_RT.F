@@ -93,6 +93,10 @@ CONTAINS
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
       if(rt_domain(did)%NLINKSL .eq. 0) NLINKSL = 1
 
+      rt_domain(did)%iswater = 0
+      rt_domain(did)%isurban = 0
+      rt_domain(did)%isoilwater = 0
+
 !DJG Allocate routing and disaggregation arrays
 
 #ifdef HYDRO_D
@@ -1140,7 +1144,8 @@ else
 !Temporary hardwire...
          rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
 
-         call read_GWBUCKPARM(rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
+         call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
+              rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
               rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
               rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
 

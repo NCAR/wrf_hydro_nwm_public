@@ -31,7 +31,7 @@ module module_HYDRO_drv
                             output_chrtout_grd_NWM, output_lsmOut_NWM, &
                             output_frxstPts, output_chanObs_NWM, output_gw_NWM
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
-        get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
+        get_file_dimension , get_file_globalatts, get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
    use module_HYDRO_io, only : output_lakes2
    use module_rt_data, only: rt_domain
@@ -1429,6 +1429,18 @@ write(78,*) "finish getChanDim "
 #endif
 #endif
 
+! ADCHANGE: get global attributes
+! need to set these after getChanDim since it allocates rt_domain vals to 0
+     call get_file_globalatts(trim(nlst_rt(did)%geo_static_flnm), &
+           rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater)
+
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
+      write(6,*) "hydro_ini: rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater"
+      write(6,*) rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater
+#endif
+#endif
+
 if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
    call gw2d_allocate(did,&
         rt_domain(did)%ixrt,&
@@ -1606,6 +1618,7 @@ end subroutine HYDRO_ini
 
       subroutine lsm_input(did,ix0,jx0,vegtyp0,soltyp0)
          implicit none
+#include <netcdf.inc>
          integer did, leng, ncid, ierr_flg
          parameter(leng=100)
          integer :: i,j, nn
@@ -1614,6 +1627,7 @@ end subroutine HYDRO_ini
 
         integer :: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
+        integer :: iret, istmp
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
@@ -1636,19 +1650,18 @@ end subroutine HYDRO_ini
          call get2d_lsm_vegtyp(RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%geo_static_flnm))
 
 
-
             if(nlst_rt(did)%sys_cpl .eq. 2 ) then
               ! coupling with WRF
                 if(present(soltyp0) ) then
-                   where(soltyp0 == 14) VEGTYP0 = 16
-                   where(VEGTYP0 == 16 ) soltyp0 = 14
+                  where(soltyp0 == rt_domain(did)%isoilwater) VEGTYP0 = rt_domain(did)%iswater
+                  where(VEGTYP0 == rt_domain(did)%iswater ) soltyp0 = rt_domain(did)%isoilwater 
                    soltyp = soltyp0
                    RT_DOMAIN(did)%VEGTYP = VEGTYP0
                 endif
             endif
 
-         where(soltyp == 14) RT_DOMAIN(did)%VEGTYP = 16
-         where(RT_DOMAIN(did)%VEGTYP == 16 ) soltyp = 14
+         where(soltyp == rt_domain(did)%isoilwater) RT_DOMAIN(did)%VEGTYP = rt_domain(did)%iswater
+         where(RT_DOMAIN(did)%VEGTYP == rt_domain(did)%iswater ) soltyp = rt_domain(did)%isoilwater
 
 ! LKSAT, 
 ! temporary set
@@ -1732,7 +1745,7 @@ end subroutine HYDRO_ini
              do i = 1, RT_DOMAIN(did)%ix
                 !yw rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
                 rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) 
-                IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
+                IF(rt_domain(did)%VEGTYP(i,j) == rt_domain(did)%isurban ) THEN   ! urban
                     rt_domain(did)%SMCMAX1(i,j) = 0.45
                     rt_domain(did)%SMCREF1(i,j) = 0.42
                     rt_domain(did)%SMCWLT1(i,j) = 0.40

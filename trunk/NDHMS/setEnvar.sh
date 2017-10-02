@@ -18,9 +18,6 @@ export WRF_HYDRO_RAPID=0
 ### using large netcdf file definition.
 export WRFIO_NCD_LARGE_FILE_SUPPORT=1
 
-### running in REALTIME mode (with reduced output).
-export HYDRO_REALTIME=0
-
 ### turn on wcoss flag 
 export NCEP_WCOSS=0
 
