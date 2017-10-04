@@ -184,10 +184,6 @@ CONTAINS
        endif
 #endif
 
-! ADCHANGE: move these checks to more universal namelist checks...
-if ( iocflag .eq. 4 ) RTOUT_DOMAIN = 0
-if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 2
-
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
            call hydro_stop("read_rt_nlst:: output_channelBucket_influx =! 0 inconsistent with out_dt and NOAH_TIMESTEP choices.")
@@ -558,7 +554,7 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%order_to_write .lt. 1 ) .or. (nlst%order_to_write .gt. 12) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid order_to_write specified')
    endif   
-   if( (nlst%nwmIo .lt. 1 ) .or. (nlst%nwmIo .gt. 4) ) then
+   if( (nlst%nwmIo .lt. 0 ) .or. (nlst%nwmIo .gt. 4) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid nwmIo specified')
    endif   
    if( (nlst%iocflag .lt. 0 ) .or. (nlst%iocflag .gt. 6) ) then
@@ -673,6 +669,26 @@ subroutine rt_nlst_check(nlst)
    endif 
    if( (nlst%output_channelBucket_influx .lt. 0 ) .or. (nlst%output_channelBucket_influx .gt. 3) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid UDMP_OPT specified')
+   endif
+   if(nlst%outlake .ne. 0) then
+      if(len(trim(nlst%route_lake_f)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a route_lake_f to ouptut and run lakes.')
+      endif
+   endif
+   if(len(trim(nlst%route_lake_f)) .ne. 0) then
+      inquire(file=trim(nlst%route_lake_f),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_lake_f not found.')
+   endif
+   ! Only allow lakes to be ran with gridded routing or NWM routing
+   if(len(trim(nlst%route_lake_f)) .ne. 0) then
+      if(nlst%channel_option .ne. 3) then
+         if(len(trim(nlst%udmap_file)) .eq. 0) then 
+            call hydro_stop('hydro.namelist ERROR: You cannot run NCAR reach-based routing with lakes. Please change your namelist settings.')
+         endif
+      endif
+   endif
+   if(nlst%outlake .ne. 0) then
+
    endif
 
 end subroutine rt_nlst_check

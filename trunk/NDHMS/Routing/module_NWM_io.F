@@ -131,22 +131,6 @@ subroutine output_chrt_NWM(domainId)
       return
    endif
 
-   ! To keep things simple, only allow CHRTOUT_DOMAIN option of 2 since this is NWM output.
-   ! We don't write frxstpts, but that could easily be put in here in the future. 
-   !if(nlst_rt(domainId)%CHRTOUT_DOMAIN .ne. 2) then
-   !   call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_DOMAIN value of 0 or 2 only allowed.')
-   !endif
-
-   ! Also, we are only allowing a split_output_count of 1.
-   !if(nlst_rt(domainId)%split_output_count .ne. 1) then
-   !   call nwmCheck(diagFlag,1,'ERROR: split_output_count of 1 only allowed.')
-   !endif
-
-   ! Since this is NWM output, we are assuming only channel_option 2 is acceptable.
-   !if(nlst_rt(domainId)%channel_option .ne. 2) then
-   !   call nwmCheck(diagFlag,1,'ERROR: Only channel_option of 2 allowed.')
-   !endif
-
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
@@ -199,9 +183,6 @@ subroutine output_chrt_NWM(domainId)
       else
          gsize = rt_domain(domainId)%gnlinks
       endif
-      !if(rt_domain(domainId)%gnlinksl .gt. rt_domain(domainId)%gnlinks) then
-      !   gsize = rt_domain(domainId)%gnlinksl
-      !endif
 
       ! Sync all processes up.
       if(mppFlag .eq. 1) then
@@ -496,8 +477,6 @@ subroutine output_chrt_NWM(domainId)
       endif
       ! Place all output arrays into one real array that will be looped over
       ! during conversion to compressed integer format.
-      !allocate(varOutReal(fileMeta%numVars,gSize))
-      !allocate(varOutInt(gSize))
       if(ascFlag .eq. 1) then
          ! Sort feature_id values by ascending values using the index array
          ! extracted from the RouteLink file. 
@@ -572,17 +551,6 @@ subroutine output_chrt_NWM(domainId)
       varMetaReal(3,:) = PACK(g_zelevOut,g_outInd == 1)
       varMetaInt(1,:) = PACK(g_orderOut,g_outInd == 1)
       varMetaInt(2,:) = PACK(g_linkidOut,g_outInd == 1)
-
-      !varOutReal(1,:) = g_qlinkOut(:,1)
-      !varOutReal(2,:) = g_nudgeOut
-      !varOutReal(3,:) = g_QLateralOut
-      !varOutReal(4,:) = g_velocityOut
-      !varOutReal(5,:) = g_hlinkOut
-      !varOutReal(6,:) = g_qSfcLatRunoffOut
-      !varOutReal(7,:) = g_qBucketOut
-      !varOutReal(8,:) = g_qBtmVertRunoffOut
-      !varOutReal(9,:) = g_accSfcLatRunoffOut
-      !varOutReal(10,:) = g_accBucketOut
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
@@ -1608,13 +1576,16 @@ subroutine output_rt_NWM(domainId,iGrid)
       myId = 0
    endif
 
+   ! Some sanity checking here. 
+   if(nlst_rt(domainId)%RTOUT_DOMAIN .eq. 0) then
+      ! No output requested here. Return to the parent calling program.
+      return
+   endif
+
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
    call initRtDomainDict(fileMeta,myId,diagFlag)
 
-   ! Depending on the NWM forecast config, we will be outputting different
-   ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
-   ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst_rt(domainId)%iocFlag .eq. 0) then
       ! All
       fileMeta%outFlag(:) = [1,1,1,1]
@@ -2111,13 +2082,16 @@ subroutine output_lakes_NWM(domainId,iGrid)
       myId = 0
    endif
 
+   ! Some sanity checking here. 
+   if(nlst_rt(domainId)%outlake .eq. 0) then
+      ! No output requested here. Return to the parent calling program.
+      return
+   endif
+
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
    call initLakeDict(fileMeta)
 
-   ! Depending on the NWM forecast config, we will be outputting different
-   ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
-   ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst_rt(1)%iocFlag .eq. 0) then
       ! All
       fileMeta%outFlag(:) = [1,1] 
@@ -2672,16 +2646,6 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       return
    endif
 
-   if(nlst_rt(domainId)%CHRTOUT_GRID .ne. 1) then
-      call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_GRID value of 0 or 1 only allowed.')
-   endif
-
-   ! We must assume gridded routing is in place on a channel grid for this
-   ! routine to be valid. 
-   if(nlst_rt(domainId)%channel_option .ne. 3) then
-      call nwmCheck(diagFlag,1,'ERROR: CHRTOUT_GRID only valid for channel_option of 3.')
-   endif
-
    ! Initialize qlink arrays and collect data from processors for output.
    gNumLnks = rt_domain(domainId)%gnlinks
    lNumLnks = rt_domain(domainId)%NLINKS
@@ -3154,6 +3118,12 @@ subroutine output_lsmOut_NWM(domainId)
       myId = 0
    endif
 
+   ! Some sanity checking here. 
+   if(nlst_rt(domainId)%LSMOUT_DOMAIN .eq. 0) then
+      ! No output requested here. Return to the parent calling program.
+      return
+   endif
+
    ! Call routine to initialize metadata structure
    call initLsmOutDict(fileMeta,myId,diagFlag)
 
@@ -3515,11 +3485,9 @@ subroutine output_lsmOut_NWM(domainId)
          endif
          if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
-            !call write_IO_int(localCompTmp,globalCompTmp)
             call write_IO_real(localRealTmp,globalOutReal)
 #endif
          else
-            !globalCompTmp = localCompTmp
             globalOutReal = localRealTmp
          endif
          ! Sync all processes up.
@@ -3537,7 +3505,6 @@ subroutine output_lsmOut_NWM(domainId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into output variable: '//trim(fileMeta%varNames(iTmp)))
          endif
 
-         !deallocate(globalCompTmp)
          deallocate(globalOutReal)
       endif
    enddo
@@ -3580,9 +3547,6 @@ implicit none
    ! Pass in "did" value from hydro driving program. 
    integer, intent(in) :: domainId
 
-   ! Derived types.
-   !type(chrtMeta) :: fileMeta
-
    ! Local variables
    integer :: mppFlag, diagFlag, ierr, myId
    integer :: seconds_since
@@ -3611,16 +3575,6 @@ implicit none
       return
    endif
 
-   ! Also, we are only allowing a split_output_count of 1.
-   if(nlst_rt(domainId)%split_output_count .ne. 1) then
-      call nwmCheck(diagFlag,1,'ERROR: split_output_count of 1 only allowed.')
-   endif
-
-   ! For now, only allow frxstPts for gridded routing. 
-   !if(nlst_rt(domainId)%channel_option .ne. 3) then
-   !   call nwmCheck(diagFlag,1,'ERROR: Only channel_option of 3 allowed.')
-   !endif
-
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
@@ -3631,11 +3585,6 @@ implicit none
    else
       myId = 0
    endif
-
-   ! Initialize NWM dictionary derived type containing all the necessary metadat
-   ! for the output file. A couple variables from this type are needed for
-   ! frxstPts.
-   !call initChrtDict(fileMeta,diagFlag,myId)
 
    ! Calculate datetime information
    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
@@ -3650,9 +3599,6 @@ implicit none
       else
          gSize = rt_domain(domainId)%gnlinks
       endif
-      !if(rt_domain(domainId)%gnlinksl .gt. rt_domain(domainId)%gnlinks) then
-      !   gSize = rt_domain(domainId)%gnlinksl
-      !endif
 
       ! Sync all processes up.
       if(mppFlag .eq. 1) then
@@ -3943,12 +3889,6 @@ subroutine output_chanObs_NWM(domainId)
       return
    endif
 
-   ! Since this is NWM output, we are assuming only channel_option 2 is
-   ! acceptable.
-   !if(nlst_rt(domainId)%channel_option .ne. 3) then
-   !   call nwmCheck(diagFlag,1,'ERROR: Only channel_option of 3 allowed.')
-   !endif
-
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
@@ -4016,9 +3956,6 @@ subroutine output_chanObs_NWM(domainId)
       else
          gSize = rt_domain(domainId)%gnlinks
       endif
-      !if(rt_domain(domainId)%gnlinksl .gt. rt_domain(domainId)%gnlinks) then
-      !   gSize = rt_domain(domainId)%gnlinksl
-      !endif
 
       ! Sync all processes up.
       if(mppFlag .eq. 1) then
@@ -4591,6 +4528,12 @@ subroutine output_gw_NWM(domainId,iGrid)
       myId = 0
    endif
 
+   ! Some sanity checking here. 
+   if(nlst_rt(domainId)%output_gw .eq. 0) then
+      ! No output requested here. Return to the parent calling program.
+      return
+   endif
+
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
    call initGwDict(fileMeta)
@@ -4796,24 +4739,6 @@ subroutine output_gw_NWM(domainId,iGrid)
       iret = nf90_put_att(ftn,featureVarId,'cf_role',trim(fileMeta%cfRole)) 
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
-      ! Create groundwater bucket lat/lon variables
-      !iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
-      !iret = nf90_put_att(ftn,latVarId,'long_name',trim(fileMeta%latLName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into latitude variable')
-      !iret = nf90_put_att(ftn,latVarId,'standard_name',trim(fileMeta%latStName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into latitude variable')
-      !iret = nf90_put_att(ftn,latVarId,'units',trim(fileMeta%latUnits))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into latitude variable')
-      !iret = nf90_def_var(ftn,"longitude",nf90_float,dimId(1),lonVarId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create longitude variable.')
-      !iret = nf90_put_att(ftn,lonVarId,'long_name',trim(fileMeta%lonLName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into longitude variable')
-      !iret = nf90_put_att(ftn,lonVarId,'standard_name',trim(fileMeta%lonStName))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into longitude variable')
-      !iret = nf90_put_att(ftn,lonVarId,'units',trim(fileMeta%lonUnits))
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into longitude variable')
-
       ! Define deflation levels for these meta-variables. For now, we are going
       ! to
       ! default to a compression level of 2. Only compress if nwmIo is set to 1.
@@ -4824,10 +4749,6 @@ subroutine output_gw_NWM(domainId,iGrid)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-         !iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
-         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
-         !iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
-         !call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.')
       endif
 
       ! Allocate memory for the output variables, then place the real output
@@ -4868,8 +4789,6 @@ subroutine output_gw_NWM(domainId,iGrid)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
-            !iret = nf90_put_att(ftn,varId,'coordinates',trim(fileMeta%coordNames(iTmp)))
-            !call nwmCheck(diagFlag,iret,'ERROR: Unable to place coordinates attribute into variable '//trim(fileMeta%varNames(iTmp)))
             if((nlst_rt(1)%nwmIo .eq. 1) .or. (nlst_rt(1)%nwmIo .eq. 2)) then
                iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -4927,17 +4846,6 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate feature_id in NetCDF file.')
       iret = nf90_put_var(ftn,varId,g_basnsInd)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
-
-      ! Place groundwater bucket metadata into NetCDF file
-      !iret = nf90_inq_varid(ftn,'latitude',varId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
-      !iret = nf90_put_var(ftn,varId,g_lakeLatOut)   
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into latitude output variable.')
-
-      !iret = nf90_inq_varid(ftn,'longitude',varId)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to locate longitude in NetCDF file.')
-      !iret = nf90_put_var(ftn,varId,g_lakeLonOut)
-      !call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into longitude output variable.')
 
       ! Place time values into time variables.
       iret = nf90_inq_varid(ftn,'time',varId)
