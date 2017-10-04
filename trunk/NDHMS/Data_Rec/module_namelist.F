@@ -186,7 +186,7 @@ CONTAINS
 
 ! ADCHANGE: move these checks to more universal namelist checks...
 if ( iocflag .eq. 4 ) RTOUT_DOMAIN = 0
-if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 2
+if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 1
 
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
