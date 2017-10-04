@@ -47,7 +47,8 @@ module module_NoahMP_hrldas_driver
    REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
    real :: etpnd1
    character(len=19) :: forcDate
-   character(len = 256):: GEO_STATIC_FLNM
+   ! LRK - Remove GEO_STATIC_FLNM
+   !character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
    integer  :: finemesh, finemesh_factor
@@ -428,9 +429,9 @@ module module_NoahMP_hrldas_driver
   integer :: brkflag = 0
   integer :: varind = 1
   namelist /WRF_HYDRO_OFFLINE/ &
-       !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
-       !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
+       !LRK - Remove HRLDAS_ini_typ and GEO_STATIC_FLNM for WRF-Hydro
+       finemesh,finemesh_factor,forc_typ, snow_assim
+       !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
 #endif
   namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
@@ -1333,28 +1334,30 @@ endif
 !       for difference forcing types, or if the user desired a different
 !       reading from wrfinput. However, for WRF-Hydro uses, we only use
 !       option 1 at this point, so removing all other potential options,
-!       which was 0 before. 
-#ifdef WRF_HYDRO
-  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
+!       which was 0 before. This will force the user to place SHDMIN/SHDMAX
+!       into the wrfinput file now as opposed to allowing it to be read 
+!       in from the geogrid file.
+!#ifdef WRF_HYDRO
+!  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
 
-  if(HRLDAS_ini_typ .eq. 1) then
-     ! read initial parameters and conditions from the HRLDAS forcing data
-     if(forc_typ .eq. 2) then
-          inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
-     else
-          inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          ".LDASIN_DOMAIN"//hgrid
-     endif
+!  if(HRLDAS_ini_typ .eq. 1) then
+!     ! read initial parameters and conditions from the HRLDAS forcing data
+!     if(forc_typ .eq. 2) then
+!          inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
+!     else
+!          inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          ".LDASIN_DOMAIN"//hgrid
+!     endif
 
-#else
+!#else
 
-     inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          ".LDASIN_DOMAIN"//hgrid
-#endif
+!     inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          ".LDASIN_DOMAIN"//hgrid
+!#endif
 
      CALL READINIT_HRLDAS(HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
@@ -1368,29 +1371,29 @@ endif
      CALL READVEG_HRLDAS(HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           OLDDATE, IVGTYP, VEGFRA, LAI, GVFMIN, GVFMAX)
 
-#ifdef WRF_HYDRO
-  else   !  HRLDAS_ini_typ        
+!#ifdef WRF_HYDRO
+!  else   !  HRLDAS_ini_typ        
 
-#ifdef MPP_LAND
-    call HYDRO_HRLDAS_ini_mpp   &
-#else
-    call HYDRO_HRLDAS_ini   &
-#endif
-       (trim(hrldas_setup_file), xend-xstart+1,yend-ystart+1, &
-       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
-       if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
+!#ifdef MPP_LAND
+!    call HYDRO_HRLDAS_ini_mpp   &
+!#else
+!    call HYDRO_HRLDAS_ini   &
+!#endif
+!       (trim(hrldas_setup_file), xend-xstart+1,yend-ystart+1, &
+!       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
+!       if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
 
-       greenfrac = 0.0
-#ifdef MPP_LAND
-        call get_greenfrac_mpp &
-#else
-      call get_greenfrac &
-#endif
-         (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
-        !yw GVFMAX = maxval(greenfrac)
-	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
-  endif   ! initialization type
-#endif
+!       greenfrac = 0.0
+!#ifdef MPP_LAND
+!        call get_greenfrac_mpp &
+!#else
+!      call get_greenfrac &
+!#endif
+!         (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
+!        !yw GVFMAX = maxval(greenfrac)
+!	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
+!  endif   ! initialization type
+!#endif
 
      SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
 

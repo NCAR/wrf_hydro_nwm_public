@@ -225,6 +225,7 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    endif  
    call mpp_land_bcast_int1(rtflag)
+   call mpp_land_bcast_int1(iniflag)
 #endif
 
 
