@@ -40,7 +40,7 @@ type chrtMeta
    ! Variable names
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numChVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from real to
@@ -108,7 +108,7 @@ type ldasMeta
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -169,7 +169,7 @@ type rtDomainMeta
    ! Variable names
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -228,7 +228,7 @@ type lakeMeta
    ! Variable names
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -294,7 +294,7 @@ type chrtGrdMeta
    ! Variable names
    character (len=64), dimension(numChGrdVars) :: varNames
    integer :: numVars = numChGrdVars
-   character (len=512) :: outVersion = "NWM v1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
                                                 ! variable to convert from 
@@ -356,7 +356,7 @@ type lsmMeta
    integer :: numVars = numLsmVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numLsmVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -418,7 +418,7 @@ type chObsMeta
    ! Variable names
    character (len=64), dimension(numChObsVars) :: varNames
    integer :: numVars = numChObsVars
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
                                                  ! each variable to convert 
@@ -485,7 +485,7 @@ type gwMeta
    ! Variable names
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
-   character (len=512) :: outVersion = "NWM 1.2"
+   character (len=512) :: outVersion = "WRF-Hydro 4.0"
    ! Output variable attributes
    real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -915,14 +915,14 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
                             "g m-2s-1 C","g m-2s-1 C","umol CO m-2 s-1","W m-2",&
                             "mm","mm","fraction","fraction","fraction","K"]
-   ldasOutDict%scaleFactor(:) = [1,1,0.01,0.1,0.1,0.1,0.01,0.1,0.000001,0.01,&
+   ldasOutDict%scaleFactor(:) = [1.0,1.0,0.01,0.1,0.1,0.1,0.01,0.1,0.000001,0.01,&
                                  0.1,0.1,0.1,0.1,0.1,0.000001,0.000001,0.01,&
                                  0.000001,0.01,0.001,0.01,0.01,0.00001,0.01,&
                                  0.01,0.01,0.01,0.01,0.01,0.1,0.1,0.1,0.1,&
                                  0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,&
                                  0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.0001,0.0001,&
                                  0.1,0.01,0.00001,0.01,0.01,0.1,0.01,0.1,0.01,&
-                                 0.0001,0.1,0.000001,1,0.001,0.01,0.01,0.00001,&
+                                 0.0001,0.1,0.000001,1.0,0.001,0.01,0.01,0.00001,&
                                  0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,&
                                  0.00001,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,&
                                  0.01,0.01,0.01,0.01,0.01,0.01,0.001,0.001,0.1]
@@ -973,17 +973,17 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   ldasOutDict%validMinReal(:) = [0,0,0,0,0,-1000,-1,-1500,0,0,-1500,-1500,-1500,-1500,-1500,-100,-100,0,&
-                                  -100,-100,0,-5,-5,0,0,0,0,-100,-100,-100,-1500,-1500,-1500,-1500,-1500,&
-                                  -1500,-1500,-1500,-1500,-1500,-1500,-1500,-1500,-1500,0,0,0,0,0,0,0,0,0,&
-                                  0,-1000,0,-100,0,0,0,0,0,0,0,0,0,0,0,0,0,-5,-5,-5,-5,-5,-5,-5,-5,0,0,0,&
-                                  0,0,0,0,0,0,0,0,-1000,-5,0,0,0,0]
-   ldasOutDict%validMaxReal(:) = [100,100,1,20,20,3000,1,1500,100,1,1500,1500,1500,1500,1500,100,100,1,100,&
-                                  100000,100000,30000,30000,10,10000,10000,9.00E+15,9.00E+15,9.00E+15,&
-                                  9.00E+15,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,&
-                                  1500,1500,400,400,400,400,400,400,400,400,1,1,100000,1,100,100000,100000,&
-                                  400,1,400,1,100,100000,100,10,1,100000,100000,5,5,5,5,5,5,5,5,1000,1000,&
-                                  1000,1000,5000,5000,1000,1000,1000,1000,1000,9.00E+15,30000,1,1,1,400]
+   ldasOutDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0,-1000.0,-1.0,-1500.0,0.0,0.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-100.0,-100.0,0.0,&
+                                  -100.0,-100.0,0.0,-5.0,-5.0,0.0,0.0,0.0,0.0,-100.0,-100.0,-100.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,&
+                                  -1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
+                                  0.0,-1000.0,0.0,-100.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,0.0,0.0,0.0,&
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1000.0,-5.0,0.0,0.0,0.0,0.0]
+   ldasOutDict%validMaxReal(:) = [100.0,100.0,1.0,20.0,20.0,3000.0,1.0,1500.0,100.0,1.0,1500.0,1500.0,1500.0,1500.0,1500.0,100.0,100.0,1.0,100.0,&
+                                  100000.0,100000.0,30000.0,30000.0,10.0,10000.0,10000.0,1.0E+6,1.0E+6,1.0E+6,&
+                                  1.0E+6,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,&
+                                  1500.0,1500.0,400.0,400.0,400.0,400.0,400.0,400.0,400.0,400.0,1.0,1.0,100000.0,1.0,100.0,100000.0,100000.0,&
+                                  400.0,1.0,400.0,1.0,100.0,100000.0,100.0,10.0,1.0,100000.0,100000.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,1000.0,1000.0,&
+                                  1000.0,1000.0,5000.0,5000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1.0E+6,30000.0,1.0,1.0,1.0,400.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
