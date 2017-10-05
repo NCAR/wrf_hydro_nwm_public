@@ -7530,13 +7530,13 @@ if (channel_option .eq. 3) then
          open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
          call flush(6)
          read(79,*)  header  !-- read the lake file
-      endif
       
-      do i=1, NLAKES
-         read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
-              WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-              LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
-      enddo
+         do i=1, NLAKES
+            read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
+                 WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
+                 LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
+         enddo
+      endif
 5101  continue
       close(79)
 
