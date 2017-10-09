@@ -525,12 +525,12 @@ subroutine rt_nlst_check(nlst)
       inquire(file=trim(nlst%geo_finegrid_flnm),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GEO_FINEGRID_FLNM not found.')
    endif
-   !if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
-   !   call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
-   !else
-   !   inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
-   !   if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
-   !endif   
+   if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
+      call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
+   else
+      inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
+   endif   
    if(len(trim(nlst%RESTART_FILE)) .ne. 0) then
       inquire(file=trim(nlst%RESTART_FILE),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR:= Hydro RESTART_FILE not found.')
@@ -570,7 +570,7 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%output_channelBucket_influx .lt. 0 ) .or. (nlst%output_channelBucket_influx .gt. 3) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid output_channelBucket_influx specified')
    endif   
-   if( (nlst%CHRTOUT_DOMAIN .lt. 0 ) .or. (nlst%CHRTOUT_DOMAIN .gt. 1) ) then
+   if( (nlst%CHRTOUT_DOMAIN .lt. 0 ) .or. (nlst%CHRTOUT_DOMAIN .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid CHRTOUT_DOMAIN specified')
    endif   
    if( (nlst%CHANOBS_DOMAIN .lt. 0 ) .or. (nlst%CHANOBS_DOMAIN .gt. 1) ) then
@@ -588,7 +588,7 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%output_gw .lt. 0 ) .or. (nlst%output_gw .gt. 1) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid output_gw specified')
    endif   
-   if( (nlst%outlake .lt. 0 ) .or. (nlst%outlake .gt. 1) ) then
+   if( (nlst%outlake .lt. 0 ) .or. (nlst%outlake .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid outlake specified')
    endif
    if( (nlst%frxst_pts_out .lt. 0 ) .or. (nlst%frxst_pts_out .gt. 1) ) then
@@ -690,9 +690,6 @@ subroutine rt_nlst_check(nlst)
             call hydro_stop('hydro.namelist ERROR: You cannot run NCAR reach-based routing with lakes. Please change your namelist settings.')
          endif
       endif
-   endif
-   if(nlst%outlake .ne. 0) then
-
    endif
 
 end subroutine rt_nlst_check

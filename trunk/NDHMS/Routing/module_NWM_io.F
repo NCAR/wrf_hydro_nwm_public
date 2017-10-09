@@ -2628,6 +2628,17 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
 #else
    diagFlag = 0
 #endif
+    
+   ! We will print a warning to the user if they request CHRTOUT_GRID under
+   ! reach-based routing. Currently, this is not supported as we don't have a
+   ! way to map reaches to individual cells on the channel grid in the Fulldom
+   ! file.
+   if(nlst_rt(domainId)%CHRTOUT_GRID .eq. 1) then
+      if(nlst_rt(domainId)%channel_option .ne. 3) then
+         call postDiagMsg(diagFlag,'WARNING: CHRTOUT_GRID only available for gridded channel routing, not reach-based routing.')
+         return
+      endif
+   endif
 
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
@@ -2681,9 +2692,6 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    if(nlst_rt(domainId)%channel_option .eq. 3) then
       call write_chanel_real(strFlowLocal,RT_DOMAIN(domainId)%map_l2g,gNumLnks,lNumLnks,g_qlink(:,1))
       call write_chanel_real(RT_DOMAIN(domainId)%qlink(:,2),RT_DOMAIN(domainId)%map_l2g,gNumLnks,lNumLnks,g_qlink(:,2))
-   else
-      call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
-      call ReachLS_write_io(RT_DOMAIN(domainId)%qlink(:,2),g_qlink(:,2))
    endif
    call write_IO_rt_int(RT_DOMAIN(domainId)%GCH_NETLNK, CH_NETLNK)
 
@@ -3720,7 +3728,8 @@ implicit none
       if(numPtsOut .eq. 0) then
          ! Write warning message to user showing there are NO forecast points to
          ! write. Simply return to the main calling function.
-         call nwmCheck(diagFlag,1,'ERROR: No forecast points found for frxstPtsOut.')
+         call postDiagMsg(diagFlag,'WARNING: No forecast or gage points found for frxstPtsOut. No file will be created.')
+         return
       endif
 
       ! Allocate output arrays based on number of output forecast points. 
@@ -4092,7 +4101,8 @@ subroutine output_chanObs_NWM(domainId)
       if(numPtsOut .eq. 0) then
          ! Write warning message to user showing there are NO forecast points to
          ! write. Simply return to the main calling function.
-         call nwmCheck(diagFlag,1,'ERROR: No forecast points found for CHANOBS.')
+         call postDiagMsg(diagFlag,'WARNING: No forecast or gage points found for CHANOBS. No file will be created.')
+         return
       endif
 
       ! Allocate output arrays based on number of output forecast points. 
@@ -4563,12 +4573,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
-   if(nlst_rt(domainId)%GWBASESWCRT .eq. 1) then
-      gnbasns = rt_domain(domainId)%gnumbasns
-   else
-      gnbasns = rt_domain(domainId)%gnumbasns
-      !gnbasns = rt_domain(domainId)%gnlinksl
-   endif
+   gnbasns = rt_domain(domainId)%gnumbasns
    gSize = gnbasns
 
    ! Collect and assemble local groundwater bucket arrays to a global array for
@@ -4593,23 +4598,14 @@ subroutine output_gw_NWM(domainId,iGrid)
          allocate(g_basnsInd(1))
       endif
 
-      if(nlst_rt(domainId)%channel_option .ne. 3) then
-         ! Reach-based routing
-         call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas,g_qin_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas,g_qout_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas,g_z_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
-      else
-         ! Gridded routing
-         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
-                               rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
-         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qout_gwsubbas,  & 
-                               rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
-         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  & 
-                               rt_domain(domainId)%basnsInd,g_z_gwsubbas)
-         call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
-                              rt_domain(domainId)%basnsInd,g_basnsInd)
-      endif
+      call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
+                            rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
+      call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qout_gwsubbas,  & 
+                            rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
+      call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  & 
+                            rt_domain(domainId)%basnsInd,g_z_gwsubbas)
+      call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
+                           rt_domain(domainId)%basnsInd,g_basnsInd)
 
    else
       allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
@@ -4761,6 +4757,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
             ! First create variable
+            print*, "I = ",iTmp
             if((nlst_rt(1)%nwmIo .eq. 1) .or. (nlst_rt(1)%nwmIo .eq. 2)) then
                iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,dimId(1),varId)
             else
@@ -4946,6 +4943,7 @@ subroutine checkRouteGages(diagFlag,nElements,indexArray)
    ! Loop over gages. If a non-empty string is found, then change the indexArray
    ! value for that element from 0 to 1.
    where(gages .ne. '               ') indexArray = 1
+   where(gages .eq. '') indexArray = 0
 
    iret = nf90_close(ftnRt)
 

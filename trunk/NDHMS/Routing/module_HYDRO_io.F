@@ -1044,7 +1044,7 @@ end subroutine get_albedo12m_netcdf
            routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq.  '.nc'
 
            if(routeLinkNetcdf) then
-              NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
+              NLINKSL = get_netcdf_dim(trim(route_link_f), 'feature_id',  &
                                    'READ_ROUTEDIM', fatalErr=.true.)
            else
               open(unit=17,file=trim(route_link_f),          & !link
