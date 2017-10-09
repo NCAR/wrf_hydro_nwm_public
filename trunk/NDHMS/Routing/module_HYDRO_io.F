@@ -1464,9 +1464,10 @@ end subroutine get_albedo12m_netcdf
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
-     else
         iret = nf_close(ncid)
-        print*, "read GWBUCKPARM.TBL file : " 
+     else
+        !iret = nf_close(ncid)
+        print*, "read GWBUCKPARM file as TBL format : " 
 #ifndef NCEP_WCOSS
 !yw        OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
         OPEN(81, FILE=trim(inFile),FORM='FORMATTED',STATUS='OLD')
@@ -7512,36 +7513,45 @@ ChSSlp = 0.0
 
 
 if (channel_option .eq. 3) then
+
 #ifdef MPP_LAND
-   if(my_id .eq. IO_id) then
+  if(my_id .eq. IO_id) then
 #endif
-    inquire (file=trim(route_lake_f), exist=fexist)
-    if(fexist) then 
-       ! use netcdf lake file of LAKEPARM.nc
-         write(6,*) "before read LAKEPARM from ", trim(route_lake_f)
-         write(6,*) "NLAKES = ", NLAKES
-         call flush(6)
-         call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
+
+    if (NLAKES .gt. 0) then
+      inquire (file=trim(route_lake_f), exist=fexist)
+      if(fexist) then 
+        ! use netcdf lake file of LAKEPARM.nc
+        iret = nf_open(trim(route_lake_f), NF_NOWRITE, ncid)
+        if( iret .eq. 0 ) then
+          iret = nf_close(ncid)
+          write(6,*) "Before read LAKEPARM from NetCDF ", trim(route_lake_f)
+          write(6,*) "NLAKES = ", NLAKES
+          call flush(6)
+          call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,WEIRL, ORIFICEC,       &
                 ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
-    else
-      if (NLAKES.gt.0) then !read in only if there are lakes
-         write(6,*) "before LAKEPARM from  LAKEPARM.TBL, unit 79"
-         open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
-         call flush(6)
-         read(79,*)  header  !-- read the lake file
-      
-         do i=1, NLAKES
+        else
+          open(unit=79,file=trim(route_lake_f), form='formatted',status='old')
+          write(6,*) "Before read LAKEPARM from text ", trim(route_lake_f)
+          write(6,*) "NLAKES = ", NLAKES
+          call flush(6)
+          read(79,*)  header  !-- read the lake file
+          do i=1, NLAKES
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
-                 WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-                 LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
-         enddo
-      endif
-5101  continue
-      close(79)
-
-
-    endif   !end if for checking existing of route_lake_f
+            WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
+            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
+          enddo
+5101      continue
+          close(79)
+        endif !endif for iret
+      else ! lake parm files does not exist
+        call hydro_stop("Cound not find file : "//trim(route_lake_f))
+        !write(6,*) "ERROR: route_lake_f required for lakes"
+        !write(6,*) "NLAKES = ", NLAKES
+        !call flush(6)
+      endif !endif for fexist
+    endif ! endif for nlakes
 
 #ifdef MPP_LAND
    endif
