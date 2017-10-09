@@ -585,7 +585,7 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%RTOUT_DOMAIN .lt. 0 ) .or. (nlst%RTOUT_DOMAIN .gt. 1) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid RTOUT_DOMAIN specified')
    endif
-   if( (nlst%output_gw .lt. 0 ) .or. (nlst%output_gw .gt. 1) ) then
+   if( (nlst%output_gw .lt. 0 ) .or. (nlst%output_gw .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid output_gw specified')
    endif   
    if( (nlst%outlake .lt. 0 ) .or. (nlst%outlake .gt. 2) ) then

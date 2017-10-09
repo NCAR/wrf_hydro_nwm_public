@@ -105,7 +105,10 @@
                system "cp arc/Makefile.mpp Makefile.comm"; 
              }
 
-     else   {print "no selection $response\n"; last} 
+     else   {print "no selection $response\n"; 
+            if(-e "macros.tmp")  { system("rm -f macros.tmp");}
+               exit;
+            } 
   }
   if(! (-e lib)) {mkdir lib;}
   if(! (-e mod)) {mkdir mod;}
