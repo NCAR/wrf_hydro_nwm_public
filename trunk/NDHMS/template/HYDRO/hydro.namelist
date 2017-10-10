@@ -63,11 +63,11 @@ order_to_write = 4
 
 ! Flag to turn on/off new I/O routines: 1 = with scale/offset/compression,
 ! 2 = with scale/offset/NO compression, 3 = compression only, 4 = no scale/offset/compression (default)
-nwmIo = 1
+io_form_outputs = 1
 
 ! Realtime run configuration option:
 ! 0=all (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective
-iocflag = 1
+io_config_outputs = 1
 
 ! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes (default)
 t0OutputFlag = 1

@@ -57,7 +57,7 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
-   integer :: iocflag=0
+   integer :: io_config_outputs=0
    integer :: t0OutputFlag=0   
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
@@ -1285,8 +1285,8 @@ module module_NoahMP_hrldas_driver
      STEPWTD = max(STEPWTD,1)
 
 #ifdef WRF_HYDRO
-call get_iocflag(1, iocflag)
-if (iocflag .gt. 0) then
+call get_iocflag(1, io_config_outputs)
+if (io_config_outputs .gt. 0) then
      ACCPRCP = 0.0
      ACCECAN = 0.0
      ACCEDIR = 0.0
@@ -1457,10 +1457,10 @@ endif
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
 
-call get_iocflag(1, iocflag)
+call get_iocflag(1, io_config_outputs)
 
    !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
-   if (iocflag .eq. 0) then
+   if (io_config_outputs .eq. 0) then
         VARLIST = 'IVGTYP,ISLTYP,FVEG,LAI,SAI,SWFORC,COSZ,LWFORC,RAINRATE,EMISS,FSA,FIRA,GRDFLX,HFX,LH,ECAN,EDIR,ALBEDO,' // &
                   'ETRAN,UGDRNOFF,SFCRNOFF,CANLIQ,CANICE,ZWT,WA,WT,ACCPRCP,ACCECAN,ACCEDIR,ACCETRAN,SAV,TR,EVC,IRC,SHC,' // &
                   'IRG,SHG,EVG,GHV,SAG,IRB,SHB,EVB,GHB,TRAD,TG,TV,TAH,TGV,TGB,T2MV,T2MB,Q2MV,Q2MB,EAH,FWET,ZSNSO_SN,SNICE,' // &
@@ -1468,22 +1468,22 @@ call get_iocflag(1, iocflag)
                   'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
                   'SOILSAT,SNOWT_AVG'
    endif
-   if (iocflag .eq. 1) then 
+   if (io_config_outputs .eq. 1) then 
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
-   if (iocflag .eq. 2) then 
+   if (io_config_outputs .eq. 2) then 
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
    endif
-   if (iocflag .eq. 3) then
+   if (io_config_outputs .eq. 3) then
         VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET,CANWAT' 
    endif
-   if (iocflag .eq. 4) then 
+   if (io_config_outputs .eq. 4) then 
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
    endif
-   if (iocflag .eq. 5) then
+   if (io_config_outputs .eq. 5) then
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
    endif
-   if (iocflag .eq. 6) then
+   if (io_config_outputs .eq. 6) then
         VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
    endif
 
@@ -1841,7 +1841,7 @@ end subroutine land_driver_exe
 subroutine  ldas_output()
 
 !#ifdef WRF_HYDRO
-!if ( (iocflag .eq. 0) ) then
+!if ( (io_config_outputs .eq. 0) ) then
 !#endif
 !#ifndef WRF_HYDRO
 !           call prepare_output_file (trim(outdir), version, &

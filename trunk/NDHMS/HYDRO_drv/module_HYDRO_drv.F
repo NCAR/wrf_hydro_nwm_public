@@ -240,7 +240,7 @@ module module_HYDRO_drv
       endif
 
      if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
-        if(nlst_rt(did)%nwmIo .eq. 0) then
+        if(nlst_rt(did)%io_form_outputs .eq. 0) then
            call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
                        //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
                        ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
@@ -261,10 +261,10 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    if(nlst_rt(did)%RTOUT_DOMAIN       .eq. 1 .and. &
       nlst_rt(did)%channel_only       .eq. 0 .and. &
       nlst_rt(did)%channelBucket_only .eq. 0       ) then 
-              if(mod(rtout_factor,3) .eq. 0 .or. nlst_rt(did)%iocFlag .ne. 5) then
+              if(mod(rtout_factor,3) .eq. 0 .or. nlst_rt(did)%io_config_outputs .ne. 5) then
                  ! Output gridded routing variables on National Water Model
                  ! high-res routing grid 
-                 if(nlst_rt(did)%nwmIo .ne. 0) then
+                 if(nlst_rt(did)%io_form_outputs .ne. 0) then
                     call output_rt_NWM(did,nlst_rt(did)%igrid)
                  else
                     call output_rt(    &
@@ -283,15 +283,15 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                       RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
                       RT_DOMAIN(did)%QBDRYRT, &
-                      nlst_rt(did)%iocflag &
+                      nlst_rt(did)%io_config_outputs &
                        )
-                 endif ! End check for nwmIo value
+                 endif ! End check for io_form_outputs value
               endif ! End check for rtout_factor
            rtout_factor = rtout_factor + 1
    endif
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
-   if(nlst_rt(did)%nwmIo .ne. 0) then
+   if(nlst_rt(did)%io_form_outputs .ne. 0) then
       if(nlst_rt(did)%GWBASESWCRT .ne. 0) then
          if(nlst_rt(did)%channel_only .eq. 0) then
             if(nlst_rt(did)%output_gw .ne. 0) then
@@ -353,7 +353,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
              endif
 !ADCHANGE: End
 
-   if(nlst_rt(did)%nwmIo .ne. 0) then
+   if(nlst_rt(did)%io_form_outputs .ne. 0) then
       ! Call National Water Model output routine for output on NHD forecast points.
       if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
          call output_chrt_NWM(did)
@@ -414,9 +414,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #ifdef WRF_HYDRO_NUDGING
                      , RT_DOMAIN(did)%nudge &
 #endif
-                     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag,
+                     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%io_config_outputs,
                      !RT_DOMAIN(did)%velocity &
-                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
+                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%io_config_outputs, vel_out &
                      , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
                      , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket &
                      , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT &
@@ -424,11 +424,11 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                  endif
 
               endif
-   endif ! End of checking for nwmIo flag value      
+   endif ! End of checking for io_form_outputs flag value      
       
 #ifdef MPP_LAND
               if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  then
-                 if(nlst_rt(did)%nwmIo .eq. 0) then
+                 if(nlst_rt(did)%io_form_outputs .eq. 0) then
                     call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                     RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
                     RT_DOMAIN(did)%GCH_NETLNK, &
@@ -443,7 +443,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                  endif
               endif
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
-                      if(nlst_rt(did)%nwmIo .ne. 0) then
+                      if(nlst_rt(did)%io_form_outputs .ne. 0) then
                          ! Output lakes in NWM format
                          if(nlst_rt(did)%outlake .ne. 0) then
                             call output_lakes_NWM(did,nlst_rt(did)%igrid)
@@ -478,7 +478,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                                   RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
                          endif
 
-                      endif ! end of check for nwmIo value
+                      endif ! end of check for io_form_outputs value
                endif   ! end if block of rNLAKES .gt. 0
         endif 
 #ifdef HYDRO_D
@@ -1481,8 +1481,8 @@ write(78,*) "finish decomposion"
 
 
 if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
-     nlst_rt(1)%nwmIo .ne. 0) then
-   !! This is the "decoder ring" for reading channel-only forcing from nwmIo=1,2 CHRTOUT files.
+     nlst_rt(1)%io_form_outputs .ne. 0) then
+   !! This is the "decoder ring" for reading channel-only forcing from io_form_outputs=1,2 CHRTOUT files.
    !! Only needed on io_id
    if(my_id .eq. io_id) then
       allocate(rt_domain(did)%ascendIndex(rt_domain(did)%gnlinksl))

@@ -394,7 +394,7 @@
          use module_namelist, only:nlst_rt
          implicit none
          integer :: did, iocflag
-         iocflag = nlst_rt(did)%iocflag
+         iocflag = nlst_rt(did)%io_config_outputs
       end subroutine get_iocflag
 
       subroutine get_t0OutputFlag(did, t0OutputFlag) 

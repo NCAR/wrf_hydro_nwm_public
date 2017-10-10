@@ -24,8 +24,8 @@
        character(len=19) :: startdate="123456"
        character(len=19) :: sincedate="123456"
 
-       integer :: iocflag  ! used for NCEP REALTIME OUTPUT
-       integer :: nwmIo ! Flag to turn on/off compressed CF_compliant output
+       integer :: io_config_outputs  ! used for NCEP REALTIME OUTPUT
+       integer :: io_form_outputs ! Flag to turn specify level of internal compression
        integer :: t0OutputFlag  
        integer :: channel_only, channelBucket_only
        integer :: output_channelBucket_influx ! used for FORCE_TYPE 9 and 10
