@@ -4599,14 +4599,24 @@ subroutine output_gw_NWM(domainId,iGrid)
          allocate(g_basnsInd(1))
       endif
 
-      call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
-                            rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
-      call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qout_gwsubbas,  & 
-                            rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
-      call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  & 
-                            rt_domain(domainId)%basnsInd,g_z_gwsubbas)
-      call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
-                           rt_domain(domainId)%basnsInd,g_basnsInd)
+      if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
+         ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
+         ! reach-based routing has the GW physics initialized the same as with 
+         ! gridded routing. 
+         call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas,g_qin_gwsubbas)
+         call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas,g_qout_gwsubbas)
+         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas,g_z_gwsubbas)
+         call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+      else
+         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
+                               rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
+         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qout_gwsubbas,  & 
+                               rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
+         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  & 
+                               rt_domain(domainId)%basnsInd,g_z_gwsubbas)
+         call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
+                              rt_domain(domainId)%basnsInd,g_basnsInd)
+      endif
 
    else
       allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))

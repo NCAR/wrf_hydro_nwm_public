@@ -1047,8 +1047,11 @@ end subroutine get_albedo12m_netcdf
               NLINKSL = -99
               NLINKSL = get_netcdf_dim(trim(route_link_f), 'feature_id',  &
                                    'READ_ROUTEDIM', fatalErr=.false.)
-              NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
-                                   'READ_ROUTEDIM', fatalErr=.false.)
+              if(NLINKSL .eq. -99) then
+                 ! We were unsucessful in getting feature_id, try linkDim
+                 NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
+                                         'READ_ROUTEDIM', fatalErr=.false.)
+              endif
               if(NLINKSL .eq. -99) then
                  ! Neither the feature_id or linkDim dimensions were found in
                  ! the RouteLink file. Throw an error...
@@ -9049,6 +9052,8 @@ iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem opening file: ", A)') trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 
 iRet = nf90_inq_dimid(ncId, trim(dimName), dimId)
@@ -9056,6 +9061,8 @@ if (iret /= nf90_noerr) then
    write(*,'("Problem getting the dimension ID ", A)') &
         '"' // trim(dimName) // '" in file: ' // trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 
 iRet = nf90_inquire_dimension(ncId, dimId, len= get_netcdf_dim)
@@ -9063,12 +9070,16 @@ if (iret /= nf90_noerr) then
    write(*,'("Problem getting the dimension length of ", A)') &
         '"' // trim(dimName) // '" in file: ' // trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 
 iRet = nf90_close(ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem closing file: ", A)') trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 end function get_netcdf_dim
 
