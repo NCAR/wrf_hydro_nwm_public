@@ -38,12 +38,12 @@
 #     print "   1. Linux PGI compiler sequential \n";
      print "   1. Linux PGI compiler dmpar \n";
 #     print "   3. IBM AIX compiler sequential, xlf90_r\n";
-     print "   2. IBM AIX compiler dmpar \n";
+#     print "   2. IBM AIX compiler dmpar \n";
 #     print "   5. Linux gfort compiler sequential \n";
-     print "   3. Linux gfort compiler dmpar      \n";
+     print "   2. Linux gfort compiler dmpar      \n";
 #     print "   7. Linux ifort compiler sequential \n";
-     print "   4. Linux ifort compiler dmpar      \n";
-     print "   5. Linux ifort compiler dmpar (WCOSS Luna)   \n";
+     print "   3. Linux ifort compiler dmpar      \n";
+     print "   4. Linux ifort compiler dmpar (WCOSS Luna)   \n";
      print "   0. exit only \n";
 
      printf "\nEnter selection [%d-%d] : ",0,9 ;
@@ -72,11 +72,11 @@
 #              system "cp arc/Makefile.seq Makefile.comm"; 
 #            }
 
-     case 2 {
-              # mpp IBM AIX
-              system "cp arc/macros.mpp.IBM.xlf90_r macros"; 
-              system "cp arc/Makefile.mpp Makefile.comm"; 
-            }
+#     case 2 {
+#              # mpp IBM AIX
+#              system "cp arc/macros.mpp.IBM.xlf90_r macros"; 
+#              system "cp arc/Makefile.mpp Makefile.comm"; 
+#            }
 
 #     case 5 {
 #              # GFORTRAN only                         
@@ -84,7 +84,7 @@
 #              system "cp arc/Makefile.seq Makefile.comm"; 
 #            }
 
-      case 3 {
+      case 2 {
                # GFORTRAN dmpar only                         
                system "cp arc/macros.mpp.gfort macros"; 
                system "cp arc/Makefile.mpp Makefile.comm"; 
@@ -94,12 +94,12 @@
 #               system "cp arc/macros.seq.ifort macros"; 
 #               system "cp arc/Makefile.seq Makefile.comm"; 
 #             }
-      case 4 {
+      case 3 {
                # ifort    dmpar only                         
                system "cp arc/macros.mpp.ifort macros"; 
                system "cp arc/Makefile.mpp Makefile.comm"; 
              }
-      case 5 {
+      case 4 {
                # ifort Luna   dmpar only                         
                system "cp arc/macros.mpp.ifort.luna macros"; 
                system "cp arc/Makefile.mpp Makefile.comm"; 

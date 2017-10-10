@@ -383,23 +383,24 @@ CONTAINS
         if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
            nlst_rt(did)%output_channelBucket_influx .eq. 3      ) &
            allocate( rt_domain(did)%qBtmVertRunoff(     1) )
-        if(nlst_rt(did)%output_channelBucket_influx .eq. 2) &
+        if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
              allocate( rt_domain(did)%qBtmVertRunoff(nsizes) )
+             rt_domain(did)%qBtmVertRunoff  = zeroFlt
+        endif
 
         if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then        
            allocate( rt_domain(did)%accSfcLatRunoff(nsizes) )
            allocate( rt_domain(did)%accBucket(      nsizes) )
            allocate( rt_domain(did)%qSfcLatRunoff(       1) )
            allocate( rt_domain(did)%qBucket(             1) )
+           rt_domain(did)%accSfcLatRunoff = zeroDbl
+           rt_domain(did)%accBucket       = zeroDbl
+           rt_domain(did)%qSfcLatRunoff   = zeroFlt
+           rt_domain(did)%qBucket         = zeroFlt
         endif
 
 	allocate( rt_domain(did)%QLateral(nsizes) )
 	allocate( rt_domain(did)%velocity(nsizes) )
-        rt_domain(did)%accSfcLatRunoff = zeroDbl
-        rt_domain(did)%accBucket       = zeroDbl
-        rt_domain(did)%qSfcLatRunoff   = zeroFlt
-        rt_domain(did)%qBucket         = zeroFlt
-        rt_domain(did)%qBtmVertRunoff  = zeroFlt
 	rt_domain(did)%QLateral  = zeroFlt
 	rt_domain(did)%velocity  = zeroFlt
      endif
