@@ -1044,8 +1044,19 @@ end subroutine get_albedo12m_netcdf
            routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq.  '.nc'
 
            if(routeLinkNetcdf) then
-              NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
-                                   'READ_ROUTEDIM', fatalErr=.true.)
+              NLINKSL = -99
+              NLINKSL = get_netcdf_dim(trim(route_link_f), 'feature_id',  &
+                                   'READ_ROUTEDIM', fatalErr=.false.)
+              if(NLINKSL .eq. -99) then
+                 ! We were unsucessful in getting feature_id, try linkDim
+                 NLINKSL = get_netcdf_dim(trim(route_link_f), 'linkDim',  &
+                                         'READ_ROUTEDIM', fatalErr=.false.)
+              endif
+              if(NLINKSL .eq. -99) then
+                 ! Neither the feature_id or linkDim dimensions were found in
+                 ! the RouteLink file. Throw an error...
+                 call hydro_stop("Could not find either feature_id or linkDim in RouteLink file.")
+              endif
            else
               open(unit=17,file=trim(route_link_f),          & !link
                    form='formatted',status='old')
@@ -1464,9 +1475,10 @@ end subroutine get_albedo12m_netcdf
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
-     else
         iret = nf_close(ncid)
-        print*, "read GWBUCKPARM.TBL file : " 
+     else
+        !iret = nf_close(ncid)
+        print*, "read GWBUCKPARM file as TBL format : " 
 #ifndef NCEP_WCOSS
 !yw        OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
         OPEN(81, FILE=trim(inFile),FORM='FORMATTED',STATUS='OLD')
@@ -1676,7 +1688,7 @@ end subroutine get_albedo12m_netcdf
        q_sfcflx_x,q_sfcflx_y,soxrt,soyrt,QSTRMVOLRT,SFCHEADSUBRT, &
        geo_finegrid_flnm,dt,sldpth,LATVAL,LONVAL,dist,CHRTOUT_GRID,  &
        QBDRYRT,  & 
-       iocflag &
+       io_config_outputs &
        )
 
 !output the routing variables over routing grid.
@@ -1685,7 +1697,7 @@ end subroutine get_albedo12m_netcdf
 
     integer,                                  intent(in) :: igrid
 
-    integer,                                  intent(in) :: iocflag
+    integer,                                  intent(in) :: io_config_outputs
     integer,                                  intent(in) :: split_output_count
     integer,                                  intent(in) :: ixrt,jxrt
     real,                                     intent(in) :: dt
@@ -1782,7 +1794,7 @@ end subroutine get_albedo12m_netcdf
         write (54,713) chan_in
        close (54)
 #else
-       if (iocflag .le. 0) then
+       if (io_config_outputs .le. 0) then
          open (unit=46,file='qstrmvolrt_accum.txt',form='formatted',&
              status='unknown',position='append')
          write (46,713) chan_in
@@ -1851,7 +1863,7 @@ end subroutine get_albedo12m_netcdf
         endif
      enddo
 
-   if (iocflag .le. 0) then  
+   if (io_config_outputs .le. 0) then  
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
       iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
@@ -1883,7 +1895,7 @@ end subroutine get_albedo12m_netcdf
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
        iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
-     if (iocflag .le. 0) then
+     if (io_config_outputs .le. 0) then
        iret = nf_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
      endif
 
@@ -1893,7 +1905,7 @@ end subroutine get_albedo12m_netcdf
          iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
          iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
        !- x-coordinate in cartesian system
         iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
@@ -1945,7 +1957,7 @@ if (iocflag .le. 0) then
 endif
 
 ! All but long range
-if ( iocflag .ne. 4 ) then
+if ( io_config_outputs .ne. 4 ) then
 
    iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
    iret = nf_put_att_text(ncid,varid,'units',1,'m')
@@ -1977,7 +1989,7 @@ if ( iocflag .ne. 4 ) then
 
 endif
 
-if (iocflag .le. 0) then 
+if (io_config_outputs .le. 0) then 
        iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
        iret = nf_put_att_text(ncid,varid,'long_name',14,'channel inflow')
@@ -2037,7 +2049,7 @@ endif
 
       iret = nf_enddef(ncid)
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
 !!-- write latitude and longitude locations
          iret = nf_inq_varid(ncid,"x", varid)
          iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
@@ -2053,7 +2065,7 @@ endif
 iret = nf_inq_varid(ncid,"time", varid)
 iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
 #ifdef MPP_LAND
         call write_IO_rt_real(LATVAL,xdumd)
     if( my_id .eq. io_id) then
@@ -2101,7 +2113,7 @@ endif
    endif !!! end of if block output_count == 0
     output_count = output_count + 1
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
 !-- 3-d soils
      do n = 1, nsoil
 #ifdef MPP_LAND
@@ -2122,7 +2134,7 @@ if (iocflag .le. 0) then
 endif
 
 ! All but long range
-if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
+if ( (io_config_outputs .ge. 0) .and. (io_config_outputs .ne. 4) ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(ZWATTABLRT,xdumd)
 #else
@@ -2138,7 +2150,7 @@ if ( (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
 #endif
 endif
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
 #ifdef MPP_LAND
           call write_IO_rt_real(QBDRYRT,xdumd)
 #else
@@ -2169,7 +2181,7 @@ if (iocflag .le. 0) then
 endif
  
 ! All but long range
-if ( iocflag .ne. 4 ) then
+if ( io_config_outputs .ne. 4 ) then
 #ifdef MPP_LAND
    call write_IO_rt_real(SFCHEADSUBRT,xdumd)
 #else
@@ -7228,7 +7240,7 @@ end subroutine RESTART_IN_nc
             
             !! NWM channel-only forcings have to be "decoded"/unshuffled.
             !! As of NWM1.2 the following global attribute is different/identifiable
-            !! for files created when nwmIo=1,2 (not 0).
+            !! for files created when io_form_outputs=1,2 (not 0).
             iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
             if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
                iret .eq. 0) then
@@ -7512,36 +7524,45 @@ ChSSlp = 0.0
 
 
 if (channel_option .eq. 3) then
+
 #ifdef MPP_LAND
-   if(my_id .eq. IO_id) then
+  if(my_id .eq. IO_id) then
 #endif
-    inquire (file=trim(route_lake_f), exist=fexist)
-    if(fexist) then 
-       ! use netcdf lake file of LAKEPARM.nc
-         write(6,*) "before read LAKEPARM from ", trim(route_lake_f)
-         write(6,*) "NLAKES = ", NLAKES
-         call flush(6)
-         call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
+
+    if (NLAKES .gt. 0) then
+      inquire (file=trim(route_lake_f), exist=fexist)
+      if(fexist) then 
+        ! use netcdf lake file of LAKEPARM.nc
+        iret = nf_open(trim(route_lake_f), NF_NOWRITE, ncid)
+        if( iret .eq. 0 ) then
+          iret = nf_close(ncid)
+          write(6,*) "Before read LAKEPARM from NetCDF ", trim(route_lake_f)
+          write(6,*) "NLAKES = ", NLAKES
+          call flush(6)
+          call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,WEIRL, ORIFICEC,       &
                 ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
-    else
-      if (NLAKES.gt.0) then !read in only if there are lakes
-         write(6,*) "before LAKEPARM from  LAKEPARM.TBL, unit 79"
-         open(unit=79,file='LAKEPARM.TBL', form='formatted',status='old')
-         call flush(6)
-         read(79,*)  header  !-- read the lake file
-      
-         do i=1, NLAKES
+        else
+          open(unit=79,file=trim(route_lake_f), form='formatted',status='old')
+          write(6,*) "Before read LAKEPARM from text ", trim(route_lake_f)
+          write(6,*) "NLAKES = ", NLAKES
+          call flush(6)
+          read(79,*)  header  !-- read the lake file
+          do i=1, NLAKES
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
-                 WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-                 LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
-         enddo
-      endif
-5101  continue
-      close(79)
-
-
-    endif   !end if for checking existing of route_lake_f
+            WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
+            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
+          enddo
+5101      continue
+          close(79)
+        endif !endif for iret
+      else ! lake parm files does not exist
+        call hydro_stop("Cound not find file : "//trim(route_lake_f))
+        !write(6,*) "ERROR: route_lake_f required for lakes"
+        !write(6,*) "NLAKES = ", NLAKES
+        !call flush(6)
+      endif !endif for fexist
+    endif ! endif for nlakes
 
 #ifdef MPP_LAND
    endif
@@ -9031,6 +9052,8 @@ iRet = nf90_open(trim(file), nf90_NOWRITE, ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem opening file: ", A)') trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 
 iRet = nf90_inq_dimid(ncId, trim(dimName), dimId)
@@ -9038,6 +9061,8 @@ if (iret /= nf90_noerr) then
    write(*,'("Problem getting the dimension ID ", A)') &
         '"' // trim(dimName) // '" in file: ' // trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 
 iRet = nf90_inquire_dimension(ncId, dimId, len= get_netcdf_dim)
@@ -9045,12 +9070,16 @@ if (iret /= nf90_noerr) then
    write(*,'("Problem getting the dimension length of ", A)') &
         '"' // trim(dimName) // '" in file: ' // trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 
 iRet = nf90_close(ncId)
 if (iret /= nf90_noerr) then
    write(*,'("Problem closing file: ", A)') trim(file)
    if(fatalErr_local) call hydro_stop(trim(callingRoutine) // ': get_netcdf_dim')
+   if(.not. fatalErr_local) get_netcdf_dim = -99
+   if(.not. fatalErr_local) return
 endif
 end function get_netcdf_dim
 
@@ -9174,7 +9203,7 @@ end subroutine readBucket_nhd
 #ifdef WRF_HYDRO_NUDGING
         , nudge                                      &
 #endif
-        ,         QLateral,    iocflag               &
+        ,         QLateral,    io_config_outputs               &
         ,                     velocity               &
         ,  accSfcLatRunoff,  accBucket               &
         ,    qSfcLatRunoff,    qBucket               &
@@ -9200,7 +9229,7 @@ end subroutine readBucket_nhd
      real, dimension(:),                  intent(in) :: nudge
 #endif
      real, dimension(:), intent(in) :: QLateral, velocity
-     integer, intent(in) :: iocflag
+     integer, intent(in) :: io_config_outputs
      real*8, dimension(:), intent(in) :: accSfcLatRunoff, accBucket
      real  , dimension(:), intent(in) ::   qSfcLatRunoff,   qBucket, qBtmVertRunoff
      integer, intent(in) :: UDMP_OPT
@@ -9340,7 +9369,7 @@ end subroutine readBucket_nhd
 #ifdef WRF_HYDRO_NUDGING
           , g_nudge                                     &
 #endif
-          ,        g_QLateral,     iocflag,      g_velocity  &
+          ,        g_QLateral,     io_config_outputs,      g_velocity  &
           , g_accSfcLatRunoff, g_accBucket                   &
           ,   g_qSfcLatRunoff,   g_qBucket, g_qBtmVertRunoff &
           ,          UDMP_OPT                                &
@@ -9387,7 +9416,7 @@ end subroutine mpp_output_chrt2
 #ifdef WRF_HYDRO_NUDGING
         , nudge                                     &
 #endif
-        ,        QLateral,   iocflag,       velocity &
+        ,        QLateral,   io_config_outputs,       velocity &
         , accSfcLatRunoff, accBucket                 &
         ,   qSfcLatRunoff,   qBucket, qBtmVertRunoff &
         ,        UDMP_OPT                            &
@@ -9409,7 +9438,7 @@ end subroutine mpp_output_chrt2
      real, dimension(:),                  intent(in) :: nudge
 #endif
      real, dimension(:), intent(in) :: QLateral, velocity
-     integer, intent(in) :: iocflag
+     integer, intent(in) :: io_config_outputs
      real*8, dimension(nlinks), intent(in) :: accSfcLatRunoff, accBucket    
      real  , dimension(nlinks), intent(in) ::   qSfcLatRunoff,   qBucket, qBtmVertRunoff     
      integer  :: UDMP_OPT
@@ -9506,7 +9535,7 @@ end subroutine mpp_output_chrt2
        iret = nf_def_dim(ncid, "station", nstations, stationdim)
        iret = nf_def_dim(ncid, "time", 1, timedim)
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
       !- station location definition all,  lat
         iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
@@ -9562,7 +9591,7 @@ endif
         iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
       endif
 !#ifdef HYDRO_REALTIME
-!      if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
+!      if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
 !	iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
 !        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
 !        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
@@ -9571,20 +9600,20 @@ endif
 
 
 	!-- NEW lateral inflow definition, var
-	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
+	if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
 	        iret = nf_def_var(ncid, "q_lateral", NF_FLOAT, 1, (/stationdim/), varid)
        		iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
                 iret = nf_put_att_text(ncid,varid,'long_name',25,'Runoff into channel reach')
 	endif
 
         !-- NEW velocity definition, var
-        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
+        if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) .and. (io_config_outputs .ne. 4) ) then
         	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
         	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
         	iret = nf_put_att_text(ncid,varid,'long_name',14,'River Velocity')
 	endif
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
 !     !- order definition, var
         iret = nf_def_var(ncid, "order", NF_INT, 1, (/stationdim/), varid)
         iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
@@ -9658,7 +9687,7 @@ endif
          iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
          iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
 
-if (iocflag .le. 0) then 
+if (io_config_outputs .le. 0) then 
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
          iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
@@ -9676,7 +9705,7 @@ endif
          iret = nf_inq_varid(ncid,"time", varid)
          iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
 
-if (iocflag .le. 0) then
+if (io_config_outputs .le. 0) then
         !-- write latitudes
          iret = nf_inq_varid(ncid,"latitude", varid)
          iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlat)
@@ -9710,7 +9739,7 @@ endif
            iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), hlink)
 	endif
 !#ifdef HYDRO_REALTIME
-!	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
+!	if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
 !	      ! dummy value for now
 !              iret = nf_inq_varid(ncid,"head", varid)
 !              iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
@@ -9718,13 +9747,13 @@ endif
 !#endif
 
         !-- write lateral inflow
-	if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) ) then
+	if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
 	        iret = nf_inq_varid(ncid,"q_lateral", varid)
        		iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), QLateral)
         endif
 
         !-- writelvelocity (dummy value for now)
-        if ( (channel_option .ne. 3) .and. (iocflag .ge. 0) .and. (iocflag .ne. 4) ) then
+        if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) .and. (io_config_outputs .ne. 4) ) then
         	iret = nf_inq_varid(ncid,"velocity", varid)
          	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), velocity)
 	endif

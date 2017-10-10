@@ -44,7 +44,7 @@ CONTAINS
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-                    UDMP_OPT, nwmIo
+                    UDMP_OPT, io_form_outputs
           real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -63,7 +63,7 @@ CONTAINS
        character(len=256)  :: hydrotbl_f   = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
-       integer :: igrid, iocflag, t0OutputFlag, output_channelBucket_influx
+       integer :: igrid, io_config_outputs, t0OutputFlag, output_channelBucket_influx
        character(len=256) :: geo_static_flnm = ""
        character(len=1024) :: land_spatial_meta_flnm = ""
        integer  :: DEEPGWSPIN
@@ -119,7 +119,7 @@ CONTAINS
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
                     RTOUT_DOMAIN, output_gw, outlake, &
                     frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, &
-                    iocflag, nwmIo, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+                    io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
       
 #ifdef WRF_HYDRO_NUDGING
    namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
@@ -137,8 +137,8 @@ CONTAINS
    UDMP_OPT = 0
    rst_bi_in = 0
    rst_bi_out = 0
-   iocflag = 0
-   nwmIo = 0
+   io_config_outputs = 0
+   io_form_outputs = 0
    frxst_pts_out = 0
    CHANOBS_DOMAIN = 0
    t0OutputFlag = 1
@@ -185,8 +185,8 @@ CONTAINS
 #endif
 
 ! ADCHANGE: move these checks to more universal namelist checks...
-if ( iocflag .eq. 4 ) RTOUT_DOMAIN = 0
-if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 1
+if ( io_config_outputs .eq. 4 ) RTOUT_DOMAIN = 0
+if ( (io_config_outputs .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 1
 
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
@@ -199,8 +199,8 @@ if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3)
 !  call mpp_land_bcast_real1(DT)
   call mpp_land_bcast_int1(SPLIT_OUTPUT_COUNT)
   call mpp_land_bcast_int1(IGRID)
-  call mpp_land_bcast_int1(iocflag)
-  call mpp_land_bcast_int1(nwmIo)
+  call mpp_land_bcast_int1(io_config_outputs)
+  call mpp_land_bcast_int1(io_form_outputs)
   call mpp_land_bcast_int1(t0OutputFlag)
   call mpp_land_bcast_int1(output_channelBucket_influx)
   call mpp_land_bcast_real1_double(out_dt)
@@ -227,8 +227,8 @@ if ( (iocflag .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3)
   nlst%hydrotbl_f = trim(hydrotbl_f) 
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
-  nlst%iocflag = iocflag
-  nlst%nwmIo = nwmIo
+  nlst%io_config_outputs = io_config_outputs
+  nlst%io_form_outputs = io_form_outputs
   nlst%t0OutputFlag = t0OutputFlag
   nlst%output_channelBucket_influx = output_channelBucket_influx
   nlst%geo_static_flnm = geo_static_flnm
@@ -526,12 +526,12 @@ subroutine rt_nlst_check(nlst)
       inquire(file=trim(nlst%geo_finegrid_flnm),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GEO_FINEGRID_FLNM not found.')
    endif
-   !if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
-   !   call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
-   !else
-   !   inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
-   !   if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
-   !endif   
+   if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
+      call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
+   else
+      inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
+   endif   
    if(len(trim(nlst%RESTART_FILE)) .ne. 0) then
       inquire(file=trim(nlst%RESTART_FILE),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR:= Hydro RESTART_FILE not found.')
@@ -559,11 +559,11 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%order_to_write .lt. 1 ) .or. (nlst%order_to_write .gt. 12) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid order_to_write specified')
    endif   
-   if( (nlst%nwmIo .lt. 0 ) .or. (nlst%nwmIo .gt. 4) ) then
-      call hydro_stop('hydro.namelist ERROR: Invalid nwmIo specified')
+   if( (nlst%io_form_outputs .lt. 0 ) .or. (nlst%io_form_outputs .gt. 4) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid io_form_outputs specified')
    endif   
-   if( (nlst%iocflag .lt. 0 ) .or. (nlst%iocflag .gt. 6) ) then
-      call hydro_stop('hydro.namelist ERROR: Invalid iocflag specified')
+   if( (nlst%io_config_outputs .lt. 0 ) .or. (nlst%io_config_outputs .gt. 6) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid io_config_outputs specified')
    endif
    if( (nlst%t0OutputFlag .lt. 0 ) .or. (nlst%t0OutputFlag .gt. 1) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid t0OutputFlag specified')
@@ -586,10 +586,10 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%RTOUT_DOMAIN .lt. 0 ) .or. (nlst%RTOUT_DOMAIN .gt. 1) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid RTOUT_DOMAIN specified')
    endif
-   if( (nlst%output_gw .lt. 0 ) .or. (nlst%output_gw .gt. 1) ) then
+   if( (nlst%output_gw .lt. 0 ) .or. (nlst%output_gw .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid output_gw specified')
    endif   
-   if( (nlst%outlake .lt. 0 ) .or. (nlst%outlake .gt. 1) ) then
+   if( (nlst%outlake .lt. 0 ) .or. (nlst%outlake .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid outlake specified')
    endif
    if( (nlst%frxst_pts_out .lt. 0 ) .or. (nlst%frxst_pts_out .gt. 1) ) then
@@ -630,7 +630,8 @@ subroutine rt_nlst_check(nlst)
       call hydro_stop('hydro.namelist ERROR: Invalid OVRTSWCRT specified')
    endif
    if( (nlst%OVRTSWCRT .eq. 1 ) .or. (nlst%SUBRTSWCRT .eq. 1) ) then
-      if( (nlst%rt_option .lt. 1 ) .or. (nlst%rt_option .gt. 2) ) then
+      !if( (nlst%rt_option .lt. 1 ) .or. (nlst%rt_option .gt. 2) ) then
+      if(nlst%rt_option .ne. 1) then
          call hydro_stop('hydro.namelist ERROR: Invalid rt_option specified')
       endif
    endif
@@ -691,9 +692,6 @@ subroutine rt_nlst_check(nlst)
             call hydro_stop('hydro.namelist ERROR: You cannot run NCAR reach-based routing with lakes. Please change your namelist settings.')
          endif
       endif
-   endif
-   if(nlst%outlake .ne. 0) then
-
    endif
 
 end subroutine rt_nlst_check

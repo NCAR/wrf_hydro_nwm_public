@@ -731,7 +731,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
-!yw   call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
+if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+  call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
+endif
 #endif
 
 #ifdef OUTPUT_CHAN_CONN      
