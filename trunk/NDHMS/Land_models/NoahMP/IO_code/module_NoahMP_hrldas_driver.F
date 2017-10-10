@@ -1395,7 +1395,7 @@ endif
 !  endif   ! initialization type
 !#endif
 
-     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
+!     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
 
      FNDSOILW = .FALSE.
      CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
