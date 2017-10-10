@@ -455,7 +455,6 @@ if ( (io_config_outputs .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_opti
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
-    write(6,*) " nlst%nwmIo ",  nwmIo, nlst%nwmIo
 #ifdef WRF_HYDRO_NUDGING
     write(6,*) " nlst%nudgingParamFile      ",  trim(nudgingParamFile)
     write(6,*) " nlst%netWkReExFile         ",  trim(netWkReExFile)
