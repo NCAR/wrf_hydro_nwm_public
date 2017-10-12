@@ -10060,8 +10060,21 @@ end subroutine output_chrt2
        if(routeLakeNetcdf) then
           write(6,'("getting NLAKES from: ''", A, "''")') trim(route_lake_f)
           NLAKES = get_netcdf_dim(trim(route_lake_f), 'nlakes',  &
-                                   'read_NSIMLAKES', fatalErr=.true.)
-        else
+                                   'read_NSIMLAKES', fatalErr=.false.)
+          NLAKES = -99
+          NLAKES = get_netcdf_dim(trim(route_lake_f), 'feature_id',  &
+                                   'read_NSIMLAKES', fatalErr=.false.)
+          if (NLAKES .eq. -99) then
+                 ! We were unsucessful in getting feature_id, try linkDim
+                 NLAKES = get_netcdf_dim(trim(route_lake_f), 'nlakes',  &
+                                   'read_NSIMLAKES', fatalErr=.false.)
+          endif 
+          if (NLAKES .eq. -99) then
+                 ! Neither the feature_id nor nlakes dimensions were found in
+                 ! the LAKEPARM file. Throw an error...
+                 call hydro_stop("Could not find either feature_id or nlakes in LAKEPARM netcdf file.")
+          endif 
+       else
 !yw for IOC reach based routing, if netcdf lake file is not set from the hydro.namelist, 
 !    we will assume that no lake will be assimulated. 
           write(6,*) "No lake nectdf file defined. NLAKES is set to be zero."
