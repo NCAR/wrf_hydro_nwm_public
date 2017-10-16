@@ -6078,19 +6078,19 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
             
 
       !! Cvol is not prognostic for Musk-cunge.
-!      if(nlst_rt(did)%channel_option .eq. 3) then
-!         call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%cvol,"cvol" &
-!#ifdef MPP_LAND
-!              ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
-!#endif
-!              )
+      if(nlst_rt(did)%channel_option .eq. 3) then
+         call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%cvol,"cvol" &
+#ifdef MPP_LAND
+              ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+#endif
+              )
 !      else
 !         call w_rst_crt_reach(ncid,rt_domain(did)%cvol, "cvol"  &
 !#ifdef MPP_LAND   
 !              ,rt_domain(did)%gnlinksl &
 !#endif
 !              )
-!      endif
+      endif
 
 
 !              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%resht,"resht" &
@@ -6667,7 +6667,7 @@ endif
 #ifdef MPP_LAND
 if(IO_id .eq. my_id) then
 #endif
-   
+
    !! Dont use a restart from a channel_only run if you're not running channel_only
    iret = nf_get_att_int(ncid, NF_GLOBAL, "channel_only", channel_only_in)
    if(iret .eq. 0) then !! If channel_only attribute prsent, then proceed with this logic
@@ -6729,11 +6729,15 @@ if(IO_id .eq. my_id) then
 
 #ifdef MPP_LAND
 endif
+! AD: Put these back as they were... fixes restart issue?
+    call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+    call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
+
 !yw call mpp_land_bcast_int1(rt_domain(did)%out_counts)
 ! Not sure what caused the problem. added out_counts = 1 as a temporary fix for the hydro output.
-rt_domain(did)%out_counts = 1
+!rt_domain(did)%out_counts = 1
 !
-call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
+!call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 !if( nlst_rt(did)%channel_only       .eq. 1 .or. &
 !    nlst_rt(did)%channelBucket_only .eq. 1         ) &
 !    call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
@@ -6870,6 +6874,19 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !! rt_domain(did)%INFXSRT=0.!rt_domain(did)%LAKE_INFLORT=0.!rt_domain(did)%QSTRMVOLRT=0.
 !end if
 
+if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
+#ifdef HYDRO_D
+  print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
+#endif
+!  rt_domain(did)%INFXSRT=0.
+  rt_domain(did)%LAKE_INFLORT=0.
+  rt_domain(did)%QSTRMVOLRT=0.
+!  rt_domain(did)%accLndRunOff = 0.
+!  rt_domain(did)%accQLateral = 0.
+!  rt_domain(did)%accStrmvolrt = 0.
+  rt_domain(did)%accBucket = 0.
+  rt_domain(did)%accSfcLatRunoff = 0.
+end if
       
 #ifdef MPP_LAND
 if(my_id .eq. IO_id) &
@@ -10059,8 +10076,6 @@ end subroutine output_chrt2
 
        if(routeLakeNetcdf) then
           write(6,'("getting NLAKES from: ''", A, "''")') trim(route_lake_f)
-          NLAKES = get_netcdf_dim(trim(route_lake_f), 'nlakes',  &
-                                   'read_NSIMLAKES', fatalErr=.false.)
           NLAKES = -99
           NLAKES = get_netcdf_dim(trim(route_lake_f), 'feature_id',  &
                                    'read_NSIMLAKES', fatalErr=.false.)

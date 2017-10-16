@@ -1595,6 +1595,9 @@ endif
 !! This was previously done in HYDRO_rst_in and so output accumulations at time 
 !! zero were getting zeroed and then writtent to file, which looses information. 
 !! Note that nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
+
+! AD: Temporarily commented this out as it is causing memory issues in gfort. MOved back to restart_in_nc.
+if (.false.) then
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
@@ -1607,6 +1610,8 @@ if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    rt_domain(did)%accSfcLatRunoff = zeroDbl
    rt_domain(did)%accBucket    = zeroDbl
 end if
+end if
+
 !#else
 !if (trim(nlst_rt(did)%restart_file) == "") then
 !   ! output at the initial time
