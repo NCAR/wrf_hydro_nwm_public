@@ -6884,8 +6884,8 @@ if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
 !  rt_domain(did)%accLndRunOff = 0.
 !  rt_domain(did)%accQLateral = 0.
 !  rt_domain(did)%accStrmvolrt = 0.
-  rt_domain(did)%accBucket = 0.
-  rt_domain(did)%accSfcLatRunoff = 0.
+!  rt_domain(did)%accBucket = 0.
+!  rt_domain(did)%accSfcLatRunoff = 0.
 end if
       
 #ifdef MPP_LAND
