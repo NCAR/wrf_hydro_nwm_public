@@ -371,10 +371,10 @@ MODULE MODULE_MPP_LAND
     integer s_r(2)
 
 !   if(my_id .eq. IO_id) then 
-       allocate(local_nx_size(numprocs),stat = status) 
-       allocate(local_ny_size(numprocs),stat = status) 
-       allocate(local_rt_nx_size(numprocs),stat = status) 
-       allocate(local_rt_ny_size(numprocs),stat = status) 
+       if(.not. allocated(local_nx_size) ) allocate(local_nx_size(numprocs),stat = status) 
+       if(.not. allocated(local_ny_size) ) allocate(local_ny_size(numprocs),stat = status) 
+       if(.not. allocated(local_rt_nx_size) ) allocate(local_rt_nx_size(numprocs),stat = status) 
+       if(.not. allocated(local_rt_ny_size) ) allocate(local_rt_ny_size(numprocs),stat = status) 
 !   end if
 
        call mpp_land_sync()
@@ -572,8 +572,8 @@ MODULE MODULE_MPP_LAND
     integer :: r_s(2)
     integer ::  t_nx, t_ny
 
-    allocate(starty(numprocs),stat = ierr) 
-    allocate(startx(numprocs),stat = ierr)
+    if(.not. allocated(starty) ) allocate(starty(numprocs),stat = ierr) 
+    if(.not. allocated(startx) ) allocate(startx(numprocs),stat = ierr)
 
     local_startx = int(global_nx/left_right_np) * left_right_p+1 
     local_starty = int(global_ny/up_down_np) * up_down_p+1 
