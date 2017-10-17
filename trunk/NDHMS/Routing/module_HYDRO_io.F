@@ -1992,7 +1992,7 @@ endif
 if (io_config_outputs .le. 0) then 
        iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
        iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',14,'channel inflow')
+       iret = nf_put_att_text(ncid,varid,'long_name',20,'accum channel inflow')
        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
@@ -5999,7 +5999,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT, "sfcheadsubrt" )
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT, "qstrmvolrt" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
       !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT, "RETDEPRT" )
 
@@ -6222,7 +6222,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                     write(iunit,ERR=101) rt_domain(did)%INFXSWGT
                     write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
-                    write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
+                    write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                     !AD_CHANGE: Not needed in RESTART
                     !write(iunit,ERR=101) rt_domain(did)%RETDEPRT
                 endif
@@ -6315,7 +6315,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%INFXSWGT
                    read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
-                   read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT
+                   read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                    !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
                    !No need to have in restart since live calculated.
                    !read(iunit,ERR=101) rt_domain(did)%RETDEPRT
@@ -6729,15 +6729,12 @@ if(IO_id .eq. my_id) then
 
 #ifdef MPP_LAND
 endif
-! AD: Put these back as they were... fixes restart issue?
-    call mpp_land_bcast_int1(rt_domain(did)%out_counts)
-    call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 
 !yw call mpp_land_bcast_int1(rt_domain(did)%out_counts)
 ! Not sure what caused the problem. added out_counts = 1 as a temporary fix for the hydro output.
-!rt_domain(did)%out_counts = 1
-!
-!call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
+rt_domain(did)%out_counts = 1
+
+call mpp_land_bcast_real1(nlst_rt(did)%DTCT)
 !if( nlst_rt(did)%channel_only       .eq. 1 .or. &
 !    nlst_rt(did)%channelBucket_only .eq. 1         ) &
 !    call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
@@ -6782,7 +6779,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT,"sfcheadsubrt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT,"qstrmvolrt")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
          !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
          !No need to have in restart since live calculated.
          !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT,"RETDEPRT")
@@ -6871,23 +6868,9 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !!   Routing/module_HYDRO_drv.F: HYDRO_ini
 !! See comments there.
 !! Conensed, commented code:
-!! rt_domain(did)%INFXSRT=0.!rt_domain(did)%LAKE_INFLORT=0.!rt_domain(did)%QSTRMVOLRT=0.
+!! rt_domain(did)%LAKE_INFLORT=0.!rt_domain(did)%QSTRMVOLRT=0.
 !end if
 
-if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
-#ifdef HYDRO_D
-  print *, "1 Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
-#endif
-!  rt_domain(did)%INFXSRT=0.
-  rt_domain(did)%LAKE_INFLORT=0.
-  rt_domain(did)%QSTRMVOLRT=0.
-!  rt_domain(did)%accLndRunOff = 0.
-!  rt_domain(did)%accQLateral = 0.
-!  rt_domain(did)%accStrmvolrt = 0.
-!  rt_domain(did)%accBucket = 0.
-!  rt_domain(did)%accSfcLatRunoff = 0.
-end if
-      
 #ifdef MPP_LAND
 if(my_id .eq. IO_id) &
 #endif
@@ -7574,7 +7557,7 @@ if (channel_option .eq. 3) then
           close(79)
         endif !endif for iret
       else ! lake parm files does not exist
-        call hydro_stop("Cound not find file : "//trim(route_lake_f))
+        call hydro_stop("Fatal error: route_lake_f must be specified in the hydro.namelist")
         !write(6,*) "ERROR: route_lake_f required for lakes"
         !write(6,*) "NLAKES = ", NLAKES
         !call flush(6)

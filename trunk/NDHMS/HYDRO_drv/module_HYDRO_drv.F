@@ -65,7 +65,11 @@ module module_HYDRO_drv
   integer :: clock_rate    = 0
 #endif
   integer :: rtout_factor
-   
+
+  integer, parameter :: r4 = selected_real_kind(4)
+  real,    parameter :: zeroFlt=0.0000000000000000000_r4
+  integer, parameter :: r8 = selected_real_kind(8)
+  real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
 
    contains
    subroutine HYDRO_rst_out(did)
@@ -278,7 +282,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
                       RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
-                      RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
+                      RT_DOMAIN(did)%QSTRMVOLRT_ACC,RT_DOMAIN(did)%SFCHEADSUBRT, &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                       RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
@@ -608,7 +612,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    ! step 1) disaggregate specific fields from LSM to Hydro grid
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
-      RT_DOMAIN(did)%QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%QSTRMVOLRT = zeroFlt
       RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
@@ -666,7 +670,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 #endif
 #endif
 
-      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
+      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%QSTRMVOLRT_ACC = RT_DOMAIN(did)%QSTRMVOLRT_ACC + RT_DOMAIN(did)%QSTRMVOLRT_TS
+      
       RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 			
 #ifdef HYDRO_D
@@ -895,21 +901,6 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
 !-------------------------------------------------------------------
 
 if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
-
-
-    if(rt_domain(did)%restQSTRM) then
-       RT_DOMAIN(did)%QSTRMVOLRT_TS = 0.000001
-       rt_domain(did)%restQSTRM = .false.
-#ifdef HYDRO_D
-#ifndef NCEP_WCOSS
-       write(6,*) "***** set QSTRMVOLRT_TS = 0.000001 *********"
-#else
-       write(78,*) "***** set QSTRMVOLRT_TS = 0.000001 *********" 
-#endif
-       call flush(6)
-#endif
-    endif 
-101  continue
 
  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
      !!! for user defined Reach based Routing method.
@@ -1326,11 +1317,6 @@ integer rst_out, ix,jx
 !        integer, OPTIONAL:: ix0,jx0
 integer:: ix0,jx0
 integer, dimension(ix0,jx0),optional :: vegtyp, soltyp
-
-integer, parameter :: r4 = selected_real_kind(4)
-real,    parameter :: zeroFlt=0.0000000000000000000_r4
-integer, parameter :: r8 = selected_real_kind(8)
-real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
 integer            :: iret, ncid, ascIndId
 
 #ifdef MPP_LAND
@@ -1595,30 +1581,15 @@ endif
 !! This was previously done in HYDRO_rst_in and so output accumulations at time 
 !! zero were getting zeroed and then writtent to file, which looses information. 
 !! Note that nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
-
-! AD: Temporarily commented this out as it is causing memory issues in gfort. MOved back to restart_in_nc.
-if (.false.) then
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
-   !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
-   call flush(6)
-   !#endif
    ! Under channel-only , these first three variables are not allocated.
-   !if(allocated(rt_domain(did)%INFXSRT)) rt_domain(did)%INFXSRT      = zeroFlt
-   if(allocated(rt_domain(did)%LAKE_INFLORT)) rt_domain(did)%LAKE_INFLORT = zeroFlt
-   if(allocated(rt_domain(did)%QSTRMVOLRT)) rt_domain(did)%QSTRMVOLRT   = zeroFlt
-   rt_domain(did)%accSfcLatRunoff = zeroDbl
-   rt_domain(did)%accBucket    = zeroDbl
+   if(allocated(rt_domain(did)%LAKE_INFLORT))    rt_domain(did)%LAKE_INFLORT = zeroFlt
+   if(allocated(rt_domain(did)%QSTRMVOLRT_ACC))  rt_domain(did)%QSTRMVOLRT_ACC   = zeroFlt
+   ! These variables are optionally allocated, if their output is requested.
+   if(allocated(rt_domain(did)%accSfcLatRunoff)) rt_domain(did)%accSfcLatRunoff = zeroDbl
+   if(allocated(rt_domain(did)%accBucket))       rt_domain(did)%accBucket    = zeroDbl
 end if
-end if
-
-!#else
-!if (trim(nlst_rt(did)%restart_file) == "") then
-!   ! output at the initial time
-!   call HYDRO_out(did)
-!   return
-!endif
-!#endif
 
 end subroutine HYDRO_ini
 
