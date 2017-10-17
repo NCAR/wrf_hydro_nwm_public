@@ -182,10 +182,9 @@ CONTAINS
      allocate( rt_domain(did)%QSTRMVOLRT  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT  = 0.0
      allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
-     !
-
-     allocate( rt_domain(did)%QSTRMVOLRT_DUM  (IXRT,JXRT) )
-     rt_domain(did)%QSTRMVOLRT_DUM  = 0.0                
+     rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
+     allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
+     rt_domain(did)%QSTRMVOLRT_ACC  = 0.0                
      allocate( rt_domain(did)%QBDRYRT   	(IXRT,JXRT) )
      rt_domain(did)%QBDRYRT   	= 0.0     
      allocate( rt_domain(did)%SUB_RESID (ixrt,jxrt) )
@@ -1356,16 +1355,13 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%ZWATTABLRT = 0.0
    rt_domain(did)%QSUBBDRYRT = 0.0
    rt_domain(did)%QSTRMVOLRT = 0.0
-   rt_domain(did)%QSTRMVOLRT = 0.0
    rt_domain(did)%QBDRYRT = 0.0
    rt_domain(did)%SFCHEADSUBRT = 0.0
    rt_domain(did)%INFXSUBRT = 0.0
    rt_domain(did)%DHRT = 0.0
    rt_domain(did)%LAKE_INFLORT = 0.0
-   !  rt_domain(did)%LAKE_INFLORT_DUM = 0.0
    rt_domain(did)%LAKE_CT = 0
    rt_domain(did)%STRM_CT = 0
-   !  rt_domain(did)%QSTRMVOLRT_DUM = 0.0
    rt_domain(did)%SOLDRAIN = 0.0
    rt_domain(did)%qinflowbase = 0.0
    
