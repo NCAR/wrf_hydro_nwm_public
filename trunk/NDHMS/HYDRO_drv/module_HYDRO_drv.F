@@ -1595,30 +1595,15 @@ endif
 !! This was previously done in HYDRO_rst_in and so output accumulations at time 
 !! zero were getting zeroed and then writtent to file, which looses information. 
 !! Note that nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
-
-! AD: Temporarily commented this out as it is causing memory issues in gfort. MOved back to restart_in_nc.
-if (.false.) then
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
-   !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
-   call flush(6)
-   !#endif
    ! Under channel-only , these first three variables are not allocated.
-   !if(allocated(rt_domain(did)%INFXSRT)) rt_domain(did)%INFXSRT      = zeroFlt
-   if(allocated(rt_domain(did)%LAKE_INFLORT)) rt_domain(did)%LAKE_INFLORT = zeroFlt
-   if(allocated(rt_domain(did)%QSTRMVOLRT)) rt_domain(did)%QSTRMVOLRT   = zeroFlt
-   rt_domain(did)%accSfcLatRunoff = zeroDbl
-   rt_domain(did)%accBucket    = zeroDbl
+   if(allocated(rt_domain(did)%LAKE_INFLORT))    rt_domain(did)%LAKE_INFLORT = zeroFlt
+   if(allocated(rt_domain(did)%QSTRMVOLRT))      rt_domain(did)%QSTRMVOLRT   = zeroFlt
+   ! These variables are optionally allocated, if their output is requested.
+   if(allocated(rt_domain(did)%accSfcLatRunoff)) rt_domain(did)%accSfcLatRunoff = zeroDbl
+   if(allocated(rt_domain(did)%accBucket))       rt_domain(did)%accBucket    = zeroDbl
 end if
-end if
-
-!#else
-!if (trim(nlst_rt(did)%restart_file) == "") then
-!   ! output at the initial time
-!   call HYDRO_out(did)
-!   return
-!endif
-!#endif
 
 end subroutine HYDRO_ini
 

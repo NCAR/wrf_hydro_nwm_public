@@ -2396,10 +2396,7 @@ MODULE MODULE_MPP_LAND
     real,    dimension(:), intent(inout) :: vector
     integer,               intent(in)    :: fromImage, toImage
     integer:: ierr, tag
-    integer:: my_id,numprocs
     tag=2   
-    call MPI_COMM_RANK(MPI_COMM_WORLD,my_id,ierr)
-    call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
     if(numprocs > 1) then
        if(my_id .eq. fromImage) &
           call mpi_send(vector, size(vector), MPI_REAL, &
@@ -2416,10 +2413,7 @@ MODULE MODULE_MPP_LAND
     character(len=*), dimension(:), intent(inout) :: vector
     integer,                        intent(in)    :: fromImage, toImage
     integer:: ierr, tag, totalLength
-    integer:: my_id,numprocs
     tag=2
-    call MPI_COMM_RANK(MPI_COMM_WORLD,my_id,ierr)
-    call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
     totalLength=len(vector(1))*size(vector,1)
     if(numprocs > 1) then
        if(my_id .eq. fromImage) &
