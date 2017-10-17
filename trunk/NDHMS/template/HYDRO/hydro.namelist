@@ -144,7 +144,8 @@ channel_option = 3
 ! Specify the reach file for reach-based routing options (e.g.: "Route_Link.nc")
 !route_link_f = "./DOMAIN/Route_Link.nc"
 
-! Specify the lake parameter file (e.g.: "LAKEPARM.nc" for netcdf or "LAKEPARM.TBL" for text)
+! Specify the lake parameter file (e.g.: "LAKEPARM.nc" for netcdf or "LAKEPARM.TBL" for text).
+! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)

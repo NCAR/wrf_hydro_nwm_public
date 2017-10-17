@@ -7557,7 +7557,7 @@ if (channel_option .eq. 3) then
           close(79)
         endif !endif for iret
       else ! lake parm files does not exist
-        call hydro_stop("Could not find file route_lake_f (may be blank): "//trim(route_lake_f))
+        call hydro_stop("Fatal error: route_lake_f must be specified in the hydro.namelist")
         !write(6,*) "ERROR: route_lake_f required for lakes"
         !write(6,*) "NLAKES = ", NLAKES
         !call flush(6)
