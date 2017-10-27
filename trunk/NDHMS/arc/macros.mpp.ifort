@@ -83,7 +83,7 @@ endif
 
 ifeq ($(ESMF_TRACE),1)
 ifneq ($(origin ESMFMKFILE), environment)
-$(error To use ESMF tracing, set ESMFMKFIL environment variable.)
+$(error To use ESMF tracing, set ESMFMKFILE environment variable to location of esmf.mk in ESMF installation.)
 endif
 include $(ESMFMKFILE)
 ESMF_TRACE   = -DESMF_TRACE
