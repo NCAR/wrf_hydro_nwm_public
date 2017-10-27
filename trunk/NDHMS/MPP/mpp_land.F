@@ -1518,6 +1518,71 @@ MODULE MODULE_MPP_LAND
       enddo
   end subroutine MPP_CHANNEL_COM_REAL
 
+
+  subroutine MPP_CHANNEL_COM_REAL8(Link_location,ix,jy,Link_V,size,flag)
+  ! communicate the data for channel routine.
+      implicit none
+      integer ix,jy,size
+      integer Link_location(ix,jy)
+      integer i,j, flag
+      real*8 ::  Link_V(size), tmp_inout(ix,jy)
+
+      tmp_inout = -999
+
+      if(size .eq. 0) then  
+            tmp_inout = -999
+      else
+
+         !     map the Link_V data to tmp_inout(ix,jy)
+         do i = 1,ix 
+            if(Link_location(i,1) .gt. 0) &
+               tmp_inout(i,1) = Link_V(Link_location(i,1))
+            if(Link_location(i,2) .gt. 0) &
+               tmp_inout(i,2) = Link_V(Link_location(i,2))
+            if(Link_location(i,jy-1) .gt. 0) &
+               tmp_inout(i,jy-1) = Link_V(Link_location(i,jy-1))
+            if(Link_location(i,jy) .gt. 0) &
+               tmp_inout(i,jy) = Link_V(Link_location(i,jy))
+          enddo
+         do j = 1,jy 
+            if(Link_location(1,j) .gt. 0) &
+               tmp_inout(1,j) = Link_V(Link_location(1,j))
+            if(Link_location(2,j) .gt. 0) &
+               tmp_inout(2,j) = Link_V(Link_location(2,j))
+            if(Link_location(ix-1,j) .gt. 0) &
+               tmp_inout(ix-1,j) = Link_V(Link_location(ix-1,j))
+            if(Link_location(ix,j) .gt. 0) &
+               tmp_inout(ix,j) = Link_V(Link_location(ix,j))
+         enddo
+    endif
+
+!   commu nicate tmp_inout
+    call MPP_LAND_COM_REAL8(tmp_inout, ix,jy,flag)
+
+!map the data back to Link_V
+    if(size .eq. 0) return
+      do j = 1,jy 
+            if( (Link_location(1,j) .gt. 0) .and. (tmp_inout(1,j) .ne. -999) ) &
+               Link_V(Link_location(1,j)) = tmp_inout(1,j)
+            if((Link_location(2,j) .gt. 0) .and. (tmp_inout(2,j) .ne. -999) ) &
+               Link_V(Link_location(2,j)) = tmp_inout(2,j)
+            if((Link_location(ix-1,j) .gt. 0) .and. (tmp_inout(ix-1,j) .ne. -999)) &
+               Link_V(Link_location(ix-1,j)) = tmp_inout(ix-1,j)
+            if((Link_location(ix,j) .gt. 0) .and. (tmp_inout(ix,j) .ne. -999) )&
+               Link_V(Link_location(ix,j)) = tmp_inout(ix,j)
+      enddo
+      do i = 1,ix 
+            if((Link_location(i,1) .gt. 0) .and. (tmp_inout(i,1) .ne. -999) )&
+               Link_V(Link_location(i,1)) = tmp_inout(i,1)
+            if( (Link_location(i,2) .gt. 0) .and. (tmp_inout(i,2) .ne. -999) )&
+               Link_V(Link_location(i,2)) = tmp_inout(i,2)
+            if((Link_location(i,jy-1) .gt. 0) .and. (tmp_inout(i,jy-1) .ne. -999) ) &
+               Link_V(Link_location(i,jy-1)) = tmp_inout(i,jy-1)
+            if((Link_location(i,jy) .gt. 0) .and. (tmp_inout(i,jy) .ne. -999) ) &
+               Link_V(Link_location(i,jy)) = tmp_inout(i,jy)
+      enddo
+  end subroutine MPP_CHANNEL_COM_REAL8
+
   subroutine MPP_CHANNEL_COM_INT(Link_location,ix,jy,Link_V,size,flag)
   ! communicate the data for channel routine.
       implicit none
@@ -2396,7 +2461,10 @@ MODULE MODULE_MPP_LAND
     real,    dimension(:), intent(inout) :: vector
     integer,               intent(in)    :: fromImage, toImage
     integer:: ierr, tag
+    integer:: my_id,numprocs
     tag=2   
+    call MPI_COMM_RANK(MPI_COMM_WORLD,my_id,ierr)
+    call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
     if(numprocs > 1) then
        if(my_id .eq. fromImage) &
           call mpi_send(vector, size(vector), MPI_REAL, &
@@ -2413,7 +2481,10 @@ MODULE MODULE_MPP_LAND
     character(len=*), dimension(:), intent(inout) :: vector
     integer,                        intent(in)    :: fromImage, toImage
     integer:: ierr, tag, totalLength
+    integer:: my_id,numprocs
     tag=2
+    call MPI_COMM_RANK(MPI_COMM_WORLD,my_id,ierr)
+    call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
     totalLength=len(vector(1))*size(vector,1)
     if(numprocs > 1) then
        if(my_id .eq. fromImage) &
