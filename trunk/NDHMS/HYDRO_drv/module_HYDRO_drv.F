@@ -50,6 +50,9 @@ module module_HYDRO_drv
 
    use module_UDMAP, only: get_basn_area_nhd
    use netcdf
+#ifdef ESMF_TRACE
+   use ESMF
+#endif
    
    implicit none
 
@@ -615,6 +618,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       RT_DOMAIN(did)%QSTRMVOLRT = zeroFlt
       RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
+#ifdef ESMF_TRACE
+      call ESMF_TraceRegionEnter("disagg")
+#endif
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call disaggregateDomain_drv(did)
       endif
@@ -625,6 +631,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
          endif
       endif
+#ifdef ESMF_TRACE
+      call ESMF_TraceRegionExit("disagg")
+#endif
 
 #ifdef HYDRO_D
       call system_clock(count=clock_count_1, count_rate=clock_rate)
@@ -1323,7 +1332,13 @@ integer            :: iret, ncid, ascIndId
 call  MPP_LAND_INIT()
 #endif
 
-
+#ifdef ESMF_TRACE
+    call ESMF_Initialize(logkindflag=ESMF_LOGKIND_NONE, rc=iret)
+    if (iret /= ESMF_SUCCESS) then
+       print *, "Failed to initialize ESMF and ESMF_TRACE=1"
+       stop
+    endif
+#endif
 ! read the namelist
 ! the lsm namelist will be read by rtland sequentially again.
 call read_rt_nlst(nlst_rt(did) )
@@ -1808,7 +1823,9 @@ end module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
         use module_stream_nudging,  only: finish_stream_nudging
 #endif
-        
+#ifdef ESMF_TRACE
+        use ESMF
+#endif
         integer :: ierr
 
 #ifdef WRF_HYDRO_NUDGING
@@ -1818,6 +1835,9 @@ end module module_HYDRO_drv
         print*, "The model finished successfully......."
 #else
         write(78,*) "The model finished successfully......."
+#endif
+#ifdef ESMF_TRACE
+    call ESMF_Finalize()
 #endif
 #ifdef MPP_LAND
 !         call mpp_land_abort()

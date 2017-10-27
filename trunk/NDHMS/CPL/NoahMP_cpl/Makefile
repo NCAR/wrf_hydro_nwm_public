@@ -7,7 +7,7 @@
 
 include ../../macros
 
-MODFLAG =       -I./ -I ../../MPP -I ../../mod
+MODFLAG =       -I./ -I ../../MPP -I ../../mod $(ESMF_INCLUDE)
 
 OBJS = \
 	module_hrldas_HYDRO.o \
