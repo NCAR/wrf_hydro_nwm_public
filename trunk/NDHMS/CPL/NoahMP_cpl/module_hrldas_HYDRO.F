@@ -44,11 +44,27 @@ module module_HRLDAS_HYDRO
     integer :: nn
     integer :: open_unit_status
 
+#ifdef WRF_HYDRO_RAPID
+     real :: timeAcc1 = 0
+     real :: timeAcc2 = 0
+     integer :: clock_count_1 = 0
+     integer :: clock_count_2 = 0
+     integer :: clock_count_3 = 0
+     integer :: clock_rate    = 0
+#endif
+
+
 
 
 CONTAINS
 
     subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+
+!---lpr added 2015-07-30---------
+#ifdef WRF_HYDRO_RAPID
+    use hrldas_RAPID_wrapper, only: hrldas_RAPID_ini,hrldas_RAPID_exe
+#endif
+!---lpr add end-----------------
 
 
        implicit none
@@ -57,10 +73,11 @@ CONTAINS
        integer k, gwsoilcpl
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
+
 !lpr add 2014-06-24
 #ifdef WRF_HYDRO_RAPID
 #ifdef MPP_LAND
-        real, dimension(ii,jj) :: g_runoff
+        real, dimension(global_nx,global_ny) :: g_runoff
 #endif
         real, dimension(ii,jj) :: runoff
 #endif
@@ -84,17 +101,47 @@ CONTAINS
 !--------LPR add 2014-06-24---------------------------
 !    it is rapid model
 #ifdef WRF_HYDRO_RAPID
+
         if(nlst_rt(did)%channel_option .eq. 4) then
+                !write(83,*) infxsrt
                 runoff  = infxsrt + soldrain
+
+		!---MPI debug information-------
+                !write(60+my_id,*) "before hrldas_RAPID_ini step 1"
+                !call flush(60+my_id)
+
                 call hrldas_RAPID_ini(ntime)    
+
+                call system_clock(count=clock_count_1, count_rate=clock_rate)
+
+                !write(60+my_id,*) "after hrldas_RAPID_ini step 2"
+                !call flush(60+my_id)
 #ifdef MPP_LAND
                 call write_io_real(runoff,g_runoff)
-                if(my_id.eq.io_id) &
-                call hrldas_RAPID_exe(runoff,g_global_nx,global_ny)     
+
+                !write(60+my_id,*) "before hrldas_RAPID_exe step 3"
+                !call flush(60+my_id)
+
+                call mpp_land_sync()
+                call system_clock(count=clock_count_2, count_rate=clock_rate)
+                call hrldas_RAPID_exe(g_runoff,global_nx,global_ny)     
+                call mpp_land_sync()
+                !write(60+my_id,*) "after hrldas_RAPID_exe step 4"
+                !call flush(60+my_id)
+
 #else
                 call hrldas_RAPID_exe(runoff,ii,jj)     
 #endif
+
+                call system_clock(count=clock_count_3, count_rate=clock_rate)
+                timeAcc2 = timeAcc2+ float(clock_count_3-clock_count_2)/float(clock_rate)
+                timeAcc1 = timeAcc1+ float(clock_count_3-clock_count_1)/float(clock_rate)
+                write(6,*) "Timing (accumulated time for Rapid) :",timeAcc1, timeAcc2
+
+
                 sfcheadrt = 0.0
+
+
                 return
         endif
 #endif

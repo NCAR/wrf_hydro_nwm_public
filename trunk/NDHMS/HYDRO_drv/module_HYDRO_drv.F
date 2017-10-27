@@ -27,9 +27,11 @@ module module_HYDRO_drv
 #else
    use module_HYDRO_io, only:  output_rt, output_chrt, output_chrt2, output_lakes
 #endif
-   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM
+   use module_NWM_io, only: output_chrt_NWM, output_rt_NWM, output_lakes_NWM,&
+                            output_chrtout_grd_NWM, output_lsmOut_NWM, &
+                            output_frxstPts, output_chanObs_NWM, output_gw_NWM
    use module_HYDRO_io, only: sub_output_gw, restart_out_nc, restart_in_nc,  &
-        get_file_dimension ,get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
+        get_file_dimension , get_file_globalatts, get2d_lsm_real, get2d_lsm_vegtyp, get2d_lsm_soltyp, &
         output_lsm,  output_GW_Diag
    use module_HYDRO_io, only : output_lakes2
    use module_rt_data, only: rt_domain
@@ -62,8 +64,12 @@ module module_HYDRO_drv
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
 #endif
+  integer :: rtout_factor
 
-   
+  integer, parameter :: r4 = selected_real_kind(4)
+  real,    parameter :: zeroFlt=0.0000000000000000000_r4
+  integer, parameter :: r8 = selected_real_kind(8)
+  real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
 
    contains
    subroutine HYDRO_rst_out(did)
@@ -139,10 +145,11 @@ module module_HYDRO_drv
 
    end subroutine HYDRO_rst_out
 
-   subroutine HYDRO_out(did)
+   subroutine HYDRO_out(did, rstflag)
    
       implicit none
-      integer did, outflag, rtflag
+      integer did, outflag, rtflag, iniflag
+      integer rstflag
       character(len=19) out_date
       integer :: Kt, ounit, i
       real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
@@ -190,7 +197,7 @@ module module_HYDRO_drv
      call mpp_land_bcast_int1(outflag)
 #endif
 
-     call HYDRO_rst_out(did) 
+     if (rstflag .eq. 1) call HYDRO_rst_out(did) 
 
      if (outflag .lt. 0) return
 
@@ -206,20 +213,23 @@ module module_HYDRO_drv
 
 ! jump the ouput for the initial time when it has restart file from routing.
    rtflag = -99
+   iniflag = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then
 #endif
-       if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
-#ifndef NCEP_WCOSS
-             print*, "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
-#else
-             write(78,*) "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
-#endif
-             rtflag = 1
-       endif
+!       if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) then
+!#ifndef NCEP_WCOSS
+!             print*, "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+!#else
+!             write(78,*) "yyyywww restart_file = ", trim(nlst_rt(did)%restart_file) 
+!#endif
+          if ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) iniflag = 1
+          if ( (trim(nlst_rt(did)%restart_file) /= "") .and. ( nlst_rt(did)%startdate(1:19) == nlst_rt(did)%olddate(1:19) ) ) rtflag = 1
+!       endif
 #ifdef MPP_LAND
    endif  
    call mpp_land_bcast_int1(rtflag)
+   call mpp_land_bcast_int1(iniflag)
 #endif
 
 
@@ -227,17 +237,22 @@ module module_HYDRO_drv
       if(rtflag == 1) then 
           rt_domain(did)%restQSTRM = .false.   !!! do not reset QSTRM.. at initial time.
           if(nlst_rt(did)%t0OutputFlag .eq. 0) return
-#ifndef HYDRO_REALTIME
-          return ! jump the initial time output for routing restart
-#endif
       endif
 
+      if (iniflag == 1) then
+         if(nlst_rt(did)%t0OutputFlag .eq. 0) return
+      endif
 
-     if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  &
-     call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
-                 //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
-                 ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
-                 did)
+     if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
+        if(nlst_rt(did)%io_form_outputs .eq. 0) then
+           call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
+                       //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
+                       ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
+                       did)
+           else
+           call output_lsmOut_NWM(did)
+        endif
+     endif
 
     
 if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
@@ -250,40 +265,51 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    if(nlst_rt(did)%RTOUT_DOMAIN       .eq. 1 .and. &
       nlst_rt(did)%channel_only       .eq. 0 .and. &
       nlst_rt(did)%channelBucket_only .eq. 0       ) then 
-              ! Output gridded routing variables on National Water Model
-              ! high-res routing grid 
-              if(nlst_rt(did)%nwmIo .ne. 0) then
-                 call output_rt_NWM(did,nlst_rt(did)%igrid)
-              else
-                 call output_rt(    &
-                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                   RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
-                   nlst_rt(did)%nsoil, &
-   !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,
-   !               RT_DOMAIN(did)%QSUBRT,&
-                   nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
-                   RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
-                   RT_DOMAIN(did)%SUB_RESID,       &
+              if(mod(rtout_factor,3) .eq. 0 .or. nlst_rt(did)%io_config_outputs .ne. 5) then
+                 ! Output gridded routing variables on National Water Model
+                 ! high-res routing grid 
+                 if(nlst_rt(did)%io_form_outputs .ne. 0) then
+                    call output_rt_NWM(did,nlst_rt(did)%igrid)
+                 else
+                    call output_rt(    &
+                      nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                      RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
+                      nlst_rt(did)%nsoil, &
+   !                  nlst_rt(did)%startdate, nlst_rt(did)%olddate,
+   !                  RT_DOMAIN(did)%QSUBRT,&
+                      nlst_rt(did)%sincedate, nlst_rt(did)%olddate, RT_DOMAIN(did)%QSUBRT,&
+                      RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
+                      RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
-                   RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
-                   RT_DOMAIN(did)%QSTRMVOLRT,RT_DOMAIN(did)%SFCHEADSUBRT, &
-                   nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
-                   RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                   RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                   RT_DOMAIN(did)%QBDRYRT &
-#ifdef HYDRO_REALTIME
-                   , nlst_rt(did)%iocflag &
-#endif
-                    )
-              endif ! End check for nwmIo value
+                      RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
+                      RT_DOMAIN(did)%QSTRMVOLRT_ACC,RT_DOMAIN(did)%SFCHEADSUBRT, &
+                      nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
+                      RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
+                      RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
+                      RT_DOMAIN(did)%QBDRYRT, &
+                      nlst_rt(did)%io_config_outputs &
+                       )
+                 endif ! End check for io_form_outputs value
+              endif ! End check for rtout_factor
+           rtout_factor = rtout_factor + 1
    endif
    !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
    !! JLM This seems like a more logical place?
-   if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
-      if(nlst_rt(did)%channel_only .eq. 0) then
-         if(nlst_rt(did)%output_gw  .eq. 1) call output_GW_Diag(did)
+   if(nlst_rt(did)%io_form_outputs .ne. 0) then
+      if(nlst_rt(did)%GWBASESWCRT .ne. 0) then
+         if(nlst_rt(did)%channel_only .eq. 0) then
+            if(nlst_rt(did)%output_gw .ne. 0) then
+               call output_gw_NWM(did,nlst_rt(did)%igrid)
+            endif
+         endif
       endif
-   end if
+   else
+      if(nlst_rt(did)%GWBASESWCRT .eq. 1) then 
+         if(nlst_rt(did)%channel_only .eq. 0) then
+            if(nlst_rt(did)%output_gw  .eq. 1) call output_GW_Diag(did)
+         endif
+      end if
+   endif
 
 
    if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
@@ -321,7 +347,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
              str_out = RT_DOMAIN(did)%QLINK
              vel_out = RT_DOMAIN(did)%velocity
 
-#ifdef HYDRO_REALTIME
              if (RT_DOMAIN(did)%NLAKES .gt. 0)  then
                     do i=1,RT_DOMAIN(did)%NLINKS
                         if (RT_DOMAIN(did)%TYPEL(i) .eq. 2) then
@@ -330,13 +355,20 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                         endif
                     end do
              endif
-#endif
 !ADCHANGE: End
 
-   if(nlst_rt(did)%nwmIo .ne. 0) then
+   if(nlst_rt(did)%io_form_outputs .ne. 0) then
       ! Call National Water Model output routine for output on NHD forecast points.
       if(nlst_rt(did)%CHRTOUT_DOMAIN .ne. 0) then
          call output_chrt_NWM(did)
+      endif
+      ! Call the subroutine to output frxstPts.
+      if(nlst_rt(did)%frxst_pts_out .ne. 0) then
+         call output_frxstPts(did)
+      endif
+      ! Call the subroutine to output CHANOBS
+      if(nlst_rt(did)%CHANOBS_DOMAIN .ne. 0) then
+         call output_chanObs_NWM(did)
       endif
    else
       ! Call traditional output routines
@@ -386,9 +418,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 #ifdef WRF_HYDRO_NUDGING
                      , RT_DOMAIN(did)%nudge &
 #endif
-                     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag,
+                     !, RT_DOMAIN(did)%QLateral, nlst_rt(did)%io_config_outputs,
                      !RT_DOMAIN(did)%velocity &
-                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%iocflag, vel_out &
+                     , RT_DOMAIN(did)%QLateral, nlst_rt(did)%io_config_outputs, vel_out &
                      , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
                      , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket &
                      , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT &
@@ -396,22 +428,26 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                  endif
 
               endif
-   endif ! End of checking for nwmIo flag value      
+   endif ! End of checking for io_form_outputs flag value      
       
 #ifdef MPP_LAND
-              if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  &
-              call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                  RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
-                  RT_DOMAIN(did)%GCH_NETLNK, &
-                  nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
-                  !RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-                  str_out, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
-                  RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
-                  RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
+              if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  then
+                 if(nlst_rt(did)%io_form_outputs .eq. 0) then
+                    call mpp_output_chrtgrd(nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+                    RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt, RT_DOMAIN(did)%NLINKS,   &
+                    RT_DOMAIN(did)%GCH_NETLNK, &
+                    nlst_rt(did)%startdate, nlst_rt(did)%olddate, &
+                    !RT_DOMAIN(did)%qlink, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                    str_out, nlst_rt(did)%dt, nlst_rt(did)%geo_finegrid_flnm,   &
+                    RT_DOMAIN(did)%gnlinks,RT_DOMAIN(did)%map_l2g,                   &
+                    RT_DOMAIN(did)%g_ixrt,RT_DOMAIN(did)%g_jxrt )
 #endif
-
+                 else
+                    call output_chrtout_grd_NWM(did,nlst_rt(did)%igrid)
+                 endif
+              endif
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
-                      if(nlst_rt(did)%nwmIo .ne. 0) then
+                      if(nlst_rt(did)%io_form_outputs .ne. 0) then
                          ! Output lakes in NWM format
                          if(nlst_rt(did)%outlake .ne. 0) then
                             call output_lakes_NWM(did,nlst_rt(did)%igrid)
@@ -446,7 +482,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                                   RT_DOMAIN(did)%RESHT,nlst_rt(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
                          endif
 
-                      endif ! end of check for nwmIo value
+                      endif ! end of check for io_form_outputs value
                endif   ! end if block of rNLAKES .gt. 0
         endif 
 #ifdef HYDRO_D
@@ -576,7 +612,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    ! step 1) disaggregate specific fields from LSM to Hydro grid
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
-      RT_DOMAIN(did)%QSTRMVOLRT_DUM = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%QSTRMVOLRT = zeroFlt
       RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
@@ -634,7 +670,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 #endif
 #endif
 
-      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT-RT_DOMAIN(did)%QSTRMVOLRT_DUM
+      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%QSTRMVOLRT_ACC = RT_DOMAIN(did)%QSTRMVOLRT_ACC + RT_DOMAIN(did)%QSTRMVOLRT_TS
+      
       RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 			
 #ifdef HYDRO_D
@@ -695,7 +733,7 @@ end if
 !          call HYDRO_out(did)
 !yw  endif
            call HYDRO_time_adv(did)
-           call HYDRO_out(did)
+           call HYDRO_out(did, 1)
 
 
 !           write(90 + my_id,*) "finish calling hydro_exe"
@@ -703,9 +741,10 @@ end if
 !          call mpp_land_sync()
 
 
-            
-           RT_DOMAIN(did)%SOLDRAIN = 0
-           RT_DOMAIN(did)%QSUBRT = 0
+
+           !! Under channel-only, these variables are not allocated
+           if(allocated(RT_DOMAIN(did)%SOLDRAIN)) RT_DOMAIN(did)%SOLDRAIN = 0
+           if(allocated(RT_DOMAIN(did)%QSUBRT))   RT_DOMAIN(did)%QSUBRT   = 0            
 
 
 
@@ -862,21 +901,6 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
 !-------------------------------------------------------------------
 
 if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
-
-
-    if(rt_domain(did)%restQSTRM) then
-       RT_DOMAIN(did)%QSTRMVOLRT_TS = 0.000001
-       rt_domain(did)%restQSTRM = .false.
-#ifdef HYDRO_D
-#ifndef NCEP_WCOSS
-       write(6,*) "***** set QSTRMVOLRT_TS = 0.000001 *********"
-#else
-       write(78,*) "***** set QSTRMVOLRT_TS = 0.000001 *********" 
-#endif
-       call flush(6)
-#endif
-    endif 
-101  continue
 
  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
      !!! for user defined Reach based Routing method.
@@ -1293,11 +1317,6 @@ integer rst_out, ix,jx
 !        integer, OPTIONAL:: ix0,jx0
 integer:: ix0,jx0
 integer, dimension(ix0,jx0),optional :: vegtyp, soltyp
-
-integer, parameter :: r4 = selected_real_kind(4)
-real,    parameter :: zeroFlt=0.0000000000000000000_r4
-integer, parameter :: r8 = selected_real_kind(8)
-real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
 integer            :: iret, ncid, ascIndId
 
 #ifdef MPP_LAND
@@ -1397,6 +1416,18 @@ write(78,*) "finish getChanDim "
 #endif
 #endif
 
+! ADCHANGE: get global attributes
+! need to set these after getChanDim since it allocates rt_domain vals to 0
+     call get_file_globalatts(trim(nlst_rt(did)%geo_static_flnm), &
+           rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater)
+
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
+      write(6,*) "hydro_ini: rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater"
+      write(6,*) rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater
+#endif
+#endif
+
 if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
    call gw2d_allocate(did,&
         rt_domain(did)%ixrt,&
@@ -1436,8 +1467,8 @@ write(78,*) "finish decomposion"
 
 
 if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
-     nlst_rt(1)%nwmIo .ne. 0) then
-   !! This is the "decoder ring" for reading channel-only forcing from nwmIo=1,2 CHRTOUT files.
+     nlst_rt(1)%io_form_outputs .ne. 0) then
+   !! This is the "decoder ring" for reading channel-only forcing from io_form_outputs=1,2 CHRTOUT files.
    !! Only needed on io_id
    if(my_id .eq. io_id) then
       allocate(rt_domain(did)%ascendIndex(rt_domain(did)%gnlinksl))
@@ -1535,8 +1566,12 @@ if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 
 call HYDRO_rst_in(did)
 
-#ifdef HYDRO_REALTIME
-call HYDRO_out(did)
+!#ifdef HYDRO_REALTIME
+if (trim(nlst_rt(did)%restart_file) == "") then
+  call HYDRO_out(did, 0)
+else
+  call HYDRO_out(did, 1)
+endif
 !! JLM: This is only currently part 1/2 of a better accumulation tracking strategy. 
 !! The parts:
 !! 1) (this) zero accumulations on restart/init after any t=0 outputs are written.
@@ -1547,27 +1582,20 @@ call HYDRO_out(did)
 !! zero were getting zeroed and then writtent to file, which looses information. 
 !! Note that nlst_rt(did)%rstrt_swc is not changed at any point in between here and the rst_in.
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
-   !#ifdef HYDRO_D
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
-   !#endif
-   rt_domain(did)%INFXSRT      = zeroFlt
-   rt_domain(did)%LAKE_INFLORT = zeroFlt
-   rt_domain(did)%QSTRMVOLRT   = zeroFlt
-   rt_domain(did)%accSfcLatRunoff = zeroDbl
-   rt_domain(did)%accBucket    = zeroDbl
+   ! Under channel-only , these first three variables are not allocated.
+   if(allocated(rt_domain(did)%LAKE_INFLORT))    rt_domain(did)%LAKE_INFLORT = zeroFlt
+   if(allocated(rt_domain(did)%QSTRMVOLRT_ACC))  rt_domain(did)%QSTRMVOLRT_ACC   = zeroFlt
+   ! These variables are optionally allocated, if their output is requested.
+   if(allocated(rt_domain(did)%accSfcLatRunoff)) rt_domain(did)%accSfcLatRunoff = zeroDbl
+   if(allocated(rt_domain(did)%accBucket))       rt_domain(did)%accBucket    = zeroDbl
 end if
-#else
-if (trim(nlst_rt(did)%restart_file) == "") then
-   ! output at the initial time
-   call HYDRO_out(did)
-   return
-endif
-#endif
 
 end subroutine HYDRO_ini
 
       subroutine lsm_input(did,ix0,jx0,vegtyp0,soltyp0)
          implicit none
+#include <netcdf.inc>
          integer did, leng, ncid, ierr_flg
          parameter(leng=100)
          integer :: i,j, nn
@@ -1576,6 +1604,7 @@ end subroutine HYDRO_ini
 
         integer :: ix0,jx0
         integer, dimension(ix0,jx0),OPTIONAL :: vegtyp0, soltyp0
+        integer :: iret, istmp
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
@@ -1598,19 +1627,18 @@ end subroutine HYDRO_ini
          call get2d_lsm_vegtyp(RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst_rt(did)%geo_static_flnm))
 
 
-
             if(nlst_rt(did)%sys_cpl .eq. 2 ) then
               ! coupling with WRF
                 if(present(soltyp0) ) then
-                   where(soltyp0 == 14) VEGTYP0 = 16
-                   where(VEGTYP0 == 16 ) soltyp0 = 14
+                  where(soltyp0 == rt_domain(did)%isoilwater) VEGTYP0 = rt_domain(did)%iswater
+                  where(VEGTYP0 == rt_domain(did)%iswater ) soltyp0 = rt_domain(did)%isoilwater 
                    soltyp = soltyp0
                    RT_DOMAIN(did)%VEGTYP = VEGTYP0
                 endif
             endif
 
-         where(soltyp == 14) RT_DOMAIN(did)%VEGTYP = 16
-         where(RT_DOMAIN(did)%VEGTYP == 16 ) soltyp = 14
+         where(soltyp == rt_domain(did)%isoilwater) RT_DOMAIN(did)%VEGTYP = rt_domain(did)%iswater
+         where(RT_DOMAIN(did)%VEGTYP == rt_domain(did)%iswater ) soltyp = rt_domain(did)%isoilwater
 
 ! LKSAT, 
 ! temporary set
@@ -1630,7 +1658,7 @@ end subroutine HYDRO_ini
 
        ierr_flg = 99
        if(trim(nlst_rt(did)%hydrotbl_f) == "") then
-           call hydro_stop("FATAL ERROR: hydrotbl_f is empty. ")
+           call hydro_stop("FATAL ERROR: hydrotbl_f is empty. Please input a netcdf file. ")
        endif
 
 #ifdef MPP_LAND
@@ -1694,7 +1722,7 @@ end subroutine HYDRO_ini
              do i = 1, RT_DOMAIN(did)%ix
                 !yw rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) * 1000.0
                 rt_domain(did)%lksat(i,j) = xdum1(soltyp(i,j) ) 
-                IF(rt_domain(did)%VEGTYP(i,j) == 1 ) THEN   ! urban
+                IF(rt_domain(did)%VEGTYP(i,j) == rt_domain(did)%isurban ) THEN   ! urban
                     rt_domain(did)%SMCMAX1(i,j) = 0.45
                     rt_domain(did)%SMCREF1(i,j) = 0.42
                     rt_domain(did)%SMCWLT1(i,j) = 0.40
@@ -1724,7 +1752,7 @@ end subroutine HYDRO_ini
 
        rt_domain(did)%soiltyp = soltyp
        
-       deallocate(soltyp)
+       if(allocated(soltyp)) deallocate(soltyp)
 
 
       end subroutine lsm_input

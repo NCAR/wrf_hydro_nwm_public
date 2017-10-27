@@ -93,6 +93,10 @@ CONTAINS
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
       if(rt_domain(did)%NLINKSL .eq. 0) NLINKSL = 1
 
+      rt_domain(did)%iswater = 0
+      rt_domain(did)%isurban = 0
+      rt_domain(did)%isoilwater = 0
+
 !DJG Allocate routing and disaggregation arrays
 
 #ifdef HYDRO_D
@@ -178,10 +182,9 @@ CONTAINS
      allocate( rt_domain(did)%QSTRMVOLRT  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT  = 0.0
      allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
-     !
-
-     allocate( rt_domain(did)%QSTRMVOLRT_DUM  (IXRT,JXRT) )
-     rt_domain(did)%QSTRMVOLRT_DUM  = 0.0                
+     rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
+     allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
+     rt_domain(did)%QSTRMVOLRT_ACC  = 0.0                
      allocate( rt_domain(did)%QBDRYRT   	(IXRT,JXRT) )
      rt_domain(did)%QBDRYRT   	= 0.0     
      allocate( rt_domain(did)%SUB_RESID (ixrt,jxrt) )
@@ -202,8 +205,8 @@ CONTAINS
      allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
      rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
      allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
-     rt_domain(did)%LONVAL = 0.0
      allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
+     rt_domain(did)%LONVAL = 0.0
      rt_domain(did)%LATVAL = 0.0                
 
 
@@ -339,20 +342,24 @@ CONTAINS
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+        allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
         allocate( rt_domain(did)%WEIRH(NLAKES) )
         allocate( rt_domain(did)%WEIRC(NLAKES) )
         allocate( rt_domain(did)%WEIRL(NLAKES) )
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+
          rt_domain(did)%HRZAREA = 0.0        
          rt_domain(did)%WEIRH = 0.0        
          rt_domain(did)%WEIRC = 0.0        
          rt_domain(did)%WEIRL = 0.0        
          rt_domain(did)%LAKEMAXH = 0.0        
+         rt_domain(did)%ELEVLAKE= 0.0        
          rt_domain(did)%ORIFICEC = 0.0        
          rt_domain(did)%ORIFICEA = 0.0        
          rt_domain(did)%ORIFICEE = 0.0        
+
      endif
 
 
@@ -375,23 +382,24 @@ CONTAINS
         if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
            nlst_rt(did)%output_channelBucket_influx .eq. 3      ) &
            allocate( rt_domain(did)%qBtmVertRunoff(     1) )
-        if(nlst_rt(did)%output_channelBucket_influx .eq. 2) &
+        if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
              allocate( rt_domain(did)%qBtmVertRunoff(nsizes) )
+             rt_domain(did)%qBtmVertRunoff  = zeroFlt
+        endif
 
         if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then        
            allocate( rt_domain(did)%accSfcLatRunoff(nsizes) )
            allocate( rt_domain(did)%accBucket(      nsizes) )
            allocate( rt_domain(did)%qSfcLatRunoff(       1) )
            allocate( rt_domain(did)%qBucket(             1) )
+           rt_domain(did)%accSfcLatRunoff = zeroDbl
+           rt_domain(did)%accBucket       = zeroDbl
+           rt_domain(did)%qSfcLatRunoff   = zeroFlt
+           rt_domain(did)%qBucket         = zeroFlt
         endif
 
 	allocate( rt_domain(did)%QLateral(nsizes) )
 	allocate( rt_domain(did)%velocity(nsizes) )
-        rt_domain(did)%accSfcLatRunoff = zeroDbl
-        rt_domain(did)%accBucket       = zeroDbl
-        rt_domain(did)%qSfcLatRunoff   = zeroFlt
-        rt_domain(did)%qBucket         = zeroFlt
-        rt_domain(did)%qBtmVertRunoff  = zeroFlt
 	rt_domain(did)%QLateral  = zeroFlt
 	rt_domain(did)%velocity  = zeroFlt
      endif
@@ -408,7 +416,7 @@ CONTAINS
      allocate( rt_domain(did)%CVOL(nsizes) )
      allocate( rt_domain(did)%LATLAKE(NLAKES) )
      allocate( rt_domain(did)%LONLAKE(NLAKES) )
-     allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
+!    allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
      allocate( rt_domain(did)%LAKENODE(nsizes) )
      allocate( rt_domain(did)%RESHT(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
@@ -443,7 +451,7 @@ CONTAINS
 
       rt_domain(did)%LATLAKE = 0.0        
       rt_domain(did)%LONLAKE = 0.0        
-      rt_domain(did)%ELEVLAKE = 0.0        
+!     rt_domain(did)%ELEVLAKE = 0.0        
       rt_domain(did)%LAKENODE = 0.0        
       rt_domain(did)%RESHT = 0.0                    
       rt_domain(did)%QLAKEI = 0.0                     
@@ -538,7 +546,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !I
               nlst_rt(did)%route_direction_f, &
               rt_domain(did)%NLINKS, &
               CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
-              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt )
+              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt , rt_domain(did)%nlakes)
 #ifndef MPP_LAND
    call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
 #endif
@@ -680,7 +688,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%CHLON,        nlst_rt(did)%channel_option,    &
              rt_domain(did)%latval,       rt_domain(did)%lonval,          &
              rt_domain(did)%STRMFRXSTPTS, nlst_rt(did)%geo_finegrid_flnm, &
-             nlst_rt(did)%UDMP_OPT                                        & !! no comma
+             nlst_rt(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst_rt(did)%UDMP_OPT   & !! no comma
 #ifdef MPP_LAND
              ,rt_domain(did)%g_IXRT,      rt_domain(did)%g_JXRT      &
              ,rt_domain(did)%gnlinks,     rt_domain(did)%GCH_NETLNK  &
@@ -722,7 +730,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
-   call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
+if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+  call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
+endif
 #endif
 
 #ifdef OUTPUT_CHAN_CONN      
@@ -1136,7 +1146,8 @@ else
 !Temporary hardwire...
          rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
 
-         call read_GWBUCKPARM(rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
+         call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
+              rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
               rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
               rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
 
@@ -1202,8 +1213,10 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
 #else
       call CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #endif
-       end if
-     if (nlst_rt(did)%channel_option .ne. 3) then
+   end if
+
+   if (nlst_rt(did)%channel_option .ne. 3) then
+
 #ifdef MPP_LAND
         if(my_id .eq. io_id) then
 #endif
@@ -1212,15 +1225,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
 #ifdef MPP_LAND
         endif
 #endif
-        do j=1,rt_domain(did)%NLINKSL
-           do k = 1, rt_domain(did)%NLAKES
-            if(rt_domain(did)%LAKEIDM(k) .eq. rt_domain(did)%LINKID(j)) then
-              if (rt_domain(did)%TYPEL(j) .eq. 1) then !- for sparse network method this is a lake  (type 0 is river)
-                rt_domain(did)%RESHT(k) = rt_domain(did)%LAKEMAXH(k) * 0.935  !-- assumes lake is ~90% MA, should put in Lake Parm
-              endif
-            endif
-           end do
-        end do
+
 #ifdef MPP_LAND
         call updateLake_seq(rt_domain(did)%RESHT, rt_domain(did)%NLAKES,tmpRESHT)
         if(my_id .eq. io_id) then 
@@ -1228,7 +1233,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
         endif
 #endif
 
-     else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
+   else       !-- parameterize according to order of diffusion scheme, or if read from hi res file, use its value
                 !--  put condition within the if/then structure, which will assign a value if something is missing in hi res
 
         do j=1,rt_domain(did)%NLINKS
@@ -1327,13 +1332,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
                 
             rt_domain(did)%CVOL(j) = (rt_domain(did)%Bw(j)+ 1/rt_domain(did)%ChSSLP(j)*rt_domain(did)%HLINK(j))*rt_domain(did)%HLINK(j)*rt_domain(did)%CHANLEN(j) !-- initalize channel volume
         end do
-     endif  !End if channel option eq 3; else;
+
+   endif  !End if channel option eq 3; else;
 
 
-     do j=1,rt_domain(did)%NLAKES
-        rt_domain(did)%RESHT(j) = rt_domain(did)%LAKEMAXH(j) * 0.935   !-- lake is 99% full at start
-     end do
-
+! Initialize Lake Elevations for Gridded and NWM routing.  
+          do j=1,rt_domain(did)%NLAKES
+                rt_domain(did)%RESHT(j) = rt_domain(did)%ORIFICEE(j) + &
+                  ((rt_domain(did)%LAKEMAXH(j) - rt_domain(did)%ORIFICEE(j) )* rt_domain(did)%ELEVLAKE(j)) 
+          end do 
 
  end if     ! Endif for channel routing setup
 !-----------------------------------------------------------------------
@@ -1348,16 +1355,13 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%ZWATTABLRT = 0.0
    rt_domain(did)%QSUBBDRYRT = 0.0
    rt_domain(did)%QSTRMVOLRT = 0.0
-   rt_domain(did)%QSTRMVOLRT = 0.0
    rt_domain(did)%QBDRYRT = 0.0
    rt_domain(did)%SFCHEADSUBRT = 0.0
    rt_domain(did)%INFXSUBRT = 0.0
    rt_domain(did)%DHRT = 0.0
    rt_domain(did)%LAKE_INFLORT = 0.0
-   !  rt_domain(did)%LAKE_INFLORT_DUM = 0.0
    rt_domain(did)%LAKE_CT = 0
    rt_domain(did)%STRM_CT = 0
-   !  rt_domain(did)%QSTRMVOLRT_DUM = 0.0
    rt_domain(did)%SOLDRAIN = 0.0
    rt_domain(did)%qinflowbase = 0.0
    

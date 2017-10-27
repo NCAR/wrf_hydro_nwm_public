@@ -17,7 +17,7 @@ GEO_FINEGRID_FLNM = "./DOMAIN/Fulldom_hires.nc"
 HYDROTBL_F = "./DOMAIN/HYDRO_TBL_2D.nc"
 
 ! Specify spatial metadata file for land surface grid. (e.g.: "geospatial_data_template_land_GIS.nc")
-LAND_SPATIAL_META_FLNM = "./DOMAIN/geospatial_data_template_land_GIS.nc"
+LAND_SPATIAL_META_FLNM = "./DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc"
 
 ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
 RESTART_FILE  = 'HYDRO_RST.2013-09-12_04:00_DOMAIN3'
@@ -61,36 +61,43 @@ SPLIT_OUTPUT_COUNT = 1
 ! Note: lower value of stream order produces more output.
 order_to_write = 4
 
-! Flag to turn on/off new I/O routines: 0 = old (default), 1 = new (with scale/offset/compression),
-! 2 = new (with scale/offset/NO compression)
-! NOTE this option is also in namelist.hrldas.
-nwmIo = 1
+! Flag to turn on/off new I/O routines: 1 = with scale/offset/compression,
+! 2 = with scale/offset/NO compression, 3 = compression only, 4 = no scale/offset/compression (default)
+io_form_outputs = 1
 
 ! Realtime run configuration option:
-! 0=diagnostic (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective
-iocflag = 1
+! 0=all (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective
+io_config_outputs = 1
 
 ! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes (default)
-t0OutputFlag = 0
+t0OutputFlag = 1
 
-! Options to output channel & bucket influxes to drive FORCE_TYPE 9.
+! Options to output channel & bucket influxes. Only active for UDMP_OPT=1.
 ! Nonzero choice requires that out_dt above matches NOAH_TIMESTEP in namelist.hrldas.
 ! 0=None (default), 1=channel influxes (qSfcLatRunoff, qBucket)
 ! 2=channel+bucket fluxes    (qSfcLatRunoff, qBucket, qBtmVertRunoff_toBucket)
 ! 3=channel accumulations    (accSfcLatRunoff, accBucket) *** NOT TESTED ***
-output_channelBucket_influx = 1
+output_channelBucket_influx = 0
 
 ! Output netcdf file control
-CHRTOUT_DOMAIN = 2           ! Netcdf point timeseries output at all channel points (1d)
-                             !      0 = no output, 1 = full output, 2 = fast (limited variables) output
+CHRTOUT_DOMAIN = 1           ! Netcdf point timeseries output at all channel points (1d)
+                             !      0 = no output, 1 = output
+CHANOBS_DOMAIN = 0           ! Netcdf point timeseries at forecast points or gage points (defined in Routelink)
+                             !      0 = no output, 1 = output at forecast points or gage points.
 CHRTOUT_GRID = 0             ! Netcdf grid of channel streamflow values (2d)
+                             !      0 = no output, 1 = output
+                             !      NOTE: Not available with reach-based routing
 LSMOUT_DOMAIN = 0            ! Netcdf grid of variables passed between LSM and routing components (2d)
+                             !      0 = no output, 1 = output
+                             !      NOTE: No scale_factor/add_offset available
 RTOUT_DOMAIN = 1             ! Netcdf grid of terrain routing variables on routing grid (2d)
-output_gw = 0                ! Netcdf GW output
-                             !      0 = no output, 1 = coupled gw model output (2d, future feature),
-                             !      2 = standard gw bucket output (1d)
-outlake  = 0                 ! Netcdf grid of lake values (1d)
-                             !      0 = no output, 1 = full point netcdf, 2 = with ComID
+                             !      0 = no output, 1 = output
+output_gw = 1                ! Netcdf GW output
+                             !      0 = no output, 1 = output
+outlake  = 1                 ! Netcdf grid of lake values (1d)
+                             !      0 = no output, 1 = output
+frxst_pts_out = 0            ! ASCII text file of forecast points or gage points (defined in Routelink)
+                             !      0 = no output, 1 = output
 
 !!!! ------------ PHYSICS OPTIONS AND RELATED SETTINGS ------------ !!!!
 
@@ -115,7 +122,7 @@ DXRT = 100.0
 AGGFACTRT = 10
 
 ! Specify the channel routing model timestep...(seconds)
-DTRT_CH = 60
+DTRT_CH = 10
 ! Specify the terrain routing model timestep...(seconds)
 DTRT_TER = 10
 
@@ -125,34 +132,36 @@ SUBRTSWCRT = 1
 ! Switch to activate surface overland flow routing...(0=no, 1=yes)
 OVRTSWCRT = 1
 
-! Specify overland & subsurface flow routing option: 1=Seepest Descent(D8) 2=CASC2D
+! Specify overland & subsurface flow routing option: 1=Seepest Descent (D8) 2=CASC2D (not active)
+! NOTE: Currently only option 1 is supported
 rt_option = 1
 
 ! Switch to activate channel routing...(0=no, 1=yes)
 CHANRTSWCRT = 1
 ! Specify channel routing option: 1=Muskingam-reach, 2=Musk.-Cunge-reach, 3=Diff.Wave-gridded
-channel_option = 2
+channel_option = 3
 
 ! Specify the reach file for reach-based routing options (e.g.: "Route_Link.nc")
-route_link_f = "./DOMAIN/Route_Link.nc"
+!route_link_f = "./DOMAIN/Route_Link.nc"
 
-! Specify the lake parameter file (e.g.: "LAKEPARM.nc")
-! Note: If this line is commented out, the code will use LAKEPARM.TBL.
+! Specify the lake parameter file (e.g.: "LAKEPARM.nc" for netcdf or "LAKEPARM.TBL" for text).
+! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
 
-! Groundwater/baseflow mask specified on land surface model grid (e.g.: "gw_basns.txt")
-! Note: Only required if baseflow bucket model is active. Currently ascii grid format
-! or netcdf for user-defined mapping option only.
-!gwbasmskfil = "./DOMAIN/gw_basns.txt"
+! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc" for netcdf
+! or "gw_basns.txt" for ascii). Note: Only required if baseflow bucket model is active and UDMP_OPT=0.
+gwbasmskfil = "./DOMAIN/GWBASINS.nc"
+
+! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc" for netcdf or "GWBUCKPARM.TBL" for text)
 GWBUCKPARM_file = "./DOMAIN/GWBUCKPARM.nc"
 
 ! User defined mapping, such NHDPlus: 0=no (default), 1=yes
-UDMP_OPT = 1
+UDMP_OPT = 0
 ! If on, specify the user-defined mapping file (e.g.: "spatialweights.nc")
-udmap_file = "./DOMAIN/spatialweights.nc"
+!udmap_file = "./DOMAIN/spatialweights.nc"
 
 /
 

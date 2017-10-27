@@ -24,8 +24,8 @@
        character(len=19) :: startdate="123456"
        character(len=19) :: sincedate="123456"
 
-       integer :: iocflag  ! used for NCEP REALTIME OUTPUT
-       integer :: nwmIo ! Flag to turn on/off compressed CF_compliant output
+       integer :: io_config_outputs  ! used for NCEP REALTIME OUTPUT
+       integer :: io_form_outputs ! Flag to turn specify level of internal compression
        integer :: t0OutputFlag  
        integer :: channel_only, channelBucket_only
        integer :: output_channelBucket_influx ! used for FORCE_TYPE 9 and 10
@@ -52,6 +52,7 @@
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
           integer ::CHRTOUT_GRID                ! Netcdf grid of channel streamflow values
+          integer ::CHANOBS_DOMAIN             ! NetCDF point timeseries of output at forecast/gage points
           integer ::LSMOUT_DOMAIN              ! Netcdf grid of variables passed between LSM and routing components
           integer ::RTOUT_DOMAIN                ! Netcdf grid of terrain routing variables on routing grid
           integer ::output_gw                   ! Netcdf grid of GW

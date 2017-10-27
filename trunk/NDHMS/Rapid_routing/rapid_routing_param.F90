@@ -1,42 +1,23 @@
-!  Program Name:
-!  Author(s)/Contact(s):
-!  Abstract:
-!  History Log:
-! 
-!  Usage:
-!  Parameters: <Specify typical arguments passed>
-!  Input Files:
-!        <list file names and briefly describe the data they include>
-!  Output Files:
-!        <list file names and briefly describe the information they include>
-! 
-!  Condition codes:
-!        <list exit condition or error codes returned >
-!        If appropriate, descriptive troubleshooting instructions or
-!        likely causes for failures could be mentioned here with the
-!        appropriate error code
-! 
-!  User controllable options: <if applicable>
-
 !*******************************************************************************
 !Subroutine - rapid_routing_param
 !*******************************************************************************
 subroutine rapid_routing_param(ZV_k,ZV_x,                                      &
                                ZV_C1,ZV_C2,ZV_C3,ZM_A) 
 
-!PURPOSE
+!Purpose:
 !Calculates the Muskingum method (McCarthy 1938) parameters C1, C2 and C3.  
 !Also calculates the matrix A used for linear system solver. 
-!Author: Cedric H. David, 2010 
+!Author: 
+!Cedric H. David, 2010-2015. 
 
 
 !*******************************************************************************
 !Declaration of variables
 !*******************************************************************************
 use rapid_var, only :                                                          &
-                   ZM_Net,                                                     &
+                   ZM_Net,ZM_T,ZM_TC1,                                         &
                    ZV_Cdenom,ZS_dtR,                                           &
-                   ierr,ZS_one,ZV_one
+                   ierr,ZS_one,ZV_one,IS_opt_routing
 
 
 implicit none
@@ -103,8 +84,13 @@ call MatCopy(ZM_Net,ZM_A,DIFFERENT_NONZERO_PATTERN,ierr)   !A=Net
 call MatDiagonalScale(ZM_A,ZV_C1,ZV_one,ierr)              !A=diag(C1)*A
 call MatScale(ZM_A,-ZS_one,ierr)                           !A=-A
 call MatShift(ZM_A,ZS_one,ierr)                            !A=A+1*I
-!!Result:A=I-diag(C1)*Net
+!Result:A=I-diag(C1)*Net
 
+if (IS_opt_routing==3) then
+call MatCopy(ZM_T,ZM_TC1,DIFFERENT_NONZERO_PATTERN,ierr)        !TC1=T
+call MatDiagonalScale(ZM_TC1,ZV_C1,ZV_one,ierr)            !TC1=diag(C1)*TC1
+!Result:TC1=T*diag(C1)
+end if
 
 !*******************************************************************************
 !End 

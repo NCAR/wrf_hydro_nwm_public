@@ -20,6 +20,10 @@
 
   INTEGER :: GNLINKSL, linklsS, linklsE , nlinksize  !## for reach based channel routing
 
+  INTEGER :: iswater     !id for water in vegtyp
+  INTEGER :: isurban     !id for urban in vegtyp
+  INTEGER :: isoilwater  !id for water in soiltyp
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETRT !-- keeps track of the 0-1 channel network
@@ -140,6 +144,8 @@
 !!! accumulated variables for reach beased rt
   Real*8, allocatable, DIMENSION(:)  :: accSfcLatRunoff, accBucket
   REAL  , allocatable, DIMENSION(:)  ::   qSfcLatRunoff,   qBucket, qBtmVertRunoff
+  REAL, allocatable, DIMENSION(:)    :: accLndRunOff, accQLateral, accStrmvolrt
+  !REAL, allocatable, DIMENSION(:)    :: qqLndRunOff, qqStrmvolrt, qqBucket
   REAL, allocatable, DIMENSION(:)    :: QLateral, velocity
 
 #ifdef MPP_LAND
@@ -160,7 +166,7 @@
   REAL,    allocatable, DIMENSION(:,:)     :: INFXSAGGRT
   REAL,    allocatable, DIMENSION(:,:)     :: DHRT,QSTRMVOLRT,QBDRYRT,LAKE_INFLORT
   REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS
-  REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_DUM,LAKE_INFLORT_DUM
+  REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_ACC, LAKE_INFLORT_DUM
   REAL,    allocatable, DIMENSION(:,:)       :: INFXSWGT, ywtmp
   REAL,    allocatable, DIMENSION(:)       :: SMCAGGRT,STCAGGRT,SH2OAGGRT
   REAL    :: INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT

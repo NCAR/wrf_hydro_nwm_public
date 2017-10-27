@@ -311,8 +311,6 @@
              print*, "read snow for initialization ...."
 #endif
              iret = nf_get_var_real(ncid, varid, weasd)
-             !ADCHANGE: NoahMP is looking for snow in mm
-             !weasd = weasd * 1.0E-3    ! transfer the unit from mm to m
           endif  
          
           
@@ -396,7 +394,7 @@
          use module_namelist, only:nlst_rt
          implicit none
          integer :: did, iocflag
-         iocflag = nlst_rt(did)%iocflag
+         iocflag = nlst_rt(did)%io_config_outputs
       end subroutine get_iocflag
 
       subroutine get_t0OutputFlag(did, t0OutputFlag) 

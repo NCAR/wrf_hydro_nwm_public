@@ -64,19 +64,6 @@ rst_bi_out = 0     !0: use netcdf output restart file
 
 ! Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format, 3=WRF, 
 !    4=Idealized, 5=Ideal w/ Spec.Precip., 6=HRLDAS-hrl y fomat w/ Spec. Precip, 
-!    9=Channel-only forcing, see hydro.namelist output_channelBucket_influxes
-!    10=Channel+Bucket only forcing, see hydro.namelist output_channelBucket_influxes
 FORC_TYP = 1
-
-! Initial conditions and parameters from: 0=wrfinput, 1=forcing
-HRLDAS_ini_typ = 1
-
-! Specify geogrid file for extract greenfrac
-GEO_STATIC_FLNM = "./DOMAIN/geo_em.d03.nc"
-
-! Flag to turn on/off new I/O routines: 0 = old (default), 1 = new (with scale/offset/compression),
-! 2 = new (with scale/offset/NO compression)
-! NOTE this option is also in hydro.namelist.
-nwmIo = 1
 
 /
