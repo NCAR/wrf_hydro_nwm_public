@@ -29,6 +29,10 @@
 
 .IGNORE:
 
+ifeq ($(origin ESMFMKFILE), environment)
+include $(ESMFMKFILE)
+endif
+
 ifeq ($(SPATIAL_SOIL),1)
 SPATIAL_SOIL = -DSPATIAL_SOIL
 else
@@ -91,6 +95,6 @@ MODFLAG	    = -I./ -I ../../MPP -I ../MPP -I ../mod
 LDFLAGS	    =
 CPP	    = cpp
 CPPFLAGS    = -P -traditional -nostdinc -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE)
-LIBS 	    =	
+LIBS 	    = $(ESMF_F90LINKLIBS)	
 NETCDFINC   = $(NETCDF_INC)
 NETCDFLIB   = -L$(NETCDF_LIB) -lnetcdff -lnetcdf
