@@ -18,6 +18,14 @@
 ! 
 !  User controllable options: <if applicable>
 
+#ifdef ESMF_TRACE
+#define TRACE_ENTER(region) call ESMF_TraceRegionEnter(region)
+#define TRACE_EXIT(region) call ESMF_TraceRegionExit(region)
+#else
+#define TRACE_ENTER(region)
+#define TRACE_EXIT(region)
+#endif
+
 module module_HYDRO_drv
 #ifdef MPP_LAND 
    use module_HYDRO_io, only:  output_rt, mpp_output_chrt, mpp_output_lakes, mpp_output_chrtgrd, &
@@ -50,6 +58,9 @@ module module_HYDRO_drv
 
    use module_UDMAP, only: get_basn_area_nhd
    use netcdf
+#ifdef ESMF_TRACE
+   use ESMF
+#endif
    
    implicit none
 
@@ -599,9 +610,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !              call read_land_par(did,lsm(did)%ix,lsm(did)%jx)
 !          endif
 
-
-
-
+TRACE_ENTER("HYDRO_exe")
 
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
     nlst_rt(did)%SUBRTSWCRT         .ne. 0 .or. &
@@ -615,14 +624,19 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       RT_DOMAIN(did)%QSTRMVOLRT = zeroFlt
       RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
 
+
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
+         TRACE_ENTER("disagg")
          call disaggregateDomain_drv(did)
+         TRACE_EXIT("disagg")
       endif
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            TRACE_ENTER("runoffdisagg")
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%dist(:,:,9), &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
+            TRACE_EXIT("runoffdisagg")
          endif
       endif
 
@@ -635,7 +649,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    ! step 2)
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
       if(nlst_rt(did)%SUBRTSWCRT .ne.0) then
+         TRACE_ENTER("subsurf")
          call SubsurfaceRouting_drv(did)
+         TRACE_EXIT("subsurf")
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -655,7 +671,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
       if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
+         TRACE_ENTER("overland")
          call OverlandRouting_drv(did)
+         TRACE_EXIT("overland")
       else
          RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%INFXSUBRT
          RT_DOMAIN(did)%INFXSUBRT = 0.
@@ -685,7 +703,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    !! channelBucket_only can be anything: the only time you dont run this is if channel_only=1
    if(nlst_rt(did)%channel_only .eq. 0) then  
       if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
+         TRACE_ENTER("gwbase")
          call driveGwBaseflow(did)
+         TRACE_EXIT("gwbase")
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -702,7 +722,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    end if !! channel_only == 0
 
    ! step 5) river channel physics
+   TRACE_ENTER("channel")
    call driveChannelRouting(did)
+   TRACE_EXIT("channel")
 #ifdef HYDRO_D
    call system_clock(count=clock_count_2, count_rate=clock_rate)
    timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -718,7 +740,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 	
       ! step 6) aggregate specific fields from Hydro to LSM grid
       if (nlst_rt(did)%SUBRTSWCRT .ne.0  .or. nlst_rt(did)%OVRTSWCRT .ne. 0 ) then
+         TRACE_ENTER("agg")
          call aggregateDomain(did)
+         TRACE_EXIT("agg")
       endif
 
    end if !! channel_only & channelBucket_only == 0
@@ -733,8 +757,9 @@ end if
 !          call HYDRO_out(did)
 !yw  endif
            call HYDRO_time_adv(did)
+           TRACE_ENTER("HYDRO_out")
            call HYDRO_out(did, 1)
-
+           TRACE_EXIT("HYDRO_out")
 
 !           write(90 + my_id,*) "finish calling hydro_exe"
 !           call flush(90+my_id)
@@ -746,7 +771,7 @@ end if
            if(allocated(RT_DOMAIN(did)%SOLDRAIN)) RT_DOMAIN(did)%SOLDRAIN = 0
            if(allocated(RT_DOMAIN(did)%QSUBRT))   RT_DOMAIN(did)%QSUBRT   = 0            
 
-
+      TRACE_EXIT("HYDRO_exe")
 
       end subroutine HYDRO_exe
 
@@ -1323,7 +1348,13 @@ integer            :: iret, ncid, ascIndId
 call  MPP_LAND_INIT()
 #endif
 
-
+#ifdef ESMF_TRACE
+    call ESMF_Initialize(logkindflag=ESMF_LOGKIND_NONE, rc=iret)
+    if (iret /= ESMF_SUCCESS) then
+       print *, "Failed to initialize ESMF and ESMF_TRACE=1"
+       stop
+    endif
+#endif
 ! read the namelist
 ! the lsm namelist will be read by rtland sequentially again.
 call read_rt_nlst(nlst_rt(did) )
@@ -1808,7 +1839,9 @@ end module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
         use module_stream_nudging,  only: finish_stream_nudging
 #endif
-        
+#ifdef ESMF_TRACE
+        use ESMF
+#endif
         integer :: ierr
 
 #ifdef WRF_HYDRO_NUDGING
@@ -1818,6 +1851,9 @@ end module module_HYDRO_drv
         print*, "The model finished successfully......."
 #else
         write(78,*) "The model finished successfully......."
+#endif
+#ifdef ESMF_TRACE
+    call ESMF_Finalize(endflag=ESMF_END_KEEPMPI)
 #endif
 #ifdef MPP_LAND
 !         call mpp_land_abort()
