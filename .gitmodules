@@ -1,0 +1,4 @@
+[submodule "trunk/NDHMS/CPL/NUOPC_cpl"]
+	path = trunk/NDHMS/CPL/NUOPC_cpl
+	url = https://github.com/NESII/wrfhydro_cap.git
+	branch = master
