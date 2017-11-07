@@ -986,6 +986,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LINKID   !--  id of channel elements for linked scheme
         REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flow
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
+        REAL*8, DIMENSION(NLINKS)                   :: QSUM8     !--mass bal of node
         REAL, DIMENSION(NLAKES)                   :: QLLAKE   !-- lateral inflow to lake in diffusion scheme
         REAL*8, DIMENSION(NLAKES)                   :: QLLAKE8   !-- lateral inflow to lake in diffusion scheme
 
@@ -1244,6 +1245,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !        call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,ZELEV,NLINKS,99)
  crnt:   DO                      !-- loop on the courant condition
           QSUM     = 0.              !-- initialize the total flow out of each cell to zero
+          QSUM8     = 0.              !-- initialize the total flow out of each cell to zero
           QLAKEI8  = 0.              !-- set the lake inflow as zero
           QLAKEI   = 0.              !-- set the lake inflow as zero
           QLLAKE   = 0.              !-- initialize each lake's lateral inflow to zero  
@@ -1401,13 +1403,14 @@ gwOption:   if(gwBaseSwCRT == 3) then
           DO i = 1,NLINKS                                                 !-- inflow to node across each face
 #endif
            if(TYPEL(i) .eq. 0) then                                       !-- only regular nodes have to attribute
-              QSUM(TO_NODE(i)) = QSUM(TO_NODE(i)) + QLINK(i,1)
+              QSUM8(TO_NODE(i)) = QSUM8(TO_NODE(i)) + QLINK(i,1)
            endif
           END DO
 
 #ifdef MPP_LAND
-    call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,qsum,NLINKS,0)
+    call MPP_CHANNEL_COM_REAL8(Link_location,ixrt,jxrt,qsum8,NLINKS,0)
 #endif
+    qsum = qsum8
 
 
 
