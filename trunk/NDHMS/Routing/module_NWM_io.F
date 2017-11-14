@@ -65,6 +65,7 @@ subroutine output_chrt_NWM(domainId)
    integer :: varId ! Variable ID value created as NetCDF variables are created and populated.
    integer :: timeId ! Dimension ID for the time dimension.
    integer :: refTimeId ! Dimension ID for the reference time dimension.
+   integer :: coordVarId ! Variable to hold crs
    integer :: featureVarId, elevVarId, orderVarId ! Misc NetCDF variable id values
    integer :: latVarId, lonVarId ! Lat/lon NetCDF variable id values.
    integer :: varRange(2) ! Local storage of min/max valid range values.
@@ -308,6 +309,8 @@ subroutine output_chrt_NWM(domainId)
             fileMeta%outFlag(2) = 1 ! Set output flag to on. 
             call ReachLS_write_io(RT_DOMAIN(domainID)%nudge,g_nudge)
 #endif
+         else
+            fileMeta%outFlag(2) = 0 ! Set output flag to off.
          endif
          if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
             nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
@@ -344,6 +347,14 @@ subroutine output_chrt_NWM(domainId)
          if(nlst_rt(domainId)%output_channelBucket_influx .ne. 0) then
             call postDiagMsg(diagFlag,'WARNING: This channelBucket_influx only available for reach-based routing.')
          endif 
+         if(nudgeFlag .eq. 1)then
+#ifdef WRF_HYDRO_NUDGING
+            fileMeta%outFlag(2) = 1 ! Set output flag to on.
+            call write_chanel_real(RT_DOMAIN(domainID)%nudge,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nudge,g_nudge)
+#endif
+         else
+            fileMeta%outFlag(2) = 0 ! Set output flag to off.
+         endif
       endif
 
    else
@@ -531,6 +542,15 @@ subroutine output_chrt_NWM(domainId)
          return
       endif
 
+      ! Loop through all channel points if we are running gridded routing.
+      ! Assign an arbitrary index value as the linkid field is read in as 0 from
+      ! the Fulldom file.
+      if(nlst_rt(domainId)%channel_option .eq. 3) then
+         do iTmp=1,gSize
+            g_linkidOut(iTmp) = iTmp
+         end do
+      endif
+
       allocate(varOutReal(fileMeta%numVars,numPtsOut))
       allocate(varOutInt(numPtsOut))
       allocate(varMetaReal(3,numPtsOut))
@@ -574,8 +594,8 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create order attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"cdm_datatype",trim(fileMeta%cdm))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CDM attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
+      !iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
+      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
@@ -620,6 +640,38 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'units',trim(fileMeta%rTimeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
+
+      ! Create a crs variable. 
+      ! NOTE - For now, we are hard-coding in for lat/lon points. However, this
+      ! may be more flexible in future iterations.
+      iret = nf90_def_var(ftn,'crs',nf90_char,varid=coordVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'transform_name','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string','GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",&
+                                          &SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",&
+                                          &0.0174532925199433]];-400 -400 1000000000;&
+                                          &-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'spatial_ref','GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",&
+                                          &SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",&
+                                          &0.0174532925199433]];-400 -400 1000000000;&
+                                          &-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place spatial_ref into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'long_name','CRS definition')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'longitude_of_prime_meridian',0.0)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_prime_meridian into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'semi_major_axis',6378137.0)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place semi_major_axis into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'semi_minor_axis',6356752.31424518)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place semi_minor_axis into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'inverse_flattening',298.257223563)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place inverse_flattening into crs variable.')
 
       ! Create feature_id variable
       iret = nf90_def_var(ftn,"feature_id",nf90_int,dimId(1),featureVarId)
@@ -722,6 +774,8 @@ subroutine output_chrt_NWM(domainId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'coordinates',trim(fileMeta%coordNames(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place coordinates attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'grid_mapping','crs')
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable '//trim(fileMeta%varNames(iTmp)))
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -758,6 +812,7 @@ subroutine output_chrt_NWM(domainId)
             ! need to convert all data to NDV
             if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
                varOutInt(:) = fileMeta%fillComp(iTmp)
+               varOutReal(iTmp,:) = fileMeta%fillReal(iTmp)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
@@ -928,7 +983,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    integer :: ierr, myId ! MPI related values
    integer :: varRange(2) ! Local storage of valid min/max values
    real :: varRangeReal(2) ! Local storage of valid min/max values
-   integer :: iTmp,jTmp,zTmp,jTmp2
+   integer :: iTmp,jTmp,zTmp,jTmp2,iTmp2
    integer :: ftnGeo,geoXVarId,geoYVarId
    integer :: waterVal ! Value in HRLDAS in WRFINPUT file used to define water bodies for masking
    ! Allocatable arrays to hold global output arrays, and local arrays for
@@ -1102,8 +1157,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
-         iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"GDAL_DataType","Generic")
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create GDAL_DataType attribute')
 
          ! Create dimensions
          iret = nf90_def_dim(ftnNoahMP,'time',NF90_UNLIMITED,dimId(1))
@@ -1140,32 +1199,28 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          ! Create x/y coordinate variables
          iret = nf90_def_var(ftnNoahMP,'x',nf90_double,dimId(2),xVarId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,xVarId,'long_name',trim(fileMeta%xLName))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,xVarId,'standard_name',trim(fileMeta%xStName))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,xVarId,'units',trim(fileMeta%xUnits))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,xVarId,'resolution',fileMeta%xRes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+         do iTmp=1,fileMeta%nxRealAtts
+            iret = nf90_put_att(ftnNoahMP,xVarId,trim(fileMeta%xFloatAttNames(iTmp)),&
+                                fileMeta%xRealAttVals(iTmp,1:fileMeta%xRealAttLen(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place x floating point attributes into LDASOUT file.')
+         end do
+         do iTmp=1,fileMeta%nxCharAtts
+            iret = nf90_put_att(ftnNoahMP,xVarId,trim(fileMeta%xCharAttNames(iTmp)),trim(fileMeta%xCharAttVals(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place x string point attributes into LDASOUT file.')
+         end do
          iret = nf90_def_var(ftnNoahMP,'y',nf90_double,dimId(3),yVarId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,yVarId,'long_name',trim(fileMeta%yLName))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,yVarId,'standard_name',trim(fileMeta%yStName))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,yVarId,'units',trim(fileMeta%yUnits))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
-         iret = nf90_put_att(ftnNoahMP,yVarId,'resolution',fileMeta%yRes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+         do iTmp=1,fileMeta%nyRealAtts
+            iret = nf90_put_att(ftnNoahMP,yVarId,trim(fileMeta%yFloatAttNames(iTmp)),&
+                                fileMeta%yRealAttVals(iTmp,1:fileMeta%yRealAttLen(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place y floating point attributes into LDASOUT file.')
+         end do
+         do iTmp=1,fileMeta%nyCharAtts
+            iret = nf90_put_att(ftnNoahMP,yVarId,trim(fileMeta%yCharAttNames(iTmp)),trim(fileMeta%yCharAttVals(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place y string point attributes into LDASOUT file.')
+         end do
 
-         ! Define compression for meta-variables. Only compress if
-         ! io_form_outputs is set
-         ! to 1.
+         ! Define compression if chosen.
          if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 3)) then
             iret = nf90_def_var_deflate(ftn,timeId,0,1,2)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
@@ -1177,32 +1232,19 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
             call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
          endif
 
-         ! Create ProjectionCoordinateSystem variable
-         iret = nf90_def_var(ftnNoahMP,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'transform_name',trim(fileMeta%projTransformName))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'standard_parallel',fileMeta%stParallel)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'false_easting',fileMeta%falseEast)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'false_northing',fileMeta%falseNorth)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'earth_radius',fileMeta%radius)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
-         iret = nf90_put_att(ftnNoahMP,coordVarId,'proj4',trim(fileMeta%proj4))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+         ! Translate crs variable info from land spatial metadata file to output
+         ! file.
+         iret = nf90_def_var(ftnNoahMP,'crs',nf90_char,varid=coordVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable in LDASOUT file.')
+         do iTmp=1,fileMeta%nCrsRealAtts
+            iret = nf90_put_att(ftnNoahMP,coordVarId,trim(fileMeta%crsFloatAttNames(iTmp)),&
+                                fileMeta%crsRealAttVals(iTmp,1:fileMeta%crsRealAttLen(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs floating point attributes into LDASOUT file.')
+         end do
+         do iTmp=1,fileMeta%nCrsCharAtts
+            iret = nf90_put_att(ftnNoahMP,coordVarId,trim(fileMeta%crsCharAttNames(iTmp)),trim(fileMeta%crsCharAttVals(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs string point attributes into LDASOUT file.')
+         end do
 
          ! Loop through all possible variables and create them, along with their
          ! metadata attributes. 
@@ -1248,12 +1290,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
                iret = nf90_put_att(ftnNoahMP,varId,'units',trim(fileMeta%units(iTmp)))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
-               iret = nf90_put_att(ftnNoahMP,varId,'proj4',trim(fileMeta%proj4))
-               call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-               iret = nf90_put_att(ftnNoahMP,varId,'grid_mapping',trim(fileMeta%gridMapping))
+               iret = nf90_put_att(ftnNoahMP,varId,'grid_mapping','crs')
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-               iret = nf90_put_att(ftnNoahMP,varId,'esri_pe_string',trim(fileMeta%projEsri))
-               call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(iTmp)))
                if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                   iret = nf90_put_att(ftnNoahMP,varId,'_FillValue',fileMeta%fillComp(iTmp))
                   call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -1273,6 +1311,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                   iret = nf90_put_att(ftnNoahMP,varId,'valid_range',varRangeReal)
                   call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(iTmp)))
                endif
+               ! Place necessary geospatial attributes into the variable.
+               do iTmp2=1,fileMeta%nCrsCharAtts
+                  if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
+                     iret = nf90_put_att(ftnNoahMP,varId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
+                     call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+                  endif
+               end do
             endif ! End if output flag is on
          end do ! end looping through variable output list.
 
@@ -1302,6 +1347,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find y coordinate in geoGrid file')
             iret = nf90_get_var(ftnGeo,geoYVarId,yCoord)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to extract y coordinate from geoGrid file')
+
             iret = nf90_close(ftnGeo)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to close geoGrid file.')
             ! Reverse Y coordinates. They are read in reverse. 
@@ -1665,6 +1711,10 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create GDAL_DataType attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
@@ -1697,28 +1747,26 @@ subroutine output_rt_NWM(domainId,iGrid)
       ! Create x/y coordinate variables
       iret = nf90_def_var(ftn,'x',nf90_double,dimId(2),xVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'long_name',trim(fileMeta%xLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'standard_name',trim(fileMeta%xStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'units',trim(fileMeta%xUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'resolution',fileMeta%xRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+      do iTmp=1,fileMeta%nxRealAtts
+         iret = nf90_put_att(ftn,xVarId,trim(fileMeta%xFloatAttNames(iTmp)),&
+                             fileMeta%xRealAttVals(iTmp,1:fileMeta%xRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place x floating point attributes into RTDOMAIN file.')
+      end do
+      do iTmp=1,fileMeta%nxCharAtts
+         iret = nf90_put_att(ftn,xVarId,trim(fileMeta%xCharAttNames(iTmp)),trim(fileMeta%xCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place x string point attributes into RTDOMAIN file.')
+      end do
       iret = nf90_def_var(ftn,'y',nf90_double,dimId(3),yVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'long_name',trim(fileMeta%yLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'standard_name',trim(fileMeta%yStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'units',trim(fileMeta%yUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+      do iTmp=1,fileMeta%nyRealAtts
+         iret = nf90_put_att(ftn,yVarId,trim(fileMeta%yFloatAttNames(iTmp)),&
+                             fileMeta%yRealAttVals(iTmp,1:fileMeta%yRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place y floating point attributes into RTDOMAIN file.')
+      end do
+      do iTmp=1,fileMeta%nyCharAtts
+         iret = nf90_put_att(ftn,yVarId,trim(fileMeta%yCharAttNames(iTmp)),trim(fileMeta%yCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place y string point attributes into RTDOMAIN file.')
+      end do
  
       ! Define compression for meta-variables only if io_form_outputs is set to 1.
       if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 3)) then
@@ -1732,32 +1780,19 @@ subroutine output_rt_NWM(domainId,iGrid)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
       endif
 
-      ! Create ProjectionCoordinateSystem variable
-      iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'transform_name',trim(fileMeta%projTransformName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'standard_parallel',fileMeta%stParallel)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_easting',fileMeta%falseEast)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_northing',fileMeta%falseNorth)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'earth_radius',fileMeta%radius)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'proj4',trim(fileMeta%proj4))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+      ! Translate crs variable info from land spatial metadata file to output
+      ! file.
+      iret = nf90_def_var(ftn,'crs',nf90_char,varid=coordVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable in RT_DOMAIN file.')
+      do iTmp=1,fileMeta%nCrsRealAtts
+         iret = nf90_put_att(ftn,coordVarId,trim(fileMeta%crsFloatAttNames(iTmp)),&
+                             fileMeta%crsRealAttVals(iTmp,1:fileMeta%crsRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs floating point attributes into RT_DOMAIN file.')
+      end do
+      do iTmp=1,fileMeta%nCrsCharAtts
+         iret = nf90_put_att(ftn,coordVarId,trim(fileMeta%crsCharAttNames(iTmp)),trim(fileMeta%crsCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs string point attributes into RT_DOMAIN file.')
+      end do
  
       ! Loop through all possible variables and create them, along with their
       ! metadata attributes. 
@@ -1791,12 +1826,8 @@ subroutine output_rt_NWM(domainId,iGrid)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'proj4',trim(fileMeta%proj4))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'grid_mapping',trim(fileMeta%gridMapping))
+            iret = nf90_put_att(ftn,varId,'grid_mapping','crs')
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'esri_pe_string',trim(fileMeta%projEsri))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(iTmp)))
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -1816,6 +1847,13 @@ subroutine output_rt_NWM(domainId,iGrid)
                iret = nf90_put_att(ftn,varId,'valid_range',varRangeReal)
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(iTmp)))
             endif
+            ! Place necessary geospatial attributes into the variable.
+            do iTmp2=1,fileMeta%nCrsCharAtts
+               if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
+                  iret = nf90_put_att(ftn,varId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+               endif
+            end do
          endif
       end do ! end looping through variable output list.
       
@@ -2030,6 +2068,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
    integer :: varId ! Variable ID value created as NetCDF variables are created and populated.
    integer :: timeId ! Dimension ID for the time dimension.
    integer :: refTimeId ! Dimension ID for the reference time dimension.
+   integer :: coordVarId ! Variable to hold crs
    integer :: featureVarId ! feature_id NetCDF variable ID
    integer :: latVarId, lonVarId ! lat/lon NetCDF variable ID values
    integer :: elevVarId ! elevation NetCDF variable ID
@@ -2091,7 +2130,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.
-   call initLakeDict(fileMeta)
+   call initLakeDict(fileMeta,myId,diagFlag)
 
    if(nlst_rt(1)%io_config_outputs .eq. 0) then
       ! All
@@ -2302,8 +2341,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create st. dimension attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_valid_time",trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model valid attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
+      !iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
+      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
@@ -2334,6 +2373,38 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'units',trim(fileMeta%rTimeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
+
+      ! Create a crs variable. 
+      ! NOTE - For now, we are hard-coding in for lat/lon points. However, this
+      ! may be more flexible in future iterations.
+      iret = nf90_def_var(ftn,'crs',nf90_char,varid=coordVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'transform_name','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string','GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",&
+                                          &SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",&
+                                          &0.0174532925199433]];-400 -400 1000000000;&
+                                          &-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'spatial_ref','GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",&
+                                          &SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",&
+                                          &0.0174532925199433]];-400 -400 1000000000;&
+                                          &-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place spatial_ref into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'long_name','CRS definition')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'longitude_of_prime_meridian',0.0)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_prime_meridian into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'semi_major_axis',6378137.0)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place semi_major_axis into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'semi_minor_axis',6356752.31424518)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place semi_minor_axis into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'inverse_flattening',298.257223563)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place inverse_flattening into crs variable.')
 
       ! Create feature_id variable
       iret = nf90_def_var(ftn,"feature_id",nf90_int,dimId(1),featureVarId)
@@ -2426,6 +2497,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'coordinates',trim(fileMeta%coordNames(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place coordinates attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'grid_mapping','crs')
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable '//trim(fileMeta%varNames(iTmp)))
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -2461,6 +2534,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
             ! need to fill in with NDV values. 
             if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
                varOutInt(:) = fileMeta%fillComp(iTmp)
+               varOutReal(iTmp,:) = fileMeta%fillReal(iTmp)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
@@ -2756,6 +2830,10 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create GDAL_DataType attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
@@ -2788,28 +2866,26 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       ! Create x/y coordinate variables
       iret = nf90_def_var(ftn,'x',nf90_double,dimId(2),xVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'long_name',trim(fileMeta%xLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'standard_name',trim(fileMeta%xStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'units',trim(fileMeta%xUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'resolution',fileMeta%xRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+      do iTmp=1,fileMeta%nxRealAtts
+         iret = nf90_put_att(ftn,xVarId,trim(fileMeta%xFloatAttNames(iTmp)),&
+                             fileMeta%xRealAttVals(iTmp,1:fileMeta%xRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place x floating point attributes into CHRTOUT_GRID file.')
+      end do
+      do iTmp=1,fileMeta%nxCharAtts
+         iret = nf90_put_att(ftn,xVarId,trim(fileMeta%xCharAttNames(iTmp)),trim(fileMeta%xCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place x string point attributes into CHRTOUT_GRID file.')
+      end do
       iret = nf90_def_var(ftn,'y',nf90_double,dimId(3),yVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'long_name',trim(fileMeta%yLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'standard_name',trim(fileMeta%yStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'units',trim(fileMeta%yUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+      do iTmp=1,fileMeta%nyRealAtts
+         iret = nf90_put_att(ftn,yVarId,trim(fileMeta%yFloatAttNames(iTmp)),&
+                             fileMeta%yRealAttVals(iTmp,1:fileMeta%yRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place y floating point attributes into CHRTOUT_GRID file.')
+      end do
+      do iTmp=1,fileMeta%nyCharAtts
+         iret = nf90_put_att(ftn,yVarId,trim(fileMeta%yCharAttNames(iTmp)),trim(fileMeta%yCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place y string point attributes into CHRTOUT_GRID file.')
+      end do
 
       ! Define compression for meta-variables only if io_form_outputs is set to 1.
       if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 3)) then
@@ -2823,32 +2899,19 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
       endif
 
-      ! Create ProjectionCoordinateSystem variable
-      iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'transform_name',trim(fileMeta%projTransformName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'standard_parallel',fileMeta%stParallel)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_easting',fileMeta%falseEast)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_northing',fileMeta%falseNorth)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'earth_radius',fileMeta%radius)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'proj4',trim(fileMeta%proj4))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+      ! Translate crs variable info from land spatial metadata file to output
+      ! file.
+      iret = nf90_def_var(ftn,'crs',nf90_char,varid=coordVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable in CHRTOUT_GRID file.')
+      do iTmp=1,fileMeta%nCrsRealAtts
+         iret = nf90_put_att(ftn,coordVarId,trim(fileMeta%crsFloatAttNames(iTmp)),&
+                             fileMeta%crsRealAttVals(iTmp,1:fileMeta%crsRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs floating point attributes into CHRTOUT_GRID file.')
+      end do
+      do iTmp=1,fileMeta%nCrsCharAtts
+         iret = nf90_put_att(ftn,coordVarId,trim(fileMeta%crsCharAttNames(iTmp)),trim(fileMeta%crsCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs string point attributes into CHRTOUT_GRID file.')
+      end do
 
       ! Create channel index variable.
       iret = nf90_def_var(ftn,'index',nf90_int,(/dimId(2),dimId(3)/),varid=indexVarId)
@@ -2860,12 +2923,15 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable index')
       iret = nf90_put_att(ftn,indexVarId,'units','-')
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable index')
-      iret = nf90_put_att(ftn,indexVarId,'proj4',trim(fileMeta%proj4))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: index')
-      iret = nf90_put_att(ftn,indexVarId,'grid_mapping',trim(fileMeta%gridMapping))
+      iret = nf90_put_att(ftn,indexVarId,'grid_mapping','crs')
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: index')
-      iret = nf90_put_att(ftn,indexVarId,'esri_pe_string',trim(fileMeta%projEsri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: index')
+      ! Place necessary geospatial attributes into the variable.
+      do iTmp2=1,fileMeta%nCrsCharAtts
+         if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
+            iret = nf90_put_att(ftn,indexVarId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+         endif
+      end do
       ! Define compression for meta-variables only if io_form_outputs is set to 1.
       if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 3)) then
          iret = nf90_def_var_deflate(ftn,indexVarId,0,1,2)
@@ -2907,12 +2973,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'proj4',trim(fileMeta%proj4))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'grid_mapping',trim(fileMeta%gridMapping))
+            iret = nf90_put_att(ftn,varId,'grid_mapping','crs')
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'esri_pe_string',trim(fileMeta%projEsri))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(iTmp)))
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -2932,6 +2994,13 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
                iret = nf90_put_att(ftn,varId,'valid_range',varRangeReal)
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_range attribute into variable '//trim(fileMeta%varNames(iTmp)))
             endif
+            ! Place necessary geospatial attributes into the variable.
+            do iTmp2=1,fileMeta%nCrsCharAtts
+               if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
+                  iret = nf90_put_att(ftn,varId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+               endif
+            end do
          endif
       end do ! end looping through variable output list.
 
@@ -3205,6 +3274,10 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create GDAL_DataType attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,'time',NF90_UNLIMITED,dimId(1))
@@ -3237,28 +3310,26 @@ subroutine output_lsmOut_NWM(domainId)
       ! Create x/y coordinate variables
       iret = nf90_def_var(ftn,'x',nf90_double,dimId(2),xVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'long_name',trim(fileMeta%xLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'standard_name',trim(fileMeta%xStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'_CoordinateAxisType',trim(fileMeta%xAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'units',trim(fileMeta%xUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into x coordinate variable')
-      iret = nf90_put_att(ftn,xVarId,'resolution',fileMeta%xRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into x coordinate variable')
+      do iTmp=1,fileMeta%nxRealAtts
+         iret = nf90_put_att(ftn,xVarId,trim(fileMeta%xFloatAttNames(iTmp)),&
+                             fileMeta%xRealAttVals(iTmp,1:fileMeta%xRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place x floating point attributes into LSMOUT file.')
+      end do
+      do iTmp=1,fileMeta%nxCharAtts
+         iret = nf90_put_att(ftn,xVarId,trim(fileMeta%xCharAttNames(iTmp)),trim(fileMeta%xCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place x string point attributes into LSMOUT file.')
+      end do
       iret = nf90_def_var(ftn,'y',nf90_double,dimId(3),yVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'long_name',trim(fileMeta%yLName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'standard_name',trim(fileMeta%yStName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'_CoordinateAxisType',trim(fileMeta%yAxisType))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxisType attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'units',trim(fileMeta%yUnits))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into y coordinate variable')
-      iret = nf90_put_att(ftn,yVarId,'resolution',fileMeta%yRes)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place resolution attribute into y coordinate variable')
+      do iTmp=1,fileMeta%nyRealAtts
+         iret = nf90_put_att(ftn,yVarId,trim(fileMeta%yFloatAttNames(iTmp)),&
+                             fileMeta%yRealAttVals(iTmp,1:fileMeta%yRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place y floating point attributes into LSMOUT file.')
+      end do
+      do iTmp=1,fileMeta%nyCharAtts
+         iret = nf90_put_att(ftn,yVarId,trim(fileMeta%yCharAttNames(iTmp)),trim(fileMeta%yCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place y string point attributes into LSMOUT file.')
+      end do
 
       ! Define compression for meta-variables. Only compress if io_form_outputs is set
       ! to 1.
@@ -3273,32 +3344,19 @@ subroutine output_lsmOut_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for y.')
       endif
 
-      ! Create ProjectionCoordinateSystem variable
-      iret = nf90_def_var(ftn,'ProjectionCoordinateSystem',nf90_char,varid=coordVarId)
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateTransformType',trim(fileMeta%projTransform))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateTransformType attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'transform_name',trim(fileMeta%projTransformName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name',trim(fileMeta%projGridMappingName))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes',trim(fileMeta%projCoordAxes))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string',trim(fileMeta%projEsri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'standard_parallel',fileMeta%stParallel)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_parallel attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'longitude_of_central_meridian',fileMeta%lonCtrlMer)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_central_meridian attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'latitude_of_projection_origin',fileMeta%latOrig)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place latitude_of_projection_origin attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_easting',fileMeta%falseEast)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to false_easting place attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'false_northing',fileMeta%falseNorth)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place false_northing attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'earth_radius',fileMeta%radius)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place earth_radius attribute into ProjectionCoordinateVariable')
-      iret = nf90_put_att(ftn,coordVarId,'proj4',trim(fileMeta%proj4))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into ProjectionCoordinateVariable')
+      ! Translate crs variable info from land spatial metadata file to output
+      ! file.
+      iret = nf90_def_var(ftn,'crs',nf90_char,varid=coordVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable in LSMOUT file.')
+      do iTmp=1,fileMeta%nCrsRealAtts
+         iret = nf90_put_att(ftn,coordVarId,trim(fileMeta%crsFloatAttNames(iTmp)),&
+                             fileMeta%crsRealAttVals(iTmp,1:fileMeta%crsRealAttLen(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs floating point attributes into LSMOUT file.')
+      end do
+      do iTmp=1,fileMeta%nCrsCharAtts
+         iret = nf90_put_att(ftn,coordVarId,trim(fileMeta%crsCharAttNames(iTmp)),trim(fileMeta%crsCharAttVals(iTmp)))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place crs string point attributes into LSMOUT file.')
+      end do
 
       ! Loop through all possible variables and create them, along with their
       ! metadata attributes. 
@@ -3331,12 +3389,15 @@ subroutine output_lsmOut_NWM(domainId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'units',trim(fileMeta%units(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'proj4',trim(fileMeta%proj4))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place proj4 attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'grid_mapping',trim(fileMeta%gridMapping))
+            iret = nf90_put_att(ftn,varId,'grid_mapping','crs')
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable: '//trim(fileMeta%varNames(iTmp)))
-            iret = nf90_put_att(ftn,varId,'esri_pe_string',trim(fileMeta%projEsri))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into variable: '//trim(fileMeta%varNames(iTmp)))
+            ! Place necessary geospatial attributes into the variable.
+            do iTmp2=1,fileMeta%nCrsCharAtts
+               if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
+                  iret = nf90_put_att(ftn,varId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+               endif
+            end do
          endif ! End if output flag is on
       end do ! end looping through variable output list.
 
@@ -3850,6 +3911,7 @@ subroutine output_chanObs_NWM(domainId)
    integer :: varId ! Variable ID value created as NetCDF variables are created and populated.
    integer :: timeId ! Dimension ID for the time dimension.
    integer :: refTimeId ! Dimension ID for the reference time dimension.
+   integer :: coordVarId ! Variable to hold crs
    integer :: featureVarId, elevVarId, orderVarId ! Misc NetCDF variable id values
    integer :: latVarId, lonVarId ! Lat/lon NetCDF variable id values.
    integer :: varRange(2) ! Local storage of min/max valid range values.
@@ -4154,8 +4216,8 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create order attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"cdm_datatype",trim(fileMeta%cdm))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CDM attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
+      !iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
+      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
@@ -4199,6 +4261,38 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'units',trim(fileMeta%rTimeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
+
+      ! Create a crs variable. 
+      ! NOTE - For now, we are hard-coding in for lat/lon points. However, this
+      ! may be more flexible in future iterations.
+      iret = nf90_def_var(ftn,'crs',nf90_char,varid=coordVarId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'transform_name','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place transform_name attribute into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'grid_mapping_name','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping_name attribute into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'esri_pe_string','GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",&
+                                          &SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",&
+                                          &0.0174532925199433]];-400 -400 1000000000;&
+                                          &-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'spatial_ref','GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",&
+                                          &SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",&
+                                          &0.0174532925199433]];-400 -400 1000000000;&
+                                          &-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place spatial_ref into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'long_name','CRS definition')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'longitude_of_prime_meridian',0.0)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place longitude_of_prime_meridian into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'_CoordinateAxes','latitude longitude')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place _CoordinateAxes into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'semi_major_axis',6378137.0)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place semi_major_axis into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'semi_minor_axis',6356752.31424518)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place semi_minor_axis into crs variable.')
+      iret = nf90_put_att(ftn,coordVarId,'inverse_flattening',298.257223563)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place inverse_flattening into crs variable.')
 
       ! Create feature_id variable
       iret = nf90_def_var(ftn,"feature_id",nf90_int,dimId(1),featureVarId)
@@ -4315,6 +4409,8 @@ subroutine output_chanObs_NWM(domainId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into variable '//trim(fileMeta%varNames(iTmp)))
             iret = nf90_put_att(ftn,varId,'coordinates',trim(fileMeta%coordNames(iTmp)))
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place coordinates attribute into variable '//trim(fileMeta%varNames(iTmp)))
+            iret = nf90_put_att(ftn,varId,'grid_mapping','crs')
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place grid_mapping attribute into variable '//trim(fileMeta%varNames(iTmp)))
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_att(ftn,varId,'_FillValue',fileMeta%fillComp(iTmp))
                call nwmCheck(diagFlag,iret,'ERROR: Unable to place Fill value attribute into variable '//trim(fileMeta%varNames(iTmp)))
@@ -4352,6 +4448,7 @@ subroutine output_chanObs_NWM(domainId)
             ! need to convert all data to NDV
             if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
                varOutInt(:) = fileMeta%fillComp(iTmp)
+               varOutReal(iTmp,:) = fileMeta%fillReal(iTmp)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
@@ -4832,6 +4929,7 @@ subroutine output_gw_NWM(domainId,iGrid)
             ! need to fill in with NDV values. 
             if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp) .eq. 0) then
                varOutInt(:) = fileMeta%fillComp(iTmp)
+               varOutReal(iTmp,:) = fileMeta%fillReal(iTmp)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
