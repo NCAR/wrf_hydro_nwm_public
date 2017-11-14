@@ -525,12 +525,12 @@ subroutine rt_nlst_check(nlst)
       inquire(file=trim(nlst%geo_finegrid_flnm),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GEO_FINEGRID_FLNM not found.')
    endif
-   if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
-      call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
-   else
-      inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
-      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
-   endif   
+   !if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
+   !   call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
+   !else
+   !   inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
+   !   if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
+   !endif   
    if(len(trim(nlst%RESTART_FILE)) .ne. 0) then
       inquire(file=trim(nlst%RESTART_FILE),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR:= Hydro RESTART_FILE not found.')
