@@ -350,7 +350,7 @@ subroutine output_chrt_NWM(domainId)
          if(nudgeFlag .eq. 1)then
 #ifdef WRF_HYDRO_NUDGING
             fileMeta%outFlag(2) = 1 ! Set output flag to on.
-            call write_chanel_real(RT_DOMAIN(domainID)%nudge,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nudge,g_nudge)
+            call write_chanel_real(RT_DOMAIN(domainID)%nudge,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_nudge)
 #endif
          else
             fileMeta%outFlag(2) = 0 ! Set output flag to off.
