@@ -1953,7 +1953,7 @@ subroutine output_rt_NWM(domainId,iGrid)
                else if(iTmp2 .eq. 2) then
                   varRealTmp = RT_DOMAIN(domainId)%SFCHEADSUBRT(iTmp,jTmp)
                else if(iTmp2 .eq. 3) then
-                  varRealTmp = RT_DOMAIN(domainId)%QSTRMVOLRT(iTmp,jTmp)
+                  varRealTmp = RT_DOMAIN(domainId)%QSTRMVOLRT_ACC(iTmp,jTmp)
                else if(iTmp2 .eq. 4) then
                   varRealTmp = RT_DOMAIN(domainId)%QBDRYRT(iTmp,jTmp)
                endif
