@@ -8416,7 +8416,7 @@ end subroutine read_routelink
 !       call ReachLS_decomp(tmpORIFICEE, ORIFICEE)
 
 !yw This function does not work correctly for gages.
-!yw        call ReachLS_decomp(tmpGages,    gages)
+        call ReachLS_decomp(tmpGages,    gages)
         call mpp_land_bcast_int1(MAXORDER)
 
         if(NLAKES .gt. 0) then
