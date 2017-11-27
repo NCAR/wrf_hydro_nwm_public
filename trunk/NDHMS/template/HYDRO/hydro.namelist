@@ -66,7 +66,8 @@ order_to_write = 4
 io_form_outputs = 1
 
 ! Realtime run configuration option:
-! 0=all (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective
+! 0=all (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective,
+! 6=diagnostic (includes all of 1-4 outputs combined)
 io_config_outputs = 1
 
 ! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes (default)
@@ -101,11 +102,6 @@ frxst_pts_out = 0            ! ASCII text file of forecast points or gage points
 
 !!!! ------------ PHYSICS OPTIONS AND RELATED SETTINGS ------------ !!!!
 
-! Switch for terrain adjustment of incoming solar radiation: 0=no, 1=yes
-! Note: This option is not yet active in Verion 1.0...
-!      WRF has this capability so be careful not to double apply the correction!!!
-TERADJ_SOLAR = 0
-
 ! Specify the number of soil layers (integer) and the depth of the bottom of each layer... (meters)
 ! Notes: In Version 1 of WRF-Hydro these must be the same as in the namelist.input file.
 !      Future versions will permit this to be different.
@@ -132,8 +128,8 @@ SUBRTSWCRT = 1
 ! Switch to activate surface overland flow routing...(0=no, 1=yes)
 OVRTSWCRT = 1
 
-! Specify overland & subsurface flow routing option: 1=Seepest Descent (D8) 2=CASC2D (not active)
-! NOTE: Currently only option 1 is supported
+! Specify overland flow routing option: 1=Seepest Descent (D8) 2=CASC2D (not active)
+! NOTE: Currently subsurface flow is only steepest descent
 rt_option = 1
 
 ! Switch to activate channel routing...(0=no, 1=yes)
@@ -152,7 +148,7 @@ route_lake_f = "./DOMAIN/LAKEPARM.nc"
 GWBASESWCRT = 1
 
 ! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc" for netcdf
-! or "gw_basns.txt" for ascii). Note: Only required if baseflow bucket model is active and UDMP_OPT=0.
+! or "gw_basns.txt" for ascii). Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
 gwbasmskfil = "./DOMAIN/GWBASINS.nc"
 
 ! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc" for netcdf or "GWBUCKPARM.TBL" for text)
