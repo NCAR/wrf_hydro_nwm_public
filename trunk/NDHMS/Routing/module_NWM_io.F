@@ -4700,9 +4700,11 @@ subroutine output_gw_NWM(domainId,iGrid)
          ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
          ! reach-based routing has the GW physics initialized the same as with 
          ! gridded routing. 
-         call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas,g_qin_gwsubbas)
+         !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
+         call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
          call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas,g_qout_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas,g_z_gwsubbas)
+         !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
+         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas*1000.,g_z_gwsubbas)
          call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
       else
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
@@ -4721,9 +4723,12 @@ subroutine output_gw_NWM(domainId,iGrid)
       allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
 
-      g_qin_gwsubbas = rt_domain(domainId)%qin_gwsubbas
+      !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
+      g_qin_gwsubbas = rt_domain(domainId)%qin_gwsubbas/nlst_rt(domainId)%DT
       g_qout_gwsubbas = rt_domain(domainId)%qout_gwsubbas
       g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
+      !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
+      if(nlst_rt(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
       g_basnsInd = rt_domain(domainId)%linkid
    endif   
 

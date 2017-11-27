@@ -741,7 +741,7 @@ endif
 #else
    call cpu_time(connCalcTimeEnd)
 #endif
-   if (nlst_rt(did)%channel_option .eq. 3) then 
+   if ((nlst_rt(did)%CHANRTSWCRT .eq. 1) .and. (nlst_rt(did)%channel_option .eq. 3)) then 
       call output_chan_connectivity(       &
            rt_domain(did)%CHLAT,     &   !! Channel grid lat
            rt_domain(did)%CHLON,     &   !! Channel grid lat
@@ -766,7 +766,7 @@ endif
    ! The UDMP_ini effectively sets the nhd gw bucket area (that field is not used from the file)
    !   this may be the only dependence of the nhd_routing on the UDMAPING in channelBucket_only
    if(nlst_rt(did)%channel_only .eq. 0) then
-      
+
       if(nlst_rt(did)%UDMP_OPT .eq. 1) then   
          ! get NHDPLUS mapping function. 
          !          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
@@ -783,7 +783,8 @@ endif
    end if ! end not channel_only
 
 
-    if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
+    if ( (nlst_rt(did)%CHANRTSWCRT .eq. 1) .and. &
+         (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) ) then
 #ifdef MPP_LAND
 
       if(nlst_rt(did)%UDMP_OPT .eq. 1) then
@@ -1083,8 +1084,11 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       
       call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
            rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
-           rt_domain(did)%z_max, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
-           rt_domain(did)%nhdBuckMask )     
+           rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
+           rt_domain(did)%nhdBuckMask )
+      !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
+      !for UDMP=1 so we convert units.
+      rt_domain(did)%z_gwsubbas = rt_domain(did)%z_gwsubbas/1000.     
 
 #ifdef HYDRO_D
       write(6,*) "finish readBucket_nhd "
