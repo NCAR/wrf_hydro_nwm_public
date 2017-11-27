@@ -9086,17 +9086,17 @@ end function get_netcdf_dim
 
 ! read the GWBUCET Parm for NHDPlus
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
-                z_max, LINKID, nhdBuckMask)
+                z_max, z_init, LINKID, nhdBuckMask)
     implicit none
     integer :: numbasns
     integer, dimension(numbasns) :: LINKID
-    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max
+    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
     character(len=*) :: infile
 !   define temp array
     integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
     integer, allocatable, dimension(:) :: tmpLinkid
-    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpz_max
+    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpz_max, tmpz_init
 
 !   get gnid
 #ifdef MPP_LAND
@@ -9120,6 +9120,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     allocate(tmpCoeff(gnid))
     allocate(tmpExp(gnid))
     allocate(tmpz_max(gnid))
+    allocate(tmpz_init(gnid))
 #ifdef MPP_LAND
     if(my_id .eq. io_id ) then
 #endif
@@ -9145,6 +9146,13 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           endif
           iret = nf_get_var_real(ncid, varid, tmpz_max)
 
+          iret = nf_inq_varid(ncid,"Zinit",  varid)
+          if(iret /= 0) then
+               print * , "could not find Zinit from ", infile
+               call hydro_stop("Failed to read BUCKETPARM")
+          endif
+          iret = nf_get_var_real(ncid, varid, tmpz_init)
+
           iret = nf_inq_varid(ncid, "ComID",  varid)
           if(iret /= 0) then
                print * , "could not find ComID from ", infile
@@ -9157,6 +9165,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           call mpp_land_bcast_real_1d(tmpCoeff)
           call mpp_land_bcast_real_1d(tmpExp)
           call mpp_land_bcast_real_1d(tmpz_max)
+          call mpp_land_bcast_real_1d(tmpz_init)
           call mpp_land_bcast_int(gnid ,tmpLinkid)
        endif
 #endif
@@ -9168,6 +9177,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                gw_buck_coeff(k) = tmpCoeff(i)
                gw_buck_exp(k) = tmpExp(i)
                z_max(k) = tmpz_max(i)
+               z_init(k) = tmpz_init(i)
                nhdBuckMask(k) = 1
                goto 301 
             endif
@@ -9178,6 +9188,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
     if(allocated(tmpz_max)) deallocate(tmpz_max)
+    if(allocated(tmpz_init)) deallocate(tmpz_init)
     if(allocated(tmpLinkid)) deallocate(tmpLinkid)
 end subroutine readBucket_nhd
 

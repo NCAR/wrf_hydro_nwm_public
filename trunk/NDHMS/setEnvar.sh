@@ -7,7 +7,7 @@
 export WRF_HYDRO=1
 
 ### turn on output information during running time.
-export HYDRO_D=1
+export HYDRO_D=0
 
 ### turn on distributed parameters for NoahMP
 export SPATIAL_SOIL=1  
@@ -22,4 +22,4 @@ export WRFIO_NCD_LARGE_FILE_SUPPORT=1
 export NCEP_WCOSS=0
 
 ### turn nudging off
-export WRF_HYDRO_NUDGING=1
+export WRF_HYDRO_NUDGING=0

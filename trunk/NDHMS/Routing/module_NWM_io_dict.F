@@ -2383,7 +2383,7 @@ subroutine initGwDict(gwOutDict)
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
-   do i=1,numLakeVars
+   do i=1,numGwVars
       gwOutDict%fillComp(i) = NINT((gwOutDict%fillReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
       gwOutDict%missingComp(i) = NINT((gwOutDict%missingReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
       gwOutDict%validMinComp(i) = NINT((gwOutDict%validMinReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
