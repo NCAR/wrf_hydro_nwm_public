@@ -142,20 +142,25 @@ type ldasMeta
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
    character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
-   ! Projection variable attributes
-   character (len=64) :: yLName,xLName ! long_name
-   character (len=64) :: yStName,xStName ! standard_name
-   character (len=64) :: yAxisType,xAxisType ! _CoordinateAxisType
-   character (len=64) :: yUnits,xUnits ! units
-   real :: yRes, xRes ! Resoltution in meters
-   ! Establish ProjectionCoordinateSystem variable attributes
-   character (len=64) :: projTransform,projTransformName
-   character (len=64) :: projGridMappingName,projCoordAxes
-   character (len=2048) :: projEsri
-   real, dimension(2) :: stParallel
-   real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
-   character (len=512) :: proj4
-   character (len=128) :: gridMapping
+   ! Establish a proj4 string
+   character (len=1024) :: proj4
+   ! Establish crs-related variables. 
+   character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
+   character(len=1024), dimension(20) :: crsCharAttVals
+   real, dimension(20,20) :: crsRealAttVals
+   real, dimension(20) :: crsRealAttLen
+   integer :: nCrsRealAtts, nCrsCharAtts
+   ! Establish x/y related variables.
+   character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
+   character(len=1024), dimension(20) :: xCharAttVals
+   real, dimension(20,20) :: xRealAttVals
+   integer, dimension(20) :: xRealAttLen
+   integer :: nxRealAtts, nxCharAtts
+   character(len=1024), dimension(20) :: yCharAttNames,yFloatAttNames
+   character(len=1024), dimension(20) :: yCharAttVals
+   real, dimension(20,20) :: yRealAttVals
+   integer, dimension(20) :: yRealAttLen
+   integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
    character (len=128) :: title ! File TITLE
@@ -200,21 +205,27 @@ type rtDomainMeta
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
    character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
-
-   ! Projection variable attributes
-   character (len=64) :: yLName,xLName ! long_name
-   character (len=64) :: yStName,xStName ! standard_name
-   character (len=64) :: yAxisType,xAxisType ! _CoordinateAxisType
-   character (len=64) :: yUnits,xUnits ! units
    real :: yRes, xRes ! Resoltution in meters
-   ! Establish ProjectionCoordinateSystem variable attributes
-   character (len=64) :: projTransform,projTransformName
-   character (len=64) :: projGridMappingName,projCoordAxes
-   character (len=2048) :: projEsri
-   real, dimension(2) :: stParallel
-   real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
-   character (len=512) :: proj4
-   character (len=128) :: gridMapping
+
+   ! Establish a proj4 string
+   character (len=1024) :: proj4
+   ! Establish crs-related variables. 
+   character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
+   character(len=1024), dimension(20) :: crsCharAttVals
+   real, dimension(20,20) :: crsRealAttVals
+   real, dimension(20) :: crsRealAttLen
+   integer :: nCrsRealAtts, nCrsCharAtts
+   ! Establish x/y related variables.
+   character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
+   character(len=1024), dimension(20) :: xCharAttVals
+   real, dimension(20,20) :: xRealAttVals
+   integer, dimension(20) :: xRealAttLen
+   integer :: nxRealAtts, nxCharAtts
+   character(len=1024), dimension(20) :: yCharAttNames,yFloatAttNames
+   character(len=1024), dimension(20) :: yCharAttVals
+   real, dimension(20,20) :: yRealAttVals
+   integer, dimension(20) :: yRealAttLen
+   integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
    integer :: decimation ! Decimation factor
@@ -326,21 +337,27 @@ type chrtGrdMeta
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
    character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
-
-   ! Projection variable attributes
-   character (len=64) :: yLName,xLName ! long_name
-   character (len=64) :: yStName,xStName ! standard_name
-   character (len=64) :: yAxisType,xAxisType ! _CoordinateAxisType
-   character (len=64) :: yUnits,xUnits ! units
    real :: yRes, xRes ! Resoltution in meters
-   ! Establish ProjectionCoordinateSystem variable attributes
-   character (len=64) :: projTransform,projTransformName
-   character (len=64) :: projGridMappingName,projCoordAxes
-   character (len=2048) :: projEsri
-   real, dimension(2) :: stParallel
-   real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
-   character (len=512) :: proj4
-   character (len=128) :: gridMapping
+
+   ! Establish a proj4 string
+   character (len=1024) :: proj4
+   ! Establish crs-related variables. 
+   character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
+   character(len=1024), dimension(20) :: crsCharAttVals
+   real, dimension(20,20) :: crsRealAttVals
+   real, dimension(20) :: crsRealAttLen
+   integer :: nCrsRealAtts, nCrsCharAtts
+   ! Establish x/y related variables.
+   character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
+   character(len=1024), dimension(20) :: xCharAttVals
+   real, dimension(20,20) :: xRealAttVals
+   integer, dimension(20) :: xRealAttLen
+   integer :: nxRealAtts, nxCharAtts
+   character(len=1024), dimension(20) :: yCharAttNames,yFloatAttNames
+   character(len=1024), dimension(20) :: yCharAttVals
+   real, dimension(20,20) :: yRealAttVals
+   integer, dimension(20) :: yRealAttLen
+   integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
    integer :: decimation ! Decimation factor
@@ -390,21 +407,26 @@ type lsmMeta
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
    character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
-   ! Projection variable attributes
-   character (len=64) :: yLName,xLName ! long_name
-   character (len=64) :: yStName,xStName ! standard_name
-   character (len=64) :: yAxisType,xAxisType ! _CoordinateAxisType
-   character (len=64) :: yUnits,xUnits ! units
-   real :: yRes, xRes ! Resoltution in meters
-   ! Establish ProjectionCoordinateSystem variable attributes
-   character (len=64) :: projTransform,projTransformName
-   character (len=64) :: projGridMappingName,projCoordAxes
-   character (len=2048) :: projEsri
-   real, dimension(2) :: stParallel
-   real*8 :: lonCtrlMer,latOrig,falseEast,falseNorth,radius
-   character (len=512) :: proj4
-   character (len=128) :: gridMapping
-   
+  
+   ! Establish a proj4 string
+   character (len=1024) :: proj4
+   ! Establish crs-related variables. 
+   character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
+   character(len=1024), dimension(20) :: crsCharAttVals
+   real, dimension(20,20) :: crsRealAttVals
+   real, dimension(20) :: crsRealAttLen
+   integer :: nCrsRealAtts, nCrsCharAtts
+   ! Establish x/y related variables.
+   character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
+   character(len=1024), dimension(20) :: xCharAttVals
+   real, dimension(20,20) :: xRealAttVals
+   integer, dimension(20) :: xRealAttLen
+   integer :: nxRealAtts, nxCharAtts
+   character(len=1024), dimension(20) :: yCharAttNames,yFloatAttNames
+   character(len=1024), dimension(20) :: yCharAttVals
+   real, dimension(20,20) :: yRealAttVals
+   integer, dimension(20) :: yRealAttLen
+   integer :: nyRealAtts, nyCharAtts 
 
    ! Global attributes
    character (len=128) :: title ! File TITLE
@@ -573,18 +595,28 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
       iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
+         chrtOutDict%proj4 = ''
+         chrtOutDict%esri = ''
       else
          ! First pull metadata on coordinate system.
-         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chrtOutDict%esri)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
-         iret = nf90_get_att(ftnMeta,projVarId,'proj4',chrtOutDict%proj4)
-         ! We are going to put a relaxed constraint on the proj4 string. 
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
          if(iret .ne. 0) then
-            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            call postDiagMsg(diagFlag,'WARNING: Unable to find crs in LAND spatial metadata file')
             chrtOutDict%proj4 = ''
+            chrtOutDict%esri = ''
+         else
+            iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chrtOutDict%esri)
+            if(iret .ne. 0) then
+               call postDiagMsg(diagFlag,'WARNING: Unable to find esri_pe_string in LAND spatial metadata file.')
+               chrtOutDict%esri = ''
+            endif
+            iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',chrtOutDict%proj4)
+            ! We are going to put a relaxed constraint on the proj4 string. 
+            if(iret .ne. 0) then
+               call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+               chrtOutDict%proj4 = ''
+            endif
          endif
          ! Close the file
          iret = nf90_close(ftnMeta)
@@ -692,6 +724,14 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    integer, intent(inout) :: diagFlag
    integer :: ftnMeta,projVarId,xVarId,yVarId
    integer :: iret
+   integer :: crsRealAttCnt,xRealAttCnt,yRealAttCnt
+   integer :: crsCharAttCnt,xCharAttCnt,yCharAttCnt
+   integer :: i, nCrsAtts,nxAtts,nyAtts
+   integer :: charFlag
+   integer :: floatFlag 
+   character(len=512) :: tmpAttName
+   integer :: xtypeTmp
+   integer :: tmpLen
 
    ! LDASOUT FILES
 
@@ -714,78 +754,214 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ldasOutDict%rTimeUnits = "minutes since 1970-01-01 00:00:00 UTC"
    ldasOutDict%rTimeStName = "forecast_reference_time"
 
+   crsRealAttCnt = 0
+   crsCharAttCnt = 0
+   xRealAttCnt = 0
+   xCharAttCnt = 0
+   yRealAttCnt = 0
+   yCharAttCnt = 0
+
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
       iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')        
+         ldasOutDict%nCrsCharAtts = 0
+         ldasOutDict%nCrsRealAtts = 0
+         ldasOutDict%nxCharAtts = 0
+         ldasOutDict%nxRealAtts = 0
+         ldasOutDict%nyCharAtts = 0
+         ldasOutDict%nyRealAtts = 0
+         ldasOutDict%proj4 = ''
       else
-         ! First pull metadata on coordinate system.
-         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateTransformType',ldasOutDict%projTransform)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateTransformType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'transform_name',ldasOutDict%projTransformName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find transform_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'grid_mapping_name',ldasOutDict%projGridMappingName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find grid_mapping_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateAxes',ldasOutDict%projCoordAxes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateAxes in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'standard_parallel',ldasOutDict%stParallel)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find standard_parallel in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'longitude_of_central_meridian',ldasOutDict%lonCtrlMer)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find longitude_of_central_meridian in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'latitude_of_projection_origin',ldasOutDict%latOrig)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find latitude_of_projection_origin in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_easting',ldasOutDict%falseEast)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_easting in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_northing',ldasOutDict%falseNorth)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_northing in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'earth_radius',ldasOutDict%radius)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find earth_radius in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',ldasOutDict%projEsri)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
-         iret = nf90_get_att(ftnMeta,projVarId,'proj4',ldasOutDict%proj4)
-         ! We are going to put a relaxed constraint on the proj4 string. 
+         iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',ldasOutDict%proj4)
          if(iret .ne. 0) then
-            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            call postDiagMsg(diagFlag,'WARNING: Unable to find proj4 global attribute. Defaulting to blank string.')
             ldasOutDict%proj4 = ''
          endif
-         ! Next pull metadata on x coordinate.
+         charFlag = 0
+         floatFlag = 0
+         ! Find the crs variable and pull out the attributes, their names, and
+         ! their values. This will be translated to output files. 
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
+         ! For now we are going to allow the code to move forward without
+         ! finding this variable. In the future, we will probably restrict the
+         ! code to ensure things are more seamless. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
+            ldasOutDict%nCrsCharAtts = 0
+            ldasOutDict%nCrsRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,projVarId,nAtts=nCrsAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find crs number of attributes')
+            do i =1,nCrsAtts
+               iret = nf90_inq_attname(ftnMeta,projVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from crs variable.')
+               iret = nf90_inquire_attribute(ftnMeta,projVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from crs variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1 
+                  case (NF90_UINT64) 
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  ldasOutDict%crsCharAttNames(crsCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),ldasOutDict%crsCharAttVals(crsCharAttCnt+1)) 
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsCharAttCnt = crsCharAttCnt + 1
+               else
+                  ldasOutDict%crsFloatAttNames(crsRealAttCnt+1) = trim(tmpAttName)
+                  ldasOutDict%crsRealAttLen(crsRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),ldasOutDict%crsRealAttVals(crsRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsRealAttCnt = crsRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            ldasOutDict%nCrsRealAtts = crsRealAttCnt
+            ldasOutDict%nCrsCharAtts = crsCharAttCnt
+         
+         endif
+   
+         ! Next pull the attributes from the x/y dimensions
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'x',xVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'standard_name',ldasOutDict%xStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'long_name',ldasOutDict%xLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'_CoordinateAxisType',ldasOutDict%xAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'units',ldasOutDict%xUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x units in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'resolution',ldasOutDict%xRes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
-         ! Next pull metadata on y coordinates.
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the x variable. No x variable or attributes will be created.')
+            ldasOutDict%nxCharAtts = 0
+            ldasOutDict%nxRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,xVarId,nAtts=nxAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find x number of attributes')
+            do i =1,nxAtts
+               iret = nf90_inq_attname(ftnMeta,xVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from x variable.')
+               iret = nf90_inquire_attribute(ftnMeta,xVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from x variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  ldasOutDict%xCharAttNames(xCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),ldasOutDict%xCharAttVals(xCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xCharAttCnt = xCharAttCnt + 1
+               else
+                  ldasOutDict%xFloatAttNames(xRealAttCnt+1) = trim(tmpAttName)
+                  ldasOutDict%xRealAttLen(xRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),ldasOutDict%xRealAttVals(xRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xRealAttCnt = xRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            ldasOutDict%nxRealAtts = xRealAttCnt
+            ldasOutDict%nxCharAtts = xCharAttCnt
+
+         endif
+
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'y',yVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find y variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'standard_name',ldasOutDict%yStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'long_name',ldasOutDict%yLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'_CoordinateAxisType',ldasOutDict%yAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'units',ldasOutDict%yUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y units in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'resolution',ldasOutDict%yRes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y resolution in LAND spatial metadata file')
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the y variable. No y variable or attributes will be created.')
+            ldasOutDict%nyCharAtts = 0
+            ldasOutDict%nyRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,yVarId,nAtts=nyAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find y number of attributes')
+            do i =1,nyAtts
+               iret = nf90_inq_attname(ftnMeta,yVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from y variable.')
+               iret = nf90_inquire_attribute(ftnMeta,yVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from y variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  ldasOutDict%yCharAttNames(yCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),ldasOutDict%yCharAttVals(yCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yCharAttCnt = yCharAttCnt + 1
+               else
+                  ldasOutDict%yFloatAttNames(yRealAttCnt+1) = trim(tmpAttName)
+                  ldasOutDict%yRealAttLen(yRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),ldasOutDict%yRealAttVals(yRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yRealAttCnt = yRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            ldasOutDict%nyRealAtts = yRealAttCnt
+            ldasOutDict%nyCharAtts = yCharAttCnt
+
+         endif
          ! Close the file
          iret = nf90_close(ftnMeta)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
       endif
    endif
-
-   ldasOutDict%gridMapping = "ProjectionCoordinateSystem"
 
    ! Now establish metadata attributes for variables. ESRI string is defined
    ! above and applies to all gridded variables for LDASOUT.
@@ -1006,6 +1182,14 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    integer :: xDimId,numColLand,numColHydro
    real :: resLand,resHydro,aggFactor
    integer :: iret
+   integer :: crsRealAttCnt,xRealAttCnt,yRealAttCnt
+   integer :: crsCharAttCnt,xCharAttCnt,yCharAttCnt
+   integer :: i, nCrsAtts,nxAtts,nyAtts
+   integer :: charFlag
+   integer :: floatFlag
+   character(len=512) :: tmpAttName
+   integer :: xtypeTmp
+   integer :: tmpLen
    ! RT_DOMAIN files
 
    rtDomainDict%modelNdv = -9.E15
@@ -1024,77 +1208,232 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    rtDomainDict%rTimeUnits = "minutes since 1970-01-01 00:00:00 UTC"
    rtDomainDict%rTimeStName = "forecast_reference_time"
 
-   ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   crsRealAttCnt = 0
+   crsCharAttCnt = 0
+   xRealAttCnt = 0
+   xCharAttCnt = 0
+   yRealAttCnt = 0
+   yCharAttCnt = 0
+
+   ! Pull spatial metadata information about the modeling domain from the
+   ! Fulldom file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst_rt(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
-         ! Spatial metadata file not found for land grid.
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+         ! Spatial metadata file not found for hydro grid.
+         call postDiagMsg(diagFlag,'WARNING: Unable to open Fulldom metadata file. No crs variable or attributes will be created.')
+         rtDomainDict%nCrsCharAtts = 0
+         rtDomainDict%nCrsRealAtts = 0
+         rtDomainDict%nxCharAtts = 0
+         rtDomainDict%nxRealAtts = 0
+         rtDomainDict%nyCharAtts = 0
+         rtDomainDict%nyRealAtts = 0
+         rtDomainDict%proj4 = ''
       else
-         ! First pull metadata on coordinate system.
-         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateTransformType',rtDomainDict%projTransform)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateTransformType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'transform_name',rtDomainDict%projTransformName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find transform_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'grid_mapping_name',rtDomainDict%projGridMappingName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find grid_mapping_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateAxes',rtDomainDict%projCoordAxes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateAxes in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'standard_parallel',rtDomainDict%stParallel)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find standard_parallel in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'longitude_of_central_meridian',rtDomainDict%lonCtrlMer)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find longitude_of_central_meridian in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'latitude_of_projection_origin',rtDomainDict%latOrig)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find latitude_of_projection_origin in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_easting',rtDomainDict%falseEast)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_easting in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_northing',rtDomainDict%falseNorth)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_northing in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'earth_radius',rtDomainDict%radius)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find earth_radius in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',rtDomainDict%projEsri)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
-         iret = nf90_get_att(ftnMeta,projVarId,'proj4',rtDomainDict%proj4)
-         ! We are going to put a relaxed constraint on the proj4 string. 
+         iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',rtDomainDict%proj4)
          if(iret .ne. 0) then
-            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            call postDiagMsg(diagFlag,'WARNING: Unable to find proj4 global attribute. Defaulting to blank string.')
             rtDomainDict%proj4 = ''
          endif
-         ! Next, get the number of columns on the land grid
-         iret = nf90_inq_dimid(ftnMeta,'x',xDimId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find the x dimension in the LAND spatial metadata file')
-         iret = nf90_inquire_dimension(ftnMeta,xDimId,len=numColLand)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to retrieve the x-dimension value in the LAND spatial metadata file')
-         ! Next pull metadata on x coordinate.
+         charFlag = 0
+         floatFlag = 0
+         ! Find the crs variable and pull out the attributes, their names, and
+         ! their values. This will be translated to output files. 
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
+         ! For now we are going to allow the code to move forward without
+         ! finding this variable. In the future, we will probably restrict the
+         ! code to ensure things are more seamless. 
+
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
+            rtDomainDict%nCrsCharAtts = 0
+            rtDomainDict%nCrsRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,projVarId,nAtts=nCrsAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find crs number of attributes')
+            do i =1,nCrsAtts
+               iret = nf90_inq_attname(ftnMeta,projVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from crs variable.')
+               iret = nf90_inquire_attribute(ftnMeta,projVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from crs variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  rtDomainDict%crsCharAttNames(crsCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),rtDomainDict%crsCharAttVals(crsCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsCharAttCnt = crsCharAttCnt + 1
+               else
+                  rtDomainDict%crsFloatAttNames(crsRealAttCnt+1) = trim(tmpAttName)
+                  rtDomainDict%crsRealAttLen(crsRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),rtDomainDict%crsRealAttVals(crsRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsRealAttCnt = crsRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            rtDomainDict%nCrsRealAtts = crsRealAttCnt
+            rtDomainDict%nCrsCharAtts = crsCharAttCnt
+
+         endif
+
+         ! Next pull the attributes from the x/y dimensions
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'x',xVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'standard_name',rtDomainDict%xStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'long_name',rtDomainDict%xLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'_CoordinateAxisType',rtDomainDict%xAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'units',rtDomainDict%xUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x units in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'resolution',resLand)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
-         ! Next pull metadata on y coordinates.
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the x variable. No x variable or attributes will be created.')
+            rtDomainDict%nxCharAtts = 0
+            rtDomainDict%nxRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,xVarId,nAtts=nxAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find x number of attributes')
+            do i =1,nxAtts
+               iret = nf90_inq_attname(ftnMeta,xVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from x variable.')
+               iret = nf90_inquire_attribute(ftnMeta,xVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from x variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  rtDomainDict%xCharAttNames(xCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),rtDomainDict%xCharAttVals(xCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xCharAttCnt = xCharAttCnt + 1
+               else
+                  rtDomainDict%xFloatAttNames(xRealAttCnt+1) = trim(tmpAttName)
+                  rtDomainDict%xRealAttLen(xRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),rtDomainDict%xRealAttVals(xRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xRealAttCnt = xRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            rtDomainDict%nxRealAtts = xRealAttCnt
+            rtDomainDict%nxCharAtts = xCharAttCnt
+
+         endif
+
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'y',yVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find y variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'standard_name',rtDomainDict%yStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'long_name',rtDomainDict%yLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'_CoordinateAxisType',rtDomainDict%yAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'units',rtDomainDict%yUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y units in LAND spatial metadata file')
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the y variable. No y variable or attributes will be created.')
+            rtDomainDict%nyCharAtts = 0
+            rtDomainDict%nyRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,yVarId,nAtts=nyAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find y number of attributes')
+            do i =1,nyAtts
+               iret = nf90_inq_attname(ftnMeta,yVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from y variable.')
+               iret = nf90_inquire_attribute(ftnMeta,yVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from y variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  rtDomainDict%yCharAttNames(yCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),rtDomainDict%yCharAttVals(yCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yCharAttCnt = yCharAttCnt + 1
+               else
+                  rtDomainDict%yFloatAttNames(yRealAttCnt+1) = trim(tmpAttName)
+                  rtDomainDict%yRealAttLen(yRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),rtDomainDict%yRealAttVals(yRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yRealAttCnt = yRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            rtDomainDict%nyRealAtts = yRealAttCnt
+            rtDomainDict%nyCharAtts = yCharAttCnt
+         endif
          ! Close the file
          iret = nf90_close(ftnMeta)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close Fulldom file.')
+      endif
+
+      ! Next get the number of columns on the land grid. This will be used to
+      ! calculate the resolution of the routing grid in meters and aggfactor.
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      if(iret .ne. 0) then
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND Spatial Metadata file. Defaulting to missing values.')
+         numColLand = -9999
+         resLand = -9999
+      else
+         iret = nf90_inq_dimid(ftnGeo,'x',xDimId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x dimension in LAND spatial Metadata file')
+         iret = nf90_inquire_dimension(ftnGeo,xDimId,len=numColLand)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to retrieve number of columns in the LAND spatial metadata file')
+         iret = nf90_inq_varid(ftnMeta,'x',xVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
+         iret = nf90_get_att(ftnMeta,xVarId,'resolution',resLand) 
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
+         iret = nf90_close(ftnGeo)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close the LAND spatial metadata file')
       endif
 
       ! Next get the number of columns on the high-resolution routing grid.
@@ -1114,14 +1453,17 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
       ! Calculate the aggregation factor and resolution of the hydro routing
       ! grid.
-      aggFactor = float(numColHydro/numColLand)
-      resHydro = resLand/aggFactor
+      if(numColLand .ne. -9999) then
+         aggFactor = float(numColHydro/numColLand)
+         resHydro = resLand/aggFactor
+      else
+         resHydro = -9999
+      endif
 
       rtDomainDict%xRes = resHydro
       rtDomainDict%yRes = resHydro
 
    endif
-   rtDomainDict%gridMapping = "ProjectionCoordinateSystem"
 
    rtDomainDict%varNames(:) = [character(len=64) :: "zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
                                "QBDRYRT"]
@@ -1149,10 +1491,18 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
 end subroutine initRtDomainDict
 
-subroutine initLakeDict(lakeOutDict)
+subroutine initLakeDict(lakeOutDict,diagFlag,procId)
+   use module_namelist, only: nlst_rt
+   use netcdf
    implicit none
 
    type(lakeMeta), intent(inout) :: lakeOutDict
+   integer, intent(inout) :: diagFlag
+   integer, intent(inout) :: procId
+
+   ! Local variables
+   integer :: ftnMeta,iret
+   integer :: projVarId
 
    lakeOutDict%modelNdv = -9.E15
    ! LAKE FILES
@@ -1161,15 +1511,46 @@ subroutine initLakeDict(lakeOutDict)
    !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files 
    lakeOutDict%fType = 'timeSeries'
-   lakeOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
    lakeOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    lakeOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    lakeOutDict%lakeDim = 'lake_id'
    lakeOutDict%cdm = 'PLACEHOLDER'
-   lakeOutDict%esri = 'GEOGCS[GCS_North_American_1983,DATUM[D_North_American_1983,&
-                      &SPHEROID[GRS_1980,6378137.0,298.257222101]],&
-                      &PRIMEM[Greenwich,0.0],UNIT[Degree,0.017453292519943295]]'
    lakeOutDict%conventions = 'CF-1.6'
+
+   ! Pull spatial metadata information about the modeling domain from the land
+   ! spatial metadata file. 
+   if(procId .eq. 0) then
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      if(iret .ne. 0) then
+         ! Spatial metadata file not found for land grid.
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
+         lakeOutDict%proj4 = ''
+         lakeOutDict%esri = ''
+      else
+         ! First pull metadata on coordinate system.
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to find crs in LAND spatial metadata file')
+            lakeOutDict%proj4 = ''
+            lakeOutDict%esri = ''
+         else
+            iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',lakeOutDict%esri)
+            if(iret .ne. 0) then
+               call postDiagMsg(diagFlag,'WARNING: Unable to find esri_pe_string in LAND spatial metadata file.')
+               lakeOutDict%esri = ''
+            endif
+            iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',lakeOutDict%proj4)
+            ! We are going to put a relaxed constraint on the proj4 string. 
+            if(iret .ne. 0) then
+               call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+               lakeOutDict%proj4 = ''
+            endif
+         endif
+         ! Close the file
+         iret = nf90_close(ftnMeta)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
+      endif
+   endif
 
    ! Next establish time attribues
    lakeOutDict%timeLName = 'valid output time'
@@ -1231,6 +1612,14 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    integer :: xDimId,numColLand,numColHydro
    real :: resLand,resHydro,aggFactor
    integer :: iret
+   integer :: crsRealAttCnt,xRealAttCnt,yRealAttCnt
+   integer :: crsCharAttCnt,xCharAttCnt,yCharAttCnt
+   integer :: i, nCrsAtts,nxAtts,nyAtts
+   integer :: charFlag
+   integer :: floatFlag
+   character(len=512) :: tmpAttName
+   integer :: xtypeTmp
+   integer :: tmpLen
    !CHRTOUT_GRID files
 
    chrtGrdDict%modelNdv = -9.E15
@@ -1249,77 +1638,231 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    chrtGrdDict%rTimeUnits = "minutes since 1970-01-01 00:00:00 UTC"
    chrtGrdDict%rTimeStName = "forecast_reference_time"
 
-   ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   crsRealAttCnt = 0
+   crsCharAttCnt = 0
+   xRealAttCnt = 0
+   xCharAttCnt = 0
+   yRealAttCnt = 0
+   yCharAttCnt = 0
+
+   ! Pull spatial metadata information about the modeling domain from the
+   ! Fulldom file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst_rt(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
-         ! Spatial metadata file not found for land grid.
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+         ! Spatial metadata file not found for hydro grid.
+         call postDiagMsg(diagFlag,'WARNING: Unable to open Fulldom file. No crs variable or attributes will be created.')
+         chrtGrdDict%nCrsCharAtts = 0
+         chrtGrdDict%nCrsRealAtts = 0
+         chrtGrdDict%nxCharAtts = 0
+         chrtGrdDict%nxRealAtts = 0
+         chrtGrdDict%nyCharAtts = 0
+         chrtGrdDict%nyRealAtts = 0
+         chrtGrdDict%proj4 = ''
       else
-         ! First pull metadata on coordinate system.
-         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateTransformType',chrtGrdDict%projTransform)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateTransformType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'transform_name',chrtGrdDict%projTransformName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find transform_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'grid_mapping_name',chrtGrdDict%projGridMappingName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find grid_mapping_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateAxes',chrtGrdDict%projCoordAxes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateAxes in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'standard_parallel',chrtGrdDict%stParallel)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find standard_parallel in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'longitude_of_central_meridian',chrtGrdDict%lonCtrlMer)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find longitude_of_central_meridian in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'latitude_of_projection_origin',chrtGrdDict%latOrig)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find latitude_of_projection_origin in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_easting',chrtGrdDict%falseEast)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_easting in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_northing',chrtGrdDict%falseNorth)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_northing in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'earth_radius',chrtGrdDict%radius)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find earth_radius in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chrtGrdDict%projEsri)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
-         iret = nf90_get_att(ftnMeta,projVarId,'proj4',chrtGrdDict%proj4)
-         ! We are going to put a relaxed constraint on the proj4 string. 
+         iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',chrtGrdDict%proj4)
          if(iret .ne. 0) then
-            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            call postDiagMsg(diagFlag,'WARNING: Unable to find proj4 global attribute. Defaulting to blank string.')
             chrtGrdDict%proj4 = ''
          endif
-         ! Next, get the number of columns on the land grid
-         iret = nf90_inq_dimid(ftnMeta,'x',xDimId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find the x dimension in the LAND spatial metadata file')
-         iret = nf90_inquire_dimension(ftnMeta,xDimId,len=numColLand)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to retrieve the x-dimension value in the LAND spatial metadata file')
-         ! Next pull metadata on x coordinate.
+         charFlag = 0
+         floatFlag = 0
+         ! Find the crs variable and pull out the attributes, their names, and
+         ! their values. This will be translated to output files. 
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
+         ! For now we are going to allow the code to move forward without
+         ! finding this variable. In the future, we will probably restrict the
+         ! code to ensure things are more seamless. 
+
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
+            chrtGrdDict%nCrsCharAtts = 0
+            chrtGrdDict%nCrsRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,projVarId,nAtts=nCrsAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find crs number of attributes')
+            do i =1,nCrsAtts
+               iret = nf90_inq_attname(ftnMeta,projVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from crs variable.')
+               iret = nf90_inquire_attribute(ftnMeta,projVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from crs variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  chrtGrdDict%crsCharAttNames(crsCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),chrtGrdDict%crsCharAttVals(crsCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsCharAttCnt = crsCharAttCnt + 1
+               else
+                  chrtGrdDict%crsFloatAttNames(crsRealAttCnt+1) = trim(tmpAttName)
+                  chrtGrdDict%crsRealAttLen(crsRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),chrtGrdDict%crsRealAttVals(crsRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsRealAttCnt = crsRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            chrtGrdDict%nCrsRealAtts = crsRealAttCnt
+            chrtGrdDict%nCrsCharAtts = crsCharAttCnt
+         endif
+
+         ! Next pull the attributes from the x/y dimensions
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'x',xVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'standard_name',chrtGrdDict%xStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'long_name',chrtGrdDict%xLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'_CoordinateAxisType',chrtGrdDict%xAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'units',chrtGrdDict%xUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x units in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'resolution',resLand)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
-         ! Next pull metadata on y coordinates.
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the x variable. No x variable or attributes will be created.')
+            chrtGrdDict%nxCharAtts = 0
+            chrtGrdDict%nxRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,xVarId,nAtts=nxAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find x number of attributes')
+            do i =1,nxAtts
+               iret = nf90_inq_attname(ftnMeta,xVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from x variable.')
+               iret = nf90_inquire_attribute(ftnMeta,xVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from x variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  chrtGrdDict%xCharAttNames(xCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),chrtGrdDict%xCharAttVals(xCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xCharAttCnt = xCharAttCnt + 1
+               else
+                  chrtGrdDict%xFloatAttNames(xRealAttCnt+1) = trim(tmpAttName)
+                  chrtGrdDict%xRealAttLen(xRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),chrtGrdDict%xRealAttVals(xRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xRealAttCnt = xRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            chrtGrdDict%nxRealAtts = xRealAttCnt
+            chrtGrdDict%nxCharAtts = xCharAttCnt
+         endif
+
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'y',yVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find y variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'standard_name',chrtGrdDict%yStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'long_name',chrtGrdDict%yLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'_CoordinateAxisType',chrtGrdDict%yAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'units',chrtGrdDict%yUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y units in LAND spatial metadata file')
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the y variable. No y variable or attributes will be created.')
+            chrtGrdDict%nyCharAtts = 0
+            chrtGrdDict%nyRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,yVarId,nAtts=nyAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find y number of attributes')
+            do i =1,nyAtts
+               iret = nf90_inq_attname(ftnMeta,yVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from y variable.')
+               iret = nf90_inquire_attribute(ftnMeta,yVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from y variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  chrtGrdDict%yCharAttNames(yCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),chrtGrdDict%yCharAttVals(yCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yCharAttCnt = yCharAttCnt + 1
+               else
+                  chrtGrdDict%yFloatAttNames(yRealAttCnt+1) = trim(tmpAttName)
+                  chrtGrdDict%yRealAttLen(yRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),chrtGrdDict%yRealAttVals(yRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yRealAttCnt = yRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            chrtGrdDict%nyRealAtts = yRealAttCnt
+            chrtGrdDict%nyCharAtts = yCharAttCnt
+         endif
          ! Close the file
          iret = nf90_close(ftnMeta)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
+
+      endif
+
+      ! Next get the number of columns on the land grid. This will be used to
+      ! calculate the resolution of the routing grid in meters and aggfactor.
+      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      if(iret .ne. 0) then
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND Spatial Metadata file. Defaulting to missing values.')
+         numColLand = -9999
+         resLand = -9999
+      else
+         iret = nf90_inq_dimid(ftnGeo,'x',xDimId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x dimension in LAND spatial Metadata file')
+         iret = nf90_inquire_dimension(ftnGeo,xDimId,len=numColLand)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to retrieve number of columns in the LAND spatial metadata file')
+         iret = nf90_inq_varid(ftnMeta,'x',xVarId)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
+         iret = nf90_get_att(ftnMeta,xVarId,'resolution',resLand)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
+         iret = nf90_close(ftnGeo)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to close the LAND spatial metadata file')
       endif
 
       ! Next get the number of columns on the high-resolution routing grid.
@@ -1339,15 +1882,17 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
 
       ! Calculate the aggregation factor and resolution of the hydro routing
       ! grid.
-      aggFactor = float(numColHydro/numColLand)
-      resHydro = resLand/aggFactor
+      if(numColLand .ne. -9999) then
+         aggFactor = float(numColHydro/numColLand)
+         resHydro = resLand/aggFactor
+      else
+         resHydro = -9999
+      endif
 
       chrtGrdDict%xRes = resHydro
       chrtGrdDict%yRes = resHydro
 
    endif
-
-   chrtGrdDict%gridMapping = "ProjectionCoordinateSystem"
 
    chrtGrdDict%varNames(:) = [character(len=64) :: "streamflow"]
    chrtGrdDict%longName(:) = [character(len=64) :: "River Flow"]
@@ -1382,6 +1927,14 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    integer, intent(inout) :: diagFlag
    integer :: ftnMeta,projVarId,xVarId,yVarId
    integer :: iret
+   integer :: crsRealAttCnt,xRealAttCnt,yRealAttCnt
+   integer :: crsCharAttCnt,xCharAttCnt,yCharAttCnt
+   integer :: i, nCrsAtts,nxAtts,nyAtts
+   integer :: charFlag
+   integer :: floatFlag
+   character(len=512) :: tmpAttName
+   integer :: xtypeTmp
+   integer :: tmpLen
    !LSMOUT files
 
    lsmOutDict%modelNdv = 9.9692099683868690E36
@@ -1401,78 +1954,217 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    lsmOutDict%rTimeUnits = "minutes since 1970-01-01 00:00:00 UTC"
    lsmOutDict%rTimeStName = "forecast_reference_time"
 
+   crsRealAttCnt = 0
+   crsCharAttCnt = 0
+   xRealAttCnt = 0
+   xCharAttCnt = 0
+   yRealAttCnt = 0
+   yCharAttCnt = 0
+
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
       iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')
+         lsmOutDict%nCrsCharAtts = 0
+         lsmOutDict%nCrsRealAtts = 0
+         lsmOutDict%nxCharAtts = 0
+         lsmOutDict%nxRealAtts = 0
+         lsmOutDict%nyCharAtts = 0
+         lsmOutDict%nyRealAtts = 0
+         lsmOutDict%proj4 = ''
       else
-         ! First pull metadata on coordinate system.
-         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateTransformType',lsmOutDict%projTransform)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateTransformType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'transform_name',lsmOutDict%projTransformName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find transform_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'grid_mapping_name',lsmOutDict%projGridMappingName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find grid_mapping_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'_CoordinateAxes',lsmOutDict%projCoordAxes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find _CoordinateAxes in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'standard_parallel',lsmOutDict%stParallel)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find standard_parallel in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'longitude_of_central_meridian',lsmOutDict%lonCtrlMer)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find longitude_of_central_meridian in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'latitude_of_projection_origin',lsmOutDict%latOrig)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find latitude_of_projection_origin in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_easting',lsmOutDict%falseEast)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_easting in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'false_northing',lsmOutDict%falseNorth)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find false_northing in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'earth_radius',lsmOutDict%radius)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find earth_radius in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',lsmOutDict%projEsri)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
-         iret = nf90_get_att(ftnMeta,projVarId,'proj4',lsmOutDict%proj4)
-         ! We are going to put a relaxed constraint on the proj4 string. 
+         iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',lsmOutDict%proj4)
          if(iret .ne. 0) then
-            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            call postDiagMsg(diagFlag,'WARNING: Unable to find proj4 global attribute. Defaulting to blank string.')
             lsmOutDict%proj4 = ''
          endif
-         ! Next pull metadata on x coordinate.
+         charFlag = 0
+         floatFlag = 0
+         ! Find the crs variable and pull out the attributes, their names, and
+         ! their values. This will be translated to output files. 
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
+         ! For now we are going to allow the code to move forward without
+         ! finding this variable. In the future, we will probably restrict the
+         ! code to ensure things are more seamless. 
+
+         ! code to ensure things are more seamless. 
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
+            lsmOutDict%nCrsCharAtts = 0
+            lsmOutDict%nCrsRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,projVarId,nAtts=nCrsAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find crs number of attributes')
+            do i =1,nCrsAtts
+               iret = nf90_inq_attname(ftnMeta,projVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from crs variable.')
+               iret = nf90_inquire_attribute(ftnMeta,projVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from crs variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  lsmOutDict%crsCharAttNames(crsCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),lsmOutDict%crsCharAttVals(crsCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsCharAttCnt = crsCharAttCnt + 1
+               else
+                  lsmOutDict%crsFloatAttNames(crsRealAttCnt+1) = trim(tmpAttName)
+                  lsmOutDict%crsRealAttLen(crsRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),lsmOutDict%crsRealAttVals(crsRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
+                  crsRealAttCnt = crsRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            lsmOutDict%nCrsRealAtts = crsRealAttCnt
+            lsmOutDict%nCrsCharAtts = crsCharAttCnt
+
+         endif
+
+         ! Next pull the attributes from the x/y dimensions
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'x',xVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'standard_name',lsmOutDict%xStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'long_name',lsmOutDict%xLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'_CoordinateAxisType',lsmOutDict%xAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'units',lsmOutDict%xUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x units in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,xVarId,'resolution',lsmOutDict%xRes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
-         ! Next pull metadata on y coordinates.
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the x variable. No x variable or attributes will be created.')
+            lsmOutDict%nxCharAtts = 0
+            lsmOutDict%nxRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,xVarId,nAtts=nxAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find x number of attributes')
+            do i =1,nxAtts
+               iret = nf90_inq_attname(ftnMeta,xVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from x variable.')
+               iret = nf90_inquire_attribute(ftnMeta,xVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from x variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  lsmOutDict%xCharAttNames(xCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),lsmOutDict%xCharAttVals(xCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xCharAttCnt = xCharAttCnt + 1
+               else
+                  lsmOutDict%xFloatAttNames(xRealAttCnt+1) = trim(tmpAttName)
+                  lsmOutDict%xRealAttLen(xRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,xVarId,trim(tmpAttName),lsmOutDict%xRealAttVals(xRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull x attributes')
+                  xRealAttCnt = xRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            lsmOutDict%nxRealAtts = xRealAttCnt
+            lsmOutDict%nxCharAtts = xCharAttCnt
+
+         endif
+
+         charFlag = 0
+         floatFlag = 0
          iret = nf90_inq_varid(ftnMeta,'y',yVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find y variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'standard_name',lsmOutDict%yStName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y standard_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'long_name',lsmOutDict%yLName)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y long_name in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'_CoordinateAxisType',lsmOutDict%yAxisType)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y _CoordinateAxisType in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'units',lsmOutDict%yUnits)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y units in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,yVarId,'resolution',lsmOutDict%yRes)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to get y resolution in LAND spatial metadata file')
+         if(iret .ne. 0) then
+            call postDiagMsg(diagFlag,'WARNING: Unable to locate the y variable. No y variable or attributes will be created.')
+            lsmOutDict%nyCharAtts = 0
+            lsmOutDict%nyRealAtts = 0
+         else
+            iret = nf90_inquire_variable(ftnMeta,yVarId,nAtts=nyAtts)
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to find y number of attributes')
+            do i =1,nyAtts
+               iret = nf90_inq_attname(ftnMeta,yVarId,i,name=tmpAttName)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to extract attribute names from y variable.')
+               iret = nf90_inquire_attribute(ftnMeta,yVarId,trim(tmpAttName),xtype=xtypeTmp,len=tmpLen)
+               call nwmCheck(diagFlag,iret,'ERROR: Unable to find attribute types from y variable.')
+               select case (xtypeTmp)
+                  case (NF90_FLOAT)
+                     floatFlag = 1
+                  case (NF90_CHAR)
+                     charFlag = 1
+                  case (NF90_SHORT)
+                     floatFlag = 1
+                  case (NF90_USHORT)
+                     floatFlag = 1
+                  case (NF90_INT)
+                     floatFlag = 1
+                  case (NF90_UINT)
+                     floatFlag = 1
+                  case (NF90_INT64)
+                     floatFlag = 1
+                  case (NF90_UINT64)
+                     floatFlag = 1
+                  case (NF90_DOUBLE)
+                     floatFlag = 1
+                  case (NF90_STRING)
+                     charFlag = 1
+               end select
+               if(charFlag .eq. 1) then
+                  lsmOutDict%yCharAttNames(yCharAttCnt+1) = trim(tmpAttName)
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),lsmOutDict%yCharAttVals(yCharAttCnt+1))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yCharAttCnt = yCharAttCnt + 1
+               else
+                  lsmOutDict%yFloatAttNames(yRealAttCnt+1) = trim(tmpAttName)
+                  lsmOutDict%yRealAttLen(yRealAttCnt+1) = tmpLen
+                  iret = nf90_get_att(ftnMeta,yVarId,trim(tmpAttName),lsmOutDict%yRealAttVals(yRealAttCnt+1,1:tmpLen))
+                  call nwmCheck(diagFlag,iret,'ERROR: Unable to pull y attributes')
+                  yRealAttCnt = yRealAttCnt + 1
+               endif
+               charFlag = 0
+               floatFlag = 0
+            end do
+            lsmOutDict%nyRealAtts = yRealAttCnt
+            lsmOutDict%nyCharAtts = yCharAttCnt
+
+         endif
          ! Close the file
          iret = nf90_close(ftnMeta)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
       endif
-   endif
 
-   lsmOutDict%gridMapping = "ProjectionCoordinateSystem"
+   endif
 
    lsmOutDict%varNames(:) = [character(len=64) :: "stc1","smc1","sh2ox1","stc2",&
                              "smc2","sh2ox2","stc3","smc3","sh2ox3","stc4",&
@@ -1541,24 +2233,34 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
       iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to open LAND spatial metadata file.')
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
+         chObsDict%proj4 = ''
+         chObsDict%esri = ''
       else
          ! First pull metadata on coordinate system.
-         iret = nf90_inq_varid(ftnMeta,'ProjectionCoordinateSystem',projVarId)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find ProjectionCoordinateSystem in LAND spatial metadata file')
-         iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chObsDict%esri)
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to find esri_pe_string in LAND spatial metadata file.')
-         iret = nf90_get_att(ftnMeta,projVarId,'proj4',chObsDict%proj4)
-         ! We are going to put a relaxed constraint on the proj4 string. 
+         iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
          if(iret .ne. 0) then
-            call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+            call postDiagMsg(diagFlag,'WARNING: Unable to find crs in LAND spatial metadata file')
             chObsDict%proj4 = ''
+            chObsDict%esri = ''
+         else
+            iret = nf90_get_att(ftnMeta,projVarId,'esri_pe_string',chObsDict%esri)
+            if(iret .ne. 0) then
+               call postDiagMsg(diagFlag,'WARNING: Unable to find esri_pe_string in LAND spatial metadata file.')
+               chObsDict%esri = ''
+            endif
+            iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',chObsDict%proj4)
+            ! We are going to put a relaxed constraint on the proj4 string. 
+            if(iret .ne. 0) then
+               call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
+               chObsDict%proj4 = ''
+            endif
          endif
          ! Close the file
          iret = nf90_close(ftnMeta)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAND spatial metadata file.')
       endif
-   endif   
+   endif
 
    chObsDict%fType = 'timeSeries'
    chObsDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -1673,7 +2375,7 @@ subroutine initGwDict(gwOutDict)
    gwOutDict%scaleFactor(:) = [0.01,0.01,0.1]
    gwOutDict%addOffset(:) = [0.0,0.0,0.0]
    gwOutDict%outFlag(:) = [0,0,0]
-   gwOutDict%timeZeroFlag(:) = [1,1,1]
+   gwOutDict%timeZeroFlag(:) = [0,0,1]
    gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0]
    gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0]
    gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0]
@@ -1681,7 +2383,7 @@ subroutine initGwDict(gwOutDict)
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
-   do i=1,numLakeVars
+   do i=1,numGwVars
       gwOutDict%fillComp(i) = NINT((gwOutDict%fillReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
       gwOutDict%missingComp(i) = NINT((gwOutDict%missingReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))
       gwOutDict%validMinComp(i) = NINT((gwOutDict%validMinReal(i)+gwOutDict%addOffset(i))/gwOutDict%scaleFactor(i))

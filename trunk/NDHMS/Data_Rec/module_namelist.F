@@ -143,6 +143,7 @@ CONTAINS
    CHANOBS_DOMAIN = 0
    t0OutputFlag = 1
    output_channelBucket_influx = 0
+   TERADJ_SOLAR = 0
 
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
@@ -525,12 +526,12 @@ subroutine rt_nlst_check(nlst)
       inquire(file=trim(nlst%geo_finegrid_flnm),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GEO_FINEGRID_FLNM not found.')
    endif
-   if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
-      call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
-   else
-      inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
-      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
-   endif   
+   !if(len(trim(nlst%land_spatial_meta_flnm)) .eq. 0) then
+   !   call hydro_stop("hydro.namelist ERROR: Please specify a LAND_SPATIAL_META_FLNM file.")
+   !else
+   !   inquire(file=trim(nlst%land_spatial_meta_flnm),exist=fileExists)
+   !   if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: LAND_SPATIAL_META_FLNM not found.')
+   !endif
    if(len(trim(nlst%RESTART_FILE)) .ne. 0) then
       inquire(file=trim(nlst%RESTART_FILE),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR:= Hydro RESTART_FILE not found.')
@@ -629,8 +630,8 @@ subroutine rt_nlst_check(nlst)
       call hydro_stop('hydro.namelist ERROR: Invalid OVRTSWCRT specified')
    endif
    if( (nlst%OVRTSWCRT .eq. 1 ) .or. (nlst%SUBRTSWCRT .eq. 1) ) then
-      !if( (nlst%rt_option .lt. 1 ) .or. (nlst%rt_option .gt. 2) ) then
-      if(nlst%rt_option .ne. 1) then
+      if( (nlst%rt_option .lt. 1 ) .or. (nlst%rt_option .gt. 2) ) then
+      !if(nlst%rt_option .ne. 1) then
          call hydro_stop('hydro.namelist ERROR: Invalid rt_option specified')
       endif
    endif
@@ -642,7 +643,7 @@ subroutine rt_nlst_check(nlst)
          call hydro_stop('hydro.namelist ERROR: Invalid channel_option specified')
       endif
    endif
-   if( (nlst%channel_option .eq. 1) .or. (nlst%channel_option .eq. 2) ) then
+   if( (nlst%CHANRTSWCRT .eq. 1) .and. (nlst%channel_option .lt. 3) ) then
       if(len(trim(nlst%route_link_f)) .eq. 0) then
          call hydro_stop("hydro.namelist ERROR: Please specify a route_link_f file.")
       else
@@ -653,12 +654,20 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%GWBASESWCRT .lt. 0 ) .or. (nlst%GWBASESWCRT .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid GWBASESWCRT specified')
    endif
-   if(nlst%GWBASESWCRT .gt. 0) then
+   if(nlst%GWBASESWCRT .eq. 1) then
       if(len(trim(nlst%GWBUCKPARM_file)) .eq. 0) then
          call hydro_stop("hydro.namelist ERROR: Please specify a GWBUCKPARM_file file.")
       else
          inquire(file=trim(nlst%GWBUCKPARM_file),exist=fileExists)
          if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: GWBUCKPARM_file not found.')
+      endif
+   endif
+   if( (nlst%GWBASESWCRT .gt. 0) .and. (nlst%UDMP_OPT .ne. 1) ) then
+      if(len(trim(nlst%gwbasmskfil)) .eq. 0) then
+         call hydro_stop("hydro.namelist ERROR: Please specify a gwbasmskfil file.")
+      else
+         inquire(file=trim(nlst%gwbasmskfil),exist=fileExists)
+         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: gwbasmskfil not found.')
       endif
    endif
    if( (nlst%UDMP_OPT .lt. 0 ) .or. (nlst%UDMP_OPT .gt. 1) ) then
@@ -671,10 +680,10 @@ subroutine rt_nlst_check(nlst)
          inquire(file=trim(nlst%udmap_file),exist=fileExists)
          if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: udmap_file not found.')
       endif
-   endif 
-   if( (nlst%output_channelBucket_influx .lt. 0 ) .or. (nlst%output_channelBucket_influx .gt. 3) ) then
-      call hydro_stop('hydro.namelist ERROR: Invalid UDMP_OPT specified')
    endif
+   if( (nlst%UDMP_OPT .eq. 1) .and. (nlst%CHANRTSWCRT .eq. 0) ) then
+         call hydro_stop('hydro.namelist ERROR: User-defined mapping requires channel routing on.')
+   endif 
    if(nlst%outlake .ne. 0) then
       if(len(trim(nlst%route_lake_f)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a route_lake_f to ouptut and run lakes.')
@@ -687,8 +696,8 @@ subroutine rt_nlst_check(nlst)
    ! Only allow lakes to be ran with gridded routing or NWM routing
    if(len(trim(nlst%route_lake_f)) .ne. 0) then
       if(nlst%channel_option .ne. 3) then
-         if(len(trim(nlst%udmap_file)) .eq. 0) then 
-            call hydro_stop('hydro.namelist ERROR: You cannot run NCAR reach-based routing with lakes. Please change your namelist settings.')
+         if(nlst%UDMP_OPT .ne. 1) then 
+            call hydro_stop('hydro.namelist ERROR: Currently lakes only work with gridded channel routing or UDMP=1. Please change your namelist settings.')
          endif
       endif
    endif

@@ -165,7 +165,8 @@
 
         INTEGER :: SO8RT_D(IXRT,JXRT,3)
         REAL :: SO8RT(IXRT,JXRT,8)
-        integer ::  rt_option, index
+        INTEGER, INTENT(IN)  ::  rt_option
+        integer  ::  index
 
         INTEGER :: DT_STEPS             !-- number of timestep in routing
         REAL :: SUBDT                !-- subsurface routing timestep
@@ -267,16 +268,19 @@
      print *, "calling subsurface routing subroutine...Opt. ",rt_option
 #endif
 
-
-     if(rt_option .eq. 1) then
+! ADCHANGE: IMPORTANT!
+! 2D subsurface option currently has bug so forcing to option 1 in this routine to
+! allow users to still have option to use 2d overland (both are controlled by same 
+! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
+!     if(rt_option .eq. 1) then
         CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &   
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &   
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
-     else 
-        CALL ROUTE_SUBSURFACE2(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
-               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
-               CWATAVAIL,SUBDT)
-     end if
+!     else 
+!        CALL ROUTE_SUBSURFACE2(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
+!               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
+!               CWATAVAIL,SUBDT)
+!     end if
 
 #ifdef HYDRO_D
      write(6,*) "finish calling ROUTE_SUBSURFACE ", rt_option
