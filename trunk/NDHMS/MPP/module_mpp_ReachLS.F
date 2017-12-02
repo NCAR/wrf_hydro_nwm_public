@@ -562,7 +562,7 @@ MODULE MODULE_mpp_ReachLS
               if(aLinksl(i) .gt. 0) then
                  ! The mpi_send takes what you give it and THEN treats each caracter as an array element.
                  call mpi_send(inV(linkls_s(i):linkls_e(i)),       &
-                      aLinksl(i),                           &
+                      strLen*aLinksl(i),                           &
                       MPI_CHARACTER, i-1, tag, HYDRO_COMM_WORLD, ierr)
               endif
            endif
@@ -570,9 +570,9 @@ MODULE MODULE_mpp_ReachLS
      else
         if(aLinksl(my_id+1) .gt. 0) then
            ! The mpi_recv treats each caracter as an array element.
-           call mpi_recv(outV(1 : ((linkls_e(my_id+1)-linkls_s(my_id+1)+1)) ), &  !jlm should have +1
-                alinksl(my_id+1),                                              &
-                MPI_CHARACTER, io_id, tag, HYDRO_COMM_WORLD, mpp_status,ierr            )
+           call mpi_recv(outV(1 : (linkls_e(my_id+1)-linkls_s(my_id+1)+1) ), &  !jlm should have +1
+                strLen*alinksl(my_id+1),                                              &
+                MPI_CHARACTER, io_id, tag, HYDRO_COMM_WORLD, mpp_status,ierr          )
         endif
      endif
      call mpp_land_sync()

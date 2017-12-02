@@ -4642,8 +4642,8 @@ end subroutine output_chrt_bak
         call ReachLS_write_io(chlon, g_chlon)
         call ReachLS_write_io(chlat, g_chlat)
         call ReachLS_write_io(zelev, g_zelev)
-!yw This function does not work correctly for gages
-!yw        call ReachLS_write_io(gages, g_gages)
+
+        call ReachLS_write_io(gages, g_gages)
         call ReachLS_write_io(STRMFRXSTPTS, g_STRMFRXSTPTS)
         call ReachLS_write_io(hlink, g_hlink)
 
@@ -8415,7 +8415,6 @@ end subroutine read_routelink
 !       call ReachLS_decomp(tmpORIFICEA, ORIFICEA)
 !       call ReachLS_decomp(tmpORIFICEE, ORIFICEE)
 
-!yw This function does not work correctly for gages.
         call ReachLS_decomp(tmpGages,    gages)
         call mpp_land_bcast_int1(MAXORDER)
 

@@ -2163,7 +2163,7 @@ end if
 do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 
 #ifdef HYDRO_D
-   checkInd = 213095 ! 2211014 ! see below as well
+   checkInd = -9999 !2569347 !2139306 !213095 ! 2211014 ! see below as well
    if(ll .eq. checkInd) then
       print*,'Ndg: checkInd: -------------------------'
       print*,"Ndg: checkInd: checkInd: ",checkInd
@@ -2269,7 +2269,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = 2139306 !2565959 !213095!2211014  ! see above
+checkInd = -999 !2569347 !2139306 !2565959 !213095!2211014  ! see above
 
 call geth_newdate(hydroTime, lsmTime, hydroAdv)
 
