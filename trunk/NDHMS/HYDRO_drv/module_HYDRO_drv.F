@@ -81,6 +81,10 @@ module module_HYDRO_drv
   real,    parameter :: zeroFlt=0.0000000000000000000_r4
   integer, parameter :: r8 = selected_real_kind(8)
   real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
+#ifdef ESMF_TRACE
+  logical :: hydro_init_esmf = .false.
+#endif
+
 
    contains
    subroutine HYDRO_rst_out(did)
@@ -1343,17 +1347,27 @@ integer rst_out, ix,jx
 integer:: ix0,jx0
 integer, dimension(ix0,jx0),optional :: vegtyp, soltyp
 integer            :: iret, ncid, ascIndId
+#ifdef ESMF_TRACE
+logical            :: is_init
+type(ESMF_VM)      :: vm
+#endif
 
 #ifdef MPP_LAND
 call  MPP_LAND_INIT()
 #endif
 
 #ifdef ESMF_TRACE
+  call ESMF_VMGetGlobal(vm, rc=iret)
+  if(iret .ne. 0) call hydro_stop('ERROR: ESMF_VMGetGlobal failed.')
+
+  is_init = ESMF_VMIsCreated(vm, rc=iret)
+  if(iret .ne. 0) call hydro_stop('ERROR: ESMF_VMIsCreated failed.')
+
+  if (.NOT. is_init) then
     call ESMF_Initialize(logkindflag=ESMF_LOGKIND_NONE, rc=iret)
-    if (iret /= ESMF_SUCCESS) then
-       print *, "Failed to initialize ESMF and ESMF_TRACE=1"
-       stop
-    endif
+    if(iret .ne. 0) call hydro_stop('ERROR: ESMF_Initialize failed.')
+    hydro_init_esmf = .true.
+  endif
 #endif
 ! read the namelist
 ! the lsm namelist will be read by rtland sequentially again.
@@ -1841,6 +1855,7 @@ end module module_HYDRO_drv
 #endif
 #ifdef ESMF_TRACE
         use ESMF
+        use module_HYDRO_drv, only: hydro_init_esmf
 #endif
         integer :: ierr
 
@@ -1853,7 +1868,9 @@ end module module_HYDRO_drv
         write(78,*) "The model finished successfully......."
 #endif
 #ifdef ESMF_TRACE
-    call ESMF_Finalize(endflag=ESMF_END_KEEPMPI)
+    if (hydro_init_esmf) then
+      call ESMF_Finalize(endflag=ESMF_END_KEEPMPI)
+    endif
 #endif
 #ifdef MPP_LAND
 !         call mpp_land_abort()
