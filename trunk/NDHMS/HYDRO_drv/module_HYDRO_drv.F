@@ -972,7 +972,7 @@ else
        , rt_domain(did)%CH_LNKRT_SL   &
        ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
-       nlst_rt(did)%gwChanCondConstOut &
+       nlst_rt(did)%gwChanCondConstOut, rt_domain(did)%velocity &
        )
 endif
     
