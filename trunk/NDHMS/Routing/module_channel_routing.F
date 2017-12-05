@@ -699,7 +699,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
                                                      gwBaseSwCRT, gwChanCondSw
         real, intent(in)                          :: gwChanCondConstIn, gwChanCondConstOut ! aquifer-channel conductivity constant from namelist                                             
         REAL , INTENT(IN), DIMENSION(NLINKS)      :: node_area
-        REAL, DIMENSION(:), INTENT(out)           :: velocity
+        REAL, DIMENSION(:), INTENT(inout)           :: velocity
 
 
 !DJG GW-chan coupling variables...
