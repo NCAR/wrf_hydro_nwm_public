@@ -2437,7 +2437,7 @@ CONTAINS
 ! ----------------------------------------------------------------------
 !
                IF (SOILTYP .gt. SLCATS) THEN
-                        CALL wrf_error_fatal ( 'FATAL ERROR: too many input soil types' )
+                        CALL wrf_error_fatal ( "FATAL ERROR: too many input soil types' )
                END IF
                IF (VEGTYP .gt. LUCATS) THEN
                      CALL wrf_error_fatal ( 'FATAL ERROR: too many input landuse types' )

@@ -29,10 +29,6 @@
 
 .IGNORE:
 
-ifeq ($(origin ESMFMKFILE), environment)
-include $(ESMFMKFILE)
-endif
-
 ifeq ($(SPATIAL_SOIL),1)
 SPATIAL_SOIL = -DSPATIAL_SOIL
 else
@@ -85,24 +81,16 @@ else
 PRECIP_DOUBLE = 
 endif
 
-ifeq ($(ESMF_TRACE),1)
-ifneq ($(origin ESMFMKFILE), environment)
-$(error To use ESMF tracing, set ESMFMKFILE environment variable to location of esmf.mk in ESMF installation.)
-endif
-ESMF_TRACE   = -DESMF_TRACE
-else
-ESMF_TRACE   =
-endif
 
 RMD	    = rm -f
 COMPILER90  = mpif90
 FORMAT_FREE = -FR
 BYTESWAPIO  = -convert big_endian
 F90FLAGS    = -w -c -ftz -align all -fno-alias -fp-model precise $(FORMAT_FREE) $(BYTESWAPIO)
-MODFLAG	    = -I./ -I ../../MPP -I ../MPP -I ../mod $(ESMF_F90COMPILEPATHS)
+MODFLAG	    = -I./ -I ../../MPP -I ../MPP -I ../mod
 LDFLAGS	    =
 CPP	    = cpp
-CPPFLAGS    = -P -traditional -nostdinc -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE) $(ESMF_TRACE)
-LIBS 	    = $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) $(ESMF_F90ESMFLINKLIBS)
+CPPFLAGS    = -P -traditional -nostdinc -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE)
+LIBS 	    =	
 NETCDFINC   = $(NETCDF_INC)
 NETCDFLIB   = -L$(NETCDF_LIB) -lnetcdff -lnetcdf
