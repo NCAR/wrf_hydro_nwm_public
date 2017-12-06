@@ -1,3 +1,7 @@
+# ################################
+# Resolve LIS Makefile Definitions
+# ################################
+
 ## If you have multiple mpi biulds on a single machine
 ## this example may be relevant to you. 
 ## Ex: The hydro-c1 machine has mpi and netcdf built against portland 
@@ -29,9 +33,80 @@
 
 .IGNORE:
 
-ifeq ($(origin ESMFMKFILE), environment)
-include $(ESMFMKFILE)
+ESMF_TRACE = 1
+WRFIO_NCD_LARGE_FILE_SUPPORT = 1
+WRF_HYDRO_NUDGING = 0
+SPATIAL_SOIL = 0
+
+# ################################
+# Resolve NETCDF Library Locations
+# ################################
+
+ifneq ($(strip $(NETCDF_DIR)),)
+ NETCDF = $(NETCDF_DIR)
 endif
+
+ifeq  ($(strip $(NETCDF_LIBDIR)),)
+ifneq ($(strip $(NETCDF)),)
+ NETCDF_LIBDIR = $(NETCDF)/lib
+else
+ $(error Cannot resolve NETCDF_LIBDIR.)
+endif
+endif
+
+ifeq  ($(strip $(NETCDF_LIB)),)
+ifneq ($(strip $(NETCDF_LIBDIR)),)
+ NETCDF_LIB = $(NETCDF_LIBDIR)/libnetcdf.a
+else
+ $(error Cannot resolve NETCDF_LIB.)
+endif
+endif
+
+ifeq  ($(strip $(NETCDF_LIBF)),)
+ifneq ($(strip $(NETCDF_LIBDIR)),)
+ NETCDF_LIBF = $(NETCDF_LIBDIR)/libnetcdff.a
+else
+ $(error Cannot resolve NETCDF_LIBF.)
+endif
+endif
+
+ifeq  ($(strip $(NETCDF_INCDIR)),)
+ifneq ($(strip $(NETCDF)),)
+ NETCDF_INCDIR = $(NETCDF)/include
+else
+ $(error Cannot resolve NETCDF_INCDIR.)
+endif
+endif
+
+ifeq ("$(wildcard $(NETCDF_LIBDIR))","")
+ $(error Cannot find $(NETCDF_LIBDIR).)
+endif
+
+ifeq ("$(wildcard $(NETCDF_LIB))","")
+ $(error Cannot find $(NETCDF_LIB).)
+endif
+
+ifeq ("$(wildcard $(NETCDF_LIBF))","")
+ $(error Cannot find $(NETCDF_LIBF).)
+endif
+
+ifeq ("$(wildcard $(NETCDF_INCDIR))","")
+ $(error Cannot find $(NETCDF_INCDIR).)
+endif
+
+# ##########################
+# Set ESMF Makefile Fragment
+# ##########################
+
+ifeq ($(origin ESMFMKFILE), environment)
+ include $(ESMFMKFILE)
+else
+ $(error Environment variable ESMFMKFILE was not set.)
+endif
+
+# ##########################
+# Resolve WRF-Hydro Settings
+# ##########################
 
 ifeq ($(SPATIAL_SOIL),1)
 SPATIAL_SOIL = -DSPATIAL_SOIL
@@ -95,14 +170,33 @@ ESMF_TRACE   =
 endif
 
 RMD	    = rm -f
-COMPILER90  = mpif90
+COMPILER90  = $(ESMF_F90COMPILER)
+CPP         = cpp
 FORMAT_FREE = -FR
 BYTESWAPIO  = -convert big_endian
-F90FLAGS    = -w -c -ftz -align all -fno-alias -fp-model precise $(FORMAT_FREE) $(BYTESWAPIO)
+
+ifeq ($(BOPT),g)
+ F90FLAGS   = -w -c -g -O0 -ftz -align all -fno-alias -fp-model precise 
+ F90FLAGS  += $(FORMAT_FREE) $(BYTESWAPIO)
+else
+ F90FLAGS   = -w -c -ftz -align all -fno-alias -fp-model precise 
+ F90FLAGS  += $(FORMAT_FREE) $(BYTESWAPIO)
+endif
+
 MODFLAG	    = -I./ -I ../../MPP -I ../MPP -I ../mod $(ESMF_F90COMPILEPATHS)
 LDFLAGS	    =
-CPP	    = cpp
-CPPFLAGS    = -P -traditional -nostdinc -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE) $(ESMF_TRACE)
+CPPFLAGS    = -P -traditional -nostdinc -DMPP_LAND -I ../Data_Rec $(HYDRO_D) 
+CPPFLAGS   += $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) 
+CPPFLAGS   += $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE) 
+CPPFLAGS   += $(ESMF_TRACE)
 LIBS 	    = $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) $(ESMF_F90ESMFLINKLIBS)
-NETCDFINC   = $(NETCDF_INC)
-NETCDFLIB   = -L$(NETCDF_LIB) -lnetcdff -lnetcdf
+NETCDFINC   = $(NETCDF_INCDIR)
+NETCDFLIB   = -L$(NETCDF_LIBDIR) -lnetcdff -lnetcdf
+
+ifeq ($(BOPT),g)
+ override ESMF_F90COMPILEOPTS     += -g -O0
+ override ESMF_CXXCOMPILEOPTS     += -g -O0
+ override ESMF_F90COMPILECPPFLAGS += -DDEBUG
+ override ESMF_CXXCOMPILECPPFLAGS += -DDEBUG
+endif
+

@@ -121,3 +121,29 @@ if(HYDRO_dt .gt. 1 ) call wrf_drv_HYDRO(HYDRO_dt, grid,  &
 to
 if(HYDRO_dt .gt. 0 ) call wrf_drv_HYDRO(HYDRO_dt, grid,  &
 
+Trace/Profile using ESMF/Cupid
+==============================
+Some instrumentation has been added to trace code
+regions inside HYDRO_exe. To enable, compile with:
+
+export ESMF_TRACE=1
+export ESMFMKFIKE=/path/to/esmf.mk
+
+In the run script, tracing will only be enabled if
+you set:
+
+export ESMF_RUNTIME_TRACE=ON
+
+Optionally, you can set:
+
+export ESMF_RUNTIME_TRACE_PETLIST="0 2-5 10 99"
+
+This is a space separated list of process numbers
+to trace and is recommended when running with > 50
+cores. The trace will be written to the "traceout"
+directory inside the run directory. This directory
+should be copied to your local machine and imported
+into Cupid for analysis.
+
+For more info see:
+http://cupid.readthedocs.io/en/release_2.0/runtime.html
