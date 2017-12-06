@@ -312,24 +312,34 @@ subroutine output_chrt_NWM(domainId)
          else
             fileMeta%outFlag(2) = 0 ! Set output flag to off.
          endif
-         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
-            nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-            fileMeta%outFlag(6) = 1
-            fileMeta%outFlag(7) = 1
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
-         endif
-         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
-            nlst_rt(domainId)%channel_only                .eq. 0         ) then
-            fileMeta%outFlag(8) = 1
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
-         endif
-         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
-            !! JLM: unsure the following will work... but this is caveated in namelist.
-            fileMeta%outFlag(9) = 1
-            fileMeta%outFlag(10) = 1
-            call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_accBucket)
+         if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
+            ! Currently, we only allow channel-only outputs to be produced for
+            ! NWM configurations. 
+            if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
+               nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+               fileMeta%outFlag(6) = 1
+               fileMeta%outFlag(7) = 1
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
+            endif
+            if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
+               nlst_rt(domainId)%channel_only                .eq. 0         ) then
+               fileMeta%outFlag(8) = 1
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
+            endif
+            if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
+               !! JLM: unsure the following will work... but this is caveated in namelist.
+               fileMeta%outFlag(9) = 1
+               fileMeta%outFlag(10) = 1
+               call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_accBucket)
+            endif
+         else
+            if(nlst_rt(domainId)%output_channelBucket_influx .ne. 0) then
+               ! For reach-based routing (non-NWM), we currently do not support
+               ! these outputs. Politely alert the user.....
+               call postDiagMsg(diagFlag,'WARNING: Channel-only outputs not available for UDMPT = 0 on reach-based routing.')
+            endif
          endif
 #endif
       else
@@ -408,22 +418,32 @@ subroutine output_chrt_NWM(domainId)
          g_nudge = RT_DOMAIN(domainID)%nudge
 #endif
       endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
-         nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-         fileMeta%outFlag(6) = 1
-         fileMeta%outFlag(7) = 1
-         g_qSfcLatRunoff = RT_DOMAIN(domainId)%qSfcLatRunoff
-         g_qBucket = RT_DOMAIN(domainId)%qBucket
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-         fileMeta%outFlag(8) = 1
-         g_qBtmVertRunoff = RT_DOMAIN(domainId)%qin_gwsubbas
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
-         fileMeta%outFlag(9) = 1
-         fileMeta%outFlag(10) = 1
-         g_accSfcLatRunoff = RT_DOMAIN(domainId)%accSfcLatRunoff
-         g_accBucket = RT_DOMAIN(domainId)%qBucket
+      if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
+         ! Currently, we only allow channel-only outputs to be produced for
+         ! NWM configurations.
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
+            nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+            fileMeta%outFlag(6) = 1
+            fileMeta%outFlag(7) = 1
+            g_qSfcLatRunoff = RT_DOMAIN(domainId)%qSfcLatRunoff
+            g_qBucket = RT_DOMAIN(domainId)%qBucket
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+            fileMeta%outFlag(8) = 1
+            g_qBtmVertRunoff = RT_DOMAIN(domainId)%qin_gwsubbas
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
+            fileMeta%outFlag(9) = 1
+            fileMeta%outFlag(10) = 1
+            g_accSfcLatRunoff = RT_DOMAIN(domainId)%accSfcLatRunoff
+            g_accBucket = RT_DOMAIN(domainId)%qBucket
+         endif
+      else
+         if(nlst_rt(domainId)%output_channelBucket_influx .ne. 0) then
+            ! For reach-based routing (non-NWM), we currently do not support
+            ! these outputs. Politely alert the user.....
+            call postDiagMsg(diagFlag,'WARNING: Channel-only outputs not available for UDMPT = 0 on reach-based routing.')
+         endif
       endif
    endif
 
@@ -716,6 +736,8 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'standard_name',trim(fileMeta%elevStName))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
+      iret = nf90_put_att(ftn,elevVarId,'units',trim(chrtOutDict%elevUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
 
       ! Define deflation levels for these meta-variables. For now, we are going to
       ! default to a compression level of 2. Only compress if io_form_outputs is set to 1.
@@ -4870,7 +4892,6 @@ subroutine output_gw_NWM(domainId,iGrid)
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
             ! First create variable
-            print*, "I = ",iTmp
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,dimId(1),varId)
             else
