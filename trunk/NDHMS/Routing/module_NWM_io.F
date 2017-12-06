@@ -736,7 +736,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'standard_name',trim(fileMeta%elevStName))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
-      iret = nf90_put_att(ftn,elevVarId,'units',trim(chrtOutDict%elevUnits))
+      iret = nf90_put_att(ftn,elevVarId,'units',trim(fileMeta%elevUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
 
       ! Define deflation levels for these meta-variables. For now, we are going to
