@@ -5,7 +5,7 @@ The National Water Model instance of WRF-Hydro
 
 |Linux|
 |----------|
-| [![CircleCI](https://circleci.com/gh/jmills-ncar/wrf_hydro_nwm.svg?style=svg&circle-token=3a6a8a6a37d082097fb38045c762bc4c2dd41b8a)](https://circleci.com/gh/jmills-ncar/wrf_hydro_nwm)|
+|[![CircleCI](https://circleci.com/gh/NCAR/wrf_hydro_nwm/tree/master.svg?style=svg&circle-token=95e7fc4c9cc58091d730b7fea8b6da91082f1ee6)](https://circleci.com/gh/NCAR/wrf_hydro_nwm/tree/master)|
 
 ## Branch information
 Before and after you branch, please read and edit the following page
