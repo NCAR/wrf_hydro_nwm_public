@@ -17,7 +17,7 @@ implicit none
 ! Declare parameter values for module.
 integer, parameter :: numChVars=10
 integer, parameter :: numLdasVars = 95
-integer, parameter :: numRtDomainVars = 4
+integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
 integer, parameter :: numLsmVars = 14
@@ -174,6 +174,7 @@ type rtDomainMeta
    ! Variable names
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
+   integer :: numSoilLayers = 4
    character (len=512) :: outVersion = "WRF-Hydro 5.0"
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
@@ -681,7 +682,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                               "Accumulated runoff from terrain routing",&
                               "Accumulated runoff from gw bucket"]
    chrtOutDict%units(:) = [character(len=64) :: "m3 s-1","m3 s-1","m3 s-1","ms-1",&
-                                                "meter","m3","m3",&
+                                                "meter","m3 s-1","m3 s-1",&
                                                 "m3","m3","m3"]
    chrtOutDict%coordNames(:) = [character(len=64) :: "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
@@ -1076,7 +1077,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "fraction of soil saturation, column integrated",&
                               "average snow temperature (by layer mass)"]
    ldasOutDict%units(:) = [character(len=64) :: "category","category","-","-","-",&
-                            "W m-2","W m-2","W m-2","kg m-2s-1",&
+                            "W m-2","-","W m-2","kg m-2s-1",&
                             "-","W m-2","W m-2","W m-2","W m-2","W m-2","kg m-2s-1","kg m-2s-1","-","kg m-2s-1",&
                             "mm","mm","mm","mm","m","kg m-2","kg m-2",&
                             "mm","mm","mm","mm",&
@@ -1089,7 +1090,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "m","kg m-2","mm s-1","count","-","mm","mm",&
                             "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
                             "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
-                            "g m-2s-1 C","g m-2s-1 C","umol CO m-2 s-1","W m-2",&
+                            "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2",&
                             "mm","mm","fraction","fraction","fraction","K"]
    ldasOutDict%scaleFactor(:) = [1.0,1.0,0.01,0.1,0.1,0.1,0.01,0.1,0.000001,0.01,&
                                  0.1,0.1,0.1,0.1,0.1,0.000001,0.000001,0.01,&
@@ -1466,19 +1467,20 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    endif
 
    rtDomainDict%varNames(:) = [character(len=64) :: "zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
-                               "QBDRYRT"]
+                               "QBDRYRT","SOIL_M"]
    rtDomainDict%longName(:) = [character(len=64) :: "water table depth","surface head",&
                                "channel inflow",&
-                               "accumulated value of the boundary flux, + into domain - out of domain"]
-   rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm"]
-   rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0]
-   rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0]
-   rtDomainDict%outFlag(:) = [0,0,0,0]
-   rtDomainDict%timeZeroFlag(:) = [1,1,1,1]
-   rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
-   rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
-   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0]
-   rtDomainDict%validMaxReal(:) = [10.0,1000000.0,1000.0,1000.0]
+                               "accumulated value of the boundary flux, + into domain - out of domain",&
+                               "volumetric soil moisture"]
+   rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm","m3 m-3"]
+   rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0,0.01]
+   rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0]
+   rtDomainDict%outFlag(:) = [0,0,0,0,0]
+   rtDomainDict%timeZeroFlag(:) = [1,1,1,1,1]
+   rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0]
+   rtDomainDict%validMaxReal(:) = [10.0,1000000.0,1000.0,1000.0,100.0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
