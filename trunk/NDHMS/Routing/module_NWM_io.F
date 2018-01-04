@@ -1458,7 +1458,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       where ( varRealTmp .eq. fileMeta%modelNdvInt ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdv2 ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdv3 ) varRealTmp = fileMeta%fillReal(varInd)
-      where (ISNAN(varRealTmp)) varRealTmp = fileMeta%fillReal(varInd)
+      where (varRealTmp .ne. varRealTmp) varRealTmp = fileMeta%fillReal(varInd)
       do zTmp = 1,fileMeta%numLev(varInd)
          localCompTmp = fileMeta%fillComp(varInd)
          globalCompTmp = fileMeta%fillComp(varInd)
@@ -2017,7 +2017,7 @@ subroutine output_rt_NWM(domainId,iGrid)
                   if(varRealTmp .gt. fileMeta%validMaxReal(iTmp2)) then
                      varRealTmp = fileMeta%fillReal(iTmp2)
                   endif
-                  if(ISNAN(varRealTmp)) then
+                  if(varRealTmp .ne. varRealTmp) then
                      varRealTmp = fileMeta%fillReal(iTmp2)
                   endif
                   ! If we are on time 0, make sure we don't need to fill in the
@@ -3277,9 +3277,8 @@ subroutine output_lsmOut_NWM(domainId)
    ! Call routine to initialize metadata structure
    call initLsmOutDict(fileMeta,myId,diagFlag)
 
-   ! Initialize water type to 16.
-   ! NOTE THIS MAY CHANGE IN THE FUTURE!!!!!
-   waterVal = 16
+   ! Initialize the water type
+   waterVal = rt_domain(domainId)%iswater
 
    ! Calculate necessary datetime information that will go into the output file.
    ! First compose strings of EPOCH and simulation start date.
