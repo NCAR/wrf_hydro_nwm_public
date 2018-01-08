@@ -312,24 +312,34 @@ subroutine output_chrt_NWM(domainId)
          else
             fileMeta%outFlag(2) = 0 ! Set output flag to off.
          endif
-         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
-            nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-            fileMeta%outFlag(6) = 1
-            fileMeta%outFlag(7) = 1
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
-         endif
-         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
-            nlst_rt(domainId)%channel_only                .eq. 0         ) then
-            fileMeta%outFlag(8) = 1
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
-         endif
-         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
-            !! JLM: unsure the following will work... but this is caveated in namelist.
-            fileMeta%outFlag(9) = 1
-            fileMeta%outFlag(10) = 1
-            call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
-            call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_accBucket)
+         if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
+            ! Currently, we only allow channel-only outputs to be produced for
+            ! NWM configurations. 
+            if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
+               nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+               fileMeta%outFlag(6) = 1
+               fileMeta%outFlag(7) = 1
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
+            endif
+            if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
+               nlst_rt(domainId)%channel_only                .eq. 0         ) then
+               fileMeta%outFlag(8) = 1
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qin_gwsubbas,g_qBtmVertRunoff)
+            endif
+            if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
+               !! JLM: unsure the following will work... but this is caveated in namelist.
+               fileMeta%outFlag(9) = 1
+               fileMeta%outFlag(10) = 1
+               call ReachLS_write_io(RT_DOMAIN(domainId)%accSfcLatRunoff,g_accSfcLatRunoff)
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_accBucket)
+            endif
+         else
+            if(nlst_rt(domainId)%output_channelBucket_influx .ne. 0) then
+               ! For reach-based routing (non-NWM), we currently do not support
+               ! these outputs. Politely alert the user.....
+               call postDiagMsg(diagFlag,'WARNING: Channel-only outputs not available for UDMPT = 0 on reach-based routing.')
+            endif
          endif
 #endif
       else
@@ -408,22 +418,32 @@ subroutine output_chrt_NWM(domainId)
          g_nudge = RT_DOMAIN(domainID)%nudge
 #endif
       endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
-         nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-         fileMeta%outFlag(6) = 1
-         fileMeta%outFlag(7) = 1
-         g_qSfcLatRunoff = RT_DOMAIN(domainId)%qSfcLatRunoff
-         g_qBucket = RT_DOMAIN(domainId)%qBucket
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
-         fileMeta%outFlag(8) = 1
-         g_qBtmVertRunoff = RT_DOMAIN(domainId)%qin_gwsubbas
-      endif
-      if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
-         fileMeta%outFlag(9) = 1
-         fileMeta%outFlag(10) = 1
-         g_accSfcLatRunoff = RT_DOMAIN(domainId)%accSfcLatRunoff
-         g_accBucket = RT_DOMAIN(domainId)%qBucket
+      if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
+         ! Currently, we only allow channel-only outputs to be produced for
+         ! NWM configurations.
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 1 .or. &
+            nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+            fileMeta%outFlag(6) = 1
+            fileMeta%outFlag(7) = 1
+            g_qSfcLatRunoff = RT_DOMAIN(domainId)%qSfcLatRunoff
+            g_qBucket = RT_DOMAIN(domainId)%qBucket
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
+            fileMeta%outFlag(8) = 1
+            g_qBtmVertRunoff = RT_DOMAIN(domainId)%qin_gwsubbas
+         endif
+         if(nlst_rt(domainId)%output_channelBucket_influx .eq. 3) then
+            fileMeta%outFlag(9) = 1
+            fileMeta%outFlag(10) = 1
+            g_accSfcLatRunoff = RT_DOMAIN(domainId)%accSfcLatRunoff
+            g_accBucket = RT_DOMAIN(domainId)%qBucket
+         endif
+      else
+         if(nlst_rt(domainId)%output_channelBucket_influx .ne. 0) then
+            ! For reach-based routing (non-NWM), we currently do not support
+            ! these outputs. Politely alert the user.....
+            call postDiagMsg(diagFlag,'WARNING: Channel-only outputs not available for UDMPT = 0 on reach-based routing.')
+         endif
       endif
    endif
 
@@ -716,6 +736,8 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'standard_name',trim(fileMeta%elevStName))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
+      iret = nf90_put_att(ftn,elevVarId,'units',trim(fileMeta%elevUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
 
       ! Define deflation levels for these meta-variables. For now, we are going to
       ! default to a compression level of 2. Only compress if io_form_outputs is set to 1.
@@ -1436,6 +1458,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       where ( varRealTmp .eq. fileMeta%modelNdvInt ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdv2 ) varRealTmp = fileMeta%fillReal(varInd)
       where ( varRealTmp .eq. fileMeta%modelNdv3 ) varRealTmp = fileMeta%fillReal(varInd)
+      where (ISNAN(varRealTmp)) varRealTmp = fileMeta%fillReal(varInd)
       do zTmp = 1,fileMeta%numLev(varInd)
          localCompTmp = fileMeta%fillComp(varInd)
          globalCompTmp = fileMeta%fillComp(varInd)
@@ -1579,7 +1602,7 @@ subroutine output_rt_NWM(domainId,iGrid)
    integer :: ftn ! NetCDF file handle 
    character(len=256) :: validTime ! Global attribute time string
    character(len=256) :: initTime ! Global attribute time string
-   integer :: dimId(4) ! Dimension ID values created during NetCDF created. 
+   integer :: dimId(5) ! Dimension ID values created during NetCDF created. 
    integer :: varId ! Variable ID value created as NetCDF variables are created and populated.
    integer :: timeId ! Dimension ID for the time dimension.
    integer :: refTimeId ! Dimension ID for the reference time dimension.
@@ -1587,17 +1610,18 @@ subroutine output_rt_NWM(domainId,iGrid)
    integer :: varRange(2) ! Local storage for valid min/max ranges
    real :: varRangeReal(2) ! Local storage for valid min/max ranges
    integer :: ierr, myId ! MPI return status, process ID
-   integer :: iTmp,jTmp,jTmp2,iTmp2
+   integer :: iTmp,jTmp,jTmp2,iTmp2,zTmp
    real :: varRealTmp ! Local copy of floating point lake value
    integer :: ftnGeo,geoXVarId,geoYVarId
    ! Allocatable arrays to hold either x/y coordinate information,
    ! or the grid of output values to be converted to integer via scale_factor
    ! and add_offset. 
    integer, allocatable, dimension(:,:) :: localCompTmp
-   integer, allocatable, dimension(:,:) :: globalOutComp
+   integer, allocatable, dimension(:,:,:) :: globalOutComp
    real, allocatable, dimension(:,:) :: localRealTmp
-   real, allocatable, dimension(:,:) :: globalOutReal
+   real, allocatable, dimension(:,:,:) :: globalOutReal
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
+   integer :: numLev ! This will be 4 for soil moisture, and 1 for all other variables.
 
 ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
@@ -1635,25 +1659,25 @@ subroutine output_rt_NWM(domainId,iGrid)
 
    if(nlst_rt(domainId)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,1,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,1,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,1,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,1,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,1,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,1,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1725,6 +1749,8 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
       iret = nf90_def_dim(ftn,'reference_time',1,dimId(4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension') 
+      iret = nf90_def_dim(ftn,'soil_layers_stag',fileMeta%numSoilLayers,dimId(5))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to define soil_layers_stag dimension')
 
       ! Create and populate reference_time and time variables.
       iret = nf90_def_var(ftn,"time",nf90_int,dimId(1),timeId)
@@ -1798,10 +1824,20 @@ subroutine output_rt_NWM(domainId,iGrid)
       ! metadata attributes. 
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
-            if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
-               iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(3),dimId(1)/),varId)
+            if(iTmp .eq. 5) then
+               ! Soil Moisture
+               if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
+                  iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+               else
+                  iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+               endif
             else
-               iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(3),dimId(1)/),varId)
+               ! All other variables
+               if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
+                  iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(3),dimId(1)/),varId)
+               else
+                  iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(3),dimId(1)/),varId)
+               endif
             endif
             call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(iTmp)))
 
@@ -1920,86 +1956,122 @@ subroutine output_rt_NWM(domainId,iGrid)
    ! Loop through each variable, collect local routing grid variables into a
    ! global routing grid and output through the master I/O process.
    do iTmp2=1,fileMeta%numVars
+
+      ! Specify the number of vertical levels we are dealing with
+      if(iTmp2 .eq. 5) then
+         numLev = 4
+      else
+         numLev = 1
+      endif
+
       if(fileMeta%outFlag(iTmp2) .eq. 1) then   
          !Allocate memory necessary 
          if(myId .eq. 0) then
-            allocate(globalOutComp(RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt))
-            allocate(globalOutReal(RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt))
+            allocate(globalOutComp(RT_DOMAIN(domainId)%g_ixrt,numLev,RT_DOMAIN(domainId)%g_jxrt))
+            allocate(globalOutReal(RT_DOMAIN(domainId)%g_ixrt,numLev,RT_DOMAIN(domainId)%g_jxrt))
          else
-            allocate(globalOutComp(1,1))
-            allocate(globalOutReal(1,1))
+            allocate(globalOutComp(1,1,1))
+            allocate(globalOutReal(1,1,1))
          endif
+         ! Allocate local memory
          allocate(localCompTmp(RT_DOMAIN(domainId)%ixrt,RT_DOMAIN(domainId)%jxrt))
          allocate(localRealTmp(RT_DOMAIN(domainId)%ixrt,RT_DOMAIN(domainId)%jxrt))
          ! Initialize arrays to prescribed NDV value.
          globalOutComp = fileMeta%fillComp(iTmp2)
          globalOutReal = fileMeta%fillReal(iTmp2)
-         localCompTmp = fileMeta%fillComp(iTmp2)
-         localRealTmp = fileMeta%fillReal(iTmp2)
 
-         ! Sync up processes
-         if(mppFlag .eq. 1) then
+         ! Loop through the number of levels. 
+         do zTmp=1,numLev
+            ! Initialize arrays to prescribed NDV value.
+            localCompTmp = fileMeta%fillComp(iTmp2)
+            localRealTmp = fileMeta%fillReal(iTmp2)
+
+            ! Sync up processes
+            if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
-            call mpp_land_sync()
+               call mpp_land_sync()
 #endif
-         endif
+            endif
 
-         ! Loop through output array and convert floating point values to
-         ! integers via scale_factor/add_offset. 
-         do iTmp = 1,RT_DOMAIN(domainId)%ixrt
-            do jTmp = 1,RT_DOMAIN(domainId)%jxrt
-               if(iTmp2 .eq. 1) then
-                  varRealTmp = RT_DOMAIN(domainId)%ZWATTABLRT(iTmp,jTmp)
-               else if(iTmp2 .eq. 2) then
-                  varRealTmp = RT_DOMAIN(domainId)%SFCHEADSUBRT(iTmp,jTmp)
-               else if(iTmp2 .eq. 3) then
-                  varRealTmp = RT_DOMAIN(domainId)%QSTRMVOLRT_ACC(iTmp,jTmp)
-               else if(iTmp2 .eq. 4) then
-                  varRealTmp = RT_DOMAIN(domainId)%QBDRYRT(iTmp,jTmp)
-               endif
-               ! If we are on time 0, make sure we don't need to fill in the
-               ! grid with NDV values. 
-               if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp2) .eq. 0) then
-                  localCompTmp(iTmp,jTmp) = fileMeta%fillComp(iTmp2)
-                  localRealTmp(iTmp,jTmp) = fileMeta%fillReal(iTmp2)
-               else
-                  if(varRealTmp .eq. fileMeta%modelNdv) then
-                     localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
+            ! Loop through output array and convert floating point values to
+            ! integers via scale_factor/add_offset. 
+            do iTmp = 1,RT_DOMAIN(domainId)%ixrt
+               do jTmp = 1,RT_DOMAIN(domainId)%jxrt
+                  if(iTmp2 .eq. 1) then
+                     varRealTmp = RT_DOMAIN(domainId)%ZWATTABLRT(iTmp,jTmp)
+                  else if(iTmp2 .eq. 2) then
+                     varRealTmp = RT_DOMAIN(domainId)%SFCHEADSUBRT(iTmp,jTmp)
+                  else if(iTmp2 .eq. 3) then
+                     varRealTmp = RT_DOMAIN(domainId)%QSTRMVOLRT_ACC(iTmp,jTmp)
+                  else if(iTmp2 .eq. 4) then
+                     varRealTmp = RT_DOMAIN(domainId)%QBDRYRT(iTmp,jTmp)
+                  else if(iTmp2 .eq. 5) then
+                     varRealTmp = RT_DOMAIN(domainId)%SMCRT(iTmp,jTmp,zTmp)
+                  endif
+
+                  ! Run a quick gross check on values to ensure they aren't outside our
+                  ! defined limits.
+                  if(varRealTmp .lt. fileMeta%validMinReal(iTmp2)) then
+                     varRealTmp = fileMeta%fillReal(iTmp2)
+                  endif
+                  if(varRealTmp .gt. fileMeta%validMaxReal(iTmp2)) then
+                     varRealTmp = fileMeta%fillReal(iTmp2)
+                  endif
+                  if(ISNAN(varRealTmp)) then
+                     varRealTmp = fileMeta%fillReal(iTmp2)
+                  endif
+                  ! If we are on time 0, make sure we don't need to fill in the
+                  ! grid with NDV values. 
+                  if(minSinceSim .eq. 0 .and. fileMeta%timeZeroFlag(iTmp2) .eq. 0) then
+                     localCompTmp(iTmp,jTmp) = fileMeta%fillComp(iTmp2)
                      localRealTmp(iTmp,jTmp) = fileMeta%fillReal(iTmp2)
                   else
-                     localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))/fileMeta%scaleFactor(iTmp2))
-                     localRealTmp(iTmp,jTmp) = varRealTmp
+                     if(varRealTmp .eq. fileMeta%modelNdv) then
+                        localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
+                        localRealTmp(iTmp,jTmp) = fileMeta%fillReal(iTmp2)
+                     else
+                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))/fileMeta%scaleFactor(iTmp2))
+                        localRealTmp(iTmp,jTmp) = varRealTmp
+                     endif
                   endif
-               endif
+               end do
             end do
-         end do
-         ! Collect local integer arrays into the global integer grid to be
-         ! written out. 
-         if(mppFlag .eq. 1) then
+            ! Collect local integer arrays into the global integer grid to be
+            ! written out. 
+            if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
-            call write_IO_rt_int(localCompTmp,globalOutComp)
-            call write_IO_rt_real(localRealTmp,globalOutReal)
+               call write_IO_rt_int(localCompTmp,globalOutComp(:,zTmp,:))
+               call write_IO_rt_real(localRealTmp,globalOutReal(:,zTmp,:))
 #endif
-         else
-            globalOutComp = localCompTmp
-            globalOutReal = localRealTmp
-         endif
+            else
+               globalOutComp(:,zTmp,:) = localCompTmp
+               globalOutReal(:,zTmp,:) = localRealTmp
+            endif
 
-         ! Sync up processes
-         if(mppFlag .eq. 1) then
+            ! Sync up processes
+            if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
-            call mpp_land_sync()
+               call mpp_land_sync()
 #endif
-         endif
+            endif
+         end do ! End looping through levels
 
          ! Write output to NetCDF file. 
          if(myId .eq. 0) then
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp2)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp2)))
-            if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
-               iret = nf90_put_var(ftn,varId,globalOutComp,(/1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt,1/))
+            if(numLev .eq. 1) then
+               if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
+                  iret = nf90_put_var(ftn,varId,globalOutComp,(/1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt,1/))
+               else
+                  iret = nf90_put_var(ftn,varId,globalOutReal,(/1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt,1/))
+               endif
             else
-               iret = nf90_put_var(ftn,varId,globalOutReal,(/1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,RT_DOMAIN(domainId)%g_jxrt,1/))
+               if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
+                  iret = nf90_put_var(ftn,varId,globalOutComp,(/1,1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,numLev,RT_DOMAIN(domainId)%g_jxrt,1/))
+               else
+                  iret = nf90_put_var(ftn,varId,globalOutReal,(/1,1,1,1/),(/RT_DOMAIN(domainId)%g_ixrt,numLev,RT_DOMAIN(domainId)%g_jxrt,1/))
+               endif
             endif
             call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into output variable: '//trim(fileMeta%varNames(iTmp2)))
          endif
@@ -4870,7 +4942,6 @@ subroutine output_gw_NWM(domainId,iGrid)
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
             ! First create variable
-            print*, "I = ",iTmp
             if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,dimId(1),varId)
             else
