@@ -587,27 +587,19 @@ if(temporalPersistence) then
 end if ! temporalPersistence
 #endif /* MPP_LAND */
 
-#ifdef MPP_LAND
-!=================================================
-! 8. MPP: Keep a copy of the full chanlen on image 0 
-!! only necessary if doing spatial nudging interpolation
-if(my_id .eq. io_id) allocate(chanlen_image0(nLinksL))
-if(my_id .ne. io_id) allocate(chanlen_image0(1)) !! memory fix, the next call modifies it's second arg
-call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
-#endif
 
-
-!=================================================
-! 9. Solve obsStaticStr once and for all on image 0 (could parallelize)
-!    This also solves nudgeSpatial: is spatial nudging active? Needed in 10.
-call obs_static_to_struct()
-#ifdef MPP_LAND
-if(my_id .eq. io_id) then
-#endif 
-   if(allocated(lastObsStr)) deallocate(lastObsStr)
-#ifdef MPP_LAND
-endif
-#endif
+allocate(obsStaticStr(size(nudgingParamsStr%usgsId)))
+! This seems silly now that I'm solving the whole thing at init.
+obsStaticStr(:)%R      = nudgingParamsStr%R
+obsStaticStr(:)%G      = nudgingParamsStr%G
+obsStaticStr(:)%tau    = nudgingParamsStr%tau
+obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
+do ll=1,size(nudgingParamsStr%usgsId)
+   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsTime(          nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
+end do
 
 !=================================================
 ! 4. Read in 'nudgingLastObs.nc' file (initialization and broadcasting come later)
@@ -709,6 +701,28 @@ allocate(obsTimeStr(nObsTimes))
 obsTimeStr(:)%time     = ''
 obsTimeStr(:)%updateTime = 'none'
 
+#ifdef MPP_LAND
+!=================================================
+! 8. MPP: Keep a copy of the full chanlen on image 0 
+!! only necessary if doing spatial nudging interpolation
+if(my_id .eq. io_id) allocate(chanlen_image0(nLinksL))
+if(my_id .ne. io_id) allocate(chanlen_image0(1)) !! memory fix, the next call modifies it's second arg
+call ReachLS_write_io(rt_domain(did)%chanlen, chanlen_image0)
+#endif
+
+
+!=================================================
+! 9. Solve obsStaticStr once and for all on image 0 (could parallelize)
+!    This also solves nudgeSpatial: is spatial nudging active? Needed in 10.
+! Remove lastObsStr (only needed for ingest of nudingLastObs/restart file).
+call obs_static_to_struct()
+#ifdef MPP_LAND
+if(my_id .eq. io_id) then
+#endif 
+   if(allocated(lastObsStr)) deallocate(lastObsStr)
+#ifdef MPP_LAND
+endif
+#endif
 
 !=================================================
 !10. Solve the bias terms for when biasWindowBeforeT0 = .TRUE. (in the forecast)
@@ -1496,19 +1510,6 @@ if(flushAll) flush(flushUnit)
 ! gages in the parameter file and all those defined in nodeGageStr (Route_Link)
 ! so this is minimal by construction. 
 
-
-allocate(obsStaticStr(size(nudgingParamsStr%usgsId)))
-! This seems silly now that I'm solving the whole thing at init.
-obsStaticStr(:)%R      = nudgingParamsStr%R
-obsStaticStr(:)%G      = nudgingParamsStr%G
-obsStaticStr(:)%tau    = nudgingParamsStr%tau
-obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
-do ll=1,size(nudgingParamsStr%usgsId)
-   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst_rt(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsTime(          nlst_rt(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
-end do
 
 
 #ifdef MPP_LAND
