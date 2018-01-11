@@ -157,7 +157,8 @@ real,               parameter :: noConstInterfCoeff   = 1.0 !0.500
 ! hydro.namelist: &NUDGING_nlist  variables.
 character(len=256) :: nudgingParamFile
 character(len=256) :: netwkReExFile
-character(len=256) :: nudgingLastObsFile
+character(len=256) :: nudgingLastObsFile    !! passed by namelist
+character(len=256) :: nudgingLastObsFileTry !! either the passed or, if not passed, a default
 logical            :: readTimesliceParallel
 logical            :: temporalPersistence
 logical            :: persistBias
@@ -219,6 +220,7 @@ use module_nudging_utils, only: totalNudgeTime,    &
                                 sysClockCountRate, &
                                 sysClockCountMax,  &
                                 clockType
+
 implicit none
 totalNudgeTime = 0. ! Nudging time accumulation init.
 call system_clock(count_rate=sysClockCountRate, count_max=sysClockCountMax)
@@ -267,8 +269,10 @@ use module_nudging_io,    only: get_netcdf_dim,                      &
                                 read_network_reexpression,           &
                                 find_nudging_last_obs_file,          &
                                 read_nudging_last_obs
+use module_mpp_reachls,  only: ReachLS_decomp
 
 implicit none
+
 integer                    :: nLinks, nLinksL
 !integer, dimension(nlinks) :: strmFrxstPts
 integer :: did=1
@@ -276,9 +280,10 @@ integer :: ii, kk, ll, tt, count, toSize, fromSize
 integer :: nParamGages, nParamMonth, nParamThresh, nParamThreshCat, nGgDists, nGgDistsKeep
 integer :: nWhGageDists1, nWhGageDists2, nGagesWParamsDom
 integer, allocatable, dimension(:) ::  whParamsDom
+real,    allocatable, dimension(:) :: g_nudge
 integer :: downSize, upSize, baseSize, nStnLastObs
-character(len=256) :: lastObsFile
-
+character(len=256) :: lastObsFile             !! confirms existence of a file
+logical :: lastObsFileFound
 !!$#ifdef HYDRO_D  /* un-ifdef to get timing results */
 !!$real :: startCodeTimeAcc, endCodeTimeAcc
 !!$
@@ -619,13 +624,16 @@ if(my_id .eq. io_id) then
       end do
 
       !! if blank, look for file at the current/init time
-      if(trim(nudgingLastObsFile) .eq. '') &
-           nudgingLastObsFile = 'nudgingLastObs.' // nlst_rt(did)%olddate // '.nc'
-      lastObsFile = find_nudging_last_obs_file(nudgingLastObsFile)
+      if(trim(nudgingLastObsFile) .eq. '') then
+         nudgingLastObsFileTry = 'nudgingLastObs.' // nlst_rt(did)%olddate // '.nc'
+      else
+         nudgingLastObsFileTry = nudgingLastObsFile
+      end if
+      lastObsFile = find_nudging_last_obs_file(nudgingLastObsFileTry)
       if(trim(lastObsFile) .ne. '') then
-         nStnLastObs = get_netcdf_dim(nudgingLastObsFile, 'stationIdInd', 'init_stream_nudging')
+         nStnLastObs = get_netcdf_dim(nudgingLastObsFileTry, 'stationIdInd', 'init_stream_nudging')
          if(nStnLastObs .gt. 0) then
-            print*,'Reading in nudgingLastObsFile: ', trim(nudgingLastObsFile)
+            print*,'Reading in nudgingLastObsFileTry: ', trim(nudgingLastObsFileTry)
             allocate(lastObsStr(nStnLastObs))
             do ll=1,nStnLastObs
                allocate(lastObsStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
@@ -634,11 +642,21 @@ if(my_id .eq. io_id) then
                allocate(lastObsStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
             end do
 
-            call read_nudging_last_obs(nudgingLastObsFile, lastObsStr)      
-
+            allocate(g_nudge(rt_domain(1)%gnlinksl))
+            call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
+            
          end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
    end if ! temporalPersistence
+else
+   allocate(g_nudge(1))   
+endif
+
+if(my_id .eq. io_id) lastObsFileFound=allocated(g_nudge)
+call mpp_land_bcast_logical(lastObsFileFound)
+if(lastObsFileFound) then
+   call ReachLS_decomp(g_nudge, RT_DOMAIN(1)%nudge)
+   deallocate(g_nudge)
 endif
 #endif
 
@@ -732,7 +750,6 @@ endif
 !      ! solve the bias
 !   end do ! gg=1,nGages
 !end if ! if(persistBias) then
-
 
 !=================================================
 #ifdef HYDRO_D
@@ -1651,12 +1668,12 @@ if(my_id .eq. io_id) then
 
 #ifdef HYDRO_D
       ! diagnostics
-      !if (my_id .eq. -5) then
+      if (my_id .eq. -5) then
       !             1    2       3     4      5      6     7     8     9     10
-      if( any( (/ 981, 2242,  2845,  2946,  3014,  3066,  3068,  3072, 3158, 3228, &
-                 3325, 3328,  3330,  3353,  3374,  3398,  3416,  3445, 3487, 3536, &
-                 3621, 3667, 13554, 13651, 15062, 15311, 17450, 17394 /) &
-           .eq. obsStaticStr(ll)%obsCellInd ) )then
+      !if( any( (/ 136, 981, 2242,  2845,  2946,  3014,  3066,  3068,  3072, 3158, 3228, &
+      !           3325, 3328,  3330,  3353,  3374,  3398,  3416,  3445, 3487, 3536, &
+      !           3621, 3667, 13554, 13651, 15062, 15311, 17450, 17394 /) &
+      !    .eq. obsStaticStr(ll)%obsCellInd ) )then
          print*,'Ndg: '
          print*,'Ndg: !----------------------------------'
          print*,'Ndg: ! obsStaticStr(',ll,'):'
@@ -1676,7 +1693,7 @@ if(my_id .eq. io_id) then
          endif
          print*,'Ndg: !----------------------------------'
          print*,'Ndg: '
-      endif ! any of these diag inds
+      endif ! my_id .eq. -5 (off) or any of the diagnostic inds - toggle the comments.
       if(flushAll) flush(flushUnit)
 #endif /* HYDRO_D */
 
@@ -1733,11 +1750,13 @@ end subroutine obs_static_to_struct
 ! Notes:  Needs better error handling... 
 
 subroutine output_nudging_last_obs()
+use module_RT_data,        only: rt_domain
 use module_nudging_utils,  only: whUniLoop
 use module_nudging_io,     only: write_nudging_last_obs
 #ifdef MPP_LAND
 use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
 implicit none
+real,    allocatable, dimension(:) :: g_nudge
 logical, allocatable, dimension(:) :: theMask
 integer :: whImage, oo
 #endif
@@ -1763,10 +1782,21 @@ do oo=1, size(obsStaticStr(:)%obsCellInd)
 end do
 deallocate(theMask)      
 
+if(my_id .eq. io_id) then
+   allocate(g_nudge(rt_domain(1)%gnlinksl))
+else
+   allocate(g_nudge(1))
+end if
+call ReachLS_write_io(RT_DOMAIN(1)%nudge,g_nudge)
+
 if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
      !! write out the last obs to file
-     call write_nudging_last_obs(obsStaticStr%lastObsStructure, nlst_rt(did)%olddate)
+     call write_nudging_last_obs(obsStaticStr%lastObsStructure, &
+                                 nlst_rt(did)%olddate,          &
+                                 g_nudge                         )
+
+deallocate(g_nudge)
 
 end subroutine output_nudging_last_obs
 
@@ -2124,7 +2154,7 @@ use MODULE_mpp_ReachLS, only: linkls_s, linkls_e, gNLinksL, ReachLS_write_io
 
 implicit none
 real, dimension(:,:), intent(inout) :: discharge !! modeled discharge (m3/s)
-real, dimension(:),   intent(out)   :: nudgeAdj  !! modeled discharge (m3/s)
+real, dimension(:),   intent(out)   :: nudgeAdj  !! nudge to modeled discharge (m3/s)
 integer,              intent(in)    :: hydroAdv  !! number of seconds the channel model has advanced 
 
 real, allocatable, dimension(:) :: global_discharge !! modeled discharge (m3/s)
@@ -2164,7 +2194,7 @@ end if
 do ll=startInd, endInd  ! ll is in the index of the global Route_Link
 
 #ifdef HYDRO_D
-   checkInd = -9999 !2569347 !2139306 !213095 ! 2211014 ! see below as well
+   checkInd = -9999  ! 136 !2569347 !2139306 !213095 ! 2211014 ! see below as well
    if(ll .eq. checkInd) then
       print*,'Ndg: checkInd: -------------------------'
       print*,"Ndg: checkInd: checkInd: ",checkInd
@@ -2270,7 +2300,7 @@ linkInd = linkIndIn + linkls_s(my_id+1) - 1
 #else
 linkInd = linkIndIn
 #endif
-checkInd = -999 !2569347 !2139306 !2565959 !213095!2211014  ! see above
+checkInd = -9999 ! 136 !2569347 !2139306 !2565959 !213095!2211014  ! see above
 
 call geth_newdate(hydroTime, lsmTime, hydroAdv)
 
@@ -2810,9 +2840,6 @@ integer, intent(in)    :: k   ! index of flow/routlink on local image
 
 !! If not on a gage... get out.
 if(rt_domain(1)%gages(k) .eq. rt_domain(1)%gageMiss) return
-
-!! Upto some really opaque MPI (gbcastReal2), I have a suspicion that quc and qup are equal.
-!print*,'JLM FOO trim(rt_domain(1)%gages(k)): quc==qup ?', trim(rt_domain(1)%gages(k)), quc .eq. qup
 
 qup = qup + np
 quc = quc + np

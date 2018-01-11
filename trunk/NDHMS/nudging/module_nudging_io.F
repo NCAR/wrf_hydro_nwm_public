@@ -543,16 +543,19 @@ end subroutine write_nwis_not_in_RLAndParams
 ! User controllable options: None. 
 ! Notes:  Needs better error handling... 
 
-subroutine write_nudging_last_obs(lastObsStr, modelTime)
+subroutine write_nudging_last_obs(lastObsStr, modelTime, g_nudge)
 
 implicit none
 
+!Arugments
 type(lastObsStructure), intent(in), dimension(:) :: lastObsStr
-character(len=19),                intent(in) :: modelTime
+character(len=19),      intent(in)               :: modelTime
+real,                   intent(in), dimension(:) :: g_nudge
 
+! Local
 character(len=37) :: outFileName
-integer :: nSpace, nTime, tt, ss
-integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNTime, dimIdNStn
+integer :: nSpace, nTime, nFeature, tt, ss
+integer :: ncid, iret, varid, dimIdTimeStr, dimIdStnStr, dimIdNTime, dimIdNStn, dimIdNFeature
 character(len=15), allocatable, dimension(:) :: charArr15
 character(len=19), allocatable, dimension(:,:) :: charArr19
 real,      allocatable, dimension(:,:) :: tmpFloat
@@ -565,6 +568,7 @@ flush(6)
 
 nSpace = size(lastObsStr)
 nTime  = size(lastObsStr(1)%lastObsDischarge)
+nFeature = size(g_nudge)
 
 !           !1234567891123456789212345678931234567
 outFileName='nudgingLastObs.' // modelTime // '.nc'
@@ -573,10 +577,13 @@ outFileName='nudgingLastObs.' // modelTime // '.nc'
 iret = nf90_create(outFileName, nf90_clobber, ncid)
 
 ! create dimensions
+! station id has length of the number of gages
+! feature id has length of the number of reaches/features.
 iret = nf90_def_dim(ncid, "timeStrLen",      19,             dimIdTimeStr)
 iret = nf90_def_dim(ncid, "timeInd",         nTime,          dimIdNTime)
 iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
 iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
+iret = nf90_def_dim(ncid, "feature_id",      nFeature,       dimIdNFeature)
 
 !! gageId def var
 iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
@@ -605,6 +612,12 @@ iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 iret = nf90_def_var(ncid, "discharge_quality", nf90_short, (/ dimIdNTime, dimIdNstn /), varid)
 iret = nf90_put_att(ncid, varid, 'units', "-")
 iret = nf90_put_att(ncid, varid, 'long_name', "Discharge quality 0 to 100 to be scaled by 100.")
+iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
+
+! nudge def var
+iret = nf90_def_var(ncid, "nudge", nf90_float, (/ dimIdNFeature /), varid)
+iret = nf90_put_att(ncid, varid, 'units', "m3 s-1")
+iret = nf90_put_att(ncid, varid, 'long_name', "Amount of stream flow alteration")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
 !! global attributes
@@ -664,6 +677,10 @@ end do
 end do
 iret = nf90_put_var(ncid, varid, qualityInt2) 
 deallocate(qualityInt2)
+
+! discharge_quality write var
+iret = nf90_inq_varid(ncid, "nudge", varid)
+iret = nf90_put_var(ncid, varid, g_nudge) 
 
 !! close
 iret= nf90_close(ncid)
@@ -738,11 +755,12 @@ end function find_nudging_last_obs_file
 ! User controllable options: None. 
 ! Notes: Needs better error handling... 
 
-subroutine read_nudging_last_obs(fileName, lastObsStr)
+subroutine read_nudging_last_obs(fileName, lastObsStr, g_nudge)
 
 implicit none
 character(len=*),       intent(in)                  :: fileName
 type(lastObsStructure), intent(inout), dimension(:) :: lastObsStr
+real,                   intent(inout), dimension(:) :: g_nudge
 
 integer :: nSpace, nTime, tt, ss
 integer:: ncid, iret, varid
@@ -808,6 +826,9 @@ do tt=1,nTime
    end do
 end do
 deallocate(qualityInt2)
+
+iret = nf90_inq_varid(ncid, "nudge", varid)
+iret = nf90_get_var(ncid, varid, g_nudge)
 
 !! close
 iret= nf90_close(ncid)

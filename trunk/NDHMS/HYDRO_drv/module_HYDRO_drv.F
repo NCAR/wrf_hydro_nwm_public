@@ -138,7 +138,7 @@ module module_HYDRO_drv
 #endif
 
 #ifdef WRF_HYDRO_NUDGING
-      call output_nudging_last_obs  !! only does something if temporalPersistence==TRUE
+      call output_nudging_last_obs
 #endif      
    endif
 
