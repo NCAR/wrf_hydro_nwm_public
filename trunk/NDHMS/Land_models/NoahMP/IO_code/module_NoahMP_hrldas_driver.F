@@ -1284,20 +1284,6 @@ module module_NoahMP_hrldas_driver
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
 
-#ifdef WRF_HYDRO
-call get_iocflag(1, io_config_outputs)
-if (io_config_outputs .gt. 0) then
-     ACCPRCP = 0.0
-     ACCECAN = 0.0
-     ACCEDIR = 0.0
-     ACCETRAN = 0.0
-     SFCRUNOFF = 0.0
-     UDRUNOFF = 0.0
-     ACSNOM = 0.0
-     ACSNOW = 0.0
-endif
-#endif
-
 ! Must still call NOAHMP_INIT even in restart to set up parameter arrays (also done in WRF)
 
      CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
@@ -1458,6 +1444,19 @@ endif
          olddate,zsoil(1:NSOIL))
 
 call get_iocflag(1, io_config_outputs)
+
+#ifdef WRF_HYDRO
+if (io_config_outputs .gt. 0) then
+     ACCPRCP = 0.0
+     ACCECAN = 0.0
+     ACCEDIR = 0.0
+     ACCETRAN = 0.0
+     SFCRUNOFF = 0.0
+     UDRUNOFF = 0.0
+     ACSNOM = 0.0
+     ACSNOW = 0.0
+endif
+#endif
 
    !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
    if (io_config_outputs .eq. 0) then
