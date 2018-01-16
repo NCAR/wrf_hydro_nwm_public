@@ -828,7 +828,11 @@ end do
 deallocate(qualityInt2)
 
 iret = nf90_inq_varid(ncid, "nudge", varid)
-iret = nf90_get_var(ncid, varid, g_nudge)
+if(iret .eq. nf90_noerr) then   
+   iret = nf90_get_var(ncid, varid, g_nudge)
+else 
+   g_nudge=0.0000000000
+end if
 
 !! close
 iret= nf90_close(ncid)
