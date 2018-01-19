@@ -27,6 +27,7 @@ Module overland_data
         real, allocatable, dimension(:,:) :: soyrt        ! terrian slope Y
         real, allocatable, dimension(:,:) :: ovroughrt    ! surface roughness
         real, allocatable, dimension(:,:) :: retdeprt     ! retention depthdrodirection slope)
+        real, allocatable, dimension(:,:,:) :: so8rt ! terrian slope (maybe 8 direction slope)
         integer, allocatable, dimension(:,:,:) :: so8rt_d ! slope direction (nieghbor index?)?
         real, allocatable, dimension(:,:,:) :: dist ! NEED VARIABLE INFO (distance relative to what)
     end type overland_rt_properties
