@@ -43,6 +43,7 @@ cp ../template/HYDRO/hydro.namelist .
 echo
 echo '*****************************************************************'
 echo "The environment variables used in the compile:"
-printenv | egrep -i "(HYDRO|NUDG|PRECIP|CHAN_CONN|^NETCDF|REALTIME|SOIL|WRFIO)" | egrep -v PWD
+grepStr="(WRF_HYDRO)|(HYDRO_D)|(SPATIAL_SOIL)|(WRF_HYDRO_RAPID)|(WRFIO_NCD_LARGE_FILE_SUPPORT)|(HYDRO_REALTIME)|(NCEP_WCOSS)|(WRF_HYDRO_NUDGING)|(NETCDF)"
+printenv | egrep -w "${grepStr}" | sort
 
 exit 0
