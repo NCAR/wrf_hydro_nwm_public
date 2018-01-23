@@ -1,8 +1,11 @@
 #!/bin/bash
 
+echo "IMPORTANT: environment variables for WRF-Hydro are sourced from the setEnvar.sh script"
+
 source ./setEnvar.sh
 
 if [[ "$WRF_HYDRO" -ne 1 ]]; then
+    echo
     echo "Please set WRF_HYDRO to be 1 from setEnvar.sh"
     exit
 fi
