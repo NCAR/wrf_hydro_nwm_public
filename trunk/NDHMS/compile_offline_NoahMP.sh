@@ -1,6 +1,11 @@
 #!/bin/bash
 
-echo "IMPORTANT: environment variables for WRF-Hydro are sourced from the setEnvar.sh script"
+echo
+echo "IMPORTANT: When compiling using this script, environment variables for"
+echo "WRF-Hydro are sourced from the setEnvar.sh script in this directory."
+echo 
+
+sleep 5
 
 source ./setEnvar.sh
 
