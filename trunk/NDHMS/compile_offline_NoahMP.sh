@@ -18,7 +18,7 @@ cd ../..
 ln -sf Land_models/NoahMP LandModel
 cat macros LandModel/hydro/user_build_options.bak  > LandModel/user_build_options
 ln -sf CPL/NoahMP_cpl LandModel_cpl
-make clean; rm -f Run/wrf_hydro_NoahMP.exe
+make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
 
 make
 
@@ -35,10 +35,14 @@ fi
 
 cd Run
 mv  wrf_hydro.exe wrf_hydro_NoahMP.exe; ln -sf wrf_hydro_NoahMP.exe wrf_hydro.exe
+cp ../Land_models/NoahMP/run/*TBL .
+cp ../template/NoahMP/namelist.hrldas .
+cp ../template/HYDRO/HYDRO.TBL .
+cp ../template/HYDRO/hydro.namelist .
 
 echo
 echo '*****************************************************************'
-echo "The envrionment variables use in the compile:"
+echo "The environment variables use in the compile:"
 printenv | egrep -i "(HYDRO|NUDG|PRECIP|CHAN_CONN|^NETCDF|REALTIME|SOIL|WRFIO)" | egrep -v PWD
 
 exit 0
