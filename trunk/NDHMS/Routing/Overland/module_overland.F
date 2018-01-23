@@ -405,4 +405,72 @@ subroutine overland_mass_balance_destroy(this)
     type(overland_mass_balance), intent(inout) :: this ! the type object being destroyed
 end subroutine overland_mass_balance_destroy
 
+! this procedure allocates
+
+subroutine overland_struct_init(this,ix,jx)
+    type(overland_struct), intent(inout) :: this ! the type object being initalized
+    integer, intent(in) :: ix                     ! x grid size
+    integer, intent(in) :: jx                     ! y grid size    allocate( thist%control )
+
+    ! allocate the control structure then initalize
+    allocate( this%control )
+    if ( .not. allocated( this%control) ) then
+        write(0,*) "Failure to allocate overland control structure"
+    else
+        call this%control%init
+    end if
+
+    ! allocate the streams and lakes structure
+    allocate( this%streams_and_lakes )
+    if ( .not. allocated( this%streams_and_lakes) ) then
+        write(0,*) "Failure to allocate overland lakes and streams structure"
+    else
+        call this%streams_and_lakes
+    end if
+
+    ! allocate the properties structure
+    allocate( this%properties )
+    if ( .not. allocated( this%properties) ) then
+        write(0,*) "Failure to allocate overland properties structure"
+    else
+        call this%properties
+    end if
+
+    ! allocate the mass balance structure
+    allocate( this%mass_balance)
+    if ( .not. allocated( this%mass_balance) ) then
+        write(0,*) "Failure to allocate overland mass balance structure"
+    else
+        call this%mass_balance
+    end if
+
+end subroutine overland_struct_init
+
+subroutine overland_struct_destroy(this)
+    ! call the destructors
+    type (overland_struct), intent(inout) :: this
+
+    if ( allocated(this%control ) ) then
+        call this%control%destroy
+        deallocate( this%control )
+    end if
+
+    if ( allocated(this%streams_and_lakes) )then
+        call this%stream_and_lakes%destroy
+        deallocate( this%stream_and_lakes )
+    end if
+
+    if ( allocated(this%properties) ) then
+        call this%properties%destroy
+        deallocate( this%properties )
+    end if
+
+    if ( allocated(thist%mass_balance) ) then
+        call this%mass_balance%destroy
+        deallocate( this%mass_balance )
+    end if
+
+
+end subroutine overland_struct_destroy
+
 end module overland_data
