@@ -42,7 +42,7 @@ cp ../template/HYDRO/hydro.namelist .
 
 echo
 echo '*****************************************************************'
-echo "The environment variables use in the compile:"
+echo "The environment variables used in the compile:"
 printenv | egrep -i "(HYDRO|NUDG|PRECIP|CHAN_CONN|^NETCDF|REALTIME|SOIL|WRFIO)" | egrep -v PWD
 
 exit 0
