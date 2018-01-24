@@ -1,4 +1,19 @@
+! module overland_data.F
+! Purpose: This module contains the overland struct class and its
+!          sub types. This types hold and catagorize the variables used
+!          in the overland routing code
+! National Water Center
+! Responsibility: Donald W Johnson donald.w.johnson@noaa.gov
+! Authors: Donald W Johnson
+
+
+
 module overland_data
+implicit none
+
+    interface default
+        module procedure overland_control_init, overland_control_destroy
+    end interface
 
     !type that holds the variables that are inputs to or outputs of the routing code
     ! along with book keepinh variables
@@ -10,7 +25,7 @@ module overland_data
         ! outputs
         real, allocatable, dimension(:,:) :: sfcheadrt ! surface water head
 
-        ! inputd
+        ! inputs
         real, allocatable, dimension(:,:) :: infxsubrt ! infiltration excess subgrid weighted from INFXSRT
 
         ! misc are bookkeeping
@@ -34,8 +49,8 @@ module overland_data
         real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
         real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
     contains
-        procedure :: init => overland_stream_and_lakes_init
-        procedure :: destroy => overland_stream_and_lakes_destroy
+        procedure :: init => overland_streams_and_lakes_init
+        procedure :: destroy => overland_streams_and_lakes_destroy
     end type overland_stream_and_lakes
 
     ! holds proprties of the the routing grid needed by overland routing algs
@@ -51,7 +66,7 @@ module overland_data
         real, allocatable, dimension(:,:,:) :: dist ! NEED VARIABLE INFO (distance relative to what)
     contains
         procedure :: init => overland_properties_init
-        procedure :: destroy => overland_properties_destroy
+        procedure :: destroy => overland_properties_destory
     end type overland_rt_properties
 
     ! holds variables used for mass balance
@@ -83,7 +98,7 @@ contains
 ! if the structure has been allocated an error will be logged
 
 subroutine overland_control_init(this,ix,jx)
-    type(overland_control), intent(inout) :: this ! the type object being initalized
+    class(overland_control), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size
 
@@ -125,7 +140,7 @@ subroutine overland_control_init(this,ix,jx)
 
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland control structure&
-        that where allready allocated. The allocated members where not changed"
+        &that where allready allocated. The allocated members where not changed"
 
 end subroutine overland_control_init
 
@@ -133,7 +148,7 @@ end subroutine overland_control_init
 ! overland_control_init
 
 subroutine overland_control_destroy(this)
-    type(overland_control), intent(inout) :: this ! the type object being destroyed
+    class(overland_control), intent(inout) :: this ! the type object being destroyed
 
     logical :: allocation_error = .false.
 
@@ -167,14 +182,14 @@ subroutine overland_control_destroy(this)
 
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland control structure&
-        that where not allready allocated. The unallocated members where not changed"    
-end subroutine overland_control_delete
+        &that where not allready allocated. The unallocated members where not changed"    
+end subroutine overland_control_destroy
 
 ! this structure allocates and initalizes the members of an overland_streams_and_lakes strucutre
 ! if members have allready been initalized they will not be altered and an error will be logged
 
 subroutine overland_streams_and_lakes_init(this,ix,jx)
-    type(overland_streams_and_lakes), intent(inout) :: this ! the type object being initalized
+    class(overland_stream_and_lakes), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size
 
@@ -217,12 +232,12 @@ subroutine overland_streams_and_lakes_init(this,ix,jx)
 
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland lakes and streams structure&
-        that where allready allocated. The allocated members where not changed"    
+        &that where allready allocated. The allocated members where not changed"    
 end subroutine overland_streams_and_lakes_init
 
 
 subroutine overland_streams_and_lakes_destroy(this)
-    type(overland_lakes_and_streams), intent(inout) :: this ! the type object being destroyed
+    class(overland_stream_and_lakes), intent(inout) :: this ! the type object being destroyed
 
     logical :: allocation_error = .false.
 
@@ -256,11 +271,11 @@ subroutine overland_streams_and_lakes_destroy(this)
 
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland streams and lakes structure&
-        that where not allready allocated. The unallocated members where not changed"   
+        &that where not allready allocated. The unallocated members where not changed"   
 end subroutine overland_streams_and_lakes_destroy
 
 subroutine overland_properties_init(this,ix,jx)
-    type(overland_properties), intent(inout) :: this ! the type object being initalized
+    class(overland_rt_properties), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size
 
@@ -329,11 +344,13 @@ subroutine overland_properties_init(this,ix,jx)
 
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland properties structure&
-        that where allready allocated. The allocated members where not changed"      
+        &that where allready allocated. The allocated members where not changed"      
 end subroutine overland_properties_init
 
 subroutine overland_properties_destory(this)
-    type(overland_properties), intent(inout) :: this ! the type object being destroyed
+    class(overland_rt_properties), intent(inout) :: this ! the type object being destroyed
+
+    logical :: allocation_error = .false.
 
     ! deallocate x slope
     if ( allocated(this%soxrt) ) then
@@ -386,12 +403,12 @@ subroutine overland_properties_destory(this)
 
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland properties structure&
-        that where not allocated. The unallocated members where not changed"      
+        &that where not allocated. The unallocated members where not changed"      
 end subroutine overland_properties_destory
 
 ! initalize the mass balance variables
 subroutine overland_mass_balance_init(this)
-    type(overland_mass_balance), intent(inout) :: this ! the type object being initalized
+    class(overland_mass_balance), intent(inout) :: this ! the type object being initalized
     this%dsmctot = 0.0
     this%smctot1 = 0.0
     this%smctot2 = 0.0
@@ -402,74 +419,72 @@ end subroutine overland_mass_balance_init
 ! none of the mass balance variables are dynamicly allocated if such are added
 ! they should be deallocated here
 subroutine overland_mass_balance_destroy(this)
-    type(overland_mass_balance), intent(inout) :: this ! the type object being destroyed
+    class(overland_mass_balance), intent(inout) :: this ! the type object being destroyed
 end subroutine overland_mass_balance_destroy
 
-! this procedure allocates
-
+! this procedure allocates the overland_struct
 subroutine overland_struct_init(this,ix,jx)
-    type(overland_struct), intent(inout) :: this ! the type object being initalized
+    class(overland_struct), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size    allocate( thist%control )
 
     ! allocate the control structure then initalize
     allocate( this%control )
-    if ( .not. allocated( this%control) ) then
+    if ( .not. associated( this%control) ) then
         write(0,*) "Failure to allocate overland control structure"
     else
-        call this%control%init
+        call this%control%init(ix,jx)
     end if
 
     ! allocate the streams and lakes structure
     allocate( this%streams_and_lakes )
-    if ( .not. allocated( this%streams_and_lakes) ) then
+    if ( .not. associated( this%streams_and_lakes) ) then
         write(0,*) "Failure to allocate overland lakes and streams structure"
     else
-        call this%streams_and_lakes
+        call this%streams_and_lakes%init(ix,jx)
     end if
 
     ! allocate the properties structure
     allocate( this%properties )
-    if ( .not. allocated( this%properties) ) then
+    if ( .not. associated( this%properties) ) then
         write(0,*) "Failure to allocate overland properties structure"
     else
-        call this%properties
+        call this%properties%init(ix,jx)
     end if
 
     ! allocate the mass balance structure
     allocate( this%mass_balance)
-    if ( .not. allocated( this%mass_balance) ) then
+    if ( .not. associated( this%mass_balance) ) then
         write(0,*) "Failure to allocate overland mass balance structure"
     else
-        call this%mass_balance
+        call this%mass_balance%init
     end if
 
 end subroutine overland_struct_init
 
 subroutine overland_struct_destroy(this)
     ! call the destructors
-    type (overland_struct), intent(inout) :: this
+    class (overland_struct), intent(inout) :: this
 
-    if ( allocated(this%control ) ) then
+    if ( associated(this%control ) ) then
         call this%control%destroy
         deallocate( this%control )
     end if
 
-    if ( allocated(this%streams_and_lakes) )then
-        call this%stream_and_lakes%destroy
-        deallocate( this%stream_and_lakes )
+    if ( associated(this%streams_and_lakes) )then
+        call this%streams_and_lakes%destroy
+        deallocate( this%streams_and_lakes )
     end if
 
-    if ( allocated(this%properties) ) then
+    if ( associated(this%properties) ) then
         call this%properties%destroy
         deallocate( this%properties )
     end if
 
-    if ( allocated(thist%mass_balance) ) then
+    if ( associated(this%mass_balance) ) then
         call this%mass_balance%destroy
         deallocate( this%mass_balance )
     end if
-
 
 end subroutine overland_struct_destroy
 
