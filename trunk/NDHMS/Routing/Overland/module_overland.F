@@ -510,6 +510,8 @@ subroutine overland_struct_destroy(this)
         status = .false.
     end if
 
+    this%pointer_allocation_guard = .false.
+
     if ( status .eqv. .false. ) then
         write(0,*) "Warning: Attempt to double free one or more pointers in (overland_struct_destroy)"
     end if
