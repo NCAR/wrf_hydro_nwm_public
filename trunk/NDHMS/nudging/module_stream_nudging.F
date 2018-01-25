@@ -656,8 +656,9 @@ if(my_id .eq. io_id) lastObsFileFound=allocated(g_nudge)
 call mpp_land_bcast_logical(lastObsFileFound)
 if(lastObsFileFound) then
    call ReachLS_decomp(g_nudge, RT_DOMAIN(1)%nudge)
-   deallocate(g_nudge)
+   if(my_id .eq. io_id) deallocate(g_nudge)
 endif
+if(my_id .NE. io_id) deallocate(g_nudge)
 #endif
 
 !=================================================
