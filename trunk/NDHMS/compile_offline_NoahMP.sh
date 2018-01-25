@@ -46,6 +46,7 @@ mv  wrf_hydro.exe wrf_hydro_NoahMP.exe; ln -sf wrf_hydro_NoahMP.exe wrf_hydro.ex
 cp ../Land_models/NoahMP/run/*TBL .
 cp ../template/NoahMP/namelist.hrldas .
 cp ../template/HYDRO/HYDRO.TBL .
+cp ../template/HYDRO/CHANPARM.TBL .
 cp ../template/HYDRO/hydro.namelist .
 
 echo
