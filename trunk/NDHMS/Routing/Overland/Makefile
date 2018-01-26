@@ -6,7 +6,7 @@
 
 # Setting for testing with gfortran
 FC=gfortran
-FFLAGS=-c --free-form -std=f2003 -O2
+FFLAGS=-c --free-form -std=f2003 -O3
 
 FLFLAGS=
 

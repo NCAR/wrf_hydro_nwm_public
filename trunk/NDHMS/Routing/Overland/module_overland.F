@@ -16,10 +16,6 @@ module overland_data
 
     implicit none
 
-    interface default
-        module procedure overland_control_init, overland_control_destroy
-    end interface
-
     ! hold all variables used in overland routing
     type overland_struct
 
