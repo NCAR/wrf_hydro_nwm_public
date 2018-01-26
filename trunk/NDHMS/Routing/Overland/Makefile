@@ -1,6 +1,13 @@
 #simple compilation test for modules in overland routing
 
-FFLAGS=
+# Settings for testing with ifort
+#FC=ifort
+#FFLAGS=-c -free 
+
+# Setting for testing with gfortran
+FC=gfortran
+FFLAGS=-c --free-form -std=f2003
+
 FLFLAGS=
 
 .PHONY: all mod test
@@ -8,7 +15,9 @@ FLFLAGS=
 all: mod test
 
 mod:
-	gfortran -c -ffree-form -std=f2003 module_overland.F
+	$(FC) $(FFLAGS) module_overland.F
 test:
-	gfortran -c -ffree-form -std=f2003 overland_tests.F
-	gfortran -o overland_tests module_overland.o overland_tests.o
+	$(FC) $(FFLAGS) overland_tests.F
+	$(FC) -o overland_tests module_overland.o overland_tests.o
+clean:
+	rm -f module_overland.o module_overland.mod overland_tests.o overland_tests
