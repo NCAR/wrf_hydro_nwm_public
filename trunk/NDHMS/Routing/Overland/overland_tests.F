@@ -138,8 +138,10 @@ program overland_tests
         results(4) = init_delete_test(5000,5000)
 
         if ( all(results) ) then
+            rv = .true.
             write(6,*) "All Sub-Test Passed"
         else
+            rv = .false.
             write(6,*) "At Least One Sub-Test Failed"
         end if
 
@@ -156,6 +158,7 @@ program overland_tests
         call overland_data%destroy
 
         write(6,*) "Test Passed"
+        rv = .true.
     end function double_init_test
 
     function double_destroy_test() result(rv)
@@ -169,6 +172,7 @@ program overland_tests
         call overland_data%destroy
 
         write(6,*) "Test Passed"
+        rv = .true.
     end function double_destroy_test
 
 end program overland_tests
