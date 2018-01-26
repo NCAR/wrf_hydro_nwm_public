@@ -1,0 +1,119 @@
+! module overland_streams_and_lakes_data.F
+! Purpose: This module contains the overland_control_struct class. This types holds
+! the lakes and stream related variables used in the overland routing code
+! National Water Center
+! Responsibility: Donald W Johnson donald.w.johnson@noaa.gov
+! Authors: Donald W Johnson
+
+module overland_streams_and_lakes
+
+    ! type that hold inputs and outputs for stream and channels as well as
+    ! variables used to interface with channels and lakes
+    type overland_streams_and_lakes_struct
+        real :: qstrmvoltrt     ! total of qstrmvolrt
+        real :: lake_inflotrt   ! lake inflow from surface head
+
+        real, allocatable, dimension(:,:) :: ch_netrt      ! keeps trake of the 0-1 channel network
+        integer, allocatable, dimension(:,:) :: lake_mskrt ! mask for identifing lake elements in channel network
+
+        real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
+        real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
+    contains
+        procedure :: init => overland_streams_and_lakes_init
+        procedure :: destroy => overland_streams_and_lakes_destroy
+    end type overland_streams_and_lakes_struct
+
+    contains
+
+! this structure allocates and initalizes the members of an overland_streams_and_lakes strucutre
+! if members have allready been initalized they will not be altered and an error will be logged
+
+subroutine overland_streams_and_lakes_init(this,ix,jx)
+    class(overland_streams_and_lakes_struct), intent(inout) :: this ! the type object being initalized
+    integer, intent(in) :: ix                     ! x grid size
+    integer, intent(in) :: jx                     ! y grid size
+
+    logical :: allocation_error = .false.
+
+    this%qstrmvoltrt = 0.0
+    this%lake_inflotrt = 0.0
+
+    ! allocate the stream network
+    if ( .not. allocated(this%ch_netrt) ) then
+        allocate( this%ch_netrt(ix,jx) )
+        this%ch_netrt = 0.0
+    else
+        allocation_error = .true.
+    end if
+
+    ! allocate the lake mask
+    if ( .not. allocated(this%lake_mskrt) ) then
+        allocate( this%lake_mskrt(ix,jx) )
+        this%lake_mskrt = -9999
+    else
+        allocation_error = .true.
+    end if
+
+    ! allocate qstrmvolrt
+    if ( .not. allocated(this%qstrmvolrt) ) then
+        allocate( this%qstrmvolrt(ix,jx) )
+        this%qstrmvolrt = 0.0
+    else
+        allocation_error = .true.
+    end if
+
+    ! allocate lake_inflort
+    if ( .not. allocated(this%lake_inflort) ) then
+        allocate( this%lake_inflort(ix,jx) )
+        this%lake_inflort = 0.0
+    else
+        allocation_error = .true.
+    end if
+
+    if ( allocation_error ) &
+        write(0,*) "attempt to allocate data in members of overland lakes and streams structure&
+        &that where allready allocated. The allocated members where not changed"    
+end subroutine overland_streams_and_lakes_init
+
+! this procedure deallocates and overland_streams_and_lakes structure that was initalized with
+! overland_streams_and_lakes_init
+
+subroutine overland_streams_and_lakes_destroy(this)
+    class(overland_streams_and_lakes_struct), intent(inout) :: this ! the type object being destroyed
+
+    logical :: allocation_error = .false.
+
+    ! deallocate channel network
+    if ( allocated(this%ch_netrt) ) then
+        deallocate( this%ch_netrt )
+    else
+        allocation_error = .true.
+    end if
+
+    ! deallocate the lake mask
+    if ( allocated(this%lake_mskrt) ) then
+        deallocate( this%lake_mskrt)
+    else
+        allocation_error = .true.
+    end if
+
+    ! deallocate qstrmvolrt
+    if ( allocated(this%qstrmvolrt) ) then
+         deallocate( this%qstrmvolrt )
+    else
+        allocation_error = .true.
+    end if
+
+    ! deallocate qbdryrt
+    if ( allocated(this%lake_inflort) ) then
+         deallocate( this%lake_inflort )          ! allocate qbdryrt
+    else
+        allocation_error = .true.
+    end if
+
+    if ( allocation_error ) &
+        write(0,*) "attempt to deallocate data in members of overland streams and lakes structure&
+        &that where not allready allocated. The unallocated members where not changed"   
+end subroutine overland_streams_and_lakes_destroy
+
+end module overland_streams_and_lakes
