@@ -1,25 +1,25 @@
 #!/bin/bash
 
-### This will called by either compile_offline_NoahMP.csh
-### or compile_offline_Noah.csh
+# This is called by both 
+# compile_offline_NoahMP.csh & compile_offline_Noah.csh.
 
-### turn on WRF_HYDRO for NoahMP
+# WRF-Coupled (=0) vs. Uncoupled, e.g. NoahMP or Noah (=1)
 export WRF_HYDRO=1
 
-### turn on output information during running time.
-export HYDRO_D=1
+# Enhanced diagnostic output for debugging: 0=Off, 1=On.
+export HYDRO_D=0
 
-### turn on distributed parameters for NoahMP
+# Spatially distributed parameters for NoahMP: 0=Off, 1=On.
 export SPATIAL_SOIL=1  
 
-### turn on RAPID model
+# RAPID model: 0=Off, 1=On.
 export WRF_HYDRO_RAPID=0
 
-### using large netcdf file definition.
+# Large netcdf file support: 0=Off, 1=On.
 export WRFIO_NCD_LARGE_FILE_SUPPORT=1
 
-### turn on wcoss flag 
+# WCOSS file units: 0=Off, 1=On. 
 export NCEP_WCOSS=0
 
-### turn nudging off
+# Streamflow nudging: 0=Off, 1=On.
 export WRF_HYDRO_NUDGING=0
