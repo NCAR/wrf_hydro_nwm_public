@@ -56,6 +56,7 @@ CONTAINS
       implicit none
       integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
       integer istatus, did, nsizes
+
       if(rt_domain(did)%allo_status .eq. 1) return
       rt_domain(did)%allo_status = 1
 
@@ -65,6 +66,8 @@ CONTAINS
       rt_domain(did)%jxrt = jxrt
 !     ixrt = rt_domain(did)%ixrt
 !     jxrt = rt_domain(did)%jxrt
+
+      call rt_domain(did)%overland%init(ixrt,jxrt)
       
 !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
 !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
