@@ -19,10 +19,10 @@ module overland_data
     ! hold all variables used in overland routing
     type overland_struct
 
-        type (overland_control_struct), pointer :: control => NULL()                   ! i/o and control variables
-        type (overland_streams_and_lakes_struct), pointer :: streams_and_lakes => NULL()! channel and lake related
-        type (overland_routing_properties_struct), pointer :: properties => NULL()          ! properties used in routing code
-        type (overland_mass_balance_struct), pointer :: mass_balance => NULL()         ! mass balance variables
+        type (overland_control_struct), pointer :: control => NULL()                     ! i/o and control variables
+        type (overland_streams_and_lakes_struct), pointer :: streams_and_lakes => NULL() ! channel and lake related
+        type (overland_routing_properties_struct), pointer :: properties => NULL()       ! properties used in routing code
+        type (overland_mass_balance_struct), pointer :: mass_balance => NULL()           ! mass balance variables
 
         ! unused pointer are in an undefined state
         ! this means the result of calling associated(<pointer>)
@@ -82,6 +82,7 @@ subroutine overland_struct_init(this,ix,jx)
 
 end subroutine overland_struct_init
 
+! safely deallocate data from the overland struct
 subroutine overland_struct_destroy(this)
     ! call the destructors
     class (overland_struct), intent(inout) :: this

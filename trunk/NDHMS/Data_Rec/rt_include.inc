@@ -1,7 +1,8 @@
-   TYPE RT_FIELD  
+   TYPE RT_FIELD
+   type (overland_struct) :: overland
    INTEGER :: IX, JX
-   logical initialized
-   logical restQSTRM 
+   logical :: initialized
+   logical :: restQSTRM
   REAL    :: DX,GRDAREART,SUBFLORT,WATAVAILRT,QSUBDRYRT
   REAL    :: SFHEAD1RT,INFXS1RT,QSTRMVOLTRT,QBDRYTRT,SFHEADRT,ETPND1,INFXSRTOT
   REAL    :: LAKE_INFLOTRT,accsuminfxs,diffsuminfxs,RETDEPFRAC
