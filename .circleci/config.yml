@@ -3,19 +3,19 @@ jobs:
   build:
     docker:
       - image: wrfhydro/ci:sixmile     
-        auth:
-          username: $DOCKER_USERNAME  
-          password: $DOCKER_PASSWORD
+#        auth:
+#          username: $DOCKER_USERNAME  
+#          password: $DOCKER_PASSWORD
     working_directory: /wrf_hydro_ci
     steps:
       - run:
           name: Clone testing repo
-          command: mkdir /wrf_hydro_ci/temp; git clone https://${GITHUB_USERNAME}:${GITHUB_AUTHTOKEN}@github.com/NCAR/wrf_hydro_ci /wrf_hydro_ci/temp; mv /wrf_hydro_ci/temp/* .; rm -rf temp
+          command: git clone https://${GITHUB_USERNAME}:${GITHUB_AUTHTOKEN}@github.com/NCAR/wrf_hydro_tests /wrf_hydro_ci/wrf_hydro_tests
       - run:
           name: Configure environment
-          command: ./config.sh
+          command: ./setup.sh
       - checkout:
-          path: /wrf_hydro_ci/repos/test
+          path: /wrf_hydro_ci/repos/candidate
       - run:
           name: Compile test
           command: bash runTests.sh compile
