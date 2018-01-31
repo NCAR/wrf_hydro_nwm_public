@@ -462,7 +462,7 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING
       rt_domain(did)%nudge = 0
 #endif
-      rt_domain(did)%HLINK = 0.0        !--used for diffusion only
+      rt_domain(did)%HLINK = 0.0        !--used for diffusion only, add for MMK
       rt_domain(did)%MannN = 0.0        
       rt_domain(did)%LINKID = 0.0        
 

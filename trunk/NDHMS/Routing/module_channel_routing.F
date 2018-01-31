@@ -343,7 +343,7 @@ DIFFUSION = Kf * sqrt(abs(Sf))*sgn
 end function DIFFUSION
 ! ----------------------------------------------------------------
  
-subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,Tw)
+subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,Tw,depth)
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -365,6 +365,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(IN)       :: n          ! mannings coefficient
         REAL, intent(INOUT)    :: vel        ! mannings coefficient
         INTEGER, intent(IN)    :: idx        ! channel id
+        REAL, intent(INOUT)    :: depth      ! depth of flow in channel
+        INTEGER                :: Twm        !-- Top width multiplier (intent needs to be added)
 
 !--local variables
         REAL    :: C1, C2, C3, C4
@@ -391,13 +393,16 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         INTEGER :: maxiter    !maximum number of iterations
 
 !-- local variables.. needed if channel is sub-divded
-        REAL    :: a,b,c
+        REAL    :: a,b,c,F
+        REAL    :: nc         ! manning coefficient multiplier for compund channel
         INTEGER :: i          !-- channel segment counter
-
 
         c = 0.52           !-- coefficients for finding dx/Ckdt
         b = 1.15
+        nc = 3.0
+        Twm = 3            ! will be added to RouteLinke.nc
 
+!-------------  locals
         if(Cs .eq.0) then 
          z = 1.0 
         else 
@@ -421,111 +426,99 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         error   = 1.0
         maxiter = 0
         a = 0.0
-!       write(6,*) "bfd", idx, bfd
 
 !-------------  Secant Method
-        h    =  0.90 * bfd           !67% of bankful
-        h_0   = 0.10 * bfd           !10% of bankful
-        Qj_0 = 0.0                   !- initial flow of lower interval
+       depth   = max(depth,0.01)
+       h    =  depth * 1.33        !!bfd      !67% of bankful
+       h_0   = depth * 0.67       !.1*bfd    !10% of bankful
+       Qj_0 = 0.0                  !- initial flow of lower interval
 
-        do while ((error .gt. 0.01 .and. maxiter .le. 100 .and. h .gt. 0.01))  
+        do while ((error .gt. 0.01 .and. maxiter .le. 100) ) ! .and. h .gt. 0.01))  
 
           !----- lower interval  --------------------
            Twl = Bw + 2*z*h_0      !--top surface water width of the channel inflow
 
-!            if(h_0 .ge. bfd) then !water outside of defined channel
-!             AREA =  (Bw + bfd * z) * bfd
-!             AREAC = (5*Tw * (h_0 -bfd)) !assume compound component is rect. chan, that's 3 times the Tw
-!             WP = (Bw + 2 * bfd * sqrt(1+z*z)) 
-!             WPC = (4*Tw + 2*(h_0-bfd)) !WPC is 2 times the Tw
-!             R   = (AREA + AREAC)/(WP +WPC)  ! hydraulic radius
-!            else
+            if(h_0 .gt. bfd) then !water outside of defined channel
+             AREA =  (Bw + bfd * z) * bfd
+             AREAC = (Twm * Tw * (h_0 -bfd)) !assume compound component is rect. chan, that's 3 times the Tw
+             WP = (Bw + 2 * bfd * sqrt(1+z*z)) 
+             WPC = ((Twm-1) * Tw) + (2*(h_0-bfd)) !WPC is 2 times the Tw
+             R   = (AREA + AREAC)/(WP +WPC)  ! hydraulic radius
+            else
               AREA = (Bw + h_0 * z ) * h_0
               WP = (Bw + 2 * h_0 * sqrt(1+z*z))
               R   = AREA/ WP
-!            endif
+            endif
 
-!          if(h_0 .ge. bfd) then !water outside of defined channel
-             !weight the celerity by the contributing area, and assume that the mannings
-             !of the spills is 3x the manning of the channel
-!                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
-!                ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
-!                + ((sqrt(So)/(n*3))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
-!          else
+          if(h_0 .gt. bfd) then !water outside of defined channel
+            !weight the celerity by the contributing area, and assume that the mannings
+            !of the spills is 2x the manning of the channel
+                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
+                ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
+                + ((sqrt(So)/(n*nc))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
+          else
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                  ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*h_0*z)))))
-!          endif
+          endif
 
-           Km = max(dt,dx/Ck)
+          Km = max(dt,dx/Ck)
  
-!          if(h_0 .ge. bfd) then !water outside of defined channel
-!             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*(5*Tw)*So*Ck*dx)))))
-!          else
+          if(h_0 .gt. bfd) then !water outside of defined channel
+             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*(3*Tw)*So*Ck*dx)))))
+          else
               X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*Twl*So*Ck*dx)))))
-!          endif
+          endif
   
            D = (Km*(1 - X) + dt/2)              !--seconds
             if(D .eq. 0.0) then 
               print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
               call hydro_stop("In MUSKINGCUNGE() - D is 0.")
            endif 
-  
+
            C1 =  (Km*X + dt/2)/D
            C2 =  (dt/2 - Km*X)/D
            C3 =  (Km*(1-X)-dt/2)/D
+!          C1 =  max(0.0,min(1.0,1.0-C3))
            C4 =  (ql*dt)/D
 !          C4 =  (ql*dt)/D - (ChannK * (WP + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
 
-           !Per Yates, this check is not needed. Commenting out for now.
-!         if(R .le. 0.0) then 
-!            Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-!         else 
-              if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then
-               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
-              endif 
-
-            Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*3*n))/(WP+WPC))) * &
-                    (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
-
-!           if(idx .eq. 6084443) then
-!             print *, "manL",maxiter,WP,WPC,((1/(((WP*n)+(WPC*3*n))/(WP+WPC))) * &
-!                   (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
-!           endif
-
-!         endif
+           Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+                    (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f0(x)
 
            !--upper interval -----------
            Twl = Bw + 2*z*h                    !--top width of the channel inflow
 
-!           if(h .ge. bfd) then !water outside of defined channel
-!             AREA =  (Bw + bfd * z) * bfd
-!             AREAC = (5*Tw * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
-!             WP = (Bw + 2 * bfd * sqrt(1+z*z)) 
-!             WPC = (4*Tw + 2*(h-bfd)) !the additional wetted perimeter
-!             R   = (AREA + AREAC)/(WP +WPC)
-!            ! RC  = AREAC/WPC
-!           else
+           if(h .gt. bfd) then !water outside of defined channel
+             AREA =  (Bw + bfd * z) * bfd
+             AREAC = ((Twm*Tw) * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
+             WP = (Bw + 2 * bfd * sqrt(1+z*z)) 
+             WPC = ((Twm-1) *Tw) + (2*(h-bfd)) !the additional wetted perimeter
+             R   = (AREA + AREAC)/(WP +WPC)
+            ! RC  = AREAC/WPC
+           else
               AREA = (Bw + h * z ) * h
               WP = (Bw + 2 * h * sqrt(1+z*z))
               R   = AREA/ WP
-!           endif
+           endif
 
-!          if(h .ge. bfd) then !water outside of defined channel, assumed rectangular, 3x TW and n = 3x
-!                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
-!                ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
-!                + ((sqrt(So)/(n*3))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
-!          else
+          if(h .gt. bfd) then !water outside of defined channel, assumed rectangular, 3x TW and n = 3x
+                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
+                ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
+                + ((sqrt(So)/(n*nc))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
+          else
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                  ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*h*z)))))
-!          endif
+          endif
 
            Km = max(dt,dx/Ck)
 
-!          if(h .ge. bfd) then !water outside of defined channel
-!            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*(5*Tw)*So*Ck*dx)))))
-!          else
+          if(h .gt. bfd) then !water outside of defined channel
+            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*(3*Tw)*So*Ck*dx)))))
+
+          else
              X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*Twl*So*Ck*dx)))))
-!          endif
+
+          endif
 
            D = (Km*(1 - X) + dt/2)              !--seconds
             if(D .eq. 0.0) then 
@@ -536,27 +529,16 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C1 =  (Km*X + dt/2)/D
            C2 =  (dt/2 - Km*X)/D
            C3 =  (Km*(1-X)-dt/2)/D
+!          C1 =  max(0.0,min(1.0,1.0-C3)) !! eliminate influence of upstream current
            C4 =  (ql*dt)/D
-!           C4 =  (ql*dt)/D  - (ChannK * dx * (WP+WPC))  !-- (loss units: m/s * m * m) 
+!          C4 =  (ql*dt)/D  - (ChannK * dx * (WP+WPC))  !-- (loss units: m/s * m * m) 
         
-           !Per Yates, this check is not needed. Commenting out for now.
-!          if(R .le. 0.0) then 
-!            Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-!          else
-              if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
-               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
-              endif
+           if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
+            C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
+           endif
 
-            Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*3*n))/(WP+WPC))) * &
+           Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
-   
-!           if(idx .eq. 6084443) then
-!             print *, "manU",((1/(((WP*n)+(WPC*3*n))/(WP+WPC))) * &
-!                   (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
-!           endif
-
-!          endif
-
 
            if(Qj_0-Qj .ne. 0.0) then
              h_1 = h - ((Qj * (h_0 - h))/(Qj_0 - Qj)) !update h, 3rd estimate
@@ -569,34 +551,21 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
            error = abs((h_1 - h)/h) !error is new estatimate and 2nd estimate
 
-          if(idx .eq. 6084443) then
-            print*, "h,q", maxiter,h,h_0,h_1,Qj,Qj_0
-          endif
-
            h_0  = max(0.0,h)
            h    = max(0.0,h_1)
            maxiter = maxiter + 1
 
       end do
 
-      if((maxiter .ge. 100 .and. error .gt. 0.05) .or. h .gt. 100) then 
-         print*, "WARNING:"
-         print*,'RouteLink index:', idx + linkls_s(my_id+1) - 1
-         print*, "id,err,iters,h", idx, error, maxiter, h
-         print*, "n,z,B,So,dx,X,dt,Km",n,z,Bw,So,dx,X,dt,Km
-         print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
-         print*, "bfd,Tw,Bw,Twl", bfd,Tw,Bw,Twl
-         call hydro_stop("In SUBMUSKINGCUNGE() - Water Elevation Calculation is Diverging") 
-
-!        if(h.gt.30) then
-!             print*, "WARNING: Water Elevation Calculation, h > 100"
-!             print*, "id,err,iters,h", idx, error, maxiter, h
-!             print*, "n,z,B,So,dx,X,dt,Km",n,z,Bw,So,dx,X,dt,Km
-!             print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
-!             print*, "bfd,Tw,Bw,Twl", bfd,Tw,Bw,Twl
-!             call hydro_stop("In SUBMUSKINGCUNGE() - Water Elevation Calculation is Diverging")
-!        endif
-      endif
+    if(maxiter .ge. 100) then  
+       print*, "Musk Cunge WARNING: Failure to converge"
+       print*,'RouteLink index:', idx + linkls_s(my_id+1) - 1
+       print*, "id,err,iters,h", idx, error, maxiter, h
+       print*, "Ck,X,dt,Km",Ck,X,dt,Km
+       print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
+       print*, "bfd,Tw,Bw,Twl", bfd,Tw,Bw,Twl
+       print*, "C1,C2,C3", C1,C2,C3
+    endif
 
 #ifdef HYDRO_D
       !! Getting information on c3.
@@ -626,6 +595,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
       Twl = Bw + (2*z*h)
       R = (h*(Bw + Twl) / 2) / (Bw + 2*(((Twl - Bw) / 2)**2 + h**2)**0.5)    
       vel =  (1./n) * (R **(2./3.)) * sqrt(So)  ! average velocity in m/s
+      depth = h
 
 !     qloss = (ChannK * dx * WP) ! TML -- Compute qloss to pass
 
@@ -948,7 +918,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
                    call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
                     Qup,Quc, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
-                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k))
+                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k),HLINK(k) )
 
                    else
                     print *, "FATAL ERROR: no channel option selected"
@@ -1705,7 +1675,8 @@ end subroutine drive_CHANNEL
 #endif
        , accSfcLatRunoff, accBucket                  &
        , qSfcLatRunoff,     qBucket                  &
-       , QLateral, velocity &
+       , QLateral, velocity                          &
+       , HLINK                                       &
        , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
 
        use module_UDMAP, only: LNUMRSL, LUDRSL
@@ -1744,7 +1715,9 @@ end subroutine drive_CHANNEL
        real, intent(IN), dimension(:)        :: So, MannN
        real, intent(IN), dimension(:)        :: ChSSlp,Bw,Tw  !--properties of nodes or links
        real                                      :: Km, X
-       real , intent(INOUT), dimension(:,:)  :: QLINK
+       real , intent(INOUT), dimension(:,:)  :: QLINK 
+       real , intent(INOUT), dimension(:)    :: HLINK
+
 #ifdef WRF_HYDRO_NUDGING
        !! inout for applying previous nudge to upstream components of flow at gages
        real, intent(inout),    dimension(:)    :: nudge
@@ -2072,7 +2045,7 @@ do nt = 1, nsteps
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
-              MannN(k),      ChSSlp(k),   Bw(k), Tw(k)             )
+              MannN(k),      ChSSlp(k),   Bw(k), Tw(k), HLINK(k) )
          
       else
 #ifdef HYDRO_D

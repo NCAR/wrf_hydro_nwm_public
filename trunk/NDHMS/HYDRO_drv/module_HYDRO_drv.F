@@ -932,10 +932,11 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
        , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
        , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       ,                                     RT_DOMAIN(did)%HLINK    &
        , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
        ,                                     nlst_rt(did)%SUBRTSWCRT &
        , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
-       )             
+       )
 
 else
 
