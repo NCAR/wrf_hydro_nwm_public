@@ -7,15 +7,20 @@
 
 module overland_mass_balance
 
-    ! holds variables used for mass balance
-    type overland_mass_balance_struct
-        ! mass balance
-        real(kind=8) :: dsmctot     ! NEED VARIABLE INFO
-        real(kind=8) :: smctot1     ! NEED VARIABLE INFO
-        real(kind=8) :: smctot2     ! NEED VARIABLE INFO
-        real(kind=8) :: suminfxsrt  ! NEED VARIABLE INFO
-        real(kind=8) :: suminfxsr1  ! NEED VARIABLE INFO
-    contains
+   ! holds variables used for mass balance
+   type overland_mass_balance_struct
+      ! mass balance
+      real(kind=8) :: dsmctot     ! NEED VARIABLE INFO
+      !real(kind=8) :: <dsmctot>                          ! NEED VARIABLE INFO
+      real(kind=8) :: smctot1     ! NEED VARIABLE INFO
+      !real(kind=8) :: pre_soil_moisture_content        ! Pre time step soil moisture content accumulator  (<units>)
+      real(kind=8) :: smctot2     ! NEED VARIABLE INFO
+      !real(kind=8) :: post_soil_moisture_content       ! Post time step soil moisture content accumulator (<units>)
+      real(kind=8) :: suminfxsrt  ! NEED VARIABLE INFO
+      !real(kind=8) :: pre_infiltration_excess          ! Pre time step infiltration excess accumulator    (<units>)
+      real(kind=8) :: suminfxsr1  ! NEED VARIABLE INFO
+      !real(kind=8) :: post_infiltration_excess         ! Post time step infiltration excess accumulator   (<units>)
+      contains
         procedure :: init => overland_mass_balance_init
         procedure :: destroy => overland_mass_balance_destroy
     end type overland_mass_balance_struct

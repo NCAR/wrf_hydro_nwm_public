@@ -6,27 +6,38 @@
 ! Authors: Donald W Johnson
 
 module overland_control
-    !type that holds the variables that are inputs to or outputs of the routing code
-    ! along with book keeping variables
+   !type that holds the variables that are inputs to or outputs of the routing code
+   ! along with book keeping variables
 
-    !TODO change output integers to variables that are set dependant on the running system
-    ! example WCOSS
+   !TODO change output integers to variables that are set dependant on the running system
+   ! example WCOSS
 
-    type overland_control_struct
-        ! outputs
-        real, allocatable, dimension(:,:) :: sfcheadrt ! surface water head
+   type overland_control_struct
+      ! outputs
+      real, allocatable, dimension(:,:) :: sfcheadrt             ! surface water head
+      !real, allocatable, dimension(:,:) :: surface_water_head   ! depth of water on the surface, passed to the land surface model (mm)
+                                                                 ! on the land surface grid
+      ! inputs
+      real, allocatable, dimension(:,:) :: infxsubrt            ! infiltration excess subgrid weighted from INFXSRT
+      !real, allocatable, dimension(:,:) :: infiltration_excess ! infiltration excess from the land surface model (mm)
+                                                                ! on the routing grid
+      
+      ! miscellaneous bookkeeping
+      real, allocatable, dimension(:,:) :: dhrt                 ! NEED VARIABLE INFO
+                                                                ! Is passed around overland routing as an output var, renamed to qsfc in route_overland<1,2>
+                                                                ! qsfc in overland1 is intent(in), overland2 intent(inout). qsfc NEVER USED
 
-        ! inputs
-        real, allocatable, dimension(:,:) :: infxsubrt ! infiltration excess subgrid weighted from INFXSRT
+      real, allocatable, dimension(:,:) :: qbdryrt              ! accumlated vlaue of the boundary flux, + into domain - out of domain
+      !real, allocatable, dimension(:,:) :: boundary_flux       ! <better description> (<units>)
 
-        ! misc are bookkeeping
-        real :: qbdrytrt        ! total of qbdrvrt
-        real, allocatable, dimension(:,:) :: dhrt           ! NEED VARIABLE INFO
-        real, allocatable, dimension(:,:) :: qbdryrt        ! accumlated vlaue of the boundary flux, + into domain - out of domain
-    contains
-        procedure :: init => overland_control_init
-        procedure :: destroy => overland_control_destroy
-    end type overland_control_struct
+      real :: qbdrytrt                                          ! total of qbdrvrt
+      !real :: boundary_flux_total                              ! <better description> (<units>)
+
+
+      contains
+      procedure :: init => overland_control_init
+      procedure :: destroy => overland_control_destroy
+      end type overland_control_struct
 
     contains
 

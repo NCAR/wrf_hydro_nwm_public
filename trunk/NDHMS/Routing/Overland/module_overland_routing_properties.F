@@ -7,23 +7,55 @@
 
 module overland_routing_properties
 
-    ! holds proprties of the the routing grid needed by overland routing algs
-    type overland_routing_properties_struct
-        integer :: ixrt         ! number of cells in x direction on the high res grid
-        integer :: jxrt         ! number of cells in y direction on the high res grid
-        real, allocatable, dimension(:,:) :: soxrt        ! terrian slope X
-        real, allocatable, dimension(:,:) :: soyrt        ! terrian slope Y
-        real, allocatable, dimension(:,:) :: ovroughrt    ! surface roughness
-        real, allocatable, dimension(:,:) :: retdeprt     ! retention depthdrodirection slope)
-        real, allocatable, dimension(:,:,:) :: so8rt ! terrian slope (maybe 8 direction slope)
-        integer, allocatable, dimension(:,:,:) :: so8rt_d ! slope direction (nieghbor index?)?
-        real, allocatable, dimension(:,:,:) :: dist ! NEED VARIABLE INFO (distance relative to what)
-    contains
-        procedure :: init => overland_properties_init
-        procedure :: destroy => overland_properties_destory
-    end type overland_routing_properties_struct
+   ! holds proprties of the the routing grid needed by overland routing algs
+   type overland_routing_properties_struct
+      integer :: ixrt                                            ! number of cells in x direction on the high res grid
+      !integer :: rows                                           ! number of cells in x direction on the high res grid
+      integer :: jxrt                                            ! number of cells in y direction on the high res grid
+      !integer :: columns                                        ! number of cells in y direction on the high res grid
+      real, allocatable, dimension(:,:) :: soxrt                 ! terrian slope X
+      !real, allocatable, dimension(:,:) :: surface_slope_x      ! terrian slope in the x direction (m/m)
+      real, allocatable, dimension(:,:) :: soyrt                 ! terrian slope Y
+      !real, allocatable, dimension(:,:) :: surface_slope_y      ! terrian slope in the y direction (m/m)
+      real, allocatable, dimension(:,:) :: ovroughrt             ! surface roughness
+      !real, allocatable, dimension(:,:) :: roughness            ! surface roughness (none)
+                                                                 ! dissagregated from the land surface model
+      real, allocatable, dimension(:,:) :: retdeprt              ! retention depthdrodirection slope)
+      !real, allocatable, dimension(:,:) :: retention_depth      ! minimum amount of surface water required before water is routed as overland flow (mm)
+      real, allocatable, dimension(:,:,:) :: so8rt               ! terrian slope (maybe 8 direction slope)
+      !real, allocatable, dimension(:,:,:) :: so8rt              ! terrian slope in 8 ordinal directions (m/m)                                                                  !
+                                                                 ! DOES THIS MAKE surface_slope_<x,y> REDUNDANT?
+                                                                 !                      1
+                                                                 !                      |
+                                                                 !                  8       2
+                                                                 !                    \   /
+                                                                 !                 7__     __ 3
+                                                                 !
+                                                                 !                    /   \
+                                                                 !                   6     4 
+                                                                 !                      |  
+                                                                 !                      5
+                                                                 !
 
-    contains
+      integer, allocatable, dimension(:,:,:) :: so8rt_d          ! slope direction (nieghbor index?)?
+      !integer, allocatable, dimension(:,:,:) :: so8rt_d         ! index of neighboring cell in the direction of steepest slope???
+                                                      
+      real, allocatable, dimension(:,:,:) :: dist                ! NEED VARIABLE INFO (distance relative to what)
+      !real, allocatable, dimension(:,:,:) :: dist               ! centerpoint distance to each neighbor (m)
+                                                                 ! For a regular grid, this should be pretty static, right?
+                                                                 ! neighbors 1,3,5,7 dist = grid_size
+                                                                 ! neighbors 2,4,6,8 dist = sqrt( grid_size^2 + grid_size^2)
+                                                                 ! would suggest eliminating this and using two static variables for square grids.
+                                                                 ! i.e. direct_neighbor_distance = grid_size
+                                                                 !      diagonal_neighbor_distance = sqrt( 2*(grid_size^2) )
+      
+      contains
+         procedure :: init => overland_properties_init
+         procedure :: destroy => overland_properties_destory
+   
+   end type overland_routing_properties_struct
+
+   contains
 
 ! this procedure allocates memory for an overland_routing_properties structure that has not been allocated
 ! if the structure has been allocated an error will be logged

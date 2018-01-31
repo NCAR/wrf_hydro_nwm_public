@@ -1,15 +1,15 @@
-! module overland_streams_and_lakes_data.F
+! module overland_stream_and_lake_interface_data.F
 ! Purpose: This module contains the overland_control_struct class. This types holds
 ! the lakes and stream related variables used in the overland routing code
 ! National Water Center
 ! Responsibility: Donald W Johnson donald.w.johnson@noaa.gov
 ! Authors: Donald W Johnson
 
-module overland_streams_and_lakes
+module overland_stream_and_lake_interface
 
     ! type that hold inputs and outputs for stream and channels as well as
     ! variables used to interface with channels and lakes
-    type overland_streams_and_lakes_struct
+    type overland_stream_and_lake_interface_struct
         real :: qstrmvoltrt     ! total of qstrmvolrt
         real :: lake_inflotrt   ! lake inflow from surface head
 
@@ -19,17 +19,17 @@ module overland_streams_and_lakes
         real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
         real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
     contains
-        procedure :: init => overland_streams_and_lakes_init
-        procedure :: destroy => overland_streams_and_lakes_destroy
-    end type overland_streams_and_lakes_struct
+        procedure :: init => overland_stream_and_lake_interface_init
+        procedure :: destroy => overland_stream_and_lake_interface_destroy
+    end type overland_stream_and_lake_interface_struct
 
     contains
 
-! this structure allocates and initalizes the members of an overland_streams_and_lakes strucutre
+! this structure allocates and initalizes the members of an overland_stream_and_lake_interface strucutre
 ! if members have allready been initalized they will not be altered and an error will be logged
 
-subroutine overland_streams_and_lakes_init(this,ix,jx)
-    class(overland_streams_and_lakes_struct), intent(inout) :: this ! the type object being initalized
+subroutine overland_stream_and_lake_interface_init(this,ix,jx)
+    class(overland_stream_and_lake_interface_struct), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size
 
@@ -73,13 +73,13 @@ subroutine overland_streams_and_lakes_init(this,ix,jx)
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland lakes and streams structure&
         &that where allready allocated. The allocated members where not changed"    
-end subroutine overland_streams_and_lakes_init
+end subroutine overland_stream_and_lake_interface_init
 
-! this procedure deallocates and overland_streams_and_lakes structure that was initalized with
-! overland_streams_and_lakes_init
+! this procedure deallocates and overland_stream_and_lake_interface structure that was initalized with
+! overland_stream_and_lake_interface_init
 
-subroutine overland_streams_and_lakes_destroy(this)
-    class(overland_streams_and_lakes_struct), intent(inout) :: this ! the type object being destroyed
+subroutine overland_stream_and_lake_interface_destroy(this)
+    class(overland_stream_and_lake_interface_struct), intent(inout) :: this ! the type object being destroyed
 
     logical :: allocation_error = .false.
 
@@ -114,6 +114,6 @@ subroutine overland_streams_and_lakes_destroy(this)
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland streams and lakes structure&
         &that where not allready allocated. The unallocated members where not changed"   
-end subroutine overland_streams_and_lakes_destroy
+end subroutine overland_stream_and_lake_interface_destroy
 
-end module overland_streams_and_lakes
+end module overland_stream_and_lake_interface
