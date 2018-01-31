@@ -1479,8 +1479,8 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    rtDomainDict%timeZeroFlag(:) = [1,1,1,1,1]
    rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0]
-   rtDomainDict%validMaxReal(:) = [10.0,1000000.0,1000.0,1000.0,100.0]
+   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,-1000000.0,0.0]
+   rtDomainDict%validMaxReal(:) = [100.0,1000000.0,1000000.0,1000000.0,100.0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.

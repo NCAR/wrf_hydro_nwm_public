@@ -2011,12 +2011,12 @@ subroutine output_rt_NWM(domainId,iGrid)
 
                   ! Run a quick gross check on values to ensure they aren't outside our
                   ! defined limits.
-                  if(varRealTmp .lt. fileMeta%validMinReal(iTmp2)) then
-                     varRealTmp = fileMeta%fillReal(iTmp2)
-                  endif
-                  if(varRealTmp .gt. fileMeta%validMaxReal(iTmp2)) then
-                     varRealTmp = fileMeta%fillReal(iTmp2)
-                  endif
+                  !if(varRealTmp .lt. fileMeta%validMinReal(iTmp2)) then
+                  !   varRealTmp = fileMeta%fillReal(iTmp2)
+                  !endif
+                  !if(varRealTmp .gt. fileMeta%validMaxReal(iTmp2)) then
+                  !   varRealTmp = fileMeta%fillReal(iTmp2)
+                  !endif
                   if(varRealTmp .ne. varRealTmp) then
                      varRealTmp = fileMeta%fillReal(iTmp2)
                   endif
