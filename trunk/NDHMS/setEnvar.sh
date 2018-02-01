@@ -3,7 +3,7 @@
 # This is called by both 
 # compile_offline_NoahMP.csh & compile_offline_Noah.csh.
 
-# WRF-Coupled (=0) vs. Uncoupled, e.g. NoahMP or Noah (=1)
+# This is a WRF environment variable. Always set to 1=On for compiling WRF-Hydro.
 export WRF_HYDRO=1
 
 # Enhanced diagnostic output for debugging: 0=Off, 1=On.
