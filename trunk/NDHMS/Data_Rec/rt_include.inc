@@ -46,7 +46,8 @@
   INTEGER,    allocatable, DIMENSION(:,:,:) :: SO8RT_D, SO8LD_D
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax
   REAL   Vmax
-  REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT,LKSATRT 
+  !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT,LKSATRT
+  REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT 
   REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC
   REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT,ZWATTABLRT,QSUBBDRYRT,SOLDEPRT
   REAL,    allocatable, DIMENSION(:,:)      :: SUB_RESID

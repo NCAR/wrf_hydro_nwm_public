@@ -137,14 +137,14 @@ CONTAINS
            call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
            call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
         end do
-         call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
+         call write_io_real(rt_domain(did)%overland%control%sfcheadrt,sfcheadrt)
 	if(nlst_rt(did)%GWBASESWCRT == 3)&
          call write_io_real(gw2d(did)%qsgw,qsgw)
 #else
         STC = rt_domain(did)%STC
         SMC = rt_domain(did)%SMC
         SH2OX = rt_domain(did)%SH2OX
-        sfcheadrt = rt_domain(did)%sfcheadrt
+        sfcheadrt = rt_domain(did)%overland%control%sfcheadrt
 	if(nlst_rt(did)%GWBASESWCRT == 3)&
         qsgw = gw2d(did)%qsgw
 #endif
@@ -212,7 +212,7 @@ CONTAINS
 
 #ifdef MPP_LAND
            call mpp_land_bcast_real1(nlst_rt(did)%dt)
-           call write_io_real(rt_domain(did)%sfcheadrt,sfcheadrt)
+           call write_io_real(rt_domain(did)%overland%control%sfcheadrt,sfcheadrt)
            call write_io_real(rt_domain(did)%infxsrt, infxsrt)
 !          call write_io_real(rt_domain(did)%soldrain,soldrain)
            if(nlst_rt(did)%rst_typ .eq. 1) then
@@ -234,7 +234,7 @@ CONTAINS
               endif
            endif 
 #else
-           sfcheadrt = rt_domain(did)%sfcheadrt
+           sfcheadrt = rt_domain(did)%overland%control%sfcheadrt
            infxsrt = rt_domain(did)%infxsrt
            if(nlst_rt(did)%rst_typ .eq. 1) then
               STC = rt_domain(did)%STC

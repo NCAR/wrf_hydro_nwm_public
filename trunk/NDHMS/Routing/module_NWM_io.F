@@ -3593,7 +3593,7 @@ subroutine output_lsmOut_NWM(domainId)
                else if(iTmp .eq. 13) then
                   varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
                else if(iTmp .eq. 14) then
-                  varRealTmp = rt_domain(domainId)%SFCHEADRT(iTmp2,jTmp2)
+                  varRealTmp = rt_domain(domainId)%overland%control%SFCHEADRT(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
                endif
 
                ! For now, we are foregoing converting these variables to integer

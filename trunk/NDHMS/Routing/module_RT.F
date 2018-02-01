@@ -257,8 +257,8 @@ CONTAINS
             rt_domain(did)%SO8LD_D    = 0.0           
   allocate( rt_domain(did)%SO8LD_Vmax   (IX,JX) )
             rt_domain(did)%SO8LD_Vmax    = 0.0            
-  allocate( rt_domain(did)%SFCHEADRT   (IX,JX) )
-            rt_domain(did)%SFCHEADRT    = 0.0
+  !allocate( rt_domain(did)%sfcheadrt   (IX,JX) ) !moved to overland control structure
+  !          rt_domain(did)%sfcheadrt    = 0.0    !moved to overland control structure
   allocate( rt_domain(did)%INFXSRT   (IX,JX) )
             rt_domain(did)%INFXSRT    = 0.0            
   allocate( rt_domain(did)%TERRAIN   (IX,JX) )

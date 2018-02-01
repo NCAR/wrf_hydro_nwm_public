@@ -1098,7 +1098,7 @@ endif
 
 
 
-            RT_DOMAIN(did)%SFCHEADRT(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
+            rt_domain(did)%overland%control%sfcheadrt(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
                                           / (nlst_rt(did)%AGGFACTRT**2)
 
             do KRT=1,nlst_rt(did)%NSOIL
@@ -1229,7 +1229,7 @@ endif
         sicetot2 = 0.
         do i=1,RT_DOMAIN(did)%IX
          do j=1,RT_DOMAIN(did)%JX
-            suminfxs2 = suminfxs2 + RT_DOMAIN(did)%SFCHEADRT(I,J) &
+            suminfxs2 = suminfxs2 + rt_domain(did)%overland%control%sfcheadrt(I,J) &
                                / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
             do kk=1,nlst_rt(did)%NSOIL
                 smctot2 = smctot2 + RT_DOMAIN(did)%SMC(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &

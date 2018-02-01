@@ -10,7 +10,7 @@
 module overland_data
 
     use overland_control
-    use overland_streams_and_lakes
+    use overland_stream_and_lake_interface
     use overland_routing_properties
     use overland_mass_balance
 
