@@ -13,20 +13,21 @@ jobs:
           command: git clone https://${GITHUB_USERNAME}:${GITHUB_AUTHTOKEN}@github.com/NCAR/wrf_hydro_tests /wrf_hydro_ci/wrf_hydro_tests
       - run:
           name: Configure environment
-          command: ./setup.sh
+          command: cd /wrf_hydro_ci/wrf_hydro_tests/CI; source bash_env_setup.sh; cd -
       - checkout:
           path: /wrf_hydro_ci/repos/candidate
       - run:
-          name: Compile test
-          command: bash runTests.sh compile
+          name: Compile ?
+          command: bash /wrf_hydro_ci/wrf_hydro_tests/questions/compile.sh
       - run:
-          name: Regression test
-          command: bash runTests.sh run
+          name: Run ?
+          command: bash /wrf_hydro_ci/wrf_hydro_tests/questions/run.sh
       - run:
-          name: Restart test
-          command: bash runTests.sh restart
+          name: Restart ?
+          command: bash /wrf_hydro_ci/wrf_hydro_tests/questions/perfect_restart.sh
       - run:
-          name: Num cores test
-          command: bash runTests.sh ncores
-
-          
+          name: Number of cores ?
+          command: bash /wrf_hydro_ci/wrf_hydro_tests/questions/number_of_cores.sh
+      - run:
+          name: Regression ?
+          command: bash /wrf_hydro_ci/wrf_hydro_tests/questions/regression.sh
