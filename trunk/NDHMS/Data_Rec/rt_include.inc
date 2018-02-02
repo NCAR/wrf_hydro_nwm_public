@@ -46,7 +46,7 @@
   !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT  
   REAL,    allocatable, DIMENSION(:,:)      :: ELRT
   !REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
-  INTEGER,    allocatable, DIMENSION(:,:,:) :: SO8RT_D, SO8LD_D
+  INTEGER,    allocatable, DIMENSION(:,:,:) ::  SO8LD_D ! SO8RT_D moved to overland properties module
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax
   REAL   Vmax
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT,LKSATRT  ! SFCHEAD moved to overland control module
