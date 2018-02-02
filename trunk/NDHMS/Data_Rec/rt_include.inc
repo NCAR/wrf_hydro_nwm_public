@@ -45,7 +45,7 @@
   REAL :: QSUBBDRYTRT
   !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT  
   REAL,    allocatable, DIMENSION(:,:)      :: ELRT
-  REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
+  !REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
   INTEGER,    allocatable, DIMENSION(:,:,:) :: SO8RT_D, SO8LD_D
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax
   REAL   Vmax

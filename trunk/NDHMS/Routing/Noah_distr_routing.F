@@ -2753,7 +2753,7 @@
                      rt_domain(did)%overland%properties%soyrt,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
                      rt_domain(did)%overland%control%infxsubrt,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
                      RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, RT_DOMAIN(did)%dist, &
-                     RT_DOMAIN(did)%sub_resid,RT_DOMAIN(did)%SO8RT_D, RT_DOMAIN(did)%SO8RT)
+                     RT_DOMAIN(did)%sub_resid,RT_DOMAIN(did)%SO8RT_D, rt_domain(did)%overland%properties%so8rt)
              endif
 
          end subroutine SubsurfaceRouting_drv
@@ -2838,7 +2838,7 @@
                           rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%qbdryrt, &
                           rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%qbdrytrt, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
                           rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
-                          rt_domain(did)%dist, rt_domain(did)%SO8RT, rt_domain(did)%SO8RT_D , &
+                          rt_domain(did)%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%SO8RT_D , &
                           rt_domain(did)%SMCTOT2,rt_domain(did)%suminfxs1,rt_domain(did)%suminfxsrt, &
                           rt_domain(did)%smctot1,rt_domain(did)%dsmctot )
 ! ADCHANGE: If overland routing is called, INFXSUBRT is moved to SFCHEADSUBRT, so 

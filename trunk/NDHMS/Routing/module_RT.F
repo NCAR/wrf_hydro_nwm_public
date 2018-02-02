@@ -133,8 +133,8 @@ CONTAINS
      !rt_domain(did)%overland%properties%soxrt  	= 0.0                
      !allocate( rt_domain(did)%overland%properties%soyrt   	(IXRT,JXRT) )
      !rt_domain(did)%overland%properties%soyrt   	= 0.0                
-     allocate( rt_domain(did)%SO8RT   	(IXRT,JXRT,8) )
-     rt_domain(did)%SO8RT   	= -999               
+     !allocate( rt_domain(did)%overland%properties%so8rt   	(IXRT,JXRT,8) )
+     !rt_domain(did)%overland%properties%so8rt   	= -999               
      allocate( rt_domain(did)%SO8RT_D   	(IXRT,JXRT,3) )
      rt_domain(did)%SO8RT_D   	= 0.0                
      !allocate( rt_domain(did)%overland%properties%ovroughrt   (IXRT,JXRT) )
@@ -897,7 +897,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    !DJG    will later make this a function of SOLTYP and VEGTYP
    !            OVROUGHRT(i,j) = 0.01
    
-   !rt_domain(did)%overland%properties%retdeprt = 0.001   ! units (mm) move to overland%properties 
+   rt_domain(did)%overland%properties%retdeprt = 0.001   ! units (mm)  
    rt_domain(did)%RETDEP_CHAN = 0.001
 
 
@@ -905,7 +905,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    !DJG     include as a subroutine in module module_Noahlsm_wrfcode_input.F
    !DJG  Calculate terrain slopes 'SOXRT,SOYRT' from subgrid elevation 'ELRT'
 
-   rt_domain(did)%so8rt = -999
+   rt_domain(did)%overland%properties%so8rt = -999
    Vmax = 0.0
    do j=2,rt_domain(did)%JXRT-1
       do i=2,rt_domain(did)%IXRT-1
@@ -928,74 +928,74 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
             end if
          end if
          
-         rt_domain(did)%SO8RT(i,j,1) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,1) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
          rt_domain(did)%SO8RT_D(i,j,1) = i
          rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
          rt_domain(did)%SO8RT_D(i,j,3) = 1 
-         Vmax = rt_domain(did)%SO8RT(i,j,1)
+         Vmax = rt_domain(did)%overland%properties%so8rt(i,j,1)
          
-         rt_domain(did)%SO8RT(i,j,2) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,2) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j+1))/rt_domain(did)%dist(i,j,2)  
-         if(rt_domain(did)%SO8RT(i,j,2) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,2) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i + 1
             rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
             rt_domain(did)%SO8RT_D(i,j,3) = 2
-            Vmax = rt_domain(did)%SO8RT(i,j,2)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,2)
          end if
          
-         rt_domain(did)%SO8RT(i,j,3) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,3) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
-         if(rt_domain(did)%SO8RT(i,j,3) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,3) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i + 1
             rt_domain(did)%SO8RT_D(i,j,2) = j  
             rt_domain(did)%SO8RT_D(i,j,3) = 3
-            Vmax = rt_domain(did)%SO8RT(i,j,3)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,3)
          end if
          
-         rt_domain(did)%SO8RT(i,j,4) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,4) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j-1))/rt_domain(did)%dist(i,j,4)  
-         if(rt_domain(did)%SO8RT(i,j,4) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,4) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i + 1
             rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
             rt_domain(did)%SO8RT_D(i,j,3) = 4
-            Vmax = rt_domain(did)%SO8RT(i,j,4)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,4)
          end if
          
-         rt_domain(did)%SO8RT(i,j,5) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,5) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j-1))/rt_domain(did)%dist(i,j,5)
-         if(rt_domain(did)%SO8RT(i,j,5) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,5) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i 
             rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
             rt_domain(did)%SO8RT_D(i,j,3) = 5
-            Vmax = rt_domain(did)%SO8RT(i,j,5)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,5)
          end if
          
-         rt_domain(did)%SO8RT(i,j,6) = & 
+         rt_domain(did)%overland%properties%so8rt(i,j,6) = & 
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j-1))/rt_domain(did)%dist(i,j,6)  
-         if(rt_domain(did)%SO8RT(i,j,6) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,6) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
             rt_domain(did)%SO8RT_D(i,j,2) = j - 1 
             rt_domain(did)%SO8RT_D(i,j,3) = 6
-            Vmax = rt_domain(did)%SO8RT(i,j,6)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,6)
          end if
          
-         rt_domain(did)%SO8RT(i,j,7) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,7) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j))/rt_domain(did)%dist(i,j,7)
-         if(rt_domain(did)%SO8RT(i,j,7) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,7) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
             rt_domain(did)%SO8RT_D(i,j,2) = j  
             rt_domain(did)%SO8RT_D(i,j,3) = 7
-            Vmax = rt_domain(did)%SO8RT(i,j,7)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,7)
          end if
          
-         rt_domain(did)%SO8RT(i,j,8) = &
+         rt_domain(did)%overland%properties%so8rt(i,j,8) = &
               (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j+1))/rt_domain(did)%dist(i,j,8)  
-         if(rt_domain(did)%SO8RT(i,j,8) .gt. Vmax ) then
+         if(rt_domain(did)%overland%properties%so8rt(i,j,8) .gt. Vmax ) then
             rt_domain(did)%SO8RT_D(i,j,1) = i - 1 
             rt_domain(did)%SO8RT_D(i,j,2) = j + 1 
             rt_domain(did)%SO8RT_D(i,j,3) = 8
-            Vmax = rt_domain(did)%SO8RT(i,j,8)
+            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,8)
          end if
          
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
@@ -1042,7 +1042,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soxrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soyrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    do i = 1, 8
-      call MPP_LAND_COM_REAL(rt_domain(did)%SO8RT(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%so8rt(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    end do
    do i = 1, 3
       call MPP_LAND_COM_INTEGER(rt_domain(did)%SO8RT_D(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
