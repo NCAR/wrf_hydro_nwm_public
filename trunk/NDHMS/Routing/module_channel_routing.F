@@ -399,7 +399,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
         c = 0.52           !-- coefficients for finding dx/Ckdt
         b = 1.15
-        nc = 10.0
+        nc = 4.0
         Twm = 3            ! will be added to RouteLinke.nc
 
 !-------------  locals
@@ -464,7 +464,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           Km = max(dt,dx/Ck)
  
           if(h_0 .gt. bfd) then !water outside of defined channel
-             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*(Twm)*So*Ck*dx)))))
+             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*(Tw*Twm)*So*Ck*dx)))))
           else
               X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*Twl*So*Ck*dx)))))
           endif
@@ -513,7 +513,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            Km = max(dt,dx/Ck)
 
           if(h .gt. bfd) then !water outside of defined channel
-            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*Twm*So*Ck*dx)))))
+            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*(Tw*Twm)*So*Ck*dx)))))
 
           else
              X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*Twl*So*Ck*dx)))))
