@@ -286,7 +286,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                       RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                      RT_DOMAIN(did)%QBDRYRT, &
+                      rt_domain(did)%overland%control%qbdryrt, &
                       nlst_rt(did)%io_config_outputs &
                        )
                  endif ! End check for io_form_outputs value
@@ -612,8 +612,8 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    ! step 1) disaggregate specific fields from LSM to Hydro grid
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
-      RT_DOMAIN(did)%QSTRMVOLRT = zeroFlt
-      RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
+      RT_DOMAIN(did)%overland%streams_and_lakes%qstrmvolrt = zeroFlt
+      RT_DOMAIN(did)%LAKE_INFLORT_DUM = rt_domain(did)%overland%streams_and_lakes%lake_inflort
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call disaggregateDomain_drv(did)
@@ -657,8 +657,8 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call OverlandRouting_drv(did)
       else
-         RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%INFXSUBRT
-         RT_DOMAIN(did)%INFXSUBRT = 0.
+         RT_DOMAIN(did)%SFCHEADSUBRT = rt_domain(did)%overland%control%infxsubrt
+         rt_domain(did)%overland%control%infxsubrt = 0.
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -670,10 +670,10 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 #endif
 #endif
 
-      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%QSTRMVOLRT_TS = rt_domain(did)%overland%streams_and_lakes%qstrmvolrt
       RT_DOMAIN(did)%QSTRMVOLRT_ACC = RT_DOMAIN(did)%QSTRMVOLRT_ACC + RT_DOMAIN(did)%QSTRMVOLRT_TS
       
-      RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+      RT_DOMAIN(did)%LAKE_INFLORT_TS = rt_domain(did)%overland%streams_and_lakes%lake_inflort-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 			
 #ifdef HYDRO_D
       call system_clock(count=clock_count_1, count_rate=clock_rate)
@@ -908,7 +908,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
     call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
        RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
+       rt_domain(did)%overland%streams_and_lakes%lake_mskrt, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
        RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, &
@@ -944,8 +944,8 @@ else
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
-       RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT,RT_DOMAIN(did)%CH_LNKRT,&
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH,&
+       RT_DOMAIN(did)%CH_NETLNK, rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%CH_LNKRT,&
+       rt_domain(did)%overland%streams_and_lakes%lake_mskrt, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH,&
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%QLateral, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
@@ -1585,7 +1585,7 @@ endif
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    ! Under channel-only , these first three variables are not allocated.
-   if(allocated(rt_domain(did)%LAKE_INFLORT))    rt_domain(did)%LAKE_INFLORT = zeroFlt
+   if(allocated(rt_domain(did)%overland%streams_and_lakes%lake_inflort))    rt_domain(did)%overland%streams_and_lakes%lake_inflort = zeroFlt
    if(allocated(rt_domain(did)%QSTRMVOLRT_ACC))  rt_domain(did)%QSTRMVOLRT_ACC   = zeroFlt
    ! These variables are optionally allocated, if their output is requested.
    if(allocated(rt_domain(did)%accSfcLatRunoff)) rt_domain(did)%accSfcLatRunoff = zeroDbl

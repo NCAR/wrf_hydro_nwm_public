@@ -13,7 +13,7 @@ module overland_stream_and_lake_interface
         real :: qstrmvoltrt     ! total of qstrmvolrt
         real :: lake_inflotrt   ! lake inflow from surface head
 
-        real, allocatable, dimension(:,:) :: ch_netrt      ! keeps trake of the 0-1 channel network
+        integer, allocatable, dimension(:,:) :: ch_netrt      ! keeps trake of the 0-1 channel network
         integer, allocatable, dimension(:,:) :: lake_mskrt ! mask for identifing lake elements in channel network
 
         real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow

@@ -5995,7 +5995,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
    if( nlst_rt(did)%channel_only       .eq. 0 .and. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
     
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT, "QBDRYRT" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%qbdryrt, "QBDRYRT" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT, "sfcheadsubrt" )
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
@@ -6114,7 +6114,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
-          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%LAKE_INFLORT,"lake_inflort")
+          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_inflort,"lake_inflort")
 
    end if  !    if(nlst_rt(did)%CHANRTSWCRT.eq.1) 
 
@@ -6212,13 +6212,13 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%cvol
                    write(iunit,ERR=101) rt_domain(did)%resht
                    write(iunit,ERR=101) rt_domain(did)%qlakeo
-                   write(iunit,ERR=101) rt_domain(did)%LAKE_INFLORT
+                   write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%lake_inflort
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-                    write(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                    write(iunit,ERR=101) rt_domain(did)%overland%control%qbdryrt
                     write(iunit,ERR=101) rt_domain(did)%INFXSWGT
                     write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
@@ -6305,13 +6305,13 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%cvol
                    read(iunit,ERR=101) rt_domain(did)%resht
                    read(iunit,ERR=101) rt_domain(did)%qlakeo
-                   read(iunit,ERR=101) rt_domain(did)%LAKE_INFLORT
+                   read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%lake_inflort
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-                   read(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                   read(iunit,ERR=101) rt_domain(did)%overland%control%qbdryrt
                    read(iunit,ERR=101) rt_domain(did)%INFXSWGT
                    read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
@@ -6778,7 +6778,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT,"sfcheadsubrt")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%qbdryrt,"QBDRYRT")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
          !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
          !No need to have in restart since live calculated.
@@ -6821,7 +6821,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then 
            
          if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
-            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%LAKE_INFLORT,"lake_inflort")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_inflort,"lake_inflort")
          endif
       end if
       
@@ -6868,7 +6868,7 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !!   Routing/module_HYDRO_drv.F: HYDRO_ini
 !! See comments there.
 !! Conensed, commented code:
-!! rt_domain(did)%LAKE_INFLORT=0.!rt_domain(did)%QSTRMVOLRT=0.
+!! rt_domain(did)%overland%streams_and_lakes%lake_inflort=0.!rt_domain(did)%QSTRMVOLRT=0.
 !end if
 
 #ifdef MPP_LAND

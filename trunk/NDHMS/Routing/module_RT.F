@@ -152,8 +152,8 @@ CONTAINS
 
      allocate( rt_domain(did)%SFCHEADSUBRT(IXRT,JXRT) )
      rt_domain(did)%SFCHEADSUBRT= 0.0                
-     allocate( rt_domain(did)%INFXSUBRT   (IXRT,JXRT) )
-     rt_domain(did)%INFXSUBRT   = 0.0                
+     !allocate( rt_domain(did)%overland%control%infxsubrt   (IXRT,JXRT) )
+     !rt_domain(did)%overland%control%infxsubrt   = 0.0                
      allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
      rt_domain(did)%INFXSWGT    = 0.0                
      allocate( rt_domain(did)%LKSATRT     (IXRT,JXRT) )
@@ -180,16 +180,16 @@ CONTAINS
      rt_domain(did)%SH2OWGT     = 0.0
      allocate( rt_domain(did)%INFXSAGGRT 	(IXRT,JXRT) )
      rt_domain(did)%INFXSAGGRT 	= 0.0                
-     allocate( rt_domain(did)%DHRT   	(IXRT,JXRT) )
-     rt_domain(did)%DHRT   	= 0.0                
-     allocate( rt_domain(did)%QSTRMVOLRT  (IXRT,JXRT) )
-     rt_domain(did)%QSTRMVOLRT  = 0.0
+     !allocate( rt_domain(did)%overland%control%dhrt   	(IXRT,JXRT) ) ! moved to overland control
+     !rt_domain(did)%overland%control%dhrt   	= 0.0                 ! moved to overland control
+     !allocate( rt_domain(did)%overland%streams_and_lakes%qstrmvolrt (IXRT,JXRT) )              ! moved to overland streams and lakes
+     !rt_domain(did)%overland%streams_and_lakes%qstrmvolrt = 0.0                                ! moved to overland streams and lakes
      allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
      allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT_ACC  = 0.0                
-     allocate( rt_domain(did)%QBDRYRT   	(IXRT,JXRT) )
-     rt_domain(did)%QBDRYRT   	= 0.0     
+     !allocate( rt_domain(did)%overland%control%qbdryrt   	(IXRT,JXRT) )
+     !rt_domain(did)%overland%control%qbdryrt   	= 0.0     
      allocate( rt_domain(did)%SUB_RESID (ixrt,jxrt) )
      rt_domain(did)%SUB_RESID = 0.0                
      
@@ -200,10 +200,10 @@ CONTAINS
      !! Variables (formerly?) needed for channel_only
      allocate( rt_domain(did)%ELRT   	(IXRT,JXRT) )
      rt_domain(did)%ELRT   	= 0.0                
-     allocate( rt_domain(did)%LAKE_MSKRT 	(IXRT,JXRT) )
-     rt_domain(did)%LAKE_MSKRT 	= -9999              
-     allocate( rt_domain(did)%LAKE_INFLORT(IXRT,JXRT) )
-     rt_domain(did)%LAKE_INFLORT= 0.0                
+     !allocate( rt_domain(did)%overland%streams_and_lakes%lake_mskrt 	(IXRT,JXRT) ) ! moved to overland%stream_and_lakes
+     !rt_domain(did)%overland%streams_and_lakes%lake_mskrt 	= -9999               ! moved to overland%streams_and_lakes
+     !allocate( rt_domain(did)%overland%streams_and_lakes%lake_inflort(IXRT,JXRT) )                              ! moved to overland%streams_and_lakes
+     !!rt_domain(did)%overland%streams_and_lakes%lake_inflort= 0.0                                               ! moved to overland%streams_and_lakes
      allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
      allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
      rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
@@ -285,8 +285,8 @@ CONTAINS
   !! UDMP code, this is a required variable.
   !! JLM: could these be deallocated under channel_only
   if(nlst_rt(did)%channel_only       .eq. 0) then
-     allocate( rt_domain(did)%CH_NETRT   	(IXRT,JXRT) )
-     rt_domain(did)%CH_NETRT   	= 0.0                
+     !allocate( rt_domain(did)%overland%streams_and_lakes%ch_netrt   	(IXRT,JXRT) ) !moved to overland%streams_and_lakes
+     !rt_domain(did)%overland%streams_and_lakes%ch_netrt   	= 0.0                 !moved to overland%streams_and_lakes
      allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
      rt_domain(did)%CH_LNKRT = 0.0
   endif
@@ -653,7 +653,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 #endif
 
       call READ_ROUTING_seq  (  &
-           rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+           rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
            rt_domain(did)%CH_LNKRT, &
            rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
            nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
@@ -661,7 +661,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            nlst_rt(did)%channel_option, nlst_rt(did)%udmp_opt)
 
       
-   !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%CH_NETRT, &
+   !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
 
       if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 
@@ -671,8 +671,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
          call READ_CHROUTING1( &  !! NOT TESTED
 #endif
              rt_domain(did)%IXRT,         rt_domain(did)%JXRT,       &
-             rt_domain(did)%ELRT,         rt_domain(did)%CH_NETRT,        &
-             rt_domain(did)%CH_LNKRT,     rt_domain(did)%LAKE_MSKRT, & 
+             rt_domain(did)%ELRT,         rt_domain(did)%overland%streams_and_lakes%ch_netrt,        &
+             rt_domain(did)%CH_LNKRT,     rt_domain(did)%overland%streams_and_lakes%lake_mskrt, & 
              rt_domain(did)%FROM_NODE,    rt_domain(did)%TO_NODE, &
              rt_domain(did)%TYPEL,        rt_domain(did)%ORDER, &
              rt_domain(did)%MAXORDER,     rt_domain(did)%NLINKS, &
@@ -774,7 +774,7 @@ endif
          ! get NHDPLUS mapping function. 
          !          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
          call UDMP_ini( rt_domain(did)%GNLINKSL, rt_domain(did)%ixrt,      &
-              rt_domain(did)%jxrt,     rt_domain(did)%CH_NETRT , &
+              rt_domain(did)%jxrt,     rt_domain(did)%overland%streams_and_lakes%ch_netrt , &
               nlst_rt(did)%OVRTSWCRT,  nlst_rt(did)%SUBRTSWCRT,  &
               rt_domain(did)%dist(:,:,9)                         )
 #ifdef HYDRO_D
@@ -1116,7 +1116,7 @@ else
 #endif
          rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
          rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
-         rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%ch_netrt,nlst_rt(did)%AGGFACTRT)
+         rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
          
          
          call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
@@ -1361,12 +1361,12 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%QSUBRT = 0.0
    rt_domain(did)%ZWATTABLRT = 0.0
    rt_domain(did)%QSUBBDRYRT = 0.0
-   rt_domain(did)%QSTRMVOLRT = 0.0
-   rt_domain(did)%QBDRYRT = 0.0
+   rt_domain(did)%overland%streams_and_lakes%qstrmvolrt = 0.0
+   rt_domain(did)%overland%control%qbdryrt = 0.0
    rt_domain(did)%SFCHEADSUBRT = 0.0
-   rt_domain(did)%INFXSUBRT = 0.0
-   rt_domain(did)%DHRT = 0.0
-   rt_domain(did)%LAKE_INFLORT = 0.0
+   rt_domain(did)%overland%control%infxsubrt = 0.0
+   rt_domain(did)%overland%control%dhrt = 0.0
+   rt_domain(did)%overland%streams_and_lakes%lake_inflort = 0.0
    rt_domain(did)%LAKE_CT = 0
    rt_domain(did)%STRM_CT = 0
    rt_domain(did)%SOLDRAIN = 0.0
