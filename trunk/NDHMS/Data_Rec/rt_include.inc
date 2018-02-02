@@ -43,7 +43,8 @@
   INTEGER, allocatable, DIMENSION(:,:)      :: g_LAK_1K
   ! REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT, QSUBBDRYTRT
   REAL :: QSUBBDRYTRT
-  REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT
+  !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT  
+  REAL,    allocatable, DIMENSION(:,:)      :: ELRT,OVROUGHRT,RETDEPRT
   REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
   INTEGER,    allocatable, DIMENSION(:,:,:) :: SO8RT_D, SO8LD_D
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax

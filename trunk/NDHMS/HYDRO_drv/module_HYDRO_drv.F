@@ -281,7 +281,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
-                      RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
+                      rt_domain(did)%overland%properties%soxrt,rt_domain(did)%overland%properties%soyrt,&
                       RT_DOMAIN(did)%QSTRMVOLRT_ACC,RT_DOMAIN(did)%SFCHEADSUBRT, &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&

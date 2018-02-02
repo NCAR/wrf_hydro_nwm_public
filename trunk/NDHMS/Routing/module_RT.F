@@ -129,10 +129,10 @@ CONTAINS
      allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
      !!
 
-     allocate( rt_domain(did)%SOXRT  	(IXRT,JXRT) )
-     rt_domain(did)%SOXRT  	= 0.0                
-     allocate( rt_domain(did)%SOYRT   	(IXRT,JXRT) )
-     rt_domain(did)%SOYRT   	= 0.0                
+     !allocate( rt_domain(did)%overland%properties%soxrt  	(IXRT,JXRT) )
+     !rt_domain(did)%overland%properties%soxrt  	= 0.0                
+     !allocate( rt_domain(did)%overland%properties%soyrt   	(IXRT,JXRT) )
+     !rt_domain(did)%overland%properties%soyrt   	= 0.0                
      allocate( rt_domain(did)%SO8RT   	(IXRT,JXRT,8) )
      rt_domain(did)%SO8RT   	= -999               
      allocate( rt_domain(did)%SO8RT_D   	(IXRT,JXRT,3) )
@@ -909,14 +909,14 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    Vmax = 0.0
    do j=2,rt_domain(did)%JXRT-1
       do i=2,rt_domain(did)%IXRT-1
-         rt_domain(did)%SOXRT(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
-         rt_domain(did)%SOYRT(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
+         rt_domain(did)%overland%properties%soxrt(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%dist(i,j,3)
+         rt_domain(did)%overland%properties%soyrt(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%dist(i,j,1)
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
          if (nlst_rt(did)%RT_OPTION.eq.2) then
-            if (rt_domain(did)%SOXRT(i,j).gt.rt_domain(did)%SOYRT(i,j)) then
-               Vmax=rt_domain(did)%SOXRT(i,j)
+            if (rt_domain(did)%overland%properties%soxrt(i,j).gt.rt_domain(did)%overland%properties%soyrt(i,j)) then
+               Vmax=rt_domain(did)%overland%properties%soxrt(i,j)
             else
-               Vmax=rt_domain(did)%SOYRT(i,j)
+               Vmax=rt_domain(did)%overland%properties%soyrt(i,j)
             end if
             
             if (Vmax.gt.0.1) then
@@ -1023,24 +1023,24 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
  
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
-   if(right_id .lt. 0) rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)= &
-        rt_domain(did)%SOXRT(rt_domain(did)%IXRT-1,:)
-   if(left_id  .lt. 0) rt_domain(did)%SOXRT(1,:)=rt_domain(did)%SOXRT(2,:)
-   if(up_id    .lt. 0) rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT)= &
-        rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT-1)
-   if(down_id  .lt. 0) rt_domain(did)%SOYRT(:,1)=rt_domain(did)%SOYRT(:,2)
+   if(right_id .lt. 0) rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT,:)= &
+        rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT-1,:)
+   if(left_id  .lt. 0) rt_domain(did)%overland%properties%soxrt(1,:)=rt_domain(did)%overland%properties%soxrt(2,:)
+   if(up_id    .lt. 0) rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT)= &
+        rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT-1)
+   if(down_id  .lt. 0) rt_domain(did)%overland%properties%soyrt(:,1)=rt_domain(did)%overland%properties%soyrt(:,2)
 #else
-   rt_domain(did)%SOXRT(rt_domain(did)%IXRT,:)=rt_domain(did)%SOXRT(rt_domain(did)%IXRT-1,:)
-   rt_domain(did)%SOXRT(1,:)=rt_domain(did)%SOXRT(2,:)
-   rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT)=rt_domain(did)%SOYRT(:,rt_domain(did)%JXRT-1)
-   rt_domain(did)%SOYRT(:,1)=rt_domain(did)%SOYRT(:,2)
+   rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT,:)=rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT-1,:)
+   rt_domain(did)%overland%properties%soxrt(1,:)=rt_domain(did)%overland%properties%soxrt(2,:)
+   rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT)=rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT-1)
+   rt_domain(did)%overland%properties%soyrt(:,1)=rt_domain(did)%overland%properties%soyrt(:,2)
 #endif
    
 #ifdef MPP_LAND
    ! communicate the value to 
    call MPP_LAND_COM_REAL(rt_domain(did)%RETDEPRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-   call MPP_LAND_COM_REAL(rt_domain(did)%SOXRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-   call MPP_LAND_COM_REAL(rt_domain(did)%SOYRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soxrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soyrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    do i = 1, 8
       call MPP_LAND_COM_REAL(rt_domain(did)%SO8RT(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    end do
