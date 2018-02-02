@@ -137,13 +137,13 @@ CONTAINS
      rt_domain(did)%SO8RT   	= -999               
      allocate( rt_domain(did)%SO8RT_D   	(IXRT,JXRT,3) )
      rt_domain(did)%SO8RT_D   	= 0.0                
-     allocate( rt_domain(did)%OVROUGHRT   (IXRT,JXRT) )
+     !allocate( rt_domain(did)%overland%properties%ovroughrt   (IXRT,JXRT) )
      !
 
      !allocate( rt_domain(did)%QSUBBDRYTRT   (IXRT,JXRT) )
      !rt_domain(did)%QSUBBDRYTRT = 0.0
      allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
-     rt_domain(did)%OVROUGHRT   = 0.0                
+     !rt_domain(did)%overland%properties%ovroughrt   = 0.0                
      allocate( rt_domain(did)%RETDEPRT    (IXRT,JXRT) )
      !
 
@@ -1016,7 +1016,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    
    !Apply calibration scaling factors to sfc roughness and retention depth here...
    rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
-   rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
+   rt_domain(did)%overland%properties%ovroughrt = rt_domain(did)%overland%properties%ovroughrt * rt_domain(did)%OVROUGHRTFAC
    
    ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
    rt_domain(did)%RETDEPRT = min(rt_domain(did)%RETDEPRT, 1.0)  

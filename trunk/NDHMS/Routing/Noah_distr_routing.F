@@ -2405,7 +2405,7 @@
              rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
              rt_domain(did)%overland%control%infxsubrt,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
              RT_DOMAIN(did)%SMCRT, &
-             RT_DOMAIN(did)%OVROUGHRT, rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
+             rt_domain(did)%overland%properties%ovroughrt, rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
              RT_DOMAIN(did)%iswater)
@@ -2832,7 +2832,7 @@
              if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
                  call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
                           rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
-                          rt_domain(did)%overland%control%infxsubrt, rt_domain(did)%RETDEPRT,rt_domain(did)%OVROUGHRT, &
+                          rt_domain(did)%overland%control%infxsubrt, rt_domain(did)%RETDEPRT,rt_domain(did)%overland%properties%ovroughrt, &
                           rt_domain(did)%overland%properties%soxrt, rt_domain(did)%overland%properties%soyrt, rt_domain(did)%SFCHEADSUBRT,  &
                           rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&
                           rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%qbdryrt, &
