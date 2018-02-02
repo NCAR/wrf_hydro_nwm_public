@@ -2400,7 +2400,7 @@
              RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
              RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%INFXSRT, &
              rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
-             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,RT_DOMAIN(did)%dist, &
+             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%dist, &
              RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
              rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
              rt_domain(did)%overland%control%infxsubrt,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
@@ -2752,7 +2752,7 @@
                      nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%soxrt,       &
                      rt_domain(did)%overland%properties%soyrt,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
                      rt_domain(did)%overland%control%infxsubrt,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
-                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, RT_DOMAIN(did)%dist, &
+                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%dist, &
                      RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%so8rt_d, rt_domain(did)%overland%properties%so8rt)
              endif
 
@@ -2838,7 +2838,7 @@
                           rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%qbdryrt, &
                           rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%qbdrytrt, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
                           rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
-                          rt_domain(did)%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%overland%properties%so8rt_d , &
+                          rt_domain(did)%overland%properties%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%overland%properties%so8rt_d , &
                           rt_domain(did)%SMCTOT2,rt_domain(did)%suminfxs1,rt_domain(did)%suminfxsrt, &
                           rt_domain(did)%smctot1,rt_domain(did)%dsmctot )
 ! ADCHANGE: If overland routing is called, INFXSUBRT is moved to SFCHEADSUBRT, so 

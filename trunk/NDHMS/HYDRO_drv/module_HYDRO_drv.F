@@ -285,7 +285,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%QSTRMVOLRT_ACC,RT_DOMAIN(did)%SFCHEADSUBRT, &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                      RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
+                      RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%dist,nlst_rt(did)%RTOUT_DOMAIN,&
                       rt_domain(did)%overland%control%qbdryrt, &
                       nlst_rt(did)%io_config_outputs &
                        )
@@ -326,7 +326,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                 gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,              &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
-                RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
+                RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%dist,           &
                 nlst_rt(did)%output_gw)
 
 	  endif
@@ -621,7 +621,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
-                 rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%dist(:,:,9), &
+                 rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%dist(:,:,9), &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
          endif
       endif
@@ -785,7 +785,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
               nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
               RT_DOMAIN(did)%INFXSRT,       RT_DOMAIN(did)%SOLDRAIN,        &
-              RT_DOMAIN(did)%dist(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
+              rt_domain(did)%overland%properties%dist(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
               RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
               RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
               RT_DOMAIN(did)%qout_gwsubbas, RT_DOMAIN(did)%qin_gwsubbas,    &
@@ -809,7 +809,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
              RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
              RT_DOMAIN(did)%qinflowbase,&
              RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
-             RT_DOMAIN(did)%dist,nlst_rt(did)%DT,&
+             rt_domain(did)%overland%properties%dist,nlst_rt(did)%DT,&
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
@@ -957,7 +957,7 @@ else
        RT_DOMAIN(did)%ORIFICEA, &
        RT_DOMAIN(did)%ORIFICEE, RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
        RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
-       RT_DOMAIN(did)%LAKENODE, RT_DOMAIN(did)%dist, &
+       RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%dist, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
        RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option, &
        RT_DOMAIN(did)%RETDEP_CHAN, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, &
@@ -1085,7 +1085,7 @@ endif
 !DJG Subgrid weighting edit...
                 RT_DOMAIN(did)%LSMVOL = RT_DOMAIN(did)%LSMVOL &
                                       + RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
-                                      * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9)
+                                      * rt_domain(did)%overland%properties%dist(IXXRT,JYYRT,9)
 
                 do KRT=1,nlst_rt(did)%NSOIL
 !DJG               SMCAGGRT(KRT)=SMCAGGRT(KRT)+SMCRT(IXXRT,JYYRT,KRT)
@@ -1126,7 +1126,7 @@ endif
                   if (RT_DOMAIN(did)%LSMVOL.gt.0.) then
                     RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
                                           = RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
-                                          * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9) &
+                                          * rt_domain(did)%overland%properties%dist(IXXRT,JYYRT,9) &
 					  / RT_DOMAIN(did)%LSMVOL
                   else
                     RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
