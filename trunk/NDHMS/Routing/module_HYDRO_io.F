@@ -6001,7 +6001,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
-      !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT, "RETDEPRT" )
+      !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retdeprt, "RETDEPRT" )
 
    end if ! neither channel_only nor channelBucket_only
 
@@ -6782,7 +6782,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
          !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
          !No need to have in restart since live calculated.
-         !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT,"RETDEPRT")
+         !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retdeprt,"RETDEPRT")
          call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
       endif
 

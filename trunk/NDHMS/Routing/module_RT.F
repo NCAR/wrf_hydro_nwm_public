@@ -144,7 +144,7 @@ CONTAINS
      !rt_domain(did)%QSUBBDRYTRT = 0.0
      allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
      !rt_domain(did)%overland%properties%ovroughrt   = 0.0                
-     allocate( rt_domain(did)%RETDEPRT    (IXRT,JXRT) )
+     !allocate( rt_domain(did)%overland%properties%retdeprt    (IXRT,JXRT) )
      !
 
      allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
@@ -897,7 +897,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    !DJG    will later make this a function of SOLTYP and VEGTYP
    !            OVROUGHRT(i,j) = 0.01
    
-   rt_domain(did)%RETDEPRT = 0.001   ! units (mm)
+   !rt_domain(did)%overland%properties%retdeprt = 0.001   ! units (mm) move to overland%properties 
    rt_domain(did)%RETDEP_CHAN = 0.001
 
 
@@ -920,11 +920,11 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
             end if
             
             if (Vmax.gt.0.1) then
-               rt_domain(did)%RETDEPRT(i,j)=0.
+               rt_domain(did)%overland%properties%retdeprt(i,j)=0.
             else
                rt_domain(did)%RETDEPFRAC=Vmax/0.1
-               rt_domain(did)%RETDEPRT(i,j)=rt_domain(did)%RETDEPRT(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
-               if (rt_domain(did)%RETDEPRT(i,j).lt.0.) rt_domain(did)%RETDEPRT(i,j)=0.
+               rt_domain(did)%overland%properties%retdeprt(i,j)=rt_domain(did)%overland%properties%retdeprt(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+               if (rt_domain(did)%overland%properties%retdeprt(i,j).lt.0.) rt_domain(did)%overland%properties%retdeprt(i,j)=0.
             end if
          end if
          
@@ -1001,11 +1001,11 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
          if (nlst_rt(did)%RT_OPTION.eq.1) then
             if (Vmax.gt.0.75) then
-               rt_domain(did)%RETDEPRT(i,j)=0.
+               rt_domain(did)%overland%properties%retdeprt(i,j)=0.
             else
                rt_domain(did)%RETDEPFRAC=Vmax/0.75
-               rt_domain(did)%RETDEPRT(i,j)=rt_domain(did)%RETDEPRT(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
-               if (rt_domain(did)%RETDEPRT(i,j).lt.0.) rt_domain(did)%RETDEPRT(i,j)=0.
+               rt_domain(did)%overland%properties%retdeprt(i,j)=rt_domain(did)%overland%properties%retdeprt(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+               if (rt_domain(did)%overland%properties%retdeprt(i,j).lt.0.) rt_domain(did)%overland%properties%retdeprt(i,j)=0.
             end if
          end if
          
@@ -1015,11 +1015,11 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    
    
    !Apply calibration scaling factors to sfc roughness and retention depth here...
-   rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
+   rt_domain(did)%overland%properties%retdeprt = rt_domain(did)%overland%properties%retdeprt * rt_domain(did)%RETDEPRTFAC
    rt_domain(did)%overland%properties%ovroughrt = rt_domain(did)%overland%properties%ovroughrt * rt_domain(did)%OVROUGHRTFAC
    
    ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
-   rt_domain(did)%RETDEPRT = min(rt_domain(did)%RETDEPRT, 1.0)  
+   rt_domain(did)%overland%properties%retdeprt = min(rt_domain(did)%overland%properties%retdeprt, 1.0)  
  
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
@@ -1038,7 +1038,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    
 #ifdef MPP_LAND
    ! communicate the value to 
-   call MPP_LAND_COM_REAL(rt_domain(did)%RETDEPRT,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%retdeprt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soxrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soyrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    do i = 1, 8
