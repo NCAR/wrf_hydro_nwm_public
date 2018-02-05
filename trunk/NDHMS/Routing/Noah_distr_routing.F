@@ -2840,7 +2840,7 @@
                           rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
                           rt_domain(did)%overland%properties%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%overland%properties%so8rt_d , &
                           rt_domain(did)%SMCTOT2,rt_domain(did)%suminfxs1,rt_domain(did)%suminfxsrt, &
-                          rt_domain(did)%smctot1,rt_domain(did)%dsmctot )
+                          rt_domain(did)%smctot1,rt_domain(did)%overland%mass_balance%dsmctot )
 ! ADCHANGE: If overland routing is called, INFXSUBRT is moved to SFCHEADSUBRT, so 
 !           zeroing out just in case
              rt_domain(did)%overland%control%infxsubrt = 0.0
