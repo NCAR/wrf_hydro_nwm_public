@@ -2863,6 +2863,7 @@
             rt_option, &
             ixrt, &       ! routing grid x size
             jxrt, &      ! routing grid y size
+            infxsubrt, &
             q_sfcflx_x, &! accumulated x flux
             q_sfcflx_y  &! accumulated y flux
        )
@@ -2875,6 +2876,7 @@
        type (overland_struct) :: ovrt_data
        REAL, INTENT(IN) :: DT, DTRT_TER
        integer, INTENT(IN) :: ixrt, jxrt, rt_option
+       REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT,
        real, intent(inout) :: q_sfcflx_x,q_sfcflx_y
 
        ! REMOVED VARIABLES
@@ -2967,28 +2969,28 @@
         IXRT,                 &
         JXRT,                 &
         ovrt_data%control%INFXSUBRT,            &
-        ovrt_data%control%SFCHEADSUBRT,         &
+        SFCHEADSUBRT,         &
         ovrt_data%control%DHRT,                 &
         ovrt_data%streams_and_lakes%CH_NETRT,             &
         ovrt_data%properties%RETDEPRT,             &
         ovrt_data%properties%OVROUGHRT,            &
-        ovrt_data%stream_and_lakes%QSTRMVOLRT,           &
+        ovrt_data%streams_and_lakes%QSTRMVOLRT,           &
         ovrt_data%control%QBDRYRT,              &
         ovrt_data%stream_and_lakes%QSTRMVOLTRT,          &
         ovrt_data%control%QBDRYTRT,             &
         ovrt_data%properties%SOXRT,                &
         ovrt_data%properties%SOYRT,                &
         ovrt_data%properties%dist,                 &
-        ovrt_data%stream_and_lakes%LAKE_MSKRT,           &
-        ovrt_data%stream_and_lakes%LAKE_INFLORT,         &
-        ovrt_data%stream_and_lakes%LAKE_INFLOTRT,        &
+        ovrt_data%streams_and_lakes%LAKE_MSKRT,           &
+        ovrt_data%streams_and_lakes%LAKE_INFLORT,         &
+        ovrt_data%streams_and_lakes%LAKE_INFLOTRT,        &
         ovrt_data%properties%SO8RT,                &
         ovrt_data%properties%SO8RT_D,              &
         rt_option,            &
         q_sfcflx_x,           &
         q_sfcflx_y)
     else
-      ovrt_data%control%SFCHEADSUBRT = ovrt_data%control%INFXSUBRT
+      SFCHEADSUBRT = ovrt_data%control%INFXSUBRT
 #ifdef HYDRO_D
       print *, "No water to route overland..."
 #endif
@@ -3007,7 +3009,7 @@
         qbdry2=0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt=suminfxsrt + (ovrt_data%control%SFCHEADSUBRT(I,J)/float(IXRT*JXRT))
+            suminfxsrt=suminfxsrt + (SFCHEADSUBRT(I,J)/float(IXRT*JXRT))
             chan_in2=chan_in2 + (ovrt_data%streams_and_lakesQSTRMVOLRT(I,J)/float(IXRT*JXRT))
             lake_in2=lake_in2 + (ovrt_data%streams_and_lakesLAKE_INFLORT(I,J)/float(IXRT*JXRT))
             qbdry2=qbdry2 + (ovrt_data%control%QBDRYRT(I,J)/float(IXRT*JXRT))
