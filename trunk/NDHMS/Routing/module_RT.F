@@ -1385,7 +1385,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%DESNO=0.
    rt_domain(did)%DSFCRNFF=0.
    rt_domain(did)%DQBDRY=0.
-   rt_domain(did)%SUMINFXS1=0.
+   rt_domain(did)%overland%mass_balance%suminfxs1=0.
    
 end if ! end of neither channel_only nor channelBucket_only
 

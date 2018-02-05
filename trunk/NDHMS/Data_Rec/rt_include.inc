@@ -184,8 +184,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ONLINE MASS BALANCE CALCULATION
   REAL(KIND=8)    :: DCMC,DSWE,DACRAIN,DSFCEVP,DCANEVP,DEDIR,DETT,DEPND,DESNO,DSFCRNFF
-  REAL(KIND=8)    :: RESID,SUMEVP,DUG1RNFF,DUG2RNFF,SMCTOT1,SMCTOT2,DETP ! DSMCTOT moved to overland mass balance
-  REAL(KIND=8)    :: suminfxsrt,suminfxs1,suminfxs2,dprcp_ts
+  REAL(KIND=8)    :: RESID,SUMEVP,DUG1RNFF,DUG2RNFF,DETP ! DSMCTOT, SMCTOT1, SMCTOT2 moved to overland mass balance
+  REAL(KIND=8)    :: suminfxs2,dprcp_ts ! suminfxsrt, suminfxs1 moved to overland mass balance
   REAL(KIND=8)    :: CHAN_IN1,CHAN_IN2,LAKE_IN1,LAKE_IN2,zzz, CHAN_STOR,CHAN_OUT
   REAL(KIND=8)    :: CHAN_INV,LAKE_INV  !-channel and lake inflow in volume
   REAL(KIND=8)    :: DQBDRY

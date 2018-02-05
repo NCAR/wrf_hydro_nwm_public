@@ -18,7 +18,7 @@ module overland_mass_balance
       !real(kind=8) :: post_soil_moisture_content       ! Post time step soil moisture content accumulator (<units>)
       real(kind=8) :: suminfxsrt  ! NEED VARIABLE INFO
       !real(kind=8) :: pre_infiltration_excess          ! Pre time step infiltration excess accumulator    (<units>)
-      real(kind=8) :: suminfxsr1  ! NEED VARIABLE INFO
+      real(kind=8) :: suminfxs1  ! NEED VARIABLE INFO
       !real(kind=8) :: post_infiltration_excess         ! Post time step infiltration excess accumulator   (<units>)
       contains
         procedure :: init => overland_mass_balance_init
@@ -34,7 +34,7 @@ subroutine overland_mass_balance_init(this)
     this%smctot1 = 0.0
     this%smctot2 = 0.0
     this%suminfxsrt = 0.0
-    this%suminfxsr1 = 0.0
+    this%suminfxs1 = 0.0
 end subroutine overland_mass_balance_init
 
 ! none of the mass balance variables are dynamicly allocated if such are added
