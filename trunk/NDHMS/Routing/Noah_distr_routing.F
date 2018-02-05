@@ -2849,31 +2849,47 @@
 
 
 
-       subroutine OverlandRouting (DT, DTRT_TER, rt_option, ixrt, jxrt,LAKE_MSKRT, &
-                  INFXSUBRT, RETDEPRT,OVROUGHRT,SOXRT, SOYRT, SFCHEADSUBRT,DHRT, &
-                  CH_NETRT, QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
-                  QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y, &
-                  dist, SO8RT, SO8RT_D, &
-                  SMCTOT2,suminfxs1,suminfxsrt,smctot1,dsmctot )
+       !subroutine OverlandRouting (DT, DTRT_TER, rt_option, ixrt, jxrt,LAKE_MSKRT, &
+       !           INFXSUBRT, RETDEPRT,OVROUGHRT,SOXRT, SOYRT, SFCHEADSUBRT,DHRT, &
+       !           CH_NETRT, QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
+       !           QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y, &
+       !           dist, SO8RT, SO8RT_D, &
+       !           SMCTOT2,suminfxs1,suminfxsrt,smctot1,dsmctot )
+
+       subroutine OverlandRouting( &
+            ovrt_data, & ! overland data structure
+            DT, &
+            DTRT_TER, &
+            rt_option, &
+            ixrt, &       ! routing grid x size
+            jxrt, &      ! routing grid y size
+            q_sfcflx_x, &! accumulated x flux
+            q_sfcflx_y  &! accumulated y flux
+       )
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_max_int1,  sum_real1, my_id, io_id, numprocs
+        use module_overland
 #endif
        implicit none
 
+       type (overland_struct) :: ovrt_data
        REAL, INTENT(IN) :: DT, DTRT_TER
        integer, INTENT(IN) :: ixrt, jxrt, rt_option
-       INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
+       real, intent(inout) :: q_sfcflx_x,q_sfcflx_y
 
-       REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: INFXSUBRT,  &
-                 RETDEPRT,OVROUGHRT,SOXRT, SOYRT
-       REAL, INTENT(OUT), DIMENSION(IXRT,JXRT) :: SFCHEADSUBRT,DHRT
-       INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
-       REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
-                QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y
+       ! REMOVED VARIABLES
+       !INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
 
-       REAL, INTENT(IN), DIMENSION(IXRT,JXRT,9):: dist
-       REAL, INTENT(IN), DIMENSION(IXRT,JXRT,8)  :: SO8RT
-       INTEGER SO8RT_D(IXRT,JXRT,3)
+       !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: INFXSUBRT,  &
+       !          RETDEPRT,OVROUGHRT,SOXRT, SOYRT
+       !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT) :: SFCHEADSUBRT,DHRT
+       !INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
+       !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QSTRMVOLRT,LAKE_INFLORT,QBDRYRT, &
+       !         QSTRMVOLTRT,QBDRYTRT, LAKE_INFLOTRT, q_sfcflx_x,q_sfcflx_y
+
+       !REAL, INTENT(IN), DIMENSION(IXRT,JXRT,9):: dist
+       !REAL, INTENT(IN), DIMENSION(IXRT,JXRT,8)  :: SO8RT
+       !INTEGER SO8RT_D(IXRT,JXRT,3)
 
        integer  :: i,j
       
@@ -2901,10 +2917,10 @@
         qbdry1=0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxs1=suminfxs1+INFXSUBRT(I,J)/float(IXRT*JXRT)
-            chan_in1=chan_in1+QSTRMVOLRT(I,J)/float(IXRT*JXRT)
-            lake_in1=lake_in1+LAKE_INFLORT(I,J)/float(IXRT*JXRT)
-            qbdry1=qbdry1+QBDRYRT(I,J)/float(IXRT*JXRT)
+            suminfxs1 = suminfxs1 + ( ovrt_data%control%infxsubrt(I,J)/float(IXRT*JXRT) )
+            chan_in1 = chan_in1 + ( ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT) )
+            lake_in1 = lake_in1 + ( ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT) )
+            qbdry1 = qbdry1 + ( ovrt_data%control%QBDRYRT(I,J)/float(IXRT*JXRT) )
          end do
         end do
 
@@ -2928,12 +2944,12 @@
         
         do j=1,jxrt
           do i=1,ixrt
-            if(INFXSUBRT(i,j).gt.RETDEPRT(i,j)) then
+            if( ovrt_data%control%INFXSUBRT(i,j) .gt. ovrt_data%control%RETDEPRT(i,j) ) then
               sfcrt_flag = 1
               exit
             end if
           end do
-          if(sfcrt_flag.eq.1) exit
+          if(sfcrt_flag .eq. 1) exit
         end do   
 
 #ifdef MPP_LAND
@@ -2945,13 +2961,34 @@
 #ifdef HYDRO_D
       write(6,*) "calling OV_RTNG "
 #endif
-      CALL OV_RTNG(DT,DTRT_TER,IXRT,JXRT,INFXSUBRT,SFCHEADSUBRT,DHRT,      &
-        CH_NETRT,RETDEPRT,OVROUGHRT,QSTRMVOLRT,QBDRYRT,              &
-        QSTRMVOLTRT,QBDRYTRT,SOXRT,SOYRT,dist,                       &
-        LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,SO8RT,SO8RT_D,rt_option,&
-        q_sfcflx_x,q_sfcflx_y) 
+      CALL OV_RTNG(           &
+        DT,                   &
+        DTRT_TER,             &
+        IXRT,                 &
+        JXRT,                 &
+        ovrt_data%control%INFXSUBRT,            &
+        ovrt_data%control%SFCHEADSUBRT,         &
+        ovrt_data%control%DHRT,                 &
+        ovrt_data%stream_and_lakes%CH_NETRT,             &
+        ovrt_data%properties%RETDEPRT,             &
+        ovrt_data%properties%OVROUGHRT,            &
+        ovrt_data%stream_and_lakes%QSTRMVOLRT,           &
+        ovrt_data%control%QBDRYRT,              &
+        ovrt_data%stream_and_lakes%QSTRMVOLTRT,          &
+        ovrt_data%control%QBDRYTRT,             &
+        ovrt_data%properties%SOXRT,                &
+        ovrt_data%properties%SOYRT,                &
+        ovrt_data%properties%dist,                 &
+        ovrt_data%stream_and_lakes%LAKE_MSKRT,           &
+        ovrt_data%stream_and_lakes%LAKE_INFLORT,         &
+        ovrt_data%stream_and_lakes%LAKE_INFLOTRT,        &
+        ovrt_data%properties%SO8RT,                &
+        ovrt_data%properties%SO8RT_D,              &
+        rt_option,            &
+        q_sfcflx_x,           &
+        q_sfcflx_y)
     else
-      SFCHEADSUBRT = INFXSUBRT
+      ovrt_data%control%SFCHEADSUBRT = ovrt_data%control%INFXSUBRT
 #ifdef HYDRO_D
       print *, "No water to route overland..."
 #endif
@@ -2970,10 +3007,10 @@
         qbdry2=0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt=suminfxsrt+SFCHEADSUBRT(I,J)/float(IXRT*JXRT)
-            chan_in2=chan_in2+QSTRMVOLRT(I,J)/float(IXRT*JXRT)
-            lake_in2=lake_in2+LAKE_INFLORT(I,J)/float(IXRT*JXRT)
-            qbdry2=qbdry2+QBDRYRT(I,J)/float(IXRT*JXRT)
+            suminfxsrt=suminfxsrt + (ovrt_data%control%SFCHEADSUBRT(I,J)/float(IXRT*JXRT))
+            chan_in2=chan_in2 + (ovrt_data%streams_and_lakesQSTRMVOLRT(I,J)/float(IXRT*JXRT))
+            lake_in2=lake_in2 + (ovrt_data%streams_and_lakesLAKE_INFLORT(I,J)/float(IXRT*JXRT))
+            qbdry2=qbdry2 + (ovrt_data%control%QBDRYRT(I,J)/float(IXRT*JXRT))
          end do
         end do
 #ifdef MPP_LAND
