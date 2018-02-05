@@ -2868,7 +2868,7 @@
        )
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_max_int1,  sum_real1, my_id, io_id, numprocs
-        use module_overland
+        use overland_data
 #endif
        implicit none
 
@@ -2944,7 +2944,7 @@
         
         do j=1,jxrt
           do i=1,ixrt
-            if( ovrt_data%control%INFXSUBRT(i,j) .gt. ovrt_data%control%RETDEPRT(i,j) ) then
+            if( ovrt_data%control%INFXSUBRT(i,j) .gt. ovrt_data%properties%RETDEPRT(i,j) ) then
               sfcrt_flag = 1
               exit
             end if
@@ -2969,7 +2969,7 @@
         ovrt_data%control%INFXSUBRT,            &
         ovrt_data%control%SFCHEADSUBRT,         &
         ovrt_data%control%DHRT,                 &
-        ovrt_data%stream_and_lakes%CH_NETRT,             &
+        ovrt_data%streams_and_lakes%CH_NETRT,             &
         ovrt_data%properties%RETDEPRT,             &
         ovrt_data%properties%OVROUGHRT,            &
         ovrt_data%stream_and_lakes%QSTRMVOLRT,           &
