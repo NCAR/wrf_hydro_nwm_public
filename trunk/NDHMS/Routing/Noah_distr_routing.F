@@ -2830,20 +2830,31 @@
              implicit none
              integer :: did
              if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
-                 call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
-                          rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
-                          rt_domain(did)%overland%control%infxsubrt, rt_domain(did)%overland%properties%retdeprt,rt_domain(did)%overland%properties%ovroughrt, &
-                          rt_domain(did)%overland%properties%soxrt, rt_domain(did)%overland%properties%soyrt, rt_domain(did)%SFCHEADSUBRT,  &
-                          rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&
-                          rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%qbdryrt, &
-                          rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%qbdrytrt, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
-                          rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
-                          rt_domain(did)%overland%properties%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%overland%properties%so8rt_d , &
-                          rt_domain(did)%overland%mass_balance%smctot2,rt_domain(did)%overland%mass_balance%suminfxs1,rt_domain(did)%overland%mass_balance%suminfxsrt, &
-                          rt_domain(did)%overland%mass_balance%smctot1,rt_domain(did)%overland%mass_balance%dsmctot )
+                 !call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
+                 !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
+                 !         rt_domain(did)%overland%control%infxsubrt, rt_domain(did)%overland%properties%retdeprt,rt_domain(did)%overland%properties%ovroughrt, &
+                 !         rt_domain(did)%overland%properties%soxrt, rt_domain(did)%overland%properties%soyrt, rt_domain(did)%SFCHEADSUBRT,  &
+                 !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&
+                 !         rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%qbdryrt, &
+                 !         rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%qbdrytrt, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
+                 !         rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
+                 !         rt_domain(did)%overland%properties%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%overland%properties%so8rt_d , &
+                 !         rt_domain(did)%overland%mass_balance%smctot2,rt_domain(did)%overland%mass_balance%suminfxs1,rt_domain(did)%overland%mass_balance%suminfxsrt, &
+                 !         rt_domain(did)%overland%mass_balance%smctot1,rt_domain(did)%overland%mass_balance%dsmctot )
+                 call OverlandRouting( &
+                          rt_domain(did)%overland, &
+                          nlst_rt(did)%DT, &
+                          nlst_rt(did)%DTRT_TER, &
+                          nlst_rt(did)%rt_option, &
+                          rt_domain(did)%ixrt, &
+                          rt_domain(did)%jxrt, &
+                          rt_domain(did)%SFCHEADSUBRT, &
+                          rt_domain(did)%q_sfcflx_x, &
+                          rt_domain(did)%q_sfcflx_y &
+                      )
 ! ADCHANGE: If overland routing is called, INFXSUBRT is moved to SFCHEADSUBRT, so 
 !           zeroing out just in case
-             rt_domain(did)%overland%control%infxsubrt = 0.0
+                rt_domain(did)%overland%control%infxsubrt = 0.0
              endif
        end subroutine OverlandRouting_drv
 
@@ -2863,7 +2874,7 @@
             rt_option, &
             ixrt, &       ! routing grid x size
             jxrt, &      ! routing grid y size
-            infxsubrt, &
+            SFCHEADSUBRT, &
             q_sfcflx_x, &! accumulated x flux
             q_sfcflx_y  &! accumulated y flux
        )
@@ -2876,7 +2887,7 @@
        type (overland_struct) :: ovrt_data
        REAL, INTENT(IN) :: DT, DTRT_TER
        integer, INTENT(IN) :: ixrt, jxrt, rt_option
-       REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT,
+       REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT
        real, intent(inout) :: q_sfcflx_x,q_sfcflx_y
 
        ! REMOVED VARIABLES
@@ -2976,7 +2987,7 @@
         ovrt_data%properties%OVROUGHRT,            &
         ovrt_data%streams_and_lakes%QSTRMVOLRT,           &
         ovrt_data%control%QBDRYRT,              &
-        ovrt_data%stream_and_lakes%QSTRMVOLTRT,          &
+        ovrt_data%streams_and_lakes%QSTRMVOLTRT,          &
         ovrt_data%control%QBDRYTRT,             &
         ovrt_data%properties%SOXRT,                &
         ovrt_data%properties%SOYRT,                &
@@ -3010,8 +3021,8 @@
         do i=1,IXRT
          do j=1,JXRT
             suminfxsrt=suminfxsrt + (SFCHEADSUBRT(I,J)/float(IXRT*JXRT))
-            chan_in2=chan_in2 + (ovrt_data%streams_and_lakesQSTRMVOLRT(I,J)/float(IXRT*JXRT))
-            lake_in2=lake_in2 + (ovrt_data%streams_and_lakesLAKE_INFLORT(I,J)/float(IXRT*JXRT))
+            chan_in2=chan_in2 + (ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT))
+            lake_in2=lake_in2 + (ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT))
             qbdry2=qbdry2 + (ovrt_data%control%QBDRYRT(I,J)/float(IXRT*JXRT))
          end do
         end do
