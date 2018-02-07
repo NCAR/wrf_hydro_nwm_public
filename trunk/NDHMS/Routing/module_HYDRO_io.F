@@ -5896,8 +5896,9 @@ end subroutine mpp_output_chrt
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
 
-         if(nlst_rt(did)%channel_option .eq. 3) &
-              iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
+!yw based on Laura request, hlink will do the restart for reach method.
+!         if(nlst_rt(did)%channel_option .eq. 3) &
+         iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
          iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
          iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
          if(nlst_rt(did)%channel_option .eq. 3) &
@@ -5956,7 +5957,7 @@ end subroutine mpp_output_chrt
 	      
    !         put global attribute
    iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
-   iret = nf_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,nlst_rt(did)%olddate(1:19))
+  O_RST.2010-10-01_06:00_DOMAIN1
    iret = nf_put_att_text(ncid,NF_GLOBAL,"Since_Date",19,nlst_rt(did)%sincedate(1:19))
    iret = nf_put_att_real(ncid,NF_GLOBAL,"DTCT",NF_REAL, 1,nlst_rt(did)%DTCT)
    iret = nf_put_att_int(ncid, NF_GLOBAL, "channel_only", NF_INT, 1, & 
@@ -6014,13 +6015,13 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
               ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
 #endif
               )
-! JLM: currently hlink is not a prognostic variable for channel_options 1 & 2         
-!      else
-!         call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
-!#ifdef MPP_LAND
-!              ,rt_domain(did)%gnlinksl&
-!#endif
-!              )
+      else
+         call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
+#ifdef MPP_LAND
+              ,rt_domain(did)%gnlinksl&
+#endif
+              )
+        call checkReach(99,rt_domain(did)%HLINK)
       endif
 
       if(nlst_rt(did)%channel_option .eq. 3) then
@@ -6796,10 +6797,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
       else
-         if( nlst_rt(did)%channel_only       .eq. 0 .and. &
-             nlst_rt(did)%channelBucket_only .eq. 0         ) &
-              call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL)
-         call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL)
+         call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL,fatalErr=.FALSE.)
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKSL)
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKSL)
          !call read_rst_crt_reach_nc(ncid,rt_domain(did)%CVOL,"cvol",rt_domain(did)%GNLINKSL)
@@ -8775,7 +8773,7 @@ end subroutine MPP_READ_CHROUTING_new
            iret = nf_inq_varid(ncid,"fromNode", varid)
            iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), fromNode)
            iret = nf_inq_varid(ncid,"toNode", varid)
-           iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), toNode)
+           iret = nf_jut_vara_int(ncid, varid, (/1/), (/nodes/), toNode)
            iret = nf_inq_varid(ncid,"chlat", varid)
            iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlat)
            iret = nf_inq_varid(ncid,"chlon", varid)
