@@ -17,6 +17,9 @@ module overland_control
       real, allocatable, dimension(:,:) :: sfcheadrt             ! surface water head
       !real, allocatable, dimension(:,:) :: surface_water_head   ! depth of water on the surface, passed to the land surface model (mm)
                                                                  ! on the land surface grid
+
+      real, allocatable, dimension(:,:) :: sfcheadsubrt          ! surface head on the routing grid
+
       ! inputs
       real, allocatable, dimension(:,:) :: infxsubrt            ! infiltration excess subgrid weighted from INFXSRT
       !real, allocatable, dimension(:,:) :: infiltration_excess ! infiltration excess from the land surface model (mm)
@@ -57,6 +60,14 @@ subroutine overland_control_init(this,ix,jx)
     if ( .not. allocated(this%sfcheadrt) ) then
         allocate( this%sfcheadrt(ix,jx) )
         this%sfcheadrt = 0.0
+    else
+        allocation_error = .true.
+    end if
+
+    ! allocate surface head
+    if ( .not. allocated(this%sfcheadsubrt) ) then
+        allocate( this%sfcheadsubrt(ix,jx) )
+        this%sfcheadsubrt = 0.0
     else
         allocation_error = .true.
     end if
@@ -102,6 +113,13 @@ subroutine overland_control_destroy(this)
     ! deallocate surface head
     if ( allocated(this%sfcheadrt) ) then
         deallocate( this%sfcheadrt )
+    else
+        allocation_error = .true.
+    end if
+
+    ! deallocate surface head
+    if ( allocated(this%sfcheadsubrt) ) then
+        deallocate( this%sfcheadsubrt )
     else
         allocation_error = .true.
     end if
