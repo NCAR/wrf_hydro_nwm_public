@@ -150,8 +150,8 @@ CONTAINS
      allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
      !
 
-     allocate( rt_domain(did)%SFCHEADSUBRT(IXRT,JXRT) )
-     rt_domain(did)%SFCHEADSUBRT= 0.0                
+     !allocate( rt_domain(did)%overland%control%sfcheadsubrt(IXRT,JXRT) )
+     !rt_domain(did)%overland%control%sfcheadsubrt= 0.0                
      !allocate( rt_domain(did)%overland%control%infxsubrt   (IXRT,JXRT) )
      !rt_domain(did)%overland%control%infxsubrt   = 0.0                
      allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
@@ -1363,7 +1363,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%QSUBBDRYRT = 0.0
    rt_domain(did)%overland%streams_and_lakes%qstrmvolrt = 0.0
    rt_domain(did)%overland%control%qbdryrt = 0.0
-   rt_domain(did)%SFCHEADSUBRT = 0.0
+   rt_domain(did)%overland%control%sfcheadsubrt = 0.0
    rt_domain(did)%overland%control%infxsubrt = 0.0
    rt_domain(did)%overland%control%dhrt = 0.0
    rt_domain(did)%overland%streams_and_lakes%lake_inflort = 0.0

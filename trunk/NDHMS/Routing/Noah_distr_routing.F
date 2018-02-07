@@ -2833,7 +2833,7 @@
                  !call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
                  !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
                  !         rt_domain(did)%overland%control%infxsubrt, rt_domain(did)%overland%properties%retdeprt,rt_domain(did)%overland%properties%ovroughrt, &
-                 !         rt_domain(did)%overland%properties%soxrt, rt_domain(did)%overland%properties%soyrt, rt_domain(did)%SFCHEADSUBRT,  &
+                 !         rt_domain(did)%overland%properties%soxrt, rt_domain(did)%overland%properties%soyrt, rt_domain(did)%overland%control%sfcheadsubrt,  &
                  !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&
                  !         rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%qbdryrt, &
                  !         rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%qbdrytrt, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
@@ -2848,7 +2848,7 @@
                           nlst_rt(did)%rt_option, &
                           rt_domain(did)%ixrt, &
                           rt_domain(did)%jxrt, &
-                          rt_domain(did)%SFCHEADSUBRT, &
+                          rt_domain(did)%overland%control%sfcheadsubrt, &
                           rt_domain(did)%q_sfcflx_x, &
                           rt_domain(did)%q_sfcflx_y &
                       )

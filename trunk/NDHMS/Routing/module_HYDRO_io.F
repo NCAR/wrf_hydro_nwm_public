@@ -5997,7 +5997,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
     
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%qbdryrt, "QBDRYRT" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT, "sfcheadsubrt" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%sfcheadsubrt, "sfcheadsubrt" )
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
@@ -6220,7 +6220,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
                     write(iunit,ERR=101) rt_domain(did)%overland%control%qbdryrt
                     write(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                    write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                    write(iunit,ERR=101) rt_domain(did)%overland%control%sfcheadsubrt
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
                     write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                     !AD_CHANGE: Not needed in RESTART
@@ -6313,7 +6313,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
                    read(iunit,ERR=101) rt_domain(did)%overland%control%qbdryrt
                    read(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                   read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                   read(iunit,ERR=101) rt_domain(did)%overland%control%sfcheadsubrt
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
                    read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                    !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
@@ -6777,7 +6777,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
 
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT,"sfcheadsubrt")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%sfcheadsubrt,"sfcheadsubrt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%qbdryrt,"QBDRYRT")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
          !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
