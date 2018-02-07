@@ -5957,7 +5957,7 @@ end subroutine mpp_output_chrt
 	      
    !         put global attribute
    iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
-  O_RST.2010-10-01_06:00_DOMAIN1
+   iret = nf_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,nlst_rt(did)%olddate(1:19))
    iret = nf_put_att_text(ncid,NF_GLOBAL,"Since_Date",19,nlst_rt(did)%sincedate(1:19))
    iret = nf_put_att_real(ncid,NF_GLOBAL,"DTCT",NF_REAL, 1,nlst_rt(did)%DTCT)
    iret = nf_put_att_int(ncid, NF_GLOBAL, "channel_only", NF_INT, 1, & 
@@ -8773,7 +8773,7 @@ end subroutine MPP_READ_CHROUTING_new
            iret = nf_inq_varid(ncid,"fromNode", varid)
            iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), fromNode)
            iret = nf_inq_varid(ncid,"toNode", varid)
-           iret = nf_jut_vara_int(ncid, varid, (/1/), (/nodes/), toNode)
+           iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), toNode)
            iret = nf_inq_varid(ncid,"chlat", varid)
            iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlat)
            iret = nf_inq_varid(ncid,"chlon", varid)
@@ -8846,8 +8846,8 @@ call get_1d_netcdf_real(ncid, 'MusX',     MUSX,      'read_route_link_netcdf', .
 call get_1d_netcdf_real(ncid, 'Length',   CHANLEN,   'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'n',        MannN,     'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .TRUE.)
-!! impose a minimum as this sometimes fails in the file.
-where(So .lt. 0.00001) So=0.00001
+!! impose a minimum as this sometimes fails in the file. LKR changed to 10^-4 on 2/2018.
+where(So .lt. 0.0001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'TopWdth',  Tw,        'read_route_link_netcdf', .TRUE.)
