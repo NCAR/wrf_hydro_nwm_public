@@ -2848,7 +2848,6 @@
                           nlst_rt(did)%rt_option, &
                           rt_domain(did)%ixrt, &
                           rt_domain(did)%jxrt, &
-                          rt_domain(did)%overland%control%sfcheadsubrt, &
                           rt_domain(did)%q_sfcflx_x, &
                           rt_domain(did)%q_sfcflx_y &
                       )
@@ -2874,7 +2873,6 @@
             rt_option, &
             ixrt, &       ! routing grid x size
             jxrt, &      ! routing grid y size
-            SFCHEADSUBRT, &
             q_sfcflx_x, &! accumulated x flux
             q_sfcflx_y  &! accumulated y flux
        )
@@ -2887,7 +2885,7 @@
        type (overland_struct) :: ovrt_data
        REAL, INTENT(IN) :: DT, DTRT_TER
        integer, INTENT(IN) :: ixrt, jxrt, rt_option
-       REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT
+       !REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT  ! moved into overland_data%control
        real, intent(inout) :: q_sfcflx_x,q_sfcflx_y
 
        ! REMOVED VARIABLES
@@ -2980,7 +2978,7 @@
         IXRT,                 &
         JXRT,                 &
         ovrt_data%control%INFXSUBRT,            &
-        SFCHEADSUBRT,         &
+        ovrt_data%control%SFCHEADSUBRT,         &
         ovrt_data%control%DHRT,                 &
         ovrt_data%streams_and_lakes%CH_NETRT,             &
         ovrt_data%properties%RETDEPRT,             &
@@ -3001,7 +2999,7 @@
         q_sfcflx_x,           &
         q_sfcflx_y)
     else
-      SFCHEADSUBRT = ovrt_data%control%INFXSUBRT
+      ovrt_data%control%SFCHEADSUBRT = ovrt_data%control%INFXSUBRT
 #ifdef HYDRO_D
       print *, "No water to route overland..."
 #endif
@@ -3020,7 +3018,7 @@
         qbdry2=0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt=suminfxsrt + (SFCHEADSUBRT(I,J)/float(IXRT*JXRT))
+            suminfxsrt=suminfxsrt + (ovrt_data%control%SFCHEADSUBRT(I,J)/float(IXRT*JXRT))
             chan_in2=chan_in2 + (ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT))
             lake_in2=lake_in2 + (ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT))
             qbdry2=qbdry2 + (ovrt_data%control%QBDRYRT(I,J)/float(IXRT*JXRT))
