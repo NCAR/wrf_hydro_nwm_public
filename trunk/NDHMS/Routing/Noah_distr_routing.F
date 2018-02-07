@@ -772,11 +772,22 @@
 !DJG   SUBROUTINE OV_RTNG
 !DJG ------------------------------------------------
 
-	SUBROUTINE OV_RTNG(DT,DTRT_TER,IXRT,JXRT,INFXSUBRT,      &
-          SFCHEADSUBRT,DHRT,CH_NETRT,RETDEPRT,OVROUGHRT,      &
-          QSTRMVOLRT,QBDRYRT,QSTRMVOLTRT,QBDRYTRT,SOXRT,     &
-          SOYRT,dist,LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,  &
-          SO8RT,SO8RT_D,rt_option,q_sfcflx_x,q_sfcflx_y)
+	!SUBROUTINE OV_RTNG(DT,DTRT_TER,IXRT,JXRT,INFXSUBRT,      &
+        !  SFCHEADSUBRT,DHRT,CH_NETRT,RETDEPRT,OVROUGHRT,      &
+        !  QSTRMVOLRT,QBDRYRT,QSTRMVOLTRT,QBDRYTRT,SOXRT,     &
+        !  SOYRT,dist,LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,  &
+        !  SO8RT,SO8RT_D,rt_option,q_sfcflx_x,q_sfcflx_y)
+
+       subroutine ov_rtng( &
+           ovrt_data, &
+           DT, &
+           DTRT_TER, &
+           IXRT, &
+           JXRT, &
+           rt_option, &
+           q_sfcflx_x, &
+           q_sfcflx_y &
+       )
 
 !yyww 
 #ifdef MPP_LAND
@@ -784,32 +795,34 @@
               up_id,mpp_land_com_real, my_id, &
              mpp_land_sync
 #endif
-
+        use overland_data
 	IMPLICIT NONE
 
 !DJG --------DECLARATIONS----------------------------
 
-	INTEGER, INTENT(IN)			:: IXRT,JXRT
+        type (overland_struct), intent(inout) :: ovrt_data 
+        INTEGER, INTENT(IN)			:: IXRT,JXRT
 	REAL, INTENT(IN)			:: DT,DTRT_TER
+        integer, intent(in) :: rt_option
 
-	INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
-	INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: INFXSUBRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: SOXRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: SOYRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT,9):: dist 
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)	:: RETDEPRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: OVROUGHRT
+        !INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
+        !INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: INFXSUBRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: SOXRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: SOYRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT,9):: dist 
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)	:: RETDEPRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: OVROUGHRT
 
-	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)	:: SFCHEADSUBRT
-	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)	:: DHRT
+        !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)	:: SFCHEADSUBRT
+        !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)	:: DHRT
 
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QSTRMVOLRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_INFLORT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QBDRYRT
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QSTRMVOLRT
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_INFLORT
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QBDRYRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: q_sfcflx_x,q_sfcflx_y
-	REAL, INTENT(INOUT)     :: QSTRMVOLTRT,QBDRYTRT,LAKE_INFLOTRT
-        REAL, INTENT(IN), DIMENSION(IXRT,JXRT,8)  :: SO8RT
+        !REAL, INTENT(INOUT)     :: QSTRMVOLTRT,QBDRYTRT,LAKE_INFLOTRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT,8)  :: SO8RT
 
 !DJG Local Variables
 
@@ -817,7 +830,7 @@
 
 	REAL, DIMENSION(IXRT,JXRT)	:: INFXS_FRAC
 	REAL	:: DT_FRAC,SUM_INFXS,sum_head
-        INTEGER SO8RT_D(IXRT,JXRT,3), rt_option
+        !INTEGER SO8RT_D(IXRT,JXRT,3), rt_option
 	
 	
 
@@ -842,7 +855,7 @@
 
 
 !DJG Assign all infiltration excess to surface head...
-            SFCHEADSUBRT=INFXSUBRT
+            ovrt_data%control%SFCHEADSUBRT=ovrt_data%control%INFXSUBRT
 
 !DJG Divide infiltration excess over all routing time-steps
 !	     INFXS_FRAC=INFXSUBRT/(DT/DTRT_TER)
@@ -868,12 +881,12 @@
 
 !DJG ERROR Check...
 
-	   IF (SFCHEADSUBRT(I,J).lt.0.) THEN 
+	   IF (ovrt_data%control%SFCHEADSUBRT(I,J).lt.0.) THEN 
 #ifdef HYDRO_D
 		print *, "ywcheck 2 ERROR!!!: Neg. Surface Head Value at (i,j):",    &
-                    i,j,SFCHEADSUBRT(I,J)
-                print *, "RETDEPRT(I,J) = ",RETDEPRT(I,J), "KRT=",KRT
-                print *, "INFXSUBRT(i,j)=",INFXSUBRT(i,j)
+                    i,j,ovrt_data%control%SFCHEADSUBRT(I,J)
+                print *, "RETDEPRT(I,J) = ",ovrt_data%properties%RETDEPRT(I,J), "KRT=",KRT
+                print *, "INFXSUBRT(i,j)=",ovrt_data%control%INFXSUBRT(i,j)
                 print *, "jxrt=",jxrt," ixrt=",ixrt
 #endif
            END IF
@@ -885,7 +898,7 @@
 
 
 !yw            IF (CH_NETRT(I,J).ne.-9999) THEN
-           IF (CH_NETRT(I,J).ge.0) THEN
+           IF (ovrt_data%streams_and_lakes%CH_NETRT(I,J).ge.0) THEN
              ct = ct +1
 
 !DJG Temporary test to up the retention depth of channel grid cells to 'soak' 
@@ -895,30 +908,33 @@
 !	     RETDEPRT(I,J) = 10.0    !DJG TEMP HARDWIRE!!!!
 
 ! AD hardwire to force channel retention depth to be 5mm.
-             RETDEPRT(I,J) = 5.0
+             ovrt_data%properties%RETDEPRT(I,J) = 5.0
 
-             IF (SFCHEADSUBRT(I,J).GT.RETDEPRT(I,J)) THEN
+             IF (ovrt_data%control%SFCHEADSUBRT(I,J) .GT. ovrt_data%properties%RETDEPRT(I,J)) THEN
 !!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
-               QSTRMVOLTRT = QSTRMVOLTRT + (SFCHEADSUBRT(I,J) - RETDEPRT(I,J))
-               QSTRMVOLRT(I,J) = QSTRMVOLRT(I,J)+SFCHEADSUBRT(I,J)-RETDEPRT(I,J)
+               ovrt_data%streams_and_lakes%QSTRMVOLTRT = ovrt_data%streams_and_lakes%QSTRMVOLTRT + &
+                  (ovrt_data%control%SFCHEADSUBRT(I,J) - ovrt_data%properties%RETDEPRT(I,J))
+               ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J) = ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J) + &
+                  (ovrt_data%control%SFCHEADSUBRT(I,J) - ovrt_data%properties%RETDEPRT(I,J))
 
              ! if(QSTRMVOLRT(I,J) .gt. 0) then 
              !     print *, "QSTRVOL GT 0", QSTRMVOLRT(I,J),I,J 
              !  endif
 
-               SFCHEADSUBRT(I,J) = RETDEPRT(I,J)
+               ovrt_data%control%SFCHEADSUBRT(I,J) = ovrt_data%properties%RETDEPRT(I,J)
              END IF
            END IF
 
 !DJG Lake inflow withdrawl from surface head...(4/29/05)
            
 
-           IF (LAKE_MSKRT(I,J).gt.0) THEN
-             IF (SFCHEADSUBRT(I,J).GT.RETDEPRT(I,J)) THEN
-               LAKE_INFLOTRT = LAKE_INFLOTRT + (SFCHEADSUBRT(I,J) - RETDEPRT(I,J))
-               LAKE_INFLORT(I,J) = LAKE_INFLORT(I,J)+SFCHEADSUBRT(I,J)-RETDEPRT(I,J)
-               SFCHEADSUBRT(I,J) = RETDEPRT(I,J)
-              
+           IF (ovrt_data%streams_and_lakes%LAKE_MSKRT(I,J) .gt. 0) THEN
+             IF (ovrt_data%control%SFCHEADSUBRT(I,J) .GT. ovrt_data%properties%RETDEPRT(I,J)) THEN
+               ovrt_data%streams_and_lakes%LAKE_INFLOTRT = ovrt_data%streams_and_lakes%LAKE_INFLOTRT + &
+                   (ovrt_data%control%SFCHEADSUBRT(I,J) - ovrt_data%properties%RETDEPRT(I,J))
+               ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J) = ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J) + &
+                   (ovrt_data%control%SFCHEADSUBRT(I,J)- ovrt_data%properties%RETDEPRT(I,J))
+               ovrt_data%control%SFCHEADSUBRT(I,J) = ovrt_data%properties%RETDEPRT(I,J)
              END IF
            END IF
 
@@ -936,12 +952,12 @@
 
 
            if(rt_option .eq. 1) then
-              CALL ROUTE_OVERLAND1(DTRT_TER,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
-		SOYRT,RETDEPRT,OVROUGHRT,IXRT,JXRT,QBDRYRT,QBDRYTRT,    & 
-                SO8RT,SO8RT_D,q_sfcflx_x,q_sfcflx_y)
+              CALL ROUTE_OVERLAND1(DTRT_TER, ovrt_data%properties%dist, ovrt_data%control%SFCHEADSUBRT, ovrt_data%control%DHRT, ovrt_data%properties%SOXRT,   &
+		ovrt_data%properties%SOYRT, ovrt_data%properties%RETDEPRT, ovrt_data%properties%OVROUGHRT, IXRT, JXRT, ovrt_data%control%QBDRYRT, ovrt_data%control%QBDRYTRT,    & 
+                ovrt_data%properties%SO8RT, ovrt_data%properties%SO8RT_D, q_sfcflx_x, q_sfcflx_y)
             else
-              CALL ROUTE_OVERLAND2(DTRT_TER,dist,SFCHEADSUBRT,DHRT,SOXRT,   &
-                  SOYRT,RETDEPRT,OVROUGHRT,IXRT,JXRT,QBDRYRT,QBDRYTRT,  &
+              CALL ROUTE_OVERLAND2(DTRT_TER, ovrt_data%properties%dist, ovrt_data%control%SFCHEADSUBRT, ovrt_data%control%DHRT, ovrt_data%properties%SOXRT,   &
+                  ovrt_data%properties%SOYRT, ovrt_data%properties%RETDEPRT, ovrt_data%properties%OVROUGHRT, IXRT, JXRT, ovrt_data%control%QBDRYRT, ovrt_data%control%QBDRYTRT,  &
                   q_sfcflx_x,q_sfcflx_y)    
             end if
              
@@ -2882,7 +2898,7 @@
 #endif
        implicit none
 
-       type (overland_struct) :: ovrt_data
+       type (overland_struct), intent(inout) :: ovrt_data
        REAL, INTENT(IN) :: DT, DTRT_TER
        integer, INTENT(IN) :: ixrt, jxrt, rt_option
        !REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT  ! moved into overland_data%control
@@ -2973,28 +2989,11 @@
       write(6,*) "calling OV_RTNG "
 #endif
       CALL OV_RTNG(           &
+        ovrt_data, &
         DT,                   &
         DTRT_TER,             &
         IXRT,                 &
         JXRT,                 &
-        ovrt_data%control%INFXSUBRT,            &
-        ovrt_data%control%SFCHEADSUBRT,         &
-        ovrt_data%control%DHRT,                 &
-        ovrt_data%streams_and_lakes%CH_NETRT,             &
-        ovrt_data%properties%RETDEPRT,             &
-        ovrt_data%properties%OVROUGHRT,            &
-        ovrt_data%streams_and_lakes%QSTRMVOLRT,           &
-        ovrt_data%control%QBDRYRT,              &
-        ovrt_data%streams_and_lakes%QSTRMVOLTRT,          &
-        ovrt_data%control%QBDRYTRT,             &
-        ovrt_data%properties%SOXRT,                &
-        ovrt_data%properties%SOYRT,                &
-        ovrt_data%properties%dist,                 &
-        ovrt_data%streams_and_lakes%LAKE_MSKRT,           &
-        ovrt_data%streams_and_lakes%LAKE_INFLORT,         &
-        ovrt_data%streams_and_lakes%LAKE_INFLOTRT,        &
-        ovrt_data%properties%SO8RT,                &
-        ovrt_data%properties%SO8RT_D,              &
         rt_option,            &
         q_sfcflx_x,           &
         q_sfcflx_y)
