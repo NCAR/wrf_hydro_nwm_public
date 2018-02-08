@@ -370,37 +370,40 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
 !--local variables
         REAL    :: C1, C2, C3, C4
-        REAL    :: Km          !K travel time in hrs in reach
-        REAL    :: X           !weighting factors 0<=X<=0.5
-        REAL    :: Ck          ! wave celerity (m/s)
+        REAL    :: Km             !K travel time in hrs in reach
+        REAL    :: X              !weighting factors 0<=X<=0.5
+        REAL    :: Ck             ! wave celerity (m/s)
 
 !-- channel geometry and characteristics, local variables
-        REAL    :: Twl        ! top width at given flow (m)
-        REAL    :: AREA,AREAC ! Cross sectional area channel and compound m^2
-        REAL    :: Z          ! trapezoid distance (m)
-        REAL    :: R,RC       ! Hydraulic radius of channel and compound
-        REAL    :: WP,WPC     ! wetted perimmeter of channel and compound
-        REAL    :: h          ! depth of flow in channel
-        REAL    :: h_0,h_1    ! secant method estimates
-        REAL    :: bfd        ! bankfull depth (m)
-        REAL    :: Qj_0       ! secant method estimates
-        REAL    :: Qj         ! intermediate flow estimate
-        REAL    :: D,D1       ! diffusion coeff
-        REAL    :: dtr        ! required timestep, minutes
-        REAL    :: error
-        REAL    :: hp         !courant, previous height
-        REAL    :: qloss      !Channel Loss
-        INTEGER :: maxiter    !maximum number of iterations
+        REAL    :: Twl            ! top width at given flow (m)
+        REAL    :: AREA,AREAC     ! Cross sectional area channel and compound m^2
+        REAL    :: Z              ! trapezoid distance (m)
+        REAL    :: R,RC           ! Hydraulic radius of channel and compound
+        REAL    :: WP,WPC         ! wetted perimmeter of channel and compound
+        REAL    :: h              ! depth of flow in channel
+        REAL    :: h_0,h_1        ! secant method estimates
+        REAL    :: bfd            ! bankfull depth (m)
+        REAL    :: Qj_0           ! secant method estimates
+        REAL    :: Qj             ! intermediate flow estimate
+        REAL    :: D,D1           ! diffusion coeff
+        REAL    :: dtr            ! required timestep, minutes
+        REAL    :: aerror,rerror  ! absolute and relative error
+        REAL    :: hp             ! courant, previous height
+        REAL    :: qloss          ! Channel Loss
+        INTEGER :: iter, maxiter  ! maximum number of iterations
 
 !-- local variables.. needed if channel is sub-divded
         REAL    :: a,b,c,F
         REAL    :: nc         ! manning coefficient multiplier for compund channel
+        REAL    :: mindepth   !  minimum depth in channel
         INTEGER :: i          !-- channel segment counter
 
         c = 0.52           !-- coefficients for finding dx/Ckdt
         b = 1.15
         nc = 4.0
         Twm = 3            ! will be added to RouteLinke.nc
+        maxiter  = 100
+        mindepth = 0.01
 
 !-------------  locals
         if(Cs .eq.0) then 
@@ -421,19 +424,22 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           call hydro_stop("In MUSKINGCUNGE() - Error in channel coefficients")
         end if
 
-        WPC = 0.0
-        AREAC =0.0
-        error   = 1.0
-        maxiter = 0
-        a = 0.0
+        WPC    = 0.0
+        AREAC  = 0.0
+        aerror = mindepth
+        rerror = 1.0
+        iter   = 0
+        a      = 0.0
 
 !-------------  Secant Method
-       depth   = max(depth,0.01)
-       h    =  depth * 1.33        !!bfd      !67% of bankful
-       h_0   = depth * 0.67       !.1*bfd    !10% of bankful
-       Qj_0 = 0.0                  !- initial flow of lower interval
+        depth = max(depth, 0.0)
+        h     = (depth * 1.50) + mindepth !1.50 of  depth
+        h_0   = (depth * 0.50)            !0.50 of depth
+        Qj_0  = 0.0                       !- initial flow of lower interval
+       
+        if(ql .gt. 0.0 .or. qup .gt. 0.0 .or. qdp .gt. 0.0) then  !only solve if there's water to flux
 
-        do while ((error .gt. 0.01 .and. maxiter .le. 100) ) ! .and. h .gt. 0.01))  
+         do while (rerror .gt. 0.02 .and. aerror .ge. mindepth .and. iter .le. maxiter) 
 
           !----- lower interval  --------------------
            Twl = Bw + 2*z*h_0      !--top surface water width of the channel inflow
@@ -447,7 +453,13 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             else
               AREA = (Bw + h_0 * z ) * h_0
               WP = (Bw + 2 * h_0 * sqrt(1+z*z))
-              R   = AREA/ WP
+
+              if(WP .gt. 0.0) then 
+               R  = AREA/ WP
+              else
+               R = 0.0
+              endif
+
             endif
 
           if(h_0 .gt. bfd) then !water outside of defined channel
@@ -457,16 +469,28 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
                 ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
                 + ((sqrt(So)/(n*nc))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
           else
+               if(h_0 .gt. 0.0) then
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                  ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*h_0*z)))))
+                else
+                 ck = 0.0
+                endif
           endif
 
-          Km = max(dt,dx/Ck)
+          if(Ck .gt.0) then
+            Km = max(dt,dx/Ck)
+          else
+            Km = dt
+          endif
  
           if(h_0 .gt. bfd) then !water outside of defined channel
              X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*(Tw*Twm)*So*Ck*dx)))))
           else
+            if(Ck .gt. 0.0) then
               X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*Twl*So*Ck*dx)))))
+            else
+              X = 0.5
+            endif
           endif
   
            D = (Km*(1 - X) + dt/2)              !--seconds
@@ -482,8 +506,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C4 =  (ql*dt)/D
 !          C4 =  (ql*dt)/D - (ChannK * (WP + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
 
-           Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+           if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
+             Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f0(x)
+           endif
 
            !--upper interval -----------
            Twl = Bw + 2*z*h                    !--top width of the channel inflow
@@ -498,7 +524,11 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            else
               AREA = (Bw + h * z ) * h
               WP = (Bw + 2 * h * sqrt(1+z*z))
-              R   = AREA/ WP
+              if(WP .gt. 0.0) then
+               R = AREA/WP
+              else
+               R = 0.0
+              endif
            endif
 
           if(h .gt. bfd) then !water outside of defined channel, assumed rectangular, 3x TW and n = 3x
@@ -506,17 +536,28 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
                 ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
                 + ((sqrt(So)/(n*nc))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
           else
+               if(h .gt. 0.0) then !avoid divide by zero
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                  ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*h*z)))))
+               else
+                 Ck = 0.0
+               endif
           endif
-
-           Km = max(dt,dx/Ck)
-
+           if(Ck .gt. 0.0) then
+            Km = max(dt,dx/Ck)
+           else
+            Km = dt
+           endif
           if(h .gt. bfd) then !water outside of defined channel
             X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*(Tw*Twm)*So*Ck*dx)))))
 
           else
+
+            if(Ck .gt. 0.0) then
              X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*Twl*So*Ck*dx)))))
+            else
+             X = 0.5
+            endif
 
           endif
 
@@ -537,8 +578,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
            endif
 
-           Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+           if((WP+WPC) .gt. 0.0) then
+            Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
+           endif
 
            if(Qj_0-Qj .ne. 0.0) then
              h_1 = h - ((Qj * (h_0 - h))/(Qj_0 - Qj)) !update h, 3rd estimate
@@ -549,23 +592,45 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
              h_1 = h
            endif
 
-           error = abs((h_1 - h)/h) !error is new estatimate and 2nd estimate
+           if(h .gt. 0.0) then
+             rerror = abs((h_1 - h)/h) !relative error is new estatimate and 2nd estimate
+             aerror = abs(h_1 -h)      !absolute error 
+           else
+             rerror = 0.0 
+             aerror = 0.9
+           endif
+
+!          if(idx .eq. 6276407) then
+!            print*, "err,itr,hs", rerror, iter, depth, h_0, h, h_1
+!          endif
 
            h_0  = max(0.0,h)
            h    = max(0.0,h_1)
-           maxiter = maxiter + 1
+           iter = iter + 1
 
-      end do
+           if( h .lt. mindepth) then  ! exit loop if depth is very small
+             goto 111
+           endif 
 
-    if(maxiter .ge. 100) then  
-       print*, "Musk Cunge WARNING: Failure to converge"
-       print*,'RouteLink index:', idx + linkls_s(my_id+1) - 1
-       print*, "id,err,iters,h", idx, error, maxiter, h
-       print*, "Ck,X,dt,Km",Ck,X,dt,Km
-       print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
-       print*, "bfd,Tw,Bw,Twl", bfd,Tw,Bw,Twl
-       print*, "C1,C2,C3", C1,C2,C3
-    endif
+         end do
+
+!          if(idx .eq.  6276407) then
+!            print*, "id,itr,err,h", idx, iter, rerror, h
+!          endif
+
+111      continue
+
+         if(iter .ge. maxiter) then  
+           print*, "Musk Cunge WARNING: Failure to converge"
+           print*, 'RouteLink index:', idx + linkls_s(my_id+1) - 1
+           print*, "id,err,iters,h", idx, rerror, iter, h
+           print*, "Ck,X,dt,Km",Ck,X,dt,Km
+           print*, "So,dx",So,dx
+           print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
+           print*, "bfd,Bw,Tw,Twl", bfd,Bw,Tw,Twl
+           print*, "Qmc,Qmn", (C1*qup)+(C2*quc)+(C3*qdp) + C4,((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+                    (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) 
+         endif
 
 #ifdef HYDRO_D
       !! Getting information on c3.
@@ -579,23 +644,28 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
       
 !yw added for test
       !DY and LKR Added to update for channel loss
-      if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
+        if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
-         if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then ! channel loss greater than water in chan
-           qdc = 0.0
-         else
-           qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
-         endif
-      else
+           if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then ! channel loss greater than water in chan
+             qdc = 0.0
+           else
+             qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+           endif
+        else
 !       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
-        qdc =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+          qdc =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+  
+        endif
 
-      endif
-
-      Twl = Bw + (2*z*h)
-      R = (h*(Bw + Twl) / 2) / (Bw + 2*(((Twl - Bw) / 2)**2 + h**2)**0.5)    
-      vel =  (1./n) * (R **(2./3.)) * sqrt(So)  ! average velocity in m/s
-      depth = h
+        Twl = Bw + (2*z*h)
+        R = (h*(Bw + Twl) / 2) / (Bw + 2*(((Twl - Bw) / 2)**2 + h**2)**0.5)    
+        vel =  (1./n) * (R **(2./3.)) * sqrt(So)  ! average velocity in m/s
+        depth = h
+ 
+      else   ! no flow to route
+       qdc = 0.0
+       depth = 0.0
+     endif 
 
 !     qloss = (ChannK * dx * WP) ! TML -- Compute qloss to pass
 
