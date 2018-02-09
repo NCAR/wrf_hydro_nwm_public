@@ -1,18 +1,26 @@
 #!/bin/bash
 
-echo
-echo "IMPORTANT: When compiling using this script, environment variables for"
-echo "WRF-Hydro are sourced from the setEnvar.sh script in this directory."
-echo 
+## This script takes one optional argument:
+## a file which sets the environment variables
+## to use in the compile. The template for
+## this file is trunk/NDHMS/setEnvar.sh. Please
+## copy that file to trunk/NDHMS, make copies
+## for your favorite compile configurations, and
+## pass the appropriate file name to this script
+## as desired.
+env_file=$1
 
-#sleep 5
-
-source ./setEnvar.sh
+if [[ ! -z $env_file ]]; then
+    echo "configure: Sourcing $env_file for the compile options."
+    source $env_file
+else
+    echo "configure: Using the compile options in the calling environment."
+fi
 
 if [[ "$WRF_HYDRO" -ne 1 ]]; then
     echo
-    echo "Please set WRF_HYDRO to be 1 from setEnvar.sh"
-    exit
+    echo "The WRF_HYDRO compile option is required to be 1 for compile_offline_NoahMP.sh"
+    exit 1
 fi
 
 rm -f  LandModel LandModel_cpl
