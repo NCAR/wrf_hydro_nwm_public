@@ -17,7 +17,7 @@ For user support and general inquiries please use our [contact form](https://ral
 If you have found a bug or would like to propose changes to the model code please submit an issue [here on GitHub](https://github.com/NCAR/wrf_hydro_community/issues).
 
 ## Contributions
-For more information on how to contribute to this project please refer to our [contributing guidelines](CONTRIBUTING.md).
+For more information on how to contribute to this project please refer to our [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## License
 The license and terms of use for this software can be found [here](LICENSE.txt).
