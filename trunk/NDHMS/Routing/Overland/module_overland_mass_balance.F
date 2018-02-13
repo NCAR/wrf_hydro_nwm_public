@@ -10,17 +10,34 @@ module overland_mass_balance
    ! holds variables used for mass balance
    type overland_mass_balance_struct
       ! mass balance
-      real(kind=8) :: dsmctot     ! NEED VARIABLE INFO
-      !real(kind=8) :: <dsmctot>                          ! NEED VARIABLE INFO
+      
+      ! replaced with accumulated_change_in_soil_moisture
+      real(kind=8) :: dsmctot
+      ! total difference in soil moisture each timestep
+      !real(kind=8) :: accumulated_change_in_soil_moisture
+      
+      ! replaced with pre_soil_mosture_content
       real(kind=8) :: smctot1     ! NEED VARIABLE INFO
-      !real(kind=8) :: pre_soil_moisture_content        ! Pre time step soil moisture content accumulator  (<units>)
+      ! Pre time step soil moisture content accumulator  (mm) TODO verify unit
+      !real(kind=8) :: pre_soil_moisture_content
+
+      ! replaced with post_soil_moisture_content
       real(kind=8) :: smctot2     ! NEED VARIABLE INFO
-      !real(kind=8) :: post_soil_moisture_content       ! Post time step soil moisture content accumulator (<units>)
+      ! Post time step soil moisture content accumulator (mm) TODO verify unit
+      !real(kind=8) :: post_soil_moisture_content
+
+      ! replaced with pre_infiltration_excess
       real(kind=8) :: suminfxsrt  ! NEED VARIABLE INFO
-      !real(kind=8) :: pre_infiltration_excess          ! Pre time step infiltration excess accumulator    (<units>)
+      
+      ! Pre time step infiltration excess accumulator    (mm) TODO verify unit
+      !real(kind=8) :: pre_infiltration_excess
+      
+      ! replaced with post_infiltration_excess
       real(kind=8) :: suminfxs1  ! NEED VARIABLE INFO
-      !real(kind=8) :: post_infiltration_excess         ! Post time step infiltration excess accumulator   (<units>)
-      contains
+      ! Post time step infiltration excess accumulator   (mm) TODO verify unit
+      !real(kind=8) :: post_infiltration_excess
+      
+   contains
         procedure :: init => overland_mass_balance_init
         procedure :: destroy => overland_mass_balance_destroy
     end type overland_mass_balance_struct
