@@ -396,14 +396,18 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: a,b,c,F
         REAL    :: nc         ! manning coefficient multiplier for compund channel
         REAL    :: mindepth   !  minimum depth in channel
-        INTEGER :: i          !-- channel segment counter
+        INTEGER :: i,tries    !-- channel segment counter
 
         c = 0.52           !-- coefficients for finding dx/Ckdt
         b = 1.15
+        a = 0.0
         nc = 4.0
         Twm = 3            ! will be added to RouteLinke.nc
         maxiter  = 100
         mindepth = 0.01
+        aerror = 0.01
+        rerror = 1.0
+        tries = 0
 
 !-------------  locals
         if(Cs .eq.0) then 
@@ -424,22 +428,21 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           call hydro_stop("In MUSKINGCUNGE() - Error in channel coefficients")
         end if
 
-        WPC    = 0.0
-        AREAC  = 0.0
-        aerror = mindepth
-        rerror = 1.0
-        iter   = 0
-        a      = 0.0
-
 !-------------  Secant Method
         depth = max(depth, 0.0)
-        h     = (depth * 1.50) + mindepth !1.50 of  depth
-        h_0   = (depth * 0.50)            !0.50 of depth
-        Qj_0  = 0.0                       !- initial flow of lower interval
+        h     = (depth * 1.33) + mindepth !1.50 of  depth
+        h_0   = (depth * 0.67)            !0.50 of depth
        
         if(ql .gt. 0.0 .or. qup .gt. 0.0 .or. qdp .gt. 0.0) then  !only solve if there's water to flux
 
-         do while (rerror .gt. 0.02 .and. aerror .ge. mindepth .and. iter .le. maxiter) 
+110     continue
+
+        Qj_0  = 0.0                       !- initial flow of lower interval
+        WPC    = 0.0
+        AREAC  = 0.0
+        iter   = 0
+
+        do while (rerror .gt. 0.01 .and. aerror .ge. mindepth .and. iter .le. maxiter) 
 
           !----- lower interval  --------------------
            Twl = Bw + 2*z*h_0      !--top surface water width of the channel inflow
@@ -621,11 +624,20 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 111      continue
 
          if(iter .ge. maxiter) then  
+
+           tries = tries + 1
+           if(tries .le. 4) then  ! expand the search space
+             h     =  h * 1.33
+             h_0   =  h_0 * 0.67
+             maxiter = maxiter + 25 !and increase the number of allowable iterations
+            goto 110
+           endif 
+
            print*, "Musk Cunge WARNING: Failure to converge"
            print*, 'RouteLink index:', idx + linkls_s(my_id+1) - 1
-           print*, "id,err,iters,h", idx, rerror, iter, h
+           print*, "id,err,iters,tries", idx, rerror, iter, tries
            print*, "Ck,X,dt,Km",Ck,X,dt,Km
-           print*, "So,dx",So,dx
+           print*, "So,dx,h",So,dx,h
            print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
            print*, "bfd,Bw,Tw,Twl", bfd,Bw,Tw,Twl
            print*, "Qmc,Qmn", (C1*qup)+(C2*quc)+(C3*qdp) + C4,((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
