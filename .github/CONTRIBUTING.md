@@ -1,0 +1,2 @@
+#  Contributing to WRF-Hydro
+Please note that we are currently in the process of developing contributing guidelines and testing procedures for the public WRF-Hydro repository.  These will be available at the time of the public announcement of the version 5 release of the code.  While we appreciate feedback submitted via issues on GitHub we ask that folks do not submit pull requests at this time.  
