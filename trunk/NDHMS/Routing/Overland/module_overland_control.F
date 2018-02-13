@@ -14,27 +14,43 @@ module overland_control
 
    type overland_control_struct
       ! outputs
-      real, allocatable, dimension(:,:) :: sfcheadrt             ! surface water head
-      !real, allocatable, dimension(:,:) :: surface_water_head   ! depth of water on the surface, passed to the land surface model (mm)
-                                                                 ! on the land surface grid
 
-      real, allocatable, dimension(:,:) :: sfcheadsubrt          ! surface head on the routing grid
+      ! replaced with surface_water_head_lsm
+      real, allocatable, dimension(:,:) :: sfcheadrt
+      ! depth of water on the surface (after routing), passed to the land surface model (mm) on the land surface grid.
+      ! LSM combines this with canopy water for infiltration excess at the next time step.
+      !real, allocatable, dimension(:,:) :: surface_water_head_lsm
+      
+      ! replaced with surface_water_head_routing
+      real, allocatable, dimension(:,:) :: sfcheadsubrt
+      ! surface head on the routing grid during integration, input to surface_water_head_lsm for the next time step
+      !real, allocatable, dimension(:,:) :: surface_water_head_routing
+      
+      !PROPOSED Decouple the surface_water_head_lsm and surface_water_head_routing into a cleaner interface (only one surface_water_head in overland)
+      !This will have to be done once the land surface interface is better hashed out.
 
       ! inputs
-      real, allocatable, dimension(:,:) :: infxsubrt            ! infiltration excess subgrid weighted from INFXSRT
-      !real, allocatable, dimension(:,:) :: infiltration_excess ! infiltration excess from the land surface model (mm)
-                                                                ! on the routing grid
+      ! replaced with infiltration_excess
+      real, allocatable, dimension(:,:) :: infxsubrt
+      ! infiltration excess from the land surface model (mm) on the routing grid
+      !real, allocatable, dimension(:,:) :: infiltration_excess
       
       ! miscellaneous bookkeeping
-      real, allocatable, dimension(:,:) :: dhrt                 ! NEED VARIABLE INFO
-                                                                ! Is passed around overland routing as an output var, renamed to qsfc in route_overland<1,2>
-                                                                ! qsfc in overland1 is intent(in), overland2 intent(inout). qsfc NEVER USED
+      
+      ! DEPRECATE TODO NJF and DJG Feb 13, 2018.  Remove for fall 2019 release
+      ! Is passed around overland routing as an output var, renamed to qsfc in route_overland<1,2>
+      ! qsfc in overland1 is intent(in), overland2 intent(inout). qsfc NEVER USED
+      real, allocatable, dimension(:,:) :: dhrt
+      
+      ! replaced with boundary_flux
+      real, allocatable, dimension(:,:) :: qbdryrt
+      ! flux of boundary cells at a given time step, + into the domain, - out of the domain (mm)
+      !real, allocatable, dimension(:,:) :: boundary_flux             
 
-      real, allocatable, dimension(:,:) :: qbdryrt              ! accumlated vlaue of the boundary flux, + into domain - out of domain
-      !real, allocatable, dimension(:,:) :: boundary_flux       ! <better description> (<units>)
-
-      real :: qbdrytrt                                          ! total of qbdrvrt
-      !real :: boundary_flux_total                              ! <better description> (<units>)
+      ! replaced with boundary_flux_total
+      real :: qbdrytrt
+      ! accumulation of all boundary cell fluxes per time step (<mm>)
+      !real :: boundary_flux_total                             
 
 
       contains
