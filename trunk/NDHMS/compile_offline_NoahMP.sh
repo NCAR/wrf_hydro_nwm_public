@@ -2,8 +2,9 @@
 
 ## This script takes one optional argument:
 ## a file which sets the environment variables
-## to use in the compile. The template for
-## this file is trunk/NDHMS/setEnvar.sh. Please
+## to use in the compile (clearning any inherited
+## from the calling envionrment first). The template
+## fo this file is trunk/NDHMS/setEnvar.sh. Please
 ## copy that file to trunk/NDHMS, make copies
 ## for your favorite compile configurations, and
 ## pass the appropriate file name to this script
@@ -11,8 +12,20 @@
 env_file=$1
 
 if [[ ! -z $env_file ]]; then
+
+    ## unset these in the env so we are not mixing
+    ## and matching env vars and the sourced file.
+    unset WRF_HYDRO
+    unset HYDRO_D
+    unset SPATIAL_SOIL
+    unset WRF_HYDRO_RAPID
+    unset WRFIO_NCD_LARGE_FILE_SUPPORT
+    unset NCEP_WCOSS
+    unset WRF_HYDRO_NUDGING
+
     echo "configure: Sourcing $env_file for the compile options."
     source $env_file
+    
 else
     echo "configure: Using the compile options in the calling environment."
 fi
