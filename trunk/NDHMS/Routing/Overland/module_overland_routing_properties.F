@@ -9,50 +9,74 @@ module overland_routing_properties
 
    ! holds proprties of the the routing grid needed by overland routing algs
    type overland_routing_properties_struct
-      integer :: ixrt                                            ! number of cells in x direction on the high res grid
-      !integer :: rows                                           ! number of cells in x direction on the high res grid
-      integer :: jxrt                                            ! number of cells in y direction on the high res grid
-      !integer :: columns                                        ! number of cells in y direction on the high res grid
-      real, allocatable, dimension(:,:) :: soxrt                 ! terrian slope X
-      !real, allocatable, dimension(:,:) :: surface_slope_x      ! terrian slope in the x direction (m/m)
-      real, allocatable, dimension(:,:) :: soyrt                 ! terrian slope Y
-      !real, allocatable, dimension(:,:) :: surface_slope_y      ! terrian slope in the y direction (m/m)
-      real, allocatable, dimension(:,:) :: ovroughrt             ! surface roughness
-      !real, allocatable, dimension(:,:) :: roughness            ! surface roughness (none)
-                                                                 ! dissagregated from the land surface model
-      real, allocatable, dimension(:,:) :: retdeprt              ! retention depthdrodirection slope)
-      !real, allocatable, dimension(:,:) :: retention_depth      ! minimum amount of surface water required before water is routed as overland flow (mm)
-      real, allocatable, dimension(:,:,:) :: so8rt               ! terrian slope (maybe 8 direction slope)
-      !real, allocatable, dimension(:,:,:) :: so8rt              ! terrian slope in 8 ordinal directions (m/m)                                                                  !
-                                                                 ! DOES THIS MAKE surface_slope_<x,y> REDUNDANT?
-                                                                 !                      1
-                                                                 !                      |
-                                                                 !                  8       2
-                                                                 !                    \   /
-                                                                 !                 7__     __ 3
-                                                                 !
-                                                                 !                    /   \
-                                                                 !                   6     4 
-                                                                 !                      |  
-                                                                 !                      5
-                                                                 !
+      integer :: ixrt                                            ! number of cells in x direction on the routing grid
+      integer :: jxrt                                            ! number of cells in y direction on the routing grid
 
-      integer, allocatable, dimension(:,:,:) :: so8rt_d          ! slope direction (nieghbor index?)?
-      !integer, allocatable, dimension(:,:,:) :: so8rt_d         ! index of neighboring cell in the direction of steepest slope???
-                                                      
-      real, allocatable, dimension(:,:,:) :: dist                ! NEED VARIABLE INFO (distance relative to what)
-      !real, allocatable, dimension(:,:,:) :: dist               ! centerpoint distance to each neighbor (m)
-                                                                 ! For a regular grid, this should be pretty static, right?
-                                                                 ! neighbors 1,3,5,7 dist = grid_size
-                                                                 ! neighbors 2,4,6,8 dist = sqrt( grid_size^2 + grid_size^2)
-                                                                 ! would suggest eliminating this and using two static variables for square grids.
-                                                                 ! i.e. direct_neighbor_distance = grid_size
-                                                                 !      diagonal_neighbor_distance = sqrt( 2*(grid_size^2) )
+      ! PROPOSED a more logical representation of the grid that is relative to the module would be nice.
+      ! Currently, we are leaving the legacy ixrt/jxrt names to simplify the interaction of these variables in other places in the code.
+      ! At the very least, we need to drop the rt quantifier when we can, since these are clearly ix/jx in the overland_routing structure
+      ! Once the subsurface interface is identified, I think we should revisit these.  And if possible, get away from the x notation, a more clear
+      ! name might be something like these:
+      !integer :: rows                                           ! number of cells in x direction on the routing grid
+      !integer :: columns                                        ! number of cells in y direction on the routing grid
       
+      ! replaced with surface_slope_x
+      real, allocatable, dimension(:,:) :: soxrt
+      ! terrian slope in the x direction (m/m)
+      !real, allocatable, dimension(:,:) :: surface_slope_x 
+
+      ! replaced with surface_slope_y
+      real, allocatable, dimension(:,:) :: soyrt
+      ! terrian slope in the y direction (m/m)
+      !real, allocatable, dimension(:,:) :: surface_slope_y      
+
+      ! reaplaced with roughness
+      real, allocatable, dimension(:,:) :: ovroughrt
+      ! surface roughness parameter for Manning's equation; dissagregated from the land surface model, with adjustment factor applied (none) 
+      !real, allocatable, dimension(:,:) :: roughness
+      
+      ! replaced with retention_depth
+      real, allocatable, dimension(:,:) :: retdeprt
+      ! minimum amount of surface water required before water is routed as overland flow (mm)
+      !real, allocatable, dimension(:,:) :: retention_depth     
+      
+      ! replaced with water_surface_slope
+      real, allocatable, dimension(:,:,:) :: so8rt
+      ! water surface slope in 8 ordinal directions (m/m)                                                                  !
+      ! TODO verify this correct, check with Wei? 
+      !                      1
+      !                      |
+      !                  8       2
+      !                    \   /
+      !                 7__     __ 3
+      !
+      !                    /   \
+      !                   6     4 
+      !                      |  
+      !                      5
+      !
+      !real, allocatable, dimension(:,:,:) :: water_surface_slope 
+      
+      ! replaced with max_water_surface_slope_index
+      integer, allocatable, dimension(:,:,:) :: so8rt_d
+      ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
+      !integer, allocatable, dimension(:,:,:) :: max_water_surface_slope_index                                   
+
+      ! replaced with distance_to_neighbor
+      real, allocatable, dimension(:,:,:) :: dist
+      ! centerpoint distance to each neighbor (m)
+      !real, allocatable, dimension(:,:,:) :: distance_to_neighbor
+      ! PROPOSED
+      ! For a regular grid, distance_to_neighbor should be pretty static, right?
+      ! neighbors 1,3,5,7 dist = grid_size
+      ! neighbors 2,4,6,8 dist = sqrt( grid_size^2 + grid_size^2)
+      ! would suggest eliminating this and using two static variables for square grids.
+      ! i.e. direct_neighbor_distance = grid_size
+      !      diagonal_neighbor_distance = sqrt( 2*(grid_size^2) )
+
       contains
          procedure :: init => overland_properties_init
          procedure :: destroy => overland_properties_destory
-   
    end type overland_routing_properties_struct
 
    contains
