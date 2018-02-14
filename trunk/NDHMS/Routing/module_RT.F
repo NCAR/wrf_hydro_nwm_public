@@ -129,22 +129,22 @@ CONTAINS
      allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
      !!
 
-     !allocate( rt_domain(did)%overland%properties%soxrt  	(IXRT,JXRT) )
-     !rt_domain(did)%overland%properties%soxrt  	= 0.0                
-     !allocate( rt_domain(did)%overland%properties%soyrt   	(IXRT,JXRT) )
-     !rt_domain(did)%overland%properties%soyrt   	= 0.0                
-     !allocate( rt_domain(did)%overland%properties%so8rt   	(IXRT,JXRT,8) )
-     !rt_domain(did)%overland%properties%so8rt   	= -999               
-     !allocate( rt_domain(did)%overland%properties%so8rt_d   	(IXRT,JXRT,3) )
-     !rt_domain(did)%overland%properties%so8rt_d   	= 0.0                
-     !allocate( rt_domain(did)%overland%properties%ovroughrt   (IXRT,JXRT) )
+     !allocate( rt_domain(did)%overland%properties%surface_slope_x  	(IXRT,JXRT) )
+     !rt_domain(did)%overland%properties%surface_slope_x  	= 0.0                
+     !allocate( rt_domain(did)%overland%properties%surface_slope_y   	(IXRT,JXRT) )
+     !rt_domain(did)%overland%properties%surface_slope_y   	= 0.0                
+     !allocate( rt_domain(did)%overland%properties%water_surface_slope   	(IXRT,JXRT,8) )
+     !rt_domain(did)%overland%properties%water_surface_slope   	= -999               
+     !allocate( rt_domain(did)%overland%properties%max_water_surface_slope_index   	(IXRT,JXRT,3) )
+     !rt_domain(did)%overland%properties%max_water_surface_slope_index   	= 0.0                
+     !allocate( rt_domain(did)%overland%properties%roughness   (IXRT,JXRT) )
      !
 
      !allocate( rt_domain(did)%QSUBBDRYTRT   (IXRT,JXRT) )
      !rt_domain(did)%QSUBBDRYTRT = 0.0
      allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
-     !rt_domain(did)%overland%properties%ovroughrt   = 0.0                
-     !allocate( rt_domain(did)%overland%properties%retdeprt    (IXRT,JXRT) )
+     !rt_domain(did)%overland%properties%roughness   = 0.0                
+     !allocate( rt_domain(did)%overland%properties%retention_depth    (IXRT,JXRT) )
      !
 
      allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
@@ -277,8 +277,8 @@ CONTAINS
   allocate( rt_domain(did)%lat_lsm (ix,jx) )
   allocate( rt_domain(did)%lon_lsm (ix,jx) )
   rt_domain(did)%timestep_flag = 1    ! default is cold start
-  !allocate( rt_domain(did)%overland%properties%dist (ixrt,jxrt,9) ) ! moved to overland%properties
-  !rt_domain(did)%overland%properties%dist = -999                    ! moved to overland%properties
+  !allocate( rt_domain(did)%overland%properties%distance_to_neighbor (ixrt,jxrt,9) ) ! moved to overland%properties
+  !rt_domain(did)%overland%properties%distance_to_neighbor = -999                    ! moved to overland%properties
 
   !! This is needed for channelBucket_only 
   !! because the bucket area (basns_area) depends on the initialization of the
@@ -684,7 +684,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
-             rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%dist, &
+             rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
              rt_domain(did)%CH_NETLNK,    rt_domain(did)%CHANXI,          &
              rt_domain(did)%CHANYJ,       rt_domain(did)%CHLAT,           &
@@ -776,7 +776,7 @@ endif
          call UDMP_ini( rt_domain(did)%GNLINKSL, rt_domain(did)%ixrt,      &
               rt_domain(did)%jxrt,     rt_domain(did)%overland%streams_and_lakes%ch_netrt , &
               nlst_rt(did)%OVRTSWCRT,  nlst_rt(did)%SUBRTSWCRT,  &
-              rt_domain(did)%overland%properties%dist(:,:,9)                         )
+              rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9)                         )
 #ifdef HYDRO_D
          write(6,*) "after UDMP_ini "
          call flush(6)
@@ -897,7 +897,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    !DJG    will later make this a function of SOLTYP and VEGTYP
    !            OVROUGHRT(i,j) = 0.01
    
-   rt_domain(did)%overland%properties%retdeprt = 0.001   ! units (mm)  
+   rt_domain(did)%overland%properties%retention_depth = 0.001   ! units (mm)  
    rt_domain(did)%RETDEP_CHAN = 0.001
 
 
@@ -905,107 +905,107 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    !DJG     include as a subroutine in module module_Noahlsm_wrfcode_input.F
    !DJG  Calculate terrain slopes 'SOXRT,SOYRT' from subgrid elevation 'ELRT'
 
-   rt_domain(did)%overland%properties%so8rt = -999
+   rt_domain(did)%overland%properties%water_surface_slope = -999
    Vmax = 0.0
    do j=2,rt_domain(did)%JXRT-1
       do i=2,rt_domain(did)%IXRT-1
-         rt_domain(did)%overland%properties%soxrt(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%dist(i,j,3)
-         rt_domain(did)%overland%properties%soyrt(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%dist(i,j,1)
+         rt_domain(did)%overland%properties%surface_slope_x(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,3)
+         rt_domain(did)%overland%properties%surface_slope_y(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,1)
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
          if (nlst_rt(did)%RT_OPTION.eq.2) then
-            if (rt_domain(did)%overland%properties%soxrt(i,j).gt.rt_domain(did)%overland%properties%soyrt(i,j)) then
-               Vmax=rt_domain(did)%overland%properties%soxrt(i,j)
+            if (rt_domain(did)%overland%properties%surface_slope_x(i,j).gt.rt_domain(did)%overland%properties%surface_slope_y(i,j)) then
+               Vmax=rt_domain(did)%overland%properties%surface_slope_x(i,j)
             else
-               Vmax=rt_domain(did)%overland%properties%soyrt(i,j)
+               Vmax=rt_domain(did)%overland%properties%surface_slope_y(i,j)
             end if
             
             if (Vmax.gt.0.1) then
-               rt_domain(did)%overland%properties%retdeprt(i,j)=0.
+               rt_domain(did)%overland%properties%retention_depth(i,j)=0.
             else
                rt_domain(did)%RETDEPFRAC=Vmax/0.1
-               rt_domain(did)%overland%properties%retdeprt(i,j)=rt_domain(did)%overland%properties%retdeprt(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
-               if (rt_domain(did)%overland%properties%retdeprt(i,j).lt.0.) rt_domain(did)%overland%properties%retdeprt(i,j)=0.
+               rt_domain(did)%overland%properties%retention_depth(i,j)=rt_domain(did)%overland%properties%retention_depth(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+               if (rt_domain(did)%overland%properties%retention_depth(i,j).lt.0.) rt_domain(did)%overland%properties%retention_depth(i,j)=0.
             end if
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,1) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%dist(i,j,1)
-         rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i
-         rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j + 1 
-         rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 1 
-         Vmax = rt_domain(did)%overland%properties%so8rt(i,j,1)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,1) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,1)
+         rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i
+         rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j + 1 
+         rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 1 
+         Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,1)
          
-         rt_domain(did)%overland%properties%so8rt(i,j,2) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j+1))/rt_domain(did)%overland%properties%dist(i,j,2)  
-         if(rt_domain(did)%overland%properties%so8rt(i,j,2) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i + 1
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j + 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 2
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,2)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,2) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,2)  
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,2) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i + 1
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j + 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 2
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,2)
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,3) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%dist(i,j,3)
-         if(rt_domain(did)%overland%properties%so8rt(i,j,3) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i + 1
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j  
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 3
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,3)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,3) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,3)
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,3) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i + 1
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j  
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 3
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,3)
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,4) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j-1))/rt_domain(did)%overland%properties%dist(i,j,4)  
-         if(rt_domain(did)%overland%properties%so8rt(i,j,4) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i + 1
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j - 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 4
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,4)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,4) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j-1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,4)  
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,4) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i + 1
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j - 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 4
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,4)
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,5) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j-1))/rt_domain(did)%overland%properties%dist(i,j,5)
-         if(rt_domain(did)%overland%properties%so8rt(i,j,5) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j - 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 5
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,5)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,5) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j-1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,5)
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,5) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j - 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 5
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,5)
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,6) = & 
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j-1))/rt_domain(did)%overland%properties%dist(i,j,6)  
-         if(rt_domain(did)%overland%properties%so8rt(i,j,6) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i - 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j - 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 6
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,6)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,6) = & 
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j-1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,6)  
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,6) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i - 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j - 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 6
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,6)
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,7) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j))/rt_domain(did)%overland%properties%dist(i,j,7)
-         if(rt_domain(did)%overland%properties%so8rt(i,j,7) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i - 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j  
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 7
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,7)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,7) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,7)
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,7) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i - 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j  
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 7
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,7)
          end if
          
-         rt_domain(did)%overland%properties%so8rt(i,j,8) = &
-              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j+1))/rt_domain(did)%overland%properties%dist(i,j,8)  
-         if(rt_domain(did)%overland%properties%so8rt(i,j,8) .gt. Vmax ) then
-            rt_domain(did)%overland%properties%so8rt_d(i,j,1) = i - 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,2) = j + 1 
-            rt_domain(did)%overland%properties%so8rt_d(i,j,3) = 8
-            Vmax = rt_domain(did)%overland%properties%so8rt(i,j,8)
+         rt_domain(did)%overland%properties%water_surface_slope(i,j,8) = &
+              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,8)  
+         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,8) .gt. Vmax ) then
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i - 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j + 1 
+            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 8
+            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,8)
          end if
          
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
          if (nlst_rt(did)%RT_OPTION.eq.1) then
             if (Vmax.gt.0.75) then
-               rt_domain(did)%overland%properties%retdeprt(i,j)=0.
+               rt_domain(did)%overland%properties%retention_depth(i,j)=0.
             else
                rt_domain(did)%RETDEPFRAC=Vmax/0.75
-               rt_domain(did)%overland%properties%retdeprt(i,j)=rt_domain(did)%overland%properties%retdeprt(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
-               if (rt_domain(did)%overland%properties%retdeprt(i,j).lt.0.) rt_domain(did)%overland%properties%retdeprt(i,j)=0.
+               rt_domain(did)%overland%properties%retention_depth(i,j)=rt_domain(did)%overland%properties%retention_depth(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+               if (rt_domain(did)%overland%properties%retention_depth(i,j).lt.0.) rt_domain(did)%overland%properties%retention_depth(i,j)=0.
             end if
          end if
          
@@ -1015,37 +1015,37 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    
    
    !Apply calibration scaling factors to sfc roughness and retention depth here...
-   rt_domain(did)%overland%properties%retdeprt = rt_domain(did)%overland%properties%retdeprt * rt_domain(did)%RETDEPRTFAC
-   rt_domain(did)%overland%properties%ovroughrt = rt_domain(did)%overland%properties%ovroughrt * rt_domain(did)%OVROUGHRTFAC
+   rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
+   rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
    
    ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
-   rt_domain(did)%overland%properties%retdeprt = min(rt_domain(did)%overland%properties%retdeprt, 1.0)  
+   rt_domain(did)%overland%properties%retention_depth = min(rt_domain(did)%overland%properties%retention_depth, 1.0)  
  
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
-   if(right_id .lt. 0) rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT,:)= &
-        rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT-1,:)
-   if(left_id  .lt. 0) rt_domain(did)%overland%properties%soxrt(1,:)=rt_domain(did)%overland%properties%soxrt(2,:)
-   if(up_id    .lt. 0) rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT)= &
-        rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT-1)
-   if(down_id  .lt. 0) rt_domain(did)%overland%properties%soyrt(:,1)=rt_domain(did)%overland%properties%soyrt(:,2)
+   if(right_id .lt. 0) rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT,:)= &
+        rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT-1,:)
+   if(left_id  .lt. 0) rt_domain(did)%overland%properties%surface_slope_x(1,:)=rt_domain(did)%overland%properties%surface_slope_x(2,:)
+   if(up_id    .lt. 0) rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT)= &
+        rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT-1)
+   if(down_id  .lt. 0) rt_domain(did)%overland%properties%surface_slope_y(:,1)=rt_domain(did)%overland%properties%surface_slope_y(:,2)
 #else
-   rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT,:)=rt_domain(did)%overland%properties%soxrt(rt_domain(did)%IXRT-1,:)
-   rt_domain(did)%overland%properties%soxrt(1,:)=rt_domain(did)%overland%properties%soxrt(2,:)
-   rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT)=rt_domain(did)%overland%properties%soyrt(:,rt_domain(did)%JXRT-1)
-   rt_domain(did)%overland%properties%soyrt(:,1)=rt_domain(did)%overland%properties%soyrt(:,2)
+   rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT,:)=rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT-1,:)
+   rt_domain(did)%overland%properties%surface_slope_x(1,:)=rt_domain(did)%overland%properties%surface_slope_x(2,:)
+   rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT)=rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT-1)
+   rt_domain(did)%overland%properties%surface_slope_y(:,1)=rt_domain(did)%overland%properties%surface_slope_y(:,2)
 #endif
    
 #ifdef MPP_LAND
    ! communicate the value to 
-   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%retdeprt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soxrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
-   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%soyrt,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_y,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    do i = 1, 8
-      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%so8rt(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%water_surface_slope(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    end do
    do i = 1, 3
-      call MPP_LAND_COM_INTEGER(rt_domain(did)%overland%properties%so8rt_d(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+      call MPP_LAND_COM_INTEGER(rt_domain(did)%overland%properties%max_water_surface_slope_index(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
    end do
 #endif
    

@@ -21,27 +21,27 @@ module overland_routing_properties
       !integer :: columns                                        ! number of cells in y direction on the routing grid
       
       ! replaced with surface_slope_x
-      real, allocatable, dimension(:,:) :: soxrt
+      !real, allocatable, dimension(:,:) :: soxrt
       ! terrian slope in the x direction (m/m)
-      !real, allocatable, dimension(:,:) :: surface_slope_x 
+      real, allocatable, dimension(:,:) :: surface_slope_x 
 
       ! replaced with surface_slope_y
-      real, allocatable, dimension(:,:) :: soyrt
+      !real, allocatable, dimension(:,:) :: soyrt
       ! terrian slope in the y direction (m/m)
-      !real, allocatable, dimension(:,:) :: surface_slope_y      
+      real, allocatable, dimension(:,:) :: surface_slope_y      
 
       ! reaplaced with roughness
-      real, allocatable, dimension(:,:) :: ovroughrt
+      !real, allocatable, dimension(:,:) :: ovroughrt
       ! surface roughness parameter for Manning's equation; dissagregated from the land surface model, with adjustment factor applied (none) 
-      !real, allocatable, dimension(:,:) :: roughness
+      real, allocatable, dimension(:,:) :: roughness
       
       ! replaced with retention_depth
-      real, allocatable, dimension(:,:) :: retdeprt
+      !real, allocatable, dimension(:,:) :: retdeprt
       ! minimum amount of surface water required before water is routed as overland flow (mm)
-      !real, allocatable, dimension(:,:) :: retention_depth     
+      real, allocatable, dimension(:,:) :: retention_depth     
       
       ! replaced with water_surface_slope
-      real, allocatable, dimension(:,:,:) :: so8rt
+      !real, allocatable, dimension(:,:,:) :: so8rt
       ! water surface slope in 8 ordinal directions (m/m)                                                                  !
       ! TODO verify this correct, check with Wei? 
       !                      1
@@ -55,17 +55,17 @@ module overland_routing_properties
       !                      |  
       !                      5
       !
-      !real, allocatable, dimension(:,:,:) :: water_surface_slope 
+      real, allocatable, dimension(:,:,:) :: water_surface_slope 
       
       ! replaced with max_water_surface_slope_index
-      integer, allocatable, dimension(:,:,:) :: so8rt_d
+      !integer, allocatable, dimension(:,:,:) :: so8rt_d
       ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
-      !integer, allocatable, dimension(:,:,:) :: max_water_surface_slope_index                                   
+      integer, allocatable, dimension(:,:,:) :: max_water_surface_slope_index                                   
 
       ! replaced with distance_to_neighbor
-      real, allocatable, dimension(:,:,:) :: dist
+      !real, allocatable, dimension(:,:,:) :: dist
       ! centerpoint distance to each neighbor (m)
-      !real, allocatable, dimension(:,:,:) :: distance_to_neighbor
+      real, allocatable, dimension(:,:,:) :: distance_to_neighbor
       ! PROPOSED
       ! For a regular grid, distance_to_neighbor should be pretty static, right?
       ! neighbors 1,3,5,7 dist = grid_size
@@ -97,57 +97,57 @@ subroutine overland_properties_init(this,ix,jx)
     this%jxrt = jx
 
     ! allocate x slope
-    if ( .not. allocated(this%soxrt) ) then
-        allocate( this%soxrt(ix,jx) )
-        this%soxrt = 0.0
+    if ( .not. allocated(this%surface_slope_x) ) then
+        allocate( this%surface_slope_x(ix,jx) )
+        this%surface_slope_x = 0.0
     else
         allocation_error = .true.
     end if
 
     ! allocate y slope
-    if ( .not. allocated(this%soyrt) ) then
-        allocate( this%soyrt(ix,jx) )
-        this%soyrt = 0.0
+    if ( .not. allocated(this%surface_slope_y) ) then
+        allocate( this%surface_slope_y(ix,jx) )
+        this%surface_slope_y = 0.0
     else
         allocation_error = .true.
     end if
 
     ! allocate 8 directional slope
-    if ( .not. allocated(this%so8rt) ) then
-        allocate( this%so8rt(ix,jx,8) )
-        this%so8rt = -999
+    if ( .not. allocated(this%water_surface_slope) ) then
+        allocate( this%water_surface_slope(ix,jx,8) )
+        this%water_surface_slope = -999
     else
         allocation_error = .true.
     end if
 
     ! allocate slope index
-    if ( .not. allocated(this%so8rt_d) ) then
-        allocate( this%so8rt_d(ix,jx,3) )
-        this%so8rt_d = 0.0
+    if ( .not. allocated(this%max_water_surface_slope_index) ) then
+        allocate( this%max_water_surface_slope_index(ix,jx,3) )
+        this%max_water_surface_slope_index = 0.0
     else
         allocation_error = .true.
     end if
 
     ! allocate surface roughness
-    if ( .not. allocated(this%ovroughrt) ) then
-        allocate( this%ovroughrt(ix,jx) )
-        this%ovroughrt = 0.0
+    if ( .not. allocated(this%roughness) ) then
+        allocate( this%roughness(ix,jx) )
+        this%roughness = 0.0
     else
         allocation_error = .true.
     end if
 
     ! allocate retention depth
-    if ( .not. allocated(this%retdeprt) ) then
-        allocate( this%retdeprt(ix,jx) )
-        this%retdeprt = 0.001   ! units (mm)
+    if ( .not. allocated(this%retention_depth) ) then
+        allocate( this%retention_depth(ix,jx) )
+        this%retention_depth = 0.001   ! units (mm)
     else
         allocation_error = .true.
     end if
 
     ! allocate dist
-    if ( .not. allocated(this%dist) ) then
-        allocate( this%dist(ix,jx,9) )
-        this%dist = -999
+    if ( .not. allocated(this%distance_to_neighbor) ) then
+        allocate( this%distance_to_neighbor(ix,jx,9) )
+        this%distance_to_neighbor = -999
     else
         allocation_error = .true.
     end if
@@ -166,50 +166,50 @@ subroutine overland_properties_destory(this)
     logical :: allocation_error = .false.
 
     ! deallocate x slope
-    if ( allocated(this%soxrt) ) then
-        deallocate( this%soxrt )
+    if ( allocated(this%surface_slope_x) ) then
+        deallocate( this%surface_slope_x )
     else
         allocation_error = .true.
     end if
 
     ! allocate y slope
-    if ( allocated(this%soyrt) ) then
-        deallocate( this%soyrt )
+    if ( allocated(this%surface_slope_y) ) then
+        deallocate( this%surface_slope_y )
     else
         allocation_error = .true.
     end if
 
-    ! allocate 8 directional slope
-    if ( allocated(this%so8rt) ) then
-        deallocate( this%so8rt )
+    ! allocate water surface slope
+    if ( allocated(this%water_surface_slope) ) then
+        deallocate( this%water_surface_slope )
     else
         allocation_error = .true.
     end if
 
     ! allocate slope index
-    if ( allocated(this%so8rt_d) ) then
-        deallocate( this%so8rt_d )
+    if ( allocated(this%max_water_surface_slope_index) ) then
+        deallocate( this%max_water_surface_slope_index )
     else
         allocation_error = .true.
     end if
 
     ! allocate surface roughness
-    if ( allocated(this%ovroughrt) ) then
-        deallocate( this%ovroughrt )
+    if ( allocated(this%roughness) ) then
+        deallocate( this%roughness )
     else
         allocation_error = .true.
     end if
 
     ! allocate retention depth
-    if ( allocated(this%retdeprt) ) then
-        deallocate( this%retdeprt )
+    if ( allocated(this%retention_depth ) ) then
+        deallocate( this%retention_depth )
     else
         allocation_error = .true.
     end if
 
     ! allocate dist
-    if (  allocated(this%dist) ) then
-        deallocate( this%dist )
+    if ( allocated(this%distance_to_neighbor) ) then
+        deallocate( this%distance_to_neighbor )
     else
         allocation_error = .true.
     end if

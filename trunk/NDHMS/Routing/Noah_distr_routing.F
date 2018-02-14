@@ -885,7 +885,7 @@
 #ifdef HYDRO_D
 		print *, "ywcheck 2 ERROR!!!: Neg. Surface Head Value at (i,j):",    &
                     i,j,ovrt_data%control%surface_water_head_routing(I,J)
-                print *, "RETDEPRT(I,J) = ",ovrt_data%properties%RETDEPRT(I,J), "KRT=",KRT
+                print *, "RETDEPRT(I,J) = ",ovrt_data%properties%retention_depth(I,J), "KRT=",KRT
                 print *, "INFXSUBRT(i,j)=",ovrt_data%control%infiltration_excess(i,j)
                 print *, "jxrt=",jxrt," ixrt=",ixrt
 #endif
@@ -908,20 +908,20 @@
 !	     RETDEPRT(I,J) = 10.0    !DJG TEMP HARDWIRE!!!!
 
 ! AD hardwire to force channel retention depth to be 5mm.
-             ovrt_data%properties%RETDEPRT(I,J) = 5.0
+             ovrt_data%properties%retention_depth(I,J) = 5.0
 
-             IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%RETDEPRT(I,J)) THEN
+             IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%retention_depth(I,J)) THEN
 !!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
                ovrt_data%streams_and_lakes%QSTRMVOLTRT = ovrt_data%streams_and_lakes%QSTRMVOLTRT + &
-                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%RETDEPRT(I,J))
+                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
                ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J) = ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J) + &
-                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%RETDEPRT(I,J))
+                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
 
              ! if(QSTRMVOLRT(I,J) .gt. 0) then 
              !     print *, "QSTRVOL GT 0", QSTRMVOLRT(I,J),I,J 
              !  endif
 
-               ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%RETDEPRT(I,J)
+               ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%retention_depth(I,J)
              END IF
            END IF
 
@@ -929,12 +929,12 @@
            
 
            IF (ovrt_data%streams_and_lakes%LAKE_MSKRT(I,J) .gt. 0) THEN
-             IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%RETDEPRT(I,J)) THEN
+             IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%retention_depth(I,J)) THEN
                ovrt_data%streams_and_lakes%LAKE_INFLOTRT = ovrt_data%streams_and_lakes%LAKE_INFLOTRT + &
-                   (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%RETDEPRT(I,J))
+                   (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
                ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J) = ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J) + &
-                   (ovrt_data%control%surface_water_head_routing(I,J)- ovrt_data%properties%RETDEPRT(I,J))
-               ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%RETDEPRT(I,J)
+                   (ovrt_data%control%surface_water_head_routing(I,J)- ovrt_data%properties%retention_depth(I,J))
+               ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%retention_depth(I,J)
              END IF
            END IF
 
@@ -952,12 +952,12 @@
 
 
            if(rt_option .eq. 1) then
-              CALL ROUTE_OVERLAND1(DTRT_TER, ovrt_data%properties%dist, ovrt_data%control%surface_water_head_routing, ovrt_data%control%DHRT, ovrt_data%properties%SOXRT,   &
-		ovrt_data%properties%SOYRT, ovrt_data%properties%RETDEPRT, ovrt_data%properties%OVROUGHRT, IXRT, JXRT, ovrt_data%control%boundary_flux, ovrt_data%control%boundary_flux_total,    & 
-                ovrt_data%properties%SO8RT, ovrt_data%properties%SO8RT_D, q_sfcflx_x, q_sfcflx_y)
+              CALL ROUTE_OVERLAND1(DTRT_TER, ovrt_data%properties%distance_to_neighbor, ovrt_data%control%surface_water_head_routing, ovrt_data%control%DHRT, ovrt_data%properties%surface_slope_x,   &
+		ovrt_data%properties%surface_slope_y, ovrt_data%properties%retention_depth, ovrt_data%properties%roughness, IXRT, JXRT, ovrt_data%control%boundary_flux, ovrt_data%control%boundary_flux_total,    & 
+                ovrt_data%properties%water_surface_slope, ovrt_data%properties%max_water_surface_slope_index, q_sfcflx_x, q_sfcflx_y)
             else
-              CALL ROUTE_OVERLAND2(DTRT_TER, ovrt_data%properties%dist, ovrt_data%control%surface_water_head_routing, ovrt_data%control%DHRT, ovrt_data%properties%SOXRT,   &
-                  ovrt_data%properties%SOYRT, ovrt_data%properties%RETDEPRT, ovrt_data%properties%OVROUGHRT, IXRT, JXRT, ovrt_data%control%boundary_flux, ovrt_data%control%boundary_flux_total,  &
+              CALL ROUTE_OVERLAND2(DTRT_TER, ovrt_data%properties%distance_to_neighbor, ovrt_data%control%surface_water_head_routing, ovrt_data%control%DHRT, ovrt_data%properties%surface_slope_x,   &
+                  ovrt_data%properties%surface_slope_y, ovrt_data%properties%retention_depth, ovrt_data%properties%roughness, IXRT, JXRT, ovrt_data%control%boundary_flux, ovrt_data%control%boundary_flux_total,  &
                   q_sfcflx_x,q_sfcflx_y)    
             end if
              
@@ -2416,12 +2416,12 @@
              RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
              RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%INFXSRT, &
              rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
-             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%dist, &
+             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%distance_to_neighbor, &
              RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
              rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
              rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
              RT_DOMAIN(did)%SMCRT, &
-             rt_domain(did)%overland%properties%ovroughrt, rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
+             rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
              RT_DOMAIN(did)%iswater)
@@ -2765,11 +2765,11 @@
                 call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
                      RT_DOMAIN(did)%SMCRT,RT_DOMAIN(did)%SMCMAXRT,RT_DOMAIN(did)%SMCREFRT,&
                      RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
-                     nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%soxrt,       &
-                     rt_domain(did)%overland%properties%soyrt,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
+                     nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%surface_slope_x,       &
+                     rt_domain(did)%overland%properties%surface_slope_y,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
                      rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
-                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%dist, &
-                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%so8rt_d, rt_domain(did)%overland%properties%so8rt)
+                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
+                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope)
              endif
 
          end subroutine SubsurfaceRouting_drv
@@ -2848,13 +2848,13 @@
              if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
                  !call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
                  !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
-                 !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retdeprt,rt_domain(did)%overland%properties%ovroughrt, &
-                 !         rt_domain(did)%overland%properties%soxrt, rt_domain(did)%overland%properties%soyrt, rt_domain(did)%overland%control%surface_water_head_routing,  &
+                 !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%overland%properties%roughness, &
+                 !         rt_domain(did)%overland%properties%surface_slope_x, rt_domain(did)%overland%properties%surface_slope_y, rt_domain(did)%overland%control%surface_water_head_routing,  &
                  !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&
                  !         rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%boundary_flux, &
                  !         rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%boundary_flux_total, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
                  !         rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
-                 !         rt_domain(did)%overland%properties%dist, rt_domain(did)%overland%properties%so8rt, rt_domain(did)%overland%properties%so8rt_d , &
+                 !         rt_domain(did)%overland%properties%distance_to_neighbor, rt_domain(did)%overland%properties%water_surface_slope, rt_domain(did)%overland%properties%max_water_surface_slope_index , &
                  !         rt_domain(did)%overland%mass_balance%smctot2,rt_domain(did)%overland%mass_balance%suminfxs1,rt_domain(did)%overland%mass_balance%suminfxsrt, &
                  !         rt_domain(did)%overland%mass_balance%smctot1,rt_domain(did)%overland%mass_balance%dsmctot )
                  call OverlandRouting( &
@@ -2971,7 +2971,7 @@
         
         do j=1,jxrt
           do i=1,ixrt
-            if( ovrt_data%control%infiltration_excess(i,j) .gt. ovrt_data%properties%RETDEPRT(i,j) ) then
+            if( ovrt_data%control%infiltration_excess(i,j) .gt. ovrt_data%properties%retention_depth(i,j) ) then
               sfcrt_flag = 1
               exit
             end if
