@@ -282,11 +282,11 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
                       rt_domain(did)%overland%properties%soxrt,rt_domain(did)%overland%properties%soyrt,&
-                      RT_DOMAIN(did)%QSTRMVOLRT_ACC,rt_domain(did)%overland%control%sfcheadsubrt, &
+                      RT_DOMAIN(did)%QSTRMVOLRT_ACC,rt_domain(did)%overland%control%surface_water_head_routing, &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
                       RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                      rt_domain(did)%overland%control%qbdryrt, &
+                      rt_domain(did)%overland%control%boundary_flux, &
                       nlst_rt(did)%io_config_outputs &
                        )
                  endif ! End check for io_form_outputs value
@@ -657,8 +657,8 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call OverlandRouting_drv(did)
       else
-         rt_domain(did)%overland%control%sfcheadsubrt = rt_domain(did)%overland%control%infxsubrt
-         rt_domain(did)%overland%control%infxsubrt = 0.
+         rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
+         rt_domain(did)%overland%control%infiltration_excess = 0.
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -862,7 +862,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
 	  gw2d(did)%ho = gw2d(did)%h
  
 	  ! put surface exceeding groundwater to surface routing inflow
-          rt_domain(did)%overland%control%sfcheadsubrt = rt_domain(did)%overland%control%sfcheadsubrt &
+          rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%surface_water_head_routing &
                                         + gw2d(did)%excess*1000. ! convert to mm
 	  
 	  ! aggregate  qsgw from routing to lsm grid
@@ -1034,7 +1034,7 @@ endif
         smcrttot1 = 0.
         do i=1,RT_DOMAIN(did)%IXRT
          do j=1,RT_DOMAIN(did)%JXRT
-            suminfxsrt1 = suminfxsrt1 + rt_domain(did)%overland%control%sfcheadsubrt(I,J) &
+            suminfxsrt1 = suminfxsrt1 + rt_domain(did)%overland%control%surface_water_head_routing(I,J) &
                                / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
             do kk=1,nlst_rt(did)%NSOIL
                 smcrttot1 = smcrttot1 + RT_DOMAIN(did)%SMCRT(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
@@ -1081,10 +1081,10 @@ endif
 
 !State Variables
                 RT_DOMAIN(did)%SFCHEADAGGRT = RT_DOMAIN(did)%SFCHEADAGGRT &
-                                            + rt_domain(did)%overland%control%sfcheadsubrt(IXXRT,JYYRT)
+                                            + rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT)
 !DJG Subgrid weighting edit...
                 RT_DOMAIN(did)%LSMVOL = RT_DOMAIN(did)%LSMVOL &
-                                      + rt_domain(did)%overland%control%sfcheadsubrt(IXXRT,JYYRT) &
+                                      + rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT) &
                                       * rt_domain(did)%overland%properties%dist(IXXRT,JYYRT,9)
 
                 do KRT=1,nlst_rt(did)%NSOIL
@@ -1098,7 +1098,7 @@ endif
 
 
 
-            rt_domain(did)%overland%control%sfcheadrt(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
+            rt_domain(did)%overland%control%surface_water_head_lsm(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
                                           / (nlst_rt(did)%AGGFACTRT**2)
 
             do KRT=1,nlst_rt(did)%NSOIL
@@ -1125,7 +1125,7 @@ endif
 #endif
                   if (RT_DOMAIN(did)%LSMVOL.gt.0.) then
                     RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
-                                          = rt_domain(did)%overland%control%sfcheadsubrt(IXXRT,JYYRT) &
+                                          = rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT) &
                                           * rt_domain(did)%overland%properties%dist(IXXRT,JYYRT,9) &
 					  / RT_DOMAIN(did)%LSMVOL
                   else
@@ -1229,7 +1229,7 @@ endif
         sicetot2 = 0.
         do i=1,RT_DOMAIN(did)%IX
          do j=1,RT_DOMAIN(did)%JX
-            suminfxs2 = suminfxs2 + rt_domain(did)%overland%control%sfcheadrt(I,J) &
+            suminfxs2 = suminfxs2 + rt_domain(did)%overland%control%surface_water_head_lsm(I,J) &
                                / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
             do kk=1,nlst_rt(did)%NSOIL
                 smctot2 = smctot2 + RT_DOMAIN(did)%SMC(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &

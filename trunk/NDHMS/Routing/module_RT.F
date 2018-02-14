@@ -150,10 +150,10 @@ CONTAINS
      allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
      !
 
-     !allocate( rt_domain(did)%overland%control%sfcheadsubrt(IXRT,JXRT) )
-     !rt_domain(did)%overland%control%sfcheadsubrt= 0.0                
-     !allocate( rt_domain(did)%overland%control%infxsubrt   (IXRT,JXRT) )
-     !rt_domain(did)%overland%control%infxsubrt   = 0.0                
+     !allocate( rt_domain(did)%overland%control%surface_water_head_routing(IXRT,JXRT) )
+     !rt_domain(did)%overland%control%surface_water_head_routing= 0.0                
+     !allocate( rt_domain(did)%overland%control%infiltration_excess   (IXRT,JXRT) )
+     !rt_domain(did)%overland%control%infiltration_excess   = 0.0                
      allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
      rt_domain(did)%INFXSWGT    = 0.0                
      allocate( rt_domain(did)%LKSATRT     (IXRT,JXRT) )
@@ -188,8 +188,8 @@ CONTAINS
      rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
      allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT_ACC  = 0.0                
-     !allocate( rt_domain(did)%overland%control%qbdryrt   	(IXRT,JXRT) )
-     !rt_domain(did)%overland%control%qbdryrt   	= 0.0     
+     !allocate( rt_domain(did)%overland%control%boundary_flux   	(IXRT,JXRT) )
+     !rt_domain(did)%overland%control%boundary_flux   	= 0.0     
      allocate( rt_domain(did)%SUB_RESID (ixrt,jxrt) )
      rt_domain(did)%SUB_RESID = 0.0                
      
@@ -1362,9 +1362,9 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%ZWATTABLRT = 0.0
    rt_domain(did)%QSUBBDRYRT = 0.0
    rt_domain(did)%overland%streams_and_lakes%qstrmvolrt = 0.0
-   rt_domain(did)%overland%control%qbdryrt = 0.0
-   rt_domain(did)%overland%control%sfcheadsubrt = 0.0
-   rt_domain(did)%overland%control%infxsubrt = 0.0
+   rt_domain(did)%overland%control%boundary_flux = 0.0
+   rt_domain(did)%overland%control%surface_water_head_routing = 0.0
+   rt_domain(did)%overland%control%infiltration_excess = 0.0
    rt_domain(did)%overland%control%dhrt = 0.0
    rt_domain(did)%overland%streams_and_lakes%lake_inflort = 0.0
    rt_domain(did)%LAKE_CT = 0

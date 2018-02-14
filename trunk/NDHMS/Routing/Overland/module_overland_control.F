@@ -16,24 +16,24 @@ module overland_control
       ! outputs
 
       ! replaced with surface_water_head_lsm
-      real, allocatable, dimension(:,:) :: sfcheadrt
+      !real, allocatable, dimension(:,:) :: sfcheadrt
       ! depth of water on the surface (after routing), passed to the land surface model (mm) on the land surface grid.
       ! LSM combines this with canopy water for infiltration excess at the next time step.
-      !real, allocatable, dimension(:,:) :: surface_water_head_lsm
+      real, allocatable, dimension(:,:) :: surface_water_head_lsm
       
       ! replaced with surface_water_head_routing
-      real, allocatable, dimension(:,:) :: sfcheadsubrt
+      !real, allocatable, dimension(:,:) :: sfcheadsubrt
       ! surface head on the routing grid during integration, input to surface_water_head_lsm for the next time step
-      !real, allocatable, dimension(:,:) :: surface_water_head_routing
+      real, allocatable, dimension(:,:) :: surface_water_head_routing
       
       !PROPOSED Decouple the surface_water_head_lsm and surface_water_head_routing into a cleaner interface (only one surface_water_head in overland)
       !This will have to be done once the land surface interface is better hashed out.
 
       ! inputs
       ! replaced with infiltration_excess
-      real, allocatable, dimension(:,:) :: infxsubrt
+      !real, allocatable, dimension(:,:) :: infxsubrt
       ! infiltration excess from the land surface model (mm) on the routing grid
-      !real, allocatable, dimension(:,:) :: infiltration_excess
+      real, allocatable, dimension(:,:) :: infiltration_excess
       
       ! miscellaneous bookkeeping
       
@@ -43,14 +43,14 @@ module overland_control
       real, allocatable, dimension(:,:) :: dhrt
       
       ! replaced with boundary_flux
-      real, allocatable, dimension(:,:) :: qbdryrt
+      !real, allocatable, dimension(:,:) :: qbdryrt
       ! flux of boundary cells at a given time step, + into the domain, - out of the domain (mm)
-      !real, allocatable, dimension(:,:) :: boundary_flux             
+      real, allocatable, dimension(:,:) :: boundary_flux             
 
       ! replaced with boundary_flux_total
-      real :: qbdrytrt
+      !real :: qbdrytrt
       ! accumulation of all boundary cell fluxes per time step (<mm>)
-      !real :: boundary_flux_total                             
+      real :: boundary_flux_total                             
 
 
       contains
@@ -70,32 +70,35 @@ subroutine overland_control_init(this,ix,jx)
 
     logical :: allocation_error = .false.
 
-   this%qbdrytrt = 0.0
+   this%boundary_flux_total = 0.0
 
     ! allocate surface head
-    if ( .not. allocated(this%sfcheadrt) ) then
-        allocate( this%sfcheadrt(ix,jx) )
-        this%sfcheadrt = 0.0
+    if ( .not. allocated(this%surface_water_head_lsm) ) then
+        allocate( this%surface_water_head_lsm(ix,jx) )
+        this%surface_water_head_lsm = 0.0
     else
         allocation_error = .true.
     end if
 
     ! allocate surface head
-    if ( .not. allocated(this%sfcheadsubrt) ) then
-        allocate( this%sfcheadsubrt(ix,jx) )
-        this%sfcheadsubrt = 0.0
+    if ( .not. allocated(this%surface_water_head_routing) ) then
+        allocate( this%surface_water_head_routing(ix,jx) )
+        this%surface_water_head_routing = 0.0
     else
         allocation_error = .true.
     end if
 
     ! allocate inflitration excess
-    if ( .not. allocated(this%infxsubrt) ) then
-        allocate( this%infxsubrt(ix,jx) )
-        this%infxsubrt = 0.0
+    if ( .not. allocated(this%infiltration_excess) ) then
+        allocate( this%infiltration_excess(ix,jx) )
+        this%infiltration_excess = 0.0
     else
         allocation_error = .true.
     end if
 
+    ! DEPRECATE TODO NJF and DJG Feb 13, 2018.  Remove for fall 2019 release
+    ! Is passed around overland routing as an output var, renamed to qsfc in route_overland<1,2>
+    ! qsfc in overland1 is intent(in), overland2 intent(inout). qsfc NEVER USED
     ! allocate dhrt
     if ( .not. allocated(this%dhrt) ) then
          allocate( this%dhrt(ix,jx) )
@@ -105,9 +108,9 @@ subroutine overland_control_init(this,ix,jx)
     end if
 
     ! allocate qbdryrt
-    if ( .not. allocated(this%qbdryrt) ) then
-         allocate( this%qbdryrt(ix,jx) )          ! allocate qbdryrt
-         this%qbdryrt = 0.0
+    if ( .not. allocated(this%boundary_flux) ) then
+         allocate( this%boundary_flux(ix,jx) )          ! allocate boundary_flux
+         this%boundary_flux = 0.0
     else
         allocation_error = .true.
     end if
@@ -127,22 +130,22 @@ subroutine overland_control_destroy(this)
     logical :: allocation_error = .false.
 
     ! deallocate surface head
-    if ( allocated(this%sfcheadrt) ) then
-        deallocate( this%sfcheadrt )
+    if ( allocated(this%surface_water_head_lsm) ) then
+        deallocate( this%surface_water_head_lsm )
     else
         allocation_error = .true.
     end if
 
     ! deallocate surface head
-    if ( allocated(this%sfcheadsubrt) ) then
-        deallocate( this%sfcheadsubrt )
+    if ( allocated(this%surface_water_head_routing) ) then
+        deallocate( this%surface_water_head_routing )
     else
         allocation_error = .true.
     end if
 
     ! deallocate inflitration excess
-    if ( allocated(this%infxsubrt) ) then
-        deallocate( this%infxsubrt)
+    if ( allocated(this%infiltration_excess) ) then
+        deallocate( this%infiltration_excess)
     else
         allocation_error = .true.
     end if
@@ -155,8 +158,8 @@ subroutine overland_control_destroy(this)
     end if
 
     ! deallocate qbdryrt
-    if ( allocated(this%qbdryrt) ) then
-         deallocate( this%qbdryrt )          ! allocate qbdryrt
+    if ( allocated(this%boundary_flux) ) then
+         deallocate( this%boundary_flux )          ! deallocate boundary_flux
     else
         allocation_error = .true.
     end if

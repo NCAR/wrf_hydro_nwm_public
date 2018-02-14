@@ -221,7 +221,7 @@ module module_lis_HYDRO
              call HYDRO2lis_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
         end do
 
-        call HYDRO2lis_2d(rt_domain(did)%overland%control%sfcheadrt(:,:),SFHEAD1RT,size(SFHEAD1RT),n,ix,jx)
+        call HYDRO2lis_2d(rt_domain(did)%overland%control%surface_water_head_lsm(:,:),SFHEAD1RT,size(SFHEAD1RT),n,ix,jx)
 
      return 
      end subroutine lis_cpl_HYDRO

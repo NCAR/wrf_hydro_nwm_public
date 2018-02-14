@@ -5749,7 +5749,7 @@ end subroutine mpp_output_chrt
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
-        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%sfcheadrt,"sfcheadrt" )
+        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt" )
 
 
 #ifdef MPP_LAND
@@ -5984,7 +5984,7 @@ if( nlst_rt(did)%channel_only       .eq. 0 .and. &
    !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
    call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
    call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
-   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%sfcheadrt,"sfcheadrt"  ) 
+   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt"  ) 
 
 end if ! neither channel_only nor channelBucket_only
 
@@ -5995,9 +5995,9 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
    if( nlst_rt(did)%channel_only       .eq. 0 .and. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
     
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%qbdryrt, "QBDRYRT" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux, "QBDRYRT" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%sfcheadsubrt, "sfcheadsubrt" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing, "sfcheadsubrt" )
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
@@ -6202,7 +6202,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           write(iunit,ERR=101) rt_domain(did)%SMCWLT1
           write(iunit,ERR=101) rt_domain(did)%INFXSRT
           write(iunit,ERR=101) rt_domain(did)%soldrain
-          write(iunit,ERR=101) rt_domain(did)%overland%control%sfcheadrt
+          write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
@@ -6218,9 +6218,9 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                      write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-                    write(iunit,ERR=101) rt_domain(did)%overland%control%qbdryrt
+                    write(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
                     write(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                    write(iunit,ERR=101) rt_domain(did)%overland%control%sfcheadsubrt
+                    write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
                     write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                     !AD_CHANGE: Not needed in RESTART
@@ -6294,8 +6294,8 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           read(iunit,ERR=101) rt_domain(did)%SMCWLT1
           read(iunit,ERR=101) rt_domain(did)%INFXSRT
           read(iunit,ERR=101) rt_domain(did)%soldrain
-          read(iunit,ERR=101) rt_domain(did)%overland%control%sfcheadrt
-          if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%overland%control%sfcheadrt = 0
+          read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
+          if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%overland%control%surface_water_head_lsm = 0
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
@@ -6311,9 +6311,9 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                      read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-                   read(iunit,ERR=101) rt_domain(did)%overland%control%qbdryrt
+                   read(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
                    read(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                   read(iunit,ERR=101) rt_domain(did)%overland%control%sfcheadsubrt
+                   read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
                    read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                    !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
@@ -6754,7 +6754,7 @@ if( nlst_rt(did)%channel_only       .eq. 0 .and. &
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
-      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%sfcheadrt,"sfcheadrt")
+      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt")
       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
 
    end if ! rst_typ .eq. 1
@@ -6777,8 +6777,8 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
 
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%sfcheadsubrt,"sfcheadsubrt")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%qbdryrt,"QBDRYRT")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing,"sfcheadsubrt")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux,"QBDRYRT")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
          !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
          !No need to have in restart since live calculated.

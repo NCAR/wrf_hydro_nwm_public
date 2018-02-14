@@ -2000,11 +2000,11 @@ subroutine output_rt_NWM(domainId,iGrid)
                   if(iTmp2 .eq. 1) then
                      varRealTmp = RT_DOMAIN(domainId)%ZWATTABLRT(iTmp,jTmp)
                   else if(iTmp2 .eq. 2) then
-                     varRealTmp = RT_DOMAIN(domainId)%overland%control%SFCHEADSUBRT(iTmp,jTmp)
+                     varRealTmp = RT_DOMAIN(domainId)%overland%control%surface_water_head_routing(iTmp,jTmp)
                   else if(iTmp2 .eq. 3) then
                      varRealTmp = RT_DOMAIN(domainId)%QSTRMVOLRT_ACC(iTmp,jTmp)
                   else if(iTmp2 .eq. 4) then
-                     varRealTmp = RT_DOMAIN(domainId)%overland%control%qbdryrt(iTmp,jTmp)
+                     varRealTmp = RT_DOMAIN(domainId)%overland%control%boundary_flux(iTmp,jTmp)
                   else if(iTmp2 .eq. 5) then
                      varRealTmp = RT_DOMAIN(domainId)%SMCRT(iTmp,jTmp,zTmp)
                   endif
@@ -3593,7 +3593,7 @@ subroutine output_lsmOut_NWM(domainId)
                else if(iTmp .eq. 13) then
                   varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
                else if(iTmp .eq. 14) then
-                  varRealTmp = rt_domain(domainId)%overland%control%SFCHEADRT(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
+                  varRealTmp = rt_domain(domainId)%overland%control%surface_water_head_lsm(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
                endif
 
                ! For now, we are foregoing converting these variables to integer
