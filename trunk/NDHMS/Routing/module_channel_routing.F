@@ -401,7 +401,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         c = 0.52           !-- coefficients for finding dx/Ckdt
         b = 1.15
         a = 0.0
-        nc = 4.0
+        nc = 2.0
         Twm = 3            ! will be added to RouteLinke.nc
         maxiter  = 100
         mindepth = 0.01
