@@ -30,11 +30,19 @@ module overland_mass_balance
       !real(kind=8) :: suminfxs1  ! NEED VARIABLE INFO
       
       ! Pre time step infiltration excess accumulator    (mm) TODO verify unit
+      ! FIX ME -- this variable was declared as real(kind=8) as mis match with parameter specification
+      ! in Noah_distributed_routing.F:OverlandRouting matched it with parameter specified as real(kind=4)
+      ! this caused an implicit cast to single percision float which was required as the value was then used
+      ! in the sum_real mpi call which required single percision. Does this variable need to be a double?
       real :: pre_infiltration_excess
       
       ! replaced with post_infiltration_excess
       !real(kind=8) :: suminfxsrt  ! NEED VARIABLE INFO
       ! Post time step infiltration excess accumulator   (mm) TODO verify unit
+      ! FIX ME -- this variable was declared as real(kind=8) as mis match with parameter specification
+      ! in Noah_distributed_routing.F:OverlandRouting matched it with parameter specified as real(kind=4)
+      ! this caused an implicit cast to single percision float which was required as the value was then used
+      ! in the sum_real mpi call which required single percision. Does this variable need to be a double?
       real :: post_infiltration_excess
       
    contains
