@@ -976,7 +976,7 @@
                   ovrt_data%properties%retention_depth, &
                   ovrt_data%properties%roughness, &
                   IXRT, JXRT, &
-                  ovrt_data%control%boundary_flux, 
+                  ovrt_data%control%boundary_flux, & 
                   ovrt_data%control%boundary_flux_total,  &
                   q_sfcflx_x,q_sfcflx_y)    
             end if
