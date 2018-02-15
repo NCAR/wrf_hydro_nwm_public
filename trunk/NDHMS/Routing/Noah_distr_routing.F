@@ -952,12 +952,32 @@
 
 
            if(rt_option .eq. 1) then
-              CALL ROUTE_OVERLAND1(DTRT_TER, ovrt_data%properties%distance_to_neighbor, ovrt_data%control%surface_water_head_routing, ovrt_data%control%DHRT, ovrt_data%properties%surface_slope_x,   &
-		ovrt_data%properties%surface_slope_y, ovrt_data%properties%retention_depth, ovrt_data%properties%roughness, IXRT, JXRT, ovrt_data%control%boundary_flux, ovrt_data%control%boundary_flux_total,    & 
-                ovrt_data%properties%water_surface_slope, ovrt_data%properties%max_water_surface_slope_index, q_sfcflx_x, q_sfcflx_y)
+              CALL ROUTE_OVERLAND1(DTRT_TER, &
+                  ovrt_data%properties%distance_to_neighbor, &
+                  ovrt_data%control%surface_water_head_routing, &
+                  ovrt_data%control%DHRT, &
+                  ovrt_data%properties%surface_slope_x,   &
+		  ovrt_data%properties%surface_slope_y, &
+                  ovrt_data%properties%retention_depth, &
+                  ovrt_data%properties%roughness, &
+                  IXRT, JXRT, &
+                  ovrt_data%control%boundary_flux, &
+                  ovrt_data%control%boundary_flux_total,    & 
+                  ovrt_data%properties%water_surface_slope, &
+                  ovrt_data%properties%max_water_surface_slope_index, &
+                  q_sfcflx_x, q_sfcflx_y)
             else
-              CALL ROUTE_OVERLAND2(DTRT_TER, ovrt_data%properties%distance_to_neighbor, ovrt_data%control%surface_water_head_routing, ovrt_data%control%DHRT, ovrt_data%properties%surface_slope_x,   &
-                  ovrt_data%properties%surface_slope_y, ovrt_data%properties%retention_depth, ovrt_data%properties%roughness, IXRT, JXRT, ovrt_data%control%boundary_flux, ovrt_data%control%boundary_flux_total,  &
+              CALL ROUTE_OVERLAND2(DTRT_TER, &
+                  ovrt_data%properties%distance_to_neighbor, & 
+                  ovrt_data%control%surface_water_head_routing, & 
+                  ovrt_data%control%DHRT, &
+                  ovrt_data%properties%surface_slope_x, &
+                  ovrt_data%properties%surface_slope_y, &
+                  ovrt_data%properties%retention_depth, &
+                  ovrt_data%properties%roughness, &
+                  IXRT, JXRT, &
+                  ovrt_data%control%boundary_flux, 
+                  ovrt_data%control%boundary_flux_total,  &
                   q_sfcflx_x,q_sfcflx_y)    
             end if
              
