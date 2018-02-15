@@ -2855,8 +2855,8 @@
                  !         rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%boundary_flux_total, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
                  !         rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
                  !         rt_domain(did)%overland%properties%distance_to_neighbor, rt_domain(did)%overland%properties%water_surface_slope, rt_domain(did)%overland%properties%max_water_surface_slope_index , &
-                 !         rt_domain(did)%overland%mass_balance%smctot2,rt_domain(did)%overland%mass_balance%suminfxs1,rt_domain(did)%overland%mass_balance%suminfxsrt, &
-                 !         rt_domain(did)%overland%mass_balance%smctot1,rt_domain(did)%overland%mass_balance%dsmctot )
+                 !         rt_domain(did)%overland%mass_balance%post_soil_moisture_content,rt_domain(did)%overland%mass_balance%pre_infiltration_excess,rt_domain(did)%overland%mass_balance%post_infiltration_excess, &
+                 !         rt_domain(did)%overland%mass_balance%pre_soil_moisture_content,rt_domain(did)%overland%mass_balance%accumulated_change_in_soil_moisture )
                  call OverlandRouting( &
                           rt_domain(did)%overland, &
                           nlst_rt(did)%DT, &
@@ -2921,8 +2921,8 @@
        integer  :: i,j
       
 
-       real            :: smctot2,smctot1,dsmctot
-       real            :: suminfxsrt,suminfxs1
+       !real            :: smctot2,smctot1,dsmctot
+       !real            :: suminfxsrt,suminfxs1
 ! local variable
        real            :: chan_in1,chan_in2
        real            :: lake_in1,lake_in2
@@ -2938,13 +2938,14 @@
 #endif
 
 !DJG debug...OV Routing...
-	suminfxs1=0.
+	ovrt_data%mass_balance%pre_infiltration_excess = 0.
         chan_in1=0.
         lake_in1=0.
         qbdry1=0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxs1 = suminfxs1 + ( ovrt_data%control%infiltration_excess(I,J)/float(IXRT*JXRT) )
+            ovrt_data%mass_balance%pre_infiltration_excess = &
+                ovrt_data%mass_balance%pre_infiltration_excess + ( ovrt_data%control%infiltration_excess(I,J)/float(IXRT*JXRT) )
             chan_in1 = chan_in1 + ( ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT) )
             lake_in1 = lake_in1 + ( ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT) )
             qbdry1 = qbdry1 + ( ovrt_data%control%boundary_flux(I,J)/float(IXRT*JXRT) )
@@ -2953,11 +2954,11 @@
 
 #ifdef MPP_LAND
 ! not tested
-        CALL sum_real1(suminfxs1)
+        CALL sum_real1(ovrt_data%mass_balance%pre_infiltration_excess)
         CALL sum_real1(chan_in1)
         CALL sum_real1(lake_in1)
         CALL sum_real1(qbdry1)
-        suminfxs1 = suminfxs1/float(numprocs)
+        ovrt_data%mass_balance%pre_infiltration_excess = ovrt_data%mass_balance%pre_infiltration_excess/float(numprocs)
         chan_in1 = chan_in1/float(numprocs)
         lake_in1 = lake_in1/float(numprocs)
         qbdry1 = qbdry1/float(numprocs)
@@ -3011,13 +3012,14 @@
 #endif
 
 !DJG Debug...OV Routing...
-	suminfxsrt=0.
+	ovrt_data%mass_balance%post_infiltration_excess = 0.
         chan_in2=0.
         lake_in2=0.
         qbdry2=0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt=suminfxsrt + (ovrt_data%control%surface_water_head_routing(I,J)/float(IXRT*JXRT))
+            ovrt_data%mass_balance%post_infiltration_excess = &
+                ovrt_data%mass_balance%post_infiltration_excess + (ovrt_data%control%surface_water_head_routing(I,J)/float(IXRT*JXRT))
             chan_in2=chan_in2 + (ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT))
             lake_in2=lake_in2 + (ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT))
             qbdry2=qbdry2 + (ovrt_data%control%boundary_flux(I,J)/float(IXRT*JXRT))
@@ -3025,11 +3027,11 @@
         end do
 #ifdef MPP_LAND
 ! not tested
-        CALL sum_real1(suminfxsrt)
+        CALL sum_real1(ovrt_data%mass_balance%post_infiltration_excess)
         CALL sum_real1(chan_in2)
         CALL sum_real1(lake_in2)
         CALL sum_real1(qbdry2)
-        suminfxsrt = suminfxsrt/float(numprocs)
+        ovrt_data%mass_balance%post_infiltration_excess = ovrt_data%mass_balance%post_infiltration_excess/float(numprocs)
         chan_in2 = chan_in2/float(numprocs)
         lake_in2 = lake_in2/float(numprocs)
         qbdry2 = qbdry2/float(numprocs)
@@ -3040,9 +3042,9 @@
        if(my_id .eq. IO_id) then
 #endif
 	print *, "OV Routing Mass Bal: "
-        print *, "WB_OV!InfxsDiff", suminfxsrt-suminfxs1
-        print *, "WB_OV!Infxs1", suminfxs1
-        print *, "WB_OV!Infxs2", suminfxsrt
+        print *, "WB_OV!InfxsDiff", ovrt_data%mass_balance%post_infiltration_excess - ovrt_data%mass_balance%pre_infiltration_excess
+        print *, "WB_OV!Infxs1", ovrt_data%mass_balance%pre_infiltration_excess
+        print *, "WB_OV!Infxs2", ovrt_data%mass_balance%post_infiltration_excess
         print *, "WB_OV!ChaninDiff", chan_in2-chan_in1
         print *, "WB_OV!Chanin1", chan_in1
         print *, "WB_OV!Chanin2", chan_in2
@@ -3052,8 +3054,8 @@
         print *, "WB_OV!QbdryDiff", qbdry2-qbdry1
         print *, "WB_OV!Qbdry1", qbdry1
         print *, "WB_OV!Qbdry2", qbdry2
-        print *, "WB_OV!Residual", (suminfxs1-suminfxsrt)-(chan_in2-chan_in1) &
-                      -(lake_in2-lake_in1)-(qbdry2-qbdry1)
+        print *, "WB_OV!Residual", (ovrt_data%mass_balance%post_infiltration_excess - ovrt_data%mass_balance%pre_infiltration_excess)&
+            -(chan_in2-chan_in1) -(lake_in2 - lake_in1) - (qbdry2 - qbdry1)
 #ifdef MPP_LAND
        endif
 #endif
