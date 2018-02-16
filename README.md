@@ -27,6 +27,7 @@ Funding support for the development and application of the WRF-Hydro system has 
 - The National Science Foundation and the National Center for Atmospheric Research
 - The National Oceanic and Atmospheric Administration (NOAA) Office of Water Prediction (OWP)
 - The U.S. National Weather Service (NWS)
+- The U.S. Deparment of Energy (DOE)
 - The Colorado Water Conservation Board
 - Baron Advanced Meteorological Services
 - National Aeronautics and Space Administration (NASA)
