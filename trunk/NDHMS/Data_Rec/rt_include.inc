@@ -117,7 +117,7 @@
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
   REAL, allocatable, DIMENSION(:)      :: MannN      !mannings N
   REAL, allocatable, DIMENSION(:)      :: So  !link slope and channel conductivity (m/s) 
-  REAL, allocatable, DIMENSION(:)      :: ChSSlp, Bw, Tw !trapezoid link params
+  REAL, allocatable, DIMENSION(:)      :: ChSSlp, Bw, Tw, Tw_CC, n_CC !trapezoid params, CC is compound channel
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING
@@ -127,6 +127,7 @@
   REAL, allocatable, DIMENSION(:)      :: ZELEV      !elevation of nodes for channel
   INTEGER, allocatable, DIMENSION(:)   :: CHANXI,CHANYJ !map chan to fine grid
   REAL,  DIMENSION(50)     :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+  REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params

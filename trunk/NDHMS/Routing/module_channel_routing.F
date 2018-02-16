@@ -343,7 +343,7 @@ DIFFUSION = Kf * sqrt(abs(Sf))*sgn
 end function DIFFUSION
 ! ----------------------------------------------------------------
  
-subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,Tw,depth)
+subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,Tw,TwCC,nCC,depth)
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -359,6 +359,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(IN)       :: ql         !lateral inflow through reach (m^3/sec)
         REAL, intent(IN)       :: Bw         ! bottom width (meters)
         REAL, intent(IN)       :: Tw         ! top width before bankfull (meters)
+        REAL, intent(IN)       :: TwCC       ! top width of Compund (meters)
+        REAL, intent(IN)       :: nCC        ! mannings of compund
         REAL, intent(IN)       :: Cs         ! Channel side slope slope
         REAL, intent(IN)       :: So         ! Channel bottom slope %
         REAL, intent(IN)       :: dx         ! channel lngth (m)
@@ -366,7 +368,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(INOUT)    :: vel        ! mannings coefficient
         INTEGER, intent(IN)    :: idx        ! channel id
         REAL, intent(INOUT)    :: depth      ! depth of flow in channel
-        INTEGER                :: Twm        !-- Top width multiplier (intent needs to be added)
 
 !--local variables
         REAL    :: C1, C2, C3, C4
@@ -375,7 +376,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: Ck             ! wave celerity (m/s)
 
 !-- channel geometry and characteristics, local variables
-        REAL    :: Twl            ! top width at given flow (m)
+        REAL    :: Twl            ! top width at simulated flow (m)
         REAL    :: AREA,AREAC     ! Cross sectional area channel and compound m^2
         REAL    :: Z              ! trapezoid distance (m)
         REAL    :: R,RC           ! Hydraulic radius of channel and compound
@@ -394,15 +395,12 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
 !-- local variables.. needed if channel is sub-divded
         REAL    :: a,b,c,F
-        REAL    :: nc         ! manning coefficient multiplier for compund channel
         REAL    :: mindepth   !  minimum depth in channel
         INTEGER :: i,tries    !-- channel segment counter
 
         c = 0.52           !-- coefficients for finding dx/Ckdt
         b = 1.15
         a = 0.0
-        nc = 2.0
-        Twm = 2            ! will be added to RouteLinke.nc
         maxiter  = 100
         mindepth = 0.01
         aerror = 0.01
@@ -416,8 +414,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
          z = 1/Cs          !channel side distance (m)
         endif
 
-        if(Bw .ge. Tw) then
-          bfd =  Bw/(2*z)  !bankfull depth (m)
+        if(Bw .gt. Tw) then   !effectively infinite deep bankful
+           bfd = Bw/0.00001
+        elseif (Bw .eq. Tw) then 
+          bfd =  Bw/(2*z)  !bankfull depth is effectively 
         else
           bfd =  (Tw - Bw)/(2*z)  !bankfull depth (m)
         endif
@@ -449,9 +449,9 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
             if(h_0 .gt. bfd) then !water outside of defined channel
              AREA =  (Bw + bfd * z) * bfd
-             AREAC = (Twm * Tw * (h_0 -bfd)) !assume compound component is rect. chan, that's 3 times the Tw
+             AREAC = (TwCC * (h_0 -bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2 * bfd * sqrt(1+z*z)) 
-             WPC = ((Twm-1) * Tw) + (2*(h_0-bfd)) !WPC is 2 times the Tw
+             WPC = TwCC + (2*(h_0-bfd)) !WPC is 2 times the Tw
              R   = (AREA + AREAC)/(WP +WPC)  ! hydraulic radius
             else
               AREA = (Bw + h_0 * z ) * h_0
@@ -470,7 +470,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             !of the spills is 2x the manning of the channel
                 Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                 ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
-                + ((sqrt(So)/(n*nc))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
+                + ((sqrt(So)/(nCC))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
           else
                if(h_0 .gt. 0.0) then
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
@@ -487,7 +487,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           endif
  
           if(h_0 .gt. bfd) then !water outside of defined channel
-             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*(Tw*Twm)*So*Ck*dx)))))
+             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*TwCC*So*Ck*dx)))))
           else
             if(Ck .gt. 0.0) then
               X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2*Twl*So*Ck*dx)))))
@@ -510,7 +510,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 !          C4 =  (ql*dt)/D - (ChannK * (WP + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
 
            if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
-             Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+             Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f0(x)
            endif
 
@@ -519,9 +519,9 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
            if(h .gt. bfd) then !water outside of defined channel
              AREA =  (Bw + bfd * z) * bfd
-             AREAC = ((Twm*Tw) * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
+             AREAC = (TwCC * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2 * bfd * sqrt(1+z*z)) 
-             WPC = ((Twm-1) *Tw) + (2*(h-bfd)) !the additional wetted perimeter
+             WPC = TwCC + (2*(h-bfd)) !the additional wetted perimeter
              R   = (AREA + AREAC)/(WP +WPC)
             ! RC  = AREAC/WPC
            else
@@ -537,7 +537,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           if(h .gt. bfd) then !water outside of defined channel, assumed rectangular, 3x TW and n = 3x
                 Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                 ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*bfd*z))))*AREA &
-                + ((sqrt(So)/(n*nc))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
+                + ((sqrt(So)/(nCC))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
           else
                if(h .gt. 0.0) then !avoid divide by zero
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
@@ -552,7 +552,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             Km = dt
            endif
           if(h .gt. bfd) then !water outside of defined channel
-            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*(Tw*Twm)*So*Ck*dx)))))
+            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2*TwCC*So*Ck*dx)))))
 
           else
 
@@ -582,7 +582,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            endif
 
            if((WP+WPC) .gt. 0.0) then
-            Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+            Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
            endif
 
@@ -640,7 +640,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            print*, "So,dx,h",So,dx,h
            print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
            print*, "bfd,Bw,Tw,Twl", bfd,Bw,Tw,Twl
-           print*, "Qmc,Qmn", (C1*qup)+(C2*quc)+(C3*qdp) + C4,((1/(((WP*n)+(WPC*nc*n))/(WP+WPC))) * &
+           print*, "Qmc,Qmn", (C1*qup)+(C2*quc)+(C3*qdp) + C4,((1/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) 
          endif
 
@@ -721,7 +721,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, CH_LNKRT, &
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
-       HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, &
+       HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
        RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
        ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
@@ -766,6 +766,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: CHANLEN
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: So, MannN
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChSSlp,Bw,Tw  !--properties of nodes or links
+        REAL, INTENT(IN), DIMENSION(NLINKS)       :: Tw_CC, n_CC  !properties of compund channel
+
         REAL                                      :: Km, X
         REAL , INTENT(INOUT), DIMENSION(:,:) :: QLINK
         REAL ,  DIMENSION(NLINKS,2) :: tmpQLINK
@@ -1000,7 +1002,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
                    call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
                     Qup,Quc, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
-                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k),HLINK(k) )
+                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k),Tw_CC(k), n_CC(k), HLINK(k) )
 
                    else
                     print *, "FATAL ERROR: no channel option selected"
@@ -1740,7 +1742,7 @@ end subroutine drive_CHANNEL
         LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
-        CHANLEN, MannN, So, ChSSlp, Bw, Tw, &
+        CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
         RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
         ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
@@ -1796,6 +1798,7 @@ end subroutine drive_CHANNEL
        real, intent(IN), dimension(:)        :: CHANLEN
        real, intent(IN), dimension(:)        :: So, MannN
        real, intent(IN), dimension(:)        :: ChSSlp,Bw,Tw  !--properties of nodes or links
+       real, intent(IN), dimension(:)        :: Tw_CC, n_CC   ! properties of compound channel
        real                                      :: Km, X
        real , intent(INOUT), dimension(:,:)  :: QLINK 
        real , intent(INOUT), dimension(:)    :: HLINK
@@ -2127,7 +2130,7 @@ do nt = 1, nsteps
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
-              MannN(k),      ChSSlp(k),   Bw(k), Tw(k), HLINK(k) )
+              MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k) )
          
       else
 #ifdef HYDRO_D
