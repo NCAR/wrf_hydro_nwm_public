@@ -2,7 +2,7 @@
 **IMPORTANT:** Please note that the model code contained in this repository is currently a **pre-release to beta users** and is **not fully supported at this time.** A full public release with additional documentation will be made available and officially announced through our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe). If you would like to receive notification of the official public release please subscribe to our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe).
 
 ## Description
-This is the public code repository for [WRF-Hydro](https://ral.ucar.edu/projects/wrf_hydro).
+This is the code repository for [WRF-Hydro](https://ral.ucar.edu/projects/wrf_hydro).
 
 WRF-Hydro is a community modeling system and framework for hydrologic modeling and model coupling.  In 2016 a configuration of WRF-Hydro was implemented as the [National Water Model](http://water.noaa.gov/about/nwm) (NWM) for the continental United States.
 
