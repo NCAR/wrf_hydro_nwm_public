@@ -414,7 +414,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
          z = 1/Cs          !channel side distance (m)
         endif
 
-        if(Bw .gt. Tw .OR. compound_channel .eq. FALSE) then   !effectively infinite deep bankful
+        if(Bw .gt. Tw) then   !effectively infinite deep bankful
            bfd = Bw/0.00001
         elseif (Bw .eq. Tw) then 
           bfd =  Bw/(2*z)  !bankfull depth is effectively 
