@@ -1,8 +1,15 @@
 This README provides a brief description of how to build WRF-Hydro as a standalone
 modeling system.
 
-More details regarding the model can be found on the project webpage:
+More details regarding the model as well as documentation and user guides can be found on the project website:
 https://ral.ucar.edu/projects/wrf_hydro
+
+Software Requirements:
+A compiler. WRF-Hydro supported compilers are the Portland Group FORTRAN compiler, the Intel ‘ifort’ compiler and the public license GNU Fortran compiler ‘gfort’ (for use with Linux-based operating systems on desktops and clusters)
+MPICH or OpenMPI
+netCDF C & Fortran Libraries version 4 or greater available from https://www.unidata.ucar.edu/software/netcdf/ (These libraries need to be compiled with the same compilers as you will use to compile WRF-Hydro)
+
+Note: Users must build the code (i.e. executable files) on their own machines. WRF-Hydro requires a number of machine and distribution-specific libraries. We are not able to cover the breadth of all possible configurations.
 
 Steps for building WRF-Hydro:
 
