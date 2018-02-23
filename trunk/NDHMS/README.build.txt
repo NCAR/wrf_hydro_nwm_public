@@ -1,29 +1,38 @@
 This README provides a brief description of how to build WRF-Hydro as a standalone
 modeling system.
 
-More details regarding the model as well as documentation and user guides can be found on the project website:
+More details regarding the model as well as documentation and user guides can be found on 
+the project website:
 https://ral.ucar.edu/projects/wrf_hydro
 
-Software Requirements:
-A compiler. WRF-Hydro supported compilers are the Portland Group FORTRAN compiler, the Intel ‘ifort’ compiler and the public license GNU Fortran compiler ‘gfort’ (for use with Linux-based operating systems on desktops and clusters)
-MPICH or OpenMPI
-netCDF C & Fortran Libraries version 4 or greater available from https://www.unidata.ucar.edu/software/netcdf/ (These libraries need to be compiled with the same compilers as you will use to compile WRF-Hydro)
+Requirements:
+   * A supported Fortran compiler:
+     - PGI (pgfortran) 
+     - Intel (ifort) 
+     - GNU (gfortran)
+   * MPI libraries (MPICH or Open MPI)
+   * netCDF C & Fortran libraries version 4 or greater
 
-Note: Users must build the code (i.e. executable files) on their own machines. WRF-Hydro requires a number of machine and distribution-specific libraries. We are not able to cover the breadth of all possible configurations.
+   Please note that these libraries need to be compiled with the same set of compilers 
+   that will be used to compile WRF-Hydro
 
 Steps for building WRF-Hydro:
 
 1. Obtain the source code
 
    The source code for the latest WRF-Hydro release can be obtained here:
-   https://github.com/NCAR/wrf_hydro/releases/latest
+   https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest
 
    Download and unpack the source code and navigate to the directory where you will
    compile the code:
 
-   cd  wrf_hydro/trunk/NDHMS
+   cd  wrf_hydro*/trunk/NDHMS
 
 2. Set the required environment variables
+
+   Note: If the required netCDF libraries are not already available on your system
+   (these are commonly available as a module on high performance computing environments),
+   you will need to install them now.
 
    First ensure the environment variables describing where your netCDF libraries live
    are set appropriately so that the compiler can find them.  For a bash shell the
@@ -35,9 +44,9 @@ Steps for building WRF-Hydro:
       
    Then copy over the setEnvar.sh script from the 'template' directory and edit
    the WRF-Hydro environment variables / compile time options in the file as needed.
-   This file can then be passed to the compile scripts below which will source the
-   environment variable for you. Alternatively these environment variables can be set
-   by the user.
+   This file can then be passed as an argument (see step #4) to the compile scripts 
+   below which will source the environment variables for you. Alternatively these 
+   environment variables can be set by the user.
 
 3. Configure
 
@@ -58,11 +67,10 @@ Steps for building WRF-Hydro:
    ./compile_offline_NoahMP.sh setEnvar.sh
 
    This should result in the creation of a 'Run' directory populated with the
-   appropriate parameter tables and namelist for the land surface model selected
-   as well as the hydro namelist and a model executable that is then symlinked to 
-   wrf_hydro.exe.
+   appropriate template parameter tables and namelists for the land surface model
+   selected as well as a model executable that is then symlinked to wrf_hydro.exe.
 
-   Note that as mentioned above passing the environment variable file as an argument
-   is optional. However, if this is not passed the desired environment variables 
-   must be set prior to running the compile script.
+   Note that, as mentioned above, passing the environment variable file as an argument
+   to the compile script is optional. However, if this is not passed the desired 
+   environment variables must be set prior to running the compile script.
 
