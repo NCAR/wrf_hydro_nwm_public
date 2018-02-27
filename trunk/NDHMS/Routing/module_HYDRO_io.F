@@ -8906,25 +8906,19 @@ where(So .lt. 0.0001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
 
-! TopWidth is optional, only get it if it's defined in the file.
-iRet = nf90_inq_varid(ncid, 'TopWdth', varid)
-if (iret .eq. nf90_NoErr) then
-   call get_1d_netcdf_real(ncid, 'TopWdth', Tw,  'read_route_link_netcdf', .true.)
-  else
-   Tw = 0.0  !force top width to 0.0
-end if
-
-! TopWidth of compund is optional, only get it if it's defined in the file.
-iRet = nf90_inq_varid(ncid, 'TopWdthCC', varid)
-if (iret .eq. nf90_NoErr) then
+! Compound channel variables, contingent on nlst_rt(did)%compound_channel option
+if(nlst_rt(did)%compound_channel) then
+   print*, "compound_channel is TRUE in hydro.namelist."
+   print*, "Variables are all required in route link: TopWdth, TopWdthCC, nCC."
+   ! the fatal_if_error option is tru for all of these. An error in any will be a fatal error. 
+   call get_1d_netcdf_real(ncid, 'TopWdth',   Tw,     'read_route_link_netcdf', .true.)
    call get_1d_netcdf_real(ncid, 'TopWdthCC', Tw_CC,  'read_route_link_netcdf', .true.)
+   call get_1d_netcdf_real(ncid, 'nCC',       n_CC,   'read_route_link_netcdf', .true.)
+else 
+   print*, "compound_channel is FALSE in hydro.namelist."
+   Tw = 0.0  !force top width to 0.0, this deactivates the compound channel formulation.
 end if
 
-! mannings of compund is optional, only get it if it's defined in the file.
-iRet = nf90_inq_varid(ncid, 'nCC', varid)
-if (iret .eq. nf90_NoErr) then
-   call get_1d_netcdf_real(ncid, 'nCC', n_CC,  'read_route_link_netcdf', .true.)
-end if
  
 ! gages is optional, only get it if it's defined in the file.
 iRet = nf90_inq_varid(ncid, 'gages', varid)
