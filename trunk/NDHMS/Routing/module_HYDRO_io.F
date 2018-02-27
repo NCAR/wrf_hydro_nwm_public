@@ -7359,19 +7359,19 @@ end subroutine RESTART_IN_nc
 
 
 subroutine READ_CHROUTING1( &
-     IXRT,         JXRT,              fgDEM,     CH_NETRT, & 
-     CH_LNKRT,     LAKE_MSKRT,        FROM_NODE, TO_NODE,  &
-     TYPEL,        ORDER,             MAXORDER,  NLINKS,   &
-     NLAKES,       CHANLEN,           MannN,     So,       & 
-     ChSSlp,       Bw,                Tw,                  &        
-     Tw_CC,        n_CC,                                   &
-     HRZAREA,       LAKEMAXH,                              & 
-     WEIRH,        WEIRC,             WEIRL,     ORIFICEC, &
-     ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE,  &
-     ELEVLAKE,     dist,              ZELEV,     LAKENODE, &
-     CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,    & 
-     CHLON,        channel_option,    LATVAL,    LONVAL,   &
-     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT    & !! no comma at end
+     IXRT,         JXRT,              fgDEM,        CH_NETRT, & 
+     CH_LNKRT,     LAKE_MSKRT,        FROM_NODE,    TO_NODE,  &
+     TYPEL,        ORDER,             MAXORDER,     NLINKS,   &
+     NLAKES,       CHANLEN,           MannN,        So,       & 
+     ChSSlp,       Bw,                Tw,                     &        
+     Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, & 
+     WEIRH,        WEIRC,             WEIRL,        ORIFICEC, &
+     ORIFICEA,     ORIFICEE,          LATLAKE,      LONLAKE,  &
+     ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
+     CH_NETLNK,    CHANXI,            CHANYJ,       CHLAT,    & 
+     CHLON,        channel_option,    LATVAL,       LONVAL,   &
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM,  &
+     UDMP_OPT                                                 & !! no comma at end
 #ifdef MPP_LAND
     ,Link_Location                                         &
 #endif
@@ -8343,8 +8343,8 @@ end subroutine read_routelink
         INTEGER, intent(out), dimension(:) :: LAKEIDA, LINKID, TO_NODE, TYPEL, ORDER 
 
         real,dimension(:,:)  :: QLINK
-        REAL, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-                   MannN, So, ChSSlp, Bw, Tw, latlake, lonlake, Tw_CC, n_CC
+        real, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN
+        real, intent(out), dimension(:) ::  MannN, So, ChSSlp, Bw, Tw, latlake, lonlake, Tw_CC, n_CC
 
         character(len=15), dimension(:), intent(inout) :: gages
         character(len=15), intent(in) :: gageMiss
@@ -8366,8 +8366,8 @@ end subroutine read_routelink
 
 #ifdef MPP_LAND
         real :: tmpQLINK(GNLINKSL,2)
-        REAL, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
-                   tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpTw, tmpTw_CC, tmpn_CC
+        real, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN
+        real, allocatable, dimension(:) ::  tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpTw, tmpTw_CC, tmpn_CC
 #endif 
 
         !! is RouteLink file netcdf (*.nc) or csv (*.csv)
@@ -8409,7 +8409,8 @@ end subroutine read_routelink
                   tmpCHLAT,      tmpZELEV,     tmpTYPEL,    tmpORDER,    &
                   tmpQLINK(:,1), tmpMUSK,      tmpMUSX,     tmpCHANLEN,  &
                   tmpMannN,      tmpSo,        tmpChSSlp,   tmpBw,       &
-                  tmpTw,         tmpTw_CC,     tmpn_CC,     tmpGages, tmpLAKEIDA)
+                  tmpTw,         tmpTw_CC,     tmpn_CC,     tmpGages,    &
+                  tmpLAKEIDA                                              )
 
           else
 
@@ -8521,13 +8522,14 @@ end subroutine read_routelink
        QLINK = 0 
         if(routeLinkNetcdf) then
 
-          call read_route_link_netcdf(                     &
+          call read_route_link_netcdf(                      &
                  route_link_f,                              &
                  LINKID,     TO_NODE, CHLON,                &
                  CHLAT,      ZELEV,     TYPEL,    ORDER,    &
                  QLINK(:,1), MUSK,      MUSX,     CHANLEN,  &
                  MannN,      So,        ChSSlp,   Bw,       &
-                 Tw,         Tw_CC,     n_CC,     gages, LAKEIDA)
+                 Tw,         Tw_CC,     n_CC,     gages,    & 
+                 LAKEIDA                                     )
            
         else 
 
@@ -8583,22 +8585,21 @@ end subroutine read_routelink
 !yw continue
 
 subroutine MPP_READ_CHROUTING_new(&
-     IXRT,         JXRT,             ELRT,           CH_NETRT, &
-     CH_LNKRT,     LAKE_MSKRT,       FROM_NODE,      TO_NODE, &
-     TYPEL,        ORDER,            MAXORDER,       NLINKS, &
-     NLAKES,       CHANLEN,          MannN,          So, &
-     ChSSlp,       Bw,               Tw, Tw_CC, n_CC,    & 
-     HRZAREA,      LAKEMAXH,                             &
-     WEIRH,        WEIRC,            WEIRL,          ORIFICEC, &
-     ORIFICEA,     ORIFICEE,         LATLAKE,        LONLAKE, &
-     ELEVLAKE,     dist,             ZELEV,          LAKENODE, &
-
-     CH_NETLNK,    CHANXI,            CHANYJ,        CHLAT, &
-     CHLON,        channel_option,    LATVAL,        LONVAL, &
-     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT,                  &
-     g_ixrt,       g_jxrt,            gnlinks,       GCH_NETLNK, &
-     map_l2g,      link_location,     yw_mpp_nlinks, lake_index, &
-     nlinks_index)
+     IXRT,         JXRT,              ELRT,           CH_NETRT,  &
+     CH_LNKRT,     LAKE_MSKRT,        FROM_NODE,      TO_NODE,   &
+     TYPEL,        ORDER,             MAXORDER,       NLINKS,    &
+     NLAKES,       CHANLEN,           MannN,          So,        &
+     ChSSlp,       Bw,                Tw,             Tw_CC,     &
+     n_CC,         HRZAREA,           LAKEMAXH,                  &
+     WEIRH,        WEIRC,             WEIRL,          ORIFICEC,  &
+     ORIFICEA,     ORIFICEE,          LATLAKE,        LONLAKE,   &
+     ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
+     CH_NETLNK,    CHANXI,            CHANYJ,         CHLAT,     &
+     CHLON,        channel_option,    LATVAL,         LONVAL,    &
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f,   LAKEIDM,   &
+     UDMP_OPT,     g_ixrt,            g_jxrt,         gnlinks,   &
+     GCH_NETLNK,   map_l2g,           link_location,  yw_mpp_nlinks, &
+     lake_index,   nlinks_index                                       )
 
 implicit none
 integer, intent(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS, UDMP_OPT
@@ -8658,8 +8659,8 @@ call READ_CHROUTING1( &
      CH_LNKRT,     LAKE_MSKRT,        FROM_NODE, TO_NODE, &
      TYPEL,        ORDER,             MAXORDER,  NLINKS,  &
      NLAKES,       CHANLEN,           MannN,     So,      &
-     ChSSlp,       Bw,                Tw, Tw_CC, n_CC,    &
-     HRZAREA,      LAKEMAXH,                              &
+     ChSSlp,       Bw,                Tw,        Tw_CC,   & 
+     n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     ORIFICEC,& 
      ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE, &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
@@ -8854,11 +8855,12 @@ end subroutine MPP_READ_CHROUTING_new
 ! User controllable options: None. 
 
 subroutine read_route_link_netcdf( route_link_file,                         &
-                                   LINKID,   TO_NODE, CHLON,                &
+                                   LINKID,   TO_NODE,   CHLON,              &
                                    CHLAT,    ZELEV,     TYPEL,    ORDER,    &
                                    QLINK,    MUSK,      MUSX,     CHANLEN,  &
                                    MannN,    So,        ChSSlp,   Bw,       &
-                                   Tw,       Tw_CC,     n_CC,     gages,  LAKEIDA)
+                                   Tw,       Tw_CC,     n_CC,     gages,    &
+                                   LAKEIDA                                   )
 
 implicit none
 character(len=*),        intent(in)  :: route_link_file
