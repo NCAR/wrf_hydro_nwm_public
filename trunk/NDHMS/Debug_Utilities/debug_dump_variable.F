@@ -63,7 +63,7 @@ module debug_dump_variable
         call debug_write_float_to_file(target_array, filepath)
 #endif
 
-    end subroutine dump_float_2d
+    end subroutine dump_float_2d_rt
 
     subroutine debug_write_float_to_file(target_array, filepath)
         ! parameters
