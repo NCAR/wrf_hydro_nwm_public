@@ -14,7 +14,7 @@ FLFLAGS=
 
 .PHONY: all mod test
 
-all: mod test
+all: mod
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules	
@@ -31,8 +31,8 @@ mod:
 
 	cp *.mod ../../mod
 test:
-	$(FC) $(FFLAGS) overland_tests.F
-	$(FC) -o overland_tests \
+	$(COMPILER90) $(FFLAGS) overland_tests.F
+	$(COMPILER90) -o overland_tests \
 		module_overland_control.o \
 		module_overland_streams_and_lakes.o \
 		module_overland_routing_properties.o \
