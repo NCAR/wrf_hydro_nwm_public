@@ -6,7 +6,7 @@ all:
 BASIC:
 	(cd MPP     ; make -f Makefile)
 	(cd Data_Rec     ; make -f Makefile)
-	make -C Debug_Utilites
+	make -C Debug_Utilities/
 	(cd Routing; make -f Makefile)
 	(cd HYDRO_drv;   make -f Makefile)
 
@@ -14,6 +14,6 @@ clean:
 	(cd Data_Rec; make -f Makefile clean)
 	(cd HYDRO_drv; make -f Makefile clean)
 	(cd MPP; make -f Makefile clean)
-	make -C Debug_Utilites clean
+	make -C Debug_Utilities/ clean
 	(cd Routing;    make -f Makefile clean)
 	(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)
