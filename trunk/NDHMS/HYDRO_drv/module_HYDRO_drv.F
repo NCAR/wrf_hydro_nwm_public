@@ -582,7 +582,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
         integer:: did
         integer:: rst_out
 
-
 !       call HYDRO_out(did)
 
 
@@ -598,9 +597,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !              ! does not run the NOAH LASF model, only read the parameter
 !              call read_land_par(did,lsm(did)%ix,lsm(did)%jx)
 !          endif
-
-
-
 
 
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
@@ -1408,7 +1404,6 @@ rt_domain(did)%jxrt = jx*nlst_rt(did)%AGGFACTRT
 
 call getChanDim(did)
 
-
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
 write(6,*) "finish getChanDim "
@@ -1466,7 +1461,6 @@ write(78,*) "finish decomposion"
 #endif
 #endif
 
-
 if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
      nlst_rt(1)%io_form_outputs .ne. 0) then
    !! This is the "decoder ring" for reading channel-only forcing from io_form_outputs=1,2 CHRTOUT files.
@@ -1494,7 +1488,6 @@ if(nlst_rt(did)%channel_only .ne. 1)  call get_dist_lrt(did) !! needed forchanne
   
 ! rt model initilization
 call LandRT_ini(did)
-
 
 if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
    
@@ -1566,7 +1559,6 @@ if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 
 
 call HYDRO_rst_in(did)
-
 !#ifdef HYDRO_REALTIME
 if (trim(nlst_rt(did)%restart_file) == "") then
   call HYDRO_out(did, 0)

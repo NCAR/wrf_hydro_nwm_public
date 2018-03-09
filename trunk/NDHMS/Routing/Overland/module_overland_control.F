@@ -65,10 +65,12 @@ module overland_control
 ! this procedure allocates memory for an overland_control structure that has not been allocated
 ! if the structure has been allocated an error will be logged
 
-subroutine overland_control_init(this,ix,jx)
+subroutine overland_control_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
     class(overland_control_struct), intent(inout) :: this ! the type object being initalized
-    integer, intent(in) :: ix                     ! x grid size
-    integer, intent(in) :: jx                     ! y grid size
+    integer, intent(in) :: lsm_ix                    ! land surface x size
+    integer, intent(in) :: lsm_jx                    ! land surface y size
+    integer, intent(in) :: rt_ix                     ! routing grid x size
+    integer, intent(in) :: rt_jx                     ! routing grid y size
 
     logical :: allocation_error = .false.
 
@@ -83,16 +85,16 @@ subroutine overland_control_init(this,ix,jx)
     end if
 
     ! allocate surface head
+
     if ( .not. allocated(this%surface_water_head_routing) ) then
-        allocate( this%surface_water_head_routing(ix,jx) )
-        this%surface_water_head_routing = 0.0
-    else
+        allocate( this%surface_water_head_routing(lsm_ix,lsm_jx) )
+        this%surface_water_head_routing = 0.0    else
         allocation_error = .true.
     end if
 
     ! allocate inflitration excess
     if ( .not. allocated(this%infiltration_excess) ) then
-        allocate( this%infiltration_excess(ix,jx) )
+        allocate( this%infiltration_excess(rt_ix,rt_jx) )
         this%infiltration_excess = 0.0
     else
         allocation_error = .true.
@@ -103,7 +105,7 @@ subroutine overland_control_init(this,ix,jx)
     ! qsfc in overland1 is intent(in), overland2 intent(inout). qsfc NEVER USED
     ! allocate dhrt
     if ( .not. allocated(this%dhrt) ) then
-         allocate( this%dhrt(ix,jx) )
+         allocate( this%dhrt(rt_ix,rt_jx) )
          this%dhrt = 0.0
     else
         allocation_error = .true.
@@ -111,7 +113,7 @@ subroutine overland_control_init(this,ix,jx)
 
     ! allocate qbdryrt
     if ( .not. allocated(this%boundary_flux) ) then
-         allocate( this%boundary_flux(ix,jx) )          ! allocate boundary_flux
+         allocate( this%boundary_flux(rt_ix,rt_jx) )          ! allocate qbdryrt
          this%boundary_flux = 0.0
     else
         allocation_error = .true.

@@ -39,10 +39,12 @@ module overland_data
 contains
 
 ! this procedure allocates the overland_struct
-subroutine overland_struct_init(this,ix,jx)
+subroutine overland_struct_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
     class(overland_struct), intent(inout) :: this ! the type object being initalized
-    integer, intent(in) :: ix                     ! x grid size
-    integer, intent(in) :: jx                     ! y grid size    allocate( thist%control )
+    integer, intent(in) :: lsm_ix                    ! lsm x grid size
+    integer, intent(in) :: lsm_jx                    ! lsm y grid size
+    integer, intent(in) :: rt_ix                     ! x grid size
+    integer, intent(in) :: rt_jx                     ! y grid size    allocate( thist%control )
 
     if (this%pointer_allocation_guard .eqv. .false. ) then
         this%pointer_allocation_guard = .true.
@@ -50,7 +52,7 @@ subroutine overland_struct_init(this,ix,jx)
         if ( .not. associated( this%control) ) then
             write(0,*) "Failure to allocate overland control structure"
         else
-            call this%control%init(ix,jx)
+            call this%control%init(lsm_ix,lsm_jx,rt_ix,rt_jx)
         end if
 
         ! allocate the streams and lakes structure
@@ -58,7 +60,7 @@ subroutine overland_struct_init(this,ix,jx)
         if ( .not. associated( this%streams_and_lakes) ) then
             write(0,*) "Failure to allocate overland lakes and streams structure"
         else
-            call this%streams_and_lakes%init(ix,jx)
+            call this%streams_and_lakes%init(rt_ix,rt_jx)
         end if
 
         ! allocate the properties structure
@@ -66,7 +68,7 @@ subroutine overland_struct_init(this,ix,jx)
         if ( .not. associated( this%properties) ) then
             write(0,*) "Failure to allocate overland properties structure"
         else
-            call this%properties%init(ix,jx)
+            call this%properties%init(rt_ix,rt_jx)
         end if
 
         ! allocate the mass balance structure

@@ -43,7 +43,7 @@ program overland_tests
         type (overland_struct) :: overland_data
 
         ! initalize the structure
-        call overland_data%init(ix,jx)
+        call overland_data%init(ix,jx,ix,jx)
 
         ! test to see if control was associated
         if ( associated(overland_data%control) ) then
@@ -153,8 +153,8 @@ program overland_tests
 
         type (overland_struct) :: overland_data
 
-        call overland_data%init(100,100)
-        call overland_data%init(100,100)
+        call overland_data%init(100,100,100,100)
+        call overland_data%init(100,100,100,100)
         call overland_data%destroy
 
         write(6,*) "Test Passed"
@@ -167,7 +167,7 @@ program overland_tests
 
         type (overland_struct) :: overland_data
 
-        call overland_data%init(100,100)
+        call overland_data%init(100,100,100,100)
         call overland_data%destroy
         call overland_data%destroy
 

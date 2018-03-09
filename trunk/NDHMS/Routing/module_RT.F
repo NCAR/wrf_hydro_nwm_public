@@ -67,7 +67,7 @@ CONTAINS
 !     ixrt = rt_domain(did)%ixrt
 !     jxrt = rt_domain(did)%jxrt
 
-      call rt_domain(did)%overland%init(ixrt,jxrt)
+      call rt_domain(did)%overland%init(ix,jx,ixrt,jxrt)
       
 !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
 !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
