@@ -11,13 +11,34 @@ module overland_stream_and_lake_interface
     ! variables used to interface with channels and lakes
     type overland_stream_and_lake_interface_struct
         real :: qstrmvoltrt     ! total of qstrmvolrt
+        !Accumulated water contribution form surface cells to channel cells throughout the simulation (mm)
+        !real :: accumulated_surface_water_to_channel
+         !FIXME maybe move ^^^ to mass balance
+
         real :: lake_inflotrt   ! lake inflow from surface head
+        !Accumulated water contribution from surface cells to lake cells throught the simulation (mm)
+        !real :: accumulated_surface_water_to_lake
+        !FIXME maybe move ^^^ to mass balance
 
         integer, allocatable, dimension(:,:) :: ch_netrt      ! keeps trake of the 0-1 channel network
+        !Mask of the grid cells to indicate which cells are part of the channel network, 1 for channel, 0 for not
+        !If the mask value is negative on gridded channel routing, then no channel routing occurs for that cell
+        integer, allocatable, dimension(:,:) :: channel_mask
+
         integer, allocatable, dimension(:,:) :: lake_mskrt ! mask for identifing lake elements in channel network
+        !Mask for the grid cells to indicate which cells are part of lakes, 0 for no lake
+        !other values range from 1-N, indicating the index to the lake objects represented by the cells with the
+        !same values (i.e, all lask_mask cells with a value of 1 make up the gridded representation of lake object 1)
+        !integer, allocatable, dimension(:,:) :: lake_mask
 
         real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
+        !Depth of water on the surface cell that will go into a channel cell from overland routing, depth (mm)
+        !real, allocatable, dimension(:,:) :: surface_water_to_channel
+
+
         real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
+        !Depth of water on the surface cell that will go into a lake cell from overland routing, depth (mm)
+        !real, allocatable, dimension(:,:) :: surface_water_to_lake
     contains
         procedure :: init => overland_stream_and_lake_interface_init
         procedure :: destroy => overland_stream_and_lake_interface_destroy
