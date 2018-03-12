@@ -31,9 +31,9 @@ module overland_stream_and_lake_interface
         !same values (i.e, all lask_mask cells with a value of 1 make up the gridded representation of lake object 1)
         integer, allocatable, dimension(:,:) :: lake_mask
 
-        real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
+        !real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
         !Depth of water on the surface cell that will go into a channel cell from overland routing, depth (mm)
-        !real, allocatable, dimension(:,:) :: surface_water_to_channel
+        real, allocatable, dimension(:,:) :: surface_water_to_channel
 
 
         real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
@@ -76,9 +76,9 @@ subroutine overland_stream_and_lake_interface_init(this,ix,jx)
     end if
 
     ! allocate qstrmvolrt
-    if ( .not. allocated(this%qstrmvolrt) ) then
-        allocate( this%qstrmvolrt(ix,jx) )
-        this%qstrmvolrt = 0.0
+    if ( .not. allocated(this%surface_water_to_channel) ) then
+        allocate( this%surface_water_to_channel(ix,jx) )
+        this%surface_water_to_channel = 0.0
     else
         allocation_error = .true.
     end if
@@ -119,8 +119,8 @@ subroutine overland_stream_and_lake_interface_destroy(this)
     end if
 
     ! deallocate qstrmvolrt
-    if ( allocated(this%qstrmvolrt) ) then
-         deallocate( this%qstrmvolrt )
+    if ( allocated(this%surface_water_to_channel) ) then
+         deallocate( this%surface_water_to_channel )
     else
         allocation_error = .true.
     end if

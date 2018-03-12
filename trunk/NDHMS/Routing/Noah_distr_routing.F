@@ -914,7 +914,7 @@
 !!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
                ovrt_data%streams_and_lakes%QSTRMVOLTRT = ovrt_data%streams_and_lakes%QSTRMVOLTRT + &
                   (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
-               ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J) = ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J) + &
+               ovrt_data%streams_and_lakes%surface_water_to_channel(I,J) = ovrt_data%streams_and_lakes%surface_water_to_channel(I,J) + &
                   (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
 
              ! if(QSTRMVOLRT(I,J) .gt. 0) then 
@@ -2870,7 +2870,7 @@
                  !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mask, &
                  !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%overland%properties%roughness, &
                  !         rt_domain(did)%overland%properties%surface_slope_x, rt_domain(did)%overland%properties%surface_slope_y, rt_domain(did)%overland%control%surface_water_head_routing,  &
-                 !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&
+                 !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel,&
                  !         rt_domain(did)%overland%streams_and_lakes%lake_inflort,rt_domain(did)%overland%control%boundary_flux, &
                  !         rt_domain(did)%overland%streams_and_lakes%qstrmvoltrt,rt_domain(did)%overland%control%boundary_flux_total, rt_domain(did)%overland%streams_and_lakes%lake_inflotrt,&
                  !         rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
@@ -2966,7 +2966,7 @@
          do j=1,JXRT
             ovrt_data%mass_balance%pre_infiltration_excess = &
                 ovrt_data%mass_balance%pre_infiltration_excess + ( ovrt_data%control%infiltration_excess(I,J)/float(IXRT*JXRT) )
-            chan_in1 = chan_in1 + ( ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT) )
+            chan_in1 = chan_in1 + ( ovrt_data%streams_and_lakes%surface_water_to_channel(I,J)/float(IXRT*JXRT) )
             lake_in1 = lake_in1 + ( ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT) )
             qbdry1 = qbdry1 + ( ovrt_data%control%boundary_flux(I,J)/float(IXRT*JXRT) )
          end do
@@ -3040,7 +3040,7 @@
          do j=1,JXRT
             ovrt_data%mass_balance%post_infiltration_excess = &
                 ovrt_data%mass_balance%post_infiltration_excess + (ovrt_data%control%surface_water_head_routing(I,J)/float(IXRT*JXRT))
-            chan_in2=chan_in2 + (ovrt_data%streams_and_lakes%QSTRMVOLRT(I,J)/float(IXRT*JXRT))
+            chan_in2=chan_in2 + (ovrt_data%streams_and_lakes%surface_water_to_channel(I,J)/float(IXRT*JXRT))
             lake_in2=lake_in2 + (ovrt_data%streams_and_lakes%LAKE_INFLORT(I,J)/float(IXRT*JXRT))
             qbdry2=qbdry2 + (ovrt_data%control%boundary_flux(I,J)/float(IXRT*JXRT))
          end do

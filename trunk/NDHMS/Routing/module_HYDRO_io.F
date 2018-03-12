@@ -6868,7 +6868,7 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !!   Routing/module_HYDRO_drv.F: HYDRO_ini
 !! See comments there.
 !! Conensed, commented code:
-!! rt_domain(did)%overland%streams_and_lakes%lake_inflort=0.!rt_domain(did)%QSTRMVOLRT=0.
+!! rt_domain(did)%overland%streams_and_lakes%lake_inflort=0.!rt_domain(did)%surface_water_to_channel=0.
 !end if
 
 #ifdef MPP_LAND

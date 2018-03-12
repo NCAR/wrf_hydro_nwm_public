@@ -182,8 +182,8 @@ CONTAINS
      rt_domain(did)%INFXSAGGRT 	= 0.0                
      !allocate( rt_domain(did)%overland%control%dhrt   	(IXRT,JXRT) ) ! moved to overland control
      !rt_domain(did)%overland%control%dhrt   	= 0.0                 ! moved to overland control
-     !allocate( rt_domain(did)%overland%streams_and_lakes%qstrmvolrt (IXRT,JXRT) )              ! moved to overland streams and lakes
-     !rt_domain(did)%overland%streams_and_lakes%qstrmvolrt = 0.0                                ! moved to overland streams and lakes
+     !allocate( rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel (IXRT,JXRT) )              ! moved to overland streams and lakes
+     !rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0                                ! moved to overland streams and lakes
      allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
      allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
@@ -1361,7 +1361,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%QSUBRT = 0.0
    rt_domain(did)%ZWATTABLRT = 0.0
    rt_domain(did)%QSUBBDRYRT = 0.0
-   rt_domain(did)%overland%streams_and_lakes%qstrmvolrt = 0.0
+   rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0
    rt_domain(did)%overland%control%boundary_flux = 0.0
    rt_domain(did)%overland%control%surface_water_head_routing = 0.0
    rt_domain(did)%overland%control%infiltration_excess = 0.0
