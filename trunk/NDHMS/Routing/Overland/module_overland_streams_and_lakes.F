@@ -25,11 +25,11 @@ module overland_stream_and_lake_interface
         !If the mask value is negative on gridded channel routing, then no channel routing occurs for that cell
         integer, allocatable, dimension(:,:) :: channel_mask
 
-        integer, allocatable, dimension(:,:) :: lake_mskrt ! mask for identifing lake elements in channel network
+        !integer, allocatable, dimension(:,:) :: lake_mskrt ! mask for identifing lake elements in channel network
         !Mask for the grid cells to indicate which cells are part of lakes, 0 for no lake
         !other values range from 1-N, indicating the index to the lake objects represented by the cells with the
         !same values (i.e, all lask_mask cells with a value of 1 make up the gridded representation of lake object 1)
-        !integer, allocatable, dimension(:,:) :: lake_mask
+        integer, allocatable, dimension(:,:) :: lake_mask
 
         real, allocatable, dimension(:,:) :: qstrmvolrt     ! accumulated channel inflow
         !Depth of water on the surface cell that will go into a channel cell from overland routing, depth (mm)
@@ -68,9 +68,9 @@ subroutine overland_stream_and_lake_interface_init(this,ix,jx)
     end if
 
     ! allocate the lake mask
-    if ( .not. allocated(this%lake_mskrt) ) then
-        allocate( this%lake_mskrt(ix,jx) )
-        this%lake_mskrt = -9999
+    if ( .not. allocated(this%lake_mask) ) then
+        allocate( this%lake_mask(ix,jx) )
+        this%lake_mask = -9999
     else
         allocation_error = .true.
     end if
@@ -112,8 +112,8 @@ subroutine overland_stream_and_lake_interface_destroy(this)
     end if
 
     ! deallocate the lake mask
-    if ( allocated(this%lake_mskrt) ) then
-        deallocate( this%lake_mskrt)
+    if ( allocated(this%lake_mask) ) then
+        deallocate( this%lake_mask)
     else
         allocation_error = .true.
     end if

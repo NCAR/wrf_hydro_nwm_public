@@ -928,7 +928,7 @@
 !DJG Lake inflow withdrawl from surface head...(4/29/05)
            
 
-           IF (ovrt_data%streams_and_lakes%LAKE_MSKRT(I,J) .gt. 0) THEN
+           IF (ovrt_data%streams_and_lakes%lake_mask(I,J) .gt. 0) THEN
              IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%retention_depth(I,J)) THEN
                ovrt_data%streams_and_lakes%LAKE_INFLOTRT = ovrt_data%streams_and_lakes%LAKE_INFLOTRT + &
                    (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
@@ -2441,7 +2441,7 @@
              rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
              rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
              RT_DOMAIN(did)%SMCRT, &
-             rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
+             rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
              RT_DOMAIN(did)%iswater)
@@ -2867,7 +2867,7 @@
              integer :: did
              if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
                  !call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
-                 !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mskrt, &
+                 !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mask, &
                  !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%overland%properties%roughness, &
                  !         rt_domain(did)%overland%properties%surface_slope_x, rt_domain(did)%overland%properties%surface_slope_y, rt_domain(did)%overland%control%surface_water_head_routing,  &
                  !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%qstrmvolrt,&

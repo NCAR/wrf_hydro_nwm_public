@@ -200,8 +200,8 @@ CONTAINS
      !! Variables (formerly?) needed for channel_only
      allocate( rt_domain(did)%ELRT   	(IXRT,JXRT) )
      rt_domain(did)%ELRT   	= 0.0                
-     !allocate( rt_domain(did)%overland%streams_and_lakes%lake_mskrt 	(IXRT,JXRT) ) ! moved to overland%stream_and_lakes
-     !rt_domain(did)%overland%streams_and_lakes%lake_mskrt 	= -9999               ! moved to overland%streams_and_lakes
+     !allocate( rt_domain(did)%overland%streams_and_lakes%lake_mask 	(IXRT,JXRT) ) ! moved to overland%stream_and_lakes
+     !rt_domain(did)%overland%streams_and_lakes%lake_mask 	= -9999               ! moved to overland%streams_and_lakes
      !allocate( rt_domain(did)%overland%streams_and_lakes%lake_inflort(IXRT,JXRT) )                              ! moved to overland%streams_and_lakes
      !!rt_domain(did)%overland%streams_and_lakes%lake_inflort= 0.0                                               ! moved to overland%streams_and_lakes
      allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
@@ -672,7 +672,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 #endif
              rt_domain(did)%IXRT,         rt_domain(did)%JXRT,       &
              rt_domain(did)%ELRT,         rt_domain(did)%overland%streams_and_lakes%ch_netrt,        &
-             rt_domain(did)%CH_LNKRT,     rt_domain(did)%overland%streams_and_lakes%lake_mskrt, & 
+             rt_domain(did)%CH_LNKRT,     rt_domain(did)%overland%streams_and_lakes%lake_mask, & 
              rt_domain(did)%FROM_NODE,    rt_domain(did)%TO_NODE, &
              rt_domain(did)%TYPEL,        rt_domain(did)%ORDER, &
              rt_domain(did)%MAXORDER,     rt_domain(did)%NLINKS, &
