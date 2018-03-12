@@ -10,9 +10,9 @@ module overland_stream_and_lake_interface
     ! type that hold inputs and outputs for stream and channels as well as
     ! variables used to interface with channels and lakes
     type overland_stream_and_lake_interface_struct
-        real :: qstrmvoltrt     ! total of qstrmvolrt
+        !real :: qstrmvoltrt     ! total of qstrmvolrt
         !Accumulated water contribution form surface cells to channel cells throughout the simulation (mm)
-        !real :: accumulated_surface_water_to_channel
+        real :: accumulated_surface_water_to_channel
          !FIXME maybe move ^^^ to mass balance
 
         real :: lake_inflotrt   ! lake inflow from surface head
@@ -56,7 +56,7 @@ subroutine overland_stream_and_lake_interface_init(this,ix,jx)
 
     logical :: allocation_error = .false.
 
-    this%qstrmvoltrt = 0.0
+    this%accumulated_surface_water_to_channel = 0.0
     this%lake_inflotrt = 0.0
 
     ! allocate the stream network
