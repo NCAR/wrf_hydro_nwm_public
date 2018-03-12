@@ -14,7 +14,7 @@ module overland_control
 
    type overland_control_struct
       ! outputs
-
+      !FIXME surface_water_head* should be moved to surface_water_depth since head != depth.  head is elevation + pressure/energy, not depth (FRED and TREY meeting feb 27, 2018)
       ! replaced with surface_water_head_lsm
       !real, allocatable, dimension(:,:) :: sfcheadrt
       ! depth of water on the surface (after routing), passed to the land surface model (mm) on the land surface grid.
@@ -30,6 +30,7 @@ module overland_control
       !This will have to be done once the land surface interface is better hashed out.
 
       ! inputs
+      !FIXME infiltration_excess is a DEPTH (mm) so be explicit and call it infiltration_excess_depth (FRED and TREY meeting feb 27, 2018)
       ! replaced with infiltration_excess
       !real, allocatable, dimension(:,:) :: infxsubrt
       ! infiltration excess from the land surface model (mm) on the routing grid
@@ -43,6 +44,7 @@ module overland_control
       real, allocatable, dimension(:,:) :: dhrt
       
       ! replaced with boundary_flux
+      !FIXME NOT A FLUX!!!! rename to a better descriptor (FRED and TREY meeting feb 27, 2018)
       !real, allocatable, dimension(:,:) :: qbdryrt
       ! flux of boundary cells at a given time step, + into the domain, - out of the domain (mm)
       real, allocatable, dimension(:,:) :: boundary_flux             
