@@ -613,7 +613,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
       RT_DOMAIN(did)%overland%streams_and_lakes%surface_water_to_channel = zeroFlt
-      RT_DOMAIN(did)%LAKE_INFLORT_DUM = rt_domain(did)%overland%streams_and_lakes%lake_inflort
+      RT_DOMAIN(did)%LAKE_INFLORT_DUM = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call disaggregateDomain_drv(did)
@@ -673,7 +673,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       RT_DOMAIN(did)%QSTRMVOLRT_TS = rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel
       RT_DOMAIN(did)%QSTRMVOLRT_ACC = RT_DOMAIN(did)%QSTRMVOLRT_ACC + RT_DOMAIN(did)%QSTRMVOLRT_TS
       
-      RT_DOMAIN(did)%LAKE_INFLORT_TS = rt_domain(did)%overland%streams_and_lakes%lake_inflort-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+      RT_DOMAIN(did)%LAKE_INFLORT_TS = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 			
 #ifdef HYDRO_D
       call system_clock(count=clock_count_1, count_rate=clock_rate)
@@ -1585,7 +1585,7 @@ endif
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    ! Under channel-only , these first three variables are not allocated.
-   if(allocated(rt_domain(did)%overland%streams_and_lakes%lake_inflort))    rt_domain(did)%overland%streams_and_lakes%lake_inflort = zeroFlt
+   if(allocated(rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake))    rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake = zeroFlt
    if(allocated(rt_domain(did)%QSTRMVOLRT_ACC))  rt_domain(did)%QSTRMVOLRT_ACC   = zeroFlt
    ! These variables are optionally allocated, if their output is requested.
    if(allocated(rt_domain(did)%accSfcLatRunoff)) rt_domain(did)%accSfcLatRunoff = zeroDbl

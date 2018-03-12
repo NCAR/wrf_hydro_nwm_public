@@ -6114,7 +6114,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
-          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_inflort,"lake_inflort")
+          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
 
    end if  !    if(nlst_rt(did)%CHANRTSWCRT.eq.1) 
 
@@ -6212,7 +6212,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%cvol
                    write(iunit,ERR=101) rt_domain(did)%resht
                    write(iunit,ERR=101) rt_domain(did)%qlakeo
-                   write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%lake_inflort
+                   write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
@@ -6305,7 +6305,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%cvol
                    read(iunit,ERR=101) rt_domain(did)%resht
                    read(iunit,ERR=101) rt_domain(did)%qlakeo
-                   read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%lake_inflort
+                   read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
@@ -6821,7 +6821,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then 
            
          if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
-            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_inflort,"lake_inflort")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
          endif
       end if
       
@@ -6868,7 +6868,7 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !!   Routing/module_HYDRO_drv.F: HYDRO_ini
 !! See comments there.
 !! Conensed, commented code:
-!! rt_domain(did)%overland%streams_and_lakes%lake_inflort=0.!rt_domain(did)%surface_water_to_channel=0.
+!! rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake=0.!rt_domain(did)%surface_water_to_channel=0.
 !end if
 
 #ifdef MPP_LAND

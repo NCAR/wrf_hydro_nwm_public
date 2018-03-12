@@ -202,8 +202,8 @@ CONTAINS
      rt_domain(did)%ELRT   	= 0.0                
      !allocate( rt_domain(did)%overland%streams_and_lakes%lake_mask 	(IXRT,JXRT) ) ! moved to overland%stream_and_lakes
      !rt_domain(did)%overland%streams_and_lakes%lake_mask 	= -9999               ! moved to overland%streams_and_lakes
-     !allocate( rt_domain(did)%overland%streams_and_lakes%lake_inflort(IXRT,JXRT) )                              ! moved to overland%streams_and_lakes
-     !!rt_domain(did)%overland%streams_and_lakes%lake_inflort= 0.0                                               ! moved to overland%streams_and_lakes
+     !allocate( rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake(IXRT,JXRT) )                              ! moved to overland%streams_and_lakes
+     !!rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake= 0.0                                               ! moved to overland%streams_and_lakes
      allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
      allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
      rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
@@ -1366,7 +1366,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%overland%control%surface_water_head_routing = 0.0
    rt_domain(did)%overland%control%infiltration_excess = 0.0
    rt_domain(did)%overland%control%dhrt = 0.0
-   rt_domain(did)%overland%streams_and_lakes%lake_inflort = 0.0
+   rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake = 0.0
    rt_domain(did)%LAKE_CT = 0
    rt_domain(did)%STRM_CT = 0
    rt_domain(did)%SOLDRAIN = 0.0

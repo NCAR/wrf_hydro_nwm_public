@@ -36,9 +36,9 @@ module overland_stream_and_lake_interface
         real, allocatable, dimension(:,:) :: surface_water_to_channel
 
 
-        real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
+        !real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
         !Depth of water on the surface cell that will go into a lake cell from overland routing, depth (mm)
-        !real, allocatable, dimension(:,:) :: surface_water_to_lake
+        real, allocatable, dimension(:,:) :: surface_water_to_lake
     contains
         procedure :: init => overland_stream_and_lake_interface_init
         procedure :: destroy => overland_stream_and_lake_interface_destroy
@@ -84,9 +84,9 @@ subroutine overland_stream_and_lake_interface_init(this,ix,jx)
     end if
 
     ! allocate lake_inflort
-    if ( .not. allocated(this%lake_inflort) ) then
-        allocate( this%lake_inflort(ix,jx) )
-        this%lake_inflort = 0.0
+    if ( .not. allocated(this%surface_water_to_lake) ) then
+        allocate( this%surface_water_to_lake(ix,jx) )
+        this%surface_water_to_lake = 0.0
     else
         allocation_error = .true.
     end if
@@ -126,8 +126,8 @@ subroutine overland_stream_and_lake_interface_destroy(this)
     end if
 
     ! deallocate qbdryrt
-    if ( allocated(this%lake_inflort) ) then
-         deallocate( this%lake_inflort )          ! allocate qbdryrt
+    if ( allocated(this%surface_water_to_lake) ) then
+         deallocate( this%surface_water_to_lake )          ! allocate qbdryrt
     else
         allocation_error = .true.
     end if
