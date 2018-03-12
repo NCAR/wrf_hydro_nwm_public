@@ -15,9 +15,9 @@ module overland_stream_and_lake_interface
         real :: accumulated_surface_water_to_channel
          !FIXME maybe move ^^^ to mass balance
 
-        real :: lake_inflotrt   ! lake inflow from surface head
+        !real :: lake_inflotrt   ! lake inflow from surface head
         !Accumulated water contribution from surface cells to lake cells throught the simulation (mm)
-        !real :: accumulated_surface_water_to_lake
+        real :: accumulated_surface_water_to_lake
         !FIXME maybe move ^^^ to mass balance
 
         integer, allocatable, dimension(:,:) :: ch_netrt      ! keeps trake of the 0-1 channel network
@@ -57,7 +57,7 @@ subroutine overland_stream_and_lake_interface_init(this,ix,jx)
     logical :: allocation_error = .false.
 
     this%accumulated_surface_water_to_channel = 0.0
-    this%lake_inflotrt = 0.0
+    this%accumulated_surface_water_to_lake = 0.0
 
     ! allocate the stream network
     if ( .not. allocated(this%ch_netrt) ) then
