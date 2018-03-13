@@ -4,7 +4,7 @@
 !          in the overland routing code
 ! National Water Center
 ! Responsibility: Donald W Johnson donald.w.johnson@noaa.gov
-! Authors: Donald W Johnson
+! Authors: Donald W Johnson, Nels Frazier
 
 
 module overland_data

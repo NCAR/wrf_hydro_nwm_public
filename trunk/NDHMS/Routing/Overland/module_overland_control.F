@@ -3,7 +3,7 @@
 ! the control variables used in the overland routing code
 ! National Water Center
 ! Responsibility: Donald W Johnson donald.w.johnson@noaa.gov
-! Authors: Donald W Johnson
+! Authors: Donald W Johnson, Nels Frazier
 
 module overland_control
    !type that holds the variables that are inputs to or outputs of the routing code

@@ -3,7 +3,7 @@
 ! the lakes and stream related variables used in the overland routing code
 ! National Water Center
 ! Responsibility: Donald W Johnson donald.w.johnson@noaa.gov
-! Authors: Donald W Johnson
+! Authors: Donald W Johnson, Nels Frazier
 
 module overland_stream_and_lake_interface
 
