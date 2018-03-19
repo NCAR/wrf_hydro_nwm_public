@@ -88,7 +88,8 @@ subroutine overland_control_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
 
     if ( .not. allocated(this%surface_water_head_routing) ) then
         allocate( this%surface_water_head_routing(lsm_ix,lsm_jx) )
-        this%surface_water_head_routing = 0.0    else
+        this%surface_water_head_routing = 0.0
+    else
         allocation_error = .true.
     end if
 
