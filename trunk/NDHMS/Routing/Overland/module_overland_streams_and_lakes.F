@@ -6,6 +6,7 @@
 ! Authors: Donald W Johnson, Nels Frazier
 
 module overland_stream_and_lake_interface
+    implicit none
 
     ! type that hold inputs and outputs for stream and channels as well as
     ! variables used to interface with channels and lakes
@@ -50,6 +51,7 @@ module overland_stream_and_lake_interface
 ! if members have allready been initalized they will not be altered and an error will be logged
 
 subroutine overland_stream_and_lake_interface_init(this,ix,jx)
+    implicit none
     class(overland_stream_and_lake_interface_struct), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size
@@ -100,6 +102,7 @@ end subroutine overland_stream_and_lake_interface_init
 ! overland_stream_and_lake_interface_init
 
 subroutine overland_stream_and_lake_interface_destroy(this)
+    implicit none
     class(overland_stream_and_lake_interface_struct), intent(inout) :: this ! the type object being destroyed
 
     logical :: allocation_error = .false.

@@ -6,6 +6,7 @@
 ! Authors: Donald W Johnson, Nels Frazier
 
 module overland_routing_properties
+    implicit none
 
    ! holds proprties of the the routing grid needed by overland routing algs
    type overland_routing_properties_struct
@@ -85,6 +86,7 @@ module overland_routing_properties
 ! if the structure has been allocated an error will be logged
 
 subroutine overland_properties_init(this,ix,jx)
+    implicit none
     class(overland_routing_properties_struct), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: ix                     ! x grid size
     integer, intent(in) :: jx                     ! y grid size
@@ -161,6 +163,7 @@ end subroutine overland_properties_init
 ! overland_properties_init
 
 subroutine overland_properties_destory(this)
+    implicit none
     class(overland_routing_properties_struct), intent(inout) :: this ! the type object being destroyed
 
     logical :: allocation_error = .false.

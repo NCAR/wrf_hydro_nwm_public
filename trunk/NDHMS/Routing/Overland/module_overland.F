@@ -40,6 +40,7 @@ contains
 
 ! this procedure allocates the overland_struct
 subroutine overland_struct_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
+    implicit none
     class(overland_struct), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: lsm_ix                    ! lsm x grid size
     integer, intent(in) :: lsm_jx                    ! lsm y grid size
@@ -86,6 +87,7 @@ end subroutine overland_struct_init
 
 ! safely deallocate data from the overland struct
 subroutine overland_struct_destroy(this)
+    implicit none
     ! call the destructors
     class (overland_struct), intent(inout) :: this
 
