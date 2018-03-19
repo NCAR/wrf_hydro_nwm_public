@@ -66,6 +66,7 @@ module overland_control
 ! if the structure has been allocated an error will be logged
 
 subroutine overland_control_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
+    implicit none
     class(overland_control_struct), intent(inout) :: this ! the type object being initalized
     integer, intent(in) :: lsm_ix                    ! land surface x size
     integer, intent(in) :: lsm_jx                    ! land surface y size
@@ -78,7 +79,7 @@ subroutine overland_control_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
 
     ! allocate surface head
     if ( .not. allocated(this%surface_water_head_lsm) ) then
-        allocate( this%surface_water_head_lsm(ix,jx) )
+        allocate( this%surface_water_head_lsm(lsm_ix,lsm_jx) )
         this%surface_water_head_lsm = 0.0
     else
         allocation_error = .true.
@@ -87,7 +88,7 @@ subroutine overland_control_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
     ! allocate surface head
 
     if ( .not. allocated(this%surface_water_head_routing) ) then
-        allocate( this%surface_water_head_routing(lsm_ix,lsm_jx) )
+        allocate( this%surface_water_head_routing(rt_ix,rt_jx) )
         this%surface_water_head_routing = 0.0
     else
         allocation_error = .true.
@@ -130,6 +131,7 @@ end subroutine overland_control_init
 ! overland_control_init
 
 subroutine overland_control_destroy(this)
+    implicit none
     class(overland_control_struct), intent(inout) :: this ! the type object being destroyed
 
     logical :: allocation_error = .false.
