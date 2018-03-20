@@ -596,10 +596,12 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
       if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
         qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
-
+        qdc = qdc * 1.2
+        
       else
 !       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
         qdc =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
+        qdc = qdc * 1.2
 
       endif
 
