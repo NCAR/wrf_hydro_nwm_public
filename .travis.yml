@@ -16,7 +16,7 @@ before_install:
   - REFERENCE_DIR_TRAVIS=$TRAVIS_HOME_DIR/wrf_hydro_nwm_reference/trunk/NDHMS
   - REFERENCE_DIR_DOCKER=/home/docker/reference
   - DOCKER_DOMAIN_DIR=/home/docker/domain/croton_lite
-  - git clone https://$GITHUB_USERNAME:$GITHUB_AUTHTOKEN@github.com/NCAR/wrf_hydro_nwm.git $TRAVIS_HOME_DIR/wrf_hydro_nwm_reference
+  - git clone git@github.com:NCAR/wrf_hydro_nwm.git $TRAVIS_HOME_DIR/wrf_hydro_nwm_reference
   - chmod -R 777 $CANDIDATE_DIR_TRAVIS
   - chmod -R 777 $REFERENCE_DIR_TRAVIS
   - docker pull wrfhydro/dev:travis
