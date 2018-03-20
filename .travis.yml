@@ -16,7 +16,7 @@ before_install:
   - REFERENCE_DIR_TRAVIS=$TRAVIS_HOME_DIR/wrf_hydro_nwm_reference/trunk/NDHMS
   - REFERENCE_DIR_DOCKER=/home/docker/reference
   - DOCKER_DOMAIN_DIR=/home/docker/domain/croton_lite
-  - git clone https://github.com/jmills-ncar/wrf_hydro_nwm_public.git $TRAVIS_HOME_DIR/wrf_hydro_nwm_reference
+  - git clone https://github.com/NCAR/wrf_hydro_nwm_public.git $TRAVIS_HOME_DIR/wrf_hydro_nwm_reference
   - chmod -R 777 $CANDIDATE_DIR_TRAVIS
   - chmod -R 777 $REFERENCE_DIR_TRAVIS
   - docker pull wrfhydro/dev:travis
@@ -24,25 +24,25 @@ before_install:
   - docker create --name croton_lite wrfhydro/domains:croton_lite
 
 script:
-  - docker run --volumes-from croton_lite -e GITHUB_USERNAME=$GITHUB_USERNAME -e GITHUB_AUTHTOKEN=$GITHUB_AUTHTOKEN -v $CANDIDATE_DIR_TRAVIS:$CANDIDATE_DIR_DOCKER -v $REFERENCE_DIR_TRAVIS:$REFERENCE_DIR_DOCKER -v $TEST_OUT_DIR_TRAVIS:$TEST_OUT_DIR_DOCKER wrfhydro/dev:travis $DOCKER_DOMAIN_DIR $CANDIDATE_DIR_DOCKER $REFERENCE_DIR_DOCKER $TEST_OUT_DIR_DOCKER
+  - docker run --volumes-from croton_lite -v $CANDIDATE_DIR_TRAVIS:$CANDIDATE_DIR_DOCKER -v $REFERENCE_DIR_TRAVIS:$REFERENCE_DIR_DOCKER -v $TEST_OUT_DIR_TRAVIS:$TEST_OUT_DIR_DOCKER wrfhydro/dev:travis $DOCKER_DOMAIN_DIR $CANDIDATE_DIR_DOCKER $REFERENCE_DIR_DOCKER $TEST_OUT_DIR_DOCKER
 
-after_failure:
-  - echo $TRAVIS_HOME_DIR
-  - echo $TEST_OUT_DIR_TRAVIS
-  - mkdir $TRAVIS_HOME_DIR/dockerBuild
-  - mkdir $TRAVIS_HOME_DIR/dockerBuild/test_out
-  - cp -r $TEST_OUT_DIR_TRAVIS $TRAVIS_HOME_DIR/dockerBuild/test_out
-  - cd $TRAVIS_HOME_DIR/dockerBuild
-  - touch Dockerfile
-  - echo "FROM alpine" >> Dockerfile
-  - echo "MAINTAINER jmills@ucar.edu" >> Dockerfile
-  - echo "RUN mkdir /home/docker" >> Dockerfile
-  - echo "COPY test_out/ /home/docker/" >> Dockerfile
-  - echo "RUN chmod -R 777 $TEST_OUT_DIR_DOCKER" >> Dockerfile
-  - echo "RUN chmod -R 777 /home/docker" >> Dockerfile
-  - echo "VOLUME /home/docker" >> Dockerfile
-  - echo "WORKDIR /home/docker"  >> Dockerfile
-  - docker build -t wrfhydro/travis_builds_community:$TRAVIS_BUILD_NUMBER .
-  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-  - docker push wrfhydro/travis_builds_community:$TRAVIS_BUILD_NUMBER
+# after_failure:
+#   - echo $TRAVIS_HOME_DIR
+#   - echo $TEST_OUT_DIR_TRAVIS
+#   - mkdir $TRAVIS_HOME_DIR/dockerBuild
+#   - mkdir $TRAVIS_HOME_DIR/dockerBuild/test_out
+#   - cp -r $TEST_OUT_DIR_TRAVIS $TRAVIS_HOME_DIR/dockerBuild/test_out
+#   - cd $TRAVIS_HOME_DIR/dockerBuild
+#   - touch Dockerfile
+#   - echo "FROM alpine" >> Dockerfile
+#   - echo "MAINTAINER jmills@ucar.edu" >> Dockerfile
+#   - echo "RUN mkdir /home/docker" >> Dockerfile
+#   - echo "COPY test_out/ /home/docker/" >> Dockerfile
+#   - echo "RUN chmod -R 777 $TEST_OUT_DIR_DOCKER" >> Dockerfile
+#   - echo "RUN chmod -R 777 /home/docker" >> Dockerfile
+#   - echo "VOLUME /home/docker" >> Dockerfile
+#   - echo "WORKDIR /home/docker"  >> Dockerfile
+#   - docker build -t wrfhydro/travis_builds_community:$TRAVIS_BUILD_NUMBER .
+#   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+#   - docker push wrfhydro/travis_builds_community:$TRAVIS_BUILD_NUMBER
 
