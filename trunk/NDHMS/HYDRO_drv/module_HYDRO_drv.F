@@ -1153,9 +1153,9 @@ endif
                    endif
 
 !end 
-                    IF (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .GT. &
-                        RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
 
+!ADCHANGE: Change to accept very small diff since was being triggered by vals that print identical
+IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) .GT. 0.000001 ) THEN
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
                       print *, "SMCMAX exceeded upon aggregation...", &
