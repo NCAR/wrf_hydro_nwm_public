@@ -1,48 +1,24 @@
 sudo: required
-language: python
+language: bash
 services:
   - docker
 
 before_install:
-  - TRAVIS_HOME_DIR=/home/travis_dir
-  - sudo mkdir $TRAVIS_HOME_DIR
-  - sudo chmod -R 777 $TRAVIS_HOME_DIR
-  - TEST_OUT_DIR_TRAVIS=$TRAVIS_HOME_DIR/test_out
-  - mkdir $TEST_OUT_DIR_TRAVIS
-  - sudo chmod -R 777 $TEST_OUT_DIR_TRAVIS
-  - TEST_OUT_DIR_DOCKER=/home/docker/test_out
-  - CANDIDATE_DIR_TRAVIS=$TRAVIS_BUILD_DIR/trunk/NDHMS
-  - CANDIDATE_DIR_DOCKER=/home/docker/candidate
-  - REFERENCE_DIR_TRAVIS=$TRAVIS_HOME_DIR/wrf_hydro_nwm_reference/trunk/NDHMS
-  - REFERENCE_DIR_DOCKER=/home/docker/reference
-  - DOCKER_DOMAIN_DIR=/home/docker/domain/croton_lite
-  - git clone https://github.com/NCAR/wrf_hydro_nwm_public.git $TRAVIS_HOME_DIR/wrf_hydro_nwm_reference
-  - chmod -R 777 $CANDIDATE_DIR_TRAVIS
-  - chmod -R 777 $REFERENCE_DIR_TRAVIS
-  - docker pull wrfhydro/dev:travis
+  #Setup test directory on travis
+  - sudo chmod -R 777 $HOME
+  - TEST_DIR_TRAVIS=$HOME/test_dir
+  - mkdir $TEST_DIR_TRAVIS
+  - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
+  - git clone https://github.com/NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
+  - sudo chmod -R 777 $TEST_DIR_TRAVIS
+  #Get docker images
+  - docker pull wrfhydro/dev:conda
   - docker pull wrfhydro/domains:croton_lite
   - docker create --name croton_lite wrfhydro/domains:croton_lite
+  #Setup test directory on Docker
+  - TEST_DIR_DOCKER=/home/docker/test_dir
+  - PYTEST_DIR_DOCKER=$TEST_DIR_DOCKER/candidate/tests
+  - DOMAIN_DIR_DOCKER=/home/docker/domain/croton_lite
 
 script:
-  - docker run --volumes-from croton_lite -v $CANDIDATE_DIR_TRAVIS:$CANDIDATE_DIR_DOCKER -v $REFERENCE_DIR_TRAVIS:$REFERENCE_DIR_DOCKER -v $TEST_OUT_DIR_TRAVIS:$TEST_OUT_DIR_DOCKER wrfhydro/dev:travis $DOCKER_DOMAIN_DIR $CANDIDATE_DIR_DOCKER $REFERENCE_DIR_DOCKER $TEST_OUT_DIR_DOCKER
-
-# after_failure:
-#   - echo $TRAVIS_HOME_DIR
-#   - echo $TEST_OUT_DIR_TRAVIS
-#   - mkdir $TRAVIS_HOME_DIR/dockerBuild
-#   - mkdir $TRAVIS_HOME_DIR/dockerBuild/test_out
-#   - cp -r $TEST_OUT_DIR_TRAVIS $TRAVIS_HOME_DIR/dockerBuild/test_out
-#   - cd $TRAVIS_HOME_DIR/dockerBuild
-#   - touch Dockerfile
-#   - echo "FROM alpine" >> Dockerfile
-#   - echo "MAINTAINER jmills@ucar.edu" >> Dockerfile
-#   - echo "RUN mkdir /home/docker" >> Dockerfile
-#   - echo "COPY test_out/ /home/docker/" >> Dockerfile
-#   - echo "RUN chmod -R 777 $TEST_OUT_DIR_DOCKER" >> Dockerfile
-#   - echo "RUN chmod -R 777 /home/docker" >> Dockerfile
-#   - echo "VOLUME /home/docker" >> Dockerfile
-#   - echo "WORKDIR /home/docker"  >> Dockerfile
-#   - docker build -t wrfhydro/travis_builds_community:$TRAVIS_BUILD_NUMBER .
-#   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-#   - docker push wrfhydro/travis_builds_community:$TRAVIS_BUILD_NUMBER
-
+  - docker run --volumes-from croton_lite -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip install wrfhydro; pytest $PYTEST_DIR_DOCKER -v --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
