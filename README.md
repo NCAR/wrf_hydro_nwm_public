@@ -1,6 +1,6 @@
 #  WRF-Hydro
 
-|Linux single-node|
+|Single-node|
 |----------|
 |[![Build Status](https://travis-ci.com/NCAR/wrf_hydro_nwm.svg?token=AFQxvrWSsxM61URLNtQ3&branch=master)](https://travis-ci.com/NCAR/wrf_hydro_nwm)|
 
