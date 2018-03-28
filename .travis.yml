@@ -9,7 +9,7 @@ before_install:
   - TEST_DIR_TRAVIS=$HOME/test_dir
   - mkdir $TEST_DIR_TRAVIS
   - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
-  - git clone git@github.com:NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
+  - git clone https://github.com/NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   #Get docker images
   - docker pull wrfhydro/dev:conda
