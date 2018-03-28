@@ -5,9 +5,9 @@ services:
 
 before_install:
   #Setup test directory on travis
-  - sudo chmod -R 777 $HOME
   - TEST_DIR_TRAVIS=$HOME/test_dir
-  - mkdir $TEST_DIR_TRAVIS
+  - sudo mkdir $TEST_DIR_TRAVIS
+  - sudo chmod -R 777 $TEST_DIR_TRAVIS
   - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
   - git clone https://github.com/NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
