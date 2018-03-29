@@ -1,7 +1,7 @@
 import pytest
 import sys
 import pathlib
-from wrfhydro import *
+from wrfhydropy import *
 
 def pytest_addoption(parser):
     parser.addoption('--domain_dir', action='store', help='domain directory')

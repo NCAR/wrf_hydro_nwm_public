@@ -21,4 +21,4 @@ before_install:
   - DOMAIN_DIR_DOCKER=/home/docker/domain/croton_lite
 
 script:
-  - docker run --volumes-from croton_lite -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip install wrfhydro; pytest $PYTEST_DIR_DOCKER -v --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
+  - docker run --volumes-from croton_lite -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip install wrfhydropy --upgrade; pytest $PYTEST_DIR_DOCKER -v --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
