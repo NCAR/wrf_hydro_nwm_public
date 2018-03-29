@@ -1,6 +1,6 @@
 &NOAHLSM_OFFLINE
 
- HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput.nc"
+ HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01"
  INDIR = "./FORCING"
  SPATIAL_FILENAME = "./DOMAIN/soil_properties.nc"
  OUTDIR = "./"
