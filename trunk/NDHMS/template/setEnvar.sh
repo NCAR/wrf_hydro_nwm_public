@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# This is called by both 
-# compile_offline_NoahMP.csh & compile_offline_Noah.csh.
+# WRF-Hydro compile time options
 
 # This is a WRF environment variable. Always set to 1=On for compiling WRF-Hydro.
 export WRF_HYDRO=1

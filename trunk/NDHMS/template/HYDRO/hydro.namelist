@@ -6,17 +6,17 @@ sys_cpl = 1
 
 !!!! ------------------- MODEL INPUT DATA FILES ------------------- !!!!
 
-! Specify land surface model gridded input data file (e.g.: "geo_em.d03.nc")
-GEO_STATIC_FLNM = "./DOMAIN/geo_em.d03.nc"
+! Specify land surface model gridded input data file (e.g.: "geo_em.d01.nc")
+GEO_STATIC_FLNM = "./DOMAIN/geo_em.d01.nc"
 
 ! Specify the high-resolution routing terrain input data file (e.g.: "Fulldom_hires.nc")
 GEO_FINEGRID_FLNM = "./DOMAIN/Fulldom_hires.nc"
 
-! Specify the spatial hydro parameters file (e.g.: "HYDRO_TBL_2D.nc")
+! Specify the spatial hydro parameters file (e.g.: "hydro2dtbl.nc")
 ! If you specify a filename and the file does not exist, it will be created for you.
-HYDROTBL_F = "./DOMAIN/HYDRO_TBL_2D.nc"
+HYDROTBL_F = "./DOMAIN/hydro2dtbl.nc"
 
-! Specify spatial metadata file for land surface grid. (e.g.: "geospatial_data_template_land_GIS.nc")
+! Specify spatial metadata file for land surface grid. (e.g.: "GEOGRID_LDASOUT_Spatial_Metadata.nc")
 LAND_SPATIAL_META_FLNM = "./DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc"
 
 ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
@@ -25,7 +25,7 @@ RESTART_FILE  = 'HYDRO_RST.2013-09-12_04:00_DOMAIN3'
 !!!! --------------------- MODEL SETUP OPTIONS -------------------- !!!!
 
 ! Specify the domain or nest number identifier...(integer)
-IGRID = 3
+IGRID = 1
 
 ! Specify the restart file write frequency...(minutes)
 ! A value of -99999 will output restarts on the first day of the month only.
@@ -119,6 +119,7 @@ AGGFACTRT = 10
 
 ! Specify the channel routing model timestep...(seconds)
 DTRT_CH = 10
+
 ! Specify the terrain routing model timestep...(seconds)
 DTRT_TER = 10
 
@@ -134,6 +135,7 @@ rt_option = 1
 
 ! Switch to activate channel routing...(0=no, 1=yes)
 CHANRTSWCRT = 1
+
 ! Specify channel routing option: 1=Muskingam-reach, 2=Musk.-Cunge-reach, 3=Diff.Wave-gridded
 channel_option = 3
 
@@ -156,6 +158,7 @@ GWBUCKPARM_file = "./DOMAIN/GWBUCKPARM.nc"
 
 ! User defined mapping, such NHDPlus: 0=no (default), 1=yes
 UDMP_OPT = 0
+
 ! If on, specify the user-defined mapping file (e.g.: "spatialweights.nc")
 !udmap_file = "./DOMAIN/spatialweights.nc"
 
