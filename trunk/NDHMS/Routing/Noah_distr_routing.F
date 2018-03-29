@@ -915,7 +915,7 @@
                ovrt_data%streams_and_lakes%accumulated_surface_water_to_channel = ovrt_data%streams_and_lakes%accumulated_surface_water_to_channel + &
                   (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
                ovrt_data%streams_and_lakes%surface_water_to_channel(I,J) = ovrt_data%streams_and_lakes%surface_water_to_channel(I,J) + &
-                  ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J)
+                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
 
              ! if(QSTRMVOLRT(I,J) .gt. 0) then 
              !     print *, "QSTRVOL GT 0", QSTRMVOLRT(I,J),I,J 
@@ -933,7 +933,7 @@
                ovrt_data%streams_and_lakes%accumulated_surface_water_to_lake = ovrt_data%streams_and_lakes%accumulated_surface_water_to_lake + &
                    (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
                ovrt_data%streams_and_lakes%surface_water_to_lake(I,J) = ovrt_data%streams_and_lakes%surface_water_to_lake(I,J) + &
-                   ovrt_data%control%surface_water_head_routing(I,J)- ovrt_data%properties%retention_depth(I,J)
+                   (ovrt_data%control%surface_water_head_routing(I,J)- ovrt_data%properties%retention_depth(I,J))
                ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%retention_depth(I,J)
              END IF
            END IF
