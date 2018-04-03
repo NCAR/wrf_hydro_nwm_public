@@ -20,7 +20,10 @@ import pytest
 # Define tests
 
 ###Compile questionscompiler,
-def test_compile_candidate(candidate_sim,output_dir):
+def test_compile_candidate(candidate_sim,output_dir,capsys):
+    with capsys.disabled():
+        print("Question: The candidate compiles?")
+
     compile_dir = output_dir / 'compile_candidate'
 
     # Compile the model
@@ -32,7 +35,10 @@ def test_compile_candidate(candidate_sim,output_dir):
     assert candidate_sim.model.compile_log.returncode == 0, "Candidate code did not compile correctly"
 
 
-def test_compile_reference(reference_sim,output_dir):
+def test_compile_reference(reference_sim,output_dir,capsys):
+    with capsys.disabled():
+        print("Question: The reference compiles?")
+
     compile_dir = output_dir / 'compile_reference'
 
     # Compile the model
@@ -46,7 +52,10 @@ def test_compile_reference(reference_sim,output_dir):
 
 
 ###Run questions
-def test_run_candidate(candidate_sim,output_dir):
+def test_run_candidate(candidate_sim,output_dir,capsys):
+    with capsys.disabled():
+        print("Question: The candidate will run without error, i.e. standard run?")
+
     # Set simulation directory
     simulation_dir = output_dir / 'run_candidate'
 
@@ -59,7 +68,10 @@ def test_run_candidate(candidate_sim,output_dir):
     assert candidate_run.run_log.returncode == 0, "Candidate code run exited with non-zero status"
     assert candidate_run.run_status == 0, "Candidate code run did not complete"
 
-def test_run_reference(reference_sim,output_dir):
+def test_run_reference(reference_sim,output_dir,capsys):
+    with capsys.disabled():
+        print("Question: The reference will run without error, i.e. standard run?")
+
     #Set simulation directory
     simulation_dir = output_dir / 'run_reference'
 
@@ -74,10 +86,16 @@ def test_run_reference(reference_sim,output_dir):
 
 
 #Ncores question
-def test_ncores_candidate(candidate_sim,output_dir):
+def test_ncores_candidate(candidate_sim,output_dir,capsys):
+    with capsys.disabled():
+        print("Question: The candidate restarts from a 1 core run match restarts from standard run?")
+
+    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
+    if candidate_run_file.is_file() is False:
+        pytest.skip('Candidate run object not found, skipping test')
 
     # Load initial run model object
-    candidate_run_expected = pickle.load(open(output_dir / 'run_candidate/WrfHydroRun.pkl', "rb"))
+    candidate_run_expected = pickle.load(open(candidate_run_file, "rb"))
     # Set simulation directory
     simulation_dir = output_dir.joinpath('ncores_candidate')
 
@@ -103,7 +121,14 @@ def test_ncores_candidate(candidate_sim,output_dir):
 
 
 #Perfect restarts question
-def test_perfrestart_candidate(candidate_sim,output_dir):
+def test_perfrestart_candidate(candidate_sim,output_dir,capsys):
+    with capsys.disabled():
+        print("Question: The candidate restarts from a restart run match the restarts from standard run?")
+
+    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
+    if candidate_run_file.is_file() is False:
+        pytest.skip('Candidate run object not found, skipping test')
+
     # Load initial run model object
     candidate_run_expected = pickle.load(open(output_dir / 'run_candidate' / 'WrfHydroRun.pkl',
                                               "rb"))
@@ -184,23 +209,4 @@ def test_perfrestart_candidate(candidate_sim,output_dir):
     for diff in perfstart_restart_diffs.nudging:
         assert diff == None, "Candidate nudging restart files do not match when starting from a restart"
 
-#regression question
-def test_regression(output_dir):
-    candidate_run_expected = pickle.load(open(output_dir / 'run_candidate' / 'WrfHydroRun.pkl',
-                                              "rb"))
-    reference_run_expected = pickle.load(open(output_dir / 'run_reference' / 'WrfHydroRun.pkl',
-                                              "rb"))
-    #Check regression
-    regression_diffs = RestartDiffs(candidate_run_expected,reference_run_expected)
 
-    ## Check hydro restarts
-    for diff in regression_diffs.hydro:
-        assert diff == None, "Candidate hydro restart files do not regress on reference restart files"
-
-    ## Check lsm restarts
-    for diff in regression_diffs.lsm:
-        assert diff == None, "Candidate lsm restart files do not regress on reference restart files"
-
-    ## Check nudging restarts
-    for diff in regression_diffs.nudging:
-        assert diff == None, "Candidate nudging restart files do not regress on reference restart files"
