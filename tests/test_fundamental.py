@@ -35,7 +35,7 @@ def test_compile_candidate(candidate_sim,output_dir,capsys):
     assert candidate_sim.model.compile_log.returncode == 0, "Candidate code did not compile correctly"
 
 
-def test_compile_reference(reference_sim,output_dir):
+def test_compile_reference(reference_sim,output_dir,capsys):
     with capsys.disabled():
         print("Question: The reference compiles?")
 
@@ -52,7 +52,7 @@ def test_compile_reference(reference_sim,output_dir):
 
 
 ###Run questions
-def test_run_candidate(candidate_sim,output_dir):
+def test_run_candidate(candidate_sim,output_dir,capsys):
     with capsys.disabled():
         print("Question: The candidate will run without error, i.e. standard run?")
 
@@ -68,7 +68,7 @@ def test_run_candidate(candidate_sim,output_dir):
     assert candidate_run.run_log.returncode == 0, "Candidate code run exited with non-zero status"
     assert candidate_run.run_status == 0, "Candidate code run did not complete"
 
-def test_run_reference(reference_sim,output_dir):
+def test_run_reference(reference_sim,output_dir,capsys):
     with capsys.disabled():
         print("Question: The reference will run without error, i.e. standard run?")
 
@@ -86,7 +86,7 @@ def test_run_reference(reference_sim,output_dir):
 
 
 #Ncores question
-def test_ncores_candidate(candidate_sim,output_dir):
+def test_ncores_candidate(candidate_sim,output_dir,capsys):
     with capsys.disabled():
         print("Question: The candidate restarts from a 1 core run match restarts from standard run?")
 
@@ -117,7 +117,7 @@ def test_ncores_candidate(candidate_sim,output_dir):
 
 
 #Perfect restarts question
-def test_perfrestart_candidate(candidate_sim,output_dir):
+def test_perfrestart_candidate(candidate_sim,output_dir,capsys):
     with capsys.disabled():
         print("Question: The candidate restarts from a restart run match the restarts from standard run?")
 
@@ -202,7 +202,7 @@ def test_perfrestart_candidate(candidate_sim,output_dir):
         assert diff == None, "Candidate nudging restart files do not match when starting from a restart"
 
 #regression question
-def test_regression(output_dir):
+def test_regression(output_dir,capsys):
     with capsys.disabled():
         print("Question: The candidate standard run restarts match the reference standard restarts?")
 
