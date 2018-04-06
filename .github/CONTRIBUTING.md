@@ -26,6 +26,9 @@ Much of the WRF-Hydro development occurs on the public [NCAR/wrf_hydro_nwm_publi
 
 All code development contributions will be made via [forks](https://help.github.com/articles/about-forks/) and [Pull Requests](https://help.github.com/articles/about-pull-requests/). If you are unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues and pull requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for a thorough guide to collaborating on GitHub.
 
+### Fortran code style standards
+Please see our Fortran code style guidelines [here](.github/CODESTYLE.md)
+
 ### Universal guidelines
 
 * All code contributions must be made through GitHub following specific guidelines listed below.
