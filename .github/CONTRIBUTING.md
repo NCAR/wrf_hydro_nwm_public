@@ -34,15 +34,15 @@ All code development contributions will be made via [forks](https://help.github.
 * All contributions must pass relevant automated testing procedures. These tests are executed automatically when you submit your pull request.
 * Be respectful when giving and receiving feedback on contributions or issues. 
 
-#### Pull requests
+### Pull requests
 
-##### Contributor responsibility
+#### Contributor responsibility
 Pull requests may be denied for a variety of reasons. It is the responsibility of contributors making pull requests to follow the best practices. Not following best practices described below is grounds for rejection of pull requests and may result in excessive manual work for contributors. It is the contributors’ responsibility to know and follow best git practices.
 
-##### Commits: practices & messages
+#### Commits: practices & messages
 Learning to use commits wisely and “atomically” is the foundation for success. As users gain familiarity with basics of how git works and the merging practices we are using. The next level of sophistication is interaction with the git log. Reading logs is greatly facilitated by writing good logs, or “commit messages”. The following webpage gives a crash course on how to write good commit messages: https://chris.beams.io/posts/git-commit/
 
-##### Frequency
+#### Frequency
 Pull requests should happen with high enough frequency to minimize the scope of the code review. Commits which do not changes answers (pass regression testing) MUST be kept separate from commits which do change answers even when the work is on the same feature or bug. The portion of the code which changes the answer must be isolated as much as possible into its own pull request.
 
 ### Types of contributions
