@@ -21,15 +21,19 @@ module module_subsurface
 
         contains
 
+        procedure :: init => subsurface_struct_init
+        procedure :: destroy => subsurface_struct_destroy
+
     end type subsurface_struct
 
     contains
 
-    subroutine subsurface_struct_init(this,ix,jx)
+    subroutine subsurface_struct_init(this,ix,jx,nsoil)
         implicit none
         class(subsurface_struct), intent(inout) :: this ! the type object being initialized
         integer, intent(in) :: ix                     ! x grid size
         integer, intent(in) :: jx                     ! y grid size
+        integer, intent(in) :: nsoil                  ! number of soil layers
 
     if (this%pointer_allocation_guard .eqv. .false. ) then
         this%pointer_allocation_guard = .true.
@@ -38,6 +42,7 @@ module module_subsurface
         if ( .not. associated( this%io) ) then
             write(0,*) "Failure to allocate subsurface io interface"
         else
+            !write(0,*) "Allocating io structure"
             call this%io%init(ix,jx)
         end if
 
@@ -46,6 +51,7 @@ module module_subsurface
         if ( .not. associated( this%properties) ) then
             write(0,*) "Failure to allocate subsurface io interface"
         else
+            !write(0,*) "Allocating properties structure"
             call this%properties%init(ix,jx)
         end if
 
@@ -54,9 +60,11 @@ module module_subsurface
         if ( .not. associated( this%grid_transfrom) ) then
             write(0,*) "Failure to allocate grid transform interface"
         else
-            call this%grid_transfrom%init(ix,jx)
+            !write(0,*) "Allocating grid transform structure"
+            call this%grid_transfrom%init(ix,jx,nsoil)
         end if
-
+    else
+        write(0,*)  "Attempt to double allocate subsurface_struct"
     end if
 
     end subroutine subsurface_struct_init
@@ -65,22 +73,27 @@ module module_subsurface
         implicit none
         class(subsurface_struct), intent(inout) :: this ! the type object being initialized
 
-        if ( associated( this%io ) ) then
-            call this%io%destroy
-            deallocate( this%io )
-        end if
+        if ( this%pointer_allocation_guard .eqv. .true.) then
+            !write(0,*) "Testing pointers for deallocation"
+            if ( associated( this%io ) ) then
+                call this%io%destroy
+                deallocate( this%io )
+            end if
 
-        if (associated( this%properties ) )then
-            call this%properties%destroy
-            deallocate( this%properties )
-        end if
+            if (associated( this%properties ) )then
+                call this%properties%destroy
+                deallocate( this%properties )
+            end if
 
-        if (associated( this%grid_transfrom ) ) then
-            call this%grid_transfrom%destroy
-            deallocate( this%grid_transfrom )
-        end if
+            if (associated( this%grid_transfrom ) ) then
+                call this%grid_transfrom%destroy
+                deallocate( this%grid_transfrom )
+            end if
 
-        this%pointer_allocation_guard = .false.
+            this%pointer_allocation_guard = .false.
+        else
+            write(0,*)  "Attempt to double delete subsurface_struct"
+        end if
 
     end subroutine subsurface_struct_destroy
 

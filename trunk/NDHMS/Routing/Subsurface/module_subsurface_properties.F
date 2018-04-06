@@ -28,25 +28,37 @@ contains
         integer, intent(in) :: ix                     ! x grid size
         integer, intent(in) :: jx                     ! y grid size
 
+        logical :: allocation_error = .false.
+
         ! allocate the array only if not already allocated
         if ( .not. allocated(this%lksatrt) ) then
             allocate( this%lksatrt(ix,jx) )
             this%lksatrt = 0.0
+        else
+            allocation_error = .true.
         end if
 
         ! allocate the array only if not already allocated
         if ( .not. allocated(this%zwattablrt) ) then
             allocate( this%zwattablrt(ix,jx) )
             this%zwattablrt = 0.0
+        else
+            allocation_error = .true.
         end if
 
         ! allocate the array only if not already allocated
         if ( .not. allocated(this%soldeprt) ) then
             allocate( this%soldeprt(ix,jx) )
             this%soldeprt = 0.0
+        else
+            allocation_error = .true.
         end if
 
         this%zsoil = 0.0
+
+        if ( allocation_error ) &
+            write(0,*) "attempt to allocate data in members of subsurface properties structure&
+            &that where already allocated. The allocated members where not changed"
 
     end subroutine subsurface_properties_init
 
@@ -54,20 +66,33 @@ contains
         implicit none
         class(subsurface_properties_interface), intent(inout) :: this ! the type object being destroyed
 
+        logical :: allocation_error = .false.
+
         ! only deallocated if already allocated
         if ( allocated(this%lksatrt) ) then
             deallocate( this%lksatrt)
+        else
+            allocation_error = .true.
         end if
 
         ! only deallocated if already allocated
         if ( allocated(this%zwattablrt) ) then
             deallocate( this%zwattablrt)
+        else
+            allocation_error = .true.
         end if
 
         ! only deallocated if already allocated
         if ( allocated(this%soldeprt) ) then
             deallocate( this%soldeprt)
+        else
+            allocation_error = .true.
         end if
+
+        if ( allocation_error ) &
+            write(0,*) "attempt to deallocate data in members of subsurface properties structure&
+            &that where not allocated. The unallocated members where not changed"
+
     end subroutine subsurface_properties_destroy
 
 end module module_subsurface_properties
