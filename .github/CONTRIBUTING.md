@@ -34,15 +34,27 @@ All code development contributions will be made via [forks](https://help.github.
 * All contributions must pass relevant automated testing procedures. These tests are executed automatically when you submit your pull request.
 * Be respectful when giving and receiving feedback on contributions or issues. 
 
-### Bug fixes
+#### Pull requests
+
+##### Contributor responsibility
+Pull requests may be denied for a variety of reasons. It is the responsibility of contributors making pull requests to follow the best practices. Not following best practices described below is grounds for rejection of pull requests and may result in excessive manual work for contributors. It is the contributors’ responsibility to know and follow best git practices.
+
+##### Commits: practices & messages
+Learning to use commits wisely and “atomically” is the foundation for success. As users gain familiarity with basics of how git works and the merging practices we are using. The next level of sophistication is interaction with the git log. Reading logs is greatly facilitated by writing good logs, or “commit messages”. The following webpage gives a crash course on how to write good commit messages: https://chris.beams.io/posts/git-commit/
+
+##### Frequency
+Pull requests should happen with high enough frequency to minimize the scope of the code review. Commits which do not changes answers (pass regression testing) MUST be kept separate from commits which do change answers even when the work is on the same feature or bug. The portion of the code which changes the answer must be isolated as much as possible into its own pull request.
+
+### Types of contributions
+#### Bug fixes
 All bug fixes must address a specific [GitHub issue](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Only issues labeled with "Community dev" are open to community contributions. The majority of issues will be open to community contributions, but some cases may require more careful handling. Issues without the "Community dev" label are either still being investigated, are of broad scope, or involve changes to code that is actively being developed internally. 
 
 All code changes to address issues must be submitted using a pull request, and the corresponding issue number must be referenced in the pull request. For more information on referencing issues, see [issues and keywords](https://help.github.com/articles/closing-issues-using-keywords/).
 
-### New features
+#### New features
 Code contributions for minor model enhancements or new features follow a similar pattern to bug fixes. The proposed feature must be submitted as a GitHub issue and all discussions regarding the new feature should reside in the issue thread. Additionally, work should not begin on the new feature until the issue has been tagged with "Community dev".
 
 Depending on the scope of the new feature, a WRF-Hydro core contributor may suggest you create a [branch](https://help.github.com/articles/about-branches/) to hold all development for the new feature. 
 
-### Research development
+#### Research development
 Larger-scale research development, e.g. model coupling, must be coordinated with a WRF-Hydro team member prior to beginning work. This type of development may impact other community projects and requires more careful governance to help steer the direction of model development and maximize harmony among the various NCAR, NOAA, and WRF-Hydro community research efforts.
