@@ -4,8 +4,6 @@
 [![Release](https://img.shields.io/github/release/NCAR/wrf_hydro_nwm_public.svg)](https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest)
 ![Downloads](https://img.shields.io/github/downloads/NCAR/wrf_hydro_nwm_public/total.svg)
 
-
-
 **IMPORTANT:** Please note that the model code contained in this repository is currently a **pre-release to beta users** and is **not fully supported at this time.** A full public release with additional documentation will be made available and officially announced through our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe). If you would like to receive notification of the official public release please subscribe to our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe).
 
 ## Description
