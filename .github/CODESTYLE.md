@@ -222,25 +222,25 @@ allocate(foo, bar)
   * For longer blocks of documentation, it can be inconvenient to continually type the "docmark" = ‘!!’. For such situations, the docmark_alt (set to * by default) may be used in the first line of the documentation comment. Any immediately following lines containing only a comment will then be included in the block of documentation, without needing the "docmark".
 
     Example:
-    ```
-    subroutine feed_pets(cats, dogs, food, angry)
-        !! Feeds your cats and dogs, if enough food is available. If not enough
-        !! food is available, some of your pets will get angry.
+```fortran
+subroutine feed_pets(cats, dogs, food, angry)
+    !! Feeds your cats and dogs, if enough food is available. If not enough
+    !! food is available, some of your pets will get angry.
 
-        ! Arguments
-        integer, intent(in)  :: cats
-        !! The number of cats to keep track of.
-        integer, intent(in)  :: dogs
-        !! The number of dogs to keep track of.
-        real, intent(inout)  :: food
-        !! The amount of pet food (in kilograms) which you have on hand.
-        integer, intent(out) :: angry
-        !! The number of pets angry because they weren't fed.
+    ! Arguments
+    integer, intent(in)  :: cats
+    !! The number of cats to keep track of.
+    integer, intent(in)  :: dogs
+    !! The number of dogs to keep track of.
+    real, intent(inout)  :: food
+    !! The amount of pet food (in kilograms) which you have on hand.
+    integer, intent(out) :: angry
+    !! The number of pets angry because they weren't fed.
 
-        !...
-        return
-    end subroutine feed_pets
-    ```
+    !...
+    return
+end subroutine feed_pets
+```
 
 * Avoid “side effects” (return values are the only thing modified: files are not created, module/global variables are not changed, etc). Use pure functions?
 * `implicit none` for all program units
@@ -248,7 +248,7 @@ allocate(foo, bar)
 * Restrict number of passed variables per line in the function/subroutine definition/call to 4 max. Line up variables vertically for ease of reading and counting. Match the call layout to the definition layout.
 * Have a local variables section separate from passed variables
 
-```
+```fortran
 # WRONG
 some_function(a,b,c,d,e,f,g,h &
 ,i,j,k,l)
