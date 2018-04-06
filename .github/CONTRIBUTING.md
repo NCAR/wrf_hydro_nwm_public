@@ -7,7 +7,7 @@ Please read the following guidelines carefully before contributing.
 
 **Failure to adhere to the following guidelines may result in your contributions being permanently rejected if they are unable to be merged.**
 
-All contributions must be made through the WRF-Hydro GitHub page at https://github.com/NCAR/wrf_hydro_nwm_public. Contributions submitted via email or help desk will not be processed.
+All contributions must be made through the GitHub page at https://github.com/NCAR/wrf_hydro_nwm_public. Contributions submitted via email or help desk will not be processed.
 
 ## Bug reports, feature requests, and documentation suggestions
 All bug reports, feature requests, and documentation suggestions should be submitted via [GitHub issues](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Before submitting your issue, please search for a few keywords related to your issue in the open and closed issues to discover if your issue has already been logged and/or resolved. An issue template has been provided to assist with submitting bug reports. For more information on using GitHub issues, please see https://help.github.com/articles/about-issues/.
