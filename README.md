@@ -1,13 +1,15 @@
 #  WRF-Hydro
-|Linux|
-|----------|
-|[![Build Status](https://travis-ci.org/NCAR/wrf_hydro_nwm_public.svg?branch=master)](https://travis-ci.org/NCAR/wrf_hydro_nwm_public)|
+
+[![Build Status](https://travis-ci.org/NCAR/wrf_hydro_nwm_public.svg?branch=master)](https://travis-ci.org/NCAR/wrf_hydro_nwm_public)
+[![Release](https://img.shields.io/github/release/NCAR/wrf_hydro_nwm_public.svg)](https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest)
+![Downloads](https://img.shields.io/github/downloads/NCAR/wrf_hydro_nwm_public/total.svg)
+
 
 
 **IMPORTANT:** Please note that the model code contained in this repository is currently a **pre-release to beta users** and is **not fully supported at this time.** A full public release with additional documentation will be made available and officially announced through our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe). If you would like to receive notification of the official public release please subscribe to our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe).
 
 ## Description
-This is the code repository for [WRF-Hydro](https://ral.ucar.edu/projects/wrf_hydro).
+This is the code repository for [WRF-Hydro](https://ral.ucar.edu/projects/wrf_hydro). DOI: https://doi.org/10.5065/D6J38RBJ
 
 WRF-Hydro is a community modeling system and framework for hydrologic modeling and model coupling.  In 2016 a configuration of WRF-Hydro was implemented as the [National Water Model](http://water.noaa.gov/about/nwm) (NWM) for the continental United States.
 
