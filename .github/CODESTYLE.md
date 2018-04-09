@@ -6,7 +6,8 @@ New code contributions should be written to at least Fortran 2003 standard.
 # Source Code Formatting
 * Max line length 100 characters. All wrapped code statements shall at least be indented one additional level beyond the previous level.
 * Do NOT use tab characters.
-* Indentation: 3 spaces (no tabs) for all control below the subroutine/function level. (indenting less often saves a lot of space). Tightly nested do loops can be exceptions. Put comments at same indentation level as the code which it is commenting.
+* Indentation: 3 spaces (no tabs) for all control below the subroutine/function level (indenting
+less often saves a lot of space). Tightly nested do loops can be exceptions. Put comments at same indentation level as the code which it is commenting.
 
 
 ```fortran
