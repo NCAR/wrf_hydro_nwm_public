@@ -4,10 +4,12 @@
 New code contributions should be written to at least Fortran 2003 standard.
 
 # Source Code Formatting
-* Max line length 100 characters. All wrapped code statements shall at least be indented one additional level beyond the previous level.
+* Max line length 100 characters. All wrapped code statements shall at least be indented one
+  additional level beyond the previous level.
 * Do NOT use tab characters.
 * Indentation: 3 spaces (no tabs) for all control below the subroutine/function level (indenting
-less often saves a lot of space). Tightly nested do loops can be exceptions. Put comments at same indentation level as the code which it is commenting.
+  less often saves a lot of space). Tightly nested do loops can be exceptions. Put comments at same
+  indentation level as the code which it is commenting.
 
 
 ```fortran
@@ -46,7 +48,8 @@ end module my_module
     * lowecase_underscore_separated: use for mouldes, subroutines, functions
     * UPPERCASE_UNDERSCORE_SEPARATED: constants
 
-* Line up related pieces of syntax (readability when there are repeated elements, ability to count the position of arguments), including end-of-line characters.
+* Line up related pieces of syntax (readability when there are repeated elements, ability to count
+  the position of arguments), including end-of-line characters.
 
 ```fortran
 # WRONG
@@ -58,7 +61,8 @@ foo=function(apple,  banana,   corn, &
              durian, eggplant, fig    )
 ```
 
-* Place the same number of arguments on each line except the last for countability/position matching.
+* Place the same number of arguments on each line except the last for countability/position
+  matching.
 
 ```fortran
 # WRONG
@@ -67,14 +71,17 @@ foo=function(a,b,c = 1)
 foo = function(a, b, c=1)
 ```
 
-* Horizontal white space: enhances readability, esp w respect to function/subroutine arguments. Whitespace helps identify separate things.
+* Horizontal white space: enhances readability, esp w respect to function/subroutine arguments.
+  Whitespace helps identify separate things.
 * Vertical white space:
   * No vertical white space: Used to group closely-related lines of code.
   * Single vertical white space: Separate less-related lines of code. After control structures.
-  * Two vertical white spaces: only used to emphasize separation between functions, subroutines and occasionally large code blocks.
+  * Two vertical white spaces: only used to emphasize separation between functions, subroutines and
+    occasionally large code blocks.
 * Control structures identified against their opening statement.
   * #ifdef:  When nested.
-  * If, do, while, case: Best practice: All the time. Required: when spanning more than one page of vertical space.
+  * If, do, while, case: Best practice: All the time. Required: when spanning more than one page of
+    vertical space.
 
 ```fortran
 #ifdef HYDRO_D
@@ -95,7 +102,8 @@ if(a .eq. 100) then  !! a .eq. 100 block
 endif  !! a .eq. 100 block
 ```
 
-* Comment blocks above every unit (module, subtroutine, function), with the following form. This should be the NCO standard template.
+* Comment blocks above every unit (module, subtroutine, function), with the following form. This
+  should be the NCO standard template.
 
 ```fortran
 !===================================================================================================
@@ -117,7 +125,8 @@ endif  !! a .eq. 100 block
 ```
 
 
-* Allocate/deallocate statements do NOT span multiple lines. This is so grep can reveal all allocation/deallocation pairs.
+* Allocate/deallocate statements do NOT span multiple lines. This is so grep can reveal all
+  allocation/deallocation pairs.
 
 ```fortran
 # WRONG
@@ -131,32 +140,40 @@ allocate(foo, bar)
 
 # Naming
 ## Source file names
-* The name of the source file or script shall represent its purpose. All of the functions in a file shall have a common purpose.
-* Source file names SHALL NOT (SHANT) include spaces nor colons (‘:’) nor any other special characters.
+* The name of the source file or script shall represent its purpose. All of the functions in a file
+  shall have a common purpose.
+* Source file names SHALL NOT (SHANT) include spaces nor colons (‘:’) nor any other special
+  characters.
 * End in the `.Fxx` extension, with `xx` corresponding to the fortran standard, e.g. `.F90`
 * Filenames shall use the `lowercase_underscore_separated.Fxx` convention.
 
 ## Output file names
-* Source file names SHALL NOT (SHANT) include spaces nor colons (`:`) nor any other special characters.
+* Source file names SHALL NOT (SHANT) include spaces nor colons (`:`) nor any other special
+  characters.
 
 ## Variable names
-* Variable names shall convey their intended use to other developers who did not author the code. This eliminates need for inline comments that describe variables.
-  * DO NOT strive to much for shortening of variable names, prefer meaningful name: local shortening is often possible with the associate construct.
+* Variable names shall convey their intended use to other developers who did not author the code.
+  This eliminates need for inline comments that describe variables.
+  * DO NOT strive to much for shortening of variable names, prefer meaningful name: local
+    shortening is often possible with the associate construct.
 * Comments/descriptions on variables:
   * All variables in argument lists will be described in the definition using FORD syntax.
-  * Derived type arguments only need documented in bulk, their individual components only need defined where the derived type is defined.
+  * Derived type arguments only need documented in bulk, their individual components only need
+    defined where the derived type is defined.
   * Variable descriptions will not be redundant with the variable name
   * Descriptions will describe the physical quantity
   * Descriptions will include units.
 * Variable names shall contain a noun.
 * Exception: when widely accepted equations have simple variable names. (e.g. `F=m*a`)
 * Loop counters should typically have names.
-* Loop counters should NOT be single letters. Simply doubling the letter makes it easier to search for the use (and possibly replace).
+* Loop counters should NOT be single letters. Simply doubling the letter makes it easier to search
+  for the use (and possibly replace).
 * Conventions for special kinds of variables:
   * Accumulation variables: “acc” prefix, e.g.
   * MPI global variables
   * prognostic vs diagnostic variables
-  * logical variables must be named to reflect the state they are used to convey, most with the verb to be, e.g. :
+  * logical variables must be named to reflect the state they are used to convey, most with the
+    verb to be, e.g. :
     * `lib_is_initialized` vs `lib_init`
     * `obj_has_parent` vs `obj_parent`
 
@@ -170,16 +187,28 @@ allocate(foo, bar)
 * All constants are defined as parameters.
 * Exceptions: should be rare and clearly typed (float, double, etc).
 * Constants follow the `UPPERCASE_UNDERSCORE SEPARATED` convention for naming.
-* Constant names shall describe what the contained value represents within context, e.g. `NO_DATA_VALUE`, `PLANCK_LENGTH`, `HIGH_TEMPERATURE_THRESHOLD`, etc.
+* Constant names shall describe what the contained value represents within context, e.g.
+  `NO_DATA_VALUE`, `PLANCK_LENGTH`, `HIGH_TEMPERATURE_THRESHOLD`, etc.
 
 # Documenting in the source
-* Code documentation should be a primary source of overall documentation. By following simple practices, such documentation can be extracted to live separately if needed. But keeping it close as possible to the source maintains consistency and improves communication among developers: all you need is the source to understand the code (not other random documents)
-* Write code that documents itself. Try to make code as clear as possible (“self-documenting”) to avoid use of comments and redundancy between the two which needs synchronized or is confusingly out of sync. Writing self-documenting code includes using variable names with obvious meaning and documenting ambiguities in variable names when they exist. Minimize commenting “what” (repeating the code with comments) but do it when it is necessary for interpretation.
-* Document why (not what). Algorithmic choices are often the hardest thing to perceive, not function calls on variables.
+* Code documentation should be a primary source of overall documentation. By following simple
+  practices, such documentation can be extracted to live separately if needed. But keeping it close
+  as possible to the source maintains consistency and improves communication among developers: all
+  you need is the source to understand the code (not other random documents)
+* Write code that documents itself. Try to make code as clear as possible (“self-documenting”) to
+  avoid use of comments and redundancy between the two which needs synchronized or is confusingly
+  out of sync. Writing self-documenting code includes using variable names with obvious meaning and
+  documenting ambiguities in variable names when they exist. Minimize commenting “what” (repeating
+  the code with comments) but do it when it is necessary for interpretation.
+* Document why (not what). Algorithmic choices are often the hardest thing to perceive, not
+  function calls on variables.
 * Indent comments to the indentation level of the code which is being commented.
 * Comments shall be written in English with good spelling, punctuation, and grammar.
 * Documentation shall be placed in the code and FORD will be used to generate documentation.
-* TODO: Comments used to remind developers of future or unfinished actions in source code shall begin with “TODO FML” (first middle last initials, as available), and describe the action to be taken. TODO comments shall also list a specific date or event by which the TODO action will be completed.
+* TODO: Comments used to remind developers of future or unfinished actions in source code shall
+  begin with “TODO FML” (first middle last initials, as available), and describe the action to be
+  taken. TODO comments shall also list a specific date or event by which the TODO action will be
+  completed.
 
 ```fortran
 ! TODO JLM : Rename the variable foo to discharge. Target Date: 12/25/20
@@ -188,7 +217,8 @@ allocate(foo, bar)
 ! TODO JLM : Target Date: 12/25/20
 ```
 
-* DEPRECATED: Flagging deprecated code sections shall be done in the following way for automated removal at end-of-version code release.
+* DEPRECATED: Flagging deprecated code sections shall be done in the following way for automated
+  removal at end-of-version code release.
 
 ```fortran
 !DEPRECATED >>>
@@ -201,10 +231,14 @@ allocate(foo, bar)
 * Each source file shall contain one file header comment.
 * File header comments shall contain the following:
   * A concise description of the collective purpose of file contents.
-      * Exception: When a file contains only one class or function definition, this description shall simply state the file is an implementation or definition file for class/function `<name>`. The class or function description will be written into the class or function header comment.
+      * Exception: When a file contains only one class or function definition, this description
+        shall simply state the file is an implementation or definition file for class/function
+        `<name>`. The class or function description will be written into the class or function
+        header comment.
 * Organization name: National Center for Atmospheric Research
 * Current maintainer
-* Author names. Multiple authors should be listed when more than one developer has worked on a source file over time.
+* Author names. Multiple authors should be listed when more than one developer has worked on a
+  source file over time.
 
 ```fortran
 ! module_super_foo.F
@@ -218,9 +252,16 @@ allocate(foo, bar)
 # Module/Subroutines/Function Usage
 * Always use modules.
 * Intent: all arguments should be given an intent (in,out, inout),
-* Each argument is defined its own line. Document details in- or below- line using FORD (https://github.com/cmacmackin/ford/wiki/Writing-Documentation) conventions.
-  * FORD will ignore a normal comments preceded with a single exclamation mark (!) However, comments with two exclamation marks (!!) are interpreted as documentation and will be captured for inclusion in the FORD output. By default, FORD documentation comes after whatever it is that you are documenting, either at the end of the line or on a subsequent line.
-  * For longer blocks of documentation, it can be inconvenient to continually type the "docmark" = ‘!!’. For such situations, the docmark_alt (set to * by default) may be used in the first line of the documentation comment. Any immediately following lines containing only a comment will then be included in the block of documentation, without needing the "docmark".
+* Each argument is defined its own line. Document details in- or below- line using FORD
+  (https://github.com/cmacmackin/ford/wiki/Writing-Documentation) conventions.
+  * FORD will ignore a normal comments preceded with a single exclamation mark (!) However,
+    comments with two exclamation marks (!!) are interpreted as documentation and will be captured
+    for inclusion in the FORD output. By default, FORD documentation comes after whatever it is
+    that you are documenting, either at the end of the line or on a subsequent line.
+  * For longer blocks of documentation, it can be inconvenient to continually type the "docmark" =
+    ‘!!’. For such situations, the docmark_alt (set to * by default) may be used in the first line
+    of the documentation comment. Any immediately following lines containing only a comment will
+    then be included in the block of documentation, without needing the "docmark".
 
     Example:
 ```fortran
@@ -243,10 +284,13 @@ subroutine feed_pets(cats, dogs, food, angry)
 end subroutine feed_pets
 ```
 
-* Avoid “side effects” (return values are the only thing modified: files are not created, module/global variables are not changed, etc). Use pure functions?
+* Avoid “side effects” (return values are the only thing modified: files are not created,
+  module/global variables are not changed, etc). Use pure functions?
 * `implicit none` for all program units
 * Use `use, only:` as much as possible.
-* Restrict number of passed variables per line in the function/subroutine definition/call to 4 max. Line up variables vertically for ease of reading and counting. Match the call layout to the definition layout.
+* Restrict number of passed variables per line in the function/subroutine definition/call to 4 max.
+  Line up variables vertically for ease of reading and counting. Match the call layout to the
+  definition layout.
 * Have a local variables section separate from passed variables
 
 ```fortran
@@ -292,13 +336,17 @@ call some_function(a, b, c, d &
 * Should be informative.
 
 # Compiler warning messages
-* Compilers generally issue two types of messages: warnings and errors. Extent of compiler warning messages can typically be tuned with a compiler option. Compiler warnings normally do not stop the compile process, but can still result in run-time problems. Compiler errors do stop the compile process, forcing the developer to fix the problem and recompile.
-STANDARD:
+* Compilers generally issue two types of messages: warnings and errors. Extent of compiler warning
+  messages can typically be tuned with a compiler option. Compiler warnings normally do not stop
+  the compile process, but can still result in run-time problems. Compiler errors do stop the
+  compile process, forcing the developer to fix the problem and recompile. STANDARD:
 * When available, compiler options should be set to produce the maximum number of warning messages.
 * Compiler and linker warnings shall be treated as errors and fixed.
 
 # Other general guidelines
-* Code should always be written with cleanliness and clarity in mind. Algorithm implementations should not be unnecessarily complicated without significant performance gains over simpler alternatives.
+* Code should always be written with cleanliness and clarity in mind. Algorithm implementations
+  should not be unnecessarily complicated without significant performance gains over simpler
+  alternatives.
 * Structured programming - do NOT use GOTO
 * Related resources
   * http://research.metoffice.gov.uk/research/nwp/numerical/fortran90/f90_standards.html
