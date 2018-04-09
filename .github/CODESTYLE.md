@@ -296,11 +296,7 @@ STANDARD:
 * When available, compiler options should be set to produce the maximum number of warning messages.
 * Compiler and linker warnings shall be treated as errors and fixed.
 
-# Long-term items
-* Variable declaration and initialization
-* Input validation and sanitizing
-* Exception and error return value handling
-* No obfuscated code statements
+# Other general guidelines
 * Code should always be written with cleanliness and clarity in mind. Algorithm implementations should not be unnecessarily complicated without significant performance gains over simpler alternatives.
 * Structured programming - do NOT use GOTO
 * Related resources
