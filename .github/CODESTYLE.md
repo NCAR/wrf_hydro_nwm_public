@@ -1,7 +1,8 @@
 # WRF-Hydro Fortran Conventions Guide
 
 # Fortran standard
-New code contributions should be written to at least Fortran 2003 standard.
+New code contributions should be written to at least
+[Fortran 2003 standard](https://gcc.gnu.org/wiki/GFortranStandards#Fortran_2003).
 
 # Source Code Formatting
 * Max line length 100 characters. All wrapped code statements shall at least be indented one
@@ -142,13 +143,13 @@ allocate(foo, bar)
 ## Source file names
 * The name of the source file or script shall represent its purpose. All of the functions in a file
   shall have a common purpose.
-* Source file names SHALL NOT (SHANT) include spaces nor colons (‘:’) nor any other special
+* Source file names SHALL NOT include spaces nor colons (‘:’) nor any other special
   characters.
 * End in the `.Fxx` extension, with `xx` corresponding to the fortran standard, e.g. `.F90`
 * Filenames shall use the `lowercase_underscore_separated.Fxx` convention.
 
 ## Output file names
-* Source file names SHALL NOT (SHANT) include spaces nor colons (`:`) nor any other special
+* Source file names SHALL NOT include spaces nor colons (`:`) nor any other special
   characters.
 
 ## Variable names
@@ -204,7 +205,8 @@ allocate(foo, bar)
   function calls on variables.
 * Indent comments to the indentation level of the code which is being commented.
 * Comments shall be written in English with good spelling, punctuation, and grammar.
-* Documentation shall be placed in the code and FORD will be used to generate documentation.
+* Documentation shall be placed in the code and [FORD](https://github.com/cmacmackin/ford) will be
+  used to generate documentation.
 * TODO: Comments used to remind developers of future or unfinished actions in source code shall
   begin with “TODO FML” (first middle last initials, as available), and describe the action to be
   taken. TODO comments shall also list a specific date or event by which the TODO action will be
@@ -252,8 +254,8 @@ allocate(foo, bar)
 # Module/Subroutines/Function Usage
 * Always use modules.
 * Intent: all arguments should be given an intent (in,out, inout),
-* Each argument is defined its own line. Document details in- or below- line using FORD
-  (https://github.com/cmacmackin/ford/wiki/Writing-Documentation) conventions.
+* Each argument is defined on its own line. Document details in- or below- line using
+  [FORD](https://github.com/cmacmackin/ford/wiki/Writing-Documentation) conventions.
   * FORD will ignore a normal comments preceded with a single exclamation mark (!) However,
     comments with two exclamation marks (!!) are interpreted as documentation and will be captured
     for inclusion in the FORD output. By default, FORD documentation comes after whatever it is
