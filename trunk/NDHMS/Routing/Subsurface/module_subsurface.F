@@ -1,4 +1,4 @@
-module module_subsurface
+module module_subsurface_data
 
     use module_subsurface_io
     use module_subsurface_properties
@@ -97,4 +97,4 @@ module module_subsurface
 
     end subroutine subsurface_struct_destroy
 
-end module module_subsurface
+end module module_subsurface_data
