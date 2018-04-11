@@ -5,6 +5,7 @@ all:
 
 BASIC:
 	make -C Routing/Overland
+	make -C Routing/Subsurface
 	(cd MPP     ; make -f Makefile)
 	(cd Data_Rec     ; make -f Makefile)
 	make -C Debug_Utilities/
@@ -13,6 +14,7 @@ BASIC:
 
 clean:
 	make -C Routing/Overland clean
+	make -C Routing/Subsurface clean
 	(cd Data_Rec; make -f Makefile clean)
 	(cd HYDRO_drv; make -f Makefile clean)
 	(cd MPP; make -f Makefile clean)
