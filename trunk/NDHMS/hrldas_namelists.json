@@ -1,0 +1,53 @@
+{
+    "v1.2.1": {
+        "NWM": {
+            "noahlsm_offline": {
+                "hrldas_setup_file": "NULL_specified_in_domain.json",
+                "indir": "NULL_specified_in_domain.json",
+                "spatial_filename": "NULL_specified_in_domain.json",
+                "outdir": "./",
+                "start_year": "NULL_specified_in_domain.json",
+                "start_month": "NULL_specified_in_domain.json",
+                "start_day": "NULL_specified_in_domain.json",
+                "start_hour": "NULL_specified_in_domain.json",
+                "start_min": "NULL_specified_in_domain.json",
+                "restart_filename_requested": "NULL_specified_in_domain.json",
+                "kday": 7,
+                "dynamic_veg_option": 4,
+                "canopy_stomatal_resistance_option": 1,
+                "btr_option": 1,
+                "runoff_option": 3,
+                "surface_drag_option": 1,
+                "frozen_soil_option": 1,
+                "supercooled_water_option": 1,
+                "radiative_transfer_option": 3,
+                "snow_albedo_option": 2,
+                "pcp_partition_option": 1,
+                "tbot_option": 2,
+                "temp_time_scheme_option": 3,
+                "glacier_option": 2,
+                "surface_resistance_option": 4,
+                "forcing_timestep": 3600,
+                "noah_timestep": 3600,
+                "output_timestep": 36000000,
+                "restart_frequency_hours": 24,
+                "split_output_count": 1,
+                "nsoil": 4,
+                "soil_thick_input": [
+                    0.1,
+                    0.3,
+                    0.6,
+                    1.0
+                ],
+                "zlvl": 10.0,
+                "rst_bi_in": 0,
+                "rst_bi_out": 0
+            },
+            "wrf_hydro_offline": {
+                "forc_typ": "NULL_specified_in_domain.json"
+            }
+        },
+        "Gridded": {},
+        "Reach": {}
+    }
+}
