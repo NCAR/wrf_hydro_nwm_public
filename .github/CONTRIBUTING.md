@@ -44,8 +44,8 @@ internal development must occur on a private repository maintained by NCAR and N
 dual-repository system, a strict procedure must be followed when making contributions to the WRF-
 Hydro model code.
 
-All code development contributions will be made via [forks](https://help.github.com/articles/about-
-forks/) and [Pull Requests](https://help.github.com/articles/about-pull-requests/). If you are
+All code development contributions will be made via [forks](https://help.github.com/articles/about-forks/)
+and [Pull Requests](https://help.github.com/articles/about-pull-requests/). If you are
 unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues and pull
 requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for a
 thorough guide to collaborating on GitHub.
