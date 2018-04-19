@@ -2790,7 +2790,7 @@
                      rt_domain(did)%overland%control%infiltration_excess, &
                      rt_domain(did)%subsurface%io%qsubbdrytrt, &
                      rt_domain(did)%subsurface%io%qsubbdryrt,&
-                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
+                     rt_domain(did)%subsurface%io%qsubrt ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
                      RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope)
              endif
 
