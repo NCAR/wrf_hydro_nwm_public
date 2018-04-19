@@ -2787,7 +2787,9 @@
                      RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%surface_slope_x,       &
                      rt_domain(did)%overland%properties%surface_slope_y,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
-                     rt_domain(did)%overland%control%infiltration_excess,rt_domain(did)%subsurface%io%qsubbdrytrt, RT_DOMAIN(did)%QSUBBDRYRT,&
+                     rt_domain(did)%overland%control%infiltration_excess, &
+                     rt_domain(did)%subsurface%io%qsubbdrytrt, &
+                     rt_domain(did)%subsurface%io%qsubbdryrt,&
                      RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
                      RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope)
              endif

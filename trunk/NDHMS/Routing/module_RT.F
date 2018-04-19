@@ -168,8 +168,8 @@ CONTAINS
      rt_domain(did)%QSUBRT      = 0.0
      allocate( rt_domain(did)%ZWATTABLRT  (IXRT,JXRT) )
      rt_domain(did)%ZWATTABLRT  = 0.0
-     allocate( rt_domain(did)%QSUBBDRYRT  (IXRT,JXRT) )
-     rt_domain(did)%QSUBBDRYRT  = 0.0
+     !allocate( rt_domain(did)%QSUBBDRYRT  (IXRT,JXRT) )
+     !rt_domain(did)%QSUBBDRYRT  = 0.0
      allocate( rt_domain(did)%SOLDEPRT    (IXRT,JXRT) )
      rt_domain(did)%SOLDEPRT    = 0.0
      allocate( rt_domain(did)%q_sfcflx_x  (IXRT,JXRT) )
@@ -1364,7 +1364,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
    rt_domain(did)%QSUBRT = 0.0
    rt_domain(did)%ZWATTABLRT = 0.0
-   rt_domain(did)%QSUBBDRYRT = 0.0
+   rt_domain(did)%subsurface%io%qsubbdryrt = 0.0
    rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0
    rt_domain(did)%overland%control%boundary_flux = 0.0
    rt_domain(did)%overland%control%surface_water_head_routing = 0.0

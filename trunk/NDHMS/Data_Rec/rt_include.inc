@@ -43,7 +43,7 @@
   INTEGER, allocatable, DIMENSION(:,:)      :: LAK_1K
   INTEGER, allocatable, DIMENSION(:,:)      :: g_LAK_1K
   ! REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT, QSUBBDRYTRT
-  REAL :: QSUBBDRYTRT
+  !REAL :: QSUBBDRYTRT    ! QSUBBDRYTRT moved to subsurface io module
   !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT
   REAL,    allocatable, DIMENSION(:,:)      :: ELRT
   !REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
@@ -54,7 +54,7 @@
   REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC  ! SFCHEADSUBRT, INFXSUBRT moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: LKSATFAC
-  REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT,ZWATTABLRT,QSUBBDRYRT,SOLDEPRT
+  REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT,ZWATTABLRT,SOLDEPRT ! QSUBBDRYRT moved to subsurface io module
   REAL,    allocatable, DIMENSION(:,:)      :: SUB_RESID
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x,q_sfcflx_y
   INTEGER,    allocatable, DIMENSION(:)      :: map_l2g, map_g2l
