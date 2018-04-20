@@ -50,7 +50,8 @@
   INTEGER,    allocatable, DIMENSION(:,:,:) ::  SO8LD_D ! SO8RT_D moved to overland properties module
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax
   REAL   Vmax
-  !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT,LKSATRT  ! SFCHEAD moved to overland control module
+  !REAL,    allocatable, DIMENSION(:,:)      :: LKSATRT !  LKSATRT moved to subsurface properties module
+  !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT  ! SFCHEAD moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC  ! SFCHEADSUBRT, INFXSUBRT moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: LKSATFAC

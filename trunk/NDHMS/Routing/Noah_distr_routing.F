@@ -2442,7 +2442,7 @@
              rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
              RT_DOMAIN(did)%SMCRT, &
              rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
-             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
+             rt_domain(did)%subsurface%properties%lksatrt, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
              RT_DOMAIN(did)%iswater)
 
@@ -2786,7 +2786,9 @@
                      RT_DOMAIN(did)%SMCRT,RT_DOMAIN(did)%SMCMAXRT,RT_DOMAIN(did)%SMCREFRT,&
                      RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%surface_slope_x,       &
-                     rt_domain(did)%overland%properties%surface_slope_y,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
+                     rt_domain(did)%overland%properties%surface_slope_y, &
+                     rt_domain(did)%subsurface%properties%lksatrt, &
+                     RT_DOMAIN(did)%SOLDEPRT, &
                      rt_domain(did)%overland%control%infiltration_excess, &
                      rt_domain(did)%subsurface%io%qsubbdrytrt, &
                      rt_domain(did)%subsurface%io%qsubbdryrt,&

@@ -160,8 +160,8 @@ CONTAINS
      !rt_domain(did)%overland%control%infiltration_excess   = 0.0
      allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
      rt_domain(did)%INFXSWGT    = 0.0
-     allocate( rt_domain(did)%LKSATRT     (IXRT,JXRT) )
-     rt_domain(did)%LKSATRT     = 0.0
+     !allocate( rt_domain(did)%LKSATRT     (IXRT,JXRT) )
+     !rt_domain(did)%LKSATRT     = 0.0
      allocate( rt_domain(did)%LKSATFAC    (IXRT,JXRT) )
      rt_domain(did)%LKSATFAC    = 0.0
      !allocate( rt_domain(did)%subsurface%io%qsubrt      (IXRT,JXRT) )
