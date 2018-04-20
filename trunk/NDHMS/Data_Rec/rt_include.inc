@@ -222,7 +222,7 @@
       REAL,    allocatable, DIMENSION(:)   :: SLDPTH
 
 !!! define constant/parameter
-    real ::   ov_rough(50), ZSOIL(100)
+    real ::   ov_rough(50)!, ZSOIL(100) ! ZSOIL moved to subsurface properties module
 !  out_counts: couput counts for current run.
 !  his_out_counts: used for channel routing output and  special for restart.
 !  his_out_counts = previous run + out_counts

@@ -1641,13 +1641,13 @@ end subroutine HYDRO_ini
        RT_DOMAIN(did)%SH2OAGGRT = 0
      
 
-       RT_DOMAIN(did)%zsoil(1:nlst_rt(did)%nsoil) = nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil)
+       rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil) = nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil)
 
-       RT_DOMAIN(did)%sldpth(1) = abs( RT_DOMAIN(did)%zsoil(1) )
+       rt_domain(did)%sldpth(1) = abs( RT_DOMAIN(did)%subsurface%properties%zsoil(1) )
        do i = 2, nlst_rt(did)%nsoil
-          RT_DOMAIN(did)%sldpth(i) = RT_DOMAIN(did)%zsoil(i-1)-RT_DOMAIN(did)%zsoil(i)
+          rt_domain(did)%sldpth(i) = RT_DOMAIN(did)%subsurface%properties%zsoil(i-1)-RT_DOMAIN(did)%subsurface%properties%zsoil(i)
        enddo
-       rt_domain(did)%subsurface%properties%soldeprt = -1.0*RT_DOMAIN(did)%ZSOIL(nlst_rt(did)%NSOIL)
+       rt_domain(did)%subsurface%properties%soldeprt = -1.0*RT_DOMAIN(did)%subsurface%properties%zsoil(nlst_rt(did)%NSOIL)
 
        ierr_flg = 99
        if(trim(nlst_rt(did)%hydrotbl_f) == "") then
