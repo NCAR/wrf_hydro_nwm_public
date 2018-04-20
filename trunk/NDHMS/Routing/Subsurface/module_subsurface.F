@@ -10,7 +10,7 @@ module module_subsurface_data
 
         type ( subsurface_io_interface), pointer :: io
         type ( subsurface_properties_interface), pointer :: properties
-        type ( subsurface_grid_transform_interface), pointer :: grid_transfrom
+        type ( subsurface_grid_transform_interface), pointer :: grid_transform
 
         ! unused pointer are in an undefined state
         ! this means the result of calling associated(<pointer>)
@@ -56,12 +56,12 @@ module module_subsurface_data
         end if
 
         ! allocate the grid_transfrom interface
-        allocate( this%grid_transfrom )
-        if ( .not. associated( this%grid_transfrom) ) then
+        allocate( this%grid_transform )
+        if ( .not. associated( this%grid_transform) ) then
             write(0,*) "Failure to allocate grid transform interface"
         else
             !write(0,*) "Allocating grid transform structure"
-            call this%grid_transfrom%init(ix,jx,nsoil)
+            call this%grid_transform%init(ix,jx,nsoil)
         end if
     else
         write(0,*)  "Attempt to double allocate subsurface_struct"
@@ -85,9 +85,9 @@ module module_subsurface_data
                 deallocate( this%properties )
             end if
 
-            if (associated( this%grid_transfrom ) ) then
-                call this%grid_transfrom%destroy
-                deallocate( this%grid_transfrom )
+            if (associated( this%grid_transform ) ) then
+                call this%grid_transform%destroy
+                deallocate( this%grid_transform )
             end if
 
             this%pointer_allocation_guard = .false.

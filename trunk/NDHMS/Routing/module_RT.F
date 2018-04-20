@@ -198,7 +198,7 @@ CONTAINS
      rt_domain(did)%SUB_RESID = 0.0
 
      ! tmp array
-     allocate( rt_domain(did)%SMCREFRT    	(IXRT,JXRT,NSOIL) )
+     !allocate( rt_domain(did)%subsurface%grid_transform%smcrefrt    	(IXRT,JXRT,NSOIL) )
      ! tmp
 
      !! Variables (formerly?) needed for channel_only
