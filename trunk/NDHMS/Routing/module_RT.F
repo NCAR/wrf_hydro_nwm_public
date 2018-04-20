@@ -170,8 +170,8 @@ CONTAINS
      !rt_domain(did)%subsurface%properties%zwattablrt  = 0.0
      !allocate( rt_domain(did)%QSUBBDRYRT  (IXRT,JXRT) )
      !rt_domain(did)%QSUBBDRYRT  = 0.0
-     allocate( rt_domain(did)%SOLDEPRT    (IXRT,JXRT) )
-     rt_domain(did)%SOLDEPRT    = 0.0
+     !allocate( rt_domain(did)%subsurface%properties%soldeprt    (IXRT,JXRT) )
+     !rt_domain(did)%subsurface%properties%soldeprt    = 0.0
      allocate( rt_domain(did)%q_sfcflx_x  (IXRT,JXRT) )
      rt_domain(did)%q_sfcflx_x  = 0.0
      allocate( rt_domain(did)%q_sfcflx_y  (IXRT,JXRT) )
@@ -1361,7 +1361,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 
    rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
    rt_domain(did)%SH2OWGT = 1.
-   rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
+   rt_domain(did)%subsurface%properties%soldeprt = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
    rt_domain(did)%subsurface%io%qsubrt = 0.0
    rt_domain(did)%subsurface%properties%zwattablrt = 0.0
    rt_domain(did)%subsurface%io%qsubbdryrt = 0.0

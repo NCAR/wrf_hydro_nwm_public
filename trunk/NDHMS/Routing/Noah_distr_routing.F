@@ -2788,7 +2788,7 @@
                      nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,rt_domain(did)%overland%properties%surface_slope_x,       &
                      rt_domain(did)%overland%properties%surface_slope_y, &
                      rt_domain(did)%subsurface%properties%lksatrt, &
-                     RT_DOMAIN(did)%SOLDEPRT, &
+                     rt_domain(did)%subsurface%properties%soldeprt, &
                      rt_domain(did)%overland%control%infiltration_excess, &
                      rt_domain(did)%subsurface%io%qsubbdrytrt, &
                      rt_domain(did)%subsurface%io%qsubbdryrt,&
