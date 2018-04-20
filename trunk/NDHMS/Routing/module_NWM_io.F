@@ -1998,7 +1998,7 @@ subroutine output_rt_NWM(domainId,iGrid)
             do iTmp = 1,RT_DOMAIN(domainId)%ixrt
                do jTmp = 1,RT_DOMAIN(domainId)%jxrt
                   if(iTmp2 .eq. 1) then
-                     varRealTmp = RT_DOMAIN(domainId)%ZWATTABLRT(iTmp,jTmp)
+                     varRealTmp = rt_domain(domainId)%subsurface%properties%zwattablrt(iTmp,jTmp)
                   else if(iTmp2 .eq. 2) then
                      varRealTmp = RT_DOMAIN(domainId)%overland%control%surface_water_head_routing(iTmp,jTmp)
                   else if(iTmp2 .eq. 3) then

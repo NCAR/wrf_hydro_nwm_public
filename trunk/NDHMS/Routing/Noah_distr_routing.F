@@ -2785,7 +2785,7 @@
                 call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
                      RT_DOMAIN(did)%SMCRT,RT_DOMAIN(did)%SMCMAXRT,RT_DOMAIN(did)%SMCREFRT,&
                      RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
-                     nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%surface_slope_x,       &
+                     nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,rt_domain(did)%overland%properties%surface_slope_x,       &
                      rt_domain(did)%overland%properties%surface_slope_y, &
                      rt_domain(did)%subsurface%properties%lksatrt, &
                      RT_DOMAIN(did)%SOLDEPRT, &

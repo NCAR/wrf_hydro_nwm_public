@@ -278,7 +278,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    !                  nlst_rt(did)%startdate, nlst_rt(did)%olddate,
    !                  rt_domain(did)%subsurface%io%qsubrt,&
                       nlst_rt(did)%sincedate, nlst_rt(did)%olddate, rt_domain(did)%subsurface%io%qsubrt,&
-                      RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
+                      rt_domain(did)%subsurface%properties%zwattablrt,RT_DOMAIN(did)%SMCRT,&
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
                       rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%overland%properties%surface_slope_y,&

@@ -55,7 +55,7 @@
   REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC  ! SFCHEADSUBRT, INFXSUBRT moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: LKSATFAC
-  REAL,    allocatable, DIMENSION(:,:)      :: ZWATTABLRT,SOLDEPRT ! QSUBRT, QSUBBDRYRT moved to subsurface io module
+  REAL,    allocatable, DIMENSION(:,:)      :: SOLDEPRT ! QSUBRT, QSUBBDRYRT moved to subsurface io module, ZWATTABLRT move to susurface properties
   REAL,    allocatable, DIMENSION(:,:)      :: SUB_RESID
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x,q_sfcflx_y
   INTEGER,    allocatable, DIMENSION(:)      :: map_l2g, map_g2l
