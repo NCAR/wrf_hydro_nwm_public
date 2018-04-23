@@ -2784,7 +2784,6 @@
              IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
                 call subsurfaceRouting ( rt_domain(did)%subsurface, &
                      RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
-                     RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt,RT_DOMAIN(did)%subsurface%grid_transform%smcrefrt,&
                      rt_domain(did)%subsurface%grid_transform%smcwltrt, RT_DOMAIN(did)%subsurface%properties%zsoil, RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,rt_domain(did)%overland%properties%surface_slope_x,       &
                      rt_domain(did)%overland%properties%surface_slope_y, &
@@ -2801,7 +2800,7 @@
      
          subroutine subsurfaceRouting ( subrt_data,&
                   ixrt, jxrt , nsoil, &
-                  SMCMAXRT,SMCREFRT,SMCWLTRT, &
+                  SMCWLTRT, &
                   ZSOIL, SLDPTH, &
                   DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
                   SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
@@ -2819,7 +2818,7 @@
          real,INTENT(INOUT), DIMENSION(IXRT,JXRT)::INFXSUBRT
          real,INTENT(INOUT) :: QSUBBDRYTRT
          REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
-         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT, SMCMAXRT,SMCREFRT ! SMCRT
+         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT ! SMCRT, SMCMAXRT, SMCREFRT
 
 
          INTEGER :: SO8RT_D(IXRT,JXRT,3)
@@ -2834,9 +2833,12 @@
 
 
          CWATAVAIL = 0.
-         CALL FINDZWAT(IXRT,JXRT,NSOIL,subrt_data%grid_transform%smcrt,SMCMAXRT,SMCREFRT, &
-                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
-                             CWATAVAIL,SLDPTH)
+         CALL FINDZWAT(IXRT,JXRT,NSOIL, &
+                          subrt_data%grid_transform%smcrt, &
+                          subrt_data%grid_transform%smcmaxrt, &
+                          subrt_data%grid_transform%smcrefrt, &
+                          SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
+                          CWATAVAIL,SLDPTH)
 #ifdef MPP_LAND
         call MPP_LAND_COM_REAL(ZWATTABLRT,IXRT,JXRT,99)
         call MPP_LAND_COM_REAL(CWATAVAIL,IXRT,JXRT,99)
@@ -2858,7 +2860,7 @@
 
     CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
           LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,subrt_data%grid_transform%smcrt,     &
-          INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
+          INFXSUBRT,subrt_data%grid_transform%smcmaxrt,subrt_data%grid_transform%smcrefrt,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
           SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
 
 #ifdef HYDRO_D
