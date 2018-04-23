@@ -1006,7 +1006,7 @@ subroutine gwSoilFlux(did)
 
 ! relative soil moisture content of lowest soil layer (1 = saturated)
   nsoil = nlst_rt(did)%nsoil
-  smcrel = rt_domain(did)%subsurface%grid_transform%smcrt(:,:,nsoil) / RT_DOMAIN(did)%SMCMAXRT(:,:,nsoil)
+  smcrel = rt_domain(did)%subsurface%grid_transform%smcrt(:,:,nsoil) / RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(:,:,nsoil)
 
 ! depth of transition zone from lowest soil layer to groundwater head (in cm)
 ! postivie ztrans -> head below LSM soil layer 
@@ -1046,10 +1046,10 @@ subroutine gwSoilFlux(did)
 	     ! complete filling of a LSM soil layer if groundwater head > layer top
 	       
 ! 	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
-! 	                               * (rt_domain(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
+! 	                               * (rt_domain(did)%subsurface%grid_transform%smcmaxrt(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
 ! 				       + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
 				       
-	       rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
+	       rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(i,j,k)
 	       
 	       zres = zres - rt_domain(did)%sldpth(k)*100.
 	       
@@ -1062,10 +1062,10 @@ subroutine gwSoilFlux(did)
 	       
 	       
 ! 	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
-! 	                                * (rt_domain(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
+! 	                                * (rt_domain(did)%subsurface%grid_transform%smcmaxrt(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
 ! 					* frac + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
 	       
-	          rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k) * frac
+	          rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(i,j,k) * frac
 	          
 	       end if
 	       

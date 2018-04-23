@@ -1149,17 +1149,17 @@ endif
 
 !end 
                     IF (rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT) .GT. &
-                        RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+                        rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT)) THEN
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
                       print *, "SMCMAX exceeded upon aggregation...", &
                            rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),  &
-                           RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
+                           rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT)
 #else
                      write(78,*) "FATAL ERROR: SMCMAX exceeded upon aggregation...", &
                            rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),  &
-                           RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT) 
+                           rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT) 
 #endif
 #endif
                       call hydro_stop("In module_HYDRO_drv.F aggregateDomain() - "// &
