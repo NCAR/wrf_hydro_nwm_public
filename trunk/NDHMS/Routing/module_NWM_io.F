@@ -2006,7 +2006,7 @@ subroutine output_rt_NWM(domainId,iGrid)
                   else if(iTmp2 .eq. 4) then
                      varRealTmp = RT_DOMAIN(domainId)%overland%control%boundary_flux(iTmp,jTmp)
                   else if(iTmp2 .eq. 5) then
-                     varRealTmp = RT_DOMAIN(domainId)%SMCRT(iTmp,jTmp,zTmp)
+                     varRealTmp = rt_domain(domainId)%subsurface%grid_transform%smcrt(iTmp,jTmp,zTmp)
                   endif
 
                   ! Run a quick gross check on values to ensure they aren't outside our

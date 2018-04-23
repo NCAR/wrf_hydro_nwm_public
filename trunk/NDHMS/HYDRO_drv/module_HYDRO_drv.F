@@ -278,7 +278,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    !                  nlst_rt(did)%startdate, nlst_rt(did)%olddate,
    !                  rt_domain(did)%subsurface%io%qsubrt,&
                       nlst_rt(did)%sincedate, nlst_rt(did)%olddate, rt_domain(did)%subsurface%io%qsubrt,&
-                      rt_domain(did)%subsurface%properties%zwattablrt,RT_DOMAIN(did)%SMCRT,&
+                      rt_domain(did)%subsurface%properties%zwattablrt,RT_DOMAIN(did)%subsurface%grid_transform%smcrt,&
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
                       rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%overland%properties%surface_slope_y,&
@@ -321,7 +321,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                 nlst_rt(did)%nsoil,                               &
 !               nlst_rt(did)%startdate, nlst_rt(did)%olddate,    &
                 nlst_rt(did)%sincedate, nlst_rt(did)%olddate,    &
-                gw2d(did)%h, RT_DOMAIN(did)%SMCRT,                   &
+                gw2d(did)%h, rt_domain(did)%subsurface%grid_transform%smcrt,                   &
                 gw2d(did)%convgw, gw2d(did)%excess,                  &
                 gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,              &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
@@ -1033,7 +1033,7 @@ endif
             suminfxsrt1 = suminfxsrt1 + rt_domain(did)%overland%control%surface_water_head_routing(I,J) &
                                / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
             do kk=1,nlst_rt(did)%NSOIL
-                smcrttot1 = smcrttot1 + RT_DOMAIN(did)%SMCRT(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+                smcrttot1 = smcrttot1 + rt_domain(did)%subsurface%grid_transform%smcrt(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
                                / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
             end do
          end do
@@ -1086,7 +1086,7 @@ endif
                 do KRT=1,nlst_rt(did)%NSOIL
 !DJG               SMCAGGRT(KRT)=SMCAGGRT(KRT)+SMCRT(IXXRT,JYYRT,KRT)
                    RT_DOMAIN(did)%SH2OAGGRT(KRT) = RT_DOMAIN(did)%SH2OAGGRT(KRT) &
-                                                 + RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)
+                                                 + rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT)
                 end do
 
               end do
@@ -1132,33 +1132,33 @@ endif
                   do KRT=1,nlst_rt(did)%NSOIL
 
 !!!yw added for debug
-                   if(RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .lt. 0) then
+                   if(rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT) .lt. 0) then
 #ifndef NCEP_WCOSS
-                      print*, "Error negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      print*, "Error negative SMCRT", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #else
-                      write(78,*) "WARNING: negative SMCRT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      write(78,*) "WARNING: negative SMCRT", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #endif
                    endif
                    if(RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) .lt. 0) then
 #ifndef NCEP_WCOSS
-                      print *, "Error negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      print *, "Error negative SH2OWGT", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #else
-                      write(78,*) "WARNING: negative SH2OWGT", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      write(78,*) "WARNING: negative SH2OWGT", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #endif
                    endif
 
 !end 
-                    IF (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .GT. &
+                    IF (rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT) .GT. &
                         RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
                       print *, "SMCMAX exceeded upon aggregation...", &
-                           RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
+                           rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),  &
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)
 #else
                      write(78,*) "FATAL ERROR: SMCMAX exceeded upon aggregation...", &
-                           RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),  &
+                           rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),  &
                            RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT) 
 #endif
 #endif
@@ -1170,11 +1170,11 @@ endif
 #ifndef NCEP_WCOSS
                       print *, "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
-                      print *, "Error negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      print *, "Error negative SH2OX", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #else
                      write(78,*) "Erroneous value of SH2O...", &
                                 RT_DOMAIN(did)%SH2OX(I,J,KRT),I,J,KRT
-                      write(78,*) "FATAL ERROR: negative SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                      write(78,*) "FATAL ERROR: negative SH2OX", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #endif
 #endif
                       call hydro_stop("In module_HYDRO_drv.F aggregateDomain() "// &
@@ -1183,11 +1183,11 @@ endif
 
 		    IF ( RT_DOMAIN(did)%SH2OX(I,J,KRT) .gt. 0 ) THEN
                     	RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) &
-                                 = RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) &
+                                 = rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT) &
                                  / RT_DOMAIN(did)%SH2OX(I,J,KRT)
                     ELSE
 #ifdef HYDRO_D
-                         print *, "Error zero SH2OX", RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
+                         print *, "Error zero SH2OX", rt_domain(did)%SH2OWGT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OX(I,J,KRT)
 #endif
                          RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = 0.0
                     ENDIF

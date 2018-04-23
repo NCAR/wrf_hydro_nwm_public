@@ -76,11 +76,12 @@ CONTAINS
 !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
 !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
 !     endif
-  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-      if(rt_domain(did)%NLINKS .lt. rt_domain(did)%NLINKSL) then
-          rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
+      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+          if(rt_domain(did)%NLINKS .lt. rt_domain(did)%NLINKSL) then
+              rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
+          endif
       endif
-  endif
+
 
       NLINKS = rt_domain(did)%NLINKS
       NLAKES = rt_domain(did)%NLAKES
@@ -128,8 +129,8 @@ CONTAINS
         allocate ( RT_DOMAIN(did)%landRunOff (ixrt,jxrt) )
      endif
 
-     allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
-     rt_domain(did)%SMCRT   	= 0.0
+     !allocate( rt_domain(did)%subsurface%grid_transform%smcrt   	(IXRT,JXRT,NSOIL) )
+     !rt_domain(did)%subsurface%grid_transform%smcrt   	= 0.0
      allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
      !!
 
