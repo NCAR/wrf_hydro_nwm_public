@@ -2439,7 +2439,7 @@
              RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%distance_to_neighbor, &
              RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
              rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%subsurface%grid_transform%smcrefrt,       &
-             rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt, RT_DOMAIN(did)%SMCWLTRT,    &
+             rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt, RT_DOMAIN(did)%subsurface%grid_transform%smcwltrt,    &
              rt_domain(did)%subsurface%grid_transform%smcrt, &
              rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
              rt_domain(did)%subsurface%properties%lksatrt, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
@@ -2784,7 +2784,7 @@
              IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
                 call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
                      rt_domain(did)%subsurface%grid_transform%smcrt,RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt,RT_DOMAIN(did)%subsurface%grid_transform%smcrefrt,&
-                     rt_domain(did)%SMCWLTRT, RT_DOMAIN(did)%subsurface%properties%zsoil, RT_DOMAIN(did)%SLDPTH, & 
+                     rt_domain(did)%subsurface%grid_transform%smcwltrt, RT_DOMAIN(did)%subsurface%properties%zsoil, RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,rt_domain(did)%overland%properties%surface_slope_x,       &
                      rt_domain(did)%overland%properties%surface_slope_y, &
                      rt_domain(did)%subsurface%properties%lksatrt, &

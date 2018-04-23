@@ -170,7 +170,7 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR AGGREGATION/DISAGGREGATION
-  REAL,    allocatable, DIMENSION(:,:,:)   :: SMCWLTRT,SH2OWGT,SICE ! SMCRT, SMCMAXRT moved to subsurface grid transform module
+  REAL,    allocatable, DIMENSION(:,:,:)   :: SH2OWGT,SICE ! SMCRT, SMCMAXRT, SMCWLTRT moved to subsurface grid transform module
   REAL,    allocatable, DIMENSION(:,:)     :: INFXSAGGRT
   !REAL,    allocatable, DIMENSION(:,:)     :: DHRT,QSTRMVOLRT,QBDRYRT,LAKE_INFLORT ! dhrt and qbdryrt moved to overland control qstrmvolrt and lake_inflrt moved to overland stream and lakes
   REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS

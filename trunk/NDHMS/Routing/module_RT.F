@@ -179,8 +179,8 @@ CONTAINS
      rt_domain(did)%q_sfcflx_y  = 0.0
      !allocate( rt_domain(did)%subsurface%grid_transform%smcmaxrt   	(IXRT,JXRT,NSOIL) )
      !rt_domain(did)%subsurface%grid_transform%smcmaxrt   	= 0.0
-     allocate( rt_domain(did)%SMCWLTRT   	(IXRT,JXRT,NSOIL) )
-     rt_domain(did)%SMCWLTRT   	= 0.0
+     !allocate( rt_domain(did)%subsurface%grid_transform%smcwltrt   	(IXRT,JXRT,NSOIL) )
+     !rt_domain(did)%subsurface%grid_transform%smcwltrt   	= 0.0
      allocate( rt_domain(did)%SH2OWGT   	(IXRT,JXRT,NSOIL) )
      rt_domain(did)%SH2OWGT     = 0.0
      allocate( rt_domain(did)%INFXSAGGRT 	(IXRT,JXRT) )
