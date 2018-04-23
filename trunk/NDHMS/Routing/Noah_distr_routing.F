@@ -2782,7 +2782,8 @@
              implicit none
              integer :: did
              IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
-                call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
+                call subsurfaceRouting ( rt_domain(did)%subsurface, &
+                     RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
                      rt_domain(did)%subsurface%grid_transform%smcrt,RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt,RT_DOMAIN(did)%subsurface%grid_transform%smcrefrt,&
                      rt_domain(did)%subsurface%grid_transform%smcwltrt, RT_DOMAIN(did)%subsurface%properties%zsoil, RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,rt_domain(did)%overland%properties%surface_slope_x,       &
@@ -2798,7 +2799,8 @@
 
          end subroutine SubsurfaceRouting_drv
      
-         subroutine subsurfaceRouting (ixrt, jxrt , nsoil, &
+         subroutine subsurfaceRouting ( subrt_data,&
+                  ixrt, jxrt , nsoil, &
                   SMCRT,SMCMAXRT,SMCREFRT,SMCWLTRT, &
                   ZSOIL, SLDPTH, &
                   DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
@@ -2806,8 +2808,10 @@
                   QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT)
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
+        use module_subsurface_data
 #endif
          implicit none
+         type (subsurface_struct), intent(inout) :: subrt_data
          integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          REAL, INTENT(IN)                          :: DT
          real,INTENT(IN), DIMENSION(NSOIL)      :: ZSOIL, SLDPTH
