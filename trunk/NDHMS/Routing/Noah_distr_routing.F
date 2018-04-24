@@ -2790,10 +2790,9 @@
                      rt_domain(did)%subsurface%properties%lksatrt, &
                      rt_domain(did)%subsurface%properties%soldeprt, &
                      rt_domain(did)%overland%control%infiltration_excess, &
-                     rt_domain(did)%subsurface%io%qsubbdrytrt, &
-                     rt_domain(did)%subsurface%io%qsubbdryrt,&
-                     rt_domain(did)%subsurface%io%qsubrt ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
-                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope)
+                     nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
+                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, &
+                     rt_domain(did)%overland%properties%water_surface_slope)
              endif
 
          end subroutine SubsurfaceRouting_drv
@@ -2802,8 +2801,8 @@
                   ixrt, jxrt , nsoil, &
                   ZSOIL, SLDPTH, &
                   DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
-                  SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
-                  QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT)
+                  SOLDEPRT,INFXSUBRT, &
+                  rt_option, dist,sub_resid,SO8RT_D, SO8RT)
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
         use module_subsurface_data
@@ -2815,8 +2814,8 @@
          real,INTENT(IN), DIMENSION(NSOIL)      :: ZSOIL, SLDPTH
          REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: SOXRT,SOYRT,LKSATRT, SOLDEPRT , sub_resid
          real,INTENT(INOUT), DIMENSION(IXRT,JXRT)::INFXSUBRT
-         real,INTENT(INOUT) :: QSUBBDRYTRT
-         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
+         !real,INTENT(INOUT) :: QSUBBDRYTRT
+         !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
          !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT, SMCWLTRT, SMCMAXRT, SMCREFRT
 
 
@@ -2857,8 +2856,8 @@
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
 
-    CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
-          LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,subrt_data%grid_transform%smcrt,     &
+    CALL SUBSFC_RTNG(dist,ZWATTABLRT,subrt_data%io%qsubrt,SOXRT,SOYRT,  &
+          LKSATRT, SOLDEPRT, subrt_data%io%qsubbdryrt, subrt_data%io%qsubbdrytrt, NSOIL, subrt_data%grid_transform%smcrt,     &
           INFXSUBRT,subrt_data%grid_transform%smcmaxrt,subrt_data%grid_transform%smcrefrt, &
           ZSOIL,IXRT,JXRT,DT,subrt_data%grid_transform%smcwltrt,SO8RT,    &
           SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
