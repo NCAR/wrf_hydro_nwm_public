@@ -476,7 +476,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
                  Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                  ((2./3.)*R**(5./3.)*(2*sqrt(1+z*z)/(Bw+2*h_0*z)))))
                 else
-                 ck = 0.0
+                 Ck = 0.0
                 endif
           endif
 
