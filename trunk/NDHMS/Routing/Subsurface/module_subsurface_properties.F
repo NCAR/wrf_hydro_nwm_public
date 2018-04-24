@@ -15,6 +15,35 @@ module module_subsurface_properties
         ! need info
         real, dimension(100) :: zsoil
 
+        ! shared properties -- the following variables are shared from overland properties module
+
+        ! terrian slope in the x direction (m/m)
+        real, pointer, dimension(:,:) :: surface_slope_x => null()
+
+        ! terrian slope in the y direction (m/m)
+        real, pointer, dimension(:,:) :: surface_slope_y => null()   
+
+        ! water surface slope in 8 ordinal directions (m/m)                                                                  !
+        ! TODO verify this correct, check with Wei? 
+        !                      1
+        !                      |
+        !                  8       2
+        !                    \   /
+        !                 7__     __ 3
+        !
+        !                    /   \
+        !                   6     4 
+        !                      |  
+        !                      5
+        !
+        real, pointer, dimension(:,:,:) :: water_surface_slope => null()
+
+        ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
+        integer, pointer, dimension(:,:,:) :: max_water_surface_slope_index => null() 
+
+        ! centerpoint distance to each neighbor (m)
+        real, pointer, dimension(:,:,:) :: distance_to_neighbor => null()
+
     contains
 
         procedure :: init => subsurface_properties_init
@@ -58,6 +87,38 @@ contains
 
         this%zsoil = 0.0
 
+        ! now initalize the shared properties from overland data
+
+        if ( associated(overland_data%properties%surface_slope_x) ) then
+            this%surface_slope_x => overland_data%properties%surface_slope_x
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(overland_data%properties%surface_slope_y) ) then
+            this%surface_slope_y => overland_data%properties%surface_slope_y
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(overland_data%properties%water_surface_slope) ) then
+            this%water_surface_slope => overland_data%properties%water_surface_slope
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(overland_data%properties%max_water_surface_slope_index) ) then
+            this%max_water_surface_slope_index => overland_data%properties%max_water_surface_slope_index
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(overland_data%properties%distance_to_neighbor) ) then
+            this%distance_to_neighbor => overland_data%properties%distance_to_neighbor
+        else
+            allocation_error = .true.
+        end if
+
         if ( allocation_error ) &
             write(0,*) "attempt to allocate data in members of subsurface properties structure&
             &that where already allocated. The allocated members where not changed"
@@ -90,6 +151,39 @@ contains
         else
             allocation_error = .true.
         end if
+
+        ! now release the shared properties from overland data
+
+        if ( associated(this%surface_slope_x) ) then
+            this%surface_slope_x => null()
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(this%surface_slope_y) ) then
+            this%surface_slope_y => null()
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(this%water_surface_slope) ) then
+            this%water_surface_slope => null()
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(this%max_water_surface_slope_index) ) then
+            this%max_water_surface_slope_index => null()
+        else
+            allocation_error = .true.
+        end if
+
+        if ( associated(this%distance_to_neighbor) ) then
+            this%distance_to_neighbor => null()
+        else
+            allocation_error = .true.
+        end if
+
 
         if ( allocation_error ) &
             write(0,*) "attempt to deallocate data in members of subsurface properties structure&
