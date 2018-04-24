@@ -71,7 +71,7 @@ CONTAINS
       call rt_domain(did)%overland%init(ix,jx,ixrt,jxrt)
 
      ! allocate subsurface data structures
-      call rt_domain(did)%subsurface%init(ixrt,jxrt,nsoil)
+      call rt_domain(did)%subsurface%init(ixrt,jxrt,nsoil, rt_domain(did)%overland)
 
 !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
 !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL

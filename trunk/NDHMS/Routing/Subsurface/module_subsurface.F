@@ -4,6 +4,9 @@ module module_subsurface_data
     use module_subsurface_properties
     use module_subsurface_grid_transform
 
+    ! included to allow properties to be shared between overland and subsurface code
+    use overland_data
+
     implicit none
 
     type subsurface_struct
@@ -28,12 +31,13 @@ module module_subsurface_data
 
     contains
 
-    subroutine subsurface_struct_init(this,ix,jx,nsoil)
+    subroutine subsurface_struct_init(this,ix,jx,nsoil,overland_data)
         implicit none
         class(subsurface_struct), intent(inout) :: this ! the type object being initialized
         integer, intent(in) :: ix                     ! x grid size
         integer, intent(in) :: jx                     ! y grid size
         integer, intent(in) :: nsoil                  ! number of soil layers
+        type(overland_struct), intent(inout) :: overland_data        ! overland data strucuture
 
     if (this%pointer_allocation_guard .eqv. .false. ) then
         this%pointer_allocation_guard = .true.
@@ -52,7 +56,7 @@ module module_subsurface_data
             write(0,*) "Failure to allocate subsurface io interface"
         else
             !write(0,*) "Allocating properties structure"
-            call this%properties%init(ix,jx)
+            call this%properties%init(ix,jx,overland_data)
         end if
 
         ! allocate the grid_transfrom interface

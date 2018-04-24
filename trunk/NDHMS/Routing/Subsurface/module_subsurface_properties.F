@@ -1,4 +1,5 @@
 module module_subsurface_properties
+    use overland_data
     implicit none
 
     type subsurface_properties_interface
@@ -22,11 +23,12 @@ module module_subsurface_properties
 
 contains
 
-    subroutine subsurface_properties_init(this,ix,jx)
+    subroutine subsurface_properties_init(this,ix,jx,overland_data)
         implicit none
         class(subsurface_properties_interface), intent(inout) :: this ! the type object being initalized
         integer, intent(in) :: ix                     ! x grid size
         integer, intent(in) :: jx                     ! y grid size
+        class(overland_struct), intent(inout) :: overland_data
 
         logical :: allocation_error = .false.
 

@@ -12,16 +12,18 @@ FFLAGS=-c -free -O3
 
 FLFLAGS=
 
+MODFLAG := $(MODFLAG) -I ../../mod
+
 .PHONY: all mod test
 
 all: mod
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_subsurface_grid_transform.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_subsurface_properties.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_subsurface_io.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_subsurface.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_grid_transform.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_properties.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_io.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface.F
 	ar -r ../../lib/libHYDRO.a module_subsurface_grid_transform.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_properties.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_io.o
