@@ -187,7 +187,6 @@ CONTAINS
 
 ! ADCHANGE: move these checks to more universal namelist checks...
 if ( io_config_outputs .eq. 4 ) RTOUT_DOMAIN = 0
-if ( (io_config_outputs .gt. 0) .and. (CHRTOUT_DOMAIN .eq.1) .and. (channel_option .ne. 3) ) CHRTOUT_DOMAIN = 1
 
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
@@ -571,7 +570,7 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%output_channelBucket_influx .lt. 0 ) .or. (nlst%output_channelBucket_influx .gt. 3) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid output_channelBucket_influx specified')
    endif   
-   if( (nlst%CHRTOUT_DOMAIN .lt. 0 ) .or. (nlst%CHRTOUT_DOMAIN .gt. 2) ) then
+   if( (nlst%CHRTOUT_DOMAIN .lt. 0 ) .or. (nlst%CHRTOUT_DOMAIN .gt. 1) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid CHRTOUT_DOMAIN specified')
    endif   
    if( (nlst%CHANOBS_DOMAIN .lt. 0 ) .or. (nlst%CHANOBS_DOMAIN .gt. 1) ) then
