@@ -372,34 +372,35 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
       endif
    else
       ! Call traditional output routines
-             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
-#ifdef MPP_LAND
-                 call mpp_output_chrt( &
-                      rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
-#else
-                 call output_chrt(  &
-#endif
-                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
-                   RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
-                   nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
-                   RT_DOMAIN(did)%CHLAT,                                      &
-                   RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
-                   !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
-                   str_out, nlst_rt(did)%DT,Kt,                   &
-                   RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
-                   RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
-                   rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
-                   nlst_rt(did)%dt                                            &
-#ifdef WRF_HYDRO_NUDGING
-                   , RT_DOMAIN(did)%nudge                                     &
-#endif
-                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
-                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
-                   , RT_DOMAIN(did)%qin_gwsubbas                              &
-                   , nlst_rt(did)%UDMP_OPT                                    &
-                   )
-              else
-                if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 2)  then
+!ADCHANGE: We suspect this routine is broken so default is now output_chrtout2
+!             if(nlst_rt(did)%CHRTOUT_DOMAIN  .eq. 1)  then
+!#ifdef MPP_LAND
+!                 call mpp_output_chrt( &
+!                      rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
+!#else
+!                 call output_chrt(  &
+!#endif
+!                   nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
+!                   RT_DOMAIN(did)%NLINKS,RT_DOMAIN(did)%ORDER, &
+!                   nlst_rt(did)%sincedate,nlst_rt(did)%olddate,RT_DOMAIN(did)%CHLON,&
+!                   RT_DOMAIN(did)%CHLAT,                                      &
+!                   RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ZELEV,                &
+!                   !RT_DOMAIN(did)%QLINK,nlst_rt(did)%DT,Kt,                   &
+!                   str_out, nlst_rt(did)%DT,Kt,                   &
+!                   RT_DOMAIN(did)%STRMFRXSTPTS,nlst_rt(did)%order_to_write,   &
+!                   RT_DOMAIN(did)%NLINKSL,nlst_rt(did)%channel_option,        &
+!                   rt_domain(did)%gages, rt_domain(did)%gageMiss,             &
+!                   nlst_rt(did)%dt                                            &
+!#ifdef WRF_HYDRO_NUDGING
+!                   , RT_DOMAIN(did)%nudge                                     &
+!#endif
+!                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
+!                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
+!                   , RT_DOMAIN(did)%qin_gwsubbas                              &
+!                   , nlst_rt(did)%UDMP_OPT                                    &
+!                   )
+!              else
+                if(nlst_rt(did)%CHRTOUT_DOMAIN  .gt. 0)  then
 #ifdef MPP_LAND
                      call mpp_output_chrt2(&
                           rt_domain(did)%gnlinks,rt_domain(did)%gnlinksl,rt_domain(did)%map_l2g, &
@@ -427,7 +428,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                      )
                  endif
 
-              endif
+!              endif
    endif ! End of checking for io_form_outputs flag value      
       
 #ifdef MPP_LAND
@@ -1152,9 +1153,9 @@ endif
                    endif
 
 !end 
-                    IF (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT) .GT. &
-                        RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
 
+!ADCHANGE: Change to accept very small diff since was being triggered by vals that print identical
+IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,KRT)) .GT. 0.000001 ) THEN
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
                       print *, "SMCMAX exceeded upon aggregation...", &
