@@ -109,14 +109,23 @@ def test_ncores_candidate(candidate_sim,output_dir,capsys):
 
     ## Check hydro restarts
     for diff in ncores_restart_diffs.hydro:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate hydro restart files do not match when run with different number of cores"
 
     ## Check lsm restarts
     for diff in ncores_restart_diffs.lsm:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate lsm restart files do not match when run with different number of cores"
 
     ## Check nudging restarts
     for diff in ncores_restart_diffs.nudging:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate nudging restart files do not match when run with different number of cores"
 
 
@@ -199,14 +208,23 @@ def test_perfrestart_candidate(candidate_sim,output_dir,capsys):
     perfstart_restart_diffs = wrfhydropy.RestartDiffs(candidate_perfrestart_run,candidate_run_expected)
     ## Check hydro restarts
     for diff in perfstart_restart_diffs.hydro:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate hydro restart files do not match when starting from a restart"
 
     ## Check lsm restarts
     for diff in perfstart_restart_diffs.lsm:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate lsm restart files do not match when starting from a restart"
 
     ## Check nudging restarts
     for diff in perfstart_restart_diffs.nudging:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate nudging restart files do not match when starting from a restart"
 
 
