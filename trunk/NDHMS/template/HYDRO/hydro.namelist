@@ -61,8 +61,9 @@ SPLIT_OUTPUT_COUNT = 1
 ! Note: lower value of stream order produces more output.
 order_to_write = 4
 
-! Flag to turn on/off new I/O routines: 1 = with scale/offset/compression,
-! 2 = with scale/offset/NO compression, 3 = compression only, 4 = no scale/offset/compression (default)
+! Flag to turn on/off new I/O routines: 0 = deprecated output routines (use when running with Noah LSM),
+! 1 = with scale/offset/compression, ! 2 = with scale/offset/NO compression, 
+! 3 = compression only, 4 = no scale/offset/compression (default)
 io_form_outputs = 1
 
 ! Realtime run configuration option:
@@ -171,7 +172,7 @@ timeSlicePath = "./nudgingTimeSliceObs/"
 
 nudgingParamFile = "DOMAIN/nudgingParams.nc"
 
-! Nudging restart flie = "nudgingLastObsFile"
+! Nudging restart file = "nudgingLastObsFile"
 ! nudgingLastObsFile defaults to '', which will look for nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
 !   **AT THE INITALIZATION TIME OF THE RUN**. Set to a missing file to use no restart.
 !nudgingLastObsFile = '/a/nonexistent/file/gives/nudging/cold/start'
