@@ -114,7 +114,7 @@
 	SUBROUTINE SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,    &
           SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &    
           NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
-          SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,junk4,CWATAVAIL, &
+          SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
           SATLYRCHK)
 
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
@@ -129,7 +129,7 @@
 
 	INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
 
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT,junk4
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT
 	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
 	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: LATKSATRT
 	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOLDEPRT
@@ -2787,8 +2787,7 @@
                      RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT, &
                      rt_domain(did)%overland%control%infiltration_excess, &
-                     nlst_rt(did)%rt_option, &
-                     RT_DOMAIN(did)%sub_resid)
+                     nlst_rt(did)%rt_option)
              endif
 
          end subroutine SubsurfaceRouting_drv
@@ -2798,7 +2797,7 @@
                   SLDPTH, &
                   DT, &
                   INFXSUBRT, &
-                  rt_option, sub_resid)
+                  rt_option)
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
         use module_subsurface_data
@@ -2808,7 +2807,7 @@
          integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          REAL, INTENT(IN)                          :: DT
          real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
-         REAL, INTENT(IN), DIMENSION(IXRT,JXRT) :: sub_resid
+         !REAL, INTENT(IN), DIMENSION(IXRT,JXRT) :: sub_resid
          real,INTENT(INOUT), DIMENSION(IXRT,JXRT)::INFXSUBRT
          !real,INTENT(INOUT) :: QSUBBDRYTRT
          !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
@@ -2857,7 +2856,7 @@
           subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_data%io%qsubbdryrt, subrt_data%io%qsubbdrytrt, &
           NSOIL, subrt_data%grid_transform%smcrt, INFXSUBRT,subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
           subrt_data%properties%zsoil, IXRT, JXRT, DT, subrt_data%grid_transform%smcwltrt, subrt_data%properties%water_surface_slope, &
-          subrt_data%properties%max_water_surface_slope_index, rt_option, SLDPTH, SUB_RESID, CWATAVAIL, SATLYRCHK)
+          subrt_data%properties%max_water_surface_slope_index, rt_option, SLDPTH, CWATAVAIL, SATLYRCHK)
 
 #ifdef HYDRO_D
     print *, "SUBROUTE routing called and returned..."
