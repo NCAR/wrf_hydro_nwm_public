@@ -2785,8 +2785,7 @@
                 call subsurfaceRouting ( rt_domain(did)%subsurface, &
                      RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
                      RT_DOMAIN(did)%subsurface%properties%zsoil, RT_DOMAIN(did)%SLDPTH, & 
-                     nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,rt_domain(did)%subsurface%properties%surface_slope_x,       &
-                     rt_domain(did)%subsurface%properties%surface_slope_y, &
+                     nlst_rt(did)%DT,rt_domain(did)%subsurface%properties%zwattablrt,       &
                      rt_domain(did)%subsurface%properties%lksatrt, &
                      rt_domain(did)%subsurface%properties%soldeprt, &
                      rt_domain(did)%overland%control%infiltration_excess, &
@@ -2800,7 +2799,7 @@
          subroutine subsurfaceRouting ( subrt_data,&
                   ixrt, jxrt , nsoil, &
                   ZSOIL, SLDPTH, &
-                  DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
+                  DT,ZWATTABLRT,LKSATRT,&
                   SOLDEPRT,INFXSUBRT, &
                   rt_option, dist,sub_resid,SO8RT_D, SO8RT)
 #ifdef MPP_LAND
@@ -2812,7 +2811,7 @@
          integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          REAL, INTENT(IN)                          :: DT
          real,INTENT(IN), DIMENSION(NSOIL)      :: ZSOIL, SLDPTH
-         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: SOXRT,SOYRT,LKSATRT, SOLDEPRT , sub_resid
+         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: LKSATRT, SOLDEPRT , sub_resid
          real,INTENT(INOUT), DIMENSION(IXRT,JXRT)::INFXSUBRT
          !real,INTENT(INOUT) :: QSUBBDRYTRT
          !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
@@ -2856,7 +2855,7 @@
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
 
-    CALL SUBSFC_RTNG(dist,ZWATTABLRT,subrt_data%io%qsubrt,SOXRT,SOYRT,  &
+    CALL SUBSFC_RTNG(dist,ZWATTABLRT,subrt_data%io%qsubrt,subrt_data%properties%surface_slope_x,subrt_data%properties%surface_slope_y,  &
           LKSATRT, SOLDEPRT, subrt_data%io%qsubbdryrt, subrt_data%io%qsubbdrytrt, NSOIL, subrt_data%grid_transform%smcrt,     &
           INFXSUBRT,subrt_data%grid_transform%smcmaxrt,subrt_data%grid_transform%smcrefrt, &
           ZSOIL,IXRT,JXRT,DT,subrt_data%grid_transform%smcwltrt,SO8RT,    &
