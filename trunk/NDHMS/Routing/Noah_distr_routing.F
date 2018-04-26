@@ -2787,7 +2787,7 @@
                      RT_DOMAIN(did)%SLDPTH, & 
                      nlst_rt(did)%DT, &
                      rt_domain(did)%overland%control%infiltration_excess, &
-                     nlst_rt(did)%rt_option, rt_domain(did)%subsurface%properties%distance_to_neighbor, &
+                     nlst_rt(did)%rt_option, &
                      RT_DOMAIN(did)%sub_resid)
              endif
 
@@ -2798,7 +2798,7 @@
                   SLDPTH, &
                   DT, &
                   INFXSUBRT, &
-                  rt_option, dist,sub_resid)
+                  rt_option, sub_resid)
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
         use module_subsurface_data
@@ -2817,7 +2817,7 @@
 
          !INTEGER :: SO8RT_D(IXRT,JXRT,3)
          !REAL :: SO8RT(IXRT,JXRT,8)
-         REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+         !REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
 !  -----local array ----------
          !REAL, DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
          REAL, DIMENSION(IXRT,JXRT)   :: CWATAVAIL
@@ -2852,7 +2852,7 @@
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
 
-    CALL SUBSFC_RTNG(dist, subrt_data%properties%zwattablrt, subrt_data%io%qsubrt, &
+    CALL SUBSFC_RTNG(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, subrt_data%io%qsubrt, &
           subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
           subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_data%io%qsubbdryrt, subrt_data%io%qsubbdrytrt, &
           NSOIL, subrt_data%grid_transform%smcrt, INFXSUBRT,subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &

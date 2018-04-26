@@ -1,6 +1,6 @@
 
 program subsurface_tests
-    use module_subsurface
+    use module_subsurface_data
 
     implicit none
 
@@ -28,7 +28,8 @@ program subsurface_tests
     contains
 
     function init_delete_test(ix,jx,nsoil) result(rv)
-        use module_subsurface
+        use module_subsurface_data
+        use overland_data
 
         implicit none
 
@@ -40,6 +41,7 @@ program subsurface_tests
         logical :: status_val = .true.
 
         type (subsurface_struct) :: subsurface_data
+        type (overland_struct) :: ov_data
 
         ! end of variable declarations
 
@@ -47,7 +49,8 @@ program subsurface_tests
         write(0,*) "jx = ", jx
         write(0,*) "nsoil = ", nsoil
 
-        call subsurface_data%init(ix,jx,nsoil)
+        call ov_data%init(ix,jx,ix,jx)
+        call subsurface_data%init(ix,jx,nsoil,ov_data)
 
         ! check to see that io was allocated
         if ( associated(subsurface_data%io) ) then
@@ -66,7 +69,7 @@ program subsurface_tests
         end if
 
         ! check to see that grid transform was allocated
-        if ( associated(subsurface_data%grid_transfrom) ) then
+        if ( associated(subsurface_data%grid_transform) ) then
             write(6,*) "grid_transfrom type was associated"
         else
             write(6,*) "grid_transfrom type was not associated"
@@ -92,7 +95,7 @@ program subsurface_tests
         end if
 
         ! check to see that grid transform was allocated
-        if ( .not. associated(subsurface_data%grid_transfrom) ) then
+        if ( .not. associated(subsurface_data%grid_transform) ) then
             write(6,*) "grid_transfrom type was disassociated"
         else
             write(6,*) "grid_transfrom type was not disassociated"
@@ -139,8 +142,10 @@ program subsurface_tests
         logical :: rv
 
         type (subsurface_struct) :: subsurface_data
+        type (overland_struct) :: ov_data
 
-        call subsurface_data%init(100,100,5)
+        call ov_data%init(100,100,100,100)
+        call subsurface_data%init(100,100,5,ov_data)
         call subsurface_data%destroy
         call subsurface_data%destroy
 
@@ -152,9 +157,11 @@ program subsurface_tests
         logical :: rv
 
         type (subsurface_struct) :: subsurface_data
+        type (overland_struct) :: ov_data
 
-        call subsurface_data%init(100,100,5)
-        call subsurface_data%init(100,100,5)
+        call ov_data%init(100,100,100,100)
+        call subsurface_data%init(100,100,5,ov_data)
+        call subsurface_data%init(100,100,5,ov_data)
         call subsurface_data%destroy
 
         rv = .true.

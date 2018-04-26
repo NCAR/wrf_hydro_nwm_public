@@ -56,7 +56,7 @@ module module_subsurface_data
             write(0,*) "Failure to allocate subsurface io interface"
         else
             !write(0,*) "Allocating properties structure"
-            call this%properties%init(ix,jx,overland_data)
+            call this%properties%init(ix,jx,nsoil,overland_data)
         end if
 
         ! allocate the grid_transfrom interface

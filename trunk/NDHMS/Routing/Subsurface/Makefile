@@ -31,12 +31,17 @@ mod:
 
 	cp *.mod ../../mod
 test:
-	$(COMPILER90) $(F90FLAGS) subsurface_tests.F
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG) subsurface_tests.F
 	$(COMPILER90) -o subsurface_tests \
 		module_subsurface_grid_transform.o \
 		module_subsurface_properties.o \
 		module_subsurface_io.o \
 		module_subsurface.o \
+		../Overland/module_overland.o \
+		../Overland/module_overland_control.o \
+		../Overland/module_overland_routing_properties.o \
+		../Overland/module_overland_mass_balance.o \
+		../Overland/module_overland_streams_and_lakes.o \
 		subsurface_tests.o
 clean:
 	rm -f *.o

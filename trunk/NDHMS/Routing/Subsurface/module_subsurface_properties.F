@@ -12,6 +12,9 @@ module module_subsurface_properties
         ! soil depth on routing grid
         real, allocatable, dimension(:,:) :: soldeprt
 
+        !soil depth by layer
+        real, allocatable, dimension(:) :: sldpth
+
         ! need info
         real, dimension(100) :: zsoil
 
@@ -52,11 +55,12 @@ module module_subsurface_properties
 
 contains
 
-    subroutine subsurface_properties_init(this,ix,jx,overland_data)
+    subroutine subsurface_properties_init(this,ix,jx,nsoil,overland_data)
         implicit none
         class(subsurface_properties_interface), intent(inout) :: this ! the type object being initalized
         integer, intent(in) :: ix                     ! x grid size
         integer, intent(in) :: jx                     ! y grid size
+        integer, intent(in) :: nsoil                  ! number of soil layers
         class(overland_struct), intent(inout) :: overland_data
 
         logical :: allocation_error = .false.
@@ -84,6 +88,13 @@ contains
         else
             allocation_error = .true.
         end if
+
+        !allocate storage for sldpth
+        if ( .not. allocated(this%sldpth) ) then
+            allocate( this%sldpth(nsoil) )
+        else
+            allocation_error = .true.
+        endif
 
         this%zsoil = 0.0
 
@@ -151,6 +162,14 @@ contains
         else
             allocation_error = .true.
         end if
+
+        ! only deallocated if already allocated
+        if ( allocated(this%sldpth) ) then
+            deallocate( this%sldpth)
+        else
+            allocation_error = .true.
+        end if
+
 
         ! now release the shared properties from overland data
 
