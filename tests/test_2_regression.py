@@ -1,5 +1,5 @@
 import sys
-from wrfhydropy import *
+import wrfhydropy
 import shutil
 import pickle
 import datetime as dt
@@ -26,22 +26,32 @@ def test_regression(output_dir,capsys):
     reference_run_expected = pickle.load(open(reference_run_file,"rb"))
 
     #Check regression
-    regression_diffs = RestartDiffs(candidate_run_expected,reference_run_expected)
+    regression_diffs = wrfhydropy.RestartDiffs(candidate_run_expected,reference_run_expected)
 
     ## Check hydro restarts
     for diff in regression_diffs.hydro:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate hydro restart files do not regress on reference restart files"
 
     ## Check lsm restarts
     for diff in regression_diffs.lsm:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate lsm restart files do not regress on reference restart files"
 
     ## Check nudging restarts
     for diff in regression_diffs.nudging:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
         assert diff == None, "Candidate nudging restart files do not regress on reference restart files"
 
 def test_chrtout(output_dir,capsys):
-    compare_ncfiles = compare_restarts #TODO remove when compare_restarts is deprecated
+    compare_ncfiles = wrfhydropy.utilities.compare_restarts #TODO remove when compare_restarts is
+    # deprecated
     with capsys.disabled():
         print("Question: The candidate CHRTOUT files match the reference CHRTOUT files?")
 
@@ -61,17 +71,19 @@ def test_chrtout(output_dir,capsys):
     # Check CHRTOUT files
     chrtout_diffs = compare_ncfiles(candidate_run.channel_rt, reference_run.channel_rt)
 
-    if chrtout_diffs.count(None) == len(chrtout_diffs):
+    if all(v is None for v in chrtout_diffs):
         has_diffs = False
     else:
         has_diffs = True
-        for the_diff in chrtout_diffs:
-            print(the_diff)
+        #chrtout_diffs.remove(None)
+        for the_diff in chrtout_diffs[0:5]:
+            with capsys.disabled():
+                print(the_diff)
 
     assert has_diffs == False, 'CHRTOUT output files differ between candidate and reference'
 
 def test_chanobs(output_dir, capsys):
-    compare_ncfiles = compare_restarts #TODO remove when compare_restarts is deprecated
+    compare_ncfiles = wrfhydropy.utilities.compare_restarts #TODO remove when compare_restarts is deprecated
     with capsys.disabled():
         print("Question: The candidate CHANOBS files match the reference CHANOBS files?")
 
@@ -91,11 +103,13 @@ def test_chanobs(output_dir, capsys):
     # Check CHRTOUT files
     chanobs_diffs = compare_ncfiles(candidate_run.chanobs, reference_run.chanobs)
 
-    if chanobs_diffs.count(None) == len(chanobs_diffs):
+    if all(v is None for v in chanobs_diffs):
         has_diffs = False
     else:
         has_diffs = True
-        for the_diff in chanobs_diffs:
-            print(the_diff)
+        #chanobs_diffs.remove(None)
+        for the_diff in chanobs_diffs[0:5]:
+            with capsys.disabled():
+                print(the_diff)
 
     assert has_diffs == False, 'CHANOBS output files differ between candidate and reference'
