@@ -13,8 +13,8 @@ before_install:
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   #Get docker images
   - docker pull wrfhydro/dev:conda
-  - docker pull wrfhydro/domains:croton_lite
-  - docker create --name croton_lite wrfhydro/domains:croton_lite
+  - docker pull wrfhydro/domains:croton_NY
+  - docker create --name croton_NY wrfhydro/domains:croton_NY
   #Setup test directory on Docker
   - TEST_DIR_DOCKER=/home/docker/test_dir
   - PYTEST_DIR_DOCKER=$TEST_DIR_DOCKER/candidate/tests
