@@ -1065,12 +1065,13 @@ gwOption:   if(gwBaseSwCRT == 3) then
                end if
 
          elseif(LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .gt. 0 .and. &
-               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
+!               (LAKE_MSKRT(CHANXI(i),CHANYJ(i)) .ne. -9999)) then !--a lake node
+                (CH_NETRT(CHANXI(i),CHANYJ(i)) .le. 0)) then !--a lake node
               QLLAKE8(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) = &
                  QLLAKE8(LAKE_MSKRT(CHANXI(i),CHANYJ(i))) + &
                  (LAKEINFLORT(CHANXI(i),CHANYJ(i))+ &
-                 QINFLOWBASE(CHANXI(i),CHANYJ(i)) &
-                 /DT_STEPS*node_area(i)/1000/DTCT)
+                 QINFLOWBASE(CHANXI(i),CHANYJ(i))) &
+                 /DT_STEPS*node_area(i)/1000/DTCT
          elseif(CH_NETRT(CHANXI(i),CHANYJ(i)) .gt. 0) then  !pour out of lake
                  QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) =  &
                    QLAKEO(CH_NETRT(CHANXI(i),CHANYJ(i)))  !-- previous timestep
@@ -2007,7 +2008,7 @@ do nt = 1, nsteps
          lakeid = LAKEIDX(k)
          if(lakeid .ge. 0) then
             call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
-                 QLateral(k), DT, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
+                 QLateral(k), DTRT_CH, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
                  WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
             
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
