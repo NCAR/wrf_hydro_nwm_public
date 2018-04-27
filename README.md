@@ -20,7 +20,7 @@ For news and updates regarding the WRF-Hydro project please subscribe to our [em
 
 For user support and general inquiries please use our [contact form](https://ral.ucar.edu/projects/wrf_hydro/contact).
 
-If you have found a bug or would like to propose changes to the model code please submit an issue [here on GitHub](https://github.com/NCAR/wrf_hydro_community/issues).
+If you have found a bug or would like to propose changes to the model code please submit an issue [here on GitHub](https://github.com/NCAR/wrf_hydro_nwm_public/issues).
 
 ## Contributions
 For more information on how to contribute to this project please refer to our [contributing guidelines](.github/CONTRIBUTING.md).
