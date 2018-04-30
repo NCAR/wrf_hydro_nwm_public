@@ -219,7 +219,7 @@
       REAL,    allocatable, DIMENSION(:,:)   :: SMCMAX1,SMCWLT1,SMCREF1
       INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP
       REAL, allocatable, DIMENSION(:,:)      :: OV_ROUGH2d
-      REAL,    allocatable, DIMENSION(:)   :: SLDPTH
+      !REAL,    allocatable, DIMENSION(:)   :: SLDPTH
 
 !!! define constant/parameter
     real ::   ov_rough(50)!, ZSOIL(100) ! ZSOIL moved to subsurface properties module
