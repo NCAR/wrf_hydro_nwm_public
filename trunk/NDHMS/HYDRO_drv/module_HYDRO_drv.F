@@ -284,7 +284,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%overland%properties%surface_slope_y,&
                       RT_DOMAIN(did)%QSTRMVOLRT_ACC,rt_domain(did)%overland%control%surface_water_head_routing, &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
-                      RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
+                      rt_domain(did)%subsurface%properties%sldpth,RT_DOMAIN(did)%LATVAL,&
                       RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%RTOUT_DOMAIN,&
                       rt_domain(did)%overland%control%boundary_flux, &
                       nlst_rt(did)%io_config_outputs &
@@ -325,7 +325,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                 gw2d(did)%convgw, gw2d(did)%excess,                  &
                 gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,              &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
-                RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
+                rt_domain(did)%subsurface%properties%sldpth,RT_DOMAIN(did)%LATVAL,       &
                 RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%distance_to_neighbor,           &
                 nlst_rt(did)%output_gw)
 
@@ -1033,7 +1033,7 @@ endif
             suminfxsrt1 = suminfxsrt1 + rt_domain(did)%overland%control%surface_water_head_routing(I,J) &
                                / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
             do kk=1,nlst_rt(did)%NSOIL
-                smcrttot1 = smcrttot1 + rt_domain(did)%subsurface%grid_transform%smcrt(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+                smcrttot1 = smcrttot1 + rt_domain(did)%subsurface%grid_transform%smcrt(I,J,KK)*RT_DOMAIN(did)%subsurface%properties%sldpth(KK)*1000. &
                                / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
             end do
          end do
@@ -1228,9 +1228,9 @@ endif
             suminfxs2 = suminfxs2 + rt_domain(did)%overland%control%surface_water_head_lsm(I,J) &
                                / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
             do kk=1,nlst_rt(did)%NSOIL
-                smctot2 = smctot2 + RT_DOMAIN(did)%SMC(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+                smctot2 = smctot2 + rt_domain(did)%SMC(I,J,KK)*RT_DOMAIN(did)%subsurface%properties%sldpth(KK)*1000. &
                                / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
-               sicetot2 = sicetot2 + RT_DOMAIN(did)%SICE(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
+               sicetot2 = sicetot2 + rt_domain(did)%SICE(I,J,KK)*RT_DOMAIN(did)%subsurface%properties%sldpth(KK)*1000. &
                                 / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
             end do
          end do
@@ -1643,9 +1643,9 @@ end subroutine HYDRO_ini
 
        rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil) = nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil)
 
-       rt_domain(did)%sldpth(1) = abs( RT_DOMAIN(did)%subsurface%properties%zsoil(1) )
+       rt_domain(did)%subsurface%properties%sldpth(1) = abs( RT_DOMAIN(did)%subsurface%properties%zsoil(1) )
        do i = 2, nlst_rt(did)%nsoil
-          rt_domain(did)%sldpth(i) = RT_DOMAIN(did)%subsurface%properties%zsoil(i-1)-RT_DOMAIN(did)%subsurface%properties%zsoil(i)
+          rt_domain(did)%subsurface%properties%sldpth(i) = RT_DOMAIN(did)%subsurface%properties%zsoil(i-1)-RT_DOMAIN(did)%subsurface%properties%zsoil(i)
        enddo
        rt_domain(did)%subsurface%properties%soldeprt = -1.0*RT_DOMAIN(did)%subsurface%properties%zsoil(nlst_rt(did)%NSOIL)
 

@@ -2442,7 +2442,7 @@
              rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt, RT_DOMAIN(did)%subsurface%grid_transform%smcwltrt,    &
              rt_domain(did)%subsurface%grid_transform%smcrt, &
              rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
-             rt_domain(did)%subsurface%properties%lksatrt, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
+             rt_domain(did)%subsurface%properties%lksatrt, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%subsurface%properties%sldpth, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
              RT_DOMAIN(did)%iswater)
 

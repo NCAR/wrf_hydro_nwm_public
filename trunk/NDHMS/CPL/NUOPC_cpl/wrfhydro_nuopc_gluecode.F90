@@ -534,7 +534,7 @@ contains
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
       do layerIndex = 1, nlst_rt(is%wrap%nest)%nsoil
         write(logMsg,"(A,I0,A,F0.3,A)") " Soil layer depth (layer,depth): (", &
-          layerIndex,",",rt_domain(is%wrap%nest)%SLDPTH(layerIndex),")"
+          layerIndex,",",rt_domain(is%wrap%nest)%subsurface%properties%sldpth(layerIndex),")"
         call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
       enddo
       write(logMsg,"(A,2(I0,A))") " RT domain dimensions (IX,JX): (", &

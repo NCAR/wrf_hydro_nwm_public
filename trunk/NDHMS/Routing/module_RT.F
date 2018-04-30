@@ -256,8 +256,8 @@ CONTAINS
 
   allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
             rt_domain(did)%GWSUBBASMSK    = 0
-  allocate( rt_domain(did)%SLDPTH(NSOIL) )
-            rt_domain(did)%SLDPTH = 0.0
+  !allocate( rt_domain(did)%subsurface%properties%sldpth(NSOIL) )
+  !          rt_domain(did)%subsurface%properties%sldpth = 0.0
   allocate( rt_domain(did)%SO8LD_D   (IX,JX,3) )
             rt_domain(did)%SO8LD_D    = 0.0
   allocate( rt_domain(did)%SO8LD_Vmax   (IX,JX) )
