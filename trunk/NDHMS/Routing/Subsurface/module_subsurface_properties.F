@@ -92,6 +92,7 @@ contains
         !allocate storage for sldpth
         if ( .not. allocated(this%sldpth) ) then
             allocate( this%sldpth(nsoil) )
+            this%sldpth = 0.0
         else
             allocation_error = .true.
         endif
