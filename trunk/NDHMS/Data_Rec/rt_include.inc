@@ -1,6 +1,7 @@
    TYPE RT_FIELD
    type (overland_struct) :: overland
    type (subsurface_struct) :: subsurface
+   type (subsurface_static_interface) :: subsurface_static
    INTEGER :: IX, JX
    logical :: initialized
    logical :: restQSTRM

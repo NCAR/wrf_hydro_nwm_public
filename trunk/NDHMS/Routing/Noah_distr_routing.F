@@ -2791,7 +2791,7 @@
 
          end subroutine SubsurfaceRouting_drv
      
-         subroutine subsurfaceRouting ( subrt_data,&
+         subroutine subsurfaceRouting ( subrt_data, subrt_static,&
                   ixrt, jxrt , nsoil, &
                   DT, &
                   INFXSUBRT, &
@@ -2799,9 +2799,11 @@
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
         use module_subsurface_data
+        use module_subsurface_static_data
 #endif
          implicit none
          type (subsurface_struct), intent(inout) :: subrt_data
+         type (subsurface_static_interface), intent(inout) :: subrt_static
          integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          REAL, INTENT(IN)                          :: DT
          !real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH

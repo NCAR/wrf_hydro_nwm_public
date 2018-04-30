@@ -53,6 +53,7 @@ CONTAINS
 
    subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT)
       use module_RT_data, only: rt_domain
+      use module_namelist, only: nlst_rt
       implicit none
       integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
       integer istatus, did, nsizes
@@ -70,8 +71,11 @@ CONTAINS
       ! allocate overland data structures
       call rt_domain(did)%overland%init(ix,jx,ixrt,jxrt)
 
-     ! allocate subsurface data structures
+      ! allocate subsurface data structures
       call rt_domain(did)%subsurface%init(ixrt,jxrt,nsoil, rt_domain(did)%overland)
+
+      ! allocate susurface static data structure
+      call rt_domain(did)%subsurface_static%init(ixrt, jxrt, nsoil, nlst_rt(did)%DT, nlst_rt(did)%rt_option)
 
 !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
 !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
