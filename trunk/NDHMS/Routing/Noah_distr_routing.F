@@ -2782,7 +2782,7 @@
              implicit none
              integer :: did
              IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
-                call subsurfaceRouting ( rt_domain(did)%subsurface, &
+                call subsurfaceRouting ( rt_domain(did)%subsurface, rt_domain(did)%subsurface_static, &
                      RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, & 
                      nlst_rt(did)%DT, &
                      rt_domain(did)%overland%control%infiltration_excess, &
