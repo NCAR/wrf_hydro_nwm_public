@@ -4373,7 +4373,7 @@ subroutine output_chanObs_NWM(domainId)
       if(nlst_rt(domainId)%channel_option .eq. 3) then 
          iret = nf90_put_att(ftn,featureVarId,'long_name','User Specified Forecast Points')
          call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into feature_id variable')
-         iret = nf90_put_att(ftn,featureVarId,'comment','Forecast Points Specified in Geogrid file')
+         iret = nf90_put_att(ftn,featureVarId,'comment','Forecast Points Specified in Fulldom file')
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place comment attribute into feature_id variable')
       else
          iret = nf90_put_att(ftn,featureVarId,'long_name',trim(fileMeta%featureIdLName))
