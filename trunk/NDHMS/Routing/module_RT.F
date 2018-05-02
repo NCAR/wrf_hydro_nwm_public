@@ -169,8 +169,8 @@ CONTAINS
      !rt_domain(did)%LKSATRT     = 0.0
      allocate( rt_domain(did)%LKSATFAC    (IXRT,JXRT) )
      rt_domain(did)%LKSATFAC    = 0.0
-     !allocate( rt_domain(did)%subsurface%io%qsubrt      (IXRT,JXRT) )
-     !rt_domain(did)%subsurface%io%qsubrt      = 0.0
+     !allocate( rt_domain(did)%subsurface%state%qsubrt      (IXRT,JXRT) )
+     !rt_domain(did)%subsurface%state%qsubrt      = 0.0
      !allocate( rt_domain(did)%subsurface%properties%zwattablrt  (IXRT,JXRT) )
      !rt_domain(did)%subsurface%properties%zwattablrt  = 0.0
      !allocate( rt_domain(did)%QSUBBDRYRT  (IXRT,JXRT) )
@@ -1367,9 +1367,9 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
    rt_domain(did)%SH2OWGT = 1.
    rt_domain(did)%subsurface%properties%soldeprt = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
-   rt_domain(did)%subsurface%io%qsubrt = 0.0
+   rt_domain(did)%subsurface%state%qsubrt = 0.0
    rt_domain(did)%subsurface%properties%zwattablrt = 0.0
-   rt_domain(did)%subsurface%io%qsubbdryrt = 0.0
+   rt_domain(did)%subsurface%state%qsubbdryrt = 0.0
    rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0
    rt_domain(did)%overland%control%boundary_flux = 0.0
    rt_domain(did)%overland%control%surface_water_head_routing = 0.0

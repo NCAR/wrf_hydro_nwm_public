@@ -276,8 +276,8 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
                       nlst_rt(did)%nsoil, &
    !                  nlst_rt(did)%startdate, nlst_rt(did)%olddate,
-   !                  rt_domain(did)%subsurface%io%qsubrt,&
-                      nlst_rt(did)%sincedate, nlst_rt(did)%olddate, rt_domain(did)%subsurface%io%qsubrt,&
+   !                  rt_domain(did)%subsurface%state%qsubrt,&
+                      nlst_rt(did)%sincedate, nlst_rt(did)%olddate, rt_domain(did)%subsurface%state%qsubrt,&
                       rt_domain(did)%subsurface%properties%zwattablrt,RT_DOMAIN(did)%subsurface%grid_transform%smcrt,&
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
@@ -740,7 +740,7 @@ end if
 
            !! Under channel-only, these variables are not allocated
            if(allocated(RT_DOMAIN(did)%SOLDRAIN)) RT_DOMAIN(did)%SOLDRAIN = 0
-           if(allocated(rt_domain(did)%subsurface%io%qsubrt))   RT_DOMAIN(did)%subsurface%io%qsubrt   = 0            
+           if(allocated(rt_domain(did)%subsurface%state%qsubrt))   RT_DOMAIN(did)%subsurface%state%qsubrt   = 0            
 
 
 
@@ -936,7 +936,7 @@ else
 
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
-       nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%subsurface%io%qsubrt, &
+       nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%subsurface%state%qsubrt, &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&

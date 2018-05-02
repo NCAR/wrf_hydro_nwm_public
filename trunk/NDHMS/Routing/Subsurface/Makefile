@@ -22,12 +22,12 @@ mod:
 	#Build each sub module then build the module that depends on all sub modules
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_grid_transform.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_properties.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_io.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_static_data.F
 	ar -r ../../lib/libHYDRO.a module_subsurface_grid_transform.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_properties.o
-	ar -r ../../lib/libHYDRO.a module_subsurface_io.o
+	ar -r ../../lib/libHYDRO.a module_subsurface_state.o
 	ar -r ../../lib/libHYDRO.a module_subsurface.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_static_data.o
 
@@ -37,7 +37,7 @@ test:
 	$(COMPILER90) -o subsurface_tests \
 		module_subsurface_grid_transform.o \
 		module_subsurface_properties.o \
-		module_subsurface_io.o \
+		module_subsurface_state.o \
 		module_subsurface.o \
 		../Overland/module_overland.o \
 		../Overland/module_overland_control.o \

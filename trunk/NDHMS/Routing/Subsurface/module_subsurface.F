@@ -1,6 +1,6 @@
 module module_subsurface_data
 
-    use module_subsurface_io
+    use module_subsurface_state
     use module_subsurface_properties
     use module_subsurface_grid_transform
 
@@ -11,7 +11,7 @@ module module_subsurface_data
 
     type subsurface_struct
 
-        type ( subsurface_io_interface), pointer :: io
+        type ( subsurface_state_interface), pointer :: state
         type ( subsurface_properties_interface), pointer :: properties
         type ( subsurface_grid_transform_interface), pointer :: grid_transform
 
@@ -42,12 +42,12 @@ module module_subsurface_data
     if (this%pointer_allocation_guard .eqv. .false. ) then
         this%pointer_allocation_guard = .true.
         ! allocate the io interface
-        allocate( this%io )
-        if ( .not. associated( this%io) ) then
+        allocate( this%state )
+        if ( .not. associated( this%state) ) then
             write(0,*) "Failure to allocate subsurface io interface"
         else
             !write(0,*) "Allocating io structure"
-            call this%io%init(ix,jx)
+            call this%state%init(ix,jx)
         end if
 
         ! allocate the properties interface
@@ -79,9 +79,9 @@ module module_subsurface_data
 
         if ( this%pointer_allocation_guard .eqv. .true.) then
             !write(0,*) "Testing pointers for deallocation"
-            if ( associated( this%io ) ) then
-                call this%io%destroy
-                deallocate( this%io )
+            if ( associated( this%state ) ) then
+                call this%state%destroy
+                deallocate( this%state )
             end if
 
             if (associated( this%properties ) )then
