@@ -40,7 +40,7 @@ type chrtMeta
    ! Variable names
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numChVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from real to
@@ -108,7 +108,7 @@ type ldasMeta
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -175,7 +175,7 @@ type rtDomainMeta
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -240,7 +240,7 @@ type lakeMeta
    ! Variable names
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -306,7 +306,7 @@ type chrtGrdMeta
    ! Variable names
    character (len=64), dimension(numChGrdVars) :: varNames
    integer :: numVars = numChGrdVars
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
                                                 ! variable to convert from 
@@ -374,7 +374,7 @@ type lsmMeta
    integer :: numVars = numLsmVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numLsmVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -441,7 +441,7 @@ type chObsMeta
    ! Variable names
    character (len=64), dimension(numChObsVars) :: varNames
    integer :: numVars = numChObsVars
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
                                                  ! each variable to convert 
@@ -508,7 +508,7 @@ type gwMeta
    ! Variable names
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
-   character (len=512) :: outVersion = "WRF-Hydro v5.0.0"
+   character (len=512) :: outVersion = "WRF-Hydro v5.0.0-dev"
    ! Output variable attributes
    real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -742,7 +742,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ldasOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
-   ldasOutDict%title = "OUTPUT FROM WRF-Hydro v5.0.0"
+   ldasOutDict%title = "OUTPUT FROM WRF-Hydro v5.0.0-dev"
    ldasOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    ldasOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    ldasOutDict%conventions = "CF-1.6"
@@ -1943,7 +1943,7 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    lsmOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
-   lsmOutDict%title = "OUTPUT FROM WRF-Hydro v5.0.0"
+   lsmOutDict%title = "OUTPUT FROM WRF-Hydro v5.0.0-dev"
    lsmOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    lsmOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    lsmOutDict%conventions = "CF-1.6"
