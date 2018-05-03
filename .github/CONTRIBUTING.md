@@ -50,7 +50,7 @@ unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues 
 requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for a
 thorough guide to collaborating on GitHub.
 
-### Fortran code style standards
+### WRF-Hydro Fortran code style standards
 Please see our Fortran [code style guidelines](CODESTYLE.md)
 
 ### Universal guidelines
@@ -85,7 +85,7 @@ Commits which do not changes answers (pass regression testing) MUST be kept sepa
 which do change answers even when the work is on the same feature or bug. The portion of the code
 which changes the answer must be isolated as much as possible into its own pull request.
 
-### Types of contributions
+### Types of code contributions
 #### Bug fixes
 All bug fixes must address a specific [GitHub
 issue](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Only issues labeled with "Community
