@@ -7365,7 +7365,8 @@ subroutine READ_CHROUTING1( &
      CH_LNKRT,     LAKE_MSKRT,        FROM_NODE, TO_NODE,  &
      TYPEL,        ORDER,             MAXORDER,  NLINKS,   &
      NLAKES,       CHANLEN,           MannN,     So,       & 
-     ChSSlp,       Bw,                HRZAREA,   LAKEMAXH, & 
+     ChSSlp,       Bw,                ChannK,    HRZAREA,  & 
+     LAKEMAXH,                                             &
      WEIRH,        WEIRC,             WEIRL,     ORIFICEC, &
      ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE,  &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE, &
@@ -7415,7 +7416,7 @@ integer, intent(INOUT),  dimension(NLINKS)   :: LAKENODE !,LINKID   ! identifies
 real, intent(IN)                             :: dist(ixrt,jxrt,9)
 
 integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK
-real,  dimension(IXRT,JXRT)                  :: ChSSlpG,BwG,MannNG  !channel properties on Grid
+real,  dimension(IXRT,JXRT)                  :: ChSSlpG,BwG,MannNG,ChannKG  !channel properties on Grid
 real,  dimension(IXRT,JXRT)                  :: chanDepth, elrt
 
 
@@ -7433,7 +7434,7 @@ real, intent(INOUT),  dimension(:)      :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
-real, intent(INOUT), dimension(:)       :: ChSSlp, Bw
+real, intent(INOUT), dimension(:)       :: ChSSlp, Bw, ChannK 
 
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
@@ -7515,11 +7516,13 @@ end do
 
 cnt = 0 
 BwG = 0.0
+ChannKG = 0.0
 ChSSlpG = 0.0
 MannNG = 0.0
 TYPEL = 0
 MannN = 0.0
 Bw = 0.0
+ChannK = 0.0
 ChSSlp = 0.0
 
 
@@ -7604,6 +7607,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j) 
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7631,6 +7635,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7657,6 +7662,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7684,6 +7690,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7710,6 +7717,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7737,6 +7745,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i,j)
@@ -7764,6 +7773,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                TO_NODE(cnt) = CH_NETLNK(i - 1, j)
@@ -7790,6 +7800,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7845,7 +7856,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
-            
+            ChannK(cnt) = ChannKG(i,j) 
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(j+1 .gt. JXRT) then !-- an edge
@@ -7890,6 +7901,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j+1 .gt. JXRT))  then ! an edge
@@ -7932,6 +7944,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(i+1 .gt. IXRT) then  !an edge
@@ -7975,6 +7988,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j-1 .eq. 0)) then !an edge 
@@ -8017,6 +8031,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(j-1 .eq. 0) then !- an edge
@@ -8060,6 +8075,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j-1 .eq. 0) ) then !- an edge
@@ -8102,6 +8118,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(i-1 .eq. 0) then !-- an edge
@@ -8145,6 +8162,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j+1 .gt. JXRT)) then !-- an edge
@@ -8193,7 +8211,8 @@ subroutine read_routelink(&
      TO_NODE,      TYPEL,        ORDER,    MAXORDER,   & 
      NLAKES,       MUSK,         MUSX,                 &
      QLINK,        CHANLEN,      MannN,    So,         &
-     ChSSlp,       Bw,           LAKEIDA,  HRZAREA,    & 
+     ChSSlp,       Bw,           ChannK,   LAKEIDA,    & 
+     HRZAREA,                                          & 
      LAKEMAXH,     WEIRH,        WEIRC,    WEIRL,      & 
      ORIFICEC,     ORIFICEA,     ORIFICEE, LATLAKE,    &
      LONLAKE,      ELEVLAKE,     LAKEIDM,  LAKEIDX,    &
@@ -8233,7 +8252,7 @@ LAKELINKID = 0
 call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      LINKID, TO_NODE, TYPEL, ORDER , &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-     MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
+     MannN, So, ChSSlp, Bw, ChannK, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, &
      ORIFICEA, ORIFICEE, gages, gageMiss, &
      LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
@@ -8273,7 +8292,7 @@ end subroutine read_routelink
    subroutine readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f, maxorder, &
                    LINKID, TO_NODE, TYPEL, ORDER , &
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-                   MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
+                   MannN, So, ChSSlp, Bw, ChannK, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE, gages, gageMiss,& 
                    LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
@@ -8287,7 +8306,7 @@ end subroutine read_routelink
 
         real,dimension(:,:)  :: QLINK
         REAL, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-                   MannN, So, ChSSlp, Bw, latlake, lonlake
+                   MannN, So, ChSSlp, Bw, ChannK, latlake, lonlake
 
         character(len=15), dimension(:), intent(inout) :: gages
         character(len=15), intent(in) :: gageMiss
@@ -8310,7 +8329,7 @@ end subroutine read_routelink
 #ifdef MPP_LAND
         real :: tmpQLINK(GNLINKSL,2)
         REAL, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
-                   tmpMannN, tmpSo, tmpChSSlp, tmpBw
+                   tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpChannK 
 #endif 
 
         !! is RouteLink file netcdf (*.nc) or csv (*.csv)
@@ -8339,6 +8358,7 @@ end subroutine read_routelink
           allocate(tmpSo(GNLINKSL))
           allocate(tmpChSSlp(GNLINKSL))
           allocate(tmpBw(GNLINKSL))
+          allocate(tmpChannK(GNLINKSL))
 
           if(routeLinkNetcdf) then
 
@@ -8348,7 +8368,7 @@ end subroutine read_routelink
                   tmpCHLAT,      tmpZELEV,     tmpTYPEL,    tmpORDER,    &
                   tmpQLINK(:,1), tmpMUSK,      tmpMUSX,     tmpCHANLEN,  &
                   tmpMannN,      tmpSo,        tmpChSSlp,   tmpBw,       &
-                  tmpGages, tmpLAKEIDA)
+                  tmpChannK,     tmpGages, tmpLAKEIDA)
 
           else
 
@@ -8362,7 +8382,8 @@ end subroutine read_routelink
                 read (17,*) tmpLINKID(i),   tmp_from_node,   tmpTO_NODE(i), tmpCHLON(i),    &
                             tmpCHLAT(i),    tmpZELEV(i),     tmpTYPEL(i),   tmpORDER(i),    &
                             tmpQLINK(i,1),  tmpMUSK(i),      tmpMUSX(i),    tmpCHANLEN(i),  &
-                            tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i)
+                            tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i),       &
+                            tmpChannK(i)
 
                 ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
                 if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
@@ -8405,7 +8426,7 @@ end subroutine read_routelink
         call ReachLS_decomp(tmpSo,       So     )
         call ReachLS_decomp(tmpChSSlp,   ChSSlp )
         call ReachLS_decomp(tmpBw,       Bw     )
-
+        call ReachLS_decomp(tmpChannK,   ChannK )
 
 !       call ReachLS_decomp(tmpHRZAREA,  HRZAREA)
 !       call ReachLS_decomp(tmpLAKEMAXH, LAKEMAXH)
@@ -8443,6 +8464,7 @@ end subroutine read_routelink
            if(allocated(tmpSo)) deallocate(tmpSo)
            if(allocated(tmpChSSlp)) deallocate(tmpChSSlp)
            if(allocated(tmpBw)) deallocate(tmpBw)
+           if(allocated(tmpChannK)) deallocate(tmpChannK)
 !, tmpHRZAREA,&
 !                  tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
 !                  tmpORIFICEA,tmpORIFICEE)
@@ -8470,7 +8492,7 @@ end subroutine read_routelink
           do i=1,NLINKSL
               read (17,*) LINKID(i), tmp_from_node, TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
                    TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
-                   MannN(i), So(i), ChSSlp(i), Bw(i)
+                   MannN(i), So(i), ChSSlp(i), Bw(i), ChannK(i)
 
               ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
               if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
@@ -8518,7 +8540,8 @@ subroutine MPP_READ_CHROUTING_new(&
      CH_LNKRT,     LAKE_MSKRT,       FROM_NODE,      TO_NODE, &
      TYPEL,        ORDER,            MAXORDER,       NLINKS, &
      NLAKES,       CHANLEN,          MannN,          So, &
-     ChSSlp,       Bw,               HRZAREA,        LAKEMAXH, &
+     ChSSlp,       Bw,               ChannK,         HRZAREA, &
+     LAKEMAXH,                                                &
      WEIRH,        WEIRC,            WEIRL,          ORIFICEC, &
      ORIFICEA,     ORIFICEE,         LATLAKE,        LONLAKE, &
      ELEVLAKE,     dist,             ZELEV,          LAKENODE, &
@@ -8563,7 +8586,7 @@ real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
-real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw
+real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, ChannK 
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
 
@@ -8586,7 +8609,8 @@ call READ_CHROUTING1( &
      CH_LNKRT,     LAKE_MSKRT,        FROM_NODE, TO_NODE, &
      TYPEL,        ORDER,             MAXORDER,  NLINKS,  &
      NLAKES,       CHANLEN,           MannN,     So,      &
-     ChSSlp,       Bw,                HRZAREA,   LAKEMAXH,&
+     ChSSlp,       Bw,                ChannK,    HRZAREA, &
+     LAKEMAXH,                                            &
      WEIRH,        WEIRC,             WEIRL,     ORIFICEC,& 
      ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE, &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
@@ -8785,7 +8809,7 @@ subroutine read_route_link_netcdf( route_link_file,                         &
                                    CHLAT,    ZELEV,     TYPEL,    ORDER,    &
                                    QLINK,    MUSK,      MUSX,     CHANLEN,  &
                                    MannN,    So,        ChSSlp,   Bw,       &
-                                   gages, LAKEIDA                           )
+                                   ChannK, gages, LAKEIDA                   )
 
 implicit none
 character(len=*),        intent(in)  :: route_link_file
@@ -8794,7 +8818,7 @@ real,    dimension(:),   intent(out) :: CHLON, CHLAT, ZELEV
 integer, dimension(:),   intent(out) :: TYPEL, ORDER 
 real,    dimension(:),   intent(out) :: QLINK
 real,    dimension(:),   intent(out) :: MUSK, MUSX, CHANLEN
-real,    dimension(:),   intent(out) :: MannN,    So,       ChSSlp,   Bw
+real,    dimension(:),   intent(out) :: MannN,    So,       ChSSlp,   Bw, ChannK 
 character(len=15), dimension(:), intent(inout) :: gages
 
 integer :: iRet, ncid, ii, varid
@@ -8830,7 +8854,7 @@ call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .
 where(So .lt. 0.00001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
-
+call get_1d_netcdf_real(ncid, 'Kchan',  ChannK,     'read_route_link_netcdf', .TRUE.)
 ! gages is optional, only get it if it's defined in the file.
 iRet = nf90_inq_varid(ncid, 'gages', varid)
 if (iret .eq. nf90_NoErr) then
@@ -8849,7 +8873,7 @@ print*,'last index=',ii
 print*, 'CHLON', CHLON(ii), 'CHLAT', CHLAT(ii), 'ZELEV', ZELEV(ii)
 print*,'TYPEL', TYPEL(ii), 'ORDER', ORDER(ii), 'QLINK', QLINK(ii), 'MUSK', MUSK(ii)
 print*, 'MUSX', MUSX(ii), 'CHANLEN', CHANLEN(ii), 'MannN', MannN(ii)
-print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii)
+print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii), 'ChannK', ChannK(ii)
 print*,'gages(ii): ',trim(gages(ii))
 print*,"finish read_route_link_netcdf"
 #endif

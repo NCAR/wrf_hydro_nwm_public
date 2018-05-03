@@ -343,7 +343,7 @@ DIFFUSION = Kf * sqrt(abs(Sf))*sgn
 end function DIFFUSION
 ! ----------------------------------------------------------------
 
-subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw)
+subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,ChannK)
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -358,6 +358,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(INOUT)    :: qdc        !flow downstream current timestep
         REAL, intent(IN)       :: ql         !lateral inflow through reach (m^3/sec)
         REAL, intent(IN)       :: Bw         ! bottom width (meters)
+        REAL, intent(IN)       :: ChannK     ! Channel conductivity (m/s)
         REAL, intent(IN)       :: Cs         ! Channel side slope slope
         REAL, intent(IN)       :: So         ! Channel bottom slope %
         REAL, intent(IN)       :: dx         ! channel lngth (m)
@@ -385,6 +386,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: dtr        ! required timestep, minutes
         REAL    :: error
         REAL    :: hp         !courant, previous height
+        REAL    :: qloss      !Channel loss
         INTEGER :: maxiter    !maximum number of iterations
 
 !-- local variables.. needed if channel is sub-divded
@@ -477,13 +479,16 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C1 =  (Km*X + dt/2)/D
            C2 =  (dt/2 - Km*X)/D
            C3 =  (Km*(1-X)-dt/2)/D
-           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
-
+!           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
+           C4 =  (ql*dt)/D - (ChannK * WP  * dx)  !-- DY & LKR lat inflow + channel loss
            
            if(R .le. 0.0) then 
               Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else 
-              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * (R**(2./3.)) * sqrt(So)) !f(x)
+              if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then
+               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
+              endif
+             Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * (R**(2./3.)) * sqrt(So)) !f(x)
            endif
 
            !--upper interval -----------
@@ -540,11 +545,15 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C1 =  (Km*X + dt/2)/D
            C2 =  (dt/2 - Km*X)/D
            C3 =  (Km*(1-X)-dt/2)/D
-           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
+!           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
+           C4 =  (ql*dt)/D  - (ChannK * dx * WP)  !-- (loss units: m/s * m * m)
 
            if(R .le. 0.0) then 
              Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else
+              if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
+               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
+              endif
              Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * (R**(2./3.)) * sqrt(So))
            endif
 
@@ -595,8 +604,12 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 !yw added for test
       if(((C1*qup)+(C2*quc)+(C3*qdp) + C4) .lt. 0.0) then
 !       MUSKINGCUNGE =  MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
-        qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
-
+!        qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+         if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then ! channel loss greater than water in chan
+           qdc = 0.0
+         else
+           qdc = MAX( ( (C1*qup)+(C2*quc) + C4),((C1*qup)+(C3*qdp) + C4) )
+         endif
       else
 !       MUSKINGCUNGE =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
         qdc =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) !-- pg 295 Bedient huber
@@ -606,6 +619,16 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
       Tw = Bw + (2*z*h)
       R = (h*(Bw + Tw) / 2) / (Bw + 2*(((Tw - Bw) / 2)**2 + h**2)**0.5)    
       vel =  (1./n) * (R **(2./3.)) * sqrt(So)  ! average velocity in m/s
+
+      qloss = (ChannK * dx * WP) ! TML -- Compute qloss to pass
+
+      if(qloss > ((ql*dt)/D - C4)) then
+           qloss = (ql*dt)/D - C4
+           print*, 'qloss updated to:',qloss
+           if (qloss < 0) then
+              print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
+           endif
+      endif
 
 ! ----------------------------------------------------------------
 END SUBROUTINE SUBMUSKINGCUNGE
@@ -637,7 +660,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, CH_LNKRT, &
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
-       HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, &
+       HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, ChannK, &
        RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
        ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
@@ -681,7 +704,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: MUSK, MUSX
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: CHANLEN
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: So, MannN
-        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChSSlp,Bw  !--properties of nodes or links
+        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChSSlp,Bw,ChannK  !--properties of nodes or links
         REAL                                      :: Km, X
         REAL , INTENT(INOUT), DIMENSION(:,:) :: QLINK
         REAL ,  DIMENSION(NLINKS,2) :: tmpQLINK
@@ -916,7 +939,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
                    call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
                     Qup,Quc, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
-                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k))
+                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), ChannK(k))
  
 !                    if(LINKID(k) .eq. 24800) then 
 !                      print *, "ZZ", ORDER(k),QLateral(k),QLINK(k,1), tmpQLINK(k,2)
@@ -1650,7 +1673,7 @@ end subroutine drive_CHANNEL
         LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
-        CHANLEN, MannN, So, ChSSlp, Bw, &
+        CHANLEN, MannN, So, ChSSlp, Bw, ChannK, &
         RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
         ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
@@ -1704,7 +1727,7 @@ end subroutine drive_CHANNEL
        real, intent(IN), dimension(:)        :: MUSK, MUSX
        real, intent(IN), dimension(:)        :: CHANLEN
        real, intent(IN), dimension(:)        :: So, MannN
-       real, intent(IN), dimension(:)        :: ChSSlp,Bw  !--properties of nodes or links
+       real, intent(IN), dimension(:)        :: ChSSlp,Bw,ChannK  !--properties of nodes or links
        real                                      :: Km, X
        real , intent(INOUT), dimension(:,:)  :: QLINK
 #ifdef WRF_HYDRO_NUDGING
@@ -2025,7 +2048,7 @@ do nt = 1, nsteps
       elseif (channel_option .eq. 2) then ! muskingum cunge, don't process internal lake nodes TYP=2
          !              tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
          !                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
-         !                  MannN(k), ChSSlp(k), Bw(k) )
+         !                  MannN(k), ChSSlp(k), Bw(k), ChannK(k) )
          
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
@@ -2034,7 +2057,7 @@ do nt = 1, nsteps
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
-              MannN(k),      ChSSlp(k),   Bw(k)                                )
+              MannN(k),      ChSSlp(k),   Bw(k), ChannK(k)                            )
          
       else
 #ifdef HYDRO_D

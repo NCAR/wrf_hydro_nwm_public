@@ -24,7 +24,7 @@ MODULE module_noah_chan_param_init_rt
 CONTAINS
 !
 !-----------------------------------------------------------------
-  SUBROUTINE CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)
+  SUBROUTINE CHAN_PARM_INIT (BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann)
 !-----------------------------------------------------------------
 
     IMPLICIT NONE
@@ -32,12 +32,13 @@ CONTAINS
     integer :: IINDEX, CHANCATS
     integer :: ORDER, IUNIT
     integer, PARAMETER :: NCHANTYPES=50 
-    real,dimension(NCHANTYPES)    :: BOTWID,HLINK_INIT,CHAN_SS,CHMann
+    real,dimension(NCHANTYPES)    :: BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann
     character(LEN=11) :: DATATYPE
 
 !-----SPECIFY CHANNEL RELATED CHARACTERISTICS :
 !             ORDER: Strahler Stream Order
 !            BOTWID: Channel Bottom Width (meters)
+!            CHANNK: channel conductivity (m/s)
 !        HLINK_INIT: Initial depth of flow in channel (meters)
 !           CHAN_SS: Channel side slope (assuming trapezoidal channel geom)
 !            CHMann: Channel Manning's N roughness coefficient 
@@ -66,10 +67,10 @@ CONTAINS
             CHANCATS,' CATEGORIES'
 #endif
        DO ORDER=1,CHANCATS
-          READ (IUNIT,*)IINDEX,BOTWID(ORDER),HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
+          READ (IUNIT,*)IINDEX,BOTWID(ORDER),CHANN_K(ORDER),HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
                &     CHMann(ORDER)
 #ifdef HYDRO_D
-          PRINT *, IINDEX,BOTWID(ORDER),HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
+          PRINT *, IINDEX,BOTWID(ORDER),CHANN_K(ORDER),HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
                &     CHMann(ORDER)
 #endif
        ENDDO
@@ -87,20 +88,21 @@ CONTAINS
 
 
 #ifdef MPP_LAND
-  SUBROUTINE mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)
+  SUBROUTINE mpp_CHAN_PARM_INIT (BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann)
     use module_mpp_land, only:  my_id, IO_id,mpp_land_bcast_int1, &
        mpp_land_bcast_real,mpp_land_bcast_int,mpp_land_bcast_real1
     implicit none
     integer :: IINDEX, CHANCATS
     integer :: ORDER
     integer, PARAMETER :: NCHANTYPES=50 
-    real,dimension(NCHANTYPES)    :: BOTWID,HLINK_INIT,CHAN_SS,CHMann
+    real,dimension(NCHANTYPES)    :: BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann
     character(LEN=11) :: DATATYPE
 
     if(my_id.eq.io_id) then
-       call CHAN_PARM_INIT(BOTWID,HLINK_INIT,CHAN_SS,CHMann)
+       call CHAN_PARM_INIT(BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann)
     end if
        call mpp_land_bcast_real(NCHANTYPES,BOTWID)
+       call mpp_land_bcast_real(NCHANTYPES,CHANN_K)
        call mpp_land_bcast_real(NCHANTYPES,HLINK_INIT)
        call mpp_land_bcast_real(NCHANTYPES,CHAN_SS)
        call mpp_land_bcast_real(NCHANTYPES,CHMann)

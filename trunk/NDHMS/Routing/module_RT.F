@@ -335,6 +335,7 @@ CONTAINS
      allocate( rt_domain(did)%So(nsizes) )
      allocate( rt_domain(did)%ChSSlp(nsizes) )
      allocate( rt_domain(did)%Bw(nsizes) )
+     allocate( rt_domain(did)%ChannK(nsizes) )
      allocate( rt_domain(did)%LAKEIDA(nsizes) )
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
@@ -444,6 +445,7 @@ CONTAINS
       rt_domain(did)%CHANLEN = 0.0        
       rt_domain(did)%ChSSlp = 0.0        
       rt_domain(did)%Bw = 0.0        
+      rt_domain(did)%ChannK = 0.0
       rt_domain(did)%ZELEV = 0.0        
       rt_domain(did)%CVOL = 0.0        
       rt_domain(did)%LAKEIDA = 0
@@ -619,7 +621,7 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
-real,  dimension(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+real,  dimension(50)     :: BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
 integer :: i,j,k, ll, count
  
      integer, allocatable, dimension(:) :: tmp_int
@@ -676,6 +678,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%NLAKES,       rt_domain(did)%CHANLEN, &
              rt_domain(did)%MannN,        rt_domain(did)%So, &
              rt_domain(did)%ChSSlp,       rt_domain(did)%Bw, &
+             rt_domain(did)%ChannK,                          & 
              rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
@@ -713,6 +716,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%QLINK,         rt_domain(did)%CHANLEN,    &
            rt_domain(did)%MannN,         rt_domain(did)%So,         &
            rt_domain(did)%ChSSlp,        rt_domain(did)%Bw,         &
+           rt_domain(did)%ChannK,                                   &
            rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
@@ -1213,9 +1217,9 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
    
    if (nlst_rt(did)%channel_option .eq. 3) then
 #ifdef MPP_LAND
-      call mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+      call mpp_CHAN_PARM_INIT (BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #else
-      call CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+      call CHAN_PARM_INIT (BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
 #endif
    end if
 
