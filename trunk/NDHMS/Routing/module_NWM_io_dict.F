@@ -9,7 +9,6 @@
 ! Research Applications Laboratory
 ! karsten@ucar.edu     
 ! 303-497-2693
-! 303-497-2693
 
 module module_NWM_io_dict
 implicit none
