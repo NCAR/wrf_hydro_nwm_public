@@ -44,13 +44,13 @@ internal development must occur on a private repository maintained by NCAR and N
 dual-repository system, a strict procedure must be followed when making contributions to the WRF-
 Hydro model code.
 
-All code development contributions will be made via [forks](https://help.github.com/articles/about-
-forks/) and [Pull Requests](https://help.github.com/articles/about-pull-requests/). If you are
+All code development contributions will be made via [forks](https://help.github.com/articles/about-forks/)
+and [pull requests](https://help.github.com/articles/about-pull-requests/). If you are
 unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues and pull
 requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for a
 thorough guide to collaborating on GitHub.
 
-### Fortran code style standards
+### WRF-Hydro Fortran code style standards
 Please see our Fortran [code style guidelines](CODESTYLE.md)
 
 ### Universal guidelines
@@ -59,7 +59,7 @@ Please see our Fortran [code style guidelines](CODESTYLE.md)
 * All contributions must be made in an open, and public way via the GitHub repository. There will
   be no embargo period for code contributions.
 * All contributions must be able to be merged without conflict. It is the responsibility of the
-  contributor to resolve any merge conflicts **prior** to submitting a Pull Request.
+  contributor to resolve any merge conflicts **prior** to submitting a pull request.
 * All contributions must pass relevant automated testing procedures. These tests are executed
   automatically when you submit your pull request.
 * Be respectful when giving and receiving feedback on contributions or issues.
@@ -85,7 +85,7 @@ Commits which do not changes answers (pass regression testing) MUST be kept sepa
 which do change answers even when the work is on the same feature or bug. The portion of the code
 which changes the answer must be isolated as much as possible into its own pull request.
 
-### Types of contributions
+### Types of code contributions
 #### Bug fixes
 All bug fixes must address a specific [GitHub
 issue](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Only issues labeled with "Community
