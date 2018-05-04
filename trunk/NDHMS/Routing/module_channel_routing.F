@@ -378,6 +378,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: Z          ! trapezoid distance (m)
         REAL    :: R          ! Hydraulic radius
         REAL    :: WP         ! wetted perimmeter
+        REAL    :: WPk        ! KINEROS2 modified wetted perimeter
+        REAL    :: modK       ! KINEROS2 constant (set to 0.15, line )
         REAL    :: h          ! depth of flow
         REAL    :: h_0,h_1    ! secant method estimates
         REAL    :: Qj_0       ! secant method estimates
@@ -392,6 +394,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 !-- local variables.. needed if channel is sub-divded
         REAL    :: a,b,c
         INTEGER :: i          !-- channel segment counter
+
+        !TML-- Hard code KINEROS2 Modification Parameter
+        !TML-- Set to 0.15, consistent with USDA-ARS
+        modK = 0.15
 
         c = 0.52           !-- coefficnets for finding dx/Ckdt
         b = 1.15
@@ -437,6 +443,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             WP = (Bw + 2 * h_0 * sqrt(1+z*z))
             R   = AREA/ WP
            endif
+           WPk = WP*MIN((h_0/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
 
            ! Ck = (sqrt(So)/n)*(5./3.)*(h_0**0.667)   !-- pg 287 Chow, Mdt, Mays
            ! This is for wide rectangle and not trapezoid so it was replaced
@@ -480,8 +487,9 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2 - Km*X)/D
            C3 =  (Km*(1-X)-dt/2)/D
 !           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
-           C4 =  (ql*dt)/D - (ChannK * WP  * dx)  !-- DY & LKR lat inflow + channel loss
-           
+           C4 =  (ql*dt)/D - (ChannK * WPk  * dx)  !-- DY & LKR lat inflow + channel loss
+           !TML-- channel loss now uses modified WP (from KINEROS2)           
+
            if(R .le. 0.0) then 
               Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
            else 
@@ -503,6 +511,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             WP =  (Bw + 2 * h * sqrt(1+z*z))
             R   = AREA / WP
            endif
+           WPk = WP*MIN((h/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
+
 
 !           Ck = (sqrt(So)/n)*(5./3.)*(h**0.667)   !-- pg 287 Chow, Mdt, Mays
            ! This is for wide rectangle and not trapezoid so it was replaced
@@ -546,7 +556,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2 - Km*X)/D
            C3 =  (Km*(1-X)-dt/2)/D
 !           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
-           C4 =  (ql*dt)/D  - (ChannK * dx * WP)  !-- (loss units: m/s * m * m)
+           C4 =  (ql*dt)/D  - (ChannK * dx * WPk)  !-- (loss units: m/s * m * m)
+           !TML-- channel loss now uses modified WP (from KINEROS2)
 
            if(R .le. 0.0) then 
              Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
@@ -620,11 +631,11 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
       R = (h*(Bw + Tw) / 2) / (Bw + 2*(((Tw - Bw) / 2)**2 + h**2)**0.5)    
       vel =  (1./n) * (R **(2./3.)) * sqrt(So)  ! average velocity in m/s
 
-      qloss = (ChannK * dx * WP) ! TML -- Compute qloss to pass
+      qloss = (ChannK * dx * WPk) ! TML -- Compute qloss to pass
 
       if(qloss > ((ql*dt)/D - C4)) then
            qloss = (ql*dt)/D - C4
-           print*, 'qloss updated to:',qloss
+           !print*, 'qloss updated to:',qloss
            if (qloss < 0) then
               print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
            endif
