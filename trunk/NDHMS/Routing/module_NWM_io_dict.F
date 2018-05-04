@@ -15,7 +15,7 @@ module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-integer, parameter :: numChVars=10
+integer, parameter :: numChVars=11
 integer, parameter :: numLdasVars = 95
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
