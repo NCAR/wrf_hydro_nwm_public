@@ -9,7 +9,7 @@ export WRF_HYDRO=1
 export HYDRO_D=1
 
 # Spatially distributed parameters for NoahMP: 0=Off, 1=On.
-export SPATIAL_SOIL=0  
+export SPATIAL_SOIL=1 
 
 # RAPID model: 0=Off, 1=On.
 export WRF_HYDRO_RAPID=0

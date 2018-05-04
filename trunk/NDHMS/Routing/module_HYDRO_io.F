@@ -8226,7 +8226,7 @@ integer                                    :: NLAKES
 real,    intent(INOUT),  dimension(NLINKS) :: MUSK, MUSX
 real,    intent(INOUT),  dimension(:,:)    :: QLINK  !channel flow
 real,    intent(INOUT),  dimension(NLINKS) :: CHANLEN, MannN, So
-real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw
+real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw, ChannK !added ChanLoss
 integer, intent(INOUT),  dimension(:)      :: LAKEIDA !lake COMid 4all link on full nlinks database
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
 real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL
