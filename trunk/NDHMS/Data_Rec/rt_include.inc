@@ -146,7 +146,7 @@
   REAL  , allocatable, DIMENSION(:)  ::   qSfcLatRunoff,   qBucket, qBtmVertRunoff
   REAL, allocatable, DIMENSION(:)    :: accLndRunOff, accQLateral, accStrmvolrt
   !REAL, allocatable, DIMENSION(:)    :: qqLndRunOff, qqStrmvolrt, qqBucket
-  REAL, allocatable, DIMENSION(:)    :: QLateral, velocity
+  REAL, allocatable, DIMENSION(:)    :: QLateral, velocity, qloss
 
 #ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index
