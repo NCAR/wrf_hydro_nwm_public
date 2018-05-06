@@ -272,7 +272,13 @@ subroutine output_chrt_NWM(domainId)
       allocate(velocityLocal(RT_DOMAIN(domainId)%NLINKS))
       strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
       velocityLocal = RT_DOMAIN(domainId)%velocity
- 
+      ! TML: Add qloss allocation and compute variable, only for channel 
+      ! option #2, where qloss is active (muskingum-cunge).
+      if(nlst_rt(domainId)%channel_option .eq. 2) then
+         allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
+         qlossLocal = RT_DOMAIN(domainId)%qloss
+      endif
+
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
@@ -288,6 +294,9 @@ subroutine output_chrt_NWM(domainId)
             if (RT_DOMAIN(domainId)%TYPEL(iTmp) .eq. 2) then
                strFlowLocal(iTmp) = fileMeta%modelNdv
                velocityLocal(iTmp) = fileMeta%modelNdv
+               if(nlst_rt(domainId)%channel_option .eq. 2) then
+                  qlossLocal(iTmp) = fileMeta%modelNdv
+               endif
             endif
          end do
       endif
