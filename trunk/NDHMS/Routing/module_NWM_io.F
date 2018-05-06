@@ -78,18 +78,18 @@ subroutine output_chrt_NWM(domainId)
    ! Establish local, allocatable arrays
    ! These are used to hold global output arrays, and global output arrays after
    ! sorting has taken place by ascending feature_id value. 
-   real, allocatable, dimension(:) :: strFlowLocal,velocityLocal
+   real, allocatable, dimension(:) :: strFlowLocal,velocityLocal,qlossLocal
    real, allocatable, dimension(:,:) :: g_qlink
    integer, allocatable, dimension(:) :: g_linkid,g_order
    real, allocatable, dimension(:) :: g_chlat,g_chlon,g_hlink,g_zelev
-   real, allocatable, dimension(:) :: g_QLateral,g_velocity
+   real, allocatable, dimension(:) :: g_QLateral,g_velocity,g_qloss
    real, allocatable, dimension(:) :: g_nudge,g_qSfcLatRunoff
    real, allocatable, dimension(:) :: g_qBucket,g_qBtmVertRunoff,g_accBucket
    real*8, allocatable, dimension(:) :: g_accSfcLatRunoff
    real, allocatable, dimension(:,:) :: g_qlinkOut
    integer, allocatable, dimension(:) :: g_orderOut,g_linkidOut
    real, allocatable, dimension(:) :: g_chlatOut,g_chlonOut,g_hlinkOut,g_zelevOut
-   real, allocatable, dimension(:) :: g_QLateralOut,g_velocityOut
+   real, allocatable, dimension(:) :: g_QLateralOut,g_velocityOut,g_qlossOut
    real, allocatable, dimension(:) :: g_nudgeOut,g_qSfcLatRunoffOut
    real, allocatable, dimension(:) :: g_qBucketOut,g_qBtmVertRunoffOut,g_accBucketOut
    real*8, allocatable, dimension(:) :: g_accSfcLatRunoffOut
