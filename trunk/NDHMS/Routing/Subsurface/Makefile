@@ -25,11 +25,15 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_static_data.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_output.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_subsurface_input.F
 	ar -r ../../lib/libHYDRO.a module_subsurface_grid_transform.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_properties.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_state.o
 	ar -r ../../lib/libHYDRO.a module_subsurface.o
 	ar -r ../../lib/libHYDRO.a module_subsurface_static_data.o
+	ar -r ../../lib/libHYDRO.a module_subsurface_output.o
+	ar -r ../../lib/libHYDRO.a module_subsurface_input.o
 
 	cp *.mod ../../mod
 test:
@@ -44,6 +48,9 @@ test:
 		../Overland/module_overland_routing_properties.o \
 		../Overland/module_overland_mass_balance.o \
 		../Overland/module_overland_streams_and_lakes.o \
+		../Overland/module_subsurface_static_data.o \
+		../Overland/module_subsurface_output.o \
+		../Overland/module_subsurface_input.o \
 		subsurface_tests.o
 clean:
 	rm -f *.o

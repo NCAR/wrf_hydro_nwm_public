@@ -12,17 +12,20 @@ module module_subsurface_input
 
     contains
 
-    subroutine subsurface_input_init(this, ix, jx)
+    subroutine subsurface_input_init(this, ix, jx, infiltration_excess)
         implicit none
-        class(subsurface_state_interface), intent(inout) :: this ! the type object being initialized
+        class(subsurface_input_interface), intent(inout) :: this ! the type object being initialized
         integer, intent(in) :: ix                     ! x grid size
         integer, intent(in) :: jx                     ! y grid size
+        real, pointer, dimension(:,:) :: infiltration_excess
+
+        this%infiltration_excess => infiltration_excess
 
     end subroutine subsurface_input_init
 
     subroutine subsurface_input_destroy(this)
         implicit none
-        class(subsurface_state_interface), intent(inout) :: this ! the type object being initialized
+        class(subsurface_input_interface), intent(inout) :: this ! the type object being initialized
 
     end subroutine subsurface_input_destroy
 
