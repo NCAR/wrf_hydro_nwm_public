@@ -2813,23 +2813,23 @@
          !REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
 !  -----local array ----------
          !REAL, DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
-         REAL, DIMENSION(subrt_static%IXRT,subrt_static%JXRT)   :: CWATAVAIL
-         INTEGER, DIMENSION(subrt_static%IXRT,subrt_static%JXRT) :: SATLYRCHK
+         REAL, DIMENSION(subrt_static%ixrt,subrt_static%jxrt)   :: CWATAVAIL
+         INTEGER, DIMENSION(subrt_static%ixrt,subrt_static%jxrt) :: SATLYRCHK
 
 
 
 
          CWATAVAIL = 0.
-         CALL FINDZWAT(subrt_static%IXRT,subrt_static%JXRT,subrt_static%NSOIL, &
+         CALL FINDZWAT(subrt_static%ixrt,subrt_static%jxrt,subrt_static%NSOIL, &
                           subrt_data%grid_transform%smcrt, &
                           subrt_data%grid_transform%smcmaxrt, &
                           subrt_data%grid_transform%smcrefrt, &
                           subrt_data%grid_transform%smcwltrt, subrt_data%properties%zsoil,SATLYRCHK,subrt_data%properties%zwattablrt, &
                           CWATAVAIL,subrt_data%properties%sldpth)
 #ifdef MPP_LAND
-        call MPP_LAND_COM_REAL(subrt_data%properties%zwattablrt,subrt_static%IXRT,subrt_static%JXRT,99)
-        call MPP_LAND_COM_REAL(CWATAVAIL,subrt_static%IXRT,subrt_static%JXRT,99)
-        call MPP_LAND_COM_INTEGER(SATLYRCHK,subrt_static%IXRT,subrt_static%JXRT,99)
+        call MPP_LAND_COM_REAL(subrt_data%properties%zwattablrt,subrt_static%ixrt,subrt_static%jxrt,99)
+        call MPP_LAND_COM_REAL(CWATAVAIL,subrt_static%ixrt,subrt_static%jxrt,99)
+        call MPP_LAND_COM_INTEGER(SATLYRCHK,subrt_static%ixrt,subrt_static%jxrt,99)
 #endif
 
 
