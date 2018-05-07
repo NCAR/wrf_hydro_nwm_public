@@ -403,6 +403,10 @@ CONTAINS
 	allocate( rt_domain(did)%velocity(nsizes) )
 	rt_domain(did)%QLateral  = zeroFlt
 	rt_domain(did)%velocity  = zeroFlt
+        if( nlst_rt(did)%channel_option .eq. 2 ) then
+           allocate( rt_domain(did)%qloss(nsizes) )
+           rt_domain(did)%qloss = zeroFlt
+        endif
      endif
 
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
