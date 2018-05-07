@@ -933,8 +933,8 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
        , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
        , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
-       , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
-       ,                                     nlst_rt(did)%SUBRTSWCRT &
+       , rt_domain(did)%qloss,                rt_domain(did)%nlinksize &            
+       , nlst_rt(did)%OVRTSWCRT,             nlst_rt(did)%SUBRTSWCRT &
        , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
        )             
 
@@ -974,7 +974,7 @@ else
        , rt_domain(did)%CH_LNKRT_SL   &
        ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
-       nlst_rt(did)%gwChanCondConstOut, rt_domain(did)%velocity &
+       nlst_rt(did)%gwChanCondConstOut, rt_domain(did)%velocity, rt_domain(did)%qloss &
        )
 endif
     
