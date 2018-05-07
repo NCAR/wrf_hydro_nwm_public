@@ -397,6 +397,7 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_linkid(gsize))
       allocate(g_QLateral(gsize))
       allocate(g_velocity(gsize))
+      allocate(g_qloss(gsize))
       allocate(g_nudge(gsize))
       allocate(g_qSfcLatRunoff(gsize))
       allocate(g_qBucket(gsize))
@@ -411,6 +412,7 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_orderOut(gsize))
       allocate(g_QLateralOut(gsize))
       allocate(g_velocityOut(gsize))
+      allocate(g_qlossOut(gsize))
       allocate(g_nudgeOut(gsize))
       allocate(g_qSfcLatRunoffOut(gsize))
       allocate(g_qBucketOut(gsize))
@@ -435,6 +437,11 @@ subroutine output_chrt_NWM(domainId)
          fileMeta%outFlag(2) = 1 ! Set output flag to on. 
          g_nudge = RT_DOMAIN(domainID)%nudge
 #endif
+      endif
+      ! TML: Only produce qloss output if routing option 2 is selected
+      if(nlst_rt(domainId)%channel_option .eq. 2) then
+         fileMeta%outFlag(11) = 1
+         g_qloss = RT_DOMAIN(domainId)%qloss
       endif
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
          ! Currently, we only allow channel-only outputs to be produced for
