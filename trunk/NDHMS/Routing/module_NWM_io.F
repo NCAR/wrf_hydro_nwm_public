@@ -276,7 +276,7 @@ subroutine output_chrt_NWM(domainId)
       ! option #2, where qloss is active (muskingum-cunge).
       if(nlst_rt(domainId)%channel_option .eq. 2) then
          allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
-         qlossLocal = RT_DOMAIN(domainId)%qloss
+         qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
       endif
 
       ! Sync everything up before the next step.

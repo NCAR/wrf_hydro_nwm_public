@@ -343,7 +343,7 @@ DIFFUSION = Kf * sqrt(abs(Sf))*sgn
 end function DIFFUSION
 ! ----------------------------------------------------------------
 
-subroutine SUBMUSKINGCUNGE(qdc,vel,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,ChannK)
+subroutine SUBMUSKINGCUNGE(qdc,vel,qloss,idx,qup,quc,qdp,ql,dt,So,dx,n,Cs,Bw,ChannK)
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -363,7 +363,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(IN)       :: So         ! Channel bottom slope %
         REAL, intent(IN)       :: dx         ! channel lngth (m)
         REAL, intent(IN)       :: n          ! mannings coefficient
-        REAL, intent(INOUT)    :: vel        ! mannings coefficient
+        REAL, intent(INOUT)    :: vel        ! velocity (m/s)
+        REAL, intent(INOUT)    :: qloss      ! channel infiltration (m^3/sec)
         INTEGER, intent(IN)    :: idx        ! channel id
 
 !--local variables
@@ -388,7 +389,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: dtr        ! required timestep, minutes
         REAL    :: error
         REAL    :: hp         !courant, previous height
-        REAL    :: qloss      !Channel loss
         INTEGER :: maxiter    !maximum number of iterations
 
 !-- local variables.. needed if channel is sub-divded
@@ -683,7 +683,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 #endif
        , CH_LNKRT_SL &
        ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConstIn, &
-       gwChanCondConstOut,velocity)
+       gwChanCondConstOut,velocity,qloss)
 
 
        IMPLICIT NONE
@@ -731,7 +731,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
                                                      gwBaseSwCRT, gwChanCondSw
         real, intent(in)                          :: gwChanCondConstIn, gwChanCondConstOut ! aquifer-channel conductivity constant from namelist                                             
         REAL , INTENT(IN), DIMENSION(NLINKS)      :: node_area
-        REAL, DIMENSION(:), INTENT(inout)           :: velocity
+        REAL, DIMENSION(:), INTENT(inout)           :: velocity, qloss
 
 
 !DJG GW-chan coupling variables...
@@ -948,7 +948,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
                        tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow 
                 elseif (channel_option .eq. 2) then ! muskingum cunge
 
-                   call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
+                   call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), qloss(k), LINKID(k),  &
                     Qup,Quc, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
                     CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), ChannK(k))
  
@@ -1701,7 +1701,7 @@ end subroutine drive_CHANNEL
 #endif
        , accSfcLatRunoff, accBucket                  &
        , qSfcLatRunoff,     qBucket                  &
-       , QLateral, velocity &
+       , QLateral, velocity, qloss &
        , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
 
        use module_UDMAP, only: LNUMRSL, LUDRSL
@@ -1747,7 +1747,7 @@ end subroutine drive_CHANNEL
 #endif
 
        real, dimension(:), intent(inout)     :: QLateral !--lateral flow
-       real, dimension(:), intent(out)       :: velocity
+       real, dimension(:), intent(out)       :: velocity, qloss
        real*8, dimension(:), intent(inout)     :: accSfcLatRunoff, accBucket 
        real  , dimension(:), intent(out)     :: qSfcLatRunoff  ,   qBucket
               
@@ -2066,7 +2066,7 @@ do nt = 1, nsteps
 #endif
          
          call SUBMUSKINGCUNGE(&
-              tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
+              tmpQLINK(k,2), velocity(k), qloss(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
               MannN(k),      ChSSlp(k),   Bw(k), ChannK(k)                            )
          
