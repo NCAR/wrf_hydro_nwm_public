@@ -325,6 +325,11 @@ subroutine output_chrt_NWM(domainId)
          else
             fileMeta%outFlag(2) = 0 ! Set output flag to off.
          endif
+         ! TML: Only produce qloss output if routing option 2 is selected
+         if(nlst_rt(domainId)%channel_option .eq. 2) then
+            fileMeta%outFlag(11) = 1
+            call ReachLS_write_io(qlossLocal,g_qloss)
+         endif
          if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
             ! Currently, we only allow channel-only outputs to be produced for
             ! NWM configurations. 
