@@ -550,6 +550,7 @@ subroutine output_chrt_NWM(domainId)
             g_qBtmVertRunoffOut(iTmp) = g_qBtmVertRunoff(indTmp)
             g_accSfcLatRunoffOut(iTmp) = g_accSfcLatRunoff(indTmp)
             g_accBucketOut(iTmp) = g_accBucket(indTmp)
+            g_qlossOut(iTmp) = g_qloss(indTmp)
             g_chlatOut(iTmp) = g_chlat(indTmp)
             g_chlonOut(iTmp) = g_chlon(indTmp)
             g_orderOut(iTmp) = g_order(indTmp)
@@ -567,6 +568,7 @@ subroutine output_chrt_NWM(domainId)
          g_qBtmVertRunoffOut = g_qBtmVertRunoff
          g_accSfcLatRunoffOut = g_accSfcLatRunoff
          g_accBucketOut = g_accBucket
+         g_qlossOut = g_qloss
          g_chlatOut = g_chlat
          g_chlonOut = g_chlon
          g_orderOut = g_order
@@ -611,6 +613,7 @@ subroutine output_chrt_NWM(domainId)
       varOutReal(8,:) = PACK(g_qBtmVertRunoffOut,g_outInd == 1)
       varOutReal(9,:) = PACK(g_accSfcLatRunoffOut,g_outInd == 1)
       varOutReal(10,:) = PACK(g_accBucketOut,g_outInd == 1)
+      varOutReal(11,:) = PACK(g_qlossOut,g_outInd == 1)
       varMetaReal(1,:) = PACK(g_chlatOut,g_outInd == 1)
       varMetaReal(2,:) = PACK(g_chlonOut,g_outInd == 1)
       varMetaReal(3,:) = PACK(g_zelevOut,g_outInd == 1)
