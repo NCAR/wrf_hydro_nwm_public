@@ -1015,7 +1015,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "Longwave forcing",&
                               "Precipitation rate",&
                               "Grid emissivity",&
-                              "Total absorved SW radiation",&
+                              "Total absorbed SW radiation",&
                               "Total net LW radiation to atmosphere",&
                               "Heat flux into the soil",&
                               "Total sensible heat to the atmosphere",&
@@ -1591,7 +1591,7 @@ subroutine initLakeDict(lakeOutDict,diagFlag,procId)
    lakeOutDict%elevUnits = "meters"
 
    ! Establish feature_id attributes
-   lakeOutDict%featureIdLName = "Lake COMMOND ID"
+   lakeOutDict%featureIdLName = "Lake ComID"
    lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
    lakeOutDict%cfRole = 'timeseries_id'
 
