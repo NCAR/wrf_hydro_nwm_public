@@ -3779,7 +3779,6 @@ implicit none
    integer, allocatable, dimension(:) :: frxstPtsLocal, g_STRMFRXSTPTSOut
    real, allocatable, dimension(:) :: g_chlatOut, g_chlonOut, g_hlinkOut
    integer, allocatable, dimension(:) :: g_linkid, g_linkidOut
-   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
 #ifdef MPP_LAND
    mppFlag = 1
