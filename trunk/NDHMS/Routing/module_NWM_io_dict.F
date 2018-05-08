@@ -42,6 +42,7 @@ type chrtMeta
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
    ! Output variable attributes
    real, dimension(numChVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from real to
@@ -110,6 +111,7 @@ type ldasMeta
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "land"
    ! Output variable attributes
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -177,6 +179,7 @@ type rtDomainMeta
    integer :: numVars = numRtDomainVars
    integer :: numSoilLayers = 4
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "terrain_rt"
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -242,6 +245,7 @@ type lakeMeta
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "reservoir"
    ! Output variable attributes
    real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -308,6 +312,7 @@ type chrtGrdMeta
    character (len=64), dimension(numChGrdVars) :: varNames
    integer :: numVars = numChGrdVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
                                                 ! variable to convert from 
@@ -376,6 +381,7 @@ type lsmMeta
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "land"
    ! Output variable attributes
    real, dimension(numLsmVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -443,6 +449,7 @@ type chObsMeta
    character (len=64), dimension(numChObsVars) :: varNames
    integer :: numVars = numChObsVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
    ! Output variable attributes
    real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
                                                  ! each variable to convert 
@@ -510,6 +517,7 @@ type gwMeta
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "groundWater_rt"
    ! Output variable attributes
    real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
