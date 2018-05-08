@@ -7,15 +7,13 @@
 ! Logan Karsten
 ! National Center for Atmospheric Research
 ! Research Applications Laboratory
-! karsten@ucar.edu     
-! 303-497-2693
-! 303-497-2693
+! karsten at ucar dot edu     
 
 module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-character (len=512) :: codeVersion = "WRF-Hydro v5.0.0-dev"
+character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0-dev"
 integer, parameter :: numChVars = 10
 integer, parameter :: numLdasVars = 95
 integer, parameter :: numRtDomainVars = 5
