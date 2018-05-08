@@ -7,9 +7,7 @@
 ! Logan Karsten
 ! National Center for Atmospheric Research
 ! Research Applications Laboratory
-! karsten@ucar.edu     
-! 303-497-2693
-! 303-497-2693
+! karsten at ucar dot edu     
 
 module module_NWM_io_dict
 implicit none
