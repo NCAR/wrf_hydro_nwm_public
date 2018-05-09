@@ -14,7 +14,6 @@ implicit none
 ! Module-wide variables
 integer, private :: ftnNoahMP ! Private NetCDF file handle since output routine
                               ! called multiple times for one file.
-
 contains
 
 !==============================================================================
@@ -30,6 +29,37 @@ contains
 ! Condition codes: None.
 !
 ! User controllable options: None.
+
+! To add some information as global attribute for the model configuration
+! here we get a character variable for the io_config_outputs
+function GetModelConfigType (io_config_outputs) result(modelConfigType)
+   integer io_config_outputs
+   character (len=64) :: modelConfigType
+   if (io_config_outputs .eq. 0) then
+      ! All
+       modelConfigType = "default"
+   else if (io_config_outputs .eq. 1) then
+      ! Analysis and Assimilation
+      modelConfigType = "analysis_and_assimilation"
+   else if (io_config_outputs .eq. 2) then
+      ! Short Range
+      modelConfigType = "short_range"
+   else if (io_config_outputs .eq. 3) then
+      ! Medium Range
+      modelConfigType = "medium_range"
+   else if (io_config_outputs .eq. 4) then
+      ! Long Range
+      modelConfigType = "long_range"
+   else if (io_config_outputs .eq. 5) then
+      ! Retrospective
+      modelConfigType = "retrospective"
+   else if (io_config_outputs .eq. 6) then
+      ! Diagnostic
+      modelConfigType = "diagnostic"
+   else
+   !   call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
+   endif
+END
 
 subroutine output_chrt_NWM(domainId)
    use module_rt_data, only: rt_domain
@@ -105,6 +135,8 @@ subroutine output_chrt_NWM(domainId)
    real, allocatable, dimension(:,:) :: varMetaReal
    integer, allocatable, dimension(:,:) :: varMetaInt
 
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
    ! Initialize the ascFlag to 1
    ascFlag = 1
 
@@ -175,6 +207,9 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! call the GetModelConfigType function 
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+   
    ! First step is to collect and assemble all data that will be written to the 
    ! NetCDF file. If we are not using MPI, we bypass the collection step through
    ! MPI. 
@@ -620,6 +655,10 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create global attributes specific to running output through the
       ! channel-only configuration of the model.
@@ -1016,6 +1055,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    real, allocatable, dimension(:,:) :: globalRealTmp
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    real, allocatable, dimension(:,:,:) :: varRealTmp
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -1143,6 +1184,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
@@ -1181,6 +1225,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+         iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+         iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -1622,6 +1670,7 @@ subroutine output_rt_NWM(domainId,iGrid)
    real, allocatable, dimension(:,:,:) :: globalOutReal
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    integer :: numLev ! This will be 4 for soil moisture, and 1 for all other variables.
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
 ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
@@ -1682,6 +1731,9 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
    ! Calculate datetime information.
    ! First compose strings of EPOCH and simulation start date.
    epochDate = trim("1970-01-01 00:00")
@@ -1735,6 +1787,10 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -2163,6 +2219,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
                                                      ! scale_factor/add_offset
                                                      ! have been applied.
    integer, allocatable, dimension(:) :: chIndArray ! Array of index values for
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
    !each channel point. feature_id will need to be sorted in ascending order once
    !data is collected into the global array. From there, the index values are
    !re-sorted, and used to re-sort output arrays. 
@@ -2228,6 +2286,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
+
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
 
    ! First step is to collect and assemble all data that will be written to the 
    ! NetCDF file. If we are not using MPI, we bypass the collection step through
@@ -2419,6 +2480,10 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))
@@ -2763,6 +2828,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    ! allocatable arrays to hold coordinate values
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
 
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
 ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -2888,6 +2955,9 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
                        nlst_rt(domainId)%olddate(12:13)//&
                        nlst_rt(domainId)%olddate(15:16), igrid
 
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
    if(myId .eq. 0) then
       ! Create output NetCDF file for writing. 
       iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
@@ -2902,6 +2972,10 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -3238,6 +3312,8 @@ subroutine output_lsmOut_NWM(domainId)
    real, allocatable, dimension(:,:) :: localRealTmp, globalOutReal
    !integer, allocatable, dimension(:,:) :: globalCompTmp, localCompTmp
 
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
 #ifdef MPP_LAND
    mppFlag = 1
 #else
@@ -3317,6 +3393,9 @@ subroutine output_lsmOut_NWM(domainId)
    ! diagnostic in nature.
    fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
@@ -3345,6 +3424,10 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -4007,6 +4090,7 @@ subroutine output_chanObs_NWM(domainId)
                                                      ! have been applied.
    integer, allocatable, dimension(:) :: g_STRMFRXSTPTS, g_outInd
    integer, allocatable, dimension(:) :: frxstPtsLocal, g_STRMFRXSTPTSOut
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
    ! Establish macro variables to hlep guide this subroutine. 
 #ifdef WRF_HYDRO_NUDGING
@@ -4268,6 +4352,9 @@ subroutine output_chanObs_NWM(domainId)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
+     ! call the GetModelConfigType function
+     modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
       ! Create NetCDF for output.
       iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHANOBS NetCDF file.')
@@ -4293,6 +4380,10 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create global attributes specific to running output through the
       ! channel-only configuration of the model.
@@ -4682,6 +4773,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
                                                      ! scale_factor/add_offset
                                                      ! have been applied.
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
    ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
@@ -4741,6 +4833,9 @@ subroutine output_gw_NWM(domainId,iGrid)
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
+
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
 
    gnbasns = rt_domain(domainId)%gnumbasns
    gSize = gnbasns
@@ -4882,6 +4977,10 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))

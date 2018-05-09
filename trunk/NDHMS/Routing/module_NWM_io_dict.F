@@ -40,6 +40,8 @@ type chrtMeta
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
+   character (len=64) :: modelConfigType
    ! Output variable attributes
    real, dimension(numChVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from real to
@@ -108,6 +110,9 @@ type ldasMeta
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "land"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -175,6 +180,9 @@ type rtDomainMeta
    integer :: numVars = numRtDomainVars
    integer :: numSoilLayers = 4
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "terrain_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -240,6 +248,9 @@ type lakeMeta
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "reservoir"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -306,6 +317,9 @@ type chrtGrdMeta
    character (len=64), dimension(numChGrdVars) :: varNames
    integer :: numVars = numChGrdVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
                                                 ! variable to convert from 
@@ -374,6 +388,9 @@ type lsmMeta
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "land"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numLsmVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -441,6 +458,9 @@ type chObsMeta
    character (len=64), dimension(numChObsVars) :: varNames
    integer :: numVars = numChObsVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
                                                  ! each variable to convert 
@@ -508,6 +528,9 @@ type gwMeta
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
    character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "groundwater_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -990,7 +1013,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "Longwave forcing",&
                               "Precipitation rate",&
                               "Grid emissivity",&
-                              "Total absorved SW radiation",&
+                              "Total absorbed SW radiation",&
                               "Total net LW radiation to atmosphere",&
                               "Heat flux into the soil",&
                               "Total sensible heat to the atmosphere",&
@@ -1566,7 +1589,7 @@ subroutine initLakeDict(lakeOutDict,diagFlag,procId)
    lakeOutDict%elevUnits = "meters"
 
    ! Establish feature_id attributes
-   lakeOutDict%featureIdLName = "Lake COMMOND ID"
+   lakeOutDict%featureIdLName = "Lake ComID"
    lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
    lakeOutDict%cfRole = 'timeseries_id'
 
