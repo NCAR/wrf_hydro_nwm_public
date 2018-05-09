@@ -530,7 +530,7 @@ type gwMeta
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
    character (len=512) :: outVersion = codeVersion
-   character (len=512) :: modelOutputType = "groundWater_rt"
+   character (len=512) :: modelOutputType = "groundwater_rt"
    character (len=64) :: modelConfigType
 
    ! Output variable attributes

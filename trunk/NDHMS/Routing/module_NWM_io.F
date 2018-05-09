@@ -30,6 +30,8 @@ contains
 !
 ! User controllable options: None.
 
+! To add some information as global attribute for the model configuration
+! here we get a character variable for the io_config_outputs
 function GetModelConfigType (io_config_outputs) result(modelConfigType)
    integer io_config_outputs
    character (len=64) :: modelConfigType
