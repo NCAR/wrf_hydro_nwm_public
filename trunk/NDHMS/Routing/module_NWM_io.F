@@ -514,6 +514,10 @@ subroutine output_chrt_NWM(domainId)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
  
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! Compose output file name.
    write(output_flnm, '(A12,".CHRTOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -691,6 +695,10 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -1124,10 +1132,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                   nlst_rt(1)%startdate(9:10)//'_'//&
                   nlst_rt(1)%startdate(12:13)//&
                   &':00:00') 
+
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
  
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1257,6 +1270,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
          iret = nf90_put_att(ftnNoahMP,timeId,'units',trim(fileMeta%timeUnits))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+         iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+         iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
          iret = nf90_def_var(ftnNoahMP,"reference_time",nf90_int,dimId(6),refTimeId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
          iret = nf90_put_att(ftnNoahMP,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -1766,6 +1783,10 @@ subroutine output_rt_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! Create output filename
    write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') nlst_rt(domainId)%olddate(1:4)//&
                        nlst_rt(domainId)%olddate(6:7)//&
@@ -1817,6 +1838,10 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -2405,6 +2430,10 @@ subroutine output_lakes_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! Compose output file name.
    write(output_flnm, '(A12,".LAKEOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -2502,6 +2531,10 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -2948,6 +2981,10 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! Create output filename
    write(output_flnm, '(A12,".CHRTOUT_GRID",I1)') nlst_rt(domainId)%olddate(1:4)//&
                        nlst_rt(domainId)%olddate(6:7)//&
@@ -3000,6 +3037,10 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -3388,6 +3429,10 @@ subroutine output_lsmOut_NWM(domainId)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! For now, will always default to outputting all available
    ! variables since the nature of this output file is
    ! diagnostic in nature.
@@ -3452,6 +3497,10 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -4166,6 +4215,10 @@ subroutine output_chanObs_NWM(domainId)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time 
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! Compose output file name.
    write(output_flnm,'(A12,".CHANOBS_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -4415,6 +4468,10 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -4937,6 +4994,10 @@ subroutine output_gw_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+
    ! Compose output file name.
    write(output_flnm,'(A12,".GWOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -4999,6 +5060,10 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
