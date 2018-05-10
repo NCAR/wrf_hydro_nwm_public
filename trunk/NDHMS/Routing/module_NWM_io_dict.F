@@ -69,6 +69,8 @@ type chrtMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -144,6 +146,9 @@ type ldasMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
+
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -211,6 +216,8 @@ type rtDomainMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -279,6 +286,8 @@ type lakeMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -349,6 +358,8 @@ type chrtGrdMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -422,6 +433,8 @@ type lsmMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -489,6 +502,8 @@ type chObsMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -561,6 +576,8 @@ type gwMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
