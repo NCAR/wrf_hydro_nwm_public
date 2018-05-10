@@ -7,15 +7,14 @@
 ! Logan Karsten
 ! National Center for Atmospheric Research
 ! Research Applications Laboratory
-! karsten@ucar.edu     
-! 303-497-2693
-! 303-497-2693
+! karsten at ucar dot edu     
 
 module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-integer, parameter :: numChVars=10
+character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0-dev"
+integer, parameter :: numChVars = 10
 integer, parameter :: numLdasVars = 95
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
@@ -40,7 +39,9 @@ type chrtMeta
    ! Variable names
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
+   character (len=64) :: modelConfigType
    ! Output variable attributes
    real, dimension(numChVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from real to
@@ -108,7 +109,10 @@ type ldasMeta
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "land"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -175,7 +179,10 @@ type rtDomainMeta
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "terrain_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numRtDomainVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -240,7 +247,10 @@ type lakeMeta
    ! Variable names
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "reservoir"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numLakeVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -306,7 +316,10 @@ type chrtGrdMeta
    ! Variable names
    character (len=64), dimension(numChGrdVars) :: varNames
    integer :: numVars = numChGrdVars
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
                                                 ! variable to convert from 
@@ -374,7 +387,10 @@ type lsmMeta
    integer :: numVars = numLsmVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "land"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numLsmVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
@@ -441,7 +457,10 @@ type chObsMeta
    ! Variable names
    character (len=64), dimension(numChObsVars) :: varNames
    integer :: numVars = numChObsVars
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "channel_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
                                                  ! each variable to convert 
@@ -508,7 +527,10 @@ type gwMeta
    ! Variable names
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
-   character (len=512) :: outVersion = "WRF-Hydro 5.0"
+   character (len=512) :: outVersion = codeVersion
+   character (len=512) :: modelOutputType = "groundwater_rt"
+   character (len=64) :: modelConfigType
+
    ! Output variable attributes
    real, dimension(numGwVars) :: scaleFactor ! scale_factor values used for each
                                                ! variable to converte from
@@ -742,7 +764,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ldasOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
-   ldasOutDict%title = "OUTPUT FROM HRLDAS v20150506"
+   ldasOutDict%title = "OUTPUT FROM " // codeVersion
    ldasOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    ldasOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    ldasOutDict%conventions = "CF-1.6"
@@ -991,7 +1013,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "Longwave forcing",&
                               "Precipitation rate",&
                               "Grid emissivity",&
-                              "Total absorved SW radiation",&
+                              "Total absorbed SW radiation",&
                               "Total net LW radiation to atmosphere",&
                               "Heat flux into the soil",&
                               "Total sensible heat to the atmosphere",&
@@ -1567,7 +1589,7 @@ subroutine initLakeDict(lakeOutDict,diagFlag,procId)
    lakeOutDict%elevUnits = "meters"
 
    ! Establish feature_id attributes
-   lakeOutDict%featureIdLName = "Lake COMMOND ID"
+   lakeOutDict%featureIdLName = "Lake ComID"
    lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
    lakeOutDict%cfRole = 'timeseries_id'
 
@@ -1943,7 +1965,7 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    lsmOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
-   lsmOutDict%title = "OUTPUT FROM WRF-Hydro v4.0"
+   lsmOutDict%title = "OUTPUT FROM " // codeVersion
    lsmOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    lsmOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    lsmOutDict%conventions = "CF-1.6"
