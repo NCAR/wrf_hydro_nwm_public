@@ -574,6 +574,7 @@ module module_NoahMP_hrldas_driver
 
      if(.not. RT_DOMAIN(did)%initialized) then  
         nlst_rt(did)%dt = real(noah_timestep)
+        nlst_rt(did)%khour = khour ! Adding kHOUR to be used in the NWM output routines.
         nlst_rt(did)%olddate(1:19) = olddate(1:19)
         nlst_rt(did)%startdate(1:19) = olddate(1:19)
         nlst_rt(did)%nsoil = kk
@@ -1412,6 +1413,10 @@ module module_NoahMP_hrldas_driver
 #ifdef HYDRO_D
   print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
 #endif
+
+  ! assinging the KHOUR to be used in the NWM output routing for global metadata
+  nlst_rt(did)%khour = khour
+
   call system_clock(count=clock_count_1)   ! Start a timer
 
 
