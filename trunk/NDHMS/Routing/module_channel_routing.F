@@ -635,7 +635,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
       if(qloss > ((ql*dt)/D - C4)) then
            qloss = (ql*dt)/D - C4
-           !print*, 'qloss updated to:',qloss
            if (qloss < 0) then
               print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
            endif
