@@ -104,6 +104,8 @@ type chrtMeta
    character (len=128) :: cdm ! cdm_datatype attribute
    character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
+
 
 end type chrtMeta
 
@@ -250,6 +252,7 @@ type rtDomainMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type rtDomainMeta
 
@@ -321,6 +324,7 @@ type lakeMeta
    character (len=128) :: cdm ! cdm_datatype attribute
    character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type lakeMeta
 
@@ -392,6 +396,7 @@ type chrtGrdMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type chrtGrdMeta
 
@@ -466,6 +471,7 @@ type lsmMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type lsmMeta
 
@@ -538,6 +544,7 @@ type chObsMeta
    character (len=128) :: cdm ! cdm_datatype attribute
    character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type chObsMeta
 
@@ -611,6 +618,7 @@ type gwMeta
    !character (len=128) :: cdm ! cdm_datatype attribute
    !character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type gwMeta
 
