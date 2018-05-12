@@ -178,6 +178,7 @@ type ldasMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type ldasMeta
 

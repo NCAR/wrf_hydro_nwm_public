@@ -1140,7 +1140,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + output_timestep / 60  !  output_timestep is in seconds
    fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 3600 / output_timestep ) * output_timestep / 60
-   
+  
+   ! calculate total_valid_time 
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 3600 / output_timestep )  ! # number of valid time (#of output files)
+ 
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1234,6 +1237,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'total_valid_time',fileMeta%totalValidTime)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place total_valid_time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
