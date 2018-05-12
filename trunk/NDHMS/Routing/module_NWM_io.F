@@ -516,7 +516,7 @@ subroutine output_chrt_NWM(domainId)
  
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! Compose output file name.
    write(output_flnm, '(A12,".CHRTOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
@@ -1005,7 +1005,7 @@ end subroutine output_chrt_NWM
 !
 ! User controllable options: None.
 
-subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
+subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
    use module_rt_data, only: rt_domain
    use module_namelist, only: nlst_rt
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
@@ -1020,6 +1020,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    character(len=*), intent(in) :: outDir ! Output directory to place output.
    integer, intent(in) :: iGrid ! Grid number
    integer, intent(in) :: output_timestep ! Output timestep we are on.
+   integer, intent(in) :: itime ! the noalMP time step we are in
    character(len=19),intent(in) :: startdate ! Model simulation start date
    character(len=19),intent(in) :: date ! Current model date
    integer, intent(in) :: ixPar,jxPar ! I/J dimensions of local grid.
@@ -1064,7 +1065,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    real, allocatable, dimension(:,:,:) :: varRealTmp
    character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
-
 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -1117,7 +1117,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    call geth_idts(startDateTmp,epochDate,minSinceEpoch1)
    ! Third, calculate the number of minutes since the beginning of the
    ! simulation.
-   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+   minSinceSim = int(itime * nlst_rt(1)%dt / 60) 
    ! Fourth, calculate the total number of minutes from EPOCH to the current
    ! model time step.
    minSinceEpoch = minSinceEpoch1 + minSinceSim  
@@ -1138,8 +1138,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    fileMeta%validTime = trim(validTime)
  
    ! calculate the minimum and maximum time
-   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMin = minSinceEpoch1 + output_timestep / 60  !  output_timestep is in seconds
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 3600 / output_timestep ) * output_timestep / 60
    
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
@@ -1785,7 +1785,7 @@ subroutine output_rt_NWM(domainId,iGrid)
 
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! Create output filename
    write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') nlst_rt(domainId)%olddate(1:4)//&
@@ -2432,7 +2432,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
 
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! Compose output file name.
    write(output_flnm, '(A12,".LAKEOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
@@ -2983,7 +2983,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
 
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! Create output filename
    write(output_flnm, '(A12,".CHRTOUT_GRID",I1)') nlst_rt(domainId)%olddate(1:4)//&
@@ -3431,7 +3431,7 @@ subroutine output_lsmOut_NWM(domainId)
 
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! For now, will always default to outputting all available
    ! variables since the nature of this output file is
@@ -4217,7 +4217,7 @@ subroutine output_chanObs_NWM(domainId)
 
    ! calculate the minimum and maximum time 
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! Compose output file name.
    write(output_flnm,'(A12,".CHANOBS_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
@@ -4996,7 +4996,7 @@ subroutine output_gw_NWM(domainId,iGrid)
 
    ! calculate the minimum and maximum time
    fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
-   fileMeta%timeValidMax = minSinceEpoch1 + nlst_rt(1)%khour * 60
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
 
    ! Compose output file name.
    write(output_flnm,'(A12,".GWOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
