@@ -69,13 +69,19 @@ CONTAINS
 !     jxrt = rt_domain(did)%jxrt
 
       ! allocate overland data structures
-      call rt_domain(did)%overland%init(ix,jx,ixrt,jxrt)
+      call rt_domain(did)%overland%init(ix, jx, ixrt, jxrt)
 
       ! allocate subsurface data structures
-      call rt_domain(did)%subsurface%init(ixrt,jxrt,nsoil, rt_domain(did)%overland)
+      call rt_domain(did)%subsurface%init(ixrt, jxrt, nsoil, rt_domain(did)%overland)
 
       ! allocate susurface static data structure
       call rt_domain(did)%subsurface_static%init(ixrt, jxrt, nsoil, nlst_rt(did)%DT, nlst_rt(did)%rt_option)
+
+      ! allocate subsurface input structure
+      call rt_domain(did)%subsurface_output%init(ixrt, jxrt, rt_domain(did)%overland%control%infiltration_excess)
+
+      !allocate subsurface output structure
+      call rt_domain(did)%subsurface_input%init(ixrt, jxrt, rt_domain(did)%overland%control%infiltration_excess)
 
 !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
 !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL

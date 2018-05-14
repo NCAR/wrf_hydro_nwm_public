@@ -11,9 +11,9 @@ module module_subsurface_data
 
     type subsurface_struct
 
-        type ( subsurface_state_interface), pointer :: state
-        type ( subsurface_properties_interface), pointer :: properties
-        type ( subsurface_grid_transform_interface), pointer :: grid_transform
+        type ( subsurface_state_interface), pointer :: state => null()
+        type ( subsurface_properties_interface), pointer :: properties => null()
+        type ( subsurface_grid_transform_interface), pointer :: grid_transform => null()
 
         ! unused pointer are in an undefined state
         ! this means the result of calling associated(<pointer>)
