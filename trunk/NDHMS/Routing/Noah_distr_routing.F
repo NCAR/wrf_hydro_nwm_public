@@ -2784,20 +2784,26 @@
              IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
                 call subsurfaceRouting ( rt_domain(did)%subsurface, &
                           rt_domain(did)%subsurface_static, &
+                          rt_domain(did)%subsurface_input, &
+                          rt_domain(did)%subsurface_output, &
                           rt_domain(did)%overland%control%infiltration_excess)
              endif
 
          end subroutine SubsurfaceRouting_drv
 
-         subroutine subsurfaceRouting ( subrt_data, subrt_static, INFXSUBRT)
+         subroutine subsurfaceRouting ( subrt_data, subrt_static, subrt_input, subrt_output, INFXSUBRT)
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
         use module_subsurface_data
         use module_subsurface_static_data
+        use module_subsurface_input
+        use module_subsurface_output
 #endif
          implicit none
          type (subsurface_struct), intent(inout) :: subrt_data
          type (subsurface_static_interface), intent(inout) :: subrt_static
+         type (subsurface_input_interface), intent(in) :: subrt_input
+         type (subsurface_output_interface), intent(out) :: subrt_output
          !integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          !REAL, INTENT(IN)                          :: DT
          !real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
