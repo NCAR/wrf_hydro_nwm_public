@@ -2802,8 +2802,8 @@
          implicit none
          type (subsurface_struct), intent(inout) :: subrt_data
          type (subsurface_static_interface), intent(inout) :: subrt_static
-         type (subsurface_input_interface), intent(in) :: subrt_input
-         type (subsurface_output_interface), intent(out) :: subrt_output
+         type (subsurface_input_interface), intent(inout) :: subrt_input
+         type (subsurface_output_interface), intent(inout) :: subrt_output
          !integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          !REAL, INTENT(IN)                          :: DT
          !real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
@@ -2854,7 +2854,7 @@
     CALL SUBSFC_RTNG(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, subrt_data%state%qsubrt, &
           subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
           subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
-          subrt_static%NSOIL, subrt_data%grid_transform%smcrt, INFXSUBRT,subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
+          subrt_static%NSOIL, subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
           subrt_data%properties%zsoil, subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
           subrt_data%properties%water_surface_slope, subrt_data%properties%max_water_surface_slope_index, &
           subrt_static%rt_option, subrt_data%properties%sldpth, CWATAVAIL, SATLYRCHK)
