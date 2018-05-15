@@ -18,6 +18,7 @@ OBJS = \
 	module_channel_routing.o \
 	module_lsm_forcing.o \
 	module_date_utilities_rt.o \
+        module_water_management.o \
 	module_NWM_io_dict.o \
 	module_NWM_io.o
 
