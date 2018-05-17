@@ -259,7 +259,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !    and water available for subsfc routing (CWATAVAIL)...
 !
 !         CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
-!                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
+!                             SMCWLTRT,ZSOIL,SATLYRCHK,subrt_data%properties%zwattablrt, &
 !                             CWATAVAIL,SLDPTH)
 
 
@@ -268,7 +268,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !DJG debug variable...
 
 !DJG Courant check temp variable setup...
-         ZWATTABLRTTMP = ZWATTABLRT !-- temporary storage of water table level
+         ZWATTABLRTTMP = subrt_data%properties%zwattablrt !-- temporary storage of water table level
 
 
 
@@ -283,11 +283,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 ! allow users to still have option to use 2d overland (both are controlled by same
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
 !     if(rt_option .eq. 1) then
-        CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
+        CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt,QSUBRT,SOXRT,SOYRT,  &
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
 !     else
-!        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
+!        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt,QSUBRT,SOXRT,SOYRT,      &
 !               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
 !               CWATAVAIL,SUBDT)
 !     end if
@@ -398,7 +398,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	       if (subflo.ne.0.) then
 #ifdef HYDRO_D
                   print *, "Subflo (-) not expired:",i,j,subflo,CWATAVAIL(i,j)
-                  print *, "zwatabl = ", ZWATTABLRT(I,J)
+                  print *, "zwatabl = ", subrt_data%properties%zwattablrt(I,J)
                   print *, "QSUBRT(I,J)=",QSUBRT(I,J)
                   print *, "WATAVAIL = ",WATAVAIL, "kk=",kk
                   print *
