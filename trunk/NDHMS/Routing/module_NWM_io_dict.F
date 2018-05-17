@@ -67,6 +67,8 @@ type chrtMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -100,6 +102,8 @@ type chrtMeta
    character (len=128) :: cdm ! cdm_datatype attribute
    character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
+
 
 end type chrtMeta
 
@@ -142,6 +146,9 @@ type ldasMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
+
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -171,6 +178,7 @@ type ldasMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type ldasMeta
 
@@ -209,6 +217,8 @@ type rtDomainMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -240,6 +250,7 @@ type rtDomainMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type rtDomainMeta
 
@@ -277,6 +288,8 @@ type lakeMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -309,6 +322,7 @@ type lakeMeta
    character (len=128) :: cdm ! cdm_datatype attribute
    character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type lakeMeta
 
@@ -347,6 +361,8 @@ type chrtGrdMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -378,6 +394,7 @@ type chrtGrdMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type chrtGrdMeta
 
@@ -420,6 +437,8 @@ type lsmMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -450,6 +469,7 @@ type lsmMeta
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type lsmMeta
 
@@ -487,6 +507,8 @@ type chObsMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -520,6 +542,7 @@ type chObsMeta
    character (len=128) :: cdm ! cdm_datatype attribute
    character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type chObsMeta
 
@@ -559,6 +582,8 @@ type gwMeta
    character (len=64) :: timeLName ! long_name - usually valid output time
    character (len=64) :: timeUnits ! Usually seconds since 1/1/1970
    character (len=64) :: timeStName ! standard_name - usually time
+   integer :: timeValidMin ! the minimum time each configuration can have, time of the first output file
+   integer :: timeValidMax ! the maximum time each configuration can have, time of the last output file
    ! Reference time attributes
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
@@ -591,6 +616,7 @@ type gwMeta
    !character (len=128) :: cdm ! cdm_datatype attribute
    !character (len=1024) :: esri ! esri_pe_string attribute
    character (len=128) :: conventions ! Conventions string
+   integer             :: totalValidTime ! # number of valid time (#of output files)
 
 end type gwMeta
 
