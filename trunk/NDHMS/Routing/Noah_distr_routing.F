@@ -2791,7 +2791,7 @@
 
          end subroutine SubsurfaceRouting_drv
 
-         subroutine subsurfaceRouting ( subrt_data, subrt_static, subrt_input, subrt_output, INFXSUBRT)
+         subroutine subsurfaceRouting ( subrt_data, subrt_static, subrt_input, subrt_output)
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
         use module_subsurface_data
@@ -2808,7 +2808,7 @@
          !REAL, INTENT(IN)                          :: DT
          !real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
          !REAL, INTENT(IN), DIMENSION(IXRT,JXRT) :: sub_resid
-         real,INTENT(INOUT), DIMENSION(subrt_static%IXRT,subrt_static%JXRT)::INFXSUBRT
+         !real,INTENT(INOUT), DIMENSION(subrt_static%IXRT,subrt_static%JXRT)::INFXSUBRT
          !real,INTENT(INOUT) :: QSUBBDRYTRT
          !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
          !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT, SMCWLTRT, SMCMAXRT, SMCREFRT
