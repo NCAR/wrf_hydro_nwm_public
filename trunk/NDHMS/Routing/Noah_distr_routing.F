@@ -111,21 +111,31 @@
 !DJG   SUBROUTINE SUBSFC_RTNG
 !DJG ------------------------------------------------
 
-	SUBROUTINE SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,    &
-          SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &
-          NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
-          SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
-          SATLYRCHK)
+SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
+    dist,ZWATTABLRT,QSUBRT,SOXRT,    &
+    SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &
+    NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
+    SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
+    SATLYRCHK)
 
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
 !            my_id
 #ifdef MPP_LAND
-        use module_mpp_land, only: MPP_LAND_COM_REAL, sum_real1, &
-		my_id, io_id, numprocs
+    use module_mpp_land, only: MPP_LAND_COM_REAL, sum_real1, &
+	my_id, io_id, numprocs
+    use module_subsurface_data
+    use module_subsurface_static_data
+    use module_subsurface_input
+    use module_subsurface_output
 #endif
 	IMPLICIT NONE
 
 !DJG -------- DECLARATIONS ------------------------
+
+    type (subsurface_struct), intent(inout) :: subrt_data
+    type (subsurface_static_interface), intent(inout) :: subrt_static
+    type (subsurface_input_interface), intent(inout) :: subrt_input
+    type (subsurface_output_interface), intent(inout) :: subrt_output
 
 	INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
 
@@ -2851,7 +2861,8 @@
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
 
-    CALL SUBSFC_RTNG(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, subrt_data%state%qsubrt, &
+    CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
+          subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, subrt_data%state%qsubrt, &
           subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
           subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
           subrt_static%NSOIL, subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
