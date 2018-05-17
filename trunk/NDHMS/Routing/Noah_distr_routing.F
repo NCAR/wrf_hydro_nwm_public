@@ -112,7 +112,7 @@
 !DJG ------------------------------------------------
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    dist,ZWATTABLRT,QSUBRT,SOXRT,    &
+    ZWATTABLRT,QSUBRT,SOXRT,    &
     SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &
     NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
     SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
@@ -152,7 +152,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBRT
 	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT
 
-	REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+	!REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
 	REAL, INTENT(IN)                          :: DT
 	REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
 	REAL, INTENT(IN), DIMENSION(NSOIL) 	  :: SLDPTH
@@ -219,8 +219,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
        do i=1,IXRT
          do j=1,JXRT
            suminfxsrt1 = suminfxsrt1 + INFXSUBRT(I,J) / float(IXRT*JXRT)
-           qbdry1 = qbdry1 + QSUBBDRYRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
-           sumqsubrt1 = sumqsubrt1 + QSUBRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+           qbdry1 = qbdry1 + QSUBBDRYRT(I,J) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+           sumqsubrt1 = sumqsubrt1 + QSUBRT(I,J) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            do kk=1,NSOIL
                smctot1 = smctot1 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
            end do
@@ -243,7 +243,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
         !yw GRDAREA=DXRT*DXRT
-        ! GRDAREA=dist(i,j,9)
+        ! GRDAREA=subrt_data%properties%distance_to_neighbor(i,j,9)
 
 
 !DJG debug subsfc...
@@ -283,11 +283,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 ! allow users to still have option to use 2d overland (both are controlled by same
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
 !     if(rt_option .eq. 1) then
-        CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
+        CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
 !     else
-!        CALL ROUTE_SUBSURFACE2(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
+!        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
 !               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
 !               CWATAVAIL,SUBDT)
 !     end if
@@ -307,11 +307,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !!DJG QSUB HAS units of m^3/s SUBFLO has units of m
 
 ! ADCHANGE: Moved this constraint to the ROUTE_SUBSURFACE routines
-           !IF (CWATAVAIL(i,j).le.ABS(qsubrt(i,j))/dist(i,j,9)*SUBDT) THEN
+           !IF (CWATAVAIL(i,j).le.ABS(qsubrt(i,j))/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT) THEN
            !  QSUBRT(i,j) = -1.0*CWATAVAIL(i,j)
            !  SUBFLO = QSUBRT(i,j)  !Units of qsubrt converted via CWATAVAIL
            !ELSE
-             SUBFLO=QSUBRT(I,J)/dist(i,j,9)*SUBDT !Convert qsubrt from m^3/s to m
+             SUBFLO=QSUBRT(I,J)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT !Convert qsubrt from m^3/s to m
            !END IF
 
            WATAVAIL=0.  !Initialize to 0. for every cell...
@@ -431,11 +431,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         sumqsubrt2 = 0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)
-            qbdry2 = qbdry2 + QSUBBDRYRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
-            sumqsubrt2 = sumqsubrt2 + QSUBRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+            suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)  !BUG MISSING ()
+            qbdry2 = qbdry2 + QSUBBDRYRT(I,J)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT) !BUG MISSING ()
+            sumqsubrt2 = sumqsubrt2 + QSUBRT(I,J)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT) !BUG MISSING ()
             do kk=1,NSOIL
-                smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+                smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT) !BUG MISSING ()
             end do
          end do
         end do
@@ -2862,7 +2862,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, subrt_data%state%qsubrt, &
+          subrt_data%properties%zwattablrt, subrt_data%state%qsubrt, &
           subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
           subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
           subrt_static%NSOIL, subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
