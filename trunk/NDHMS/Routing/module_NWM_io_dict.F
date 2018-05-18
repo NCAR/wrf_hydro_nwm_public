@@ -13,7 +13,7 @@ module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0-dev"
+character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0"
 integer, parameter :: numChVars = 10
 integer, parameter :: numLdasVars = 95
 integer, parameter :: numRtDomainVars = 5
