@@ -1,4 +1,9 @@
 #  WRF-Hydro
+
+|Single node|
+|----------|
+|[![Build Status](https://travis-ci.org/NCAR/wrf_hydro_nwm_public.svg?branch=master)](https://travis-ci.org/NCAR/wrf_hydro_nwm_public)|
+
 **IMPORTANT:** Please note that the model code contained in this repository is currently a **pre-release to beta users** and is **not fully supported at this time.** A full public release with additional documentation will be made available and officially announced through our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe). If you would like to receive notification of the official public release please subscribe to our [email listserv](https://ral.ucar.edu/projects/wrf_hydro/subscribe).
 
 ## Description
@@ -14,7 +19,7 @@ For news and updates regarding the WRF-Hydro project please subscribe to our [em
 
 For user support and general inquiries please use our [contact form](https://ral.ucar.edu/projects/wrf_hydro/contact).
 
-If you have found a bug or would like to propose changes to the model code please submit an issue [here on GitHub](https://github.com/NCAR/wrf_hydro_community/issues).
+If you have found a bug or would like to propose changes to the model code please refer to our [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## Contributions
 For more information on how to contribute to this project please refer to our [contributing guidelines](.github/CONTRIBUTING.md).
@@ -27,8 +32,9 @@ Funding support for the development and application of the WRF-Hydro system has 
 - The National Science Foundation and the National Center for Atmospheric Research
 - The National Oceanic and Atmospheric Administration (NOAA) Office of Water Prediction (OWP)
 - The U.S. National Weather Service (NWS)
-- The U.S. Deparment of Energy (DOE)
+- The U.S. Department of Energy (DOE)
 - The Colorado Water Conservation Board
 - Baron Advanced Meteorological Services
 - National Aeronautics and Space Administration (NASA)
 
+ 

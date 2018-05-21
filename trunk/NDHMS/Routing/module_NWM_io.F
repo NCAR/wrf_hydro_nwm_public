@@ -14,7 +14,6 @@ implicit none
 ! Module-wide variables
 integer, private :: ftnNoahMP ! Private NetCDF file handle since output routine
                               ! called multiple times for one file.
-
 contains
 
 !==============================================================================
@@ -30,6 +29,37 @@ contains
 ! Condition codes: None.
 !
 ! User controllable options: None.
+
+! To add some information as global attribute for the model configuration
+! here we get a character variable for the io_config_outputs
+function GetModelConfigType (io_config_outputs) result(modelConfigType)
+   integer io_config_outputs
+   character (len=64) :: modelConfigType
+   if (io_config_outputs .eq. 0) then
+      ! All
+       modelConfigType = "default"
+   else if (io_config_outputs .eq. 1) then
+      ! Analysis and Assimilation
+      modelConfigType = "analysis_and_assimilation"
+   else if (io_config_outputs .eq. 2) then
+      ! Short Range
+      modelConfigType = "short_range"
+   else if (io_config_outputs .eq. 3) then
+      ! Medium Range
+      modelConfigType = "medium_range"
+   else if (io_config_outputs .eq. 4) then
+      ! Long Range
+      modelConfigType = "long_range"
+   else if (io_config_outputs .eq. 5) then
+      ! Retrospective
+      modelConfigType = "retrospective"
+   else if (io_config_outputs .eq. 6) then
+      ! Diagnostic
+      modelConfigType = "diagnostic"
+   else
+   !   call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
+   endif
+END
 
 subroutine output_chrt_NWM(domainId)
    use module_rt_data, only: rt_domain
@@ -105,6 +135,8 @@ subroutine output_chrt_NWM(domainId)
    real, allocatable, dimension(:,:) :: varMetaReal
    integer, allocatable, dimension(:,:) :: varMetaInt
 
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
    ! Initialize the ascFlag to 1
    ascFlag = 1
 
@@ -175,6 +207,9 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! call the GetModelConfigType function 
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+   
    ! First step is to collect and assemble all data that will be written to the 
    ! NetCDF file. If we are not using MPI, we bypass the collection step through
    ! MPI. 
@@ -479,6 +514,13 @@ subroutine output_chrt_NWM(domainId)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
  
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
+
    ! Compose output file name.
    write(output_flnm, '(A12,".CHRTOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -610,6 +652,8 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create st. dimension attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_valid_time",trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model valid attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_total_valid_times",fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model total valid time attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"stream_order_output",fileMeta%stOrder)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create order attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"cdm_datatype",trim(fileMeta%cdm))
@@ -620,6 +664,10 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create global attributes specific to running output through the
       ! channel-only configuration of the model.
@@ -652,6 +700,10 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -958,7 +1010,7 @@ end subroutine output_chrt_NWM
 !
 ! User controllable options: None.
 
-subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
+subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
    use module_rt_data, only: rt_domain
    use module_namelist, only: nlst_rt
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
@@ -973,6 +1025,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    character(len=*), intent(in) :: outDir ! Output directory to place output.
    integer, intent(in) :: iGrid ! Grid number
    integer, intent(in) :: output_timestep ! Output timestep we are on.
+   integer, intent(in) :: itime ! the noalMP time step we are in
    character(len=19),intent(in) :: startdate ! Model simulation start date
    character(len=19),intent(in) :: date ! Current model date
    integer, intent(in) :: ixPar,jxPar ! I/J dimensions of local grid.
@@ -1016,6 +1069,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    real, allocatable, dimension(:,:) :: globalRealTmp
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    real, allocatable, dimension(:,:,:) :: varRealTmp
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -1068,7 +1122,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
    call geth_idts(startDateTmp,epochDate,minSinceEpoch1)
    ! Third, calculate the number of minutes since the beginning of the
    ! simulation.
-   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+   minSinceSim = int(itime * nlst_rt(1)%dt / 60) 
    ! Fourth, calculate the total number of minutes from EPOCH to the current
    ! model time step.
    minSinceEpoch = minSinceEpoch1 + minSinceSim  
@@ -1083,9 +1137,17 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
                   nlst_rt(1)%startdate(9:10)//'_'//&
                   nlst_rt(1)%startdate(12:13)//&
                   &':00:00') 
+
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
+ 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + output_timestep / 60  !  output_timestep is in seconds
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 3600 / output_timestep ) * output_timestep / 60
+  
+   ! calculate total_valid_time 
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 3600 / output_timestep )  ! # number of valid time (#of output files)
  
    ! Depending on the NWM forecast config, we will be outputting different
    ! varibles. DO NOT MODIFY THESE ARRAYS WITHOUT CONSULTING NCAR OR
@@ -1143,6 +1205,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
@@ -1177,10 +1242,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_total_valid_times',fileMeta%totalValidTime)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total_valid_times attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+         iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+         iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -1209,6 +1280,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,startdate,date,ixPar,j
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
          iret = nf90_put_att(ftnNoahMP,timeId,'units',trim(fileMeta%timeUnits))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+         iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+         iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
          iret = nf90_def_var(ftnNoahMP,"reference_time",nf90_int,dimId(6),refTimeId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
          iret = nf90_put_att(ftnNoahMP,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -1622,6 +1697,7 @@ subroutine output_rt_NWM(domainId,iGrid)
    real, allocatable, dimension(:,:,:) :: globalOutReal
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    integer :: numLev ! This will be 4 for soil moisture, and 1 for all other variables.
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
 ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
@@ -1682,6 +1758,9 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
    ! Calculate datetime information.
    ! First compose strings of EPOCH and simulation start date.
    epochDate = trim("1970-01-01 00:00")
@@ -1714,6 +1793,13 @@ subroutine output_rt_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
+
    ! Create output filename
    write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') nlst_rt(domainId)%olddate(1:4)//&
                        nlst_rt(domainId)%olddate(6:7)//&
@@ -1731,10 +1817,16 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into RT_DOMAIN file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_total_valid_times',fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid times attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -1761,6 +1853,10 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -2163,6 +2259,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
                                                      ! scale_factor/add_offset
                                                      ! have been applied.
    integer, allocatable, dimension(:) :: chIndArray ! Array of index values for
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
    !each channel point. feature_id will need to be sorted in ascending order once
    !data is collected into the global array. From there, the index values are
    !re-sorted, and used to re-sort output arrays. 
@@ -2228,6 +2326,9 @@ subroutine output_lakes_NWM(domainId,iGrid)
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
+
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
 
    ! First step is to collect and assemble all data that will be written to the 
    ! NetCDF file. If we are not using MPI, we bypass the collection step through
@@ -2344,6 +2445,13 @@ subroutine output_lakes_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
+
    ! Compose output file name.
    write(output_flnm, '(A12,".LAKEOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -2413,12 +2521,18 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create st. dimension attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_valid_time",trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model valid attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_total_valid_times",fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model total valid times attribute')
       !iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))
@@ -2437,6 +2551,10 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -2763,6 +2881,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    ! allocatable arrays to hold coordinate values
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
 
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
 ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -2881,12 +3001,22 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
+
    ! Create output filename
    write(output_flnm, '(A12,".CHRTOUT_GRID",I1)') nlst_rt(domainId)%olddate(1:4)//&
                        nlst_rt(domainId)%olddate(6:7)//&
                        nlst_rt(domainId)%olddate(9:10)//&
                        nlst_rt(domainId)%olddate(12:13)//&
                        nlst_rt(domainId)%olddate(15:16), igrid
+
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
 
    if(myId .eq. 0) then
       ! Create output NetCDF file for writing. 
@@ -2898,10 +3028,16 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into RT_DOMAIN file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'model_total_valid_times',fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid times attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -2926,6 +3062,10 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -3238,6 +3378,8 @@ subroutine output_lsmOut_NWM(domainId)
    real, allocatable, dimension(:,:) :: localRealTmp, globalOutReal
    !integer, allocatable, dimension(:,:) :: globalCompTmp, localCompTmp
 
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+
 #ifdef MPP_LAND
    mppFlag = 1
 #else
@@ -3312,10 +3454,20 @@ subroutine output_lsmOut_NWM(domainId)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
+
    ! For now, will always default to outputting all available
    ! variables since the nature of this output file is
    ! diagnostic in nature.
    fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
 
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
@@ -3341,10 +3493,16 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'modle_total_valid_time',fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid time attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create proj4 attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"GDAL_DataType","Generic")
@@ -3369,6 +3527,10 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(4),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -4007,6 +4169,7 @@ subroutine output_chanObs_NWM(domainId)
                                                      ! have been applied.
    integer, allocatable, dimension(:) :: g_STRMFRXSTPTS, g_outInd
    integer, allocatable, dimension(:) :: frxstPtsLocal, g_STRMFRXSTPTSOut
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
    ! Establish macro variables to hlep guide this subroutine. 
 #ifdef WRF_HYDRO_NUDGING
@@ -4081,6 +4244,13 @@ subroutine output_chanObs_NWM(domainId)
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
+
+   ! calculate the minimum and maximum time 
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
 
    ! Compose output file name.
    write(output_flnm,'(A12,".CHANOBS_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
@@ -4268,6 +4438,9 @@ subroutine output_chanObs_NWM(domainId)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
+     ! call the GetModelConfigType function
+     modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
+
       ! Create NetCDF for output.
       iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHANOBS NetCDF file.')
@@ -4283,6 +4456,8 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create st. dimension attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_valid_time",trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model valid attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_total_valid_times",fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model total valid times attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"stream_order_output",fileMeta%stOrder)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create order attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"cdm_datatype",trim(fileMeta%cdm))
@@ -4293,6 +4468,10 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create global attributes specific to running output through the
       ! channel-only configuration of the model.
@@ -4324,6 +4503,10 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))
@@ -4373,7 +4556,7 @@ subroutine output_chanObs_NWM(domainId)
       if(nlst_rt(domainId)%channel_option .eq. 3) then 
          iret = nf90_put_att(ftn,featureVarId,'long_name','User Specified Forecast Points')
          call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into feature_id variable')
-         iret = nf90_put_att(ftn,featureVarId,'comment','Forecast Points Specified in Geogrid file')
+         iret = nf90_put_att(ftn,featureVarId,'comment','Forecast Points Specified in Fulldom file')
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place comment attribute into feature_id variable')
       else
          iret = nf90_put_att(ftn,featureVarId,'long_name',trim(fileMeta%featureIdLName))
@@ -4682,6 +4865,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
                                                      ! scale_factor/add_offset
                                                      ! have been applied.
+   character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
    ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
@@ -4741,6 +4925,9 @@ subroutine output_gw_NWM(domainId,iGrid)
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
+
+   ! call the GetModelConfigType function
+   modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
 
    gnbasns = rt_domain(domainId)%gnumbasns
    gSize = gnbasns
@@ -4842,6 +5029,13 @@ subroutine output_gw_NWM(domainId,iGrid)
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
 
+   ! calculate the minimum and maximum time
+   fileMeta%timeValidMin = minSinceEpoch1 + nlst_rt(1)%out_dt 
+   fileMeta%timeValidMax = minSinceEpoch1 + int(nlst_rt(1)%khour * 60/nlst_rt(1)%out_dt) * nlst_rt(1)%out_dt
+
+   ! calculate total_valid_time
+   fileMeta%totalValidTime = int(nlst_rt(1)%khour * 60 / nlst_rt(1)%out_dt)  ! # number of valid time (#of output files)
+
    ! Compose output file name.
    write(output_flnm,'(A12,".GWOUT_DOMAIN",I1)')nlst_rt(domainId)%olddate(1:4)//&
          nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
@@ -4876,12 +5070,18 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create st. dimension attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_valid_time",trim(fileMeta%validTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model valid attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_total_valid_times",fileMeta%totalValidTime)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model total valid times attribute')
       !iret = nf90_put_att(ftn,NF90_GLOBAL,"esri_pe_string",trim(fileMeta%esri))
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_configuration attribute')
 
       ! Create dimensions
       iret = nf90_def_dim(ftn,"feature_id",gSize,dimId(1))
@@ -4900,6 +5100,10 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place standard_name attribute into time variable')
       iret = nf90_put_att(ftn,timeId,'units',trim(fileMeta%timeUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_min',fileMeta%timeValidMin)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_min attribute into time variable')
+      iret = nf90_put_att(ftn,timeId,'valid_max',fileMeta%timeValidMax)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place valid_max attribute into time variable')
       iret = nf90_def_var(ftn,"reference_time",nf90_int,dimId(3),refTimeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time variable')
       iret = nf90_put_att(ftn,refTimeId,'long_name',trim(fileMeta%rTimeLName))

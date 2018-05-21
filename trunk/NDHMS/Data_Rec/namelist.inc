@@ -59,6 +59,7 @@
           integer ::output_gw                   ! Netcdf grid of GW
           integer ::outlake                   ! Netcdf grid of lake
           integer :: rtFlag
+          integer ::khour
 
 !#ifdef WRF_HYDRO_NUDGING
        character(len=256) :: nudgingParamFile
