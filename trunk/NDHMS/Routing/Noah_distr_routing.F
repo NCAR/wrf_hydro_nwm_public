@@ -112,7 +112,6 @@
 !DJG ------------------------------------------------
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    QSUBBDRYRT,QSUBBDRYTRT,      &
     NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
     SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
     SATLYRCHK)
@@ -149,13 +148,13 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
 	!REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBRT
-	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT
+	!REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT
 
 	!REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
 	REAL, INTENT(IN)                          :: DT
 	REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
 	REAL, INTENT(IN), DIMENSION(NSOIL) 	  :: SLDPTH
-	REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
+	!REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCMAXRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCREFRT
@@ -218,7 +217,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
        do i=1,IXRT
          do j=1,JXRT
            suminfxsrt1 = suminfxsrt1 + INFXSUBRT(I,J) / float(IXRT*JXRT)
-           qbdry1 = qbdry1 + QSUBBDRYRT(I,J) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+           qbdry1 = qbdry1 + subrt_data%state%qsubbdryrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            sumqsubrt1 = sumqsubrt1 + subrt_data%state%qsubrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            do kk=1,NSOIL
                smctot1 = smctot1 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
@@ -284,12 +283,12 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !     if(rt_option .eq. 1) then
         CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, &
                subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
-               subrt_data%properties%lksatrt,subrt_data%properties%soldeprt,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &
+               subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, IXRT, JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
 !     else
 !        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt, &
 !               subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
-!               subrt_data%properties%lksatrt,subrt_data%properties%soldeprt,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
+!               subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, IXRT, JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
 !               CWATAVAIL,SUBDT)
 !     end if
 
@@ -433,7 +432,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         do i=1,IXRT
          do j=1,JXRT
             suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)  !
-            qbdry2 = qbdry2 + QSUBBDRYRT(I,J)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+            qbdry2 = qbdry2 + subrt_data%state%qsubbdryrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             do kk=1,NSOIL
                 smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
@@ -2863,7 +2862,6 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
           subrt_static%NSOIL, subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
           subrt_data%properties%zsoil, subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
           subrt_data%properties%water_surface_slope, subrt_data%properties%max_water_surface_slope_index, &
