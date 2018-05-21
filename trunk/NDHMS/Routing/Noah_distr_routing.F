@@ -112,8 +112,7 @@
 !DJG ------------------------------------------------
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    SOXRT,    &
-    SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &
+    LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &
     NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
     SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
     SATLYRCHK)
@@ -139,8 +138,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 	INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
 
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
+	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT
+	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
 	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: LATKSATRT
 	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOLDEPRT
 
@@ -283,11 +282,13 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 ! allow users to still have option to use 2d overland (both are controlled by same
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
 !     if(rt_option .eq. 1) then
-        CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt,subrt_data%state%qsubrt,SOXRT,SOYRT,  &
+        CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, &
+               subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
 !     else
-!        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt,subrt_data%state%qsubrt,SOXRT,SOYRT,      &
+!        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt, &
+!               subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
 !               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
 !               CWATAVAIL,SUBDT)
 !     end if
@@ -431,11 +432,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         sumqsubrt2 = 0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)  !BUG MISSING ()
-            qbdry2 = qbdry2 + QSUBBDRYRT(I,J)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT) !BUG MISSING ()
-            sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT) !BUG MISSING ()
+            suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)  !
+            qbdry2 = qbdry2 + QSUBBDRYRT(I,J)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+            sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             do kk=1,NSOIL
-                smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT) !BUG MISSING ()
+                smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
             end do
          end do
         end do
@@ -2862,7 +2863,6 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
           subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
           subrt_static%NSOIL, subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
           subrt_data%properties%zsoil, subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
