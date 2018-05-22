@@ -312,7 +312,8 @@ module module_NoahMP_hrldas_driver
 ! Timing:
 !------------------------------------------------------------------------
 
-  INTEGER :: NTIME          ! timesteps
+  INTEGER :: NTIME          ! total timesteps
+  INTEGER :: ITIME          ! LSM time step
   integer :: clock_count_1 = 0
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
@@ -1521,9 +1522,20 @@ endif
 #ifdef MPP_LAND
    if(my_id .eq. io_id) &
        print*, "t0OutputFlag: ", t0OutputFlag  
-#endif        
+#endif     
+
+! ldas_output subroutine will be called when 
+! the t0OutputFlag is 1 in the hydro.namelist
+! the ldas_output requires one variables ITIME 
+! which is the LSM timestep, we declare it here
+! since it does not exist at this point 
+#ifdef WRF_HYDRO
+  ITIME = 1
+#else
+  ITIME = 0
+#endif
 !#ifdef HYDRO_REALTIME
-   if(t0OutputFlag .eq. 1) call ldas_output(0)
+   if(t0OutputFlag .eq. 1) call ldas_output(ITIME)
 !#else
 !  if (restart_filename_requested == " ") then
 !     if(t0OutputFlag .eq. 1) call ldas_output()
@@ -1843,8 +1855,7 @@ end subroutine land_driver_exe
 
 !!===============================================================================
 subroutine  ldas_output(itime)
-integer, intent(in)  :: itime ! time step of the LSM, had to explicitly declare it since 
-                              ! it did not exist in the land_driver_ini 
+integer, intent(in)  :: itime ! time step of the LSM  
 
 !#ifdef WRF_HYDRO
 !if ( (io_config_outputs .eq. 0) ) then
