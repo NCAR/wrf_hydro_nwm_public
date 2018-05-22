@@ -1528,14 +1528,9 @@ endif
 ! the t0OutputFlag is 1 in the hydro.namelist
 ! the ldas_output requires one variables ITIME 
 ! which is the LSM timestep, we declare it here
-! since it does not exist at this point 
-#ifdef WRF_HYDRO
-  ITIME = 1
-#else
+! since it does not exist at this point
   ITIME = 0
-#endif
-!#ifdef HYDRO_REALTIME
-   if(t0OutputFlag .eq. 1) call ldas_output(ITIME)
+  if(t0OutputFlag .eq. 1) call ldas_output(ITIME)
 !#else
 !  if (restart_filename_requested == " ") then
 !     if(t0OutputFlag .eq. 1) call ldas_output()
