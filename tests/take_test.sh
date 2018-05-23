@@ -29,7 +29,7 @@ echo "Testing: $this_dir"
 
 # #################################
 # Collect some parameters... 
-if [ $(which docker | wc -l 2> /dev/null) != 0 ]; then
+if [ $(which docker 2> /dev/null | wc -l) != 0 ]; then
     docker_avail=0
 else
     docker_avail=1
