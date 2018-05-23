@@ -259,14 +259,14 @@ log.debug('Writing working specifications to ' +
           this_script_path +'/take_test.log')
 log.debug('')
 
-# Kill the 'stdout' handler.
-log.removeHandler(stdout)
 
-log_file = this_script_path + "take_test.log"
-log_file_handler = logging.FileHandler(log_file, mode='w')
+log_file = this_script_path + "/take_test.log"
+log_file_handler = logging.FileHandler(log_file, mode='a')
 log_file_handler.setLevel(logging.DEBUG)
 log.addHandler(log_file_handler)
 
+# Kill the 'stdout' handler.
+log.removeHandler(stdout)
 
 log.info('*****************************************************************')
 log.debug('')
