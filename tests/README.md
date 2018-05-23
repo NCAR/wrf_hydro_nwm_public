@@ -98,8 +98,20 @@ way to pull this domain and other domains outside the docker context.
 
 
 ## Cheyenne Example
+1. Setup the python 3.6.4 virutal env per cisl instructions.
+   Python 3.6.4+ is required.
+   Both sections   
+      [https://www2.cisl.ucar.edu/resources/computational-systems/cheyenne/software/python#modules]  
+      [https://www2.cisl.ucar.edu/resources/computational-systems/cheyenne/software/python#library]  
+   including "Creating your own clone of the NCAR package library".
 
-
+3. Install the wrfhydropy prequisites.  
+   These are currently summarized here:  
+      [https://github.com/NCAR/wrf_hydro_docker/blob/160da2458e9be7313636910051fa8887776fb7be/dev/conda/Dockerfile#L40-L43]  
+   Currently (may be out of date) this is, for example:  
+      `pip install jupyter cartopy rasterio netcdf4 dask f90nml deepdiff xarray plotnine boltons pytest pytest-datadir-ng wrfhydropy`
+   If a development version of wrfhydropy is needed, you'll need to clone that repository to cheyenne, then do the following:  
+      `cd /path/to/wrf_hydro_py/; pip uninstall -y wrfhydropy; python setup.py develop`
 
 ## Docker Example
 
