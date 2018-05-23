@@ -151,6 +151,9 @@ establish_repo('reference_repo', candidate_spec, user_spec)
 log.debug('')
 
 # ###################################
+log.info(horiz_bar )
+log.info("Establish jobs and scheduler:")
+
 if machine_name == 'docker':
     default_scheduler = None
 else:
@@ -173,6 +176,10 @@ job_ncores.nproc=candidate_spec['n_cores']['test']
 job_default = json.dumps(job_default.__dict__)
 job_ncores = json.dumps(job_ncores.__dict__)
 
+log.debug('')
+# ###################################
+log.info(horiz_bar)
+log.info("Calling pytest:")
 
 pytest_cmd = [
     '--rootdir', str(candidate_spec['candidate_repo']['local_path']) + '/tests/' ,
@@ -190,9 +197,15 @@ pytest_cmd = [
 
 if config is not None:
     pytest_cmd = pytest_cmd + [ '--config', config,]
+# TODO JLM: do this for all the arguments.
 
+log.debug('')
+log.debug(pytest_cmd)
+log.debug('')
 
 pytest_return = pytest.main(pytest_cmd)
+
+log.debug('')
 
 # ######################################################
 # Tear down if success

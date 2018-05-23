@@ -126,8 +126,8 @@ else
         
         echo "Starting the docker image."
         # -e establishes env variables in docker.
-        # -v mounts directories host:docker 
-        # TODO (JLM): Remove the -i? Or do we want it to be interactive if it fails?
+        # -v mounts directories host:docker
+        # The GITHUB variables are used only for the private, wrf_hydro_nwm repo.
         docker run -it \
                -e USER=docker \
                -e GITHUB_AUTHTOKEN=$GITHUB_AUTHTOKEN \

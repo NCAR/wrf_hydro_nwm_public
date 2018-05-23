@@ -122,25 +122,3 @@ way to pull this domain and other domains outside the docker context.
 ## Docker Example
 The docker setup is given in `take_test.sh`. Comments are provided for
 the docker commands.
-
-
-docker pull wrfhydro/dev:conda
-docker pull wrfhydro/domains:croton_NY
-
-## Create data volume
-docker create --name croton_NY wrfhydro/domains:croton_NY
-
-## Start docker
-docker run --volumes-from croton_NY -v YOUR_WRF_HYDRO_NWM_CODE_DIRECTORY:/home/docker/wrf_hydro_nwm_public -it wrfhydro/dev:conda
-
-### Running inside of docker issue the following commands
-#### Install correct version of wrfhydropy
-pip uninstall -y wrfhydropy
-pip install wrfhydropy
-
-#### Change directory to wrf_hydro_nwm and run tests
-cd /home/docker/wrf_hydro_nwm_public
-pytest -v --domain_dir=/home/docker/domain/croton_NY 
-          --candidate_dir=YOUR_REFERENCE_CODE_DIRECTORY/trunk/NDHMS
-          --reference_dir=YOUR_CANDIDATE_CODE_DIRECTORY/trunk/NDHMS 
-          --output_dir=/home/docker/test_out"
