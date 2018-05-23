@@ -113,7 +113,7 @@
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
     SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,IXRT,JXRT,DT,    &
-    SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
+    SMCWLTRT, rt_option,SLDPTH,CWATAVAIL, &
     SATLYRCHK)
 
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
@@ -172,8 +172,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	REAL	:: SUBFLO
 	REAL	:: WATAVAIL
 
-        INTEGER :: SO8RT_D(IXRT,JXRT,3)
-        REAL :: SO8RT(IXRT,JXRT,8)
+        !INTEGER :: SO8RT_D(IXRT,JXRT,3)
+        !REAL :: SO8RT(IXRT,JXRT,8)
         INTEGER, INTENT(IN)  ::  rt_option
         integer  ::  index
 
@@ -288,7 +288,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, &
                subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
                subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, IXRT, JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
-               SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
+               subrt_data%properties%water_surface_slope,subrt_data%properties%max_water_surface_slope_index,CWATAVAIL,SUBDT)
 !     else
 !        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt, &
 !               subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
@@ -2868,7 +2868,6 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
           subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
           subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
-          subrt_data%properties%water_surface_slope, subrt_data%properties%max_water_surface_slope_index, &
           subrt_static%rt_option, subrt_data%properties%sldpth, CWATAVAIL, SATLYRCHK)
 
 #ifdef HYDRO_D
