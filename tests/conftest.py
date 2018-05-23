@@ -129,7 +129,7 @@ def job_ncores(request, configuration):
 
 @pytest.fixture(scope="session")
 def scheduler(request, configuration):
-    sched_in = request.config.getoption("--scheduler"))
+    sched_in = request.config.getoption("--scheduler")
     if sched_in is None or sched_in == 'None':
         return None
     else:
