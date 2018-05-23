@@ -4,7 +4,7 @@
 
 log_file=take_test.log
 
-./take_test_core.sh "${@}" 2>&1 | tee $log_file
+./core_take_test.sh "${@}" 2>&1 | tee $log_file
 
 ## The following is how you get a return status in spite of tee.
 exitValue=${PIPESTATUS[0]}
