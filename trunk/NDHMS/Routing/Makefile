@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -15,6 +15,7 @@ OBJS = \
 	module_HYDRO_io.o \
  	module_RT.o \
 	Noah_distr_routing.o \
+	Noah_distr_routing_subsurface.o \
 	module_channel_routing.o \
 	module_lsm_forcing.o \
 	module_date_utilities_rt.o \
@@ -50,14 +51,14 @@ ifneq ($(WRF_HYDRO_NUDGING),-DWRF_HYDRO_NUDGING)
 module_HYDRO_io.o:  module_HYDRO_utils.o \
 	            module_date_utilities_rt.o \
                     ../Data_Rec/module_namelist.o \
-	 	    ../Data_Rec/module_RT_data.o 
-else 
+	 	    ../Data_Rec/module_RT_data.o
+else
 module_HYDRO_io.o:  module_HYDRO_utils.o \
 	            module_date_utilities_rt.o \
 		    ../nudging/module_date_utils_nudging.o \
 	            ../nudging/module_nudging_io.o \
                     ../Data_Rec/module_namelist.o \
-	 	    ../Data_Rec/module_RT_data.o 
+	 	    ../Data_Rec/module_RT_data.o
 endif
 
 module_NWM_io_dict: ../Data_Rec/module_namelist.o
@@ -71,7 +72,7 @@ module_NWM_io: module_HYDRO_utils.o \
 
 module_HYDRO_utils.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 
-module_lsm_forcing.o: module_HYDRO_io.o 
+module_lsm_forcing.o: module_HYDRO_io.o
 
 ifneq ($(WRF_HYDRO_NUDGING),-DWRF_HYDRO_NUDGING)
 module_RT.o: module_GW_baseflow.o \
@@ -106,5 +107,5 @@ module_channel_routing.o: module_UDMAP.o\
           		  ../nudging/module_stream_nudging.o
 endif
 
-clean:	
+clean:
 	rm -f *.o *.mod *.stb *~ *.f
