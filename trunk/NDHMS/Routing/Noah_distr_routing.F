@@ -112,9 +112,8 @@
 !DJG ------------------------------------------------
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    INFXSUBRT,IXRT,JXRT,DT,    &
-    SMCWLTRT, rt_option,SLDPTH,CWATAVAIL, &
-    SATLYRCHK)
+    IXRT,JXRT, &
+    CWATAVAIL, SATLYRCHK)
 
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
 !            my_id
@@ -145,22 +144,22 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
 	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: CWATAVAIL
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: SATLYRCHK
+    INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: SATLYRCHK
 
 
 	!REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBRT
 	!REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT
 
 	!REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
-	REAL, INTENT(IN)                          :: DT
-	!REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
-	REAL, INTENT(IN), DIMENSION(subrt_static%nsoil) 	  :: SLDPTH
+	!REAL, INTENT(IN)                          :: DT
+	!REAL, INTENT(IN), DIMENSION(subrt_static%nsoil)        :: ZSOIL
+	!REAL, INTENT(IN), DIMENSION(subrt_static%nsoil) 	  :: SLDPTH
 	!REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
+	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
 	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCMAXRT
 	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCREFRT
 	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCWLTRT
+	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCWLTRT
 
 	REAL, DIMENSION(IXRT,JXRT)	:: ywtmp
 !DJG Local Variables
@@ -174,7 +173,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
         !INTEGER :: SO8RT_D(IXRT,JXRT,3)
         !REAL :: SO8RT(IXRT,JXRT,8)
-        INTEGER, INTENT(IN)  ::  rt_option
+        !INTEGER, INTENT(IN)  ::  rt_option
         integer  ::  index
 
         INTEGER :: DT_STEPS             !-- number of timestep in routing
@@ -217,11 +216,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
        sumqsubrt1 = 0.
        do i=1,IXRT
          do j=1,JXRT
-           suminfxsrt1 = suminfxsrt1 + INFXSUBRT(I,J) / float(IXRT*JXRT)
+           suminfxsrt1 = suminfxsrt1 + subrt_input%infiltration_excess(I,J) / float(IXRT*JXRT)
            qbdry1 = qbdry1 + subrt_data%state%qsubbdryrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            sumqsubrt1 = sumqsubrt1 + subrt_data%state%qsubrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            do kk=1,subrt_static%nsoil
-               smctot1 = smctot1 + subrt_data%grid_transform%smcrt(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+               smctot1 = smctot1 + subrt_data%grid_transform%smcrt(I,J,KK)*subrt_data%properties%sldpth(KK)*1000. / float(IXRT*JXRT)
            end do
          end do
        end do
@@ -250,7 +249,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 !DJG Set up mass balance checks...
 !         CWATAVAIL = 0.            !-- initialize subsurface watavail
-         SUBDT = DT                !-- initialize the routing timestep to DT
+         SUBDT = subrt_static%dt                !-- initialize the routing timestep to DT
 
 
 !!!! Find saturated layer depth...
@@ -277,14 +276,14 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 !!!! Call subsurface routing subroutine...
 #ifdef HYDRO_D
-     print *, "calling subsurface routing subroutine...Opt. ",rt_option
+     print *, "calling subsurface routing subroutine...Opt. ",subrt_static%rt_option
 #endif
 
 ! ADCHANGE: IMPORTANT!
 ! 2D subsurface option currently has bug so forcing to option 1 in this routine to
 ! allow users to still have option to use 2d overland (both are controlled by same
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
-!     if(rt_option .eq. 1) then
+!     if(subrt_static%rt_option .eq. 1) then
         CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, &
                subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
                subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, IXRT, JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
@@ -297,7 +296,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !     end if
 
 #ifdef HYDRO_D
-     write(6,*) "finish calling ROUTE_SUBSURFACE ", rt_option
+     write(6,*) "finish calling ROUTE_SUBSURFACE ", subrt_static%rt_option
 #endif
 
 
@@ -339,9 +338,9 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
                   ELSE
                 END IF
                 ELSE
-                  WATAVAIL = (subrt_data%grid_transform%smcmaxrt(I,J,KK)-subrt_data%grid_transform%smcrt(I,J,KK))*SLDPTH(KK)
+                  WATAVAIL = (subrt_data%grid_transform%smcmaxrt(I,J,KK)-subrt_data%grid_transform%smcrt(I,J,KK))*subrt_data%properties%sldpth(KK)
                   IF (WATAVAIL.GE.SUBFLO) THEN
-                    subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrt(I,J,KK) + SUBFLO/SLDPTH(KK)
+                    subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrt(I,J,KK) + SUBFLO/subrt_data%properties%sldpth(KK)
                     SUBFLO = 0.
                   ELSE
                     SUBFLO = SUBFLO - WATAVAIL
@@ -358,7 +357,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 ! If all layers sat. add remaining subflo to infilt. excess...
               IF (KK.eq.0.AND.SUBFLO.gt.0.) then
-                 INFXSUBRT(I,J) = INFXSUBRT(I,J) + SUBFLO*1000.    !Units = mm
+                 subrt_input%infiltration_excess(I,J) = subrt_input%infiltration_excess(I,J) + SUBFLO*1000.    !Units = mm
                  SUBFLO=0.
               END IF
 
@@ -382,10 +381,10 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !DJG and then using unsat cond as opposed to Ksat...
 
 	      DO KK=SATLYRCHK(I,J),subrt_static%nsoil
-                 WATAVAIL = (subrt_data%grid_transform%smcrt(I,J,KK) - subrt_data%grid_transform%smcrefrt(I,J,KK)) * SLDPTH(KK)
+                 WATAVAIL = (subrt_data%grid_transform%smcrt(I,J,KK) - subrt_data%grid_transform%smcrefrt(I,J,KK)) * subrt_data%properties%sldpth(KK)
                  IF (WATAVAIL.GE.ABS(SUBFLO)) THEN
 !?yw mod                 IF (WATAVAIL.GE.(ABS(SUBFLO)+0.000001) ) THEN
-                   subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrt(I,J,KK) + SUBFLO/SLDPTH(KK)
+                   subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrt(I,J,KK) + SUBFLO/subrt_data%properties%sldpth(KK)
                    SUBFLO=0.
                  ELSE     ! Since subflo is small on a time-step following is unlikely...
                    subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrefrt(I,J,KK)
@@ -437,11 +436,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         sumqsubrt2 = 0.
         do i=1,IXRT
          do j=1,JXRT
-            suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)  !
+            suminfxsrt2 = suminfxsrt2 + subrt_input%infiltration_excess(I,J) / float(IXRT*JXRT)  !
             qbdry2 = qbdry2 + subrt_data%state%qsubbdryrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             do kk=1,subrt_static%nsoil
-                smctot2 = smctot2 + subrt_data%grid_transform%smcrt(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+                smctot2 = smctot2 + subrt_data%grid_transform%smcrt(I,J,KK)*subrt_data%properties%sldpth(KK)*1000. / float(IXRT*JXRT)
             end do
          end do
         end do
@@ -2868,9 +2867,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_input%infiltration_excess, &
-          subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
-          subrt_static%rt_option, subrt_data%properties%sldpth, CWATAVAIL, SATLYRCHK)
+          subrt_static%IXRT, subrt_static%JXRT, &
+          CWATAVAIL, SATLYRCHK)
 
 #ifdef HYDRO_D
     print *, "SUBROUTE routing called and returned..."
