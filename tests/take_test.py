@@ -1,49 +1,43 @@
-import argparse
-import code
-import copy
-import json
-import logging
-import os
-import pathlib
-from pprint import pprint, pformat
-import pytest
-import shutil
-import sys
-import wrfhydropy
+# take_test.py :
+#   A python interface to wrf_hydro_nwm and wrfhydro_nwm_public testing
+# Purpose:
+#   Set up all the desired prerequisites for testing and call pytest.
 
+# #######################################################
+# Basic orientation
+import os
 this_script = __file__
 this_script_path = os.path.dirname(os.path.realpath(this_script))
 this_repo_path = os.path.dirname(os.path.realpath(this_script_path))
 
-sys.path.insert(0, this_script_path+'/toolbox/')
-from color_logs import log
-from establish_repo import *
-from establish_specs import *
-from log_boilerplate import log_boilerplate
+import wrfhydropy
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    machine_name = wrfhydropy.core.job_tools.get_machine()
 
-machine_name = wrfhydropy.core.job_tools.get_machine()
-
-# ######################################################
-# Preamble/overview/Help/docstring.
 
 # ######################################################
 # Agruments
+# Do this up front for speed when help is requested.
+import argparse
+
 parser = argparse.ArgumentParser(
     description='A WRF-Hydro candidate takes a test.'
 )
 
 parser.add_argument(
     '--domain',
-    metavar='path to domain directory',
+    metavar='/path/to/domain/directory',
     help='Path to the domain directory.',
     default=None
 )
 
 parser.add_argument(
     '--candidate_spec_file',
-    metavar='candidate spec file',
+    metavar='path/to/candidate_spec_file',
     type=str, 
-    help='The candidate specification file.',
+    help='The YAML candidate specification file.',
     default=this_script_path + '/default_candidate_spec_' + machine_name + '.yaml'
 )
 
@@ -51,24 +45,55 @@ parser.add_argument(
 
 parser.add_argument(
     '--config',
-    metavar='model configuration key',   
-    help='Key for model configuration (default is all)',
+    nargs='*',
+    metavar='key',   
+    help=('Zero or more keys separated by whitespace for model configuration selection ' +
+          '(no keys runs all configurations).'),
     default = None # None is handled as all by pytest currently.
 )
 
 parser.add_argument(
-   '--test_spec',
-   metavar='test specification key',
-   help='Key for specifying the desired tests',
-   default=None
+    '--test_spec',
+    nargs='*',
+    metavar='key',
+    help=('Zero or more keys separated by whitespace for specifying the desired tests. ' +
+          'These keys are grepped against the test_*py files in the tests/ directory.'),
+    default=None
 )
 
 args = parser.parse_args()
 candidate_spec_file = args.candidate_spec_file
 domain = args.domain
+
 config= args.config
+
 test_spec = args.test_spec
-# TODO(JLM): these items need to go into the boilerplate.
+if test_spec is not None:
+    if type(test_spec) is not list:
+        test_spec = [test_spec]
+
+
+# #######################################################
+# Rest of the imports now.
+import code
+import copy
+import json
+import logging
+import pathlib
+from pprint import pprint, pformat
+import pytest
+import shutil
+import sys
+
+sys.path.insert(0, this_script_path+'/toolbox/')
+from color_logs import log
+from establish_repo import *
+from establish_specs import *
+from log_boilerplate import log_boilerplate
+
+
+# ######################################################
+# Preamble/overview/Help/docstring.
 
 if domain is None:
     if machine_name is 'cheyenne':
@@ -76,34 +101,28 @@ if domain is None:
     else :
         domain = '/home/docker/domain/croton_NY'
 
-if test_spec is None:
-    test_spec = 'fundamental'
-
-# TODO JLM: want to get the log file name from the candidate_spec_file but want to be
-#           logging to file before that. COPY the log file at the end.
-
-# TODO JLM: generate default log file name. Hide it in a dot file and copy at end?
-# TODO JLM: deal with relative and absolute paths, eg log file... 
+check = pathlib.PosixPath(domain).exists()
 
 # ######################################################
 # Logging setup.
-# This coloring approach may only allow one log.
+# Right now handling the logging through the two-layer bash system.
+# It's currently opaque to me how to get the pytest output into
+# this kind of log. 
 log.setLevel(logging.DEBUG)
 
 stdout = logging.StreamHandler()
 stdout.setLevel(logging.DEBUG)
 log.addHandler(stdout)
 
-log_file = "take_test.log"
-log_file_handler = logging.FileHandler(log_file, mode='w')
-log_file_handler.setLevel(logging.DEBUG)
-log.addHandler(log_file_handler)
+# log_file = "take_test.log"
+# log_file_handler = logging.FileHandler(log_file, mode='w')
+# log_file_handler.setLevel(logging.DEBUG)
+# log.addHandler(log_file_handler)
 
 horiz_bar = '================================================================='
 log.info(horiz_bar)
 log.info("*** take_test.py: A wrf_hydro candidate takes a test. ***")
 log.debug('')
-
 
 # ######################################################
 # Specification files to dictionaries.
@@ -196,11 +215,15 @@ pytest_cmd = [
 ]
 
 if config is not None:
-    pytest_cmd = pytest_cmd + [ '--config', config,]
-# TODO JLM: do this for all the arguments.
+    pytest_cmd = pytest_cmd + [ '--config' ] + config
+
+if test_spec is not None:
+    pytest_cmd = pytest_cmd + [ '-k'] + test_spec
 
 log.debug('')
-log.debug(pytest_cmd)
+log.info('with arguments:')
+pprint(pytest_cmd)
+log.debug('')
 log.debug('')
 
 pytest_return = pytest.main(pytest_cmd)
@@ -232,7 +255,8 @@ else:
 log.info('=================================================================')
 log.info('*** take_test.py: Finished. ***')
 log.debug('')
-log.debug('Writing working specifications to ' + log_file +'.')
+log.debug('Writing working specifications to ' +
+          this_script_path +'/take_test.log')
 log.debug('')
 
 # Kill the 'stdout' handler.

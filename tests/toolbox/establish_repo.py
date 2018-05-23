@@ -60,7 +60,7 @@ def establish_repo(repo_tag, candidate_spec, user_spec):
         # The case when local_path is not set.
         candidate_spec[repo_tag]['local_path_setby'] = 'fork & commitish'
         dir_for_clone = Path(candidate_spec['repos_dir'] + '/' + repo_tag_base)
-        print('dir_for_clone: ',dir_for_clone)
+        #print('dir_for_clone: ',dir_for_clone)
 
         candidate_spec[repo_tag]['local_path'] = dir_for_clone
 

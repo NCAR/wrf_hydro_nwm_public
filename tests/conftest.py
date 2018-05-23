@@ -11,8 +11,8 @@ def pytest_addoption(parser):
         "--config",
         default=['NWM', 'Gridded', 'Reach'],
         nargs='+',
-        help="List of model configurations to test, options are 'NWM'," +
-        "'Gridded',and'Reach'"
+        help=("List of model configurations to test, options are 'NWM'," +
+              "'Gridded',and 'Reach'")
     )
 
     parser.addoption('--compiler', required=False, action='store', help='compiler key from config')

@@ -52,6 +52,6 @@ def log_boilerplate(candidate_spec, user_spec, env_vars, horiz_bar, script_path)
     #log.debug( "Test spec set by      : " +
     #           candidate_spec['test_spec_setby'] )
 
-    log.debug("Log file              : ")
+    log.debug("Log file              : " + script_path + '/take_test.log')
     log.debug("Will echo specs to log at end.")
     return(True)

@@ -74,7 +74,7 @@ def establish_user_spec(candidate_spec, env_vars):
     candidate_spec['user_spec_file'] = user_spec_file
     # TODO JLM: indicate in the candidate_spec how the user_spec_file was set.
     # TODO JLM: WARN if DNE
-    print('user_spec_file: ', user_spec_file)
+    #print('user_spec_file: ', user_spec_file)
     user_spec = establish_spec(user_spec_file)
 
     return(user_spec)
