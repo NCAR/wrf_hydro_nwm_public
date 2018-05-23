@@ -112,7 +112,7 @@
 !DJG ------------------------------------------------
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,IXRT,JXRT,DT,    &
+    INFXSUBRT,IXRT,JXRT,DT,    &
     SMCWLTRT, rt_option,SLDPTH,CWATAVAIL, &
     SATLYRCHK)
 
@@ -157,9 +157,9 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	REAL, INTENT(IN), DIMENSION(subrt_static%nsoil) 	  :: SLDPTH
 	!REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCMAXRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCREFRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCRT
+	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCMAXRT
+	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCREFRT
+	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCWLTRT
 
 	REAL, DIMENSION(IXRT,JXRT)	:: ywtmp
@@ -221,7 +221,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
            qbdry1 = qbdry1 + subrt_data%state%qsubbdryrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            sumqsubrt1 = sumqsubrt1 + subrt_data%state%qsubrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            do kk=1,subrt_static%nsoil
-               smctot1 = smctot1 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+               smctot1 = smctot1 + subrt_data%grid_transform%smcrt(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
            end do
          end do
        end do
@@ -331,21 +331,21 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
 ! Check for saturated layers
-                IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK)) THEN
-                  IF (SMCRT(I,J,KK).GT.SMCMAXRT(I,J,KK)) THEN
+                IF (subrt_data%grid_transform%smcrt(I,J,KK) .GE. subrt_data%grid_transform%smcmaxrt(I,J,KK)) THEN
+                  IF (subrt_data%grid_transform%smcrt(I,J,KK) .GT. subrt_data%grid_transform%smcmaxrt(I,J,KK)) THEN
                    print *, "FATAL ERROR: Subsfc acct. SMCMAX exceeded...", &
-                       SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
+                       subrt_data%grid_transform%smcrt(I,J,KK), subrt_data%grid_transform%smcmaxrt(I,J,KK),KK,i,j
                    call hydro_stop("In SUBSFC_RTNG() - SMCMAX exceeded")
                   ELSE
-                  END IF
+                END IF
                 ELSE
-                  WATAVAIL = (SMCMAXRT(I,J,KK)-SMCRT(I,J,KK))*SLDPTH(KK)
+                  WATAVAIL = (subrt_data%grid_transform%smcmaxrt(I,J,KK)-subrt_data%grid_transform%smcrt(I,J,KK))*SLDPTH(KK)
                   IF (WATAVAIL.GE.SUBFLO) THEN
-                    SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
+                    subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrt(I,J,KK) + SUBFLO/SLDPTH(KK)
                     SUBFLO = 0.
                   ELSE
                     SUBFLO = SUBFLO - WATAVAIL
-                    SMCRT(I,J,KK) = SMCMAXRT(I,J,KK)
+                    subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcmaxrt(I,J,KK)
                   END IF
                 END IF
 
@@ -365,9 +365,11 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !DJG Error trap...
 	       if (subflo.ne.0.) then
 #ifdef HYDRO_D
-                  print *, "Subflo (+) not expired...:",subflo,i,j,kk,SMCRT(i,j,1), &
-                           SMCRT(i,j,2),SMCRT(i,j,3),SMCRT(i,j,4),SMCRT(i,j,5),  &
-                           SMCRT(i,j,6),SMCRT(i,j,7),SMCRT(i,j,8),"SMCMAX",SMCMAXRT(i,j,1)
+                  print *, "Subflo (+) not expired...:",subflo, i, j, kk, subrt_data%grid_transform%smcrt(i,j,1), &
+                           subrt_data%grid_transform%smcrt(i,j,2), subrt_data%grid_transform%smcrt(i,j,3), &
+                           subrt_data%grid_transform%smcrt(i,j,4), subrt_data%grid_transform%smcrt(i,j,5), &
+                           subrt_data%grid_transform%smcrt(i,j,6), subrt_data%grid_transform%smcrt(i,j,7), &
+                           subrt_data%grid_transform%smcrt(i,j,8), "SMCMAX", subrt_data%grid_transform%smcmaxrt(i,j,1)
 #endif
                end if
 
@@ -380,13 +382,13 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !DJG and then using unsat cond as opposed to Ksat...
 
 	      DO KK=SATLYRCHK(I,J),subrt_static%nsoil
-                 WATAVAIL = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
+                 WATAVAIL = (subrt_data%grid_transform%smcrt(I,J,KK) - subrt_data%grid_transform%smcrefrt(I,J,KK)) * SLDPTH(KK)
                  IF (WATAVAIL.GE.ABS(SUBFLO)) THEN
 !?yw mod                 IF (WATAVAIL.GE.(ABS(SUBFLO)+0.000001) ) THEN
-                   SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
+                   subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrt(I,J,KK) + SUBFLO/SLDPTH(KK)
                    SUBFLO=0.
                  ELSE     ! Since subflo is small on a time-step following is unlikely...
-                   SMCRT(I,J,KK)=SMCREFRT(I,J,KK)
+                   subrt_data%grid_transform%smcrt(I,J,KK) = subrt_data%grid_transform%smcrefrt(I,J,KK)
                    SUBFLO=SUBFLO+WATAVAIL
                  END IF
                  IF (SUBFLO.EQ.0.) EXIT
@@ -422,7 +424,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 #ifdef MPP_LAND
      do i = 1, subrt_static%nsoil
-        call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(subrt_data%grid_transform%smcrt(:,:,i),IXRT,JXRT,99)
      end DO
 #endif
 
@@ -439,7 +441,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
             qbdry2 = qbdry2 + subrt_data%state%qsubbdryrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             do kk=1,subrt_static%nsoil
-                smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+                smctot2 = smctot2 + subrt_data%grid_transform%smcrt(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
             end do
          end do
         end do
@@ -2866,7 +2868,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
+          subrt_input%infiltration_excess, &
           subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
           subrt_static%rt_option, subrt_data%properties%sldpth, CWATAVAIL, SATLYRCHK)
 
