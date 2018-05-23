@@ -111,9 +111,7 @@
 !DJG   SUBROUTINE SUBSFC_RTNG
 !DJG ------------------------------------------------
 
-SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    IXRT,JXRT, &
-    CWATAVAIL, SATLYRCHK)
+SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, CWATAVAIL, SATLYRCHK)
 
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
 !            my_id
@@ -135,7 +133,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
     type (subsurface_output_interface), intent(inout) :: subrt_output
 
 	!INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
-	INTEGER, INTENT(IN) :: IXRT,JXRT
+	!INTEGER, INTENT(IN) :: IXRT,JXRT
 
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
@@ -143,8 +141,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOLDEPRT
 
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
-	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: CWATAVAIL
-    INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: SATLYRCHK
+	REAL, INTENT(IN), DIMENSION(subrt_static%ixrt,subrt_static%jxrt)   :: CWATAVAIL
+    INTEGER, INTENT(IN), DIMENSION(subrt_static%ixrt,subrt_static%jxrt) :: SATLYRCHK
 
 
 	!REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBRT
@@ -161,7 +159,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCRT
 	!REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCWLTRT
 
-	REAL, DIMENSION(IXRT,JXRT)	:: ywtmp
+	REAL, DIMENSION(subrt_static%IXRT,subrt_static%JXRT)	:: ywtmp
 !DJG Local Variables
 
 	INTEGER	:: I,J,KK
@@ -171,17 +169,17 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 	REAL	:: SUBFLO
 	REAL	:: WATAVAIL
 
-        !INTEGER :: SO8RT_D(IXRT,JXRT,3)
-        !REAL :: SO8RT(IXRT,JXRT,8)
-        !INTEGER, INTENT(IN)  ::  rt_option
-        integer  ::  index
+    !INTEGER :: SO8RT_D(IXRT,JXRT,3)
+    !REAL :: SO8RT(IXRT,JXRT,8)
+    !INTEGER, INTENT(IN)  ::  rt_option
+    integer  ::  index
 
-        INTEGER :: DT_STEPS             !-- number of timestep in routing
-        REAL :: SUBDT                !-- subsurface routing timestep
-        INTEGER :: KRT                  !-- routing counter
-        REAL, DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCTMP  !--temp store of SMC
-        REAL, DIMENSION(IXRT,JXRT) :: ZWATTABLRTTMP ! temp store of ZWAT
-        REAL, DIMENSION(IXRT,JXRT) :: INFXSUBRTTMP ! temp store of infilx
+    INTEGER :: DT_STEPS             !-- number of timestep in routing
+    REAL :: SUBDT                !-- subsurface routing timestep
+    INTEGER :: KRT                  !-- routing counter
+    REAL, DIMENSION(subrt_static%IXRT,subrt_static%JXRT,subrt_static%nsoil) :: SMCTMP  !--temp store of SMC
+    REAL, DIMENSION(subrt_static%IXRT,subrt_static%JXRT) :: ZWATTABLRTTMP ! temp store of ZWAT
+    REAL, DIMENSION(subrt_static%IXRT,subrt_static%JXRT) :: INFXSUBRTTMP ! temp store of infilx
 !djg        REAL, DIMENSION(IXRT,JXRT) :: CWATAVAIL ! temp specif. of wat avial
 
 
@@ -214,13 +212,13 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
        qbdry1 = 0.
        smctot1 = 0.
        sumqsubrt1 = 0.
-       do i=1,IXRT
-         do j=1,JXRT
-           suminfxsrt1 = suminfxsrt1 + subrt_input%infiltration_excess(I,J) / float(IXRT*JXRT)
-           qbdry1 = qbdry1 + subrt_data%state%qsubbdryrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
-           sumqsubrt1 = sumqsubrt1 + subrt_data%state%qsubrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+       do i=1,subrt_static%IXRT
+         do j=1,subrt_static%JXRT
+           suminfxsrt1 = suminfxsrt1 + subrt_input%infiltration_excess(I,J) / float(subrt_static%IXRT*subrt_static%JXRT)
+           qbdry1 = qbdry1 + subrt_data%state%qsubbdryrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(subrt_static%IXRT*subrt_static%JXRT)
+           sumqsubrt1 = sumqsubrt1 + subrt_data%state%qsubrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(subrt_static%IXRT*subrt_static%JXRT)
            do kk=1,subrt_static%nsoil
-               smctot1 = smctot1 + subrt_data%grid_transform%smcrt(I,J,KK)*subrt_data%properties%sldpth(KK)*1000. / float(IXRT*JXRT)
+               smctot1 = smctot1 + subrt_data%grid_transform%smcrt(I,J,KK)*subrt_data%properties%sldpth(KK)*1000. / float(subrt_static%IXRT*subrt_static%JXRT)
            end do
          end do
        end do
@@ -286,12 +284,12 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !     if(subrt_static%rt_option .eq. 1) then
         CALL ROUTE_SUBSURFACE1(subrt_data%properties%distance_to_neighbor, subrt_data%properties%zwattablrt, &
                subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
-               subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, IXRT, JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
+               subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_static%IXRT, subrt_static%JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
                subrt_data%properties%water_surface_slope,subrt_data%properties%max_water_surface_slope_index,CWATAVAIL,SUBDT)
 !     else
 !        CALL ROUTE_SUBSURFACE2(subrt_data%properties%distance_to_neighbor,subrt_data%properties%zwattablrt, &
 !               subrt_data%state%qsubrt, subrt_data%properties%surface_slope_x, subrt_data%properties%surface_slope_y, &
-!               subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, IXRT, JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
+!               subrt_data%properties%lksatrt, subrt_data%properties%soldeprt, subrt_static%IXRT, subrt_static%JXRT, subrt_data%state%qsubbdryrt, subrt_data%state%qsubbdrytrt, &
 !               CWATAVAIL,SUBDT)
 !     end if
 
@@ -303,8 +301,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !!!! Update soil moisture fields with subsurface flow...
 
 !!!! Loop through subsurface routing domain...
-	DO I=1,IXRT
-          DO J=1,JXRT
+	DO I=1,subrt_static%IXRT
+          DO J=1,subrt_static%JXRT
 
 !!DJG Check for courant condition violation...put limit on qsub
 !!DJG QSUB HAS units of m^3/s SUBFLO has units of m
@@ -423,7 +421,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 #ifdef MPP_LAND
      do i = 1, subrt_static%nsoil
-        call MPP_LAND_COM_REAL(subrt_data%grid_transform%smcrt(:,:,i),IXRT,JXRT,99)
+        call MPP_LAND_COM_REAL(subrt_data%grid_transform%smcrt(:,:,i),subrt_static%IXRT,subrt_static%JXRT,99)
      end DO
 #endif
 
@@ -434,13 +432,13 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         qbdry2 = 0.
         smctot2 = 0.
         sumqsubrt2 = 0.
-        do i=1,IXRT
-         do j=1,JXRT
-            suminfxsrt2 = suminfxsrt2 + subrt_input%infiltration_excess(I,J) / float(IXRT*JXRT)  !
-            qbdry2 = qbdry2 + subrt_data%state%qsubbdryrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
-            sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+        do i=1,subrt_static%IXRT
+         do j=1,subrt_static%JXRT
+            suminfxsrt2 = suminfxsrt2 + subrt_input%infiltration_excess(I,J) / float(subrt_static%IXRT*subrt_static%JXRT)  !
+            qbdry2 = qbdry2 + subrt_data%state%qsubbdryrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(subrt_static%IXRT*subrt_static%JXRT)
+            sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(subrt_static%IXRT*subrt_static%JXRT)
             do kk=1,subrt_static%nsoil
-                smctot2 = smctot2 + subrt_data%grid_transform%smcrt(I,J,KK)*subrt_data%properties%sldpth(KK)*1000. / float(IXRT*JXRT)
+                smctot2 = smctot2 + subrt_data%grid_transform%smcrt(I,J,KK)*subrt_data%properties%sldpth(KK)*1000. / float(subrt_static%IXRT*subrt_static%JXRT)
             end do
          end do
         end do
@@ -2866,9 +2864,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
 
-    CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_static%IXRT, subrt_static%JXRT, &
-          CWATAVAIL, SATLYRCHK)
+    CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, CWATAVAIL, SATLYRCHK)
 
 #ifdef HYDRO_D
     print *, "SUBROUTE routing called and returned..."
