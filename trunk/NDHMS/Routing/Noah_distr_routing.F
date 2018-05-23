@@ -112,7 +112,7 @@
 !DJG ------------------------------------------------
 
 SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
-    NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
+    SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,IXRT,JXRT,DT,    &
     SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,CWATAVAIL, &
     SATLYRCHK)
 
@@ -135,7 +135,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
     type (subsurface_input_interface), intent(inout) :: subrt_input
     type (subsurface_output_interface), intent(inout) :: subrt_output
 
-	INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
+	!INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
+	INTEGER, INTENT(IN) :: IXRT,JXRT
 
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT
 	!REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
@@ -152,14 +153,14 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 	!REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
 	REAL, INTENT(IN)                          :: DT
-	REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
-	REAL, INTENT(IN), DIMENSION(NSOIL) 	  :: SLDPTH
+	!REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
+	REAL, INTENT(IN), DIMENSION(subrt_static%nsoil) 	  :: SLDPTH
 	!REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCMAXRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCREFRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT
-	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCMAXRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCREFRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCWLTRT
 
 	REAL, DIMENSION(IXRT,JXRT)	:: ywtmp
 !DJG Local Variables
@@ -179,7 +180,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
         INTEGER :: DT_STEPS             !-- number of timestep in routing
         REAL :: SUBDT                !-- subsurface routing timestep
         INTEGER :: KRT                  !-- routing counter
-        REAL, DIMENSION(IXRT,JXRT,NSOIL) :: SMCTMP  !--temp store of SMC
+        REAL, DIMENSION(IXRT,JXRT,subrt_static%nsoil) :: SMCTMP  !--temp store of SMC
         REAL, DIMENSION(IXRT,JXRT) :: ZWATTABLRTTMP ! temp store of ZWAT
         REAL, DIMENSION(IXRT,JXRT) :: INFXSUBRTTMP ! temp store of infilx
 !djg        REAL, DIMENSION(IXRT,JXRT) :: CWATAVAIL ! temp specif. of wat avial
@@ -219,7 +220,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
            suminfxsrt1 = suminfxsrt1 + INFXSUBRT(I,J) / float(IXRT*JXRT)
            qbdry1 = qbdry1 + subrt_data%state%qsubbdryrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
            sumqsubrt1 = sumqsubrt1 + subrt_data%state%qsubrt(i,j) / subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
-           do kk=1,NSOIL
+           do kk=1,subrt_static%nsoil
                smctot1 = smctot1 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
            end do
          end do
@@ -256,7 +257,10 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 ! Loop through domain to determine sat. layers and assign wat tbl depth...
 !    and water available for subsfc routing (CWATAVAIL)...
 !
-!         CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
+!   This function call appears to have been moved to SubsurfaceRouting()
+!
+!
+!         CALL FINDZWAT(IXRT,JXRT,subrt_static%nsoil,SMCRT,SMCMAXRT,SMCREFRT, &
 !                             SMCWLTRT,ZSOIL,SATLYRCHK,subrt_data%properties%zwattablrt, &
 !                             CWATAVAIL,SLDPTH)
 
@@ -323,7 +327,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
             IF (SUBFLO.GT.0) THEN ! Increase soil moist for +SUBFLO (Inflow)
 
 ! Loop through soil layers from bottom to top
-              DO KK=NSOIL,1,-1
+              DO KK=subrt_static%nsoil,1,-1
 
 
 ! Check for saturated layers
@@ -375,7 +379,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !    now set to SMCREF, 8/24/07
 !DJG and then using unsat cond as opposed to Ksat...
 
-	      DO KK=SATLYRCHK(I,J),NSOIL
+	      DO KK=SATLYRCHK(I,J),subrt_static%nsoil
                  WATAVAIL = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
                  IF (WATAVAIL.GE.ABS(SUBFLO)) THEN
 !?yw mod                 IF (WATAVAIL.GE.(ABS(SUBFLO)+0.000001) ) THEN
@@ -417,7 +421,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 !!!! End loop through subsurface routing domain...
 
 #ifdef MPP_LAND
-     do i = 1, NSOIL
+     do i = 1, subrt_static%nsoil
         call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
      end DO
 #endif
@@ -434,7 +438,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
             suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)  !
             qbdry2 = qbdry2 + subrt_data%state%qsubbdryrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
             sumqsubrt2 = sumqsubrt2 + subrt_data%state%qsubrt(i,j)/subrt_data%properties%distance_to_neighbor(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
-            do kk=1,NSOIL
+            do kk=1,subrt_static%nsoil
                 smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
             end do
          end do
@@ -2862,8 +2866,8 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, &
 
 
     CALL SUBSFC_RTNG( subrt_data, subrt_static, subrt_input, subrt_output, &
-          subrt_static%NSOIL, subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
-          subrt_data%properties%zsoil, subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
+          subrt_data%grid_transform%smcrt, subrt_input%infiltration_excess, subrt_data%grid_transform%smcmaxrt, subrt_data%grid_transform%smcrefrt, &
+          subrt_static%IXRT, subrt_static%JXRT, subrt_static%DT, subrt_data%grid_transform%smcwltrt, &
           subrt_data%properties%water_surface_slope, subrt_data%properties%max_water_surface_slope_index, &
           subrt_static%rt_option, subrt_data%properties%sldpth, CWATAVAIL, SATLYRCHK)
 
