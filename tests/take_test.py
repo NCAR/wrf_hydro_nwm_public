@@ -57,10 +57,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--test_spec',
-    metavar='test specification key',
-    help='Key for specifying the desired tests',
-    default=None
+   '--test_spec',
+   metavar='test specification key',
+   help='Key for specifying the desired tests',
+   default=None
 )
 
 args = parser.parse_args()
@@ -125,8 +125,17 @@ candidate_spec['machine_spec_file'] = this_script_path + '/machine_spec.yaml'
 machine_spec   = establish_machine_spec(candidate_spec, user_spec, env_vars)
 log.debug('')
 
+# #################################
+if pathlib.PosixPath(candidate_spec['test_dir']).exists():
+    raise FileExistsError("Exiting: the testing run directory already exists " +
+                          candidate_spec['test_dir'])
+
 # ######################################################
 # Log boilerplate info
+
+candidate_spec['config'] = config
+candidate_spec['domain'] = domain
+
 log.info(horiz_bar )
 log.info("Boilerplate:")
 log_boilerplate(candidate_spec, user_spec, env_vars, horiz_bar, this_script_path)

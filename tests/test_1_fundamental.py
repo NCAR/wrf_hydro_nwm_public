@@ -75,7 +75,7 @@ def test_run_candidate(
     capsys
 ):
     with capsys.disabled():
-        print("\nQuestion: The candidate will run successfully?", end='')
+        print("\nQuestion: The candidate runs successfully?", end='')
 
     # Set run directory
     run_dir = output_dir / 'run_candidate'
@@ -109,7 +109,7 @@ def test_run_reference(
     capsys
 ):
     with capsys.disabled():
-        print("\nQuestion: The reference will run successfully?", end='')
+        print("\nQuestion: The reference runs successfully?", end='')
 
     #Set run directory
     run_dir = output_dir / 'run_reference'

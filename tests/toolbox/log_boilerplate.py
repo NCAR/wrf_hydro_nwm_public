@@ -32,20 +32,26 @@ def log_boilerplate(candidate_spec, user_spec, env_vars, horiz_bar, script_path)
     #if is_uncommitted != 0:
     #    log.warning( "There are uncommitted changes to the testing repo (" + script_path + ")")
 
-    log.debug( "Candidate spec file   : " + candidate_spec['candidate_spec_file'] )
+    log.debug("Domain argument       : " + str(candidate_spec['domain']))
+    log.debug("Config argument       : " + str(candidate_spec['config']))
 
-    log.debug( "Machine spec file     : " + candidate_spec['machine_spec_file'] )
-    log.debug( "Machine spec set by   : " +
-               candidate_spec['machine_spec_setby'] )
+    log.debug("Tests run in          : " + candidate_spec['test_dir'] )
+    log.debug("Cloned repos in       : " + candidate_spec['repos_dir'] )
+    
+    log.debug("Candidate spec file   : " + candidate_spec['candidate_spec_file'] )
 
-    log.debug( "User spec file        : " + candidate_spec['user_spec_file'] )
-    log.debug( "User spec set by      : " +
-               candidate_spec['user_spec_setby'] )
+    log.debug("Machine spec file     : " + candidate_spec['machine_spec_file'] )
+    log.debug("Machine spec set by   : " +
+              candidate_spec['machine_spec_setby'] )
+
+    log.debug("User spec file        : " + candidate_spec['user_spec_file'] )
+    log.debug("User spec set by      : " +
+              candidate_spec['user_spec_setby'] )
 
     #log.debug( "Test spec file        : " + candidate_spec['test_spec_file'] )
     #log.debug( "Test spec set by      : " +
     #           candidate_spec['test_spec_setby'] )
 
-    log.debug( "Log file              : ")
-    log.debug( "Will echo specs to log at end.")
+    log.debug("Log file              : ")
+    log.debug("Will echo specs to log at end.")
     return(True)

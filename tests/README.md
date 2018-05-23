@@ -24,17 +24,22 @@ the repository for the candidate's results.
 
 
 ## Usage
-Currently:  
+Currently there are 2 ways to invoke the testing. The fundamental way:
 `python take_test.py <options>`
+This works fine on linux. But if you want to test on docker, the
+following script is meant to be a machine independent interface:
+`take_test.sh <options>`
+This later option is still under development.
 
-In the future, we aim to provide a more general script which will 
-choose and run in docker if not on a known machine. 
+Both of the "take_test" scripts may be preceeded with a path or
+invoked in the `tests/` directory, as shown. 
 
-Supported machines: cheyenne and docker. There are sections below 
+The options are described below.
+
+Currently supported machines: cheyenne and docker. There are sections below 
 about both of these. More machines can be added. 
 
-
-Options are currently described by:
+Options (all optional) are described by:
 `python take_test.py --help`:
 
 
@@ -67,15 +72,16 @@ example in bash:
 `export WRF_HYDRO_TESTS_USER_SPEC=~/wrf_hydro_tests_user_spec.yaml`
 
 The `wrf_hydro_nwm_public/tests/tests/template_user_spec.yaml` should
-be copied a new location and edited to meet your needs.
+be copied a new location and edited to meet your needs (do not put
+your edits under version control).
 
 ### Candidate spec file
 The `wrf_hydro_nwm_public/tests/template_candidate_spec.yaml` should
-be copied and modified for specific tests. This file allows for the
-maximum testing flexibility. 
+be copied and modified for specific tests (do not put your edits under
+version control). This file allows for the maximum testing flexibility. 
 
 ### Machine spec file
-This file is update for new machines (your cluster or your desktop) to
+This file is to be updated for new machines (your cluster or your desktop) to
 run the tests. These changes should come back via version control so
 that each machine only needs specified just once. 
 
@@ -97,7 +103,7 @@ testing: wrfhydro/domains:croton_NY. We will shortly provide a better
 way to pull this domain and other domains outside the docker context.
 
 
-## Cheyenne Example
+## Cheyenne Setup
 1. Setup the python 3.6.4 virutal env per cisl instructions.
    Python 3.6.4+ is required.
    Both sections   
@@ -111,11 +117,13 @@ way to pull this domain and other domains outside the docker context.
    Currently (may be out of date) this is, for example:  
       `pip install jupyter cartopy rasterio netcdf4 dask f90nml deepdiff xarray plotnine boltons pytest pytest-datadir-ng wrfhydropy`
    If a development version of wrfhydropy is needed, you'll need to clone that repository to cheyenne, then do the following:  
-      `cd /path/to/wrf_hydro_py/; pip uninstall -y wrfhydropy; python setup.py develop`
+      `cd /path/to/wrf_hydro_py/; pip uninstall -y wrfhydropy; python setup.py install`
 
 ## Docker Example
+The docker setup is given in `take_test.sh`. Comments are provided for
+the docker commands.
 
-## Get docker images
+
 docker pull wrfhydro/dev:conda
 docker pull wrfhydro/domains:croton_NY
 
