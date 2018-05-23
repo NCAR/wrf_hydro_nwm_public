@@ -262,6 +262,12 @@ log.debug('')
 # Kill the 'stdout' handler.
 log.removeHandler(stdout)
 
+log_file = this_script_path + "take_test.log"
+log_file_handler = logging.FileHandler(log_file, mode='w')
+log_file_handler.setLevel(logging.DEBUG)
+log.addHandler(log_file_handler)
+
+
 log.info('*****************************************************************')
 log.debug('')
 
