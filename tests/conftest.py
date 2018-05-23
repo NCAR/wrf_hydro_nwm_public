@@ -105,26 +105,35 @@ def compiler(request):
 
 @pytest.fixture(scope="session")
 def job_default(request, configuration):
-    job_in = json.loads(request.config.getoption("--job_default"))
-    job_dum = Job(nproc=-1)
-    job_dum.__dict__.update(job_in)
+    job_in = request.config.getoption("--job_default")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        job_dum = Job(nproc=-1)
+    if job_in is not None:
+        job_in = json.loads(job_in)
+        job_dum.__dict__.update(job_in)
     return job_dum
 
 
 @pytest.fixture(scope="session")
 def job_ncores(request, configuration):
-    job_in = json.loads(request.config.getoption("--job_ncores"))
-    job_dum = Job(nproc=-1)
-    job_dum.__dict__.update(job_in)
+    job_in = request.config.getoption("--job_ncores")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        job_dum = Job(nproc=-1)
+    if job_in is not None:
+        job_in = json.load(job_in)
+        job_dum.__dict__.update(job_in)
     return job_dum
 
 
 @pytest.fixture(scope="session")
 def scheduler(request, configuration):
-    sched = json.loads(request.config.getoption("--scheduler"))
-    if sched is None or sched == 'None':
+    sched_in = request.config.getoption("--scheduler"))
+    if sched_in is None or sched_in == 'None':
         return None
     else:
+        sched = json.loads(sched_in)
         sched_dum = Scheduler(
             job_name='default',
             account='DUMDUM',
