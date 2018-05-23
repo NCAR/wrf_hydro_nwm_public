@@ -67,14 +67,14 @@ def establish_user_spec(candidate_spec, env_vars):
         candidate_spec['user_spec_setby'] = 'candidate spec'
 
     if user_spec_file == '' or user_spec_file is None:
-        default_files = establish_default_files()
-        user_spec_file = default_files[0]
+        user_spec_file = os.environ['WRF_HYDRO_TESTS_USER_SPEC']
+        user_spec = establish_spec(user_spec_file)
         candidate_spec['user_spec_setby'] = 'env var'
 
     candidate_spec['user_spec_file'] = user_spec_file
     # TODO JLM: indicate in the candidate_spec how the user_spec_file was set.
     # TODO JLM: WARN if DNE
-
+    print('user_spec_file: ', user_spec_file)
     user_spec = establish_spec(user_spec_file)
 
     return(user_spec)
@@ -103,33 +103,3 @@ def establish_candidate(candidate_spec_file):
     candidate_spec = establish_spec(candidate_spec_file)
     candidate_spec['candidate_spec_file'] = candidate_spec_file
     return(candidate_spec)
-
-
-# ######################################################
-# Test spec
-# This one is very different as there's no yaml file to parse, just
-# a command line arg.
-
-# def establish_test(test_spec, candidate_spec, user_spec):
-#     log.debug("Establish test spec.")
-#     test_spec_file = Path(test_spec)
-#     candidate_spec['test_spec_setby'] = 'command line path/file'
-#     if not test_spec_file.exists():
-#         candidate_spec['test_spec_setby'] = 'command line key'
-#         test_spec_list = \
-#             list(Path(user_spec['wrf_hydro_tests_dir']+'/tests').glob(test_spec+'.py'))
-#         if len(test_spec_list) != 1:
-#             log.error('The test specification argument does not identify a unique test.')
-#         else:
-#             test_spec_file = str(test_spec_list[0])
-
-#     candidate_spec['test_spec_file'] = test_spec_file
-#     return(True)
-
-
-# This is to support external calls... should probably enforce this above... 
-def establish_default_files():
-    default_user_spec_file = os.environ['WRF_HYDRO_TESTS_USER_SPEC']
-    default_user_spec = establish_spec(default_user_spec_file)
-    default_machine_spec_file = default_user_spec['wrf_hydro_tests_dir'] + '/machine_spec.yaml'
-    return default_user_spec_file, default_machine_spec_file

@@ -21,7 +21,7 @@ from establish_repo import *
 from establish_specs import *
 from log_boilerplate import log_boilerplate
 
-machine_name = wrfhydropy.job_tools.get_machine()
+machine_name = wrfhydropy.core.job_tools.get_machine()
 
 # ######################################################
 # Preamble/overview/Help/docstring.
@@ -63,20 +63,11 @@ parser.add_argument(
     default=None
 )
 
-# parser.add_argument(
-#     '--version',
-#     metavar='version specification key',
-#     help='Key for specifying the desired model version (default is candidate version)',
-#     default=None
-# )
-
 args = parser.parse_args()
 candidate_spec_file = args.candidate_spec_file
 domain = args.domain
 config= args.config
 test_spec = args.test_spec
-# version = args.version
-
 # TODO(JLM): these items need to go into the boilerplate.
 
 if domain is None:
@@ -87,7 +78,7 @@ if domain is None:
 
 if test_spec is None:
     test_spec = 'fundamental'
-        
+
 # TODO JLM: want to get the log file name from the candidate_spec_file but want to be
 #           logging to file before that. COPY the log file at the end.
 

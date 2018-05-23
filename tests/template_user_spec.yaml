@@ -3,31 +3,25 @@
 # setting these. These can be inherited from the environment
 github:
   # Authtoken can either be a file or an env var.
-  authtoken : $GITHUB_AUTHTOKEN
-  authtoken_file : ~/.github_authtoken
-  username       : jmccreight
+  authtoken: $GITHUB_AUTHTOKEN
+  authtoken_file: ~/.github_authtoken
+  username: jmccreight
   # Note: setting ssh_priv_key overrides using authtoken.
   # No value results in None.
-  ssh_priv_key   :
-    #/Users/jamesmcc/.ssh/id_rsa_chimayo_ucar
+  ssh_priv_key:
+  #/Users/jamesmcc/.ssh/id_rsa_chimayo_ucar
 
+# Your PBS header fields. Edit to your needs Do NOT include others here.
+# These appear commented, but PBS looks for lines beginning with #PBS
+PBS:
+  email:
+    when: abe
+    who: $USER@ucar.edu
+  account: NRAL0017
 
-## Your PBS header fields. Edit to your needs Do NOT include others here.
-## These appear commented, but PBS looks for lines beginning with #PBS
-PBS :
-  email :
-    when : abe
-    who  : $USER@ucar.edu
-  account : NRAL0017
-    
-#PBS -m abe 
-#PBS -M `whoami`@ucar.edu
-#PBS -A NRAL0017
-
-
-#######################################################
+  
+# ######################################################
 # Overrides to machine_spec.sh
 # Place any environment variables you would like modified
 # compared to the machine_spec.sh file.
-
-marchine_spec_overrides:
+machine_spec_overrides:
