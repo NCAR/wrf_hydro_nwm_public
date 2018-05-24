@@ -1,0 +1,33 @@
+# wrf_hydro_tests: machine configuration file.
+# Purpose: Log all the static information for each machine in this file. This file
+#          is sourced after the candidate specification file and my rely on 
+#          variables defined therein.
+cheyenne:
+
+  modules: 
+    base : nco/4.6.2 python/3.6.2
+    ifort: intel/16.0.3 ncarenv/1.2 ncarcompilers/0.4.1 mpt/2.15f netcdf/4.4.1
+    gfort: gnu/7.1.0 ncarenv/1.2 ncarcompilers/0.4.1 mpt/2.15 netcdf/4.4.1.1
+
+# This should Not be necessary.    
+#  netcdf:
+#      intel: /glade/u/apps/ch/opt/netcdf/4.4.1/intel/16.0.1
+#      GNU  : /glade/u/apps/ch/opt/netcdf/4.4.1.1/gnu/7.1.0
+
+  scheduler:
+    name: "PBS"
+    max_walltime: '12:00'
+      
+  cores_per_node: 36
+
+  # The executable invocation on the machine
+  exe_cmd:
+    PBS    : 'mpiexec_mpt ./wrf_hydro.exe'
+    default: 'mpirun -np {nproc} ./wrf_hydro.exe'
+    
+docker:
+  modules:
+  scheduler:
+  cores_per_node:
+  exe_cmd:
+    default: 'mpirun -ppn {nproc} ./wrf_hydro.exe'
