@@ -13,7 +13,7 @@ module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0-dev"
+character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0"
 integer, parameter :: numChVars = 10
 integer, parameter :: numLdasVars = 97
 integer, parameter :: numRtDomainVars = 5
@@ -124,7 +124,7 @@ type ldasMeta
                                                   ! real to
                                                   ! integer.
    real, dimension(numLdasVars)             :: addOffset   ! add_offset values for each variable.
-   character (len=64), dimension(numLdasVars) :: longName  ! Long names for each variable.
+   character (len=128), dimension(numLdasVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLdasVars) :: units ! Units for each variable.
    integer, dimension(numLdasVars) :: numLev ! Number of levels for each variable.
    integer*8, dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
@@ -1030,7 +1030,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "WOOD","STBLCP","FASTCP","NEE","GPP","NPP","PSN",&
                                "APAR","ACCET","CANWAT","SOILICE","SOILSAT_TOP",&
                                "SOILSAT","SNOWT_AVG","ALBSND","ALBSNI"]
-   ldasOutDict%longName(:) = [character(len=64) :: "Dominant vegetation category",&
+   ldasOutDict%longName(:) = [character(len=128) :: "Dominant vegetation category",&
                               "Dominant soil category",&
                               "Green Vegetation Fraction",&
                               "Leaf area index",&
@@ -1092,7 +1092,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "soil temperature",&
                               "liquid volumetric soil moisture",&
                               "snow temperature",&
-                              "volumetric soil moisture",&
+                              "volumetric soil moisture, the dimensionless ratio of water volume (m3) to soil volume (m3)",&
                               "Snow depth",&
                               "Snow water equivalent",&
                               "Snowfall rate",&
@@ -1137,11 +1137,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "K","K","K","K","K","K","K","K",&
                             "kg/kg","kg/kg","Pa","fraction",&
                             "m","mm","mm","K","m3 m-3","K","m3 m-3",&
-                            "m","kg m-2","mm s-1","count","-","mm","mm",&
+                            "m","kg m-2","mm s-1","count","1","mm","mm",&
                             "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
                             "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
                             "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2",&
-                            "mm","mm","fraction","fraction","fraction","K","-","-"]
+                            "mm","mm","1","1","1","K","-","-"]
    ldasOutDict%scaleFactor(:) = [1.0,1.0,0.01,0.1,0.1,0.1,0.01,0.1,0.000001,0.01,&
                                  0.1,0.1,0.1,0.1,0.1,0.000001,0.000001,0.01,&
                                  0.000001,0.01,0.001,0.01,0.01,0.00001,0.01,&
@@ -1614,7 +1614,7 @@ subroutine initLakeDict(lakeOutDict,diagFlag,procId)
 
    ! Establish elevation variable attributes
    lakeOutDict%elevLName = "Water Surface Elevation"
-   lakeOutDict%elevUnits = "meters"
+   lakeOutDict%elevUnits = "m" ! meters
 
    ! Establish feature_id attributes
    lakeOutDict%featureIdLName = "Lake ComID"
