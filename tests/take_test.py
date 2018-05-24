@@ -206,6 +206,7 @@ pytest_cmd = [
     '--rootdir', str(candidate_spec['candidate_repo']['local_path']) + '/tests/' ,
     '--ignore', 'take_test.py',
     '--ignore', 'toolbox/',
+    '--ignore', 'run_travis_yml_locally.py',
     '--compiler', candidate_spec['compiler'],
     '--domain_dir', domain,
     '--output_dir',  candidate_spec['test_dir'],
