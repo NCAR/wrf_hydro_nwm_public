@@ -1,12 +1,16 @@
 #!/bin/bash
+# TODO(JLM): I should have written this in python.
 # Purpose:
 #   This script is the general pupose launching script for wrf_hydro_nwm_public
 #   and wrf_hydro_nwm testing.
 #   This script takes care of logging the tests.
 #   This script handles launchin in docker and on known machines. Other
 #   machines will cause an error.
-#           
-# Arguments are passed to take_test.py, please run
+#
+# Only argument take for docker usage:
+#   -i : enters docker interactively.
+#
+# All other arguments are passed to take_test.py, please run
 #   ./take_test.sh --help
 # For complete information on the following arguments:
 #   -- domain
@@ -102,7 +106,8 @@ if [ $wh_domain != -1 ]; then
     #echo "domain: $domain"
 fi
 if [ -z $domain ]; then
-    domain=croton_NY
+    domain=wrfhydro/domains:croton_NY
+    args_to_pass="${args_to_pass} --domain $domain"
     #echo "domain: $domain"
 fi
 
@@ -117,7 +122,8 @@ fi
 if [[ $known_machine == 0 ]] || [[ $in_docker == 0 ]]; then
 
     python ${this_dir}/take_test.py ${args_to_pass}
-
+    return_code=$?
+    
 else
 
 # #################################
@@ -136,18 +142,35 @@ else
         echo 
         echo "Using Docker."
         echo
-        
+
         echo "Refresh the wrfhydro/dev:conda container"
         docker pull wrfhydro/dev:conda
         echo
-        echo "Refresh the wrfhydro/domains:${domain} container"
-        docker pull wrfhydro/domains:${domain}
-        echo
         
-        # Dummy, hopefully untaken name...
-        domain_tmp_vol=${domain}_tmp_vol    
-        docker create --name ${domain_tmp_vol} wrfhydro/domains:${domain} || exit 1
- 
+        # Is the domain a container or a path?
+        if [[ ${domain} == "wrfhydro/domains:"* ]]; then
+
+            echo "Refresh the ${domain} container"
+            docker pull ${domain}
+
+            # Have to edit args_to_pass to the correct location.
+            domain_tag=$(echo $domain | cut -d':' -f2)
+            args_to_pass=$(echo "$args_to_pass" | sed "s|${domain}|/home/docker/domain/${domain_tag}|")
+            # Dummy, hopefully untaken name...
+            domain_tmp_vol="${domain_tag}"_tmp_vol
+            docker create --name $domain_tmp_vol ${domain} || exit 1
+
+        else
+
+            # Set the mount.
+            host_domain_dir=$domain
+            domain_tag=$(basename $domain)
+            docker_domain_dir=/home/docker/domain/$domain_tag
+            args_to_pass=$(echo "$args_to_pass" | sed "s|${domain}|/home/docker/domain/${domain_tag}|")
+            
+        fi
+        echo
+       
         # Need the user and candidate specs in a mountable place.
         host_spec_dir=/tmp/user_spec_dir/
         docker_spec_dir=/home/docker/.test_spec_dir
@@ -175,34 +198,70 @@ else
         # Use mount this repo to /home/docker
         this_repo_name=$(basename $this_repo)
 
+        not_interactive=$(echo "$args_to_pass" | grep ' -i' | wc -l)
+        args_to_pass=$(echo "$args_to_pass" | sed "s| -i||")
+
         docker_cmd=""
         #docker_cmd=${docker_cmd}"cd /home/docker/wrf_hydro_py; pip uninstall -y wrfhydropy; "
         #docker_cmd=${docker_cmd}" python setup.py install; pip install termcolor; "
-        docker_cmd=${docker_cmd}" cd /home/docker/${this_repo_name}/tests/; ./take_test.sh ${args_to_pass};"
-        docker_cmd=${docker_cmd}" exit $?"
-        # TODO(JLM): I have not verified passing of the return value...
+        docker_cmd=$(echo "${docker_cmd}cd /home/docker/${this_repo_name}/tests/; ./take_test.sh ${args_to_pass};")
+        if [[ "$not_interactive" -eq 0 ]]; then 
+            docker_cmd=$(echo "${docker_cmd} echo $?")
+        else
+            docker_cmd=$(echo "${docker_cmd} /bin/bash ")
+        fi
+        
+        #echo "docker_cmd: $docker_cmd"
         
         echo "Starting the docker image."
         echo
         # -e establishes env variables in docker.
         # -v mounts directories host:docker
         # The GITHUB variables are used only for the private, wrf_hydro_nwm repo.
-        docker run -it \
-               -e USER=docker \
-               -e GITHUB_AUTHTOKEN=$GITHUB_AUTHTOKEN \
-               -e GITHUB_USERNAME=$GITHUB_USERNAME \
-               -e WRF_HYDRO_TESTS_USER_SPEC=${docker_user_spec} \
-               -v ${host_spec_dir}:${docker_spec_dir} \
-               -v ${this_repo}:/home/docker/${this_repo_name} \
-               -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
-               --volumes-from ${domain_tmp_vol} \
-               wrfhydro/dev:conda /bin/bash -c "${docker_cmd}"
+        invoke_docker=$(echo \
+"docker run -it \
+     -e USER=docker \
+     -e GITHUB_AUTHTOKEN=$GITHUB_AUTHTOKEN \
+     -e GITHUB_USERNAME=$GITHUB_USERNAME \
+     -e WRF_HYDRO_TESTS_USER_SPEC=${docker_user_spec} \
+")
+        
+        if [[ ! -z $host_domain_dir ]]; then
+            invoke_docker=$(echo \
+"${invoke_docker} \
+     -v ${host_domain_dir}:${docker_domain_dir} \
+")
+        fi
 
-        # TODO (JLM): Dont remove this if the test failed? May want different name.
-        echo "Tearing down the data container: " $(docker rm -v ${domain_tmp_vol})
+        invoke_docker=$(echo \
+"${invoke_docker} \
+     -v ${host_spec_dir}:${docker_spec_dir} \
+     -v ${this_repo}:/home/docker/${this_repo_name} \
+     -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
+")
+        if [[ ! -z $domain_tmp_vol ]]; then
+            invoke_docker=$(echo \
+"${invoke_docker} \
+     --volumes-from ${domain_tmp_vol} \
+")
+        fi
+
+        invoke_docker=$(echo \
+"${invoke_docker} \
+     wrfhydro/dev:conda /bin/bash -c \"${docker_cmd}\"")
+
+        #echo "$args_to_pass"
+        #echo "$invoke_docker"
+        
+        eval $invoke_docker
+        #return_code=$?
+        
+        if [[ ${domain} == "wrfhydro/domains:"* ]]; then
+            echo "Tearing down the data container: " $(docker rm -v ${domain_tmp_vol})
+        fi
         
     fi # Trying docker
     
 fi # Known machine else unknown machine
     
-exit 0
+exit $return_code
