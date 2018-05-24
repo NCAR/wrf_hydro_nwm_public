@@ -201,6 +201,8 @@ log.info(horiz_bar)
 log.info("Calling pytest:")
 
 pytest_cmd = [
+    '-v',
+    '--color', 'yes',
     '--rootdir', str(candidate_spec['candidate_repo']['local_path']) + '/tests/' ,
     '--ignore', 'take_test.py',
     '--ignore', 'toolbox/',

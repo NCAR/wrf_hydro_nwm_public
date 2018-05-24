@@ -2,23 +2,27 @@ import json
 import pathlib
 import pytest
 import sys
+import warnings
 from wrfhydropy import *
 
 
 def pytest_addoption(parser):
 
+    # Required args:
+
     parser.addoption(
-        "--config",
-        default=['NWM', 'Gridded', 'Reach'],
-        nargs='+',
-        help=("List of model configurations to test, options are 'NWM'," +
-              "'Gridded',and 'Reach'")
+        '--domain_dir',
+        required=True,
+        action='store',
+        help='domain directory'
     )
 
-    parser.addoption('--compiler', required=False, action='store', help='compiler key from config')
-
-    parser.addoption('--domain_dir', required=True, action='store', help='domain directory')
-    parser.addoption('--output_dir', required=True, action='store', help='test output directory')
+    parser.addoption(
+        '--output_dir',
+        required=True,
+        action='store',
+        help='test output directory'
+    )
 
     parser.addoption(
         '--candidate_dir',
@@ -34,9 +38,46 @@ def pytest_addoption(parser):
         help='reference model directory'
     )
 
-    parser.addoption('--job_default', required=False, action='store', help='candidate job')
-    parser.addoption('--job_ncores', required=False, action='store', help='ncores job')
-    parser.addoption('--scheduler', required=False, action='store', help='scheduler for all jobs')
+    # Optional args:
+
+    parser.addoption(
+        "--config",
+        default=['NWM', 'Gridded', 'Reach'],
+        nargs='+',
+        help=("List of model configurations to test, options are 'NWM'," +
+              "'Gridded',and 'Reach'")
+    )
+
+    parser.addoption(
+        '--compiler',
+        default='gfort',
+        required=False,
+        action='store',
+        help='compiler key from config'
+    )
+
+    parser.addoption(
+        '--job_default',
+        default=None,
+        required=False,
+        action='store',
+        help='candidate job'
+    )
+
+    parser.addoption(
+        '--job_ncores',
+        default=None,
+        required=False,
+        action='store',
+        help='ncores job'
+    )
+
+    parser.addoption(
+        '--scheduler',
+        default=None,
+        required=False,
+        action='store',
+        help='scheduler for all jobs')
 
 
 def pytest_generate_tests(metafunc):
@@ -118,11 +159,13 @@ def job_default(request, configuration):
 @pytest.fixture(scope="session")
 def job_ncores(request, configuration):
     job_in = request.config.getoption("--job_ncores")
+    print("job_in: ", job_in)
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         job_dum = Job(nproc=-1)
     if job_in is not None:
-        job_in = json.load(job_in)
+        job_in = json.loads(job_in)
         job_dum.__dict__.update(job_in)
     return job_dum
 
@@ -130,7 +173,7 @@ def job_ncores(request, configuration):
 @pytest.fixture(scope="session")
 def scheduler(request, configuration):
     sched_in = request.config.getoption("--scheduler")
-    if sched_in is None or sched_in == 'None':
+    if sched_in is None or sched_in == 'null':
         return None
     else:
         sched = json.loads(sched_in)

@@ -147,7 +147,7 @@ else
         # Dummy, hopefully untaken name...
         domain_tmp_vol=${domain}_tmp_vol    
         docker create --name ${domain_tmp_vol} wrfhydro/domains:${domain} || exit 1
-
+ 
         # Need the user and candidate specs in a mountable place.
         host_spec_dir=/tmp/user_spec_dir/
         docker_spec_dir=/home/docker/.test_spec_dir
