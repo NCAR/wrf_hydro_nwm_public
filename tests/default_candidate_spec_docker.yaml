@@ -1,0 +1,31 @@
+# Choices are currently 'GNU' and 'intel'. (currently case-sensitive).
+compiler : 'gfort'
+
+# queue: None disables the scheduler.
+queue :
+wall_time :
+  
+n_cores:
+      default : 2
+      test    : 1
+
+     
+# Where temp repositories cloned from github shall be placed
+#   (in subfolders candidate/ and reference/)
+repos_dir : /home/docker/take_test/test_repos
+test_dir : /home/docker/take_test/test_dir
+
+candidate_repo:
+    fork       : 
+    commitish  : 
+    # The path to the repo from whence take_test was called.
+    local_path : '{this_repo_path}'
+
+reference_repo:
+    fork       : NCAR/wrf_hydro_nwm  
+    commitish  : master
+    local_path : 
+
+wrf_hydro_tests:    
+    user_spec :
+    machine_spec : 
