@@ -7,6 +7,7 @@
 - Updates to Noah-MP infiltration scheme to better handle high intensity rainfall events in fast-draining soils.
 - Significant improvements to model output routines, including full CF compliance, new capabilities for applying internal scale/offset and compression to reduce file sizes, and built-in coordinate information to allow outputs to be read natively in GIS environments.
 - New streamflow nudging data-assimilation capability for the Muskingum-Cunge method.
+- Testing is now available for WRF-Hydro.  More information can be found [here](tests/README.md).
 
 ## Details:
 ### Namelists:
