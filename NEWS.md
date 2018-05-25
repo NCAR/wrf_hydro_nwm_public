@@ -1,13 +1,13 @@
 # WRF-Hydro v5.0.0
 
 ## High-Level Highlights:
-- New capability to aggregate and route flow with user-defined mapping (catchments and reaches, e.g., NHDPlus).
-- New capability to specify key hydrologic and vegetation parameters in 2 dimensions (and 3 in the case of soil properties).
-- New Noah-MP surface resistance formulation that improves snowpack simulation.
-- Updates to Noah-MP infiltration scheme to better handle high intensity rainfall events in fast-draining soils.
-- Significant improvements to model output routines, including full CF compliance, new capabilities for applying internal scale/offset and compression to reduce file sizes, and built-in coordinate information to allow outputs to be read natively in GIS environments.
-- New streamflow nudging data-assimilation capability for the Muskingum-Cunge method.
-- Testing is now available for WRF-Hydro.  More information can be found [here](tests/README.md).
+- New capability to aggregate and route flow with user-defined mapping over NHDPLUS catchments and reaches
+- New capability to specify key hydrologic and vegetation parameters in 2 dimensions (and 3 in the case of soil properties)
+- New Noah-MP surface resistance formulation that improves snowpack simulation
+- Updates to Noah-MP infiltration scheme to better handle high intensity rainfall events in fast-draining soils
+- Significant improvements to model output routines, including full CF compliance, new capabilities for applying internal scale/offset and compression to reduce file sizes, and built-in coordinate information to allow outputs to be read natively in GIS environments
+- New capability for streamflow nudging data-assimilation for the Muskingum-Cunge method
+- New capability for engineering and regression testing is now available for WRF-Hydro. More information can be found [here](tests/README.md).
 
 ## Details:
 ### Namelists:
