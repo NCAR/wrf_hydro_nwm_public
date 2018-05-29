@@ -21,4 +21,5 @@ before_install:
   - DOMAIN_DIR_DOCKER=/home/docker/domain/croton_NY
 
 script:
-  - docker run --volumes-from croton_NY -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip uninstall -y wrfhydropy; pip install wrfhydropy; cd $PYTEST_DIR_DOCKER; pytest $PYTEST_DIR_DOCKER -v --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
+  - docker run --volumes-from croton_NY -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip uninstall -y wrfhydropy; pip install wrfhydropy; cd $PYTEST_DIR_DOCKER; pytest -v --ignore take_test.py --ignore toolbox/ --ignore run_travis_yml_locally.py --compiler gfort --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
+

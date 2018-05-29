@@ -143,18 +143,18 @@ channel_option = 3
 ! Specify the reach file for reach-based routing options (e.g.: "Route_Link.nc")
 !route_link_f = "./DOMAIN/Route_Link.nc"
 
-! Specify the lake parameter file (e.g.: "LAKEPARM.nc" for netcdf or "LAKEPARM.TBL" for text).
+! Specify the lake parameter file (e.g.: "LAKEPARM.nc").
 ! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
 
-! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc" for netcdf
-! or "gw_basns.txt" for ascii). Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
+! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc")
+!Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
 gwbasmskfil = "./DOMAIN/GWBASINS.nc"
 
-! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc" for netcdf or "GWBUCKPARM.TBL" for text)
+! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc")
 GWBUCKPARM_file = "./DOMAIN/GWBUCKPARM.nc"
 
 ! User defined mapping, such NHDPlus: 0=no (default), 1=yes
