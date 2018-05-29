@@ -15,6 +15,7 @@ OBJS = \
 	module_HYDRO_io.o \
  	module_RT.o \
 	Noah_distr_routing.o \
+	Noah_distr_routing_overland.o \
 	Noah_distr_routing_subsurface.o \
 	module_channel_routing.o \
 	module_lsm_forcing.o \
