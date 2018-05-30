@@ -1,5 +1,5 @@
 # Development
-- *Backwards Incompatibility*. The previously hard coded soil shape function exponent parameter in Noah-MP was added to the MPTABLE.TBL parameter table as `RSURF_EXP` and spatial soil parameter file as `rsurfexp`.  Users specifying a spatial soil parameter file (in namelist.hrldas -> noahlsm_offline -> spatial_file)  will need to update this file. The file can be updated, for example, by the following NCO command where the existing file is named "soil_properties.nc": `ncap2 -O -s "rsurfexp=slope*0.0+5.0" soil_properties.nc soil_properties.nc` (#62)
+- *Backwards Incompatibility*. The previously hard coded soil shape function exponent parameter in Noah-MP was added to the MPTABLE.TBL parameter table as `RSURF_EXP` and spatial soil parameter file as `rsurfexp`.  Users specifying a spatial soil parameter file (in namelist.hrldas -> noahlsm_offline -> spatial_filename)  will need to update this file. The file can be updated, for example, by the following NCO command where the existing file is named "soil_properties.nc": `ncap2 -O -s "rsurfexp=slope*0.0+5.0" soil_properties.nc soil_properties.nc` (#62)
 
 # WRF-Hydro v5.0.0
 
