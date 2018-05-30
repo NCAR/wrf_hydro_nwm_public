@@ -235,6 +235,8 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SAGXY     ! solar rad absorbed by ground (w/m2)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RSSUNXY   ! sunlit leaf stomatal resistance (s/m)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RSSHAXY   ! shaded leaf stomatal resistance (s/m)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ALBSNDXY  ! snow albedo (direct)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ALBSNIXY  ! snow albedo (diffuse)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  BGAPXY    ! between gap fraction
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WGAPXY    ! within gap fraction
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGVXY     ! under canopy ground temperature[K]
@@ -312,7 +314,8 @@ module module_NoahMP_hrldas_driver
 ! Timing:
 !------------------------------------------------------------------------
 
-  INTEGER :: NTIME          ! timesteps
+  INTEGER :: NTIME          ! total timesteps
+  INTEGER :: ITIME          ! LSM time step
   integer :: clock_count_1 = 0
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
@@ -913,6 +916,8 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( SAGXY     (XSTART:XEND,YSTART:YEND) )  ! solar rad absorbed by ground (w/m2)
   ALLOCATE ( RSSUNXY   (XSTART:XEND,YSTART:YEND) )  ! sunlit leaf stomatal resistance (s/m)
   ALLOCATE ( RSSHAXY   (XSTART:XEND,YSTART:YEND) )  ! shaded leaf stomatal resistance (s/m)
+  ALLOCATE ( ALBSNDXY  (XSTART:XEND,1:2,YSTART:YEND) )  ! snow albedo (direct)
+  ALLOCATE ( ALBSNIXY  (XSTART:XEND,1:2,YSTART:YEND) )  ! snow albedo (diffuse)
   ALLOCATE ( BGAPXY    (XSTART:XEND,YSTART:YEND) )  ! between gap fraction
   ALLOCATE ( WGAPXY    (XSTART:XEND,YSTART:YEND) )  ! within gap fraction
   ALLOCATE ( TGVXY     (XSTART:XEND,YSTART:YEND) )  ! under canopy ground temperature[K]
@@ -1094,6 +1099,8 @@ module module_NoahMP_hrldas_driver
   SAGXY      = undefined_real
   RSSUNXY    = undefined_real
   RSSHAXY    = undefined_real
+  ALBSNDXY   = undefined_real
+  ALBSNIXY   = undefined_real
   BGAPXY     = undefined_real
   WGAPXY     = undefined_real
   TGVXY      = undefined_real
@@ -1521,9 +1528,15 @@ endif
 #ifdef MPP_LAND
    if(my_id .eq. io_id) &
        print*, "t0OutputFlag: ", t0OutputFlag  
-#endif        
-!#ifdef HYDRO_REALTIME
-   if(t0OutputFlag .eq. 1) call ldas_output(0)
+#endif     
+
+! ldas_output subroutine will be called when 
+! the t0OutputFlag is 1 in the hydro.namelist
+! the ldas_output requires one variables ITIME 
+! which is the LSM timestep, we declare it here
+! since it does not exist at this point
+  ITIME = 0
+  if(t0OutputFlag .eq. 1) call ldas_output(ITIME)
 !#else
 !  if (restart_filename_requested == " ") then
 !     if(t0OutputFlag .eq. 1) call ldas_output()
@@ -1718,6 +1731,7 @@ end subroutine land_driver_ini
                  TRADXY,    NEEXY,    GPPXY,    NPPXY,    FVEGXY,    RUNSFXY, &
 	        RUNSBXY,   ECANXY,   EDIRXY,  ETRANXY,     FSAXY,     FIRAXY, &
                  APARXY,    PSNXY,    SAVXY,    SAGXY,   RSSUNXY,    RSSHAXY, &
+               ALBSNDXY, ALBSNIXY,                                            & ! OUT Noah MP only
                  BGAPXY,   WGAPXY,    TGVXY,    TGBXY,     CHVXY,      CHBXY, &
 		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
 		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
@@ -1843,8 +1857,7 @@ end subroutine land_driver_exe
 
 !!===============================================================================
 subroutine  ldas_output(itime)
-integer, intent(in)  :: itime ! time step of the LSM, had to explicitly declare it since 
-                              ! it did not exist in the land_driver_ini 
+integer, intent(in)  :: itime ! time step of the LSM  
 
 !#ifdef WRF_HYDRO
 !if ( (io_config_outputs .eq. 0) ) then
@@ -2079,6 +2092,8 @@ integer, intent(in)  :: itime ! time step of the LSM, had to explicitly declare 
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT_TOP),IVGTYP,93)
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT),IVGTYP,94)
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SNOWT_AVG),IVGTYP,95)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNDXY,IVGTYP,96)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNIXY,IVGTYP,97)
 #endif /* WRF_HYDRO */
 
 !#ifdef WRF_HYDRO
