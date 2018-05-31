@@ -766,7 +766,7 @@ contains
   subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
                           nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &
 		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d,slope_2d,&
-			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d)
+			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d,rsurfexp_2d)
     implicit none
     character(len=*),          intent(in)  :: spatial_filename
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -788,6 +788,7 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mp_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: hvt_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mfsno_2d    
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: rsurfexp_2d
 
     character(len=24)  :: name
     character(len=256) :: units
@@ -1006,6 +1007,16 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, mfsno_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!    
+    name = "rsurfexp"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, rsurfexp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
     
     ! Close the NetCDF file
     ierr = nf90_close(ncid)

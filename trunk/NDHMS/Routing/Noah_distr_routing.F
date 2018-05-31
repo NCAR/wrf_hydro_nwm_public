@@ -894,8 +894,10 @@
 !	     RETDEPRT(I,J) = RETDEPRT(I,J) * 100.0    !DJG TEMP HARDWIRE!!!!
 !	     RETDEPRT(I,J) = 10.0    !DJG TEMP HARDWIRE!!!!
 
-! AD hardwire to force channel retention depth to be 5mm.
-             RETDEPRT(I,J) = 5.0
+!ADCHANGE: This RETDEPRT setting for channel cells has been moved to LandRT_ini where
+!RETDEPRT is initially calculated. Keeps it out of this frequent routine call and 
+!time loop. 
+!             RETDEPRT(I,J) = 5.0
 
              IF (SFCHEADSUBRT(I,J).GT.RETDEPRT(I,J)) THEN
 !!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
