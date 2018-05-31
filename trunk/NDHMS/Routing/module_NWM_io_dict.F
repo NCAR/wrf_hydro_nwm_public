@@ -13,9 +13,9 @@ module module_NWM_io_dict
 implicit none
 
 ! Declare parameter values for module.
-character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0-dev"
+character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0"
 integer, parameter :: numChVars = 10
-integer, parameter :: numLdasVars = 95
+integer, parameter :: numLdasVars = 97
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
@@ -113,6 +113,7 @@ type ldasMeta
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
+   integer :: numSpectrumBands = 2
    character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
@@ -123,7 +124,7 @@ type ldasMeta
                                                   ! real to
                                                   ! integer.
    real, dimension(numLdasVars)             :: addOffset   ! add_offset values for each variable.
-   character (len=64), dimension(numLdasVars) :: longName  ! Long names for each variable.
+   character (len=128), dimension(numLdasVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLdasVars) :: units ! Units for each variable.
    integer, dimension(numLdasVars) :: numLev ! Number of levels for each variable.
    integer*8, dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
@@ -1028,8 +1029,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "CHUC","CHV2","CHB2","LFMASS","RTMASS","STMASS",&
                                "WOOD","STBLCP","FASTCP","NEE","GPP","NPP","PSN",&
                                "APAR","ACCET","CANWAT","SOILICE","SOILSAT_TOP",&
-                               "SOILSAT","SNOWT_AVG"]
-   ldasOutDict%longName(:) = [character(len=64) :: "Dominant vegetation category",&
+                               "SOILSAT","SNOWT_AVG","ALBSND","ALBSNI"]
+   ldasOutDict%longName(:) = [character(len=128) :: "Dominant vegetation category",&
                               "Dominant soil category",&
                               "Green Vegetation Fraction",&
                               "Leaf area index",&
@@ -1091,7 +1092,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "soil temperature",&
                               "liquid volumetric soil moisture",&
                               "snow temperature",&
-                              "volumetric soil moisture",&
+                              "volumetric soil moisture, the dimensionless ratio of water volume (m3) to soil volume (m3)",&
                               "Snow depth",&
                               "Snow water equivalent",&
                               "Snowfall rate",&
@@ -1123,7 +1124,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "fraction of soil moisture that is ice",&
                               "fraction of soil saturation, top 2 layers",&
                               "fraction of soil saturation, column integrated",&
-                              "average snow temperature (by layer mass)"]
+                              "average snow temperature (by layer mass)",&
+                              "snowpack albedo, direct", "snowpack albedo, diffuse"]
    ldasOutDict%units(:) = [character(len=64) :: "category","category","-","-","-",&
                             "W m-2","-","W m-2","kg m-2s-1",&
                             "-","W m-2","W m-2","W m-2","W m-2","W m-2","kg m-2s-1","kg m-2s-1","-","kg m-2s-1",&
@@ -1135,11 +1137,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "K","K","K","K","K","K","K","K",&
                             "kg/kg","kg/kg","Pa","fraction",&
                             "m","mm","mm","K","m3 m-3","K","m3 m-3",&
-                            "m","kg m-2","mm s-1","count","-","mm","mm",&
+                            "m","kg m-2","mm s-1","count","1","mm","mm",&
                             "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
                             "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
                             "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2",&
-                            "mm","mm","fraction","fraction","fraction","K"]
+                            "mm","mm","1","1","1","K","-","-"]
    ldasOutDict%scaleFactor(:) = [1.0,1.0,0.01,0.1,0.1,0.1,0.01,0.1,0.000001,0.01,&
                                  0.1,0.1,0.1,0.1,0.1,0.000001,0.000001,0.01,&
                                  0.000001,0.01,0.001,0.01,0.01,0.00001,0.01,&
@@ -1150,7 +1152,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.0001,0.1,0.000001,1.0,0.001,0.01,0.01,0.00001,&
                                  0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,&
                                  0.00001,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,&
-                                 0.01,0.01,0.01,0.01,0.01,0.01,0.001,0.001,0.1]
+                                 0.01,0.01,0.01,0.01,0.01,0.01,0.001,0.001,0.1,0.01,0.01]
    ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
@@ -1160,24 +1162,24 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0]
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0]
    ! Note that output flags will be set in the the output routine, and will vary
    ! by the IOC flag specified in hydro.namelist.
    ldasOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
    ldasOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                                   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                                   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                                   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
    ldasOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,4,&
                             4,3,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2]
    ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
@@ -1187,7 +1189,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
@@ -1197,18 +1199,18 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    ldasOutDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0,-1000.0,-1.0,-1500.0,0.0,0.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-100.0,-100.0,0.0,&
                                   -100.0,-100.0,0.0,-5.0,-5.0,0.0,0.0,0.0,0.0,-100.0,-100.0,-100.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,&
                                   -1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                   0.0,-1000.0,0.0,-100.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1000.0,-5.0,0.0,0.0,0.0,0.0]
+                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1000.0,-5.0,0.0,0.0,0.0,0.0,0.0,0.0]
    ldasOutDict%validMaxReal(:) = [100.0,100.0,1.0,20.0,20.0,3000.0,1.0,1500.0,100.0,1.0,1500.0,1500.0,1500.0,1500.0,1500.0,100.0,100.0,1.0,100.0,&
                                   100000.0,100000.0,30000.0,30000.0,10.0,10000.0,10000.0,1.0E+6,1.0E+6,1.0E+6,&
                                   1.0E+6,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,&
                                   1500.0,1500.0,400.0,400.0,400.0,400.0,400.0,400.0,400.0,400.0,1.0,1.0,100000.0,1.0,100.0,100000.0,100000.0,&
                                   400.0,1.0,400.0,1.0,100.0,100000.0,100.0,10.0,1.0,100000.0,100000.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,1000.0,1000.0,&
-                                  1000.0,1000.0,5000.0,5000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1.0E+6,30000.0,1.0,1.0,1.0,400.0]
+                                  1000.0,1000.0,5000.0,5000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1.0E+6,30000.0,1.0,1.0,1.0,400.0,1.0,1.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
@@ -1612,7 +1614,7 @@ subroutine initLakeDict(lakeOutDict,diagFlag,procId)
 
    ! Establish elevation variable attributes
    lakeOutDict%elevLName = "Water Surface Elevation"
-   lakeOutDict%elevUnits = "meters"
+   lakeOutDict%elevUnits = "m" ! meters
 
    ! Establish feature_id attributes
    lakeOutDict%featureIdLName = "Lake ComID"

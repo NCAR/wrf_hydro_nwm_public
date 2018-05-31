@@ -10,7 +10,8 @@ import pytest
 #regression question
 def test_regression(output_dir,capsys):
     with capsys.disabled():
-        print("Question: The candidate standard run restarts match the reference standard restarts?")
+        print("\nQuestion: The candidate standard run restarts match the reference standard restarts?",
+              end="")
 
     # Check for existence of run objects
     candidate_run_file =  output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
@@ -53,7 +54,7 @@ def test_chrtout(output_dir,capsys):
     compare_ncfiles = wrfhydropy.utilities.compare_restarts #TODO remove when compare_restarts is
     # deprecated
     with capsys.disabled():
-        print("Question: The candidate CHRTOUT files match the reference CHRTOUT files?")
+        print("\nQuestion: The candidate CHRTOUT files match the reference CHRTOUT files?", end="")
 
     # Check for existence of run objects
     candidate_run_file =  output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
@@ -85,7 +86,7 @@ def test_chrtout(output_dir,capsys):
 def test_chanobs(output_dir, capsys):
     compare_ncfiles = wrfhydropy.utilities.compare_restarts #TODO remove when compare_restarts is deprecated
     with capsys.disabled():
-        print("Question: The candidate CHANOBS files match the reference CHANOBS files?")
+        print("\nQuestion: The candidate CHANOBS files match the reference CHANOBS files?", end="")
 
     # Check for existence of run objects
     candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroRun.pkl'

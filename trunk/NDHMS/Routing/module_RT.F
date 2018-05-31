@@ -1020,6 +1020,15 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    
    ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
    rt_domain(did)%overland%properties%retention_depth = min(rt_domain(did)%overland%properties%retention_depth, 1.0)  
+
+   !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
+   !of overland routine (frequently called) and time loop.
+   !Force channel retention depth to be 5mm.
+   ! JLM: for DWJ I'm leaving this next line for you to verify as
+   !      it's the one I translated to the following line,
+   !where (rt_domain(did)%CH_NETRT .ge. 0) rt_domain(did)%RETDEPRT = 5.0
+   where (rt_domain(did)%overland%streams_and_lakes%ch_netrt .ge. 0) &
+        rt_domain(did)%overland%properties%retention_depth(I,J) = 5.0
  
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
