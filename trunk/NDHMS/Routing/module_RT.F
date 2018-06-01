@@ -1028,7 +1028,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    !      it's the one I translated to the following line,
    !where (rt_domain(did)%CH_NETRT .ge. 0) rt_domain(did)%RETDEPRT = 5.0
    where (rt_domain(did)%overland%streams_and_lakes%ch_netrt .ge. 0) &
-        rt_domain(did)%overland%properties%retention_depth(I,J) = 5.0
+        rt_domain(did)%overland%properties%retention_depth = 5.0
  
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
