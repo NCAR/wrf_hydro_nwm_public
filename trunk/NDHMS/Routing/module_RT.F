@@ -1030,8 +1030,10 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%RETDEPRT = rt_domain(did)%RETDEPRT * rt_domain(did)%RETDEPRTFAC
    rt_domain(did)%OVROUGHRT = rt_domain(did)%OVROUGHRT * rt_domain(did)%OVROUGHRTFAC
    
-   ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
-   rt_domain(did)%RETDEPRT = min(rt_domain(did)%RETDEPRT, 1.0)  
+   !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
+   !of overland routine (frequently called) and time loop.
+   !Force channel retention depth to be 5mm.
+   where (rt_domain(did)%CH_NETRT .ge. 0) rt_domain(did)%RETDEPRT = 5.0
  
    ! calculate the slope for boundary        
 #ifdef MPP_LAND
