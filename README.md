@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/NCAR/wrf_hydro_nwm_public.svg?branch=master)](https://travis-ci.org/NCAR/wrf_hydro_nwm_public)
 [![Release](https://img.shields.io/github/release/NCAR/wrf_hydro_nwm_public.svg)](https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest)
-![Downloads](https://img.shields.io/github/downloads/NCAR/wrf_hydro_nwm_public/total.svg)
 [![DOI](.github/badges/doi.svg)](https://ezid.cdlib.org/id/doi:10.5065/D6J38RBJ)
 
 ## Description
