@@ -907,9 +907,6 @@
 !	     RETDEPRT(I,J) = RETDEPRT(I,J) * 100.0    !DJG TEMP HARDWIRE!!!!
 !	     RETDEPRT(I,J) = 10.0    !DJG TEMP HARDWIRE!!!!
 
-! AD hardwire to force channel retention depth to be 5mm.
-             ovrt_data%properties%retention_depth(I,J) = 5.0
-
              IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%retention_depth(I,J)) THEN
 !!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
                ovrt_data%streams_and_lakes%accumulated_surface_water_to_channel = ovrt_data%streams_and_lakes%accumulated_surface_water_to_channel + &
