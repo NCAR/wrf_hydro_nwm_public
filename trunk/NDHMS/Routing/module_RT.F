@@ -1240,6 +1240,10 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
    !--------------------------------------------------------------------
    if (nlst_rt(did)%channel_option .eq. 3) then
 #ifdef MPP_LAND
+      ! JLM: Currently compound channel does not work for diffusive wave/gridded channel.
+      ! This conflict of options is caught in Data_Rec/module_namelist.F
+      ! Some of the code for reading/using top-width-necessary params from CHANPARM.TBL are available
+      ! but commented out in the code, since they were a bridge to nowhere.
       call mpp_CHAN_PARM_INIT (BOTWID, HLINK_INIT, CHAN_SS, CHMann)  !Read chan parms from table...
       !call mpp_CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)  !Read chan parms from table...
 #else
