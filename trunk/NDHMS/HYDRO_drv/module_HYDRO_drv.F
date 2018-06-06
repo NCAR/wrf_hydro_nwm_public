@@ -281,12 +281,12 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                       RT_DOMAIN(did)%ZWATTABLRT,RT_DOMAIN(did)%SMCRT,&
                       RT_DOMAIN(did)%SUB_RESID,       &
                       RT_DOMAIN(did)%q_sfcflx_x,RT_DOMAIN(did)%q_sfcflx_y,&
-                      RT_DOMAIN(did)%soxrt,RT_DOMAIN(did)%soyrt,&
-                      RT_DOMAIN(did)%QSTRMVOLRT_ACC,RT_DOMAIN(did)%SFCHEADSUBRT, &
+                      rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%overland%properties%surface_slope_y,&
+                      RT_DOMAIN(did)%QSTRMVOLRT_ACC,rt_domain(did)%overland%control%surface_water_head_routing, &
                       nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT,&
                       RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,&
-                      RT_DOMAIN(did)%LONVAL,RT_DOMAIN(did)%dist,nlst_rt(did)%RTOUT_DOMAIN,&
-                      RT_DOMAIN(did)%QBDRYRT, &
+                      RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%RTOUT_DOMAIN,&
+                      rt_domain(did)%overland%control%boundary_flux, &
                       nlst_rt(did)%io_config_outputs &
                        )
                  endif ! End check for io_form_outputs value
@@ -326,7 +326,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                 gw2d(did)%qsgwrt, gw2d(did)%qgw_chanrt,              &
                 nlst_rt(did)%geo_finegrid_flnm,nlst_rt(did)%DT, &
                 RT_DOMAIN(did)%SLDPTH,RT_DOMAIN(did)%LATVAL,       &
-                RT_DOMAIN(did)%LONVAL,rt_domain(did)%dist,           &
+                RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%distance_to_neighbor,           &
                 nlst_rt(did)%output_gw)
 
 	  endif
@@ -583,7 +583,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
         integer:: did
         integer:: rst_out
 
-
 !       call HYDRO_out(did)
 
 
@@ -601,9 +600,6 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !          endif
 
 
-
-
-
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
     nlst_rt(did)%SUBRTSWCRT         .ne. 0 .or. &
     nlst_rt(did)%OVRTSWCRT          .ne. 0 .or. &
@@ -613,8 +609,8 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    ! step 1) disaggregate specific fields from LSM to Hydro grid
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
-      RT_DOMAIN(did)%QSTRMVOLRT = zeroFlt
-      RT_DOMAIN(did)%LAKE_INFLORT_DUM = RT_DOMAIN(did)%LAKE_INFLORT
+      RT_DOMAIN(did)%overland%streams_and_lakes%surface_water_to_channel = zeroFlt
+      RT_DOMAIN(did)%LAKE_INFLORT_DUM = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call disaggregateDomain_drv(did)
@@ -622,7 +618,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
-                 rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%dist(:,:,9), &
+                 rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
          endif
       endif
@@ -658,8 +654,8 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
          call OverlandRouting_drv(did)
       else
-         RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%INFXSUBRT
-         RT_DOMAIN(did)%INFXSUBRT = 0.
+         rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
+         rt_domain(did)%overland%control%infiltration_excess = 0.
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -671,10 +667,10 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 #endif
 #endif
 
-      RT_DOMAIN(did)%QSTRMVOLRT_TS = RT_DOMAIN(did)%QSTRMVOLRT
+      RT_DOMAIN(did)%QSTRMVOLRT_TS = rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel
       RT_DOMAIN(did)%QSTRMVOLRT_ACC = RT_DOMAIN(did)%QSTRMVOLRT_ACC + RT_DOMAIN(did)%QSTRMVOLRT_TS
       
-      RT_DOMAIN(did)%LAKE_INFLORT_TS = RT_DOMAIN(did)%LAKE_INFLORT-RT_DOMAIN(did)%LAKE_INFLORT_DUM
+      RT_DOMAIN(did)%LAKE_INFLORT_TS = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake-RT_DOMAIN(did)%LAKE_INFLORT_DUM
 			
 #ifdef HYDRO_D
       call system_clock(count=clock_count_1, count_rate=clock_rate)
@@ -786,7 +782,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
               nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
               RT_DOMAIN(did)%INFXSRT,       RT_DOMAIN(did)%SOLDRAIN,        &
-              RT_DOMAIN(did)%dist(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
+              rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
               RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
               RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
               RT_DOMAIN(did)%qout_gwsubbas, RT_DOMAIN(did)%qin_gwsubbas,    &
@@ -810,7 +806,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
              RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
              RT_DOMAIN(did)%qinflowbase,&
              RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
-             RT_DOMAIN(did)%dist,nlst_rt(did)%DT,&
+             rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%DT,&
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
@@ -863,7 +859,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
 	  gw2d(did)%ho = gw2d(did)%h
  
 	  ! put surface exceeding groundwater to surface routing inflow
-          RT_DOMAIN(did)%SFCHEADSUBRT = RT_DOMAIN(did)%SFCHEADSUBRT &
+          rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%surface_water_head_routing &
                                         + gw2d(did)%excess*1000. ! convert to mm
 	  
 	  ! aggregate  qsgw from routing to lsm grid
@@ -909,7 +905,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
     call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
        RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
+       rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
        RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
@@ -947,8 +943,8 @@ else
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
        RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
        RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
-       RT_DOMAIN(did)%CH_NETLNK, RT_DOMAIN(did)%CH_NETRT,RT_DOMAIN(did)%CH_LNKRT,&
-       RT_DOMAIN(did)%LAKE_MSKRT, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH,&
+       RT_DOMAIN(did)%CH_NETLNK, rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%CH_LNKRT,&
+       rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH,&
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%QLateral, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
@@ -960,7 +956,7 @@ else
        RT_DOMAIN(did)%ORIFICEA, &
        RT_DOMAIN(did)%ORIFICEE, RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
        RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
-       RT_DOMAIN(did)%LAKENODE, RT_DOMAIN(did)%dist, &
+       RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
        RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option, &
        RT_DOMAIN(did)%RETDEP_CHAN, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, &
@@ -1037,7 +1033,7 @@ endif
         smcrttot1 = 0.
         do i=1,RT_DOMAIN(did)%IXRT
          do j=1,RT_DOMAIN(did)%JXRT
-            suminfxsrt1 = suminfxsrt1 + RT_DOMAIN(did)%SFCHEADSUBRT(I,J) &
+            suminfxsrt1 = suminfxsrt1 + rt_domain(did)%overland%control%surface_water_head_routing(I,J) &
                                / float(RT_DOMAIN(did)%IXRT * RT_DOMAIN(did)%JXRT)
             do kk=1,nlst_rt(did)%NSOIL
                 smcrttot1 = smcrttot1 + RT_DOMAIN(did)%SMCRT(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
@@ -1084,11 +1080,11 @@ endif
 
 !State Variables
                 RT_DOMAIN(did)%SFCHEADAGGRT = RT_DOMAIN(did)%SFCHEADAGGRT &
-                                            + RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT)
+                                            + rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT)
 !DJG Subgrid weighting edit...
                 RT_DOMAIN(did)%LSMVOL = RT_DOMAIN(did)%LSMVOL &
-                                      + RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
-                                      * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9)
+                                      + rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT) &
+                                      * rt_domain(did)%overland%properties%distance_to_neighbor(IXXRT,JYYRT,9)
 
                 do KRT=1,nlst_rt(did)%NSOIL
 !DJG               SMCAGGRT(KRT)=SMCAGGRT(KRT)+SMCRT(IXXRT,JYYRT,KRT)
@@ -1101,7 +1097,7 @@ endif
 
 
 
-            RT_DOMAIN(did)%SFCHEADRT(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
+            rt_domain(did)%overland%control%surface_water_head_lsm(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
                                           / (nlst_rt(did)%AGGFACTRT**2)
 
             do KRT=1,nlst_rt(did)%NSOIL
@@ -1128,8 +1124,8 @@ endif
 #endif
                   if (RT_DOMAIN(did)%LSMVOL.gt.0.) then
                     RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
-                                          = RT_DOMAIN(did)%SFCHEADSUBRT(IXXRT,JYYRT) &
-                                          * RT_DOMAIN(did)%dist(IXXRT,JYYRT,9) &
+                                          = rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT) &
+                                          * rt_domain(did)%overland%properties%distance_to_neighbor(IXXRT,JYYRT,9) &
 					  / RT_DOMAIN(did)%LSMVOL
                   else
                     RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
@@ -1232,7 +1228,7 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
         sicetot2 = 0.
         do i=1,RT_DOMAIN(did)%IX
          do j=1,RT_DOMAIN(did)%JX
-            suminfxs2 = suminfxs2 + RT_DOMAIN(did)%SFCHEADRT(I,J) &
+            suminfxs2 = suminfxs2 + rt_domain(did)%overland%control%surface_water_head_lsm(I,J) &
                                / float(RT_DOMAIN(did)%IX * RT_DOMAIN(did)%JX)
             do kk=1,nlst_rt(did)%NSOIL
                 smctot2 = smctot2 + RT_DOMAIN(did)%SMC(I,J,KK)*RT_DOMAIN(did)%SLDPTH(KK)*1000. &
@@ -1411,7 +1407,6 @@ rt_domain(did)%jxrt = jx*nlst_rt(did)%AGGFACTRT
 
 call getChanDim(did)
 
-
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
 write(6,*) "finish getChanDim "
@@ -1469,7 +1464,6 @@ write(78,*) "finish decomposion"
 #endif
 #endif
 
-
 if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
      nlst_rt(1)%io_form_outputs .ne. 0) then
    !! This is the "decoder ring" for reading channel-only forcing from io_form_outputs=1,2 CHRTOUT files.
@@ -1497,7 +1491,6 @@ if(nlst_rt(did)%channel_only .ne. 1)  call get_dist_lrt(did) !! needed forchanne
   
 ! rt model initilization
 call LandRT_ini(did)
-
 
 if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then
    
@@ -1569,7 +1562,6 @@ if(nlst_rt(did)%CHANRTSWCRT .ne. 0) call init_stream_nudging
 
 
 call HYDRO_rst_in(did)
-
 !#ifdef HYDRO_REALTIME
 if (trim(nlst_rt(did)%restart_file) == "") then
   call HYDRO_out(did, 0)
@@ -1588,7 +1580,7 @@ endif
 if(nlst_rt(did)%rstrt_swc.eq.1) then  !Switch for rest of restart accum vars...
    print *, "Resetting RESTART Accumulation Variables to 0...",nlst_rt(did)%rstrt_swc
    ! Under channel-only , these first three variables are not allocated.
-   if(allocated(rt_domain(did)%LAKE_INFLORT))    rt_domain(did)%LAKE_INFLORT = zeroFlt
+   if(allocated(rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake))    rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake = zeroFlt
    if(allocated(rt_domain(did)%QSTRMVOLRT_ACC))  rt_domain(did)%QSTRMVOLRT_ACC   = zeroFlt
    ! These variables are optionally allocated, if their output is requested.
    if(allocated(rt_domain(did)%accSfcLatRunoff)) rt_domain(did)%accSfcLatRunoff = zeroDbl

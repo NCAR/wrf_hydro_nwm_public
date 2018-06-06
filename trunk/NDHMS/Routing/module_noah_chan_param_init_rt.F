@@ -24,7 +24,8 @@ MODULE module_noah_chan_param_init_rt
 CONTAINS
 !
 !-----------------------------------------------------------------
-  SUBROUTINE CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)
+  subroutine CHAN_PARM_INIT (BOTWID, HLINK_INIT, CHAN_SS, CHMann)
+!  SUBROUTINE CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)
 !-----------------------------------------------------------------
 
     IMPLICIT NONE
@@ -69,16 +70,18 @@ CONTAINS
        PRINT *, 'CHANNEL DATA SOURCE TYPE = ',DATATYPE,' FOUND',           &
             CHANCATS,' CATEGORIES'
 #endif
-       DO ORDER=1,CHANCATS
-          READ (IUNIT,*)IINDEX,BOTWID(ORDER),TOPWID(ORDER), &
-               HLINK_INIT(ORDER),CHAN_SS(ORDER),CHMann(ORDER),&
-               TOPWIDCC(ORDER),NCC(ORDER)
+       do ORDER=1,CHANCATS
+
+          read (IUNIT,*)IINDEX, BOTWID(ORDER), HLINK_INIT(ORDER), CHAN_SS(ORDER), CHMann(ORDER)
+!          READ (IUNIT,*)IINDEX,BOTWID(ORDER),TOPWID(ORDER), &
+!               HLINK_INIT(ORDER),CHAN_SS(ORDER),CHMann(ORDER),&
+!               TOPWIDCC(ORDER),NCC(ORDER)
 
 #ifdef HYDRO_D
-!         PRINT *, IINDEX,BOTWID(ORDER),TOPWID(ORDER), & 
-          PRINT *, IINDEX,BOTWID(ORDER),& 
-                HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
-                CHMann(ORDER),TOPWIDCC(ORDER),NCC(ORDER)
+          PRINT *, IINDEX, BOTWID(ORDER), HLINK_INIT(ORDER), CHAN_SS(ORDER), CHMann(ORDER)
+!          PRINT *, IINDEX,BOTWID(ORDER),& 
+!                HLINK_INIT(ORDER),CHAN_SS(ORDER),   &
+!                CHMann(ORDER),TOPWIDCC(ORDER),NCC(ORDER)
 #endif
        ENDDO
     ENDIF
@@ -95,27 +98,29 @@ CONTAINS
 
 
 #ifdef MPP_LAND
-  SUBROUTINE mpp_CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)
+  subroutine mpp_CHAN_PARM_INIT (BOTWID, HLINK_INIT, CHAN_SS, CHMann)
+!  subroutine mpp_CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)
     use module_mpp_land, only:  my_id, IO_id,mpp_land_bcast_int1, &
        mpp_land_bcast_real,mpp_land_bcast_int,mpp_land_bcast_real1
     implicit none
     integer :: IINDEX, CHANCATS
     integer :: ORDER
     integer, PARAMETER :: NCHANTYPES=50 
-    real,dimension(NCHANTYPES)    :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann
-    real,dimension(NCHANTYPES)    :: TOPWIDCC,NCC  ! compound components
+    real,dimension(NCHANTYPES)    :: BOTWID, HLINK_INIT, CHAN_SS, CHMann
+    !real,dimension(NCHANTYPES)    :: TOPWID, TOPWIDCC, NCC  ! compound components
     character(LEN=11) :: DATATYPE
 
     if(my_id.eq.io_id) then
-       call CHAN_PARM_INIT(BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)
+       call CHAN_PARM_INIT(BOTWID, HLINK_INIT, CHAN_SS, CHMann)
+!       call CHAN_PARM_INIT(BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)
     end if
        call mpp_land_bcast_real(NCHANTYPES,BOTWID)
-       call mpp_land_bcast_real(NCHANTYPES,TOPWID)
        call mpp_land_bcast_real(NCHANTYPES,HLINK_INIT)
        call mpp_land_bcast_real(NCHANTYPES,CHAN_SS)
        call mpp_land_bcast_real(NCHANTYPES,CHMann)
-       call mpp_land_bcast_real(NCHANTYPES,TOPWIDCC)
-       call mpp_land_bcast_real(NCHANTYPES,NCC)
+!       call mpp_land_bcast_real(NCHANTYPES,TOPWID)
+!       call mpp_land_bcast_real(NCHANTYPES,TOPWIDCC)
+!       call mpp_land_bcast_real(NCHANTYPES,NCC)
 
     return 
     END SUBROUTINE mpp_CHAN_PARM_INIT

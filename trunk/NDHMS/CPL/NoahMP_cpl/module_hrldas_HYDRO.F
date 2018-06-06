@@ -198,7 +198,7 @@ CONTAINS
            STC = rt_domain(did)%STC
            SMC = rt_domain(did)%SMC
            SH2OX = rt_domain(did)%SH2OX
-           sfcheadrt = rt_domain(did)%sfcheadrt
+           sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
         end if
         if(nlst_rt(did)%GWBASESWCRT == 3)  qsgw = gw2d(did)%qsgw
 
@@ -271,7 +271,7 @@ CONTAINS
 #ifdef MPP_LAND
           call mpp_land_bcast_real1(nlst_rt(did)%dt)
 #endif
-          sfcheadrt = rt_domain(did)%sfcheadrt
+          sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
           infxsrt = rt_domain(did)%infxsrt
           if(nlst_rt(did)%rst_typ .eq. 1) then
              STC = rt_domain(did)%STC
