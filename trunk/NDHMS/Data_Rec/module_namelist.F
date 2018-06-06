@@ -604,19 +604,19 @@ subroutine rt_nlst_check(nlst)
    if(nlst%TERADJ_SOLAR .ne. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid TERADJ_SOLAR specified')
    endif
-!   if(nlst%NSOIL .le. 0) then
-!      call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
-!   endif
-!   do i = 1,nlst%NSOIL
-!      if(nlst%ZSOIL8(i) .gt. 0) then
-!          call hydro_stop('hydro.namelist ERROR: Invalid ZSOIL layer depth specified.')
-!      endif
-!      if(i .gt. 1) then
-!         if(nlst%ZSOIL8(i) .ge. nlst%ZSOIL8(i-1)) then
-!            call hydro_stop('hydro.namelist ERROR: Invalid ZSOIL layer depth specified.')
-!         endif
-!      endif
-!   end do
+   if(nlst%NSOIL .le. 0) then
+      call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
+   endif
+   do i = 1,nlst%NSOIL
+      if(nlst%ZSOIL8(i) .gt. 0) then
+          call hydro_stop('hydro.namelist ERROR: Invalid ZSOIL layer depth specified.')
+      endif
+      if(i .gt. 1) then
+         if(nlst%ZSOIL8(i) .ge. nlst%ZSOIL8(i-1)) then
+            call hydro_stop('hydro.namelist ERROR: Invalid ZSOIL layer depth specified.')
+         endif
+      endif
+   end do
    if(nlst%dxrt0 .le. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid DXRT specified.')
    endif
