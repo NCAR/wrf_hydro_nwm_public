@@ -59,7 +59,7 @@ function GetModelConfigType (io_config_outputs) result(modelConfigType)
    else
    !   call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
-END
+end function GetModelConfigType
 
 subroutine output_chrt_NWM(domainId)
    use module_rt_data, only: rt_domain
