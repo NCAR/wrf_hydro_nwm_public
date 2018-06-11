@@ -20,7 +20,7 @@ candidate_repo:
     # --- OR ---
     # A path on local machine where the current state of the repo (potentially uncommitted)
     # is compiled. This supercedes BOTH candidateFork and candidateBranchCommit if set. 
-    local_path : /home/docker/wrf_hydro_nwm_myFork
+    local_path : /Users/james/WRF_Hydro/wrf_hydro_nwm_public
 
 reference_repo:
     # Default = ${GITHUB_USERNAME}/wrf_hydro_nwm
@@ -29,7 +29,7 @@ reference_repo:
     # --- OR ---
     # A path on local machine where the current state of the repo (potentially uncommitted)
     # is compiled. This supercedes BOTH referenceFork and referenceBranchCommit if set. 
-    local_path : 
+    local_path : /Users/james/WRF_Hydro/wrf_hydro_nwm_public_test_copy
 
 wrf_hydro_tests:    
 # * User spec file path *

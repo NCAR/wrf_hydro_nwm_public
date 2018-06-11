@@ -1,5 +1,6 @@
 #!/bin/bash
-# TODO(JLM): I should have written this in python.
+# TODO(JLM): I should have written this in python... or not, would require python whereas
+#            docker has python. This only require bash on the host machine.
 # Purpose:
 #   This script is the general pupose launching script for wrf_hydro_nwm_public
 #   and wrf_hydro_nwm testing.
@@ -34,13 +35,14 @@ fi
 # Determine the path to this file, allowing for a symlink.
 #https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 this_dir="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 this_repo=$(dirname $this_dir)
+this_repo_name=$(basename $this_repo)
 #echo "Testing: $this_dir"
 
 
@@ -208,10 +210,42 @@ else
 
         # Candidate spec 
         if [ $wh_candidate_spec != -1 ]; then
-            cp $candidate_spec_file ${host_spec_dir}/.
-            # 
+            cp ${candidate_spec_file} ${host_spec_dir}/.
+	    can_spec_file_copy=${host_spec_dir}$(basename ${candidate_spec_file})
+            # Have to mount and edit
+	    candidate_spec_mounts=""
+	    for ii in `egrep 'local_path.*:' template_candidate_spec.yaml | tr -d ' ' | cut -d':' -f2`; do
+		if [ -z $ii ]; then
+		    continue
+		fi
+		echo ----
+		# SOURCE="$ii"
+		# while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlnk
+		#     echo bar
+		#     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+		#     SOURCE="$(readlink "$SOURCE")"
+		#     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+		# done
+		# the_path=$SOURCE
+		the_path=$ii
+		echo $the_path
+		echo $this_repo
+		echo $this_repo_name
+		if [[ "$the_path" != "$this_repo" ]] && \
+		       [[ "$the_path" != *"$this_repo_name" ]]; then
+		    # If the local_path is the testing repo (though full path is not 
+		    # in this case have to mount the repos
+		    # and have to edit the copied candidate spec to reflect docker locn
+		    rep_str="${the_path}:/home/docker/$(basename ${the_path})"
+		    candidate_spec_mounts=$(echo "${candiate_spec_mounts} -v ${rep_str}")
+		fi
+		sed -i '' "s|${the_path}|/home/docker/$(basename ${the_path})|g" $can_spec_file_copy
+		    
+	    done
+	    
         fi
-        
+        exit 99
+	
         # Use mount this repo to /home/docker
         this_repo_name=$(basename $this_repo)
 
