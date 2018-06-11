@@ -121,7 +121,24 @@ fi
 
 if [[ $known_machine == 0 ]] || [[ $in_docker == 0 ]]; then
 
-    python ${this_dir}/take_test.py ${args_to_pass}
+    if [[ $in_docker == 0 ]]; then
+
+	# Deal with possibility of case-insensitive mounted file system
+	rm -f abcdefghijklmnop ABCDEFGHIJKLMNOP
+	touch abcdefghijklmnop ABCDEFGHIJKLMNOP &> /dev/null
+	rm -f ABCDEFGHIJKLMNOP
+	case_insensitive=$(ls abcdefghijklmnop &> /dev/null | wc -l)
+	#echo "case_insensitive: $case_insensitive"
+	rm -f abcdefghijklmnop ABCDEFGHIJKLMNOP
+	
+	if [[ $case_insensitive -eq 0 ]]; then
+	    cp -r ${this_repo} ${this_repo}_case_sensitive
+	    cd ${this_repo}_case_sensitive/tests
+	fi
+
+    fi
+
+    python take_test.py ${args_to_pass}
     return_code=$?
     
 else
@@ -191,26 +208,30 @@ else
 
         # Candidate spec 
         if [ $wh_candidate_spec != -1 ]; then
-            cp candidate_spec_file ${host_spec_dir}/.
-            
+            cp $candidate_spec_file ${host_spec_dir}/.
+            # 
         fi
         
         # Use mount this repo to /home/docker
         this_repo_name=$(basename $this_repo)
 
         not_interactive=$(echo "$args_to_pass" | grep '\-i' | wc -l)
-        args_to_pass=$(echo "$args_to_pass" | sed "s|-i||")
+        #args_to_pass=$(echo "$args_to_pass" | sed "s|-i||")
         
         docker_cmd=""
         #docker_cmd=${docker_cmd}"cd /home/docker/wrf_hydro_py; pip uninstall -y wrfhydropy; "
         #docker_cmd=${docker_cmd}" python setup.py install; pip install termcolor; "
-        docker_cmd=$(echo "${docker_cmd}cd /home/docker/${this_repo_name}/tests/; ./take_test.sh ${args_to_pass};")
+        docker_cmd=$(echo \
+"${docker_cmd} \
+cd /home/docker/${this_repo_name}/tests/; \
+./take_test.sh ${args_to_pass}; \
+if [ \\\$? -ne 0 ]; then cd /home/docker/take_test; /bin/bash; fi;")
 
-        if [[ "$not_interactive" -eq 0 ]]; then
-            docker_cmd=$(echo "${docker_cmd} echo $?")
-        else
+        if [[ "$not_interactive" -eq 1 ]]; then
             echo "Interactive docker requested at end of test."
-            docker_cmd=$(echo "${docker_cmd} /bin/bash ")
+            docker_cmd=$(echo "${docker_cmd} cd /home/docker/take_test; /bin/bash ")
+	else
+            docker_cmd=$(echo "${docker_cmd} exit \\\$? ")	    
         fi
 
         #echo "docker_cmd: $docker_cmd"
@@ -239,8 +260,11 @@ else
 "${invoke_docker} \
      -v ${host_spec_dir}:${docker_spec_dir} \
      -v ${this_repo}:/home/docker/${this_repo_name} \
-     -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
 ")
+
+        # May want the custom ability to mount wrf_hydro_py at some point. 
+#     -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
+
         if [[ ! -z $domain_tmp_vol ]]; then
             invoke_docker=$(echo \
 "${invoke_docker} \
@@ -253,10 +277,10 @@ else
      wrfhydro/dev:conda /bin/bash -c \"${docker_cmd}\"")
 
         #echo "$args_to_pass"
-        #echo "$invoke_docker"
+        #echo "invoke_docker: $invoke_docker"
         
         eval $invoke_docker
-        #return_code=$?
+        return_code=$?
         
         if [[ ${domain} == "wrfhydro/domains:"* ]]; then
             echo "Tearing down the data container: " $(docker rm -v ${domain_tmp_vol})
@@ -265,5 +289,5 @@ else
     fi # Trying docker
     
 fi # Known machine else unknown machine
-    
+
 exit $return_code
