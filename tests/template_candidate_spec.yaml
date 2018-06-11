@@ -11,7 +11,7 @@ n_cores:
 #   (in subfolders candidate/ and reference/)
 repos_dir : /home/docker/test_repos
 
-test_dir : /home/docker/test_dir
+test_dir : /home/docker/take_test
 
 candidate_repo:
     # Default = ${GITHUB_USERNAME}/wrf_hydro_nwm

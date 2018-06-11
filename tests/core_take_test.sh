@@ -136,6 +136,22 @@ if [[ $known_machine == 0 ]] || [[ $in_docker == 0 ]]; then
 	if [[ $case_insensitive -eq 0 ]]; then
 	    cp -r ${this_repo} ${this_repo}_case_sensitive
 	    cd ${this_repo}_case_sensitive/tests
+	    # Edit the candidate spec file for the above. 
+	    for ff in ~/.test_spec_dir/*yaml; do
+		sed -i "s|${this_repo}\$|${this_repo}_case_sensitive|g" $ff
+		echo $this_repo
+		echo $ff
+	    done
+	    # Also deal with local_paths in the candidate spec...
+	    for ii in `egrep 'local_path.*:' ~/.test_spec_dir/*.yaml | tr -d ' ' | cut -d':' -f3`; do
+		echo $ii
+		if [[ "$ii" == *"_case_sensitive" ]]; then
+		    continue
+		fi
+		cp -r $ii ${ii}_case_sensitive
+		sed -i "s|$ii\$|${ii}_case_sensitive|g"  ~/.test_spec_dir/*.yaml
+	    done
+		
 	fi
 
     fi
@@ -212,9 +228,13 @@ else
         if [ $wh_candidate_spec != -1 ]; then
             cp ${candidate_spec_file} ${host_spec_dir}/.
 	    can_spec_file_copy=${host_spec_dir}$(basename ${candidate_spec_file})
+	    can_spec_file_docker=$docker_spec_dir/$(basename ${candidate_spec_file})
             # Have to mount and edit
+	    
+	    args_to_pass=$(echo "$args_to_pass" | \
+			   sed "s|${candidate_spec_file}|$can_spec_file_docker|")
 	    candidate_spec_mounts=""
-	    for ii in `egrep 'local_path.*:' template_candidate_spec.yaml | tr -d ' ' | cut -d':' -f2`; do
+	    for ii in `egrep 'local_path.*:' ${candidate_spec_file} | tr -d ' ' | cut -d':' -f2`; do
 		if [ -z $ii ]; then
 		    continue
 		fi
@@ -228,9 +248,9 @@ else
 		# done
 		# the_path=$SOURCE
 		the_path=$ii
-		echo $the_path
-		echo $this_repo
-		echo $this_repo_name
+		echo "the_path: $the_path"
+		echo "this_repo: $this_repo"
+		echo "this_repo_name: $this_repo_name"
 		if [[ "$the_path" != "$this_repo" ]] && \
 		       [[ "$the_path" != *"$this_repo_name" ]]; then
 		    # If the local_path is the testing repo (though full path is not 
@@ -239,12 +259,11 @@ else
 		    rep_str="${the_path}:/home/docker/$(basename ${the_path})"
 		    candidate_spec_mounts=$(echo "${candiate_spec_mounts} -v ${rep_str}")
 		fi
-		sed -i '' "s|${the_path}|/home/docker/$(basename ${the_path})|g" $can_spec_file_copy
-		    
+		sed -i '' "s|${the_path}|/home/docker/$(basename ${the_path})|g" $can_spec_file_copy		    
 	    done
 	    
         fi
-        exit 99
+
 	
         # Use mount this repo to /home/docker
         this_repo_name=$(basename $this_repo)
@@ -294,7 +313,7 @@ if [ \\\$? -ne 0 ]; then cd /home/docker/take_test; /bin/bash; fi;")
 "${invoke_docker} \
      -v ${host_spec_dir}:${docker_spec_dir} \
      -v ${this_repo}:/home/docker/${this_repo_name} \
-")
+     ${candidate_spec_mounts}")
 
         # May want the custom ability to mount wrf_hydro_py at some point. 
 #     -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
