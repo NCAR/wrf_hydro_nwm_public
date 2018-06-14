@@ -57,6 +57,7 @@ CONTAINS
           character(len=256) :: geo_finegrid_flnm =""
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
+          integer :: reservoir_realtime ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
        integer :: SOLVEG_INITSWC
        real*8 :: out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
@@ -144,6 +145,7 @@ CONTAINS
    t0OutputFlag = 1
    output_channelBucket_influx = 0
    TERADJ_SOLAR = 0
+   reservoir_realtime = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.  
 
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
@@ -299,6 +301,7 @@ CONTAINS
   call mpp_land_bcast_int1(LSMOUT_DOMAIN)
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
   call mpp_land_bcast_int1(UDMP_OPT)
+  call mpp_land_bcast_int1(reservoir_realtime)
 #ifdef WRF_HYDRO_NUDGING
   call mpp_land_bcast_char(256, nudgingParamFile  )
   call mpp_land_bcast_char(256, netwkReExFile     )
@@ -401,6 +404,7 @@ CONTAINS
     nlst%udmap_file =  udmap_file
     nlst%UDMP_OPT = UDMP_OPT
     nlst%GWBUCKPARM_file =  GWBUCKPARM_file
+    nlst%reservoir_realtime = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
 #ifdef WRF_HYDRO_NUDGING
     nlst%nudgingParamFile       = nudgingParamFile
     nlst%netWkReExFile          = netWkReExFile
@@ -457,6 +461,7 @@ CONTAINS
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
+    write(6,*) " nlst%reservoir_realtime ", reservoir_realtime
 #ifdef WRF_HYDRO_NUDGING
     write(6,*) " nlst%nudgingParamFile      ",  trim(nudgingParamFile)
     write(6,*) " nlst%netWkReExFile         ",  trim(netWkReExFile)
