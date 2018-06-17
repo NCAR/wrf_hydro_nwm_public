@@ -139,12 +139,12 @@ if [[ $known_machine == 0 ]] || [[ $in_docker == 0 ]]; then
 	    # Edit the candidate spec file for the above. 
 	    for ff in ~/.test_spec_dir/*yaml; do
 		sed -i "s|${this_repo}\$|${this_repo}_case_sensitive|g" $ff
-		echo $this_repo
-		echo $ff
+		#echo $this_repo
+		#echo $ff
 	    done
 	    # Also deal with local_paths in the candidate spec...
 	    for ii in `egrep 'local_path.*:' ~/.test_spec_dir/*.yaml | tr -d ' ' | cut -d':' -f3`; do
-		echo $ii
+		#echo $ii
 		if [[ "$ii" == *"_case_sensitive" ]]; then
 		    continue
 		fi
@@ -238,7 +238,7 @@ else
 		if [ -z $ii ]; then
 		    continue
 		fi
-		echo ----
+		#echo ----
 		# SOURCE="$ii"
 		# while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlnk
 		#     echo bar
@@ -248,9 +248,9 @@ else
 		# done
 		# the_path=$SOURCE
 		the_path=$ii
-		echo "the_path: $the_path"
-		echo "this_repo: $this_repo"
-		echo "this_repo_name: $this_repo_name"
+		#echo "the_path: $the_path"
+		#echo "this_repo: $this_repo"
+		#echo "this_repo_name: $this_repo_name"
 		if [[ "$the_path" != "$this_repo" ]] && \
 		       [[ "$the_path" != *"$this_repo_name" ]]; then
 		    # If the local_path is the testing repo (though full path is not 
