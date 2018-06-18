@@ -330,8 +330,7 @@ if [ \\\$? -ne 0 ]; then cd /home/docker/take_test; /bin/bash; fi;")
      wrfhydro/dev:conda /bin/bash -c \"${docker_cmd}\"")
 
         #echo "$args_to_pass"
-        #echo "invoke_docker: $invoke_docker"
-        
+        #echo "invoke_docker: $invoke_docker"        
         eval $invoke_docker
         return_code=$?
         

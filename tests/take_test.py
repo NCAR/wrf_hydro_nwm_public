@@ -57,7 +57,8 @@ parser.add_argument(
     nargs='*',
     metavar='key',
     help=('Zero or more keys separated by whitespace for specifying the desired tests. ' +
-          'These keys are grepped against the test_*py files in the tests/ directory.'),
+          'See pytest -k for details on keys including logical relations (note different ' +
+          'format here).'),
     default=None
 )
 
@@ -77,8 +78,8 @@ config= args.config
 
 test_spec = args.test_spec
 if test_spec is not None:
-    if type(test_spec) is not list:
-        test_spec = [test_spec]
+    if type(test_spec) is list:
+        test_spec = ' '.join(test_spec)
 
 interactive = args.i
 
@@ -231,7 +232,7 @@ if config is not None:
     pytest_cmd = pytest_cmd + [ '--config' ] + config
 
 if test_spec is not None:
-    pytest_cmd = pytest_cmd + [ '-k'] + test_spec
+    pytest_cmd = pytest_cmd + ['-k'] + [test_spec]
 
 log.debug('')
 log.info('with arguments:')
