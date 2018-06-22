@@ -92,6 +92,7 @@ def test_run_candidate(
     check_run_dir = candidate_run.run_jobs()
 
     if scheduler is not None:
+        # This function waits for the completed run.
         candidate_run = wrfhydropy.job_tools.restore_completed_scheduled_job(check_run_dir)
 
     # Check subprocess and model run status
