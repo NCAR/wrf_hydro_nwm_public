@@ -1,0 +1,25 @@
+sudo: required
+language: bash
+services:
+  - docker
+
+before_install:
+  #Setup test directory on travis
+  - TEST_DIR_TRAVIS=$HOME/test_dir
+  - sudo mkdir $TEST_DIR_TRAVIS
+  - sudo chmod -R 777 $TEST_DIR_TRAVIS
+  - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
+  - git clone git@github.com:NCAR/wrf_hydro_nwm.git $TEST_DIR_TRAVIS/reference
+  - sudo chmod -R 777 $TEST_DIR_TRAVIS
+  #Get docker images
+  - docker pull wrfhydro/dev:conda
+  - docker pull wrfhydro/domains:croton_NY
+  - docker create --name croton_NY wrfhydro/domains:croton_NY
+  #Setup test directory on Docker
+  - TEST_DIR_DOCKER=/home/docker/test_dir
+  - PYTEST_DIR_DOCKER=$TEST_DIR_DOCKER/candidate/tests
+  - DOMAIN_DIR_DOCKER=/home/docker/domain/croton_NY
+
+script:
+  - docker run --volumes-from croton_NY -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip uninstall -y wrfhydropy; pip install wrfhydropy; cd $PYTEST_DIR_DOCKER; pytest -v --ignore take_test.py --ignore toolbox/ --ignore run_travis_yml_locally.py --compiler gfort --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
+
