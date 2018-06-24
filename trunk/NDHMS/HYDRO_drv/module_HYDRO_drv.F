@@ -243,17 +243,18 @@ module module_HYDRO_drv
          if(nlst_rt(did)%t0OutputFlag .eq. 0) return
       endif
 
-     if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
-        if(nlst_rt(did)%io_form_outputs .eq. 0) then
-           call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
-                       //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
-                       ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
-                       did)
-           else
-           call output_lsmOut_NWM(did)
-        endif
-     endif
-
+      if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+         if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
+            if(nlst_rt(did)%io_form_outputs .eq. 0) then
+               call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
+                    //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
+                    ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
+                    did)
+            else
+               call output_lsmOut_NWM(did)
+            endif
+         endif
+      end if
     
 if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
    nlst_rt(did)%OVRTSWCRT          .gt. 0 .or. &
