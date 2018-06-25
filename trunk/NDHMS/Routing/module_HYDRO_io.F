@@ -1161,7 +1161,7 @@ end subroutine get_albedo12m_netcdf
 
               jj = global_rt_ny
               do i = 1, global_rt_ny
-                 g_inv(:,j) = g_inv_tmp(:,jj)
+                 g_inv(:,i) = g_inv_tmp(:,jj)
                  jj = global_rt_ny - i
               end do
          else
