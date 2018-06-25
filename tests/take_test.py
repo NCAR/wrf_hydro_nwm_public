@@ -253,7 +253,7 @@ if pytest_return == 0:
     else: 
         log.info('All tests successful: tear down test.')
         log.debug('')
-        if candidate_spec['repos_dir'].exists():
+        if pathlib.PosixPath(candidate_spec['repos_dir']).exists():
             shutil.rmtree(candidate_spec['repos_dir'])
         shutil.rmtree(candidate_spec['test_dir'])
     log.debug('')
