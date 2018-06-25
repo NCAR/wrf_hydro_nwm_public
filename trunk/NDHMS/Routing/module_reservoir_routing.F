@@ -14,8 +14,10 @@
 module module_reservoir_routing
 implicit none
 
+contains
+
 subroutine read_reservoir_obs(domainId)
-   use module_namelist, only nlst_rt
+   use module_namelist, only: nlst_rt
    use netcdf
 #ifdef MPP_LAND
    use module_mpp_land
@@ -52,6 +54,9 @@ subroutine read_reservoir_obs(domainId)
    logical :: file_exists
    integer :: missingFlag
    integer :: varTmpId
+   integer :: mppFlag
+   integer :: iret
+   integer :: lakeDimId
 
 #ifdef HYDRO_D
    diagFlag = 1
@@ -68,7 +73,7 @@ subroutine read_reservoir_obs(domainId)
 
    ! Check to ensure the namelist option for reading in the reservoir discharge data
    ! has been set to 1. If not, return back to the main calling program.
-   if(nlst_rt%reservoir_realtime .eq. 0) then
+   if(nlst_rt(domainId)%reservoir_realtime .eq. 0) then
        ! No reservoir realtime data requested. 
        return
    endif
@@ -91,7 +96,7 @@ subroutine read_reservoir_obs(domainId)
       missingFlag = 0
 
       ! We are on the I/O processor.
-      write(inFlnm,'(A,"/LAKEFILE_DISCHARGE_",A12,".nc")') nlst_rt%reservoir_obs_dir,nlst_rt(domainId)%olddate(1:4)//&
+      write(inFlnm,'(A,"/LAKEFILE_DISCHARGE_",A12,".nc")') nlst_rt(domainId)%reservoir_obs_dir,nlst_rt(domainId)%olddate(1:4)//&
             nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
             nlst_rt(domainId)%olddate(12:13)//nlst_rt(domainId)%olddate(15:16)
 
@@ -234,12 +239,13 @@ subroutine read_reservoir_obs(domainId)
          deallocate(lakeLat)
          deallocate(lakeLon)
 
-   else
-      missingFlag = 1
-      return
+      else
+         missingFlag = 1
+         return
+      endif
    endif
 
-end subroutine read_reservoir_obs()
+end subroutine read_reservoir_obs
 
 subroutine postDiagMsg(diagFlag,diagMsg)
    implicit none

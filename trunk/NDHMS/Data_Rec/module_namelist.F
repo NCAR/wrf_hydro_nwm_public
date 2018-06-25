@@ -87,6 +87,7 @@ CONTAINS
        real :: ZSOIL8(8)
 
        logical            :: dir_e
+       character(len=1024) :: reservoir_obs_dir
 #ifdef WRF_HYDRO_NUDGING
        character(len=256) :: nudgingParamFile
        character(len=256) :: netwkReExFile
@@ -241,10 +242,12 @@ CONTAINS
   nlst%rst_dt = rst_dt
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
+  nlst%reservoir_obs_dir = "testDirectory"
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
+  call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
 #endif
 
   write(nlst%hgrid,'(I1)') igrid
@@ -405,6 +408,7 @@ CONTAINS
     nlst%UDMP_OPT = UDMP_OPT
     nlst%GWBUCKPARM_file =  GWBUCKPARM_file
     nlst%reservoir_realtime = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
+    nlst%reservoir_obs_dir = 'testDirectory'
 #ifdef WRF_HYDRO_NUDGING
     nlst%nudgingParamFile       = nudgingParamFile
     nlst%netWkReExFile          = netWkReExFile

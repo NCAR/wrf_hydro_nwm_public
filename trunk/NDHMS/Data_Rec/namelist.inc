@@ -49,6 +49,7 @@
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
           integer :: reservoir_realtime ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
+          character(len=1024) :: reservoir_obs_dir = ""
 
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
