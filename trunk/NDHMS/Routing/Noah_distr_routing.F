@@ -270,7 +270,7 @@
 
 ! ADCHANGE: IMPORTANT!
 ! 2D subsurface option currently has bug so forcing to option 1 in this routine to
-! allow users to still have option to use 2d overland (both are controlled by same 
+! allow users to still have option to use 2d overland (both are controlled by same
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
 !     if(rt_option .eq. 1) then
         CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &   

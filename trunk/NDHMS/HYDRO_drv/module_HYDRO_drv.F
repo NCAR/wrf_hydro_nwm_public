@@ -908,6 +908,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
+       RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
        RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, &
        RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
        RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
@@ -928,10 +929,11 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
        , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
        , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       ,                                     RT_DOMAIN(did)%HLINK    &
        , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
        ,                                     nlst_rt(did)%SUBRTSWCRT &
        , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
-       )             
+       )
 
 else
 
@@ -947,7 +949,7 @@ else
        RT_DOMAIN(did)%QLateral, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &
-       RT_DOMAIN(did)%Bw,&
+       RT_DOMAIN(did)%Bw,RT_DOMAIN(did)%Tw,RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
        RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH,&
        RT_DOMAIN(did)%WEIRH,    &
        RT_DOMAIN(did)%WEIRC, RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, &
@@ -969,7 +971,7 @@ else
        , rt_domain(did)%CH_LNKRT_SL   &
        ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
-       nlst_rt(did)%gwChanCondConstOut, rt_domain(did)%velocity &
+       nlst_rt(did)%gwChanCondConstOut,rt_domain(did)%velocity &
        )
 endif
     

@@ -49,6 +49,7 @@ CONTAINS
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
+          logical            :: compound_channel
           character(len=256) :: route_lake_f=""
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
@@ -114,7 +115,7 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt_ter,dtrt_ch,dxrt,&
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
-                    route_topo_f,route_chan_f,route_link_f,route_lake_f, &
+                    route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
                     route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
@@ -146,8 +147,13 @@ CONTAINS
    t0OutputFlag = 1
    output_channelBucket_influx = 0
    TERADJ_SOLAR = 0
+<<<<<<< HEAD
    reservoir_realtime = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.  
 
+=======
+   compound_channel = .FALSE.
+   
+>>>>>>> ad76ab8965f5c585813ca02c2cdce754bc014079
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
@@ -394,6 +400,8 @@ CONTAINS
     nlst%rst_bi_in = rst_bi_in
     nlst%rst_bi_out = rst_bi_out
     nlst%order_to_write = order_to_write
+    nlst%compound_channel = compound_channel
+
 ! files
     nlst%route_topo_f   =  route_topo_f
     nlst%route_chan_f = route_chan_f 
@@ -459,6 +467,7 @@ CONTAINS
     write(6,*) " nlst%route_topo_f   ",  route_topo_f
     write(6,*) " nlst%route_chan_f ", route_chan_f 
     write(6,*) " nlst%route_link_f ", route_link_f
+    write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
@@ -712,6 +721,11 @@ subroutine rt_nlst_check(nlst)
       endif
    endif
 
+   if((nlst%channel_option .eq. 3) .and. (nlst%compound_channel)) then
+      call hydro_stop("Compound channel option not available for diffusive wave routing. ")
+   end if
+
+   
 end subroutine rt_nlst_check
 
 end module module_namelist

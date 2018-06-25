@@ -198,6 +198,11 @@ else
         # Use mount this repo to /home/docker
         this_repo_name=$(basename $this_repo)
 
+        # Candidate spec file
+        # needs mounted, may spcify alternate
+        # repos which need mounted.
+
+        
         not_interactive=$(echo "$args_to_pass" | grep '\-i' | wc -l)
         args_to_pass=$(echo "$args_to_pass" | sed "s|-i||")
         
