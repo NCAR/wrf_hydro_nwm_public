@@ -394,7 +394,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: dtr            ! required timestep, minutes
         REAL    :: aerror,rerror  ! absolute and relative error
         REAL    :: hp             ! courant, previous height
-        REAL    :: qloss          ! Channel Loss
         INTEGER :: iter, maxiter  ! maximum number of iterations
 
 !-- local variables.. needed if channel is sub-divded
@@ -682,18 +681,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
        qdc = 0.0
        depth = 0.0
      endif 
-
-!     qloss = (ChannK * dx * WP) ! TML -- Compute qloss to pass
-
-!     if(qloss > ((ql*dt)/D - C4)) then
-!          qloss = (ql*dt)/D - C4
-!          print*, 'qloss updated to:',qloss
-!          if (qloss < 0) then
-!             print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
-!          endif
-!     endif
-
-!     if(h.gt.0.0) write(6,*) "h,q,c4,qloss=",h,qdc,C4,qloss
 
 ! ----------------------------------------------------------------
 END SUBROUTINE SUBMUSKINGCUNGE

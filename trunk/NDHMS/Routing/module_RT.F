@@ -471,7 +471,7 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING
       rt_domain(did)%nudge = 0
 #endif
-      rt_domain(did)%HLINK = -999.        !--default to -999 if not found in the restart. should be read in for all channel options
+      rt_domain(did)%HLINK = -999.  !--default to -999 if not found in the restart.
       rt_domain(did)%MannN = 0.0        
       rt_domain(did)%LINKID = 0.0        
 
@@ -630,7 +630,7 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
-real,  dimension(50)     :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
 real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
 
 integer :: i,j,k, ll, count
@@ -1247,7 +1247,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
       call mpp_CHAN_PARM_INIT (BOTWID, HLINK_INIT, CHAN_SS, CHMann)  !Read chan parms from table...
       !call mpp_CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)  !Read chan parms from table...
 #else
-      call CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)  !Read chan parms from table...
+      call CHAN_PARM_INIT (BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann) !,TOPWIDCC,NCC)  !Read chan parms from table...
 #endif
    end if
 

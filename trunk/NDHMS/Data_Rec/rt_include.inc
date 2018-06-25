@@ -122,8 +122,13 @@
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
   REAL, allocatable, DIMENSION(:)      :: MannN      !mannings N
-  REAL, allocatable, DIMENSION(:)      :: So  !link slope and channel conductivity (m/s) 
-  REAL, allocatable, DIMENSION(:)      :: ChSSlp, Bw, Tw, Tw_CC, n_CC !trapezoid params, CC is compound channel
+  REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s) 
+  REAL, allocatable, DIMENSION(:)      :: ChSSlp ! channel side slope
+  REAL, allocatable, DIMENSION(:)      :: Bw     ! Bottom width of channel
+  REAL, allocatable, DIMENSION(:)      :: Tw     ! top width of channel
+  REAL, allocatable, DIMENSION(:)      :: Tw_CC  ! top width of the (CC) compound channel
+  REAL, allocatable, DIMENSION(:)      :: n_CC   ! mannings N of (CC) compound channel
+  
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING
