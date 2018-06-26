@@ -315,3 +315,60 @@ def test_perfrestart_candidate(
                 print(diff)
         assert diff is None, \
             "Candidate nudging restart files do not match when starting from a restart"
+
+
+# #################################
+# Channel-only Tests:
+# 0. Must be NWM config.
+# 1: Does channel-only run?
+# 2. Does channel-only perfect restart?
+# 3. Does channel-only pass ncores test?
+# 4. Does channel-only output match that of the full-model candidate?
+
+
+# Run questions
+def test_run_candidate_channel_only(
+    candidate_setup,
+    candidate_channel_only_setup,
+    output_dir,
+    job_default,
+    scheduler,
+    capsys
+):
+
+    if candidate_channel_only_setup is None:
+        return
+
+    with capsys.disabled():
+        print("\nQuestion: The candidate channel-only mode runs successfully?", end='')
+
+    # Dont recompile the model, just use the candidate's model.
+
+    candidate_channel_only_setup.model = candidate_setup.model
+
+    # Set run directory
+    run_dir = output_dir / 'run_candidate_channel_only'
+
+    candidate_channel_only_job = job_default
+    candidate_channel_only_job.scheduler = scheduler
+
+    # Run
+    candidate_channel_only_run = wrfhydropy.WrfHydroRun(
+        wrf_hydro_setup=candidate_channel_only_setup,
+        run_dir=run_dir,
+        jobs=candidate_channel_only_job
+    )
+    check_run_dir = candidate_channel_only_run.run_jobs()
+
+    if scheduler is not None:
+        # This function waits for the completed run.
+        candidate_channel_only_run = wrfhydropy.job_tools.restore_completed_scheduled_job(check_run_dir)
+
+    # Check subprocess and model run status
+    assert candidate_channel_only_run.jobs_completed[0].exit_status == 0, \
+        "Candidate code run exited with non-zero status"
+    assert candidate_channel_only_run.jobs_completed[0].job_status == 'completed success', \
+        "Candidate code run did not complete"
+
+
+        

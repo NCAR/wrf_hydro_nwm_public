@@ -115,6 +115,34 @@ def candidate_setup(request, configuration):
 
 
 @pytest.fixture(scope="session")
+def candidate_channel_only_setup(request, configuration):
+
+    if configuration != 'NWM':
+        return
+
+    domain_dir = request.config.getoption("--domain_dir")
+    candidate_dir = request.config.getoption("--candidate_dir")
+
+    # Candidate model
+    candidate_model = WrfHydroModel(
+        source_dir=candidate_dir,
+        model_config='NWM_channel-only'
+    )
+
+    # Candidate domain
+    domain = WrfHydroDomain(
+        domain_top_dir=domain_dir,
+        domain_config='NWM_channel-only',
+        model_version=candidate_model.version
+    )
+
+    # Candidate setup
+    candidate_channel_only_setup = WrfHydroSetup(candidate_model, domain)
+
+    return candidate_channel_only_setup
+
+
+@pytest.fixture(scope="session")
 def reference_setup(request, configuration):
 
     domain_dir = request.config.getoption("--domain_dir")
