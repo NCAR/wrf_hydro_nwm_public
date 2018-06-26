@@ -319,14 +319,12 @@ def test_perfrestart_candidate(
 
 # #################################
 # Channel-only Tests:
-# 0. Must be NWM config.
-# 1: Does channel-only run?
 # 2. Does channel-only perfect restart?
 # 3. Does channel-only pass ncores test?
 # 4. Does channel-only output match that of the full-model candidate?
 
 
-# Run questions
+# Channel-only Run
 def test_run_candidate_channel_only(
     candidate_setup,
     candidate_channel_only_setup,
@@ -370,5 +368,68 @@ def test_run_candidate_channel_only(
     assert candidate_channel_only_run.jobs_completed[0].job_status == 'completed success', \
         "Candidate code run did not complete"
 
+
+#Ncores question
+def test_ncores_candidate_channel_only(
+    candidate_setup,    
+    candidate_channel_only_setup,
+    output_dir,
+    job_ncores,
+    scheduler,
+    capsys
+):
+    with capsys.disabled():
+        print("\nQuestion: The candidate_channel-only restarts from a 1 core run match restarts from standard run?",
+              end='')
+
+    candidate_channel_only_run_file = output_dir / 'run_candidate_channel_only' / 'WrfHydroRun.pkl'
+    if candidate_channel_only_run_file.is_file() is False:
+        pytest.skip('candidate_channel_only run object not found, skipping test.')
+
+    # Load initial run model object
+    candidate_channel_only_run_expected = pickle.load(open(candidate_channel_only_run_file, "rb"))
+    # Set run directory
+    run_dir = output_dir.joinpath('ncores_candidate_channel_only')
+
+    candidate_channel_only_ncores_job = job_ncores
+    candidate_channel_only_ncores_job.scheduler = scheduler
+
+    # Run
+    candidate_channel_only_ncores_run = wrfhydropy.WrfHydroRun(
+        wrf_hydro_setup=candidate_channel_only_setup,
+        run_dir=run_dir,
+        jobs=candidate_channel_only_ncores_job
+    )
+    check_run_dir = candidate_channel_only_ncores_run.run_jobs()
+
+    if scheduler is not None:
+        candidate_channel_only_ncores_run = wrfhydropy.job_tools.restore_completed_scheduled_job(check_run_dir)
+    
+    #Check against initial run
+    ncores_restart_diffs = wrfhydropy.RestartDiffs(
+        candidate_channel_only_ncores_run,
+        candidate_channel_only_run_expected
+    )
+
+    ## Check hydro restarts
+    for diff in ncores_restart_diffs.hydro:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
+        assert diff == None, "candidate_channel-only hydro restart files do not match when run with different number of cores"
+
+    ## Check lsm restarts
+    for diff in ncores_restart_diffs.lsm:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
+        assert diff == None, "candidate_channel-only lsm restart files do not match when run with different number of cores"
+
+    ## Check nudging restarts
+    for diff in ncores_restart_diffs.nudging:
+        if diff is not None:
+            with capsys.disabled():
+                print(diff)
+        assert diff == None, "candidate_channel-only nudging restart files do not match when run with different number of cores"
 
         
