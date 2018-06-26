@@ -49,6 +49,7 @@
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
 
+          logical :: compound_channel
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
           integer ::CHRTOUT_GRID                ! Netcdf grid of channel streamflow values

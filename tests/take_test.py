@@ -169,6 +169,10 @@ establish_repo('candidate_repo', candidate_spec, user_spec)
 establish_repo('reference_repo', candidate_spec, user_spec)
 log.debug('')
 
+# Can I catch at this point:
+# if a path, is the repo on a case-sensitive dir?
+# if not copy and edit (this is in docker).
+
 # ###################################
 log.info(horiz_bar )
 log.info("Establish jobs and scheduler:")
