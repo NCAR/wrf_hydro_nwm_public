@@ -147,13 +147,9 @@ CONTAINS
    t0OutputFlag = 1
    output_channelBucket_influx = 0
    TERADJ_SOLAR = 0
-<<<<<<< HEAD
    reservoir_realtime = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.  
-
-=======
    compound_channel = .FALSE.
    
->>>>>>> ad76ab8965f5c585813ca02c2cdce754bc014079
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
