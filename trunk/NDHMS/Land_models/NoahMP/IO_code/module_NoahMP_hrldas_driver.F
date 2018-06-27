@@ -581,7 +581,7 @@ module module_NoahMP_hrldas_driver
         nlst_rt(did)%khour = khour ! Adding kHOUR to be used in the NWM output routines.
         nlst_rt(did)%olddate(1:19) = olddate(1:19)
         nlst_rt(did)%startdate(1:19) = olddate(1:19)
-        nlst_rt(did)%nsoil = kk
+        nlst_rt(did)%nsoil = -999999
 #ifdef MPP_LAND
         call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
 #endif
