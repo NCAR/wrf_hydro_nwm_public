@@ -1104,17 +1104,16 @@ end subroutine get_albedo12m_netcdf
               allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
               allocate(g_inv(global_rt_nx,global_rt_ny))
 
-
               g_inv_tmp = -9999.9
               iret =  get2d_real(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
                      trim(fileName), fatalErr=fatalErr_local)
-              do i=1,global_rt_nx
-                 jj=global_rt_ny
-                 do j=1,global_rt_ny
-                   g_inv(i,j)=g_inv_tmp(i,jj)
-                   jj=global_rt_ny-j
-                 end do
+
+              jj = global_rt_ny
+              do i = 1, global_rt_ny
+                 g_inv(:,i) = g_inv_tmp(:,jj)
+                 jj = global_rt_ny - i
               end do
+
               if(allocated(g_inv_tmp)) deallocate(g_inv_tmp)
          else
               allocate(g_inv(1,1))
@@ -1159,12 +1158,11 @@ end subroutine get_albedo12m_netcdf
               g_inv_tmp = -9999.9
               call  get2d_int(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
                      trim(fileName), fatalErr=fatalErr_local)
-              do i=1,global_rt_nx
-                 jj=global_rt_ny
-                do j=1,global_rt_ny
-                  g_inv(i,j)=g_inv_tmp(i,jj)
-                  jj=global_rt_ny-j
-                end do
+
+              jj = global_rt_ny
+              do i = 1, global_rt_ny
+                 g_inv(:,i) = g_inv_tmp(:,jj)
+                 jj = global_rt_ny - i
               end do
          else
               allocate(g_inv_tmp(1,1))
@@ -1203,13 +1201,13 @@ end subroutine get_albedo12m_netcdf
          inv_tmp = -9999.9
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
                      trim(fileName), fatalErr=fatalErr_local)
-         do i=1,ixrt
-            jj=jxrt
-         do j=1,jxrt
-           inv(i,j)=inv_tmp(i,jj)
-           jj=jxrt-j
+
+         jj = jxrt
+         do i = 1, jxrt
+            inv(:,i) = inv_tmp(:,jj)
+            jj = jxrt - i
          end do
-        end do
+
      end SUBROUTINE readRT2d_real
 
      subroutine readRT2d_int(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
@@ -1225,13 +1223,13 @@ end subroutine get_albedo12m_netcdf
          if(present(fatalErr)) fatalErr_local=fatalErr
          call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
                      trim(fileName), fatalErr=fatalErr_local)
-         do i=1,ixrt
-            jj=jxrt
-         do j=1,jxrt
-           inv(i,j)=inv_tmp(i,jj)
-           jj=jxrt-j
+         
+         jj = jxrt
+         do i = 1, jxrt
+            inv(:,i) = inv_tmp(:,jj)
+            jj = jxrt - i
          end do
-        end do
+
      end SUBROUTINE readRT2d_int
 
 !---------------------------------------------------------
