@@ -1,5 +1,6 @@
 #!/bin/bash
-# TODO(JLM): I should have written this in python.
+# TODO(JLM): I should have written this in python... or not, would require python whereas
+#            docker has python. This only require bash on the host machine.
 # Purpose:
 #   This script is the general pupose launching script for wrf_hydro_nwm_public
 #   and wrf_hydro_nwm testing.
@@ -34,13 +35,14 @@ fi
 # Determine the path to this file, allowing for a symlink.
 #https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
   SOURCE="$(readlink "$SOURCE")"
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 this_dir="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 this_repo=$(dirname $this_dir)
+this_repo_name=$(basename $this_repo)
 #echo "Testing: $this_dir"
 
 
@@ -121,7 +123,40 @@ fi
 
 if [[ $known_machine == 0 ]] || [[ $in_docker == 0 ]]; then
 
-    python ${this_dir}/take_test.py ${args_to_pass}
+    if [[ $in_docker == 0 ]]; then
+
+	# Deal with possibility of case-insensitive mounted file system
+	rm -f abcdefghijklmnop ABCDEFGHIJKLMNOP
+	touch abcdefghijklmnop ABCDEFGHIJKLMNOP &> /dev/null
+	rm -f ABCDEFGHIJKLMNOP
+	case_insensitive=$(ls abcdefghijklmnop &> /dev/null | wc -l)
+	#echo "case_insensitive: $case_insensitive"
+	rm -f abcdefghijklmnop ABCDEFGHIJKLMNOP
+	
+	if [[ $case_insensitive -eq 0 ]]; then
+	    cp -r ${this_repo} ${this_repo}_case_sensitive
+	    cd ${this_repo}_case_sensitive/tests
+	    # Edit the candidate spec file for the above. 
+	    for ff in ~/.test_spec_dir/*yaml; do
+		sed -i "s|${this_repo}\$|${this_repo}_case_sensitive|g" $ff
+		#echo $this_repo
+		#echo $ff
+	    done
+	    # Also deal with local_paths in the candidate spec...
+	    for ii in `egrep 'local_path.*:' ~/.test_spec_dir/*.yaml | tr -d ' ' | cut -d':' -f3`; do
+		#echo $ii
+		if [[ "$ii" == *"_case_sensitive" ]]; then
+		    continue
+		fi
+		cp -r $ii ${ii}_case_sensitive
+		sed -i "s|$ii\$|${ii}_case_sensitive|g"  ~/.test_spec_dir/*.yaml
+	    done
+		
+	fi
+
+    fi
+
+    python take_test.py ${args_to_pass}
     return_code=$?
     
 else
@@ -191,25 +226,65 @@ else
 
         # Candidate spec 
         if [ $wh_candidate_spec != -1 ]; then
-            cp candidate_spec_file ${host_spec_dir}/.
-            
+            cp ${candidate_spec_file} ${host_spec_dir}/.
+	    can_spec_file_copy=${host_spec_dir}$(basename ${candidate_spec_file})
+	    can_spec_file_docker=$docker_spec_dir/$(basename ${candidate_spec_file})
+            # Have to mount and edit
+	    
+	    args_to_pass=$(echo "$args_to_pass" | \
+			   sed "s|${candidate_spec_file}|$can_spec_file_docker|")
+	    candidate_spec_mounts=""
+	    for ii in `egrep 'local_path.*:' ${candidate_spec_file} | tr -d ' ' | cut -d':' -f2`; do
+		if [ -z $ii ]; then
+		    continue
+		fi
+		#echo ----
+		# SOURCE="$ii"
+		# while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlnk
+		#     echo bar
+		#     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+		#     SOURCE="$(readlink "$SOURCE")"
+		#     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+		# done
+		# the_path=$SOURCE
+		the_path=$ii
+		#echo "the_path: $the_path"
+		#echo "this_repo: $this_repo"
+		#echo "this_repo_name: $this_repo_name"
+		if [[ "$the_path" != "$this_repo" ]] && \
+		       [[ "$the_path" != *"$this_repo_name" ]]; then
+		    # If the local_path is the testing repo (though full path is not 
+		    # in this case have to mount the repos
+		    # and have to edit the copied candidate spec to reflect docker locn
+		    rep_str="${the_path}:/home/docker/$(basename ${the_path})"
+		    candidate_spec_mounts=$(echo "${candiate_spec_mounts} -v ${rep_str}")
+		fi
+		sed -i '' "s|${the_path}|/home/docker/$(basename ${the_path})|g" $can_spec_file_copy		    
+	    done
+	    
         fi
-        
+
+	
         # Use mount this repo to /home/docker
         this_repo_name=$(basename $this_repo)
 
         not_interactive=$(echo "$args_to_pass" | grep '\-i' | wc -l)
-        args_to_pass=$(echo "$args_to_pass" | sed "s|-i||")
+        #args_to_pass=$(echo "$args_to_pass" | sed "s|-i||")
         
         docker_cmd=""
         #docker_cmd=${docker_cmd}"cd /home/docker/wrf_hydro_py; pip uninstall -y wrfhydropy; "
         #docker_cmd=${docker_cmd}" python setup.py install; pip install termcolor; "
-        docker_cmd=$(echo "${docker_cmd}cd /home/docker/${this_repo_name}/tests/; ./take_test.sh ${args_to_pass};")
-        if [[ "$not_interactive" -eq 0 ]]; then
-            docker_cmd=$(echo "${docker_cmd} echo $?")
-        else
+        docker_cmd=$(echo \
+"${docker_cmd} \
+cd /home/docker/${this_repo_name}/tests/; \
+./take_test.sh ${args_to_pass}; \
+if [ \\\$? -ne 0 ]; then cd /home/docker/take_test; /bin/bash; fi;")
+
+        if [[ "$not_interactive" -eq 1 ]]; then
             echo "Interactive docker requested at end of test."
-            docker_cmd=$(echo "${docker_cmd} /bin/bash ")
+            docker_cmd=$(echo "${docker_cmd} cd /home/docker/take_test; /bin/bash ")
+	else
+            docker_cmd=$(echo "${docker_cmd} exit \\\$? ")	    
         fi
 
         #echo "docker_cmd: $docker_cmd"
@@ -238,8 +313,11 @@ else
 "${invoke_docker} \
      -v ${host_spec_dir}:${docker_spec_dir} \
      -v ${this_repo}:/home/docker/${this_repo_name} \
-     -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
-")
+     ${candidate_spec_mounts}")
+
+        # May want the custom ability to mount wrf_hydro_py at some point. 
+#     -v /Users/jamesmcc/WRF_Hydro/wrf_hydro_py:/home/docker/wrf_hydro_py \
+
         if [[ ! -z $domain_tmp_vol ]]; then
             invoke_docker=$(echo \
 "${invoke_docker} \
@@ -252,10 +330,9 @@ else
      wrfhydro/dev:conda /bin/bash -c \"${docker_cmd}\"")
 
         #echo "$args_to_pass"
-        #echo "$invoke_docker"
-        
+        #echo "invoke_docker: $invoke_docker"        
         eval $invoke_docker
-        #return_code=$?
+        return_code=$?
         
         if [[ ${domain} == "wrfhydro/domains:"* ]]; then
             echo "Tearing down the data container: " $(docker rm -v ${domain_tmp_vol})
@@ -264,5 +341,5 @@ else
     fi # Trying docker
     
 fi # Known machine else unknown machine
-    
+
 exit $return_code
