@@ -57,9 +57,18 @@ parser.add_argument(
     nargs='*',
     metavar='key',
     help=('Zero or more keys separated by whitespace for specifying the desired tests. ' +
-          'These keys are grepped against the test_*py files in the tests/ directory.'),
+          'See pytest -k for details on keys including logical relations (note different ' +
+          'format here).'),
     default=None
 )
+
+parser.add_argument(
+    '-i',
+    action='store_true',
+    help=('Keep output (for browsing) even when all tests successful.'),
+    default=None
+)
+
 
 args = parser.parse_args()
 candidate_spec_file = args.candidate_spec_file
@@ -69,8 +78,10 @@ config= args.config
 
 test_spec = args.test_spec
 if test_spec is not None:
-    if type(test_spec) is not list:
-        test_spec = [test_spec]
+    if type(test_spec) is list:
+        test_spec = ' '.join(test_spec)
+
+interactive = args.i
 
 
 # #######################################################
@@ -221,7 +232,7 @@ if config is not None:
     pytest_cmd = pytest_cmd + [ '--config' ] + config
 
 if test_spec is not None:
-    pytest_cmd = pytest_cmd + [ '-k'] + test_spec
+    pytest_cmd = pytest_cmd + ['-k'] + [test_spec]
 
 log.debug('')
 log.info('with arguments:')
@@ -237,10 +248,14 @@ log.debug('')
 # Tear down if success
 log.info('=================================================================')
 if pytest_return == 0:
-    log.info('All tests successful: tear down test.')
-    log.debug('')
-    shutil.rmtree(candidate_spec['repos_dir'])
-    shutil.rmtree(candidate_spec['test_dir'])
+    if interactive:
+        log.info('All tests successful but -i leaves files for interactive browsing.')
+    else: 
+        log.info('All tests successful: tear down test.')
+        log.debug('')
+        if pathlib.PosixPath(candidate_spec['repos_dir']).exists():
+            shutil.rmtree(candidate_spec['repos_dir'])
+        shutil.rmtree(candidate_spec['test_dir'])
     log.debug('')
 else:
     if pathlib.PosixPath(candidate_spec['repos_dir']).exists():
@@ -248,7 +263,7 @@ else:
         log.info('Repos: ' + candidate_spec['repos_dir'])
     else:
         log.info('Some tests failed: leaving tests in:')
-        
+
     log.info('Tests: ' + candidate_spec['test_dir'])
     log.debug('')
 
@@ -290,3 +305,6 @@ all_specs = { 'Candidate': candidate_spec,
 
 for key, value in all_specs.items():
     log_spec(value, key)
+
+
+sys.exit(pytest_return)

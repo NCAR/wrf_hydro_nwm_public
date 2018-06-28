@@ -599,7 +599,9 @@ subroutine rt_nlst_check(nlst)
    if(nlst%TERADJ_SOLAR .ne. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid TERADJ_SOLAR specified')
    endif
-   if(nlst%NSOIL .le. 0) then
+   ! The default value of nsoil == -999. When channel-only is used,
+   ! nsoil ==  -999999. In the case of channel-only, skip following block of code.
+   if(nlst%NSOIL .le. 0 .and. nlst%NSOIL .ne. -999999) then
       call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
    endif
    do i = 1,nlst%NSOIL
