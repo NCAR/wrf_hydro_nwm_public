@@ -48,7 +48,7 @@
           character(len=256) :: geo_finegrid_flnm =""
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
-          integer :: reservoir_realtime ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
+          integer :: reservoir_data_ingest ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
           character(len=1024) :: reservoir_obs_dir = ""
 
           logical :: compound_channel

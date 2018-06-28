@@ -73,7 +73,7 @@ subroutine read_reservoir_obs(domainId)
 
    ! Check to ensure the namelist option for reading in the reservoir discharge data
    ! has been set to 1. If not, return back to the main calling program.
-   if(nlst_rt(domainId)%reservoir_realtime .eq. 0) then
+   if(nlst_rt(domainId)%reservoir_data_ingest .eq. 0) then
        ! No reservoir realtime data requested. 
        return
    endif
