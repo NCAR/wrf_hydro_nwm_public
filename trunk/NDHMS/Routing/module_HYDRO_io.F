@@ -10201,6 +10201,8 @@ end subroutine output_chrt2
         integer,allocatable, dimension(:) ::  gto, tmpLAKELINKID, gTYPEL, gOUTLAKEID
 
       integer tmpBuf(GNLINKSL)
+      integer, allocatable :: num_a(:)
+      integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       tmpSize = size(TO_NODE,1)
       allocate(OUTLAKEID(tmpSize))
@@ -10219,19 +10221,29 @@ end subroutine output_chrt2
      call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
 #endif
 
-   
       call gBcastValue(TO_NODE,gto)   
+
       maxNum = 0
       kk = 0
-      do m = 1, NLINKSL
-          num = 0
-          do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 kk = kk +1
-                 num = num + 1
-             endif
-          end do
-          if(num .gt. maxNum) maxNum = num
+      allocate(num_a(NLINKSL))
+      cache_block = 512
+      num_a = 0
+      tmp_num = 0
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  kk = kk +1
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+            num = tmp_num
+            if(num .gt. maxNum) maxNum = num
+         end do
       end do
 
       allocate(ind(kk))
@@ -10253,20 +10265,28 @@ end subroutine output_chrt2
          TYPEL = -999
       endif
 
+      num_a = 1
+      tmp_num = 0
       kk = 0
-      do m = 1, NLINKSL
-         num = 1
-         do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 kk = kk +1
-                 ind(kk) = k
-                 tmpTO_NODE(kk) = gto(k)
-                 gToNodeOut(m,num+1) = kk
-                 gToNodeOut(m,1) = num
-                 num = num + 1
-             endif
-          end do
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  kk = kk +1
+                  ind(kk) = k
+                  tmpTO_NODE(kk) = gto(k)
+                  gToNodeOut(m,tmp_num+1) = kk
+                  gToNodeOut(m,1) = tmp_num
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+         end do
       end do
+      deallocate(num_a)
       size2 = kk
       deallocate (gto)
     
@@ -10456,6 +10476,8 @@ end subroutine output_chrt2
 !       integer tmpBuf(GNLINKSL)
         integer, dimension(nlakes) :: lakemask
         integer ii
+        integer, allocatable :: num_a(:)
+        integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       allocate (gto(GNLINKSL))
       allocate (gtoLakeId_g(GNLINKSL))
@@ -10469,18 +10491,29 @@ end subroutine output_chrt2
       gtoLakeId_g=-999
  
       call gBcastValue(TO_NODE,gto)   
+
       maxNum = 0
       kk = 0
-      do m = 1, NLINKSL
-          num = 0
-          do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 gtoLakeId_g(k) = lakeida(m)
-                 kk = kk +1
-                 num = num + 1
-             endif
-          end do
-          if(num .gt. maxNum) maxNum = num
+      allocate(num_a(NLINKSL))
+      cache_block = 512
+      num_a = 0
+      tmp_num = 0
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  gtoLakeId_g(k) = lakeida(m)
+                  kk = kk +1
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+            num = tmp_num
+            if(num .gt. maxNum) maxNum = num
+         end do
       end do
 
       allocate(ind(kk))
@@ -10489,21 +10522,28 @@ end subroutine output_chrt2
       allocate(tmpLAKEIDA(kk))
       allocate(tmpTO_NODE(kk))
 
-
+      num_a = 1
+      tmp_num = 0
       kk = 0
-      do m = 1, NLINKSL
-         num = 1
-         do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 kk = kk +1
-                 ind(kk) = k
-                 tmpTO_NODE(kk) = gto(k)
-                 gToNodeOut(m,num+1) = kk
-                 gToNodeOut(m,1) = num
-                 num = num + 1
-             endif
-          end do
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  kk = kk +1
+                  ind(kk) = k
+                  tmpTO_NODE(kk) = gto(k)
+                  gToNodeOut(m,tmp_num+1) = kk
+                  gToNodeOut(m,1) = tmp_num
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+         end do
       end do
+      deallocate(num_a)
       size = kk
       if(allocated(gto)) deallocate (gto)
     
