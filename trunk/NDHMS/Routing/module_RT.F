@@ -791,7 +791,9 @@ endif
          call UDMP_ini( rt_domain(did)%GNLINKSL, rt_domain(did)%ixrt,      &
               rt_domain(did)%jxrt,     rt_domain(did)%overland%streams_and_lakes%ch_netrt , &
               nlst_rt(did)%OVRTSWCRT,  nlst_rt(did)%SUBRTSWCRT,  &
-              rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9)                         )
+              rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+              nlst_rt(did)%udmap_file, &
+              nlst_rt(did)%route_link_f )
 #ifdef HYDRO_D
          write(6,*) "after UDMP_ini "
          call flush(6)

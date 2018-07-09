@@ -24,10 +24,10 @@ module module_subsurface_properties
         real, pointer, dimension(:,:) :: surface_slope_x => null()
 
         ! terrian slope in the y direction (m/m)
-        real, pointer, dimension(:,:) :: surface_slope_y => null()   
+        real, pointer, dimension(:,:) :: surface_slope_y => null()
 
         ! water surface slope in 8 ordinal directions (m/m)                                                                  !
-        ! TODO verify this correct, check with Wei? 
+        ! TODO verify this correct, check with Wei?
         !                      1
         !                      |
         !                  8       2
@@ -35,17 +35,19 @@ module module_subsurface_properties
         !                 7__     __ 3
         !
         !                    /   \
-        !                   6     4 
-        !                      |  
+        !                   6     4
+        !                      |
         !                      5
         !
         real, pointer, dimension(:,:,:) :: water_surface_slope => null()
 
         ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
-        integer, pointer, dimension(:,:,:) :: max_water_surface_slope_index => null() 
+        integer, pointer, dimension(:,:,:) :: max_water_surface_slope_index => null()
 
         ! centerpoint distance to each neighbor (m)
         real, pointer, dimension(:,:,:) :: distance_to_neighbor => null()
+
+        logical :: pointers_need_set = .true.
 
     contains
 
@@ -101,35 +103,37 @@ contains
 
         ! now initalize the shared properties from overland data
 
-        if ( associated(overland_data%properties%surface_slope_x) ) then
+        if ( .not. associated(overland_data%properties%surface_slope_x) .or. this%pointers_need_set ) then
             this%surface_slope_x => overland_data%properties%surface_slope_x
         else
             allocation_error = .true.
         end if
 
-        if ( associated(overland_data%properties%surface_slope_y) ) then
+        if ( .not. associated(overland_data%properties%surface_slope_y) .or. this%pointers_need_set  ) then
             this%surface_slope_y => overland_data%properties%surface_slope_y
         else
             allocation_error = .true.
         end if
 
-        if ( associated(overland_data%properties%water_surface_slope) ) then
+        if ( .not. associated(overland_data%properties%water_surface_slope) .or. this%pointers_need_set  ) then
             this%water_surface_slope => overland_data%properties%water_surface_slope
         else
             allocation_error = .true.
         end if
 
-        if ( associated(overland_data%properties%max_water_surface_slope_index) ) then
+        if ( .not. associated(overland_data%properties%max_water_surface_slope_index) .or. this%pointers_need_set  ) then
             this%max_water_surface_slope_index => overland_data%properties%max_water_surface_slope_index
         else
             allocation_error = .true.
         end if
 
-        if ( associated(overland_data%properties%distance_to_neighbor) ) then
+        if ( .not. associated(overland_data%properties%distance_to_neighbor) .or. this%pointers_need_set  ) then
             this%distance_to_neighbor => overland_data%properties%distance_to_neighbor
         else
             allocation_error = .true.
         end if
+
+        this%pointers_need_set = .false.
 
         if ( allocation_error ) &
             write(0,*) "attempt to allocate data in members of subsurface properties structure&
@@ -203,6 +207,8 @@ contains
         else
             allocation_error = .true.
         end if
+
+        this%pointers_need_set = .true.
 
 
         if ( allocation_error ) &

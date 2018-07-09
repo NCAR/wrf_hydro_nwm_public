@@ -53,10 +53,10 @@ program subsurface_tests
         call subsurface_data%init(ix,jx,nsoil,ov_data)
 
         ! check to see that io was allocated
-        if ( associated(subsurface_data%io) ) then
-            write(6,*) "io type was associated"
+        if ( associated(subsurface_data%state) ) then
+            write(6,*) "state type was associated"
         else
-            write(6,*) "io type was not associated"
+            write(6,*) "state type was not associated"
             status_val = .false.
         end if
 
@@ -79,10 +79,10 @@ program subsurface_tests
         call subsurface_data%destroy
 
          ! check to see that io was deallocated
-        if ( .not. associated(subsurface_data%io) ) then
-            write(6,*) "io type was disassociated"
+        if ( .not. associated(subsurface_data%state) ) then
+            write(6,*) "state type was disassociated"
         else
-            write(6,*) "io type was not disassociated"
+            write(6,*) "state type was not disassociated"
             status_val = .false.
         end if
 
