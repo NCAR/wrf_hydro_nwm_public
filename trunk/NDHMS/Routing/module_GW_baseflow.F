@@ -20,6 +20,7 @@
 
 module module_GW_baseflow
 
+!   use overland_data
 #ifdef MPP_LAND
    use module_mpp_land
    use MODULE_mpp_GWBUCKET, only: gw_sum_real, gw_write_io_real
@@ -27,7 +28,7 @@ module module_GW_baseflow
 #endif
    implicit none
 
-#include "rt_include.inc"
+!#include "rt_include.inc"
 !yw #include "namelist.inc"
 contains
 

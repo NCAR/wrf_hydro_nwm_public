@@ -148,6 +148,7 @@ module module_NoahMP_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  mp_2D      ! Slope of Ball-Berry rs-P relationship
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  hvt_2D     ! Canopy Height
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  mfsno_2D   ! Snow cover m parameter
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  rsurfexp_2D! exponent in the shape parameter for soil resistance option 1
 #endif
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
@@ -580,7 +581,7 @@ module module_NoahMP_hrldas_driver
         nlst_rt(did)%khour = khour ! Adding kHOUR to be used in the NWM output routines.
         nlst_rt(did)%olddate(1:19) = olddate(1:19)
         nlst_rt(did)%startdate(1:19) = olddate(1:19)
-        nlst_rt(did)%nsoil = kk
+        nlst_rt(did)%nsoil = -999999
 #ifdef MPP_LAND
         call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
 #endif
@@ -829,6 +830,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( mp_2D      (XSTART:XEND,YSTART:YEND) )            ! Slope of Ball-Berry rs-P relationship
   ALLOCATE ( hvt_2D     (XSTART:XEND,YSTART:YEND) )            ! Canopy Height
   ALLOCATE ( mfsno_2D   (XSTART:XEND,YSTART:YEND) )            ! Snow cover m parameter
+  ALLOCATE ( rsurfexp_2D(XSTART:XEND,YSTART:YEND) )            ! exponent in the shape parameter for soil resistance option 1
 #endif
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
@@ -1171,7 +1173,7 @@ module module_NoahMP_hrldas_driver
     CALL READ_3D_SOIL(SPATIAL_FILENAME, XSTART, XEND, YSTART, YEND, &
                       NSOIL,BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,  &
 		      DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,REFDK_2D,REFKDT_2D,&
-		      SLOPE_2D,CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D)
+		      SLOPE_2D,CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D)
 #endif
   
 !------------------------------------------------------------------------
@@ -1740,7 +1742,7 @@ end subroutine land_driver_ini
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
-		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,                    &
+		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
 #endif
 #ifdef WRF_HYDRO
                  sfcheadrt,INFXSRT,soldrain,                          &    !O
