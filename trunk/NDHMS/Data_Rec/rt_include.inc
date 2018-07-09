@@ -4,6 +4,7 @@
    type (subsurface_static_interface) :: subsurface_static
    type (subsurface_input_interface) :: subsurface_input
    type (subsurface_output_interface) :: subsurface_output
+   class (groundwater_base_data_struct), pointer :: groundwater
    INTEGER :: IX, JX
    logical :: initialized
    logical :: restQSTRM
