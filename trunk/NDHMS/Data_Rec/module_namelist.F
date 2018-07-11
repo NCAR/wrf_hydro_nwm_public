@@ -186,7 +186,7 @@ CONTAINS
 #endif
 
 ! ADCHANGE: move these checks to more universal namelist checks...
-if ( io_config_outputs .eq. 4 ) RTOUT_DOMAIN = 0
+   if ( io_config_outputs .eq. 4 ) RTOUT_DOMAIN = 0
 
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
@@ -194,6 +194,8 @@ if ( io_config_outputs .eq. 4 ) RTOUT_DOMAIN = 0
       if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1) &
            call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1.")
    end if
+
+   if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
 
 #ifdef MPP_LAND
 !  call mpp_land_bcast_real1(DT)
@@ -597,7 +599,9 @@ subroutine rt_nlst_check(nlst)
    if(nlst%TERADJ_SOLAR .ne. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid TERADJ_SOLAR specified')
    endif
-   if(nlst%NSOIL .le. 0) then
+   ! The default value of nsoil == -999. When channel-only is used,
+   ! nsoil ==  -999999. In the case of channel-only, skip following block of code.
+   if(nlst%NSOIL .le. 0 .and. nlst%NSOIL .ne. -999999) then
       call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
    endif
    do i = 1,nlst%NSOIL

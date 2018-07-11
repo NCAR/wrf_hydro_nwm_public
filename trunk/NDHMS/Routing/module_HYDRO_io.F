@@ -1104,17 +1104,16 @@ end subroutine get_albedo12m_netcdf
               allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
               allocate(g_inv(global_rt_nx,global_rt_ny))
 
-
               g_inv_tmp = -9999.9
               iret =  get2d_real(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
                      trim(fileName), fatalErr=fatalErr_local)
-              do i=1,global_rt_nx
-                 jj=global_rt_ny
-                 do j=1,global_rt_ny
-                   g_inv(i,j)=g_inv_tmp(i,jj)
-                   jj=global_rt_ny-j
-                 end do
+
+              jj = global_rt_ny
+              do j = 1, global_rt_ny
+                 g_inv(:,j) = g_inv_tmp(:,jj)
+                 jj = global_rt_ny - j
               end do
+
               if(allocated(g_inv_tmp)) deallocate(g_inv_tmp)
          else
               allocate(g_inv(1,1))
@@ -1159,12 +1158,11 @@ end subroutine get_albedo12m_netcdf
               g_inv_tmp = -9999.9
               call  get2d_int(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
                      trim(fileName), fatalErr=fatalErr_local)
-              do i=1,global_rt_nx
-                 jj=global_rt_ny
-                do j=1,global_rt_ny
-                  g_inv(i,j)=g_inv_tmp(i,jj)
-                  jj=global_rt_ny-j
-                end do
+
+              jj = global_rt_ny
+              do j = 1, global_rt_ny
+                 g_inv(:,j) = g_inv_tmp(:,jj)
+                 jj = global_rt_ny - j
               end do
          else
               allocate(g_inv_tmp(1,1))
@@ -1203,13 +1201,13 @@ end subroutine get_albedo12m_netcdf
          inv_tmp = -9999.9
          iret =  get2d_real(var_name,inv_tmp,ixrt,jxrt,&
                      trim(fileName), fatalErr=fatalErr_local)
-         do i=1,ixrt
-            jj=jxrt
-         do j=1,jxrt
-           inv(i,j)=inv_tmp(i,jj)
-           jj=jxrt-j
+
+         jj = jxrt
+         do j = 1, jxrt
+            inv(:,j) = inv_tmp(:,jj)
+            jj = jxrt - j
          end do
-        end do
+
      end SUBROUTINE readRT2d_real
 
      subroutine readRT2d_int(var_name, inv, ixrt, jxrt, fileName, fatalErr) 
@@ -1225,13 +1223,13 @@ end subroutine get_albedo12m_netcdf
          if(present(fatalErr)) fatalErr_local=fatalErr
          call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
                      trim(fileName), fatalErr=fatalErr_local)
-         do i=1,ixrt
-            jj=jxrt
-         do j=1,jxrt
-           inv(i,j)=inv_tmp(i,jj)
-           jj=jxrt-j
+         
+         jj = jxrt
+         do j = 1, jxrt
+            inv(:,j) = inv_tmp(:,jj)
+            jj = jxrt - j
          end do
-        end do
+
      end SUBROUTINE readRT2d_int
 
 !---------------------------------------------------------
@@ -5749,7 +5747,7 @@ end subroutine mpp_output_chrt
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
-        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SFCHEADRT,"sfcheadrt" )
+        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt" )
 
 
 #ifdef MPP_LAND
@@ -5984,7 +5982,7 @@ if( nlst_rt(did)%channel_only       .eq. 0 .and. &
    !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
    call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
    call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
-   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt"  ) 
+   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt"  ) 
 
 end if ! neither channel_only nor channelBucket_only
 
@@ -5995,13 +5993,13 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
    if( nlst_rt(did)%channel_only       .eq. 0 .and. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
     
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT, "QBDRYRT" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux, "QBDRYRT" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT, "sfcheadsubrt" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing, "sfcheadsubrt" )
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
-      !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT, "RETDEPRT" )
+      !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retention_depth, "RETDEPRT" )
 
    end if ! neither channel_only nor channelBucket_only
 
@@ -6114,7 +6112,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
-          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%LAKE_INFLORT,"lake_inflort")
+          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
 
    end if  !    if(nlst_rt(did)%CHANRTSWCRT.eq.1) 
 
@@ -6202,7 +6200,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           write(iunit,ERR=101) rt_domain(did)%SMCWLT1
           write(iunit,ERR=101) rt_domain(did)%INFXSRT
           write(iunit,ERR=101) rt_domain(did)%soldrain
-          write(iunit,ERR=101) rt_domain(did)%sfcheadrt
+          write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
@@ -6212,15 +6210,15 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%cvol
                    write(iunit,ERR=101) rt_domain(did)%resht
                    write(iunit,ERR=101) rt_domain(did)%qlakeo
-                   write(iunit,ERR=101) rt_domain(did)%LAKE_INFLORT
+                   write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-                    write(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                    write(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
                     write(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                    write(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                    write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
                     write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                     !AD_CHANGE: Not needed in RESTART
@@ -6294,8 +6292,8 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           read(iunit,ERR=101) rt_domain(did)%SMCWLT1
           read(iunit,ERR=101) rt_domain(did)%INFXSRT
           read(iunit,ERR=101) rt_domain(did)%soldrain
-          read(iunit,ERR=101) rt_domain(did)%sfcheadrt
-          if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%sfcheadrt = 0
+          read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
+          if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%overland%control%surface_water_head_lsm = 0
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
                 if(nlst_rt(did)%CHANRTSWCRT.EQ.1) then
@@ -6305,15 +6303,15 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%cvol
                    read(iunit,ERR=101) rt_domain(did)%resht
                    read(iunit,ERR=101) rt_domain(did)%qlakeo
-                   read(iunit,ERR=101) rt_domain(did)%LAKE_INFLORT
+                   read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
                      read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
-                   read(iunit,ERR=101) rt_domain(did)%QBDRYRT
+                   read(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
                    read(iunit,ERR=101) rt_domain(did)%INFXSWGT
-                   read(iunit,ERR=101) rt_domain(did)%SFCHEADSUBRT
+                   read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
                    read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
                    !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
@@ -6754,7 +6752,7 @@ if( nlst_rt(did)%channel_only       .eq. 0 .and. &
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
-      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%sfcheadrt,"sfcheadrt")
+      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt")
       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
 
    end if ! rst_typ .eq. 1
@@ -6777,12 +6775,12 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
 
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%SFCHEADSUBRT,"sfcheadsubrt")
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QBDRYRT,"QBDRYRT")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing,"sfcheadsubrt")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux,"QBDRYRT")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
          !AD_CHANGE: This is overwriting the RETDEPRTFAC version, so causes issues when changing that factor.
          !No need to have in restart since live calculated.
-         !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%RETDEPRT,"RETDEPRT")
+         !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retention_depth,"RETDEPRT")
          call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
       endif
 
@@ -6821,7 +6819,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then 
            
          if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
-            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%LAKE_INFLORT,"lake_inflort")
+            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
          endif
       end if
       
@@ -6868,7 +6866,7 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !!   Routing/module_HYDRO_drv.F: HYDRO_ini
 !! See comments there.
 !! Conensed, commented code:
-!! rt_domain(did)%LAKE_INFLORT=0.!rt_domain(did)%QSTRMVOLRT=0.
+!! rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake=0.!rt_domain(did)%surface_water_to_channel=0.
 !end if
 
 #ifdef MPP_LAND
@@ -10203,6 +10201,8 @@ end subroutine output_chrt2
         integer,allocatable, dimension(:) ::  gto, tmpLAKELINKID, gTYPEL, gOUTLAKEID
 
       integer tmpBuf(GNLINKSL)
+      integer, allocatable :: num_a(:)
+      integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       tmpSize = size(TO_NODE,1)
       allocate(OUTLAKEID(tmpSize))
@@ -10221,19 +10221,29 @@ end subroutine output_chrt2
      call nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
 #endif
 
-   
       call gBcastValue(TO_NODE,gto)   
+
       maxNum = 0
       kk = 0
-      do m = 1, NLINKSL
-          num = 0
-          do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 kk = kk +1
-                 num = num + 1
-             endif
-          end do
-          if(num .gt. maxNum) maxNum = num
+      allocate(num_a(NLINKSL))
+      cache_block = 512
+      num_a = 0
+      tmp_num = 0
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  kk = kk +1
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+            num = tmp_num
+            if(num .gt. maxNum) maxNum = num
+         end do
       end do
 
       allocate(ind(kk))
@@ -10255,20 +10265,28 @@ end subroutine output_chrt2
          TYPEL = -999
       endif
 
+      num_a = 1
+      tmp_num = 0
       kk = 0
-      do m = 1, NLINKSL
-         num = 1
-         do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 kk = kk +1
-                 ind(kk) = k
-                 tmpTO_NODE(kk) = gto(k)
-                 gToNodeOut(m,num+1) = kk
-                 gToNodeOut(m,1) = num
-                 num = num + 1
-             endif
-          end do
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  kk = kk +1
+                  ind(kk) = k
+                  tmpTO_NODE(kk) = gto(k)
+                  gToNodeOut(m,tmp_num+1) = kk
+                  gToNodeOut(m,1) = tmp_num
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+         end do
       end do
+      deallocate(num_a)
       size2 = kk
       deallocate (gto)
     
@@ -10458,6 +10476,8 @@ end subroutine output_chrt2
 !       integer tmpBuf(GNLINKSL)
         integer, dimension(nlakes) :: lakemask
         integer ii
+        integer, allocatable :: num_a(:)
+        integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       allocate (gto(GNLINKSL))
       allocate (gtoLakeId_g(GNLINKSL))
@@ -10471,18 +10491,29 @@ end subroutine output_chrt2
       gtoLakeId_g=-999
  
       call gBcastValue(TO_NODE,gto)   
+
       maxNum = 0
       kk = 0
-      do m = 1, NLINKSL
-          num = 0
-          do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 gtoLakeId_g(k) = lakeida(m)
-                 kk = kk +1
-                 num = num + 1
-             endif
-          end do
-          if(num .gt. maxNum) maxNum = num
+      allocate(num_a(NLINKSL))
+      cache_block = 512
+      num_a = 0
+      tmp_num = 0
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  gtoLakeId_g(k) = lakeida(m)
+                  kk = kk +1
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+            num = tmp_num
+            if(num .gt. maxNum) maxNum = num
+         end do
       end do
 
       allocate(ind(kk))
@@ -10491,21 +10522,28 @@ end subroutine output_chrt2
       allocate(tmpLAKEIDA(kk))
       allocate(tmpTO_NODE(kk))
 
-
+      num_a = 1
+      tmp_num = 0
       kk = 0
-      do m = 1, NLINKSL
-         num = 1
-         do k = 1, gnlinksl
-             if(gto(k) .eq. LINKID(m) ) then
-                 kk = kk +1
-                 ind(kk) = k
-                 tmpTO_NODE(kk) = gto(k)
-                 gToNodeOut(m,num+1) = kk
-                 gToNodeOut(m,1) = num
-                 num = num + 1
-             endif
-          end do
+      do cache_idx = 0, gnlinksl-1, cache_block
+         cache_block_begin = cache_idx + 1
+         cache_block_end = min(cache_idx + cache_block, gnlinksl)
+         do m = 1, NLINKSL
+            tmp_num = num_a(m)
+            do k = cache_block_begin, cache_block_end
+               if(gto(k) .eq. LINKID(m) ) then
+                  kk = kk +1
+                  ind(kk) = k
+                  tmpTO_NODE(kk) = gto(k)
+                  gToNodeOut(m,tmp_num+1) = kk
+                  gToNodeOut(m,1) = tmp_num
+                  tmp_num = tmp_num + 1
+               endif
+            end do
+            num_a(m) = tmp_num
+         end do
       end do
+      deallocate(num_a)
       size = kk
       if(allocated(gto)) deallocate (gto)
     

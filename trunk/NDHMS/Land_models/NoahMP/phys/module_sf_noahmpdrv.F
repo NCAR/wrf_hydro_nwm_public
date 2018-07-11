@@ -53,6 +53,7 @@ CONTAINS
 	        TRADXY,    NEEXY,    GPPXY,     NPPXY,   FVEGXY,   RUNSFXY, & ! OUT Noah MP only
 	       RUNSBXY,   ECANXY,   EDIRXY,   ETRANXY,    FSAXY,    FIRAXY, & ! OUT Noah MP only
 	        APARXY,    PSNXY,    SAVXY,     SAGXY,  RSSUNXY,   RSSHAXY, & ! OUT Noah MP only
+              ALBSNDXY, ALBSNIXY,                                           & ! OUT Noah MP only
 		BGAPXY,   WGAPXY,    TGVXY,     TGBXY,    CHVXY,     CHBXY, & ! OUT Noah MP only
 		 SHGXY,    SHCXY,    SHBXY,     EVGXY,    EVBXY,     GHVXY, & ! OUT Noah MP only
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
@@ -61,7 +62,7 @@ CONTAINS
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
-		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,                    &
+		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
@@ -156,6 +157,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  MP_2D     ! Slope of Ball-Berry rs-P relationship
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  HVT_2D    ! Canopy Height
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  MFSNO_2D  ! Snow cover m parameter
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  RSURFEXP_2D ! exponent in the shape parameter for soil resistance option 1
 #endif
 
 ! INOUT (with generic LSM equivalent)
@@ -245,6 +247,8 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  SAGXY     ! solar rad absorbed by ground (w/m2)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  RSSUNXY   ! sunlit leaf stomatal resistance (s/m)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  RSSHAXY   ! shaded leaf stomatal resistance (s/m)
+    REAL,    DIMENSION( ims:ime,1:2,      jms:jme ), INTENT(OUT  ) ::  ALBSNDXY  ! snow albedo (direct)
+    REAL,    DIMENSION( ims:ime,1:2,      jms:jme ), INTENT(OUT  ) ::  ALBSNIXY  ! snow albedo (diffuse)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  BGAPXY    ! between gap fraction
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  WGAPXY    ! within gap fraction
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  TGVXY     ! under canopy ground temperature[K]
@@ -386,6 +390,8 @@ CONTAINS
     REAL                                :: SAG          ! solar rad absorbed by ground (w/m2)
     REAL                                :: RSSUN        ! sunlit leaf stomatal resistance (s/m)
     REAL                                :: RSSHA        ! shaded leaf stomatal resistance (s/m)
+    REAL, DIMENSION(1:2)                :: ALBSND       ! snow albedo (direct)
+    REAL, DIMENSION(1:2)                :: ALBSNI       ! snow albedo (diffuse)
     REAL                                :: BGAP         ! between gap fraction
     REAL                                :: WGAP         ! within gap fraction
     REAL                                :: TGV          ! under canopy ground temperature[K]
@@ -638,6 +644,7 @@ CONTAINS
        parameters%mp     = MP_2D(I,J)             ! Slope of Ball-Berry rs-P relationship
        parameters%hvt    = HVT_2D(I,J)            ! Canopy Height
        parameters%mfsno  = MFSNO_2D(I,J)          ! Snow cover m parameter
+       parameters%rsurf_exp = RSURFEXP_2D(I,J)    ! exponent in the shape parameter for soil resistance option 1
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters)
        
@@ -780,6 +787,7 @@ CONTAINS
             RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , & ! OUT : 
             FSNO    , NEE     , GPP     , NPP     , FVEGMP  , SALB    , & ! OUT : 
             QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT : 
+            ALBSND  , ALBSNI  ,                                         & ! OUT :
             BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT : 
             SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
 	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
@@ -926,6 +934,13 @@ CONTAINS
              SAGXY    (I,J)                = SAG
              RSSUNXY  (I,J)                = RSSUN
              RSSHAXY  (I,J)                = RSSHA
+             IF(SWE > 0.0) THEN
+               ALBSNDXY (I,:,J)            = ALBSND   !snow albedo (direct)
+               ALBSNIXY (I,:,J)            = ALBSNI   !snow albedo (diffuse)
+             ELSE
+               ALBSNDXY (I,:,J)            = 0.0   !snow albedo (direct)
+               ALBSNIXY (I,:,J)            = 0.0   !snow albedo (diffuse)
+             ENDIF
              BGAPXY   (I,J)                = BGAP
              WGAPXY   (I,J)                = WGAP
              TGVXY    (I,J)                = TGV
@@ -1072,6 +1087,17 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
    parameters%Z0SNO      =       Z0SNO_TABLE
    parameters%SSI        =         SSI_TABLE
    parameters%SWEMX      =       SWEMX_TABLE
+   parameters%TAU0         =      TAU0_TABLE
+   parameters%GRAIN_GROWTH = GRAIN_GROWTH_TABLE
+   parameters%EXTRA_GROWTH = EXTRA_GROWTH_TABLE
+   parameters%DIRT_SOOT    =    DIRT_SOOT_TABLE
+   parameters%BATS_COSZ    =    BATS_COSZ_TABLE
+   parameters%BATS_VIS_NEW = BATS_VIS_NEW_TABLE
+   parameters%BATS_NIR_NEW = BATS_NIR_NEW_TABLE
+   parameters%BATS_VIS_AGE = BATS_VIS_AGE_TABLE
+   parameters%BATS_NIR_AGE = BATS_NIR_AGE_TABLE
+   parameters%BATS_VIS_DIR = BATS_VIS_DIR_TABLE
+   parameters%BATS_NIR_DIR = BATS_NIR_DIR_TABLE
    parameters%RSURF_SNOW =  RSURF_SNOW_TABLE
 
 ! ----------------------------------------------------------------------
@@ -1097,6 +1123,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
     parameters%MFSNO  =  MFSNO_TABLE(VEGTYPE)       !snowmelt m parameter ()
     parameters%HVT    =    HVT_TABLE(VEGTYPE)       !top of canopy (m)
     parameters%MP     =     MP_TABLE(VEGTYPE)       !slope of conductance-to-photosynthesis relationship
+   parameters%RSURF_EXP  =   RSURF_EXP_TABLE
 #endif
 
 ! ----------------------------------------------------------------------
