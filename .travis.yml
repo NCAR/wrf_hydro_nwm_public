@@ -9,7 +9,7 @@ before_install:
   - sudo mkdir $TEST_DIR_TRAVIS
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
-  - git clone git@github.com:NCAR/wrf_hydro_nwm.git $TEST_DIR_TRAVIS/reference
+  - git clone git@github.com:NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
   - cd $TEST_DIR_TRAVIS/reference
   - git checkout $TRAVIS_BRANCH
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
