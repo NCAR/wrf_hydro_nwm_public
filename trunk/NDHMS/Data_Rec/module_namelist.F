@@ -58,6 +58,7 @@ CONTAINS
           character(len=256) :: geo_finegrid_flnm =""
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
+          integer :: reservoir_data_ingest ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
        integer :: SOLVEG_INITSWC
        real*8 :: out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
@@ -87,6 +88,7 @@ CONTAINS
        real :: ZSOIL8(8)
 
        logical            :: dir_e
+       character(len=1024) :: reservoir_obs_dir
 #ifdef WRF_HYDRO_NUDGING
        character(len=256) :: nudgingParamFile
        character(len=256) :: netwkReExFile
@@ -145,6 +147,7 @@ CONTAINS
    t0OutputFlag = 1
    output_channelBucket_influx = 0
    TERADJ_SOLAR = 0
+   reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.  
    compound_channel = .FALSE.
    
 #ifdef WRF_HYDRO_NUDGING
@@ -241,10 +244,12 @@ CONTAINS
   nlst%rst_dt = rst_dt
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
+  nlst%reservoir_obs_dir = "testDirectory"
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
+  call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
 #endif
 
   write(nlst%hgrid,'(I1)') igrid
@@ -301,6 +306,7 @@ CONTAINS
   call mpp_land_bcast_int1(LSMOUT_DOMAIN)
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
   call mpp_land_bcast_int1(UDMP_OPT)
+  call mpp_land_bcast_int1(reservoir_data_ingest)
 #ifdef WRF_HYDRO_NUDGING
   call mpp_land_bcast_char(256, nudgingParamFile  )
   call mpp_land_bcast_char(256, netwkReExFile     )
@@ -405,6 +411,8 @@ CONTAINS
     nlst%udmap_file =  udmap_file
     nlst%UDMP_OPT = UDMP_OPT
     nlst%GWBUCKPARM_file =  GWBUCKPARM_file
+    nlst%reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
+    nlst%reservoir_obs_dir = 'testDirectory'
 #ifdef WRF_HYDRO_NUDGING
     nlst%nudgingParamFile       = nudgingParamFile
     nlst%netWkReExFile          = netWkReExFile
@@ -462,6 +470,7 @@ CONTAINS
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
+    write(6,*) " nlst%reservoir_data_ingest ", reservoir_data_ingest
 #ifdef WRF_HYDRO_NUDGING
     write(6,*) " nlst%nudgingParamFile      ",  trim(nudgingParamFile)
     write(6,*) " nlst%netWkReExFile         ",  trim(netWkReExFile)
