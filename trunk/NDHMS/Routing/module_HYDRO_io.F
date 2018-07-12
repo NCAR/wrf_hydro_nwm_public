@@ -6019,7 +6019,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
               ,rt_domain(did)%gnlinksl&
 #endif
               )
-        call checkReach(99,rt_domain(did)%HLINK)
+        !call checkReach(99,rt_domain(did)%HLINK)
       endif
 
       if(nlst_rt(did)%channel_option .eq. 3) then
