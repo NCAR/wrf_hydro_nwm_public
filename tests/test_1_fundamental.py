@@ -1,10 +1,7 @@
 import copy
 import datetime as dt
-import json
 import pickle
 import pytest
-import shutil
-import time
 import warnings
 import wrfhydropy
 
@@ -337,8 +334,11 @@ def test_run_candidate_channel_only(
         print("\nQuestion: The candidate channel-only mode runs successfully?", end='')
 
     # Dont recompile the model, just use the candidate's model.
-
     candidate_channel_only_setup.model = candidate_setup.model
+
+    # Set the forcing directory
+    candidate_channel_only_setup.namelist_hrldas['noahlsm_offline']['indir'] = \
+        str(output_dir / 'run_candidate')
 
     # Set run directory
     run_dir = output_dir / 'run_candidate_channel_only'
@@ -356,7 +356,8 @@ def test_run_candidate_channel_only(
 
     if scheduler is not None:
         # This function waits for the completed run.
-        candidate_channel_only_run = wrfhydropy.job_tools.restore_completed_scheduled_job(check_run_dir)
+        candidate_channel_only_run = \
+            wrfhydropy.job_tools.restore_completed_scheduled_job(check_run_dir)
 
     # Check subprocess and model run status
     assert candidate_channel_only_run.jobs_completed[0].exit_status == 0, \
@@ -373,7 +374,7 @@ def test_channel_only_matches_full(
 ):
 
     if candidate_channel_only_setup is None:
-        pytest.skip("unsupported configuration")
+        pytest.skip("Unsupported configuration for channel-only.")
 
     with capsys.disabled():
         print("\nQuestion: The candidate channel-only run restarts and CHRTOUT files match " +
@@ -393,27 +394,68 @@ def test_channel_only_matches_full(
     candidate_run_expected = pickle.load(open(candidate_run_file,"rb"))
     candidate_channel_only_run_expected = pickle.load(open(candidate_channel_only_run_file,"rb"))
 
-    #Check regression
+    exclude_vars = [
+        'stc1',
+        'smc1',
+        'sh2ox1',
+        'stc2',
+        'smc2',
+        'sh2ox2',
+        'stc3',
+        'smc3',
+        'sh2ox3',
+        'stc4',
+        'smc4',
+        'sh2ox4',
+        'infxsrt',
+        'soldrain',
+        'sfcheadrt',
+        'QBDRYRT',
+        'infxswgt',
+        'sfcheadsubrt',
+        'sh2owgt1',
+        'sh2owgt2',
+        'sh2owgt3',
+        'sh2owgt4',
+        'qstrmvolrt',
+        'hlink',
+        'lake_inflort'
+    ]
+
+    # We still compare these:
+    # 'qlink1'
+    # 'qlink2'
+    # 'resht'
+    # 'qlakeo'
+    # 'z_gwsubbas'
+
+    # Dont compare metadata in this case, there are different dimensions
+    # in the files that always result in a return code of 1.
+    nccmp_options = ['--data', '--force', '--quiet'] #, '--metadata']
+
+    # Check diffs
     regression_diffs = wrfhydropy.RestartDiffs(
         candidate_run_expected,
-        candidate_channel_only_run_expected
+        candidate_channel_only_run_expected,
+        nccmp_options=nccmp_options,
+        exclude_vars=exclude_vars
     )
 
-    ## Check hydro restarts
+    # Check hydro restarts
     for diff in regression_diffs.hydro:
         if diff is not None:
             with capsys.disabled():
                 print(diff)
-        assert diff == None, "Candidate channel-only hydro restart files do not match full " + \
-                             "restart files"
+        assert diff is None, \
+            "Candidate channel-only hydro restart files do not match full restart files"
 
-    ## Check nudging restarts
+    # Check nudging restarts
     for diff in regression_diffs.nudging:
         if diff is not None:
             with capsys.disabled():
                 print(diff)
-        assert diff == None, "Candidate channel-only nudging restart files do not match full " + \
-                             "restart files"
+        assert diff is None, \
+            "Candidate channel-only nudging restart files do not match full restart files"
 
 
 # Channel-only ncores question

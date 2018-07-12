@@ -201,14 +201,13 @@ else
         # Candidate spec file
         # needs mounted, may spcify alternate
         # repos which need mounted.
-
         
         not_interactive=$(echo "$args_to_pass" | grep '\-i' | wc -l)
         args_to_pass=$(echo "$args_to_pass" | sed "s|-i||")
         
         docker_cmd=""
-        #docker_cmd=${docker_cmd}"cd /home/docker/wrf_hydro_py; pip uninstall -y wrfhydropy; "
-        #docker_cmd=${docker_cmd}" python setup.py install; pip install termcolor; "
+        docker_cmd=${docker_cmd}"cd /home/docker/wrf_hydro_py; pip uninstall -y wrfhydropy; "
+        docker_cmd=${docker_cmd}" python setup.py install; pip install termcolor; "
         docker_cmd=$(echo "${docker_cmd}cd /home/docker/${this_repo_name}/tests/; ./take_test.sh ${args_to_pass};")
         if [[ "$not_interactive" -eq 0 ]]; then
             docker_cmd=$(echo "${docker_cmd} echo $?")

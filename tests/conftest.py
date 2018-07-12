@@ -118,7 +118,7 @@ def candidate_setup(request, configuration):
 def candidate_channel_only_setup(request, configuration):
 
     if configuration != 'NWM':
-        return
+        return None
 
     domain_dir = request.config.getoption("--domain_dir")
     candidate_dir = request.config.getoption("--candidate_dir")
