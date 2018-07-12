@@ -461,6 +461,7 @@ module module_NoahMP_hrldas_driver
      use module_HYDRO_drv, only: HYDRO_ini
      use module_namelist, only: nlst_rt
      use module_rt_data, only: rt_domain
+     use module_hrldas_HYDRO, only: open_print_mpp
      implicit  none
      integer:: NTIME_out
      integer, parameter :: did=1
@@ -590,6 +591,9 @@ module module_NoahMP_hrldas_driver
         call HYDRO_ini(ntime,did,ix0=1,jx0=1)
         RT_DOMAIN(did)%initialized = .true.
      endif ! if .not. RT_DOMAIN(did)%initialized
+
+     call open_print_mpp(6)
+     
      return  !! no more init necessary if channel_only or channelBucket_only
 
   endif

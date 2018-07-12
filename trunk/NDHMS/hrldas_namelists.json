@@ -42,7 +42,8 @@
                 "forc_typ": "NULL_specified_in_domain.json"
             }
         },
-        "NWM-channel-only": {
+
+        "NWM_channel-only": {
             "noahlsm_offline": {
                 "btr_option": 1,
                 "canopy_stomatal_resistance_option": 1,
@@ -84,6 +85,7 @@
                 "forc_typ": "NULL_specified_in_domain.json"
             }
         },
+        
         "Gridded": {
             "noahlsm_offline": {
                 "btr_option": 1,
@@ -125,6 +127,7 @@
                 "forc_typ": "NULL_specified_in_domain.json"
             }
         },
+        
           "Reach": {
             "noahlsm_offline": {
                 "btr_option": 1,

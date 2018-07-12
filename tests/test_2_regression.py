@@ -7,8 +7,9 @@ import copy
 import warnings
 import pytest
 
-#regression question
-def test_regression(output_dir,capsys):
+
+# regression question
+def test_regression(output_dir, capsys):
     with capsys.disabled():
         print("\nQuestion: The candidate standard run restarts match the reference standard restarts?",
               end="")

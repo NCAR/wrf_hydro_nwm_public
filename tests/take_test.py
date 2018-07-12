@@ -216,6 +216,7 @@ log.info(horiz_bar)
 log.info("Calling pytest:")
 
 pytest_cmd = [
+    #'--pdb', # for debugging the tests. May make this an option in the future... 
     '-v',
     '--color', 'yes',
     '--rootdir', str(candidate_spec['candidate_repo']['local_path']) + '/tests/' ,
