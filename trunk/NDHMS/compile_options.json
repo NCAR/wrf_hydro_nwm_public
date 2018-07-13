@@ -1,5 +1,6 @@
 {
     "v1.2.1": {
+        
         "NWM": {
             "WRF_HYDRO": 1,
             "HYDRO_D": 0,
@@ -9,6 +10,17 @@
             "NCEP_WCOSS": 0,
             "WRF_HYDRO_NUDGING": 1
         },
+        
+        "NWM_channel-only": {
+            "WRF_HYDRO": 1,
+            "HYDRO_D": 0,
+            "SPATIAL_SOIL": 1,
+            "WRF_HYDRO_RAPID": 0,
+            "WRFIO_NCD_LARGE_FILE_SUPPORT": 1,
+            "NCEP_WCOSS": 0,
+            "WRF_HYDRO_NUDGING": 1
+        },
+
         "Gridded": {
             "WRF_HYDRO": 1,
             "HYDRO_D": 0,
@@ -18,6 +30,7 @@
             "NCEP_WCOSS": 0,
             "WRF_HYDRO_NUDGING": 0
         },
+        
         "Reach": {
             "WRF_HYDRO": 1,
             "HYDRO_D": 0,
@@ -27,5 +40,6 @@
             "NCEP_WCOSS": 0,
             "WRF_HYDRO_NUDGING": 0
         }
+        
     }
 }

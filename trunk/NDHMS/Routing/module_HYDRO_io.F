@@ -5894,8 +5894,9 @@ end subroutine mpp_output_chrt
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
 
-         if(nlst_rt(did)%channel_option .eq. 3) &
-              iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
+!yw based on Laura request, hlink will do the restart for reach method.
+!         if(nlst_rt(did)%channel_option .eq. 3) &
+         iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
          iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
          iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
          if(nlst_rt(did)%channel_option .eq. 3) &
@@ -6012,13 +6013,13 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
               ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
 #endif
               )
-! JLM: currently hlink is not a prognostic variable for channel_options 1 & 2         
-!      else
-!         call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
-!#ifdef MPP_LAND
-!              ,rt_domain(did)%gnlinksl&
-!#endif
-!              )
+      else
+         call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
+#ifdef MPP_LAND
+              ,rt_domain(did)%gnlinksl&
+#endif
+              )
+        !call checkReach(99,rt_domain(did)%HLINK)
       endif
 
       if(nlst_rt(did)%channel_option .eq. 3) then
@@ -6794,10 +6795,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
       else
-         if( nlst_rt(did)%channel_only       .eq. 0 .and. &
-             nlst_rt(did)%channelBucket_only .eq. 0         ) &
-              call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL)
-         call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL)
+         call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL,fatalErr=.FALSE.)
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKSL)
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKSL)
          !call read_rst_crt_reach_nc(ncid,rt_domain(did)%CVOL,"cvol",rt_domain(did)%GNLINKSL)
@@ -7359,17 +7357,19 @@ end subroutine RESTART_IN_nc
 
 
 subroutine READ_CHROUTING1( &
-     IXRT,         JXRT,              fgDEM,     CH_NETRT, & 
-     CH_LNKRT,     LAKE_MSKRT,        FROM_NODE, TO_NODE,  &
-     TYPEL,        ORDER,             MAXORDER,  NLINKS,   &
-     NLAKES,       CHANLEN,           MannN,     So,       & 
-     ChSSlp,       Bw,                HRZAREA,   LAKEMAXH, & 
-     WEIRH,        WEIRC,             WEIRL,     ORIFICEC, &
-     ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE,  &
-     ELEVLAKE,     dist,              ZELEV,     LAKENODE, &
-     CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,    & 
-     CHLON,        channel_option,    LATVAL,    LONVAL,   &
-     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT    & !! no comma at end
+     IXRT,         JXRT,              fgDEM,        CH_NETRT, & 
+     CH_LNKRT,     LAKE_MSKRT,        FROM_NODE,    TO_NODE,  &
+     TYPEL,        ORDER,             MAXORDER,     NLINKS,   &
+     NLAKES,       CHANLEN,           MannN,        So,       & 
+     ChSSlp,       Bw,                Tw,                     &        
+     Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, & 
+     WEIRH,        WEIRC,             WEIRL,        ORIFICEC, &
+     ORIFICEA,     ORIFICEE,          LATLAKE,      LONLAKE,  &
+     ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
+     CH_NETLNK,    CHANXI,            CHANYJ,       CHLAT,    & 
+     CHLON,        channel_option,    LATVAL,       LONVAL,   &
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM,  &
+     UDMP_OPT                                                 & !! no comma at end
 #ifdef MPP_LAND
     ,Link_Location                                         &
 #endif
@@ -7413,7 +7413,8 @@ integer, intent(INOUT),  dimension(NLINKS)   :: LAKENODE !,LINKID   ! identifies
 real, intent(IN)                             :: dist(ixrt,jxrt,9)
 
 integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK
-real,  dimension(IXRT,JXRT)                  :: ChSSlpG,BwG,MannNG  !channel properties on Grid
+real,  dimension(IXRT,JXRT)                  :: ChSSlpG,BwG,TwG,MannNG  !channel properties
+real,  dimension(IXRT,JXRT)                  :: Tw_CCG,n_CCG            !channel properties of compound
 real,  dimension(IXRT,JXRT)                  :: chanDepth, elrt
 
 
@@ -7431,7 +7432,9 @@ real, intent(INOUT),  dimension(:)      :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
-real, intent(INOUT), dimension(:)       :: ChSSlp, Bw
+real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
+real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
+
 
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
@@ -7509,16 +7512,21 @@ do j=1,jxrt
    end do
 end do
 
+cnt    = 0 
+BwG    = 0.0
+TwG    = 0.0
+Tw_CCG = 0.0
+n_CCG  = 0.0
 
-
-cnt = 0 
-BwG = 0.0
 ChSSlpG = 0.0
-MannNG = 0.0
-TYPEL = 0
-MannN = 0.0
-Bw = 0.0
-ChSSlp = 0.0
+MannNG  = 0.0
+TYPEL   = 0
+MannN   = 0.0
+Bw      = 0.0
+Tw      = 0.0
+Tw_CC   = 0.0
+n_CC    = 0.0
+ChSSlp  = 0.0
 
 
 if (channel_option .eq. 3) then
@@ -7602,6 +7610,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7629,6 +7640,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7655,6 +7669,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7682,6 +7699,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7708,6 +7728,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7735,6 +7758,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i,j)
@@ -7762,6 +7788,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                TO_NODE(cnt) = CH_NETLNK(i - 1, j)
@@ -7788,6 +7817,9 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               Tw(cnt) = TwG(i,j)
+               Tw_CC(cnt) = Tw_CCG(i,j)
+               n_CC(cnt) = n_CCG(i,j)
                CHLAT(cnt) = LATVAL(i,j)
                CHLON(cnt) = LONVAL(i,j)
                FROM_NODE(cnt) = CH_NETLNK(i, j)
@@ -7843,7 +7875,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
-            
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(j+1 .gt. JXRT) then !-- an edge
@@ -7888,6 +7922,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j+1 .gt. JXRT))  then ! an edge
@@ -7930,6 +7967,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(i+1 .gt. IXRT) then  !an edge
@@ -7973,6 +8013,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if((i+1 .gt. IXRT) .or. (j-1 .eq. 0)) then !an edge 
@@ -8015,6 +8058,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(j-1 .eq. 0) then !- an edge
@@ -8058,6 +8104,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j-1 .eq. 0) ) then !- an edge
@@ -8100,6 +8149,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if(i-1 .eq. 0) then !-- an edge
@@ -8143,6 +8195,9 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            Tw(cnt) = TwG(i,j)
+            Tw_CC(cnt) = Tw_CCG(i,j)
+            n_CC(cnt) = n_CCG(i,j)
             CHLAT(cnt) = LATVAL(i,j)
             CHLON(cnt) = LONVAL(i,j)
             if( (i-1 .eq. 0) .or. (j+1 .gt. JXRT)) then !-- an edge
@@ -8191,7 +8246,8 @@ subroutine read_routelink(&
      TO_NODE,      TYPEL,        ORDER,    MAXORDER,   & 
      NLAKES,       MUSK,         MUSX,                 &
      QLINK,        CHANLEN,      MannN,    So,         &
-     ChSSlp,       Bw,           LAKEIDA,  HRZAREA,    & 
+     ChSSlp,       Bw,           Tw,       Tw_CC,      &
+     n_CC,         LAKEIDA,      HRZAREA,              & 
      LAKEMAXH,     WEIRH,        WEIRC,    WEIRL,      & 
      ORIFICEC,     ORIFICEA,     ORIFICEE, LATLAKE,    &
      LONLAKE,      ELEVLAKE,     LAKEIDM,  LAKEIDX,    &
@@ -8205,7 +8261,8 @@ integer                                    :: NLAKES
 real,    intent(INOUT),  dimension(NLINKS) :: MUSK, MUSX
 real,    intent(INOUT),  dimension(:,:)    :: QLINK  !channel flow
 real,    intent(INOUT),  dimension(NLINKS) :: CHANLEN, MannN, So
-real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw
+real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw !added Top Width LKR/DY 
+real,    intent(INOUT),  dimension(:)      :: Tw_CC, n_CC !compound chnannel params
 integer, intent(INOUT),  dimension(:)      :: LAKEIDA !lake COMid 4all link on full nlinks database
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
 real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL
@@ -8231,7 +8288,7 @@ LAKELINKID = 0
 call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      LINKID, TO_NODE, TYPEL, ORDER , &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-     MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
+     MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, &
      ORIFICEA, ORIFICEE, gages, gageMiss, &
      LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
@@ -8271,7 +8328,7 @@ end subroutine read_routelink
    subroutine readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f, maxorder, &
                    LINKID, TO_NODE, TYPEL, ORDER , &
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-                   MannN, So, ChSSlp, Bw, LAKEIDA, HRZAREA,  &
+                   MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, ORIFICEC, &
                    ORIFICEA, ORIFICEE, gages, gageMiss,& 
                    LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
@@ -8284,8 +8341,8 @@ end subroutine read_routelink
         INTEGER, intent(out), dimension(:) :: LAKEIDA, LINKID, TO_NODE, TYPEL, ORDER 
 
         real,dimension(:,:)  :: QLINK
-        REAL, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-                   MannN, So, ChSSlp, Bw, latlake, lonlake
+        real, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN
+        real, intent(out), dimension(:) ::  MannN, So, ChSSlp, Bw, Tw, latlake, lonlake, Tw_CC, n_CC
 
         character(len=15), dimension(:), intent(inout) :: gages
         character(len=15), intent(in) :: gageMiss
@@ -8307,8 +8364,8 @@ end subroutine read_routelink
 
 #ifdef MPP_LAND
         real :: tmpQLINK(GNLINKSL,2)
-        REAL, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN, &
-                   tmpMannN, tmpSo, tmpChSSlp, tmpBw
+        real, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN
+        real, allocatable, dimension(:) ::  tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpTw, tmpTw_CC, tmpn_CC
 #endif 
 
         !! is RouteLink file netcdf (*.nc) or csv (*.csv)
@@ -8337,6 +8394,10 @@ end subroutine read_routelink
           allocate(tmpSo(GNLINKSL))
           allocate(tmpChSSlp(GNLINKSL))
           allocate(tmpBw(GNLINKSL))
+          allocate(tmpTw(GNLINKSL))
+          allocate(tmpTw_CC(GNLINKSL))
+          allocate(tmpn_CC(GNLINKSL))
+
 
           if(routeLinkNetcdf) then
 
@@ -8346,7 +8407,8 @@ end subroutine read_routelink
                   tmpCHLAT,      tmpZELEV,     tmpTYPEL,    tmpORDER,    &
                   tmpQLINK(:,1), tmpMUSK,      tmpMUSX,     tmpCHANLEN,  &
                   tmpMannN,      tmpSo,        tmpChSSlp,   tmpBw,       &
-                  tmpGages, tmpLAKEIDA)
+                  tmpTw,         tmpTw_CC,     tmpn_CC,     tmpGages,    &
+                  tmpLAKEIDA                                              )
 
           else
 
@@ -8360,7 +8422,8 @@ end subroutine read_routelink
                 read (17,*) tmpLINKID(i),   tmp_from_node,   tmpTO_NODE(i), tmpCHLON(i),    &
                             tmpCHLAT(i),    tmpZELEV(i),     tmpTYPEL(i),   tmpORDER(i),    &
                             tmpQLINK(i,1),  tmpMUSK(i),      tmpMUSX(i),    tmpCHANLEN(i),  &
-                            tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i)
+                            tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i),       &
+                            tmpTw(i),       tmpTw_CC(i),     tmpn_CC(i)
 
                 ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
                 if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
@@ -8403,6 +8466,9 @@ end subroutine read_routelink
         call ReachLS_decomp(tmpSo,       So     )
         call ReachLS_decomp(tmpChSSlp,   ChSSlp )
         call ReachLS_decomp(tmpBw,       Bw     )
+        call ReachLS_decomp(tmpTw,       Tw     )
+        call ReachLS_decomp(tmpTw_CC,    Tw_CC  )
+        call ReachLS_decomp(tmpn_CC,     n_CC   )
 
 
 !       call ReachLS_decomp(tmpHRZAREA,  HRZAREA)
@@ -8441,6 +8507,10 @@ end subroutine read_routelink
            if(allocated(tmpSo)) deallocate(tmpSo)
            if(allocated(tmpChSSlp)) deallocate(tmpChSSlp)
            if(allocated(tmpBw)) deallocate(tmpBw)
+           if(allocated(tmpTw)) deallocate(tmpTw)
+           if(allocated(tmpTw_CC)) deallocate(tmpTw_CC)
+           if(allocated(tmpn_CC)) deallocate(tmpn_CC)
+
 !, tmpHRZAREA,&
 !                  tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
 !                  tmpORIFICEA,tmpORIFICEE)
@@ -8450,13 +8520,14 @@ end subroutine read_routelink
        QLINK = 0 
         if(routeLinkNetcdf) then
 
-          call read_route_link_netcdf(                     &
+          call read_route_link_netcdf(                      &
                  route_link_f,                              &
                  LINKID,     TO_NODE, CHLON,                &
                  CHLAT,      ZELEV,     TYPEL,    ORDER,    &
                  QLINK(:,1), MUSK,      MUSX,     CHANLEN,  &
                  MannN,      So,        ChSSlp,   Bw,       &
-                 gages, LAKEIDA)
+                 Tw,         Tw_CC,     n_CC,     gages,    & 
+                 LAKEIDA                                     )
            
         else 
 
@@ -8468,7 +8539,7 @@ end subroutine read_routelink
           do i=1,NLINKSL
               read (17,*) LINKID(i), tmp_from_node, TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
                    TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
-                   MannN(i), So(i), ChSSlp(i), Bw(i)
+                   MannN(i), So(i), ChSSlp(i), Bw(i), Tw(i), Tw_CC(i), n_CC(i)
 
               ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
               if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
@@ -8512,21 +8583,21 @@ end subroutine read_routelink
 !yw continue
 
 subroutine MPP_READ_CHROUTING_new(&
-     IXRT,         JXRT,             ELRT,           CH_NETRT, &
-     CH_LNKRT,     LAKE_MSKRT,       FROM_NODE,      TO_NODE, &
-     TYPEL,        ORDER,            MAXORDER,       NLINKS, &
-     NLAKES,       CHANLEN,          MannN,          So, &
-     ChSSlp,       Bw,               HRZAREA,        LAKEMAXH, &
-     WEIRH,        WEIRC,            WEIRL,          ORIFICEC, &
-     ORIFICEA,     ORIFICEE,         LATLAKE,        LONLAKE, &
-     ELEVLAKE,     dist,             ZELEV,          LAKENODE, &
-
-     CH_NETLNK,    CHANXI,            CHANYJ,        CHLAT, &
-     CHLON,        channel_option,    LATVAL,        LONVAL, &
-     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f, LAKEIDM, UDMP_OPT,                  &
-     g_ixrt,       g_jxrt,            gnlinks,       GCH_NETLNK, &
-     map_l2g,      link_location,     yw_mpp_nlinks, lake_index, &
-     nlinks_index)
+     IXRT,         JXRT,              ELRT,           CH_NETRT,  &
+     CH_LNKRT,     LAKE_MSKRT,        FROM_NODE,      TO_NODE,   &
+     TYPEL,        ORDER,             MAXORDER,       NLINKS,    &
+     NLAKES,       CHANLEN,           MannN,          So,        &
+     ChSSlp,       Bw,                Tw,             Tw_CC,     &
+     n_CC,         HRZAREA,           LAKEMAXH,                  &
+     WEIRH,        WEIRC,             WEIRL,          ORIFICEC,  &
+     ORIFICEA,     ORIFICEE,          LATLAKE,        LONLAKE,   &
+     ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
+     CH_NETLNK,    CHANXI,            CHANYJ,         CHLAT,     &
+     CHLON,        channel_option,    LATVAL,         LONVAL,    &
+     STRMFRXSTPTS, geo_finegrid_flnm, route_lake_f,   LAKEIDM,   &
+     UDMP_OPT,     g_ixrt,            g_jxrt,         gnlinks,   &
+     GCH_NETLNK,   map_l2g,           link_location,  yw_mpp_nlinks, &
+     lake_index,   nlinks_index                                       )
 
 implicit none
 integer, intent(IN)                          :: IXRT,JXRT,g_IXRT,g_JXRT, GNLINKS, UDMP_OPT
@@ -8561,7 +8632,9 @@ real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
-real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw
+real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw 
+real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
+
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
 
@@ -8584,7 +8657,8 @@ call READ_CHROUTING1( &
      CH_LNKRT,     LAKE_MSKRT,        FROM_NODE, TO_NODE, &
      TYPEL,        ORDER,             MAXORDER,  NLINKS,  &
      NLAKES,       CHANLEN,           MannN,     So,      &
-     ChSSlp,       Bw,                HRZAREA,   LAKEMAXH,&
+     ChSSlp,       Bw,                Tw,        Tw_CC,   & 
+     n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     ORIFICEC,& 
      ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE, &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
@@ -8779,11 +8853,12 @@ end subroutine MPP_READ_CHROUTING_new
 ! User controllable options: None. 
 
 subroutine read_route_link_netcdf( route_link_file,                         &
-                                   LINKID,   TO_NODE, CHLON,                &
+                                   LINKID,   TO_NODE,   CHLON,              &
                                    CHLAT,    ZELEV,     TYPEL,    ORDER,    &
                                    QLINK,    MUSK,      MUSX,     CHANLEN,  &
                                    MannN,    So,        ChSSlp,   Bw,       &
-                                   gages, LAKEIDA                           )
+                                   Tw,       Tw_CC,     n_CC,     gages,    &
+                                   LAKEIDA                                   )
 
 implicit none
 character(len=*),        intent(in)  :: route_link_file
@@ -8792,7 +8867,9 @@ real,    dimension(:),   intent(out) :: CHLON, CHLAT, ZELEV
 integer, dimension(:),   intent(out) :: TYPEL, ORDER 
 real,    dimension(:),   intent(out) :: QLINK
 real,    dimension(:),   intent(out) :: MUSK, MUSX, CHANLEN
-real,    dimension(:),   intent(out) :: MannN,    So,       ChSSlp,   Bw
+real,    dimension(:),   intent(out) :: MannN, So, ChSSlp, Bw, Tw 
+real,    dimension(:),   intent(out) :: Tw_CC, n_CC
+
 character(len=15), dimension(:), intent(inout) :: gages
 
 integer :: iRet, ncid, ii, varid
@@ -8824,11 +8901,25 @@ call get_1d_netcdf_real(ncid, 'MusX',     MUSX,      'read_route_link_netcdf', .
 call get_1d_netcdf_real(ncid, 'Length',   CHANLEN,   'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'n',        MannN,     'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .TRUE.)
-!! impose a minimum as this sometimes fails in the file.
-where(So .lt. 0.00001) So=0.00001
+!! impose a minimum as this sometimes fails in the file. LKR changed to 10^-4 on 2/2018.
+where(So .lt. 0.0001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
 
+! Compound channel variables, contingent on nlst_rt(did)%compound_channel option
+if(nlst_rt(did)%compound_channel) then
+   print*, "compound_channel is TRUE in hydro.namelist."
+   print*, "Variables are all required in route link: TopWdth, TopWdthCC, nCC."
+   ! the fatal_if_error option is tru for all of these. An error in any will be a fatal error. 
+   call get_1d_netcdf_real(ncid, 'TopWdth',   Tw,     'read_route_link_netcdf', .true.)
+   call get_1d_netcdf_real(ncid, 'TopWdthCC', Tw_CC,  'read_route_link_netcdf', .true.)
+   call get_1d_netcdf_real(ncid, 'nCC',       n_CC,   'read_route_link_netcdf', .true.)
+else 
+   print*, "compound_channel is FALSE in hydro.namelist."
+   Tw = 0.0  !force top width to 0.0, this deactivates the compound channel formulation.
+end if
+
+ 
 ! gages is optional, only get it if it's defined in the file.
 iRet = nf90_inq_varid(ncid, 'gages', varid)
 if (iret .eq. nf90_NoErr) then
@@ -8847,7 +8938,9 @@ print*,'last index=',ii
 print*, 'CHLON', CHLON(ii), 'CHLAT', CHLAT(ii), 'ZELEV', ZELEV(ii)
 print*,'TYPEL', TYPEL(ii), 'ORDER', ORDER(ii), 'QLINK', QLINK(ii), 'MUSK', MUSK(ii)
 print*, 'MUSX', MUSX(ii), 'CHANLEN', CHANLEN(ii), 'MannN', MannN(ii)
-print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii)
+print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii), 'Tw', Tw(ii) 
+print*,'TwCompund', Tw_CC(ii), 'Mann Compund', n_CC(ii)
+
 print*,'gages(ii): ',trim(gages(ii))
 print*,"finish read_route_link_netcdf"
 #endif
@@ -9081,7 +9174,7 @@ endif
 end function get_netcdf_dim
 
 
-! read the GWBUCET Parm for NHDPlus
+! read the GWBUCKET Parm for NHDPlus
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 z_max, z_init, LINKID, nhdBuckMask)
     implicit none
