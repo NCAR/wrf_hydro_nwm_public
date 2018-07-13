@@ -10319,7 +10319,7 @@ end subroutine output_chrt2
       maxNum = 0
       kk = 0
       allocate(num_a(NLINKSL))
-      cache_block = 512
+      cache_block = 256
       num_a = 0
       tmp_num = 0
       do cache_idx = 0, gnlinksl-1, cache_block
@@ -10588,7 +10588,7 @@ end subroutine output_chrt2
       maxNum = 0
       kk = 0
       allocate(num_a(NLINKSL))
-      cache_block = 512
+      cache_block = 256
       num_a = 0
       tmp_num = 0
       do cache_idx = 0, gnlinksl-1, cache_block
