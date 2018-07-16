@@ -23,6 +23,10 @@ module module_nhd_basin
 
         real, allocatable, dimension(:,:) :: infxswgt
 
+        real, allocatable, dimension(:,:) :: cell_area
+
+        real, allocatable, dimension(:,:) :: cell_area_lsm
+
         ! guard variable for broken fortran pointers
         logical :: pointers_need_set = .true.
 
@@ -34,7 +38,7 @@ module module_nhd_basin
 
 contains
 
-    subroutine nhd_basin_init(this,ixrt, jxrt, numbasins, num_local_links, cb_only, aggfactrt)
+    subroutine nhd_basin_init(this,ixrt, jxrt, numbasins, num_local_links, cb_only, aggfactrt )
         implicit none
         class(nhd_basin_interface), intent(inout) :: this ! the type object being initialized
         integer, intent(in) :: ixrt
@@ -80,7 +84,6 @@ contains
         ! set the flag for aggfactrt
         this%agg_factor = aggfactrt
 
-
         this%pointers_need_set = .false.
 
         if ( allocation_error ) &
@@ -98,6 +101,18 @@ contains
         ! deallocate basin area
         if ( allocated(this%basin_area) ) then
             deallocate(this%basin_area)
+        else
+            allocation_error = .true.
+        end if
+
+        if ( allocated(this%cell_area) ) then
+            deallocate(this%cell_area)
+        else
+            allocation_error = .true.
+        end if
+
+        if ( allocated(this%cell_area_lsm) ) then
+            deallocate(this%cell_area_lsm)
         else
             allocation_error = .true.
         end if

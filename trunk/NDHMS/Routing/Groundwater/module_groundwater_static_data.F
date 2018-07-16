@@ -8,7 +8,7 @@ module module_groundwater_static_data
         integer :: jx_lsm
         integer :: ix_rt
         integer :: jx_rt
-        integer :: dt
+        real :: dt
         integer :: gwbaseswcrt
         integer :: ovrtswcrt
 
@@ -29,7 +29,7 @@ module module_groundwater_static_data
         integer, intent(in) :: jx
         integer, intent(in) :: ixrt
         integer, intent(in) :: jxrt
-        integer, intent(in) :: dt
+        real, intent(in) :: dt
         integer, intent(in) :: gwbaseswcrt
         integer, intent(in) :: ovrtswcrt
 

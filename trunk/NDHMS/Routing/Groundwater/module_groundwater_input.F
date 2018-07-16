@@ -8,7 +8,7 @@ module module_groundwater_input
         real, allocatable, dimension(:,:) :: infxsrt
 
         ! drainage from bottom of soil column (from LSM)
-        integer, allocatable, dimension(:,:) :: soldrain
+        real, allocatable, dimension(:,:) :: soldrain
 
         ! flow to GW bucket
         real, allocatable, dimension(:) :: qin_gwsubbas
@@ -22,18 +22,18 @@ module module_groundwater_input
     contains
 
     !constructor for the ground water struct
-    subroutine groundwater_input_struct_init(this, ixrt, jxrt, numbasins)
+    subroutine groundwater_input_struct_init(this, ix, jx, numbasins)
         implicit none
         class (groundwater_input_struct), intent(inout) :: this ! object being initialized
-        integer, intent(in) :: ixrt         ! number of rows in the routing grid
-        integer, intent(in) :: jxrt         ! number of cols in the routing grid
+        integer, intent(in) :: ix         ! number of rows in the lsm grid
+        integer, intent(in) :: jx         ! number of cols in the lsm grid
         integer, intent(in) :: numbasins
 
         logical :: allocation_error = .false.
 
         ! allocate infxsrt
         if ( .not. allocated(this%infxsrt) ) then
-            allocate(this%infxsrt(ixrt,jxrt))
+            allocate(this%infxsrt(ix,jx))
             this%infxsrt = 0.0
         else
             allocation_error = .true.
@@ -41,7 +41,7 @@ module module_groundwater_input
 
         ! allocate soldrain
         if ( .not. allocated(this%soldrain) ) then
-            allocate(this%soldrain(ixrt,jxrt))
+            allocate(this%soldrain(ix,jx))
             this%soldrain = 0.0
         else
             allocation_error = .true.
