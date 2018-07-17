@@ -639,6 +639,9 @@ integer :: i,j,k, ll, count
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
      real, allocatable, dimension(:) :: tmpRESHT
+     integer :: new_start_i, new_start_j, new_end_i, new_end_j
+     integer :: cache_block_begin_i, cache_block_end_i, cache_block_begin_j, cache_block_end_j
+     integer :: cache_block, cache_idx
 
 #ifdef OUTPUT_CHAN_CONN
 real :: connCalcTimeStart, connCalcTimeEnd
@@ -854,20 +857,35 @@ endif
          if(allocated(buf)) deallocate(buf)
 
       endif  ! end if block for UDMP_OPT
-      
-           do k = 1, rt_domain(did)%LNLINKSL
-               do j = 1, rt_domain(did)%jxrt
-                  do i = 1, rt_domain(did)%ixrt
-                     if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then
-                            if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                               rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                            endif
-                     endif
-                  end do 
-               end do
-           end do
 
+      new_start_i = 0; new_start_j = 0
+      new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
+
+      if(left_id .ge. 0) new_start_i = 1
+      if(right_id .ge. 0) new_end_i = rt_domain(did)%ixrt - 1
+      if(down_id .ge. 0) new_start_j = 1
+      if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
+      
+      cache_block = 32
+      cache_block_begin_i = new_start_i
+      cache_block_begin_j = new_start_j
+      do cache_idx = 0, max(rt_domain(did)%ixrt - 1, rt_domain(did)%jxrt - 1), cache_block
+         cache_block_begin_i = cache_block_begin_i + cache_idx + 1
+         cache_block_end_i = min(cache_idx + cache_block, new_end_i)
+         cache_block_begin_j = cache_block_begin_j + cache_idx + 1
+         cache_block_end_j = min(cache_idx + cache_block, new_end_j)
+         do k = 1, rt_domain(did)%LNLINKSL
+            do j = cache_block_begin_j, cache_block_end_j
+               do i = cache_block_begin_i, cache_block_end_i
+                  if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+                     rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+                  endif
+               end do
+            end do
+         end do
+         cache_block_begin_i = 0
+         cache_block_begin_j = 0
+      end do
             call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
            call getToInd(rt_domain(did)%LINKID,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
