@@ -639,6 +639,7 @@ integer :: i,j,k, ll, count
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
      real, allocatable, dimension(:) :: tmpRESHT
+     integer :: new_start_i, new_start_j, new_end_i, new_end_j
 
 #ifdef OUTPUT_CHAN_CONN
 real :: connCalcTimeStart, connCalcTimeEnd
@@ -854,23 +855,28 @@ endif
          if(allocated(buf)) deallocate(buf)
 
       endif  ! end if block for UDMP_OPT
+
+      new_start_i = 1; new_start_j = 1
+      new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
+
+      if(left_id .ge. 0) new_start_i = 2
+      if(right_id .ge. 0) new_end_i = rt_domain(did)%ixrt - 1
+      if(down_id .ge. 0) new_start_j = 2
+      if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
       
-           do k = 1, rt_domain(did)%LNLINKSL
-               do j = 1, rt_domain(did)%jxrt
-                  do i = 1, rt_domain(did)%ixrt
-                     if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then
-                            if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                               rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                            endif
-                     endif
-                  end do 
-               end do
-           end do
+      do k = 1, rt_domain(did)%LNLINKSL
+         do j = new_start_j, new_end_j
+            do i = new_start_i, new_end_i
+               if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+                  rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+               endif
+            end do
+         end do
+      end do
 
-            call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
+      call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
-           call getToInd(rt_domain(did)%LINKID,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+      call getToInd(rt_domain(did)%LINKID,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
 #else
         do k = 1, rt_domain(did)%NLINKSL
             do j = 1, rt_domain(did)%jxrt

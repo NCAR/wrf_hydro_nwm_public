@@ -346,6 +346,9 @@ MODULE MODULE_mpp_ReachLS
        integer, dimension(:) :: LINKID, LLINKID
        integer :: i,k, glinksl, ierr
        integer :: gLinkId(glinksl)
+       integer :: cache_idx, cache_block
+       integer :: cache_block_begin, cache_block_end
+
        LLINKLEN = size(LLINKID,1)
        allocate(LLINKIDINDX(LLINKLEN))
        LLINKIDINDX = 0
@@ -356,15 +359,19 @@ MODULE MODULE_mpp_ReachLS
        call mpi_bcast(gLinkId(1:glinksl),glinksl,MPI_INTEGER,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
 
-       do i = 1, LLINKLEN
-           do k = 1, glinksl
-               if(LLINKID(i) .eq. gLinkId(k)) then
-                    LLINKIDINDX(i) = k
-                    goto 1001
-               endif
-           end do
-1001       continue
-       end do 
+       cache_block = 256
+       do cache_idx = 0, glinksl - 1, cache_block
+          cache_block_begin = cache_idx + 1
+          cache_block_end = min(cache_idx + cache_block, glinksl)
+          do i = 1, LLINKLEN
+             if(LLINKIDINDX(i) /= 0) cycle
+             do k = cache_block_begin, cache_block_end
+                if(LLINKID(i) .eq. gLinkId(k)) then
+                   LLINKIDINDX(i) = k
+                endif
+             end do
+          end do
+       end do
        
        call mpp_land_sync()
   end subroutine getLocalIndx
@@ -833,7 +840,7 @@ MODULE MODULE_mpp_ReachLS
        mm = l_nlinksl
 
       allocate(num_a(mm))
-      cache_block = 1024
+      cache_block = 256
       num_a = 0
       tmp_num = 0
       kk = 0
