@@ -1033,9 +1033,6 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
    rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
    
-   ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
-   rt_domain(did)%overland%properties%retention_depth = min(rt_domain(did)%overland%properties%retention_depth, 1.0)  
-
    !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
    !of overland routine (frequently called) and time loop.
    !Force channel retention depth to be 5mm.
