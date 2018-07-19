@@ -3,7 +3,7 @@ module module_nhd_data
     use module_nhd_basin
     use module_nhd_properties
     use module_groundwater_output
-    use module_groundwater_input
+    !use module_groundwater_input
     use module_groundwater_static_data
     use module_groundwater_base
     implicit none
@@ -13,7 +13,7 @@ module module_nhd_data
         type (nhd_state_interface), pointer :: state => null()
         type (nhd_properties_interface), pointer :: properties => null()
         type (nhd_basin_interface), pointer :: basin => null()
-        type (groundwater_input_struct), pointer :: input => null()
+        !type (groundwater_input_struct), pointer :: input => null()
         type (groundwater_output_struct), pointer :: output => null()
         type (groundwater_static_struct), pointer :: static_data => null()
 
