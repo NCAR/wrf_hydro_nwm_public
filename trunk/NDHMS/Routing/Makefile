@@ -20,7 +20,8 @@ OBJS = \
 	module_date_utilities_rt.o \
         module_water_management.o \
 	module_NWM_io_dict.o \
-	module_NWM_io.o
+	module_NWM_io.o \
+        module_reservoir_routing.o
 
 all:	$(OBJS)
 
@@ -69,6 +70,8 @@ module_NWM_io: module_HYDRO_utils.o \
                module_date_utilities_rt.o \
                ../Data_Rec/module_namelist.o \
                ../Data_Rec/module_RT_data.o
+
+module_reservoir_routing: ../Data_Rec/module_namelist.o
 
 module_HYDRO_utils.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 

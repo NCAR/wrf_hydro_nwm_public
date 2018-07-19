@@ -38,12 +38,6 @@ document title, page number and quote the line or section for suggesting changes
 documentation.
 
 ## Code contributions
-Much of the WRF-Hydro development occurs on the public
-[NCAR/wrf_hydro_nwm_public](https://github.com/NCAR/wrf_hydro_nwm_public) repository. However, some
-internal development must occur on a private repository maintained by NCAR and NOAA. Due to this
-dual-repository system, a strict procedure must be followed when making contributions to the WRF-
-Hydro model code.
-
 All code development contributions will be made via [forks](https://help.github.com/articles/about-forks/)
 and [pull requests](https://help.github.com/articles/about-pull-requests/). If you are
 unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues and pull

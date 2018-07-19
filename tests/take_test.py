@@ -180,6 +180,10 @@ establish_repo('candidate_repo', candidate_spec, user_spec)
 establish_repo('reference_repo', candidate_spec, user_spec)
 log.debug('')
 
+# Can I catch at this point:
+# if a path, is the repo on a case-sensitive dir?
+# if not copy and edit (this is in docker).
+
 # ###################################
 log.info(horiz_bar )
 log.info("Establish jobs and scheduler:")
@@ -212,6 +216,7 @@ log.info(horiz_bar)
 log.info("Calling pytest:")
 
 pytest_cmd = [
+    #'--pdb', # for debugging the tests. May make this an option in the future... 
     '-v',
     '--color', 'yes',
     '--rootdir', str(candidate_spec['candidate_repo']['local_path']) + '/tests/' ,

@@ -22,7 +22,7 @@ candidate_repo:
     local_path : '{this_repo_path}'
 
 reference_repo:
-    fork       : NCAR/wrf_hydro_nwm  
+    fork       : NCAR/wrf_hydro_nwm_public
     commitish  : master
     local_path : 
 

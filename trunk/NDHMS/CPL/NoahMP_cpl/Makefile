@@ -22,6 +22,7 @@ all:	$(OBJS)
 	$(RMD) $(*).f
 	@echo ""
 	ar -r ../../lib/libHYDRO.a $(@)
+	cp *.mod ../../mod
 
 #
 # Dependencies:
