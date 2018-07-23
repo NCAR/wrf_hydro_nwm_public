@@ -62,6 +62,7 @@
             "timeslicepath": "NULL_specified_in_domain.json"
         }
     },
+
     "nwm_ana": {
         "hydro_nlist": {},
         "nudging_nlist": {

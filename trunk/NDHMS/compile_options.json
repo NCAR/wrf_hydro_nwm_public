@@ -8,6 +8,7 @@
         "NCEP_WCOSS": 0,
         "WRF_HYDRO_NUDGING": 1
     },
+
     "gridded": {
         "WRF_HYDRO": 1,
         "HYDRO_D": 0,
@@ -17,6 +18,7 @@
         "NCEP_WCOSS": 0,
         "WRF_HYDRO_NUDGING": 0
     },
+
     "gridded_no_lakes": {
         "WRF_HYDRO": 1,
         "HYDRO_D": 0,
@@ -26,6 +28,7 @@
         "NCEP_WCOSS": 0,
         "WRF_HYDRO_NUDGING": 0
     },
+
     "reach": {
         "WRF_HYDRO": 1,
         "HYDRO_D": 0,
