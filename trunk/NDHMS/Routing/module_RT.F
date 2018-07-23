@@ -872,7 +872,7 @@ endif
          do cache_idx = 0, num_blocks - 1
             cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
             cache_block_end_i = min(cache_block_begin_i + cache_block - 1, new_end_i)
-            do cache_idx_k = 0, rt_domain(did)%LNLINKSL, cache_block
+            do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
                cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
                cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
                do i = cache_block_begin_i, cache_block_end_i
