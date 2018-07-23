@@ -1,8 +1,4 @@
-import json
-import pathlib
 import pytest
-import sys
-import warnings
 from wrfhydropy import *
 
 
@@ -53,23 +49,15 @@ def pytest_addoption(parser):
         default='gfort',
         required=False,
         action='store',
-        help='compiler key from config'
+        help='compiler, options are intel or gfort'
     )
 
     parser.addoption(
-        '--job_default',
-        default=None,
+        '--ncores',
+        default='2',
         required=False,
         action='store',
-        help='candidate job'
-    )
-
-    parser.addoption(
-        '--job_ncores',
-        default=None,
-        required=False,
-        action='store',
-        help='ncores job'
+        help='Number of cores to use for testing'
     )
 
     parser.addoption(
@@ -77,121 +65,91 @@ def pytest_addoption(parser):
         default=None,
         required=False,
         action='store',
-        help='scheduler for all jobs')
+        help='Scheduler to use for testing, options are PBSCheyenne or do not specify for no '
+             'scheduler')
 
+    parser.addoption(
+        '--account',
+        default='NRAL0017',
+        required=False,
+        action='store',
+        help='Account number to use if using a scheduler.')
 
-def pytest_generate_tests(metafunc):
-    if 'configuration' in metafunc.fixturenames:
-        metafunc.parametrize(
-            "configuration",
-            metafunc.config.option.config,
-            scope="session"
-        )
-
-
-@pytest.fixture(scope="session")
-def candidate_setup(request, configuration):
-
-    domain_dir = request.config.getoption("--domain_dir")
-    candidate_dir = request.config.getoption("--candidate_dir")
-
+def _make_sim(domain_dir,
+             source_dir,
+              configuration,
+              ncores,
+              scheduler,
+              account):
     # Candidate model
-    candidate_model = WrfHydroModel(
-        source_dir=candidate_dir,
+    model = Model(
+        source_dir=source_dir,
         model_config=configuration
     )
 
     # Candidate domain
-    domain = WrfHydroDomain(
+    domain = Domain(
         domain_top_dir=domain_dir,
-        domain_config=configuration,
-        model_version=candidate_model.version
-    )
+        domain_config=configuration)
 
-    # Candidate setup
-    candidate_setup = WrfHydroSetup(candidate_model, domain)
+    # Job
+    exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
+    job = Job(job_id='test_job',exe_cmd=exe_command)
 
-    return candidate_setup
+    # Candidate simulation
+    sim = Simulation()
+    sim.add(model)
+    sim.add(domain)
+    sim.add(job)
 
+    if scheduler is not None and scheduler == 'pbscheyenne':
+        sim.add(schedulers.PBSCheyenne(account=account,nproc=int(ncores)))
+
+    return sim
 
 @pytest.fixture(scope="session")
-def reference_setup(request, configuration):
+def candidate_setup(request):
+
+    domain_dir = request.config.getoption("--domain_dir")
+    candidate_dir = request.config.getoption("--candidate_dir")
+    configuration = request.config.getoption("--config")
+    ncores = request.config.getoption("--ncores")
+    scheduler = str(request.config.getoption("--scheduler")).lower()
+    account = request.config.getoption("--account")
+
+    candidate_sim = _make_sim(domain_dir = domain_dir,
+              source_dir= candidate_dir,
+              configuration=configuration,
+              ncores = ncores,
+              scheduler = scheduler,
+              account = account)
+
+    return candidate_sim
+
+@pytest.fixture(scope="session")
+def reference_setup(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     reference_dir = request.config.getoption("--reference_dir")
+    configuration = request.config.getoption("--config")
+    ncores = request.config.getoption("--ncores")
+    scheduler = str(request.config.getoption("--scheduler")).lower()
+    account = request.config.getoption("--account")
 
-    # Reference model
-    reference_model = WrfHydroModel(
-        source_dir=reference_dir,
-        model_config=configuration
-    )
+    reference_sim = _make_sim(domain_dir = domain_dir,
+              source_dir= reference_dir,
+              configuration=configuration,
+              ncores = ncores,
+              scheduler = scheduler,
+              account = account)
 
-    # Reference domain
-    domain = WrfHydroDomain(
-        domain_top_dir=domain_dir,
-        domain_config=configuration,
-        model_version=reference_model.version
-    )
-
-    # Reference setup
-    reference_setup = WrfHydroSetup(reference_model, domain)
-
-    return reference_setup
-
+    return reference_sim
 
 @pytest.fixture(scope="session")
-def compiler(request):
-    return request.config.getoption("--compiler")
-
-
-@pytest.fixture(scope="session")
-def job_default(request, configuration):
-    job_in = request.config.getoption("--job_default")
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        job_dum = Job(nproc=-1)
-    if job_in is not None:
-        job_in = json.loads(job_in)
-        job_dum.__dict__.update(job_in)
-    return job_dum
-
-
-@pytest.fixture(scope="session")
-def job_ncores(request, configuration):
-    job_in = request.config.getoption("--job_ncores")
-    print("job_in: ", job_in)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        job_dum = Job(nproc=-1)
-    if job_in is not None:
-        job_in = json.loads(job_in)
-        job_dum.__dict__.update(job_in)
-    return job_dum
-
-
-@pytest.fixture(scope="session")
-def scheduler(request, configuration):
-    sched_in = request.config.getoption("--scheduler")
-    if sched_in is None or sched_in == 'null':
-        return None
-    else:
-        sched = json.loads(sched_in)
-        sched_dum = Scheduler(
-            job_name='default',
-            account='DUMDUM',
-            walltime='00:01:00',
-            queue='none',
-            nproc=1,
-            ppn=1
-        )
-        sched_dum.__dict__.update(sched)
-        return sched_dum
-
-
-@pytest.fixture(scope="session")
-def output_dir(request,configuration):
+def output_dir(request):
+    configuration = request.config.getoption("--config")
     output_dir = request.config.getoption("--output_dir")
+
     output_dir = pathlib.Path(output_dir)
     output_dir = output_dir / configuration
     if output_dir.is_dir() is False:
