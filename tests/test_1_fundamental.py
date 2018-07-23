@@ -1,7 +1,10 @@
 import copy
 import datetime as dt
+import json
 import pickle
 import pytest
+import shutil
+import time
 import warnings
 import wrfhydropy
 
@@ -17,7 +20,7 @@ import wrfhydropy
 
 ###Compile questions compiler,
 def test_compile_candidate(
-    candidate_sim,
+    candidate_setup,
     output_dir,
     compiler,
     capsys
@@ -28,19 +31,19 @@ def test_compile_candidate(
     compile_dir = output_dir / 'compile_candidate'
 
     # Compile the model
-    candidate_sim.model.compile(
+    candidate_setup.model.compile(
         compiler=compiler,
         compile_dir=compile_dir,
         overwrite=True
     )
 
     # Check compilation status
-    assert candidate_sim.model.compile_log.returncode == 0, \
+    assert candidate_setup.model.compile_log.returncode == 0, \
         "Candidate code did not compile correctly."
 
 
 def test_compile_reference(
-    reference_sim,
+    reference_setup,
     output_dir,
     compiler,
     capsys
@@ -51,14 +54,14 @@ def test_compile_reference(
     compile_dir = output_dir / 'compile_reference'
 
     # Compile the model
-    reference_sim.model.compile(
+    reference_setup.model.compile(
         compiler=compiler,
         compile_dir=compile_dir,
         overwrite=True
     )
 
     # Check compilation status
-    assert reference_sim.model.compile_log.returncode == 0, \
+    assert reference_setup.model.compile_log.returncode == 0, \
         "Reference code did not compile correctly"
 
 
