@@ -35,11 +35,10 @@ def pytest_addoption(parser):
     )
 
     # Optional args:
-
     parser.addoption(
         "--config",
-        default=['NWM', 'Gridded', 'Reach'],
-        nargs='+',
+        required=True,
+        action='store',
         help=("List of model configurations to test, options are 'NWM'," +
               "'Gridded',and 'Reach'")
     )
@@ -108,7 +107,7 @@ def _make_sim(domain_dir,
     return sim
 
 @pytest.fixture(scope="session")
-def candidate_setup(request):
+def candidate_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     candidate_dir = request.config.getoption("--candidate_dir")
@@ -127,7 +126,7 @@ def candidate_setup(request):
     return candidate_sim
 
 @pytest.fixture(scope="session")
-def reference_setup(request):
+def reference_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     reference_dir = request.config.getoption("--reference_dir")
