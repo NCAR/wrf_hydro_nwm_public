@@ -395,7 +395,7 @@ module module_HYDRO_drv
                         !#endif
                     !                   , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
                         !                   , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket   &
-                        !                   , RT_DOMAIN(did)%qin_gwsubbas                              &
+                        !                   , rt_domain(did)%groundwater%input%qin_gwsubbas                              &
                         !                   , nlst_rt(did)%UDMP_OPT                                    &
                         !                   )
                     !              else
@@ -423,7 +423,7 @@ module module_HYDRO_drv
                             , RT_DOMAIN(did)%QLateral, nlst_rt(did)%io_config_outputs, vel_out &
                             , RT_DOMAIN(did)%accSfcLatRunoff, RT_DOMAIN(did)%accBucket &
                             , RT_DOMAIN(did)%qSfcLatRunoff,   RT_DOMAIN(did)%qBucket &
-                            , RT_DOMAIN(did)%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT &
+                            , rt_domain(did)%groundwater%input%qin_gwsubbas,    nlst_rt(did)%UDMP_OPT &
                             )
                     endif
 
@@ -783,7 +783,7 @@ subroutine driveGwBaseflow(did)
                     rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
                     RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
                     RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
-                    RT_DOMAIN(did)%qout_gwsubbas, RT_DOMAIN(did)%qin_gwsubbas,    &
+                    rt_domain(did)%qout_gwsubbas, RT_DOMAIN(did)%groundwater%input%qin_gwsubbas,    &
                     nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         &
 #ifdef MPP_LAND
                 RT_DOMAIN(did)%LNLINKSL,                                      &
@@ -801,7 +801,7 @@ subroutine driveGwBaseflow(did)
                     rt_domain(did)%gwsubbasmsk, RT_DOMAIN(did)%groundwater%input%infxsrt, &
                     rt_domain(did)%groundwater%input%soldrain, &
                     RT_DOMAIN(did)%z_gwsubbas,&
-                    RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
+                    rt_domain(did)%groundwater%input%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
                     RT_DOMAIN(did)%qinflowbase,&
                     RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
                     rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%DT,&

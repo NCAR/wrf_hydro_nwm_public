@@ -6142,7 +6142,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp,"gw_buck_exp" )
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_max,"z_max" )
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_coeff,"gw_buck_coeff" )
-!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,"qin_gwsubbas" )
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%groundwater%input%qin_gwsubbas,"qin_gwsubbas" )
 !             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%qinflowbase,"qinflowbase")
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,"qout_gwsubbas" )
    end if ! GWBASESWCRT .eq. 1
@@ -9844,12 +9844,12 @@ end subroutine output_chrt2
        endif
 
        if(nlst_rt(did)%channel_option .ne. 3) then
-          call ReachLS_write_io(rt_domain(did)%qin_gwsubbas,g_qin_gwsubbas)
+          call ReachLS_write_io(rt_domain(did)%groundwater%input%qin_gwsubbas,g_qin_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%qout_gwsubbas,g_qout_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%z_gwsubbas,g_z_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%linkid,g_basnsInd)
        else
-          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,  &
+          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%input%qin_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qin_gwsubbas)
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qout_gwsubbas)
@@ -9893,7 +9893,7 @@ end subroutine output_chrt2
 !       open (unit=53,file='GW_zlev.txt',form='formatted',&
 !             status='unknown',position='append')
 !       do i=1,RT_DOMAIN(did)%numbasns
-!          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
+!          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%groundwater%input%qin_gwsubbas(i)
 951        FORMAT(I3,1X,A19,1X,F11.3)
 !          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
 !          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
@@ -9904,12 +9904,12 @@ end subroutine output_chrt2
         if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
           call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%numbasns, &
                   trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                  rt_domain(did)%basnsInd,rt_domain(did)%qin_gwsubbas, &
+                  rt_domain(did)%basnsInd,rt_domain(did)%groundwater%input%qin_gwsubbas, &
                   rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
         else
           call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%nlinksl, &
                   trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                  rt_domain(did)%linkid,rt_domain(did)%qin_gwsubbas, &
+                  rt_domain(did)%linkid,rt_domain(did)%groundwater%input%qin_gwsubbas, &
                   rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
         endif
 #endif
@@ -10967,7 +10967,7 @@ if(nlst_rt(did)%channel_only       .eq. 1 .or. &
    if(nlst_rt(did)%channelBucket_only .eq. 1) then
       call read_rst_crt_reach_nc(ncid, qBucket_in, "qBtmVertRunoff",     &
                                  rt_domain(did)%GNLINKSL, fatalErr=.true.)
-      rt_domain(did)%qin_gwsubbas = qBucket_in
+      rt_domain(did)%groundwater%input%qin_gwsubbas = qBucket_in
       rt_domain(did)%QLateral     = qSfcLatRunoff_in
    end if
 

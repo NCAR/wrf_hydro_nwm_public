@@ -1082,7 +1082,7 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
       allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
 
-      !allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+      !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
@@ -1092,7 +1092,7 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
 
-      !rt_domain(did)%qin_gwsubbas = 0
+      !rt_domain(did)%groundwater%input%qin_gwsubbas = 0
       rt_domain(did)%z_gwsubbas = 0
       rt_domain(did)%gwbas_pix_ct = 0
       rt_domain(did)%bas_pcp = 0
@@ -1155,7 +1155,7 @@ else
               rt_domain(did)%numbasns,rt_domain(did)%basnsInd,rt_domain(did)%gw_strm_msk_lind)
 
          allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%numbasns))
-         !allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+         !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
          allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
          allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
          allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
