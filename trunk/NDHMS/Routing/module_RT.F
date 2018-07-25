@@ -1074,13 +1074,15 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
    rt_domain(did)%qout_gwsubbas = 0
    ! use different baseflow for NHDPlus
    if (nlst_rt(did)%GWBASESWCRT.ge.1) then
+      ! TODO INSERT ALLOCATION OF NHD GROUNDWATER OBJECT HERE
+
       rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
       RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
 
       allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
       allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
 
-      allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+      !allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
@@ -1090,7 +1092,7 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
 
-      rt_domain(did)%qin_gwsubbas = 0
+      !rt_domain(did)%qin_gwsubbas = 0
       rt_domain(did)%z_gwsubbas = 0
       rt_domain(did)%gwbas_pix_ct = 0
       rt_domain(did)%bas_pcp = 0
