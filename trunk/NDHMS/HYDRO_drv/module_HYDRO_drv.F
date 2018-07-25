@@ -738,7 +738,7 @@ end if
 
 
            !! Under channel-only, these variables are not allocated
-           if(allocated(RT_DOMAIN(did)%SOLDRAIN)) RT_DOMAIN(did)%SOLDRAIN = 0
+           if(allocated(rt_domain(did)%groundwater%input%soldrain)) RT_DOMAIN(did)%groundwater%input%soldrain = 0
            if(allocated(rt_domain(did)%subsurface%state%qsubrt))   RT_DOMAIN(did)%subsurface%state%qsubrt   = 0
 
 
@@ -779,7 +779,7 @@ subroutine driveGwBaseflow(did)
                     RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
                     RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
                     nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
-                    rt_domain(did)%groundwater%input%infxsrt,       RT_DOMAIN(did)%SOLDRAIN,        &
+                    rt_domain(did)%groundwater%input%infxsrt,       RT_DOMAIN(did)%groundwater%input%soldrain,        &
                     rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
                     RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
                     RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
@@ -799,7 +799,7 @@ subroutine driveGwBaseflow(did)
                 RT_DOMAIN(did)%basns_area,&
                     RT_DOMAIN(did)%basnsInd, RT_DOMAIN(did)%gw_strm_msk_lind,             &
                     rt_domain(did)%gwsubbasmsk, RT_DOMAIN(did)%groundwater%input%infxsrt, &
-                    RT_DOMAIN(did)%SOLDRAIN, &
+                    rt_domain(did)%groundwater%input%soldrain, &
                     RT_DOMAIN(did)%z_gwsubbas,&
                     RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
                     RT_DOMAIN(did)%qinflowbase,&

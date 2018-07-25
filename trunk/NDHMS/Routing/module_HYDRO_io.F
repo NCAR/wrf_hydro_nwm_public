@@ -5983,7 +5983,7 @@ if( nlst_rt(did)%channel_only       .eq. 0 .and. &
    !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
    !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  )
    call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%groundwater%input%infxsrt,"infxsrt"  )
-   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  )
+   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%groundwater%input%soldrain,"soldrain"  )
    call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt"  )
 
 end if ! neither channel_only nor channelBucket_only
@@ -6201,7 +6201,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           write(iunit,ERR=101) rt_domain(did)%SMCREF1
           write(iunit,ERR=101) rt_domain(did)%SMCWLT1
           write(iunit,ERR=101) rt_domain(did)%groundwater%input%infxsrt
-          write(iunit,ERR=101) rt_domain(did)%soldrain
+          write(iunit,ERR=101) rt_domain(did)%groundwater%input%soldrain
           write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
 
           if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1 .or. nlst_rt(did)%GWBASESWCRT .ne. 0) then
@@ -6293,7 +6293,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           read(iunit,ERR=101) rt_domain(did)%SMCREF1
           read(iunit,ERR=101) rt_domain(did)%SMCWLT1
           read(iunit,ERR=101) rt_domain(did)%groundwater%input%infxsrt
-          read(iunit,ERR=101) rt_domain(did)%soldrain
+          read(iunit,ERR=101) rt_domain(did)%groundwater%input%soldrain
           read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
           if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%overland%control%surface_water_head_lsm = 0
 
@@ -6755,7 +6755,7 @@ if( nlst_rt(did)%channel_only       .eq. 0 .and. &
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%groundwater%input%infxsrt,"infxsrt")
       call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt")
-      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
+      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%groundwater%input%soldrain,"soldrain")
 
    end if ! rst_typ .eq. 1
    !yw check

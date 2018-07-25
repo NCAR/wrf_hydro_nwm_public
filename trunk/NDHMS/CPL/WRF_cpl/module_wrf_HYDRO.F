@@ -216,7 +216,7 @@ CONTAINS
                 RT_DOMAIN(did)%sh2ox(:,:,k) = grid%sh2o(its:ite,k,jts:jte) 
             end do 
             rt_domain(did)%groundwater%input%infxsrt = grid%infxsrt(its:ite,jts:jte)
-            rt_domain(did)%soldrain = grid%soldrain(its:ite,jts:jte)
+            rt_domain(did)%groundwater%input%soldrain = grid%soldrain(its:ite,jts:jte)
        endif  
 
             call HYDRO_exe(did)

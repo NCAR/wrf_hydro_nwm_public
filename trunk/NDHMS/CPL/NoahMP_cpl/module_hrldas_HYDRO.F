@@ -167,7 +167,7 @@ CONTAINS
            RT_DOMAIN(did)%SMC = SMC
            RT_DOMAIN(did)%SH2OX = SH2OX
            rt_domain(did)%groundwater%input%infxsrt = infxsrt
-           RT_DOMAIN(did)%soldrain = soldrain
+           rt_domain(did)%groundwater%input%soldrain = soldrain
         end if
 
            if(nlst_rt(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw

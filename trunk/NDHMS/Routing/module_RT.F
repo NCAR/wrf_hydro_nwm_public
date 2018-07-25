@@ -280,8 +280,8 @@ CONTAINS
             rt_domain(did)%TERRAIN    = 0.0
   allocate( rt_domain(did)%LKSAT   (IX,JX) )
             rt_domain(did)%LKSAT    = 0.0
-  !allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
-  !          rt_domain(did)%SOLDRAIN    = 0.0
+  !allocate( rt_domain(did)%groundwater%input%soldrain   (IX,JX) )
+  !          rt_domain(did)%groundwater%input%soldrain    = 0.0
 
   end if ! neither channel_only nor channelBucket_only
 
@@ -1386,7 +1386,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake = 0.0
    rt_domain(did)%LAKE_CT = 0
    rt_domain(did)%STRM_CT = 0
-   rt_domain(did)%SOLDRAIN = 0.0
+   rt_domain(did)%groundwater%input%soldrain = 0.0
    rt_domain(did)%qinflowbase = 0.0
 
    !  rt_domain(did)%BASIN_MSK = 1

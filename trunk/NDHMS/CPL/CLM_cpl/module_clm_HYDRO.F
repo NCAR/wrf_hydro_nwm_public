@@ -137,7 +137,7 @@ CONTAINS
             r1p => clm3%g%l%c%cwf%qflx_drain  
             call c2g_1d(begc, endc, begl, endl, begg, endg, r1p(begc:endc), clm_g1d, &
                 'urbanf', 'unity')
-            call clm2ND2d(clm_g1d,nn,RT_DOMAIN(did)%SOLDRAIN,ix,jx)
+            call clm2ND2d(clm_g1d,nn,rt_domain(did)%groundwater%input%soldrain,ix,jx)
 
 
 #ifdef HYDRO_D
