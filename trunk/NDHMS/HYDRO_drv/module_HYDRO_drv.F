@@ -615,7 +615,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       endif
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-            call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
+            call RunOffDisag(rt_domain(did)%groundwater%input%infxsrt, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
          endif
@@ -779,7 +779,7 @@ subroutine driveGwBaseflow(did)
                     RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
                     RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
                     nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
-                    RT_DOMAIN(did)%INFXSRT,       RT_DOMAIN(did)%SOLDRAIN,        &
+                    rt_domain(did)%groundwater%input%infxsrt,       RT_DOMAIN(did)%SOLDRAIN,        &
                     rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
                     RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
                     RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
@@ -798,7 +798,7 @@ subroutine driveGwBaseflow(did)
                     RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,&
                 RT_DOMAIN(did)%basns_area,&
                     RT_DOMAIN(did)%basnsInd, RT_DOMAIN(did)%gw_strm_msk_lind,             &
-                    RT_DOMAIN(did)%gwsubbasmsk, RT_DOMAIN(did)%INFXSRT, &
+                    rt_domain(did)%gwsubbasmsk, RT_DOMAIN(did)%groundwater%input%infxsrt, &
                     RT_DOMAIN(did)%SOLDRAIN, &
                     RT_DOMAIN(did)%z_gwsubbas,&
                     RT_DOMAIN(did)%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&

@@ -411,7 +411,7 @@ contains
             nlst_rt(is%wrap%nest)%hgrid, &
             trim(configFile%indir), nlst_rt(is%wrap%nest)%dt, &
             rt_domain(is%wrap%nest)%ix,rt_domain(is%wrap%nest)%jx, &
-            rt_domain(is%wrap%nest)%infxsrt,rt_domain(is%wrap%nest)%soldrain)
+            rt_domain(is%wrap%nest)%groundwater%input%infxsrt,rt_domain(is%wrap%nest)%soldrain)
         case (mode_Coupled)
           call copy_import_fields(is, importState, rc)
           if (ESMF_STDERRORCHECK(rc)) return
@@ -426,7 +426,7 @@ contains
             nlst_rt(is%wrap%nest)%hgrid, &
             trim(configFile%indir), nlst_rt(is%wrap%nest)%dt, &
             rt_domain(is%wrap%nest)%ix,rt_domain(is%wrap%nest)%jx, &
-            rt_domain(is%wrap%nest)%infxsrt,rt_domain(is%wrap%nest)%soldrain)
+            rt_domain(is%wrap%nest)%groundwater%input%infxsrt,rt_domain(is%wrap%nest)%soldrain)
           call copy_import_fields(is, importState, rc)
           if (ESMF_STDERRORCHECK(rc)) return
         case default
@@ -528,7 +528,7 @@ contains
       call array_print(is," Moisture content of soil", rt_domain(is%wrap%nest)%smc,layerIndex, rc)
       call array_print(is," Liquid water content of soil", rt_domain(is%wrap%nest)%sh2ox,layerIndex, rc)
     enddo
-    call array_print(is," Surface runoff flux", rt_domain(is%wrap%nest)%infxsrt, rc)
+    call array_print(is," Surface runoff flux", rt_domain(is%wrap%nest)%groundwater%input%infxsrt, rc)
     call array_print(is," Subsurface runoff flux", rt_domain(is%wrap%nest)%soldrain, rc)
     
     if (is%wrap%verbosity >= VERBOSITY_DBG) then
@@ -720,7 +720,7 @@ contains
           if (ESMF_STDERRORCHECK(rc)) return
         CASE ('surface_runoff_flux')
           call copy_data(is,importState,'surface_runoff_flux', &
-            rt_domain(is%wrap%nest)%infxsrt,'i',.true.,rc)
+            rt_domain(is%wrap%nest)%groundwater%input%infxsrt,'i',.true.,rc)
           if (ESMF_STDERRORCHECK(rc)) return
         CASE ('temperature_of_soil_layer_1')
           call copy_data(is,importState,'temperature_of_soil_layer_1', &
@@ -807,7 +807,7 @@ contains
           if(ESMF_STDERRORCHECK(rc)) return ! bail out
         CASE ('surface_runoff_flux')
           call copy_data(is,exportState,'surface_runoff_flux', &
-            rt_domain(is%wrap%nest)%infxsrt,'e',.true.,rc)
+            rt_domain(is%wrap%nest)%groundwater%input%infxsrt,'e',.true.,rc)
           if(ESMF_STDERRORCHECK(rc)) return ! bail out
 !        CASE ('surface_snow_thickness')
 !          call copy_data(is,exportState,'surface_snow_thickness', &
@@ -1605,7 +1605,7 @@ contains
       rt_domain(is%wrap%nest)%ix,",",rt_domain(is%wrap%nest)%jx,")"
     call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO, file=FILENAME, method=SUBNAME)
 
-    call array_print(is," Surface runoff flux", rt_domain(is%wrap%nest)%infxsrt, rc)
+    call array_print(is," Surface runoff flux", rt_domain(is%wrap%nest)%groundwater%input%infxsrt, rc)
     call array_print(is," Subsurface runoff flux", rt_domain(is%wrap%nest)%soldrain, rc)    
 
     if (is%wrap%verbosity >= VERBOSITY_DBG) then

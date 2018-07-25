@@ -127,7 +127,7 @@ CONTAINS
             r1p => clm3%g%l%c%cwf%qflx_surf
             call c2g_1d(begc, endc, begl, endl, begg, endg, r1p(begc:endc), clm_g1d, &
                 'urbanf', 'unity')
-            call clm2ND2d(clm_g1d,nn,RT_DOMAIN(did)%INFXSRT,ix,jx)
+            call clm2ND2d(clm_g1d,nn,rt_domain(did)%groundwater%input%infxsrt,ix,jx)
 
 #ifdef HYDRO_D
             write(6,*) "finish qflx_surf"

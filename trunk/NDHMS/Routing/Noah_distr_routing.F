@@ -867,7 +867,7 @@ subroutine disaggregateDomain_drv(did)
     integer :: did
     call disaggregateDomain( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
         RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
-        RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%INFXSRT, &
+        rt_domain(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%groundwater%input%infxsrt, &
         rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
         RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%distance_to_neighbor, &
         RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &

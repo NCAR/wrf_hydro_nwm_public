@@ -3759,7 +3759,7 @@ subroutine output_lsmOut_NWM(domainId)
                else if(iTmp .eq. 12) then
                   varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,4)
                else if(iTmp .eq. 13) then
-                  varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
+                  varRealTmp = rt_domain(domainId)%groundwater%input%infxsrt(iTmp2,jTmp2)
                else if(iTmp .eq. 14) then
                   varRealTmp = rt_domain(domainId)%overland%control%surface_water_head_lsm(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
                endif
