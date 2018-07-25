@@ -1125,6 +1125,8 @@ else
    !----------------------------------------------------------------------
    if (nlst_rt(did)%GWBASESWCRT.ge.1) then
       if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
+
+        ! TODO INSERT ALLOCATION OF SIMPLE GROUNDWATER OBJECT HERE
 #ifdef HYDRO_D
          print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
@@ -1153,7 +1155,7 @@ else
               rt_domain(did)%numbasns,rt_domain(did)%basnsInd,rt_domain(did)%gw_strm_msk_lind)
 
          allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%numbasns))
-         allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+         !allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
          allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
          allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
          allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
