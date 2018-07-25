@@ -1,4 +1,5 @@
 import pytest
+import warnings
 from wrfhydropy import *
 
 
@@ -80,13 +81,13 @@ def _make_sim(domain_dir,
               ncores,
               scheduler,
               account):
-    # Candidate model
+    # model
     model = Model(
         source_dir=source_dir,
         model_config=configuration
     )
 
-    # Candidate domain
+    # domain
     domain = Domain(
         domain_top_dir=domain_dir,
         domain_config=configuration)
@@ -95,7 +96,7 @@ def _make_sim(domain_dir,
     exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
     job = Job(job_id='test_job',exe_cmd=exe_command)
 
-    # Candidate simulation
+    # simulation
     sim = Simulation()
     sim.add(model)
     sim.add(domain)
