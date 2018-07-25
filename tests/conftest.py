@@ -1,5 +1,4 @@
 import pytest
-import warnings
 from wrfhydropy import *
 
 
