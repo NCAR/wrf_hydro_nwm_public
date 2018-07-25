@@ -56,7 +56,7 @@
   REAL   Vmax
   !REAL,    allocatable, DIMENSION(:,:)      :: LKSATRT !  LKSATRT moved to subsurface properties module
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT  ! SFCHEAD moved to overland control module
-  REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT
+  REAL,    allocatable, DIMENSION(:,:)      :: LKSAT,LKSATRT ! moved INFXSRT to nhd groundwater module
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC  ! SFCHEADSUBRT, INFXSUBRT moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: LKSATFAC
   !REAL,    allocatable, DIMENSION(:,:)      :: SOLDEPRT ! QSUBRT, QSUBBDRYRT moved to subsurface io module, SOLDEPRT, ZWATTABLRT move to susurface properties
