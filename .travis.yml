@@ -20,7 +20,7 @@ before_install:
   - DOMAIN_DIR_TRAVIS=$HOME/example_case
   - release=$(curl -s https://api.github.com/repos/NCAR/wrf_hydro_nwm_public/releases/tags/$version)
   - echo $release
-  - exampleCaseURL=$(echo "$release" | grep 'testcase' | grep "browser_download_url" | cut -d ':' - f2,3 |  tr -d '"')
+  - exampleCaseURL=$(echo "$release" | grep 'testcase' | grep "browser_download_url" | cut -d ':' -f2,3 |  tr -d '"')
   - echo $exampleCaseURL
   - echo "$exampleCaseURL" | wget -qi -
   - tar -xf *testcase*.tar.gz -C $HOME
