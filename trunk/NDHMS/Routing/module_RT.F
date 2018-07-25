@@ -274,8 +274,8 @@ CONTAINS
             rt_domain(did)%SO8LD_Vmax    = 0.0
   !allocate( rt_domain(did)%sfcheadrt   (IX,JX) ) !moved to overland control structure
   !          rt_domain(did)%sfcheadrt    = 0.0    !moved to overland control structure
-  allocate( rt_domain(did)%groundwater%input%infxsrt   (IX,JX) )
-            rt_domain(did)%groundwater%input%infxsrt    = 0.0
+  !allocate( rt_domain(did)%groundwater%input%infxsrt   (IX,JX) )
+  !          rt_domain(did)%groundwater%input%infxsrt    = 0.0
   allocate( rt_domain(did)%TERRAIN   (IX,JX) )
             rt_domain(did)%TERRAIN    = 0.0
   allocate( rt_domain(did)%LKSAT   (IX,JX) )
