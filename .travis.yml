@@ -15,10 +15,12 @@ before_install:
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   #Get docker images
   - docker pull wrfhydro/dev:conda
-  #Get domain from latest release
+  #Get domain from release
+  - version=$(cat $TRAVIS_BUILD_DIR/trunk/NDHMS/.version)
   - DOMAIN_DIR_TRAVIS=$HOME/example_case
-  - release=$(curl -s https://api.github.com/repos/NCAR/wrf_hydro_nwm_public/releases/latest)
-  - exampleCaseURL=$(echo "$release" | grep 'testcase' | grep "browser_download_url" | cut -d ':' f2,3 |  tr -d \")
+  - release=$(curl -s https://api.github.com/repos/NCAR/wrf_hydro_nwm_public/releases/tags/$version)
+  - echo $release
+  - exampleCaseURL=$(echo "$release" | grep 'testcase' | grep "browser_download_url" | cut -d ':' - f2,3 |  tr -d '"')
   - echo $exampleCaseURL
   - echo "$exampleCaseURL" | wget -qi -
   - tar -xf *testcase*.tar.gz -C $HOME
