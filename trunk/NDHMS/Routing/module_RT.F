@@ -280,8 +280,8 @@ CONTAINS
             rt_domain(did)%TERRAIN    = 0.0
   allocate( rt_domain(did)%LKSAT   (IX,JX) )
             rt_domain(did)%LKSAT    = 0.0
-  allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
-            rt_domain(did)%SOLDRAIN    = 0.0
+  !allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
+  !          rt_domain(did)%SOLDRAIN    = 0.0
 
   end if ! neither channel_only nor channelBucket_only
 
