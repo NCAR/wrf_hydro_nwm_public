@@ -77,7 +77,7 @@
   INTEGER, allocatable, DIMENSION(:)     :: basnsInd ! basin index for tile
   INTEGER, allocatable, DIMENSION(:,:)   :: GWSUBBASMSK  !GW basin mask grid
   REAL,    allocatable, DIMENSION(:,:)   :: qinflowbase  !strm inflow/baseflow from GW
-  REAL,    allocatable, DIMENSION(:,:)   :: SOLDRAIN     !time-step drainage
+  !REAL,    allocatable, DIMENSION(:,:)   :: SOLDRAIN     !time-step drainage
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk  !GW basin mask grid
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk_lind  !GW basin mask grid tile maping index
   REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
