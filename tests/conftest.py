@@ -151,6 +151,9 @@ def output_dir(request):
 
     output_dir = pathlib.Path(output_dir)
     output_dir = output_dir / configuration
-    if output_dir.is_dir() is False:
-        output_dir.mkdir(parents=True)
+
+    if output_dir.is_dir() is True:
+        shutil.rmtree(str(output_dir))
+
+    output_dir.mkdir(parents=True)
     return output_dir

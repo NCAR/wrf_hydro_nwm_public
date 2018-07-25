@@ -13,7 +13,7 @@
             "frxst_pts_out": 0,
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
-            "gw_restart": 0,
+            "gw_restart": 1,
             "gwbaseswcrt": 1,
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
@@ -35,8 +35,8 @@
             "rst_bi_in": 0,
             "rst_bi_out": 0,
             "rst_dt": 60,
-            "rst_typ": 0,
-            "rstrt_swc": 1,
+            "rst_typ": 1,
+            "rstrt_swc": 0,
             "rt_option": 1,
             "rtout_domain": 1,
             "split_output_count": 1,
@@ -84,7 +84,7 @@
     "nwm_short_range" : {
         "hydro_nlist": {},
         "nudging_nlist": {
-            "biaswindowbeforet0": true,
+            "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
             "minnumpairsbiaspersist": 1,
@@ -102,7 +102,7 @@
     "nwm_medium_range": {
         "hydro_nlist": {},
         "nudging_nlist": {
-            "biaswindowbeforet0": true,
+            "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
             "minnumpairsbiaspersist": 1,
@@ -124,7 +124,7 @@
             "subrtswcrt": 0
         },
         "nudging_nlist": {
-            "biaswindowbeforet0": true,
+            "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
             "minnumpairsbiaspersist": 1,
