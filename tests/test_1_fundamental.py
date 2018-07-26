@@ -203,7 +203,7 @@ def test_perfrestart_candidate(
     candidate_lsm_restart_file.symlink_to(expected_lsm_restart_file)
 
     ## Nudging
-    if len(candidate_sim_expected.output.restart_nudging) > 0:
+    if len(candidate_sim_expected.output.restart_nudging) > 1:
         expected_nudging_restart_file = candidate_sim_expected.output.restart_nudging[1]
         candidate_nudging_restart_file = pathlib.Path(expected_nudging_restart_file.name)
         candidate_nudging_restart_file.symlink_to(expected_nudging_restart_file)
