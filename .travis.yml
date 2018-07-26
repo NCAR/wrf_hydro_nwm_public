@@ -15,28 +15,11 @@ before_install:
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   #Get docker images
   - docker pull wrfhydro/dev:modeltesting
-  #Setup test directory on Docker
-  - TEST_DIR_DOCKER=/home/docker/test_dir
-  - PYTEST_DIR_DOCKER=$TEST_DIR_DOCKER/candidate/tests
-  - DOMAIN_DIR_DOCKER=/home/docker/domain/example_case
 
 script:
-  # NWM ANA
-  - echo "TESTING NWM_ANA"
-  - echo " "
   - docker run \
-  -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate \
-  -v $TEST_DIR_TRAVIS/reference:/home/docker/reference \
-  wrfhydro/dev:modeltesting --config nwm_ana --tag v5.0.1
-
-  # GRIDDED
-  - echo "TESTING GRIDDED"
-  - echo " "
-  - docker run \
-  -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate \
-  -v $TEST_DIR_TRAVIS/reference:/home/docker/reference \
-  wrfhydro/dev:modeltesting --config gridded --tag v5.0.1
-
-script:
-  - docker run -v $DOMAIN_DIR_TRAVIS:$DOMAIN_DIR_DOCKER -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip uninstall -y wrfhydropy; pip install wrfhydropy==0.0.5.dev0; cd $PYTEST_DIR_DOCKER; pytest -v --ignore local --ignore toolbox/ --config nwm_ana --compiler gfort --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
-
+    -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate \
+    -v $TEST_DIR_TRAVIS/reference:/home/docker/reference \
+    wrfhydro/dev:modeltesting \
+    --config nwm_ana gridded reach \
+    --tag v5.0.1
