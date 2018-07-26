@@ -142,7 +142,7 @@ MODULE MODULE_MPP_LAND
 !    ### initialize the land model logically based on the two D method. 
 !    ### Call this function directly if it is nested with WRF.
     implicit none
-    integer :: ierr
+    integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
      
@@ -151,7 +151,8 @@ MODULE MODULE_MPP_LAND
 
       CALL mpi_initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
-           call MPI_INIT( ierr )  ! stand alone land model.
+!           call MPI_INIT( ierr )  ! stand alone land model.
+         call MPI_init_thread(MPI_THREAD_FUNNELED, provided, ierr)
       endif
            HYDRO_COMM_WORLD = MPI_COMM_WORLD
            call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
