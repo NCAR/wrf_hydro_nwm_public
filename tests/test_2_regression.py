@@ -2,9 +2,8 @@ import wrfhydropy
 import pickle
 import pytest
 
-
-# regression question
-def test_regression(output_dir, capsys):
+#regression question
+def test_regression(output_dir,capsys):
     with capsys.disabled():
         print("\nQuestion: The candidate run outputs match the reference run outputs?", end="")
 

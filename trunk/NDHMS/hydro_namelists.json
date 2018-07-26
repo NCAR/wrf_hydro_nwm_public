@@ -1,16 +1,15 @@
 {
-    "base": {            
+    "base": {
         "hydro_nlist": {
-            "aggfactrt": 4,
+            "aggfactrt": 1,
             "channel_option": 2,
             "chanobs_domain": 1,
             "chanrtswcrt": 1,
             "chrtout_domain": 1,
             "chrtout_grid": 0,
-            "compound_channel": false,
             "dtrt_ch": 300,
             "dtrt_ter": 10,
-            "dxrt": 250.0,
+            "dxrt": 1000,
             "frxst_pts_out": 0,
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
@@ -27,7 +26,7 @@
             "order_to_write": 1,
             "out_dt": 60,
             "outlake": 1,
-            "output_channelbucket_influx": 1,
+            "output_channelbucket_influx": 2,
             "output_gw": 1,
             "ovrtswcrt": 1,
             "restart_file": "NULL_specified_in_domain.json",
@@ -37,7 +36,7 @@
             "rst_bi_out": 0,
             "rst_dt": 60,
             "rst_typ": 1,
-            "rstrt_swc": 1,
+            "rstrt_swc": 0,
             "rt_option": 1,
             "rtout_domain": 1,
             "split_output_count": 1,
@@ -48,7 +47,7 @@
             "udmp_opt": 1,
             "zsoil8": [-0.1, -0.4, -1.0, -2.0]
         },
-        "nudging_nlist": {            
+        "nudging_nlist": {
             "biaswindowbeforet0": "",
             "invdisttimeweightbias": "",
             "maxagepairsbiaspersist": "",
@@ -63,14 +62,9 @@
             "timeslicepath": "NULL_specified_in_domain.json"
         }
     },
-    "NWM_ana": {
-        "hydro_nlist": {
-            "chrtout_domain": 1,
-            "outlake": 1,
-            "output_channelbucket_influx": 1,
-            "output_gw": 0,
-            "lsmout_domain": 0
-        },
+
+    "nwm_ana": {
+        "hydro_nlist": {},
         "nudging_nlist": {
             "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
@@ -87,17 +81,10 @@
         }
     },
 
-    "NWM_short_range" : {
-        "hydro_nlist": {
-            "chrtout_domain": 1,
-            "outlake": 1,
-            "output_channelbucket_influx": 1,
-            "output_gw": 0,
-            "lsmout_domain": 0,
-            "rst_dt": 999990
-        },
+    "nwm_short_range" : {
+        "hydro_nlist": {},
         "nudging_nlist": {
-            "biaswindowbeforet0": true,
+            "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
             "minnumpairsbiaspersist": 1,
@@ -112,18 +99,10 @@
         }
     },
 
-    "NWM_medium_range": {
-        "hydro_nlist": {
-            "chrtout_domain": 1,
-            "outlake": 1,
-            "output_gw": 0,
-            "lsmout_domain": 0,
-            "out_dt": 180,
-            "output_channelbucket_influx": 1,
-            "rst_dt": 999990
-        },
+    "nwm_medium_range": {
+        "hydro_nlist": {},
         "nudging_nlist": {
-            "biaswindowbeforet0": true,
+            "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
             "minnumpairsbiaspersist": 1,
@@ -138,24 +117,14 @@
         }
     },
 
-    "NWM_long_range": {
+    "nwm_long_range": {
         "hydro_nlist": {
-            "chrtout_domain": 1,
-            "outlake": 1,
-            "output_gw": 0,
-            "lsmout_domain": 0,
-            "aggfactrt": 1,
-            "dxrt": 1000.0,
-            "out_dt": 360,
-            "output_channelbucket_influx": 0,
             "ovrtswcrt": 0,
-            "rst_dt": 999990,
-            "rst_typ": 0,
             "rtout_domain": 0,
             "subrtswcrt": 0
         },
         "nudging_nlist": {
-            "biaswindowbeforet0": true,
+            "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
             "minnumpairsbiaspersist": 1,
@@ -170,11 +139,8 @@
         }
     },
 
-    "NWM_channel-only": {
+    "nwm_channel-only": {
         "hydro_nlist": {
-            "chrtout_domain": 1,
-            "outlake": 1,
-            "output_channelbucket_influx": 1,
             "output_gw": 0,
             "lsmout_domain": 0
         },
@@ -194,7 +160,7 @@
         }
     },
 
-    "Gridded": {
+    "gridded": {
         "hydro_nlist": {
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
@@ -205,8 +171,8 @@
         },
         "nudging_nlist": {}
     },
-    
-    "Reach": {
+
+    "reach": {
         "hydro_nlist": {
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "dtrt_ch": 10,
