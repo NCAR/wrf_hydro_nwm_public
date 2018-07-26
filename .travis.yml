@@ -14,13 +14,7 @@ before_install:
   - git checkout $TRAVIS_BRANCH
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   #Get docker images
-  - docker pull wrfhydro/dev:conda
-  - docker pull wrfhydro/domains:croton_NY
-  - docker create --name croton_NY wrfhydro/domains:croton_NY
-  #Setup test directory on Docker
-  - TEST_DIR_DOCKER=/home/docker/test_dir
-  - PYTEST_DIR_DOCKER=$TEST_DIR_DOCKER/candidate/tests
-  - DOMAIN_DIR_DOCKER=/home/docker/domain/croton_NY
+  - docker pull wrfhydro/dev:modeltesting
 
 script:
-  - docker run --volumes-from croton_NY -v $TEST_DIR_TRAVIS:$TEST_DIR_DOCKER wrfhydro/dev:conda /bin/bash -c "pip uninstall -y wrfhydropy; pip install wrfhydropy; cd $PYTEST_DIR_DOCKER; pytest -v --ignore take_test.py --ignore toolbox/ --ignore run_travis_yml_locally.py --compiler gfort --domain_dir $DOMAIN_DIR_DOCKER --candidate_dir $TEST_DIR_DOCKER/candidate/trunk/NDHMS --reference_dir $TEST_DIR_DOCKER/reference/trunk/NDHMS --output_dir $TEST_DIR_DOCKER/test_out"
+  - docker run -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana gridded reach
