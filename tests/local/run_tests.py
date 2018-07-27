@@ -117,10 +117,13 @@ def main():
     output_dir = pathlib.Path(args.output_dir)
     candidate_dir = pathlib.Path(args.candidate_dir)
     reference_dir = pathlib.Path(args.reference_dir)
-    domain_dir = pathlib.Path(args.domain_dir)
+    domain_dir = args.domain_dir
+
+    if domain_dir is not None:
+        domain_dir = pathlib.Path(domain_dir)
 
     # Get other args
-    config = args.config
+    config_list = args.config
     compiler = args.compiler
     domain_tag = args.domain_tag
     ncores = args.ncores
@@ -176,7 +179,7 @@ def main():
 
     # run pytest for each supplied config
     has_failure = False
-    for config in args.config:
+    for config in config_list:
         print('\n\n############################')
         print('### TESTING ' + config + ' ###')
         print('############################\n\n',flush=True)
@@ -187,6 +190,7 @@ def main():
                                 candidate_dir = str(candidate_dir),
                                 reference_dir = str(reference_dir),
                                 output_dir = str(output_dir),
+                                scheduler = scheduler,
                                 ncores = ncores,
                                 nnodes = nnodes,
                                 account = account)
