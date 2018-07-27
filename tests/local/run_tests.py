@@ -45,13 +45,6 @@ def run_tests(config: str,
     pytest_cmd += " --reference_dir " + reference_source_dir
     pytest_cmd += " --output_dir " + output_dir
 
-
-    # Get hostname to add scheduler if running on cheyenne
-    if 'cheyenne' in socket.gethostname():
-        pytest_cmd += " --scheduler pbscheyenne"
-        pytest_cmd += " --ncores " + str(ncores)
-        pytest_cmd += " --account " + account
-
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
     return tests
@@ -82,7 +75,6 @@ def main():
                         help='<Required> reference model directory')
 
     parser.add_argument('--domain_dir',
-                        required=True,
                         help='<Required> domain directory')
 
     parser.add_argument("--domain_tag",
@@ -90,7 +82,7 @@ def main():
                         help="The release tag of the domain to retrieve, e.g. v5.0.1. or dev. If "
                              "specified, a small test domain will be retrieved and placed in the "
                              "specified output_dir and used for the testing domain")
-    # Optional args:
+
     parser.add_argument('--ncores',
                         default='2',
                         required=False,
