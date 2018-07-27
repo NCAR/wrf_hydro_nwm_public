@@ -15,6 +15,7 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
+              scheduler: str = None,
               ncores: int = 72,
               nnodes: int = 2,
               account: str = 'NRAL0017'):
@@ -44,6 +45,12 @@ def run_tests(config: str,
     pytest_cmd += " --candidate_dir " + candidate_source_dir
     pytest_cmd += " --reference_dir " + reference_source_dir
     pytest_cmd += " --output_dir " + output_dir
+    pytest_cmd += " --ncores " + str(ncores)
+
+    if scheduler is not None:
+        pytest_cmd += " --scheduler " + scheduler
+        pytest_cmd += " --nnodes " + str(nnodes)
+        pytest_cmd += " --account " + account
 
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
