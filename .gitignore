@@ -1,6 +1,7 @@
 *.o
 *.f
 *.f90
+*.F90
 *.mod
 *~
 Makefile.comm
