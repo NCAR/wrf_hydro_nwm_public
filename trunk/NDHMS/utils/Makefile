@@ -5,11 +5,11 @@
 
 include ../macros
 
-#wh_version := $(shell cat ../.version)
-#nwm_veresion  := $(shell cat ../.nwm_version)
+wh_version := $(shell cat ../.version)
+WRF_HYDRO_VERSION=\"$(wh_version)\"
 
-NWM_VERSION=\"the_nwm_version_10000\"
-WRF_HYDRO_VERSION=\"the_wrf_hydro_version_4\"
+nwm_version  := $(shell cat ../.nwm_version)
+NWM_VERSION=\"$(nwm_version)\"
 
 F90FLAGS += -DNWM_VERSION=$(NWM_VERSION) -DWRF_HYDRO_VERSION=$(WRF_HYDRO_VERSION)
 
