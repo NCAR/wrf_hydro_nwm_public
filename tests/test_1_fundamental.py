@@ -77,11 +77,11 @@ def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
         warnings.simplefilter("ignore")
         candidate_sim.compose()
 
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     candidate_sim.run()
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
     wait_job(candidate_sim)
 
     candidate_sim.collect()
@@ -113,12 +113,12 @@ def test_run_reference(reference_sim, output_dir, ncores, capsys):
         warnings.simplefilter("ignore")
         reference_sim.compose()
 
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     reference_sim.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
     wait_job(reference_sim)
 
     reference_sim.collect()
@@ -169,14 +169,14 @@ def test_ncores_candidate(output_dir, capsys):
     # catch warnings related to missing start and end job times
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        candidate_sim_ncores.compose()
+        candidate_sim_ncores.compose(force=True)
 
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     candidate_sim_ncores.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
     wait_job(candidate_sim_ncores)
 
     candidate_sim_ncores.collect()
@@ -205,7 +205,7 @@ def test_perfrestart_candidate(
     capsys
 ):
     with capsys.disabled():
-        print("\nQuestion: The candidate restarts from a restart run match the restarts"
+        print("\nQuestion: The candidate outputs from a restart run match the outputs"
               " from standard run?\n", end='')
 
     candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
@@ -256,13 +256,14 @@ def test_perfrestart_candidate(
     # catch warnings related to missing start and end job times
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        candidate_sim_restart.compose()
+        candidate_sim_restart.compose(force=True)
+
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     candidate_sim_restart.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
     wait_job(candidate_sim_restart)
 
     candidate_sim_restart.collect()
