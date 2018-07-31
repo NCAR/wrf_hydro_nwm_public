@@ -16,7 +16,7 @@ def run_tests(config: str,
               reference_dir: str,
               output_dir: str,
               scheduler: str = None,
-              entry_cmd:str = None,
+              entry_cmd:str = '',
               ncores: int = 72,
               nnodes: int = 2,
               account: str = 'NRAL0017'):
