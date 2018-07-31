@@ -170,12 +170,17 @@ def test_ncores_candidate(output_dir, capsys):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         candidate_sim_ncores.compose()
+
     candidate_sim_ncores.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     wait_job(candidate_sim_ncores)
+
     candidate_sim_ncores.collect()
+    candidate_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
     diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_sim_ncores.output,
@@ -248,15 +253,20 @@ def test_perfrestart_candidate(
     candidate_sim_restart.add(new_job)
 
     # Compose and run
-    candidate_sim_restart.compose(force=True)
+    # catch warnings related to missing start and end job times
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        candidate_sim_restart.compose()
     candidate_sim_restart.run()
-
-    # collect
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     wait_job(candidate_sim_restart)
+
     candidate_sim_restart.collect()
+    candidate_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
     diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_sim_restart.output,
