@@ -17,8 +17,8 @@ def test_regression(output_dir,capsys):
         pytest.skip('Reference run object not found, skipping test')
 
     # Load run objects
-    candidate_run_expected = pickle.load(open(candidate_run_file,"rb"))
-    reference_run_expected = pickle.load(open(reference_run_file,"rb"))
+    candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))
+    reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
 
     #Check regression
     diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_run_expected.output,

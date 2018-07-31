@@ -15,6 +15,7 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
+              scheduler: str = None,
               ncores: int = 72,
               nnodes: int = 2,
               account: str = 'NRAL0017'):
@@ -44,12 +45,12 @@ def run_tests(config: str,
     pytest_cmd += " --candidate_dir " + candidate_source_dir
     pytest_cmd += " --reference_dir " + reference_source_dir
     pytest_cmd += " --output_dir " + output_dir
+    pytest_cmd += " --ncores " + str(ncores)
 
+    if scheduler is not None:
+        pytest_cmd += " --scheduler " + scheduler
+        pytest_cmd += " --nnodes " + str(nnodes)
 
-    # Get hostname to add scheduler if running on cheyenne
-    if 'cheyenne' in socket.gethostname():
-        pytest_cmd += " --scheduler pbscheyenne"
-        pytest_cmd += " --ncores " + str(ncores)
         pytest_cmd += " --account " + account
 
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
@@ -82,29 +83,31 @@ def main():
                         help='<Required> reference model directory')
 
     parser.add_argument('--domain_dir',
-                        required=True,
-                        help='<Required> domain directory')
+                        help='optional domain directory')
 
     parser.add_argument("--domain_tag",
                         required=False,
                         help="The release tag of the domain to retrieve, e.g. v5.0.1. or dev. If "
                              "specified, a small test domain will be retrieved and placed in the "
                              "specified output_dir and used for the testing domain")
-    # Optional args:
+
+
     parser.add_argument('--ncores',
                         default='2',
                         required=False,
                         help='Number of cores to use for testing')
+
+    parser.add_argument('--scheduler',
+                        required=False,
+                        help='Scheduler to use for testing, options are PBSCheyenne or do not '
+                             'specify for no scheduler')
+
 
     parser.add_argument('--nnodes',
                      default='2',
                      required=False,
                      help='Number of nodes to use for testing if running on scheduler')
 
-    parser.add_argument('--scheduler',
-                        required=False,
-                        help='Scheduler to use for testing, options are PBSCheyenne or do not '
-                             'specify for no scheduler')
 
     parser.add_argument('--account',
                         default='NRAL0017',
@@ -118,10 +121,14 @@ def main():
     output_dir = pathlib.Path(args.output_dir)
     candidate_dir = pathlib.Path(args.candidate_dir)
     reference_dir = pathlib.Path(args.reference_dir)
-    domain_dir = pathlib.Path(args.domain_dir)
+    domain_dir = args.domain_dir
+
+    if domain_dir is not None:
+        domain_dir = pathlib.Path(domain_dir)
 
     # Get other args
-    config = args.config
+    config_list = args.config
+
     compiler = args.compiler
     domain_tag = args.domain_tag
     ncores = args.ncores
@@ -177,7 +184,8 @@ def main():
 
     # run pytest for each supplied config
     has_failure = False
-    for config in args.config:
+    for config in config_list:
+
         print('\n\n############################')
         print('### TESTING ' + config + ' ###')
         print('############################\n\n',flush=True)
@@ -188,6 +196,7 @@ def main():
                                 candidate_dir = str(candidate_dir),
                                 reference_dir = str(reference_dir),
                                 output_dir = str(output_dir),
+                                scheduler = scheduler,
                                 ncores = ncores,
                                 nnodes = nnodes,
                                 account = account)
