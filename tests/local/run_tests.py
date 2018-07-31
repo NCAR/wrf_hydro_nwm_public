@@ -16,6 +16,7 @@ def run_tests(config: str,
               reference_dir: str,
               output_dir: str,
               scheduler: str = None,
+              entry_cmd:str = None,
               ncores: int = 72,
               nnodes: int = 2,
               account: str = 'NRAL0017'):
@@ -49,6 +50,7 @@ def run_tests(config: str,
 
     if scheduler is not None:
         pytest_cmd += " --scheduler " + scheduler
+        pytest_cmd += " --entry_cmd " + entry_cmd
         pytest_cmd += " --nnodes " + str(nnodes)
         pytest_cmd += " --account " + account
 
@@ -95,15 +97,20 @@ def main():
                         required=False,
                         help='Number of cores to use for testing')
 
-    parser.add_argument('--nnodes',
-                     default='2',
-                     required=False,
-                     help='Number of nodes to use for testing if running on scheduler')
-
     parser.add_argument('--scheduler',
                         required=False,
                         help='Scheduler to use for testing, options are PBSCheyenne or do not '
                              'specify for no scheduler')
+
+    parser.add_argument('--entry_cmd',
+                        required=False,
+                        help='A command to execute prior to running the job if using a scheduler.'
+                             'For example, loading a virtual env.')
+
+    parser.add_argument('--nnodes',
+                     default='2',
+                     required=False,
+                     help='Number of nodes to use for testing if running on scheduler')
 
     parser.add_argument('--account',
                         default='NRAL0017',
@@ -129,6 +136,7 @@ def main():
     ncores = args.ncores
     nnodes = args.nnodes
     scheduler = args.scheduler
+    entry_cmd = args.entry_cmd
     account = args.account
 
     # Make output dir if does not exist
@@ -191,6 +199,7 @@ def main():
                                 reference_dir = str(reference_dir),
                                 output_dir = str(output_dir),
                                 scheduler = scheduler,
+                                entry_cmd = entry_cmd,
                                 ncores = ncores,
                                 nnodes = nnodes,
                                 account = account)
