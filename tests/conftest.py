@@ -9,59 +9,59 @@ def pytest_addoption(parser):
     # Required args:
 
     parser.addoption('--domain_dir',
-        required=True,
-        action='store',
-        help='domain directory'
-    )
+                     required=True,
+                     action='store',
+                     help='domain directory'
+                     )
 
     parser.addoption('--output_dir',
-        required=True,
-        action='store',
-        help='test output directory'
-    )
+                     required=True,
+                     action='store',
+                     help='test output directory'
+                     )
 
     parser.addoption('--candidate_dir',
-        required=True,
-        action='store',
-        help='candidate model directory'
-    )
+                     required=True,
+                     action='store',
+                     help='candidate model directory'
+                     )
 
     parser.addoption('--reference_dir',
-        required=True,
-        action='store',
-        help='reference model directory'
-    )
+                     required=True,
+                     action='store',
+                     help='reference model directory'
+                     )
 
     # Optional args:
     parser.addoption("--config",
-        required=True,
-        action='store',
-        help=("List of model configurations to test, options are 'NWM'," +
-              "'Gridded',and 'Reach'")
-    )
+                     required=True,
+                     action='store',
+                     help=("List of model configurations to test, options are 'NWM'," +
+                           "'Gridded',and 'Reach'")
+                     )
 
     # Optional args
 
     parser.addoption('--compiler',
-        default='gfort',
-        required=False,
-        action='store',
-        help='compiler, options are intel or gfort'
-    )
+                     default='gfort',
+                     required=False,
+                     action='store',
+                     help='compiler, options are intel or gfort'
+                     )
 
     parser.addoption( '--ncores',
-        default='2',
-        required=False,
-        action='store',
-        help='Number of cores to use for testing'
-    )
+                      default='2',
+                      required=False,
+                      action='store',
+                      help='Number of cores to use for testing'
+                      )
 
     parser.addoption('--scheduler',
-        default=None,
-        required=False,
-        action='store',
-        help='Scheduler to use for testing, options are PBSCheyenne or do not specify for no '
-             'scheduler')
+                     default=None,
+                     required=False,
+                     action='store',
+                     help='Scheduler to use for testing, options are PBSCheyenne or do not specify for no '
+                          'scheduler')
 
     parser.addoption('--nnodes',
                      default='2',
@@ -69,16 +69,10 @@ def pytest_addoption(parser):
                      help='Number of nodes to use for testing if running on scheduler')
 
     parser.addoption('--account',
-        default='NRAL0017',
-        required=False,
-        action='store',
-        help='Account number to use if using a scheduler.')
-
-    parser.addoption('--entry_cmd',
-        required=False,
-        action='store',
-        help='A command to execute prior to running the job if using a scheduler. For exsample, '
-             'loading a virtual env.')
+                     default='NRAL0017',
+                     required=False,
+                     action='store',
+                     help='Account number to use if using a scheduler.')
 
 def _make_sim(domain_dir,
               source_dir,
@@ -86,8 +80,7 @@ def _make_sim(domain_dir,
               ncores,
               nnodes,
               scheduler,
-              account,
-              entry_cmd):
+              account):
     # model
     model = Model(
         source_dir=source_dir,
@@ -112,8 +105,7 @@ def _make_sim(domain_dir,
     if scheduler is not None and scheduler == 'pbscheyenne':
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
-                                       nnodes=nnodes,
-                                       entry_cmd=entry_cmd))
+                                       nnodes=nnodes))
 
     return sim
 
@@ -127,7 +119,6 @@ def candidate_sim(request):
     nnodes = request.config.getoption("--nnodes")
     scheduler = str(request.config.getoption("--scheduler")).lower()
     account = request.config.getoption("--account")
-    entry_cmd = request.config.getoption("--entry_cmd")
 
     candidate_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= candidate_dir,
@@ -135,8 +126,7 @@ def candidate_sim(request):
                               ncores = ncores,
                               nnodes=nnodes,
                               scheduler = scheduler,
-                              account = account,
-                              entry_cmd = entry_cmd)
+                              account = account)
 
     return candidate_sim
 
@@ -150,7 +140,6 @@ def reference_sim(request):
     nnodes = request.config.getoption("--nnodes")
     scheduler = str(request.config.getoption("--scheduler")).lower()
     account = request.config.getoption("--account")
-    entry_cmd = request.config.getoption("--entry_cmd")
 
     reference_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= reference_dir,
@@ -158,8 +147,7 @@ def reference_sim(request):
                               ncores = ncores,
                               nnodes=nnodes,
                               scheduler = scheduler,
-                              account = account,
-                              entry_cmd = entry_cmd)
+                              account = account)
 
     return reference_sim
 
