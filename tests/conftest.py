@@ -74,6 +74,7 @@ def pytest_addoption(parser):
                      action='store',
                      help='Account number to use if using a scheduler.')
 
+
 def _make_sim(domain_dir,
               source_dir,
               configuration,
@@ -106,6 +107,7 @@ def _make_sim(domain_dir,
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
                                        nnodes=nnodes))
+
 
     return sim
 

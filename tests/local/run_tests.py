@@ -50,6 +50,7 @@ def run_tests(config: str,
     if scheduler is not None:
         pytest_cmd += " --scheduler " + scheduler
         pytest_cmd += " --nnodes " + str(nnodes)
+
         pytest_cmd += " --account " + account
 
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
@@ -82,13 +83,14 @@ def main():
                         help='<Required> reference model directory')
 
     parser.add_argument('--domain_dir',
-                        help='<Required> domain directory')
+                        help='optional domain directory')
 
     parser.add_argument("--domain_tag",
                         required=False,
                         help="The release tag of the domain to retrieve, e.g. v5.0.1. or dev. If "
                              "specified, a small test domain will be retrieved and placed in the "
                              "specified output_dir and used for the testing domain")
+
 
     parser.add_argument('--ncores',
                         default='2',
@@ -100,10 +102,12 @@ def main():
                         help='Scheduler to use for testing, options are PBSCheyenne or do not '
                              'specify for no scheduler')
 
+
     parser.add_argument('--nnodes',
                      default='2',
                      required=False,
                      help='Number of nodes to use for testing if running on scheduler')
+
 
     parser.add_argument('--account',
                         default='NRAL0017',
@@ -124,6 +128,7 @@ def main():
 
     # Get other args
     config_list = args.config
+
     compiler = args.compiler
     domain_tag = args.domain_tag
     ncores = args.ncores
@@ -180,6 +185,7 @@ def main():
     # run pytest for each supplied config
     has_failure = False
     for config in config_list:
+
         print('\n\n############################')
         print('### TESTING ' + config + ' ###')
         print('############################\n\n',flush=True)

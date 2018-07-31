@@ -2,6 +2,7 @@ import requests
 from argparse import ArgumentParser
 
 
+
 def download_file_from_google_drive(id, destination):
     URL = "https://docs.google.com/uc?export=download"
 
@@ -15,6 +16,7 @@ def download_file_from_google_drive(id, destination):
         response = session.get(URL, params=params, stream=True)
 
     save_response_content(response, destination)
+
 
 
 def get_confirm_token(response):
@@ -35,6 +37,7 @@ def save_response_content(response, destination):
 
 
 def main():
+
     parser = ArgumentParser()
     parser.add_argument("--file_id",
                         dest="file_id",
@@ -48,7 +51,6 @@ def main():
     dest_file = args.dest_file
 
     download_file_from_google_drive(file_id, dest_file)
-
 
 if __name__ == "__main__":
     main()
