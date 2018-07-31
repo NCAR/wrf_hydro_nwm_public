@@ -117,14 +117,17 @@ def test_run_reference(reference_sim, output_dir, ncores, capsys):
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
+    with capsys.disabled():
+        print('\nwaiting for job to complete...', end='')
     wait_job(reference_sim)
+
     reference_sim.collect()
     reference_sim.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check job run statuses
     for job in reference_sim.jobs:
         assert job.exit_status == 0, \
-            "Candidate code run exited with non-zero status"
+            "Reference code run exited with non-zero status"
 
 #Ncores question
 def test_ncores_candidate(output_dir, capsys):
@@ -138,8 +141,8 @@ def test_ncores_candidate(output_dir, capsys):
         pytest.skip('Candidate run object not found, skipping test.')
 
     # Load initial sim object, collect sim_object and copy for makign new sims
-    candidate_sim = pickle.load(open(candidate_sim_file, "rb"))
-    candidate_sim_expected = pickle.load(open(candidate_collected_file, "rb"))
+    candidate_sim = pickle.load(candidate_sim_file.open(mode="rb"))
+    candidate_sim_expected = pickle.load(candidate_collected_file.open(mode="rb"))
     candidate_sim_ncores = copy.deepcopy(candidate_sim)
 
     # Set run directory
@@ -205,7 +208,7 @@ def test_perfrestart_candidate(
         pytest.skip('Candidate run object not found, skipping test.')
 
     # Load initial run model object and copy
-    candidate_sim_expected = pickle.load(open(candidate_run_file, "rb"))
+    candidate_sim_expected = pickle.load(candidate_run_file.open(mode="rb"))
     candidate_sim_restart = copy.deepcopy(candidate_sim_expected)
 
     # Set run directory
