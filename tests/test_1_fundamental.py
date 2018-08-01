@@ -9,7 +9,6 @@ import shutil
 import pathlib
 import time
 import pandas as pd
-import netCDF4
 
 ##################################
 # Setup the test with a domain, a candidate, and a reference.
@@ -226,7 +225,7 @@ def test_perfrestart_candidate(
     # Get a new start time 1 hour later
     restart_job = candidate_sim_restart.jobs[0]
     restart_job.model_start_time = restart_job.model_start_time + \
-                                   dt.timedelta(hours=1)
+                                   dt.timedelta(hours=2)
 
     # Get restart files from previous run and symlink into restart sim dir
     ## Hydro
