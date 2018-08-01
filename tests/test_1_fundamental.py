@@ -9,6 +9,8 @@ import shutil
 import pathlib
 import time
 import pandas as pd
+import netCDF4
+
 ##################################
 # Setup the test with a domain, a candidate, and a reference.
 # Get domain, reference, candidate, and optional output directory from command line arguments
