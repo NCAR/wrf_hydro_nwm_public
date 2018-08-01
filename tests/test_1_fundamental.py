@@ -8,7 +8,7 @@ import os
 import shutil
 import pathlib
 import time
-
+import pandas as pd
 ##################################
 # Setup the test with a domain, a candidate, and a reference.
 # Get domain, reference, candidate, and optional output directory from command line arguments
@@ -221,32 +221,59 @@ def test_perfrestart_candidate(
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
-    # Edit the sim object job start time to be one hour earlier
+    # Get a new start time 1 hour later
     restart_job = candidate_sim_restart.jobs[0]
-    restart_job.model_start_time = restart_job.model_start_time + \
+    model_start_time = restart_job.model_start_time + \
                                    dt.timedelta(hours=1)
 
     # Get restart files from previous run and symlink into restart sim dir
     ## Hydro
-    expected_hydro_restart_file = candidate_sim_expected.output.restart_hydro[1]
-    candidate_hydro_restart_file = pathlib.Path(expected_hydro_restart_file.name)
-    candidate_hydro_restart_file.symlink_to(expected_hydro_restart_file)
+    ### Loop through and use actual time listed in meta data, not filename or positional list index
+    for restart_file in candidate_sim_expected.output.restart_hydro:
+        restart_time = restart_file.open().Restart_Time
+        restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
+        if restart_time == model_start_time:
+            candidate_hydro_restart_file = pathlib.Path(restart_file.name)
+            candidate_hydro_restart_file.symlink_to(restart_file)
+
+    # expected_hydro_restart_file = candidate_sim_expected.output.restart_hydro[1]
+    # candidate_hydro_restart_file = pathlib.Path(expected_hydro_restart_file.name)
+    # candidate_hydro_restart_file.symlink_to(expected_hydro_restart_file)
 
     ## LSM
-    expected_lsm_restart_file = candidate_sim_expected.output.restart_lsm[1]
-    candidate_lsm_restart_file = pathlib.Path(expected_lsm_restart_file.name)
-    candidate_lsm_restart_file.symlink_to(expected_lsm_restart_file)
+    ### Loop through and use actual time listed in meta data, not filename or positional list index
+    for restart_file in candidate_sim_expected.output.restart_lsm:
+        restart_time = restart_file.open().Times[0]
+        restart_time = restart_time.astype(str).item(0)
+        restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
+        if restart_time == model_start_time:
+            candidate_lsm_restart_file = pathlib.Path(restart_file.name)
+            candidate_lsm_restart_file.symlink_to(restart_file)
+
+    # expected_lsm_restart_file = candidate_sim_expected.output.restart_lsm[1]
+    # candidate_lsm_restart_file = pathlib.Path(expected_lsm_restart_file.name)
+    # candidate_lsm_restart_file.symlink_to(expected_lsm_restart_file)
 
     ## Nudging
-    if len(candidate_sim_expected.output.restart_nudging) > 1:
-        expected_nudging_restart_file = candidate_sim_expected.output.restart_nudging[1]
-        candidate_nudging_restart_file = pathlib.Path(expected_nudging_restart_file.name)
-        candidate_nudging_restart_file.symlink_to(expected_nudging_restart_file)
+    ### Loop through and use actual time listed in meta data, not filename or positional list index
+    for restart_file in candidate_sim_expected.output.restart_nudging:
+        restart_time = restart_file.open().modelTimeAtOutput
+        restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
+        if restart_time == model_start_time:
+            candidate_nudging_restart_file = pathlib.Path(restart_file.name)
+            candidate_nudging_restart_file.symlink_to(restart_file)
+
+    # if len(candidate_sim_expected.output.restart_nudging) > 1:
+    #     expected_nudging_restart_file = candidate_sim_expected.output.restart_nudging[1]
+    #     candidate_nudging_restart_file = pathlib.Path(expected_nudging_restart_file.name)
+    #     candidate_nudging_restart_file.symlink_to(expected_nudging_restart_file)
 
 
     # Make a new job based on the old job but with a new job ID
     old_job = candidate_sim_restart.jobs[0]
-    new_job = wrfhydropy.Job(job_id='restart_candidate', exe_cmd=old_job._exe_cmd)
+    new_job = wrfhydropy.Job(job_id='restart_candidate',
+                             exe_cmd=old_job._exe_cmd,
+                             model_start_time = model_start_time)
 
     # Remove old job and add new job
     candidate_sim_restart.jobs.pop(0)
