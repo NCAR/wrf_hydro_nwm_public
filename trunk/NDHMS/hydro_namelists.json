@@ -1,5 +1,5 @@
 {
-    "base": {            
+    "base": {
         "hydro_nlist": {
             "aggfactrt": 1,
             "channel_option": 2,
@@ -47,7 +47,7 @@
             "udmp_opt": 1,
             "zsoil8": [-0.1, -0.4, -1.0, -2.0]
         },
-        "nudging_nlist": {            
+        "nudging_nlist": {
             "biaswindowbeforet0": "",
             "invdisttimeweightbias": "",
             "maxagepairsbiaspersist": "",
@@ -171,7 +171,7 @@
         },
         "nudging_nlist": {}
     },
-    
+
     "reach": {
         "hydro_nlist": {
             "gwbasmskfil": "NULL_specified_in_domain.json",

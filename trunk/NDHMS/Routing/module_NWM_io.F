@@ -1049,7 +1049,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    character(len=1024) :: output_flnm ! Output file name
    integer :: iret ! NetCDF return status
    integer :: ftn  ! NetCDF file handle
-   integer :: dimId(6) ! NetCDF dimension ID values
+   integer :: dimId(7) ! NetCDF dimension ID values
    integer :: varId ! NetCDF variable ID value
    integer :: timeId ! NetCDF time variable ID
    integer :: refTimeId ! NetCDF reference_time variable ID
@@ -1158,49 +1158,49 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                              1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
                              1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1]
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
+                             0,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,0]
    else if(nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1]
+                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0]
    else if(nlst_rt(1)%io_config_outputs .eq. 3) then
       ! Medium Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
                              0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
                              0,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,0,1]
+                             0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0]
    else if(nlst_rt(1)%io_config_outputs .eq. 4) then
       ! Long Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,&
                              1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,0,1,1,0]
+                             0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0]
    else if(nlst_rt(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,1,& !1-20
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,1,1,0,1,1,0,0,1,0,1,& !1-20
                              1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !21-40
                              0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !41-60
                              1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,& !61-80
-                             0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]            !81-95
+                             0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1]        !81-97
    else if(nlst_rt(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
                              1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
                              1,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1]
+                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1270,6 +1270,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define snow_layers dimension')
          iret = nf90_def_dim(ftnNoahMP,'reference_time',1,dimId(6))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
+         iret = nf90_def_dim(ftnNoahMP,'vis_nir',fileMeta%numSpectrumBands,dimId(7))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define vis_nir dimension')
 
          ! Create and populate reference_time and time variables.
          iret = nf90_def_var(ftnNoahMP,"time",nf90_int,dimId(1),timeId)
@@ -1352,6 +1354,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+                  else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
+                     iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. 1) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(3),dimId(1)/),varId)
                   endif
@@ -1360,6 +1364,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+                  else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
+                     iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. 1) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(3),dimId(1)/),varId)
                   endif
@@ -2096,11 +2102,11 @@ subroutine output_rt_NWM(domainId,iGrid)
                   if(iTmp2 .eq. 1) then
                      varRealTmp = RT_DOMAIN(domainId)%ZWATTABLRT(iTmp,jTmp)
                   else if(iTmp2 .eq. 2) then
-                     varRealTmp = RT_DOMAIN(domainId)%SFCHEADSUBRT(iTmp,jTmp)
+                     varRealTmp = RT_DOMAIN(domainId)%overland%control%surface_water_head_routing(iTmp,jTmp)
                   else if(iTmp2 .eq. 3) then
                      varRealTmp = RT_DOMAIN(domainId)%QSTRMVOLRT_ACC(iTmp,jTmp)
                   else if(iTmp2 .eq. 4) then
-                     varRealTmp = RT_DOMAIN(domainId)%QBDRYRT(iTmp,jTmp)
+                     varRealTmp = RT_DOMAIN(domainId)%overland%control%boundary_flux(iTmp,jTmp)
                   else if(iTmp2 .eq. 5) then
                      varRealTmp = RT_DOMAIN(domainId)%SMCRT(iTmp,jTmp,zTmp)
                   endif
@@ -3755,7 +3761,7 @@ subroutine output_lsmOut_NWM(domainId)
                else if(iTmp .eq. 13) then
                   varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
                else if(iTmp .eq. 14) then
-                  varRealTmp = rt_domain(domainId)%SFCHEADRT(iTmp2,jTmp2)
+                  varRealTmp = rt_domain(domainId)%overland%control%surface_water_head_lsm(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
                endif
 
                ! For now, we are foregoing converting these variables to integer
