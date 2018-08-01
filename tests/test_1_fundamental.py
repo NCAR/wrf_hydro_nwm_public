@@ -223,7 +223,7 @@ def test_perfrestart_candidate(
 
     # Get a new start time 1 hour later
     restart_job = candidate_sim_restart.jobs[0]
-    model_start_time = restart_job.model_start_time + \
+    restart_job.model_start_time = restart_job.model_start_time + \
                                    dt.timedelta(hours=1)
 
     # Get restart files from previous run and symlink into restart sim dir
@@ -232,7 +232,7 @@ def test_perfrestart_candidate(
     for restart_file in candidate_sim_expected.output.restart_hydro:
         restart_time = restart_file.open().Restart_Time
         restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == model_start_time:
+        if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
 
@@ -246,7 +246,7 @@ def test_perfrestart_candidate(
         restart_time = restart_file.open().Times[0]
         restart_time = restart_time.astype(str).item(0)
         restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == model_start_time:
+        if restart_time == restart_job.model_start_time:
             candidate_lsm_restart_file = pathlib.Path(restart_file.name)
             candidate_lsm_restart_file.symlink_to(restart_file)
 
@@ -259,7 +259,7 @@ def test_perfrestart_candidate(
     for restart_file in candidate_sim_expected.output.restart_nudging:
         restart_time = restart_file.open().modelTimeAtOutput
         restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == model_start_time:
+        if restart_time == restart_job.model_start_time:
             candidate_nudging_restart_file = pathlib.Path(restart_file.name)
             candidate_nudging_restart_file.symlink_to(restart_file)
 
@@ -270,14 +270,14 @@ def test_perfrestart_candidate(
 
 
     # Make a new job based on the old job but with a new job ID
-    old_job = candidate_sim_restart.jobs[0]
-    new_job = wrfhydropy.Job(job_id='restart_candidate',
-                             exe_cmd=old_job._exe_cmd,
-                             model_start_time = model_start_time)
+    # old_job = candidate_sim_restart.jobs[0]
+    # new_job = wrfhydropy.Job(job_id='restart_candidate',
+    #                          exe_cmd=old_job._exe_cmd,
+    #                          model_start_time = model_start_time)
 
     # Remove old job and add new job
-    candidate_sim_restart.jobs.pop(0)
-    candidate_sim_restart.add(new_job)
+    # candidate_sim_restart.jobs.pop(0)
+    # candidate_sim_restart.add(new_job)
 
     # Compose and run
     # catch warnings related to missing start and end job times
