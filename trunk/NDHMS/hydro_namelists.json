@@ -7,7 +7,7 @@
             "chanrtswcrt": 1,
             "chrtout_domain": 1,
             "chrtout_grid": 0,
-            "compound_channel": ".TRUE.",
+            "compound_channel": true,
             "dtrt_ch": 300,
             "dtrt_ter": 10,
             "dxrt": 1000,

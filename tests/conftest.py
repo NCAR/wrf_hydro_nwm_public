@@ -127,6 +127,7 @@ def candidate_sim(request):
     domain_dir = request.config.getoption("--domain_dir")
     candidate_dir = request.config.getoption("--candidate_dir")
     configuration = request.config.getoption("--config")
+    option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
     scheduler = str(request.config.getoption("--scheduler")).lower()
@@ -135,6 +136,7 @@ def candidate_sim(request):
     candidate_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= candidate_dir,
                               configuration=configuration,
+                              option_suite=option_suite,
                               ncores = ncores,
                               nnodes=nnodes,
                               scheduler = scheduler,
@@ -148,6 +150,7 @@ def reference_sim(request):
     domain_dir = request.config.getoption("--domain_dir")
     reference_dir = request.config.getoption("--reference_dir")
     configuration = request.config.getoption("--config")
+    option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
     scheduler = str(request.config.getoption("--scheduler")).lower()
@@ -156,6 +159,7 @@ def reference_sim(request):
     reference_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= reference_dir,
                               configuration=configuration,
+                              option_suite=option_suite,
                               ncores = ncores,
                               nnodes=nnodes,
                               scheduler = scheduler,
