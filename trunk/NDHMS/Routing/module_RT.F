@@ -1069,12 +1069,12 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 end if ! end of neither channel_only nor channelBucket_only
 
 if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+   ! TODO INSERT ALLOCATION OF NHD GROUNDWATER OBJECT HERE
 
-   allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%nlinksL))
-   rt_domain(did)%groundwater%output%qout_gwsubbas = 0
+   !allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%nlinksL))
+   !rt_domain(did)%groundwater%output%qout_gwsubbas = 0
    ! use different baseflow for NHDPlus
    if (nlst_rt(did)%GWBASESWCRT.ge.1) then
-      ! TODO INSERT ALLOCATION OF NHD GROUNDWATER OBJECT HERE
 
       rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
       RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
