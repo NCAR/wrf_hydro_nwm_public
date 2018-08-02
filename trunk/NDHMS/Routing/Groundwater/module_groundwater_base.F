@@ -29,7 +29,7 @@ module module_groundwater_base
     end type
 
     type :: groundwater_base_output_struct
-        real, allocatable, dimension(:,:) :: qout_gwsubbas  ! flow from the GW bucket
+        real, allocatable, dimension(:) :: qout_gwsubbas  ! flow from the GW bucket
         integer, allocatable, dimension(:,:) :: qinflowbase     ! inflow/baseflow from QW to stream network
 
         contains
@@ -128,16 +128,17 @@ module module_groundwater_base
     end subroutine groundwater_base_input_struct_destroy
 
     !constructor for the ground water struct
-    subroutine groundwater_base_output_struct_init(this,ixrt,jxrt)
+    subroutine groundwater_base_output_struct_init(this,ixrt,jxrt, numbasins)
         implicit none
         class (groundwater_base_output_struct), intent(inout) :: this ! object being initialized
         integer, intent(in) :: ixrt         ! number of rows in the routing grid
         integer, intent(in) :: jxrt         ! number of cols in the routing grid
+        integer, intent(in) :: numbasins
 
         logical :: allocation_error = .false.
 
         if ( .not. allocated(this%qout_gwsubbas) ) then
-            allocate(this%qout_gwsubbas(ixrt,jxrt))
+            allocate(this%qout_gwsubbas(numbasins))
             this%qout_gwsubbas = 0.0
         else
             allocation_error = .true.

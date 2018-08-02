@@ -4,7 +4,7 @@ module module_groundwater_output
 
     type, extends(groundwater_base_output_struct) :: groundwater_output_struct
 
-        real, allocatable, dimension(:,:) :: qout_gwsubbas  ! flow from the GW bucket
+        real, allocatable, dimension(:) :: qout_gwsubbas  ! flow from the GW bucket
         integer, allocatable, dimension(:,:) :: qinflowbase     ! inflow/baseflow from QW to stream network
 
         contains

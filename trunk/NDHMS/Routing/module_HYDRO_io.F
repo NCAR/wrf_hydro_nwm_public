@@ -6144,7 +6144,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_coeff,"gw_buck_coeff" )
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%groundwater%input%qin_gwsubbas,"qin_gwsubbas" )
 !             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%qinflowbase,"qinflowbase")
-!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,"qout_gwsubbas" )
+!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%groundwater%output%qout_gwsubbas,"qout_gwsubbas" )
    end if ! GWBASESWCRT .eq. 1
 
    if(nlst_rt(did)%GWBASESWCRT.eq.3) then
@@ -9845,13 +9845,13 @@ end subroutine output_chrt2
 
        if(nlst_rt(did)%channel_option .ne. 3) then
           call ReachLS_write_io(rt_domain(did)%groundwater%input%qin_gwsubbas,g_qin_gwsubbas)
-          call ReachLS_write_io(rt_domain(did)%qout_gwsubbas,g_qout_gwsubbas)
+          call ReachLS_write_io(rt_domain(did)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%z_gwsubbas,g_z_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%linkid,g_basnsInd)
        else
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%input%qin_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qin_gwsubbas)
-          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,  &
+          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%output%qout_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qout_gwsubbas)
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_z_gwsubbas)
@@ -9895,7 +9895,7 @@ end subroutine output_chrt2
 !       do i=1,RT_DOMAIN(did)%numbasns
 !          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%groundwater%input%qin_gwsubbas(i)
 951        FORMAT(I3,1X,A19,1X,F11.3)
-!          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
+!          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%groundwater%output%qout_gwsubbas(i)
 !          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
 !       end do
 !       close(51)
@@ -9905,12 +9905,12 @@ end subroutine output_chrt2
           call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%numbasns, &
                   trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
                   rt_domain(did)%basnsInd,rt_domain(did)%groundwater%input%qin_gwsubbas, &
-                  rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+                  rt_domain(did)%groundwater%output%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
         else
           call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%nlinksl, &
                   trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
                   rt_domain(did)%linkid,rt_domain(did)%groundwater%input%qin_gwsubbas, &
-                  rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+                  rt_domain(did)%groundwater%output%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
         endif
 #endif
     end subroutine output_GW_Diag
@@ -10959,7 +10959,7 @@ if(nlst_rt(did)%channel_only       .eq. 1 .or. &
    if(nlst_rt(did)%channel_only .eq. 1) then
       call read_rst_crt_reach_nc(ncid, qBucket_in, "qBucket",            &
                                  rt_domain(did)%GNLINKSL, fatalErr=.true.)
-      rt_domain(did)%qout_gwsubbas = qBucket_in
+      rt_domain(did)%groundwater%output%qout_gwsubbas = qBucket_in
       rt_domain(did)%QLateral      = qBucket_in + qSfcLatRunoff_in
    endif
 
@@ -10990,17 +10990,17 @@ if(.FALSE.) then
 
    !! Calculate the current
    if(len .gt. 0) then  !! would the length be zero on some images?
-      rt_domain(did)%qout_gwsubbas = &
+      rt_domain(did)%groundwater%output%qout_gwsubbas = &
            real( (accBucket_in - rt_domain(did)%accBucket)/nlst_rt(did)%DT )
       rt_domain(did)%QLateral      = &
-           real( rt_domain(did)%qout_gwsubbas +     &
+           real( rt_domain(did)%groundwater%output%qout_gwsubbas +     &
                  (accSfcLatRunoff_in - rt_domain(did)%accSfcLatRunoff)/nlst_rt(did)%DT )
 
       !! Negative accumulations imply accumulations were zeroed, e.g. the code was restarted
       if(any(rt_domain(did)%QLateral .lt. 0)) &
            rt_domain(did)%QLateral      = real( (accSfcLatRunoff_in)/nlst_rt(did)%DT )
-      if(any(rt_domain(did)%qout_gwsubbas .lt. 0)) &
-           rt_domain(did)%qout_gwsubbas = real( (accBucket_in)/nlst_rt(did)%DT )
+      if(any(rt_domain(did)%groundwater%output%qout_gwsubbas .lt. 0)) &
+           rt_domain(did)%groundwater%output%qout_gwsubbas = real( (accBucket_in)/nlst_rt(did)%DT )
 
       !! /\ ORDER MATTERS \/ because the pre-input accumulations are needed above.
       !! else below would be zero.

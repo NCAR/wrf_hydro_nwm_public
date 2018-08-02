@@ -4966,14 +4966,14 @@ subroutine output_gw_NWM(domainId,iGrid)
          ! gridded routing.
          !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
          call ReachLS_write_io(rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas,g_qout_gwsubbas)
+         call ReachLS_write_io(rt_domain(domainId)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
          !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
          call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas*1000.,g_z_gwsubbas)
          call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
       else
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%input%qin_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
-         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qout_gwsubbas,  &
+         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qout_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_z_gwsubbas)
@@ -4989,7 +4989,7 @@ subroutine output_gw_NWM(domainId,iGrid)
 
       !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
       g_qin_gwsubbas = rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT
-      g_qout_gwsubbas = rt_domain(domainId)%qout_gwsubbas
+      g_qout_gwsubbas = rt_domain(domainId)%groundwater%output%qout_gwsubbas
       g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.

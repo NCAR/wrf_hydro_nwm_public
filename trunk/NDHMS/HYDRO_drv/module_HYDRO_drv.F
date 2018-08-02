@@ -783,7 +783,7 @@ subroutine driveGwBaseflow(did)
                     rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
                     RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
                     RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
-                    rt_domain(did)%qout_gwsubbas, RT_DOMAIN(did)%groundwater%input%qin_gwsubbas,    &
+                    rt_domain(did)%groundwater%output%qout_gwsubbas, RT_DOMAIN(did)%groundwater%input%qin_gwsubbas,    &
                     nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         &
 #ifdef MPP_LAND
                 RT_DOMAIN(did)%LNLINKSL,                                      &
@@ -801,7 +801,7 @@ subroutine driveGwBaseflow(did)
                     rt_domain(did)%gwsubbasmsk, RT_DOMAIN(did)%groundwater%input%infxsrt, &
                     rt_domain(did)%groundwater%input%soldrain, &
                     RT_DOMAIN(did)%z_gwsubbas,&
-                    rt_domain(did)%groundwater%input%qin_gwsubbas,RT_DOMAIN(did)%qout_gwsubbas,&
+                    rt_domain(did)%groundwater%input%qin_gwsubbas,RT_DOMAIN(did)%groundwater%output%qout_gwsubbas,&
                     RT_DOMAIN(did)%qinflowbase,&
                     RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
                     rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%DT,&
@@ -912,7 +912,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
        RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
-       RT_DOMAIN(did)%qout_gwsubbas, &
+       rt_domain(did)%groundwater%output%qout_gwsubbas, &
        RT_DOMAIN(did)%LAKEIDA, RT_DOMAIN(did)%LAKEIDM, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%LAKEIDX   &
 #ifdef MPP_LAND
        , RT_DOMAIN(did)%nlinks_index, RT_DOMAIN(did)%mpp_nlinks, RT_DOMAIN(did)%yw_mpp_nlinks  &
