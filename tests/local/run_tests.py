@@ -64,7 +64,7 @@ def main():
                         required=True,
                         nargs='+',
                         help="<Required> The configuration(s) to test, "
-                             "must be one listed in hydro_namelist.json keys.")
+                             "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
 
     parser.add_argument('--compiler',
                         required=True,
@@ -206,12 +206,12 @@ def main():
     # Exit with 1 if failure
     if has_failure:
         print('\n\n############################')
-        print('### FAILED ###')
+        print('### TESTING FAILED ###')
         print('############################\n\n',flush=True)
         exit(1)
     else:
         print('\n\n############################')
-        print('### PASSED ###')
+        print('### TESTING PASSED ###')
         print('############################\n\n',flush=True)
         exit(0)
 

@@ -36,8 +36,8 @@ def pytest_addoption(parser):
     parser.addoption("--config",
                      required=True,
                      action='store',
-                     help=("List of model configurations to test, options are 'NWM'," +
-                           "'Gridded',and 'Reach'")
+                     help=("The configuration to test, "
+                             "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
                      )
 
     # Optional args
@@ -47,6 +47,13 @@ def pytest_addoption(parser):
                      required=False,
                      action='store',
                      help='compiler, options are intel or gfort'
+                     )
+
+    parser.addoption("--option_suite",
+                     required=False,
+                     action='store',
+                     help=("An option suite to test on top of the specified configuration,"
+                           "must be one listed in hydro_option_suites.json")
                      )
 
     parser.addoption( '--ncores',
@@ -74,10 +81,10 @@ def pytest_addoption(parser):
                      action='store',
                      help='Account number to use if using a scheduler.')
 
-
 def _make_sim(domain_dir,
               source_dir,
               configuration,
+              option_suite,
               ncores,
               nnodes,
               scheduler,
@@ -101,7 +108,10 @@ def _make_sim(domain_dir,
     sim = Simulation()
     sim.add(model)
     sim.add(domain)
-    # sim.add(job)
+
+    # Update base namelists with option suite if specified
+    if option_suite is not None:
+        pass
 
     if scheduler is not None and scheduler == 'pbscheyenne':
         sim.add(schedulers.PBSCheyenne(account=account,
