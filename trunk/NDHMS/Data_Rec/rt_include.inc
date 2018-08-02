@@ -82,7 +82,7 @@
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk_lind  !GW basin mask grid tile maping index
   REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
   !REAL,    allocatable, DIMENSION(:)     :: qin_gwsubbas !flow to GW bucket
-  REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
+  !REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
   REAL,    allocatable, DIMENSION(:)     :: gwbas_pix_ct !ct of strm pixels in
   REAL,    allocatable, DIMENSION(:)     :: basns_area   !basin area
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
