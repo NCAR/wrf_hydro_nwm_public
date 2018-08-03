@@ -127,6 +127,7 @@
 
     "gridded": {
         "hydro_nlist": {
+            "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "chrtout_grid": 1,
