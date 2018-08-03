@@ -14,9 +14,9 @@ function get_model_version()
 character (len=512) :: get_model_version
 
 #ifdef NCEP_WCOSS
-   get_model_version=NWM_VERSION
+   get_model_version="NWM " // NWM_VERSION
 #else
-   get_model_version=WRF_HYDRO_VERSION
+   get_model_version="WRF-Hydro " // WRF_HYDRO_VERSION
 #endif
 
 end function get_model_version
