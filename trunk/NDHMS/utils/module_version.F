@@ -6,7 +6,7 @@ character (len=512), parameter :: wrfHydroVersion=WRF_HYDRO_VERSION
 character (len=512), parameter :: nwmVersion=NWM_VERSION
 
 private :: wrfHydroVersion, nwmVersion
-public  :: get_model_version, get_code_version, get_nwm_version`
+public  :: get_model_version, get_code_version, get_nwm_version
 
 contains
 
