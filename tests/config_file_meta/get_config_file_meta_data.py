@@ -1,15 +1,17 @@
 from boltons import iterutils
 import os
 import pathlib
-import shlex
 import subprocess
 from wrfhydropy import JSONNamelist
 
-
-# 1) Run script file in-place.
+# Example: python get_config_file_meta_data
+#
+# 1) Run script file in-place, in this directory, as above.
 # 2) Typically, this will be run on cheyenne since that's where CONUS domain
-# files will live.
-# 3)
+#    files will live.
+# 3) Configure the list of domains paths and configs below.
+# 4) The dirs in this directory must be removed to be refreshed.
+# 5) This script skips non-existent files and ignores timeslices.
 
 domain_paths = [
     "/glade/work/jamesmcc/domains/public/croton_NY_v5.0.1",
@@ -21,7 +23,7 @@ configs = [
     'nwm_medium_range'
 ]
 
-
+# Just for testing
 domain_paths = [domain_paths[0]]
 configs = [configs[0]]
 
@@ -29,7 +31,6 @@ configs = [configs[0]]
 domain_paths = [pathlib.PosixPath(pp) for pp in domain_paths]
 this_path = pathlib.PosixPath(os.getcwd())
 code_path = this_path.parent.parent / 'trunk/NDHMS/'
-
 
 def get_file_meta(
     namelist: dict,
@@ -61,9 +62,16 @@ def get_file_meta(
 
     def visit_missing_file(path, key, value):
         #print(path, key, value)
-        if value.name == 'nudgingTimeSliceObs':
+        if type(value) is pathlib.PosixPath:
+            if str(value.name) == 'nudgingTimeSliceObs':
+                return False
+            if value.is_dir():
+                return False
+        else:
             return False
+        
         data_path = value
+        print(value)
         meta_path = '/'.join(str(value).split('/')[-3:])
         the_cmd = 'meta_path=' + meta_path
         the_cmd += ' && data_path=' + str(data_path)
@@ -73,15 +81,14 @@ def get_file_meta(
         #subprocess.run(shlex.split(the_cmd), cwd=this_path)#, shell=True, executable='/bin/bash')
         subprocess.run(
             the_cmd,
-            cwd=this_path / domain_tag,
+            cwd=config_dir,
             shell=True,
             executable='/bin/bash'
         )
         return True
 
-    bob = iterutils.remap(file_dict, visit=visit_missing_file)
-    fooo
-         
+    _ = iterutils.remap(file_dict, visit=visit_missing_file)
+
 
 for dd in domain_paths:
 
@@ -111,7 +118,7 @@ for dd in domain_paths:
             # Write them out for completeness.
             patched_namelist.write(str(config_dir / ff))
 
-            # All files, 
+            # This function does the work.
             get_file_meta(patched_namelist, dd)
 
 
