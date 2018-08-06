@@ -773,42 +773,43 @@ subroutine driveGwBaseflow(did)
 #endif
 #endif
 
-            if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-                call simp_gw_buck_nhd(                                             &
-                    RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
-                    RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
-                    RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
-                    nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
-                    rt_domain(did)%groundwater%input%infxsrt,       RT_DOMAIN(did)%groundwater%input%soldrain,        &
-                    rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
-                    RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
-                    RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
-                    rt_domain(did)%groundwater%output%qout_gwsubbas, RT_DOMAIN(did)%groundwater%input%qin_gwsubbas,    &
-                    nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         &
+            call rt_domain(did)%groundwater%run_timestep()
+            !if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+                !call simp_gw_buck_nhd(                                             &
+                !    RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
+                !    RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
+                !    RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
+                !    nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
+                !    rt_domain(did)%groundwater%input%infxsrt,       RT_DOMAIN(did)%groundwater%input%soldrain,        &
+                !    rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
+                !    RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
+                !    RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
+                !    rt_domain(did)%groundwater%output%qout_gwsubbas, RT_DOMAIN(did)%groundwater%input%qin_gwsubbas,    &
+                !    nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         &
 #ifdef MPP_LAND
-                RT_DOMAIN(did)%LNLINKSL,                                      &
+                !RT_DOMAIN(did)%LNLINKSL,                                      &
 #else
-                    RT_DOMAIN(did)%numbasns,                                      &
+                 !   RT_DOMAIN(did)%numbasns,                                      &
 #endif
-                    rt_domain(did)%basns_area,                                    &
-                    rt_domain(did)%nhdBuckMask,   nlst_rt(did)%channelBucket_only )
+                 !   rt_domain(did)%basns_area,                                    &
+                 !   rt_domain(did)%nhdBuckMask,   nlst_rt(did)%channelBucket_only )
 
-            else
-                call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
-                    RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,&
-                RT_DOMAIN(did)%basns_area,&
-                    RT_DOMAIN(did)%basnsInd, RT_DOMAIN(did)%gw_strm_msk_lind,             &
-                    rt_domain(did)%gwsubbasmsk, RT_DOMAIN(did)%groundwater%input%infxsrt, &
-                    rt_domain(did)%groundwater%input%soldrain, &
-                    RT_DOMAIN(did)%z_gwsubbas,&
-                    rt_domain(did)%groundwater%input%qin_gwsubbas,RT_DOMAIN(did)%groundwater%output%qout_gwsubbas,&
-                    RT_DOMAIN(did)%qinflowbase,&
-                    RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
-                    rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%DT,&
-                    RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
-                    RT_DOMAIN(did)%z_max,&
-                    nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
-            endif
+            !else
+                !call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
+                !    RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,&
+                !RT_DOMAIN(did)%basns_area,&
+                !    RT_DOMAIN(did)%basnsInd, RT_DOMAIN(did)%gw_strm_msk_lind,             &
+                !    rt_domain(did)%gwsubbasmsk, RT_DOMAIN(did)%groundwater%input%infxsrt, &
+                !    rt_domain(did)%groundwater%input%soldrain, &
+                !    RT_DOMAIN(did)%z_gwsubbas,&
+                !    rt_domain(did)%groundwater%input%qin_gwsubbas,RT_DOMAIN(did)%groundwater%output%qout_gwsubbas,&
+                !    RT_DOMAIN(did)%qinflowbase,&
+                !    RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
+                !    rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%DT,&
+                !    RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
+                !    RT_DOMAIN(did)%z_max,&
+                !    nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
+            !endif
 
             !! JLM: There's *perhaps* a better location for this output above.
             !! If above is better, remove this when runtime output options are avail.

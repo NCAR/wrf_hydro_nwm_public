@@ -21,11 +21,12 @@ module module_groundwater_output
         class (groundwater_output_struct), intent(inout) :: this ! object being initialized
         integer, intent(in) :: ixrt         ! number of rows in the routing grid
         integer, intent(in) :: jxrt         ! number of cols in the routing grid
+        integer, intent(in) :: numbasins
 
         logical :: allocation_error = .false.
 
         if ( .not. allocated(this%qout_gwsubbas) ) then
-            allocate(this%qout_gwsubbas(ixrt,jxrt))
+            allocate(this%qout_gwsubbas(numbasins))
             this%qout_gwsubbas = 0.0
         else
             allocation_error = .true.

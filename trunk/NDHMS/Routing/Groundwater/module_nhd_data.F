@@ -13,9 +13,9 @@ module module_nhd_data
         type (nhd_state_interface), pointer :: state => null()
         type (nhd_properties_interface), pointer :: properties => null()
         type (nhd_basin_interface), pointer :: basin => null()
-        !type (groundwater_input_struct), pointer :: input => null()
-        !type (groundwater_output_struct), pointer :: output => null()
         type (groundwater_static_struct), pointer :: static_data => null()
+
+        logical :: pointer_allocation_guard = .false.
 
     contains
 
@@ -27,9 +27,88 @@ module module_nhd_data
 contains
 
     !constructor for the ground water struct
-    subroutine nhd_groundwater_struct_init(this)
+    subroutine nhd_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area)
         implicit none
         class (nhd_groundwater_struct), intent(inout) :: this ! object being initialized
+        integer, intent(in) :: ix
+        integer, intent(in) :: jx
+        integer, intent(in) :: ixrt
+        integer, intent(in) :: jxrt
+        real, intent(in) :: dt
+        integer, intent(in) :: gwbaseswcrt
+        integer, intent(in) :: ovrtswcrt
+        integer, intent(in) :: numbasins
+        integer, intent(in) :: num_local_links
+        integer, intent(in) :: cb_only
+        integer, intent(in) :: agg_factor
+        real, dimension(:,:), intent(in) :: cell_area
+
+        if (this%pointer_allocation_guard .eqv. .false. ) then
+            ! try to allocate input
+            allocate ( this%input )
+            if ( .not. associated(this%input) ) then
+                ! if the input structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater input structure"
+            else
+                ! initialize the input structure
+                call this%input%init(ix,jx,numbasins)
+            end if
+
+            ! try to allocate output
+            allocate ( this%output )
+            if ( .not. associated(this%output) ) then
+                ! if the output structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater output structure"
+            else
+                ! initialize the output structure
+                call this%output%init(ixrt,jxrt,numbasins)
+            end if
+
+            ! try to allocate state
+            allocate ( this%state )
+            if ( .not. associated(this%state) ) then
+                ! if the input structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater state structure"
+            else
+                ! initialize the state structure
+                call this%state%init(numbasins)
+            end if
+            this%pointer_allocation_guard = .true.
+
+            ! try to allocate properties
+            allocate ( this%properties )
+            if ( .not. associated(this%properties) ) then
+                ! if the properties structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater properties structure"
+            else
+                ! initialize the properties structure
+                call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area)
+            end if
+            this%pointer_allocation_guard = .true.
+
+            ! try to allocate basin
+            allocate ( this%basin )
+            if ( .not. associated(this%basin) ) then
+                ! if the basin structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater properties structure"
+            else
+                ! initialize the basin structure
+                call this%basin%init(ix, jx, numbasins, num_local_links, cb_only, agg_factor)
+            end if
+
+            ! try to allocate static data
+            allocate ( this%static_data )
+            if ( .not. associated(this%static_data) ) then
+                ! if the static data structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater properties structure"
+            else
+                ! initialize the static data structure
+                call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
+            end if
+
+            this%pointer_allocation_guard = .true.
+        end if
+
     end subroutine nhd_groundwater_struct_init
 
     ! destructor for the ground water struct
@@ -47,7 +126,7 @@ contains
             ground_water_data%basin%num_basins, ground_water_data%basin%agg_factor, &
             ground_water_data%static_data%dt, ground_water_data%basin%infxswgt, &
             ground_water_data%input%infxsrt, ground_water_data%input%soldrain, &
-            ground_water_data%properties%distance_to_neighbor(:,:,9), ground_water_data%properties%distance_to_neighbor_lsm(:,:,9), &
+            ground_water_data%properties%cell_area, ground_water_data%properties%cell_area_lsm, &
             ground_water_data%properties%gw_buck_coeff, ground_water_data%properties%gw_buck_exp, &
             ground_water_data%properties%z_max, ground_water_data%state%z_gwsubbas, &
             ground_water_data%output%qout_gwsubbas, ground_water_data%input%qin_gwsubbas, &

@@ -1,15 +1,14 @@
 module module_nhd_properties
-    use overland_data
     use module_groundwater_base
     implicit none
 
     type, extends(groundwater_base_properties_struct) :: nhd_properties_interface
 
         ! centerpoint distance to each neighbor on the routing grid (m)
-        real, pointer, dimension(:,:,:) :: distance_to_neighbor => null()
+        real, allocatable, dimension(:,:) :: cell_area
 
         ! centerpoint distance to each neighbor on the land surface grid (m)
-        real, allocatable, dimension(:,:,:) :: distance_to_neighbor_lsm
+        real, allocatable, dimension(:,:) :: cell_area_lsm
 
         ! Coefficient parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: gw_buck_coeff
@@ -20,8 +19,6 @@ module module_nhd_properties
         ! Max water table parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: z_max
 
-        logical :: pointers_need_set = .true.
-
     contains
 
         procedure :: init => nhd_properties_init
@@ -30,22 +27,31 @@ module module_nhd_properties
 
 contains
 
-    subroutine nhd_properties_init(this,ix_lsm,jx_lsm,numbasins,overland_data)
+    subroutine nhd_properties_init(this,ix_lsm,jx_lsm,ix_rt,jx_rt,numbasins,cell_area)
         implicit none
         class(nhd_properties_interface), intent(inout) :: this ! the type object being initalized
+        integer, intent(in) :: ix_rt
+        integer, intent(in) :: jx_rt
         integer, intent(in) :: ix_lsm                     ! x grid size
         integer, intent(in) :: jx_lsm                     ! y grid size
         integer, intent(in) :: numbasins                  ! number of basins
-        class(overland_struct), intent(inout) :: overland_data
+        real, dimension(:,:), intent(in) :: cell_area
 
         logical :: allocation_error = .false.
 
         ! allocate local properties
 
+        if ( .not. allocated(this%cell_area) ) then
+            allocate( this%cell_area(ix_rt,jx_rt) )
+            this%cell_area = cell_area
+        else
+            allocation_error = .true.
+        end if
+
         ! allocate distance_to_neighbor lsm, NOT on the routing grid
-        if ( .not. allocated(this%distance_to_neighbor_lsm) ) then
-            allocate(this%distance_to_neighbor_lsm(ix_lsm,jx_lsm,9))
-            this%distance_to_neighbor_lsm = 0.0
+        if ( .not. allocated(this%cell_area_lsm) ) then
+            allocate(this%cell_area_lsm(ix_lsm,jx_lsm))
+            this%cell_area_lsm = 0.0
         else
             allocation_error = .true.
         end if
@@ -74,15 +80,6 @@ contains
             allocation_error = .true.
         end if
 
-        ! now set shared properties
-        if ( .not. associated(overland_data%properties%distance_to_neighbor) .or. this%pointers_need_set) then
-            this%distance_to_neighbor => overland_data%properties%distance_to_neighbor
-        else
-            allocation_error = .true.
-        end if
-
-        this%pointers_need_set = .false.
-
         if ( allocation_error ) &
             write(0,*) "attempt to allocate data in members of groundwater properties structure&
             &that where already allocated. The allocated members where not changed"
@@ -98,8 +95,8 @@ contains
         ! deallocate local properties
 
         ! deallocate distance_to_neighbor lsm, NOT on the routing grid
-        if (  allocated(this%distance_to_neighbor_lsm) ) then
-            deallocate(this%distance_to_neighbor_lsm)
+        if (  allocated(this%cell_area_lsm) ) then
+            deallocate(this%cell_area_lsm)
         else
             allocation_error = .true.
         end if
@@ -125,14 +122,17 @@ contains
             allocation_error = .true.
         end if
 
-        ! now set shared properties
-        if ( associated(this%distance_to_neighbor) ) then
-            this%distance_to_neighbor => null()
+        if ( allocated(this%cell_area) ) then
+            deallocate(this%cell_area)
         else
             allocation_error = .true.
         end if
 
-        this%pointers_need_set = .true.
+        if ( allocated(this%cell_area_lsm) ) then
+            deallocate(this%cell_area_lsm)
+        else
+            allocation_error = .true.
+        end if
 
         if ( allocation_error ) &
             write(0,*) "attempt to deallocate data in members of groundwater properties structure&

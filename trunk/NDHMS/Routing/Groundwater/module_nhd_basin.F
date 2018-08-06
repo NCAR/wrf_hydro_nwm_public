@@ -67,6 +67,9 @@ contains
             allocation_error = .true.
         end if
 
+        ! set the flag for aggfactrt
+        this%agg_factor = aggfactrt
+
         !allocate infxswgt
         if ( .not.  allocated(this%infxswgt)) then
             allocate( this%infxswgt(ixrt,jxrt) )
@@ -80,9 +83,6 @@ contains
 
         ! set the flag for channel bucket only
         this%channel_bucket_only = cb_only
-
-        ! set the flag for aggfactrt
-        this%agg_factor = aggfactrt
 
         this%pointers_need_set = .false.
 
