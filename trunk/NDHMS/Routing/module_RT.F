@@ -1084,9 +1084,18 @@ CONTAINS
 
                 select type (gwd => rt_domain(did)%groundwater)
                     type is (nhd_groundwater_struct)
-                        call gwd%init(rt_domain(did)%IX, rt_domain(did)%JX, &
-                            rt_domain(did)%IXRT, rt_domain(did)%JXRT, &
-                            rt_domain(did)%numbasns, rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9))
+                        call gwd%init(rt_domain(did)%IX, &
+                            rt_domain(did)%JX, &
+                            rt_domain(did)%IXRT, &
+                            rt_domain(did)%JXRT, &
+                            nlst_rt(did)%dt, &
+                            nlst_rt(did)%GWBASESWCRT, &
+                            nlst_rt(did)%OVRTSWCRT, &
+                            rt_domain(did)%numbasns, &
+                            RT_DOMAIN(did)%LNLINKSL, &
+                            nlst_rt(did)%channelBucket_only, &
+                            nlst_rt(did)%AGGFACTRT, &
+                            rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9))
 
                         gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
                         call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
