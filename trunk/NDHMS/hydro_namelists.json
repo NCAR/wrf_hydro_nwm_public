@@ -7,6 +7,7 @@
             "chanrtswcrt": 1,
             "chrtout_domain": 1,
             "chrtout_grid": 0,
+            "compound_channel": true,
             "dtrt_ch": 300,
             "dtrt_ter": 10,
             "dxrt": 1000,
@@ -18,7 +19,7 @@
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
-            "io_config_outputs": 5,
+            "io_config_outputs": 0,
             "io_form_outputs": 4,
             "land_spatial_meta_flnm": "NULL_specified_in_domain.json",
             "lsmout_domain": 1,
@@ -81,42 +82,6 @@
         }
     },
 
-    "nwm_short_range" : {
-        "hydro_nlist": {},
-        "nudging_nlist": {
-            "biaswindowbeforet0": false,
-            "invdisttimeweightbias": true,
-            "maxagepairsbiaspersist": 24,
-            "minnumpairsbiaspersist": 1,
-            "nlastobs": 480,
-            "noconstinterfbias": true,
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": false,
-            "readtimesliceparallel": true,
-            "temporalpersistence": true,
-            "timeslicepath": "NULL_specified_in_domain.json"
-        }
-    },
-
-    "nwm_medium_range": {
-        "hydro_nlist": {},
-        "nudging_nlist": {
-            "biaswindowbeforet0": false,
-            "invdisttimeweightbias": true,
-            "maxagepairsbiaspersist": 24,
-            "minnumpairsbiaspersist": 1,
-            "nlastobs": 480,
-            "noconstinterfbias": true,
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": false,
-            "readtimesliceparallel": true,
-            "temporalpersistence": true,
-            "timeslicepath": "NULL_specified_in_domain.json"
-        }
-    },
-
     "nwm_long_range": {
         "hydro_nlist": {
             "ovrtswcrt": 0,
@@ -162,6 +127,7 @@
 
     "gridded": {
         "hydro_nlist": {
+            "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "chrtout_grid": 1,
@@ -174,6 +140,7 @@
 
     "reach": {
         "hydro_nlist": {
+            "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "dtrt_ch": 10,
             "outlake": 0,
