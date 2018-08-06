@@ -1,6 +1,5 @@
 # Makefile 
-#
-.SUFFIXES:
+
 .SUFFIXES: .o .F
 
 include ../macros
