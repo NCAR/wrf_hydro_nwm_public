@@ -145,7 +145,8 @@ def candidate_sim(request):
                               ncores = ncores,
                               nnodes=nnodes,
                               scheduler = scheduler,
-                              account = account)
+                              account = account,
+                              walltime=walltime)
 
     return candidate_sim
 
@@ -169,7 +170,8 @@ def reference_sim(request):
                               ncores = ncores,
                               nnodes=nnodes,
                               scheduler = scheduler,
-                              account = account)
+                              account = account,
+                              walltime=walltime)
 
     return reference_sim
 
