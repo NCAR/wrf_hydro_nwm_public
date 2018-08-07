@@ -64,6 +64,16 @@ contains
                 call this%output%init(ixrt,jxrt,numbasins)
             end if
 
+            !try to allocate aggregation
+            allocate ( this%aggregation )
+            if ( .not. associated(this%aggregation) ) then
+                ! if the output structure could not be created write and error
+                write(0,*) "Failure to allocate groundwater aggregation structure"
+            else
+                ! initialize the output structure
+                call this%aggregation%init(ixrt,jxrt,agg_factor)
+            end if
+
             ! try to allocate state
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
@@ -123,8 +133,8 @@ contains
 
         call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, ground_water_data%static_data%jx_lsm,&
             ground_water_data%static_data%ix_rt, ground_water_data%static_data%jx_lsm, &
-            ground_water_data%basin%num_basins, ground_water_data%basin%agg_factor, &
-            ground_water_data%static_data%dt, ground_water_data%basin%infxswgt, &
+            ground_water_data%basin%num_basins, ground_water_data%aggregation%agg_factor, &
+            ground_water_data%static_data%dt, ground_water_data%aggregation%infxswgt, &
             ground_water_data%input%infxsrt, ground_water_data%input%soldrain, &
             ground_water_data%properties%cell_area, ground_water_data%properties%cell_area_lsm, &
             ground_water_data%properties%gw_buck_coeff, ground_water_data%properties%gw_buck_exp, &

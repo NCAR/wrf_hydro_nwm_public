@@ -21,8 +21,6 @@ module module_nhd_basin
 
         integer :: agg_factor
 
-        real, allocatable, dimension(:,:) :: infxswgt
-
         real, allocatable, dimension(:,:) :: cell_area
 
         real, allocatable, dimension(:,:) :: cell_area_lsm
@@ -69,14 +67,6 @@ contains
 
         ! set the flag for aggfactrt
         this%agg_factor = aggfactrt
-
-        !allocate infxswgt
-        if ( .not.  allocated(this%infxswgt)) then
-            allocate( this%infxswgt(ixrt,jxrt) )
-            this%infxswgt = 1./(this%agg_factor * this%agg_factor)
-        else
-            allocation_error = .true.
-        end if
 
         ! set the number of local nhdplus links
         this%lnlinksl = num_local_links

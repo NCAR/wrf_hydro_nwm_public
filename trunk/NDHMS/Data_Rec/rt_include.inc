@@ -179,7 +179,7 @@
   !REAL,    allocatable, DIMENSION(:,:)     :: DHRT,QSTRMVOLRT,QBDRYRT,LAKE_INFLORT ! dhrt and qbdryrt moved to overland control qstrmvolrt and lake_inflrt moved to overland stream and lakes
   REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS
   REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_ACC, LAKE_INFLORT_DUM
-  REAL,    allocatable, DIMENSION(:,:)       :: INFXSWGT, ywtmp
+  REAL,    allocatable, DIMENSION(:,:)       :: ywtmp !INFXSWGT moved to groundwater%basin
   REAL,    allocatable, DIMENSION(:)       :: SMCAGGRT,STCAGGRT,SH2OAGGRT
   REAL    :: INFXSAGG1RT,SFCHEADAGG1RT,SFCHEADAGGRT
   !REAL,    allocatable, DIMENSION(:,:,:)       :: dist  ! 8 direction of distance moved to overland properties
