@@ -15,10 +15,11 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
-              scheduler: str = None,
-              ncores: int = 72,
-              nnodes: int = 2,
-              account: str = 'NRAL0017'):
+              scheduler: bool = False,
+              ncores: int = 360,
+              nnodes: int = 10,
+              account: str = 'NRAL0017',
+              walltime: str = '00:45:00'):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -47,11 +48,11 @@ def run_tests(config: str,
     pytest_cmd += " --output_dir " + output_dir
     pytest_cmd += " --ncores " + str(ncores)
 
-    if scheduler is not None:
-        pytest_cmd += " --scheduler " + scheduler
+    if scheduler:
+        pytest_cmd += " --scheduler "
         pytest_cmd += " --nnodes " + str(nnodes)
-
         pytest_cmd += " --account " + account
+        pytest_cmd += " --walltime " + walltime
 
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
@@ -92,7 +93,6 @@ def main():
                              "specified, a small test domain will be retrieved and placed in the "
                              "specified output_dir and used for the testing domain")
 
-
     parser.add_argument('--ncores',
                         default='2',
                         required=False,
@@ -100,9 +100,9 @@ def main():
 
     parser.add_argument('--scheduler',
                         required=False,
+                        action='store_true',
                         help='Scheduler to use for testing, options are PBSCheyenne or do not '
                              'specify for no scheduler')
-
 
     parser.add_argument('--nnodes',
                      default='2',
@@ -112,6 +112,12 @@ def main():
 
     parser.add_argument('--account',
                         default='NRAL0017',
+                        required=False,
+                        action='store',
+                        help='Account number to use if using a scheduler.')
+
+    parser.add_argument('--walltime',
+                        default='00:45:00',
                         required=False,
                         action='store',
                         help='Account number to use if using a scheduler.')
@@ -136,6 +142,7 @@ def main():
     nnodes = args.nnodes
     scheduler = args.scheduler
     account = args.account
+    walltime = args.walltime
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -200,7 +207,8 @@ def main():
                                 scheduler = scheduler,
                                 ncores = ncores,
                                 nnodes = nnodes,
-                                account = account)
+                                account = account,
+                                walltime = walltime)
         if test_result.returncode != 0:
             has_failure = True
 
