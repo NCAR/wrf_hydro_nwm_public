@@ -64,11 +64,9 @@ def pytest_addoption(parser):
                       )
 
     parser.addoption('--scheduler',
-                     default=None,
                      required=False,
-                     action='store',
-                     help='Scheduler to use for testing, options are PBSCheyenne or'
-                          ' do not specify for no scheduler')
+                     action='store_true',
+                     help='Use PBS scheduler on cheyenne')
 
     parser.addoption('--nnodes',
                      default='2',
@@ -118,7 +116,8 @@ def _make_sim(domain_dir,
     if scheduler is not None and scheduler == 'pbscheyenne':
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
-                                       nnodes=nnodes))
+                                       nnodes=nnodes,
+                                       walltime='00:45:00'))
 
     return sim
 

@@ -84,6 +84,7 @@ def main():
                         help='<Required> reference model directory')
 
     parser.add_argument('--domain_dir',
+                        required=False,
                         help='optional domain directory')
 
     parser.add_argument("--domain_tag",
