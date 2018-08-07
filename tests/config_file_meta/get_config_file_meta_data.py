@@ -23,9 +23,6 @@ configs = [
     'nwm_long_range'
 ]
 
-# Just for testing
-domain_paths = [domain_paths[0]]
-
 # -----------------------------------
 domain_paths = [pathlib.PosixPath(pp) for pp in domain_paths]
 this_path = pathlib.PosixPath(os.getcwd())
@@ -51,6 +48,9 @@ def get_nlst_file_meta(
             return False
 
         print('            ' + str(the_file_abs))
+
+        if the_file_abs.exists() is False:
+            raise ValueError("The file does not exist: " + str(the_file_abs))
         
         # The sub process command is executed in the root of the meta path,
         # use the relative data path/
@@ -60,12 +60,13 @@ def get_nlst_file_meta(
         the_cmd += ' && mkdir -p $(dirname $meta_path)'
         the_cmd += ' && echo "md5sum: $(md5sum $data_path)" > $meta_path'
         the_cmd += ' && echo "ncdump -h: $(ncdump -h $data_path)" >> $meta_path'
-        subprocess.run(
+        proc = subprocess.run(
             the_cmd,
             cwd=config_dir,
             shell=True,
             executable='/bin/bash'
         )
+        
         return True
 
     _ = iterutils.remap(namelist, visit=visit_missing_file)
