@@ -78,6 +78,11 @@ def pytest_addoption(parser):
                      action='store',
                      help='Account number to use if using a scheduler.')
 
+    parser.addoption('--walltime',
+                     default='00:45:00',
+                     required=False,
+                     action='store',
+                     help='Wall clock time in hh:mm:ss format')
 def _make_sim(domain_dir,
               source_dir,
               configuration,
@@ -85,7 +90,8 @@ def _make_sim(domain_dir,
               ncores,
               nnodes,
               scheduler,
-              account):
+              account,
+              walltime):
     # model
     model = Model(
         source_dir=source_dir,
@@ -114,7 +120,7 @@ def _make_sim(domain_dir,
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
                                        nnodes=nnodes,
-                                       walltime='00:45:00'))
+                                       walltime=walltime))
 
 
     return sim
@@ -130,6 +136,7 @@ def candidate_sim(request):
     nnodes = request.config.getoption("--nnodes")
     scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
 
     candidate_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= candidate_dir,
@@ -153,6 +160,7 @@ def reference_sim(request):
     nnodes = request.config.getoption("--nnodes")
     scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
 
     reference_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= reference_dir,
