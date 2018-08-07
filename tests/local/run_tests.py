@@ -38,6 +38,7 @@ def run_tests(config: str,
     candidate_source_dir = candidate_dir + '/trunk/NDHMS'
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
+    # For interactive debug add: --pdb
     pytest_cmd = "pytest -v --ignore=local"
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()

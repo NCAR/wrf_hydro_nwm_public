@@ -67,8 +67,8 @@ def pytest_addoption(parser):
                      default=None,
                      required=False,
                      action='store',
-                     help='Scheduler to use for testing, options are PBSCheyenne or do not specify for no '
-                          'scheduler')
+                     help='Scheduler to use for testing, options are PBSCheyenne or'
+                          ' do not specify for no scheduler')
 
     parser.addoption('--nnodes',
                      default='2',
@@ -80,6 +80,7 @@ def pytest_addoption(parser):
                      required=False,
                      action='store',
                      help='Account number to use if using a scheduler.')
+
 
 def _make_sim(domain_dir,
               source_dir,
@@ -98,7 +99,8 @@ def _make_sim(domain_dir,
     # domain
     domain = Domain(
         domain_top_dir=domain_dir,
-        domain_config=configuration)
+        domain_config=configuration
+    )
 
     # Job
     # exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
@@ -118,8 +120,8 @@ def _make_sim(domain_dir,
                                        nproc=int(ncores),
                                        nnodes=nnodes))
 
-
     return sim
+
 
 @pytest.fixture(scope="session")
 def candidate_sim(request):
@@ -133,16 +135,43 @@ def candidate_sim(request):
     scheduler = str(request.config.getoption("--scheduler")).lower()
     account = request.config.getoption("--account")
 
-    candidate_sim = _make_sim(domain_dir = domain_dir,
-                              source_dir= candidate_dir,
+    candidate_sim = _make_sim(domain_dir=domain_dir,
+                              source_dir=candidate_dir,
                               configuration=configuration,
                               option_suite=option_suite,
-                              ncores = ncores,
+                              ncores=ncores,
                               nnodes=nnodes,
-                              scheduler = scheduler,
-                              account = account)
+                              scheduler=scheduler,
+                              account=account)
 
     return candidate_sim
+
+
+@pytest.fixture(scope="session")
+def candidate_channel_only_sim(request):
+
+    domain_dir = request.config.getoption("--domain_dir")
+    candidate_dir = request.config.getoption("--candidate_dir")
+    configuration = request.config.getoption("--config")
+    option_suite = request.config.getoption("--option_suite")
+    ncores = request.config.getoption("--ncores")
+    nnodes = request.config.getoption("--nnodes")
+    scheduler = str(request.config.getoption("--scheduler")).lower()
+    account = request.config.getoption("--account")
+
+    candidate_sim = _make_sim(domain_dir=domain_dir,
+                              source_dir=candidate_dir,
+                              configuration=configuration,
+                              option_suite=option_suite,
+                              ncores=ncores,
+                              nnodes=nnodes,
+                              scheduler=scheduler,
+                              account=account)
+
+    # Channel and bucket mode is forc_typ = 10.
+    candidate_sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
+    return candidate_sim
+
 
 @pytest.fixture(scope="session")
 def reference_sim(request):
@@ -156,16 +185,17 @@ def reference_sim(request):
     scheduler = str(request.config.getoption("--scheduler")).lower()
     account = request.config.getoption("--account")
 
-    reference_sim = _make_sim(domain_dir = domain_dir,
-                              source_dir= reference_dir,
+    reference_sim = _make_sim(domain_dir=domain_dir,
+                              source_dir=reference_dir,
                               configuration=configuration,
                               option_suite=option_suite,
-                              ncores = ncores,
+                              ncores=ncores,
                               nnodes=nnodes,
-                              scheduler = scheduler,
-                              account = account)
+                              scheduler=scheduler,
+                              account=account)
 
     return reference_sim
+
 
 @pytest.fixture(scope="session")
 def output_dir(request):
@@ -181,9 +211,9 @@ def output_dir(request):
     output_dir.mkdir(parents=True)
     return output_dir
 
+
 @pytest.fixture(scope="session")
 def ncores(request):
     ncores = request.config.getoption("--ncores")
 
     return ncores
-
