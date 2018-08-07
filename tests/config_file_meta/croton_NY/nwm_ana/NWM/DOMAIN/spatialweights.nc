@@ -1,4 +1,4 @@
-md5sum: 9e1cfd3b004ce33d13f453087d79cfba  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/spatialweights.nc
+md5sum: 9e1cfd3b004ce33d13f453087d79cfba  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/spatialweights.nc
 ncdump -h: netcdf spatialweights {
 dimensions:
 	data = 4980 ;

@@ -1,4 +1,4 @@
-md5sum: 9296ee70d4e023549411f43e7e37d7cd  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/geo_em.d01.nc
+md5sum: 84484cad69c315ef3307249b51abfc66  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/geo_em.d01.nc
 ncdump -h: netcdf geo_em.d01 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
@@ -437,7 +437,7 @@ variables:
 		:FLAG_LAKE_DEPTH = 1 ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;
 		:nco_openmp_thread_number = 1 ;
-		:history = "Sun Aug  5 17:31:16 2018: ncatted -O -a corner_lats,global,o,f,41.4228134155273,41.5563621520996,41.5190696716309,41.3856048583984,41.4241333007812,41.5576934814453,41.5177383422852,41.38427734375,41.4183578491211,41.5608215332031,41.5235252380371,41.3811531066895,0,0,0,0 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc\n",
-			"Sun Aug  5 17:31:16 2018: ncatted -O -a corner_lons,global,o,f,-73.8533325195312,-73.8002624511719,-73.6337890625,-73.6871948242188,-73.8592834472656,-73.8062133789062,-73.6278381347656,-73.6812744140625,-73.8551025390625,-73.7984924316406,-73.6320190429688,-73.6889953613281,0,0,0,0 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc\n",
-			"Sun Aug  5 17:31:14 2018: ncks -d west_east,4146,4160 -d south_north,2341,2356 -d west_east_stag,4146,4161 -d south_north_stag,2341,2357 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/geo_em.d01.conus_1km_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc" ;
+		:history = "Mon Aug  6 15:07:46 2018: ncatted -O -a corner_lats,global,o,f,41.4228134155273,41.5563621520996,41.5190696716309,41.3856048583984,41.4241333007812,41.5576934814453,41.5177383422852,41.38427734375,41.4183578491211,41.5608215332031,41.5235252380371,41.3811531066895,0,0,0,0 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc\n",
+			"Mon Aug  6 15:07:46 2018: ncatted -O -a corner_lons,global,o,f,-73.8533325195312,-73.8002624511719,-73.6337890625,-73.6871948242188,-73.8592834472656,-73.8062133789062,-73.6278381347656,-73.6812744140625,-73.8551025390625,-73.7984924316406,-73.6320190429688,-73.6889953613281,0,0,0,0 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc\n",
+			"Mon Aug  6 15:07:41 2018: ncks -d west_east,4146,4160 -d south_north,2341,2356 -d west_east_stag,4146,4161 -d south_north_stag,2341,2357 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/geo_em.d01.conus_1km_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc" ;
 }

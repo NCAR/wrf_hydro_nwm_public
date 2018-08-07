@@ -1,4 +1,4 @@
-md5sum: 85c0d734366f485e5fdc2a654dfc1415  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/wrfinput_d01.nc
+md5sum: 85c0d734366f485e5fdc2a654dfc1415  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/wrfinput_d01.nc
 ncdump -h: netcdf wrfinput_d01 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)

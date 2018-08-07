@@ -7,7 +7,7 @@
     chrtout_grid = 0
     dtrt_ch = 300
     dtrt_ter = 10
-    dxrt = 1000
+    dxrt = 250
     frxst_pts_out = 0
     geo_finegrid_flnm = './NWM/DOMAIN/Fulldom_hires.nc'
     geo_static_flnm = './NWM/DOMAIN/geo_em.d01.nc'

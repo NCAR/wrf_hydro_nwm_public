@@ -1,4 +1,4 @@
-md5sum: 732b39412306e6cc824009310f115e1a  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/LAKEPARM.nc
+md5sum: 732b39412306e6cc824009310f115e1a  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/LAKEPARM.nc
 ncdump -h: netcdf LAKEPARM {
 dimensions:
 	nlakes = 1 ;

@@ -1,4 +1,4 @@
-md5sum: 51ec2efd0237112b5ae7c41ed5831eab  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/GWBUCKPARM.nc
+md5sum: 51ec2efd0237112b5ae7c41ed5831eab  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/GWBUCKPARM.nc
 ncdump -h: netcdf GWBUCKPARM {
 dimensions:
 	BasinDim = 183 ;

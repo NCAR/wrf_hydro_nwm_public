@@ -1,4 +1,4 @@
-md5sum: 8f86fe0f68c32a5138738bb0d350dfe1  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/hydro2dtbl.nc
+md5sum: 8f86fe0f68c32a5138738bb0d350dfe1  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/hydro2dtbl.nc
 ncdump -h: netcdf hydro2dtbl {
 dimensions:
 	south_north = 16 ;

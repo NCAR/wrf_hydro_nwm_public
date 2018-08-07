@@ -1,11 +1,11 @@
-md5sum: 4d83331b16f19ed57534ece25986f9f8  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1
+md5sum: 5aad47e95b25f3b8cb94a637af561aff  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART_LR/HYDRO_RST.2011-08-26_00:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;
 	ix = 15 ;
 	iy = 16 ;
-	ixrt = 60 ;
-	iyrt = 64 ;
+	ixrt = 15 ;
+	iyrt = 16 ;
 	links = 185 ;
 	basns = 185 ;
 	lakes = 1 ;

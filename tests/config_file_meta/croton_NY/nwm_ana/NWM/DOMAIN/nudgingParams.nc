@@ -1,4 +1,4 @@
-md5sum: 0dd15ead2501e003d8f745735e71a808  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/nudgingParams.nc
+md5sum: 0dd15ead2501e003d8f745735e71a808  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/nudgingParams.nc
 ncdump -h: netcdf nudgingParams {
 dimensions:
 	stationIdInd = UNLIMITED ; // (4 currently)

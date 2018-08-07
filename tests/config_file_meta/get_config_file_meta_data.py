@@ -14,71 +14,52 @@ from wrfhydropy import JSONNamelist
 # 5) This script skips non-existent files and ignores timeslices.
 
 domain_paths = [
-    "/glade/work/jamesmcc/domains/public/croton_NY_v5.0.1",
+    "/glade/work/jamesmcc/domains/public/croton_NY",
     "/glade/work/jamesmcc/domains/private/CONUS"
 ]
 
 configs = [
     'nwm_ana',
-    'nwm_medium_range'
+    'nwm_long_range'
 ]
 
 # Just for testing
 domain_paths = [domain_paths[0]]
-configs = [configs[0]]
 
 # -----------------------------------
 domain_paths = [pathlib.PosixPath(pp) for pp in domain_paths]
 this_path = pathlib.PosixPath(os.getcwd())
 code_path = this_path.parent.parent / 'trunk/NDHMS/'
 
-def get_file_meta(
+def get_nlst_file_meta(
     namelist: dict,
     dom_dir: str
 ):
 
-    def visit_is_file(path, key, value):
-        if value is None:
-            return False
-        return type(value) is str or type(value) is dict
-
-    def visit_not_none(path, key, value):
-        return bool(value)
-
-    def visit_str_posix_exists(path, key, value):
-        if type(value) is dict:
-            return True
-        #return key, (dom_dir / pathlib.PosixPath(value)).exists()
-        return key, (dom_dir / pathlib.PosixPath(value))
-
-    def remap_nlst(nlst):
-        # The outer remap removes empty dicts
-        files = iterutils.remap(nlst,  visit=visit_is_file)
-        files = iterutils.remap(files, visit=visit_not_none)
-        exists = iterutils.remap(files, visit=visit_str_posix_exists)
-        return exists
-
-    file_dict = remap_nlst(namelist)
-
     def visit_missing_file(path, key, value):
-        #print(path, key, value)
-        if type(value) is pathlib.PosixPath:
-            if str(value.name) == 'nudgingTimeSliceObs':
-                return False
-            if value.is_dir():
-                return False
-        else:
+
+        # Only treat strings
+        if type(value) is not str:
             return False
+
+        # Convert to pathlib object, kee        
+        the_file_rel = pathlib.PosixPath(value)
+        the_file_abs = dom_dir / the_file_rel
+
+        # Do not treat dirs.
+        if the_file_abs.is_dir():
+            return False
+
+        print('            ' + str(the_file_abs))
         
-        data_path = value
-        print(value)
-        meta_path = '/'.join(str(value).split('/')[-3:])
-        the_cmd = 'meta_path=' + meta_path
-        the_cmd += ' && data_path=' + str(data_path)
+        # The sub process command is executed in the root of the meta path,
+        # use the relative data path/
+        meta_path_rel = the_file_rel
+        the_cmd = 'meta_path=' + str(meta_path_rel)
+        the_cmd += ' && data_path=' + str(the_file_abs)
         the_cmd += ' && mkdir -p $(dirname $meta_path)'
         the_cmd += ' && echo "md5sum: $(md5sum $data_path)" > $meta_path'
         the_cmd += ' && echo "ncdump -h: $(ncdump -h $data_path)" >> $meta_path'
-        #subprocess.run(shlex.split(the_cmd), cwd=this_path)#, shell=True, executable='/bin/bash')
         subprocess.run(
             the_cmd,
             cwd=config_dir,
@@ -87,38 +68,45 @@ def get_file_meta(
         )
         return True
 
-    _ = iterutils.remap(file_dict, visit=visit_missing_file)
+    _ = iterutils.remap(namelist, visit=visit_missing_file)
 
-
+    
 for dd in domain_paths:
+
+    print('')
+    print('Domain: ' + str(dd))
 
     domain_tag = dd.name
     
     for cc in configs:
+
+        print('')
+        print('    Config: ' + str(cc))
         
+        # Make a meta data output dir for each configuration.
         config_dir = (this_path / domain_tag) / cc
         config_dir.mkdir(parents=True, exist_ok=False)
         
         # Create the namelists
-        
         domain_nlsts = ['hydro_namelists.json', 'hrldas_namelists.json']
         code_nlsts = ['hydro_namelist_patches.json', 'hrldas_namelist_patches.json']
         file_names = ['hydro.namelist', 'namelist.hrldas']
         
         for code, dom, ff in zip(domain_nlsts, code_nlsts, file_names):
-            
+
+            print('        Namelist: ' + str(ff))
             repo_namelists = JSONNamelist(code_path / code)
             domain_namelists = JSONNamelist(dd / dom)
             
-            repo_ana = repo_namelists.get_config(cc)
-            domain_ana = domain_namelists.get_config(cc)
-            
-            patched_namelist = repo_ana.patch(domain_ana)
+            repo_config = repo_namelists.get_config(cc)
+            domain_config = domain_namelists.get_config(cc)
+
+            patched_namelist = repo_config.patch(domain_config)
 
             # Write them out for completeness.
-            patched_namelist.write(str(config_dir / ff))
-
+            patched_namelist.write(str(config_dir / ff))         
+            
             # This function does the work.
-            get_file_meta(patched_namelist, dd)
+            get_nlst_file_meta(patched_namelist, dd)
 
 

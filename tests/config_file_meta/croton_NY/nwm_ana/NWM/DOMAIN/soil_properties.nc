@@ -1,4 +1,4 @@
-md5sum: 77a8fcc8868471808c3723e7b8bb79c6  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/soil_properties.nc
+md5sum: 77a8fcc8868471808c3723e7b8bb79c6  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/soil_properties.nc
 ncdump -h: netcdf soil_properties {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)

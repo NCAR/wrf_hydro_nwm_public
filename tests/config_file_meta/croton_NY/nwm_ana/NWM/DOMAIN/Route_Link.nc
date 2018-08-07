@@ -1,4 +1,4 @@
-md5sum: 205f79ead4377b3a23fd96d7fc4c11e7  /glade/work/jamesmcc/domains/public/croton_NY_v5.0.1/NWM/DOMAIN/Route_Link.nc
+md5sum: 205f79ead4377b3a23fd96d7fc4c11e7  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/Route_Link.nc
 ncdump -h: netcdf Route_Link {
 dimensions:
 	feature_id = 185 ;
