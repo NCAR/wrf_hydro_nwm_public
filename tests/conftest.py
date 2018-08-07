@@ -64,7 +64,6 @@ def pytest_addoption(parser):
                       )
 
     parser.addoption('--scheduler',
-                     required=False,
                      action='store_true',
                      help='Use PBS scheduler on cheyenne')
 
@@ -111,7 +110,7 @@ def _make_sim(domain_dir,
     if option_suite is not None:
         pass
 
-    if scheduler is not None and scheduler == 'pbscheyenne':
+    if scheduler:
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
                                        nnodes=nnodes,
@@ -129,7 +128,7 @@ def candidate_sim(request):
     option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
-    scheduler = str(request.config.getoption("--scheduler")).lower()
+    scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
 
     candidate_sim = _make_sim(domain_dir = domain_dir,
@@ -152,7 +151,7 @@ def reference_sim(request):
     option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
-    scheduler = str(request.config.getoption("--scheduler")).lower()
+    scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
 
     reference_sim = _make_sim(domain_dir = domain_dir,
