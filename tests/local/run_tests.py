@@ -19,7 +19,8 @@ def run_tests(config: str,
               ncores: int = 360,
               nnodes: int = 10,
               account: str = 'NRAL0017',
-              walltime: str = '00:45:00'):
+              walltime: str = '00:45:00',
+              html_report = 'wrfhydro_testout.html'):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -40,6 +41,7 @@ def run_tests(config: str,
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
     pytest_cmd = "pytest -v --ignore=local"
+    pytest_cmd += " --html=" + str(html_report)
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
     pytest_cmd += " --domain_dir " + domain_dir
@@ -122,6 +124,12 @@ def main():
                         action='store',
                         help='Account number to use if using a scheduler.')
 
+    parser.add_argument('--html_report',
+                        default='wrfhydro_testout.html',
+                        required=False,
+                        action='store',
+                        help='Create an HTML report from testing with the specified name')
+
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -143,6 +151,10 @@ def main():
     scheduler = args.scheduler
     account = args.account
     walltime = args.walltime
+
+    # Build path to html report
+    html_report = args.html_report
+    html_report = str(output_dir.joinpath(html_report))
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -208,7 +220,8 @@ def main():
                                 ncores = ncores,
                                 nnodes = nnodes,
                                 account = account,
-                                walltime = walltime)
+                                walltime = walltime,
+                                html_report = html_report)
         if test_result.returncode != 0:
             has_failure = True
 
