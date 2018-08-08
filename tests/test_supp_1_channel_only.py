@@ -4,18 +4,12 @@ import os
 import pandas as pd
 import pathlib
 import pickle
-import time
+import pytest
 import warnings
 import wrfhydropy
-
-
-# Utility function to wait for job completion
-def wait_job(sim):
-    file = sim.jobs[0].job_dir.joinpath('WrfHydroJob_postrun.pkl')
-    while True:
-        if file.exists():
-            break
-        time.sleep(5)
+import sys
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from test_1_fundamental import wait_job
 
 
 # Channel-only Run
@@ -26,6 +20,9 @@ def test_run_candidate_channel_only(
     ncores,
     capsys
 ):
+
+    if candidate_sim.model.model_config.lower().find('nwm') < 0:
+        pytest.skip('Channel-only test only applicable to nwm_ana config')
 
     with capsys.disabled():
         print("\nQuestion: The candidate channel-only mode runs successfully?", end='')
@@ -71,6 +68,10 @@ def test_run_candidate_channel_only(
 
 # Channel-only matches full-model?
 def test_channel_only_matches_full(candidate_channel_only_sim, output_dir, capsys):
+
+    if candidate_channel_only_sim.model.model_config.lower().find('nwm') < 0:
+        pytest.skip('Channel-only test only applicable to nwm_ana config')
+        
     with capsys.disabled():
         print(
             "\nQuestion: The candidate channel-only run output files match"
@@ -133,12 +134,15 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir, capsy
     nccmp_options = ['--data', '--force', '--quiet'] #, '--metadata']
 
     # Check diffs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(
-        candidate_run_expected.output,
-        candidate_channel_only_run_expected.output,
-        nccmp_options=nccmp_options,
-        exclude_vars=exclude_vars
-    )
+        # Run
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        diffs = wrfhydropy.outputdiffs.OutputDiffs(
+            candidate_run_expected.output,
+            candidate_channel_only_run_expected.output,
+            nccmp_options=nccmp_options,
+            exclude_vars=exclude_vars
+        )
 
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
@@ -156,19 +160,20 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir, capsy
 # Channel-only ncores question
 def test_ncores_candidate_channel_only(output_dir, capsys):
 
+    candidate_channel_only_sim_file = \
+        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
+    candidate_channel_only_collected_file = \
+        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
+
+    if candidate_channel_only_collected_file.is_file() is False:
+        pytest.skip('candidate_channel_only collected run object not found, skipping test.')
+
     with capsys.disabled():
         print(
             "\nQuestion: The candidate_channel-only output files from an ncores run"
             " match those from an ncores-1 run?",
             end=''
         )
-
-    candidate_channel_only_sim_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
-    candidate_channel_only_collected_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
-    if candidate_channel_only_collected_file.is_file() is False:
-        pytest.skip('candidate_channel_only collected run object not found, skipping test.')
 
     candidate_channel_only_sim = \
         pickle.load(open(candidate_channel_only_sim_file, "rb"))
@@ -231,19 +236,20 @@ def test_ncores_candidate_channel_only(output_dir, capsys):
 
 def test_perfrestart_candidate_channel_only(output_dir, capsys):
 
+    candidate_channel_only_sim_file = \
+        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
+    candidate_channel_only_collected_file = \
+        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
+
+    if candidate_channel_only_collected_file.is_file() is False:
+        pytest.skip('candidate_channel_only run object not found, skipping test')
+
     with capsys.disabled():
         print(
             "\nQuestion: The candidate_channel_only outputs from a restart run match"
             " the outputs from standard run?",
             end=''
         )
-
-    candidate_channel_only_sim_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
-    candidate_channel_only_collected_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
-    if candidate_channel_only_collected_file.is_file() is False:
-        pytest.skip('candidate_channel_only run object not found, skipping test')
 
     # Load initial run model object and copy
     candidate_channel_only_sim = \

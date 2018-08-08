@@ -48,7 +48,7 @@ def run_tests(config: str,
     # NWM
     # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
     if config.lower().find('nwm') < 0:
-        pytest_cmd += " --ignore=test_supp_1_channel_only.py"
+        pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
 
     pytest_cmd += " --html=" + str(html_report)
     pytest_cmd += " --config " + config.lower()
@@ -66,6 +66,7 @@ def run_tests(config: str,
         pytest_cmd += " --walltime " + walltime
         pytest_cmd += " --queue " + queue
 
+    print(pytest_cmd)
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
     return tests
@@ -224,9 +225,11 @@ def main():
     has_failure = False
     for config in config_list:
 
-        print('\n\n############################')
-        print('### TESTING ' + config + ' ###')
-        print('############################\n\n',flush=True)
+        extra_spaces = 29
+        total_len = len(config) + extra_spaces
+        print('\n\n' + ('#' * total_len))
+        print('### TESTING:  ---  ' + config + '  ---  ###')
+        print(('#' * total_len) + '\n', flush=True)
 
         test_result = run_tests(config = config,
                                 compiler = compiler,
@@ -246,14 +249,16 @@ def main():
 
     # Exit with 1 if failure
     if has_failure:
-        print('\n\n############################')
-        print('### TESTING FAILED ###')
-        print('############################\n\n',flush=True)
+        print('\n\n'
+              '##################################')
+        print('###  ---  TESTING FAILED  ---  ###')
+        print('##################################\n\n', flush=True)
         exit(1)
     else:
-        print('\n\n############################')
-        print('### TESTING PASSED ###')
-        print('############################\n\n',flush=True)
+        print('\n\n'
+              '##################################')
+        print('###  ---  TESTING PASSED  ---  ###')
+        print('##################################\n\n', flush=True)
         exit(0)
 
 if __name__ == '__main__':

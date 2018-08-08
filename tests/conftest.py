@@ -171,13 +171,16 @@ def candidate_sim(request):
 def candidate_channel_only_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
     candidate_dir = request.config.getoption("--candidate_dir")
     configuration = request.config.getoption("--config")
     option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
-    scheduler = str(request.config.getoption("--scheduler")).lower()
+    scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
 
     candidate_channel_only_sim = _make_sim(
         domain_dir=domain_dir,
