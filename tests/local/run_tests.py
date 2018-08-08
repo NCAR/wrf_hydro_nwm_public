@@ -42,7 +42,7 @@ def run_tests(config: str,
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
     pytest_cmd = "pytest -v --ignore=local"
-    pytest_cmd += " --html=" + str(html_report)
+    pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
     pytest_cmd += " --domain_dir " + domain_dir
