@@ -44,7 +44,7 @@ def pytest_addoption(parser):
                      default='gfort',
                      required=False,
                      action='store',
-                     help='compiler, options are intel or gfort'
+                     help='compiler, options are ifort or gfort'
                      )
 
     parser.addoption("--option_suite",
@@ -90,6 +90,7 @@ def pytest_addoption(parser):
                           'premium, or shared')
 
 def _make_sim(domain_dir,
+              compiler,
               source_dir,
               configuration,
               option_suite,
@@ -101,6 +102,7 @@ def _make_sim(domain_dir,
               queue):
     # model
     model = Model(
+        compiler=compiler,
         source_dir=source_dir,
         model_config=configuration
     )
@@ -137,6 +139,7 @@ def _make_sim(domain_dir,
 def candidate_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
     candidate_dir = request.config.getoption("--candidate_dir")
     configuration = request.config.getoption("--config")
     option_suite = request.config.getoption("--option_suite")
