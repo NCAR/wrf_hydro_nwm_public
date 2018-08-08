@@ -47,16 +47,6 @@
         "wrf_hydro_offline": {}
     },
 
-    "nwm_short_range" : {
-        "noahlsm_offline": {},
-        "wrf_hydro_offline": {}
-    },
-
-    "nwm_medium_range" : {
-        "noahlsm_offline": {},
-        "wrf_hydro_offline": {}
-    },
-
     "nwm_long_range" : {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
