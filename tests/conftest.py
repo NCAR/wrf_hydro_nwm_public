@@ -81,6 +81,14 @@ def pytest_addoption(parser):
                      required=False,
                      action='store',
                      help='Wall clock time in hh:mm:ss format')
+
+    parser.addoption('--queue',
+                     default='regular',
+                     required=False,
+                     action='store',
+                     help='Queue to use if running on NCAR Cheyenne, options are regular, '
+                          'premium, or shared')
+
 def _make_sim(domain_dir,
               source_dir,
               configuration,
@@ -89,7 +97,8 @@ def _make_sim(domain_dir,
               nnodes,
               scheduler,
               account,
-              walltime):
+              walltime,
+              queue):
     # model
     model = Model(
         source_dir=source_dir,
@@ -118,7 +127,8 @@ def _make_sim(domain_dir,
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
                                        nnodes=nnodes,
-                                       walltime=walltime))
+                                       walltime=walltime,
+                                       queue=queue))
 
 
     return sim
@@ -135,6 +145,7 @@ def candidate_sim(request):
     scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
     walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
 
     candidate_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= candidate_dir,
@@ -144,7 +155,8 @@ def candidate_sim(request):
                               nnodes=nnodes,
                               scheduler = scheduler,
                               account = account,
-                              walltime=walltime)
+                              walltime=walltime,
+                              queue=queue)
 
     return candidate_sim
 
@@ -160,6 +172,7 @@ def reference_sim(request):
     scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
     walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
 
     reference_sim = _make_sim(domain_dir = domain_dir,
                               source_dir= reference_dir,
@@ -169,7 +182,8 @@ def reference_sim(request):
                               nnodes=nnodes,
                               scheduler = scheduler,
                               account = account,
-                              walltime=walltime)
+                              walltime=walltime,
+                              queue=queue)
 
     return reference_sim
 

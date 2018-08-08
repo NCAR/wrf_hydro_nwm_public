@@ -109,7 +109,7 @@ def main():
                              'specify for no scheduler')
 
     parser.add_argument('--nnodes',
-                     default='2',
+                     default='6',
                      required=False,
                      help='Number of nodes to use for testing if running on scheduler')
 
@@ -130,7 +130,8 @@ def main():
                         default='regular',
                         required=False,
                         action='store',
-                        help='Queue to use, options are regular, premium, or shared')
+                        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+                             'premium, or shared')
 
     parser.add_argument('--html_report',
                         default='wrfhydro_testout.html',
