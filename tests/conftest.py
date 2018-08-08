@@ -1,7 +1,6 @@
 import pytest
 from wrfhydropy import *
 
-
 def pytest_addoption(parser):
 
     # Required args:
@@ -212,4 +211,5 @@ def ncores(request):
     ncores = request.config.getoption("--ncores")
 
     return ncores
+
 
