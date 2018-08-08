@@ -151,6 +151,7 @@ def candidate_sim(request):
     queue = request.config.getoption("--queue")
 
     candidate_sim = _make_sim(domain_dir = domain_dir,
+                              compiler=compiler,
                               source_dir= candidate_dir,
                               configuration=configuration,
                               option_suite=option_suite,
@@ -167,6 +168,7 @@ def candidate_sim(request):
 def reference_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
     reference_dir = request.config.getoption("--reference_dir")
     configuration = request.config.getoption("--config")
     option_suite = request.config.getoption("--option_suite")
@@ -178,6 +180,7 @@ def reference_sim(request):
     queue = request.config.getoption("--queue")
 
     reference_sim = _make_sim(domain_dir = domain_dir,
+                              compiler=compiler,
                               source_dir= reference_dir,
                               configuration=configuration,
                               option_suite=option_suite,
