@@ -1,6 +1,4 @@
 import pytest
-import shutil
-import pathlib
 from wrfhydropy import *
 
 
@@ -46,7 +44,7 @@ def pytest_addoption(parser):
                      default='gfort',
                      required=False,
                      action='store',
-                     help='compiler, options are intel or gfort'
+                     help='compiler, options are ifort or gfort'
                      )
 
     parser.addoption("--option_suite",
@@ -64,7 +62,6 @@ def pytest_addoption(parser):
                       )
 
     parser.addoption('--scheduler',
-                     required=False,
                      action='store_true',
                      help='Use PBS scheduler on cheyenne')
 
@@ -79,17 +76,33 @@ def pytest_addoption(parser):
                      action='store',
                      help='Account number to use if using a scheduler.')
 
+    parser.addoption('--walltime',
+                     default='02:00:00',
+                     required=False,
+                     action='store',
+                     help='Wall clock time for each test run in hh:mm:ss format')
+
+    parser.addoption('--queue',
+                     default='regular',
+                     required=False,
+                     action='store',
+                     help='Queue to use if running on NCAR Cheyenne, options are regular, '
+                          'premium, or shared')
 
 def _make_sim(domain_dir,
+              compiler,
               source_dir,
               configuration,
               option_suite,
               ncores,
               nnodes,
               scheduler,
-              account):
+              account,
+              walltime,
+              queue):
     # model
     model = Model(
+        compiler=compiler,
         source_dir=source_dir,
         model_config=configuration
     )
@@ -113,11 +126,12 @@ def _make_sim(domain_dir,
     if option_suite is not None:
         pass
 
-    if scheduler is not None and scheduler == 'pbscheyenne':
+    if scheduler:
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
-                                       nnodes=nnodes,
-                                       walltime='00:45:00'))
+                                       nnodes=int(nnodes),
+                                       walltime=walltime,
+                                       queue=queue))
 
     return sim
 
@@ -126,25 +140,32 @@ def _make_sim(domain_dir,
 def candidate_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
     candidate_dir = request.config.getoption("--candidate_dir")
     configuration = request.config.getoption("--config")
     option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
-    scheduler = str(request.config.getoption("--scheduler")).lower()
+    scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
 
-    candidate_sim = _make_sim(domain_dir=domain_dir,
-                              source_dir=candidate_dir,
-                              configuration=configuration,
-                              option_suite=option_suite,
-                              ncores=ncores,
-                              nnodes=nnodes,
-                              scheduler=scheduler,
-                              account=account)
+    candidate_sim = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=candidate_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
 
     return candidate_sim
-
 
 @pytest.fixture(scope="session")
 def candidate_channel_only_sim(request):
@@ -158,40 +179,53 @@ def candidate_channel_only_sim(request):
     scheduler = str(request.config.getoption("--scheduler")).lower()
     account = request.config.getoption("--account")
 
-    candidate_sim = _make_sim(domain_dir=domain_dir,
-                              source_dir=candidate_dir,
-                              configuration=configuration,
-                              option_suite=option_suite,
-                              ncores=ncores,
-                              nnodes=nnodes,
-                              scheduler=scheduler,
-                              account=account)
+    candidate_channel_only_sim = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=candidate_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
 
     # Channel and bucket mode is forc_typ = 10.
-    candidate_sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
-    return candidate_sim
+    candidate_channel_only_sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
+    return candidate_channel_only_sim
 
 
 @pytest.fixture(scope="session")
 def reference_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
     reference_dir = request.config.getoption("--reference_dir")
     configuration = request.config.getoption("--config")
     option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
-    scheduler = str(request.config.getoption("--scheduler")).lower()
+    scheduler = request.config.getoption("--scheduler")
     account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
 
-    reference_sim = _make_sim(domain_dir=domain_dir,
-                              source_dir=reference_dir,
-                              configuration=configuration,
-                              option_suite=option_suite,
-                              ncores=ncores,
-                              nnodes=nnodes,
-                              scheduler=scheduler,
-                              account=account)
+    reference_sim = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=reference_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
 
     return reference_sim
 

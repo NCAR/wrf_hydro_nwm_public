@@ -1,13 +1,15 @@
 import copy
 import datetime as dt
-import pickle
-import pytest
-import warnings
-import wrfhydropy
 import os
 import pathlib
+import pickle
 import time
+import warnings
+
 import pandas as pd
+import pytest
+import wrfhydropy
+
 
 # #################################
 # Setup the test with a domain, a candidate, and a reference.
@@ -247,12 +249,13 @@ def test_perfrestart_candidate(
             candidate_lsm_restart_file.symlink_to(restart_file)
 
     # Nudging: Use actual time listed in meta data, not filename or positional list index
-    for restart_file in candidate_sim_expected.output.restart_nudging:
-        restart_time = restart_file.open().modelTimeAtOutput
-        restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == restart_job.model_start_time:
-            candidate_nudging_restart_file = pathlib.Path(restart_file.name)
-            candidate_nudging_restart_file.symlink_to(restart_file)
+    if candidate_sim_expected.output.restart_nudging is not None:
+        for restart_file in candidate_sim_expected.output.restart_nudging:
+            restart_time = restart_file.open().modelTimeAtOutput
+            restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
+            if restart_time == restart_job.model_start_time:
+                candidate_nudging_restart_file = pathlib.Path(restart_file.name)
+                candidate_nudging_restart_file.symlink_to(restart_file)
 
     # Compose and run
     # catch warnings related to missing start and end job times
