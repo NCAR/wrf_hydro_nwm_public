@@ -6,6 +6,7 @@ all:
 BASIC:
 	make -C Routing/Overland
 	make -C Routing/Subsurface
+	make -C Routing/Groundwater
 	(cd MPP     ; make -f Makefile)
 	(cd Data_Rec     ; make -f Makefile)
 	make -C Debug_Utilities/
