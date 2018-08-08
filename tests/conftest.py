@@ -126,7 +126,7 @@ def _make_sim(domain_dir,
     if scheduler:
         sim.add(schedulers.PBSCheyenne(account=account,
                                        nproc=int(ncores),
-                                       nnodes=nnodes,
+                                       nnodes=int(nnodes),
                                        walltime=walltime,
                                        queue=queue))
 
