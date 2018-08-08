@@ -40,6 +40,13 @@ def run_tests(config: str,
 
     # For interactive debug add: --pdb
     pytest_cmd = "pytest -v --ignore=local"
+
+    # Ignore section: for cleaner tests with less skipps!
+    # NWM
+    # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
+    if config.lower().find('nwm') < 0:
+        pytest_cmd += " --ignore=test_supp_1_channel_only.py"
+
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
     pytest_cmd += " --domain_dir " + domain_dir
