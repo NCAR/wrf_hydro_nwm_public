@@ -15,10 +15,13 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
-              scheduler: str = None,
-              ncores: int = 72,
-              nnodes: int = 2,
-              account: str = 'NRAL0017'):
+              scheduler: bool = False,
+              ncores: int = 216,
+              nnodes: int = 6,
+              account: str = 'NRAL0017',
+              walltime: str = '02:00:00',
+              queue = 'regular',
+              html_report = 'wrfhydro_testout.html'):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -39,6 +42,7 @@ def run_tests(config: str,
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
     pytest_cmd = "pytest -v --ignore=local"
+    pytest_cmd += " --html=" + str(html_report)
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
     pytest_cmd += " --domain_dir " + domain_dir
@@ -47,11 +51,12 @@ def run_tests(config: str,
     pytest_cmd += " --output_dir " + output_dir
     pytest_cmd += " --ncores " + str(ncores)
 
-    if scheduler is not None:
-        pytest_cmd += " --scheduler " + scheduler
+    if scheduler:
+        pytest_cmd += " --scheduler "
         pytest_cmd += " --nnodes " + str(nnodes)
-
         pytest_cmd += " --account " + account
+        pytest_cmd += " --walltime " + walltime
+        pytest_cmd += " --queue " + queue
 
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
@@ -92,7 +97,6 @@ def main():
                              "specified, a small test domain will be retrieved and placed in the "
                              "specified output_dir and used for the testing domain")
 
-
     parser.add_argument('--ncores',
                         default='2',
                         required=False,
@@ -100,12 +104,12 @@ def main():
 
     parser.add_argument('--scheduler',
                         required=False,
+                        action='store_true',
                         help='Scheduler to use for testing, options are PBSCheyenne or do not '
                              'specify for no scheduler')
 
-
     parser.add_argument('--nnodes',
-                     default='2',
+                     default='6',
                      required=False,
                      help='Number of nodes to use for testing if running on scheduler')
 
@@ -115,6 +119,25 @@ def main():
                         required=False,
                         action='store',
                         help='Account number to use if using a scheduler.')
+
+    parser.add_argument('--walltime',
+                        default='02:00:00',
+                        required=False,
+                        action='store',
+                        help='Account number to use if using a scheduler.')
+
+    parser.add_argument('--queue',
+                        default='regular',
+                        required=False,
+                        action='store',
+                        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+                             'premium, or shared')
+
+    parser.add_argument('--html_report',
+                        default='wrfhydro_testout.html',
+                        required=False,
+                        action='store',
+                        help='Create an HTML report from testing with the specified name')
 
     args = parser.parse_args()
 
@@ -136,6 +159,12 @@ def main():
     nnodes = args.nnodes
     scheduler = args.scheduler
     account = args.account
+    walltime = args.walltime
+    queue = args.queue
+
+    # Build path to html report
+    html_report = args.html_report
+    html_report = str(output_dir.joinpath(html_report))
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -200,7 +229,10 @@ def main():
                                 scheduler = scheduler,
                                 ncores = ncores,
                                 nnodes = nnodes,
-                                account = account)
+                                account = account,
+                                walltime = walltime,
+                                queue = queue,
+                                html_report = html_report)
         if test_result.returncode != 0:
             has_failure = True
 

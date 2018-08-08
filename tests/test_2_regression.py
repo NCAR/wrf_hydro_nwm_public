@@ -1,6 +1,8 @@
-import wrfhydropy
 import pickle
+
 import pytest
+import wrfhydropy
+
 
 #regression question
 def test_regression(output_dir,capsys):

@@ -49,30 +49,12 @@
             "zsoil8": [-0.1, -0.4, -1.0, -2.0]
         },
         "nudging_nlist": {
-            "biaswindowbeforet0": "",
-            "invdisttimeweightbias": "",
-            "maxagepairsbiaspersist": "",
-            "minnumpairsbiaspersist": "",
-            "nlastobs": "",
-            "noconstinterfbias": "",
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": "",
-            "readtimesliceparallel": "",
-            "temporalpersistence": "",
-            "timeslicepath": "NULL_specified_in_domain.json"
-        }
-    },
-
-    "nwm_ana": {
-        "hydro_nlist": {},
-        "nudging_nlist": {
             "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 3,
             "minnumpairsbiaspersist": 1,
             "nlastobs": 480,
-            "noconstinterfbias": true,
+            "noconstinterfbias": false,
             "nudginglastobsfile": "NULL_specified_in_domain.json",
             "nudgingparamfile": "NULL_specified_in_domain.json",
             "persistbias": true,
@@ -80,6 +62,11 @@
             "temporalpersistence": true,
             "timeslicepath": "NULL_specified_in_domain.json"
         }
+    },
+
+    "nwm_ana": {
+        "hydro_nlist": {},
+        "nudging_nlist": {}
     },
 
     "nwm_long_range": {
@@ -95,18 +82,8 @@
             "subrtswcrt": 0
         },
         "nudging_nlist": {
-            "biaswindowbeforet0": false,
-            "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
-            "minnumpairsbiaspersist": 1,
-            "nlastobs": 480,
-            "noconstinterfbias": true,
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": false,
-            "readtimesliceparallel": true,
-            "temporalpersistence": true,
-            "timeslicepath": "NULL_specified_in_domain.json"
+            "persistbias": false
         }
     },
 
@@ -115,20 +92,7 @@
             "output_gw": 0,
             "lsmout_domain": 0
         },
-        "nudging_nlist": {
-            "biaswindowbeforet0": false,
-            "invdisttimeweightbias": true,
-            "maxagepairsbiaspersist": 3,
-            "minnumpairsbiaspersist": 1,
-            "nlastobs": 480,
-            "noconstinterfbias": true,
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": true,
-            "readtimesliceparallel": true,
-            "temporalpersistence": true,
-            "timeslicepath": "NULL_specified_in_domain.json"
-        }
+        "nudging_nlist": {}
     },
 
     "gridded": {
@@ -141,7 +105,20 @@
             "rstrt_swc": 1,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     },
 
     "reach": {
@@ -155,6 +132,19 @@
             "t0outputflag": 0,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     }
 }
