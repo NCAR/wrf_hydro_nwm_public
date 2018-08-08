@@ -19,7 +19,7 @@ def run_tests(config: str,
               ncores: int = 216,
               nnodes: int = 6,
               account: str = 'NRAL0017',
-              walltime: str = '00:45:00',
+              walltime: str = '01:00:00',
               queue = 'regular',
               html_report = 'wrfhydro_testout.html'):
 
@@ -121,7 +121,7 @@ def main():
                         help='Account number to use if using a scheduler.')
 
     parser.add_argument('--walltime',
-                        default='00:45:00',
+                        default='01:00:00',
                         required=False,
                         action='store',
                         help='Account number to use if using a scheduler.')
