@@ -1,14 +1,15 @@
 import copy
 import datetime as dt
-import pickle
-import pytest
-import warnings
-import wrfhydropy
 import os
-import shutil
 import pathlib
+import pickle
 import time
+import warnings
+
 import pandas as pd
+import pytest
+import wrfhydropy
+
 
 ##################################
 # Setup the test with a domain, a candidate, and a reference.
