@@ -20,8 +20,7 @@ def run_tests(config: str,
               nnodes: int = 6,
               account: str = 'NRAL0017',
               walltime: str = '02:00:00',
-              queue = 'regular',
-              html_report = 'wrfhydro_testout.html'):
+              queue = 'regular'):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -40,6 +39,10 @@ def run_tests(config: str,
     # Pytest wants the actual source code directory, not the top level repo directory
     candidate_source_dir = candidate_dir + '/trunk/NDHMS'
     reference_source_dir = reference_dir + '/trunk/NDHMS'
+
+    # HTML report
+    html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
+    html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
     pytest_cmd = "pytest -v --ignore=local"
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
@@ -133,12 +136,6 @@ def main():
                         help='Queue to use if running on NCAR Cheyenne, options are regular, '
                              'premium, or shared')
 
-    parser.add_argument('--html_report',
-                        default='wrfhydro_testout.html',
-                        required=False,
-                        action='store',
-                        help='Create an HTML report from testing with the specified name')
-
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -161,10 +158,6 @@ def main():
     account = args.account
     walltime = args.walltime
     queue = args.queue
-
-    # Build path to html report
-    html_report = args.html_report
-    html_report = str(output_dir.joinpath(html_report))
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -215,7 +208,6 @@ def main():
     # run pytest for each supplied config
     has_failure = False
     for config in config_list:
-
         print('\n\n############################')
         print('### TESTING ' + config + ' ###')
         print('############################\n\n',flush=True)
@@ -231,8 +223,8 @@ def main():
                                 nnodes = nnodes,
                                 account = account,
                                 walltime = walltime,
-                                queue = queue,
-                                html_report = html_report)
+                                queue = queue)
+
         if test_result.returncode != 0:
             has_failure = True
 
