@@ -1,7 +1,4 @@
 import subprocess
-import socket
-import getpass
-
 import pathlib
 from argparse import ArgumentParser
 import shutil
@@ -9,19 +6,22 @@ import shutil
 from releaseapi import get_release_asset
 from gdrive_download import download_file_from_google_drive
 
-def run_tests(config: str,
-              compiler: str,
-              domain_dir: str,
-              candidate_dir: str,
-              reference_dir: str,
-              output_dir: str,
-              scheduler: bool = False,
-              ncores: int = 216,
-              nnodes: int = 6,
-              account: str = 'NRAL0017',
-              walltime: str = '02:00:00',
-              queue = 'regular',
-              html_report = 'wrfhydro_testout.html'):
+
+def run_tests(
+    config: str,
+    compiler: str,
+    domain_dir: str,
+    candidate_dir: str,
+    reference_dir: str,
+    output_dir: str,
+    scheduler: bool=False,
+    ncores: int=216,
+    nnodes: int=6,
+    account: str='NRAL0017',
+    walltime: str='02:00:00',
+    queue='regular',
+    html_report='wrfhydro_testout.html'
+):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -71,6 +71,7 @@ def run_tests(config: str,
 
     return tests
 
+
 def main():
     parser = ArgumentParser()
 
@@ -118,10 +119,9 @@ def main():
                              'specify for no scheduler')
 
     parser.add_argument('--nnodes',
-                     default='6',
-                     required=False,
-                     help='Number of nodes to use for testing if running on scheduler')
-
+                        default='6',
+                        required=False,
+                        help='Number of nodes to use for testing if running on scheduler')
 
     parser.add_argument('--account',
                         default='NRAL0017',
@@ -183,7 +183,7 @@ def main():
 
     # Get the domain if asked for
     if domain_tag is not None:
-        #Reset domain dir to be the downlaoded domain in the output dir
+        # Reset domain dir to be the downlaoded domain in the output dir
         domain_dir = output_dir.joinpath('example_case')
 
         if domain_tag == 'dev':
@@ -207,19 +207,19 @@ def main():
                            shell=True,
                            cwd=str(output_dir))
 
-    ## Make copy paths
+    # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
     reference_copy = output_dir.joinpath(reference_dir.name + '_ref_pytest')
 
-    ## Remove if exist and make if not
+    # Remove if exist and make if not
     if candidate_copy.is_dir():
         shutil.rmtree(str(candidate_copy))
     if reference_copy.is_dir():
         shutil.rmtree(str(reference_copy))
 
-    ## copy directories to avoid polluting user source code directories
-    shutil.copytree(str(candidate_dir),str(candidate_copy),symlinks=True)
-    shutil.copytree(str(reference_dir),str(reference_copy),symlinks=True)
+    # copy directories to avoid polluting user source code directories
+    shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
+    shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
 
     # run pytest for each supplied config
     has_failure = False
@@ -231,19 +231,21 @@ def main():
         print('### TESTING:  ---  ' + config + '  ---  ###')
         print(('#' * total_len) + '\n', flush=True)
 
-        test_result = run_tests(config = config,
-                                compiler = compiler,
-                                domain_dir = str(domain_dir),
-                                candidate_dir = str(candidate_copy),
-                                reference_dir = str(reference_copy),
-                                output_dir = str(output_dir),
-                                scheduler = scheduler,
-                                ncores = ncores,
-                                nnodes = nnodes,
-                                account = account,
-                                walltime = walltime,
-                                queue = queue,
-                                html_report = html_report)
+        test_result = run_tests(
+            config=config,
+            compiler=compiler,
+            domain_dir=str(domain_dir),
+            candidate_dir=str(candidate_copy),
+            reference_dir=str(reference_copy),
+            output_dir=str(output_dir),
+            scheduler=scheduler,
+            ncores=ncores,
+            nnodes=nnodes,
+            account=account,
+            walltime=walltime,
+            queue=queue,
+            html_report=html_report
+        )
         if test_result.returncode != 0:
             has_failure = True
 
@@ -260,6 +262,7 @@ def main():
         print('###  ---  TESTING PASSED  ---  ###')
         print('##################################\n\n', flush=True)
         exit(0)
+
 
 if __name__ == '__main__':
     main()
