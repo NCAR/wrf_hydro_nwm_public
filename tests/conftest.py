@@ -77,10 +77,10 @@ def pytest_addoption(parser):
                      help='Account number to use if using a scheduler.')
 
     parser.addoption('--walltime',
-                     default='01:00:00',
+                     default='02:00:00',
                      required=False,
                      action='store',
-                     help='Wall clock time in hh:mm:ss format')
+                     help='Wall clock time for each test run in hh:mm:ss format')
 
     parser.addoption('--queue',
                      default='regular',
