@@ -16,10 +16,11 @@ def run_tests(config: str,
               reference_dir: str,
               output_dir: str,
               scheduler: bool = False,
-              ncores: int = 360,
-              nnodes: int = 10,
+              ncores: int = 216,
+              nnodes: int = 6,
               account: str = 'NRAL0017',
               walltime: str = '00:45:00',
+              queue = 'regular',
               html_report = 'wrfhydro_testout.html'):
 
     """Function to run wrf_hydro_nwm pytests
@@ -55,6 +56,7 @@ def run_tests(config: str,
         pytest_cmd += " --nnodes " + str(nnodes)
         pytest_cmd += " --account " + account
         pytest_cmd += " --walltime " + walltime
+        pytest_cmd += " --queue " + queue
 
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
@@ -124,6 +126,12 @@ def main():
                         action='store',
                         help='Account number to use if using a scheduler.')
 
+    parser.add_argument('--queue',
+                        default='regular',
+                        required=False,
+                        action='store',
+                        help='Queue to use, options are regular, premium, or shared')
+
     parser.add_argument('--html_report',
                         default='wrfhydro_testout.html',
                         required=False,
@@ -151,6 +159,7 @@ def main():
     scheduler = args.scheduler
     account = args.account
     walltime = args.walltime
+    queue = args.queue
 
     # Build path to html report
     html_report = args.html_report
@@ -221,6 +230,7 @@ def main():
                                 nnodes = nnodes,
                                 account = account,
                                 walltime = walltime,
+                                queue = queue,
                                 html_report = html_report)
         if test_result.returncode != 0:
             has_failure = True
