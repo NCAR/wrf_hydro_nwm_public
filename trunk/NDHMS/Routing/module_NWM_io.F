@@ -761,7 +761,9 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_att(ftn,featureVarId,'cf_role',trim(fileMeta%cfRole))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
+#ifndef NCEP_WCOSS
       ! Create channel lat/lon variables
+      ! NOTE: NWM current operations do not permit the output of latitude and longitude for streamflow. 
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
       iret = nf90_put_att(ftn,latVarId,'long_name',trim(fileMeta%latLName))
@@ -778,6 +780,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into longitude variable')
       iret = nf90_put_att(ftn,lonVarId,'units',trim(fileMeta%lonUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into longitude variable')
+#endif
 
       ! Create channel order variable
       iret = nf90_def_var(ftn,"order",nf90_int,dimId(1),orderVarId)
@@ -806,10 +809,12 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+#ifndef NCEP_WCOSS
          iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
          iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.') 
+#endif
          iret = nf90_def_var_deflate(ftn,orderVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
          iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
@@ -916,6 +921,7 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_var(ftn,varId,varMetaInt(2,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
       
+#ifndef NCEP_WCOSS
       iret = nf90_inq_varid(ftn,'latitude',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(1,:))
@@ -925,6 +931,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate longitude in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(2,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into longitude output variable.')
+#endif
 
       iret = nf90_inq_varid(ftn,'order',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate order in NetCDF file.')
