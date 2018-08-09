@@ -170,8 +170,8 @@ CONTAINS
             !rt_domain(did)%overland%control%surface_water_head_routing= 0.0
             !allocate( rt_domain(did)%overland%control%infiltration_excess   (IXRT,JXRT) )
             !rt_domain(did)%overland%control%infiltration_excess   = 0.0
-            allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
-            rt_domain(did)%INFXSWGT    = 0.0
+            !allocate( rt_domain(did)%groundwater%aggregation%infxswgt    (IXRT,JXRT) )
+            !rt_domain(did)%groundwater%aggregation%infxswgt    = 0.0
             !allocate( rt_domain(did)%LKSATRT     (IXRT,JXRT) )
             !rt_domain(did)%LKSATRT     = 0.0
             allocate( rt_domain(did)%LKSATFAC    (IXRT,JXRT) )
@@ -1406,7 +1406,7 @@ CONTAINS
                 nlst_rt(did)%channelBucket_only .eq. 0        ) then
 
             ! this initalization done in module_nhd_basin.F
-            !rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+            !rt_domain(did)%groundwater%aggregation%infxswgt = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
             rt_domain(did)%SH2OWGT = 1.
             rt_domain(did)%subsurface%properties%soldeprt = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
             rt_domain(did)%subsurface%state%qsubrt = 0.0

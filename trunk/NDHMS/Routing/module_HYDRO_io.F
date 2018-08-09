@@ -5996,7 +5996,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
 
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux, "QBDRYRT" )
-      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
+      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%groundwater%aggregation%infxswgt, "infxswgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing, "sfcheadsubrt" )
       call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
@@ -6219,7 +6219,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
                     write(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
-                    write(iunit,ERR=101) rt_domain(did)%INFXSWGT
+                    write(iunit,ERR=101) rt_domain(did)%groundwater%aggregation%infxswgt
                     write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
                     write(iunit,ERR=101) rt_domain(did)%SH2OWGT
                     write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
@@ -6312,7 +6312,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
                    read(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
-                   read(iunit,ERR=101) rt_domain(did)%INFXSWGT
+                   read(iunit,ERR=101) rt_domain(did)%groundwater%aggregation%infxswgt
                    read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
                    read(iunit,ERR=101) rt_domain(did)%SH2OWGT
                    read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
@@ -6776,7 +6776,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 
       if(nlst_rt(did)%SUBRTSWCRT.eq.1.or.nlst_rt(did)%OVRTSWCRT.eq.1) then
 
-         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
+         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%groundwater%aggregation%infxswgt,"infxswgt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing,"sfcheadsubrt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux,"QBDRYRT")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")

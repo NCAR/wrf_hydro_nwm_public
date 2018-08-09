@@ -617,7 +617,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             call RunOffDisag(rt_domain(did)%groundwater%input%infxsrt, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
+                 rt_domain(did)%groundwater%aggregation%infxswgt, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
          endif
       endif
 
@@ -779,7 +779,7 @@ subroutine driveGwBaseflow(did)
                 !    RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
                 !    RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
                 !    RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
-                !    nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
+                !    nlst_rt(did)%DT,              rt_domain(did)%groundwater%aggregation%infxswgt,        &
                 !    rt_domain(did)%groundwater%input%infxsrt,       RT_DOMAIN(did)%groundwater%input%soldrain,        &
                 !    rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
                 !    RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
@@ -1120,12 +1120,12 @@ endif
 !       JYYRT=JYYRT+1
 #endif
                   if (RT_DOMAIN(did)%LSMVOL.gt.0.) then
-                    RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
+                    rt_domain(did)%groundwater%aggregation%infxswgt(IXXRT,JYYRT) &
                                           = rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT) &
                                           * rt_domain(did)%overland%properties%distance_to_neighbor(IXXRT,JYYRT,9) &
 					  / RT_DOMAIN(did)%LSMVOL
                   else
-                    RT_DOMAIN(did)%INFXSWGT(IXXRT,JYYRT) &
+                    rt_domain(did)%groundwater%aggregation%infxswgt(IXXRT,JYYRT) &
                                           = 1./FLOAT(nlst_rt(did)%AGGFACTRT**2)
                   end if
 
@@ -1201,7 +1201,7 @@ endif
 
 
 #ifdef MPP_LAND
-        call MPP_LAND_COM_REAL(RT_DOMAIN(did)%INFXSWGT, &
+        call MPP_LAND_COM_REAL(rt_domain(did)%groundwater%aggregation%infxswgt, &
                                RT_DOMAIN(did)%IXRT,    &
                                RT_DOMAIN(did)%JXRT, 99)
 
