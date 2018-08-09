@@ -20,7 +20,7 @@ HYDROTBL_F = './DOMAIN/HYDRO_TBL_2D.nc'
 LAND_SPATIAL_META_FLNM = './DOMAIN/WRF_Hydro_NWM_geospatial_data_template_land_GIS.nc'
 
 ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
-RESTART_FILE  = 'HYDRO_RST.2018-06-01_00:00_DOMAIN1'
+RESTART_FILE  = './RESTART/HYDRO_RST.2018-06-01_00:00_DOMAIN1'
 
 !!!! --------------------- MODEL SETUP OPTIONS -------------------- !!!!
 
@@ -178,7 +178,7 @@ nudgingParamFile = './DOMAIN/nudgingParams.nc'
 ! Nudging restart file = 'nudgingLastObsFile'
 ! nudgingLastObsFile defaults to '', which will look for nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
 !   **AT THE INITALIZATION TIME OF THE RUN**. Set to a missing file to use no restart.
-!nudgingLastObsFile = '/a/nonexistent/file/gives/nudging/cold/start'
+nudgingLastObsFile = './RESTART/nudgingLastObs.2018-06-01_00:00:00.nc'
 
 !! Parallel input of nudging timeslice observation files?
 readTimesliceParallel = .TRUE.
