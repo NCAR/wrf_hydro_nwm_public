@@ -6,18 +6,18 @@ sys_cpl = 1
 
 !!!! ------------------- MODEL INPUT DATA FILES ------------------- !!!!
 
-! Specify land surface model gridded input data file (e.g.: "geo_em.d01.nc")
-GEO_STATIC_FLNM = "./DOMAIN/geo_em.d01_1km.nc"
+! Specify land surface model gridded input data file (e.g.: 'geo_em.d01.nc')
+GEO_STATIC_FLNM = './DOMAIN/geo_em.d01_1km.nc'
 
-! Specify the high-resolution routing terrain input data file (e.g.: "Fulldom_hires.nc")
-GEO_FINEGRID_FLNM = "./DOMAIN/Fulldom_hires_netcdf_1km.nc"
+! Specify the high-resolution routing terrain input data file (e.g.: 'Fulldom_hires.nc')
+GEO_FINEGRID_FLNM = './DOMAIN/Fulldom_hires_netcdf_1km.nc'
 
-! Specify the spatial hydro parameters file (e.g.: "hydro2dtbl.nc")
+! Specify the spatial hydro parameters file (e.g.: 'hydro2dtbl.nc')
 ! If you specify a filename and the file does not exist, it will be created for you.
-HYDROTBL_F = "./DOMAIN/HYDRO_TBL_2D_LongRange.nc"
+HYDROTBL_F = './DOMAIN/HYDRO_TBL_2D_LongRange.nc'
 
-! Specify spatial metadata file for land surface grid. (e.g.: "GEOGRID_LDASOUT_Spatial_Metadata.nc")
-LAND_SPATIAL_META_FLNM = "./DOMAIN/WRF_Hydro_NWM_geospatial_data_template_land_GIS.nc"
+! Specify spatial metadata file for land surface grid. (e.g.: 'GEOGRID_LDASOUT_Spatial_Metadata.nc')
+LAND_SPATIAL_META_FLNM = './DOMAIN/WRF_Hydro_NWM_geospatial_data_template_land_GIS.nc'
 
 ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
 RESTART_FILE  = 'HYDRO_RST.2018-06-01_00:00_DOMAIN1'
@@ -140,42 +140,42 @@ CHANRTSWCRT = 1
 ! Specify channel routing option: 1=Muskingam-reach, 2=Musk.-Cunge-reach, 3=Diff.Wave-gridded
 channel_option = 2
 
-! Specify the reach file for reach-based routing options (e.g.: "Route_Link.nc")
-route_link_f = "./DOMAIN/RouteLink_NHDPLUS.nc"
+! Specify the reach file for reach-based routing options (e.g.: 'Route_Link.nc')
+route_link_f = './DOMAIN/RouteLink_NHDPLUS.nc'
 
 ! If using channel_option=2, activate the compound channel formulation? (Default=.FALSE.)
 compound_channel = .TRUE.
 
-! Specify the lake parameter file (e.g.: "LAKEPARM.nc").
+! Specify the lake parameter file (e.g.: 'LAKEPARM.nc').
 ! Note REQUIRED if lakes are on.
-route_lake_f = "./DOMAIN/LAKEPARM_NHDPLUS.nc"
+route_lake_f = './DOMAIN/LAKEPARM_NHDPLUS.nc'
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
 
-! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc")
+! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: 'GWBASINS.nc')
 !Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
-!gwbasmskfil = "./DOMAIN/GWBASINS.nc"
+!gwbasmskfil = './DOMAIN/GWBASINS.nc'
 
-! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc")
-GWBUCKPARM_file = "./DOMAIN/GWBUCKPARM_CONUS_LongRange.nc"
+! Groundwater bucket parameter file (e.g.: 'GWBUCKPARM.nc')
+GWBUCKPARM_file = './DOMAIN/GWBUCKPARM_CONUS_LongRange.nc'
 
 ! User defined mapping, such NHDPlus: 0=no (default), 1=yes
 UDMP_OPT = 1
 
-! If on, specify the user-defined mapping file (e.g.: "spatialweights.nc")
-udmap_file = "./DOMAIN/spatialweights_1km_all_basins.nc"
+! If on, specify the user-defined mapping file (e.g.: 'spatialweights.nc')
+udmap_file = './DOMAIN/spatialweights_1km_all_basins.nc'
 
 /
 
 &NUDGING_nlist
 
-! Path to the "timeslice" observation files.
-timeSlicePath = "./nudgingTimeSliceObs/"
+! Path to the 'timeslice' observation files.
+timeSlicePath = './nudgingTimeSliceObs/'
 
-nudgingParamFile = "./DOMAIN/nudgingParams.nc"
+nudgingParamFile = './DOMAIN/nudgingParams.nc'
 
-! Nudging restart file = "nudgingLastObsFile"
+! Nudging restart file = 'nudgingLastObsFile'
 ! nudgingLastObsFile defaults to '', which will look for nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
 !   **AT THE INITALIZATION TIME OF THE RUN**. Set to a missing file to use no restart.
 !nudgingLastObsFile = '/a/nonexistent/file/gives/nudging/cold/start'
@@ -217,7 +217,7 @@ minNumPairsBiasPersist = 1
 ! If persistBias: give more weight to observations closer in time? (default=FALSE)
 invDistTimeWeightBias = .TRUE.
 
-! If persistBias: "No constructive interference in bias correction?", Reduce the bias adjustment
+! If persistBias: 'No constructive interference in bias correction?', Reduce the bias adjustment
 ! when the model and the bias adjustment have the same sign relative to the modeled flow at t0?
 ! (default=FALSE)
 ! Note: Perfect restart tests require this option to be .FALSE.

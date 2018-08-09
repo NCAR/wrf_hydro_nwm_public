@@ -1,9 +1,9 @@
 &NOAHLSM_OFFLINE
 
- HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01_1km.nc"
- INDIR = "./forcing"
- SPATIAL_FILENAME = "./DOMAIN/soil_veg_properties_LongRange.nc"
- OUTDIR = "./"
+ HRLDAS_SETUP_FILE = './DOMAIN/wrfinput_d01_1km.nc'
+ INDIR = './forcing'
+ SPATIAL_FILENAME = './DOMAIN/soil_veg_properties_LongRange.nc'
+ OUTDIR = './'
 
  START_YEAR  = 2018
  START_MONTH = 06
@@ -11,7 +11,7 @@
  START_HOUR  = 00
  START_MIN   = 00
 
- RESTART_FILENAME_REQUESTED = "RESTART.2018060100_DOMAIN1"
+ RESTART_FILENAME_REQUESTED = 'RESTART.2018060100_DOMAIN1'
 
  ! Specification of simulation length in days OR hours
  ! KDAY = 1
