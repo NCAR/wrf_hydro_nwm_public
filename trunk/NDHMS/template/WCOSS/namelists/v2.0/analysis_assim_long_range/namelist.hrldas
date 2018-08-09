@@ -2,7 +2,7 @@
 
  HRLDAS_SETUP_FILE = './DOMAIN/wrfinput_d01_1km.nc'
  INDIR = './forcing'
- SPATIAL_FILENAME = './DOMAIN/soil_veg_properties_ASM.nc'
+ SPATIAL_FILENAME = './DOMAIN/soil_veg_properties_LongRange.nc'
  OUTDIR = './'
 
  START_YEAR  = 2018
@@ -11,11 +11,11 @@
  START_HOUR  = 00
  START_MIN   = 00
 
- RESTART_FILENAME_REQUESTED = './RESTART/RESTART.2018060100_DOMAIN1'
+ RESTART_FILENAME_REQUESTED = './RESTART_LR/RESTART.2018060100_DOMAIN1'
 
  ! Specification of simulation length in days OR hours
  !KDAY = 1
- KHOUR = 240
+ KHOUR = 3
 
  ! Physics options (see the documentation for details)
  DYNAMIC_VEG_OPTION                = 4
@@ -34,12 +34,12 @@
  SURFACE_RESISTANCE_OPTION         = 4
 
  ! Timesteps in units of seconds
- FORCING_TIMESTEP = 3600 
+ FORCING_TIMESTEP = 3600
  NOAH_TIMESTEP    = 3600 
- OUTPUT_TIMESTEP  = 10800 
+ OUTPUT_TIMESTEP  = 3600
 
  ! Land surface model restart file write frequency
- RESTART_FREQUENCY_HOURS = 6000
+ RESTART_FREQUENCY_HOURS = 1
 
  ! Split output after split_output_count output times.
  SPLIT_OUTPUT_COUNT = 1
