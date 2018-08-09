@@ -7,7 +7,6 @@ include ../macros
 
 OBJS = \
 	module_date_utilities_rt.o \
-	module_UDMAP.o \
 	module_HYDRO_utils.o \
 	module_noah_chan_param_init_rt.o \
 	module_GW_baseflow.o \
@@ -100,10 +99,9 @@ endif
 module_UDMAP.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 
 ifneq ($(WRF_HYDRO_NUDGING),-DWRF_HYDRO_NUDGING)
-module_channel_routing.o: module_UDMAP.o
+module_channel_routing.o: 
 else
-module_channel_routing.o: module_UDMAP.o\
-			  ../nudging/module_date_utils_nudging.o \
+module_channel_routing.o: ../nudging/module_date_utils_nudging.o \
 		          ../nudging/module_nudging_utils.o \
           		  ../nudging/module_stream_nudging.o
 endif
