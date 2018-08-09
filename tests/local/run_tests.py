@@ -27,7 +27,7 @@ def run_tests(
         Args:
             config: The config(s) to run, must be listed in hydro_namelist.json keys.
             E.g. nwm_ana gridded
-            compiler: The compiler to use, options are 'intel' or 'gfort'
+            compiler: The compiler to use, options are 'ifort' or 'gfort'
             domain_dir: The domain directory to use
             candidate_dir: The wrf-hydro code candidate directory to use, e.g. wrf_hydro_nwm_public
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
