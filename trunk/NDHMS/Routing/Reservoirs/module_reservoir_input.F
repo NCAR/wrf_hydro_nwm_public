@@ -5,14 +5,15 @@ module module_reservoir_input
 
     type, extends(reservoir_base_input_struct) :: reservoir_input_struct
 
-        real, allocatable :: inflow
+        !real, allocatable :: inflow
 
+        real :: inflow2
 
         contains
 
 
         procedure :: init => reservoir_input_struct_init
-        procedure :: destroy => reservoir_input_struct_destroy
+        !procedure :: destroy => reservoir_input_struct_destroy
 
 
     end type reservoir_input_struct
@@ -26,17 +27,19 @@ module module_reservoir_input
 	implicit none
     	class (reservoir_input_struct), intent(inout) :: this ! object being initialized
 
+        this%inflow = 0.0
 
-        logical :: allocation_error = .false.
+
+        !logical :: allocation_error = .false.
 
 
         ! allocate reservoir_inflow
-        if ( .not. allocated(this%inflow) ) then
-            allocate(this%inflow())             !Is this correct???
-            this%inflow = 0.0
-        else
-            allocation_error = .true.
-        end if
+        !if ( .not. allocated(this%inflow) ) then
+        !    allocate(this%inflow())             !Is this correct???
+        !    this%inflow = 0.0
+        !else
+        !    allocation_error = .true.
+        !end if
 
 
     end subroutine reservoir_input_struct_init
@@ -45,21 +48,21 @@ module module_reservoir_input
 
 
     ! destructor for the reservoir input struct
-    subroutine reservoir_input_struct_destroy(this)
-        implicit none
-        class (reservoir_base_input_struct), intent(inout) :: this ! object being destroyed
+    !subroutine reservoir_input_struct_destroy(this)
+    !    implicit none
+    !    class (reservoir_base_input_struct), intent(inout) :: this ! object being destroyed
 
-        logical :: allocation_error = .false.
+    !    logical :: allocation_error = .false.
 
-        ! deallocate reservoir_inflow
-        if (  allocated(this%inflow) ) then
-            deallocate(this%inflow)
-        else
-            allocation_error = .true.
-        end if
+    !    ! deallocate reservoir_inflow
+    !    if (  allocated(this%inflow) ) then
+    !        deallocate(this%inflow)
+    !    else
+    !        allocation_error = .true.
+    !    end if
 
 
-    end subroutine reservoir_input_struct_destroy
+    !end subroutine reservoir_input_struct_destroy
 
 
 end module module_reservoir_input
