@@ -42,45 +42,6 @@ module module_reservoir_base
 
 
 
-    type :: levelpool_base_struct
-
-
-    end type
-
-
-
-    type :: levelpool_base_state_struct
-
-
-    end type
-
-
-
-    type :: levelpool_base_parameters_struct
-
-
-    end type
-
-
-
-    type :: machine_learning_base_struct
-
-    end type
-
-
-    type :: machine_learning_base_state_struct
-
-    end type
-
-
-    type :: machine_learning_parameters_struct
-
-    end type
-
-
-
-
-
     type, abstract :: reservoir_base_struct
 
         type(reservoir_base_input_struct), pointer :: input
@@ -96,9 +57,12 @@ module module_reservoir_base
 
 
     abstract interface
-        subroutine run_release_interface(reservoir_data)   !Not sure what is being passed here at the moment
+        subroutine run_release_interface(reservoir_data)   !Reservoir static data needed???
+        !subroutine run_release_interface()   !Nothing passed
+
             import :: reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
+            !class(reservoir_base_struct)
         end subroutine
     end interface
 
