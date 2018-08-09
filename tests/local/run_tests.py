@@ -223,6 +223,8 @@ def main():
 
     # run pytest for each supplied config
     has_failure = False
+    print("\n\n---------------- Starting WRF-Hydro Testing ----------------")
+    print("Testing the configs: " + ', '.join(config_list), flush=True)
     for config in config_list:
 
         extra_spaces = 29
