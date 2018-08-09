@@ -28,6 +28,28 @@ module module_levelpool
     contains
 
 
+
+    !Level Pool Constructor
+    subroutine levelpool_struct_init(this)   !Need to figure out connecting this with LP params
+        implicit none
+
+        class(levelpool_struct), intent(inout) :: this ! object being initialized
+
+    end subroutine levelpool_struct_init
+
+
+
+    !Level Pool Destructor
+    subroutine levelpool_struct_destroy(this)
+        implicit none
+
+        class(levelpool_struct), intent(inout) :: this ! object being destroyed
+
+    end subroutine levelpool_struct_destroy
+
+
+
+
     subroutine run_levelpool_release(reservoir_data)   !Reservoir static data needed???
     !subroutine run_levelpool_release()   !Nothing passed
         implicit none
@@ -38,6 +60,7 @@ module module_levelpool
         !I think I should call LP physics code here
 
     end subroutine run_levelpool_release
+
 
 
 

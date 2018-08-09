@@ -72,7 +72,7 @@ module module_reservoir_base
 
     !constructor for the reservoir input struct
     subroutine reservoir_base_input_struct_init(this)      !I don't think I need to pass any parameters here??
-	implicit none
+        implicit none
     	class (reservoir_base_input_struct), intent(inout) :: this ! object being initialized
 
         this%inflow = 0.0
@@ -94,7 +94,7 @@ module module_reservoir_base
 
     !constructor for the reservoir output struct
     subroutine reservoir_base_output_struct_init(this)      !I don't think I need to pass any parameters here??
-	implicit none
+        implicit none
     	class (reservoir_base_output_struct), intent(inout) :: this ! object being initialized
 
         this%outflow = 0.0
