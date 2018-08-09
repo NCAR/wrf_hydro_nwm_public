@@ -75,7 +75,7 @@
             "dxrt": 1000,
             "io_config_outputs": 4,
             "io_form_outputs": 2,
-            "output_channelbucket_influx": 0,
+            "output_channelbucket_influx": 2,
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,

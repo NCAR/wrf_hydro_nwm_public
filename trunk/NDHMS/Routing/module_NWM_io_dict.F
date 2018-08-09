@@ -10,10 +10,12 @@
 ! karsten at ucar dot edu     
 
 module module_NWM_io_dict
+
+use module_version, only: get_model_version
+
 implicit none
 
 ! Declare parameter values for module.
-character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0"
 integer, parameter :: numChVars = 10
 integer, parameter :: numLdasVars = 97
 integer, parameter :: numRtDomainVars = 5
@@ -39,7 +41,6 @@ type chrtMeta
    ! Variable names
    character (len=64), dimension(numChVars) :: varNames
    integer :: numVars = numChVars
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "channel_rt"
    character (len=64) :: modelConfigType
    ! Output variable attributes
@@ -114,7 +115,6 @@ type ldasMeta
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
    integer :: numSpectrumBands = 2
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
 
@@ -188,7 +188,6 @@ type rtDomainMeta
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "terrain_rt"
    character (len=64) :: modelConfigType
 
@@ -259,7 +258,6 @@ type lakeMeta
    ! Variable names
    character (len=64), dimension(numLakeVars) :: varNames
    integer :: numVars = numLakeVars
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "reservoir"
    character (len=64) :: modelConfigType
 
@@ -331,7 +329,6 @@ type chrtGrdMeta
    ! Variable names
    character (len=64), dimension(numChGrdVars) :: varNames
    integer :: numVars = numChGrdVars
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "channel_rt"
    character (len=64) :: modelConfigType
 
@@ -405,7 +402,6 @@ type lsmMeta
    integer :: numVars = numLsmVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers = 4
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
 
@@ -478,7 +474,6 @@ type chObsMeta
    ! Variable names
    character (len=64), dimension(numChObsVars) :: varNames
    integer :: numVars = numChObsVars
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "channel_rt"
    character (len=64) :: modelConfigType
 
@@ -551,7 +546,6 @@ type gwMeta
    ! Variable names
    character (len=64), dimension(numGwVars) :: varNames
    integer :: numVars = numGwVars
-   character (len=512) :: outVersion = codeVersion
    character (len=512) :: modelOutputType = "groundwater_rt"
    character (len=64) :: modelConfigType
 
@@ -791,7 +785,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ldasOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
-   ldasOutDict%title = "OUTPUT FROM " // codeVersion
+   ldasOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    ldasOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    ldasOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    ldasOutDict%conventions = "CF-1.6"
@@ -1993,7 +1987,7 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    lsmOutDict%modelNdvInt = -2147483647
 
    ! First establish global attributes.
-   lsmOutDict%title = "OUTPUT FROM " // codeVersion
+   lsmOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    lsmOutDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    lsmOutDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    lsmOutDict%conventions = "CF-1.6"

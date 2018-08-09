@@ -5,13 +5,13 @@ import wrfhydropy
 
 
 #regression question
-def test_regression(output_dir,capsys):
+def test_regression(output_dir, capsys):
     with capsys.disabled():
         print("\nQuestion: The candidate run outputs match the reference run outputs?", end="")
 
     # Check for existence of sim objects
-    candidate_run_file =  output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
-    reference_run_file =  output_dir / 'run_reference' / 'WrfHydroSim_collected.pkl'
+    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
+    reference_run_file = output_dir / 'run_reference' / 'WrfHydroSim_collected.pkl'
 
     if candidate_run_file.is_file() is False:
         pytest.skip('Candidate run object not found, skipping test')

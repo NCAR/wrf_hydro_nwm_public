@@ -1,7 +1,4 @@
 import subprocess
-import socket
-import getpass
-
 import pathlib
 from argparse import ArgumentParser
 import shutil
@@ -26,7 +23,7 @@ def run_tests(config: str,
         Args:
             config: The config(s) to run, must be listed in hydro_namelist.json keys.
             E.g. nwm_ana gridded
-            compiler: The compiler to use, options are 'intel' or 'gfort'
+            compiler: The compiler to use, options are 'ifort' or 'gfort'
             domain_dir: The domain directory to use
             candidate_dir: The wrf-hydro code candidate directory to use, e.g. wrf_hydro_nwm_public
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
@@ -45,6 +42,13 @@ def run_tests(config: str,
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
     pytest_cmd = "pytest -v --ignore=local"
+
+    # Ignore section: for cleaner tests with less skipps!
+    # NWM
+    # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
+    if config.lower().find('nwm') < 0:
+        pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
+
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
@@ -61,9 +65,11 @@ def run_tests(config: str,
         pytest_cmd += " --walltime " + walltime
         pytest_cmd += " --queue " + queue
 
+    print(pytest_cmd)
     tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
 
     return tests
+
 
 def main():
     parser = ArgumentParser()
@@ -112,10 +118,9 @@ def main():
                              'specify for no scheduler')
 
     parser.add_argument('--nnodes',
-                     default='6',
-                     required=False,
-                     help='Number of nodes to use for testing if running on scheduler')
-
+                        default='6',
+                        required=False,
+                        help='Number of nodes to use for testing if running on scheduler')
 
     parser.add_argument('--account',
                         default='NRAL0017',
@@ -167,7 +172,7 @@ def main():
 
     # Get the domain if asked for
     if domain_tag is not None:
-        #Reset domain dir to be the downlaoded domain in the output dir
+        # Reset domain dir to be the downlaoded domain in the output dir
         domain_dir = output_dir.joinpath('example_case')
 
         if domain_tag == 'dev':
@@ -191,26 +196,30 @@ def main():
                            shell=True,
                            cwd=str(output_dir))
 
-    ## Make copy paths
+    # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
     reference_copy = output_dir.joinpath(reference_dir.name + '_ref_pytest')
 
-    ## Remove if exist and make if not
+    # Remove if exist and make if not
     if candidate_copy.is_dir():
         shutil.rmtree(str(candidate_copy))
     if reference_copy.is_dir():
         shutil.rmtree(str(reference_copy))
 
-    ## copy directories to avoid polluting user source code directories
-    shutil.copytree(str(candidate_dir),str(candidate_copy),symlinks=True)
-    shutil.copytree(str(reference_dir),str(reference_copy),symlinks=True)
+    # copy directories to avoid polluting user source code directories
+    shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
+    shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
 
     # run pytest for each supplied config
     has_failure = False
+    print("\n\n---------------- Starting WRF-Hydro Testing ----------------")
+    print("Testing the configs: " + ', '.join(config_list), flush=True)
     for config in config_list:
-        print('\n\n############################')
-        print('### TESTING ' + config + ' ###')
-        print('############################\n\n',flush=True)
+        extra_spaces = 29
+        total_len = len(config) + extra_spaces
+        print('\n\n' + ('#' * total_len))
+        print('### TESTING:  ---  ' + config + '  ---  ###')
+        print(('#' * total_len) + '\n', flush=True)
 
         test_result = run_tests(config = config,
                                 compiler = compiler,
@@ -230,15 +239,18 @@ def main():
 
     # Exit with 1 if failure
     if has_failure:
-        print('\n\n############################')
-        print('### TESTING FAILED ###')
-        print('############################\n\n',flush=True)
+        print('\n\n'
+              '##################################')
+        print('###  ---  TESTING FAILED  ---  ###')
+        print('##################################\n\n', flush=True)
         exit(1)
     else:
-        print('\n\n############################')
-        print('### TESTING PASSED ###')
-        print('############################\n\n',flush=True)
+        print('\n\n'
+              '##################################')
+        print('###  ---  TESTING PASSED  ---  ###')
+        print('##################################\n\n', flush=True)
         exit(0)
+
 
 if __name__ == '__main__':
     main()
