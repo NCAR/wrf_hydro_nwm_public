@@ -14,14 +14,6 @@ module module_reservoir_base
 
 
 
-
-    type, abstract :: reservoir_base_struct
-
-
-    end type
-
-
-
     type :: reservoir_base_input_struct
 
 
@@ -33,6 +25,82 @@ module module_reservoir_base
         procedure :: destroy => reservoir_base_input_struct_destroy
 
     end type
+
+
+
+    type :: reservoir_base_output_struct
+
+
+        real :: outflow
+
+        contains
+
+        procedure :: init => reservoir_base_output_struct_init
+        procedure :: destroy => reservoir_base_output_struct_destroy
+
+    end type
+
+
+
+    type :: levelpool_base_struct
+
+
+    end type
+
+
+
+    type :: levelpool_base_state_struct
+
+
+    end type
+
+
+
+    type :: levelpool_base_parameters_struct
+
+
+    end type
+
+
+
+    type :: machine_learning_base_struct
+
+    end type
+
+
+    type :: machine_learning_base_state_struct
+
+    end type
+
+
+    type :: machine_learning_parameters_struct
+
+    end type
+
+
+
+
+
+    type, abstract :: reservoir_base_struct
+
+        type(reservoir_base_input_struct), pointer :: input
+        type(reservoir_base_output_struct), pointer :: output
+
+
+        contains
+
+        procedure (run_release_interface), deferred :: run_release
+
+
+    end type
+
+
+    abstract interface
+        subroutine run_release_interface(reservoir_data)   !Not sure what is being passed here at the moment
+            import :: reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+        end subroutine
+    end interface
 
 
 
@@ -57,6 +125,28 @@ module module_reservoir_base
 
 
     end subroutine reservoir_base_input_struct_destroy
+
+
+
+    !constructor for the reservoir output struct
+    subroutine reservoir_base_output_struct_init(this)      !I don't think I need to pass any parameters here??
+	implicit none
+    	class (reservoir_base_output_struct), intent(inout) :: this ! object being initialized
+
+        this%outflow = 0.0
+
+
+    end subroutine reservoir_base_output_struct_init
+
+
+
+    !destructor for the reservoir output struct
+    subroutine reservoir_base_output_struct_destroy(this)
+        implicit none
+        class (reservoir_base_output_struct), intent(inout) :: this ! object being destroyed
+
+
+    end subroutine reservoir_base_output_struct_destroy
 
 
 
