@@ -6,22 +6,18 @@ import shutil
 from releaseapi import get_release_asset
 from gdrive_download import download_file_from_google_drive
 
-
-def run_tests(
-    config: str,
-    compiler: str,
-    domain_dir: str,
-    candidate_dir: str,
-    reference_dir: str,
-    output_dir: str,
-    scheduler: bool=False,
-    ncores: int=216,
-    nnodes: int=6,
-    account: str='NRAL0017',
-    walltime: str='02:00:00',
-    queue='regular',
-    html_report='wrfhydro_testout.html'
-):
+def run_tests(config: str,
+              compiler: str,
+              domain_dir: str,
+              candidate_dir: str,
+              reference_dir: str,
+              output_dir: str,
+              scheduler: bool = False,
+              ncores: int = 216,
+              nnodes: int = 6,
+              account: str = 'NRAL0017',
+              walltime: str = '02:00:00',
+              queue = 'regular'):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -41,7 +37,10 @@ def run_tests(
     candidate_source_dir = candidate_dir + '/trunk/NDHMS'
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
-    # For interactive debug add: --pdb
+    # HTML report
+    html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
+    html_report = str(pathlib.Path(output_dir).joinpath(html_report))
+
     pytest_cmd = "pytest -v --ignore=local"
 
     # Ignore section: for cleaner tests with less skipps!
@@ -50,7 +49,7 @@ def run_tests(
     if config.lower().find('nwm') < 0:
         pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
 
-    pytest_cmd += " --html=" + str(html_report)
+    pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
     pytest_cmd += " --domain_dir " + domain_dir
@@ -142,12 +141,6 @@ def main():
                         help='Queue to use if running on NCAR Cheyenne, options are regular, '
                              'premium, or shared')
 
-    parser.add_argument('--html_report',
-                        default='wrfhydro_testout.html',
-                        required=False,
-                        action='store',
-                        help='Create an HTML report from testing with the specified name')
-
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -170,10 +163,6 @@ def main():
     account = args.account
     walltime = args.walltime
     queue = args.queue
-
-    # Build path to html report
-    html_report = args.html_report
-    html_report = str(output_dir.joinpath(html_report))
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -226,28 +215,25 @@ def main():
     print("\n\n---------------- Starting WRF-Hydro Testing ----------------")
     print("Testing the configs: " + ', '.join(config_list), flush=True)
     for config in config_list:
-
         extra_spaces = 29
         total_len = len(config) + extra_spaces
         print('\n\n' + ('#' * total_len))
         print('### TESTING:  ---  ' + config + '  ---  ###')
         print(('#' * total_len) + '\n', flush=True)
 
-        test_result = run_tests(
-            config=config,
-            compiler=compiler,
-            domain_dir=str(domain_dir),
-            candidate_dir=str(candidate_copy),
-            reference_dir=str(reference_copy),
-            output_dir=str(output_dir),
-            scheduler=scheduler,
-            ncores=ncores,
-            nnodes=nnodes,
-            account=account,
-            walltime=walltime,
-            queue=queue,
-            html_report=html_report
-        )
+        test_result = run_tests(config = config,
+                                compiler = compiler,
+                                domain_dir = str(domain_dir),
+                                candidate_dir = str(candidate_copy),
+                                reference_dir = str(reference_copy),
+                                output_dir = str(output_dir),
+                                scheduler = scheduler,
+                                ncores = ncores,
+                                nnodes = nnodes,
+                                account = account,
+                                walltime = walltime,
+                                queue = queue)
+
         if test_result.returncode != 0:
             has_failure = True
 
