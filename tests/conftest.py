@@ -110,7 +110,8 @@ def _make_sim(domain_dir,
     # domain
     domain = Domain(
         domain_top_dir=domain_dir,
-        domain_config=configuration)
+        domain_config=configuration
+    )
 
     # Job
     # exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
@@ -132,8 +133,8 @@ def _make_sim(domain_dir,
                                        walltime=walltime,
                                        queue=queue))
 
-
     return sim
+
 
 @pytest.fixture(scope="session")
 def candidate_sim(request):
@@ -150,19 +151,55 @@ def candidate_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    candidate_sim = _make_sim(domain_dir = domain_dir,
-                              compiler=compiler,
-                              source_dir= candidate_dir,
-                              configuration=configuration,
-                              option_suite=option_suite,
-                              ncores = ncores,
-                              nnodes=nnodes,
-                              scheduler = scheduler,
-                              account = account,
-                              walltime=walltime,
-                              queue=queue)
+    candidate_sim = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=candidate_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
 
     return candidate_sim
+
+@pytest.fixture(scope="session")
+def candidate_channel_only_sim(request):
+
+    domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
+    candidate_dir = request.config.getoption("--candidate_dir")
+    configuration = request.config.getoption("--config")
+    option_suite = request.config.getoption("--option_suite")
+    ncores = request.config.getoption("--ncores")
+    nnodes = request.config.getoption("--nnodes")
+    scheduler = request.config.getoption("--scheduler")
+    account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
+
+    candidate_channel_only_sim = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=candidate_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
+
+    # Channel and bucket mode is forc_typ = 10.
+    candidate_channel_only_sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
+    return candidate_channel_only_sim
+
 
 @pytest.fixture(scope="session")
 def reference_sim(request):
@@ -179,19 +216,22 @@ def reference_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    reference_sim = _make_sim(domain_dir = domain_dir,
-                              compiler=compiler,
-                              source_dir= reference_dir,
-                              configuration=configuration,
-                              option_suite=option_suite,
-                              ncores = ncores,
-                              nnodes=nnodes,
-                              scheduler = scheduler,
-                              account = account,
-                              walltime=walltime,
-                              queue=queue)
+    reference_sim = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=reference_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
 
     return reference_sim
+
 
 @pytest.fixture(scope="session")
 def output_dir(request):
@@ -207,9 +247,9 @@ def output_dir(request):
     output_dir.mkdir(parents=True)
     return output_dir
 
+
 @pytest.fixture(scope="session")
 def ncores(request):
     ncores = request.config.getoption("--ncores")
 
     return ncores
-
