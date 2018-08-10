@@ -1,5 +1,5 @@
 import pickle
-
+import warnings
 import pytest
 import wrfhydropy
 
@@ -23,8 +23,10 @@ def test_regression_data(output_dir, capsys):
     reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
 
     #Check regression
-    data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_run_expected.output,
-                                               reference_run_expected.output)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_run_expected.output,
+                                                   reference_run_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_data_diffs = any(value != 0 for value in data_diffs.diff_counts.values())
@@ -59,8 +61,10 @@ def test_regression_metadata(output_dir, capsys):
     reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
 
     #Check regression
-    meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(candidate_run_expected.output,
-                                               reference_run_expected.output)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(candidate_run_expected.output,
+                                                   reference_run_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_data_diffs = any(value != 0 for value in meta_data_diffs.diff_counts.values())
