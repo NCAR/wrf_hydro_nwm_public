@@ -30,10 +30,56 @@ module module_levelpool
 
 
     !Level Pool Constructor
-    subroutine levelpool_struct_init(this)   !Need to figure out connecting this with LP params
+    subroutine levelpool_struct_init(this, routing_period, &    !Need to check 2 different sources of routing period
+        area_of_reservoir, bottom_of_weir_elevation, &          !area of reservoir maybe later a static param to reservoir??
+        weir_coeffecient, weir_length, orifice_elevation, &
+        orifice_coffecient, orifice_area, max_depth_of_reservoir, &
+        lake_number)   !Need to figure out connecting this with LP params
         implicit none
-
         class(levelpool_struct), intent(inout) :: this ! object being initialized
+        real, intent(IN)    :: routing_period            ! routing period [s]
+        real, intent(IN)    :: area_of_reservoir                 ! area of reservoir (km^2)
+        real, intent(IN)    :: bottom_of_weir_elevation          ! bottom of weir elevation
+        real, intent(IN)    :: weir_coeffecient                  ! weir coeff.
+        real, intent(IN)    :: weir_length                      ! weir length (m)
+        real, intent(IN)    :: orifice_elevation                ! orifice elevation
+        real, intent(IN)    :: orifice_coffecient                ! orifice coeff.
+        real, intent(IN)    :: orifice_area                     ! orifice area (m^2)
+        real, intent(IN)    :: max_depth_of_reservoir          ! max depth of reservoir before overtop (m)
+        integer, intent(IN) :: lake_number                      ! lake number
+
+
+
+        if (this%pointer_allocation_guard .eqv. .false. ) then
+
+            ! try to allocate inflow
+            allocate ( this%inflow )
+            if ( .not. associated(this%inflow) ) then
+                ! if the input structure could not be created write and error
+                write(0,*) "Failure to allocate level pool input structure"
+            else
+                ! initialize the input structure
+                call this%inflow%init()
+            end if
+
+
+
+            ! try to allocate outflow
+            allocate ( this%outflow )
+            if ( .not. associated(this%outflow) ) then
+                ! if the output structure could not be created write and error
+                write(0,*) "Failure to allocate level pool output structure"
+            else
+                ! initialize the output structure
+                call this%outflow%init()
+            end if
+
+
+
+        !Next figure out allocation of parameters and state
+
+        end if
+
 
     end subroutine levelpool_struct_init
 

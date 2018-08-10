@@ -44,8 +44,8 @@ module module_reservoir_base
 
     type, abstract :: reservoir_base_struct
 
-        type(reservoir_base_input_struct), pointer :: input
-        type(reservoir_base_output_struct), pointer :: output
+        type(reservoir_base_input_struct), pointer :: inflow
+        type(reservoir_base_output_struct), pointer :: outflow
 
 
         contains
