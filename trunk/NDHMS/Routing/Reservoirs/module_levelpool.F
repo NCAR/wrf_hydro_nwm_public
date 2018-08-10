@@ -1,6 +1,6 @@
 module module_levelpool
 
-    !use module_levelpool_parameters
+    use module_levelpool_parameters
     !use module_levelpool_state
     use module_reservoir_base
 
@@ -10,7 +10,7 @@ module module_levelpool
 
     type, extends(reservoir_base_struct) :: levelpool_struct
 
-        !type (levelpool_parameters_interface), pointer :: parameters => null()
+        type (levelpool_parameters_interface), pointer :: parameters => null()
         !type (levelpool_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
@@ -29,23 +29,26 @@ module module_levelpool
 
 
 
+    !I will fix the lining up of things
+
     !Level Pool Constructor
     subroutine levelpool_struct_init(this, routing_period, &    !Need to check 2 different sources of routing period
-        area_of_reservoir, bottom_of_weir_elevation, &          !area of reservoir maybe later a static param to reservoir??
+        area, weir_elevation, &                     !area of reservoir maybe later a static param to reservoir??
         weir_coeffecient, weir_length, orifice_elevation, &
-        orifice_coffecient, orifice_area, max_depth_of_reservoir, &
+        orifice_coffecient, orifice_area, max_depth, &
         lake_number)   !Need to figure out connecting this with LP params
+
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
         real, intent(IN)    :: routing_period            ! routing period [s]
-        real, intent(IN)    :: area_of_reservoir                 ! area of reservoir (km^2)
-        real, intent(IN)    :: bottom_of_weir_elevation          ! bottom of weir elevation
+        real, intent(IN)    :: area                 ! area of reservoir (km^2)
+        real, intent(IN)    :: weir_elevation          ! bottom of weir elevation
         real, intent(IN)    :: weir_coeffecient                  ! weir coeff.
         real, intent(IN)    :: weir_length                      ! weir length (m)
         real, intent(IN)    :: orifice_elevation                ! orifice elevation
         real, intent(IN)    :: orifice_coffecient                ! orifice coeff.
         real, intent(IN)    :: orifice_area                     ! orifice area (m^2)
-        real, intent(IN)    :: max_depth_of_reservoir          ! max depth of reservoir before overtop (m)
+        real, intent(IN)    :: max_depth         ! max depth of reservoir before overtop (m)
         integer, intent(IN) :: lake_number                      ! lake number
 
 
@@ -73,6 +76,23 @@ module module_levelpool
                 ! initialize the output structure
                 call this%outflow%init()
             end if
+
+
+
+            ! try to allocate levelpool parameters
+            allocate ( this%parameters )
+            if ( .not. associated(this%parameters) ) then
+                ! if the parameters structure could not be created write an error
+                write(0,*) "Failure to allocate levelpool parameters structure"
+            else
+                ! initialize the parameters structure
+                call this%parameters%init( routing_period, &
+                    area, weir_elevation, &
+                    weir_coeffecient, weir_length, orifice_elevation, &
+                    orifice_coffecient, orifice_area, max_depth, &
+                    lake_number)
+            end if
+            this%pointer_allocation_guard = .true.
 
 
 
@@ -104,6 +124,10 @@ module module_levelpool
 
 
         !I think I should call LP physics code here
+
+        !first call to LP physics
+
+        !second call to LP physics
 
     end subroutine run_levelpool_release
 
