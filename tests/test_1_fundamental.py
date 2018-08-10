@@ -1,5 +1,6 @@
 import copy
 import datetime as dt
+import math
 import os
 import pathlib
 import pickle
@@ -185,8 +186,10 @@ def test_ncores_candidate(output_dir, capsys):
     candidate_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_sim_ncores.output,
-                                               candidate_sim_expected.output)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_ncores.output,
+                                                   candidate_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -274,8 +277,10 @@ def test_perfrestart_candidate(
     candidate_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_sim_restart.output,
-                                               candidate_sim_expected.output)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_restart.output,
+                                                   candidate_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
