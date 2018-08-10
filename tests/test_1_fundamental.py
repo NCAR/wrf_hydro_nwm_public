@@ -163,7 +163,7 @@ def test_ncores_candidate(output_dir, capsys):
 
     # Edit the sim object number of cores
     if candidate_sim_ncores.scheduler is not None:
-        candidate_sim_ncores.scheduler.nproc = math.ceil(candidate_sim_ncores.scheduler.nproc * 0.1)
+        candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - 1
     else:
         orig_exe_cmd = candidate_sim_ncores.jobs[0]._exe_cmd
         orig_exe_cmd = orig_exe_cmd.replace('-np 2','-np 1')
