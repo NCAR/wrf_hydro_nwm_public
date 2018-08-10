@@ -137,7 +137,7 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir, capsy
         # Run
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        diffs = wrfhydropy.outputdiffs.OutputDiffs(
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_run_expected.output,
             candidate_channel_only_run_expected.output,
             nccmp_options=nccmp_options,
@@ -218,7 +218,7 @@ def test_ncores_candidate_channel_only(output_dir, capsys):
     candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_channel_only_sim_ncores.output,
+    diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_channel_only_sim_ncores.output,
                                                candidate_channel_only_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
@@ -301,7 +301,7 @@ def test_perfrestart_candidate_channel_only(output_dir, capsys):
     candidate_channel_only_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_channel_only_sim_restart.output,
+    diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_channel_only_sim_restart.output,
                                                candidate_channel_only_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
