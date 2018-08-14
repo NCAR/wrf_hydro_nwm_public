@@ -180,8 +180,8 @@ def main():
 
     compiler = args.compiler
     domain_tag = args.domain_tag
-    ncores = args.ncores
-    nnodes = args.nnodes
+    ncores = int(args.ncores)
+    nnodes = int(args.nnodes)
     scheduler = args.scheduler
     account = args.account
     walltime = args.walltime
