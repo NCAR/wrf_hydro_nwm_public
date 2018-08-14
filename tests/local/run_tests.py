@@ -95,7 +95,17 @@ def run_tests(config: str,
 
 
 def main():
-    parser = ArgumentParser()
+    parser = ArgumentParser(description='Run WRF-Hydro test suite locally',
+                            epilog='Example usage: python -B run_tests.py '
+                                   '--config nwm_ana nwm_long_range '
+                                   '--compiler gfort '
+                                   '--candidate_dir '
+                                   '/glade/scratch/jmills/wrf_hydro_nwm_public_origin '
+                                   '--reference_dir '
+                                   '/glade/scratch/jmills/wrf_hydro_nwm_public_upstream '
+                                   '--domain_dir /glade/scratch/jmills/CONUS_V2 '
+                                   '--scheduler '
+                                   '--output_dir /glade/scratch/jmills/conus_v2_testing_gfort')
 
     parser.add_argument("--config",
                         required=True,
