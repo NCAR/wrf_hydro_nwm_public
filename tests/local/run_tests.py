@@ -2,9 +2,11 @@ import subprocess
 import pathlib
 from argparse import ArgumentParser
 import shutil
+import socket
+import warnings
 
-from releaseapi import get_release_asset
-from gdrive_download import download_file_from_google_drive
+from utils.releaseapi import get_release_asset
+from utils.gdrive_download import download_file_from_google_drive
 
 def run_tests(config: str,
               compiler: str,
@@ -37,11 +39,31 @@ def run_tests(config: str,
     candidate_source_dir = candidate_dir + '/trunk/NDHMS'
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
+    # Load modules and override nnodes/ncores if running on cheyenne
+    hostname = socket.gethostname()
+    module_cmd = ''
+    if 'cheyenne' in hostname:
+        if compiler.lower() == 'ifort':
+            module_cmd = 'module purge; module load intel/16.0.3 ncarenv/1.2 ncarcompilers/0.4.1 ' \
+                         'mpt/2.15f netcdf/4.4.1;'
+        elif compiler.lower() == 'gfort':
+            module_cmd = 'module purge; module load gnu/7.1.0 ncarenv/1.2 ncarcompilers/0.4.1 ' \
+                         'mpt/2.15 netcdf/4.4.1.1;'
+        if scheduler:
+            # reset ncores and nnodes defaults to scheduler defaults
+            if ncores == 2:
+                ncores = 216
+            if nnodes < 6:
+                warnings.warn('CONUS testing should run on a minimum of 6 nodes, setting nnodes '
+                              'to 6')
+                nnodes = 6
+
+
     # HTML report
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
-    pytest_cmd = "pytest -v --ignore=local"
+    pytest_cmd = "pytest -v --ignore=local -p no:cacheprovider "
 
     # Ignore section: for cleaner tests with less skipps!
     # NWM
@@ -65,8 +87,9 @@ def run_tests(config: str,
         pytest_cmd += " --walltime " + walltime
         pytest_cmd += " --queue " + queue
 
-    print(pytest_cmd)
-    tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
+    subprocess_cmd = module_cmd + pytest_cmd
+    print(subprocess_cmd)
+    tests = subprocess.run(subprocess_cmd, shell=True, cwd=candidate_dir)
 
     return tests
 
