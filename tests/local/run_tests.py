@@ -41,7 +41,7 @@ def run_tests(config: str,
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
-    pytest_cmd = "pytest -v --ignore=local"
+    pytest_cmd = "pytest -v --ignore=local -p no:cacheprovider "
 
     # Ignore section: for cleaner tests with less skipps!
     # NWM
