@@ -1,4 +1,4 @@
-md5sum: 836d0d9848236afd0a8d4c34f5562e27  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART_LR/HYDRO_RST.2018-06-01_00:00_DOMAIN1
+md5sum: 1da057f89870e1166856893ab7a4ea8b  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART_LR/HYDRO_RST.2018-06-01_00:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;
@@ -44,7 +44,7 @@ variables:
 // global attributes:
 		:his_out_counts = 24 ;
 		:Restart_Time = "2018-06-01_00:00:00" ;
-		:Since_Date = "2018-05-31_00:00:00" ;
+		:Since_Date = "2018-05-20_00:00:00" ;
 		:DTCT = 300.f ;
 		:channel_only = 0 ;
 		:channelBucket_only = 0 ;
