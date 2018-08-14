@@ -20,7 +20,8 @@ OBJS = \
 	module_lsm_forcing.o \
 	module_date_utilities_rt.o \
 	module_NWM_io_dict.o \
-	module_NWM_io.o
+	module_NWM_io.o \
+        module_reservoir_routing.o
 
 all:	$(OBJS)
 
@@ -61,14 +62,17 @@ module_HYDRO_io.o:  module_HYDRO_utils.o \
 	 	    ../Data_Rec/module_RT_data.o
 endif
 
-module_NWM_io_dict: ../Data_Rec/module_namelist.o
+module_NWM_io_dict: ../Data_Rec/module_namelist.o ../utils/module_version.o
 
 module_NWM_io: module_HYDRO_utils.o \
                module_NWM_io_dict.o \
                module_HYDRO_io.o \
                module_date_utilities_rt.o \
                ../Data_Rec/module_namelist.o \
-               ../Data_Rec/module_RT_data.o
+               ../Data_Rec/module_RT_data.o \
+	       ../utils/module_version.o
+
+module_reservoir_routing: ../Data_Rec/module_namelist.o
 
 module_HYDRO_utils.o: ../Data_Rec/module_namelist.o ../Data_Rec/module_RT_data.o
 

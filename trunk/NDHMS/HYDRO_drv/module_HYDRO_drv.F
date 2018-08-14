@@ -242,18 +242,18 @@ module module_HYDRO_drv
             if(nlst_rt(did)%t0OutputFlag .eq. 0) return
         endif
 
-        if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
-            if(nlst_rt(did)%io_form_outputs .eq. 0) then
-                call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
-                    //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
-                    ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
-                    did)
-            else
-                call output_lsmOut_NWM(did)
+        if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
+            if(nlst_rt(did)%LSMOUT_DOMAIN .eq. 1)  then
+                if(nlst_rt(did)%io_form_outputs .eq. 0) then
+                    call output_lsm(trim(nlst_rt(did)%olddate(1:4)//nlst_rt(did)%olddate(6:7)//nlst_rt(did)%olddate(9:10)  &
+                        //nlst_rt(did)%olddate(12:13)//nlst_rt(did)%olddate(15:16)//  &
+                        ".LSMOUT_DOMAIN"//trim(nlst_rt(did)%hgrid)),     &
+                        did)
+                else
+                    call output_lsmOut_NWM(did)
+                endif
             endif
         endif
-
-
         if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                 nlst_rt(did)%OVRTSWCRT          .gt. 0 .or. &
                 nlst_rt(did)%GWBASESWCRT        .gt. 0 .or. &
@@ -274,8 +274,8 @@ module module_HYDRO_drv
                             nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, &
                             RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, &
                             nlst_rt(did)%nsoil, &
-                            !                  nlst_rt(did)%startdate, nlst_rt(did)%olddate,
-                        !                  rt_domain(did)%subsurface%state%qsubrt,&
+                            !nlst_rt(did)%startdate, nlst_rt(did)%olddate,
+                            !rt_domain(did)%subsurface%state%qsubrt,&
                             nlst_rt(did)%sincedate, nlst_rt(did)%olddate, rt_domain(did)%subsurface%state%qsubrt,&
                             rt_domain(did)%subsurface%properties%zwattablrt,RT_DOMAIN(did)%subsurface%grid_transform%smcrt,&
                             RT_DOMAIN(did)%SUB_RESID,       &
@@ -907,6 +907,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
+       RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
        RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, &
        RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
        RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
@@ -927,6 +928,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
        , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
        , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       ,                                     RT_DOMAIN(did)%HLINK    &
        , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
        ,                                     nlst_rt(did)%SUBRTSWCRT &
        , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
@@ -946,7 +948,7 @@ else
        RT_DOMAIN(did)%QLateral, &
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &
-       RT_DOMAIN(did)%Bw,&
+       RT_DOMAIN(did)%Bw,RT_DOMAIN(did)%Tw,RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
        RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH,&
        RT_DOMAIN(did)%WEIRH,    &
        RT_DOMAIN(did)%WEIRC, RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, &
@@ -968,7 +970,7 @@ else
        , rt_domain(did)%CH_LNKRT_SL   &
        ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
-       nlst_rt(did)%gwChanCondConstOut, rt_domain(did)%velocity &
+       nlst_rt(did)%gwChanCondConstOut,rt_domain(did)%velocity &
        )
 endif
 

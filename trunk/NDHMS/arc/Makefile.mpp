@@ -4,16 +4,18 @@ all:
 	(make -f Makefile.comm BASIC)
 
 BASIC:
+	(cd utils   ; make -f Makefile)
+	(cd MPP     ; make -f Makefile)
 	make -C Routing/Overland
 	make -C Routing/Subsurface
 	make -C Routing/Groundwater
-	(cd MPP     ; make -f Makefile)
 	(cd Data_Rec     ; make -f Makefile)
 	make -C Debug_Utilities/
 	(cd Routing; make -f Makefile)
 	(cd HYDRO_drv;   make -f Makefile)
 
 clean:
+	(cd utils   ; make -f Makefile clean)
 	make -C Routing/Overland clean
 	make -C Routing/Subsurface clean
 	(cd Data_Rec; make -f Makefile clean)

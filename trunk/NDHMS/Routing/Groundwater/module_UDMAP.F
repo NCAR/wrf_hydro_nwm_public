@@ -92,6 +92,7 @@ contains
         integer :: ix_bufid, ii, ixrt,jxrt
         integer, allocatable, dimension(:) :: gbufi,gbufj,bufsize
         real*8 , allocatable, dimension(:) :: gbufw
+        integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
         character(len=*), intent(in) :: udmap_file
         character(len=*), intent(in) :: routelink_file
 
@@ -173,16 +174,19 @@ contains
           bufidflag = -999
        endif
 
-       do i = 1, ix_bufid
-          do j = 1, nlinksl
-               if(bufid_tmp(i) .eq. linkid(j)) then
-                  bufidflag(i) = bufid_tmp(i)
-                  goto 102
-               endif
-          end do
-102       continue
-       end do
-
+       cache_block = 256
+       do cache_idx = 0, nlinksl - 1, cache_block
+          cache_block_begin = cache_idx + 1
+          cache_block_end = min(cache_idx + cache_block, nlinksl)
+          do i = 1, ix_bufid
+             if(bufidflag(i) /= -999) cycle
+             do j = cache_block_begin, cache_block_end
+                if(bufid_tmp(i) .eq. linkid(j)) then
+                   bufidflag(i) = bufid_tmp(i)
+                endif
+             end do
+          enddo
+       enddo
 #ifdef MPP_LAND
       call com_write1dInt(bufidflag,ix_bufid,gbufid,npid)
 #endif

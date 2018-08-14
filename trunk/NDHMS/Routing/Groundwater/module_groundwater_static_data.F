@@ -13,13 +13,13 @@ module module_groundwater_static_data
         integer :: ovrtswcrt
 
 
-        contains
+    contains
 
         procedure :: init => groundwater_static_struct_init
         procedure :: destroy => groundwater_static_struct_destroy
     end type groundwater_static_struct
 
-    contains
+contains
 
     !constructor for the ground water struct
     subroutine groundwater_static_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
