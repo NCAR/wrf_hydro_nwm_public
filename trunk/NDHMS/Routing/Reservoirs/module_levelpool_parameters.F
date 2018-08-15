@@ -17,14 +17,14 @@ module module_levelpool_parameters
 
 contains
 
-    subroutine levelpool_parameters_init(this, routing_period, reservoir_area, &
+    subroutine levelpool_parameters_init(this, reservoir_area, &
         weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
         orifice_coffecient, orifice_area, max_depth, lake_number)
 
         implicit none
         class(levelpool_parameters_interface), intent(inout) :: this ! the type object being initialized
 
-        real, intent(IN)    :: routing_period           ! routing period [s]
+        !real, intent(IN)    :: routing_period           ! routing period [s]
         real, intent(IN)    :: reservoir_area                     ! area of reservoir (km^2)
         real, intent(IN)    :: weir_elevation           ! bottom of weir elevation
         real, intent(IN)    :: weir_coeffecient         ! weir coeff.

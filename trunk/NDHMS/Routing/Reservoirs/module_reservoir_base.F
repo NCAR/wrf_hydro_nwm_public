@@ -18,6 +18,8 @@ module module_reservoir_base
 
 
         real :: inflow
+        real :: routing_period
+
 
         contains
 
@@ -44,8 +46,8 @@ module module_reservoir_base
 
     type, abstract :: reservoir_base_struct
 
-        type(reservoir_base_input_struct), pointer :: inflow
-        type(reservoir_base_output_struct), pointer :: outflow
+        type(reservoir_base_input_struct), pointer :: input
+        type(reservoir_base_output_struct), pointer :: output
 
 
         contains

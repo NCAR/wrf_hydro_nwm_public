@@ -10,8 +10,15 @@ module module_levelpool
 
     type, extends(reservoir_base_struct) :: levelpool_struct
 
-        type (levelpool_parameters_interface), pointer :: parameters => null()
-        type (levelpool_state_interface), pointer :: state => null()
+        !type (levelpool_parameters_interface), pointer :: parameters => null()
+        !type (levelpool_state_interface), pointer :: state => null()
+
+        type (levelpool_parameters_interface) :: parameters
+        type (levelpool_state_interface) :: state
+
+
+
+
 
         logical :: pointer_allocation_guard = .false.
 
@@ -53,60 +60,68 @@ module module_levelpool
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
 
-            ! try to allocate inflow
-            allocate ( this%inflow )
-            if ( .not. associated(this%inflow) ) then
+            ! try to allocate input
+            allocate ( this%input )
+            if ( .not. associated(this%input) ) then
                 ! if the input structure could not be created write and error
                 write(0,*) "Failure to allocate level pool input structure"
             else
                 ! initialize the input structure
-                call this%inflow%init()
+                call this%input%init()
             end if
 
 
 
-            ! try to allocate outflow
-            allocate ( this%outflow )
-            if ( .not. associated(this%outflow) ) then
+            ! try to allocate output
+            allocate ( this%output )
+            if ( .not. associated(this%output) ) then
                 ! if the output structure could not be created write and error
                 write(0,*) "Failure to allocate level pool output structure"
             else
                 ! initialize the output structure
-                call this%outflow%init()
+                call this%output%init()
             end if
 
+
+            ! initialize levelpool parameters
+            call this%parameters%init( reservoir_area, weir_elevation, weir_coeffecient, &
+                weir_length, orifice_elevation, &
+                orifice_coffecient, orifice_area, &
+                max_depth, lake_number)
+
+
+
+            ! initialize levelpool state
+            call this%state%init( water_elevation )
 
 
             ! try to allocate levelpool parameters
-            allocate ( this%parameters )
-            if ( .not. associated(this%parameters) ) then
-                ! if the parameters structure could not be created write an error
-                write(0,*) "Failure to allocate levelpool parameters structure"
-            else
-                ! initialize the parameters structure
-                call this%parameters%init( routing_period, &
-                    reservoir_area, weir_elevation, weir_coeffecient, &
-                    weir_length, orifice_elevation, &
-                    orifice_coffecient, orifice_area, &
-                    max_depth, lake_number)
-            end if
-            this%pointer_allocation_guard = .true.
+            !allocate ( this%parameters )
+            !if ( .not. associated(this%parameters) ) then
+            !    if the parameters structure could not be created write an error
+            !    write(0,*) "Failure to allocate levelpool parameters structure"
+            !else
+            !    ! initialize the parameters structure
+            !    call this%parameters%init( reservoir_area, weir_elevation, weir_coeffecient, &
+            !        weir_length, orifice_elevation, &
+            !        orifice_coffecient, orifice_area, &
+            !        max_depth, lake_number)
+            !end if
+            !this%pointer_allocation_guard = .true.
 
 
 
             ! try to allocate levelpool state
-            allocate ( this%state )
-            if ( .not. associated(this%state) ) then
-                ! if the parameters structure could not be created write an error
-                write(0,*) "Failure to allocate levelpool state structure"
-            else
-                ! initialize the state structure
-                call this%state%init( water_elevation )
-            end if
-            this%pointer_allocation_guard = .true.
+            !allocate ( this%state )
+            !if ( .not. associated(this%state) ) then
+            !     if the parameters structure could not be created write an error
+            !    write(0,*) "Failure to allocate levelpool state structure"
+            !else
+            !    ! initialize the state structure
+            !    call this%state%init( water_elevation )
+            !end if
+            !this%pointer_allocation_guard = .true.
 
-
-        !Next figure out allocation of parameters and state
 
         end if
 
