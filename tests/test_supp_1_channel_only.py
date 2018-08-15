@@ -91,8 +91,8 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir, capsy
         pytest.skip('candidate_channel_only run object not found, skipping test')
 
     # Load run objects
-    candidate_run_expected = pickle.load(open(candidate_run_file, "rb"))
-    candidate_channel_only_run_expected = pickle.load(open(candidate_channel_only_run_file, "rb"))
+    candidate_run_expected = pickle.load(candidate_run_file.open("rb"))
+    candidate_channel_only_run_expected = pickle.load(candidate_channel_only_run_file.open("rb"))
 
     exclude_vars = [
         'stc1',
@@ -176,9 +176,9 @@ def test_ncores_candidate_channel_only(output_dir, capsys):
         )
 
     candidate_channel_only_sim = \
-        pickle.load(open(candidate_channel_only_sim_file, "rb"))
+        pickle.load(candidate_channel_only_sim_file.open("rb"))
     candidate_channel_only_sim_expected = \
-        pickle.load(open(candidate_channel_only_collected_file, "rb"))
+        pickle.load(candidate_channel_only_collected_file.open("rb"))
     candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
 
     run_dir = output_dir / 'ncores_candidate_channel_only'
