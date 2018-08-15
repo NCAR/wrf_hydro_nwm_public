@@ -36,8 +36,9 @@ module module_levelpool
 
 
 
+    !I don't need to pass in inflow, lat_in, prev_in, and outflow because they are derived from base input/output structs
     !Level Pool Constructor
-    subroutine levelpool_struct_init(this, water_elevation, routing_period, &    !Need to check 2 different sources of routing period
+    subroutine levelpool_struct_init(this, water_elevation,  &    !Need to check 2 different sources of routing period
         reservoir_area, weir_elevation, weir_coeffecient, &     !reservoir_area of reservoir maybe later a static param to reservoir??
         weir_length, orifice_elevation, orifice_coffecient, &
         orifice_area, max_depth, lake_number)   !Need to figure out connecting this with LP params
@@ -45,7 +46,7 @@ module module_levelpool
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
         real, intent(INOUT) :: water_elevation
-        real, intent(IN)    :: routing_period            ! routing period [s]
+        !real, intent(IN)    :: routing_period            ! routing period [s]
         real, intent(IN)    :: reservoir_area            ! area of reservoir (km^2)
         real, intent(IN)    :: weir_elevation            ! bottom of weir elevation
         real, intent(IN)    :: weir_coeffecient          ! weir coeff.

@@ -18,8 +18,8 @@ module module_reservoir_base
 
 
         real :: inflow
-        real :: routing_period
-
+        real :: lateral_inflow
+        real :: previous_day_inflow
 
         contains
 
@@ -78,13 +78,14 @@ module module_reservoir_base
     	class (reservoir_base_input_struct), intent(inout) :: this ! object being initialized
 
         this%inflow = 0.0
-
+        this%lateral_inflow = 0.0
+        this%previous_day_inflow = 0.0
 
     end subroutine reservoir_base_input_struct_init
 
 
 
-    !destructor for the reservoir input struct
+    ! destructor for the reservoir input struct
     subroutine reservoir_base_input_struct_destroy(this)
         implicit none
         class (reservoir_base_input_struct), intent(inout) :: this ! object being destroyed
