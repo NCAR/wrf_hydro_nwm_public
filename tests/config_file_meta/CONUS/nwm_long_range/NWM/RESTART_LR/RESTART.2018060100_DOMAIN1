@@ -1,4 +1,4 @@
-md5sum: ac171ac7124e115e5f434289d4d6203b  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART_LR/RESTART.2018060100_DOMAIN1
+md5sum: e881a666e3e3f4cd3049ea567cdae07d  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART_LR/RESTART.2018060100_DOMAIN1
 ncdump -h: netcdf RESTART {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)

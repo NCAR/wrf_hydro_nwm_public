@@ -33,7 +33,7 @@ def get_nlst_file_meta(
     dom_dir: str
 ):
 
-    def visit_missing_file(path, key, value):
+    def visit_file(path, key, value):
 
         # Only treat strings
         if type(value) is not str:
@@ -43,10 +43,28 @@ def get_nlst_file_meta(
         the_file_rel = pathlib.PosixPath(value)
         the_file_abs = dom_dir / the_file_rel
 
-        # Do not treat dirs.
+        # Dirs: get the md5sum of every file inside
         if the_file_abs.is_dir():
-            return False
+            if the_file_abs.name not in ['FORCING','nudgingTimeSliceObs']:
+                return False
 
+            print('            ' + str(the_file_abs))
+            if the_file_abs.exists() is False:
+                raise ValueError("The file does not exist: " + str(the_file_abs))
+            
+            meta_path_rel = the_file_rel
+            the_cmd = 'meta_path=' + str(meta_path_rel)
+            the_cmd += ' && data_path=' + str(the_file_abs)
+            the_cmd += ' && echo "md5sum $data_path/*: $(md5sum $data_path/*)" > $meta_path'
+            proc = subprocess.run(
+                the_cmd,
+                cwd=config_dir,
+                shell=True,
+                executable='/bin/bash'
+            )
+            return True
+
+        # Regular files...
         print('            ' + str(the_file_abs))
 
         if the_file_abs.exists() is False:
@@ -69,7 +87,7 @@ def get_nlst_file_meta(
         
         return True
 
-    _ = iterutils.remap(namelist, visit=visit_missing_file)
+    _ = iterutils.remap(namelist, visit=visit_file)
 
     
 for dd in domain_paths:
