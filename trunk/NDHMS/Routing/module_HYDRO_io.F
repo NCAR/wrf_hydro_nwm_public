@@ -9187,6 +9187,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
     integer, allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpz_max, tmpz_init
+    integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
 
 !   get gnid
 #ifdef MPP_LAND
@@ -9260,21 +9261,25 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        endif
 #endif
    
-    nhdBuckMask = -999
-    do k = 1, numbasns
-        do i = 1, gnid
-            if(LINKID(k) .eq. tmpLinkid(i)) then
-               gw_buck_coeff(k) = tmpCoeff(i)
-               gw_buck_exp(k) = tmpExp(i)
-               z_max(k) = tmpz_max(i)
-               z_init(k) = tmpz_init(i)
-               nhdBuckMask(k) = 1
-               goto 301 
-            endif
-        end do
-301     continue
-    end do 
-
+       nhdBuckMask = -999
+       cache_block = 128
+       do cache_idx = 0, gnid-1, cache_block
+          cache_block_begin = cache_idx + 1
+          cache_block_end = min(cache_idx + cache_block, gnid)
+          do k = 1, numbasns
+             if(nhdBuckMask(k) /= -999) cycle
+             do i = cache_block_begin, cache_block_end
+                if(LINKID(k) .eq. tmpLinkid(i)) then
+                   gw_buck_coeff(k) = tmpCoeff(i)
+                   gw_buck_exp(k) = tmpExp(i)
+                   z_max(k) = tmpz_max(i)
+                   z_init(k) = tmpz_init(i)
+                   nhdBuckMask(k) = 1
+                endif
+             end do
+          end do
+       end do
+       
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
     if(allocated(tmpz_max)) deallocate(tmpz_max)
@@ -10319,7 +10324,7 @@ end subroutine output_chrt2
       maxNum = 0
       kk = 0
       allocate(num_a(NLINKSL))
-      cache_block = 512
+      cache_block = 256
       num_a = 0
       tmp_num = 0
       do cache_idx = 0, gnlinksl-1, cache_block
@@ -10588,7 +10593,7 @@ end subroutine output_chrt2
       maxNum = 0
       kk = 0
       allocate(num_a(NLINKSL))
-      cache_block = 512
+      cache_block = 256
       num_a = 0
       tmp_num = 0
       do cache_idx = 0, gnlinksl-1, cache_block

@@ -1,22 +1,17 @@
-import sys
-import wrfhydropy
-import shutil
 import pickle
-import datetime as dt
-import copy
 import warnings
 import pytest
+import wrfhydropy
 
 
-# regression question
-def test_regression(output_dir, capsys):
+#regression question
+def test_regression_data(output_dir, capsys):
     with capsys.disabled():
-        print("\nQuestion: The candidate standard run restarts match the reference standard restarts?",
-              end="")
+        print("\nQuestion: The candidate run data values match the reference run?", end="")
 
-    # Check for existence of run objects
-    candidate_run_file =  output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
-    reference_run_file =  output_dir / 'run_reference' / 'WrfHydroRun.pkl'
+    # Check for existence of sim objects
+    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
+    reference_run_file = output_dir / 'run_reference' / 'WrfHydroSim_collected.pkl'
 
     if candidate_run_file.is_file() is False:
         pytest.skip('Candidate run object not found, skipping test')
@@ -24,94 +19,62 @@ def test_regression(output_dir, capsys):
         pytest.skip('Reference run object not found, skipping test')
 
     # Load run objects
-    candidate_run_expected = pickle.load(open(candidate_run_file,"rb"))
-    reference_run_expected = pickle.load(open(reference_run_file,"rb"))
+    candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))
+    reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
 
     #Check regression
-    regression_diffs = wrfhydropy.RestartDiffs(candidate_run_expected,reference_run_expected)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_run_expected.output,
+                                                   reference_run_expected.output)
 
-    ## Check hydro restarts
-    for diff in regression_diffs.hydro:
-        if diff is not None:
-            with capsys.disabled():
-                print(diff)
-        assert diff == None, "Candidate hydro restart files do not regress on reference restart files"
+    # Assert all diff values are 0 and print diff stats if not
+    has_data_diffs = any(value != 0 for value in data_diffs.diff_counts.values())
+    if has_data_diffs:
+        with capsys.disabled():
+            print(data_diffs.diff_counts)
+        for key, value in data_diffs.diff_counts.items():
+            if value != 0:
+                with capsys.disabled():
+                    print('\n' + key + '\n')
+                    print(getattr(data_diffs, key))
+    assert has_data_diffs == False, \
+        'Data values in outputs for candidate run do not match reference run'
 
-    ## Check lsm restarts
-    for diff in regression_diffs.lsm:
-        if diff is not None:
-            with capsys.disabled():
-                print(diff)
-        assert diff == None, "Candidate lsm restart files do not regress on reference restart files"
-
-    ## Check nudging restarts
-    for diff in regression_diffs.nudging:
-        if diff is not None:
-            with capsys.disabled():
-                print(diff)
-        assert diff == None, "Candidate nudging restart files do not regress on reference restart files"
-
-def test_chrtout(output_dir,capsys):
-    compare_ncfiles = wrfhydropy.utilities.compare_restarts #TODO remove when compare_restarts is
-    # deprecated
+#regression question
+def test_regression_metadata(output_dir, capsys):
     with capsys.disabled():
-        print("\nQuestion: The candidate CHRTOUT files match the reference CHRTOUT files?", end="")
+        print("\nQuestion: The candidate run output metadata match the reference run?",
+              end="")
 
-    # Check for existence of run objects
-    candidate_run_file =  output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
-    reference_run_file =  output_dir / 'run_reference' / 'WrfHydroRun.pkl'
+    # Check for existence of sim objects
+    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
+    reference_run_file = output_dir / 'run_reference' / 'WrfHydroSim_collected.pkl'
 
     if candidate_run_file.is_file() is False:
         pytest.skip('Candidate run object not found, skipping test')
     if reference_run_file.is_file() is False:
         pytest.skip('Reference run object not found, skipping test')
 
-    # Load objects
-    candidate_run = pickle.load(open(candidate_run_file,"rb"))
-    reference_run = pickle.load(open(reference_run_file,"rb"))
+    # Load run objects
+    candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))
+    reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
 
-    # Check CHRTOUT files
-    chrtout_diffs = compare_ncfiles(candidate_run.channel_rt, reference_run.channel_rt)
+    #Check regression
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(candidate_run_expected.output,
+                                                   reference_run_expected.output)
 
-    if all(v is None for v in chrtout_diffs):
-        has_diffs = False
-    else:
-        has_diffs = True
-        #chrtout_diffs.remove(None)
-        for the_diff in chrtout_diffs[0:5]:
-            with capsys.disabled():
-                print(the_diff)
-
-    assert has_diffs == False, 'CHRTOUT output files differ between candidate and reference'
-
-def test_chanobs(output_dir, capsys):
-    compare_ncfiles = wrfhydropy.utilities.compare_restarts #TODO remove when compare_restarts is deprecated
-    with capsys.disabled():
-        print("\nQuestion: The candidate CHANOBS files match the reference CHANOBS files?", end="")
-
-    # Check for existence of run objects
-    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroRun.pkl'
-    reference_run_file = output_dir / 'run_reference' / 'WrfHydroRun.pkl'
-
-    if candidate_run_file.is_file() is False:
-        pytest.skip('Candidate run object not found, skipping test')
-    if reference_run_file.is_file() is False:
-        pytest.skip('Reference run object not found, skipping test')
-
-    # Load objects
-    candidate_run = pickle.load(open(candidate_run_file, "rb"))
-    reference_run = pickle.load(open(reference_run_file, "rb"))
-
-    # Check CHRTOUT files
-    chanobs_diffs = compare_ncfiles(candidate_run.chanobs, reference_run.chanobs)
-
-    if all(v is None for v in chanobs_diffs):
-        has_diffs = False
-    else:
-        has_diffs = True
-        #chanobs_diffs.remove(None)
-        for the_diff in chanobs_diffs[0:5]:
-            with capsys.disabled():
-                print(the_diff)
-
-    assert has_diffs == False, 'CHANOBS output files differ between candidate and reference'
+    # Assert all diff values are 0 and print diff stats if not
+    has_data_diffs = any(value != 0 for value in meta_data_diffs.diff_counts.values())
+    if has_data_diffs:
+        with capsys.disabled():
+            print(meta_data_diffs.diff_counts)
+        for key, value in meta_data_diffs.diff_counts.items():
+            if value != 0:
+                with capsys.disabled():
+                    print('\n' + key + '\n')
+                    print(getattr(meta_data_diffs, key))
+    assert has_data_diffs == False, \
+        'Metadata and attributes in outputs for candidate run do not match reference run'
