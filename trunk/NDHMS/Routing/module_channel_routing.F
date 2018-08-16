@@ -328,7 +328,7 @@ w = 0.5*(sgn + 1.)         !-- compute upstream or downstream weighting
 z = 1.0/Cs                   !--channel side distance (m)
 R = ((Bw + z*h1)*h1) / (Bw+ 2.0*h1*sqrt(1.0 + z*z)) !-- Hyd Radius
 AREA = (Bw + z*h1)*h1        !-- Flow area
-Ku = (1.0/n)*(R**())*AREA     !-- convenyance
+Ku = (1.0/n)*(R**(2./3.))*AREA     !-- convenyance
 
 R = ((Bw + z*h2)*h2)/(Bw + 2.0*h2*sqrt(1.0 + z*z)) !-- Hyd Radius
 AREA = (Bw + z*h2)*h2        !-- Flow area
@@ -471,13 +471,13 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           if(h_0 .gt. bfd) then !water outside of defined channel
             !weight the celerity by the contributing area, and assume that the mannings
             !of the spills is 2x the manning of the channel
-                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**() - &
-                (()*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw+2.0*bfd*z))))*AREA &
-                + ((sqrt(So)/(nCC))*(5./3.)*(h_0-bfd)**())*AREAC)/(AREA+AREAC))
+                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
+                ((2./3.)*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw+2.0*bfd*z))))*AREA &
+                + ((sqrt(So)/(nCC))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
           else
                if(h_0 .gt. 0.0) then
-                 Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**() - &
-                 (()*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw+2.0*h_0*z)))))
+                 Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
+                 ((2./3.)*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw+2.0*h_0*z)))))
                 else
                  Ck = 0.0
                 endif
@@ -514,7 +514,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
            if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
-                    (AREA+AREAC) * (R**()) * sqrt(So)) !f0(x)
+                    (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f0(x)
            endif
 
            !--upper interval -----------
@@ -538,13 +538,13 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            endif
 
           if(h .gt. bfd) then !water outside of defined channel, assumed rectangular, 3x TW and n = 3x
-                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**() - &
-                (()*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw + 2.0*bfd*z))))*AREA &
-                + ((sqrt(So)/(nCC))*(5./3.)*(h-bfd)**())*AREAC)/(AREA+AREAC))
+                Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
+                ((2./3.)*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw + 2.0*bfd*z))))*AREA &
+                + ((sqrt(So)/(nCC))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
           else
                if(h .gt. 0.0) then !avoid divide by zero
-                 Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**() - &
-                 (()*R**(5./3.)*(2.0 * sqrt(1.0 + z*z)/(Bw + 2.0*h*z)))))
+                 Ck = max(0.0,(sqrt(So)/n)*((5./3.)*R**(2./3.) - &
+                 ((2./3.)*R**(5./3.)*(2.0 * sqrt(1.0 + z*z)/(Bw + 2.0*h*z)))))
                else
                  Ck = 0.0
                endif
@@ -586,7 +586,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
            if((WP+WPC) .gt. 0.0) then
             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1.0000000/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
-                    (AREA+AREAC) * (R**()) * sqrt(So)) !f(x)
+                    (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
            endif
 
            if(Qj_0-Qj .ne. 0.0) then
@@ -644,7 +644,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            print*, "qup,quc,qdp,ql", qup,quc,qdp,ql
            print*, "bfd,Bw,Tw,Twl", bfd,Bw,Tw,Twl
            print*, "Qmc,Qmn", (C1*qup)+(C2*quc)+(C3*qdp) + C4,((1/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
-                    (AREA+AREAC) * (R**()) * sqrt(So))
+                    (AREA+AREAC) * (R**(2./3.)) * sqrt(So))
          endif
 
 #ifdef HYDRO_D

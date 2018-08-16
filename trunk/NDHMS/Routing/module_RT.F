@@ -632,6 +632,10 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
+integer :: bee
+
+integer :: lake_index, NLAKES_total
+
 real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
 real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
 
@@ -751,6 +755,21 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%NLINKS,        rt_domain(did)%gages,      &
            rt_domain(did)%gageMiss                                   )
    end if
+
+
+
+
+   NLAKES_total = rt_domain(did)%NLAKES
+
+   do lake_index = 1, NLAKES_total
+
+     bee = 1
+
+   end do
+
+
+
+
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
