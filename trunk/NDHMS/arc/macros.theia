@@ -86,6 +86,7 @@ MODFLAG         = -I./ -I../../MPP -I../MPP -I../mod
 LDFLAGS         = 
 CPP             = cpp
 CPPFLAGS        = -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D) $(WRFIO_NCD_LARGE_FILE_SUPPORT)
+FPPFLAGS        = -P -DMPP_LAND -I../Data_Rec $(HYDRO_D) $(WRFIO_NCD_LARGE_FILE_SUPPORT)
 # -C:                  Do not discard comments.
 # -P:                  Inhibit generation of linemarkers in the output 
 #                       from the preprocessor.
