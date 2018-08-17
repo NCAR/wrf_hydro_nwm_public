@@ -1,4 +1,4 @@
-md5sum: b8839928ee59b1b3270b28be9158b936  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/spatialweights.nc
+md5sum: b8839928ee59b1b3270b28be9158b936  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/spatialweights.nc
 ncdump -h: netcdf spatialweights {
 dimensions:
 	polyid = 13296 ;

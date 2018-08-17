@@ -1,4 +1,4 @@
-md5sum: 24fc3027e78031ce0bd05b0e691681c0  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/GWBUCKPARM.nc
+md5sum: 24fc3027e78031ce0bd05b0e691681c0  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/GWBUCKPARM.nc
 ncdump -h: netcdf GWBUCKPARM {
 dimensions:
 	BasinDim = 13296 ;

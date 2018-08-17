@@ -1,4 +1,4 @@
-md5sum: 9a3b89bfa5adf4a0e20b7e522ba24af3  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/LAKEPARM.nc
+md5sum: 9a3b89bfa5adf4a0e20b7e522ba24af3  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/LAKEPARM.nc
 ncdump -h: netcdf LAKEPARM {
 dimensions:
 	feature_id = 10 ;

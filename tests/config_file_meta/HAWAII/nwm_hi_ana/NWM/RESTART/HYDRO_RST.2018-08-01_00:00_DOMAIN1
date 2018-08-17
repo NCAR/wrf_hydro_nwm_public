@@ -1,4 +1,4 @@
-md5sum: d0167d2e3c2160cad19c1ac4fedf90d9  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/RESTART/HYDRO_RST.2018-08-01_00:00_DOMAIN1
+md5sum: d0167d2e3c2160cad19c1ac4fedf90d9  /glade/work/jamesmcc/domains/private/HAWAII/NWM/RESTART/HYDRO_RST.2018-08-01_00:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;

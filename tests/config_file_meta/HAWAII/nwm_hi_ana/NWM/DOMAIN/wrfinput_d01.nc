@@ -1,4 +1,4 @@
-md5sum: b046d7c15d5f6beedb3a0037f5d0b8fe  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/wrfinput_d01.nc
+md5sum: b046d7c15d5f6beedb3a0037f5d0b8fe  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/wrfinput_d01.nc
 ncdump -h: netcdf wrfinput_d01 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)

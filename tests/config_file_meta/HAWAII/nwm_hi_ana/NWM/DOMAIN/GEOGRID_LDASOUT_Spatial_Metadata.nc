@@ -1,4 +1,4 @@
-md5sum: 9c20e484ffb614f5157dbe84e49e4b37  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc
+md5sum: 9c20e484ffb614f5157dbe84e49e4b37  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc
 ncdump -h: netcdf GEOGRID_LDASOUT_Spatial_Metadata {
 dimensions:
 	y = 390 ;

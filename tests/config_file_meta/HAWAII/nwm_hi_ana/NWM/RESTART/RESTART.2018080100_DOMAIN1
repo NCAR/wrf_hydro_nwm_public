@@ -1,4 +1,4 @@
-md5sum: c1faf16970fa32e59f4401f94b650d2f  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/RESTART/RESTART.2018080100_DOMAIN1
+md5sum: c1faf16970fa32e59f4401f94b650d2f  /glade/work/jamesmcc/domains/private/HAWAII/NWM/RESTART/RESTART.2018080100_DOMAIN1
 ncdump -h: netcdf RESTART {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)

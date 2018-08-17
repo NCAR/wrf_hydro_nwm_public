@@ -1,4 +1,4 @@
-md5sum: 48c5fc310472d2cb4d1a85f2cc4c49c0  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/nudgingParams.nc
+md5sum: 48c5fc310472d2cb4d1a85f2cc4c49c0  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/nudgingParams.nc
 ncdump -h: netcdf nudgingParams {
 dimensions:
 	stationIdStrLen = 15 ;

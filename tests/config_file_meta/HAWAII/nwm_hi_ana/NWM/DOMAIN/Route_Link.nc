@@ -1,4 +1,4 @@
-md5sum: 78e7adbf358d826f3f4f0f09643fdfba  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/Route_Link.nc
+md5sum: 78e7adbf358d826f3f4f0f09643fdfba  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/Route_Link.nc
 ncdump -h: netcdf Route_Link {
 dimensions:
 	feature_id = 13637 ;

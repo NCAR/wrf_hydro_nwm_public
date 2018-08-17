@@ -1,4 +1,4 @@
-md5sum: f0f38dcd20c2cce5296f97694d9456da  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/RESTART/nudgingLastObs.2018-08-01_00:00:00.nc
+md5sum: f0f38dcd20c2cce5296f97694d9456da  /glade/work/jamesmcc/domains/private/HAWAII/NWM/RESTART/nudgingLastObs.2018-08-01_00:00:00.nc
 ncdump -h: netcdf nudgingLastObs.2018-08-01_00\:00\:00 {
 dimensions:
 	timeStrLen = 19 ;

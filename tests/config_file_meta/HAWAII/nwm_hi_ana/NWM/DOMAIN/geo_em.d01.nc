@@ -1,4 +1,4 @@
-md5sum: ab969b24fd060f61deb047fbb62027d0  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/geo_em.d01.nc
+md5sum: ab969b24fd060f61deb047fbb62027d0  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/geo_em.d01.nc
 ncdump -h: netcdf geo_em.d01 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)

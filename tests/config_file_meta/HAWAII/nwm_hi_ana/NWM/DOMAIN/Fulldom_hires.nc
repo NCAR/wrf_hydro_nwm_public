@@ -1,4 +1,4 @@
-md5sum: 9ccb706acd8790330db3035330a532ff  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/Fulldom_hires.nc
+md5sum: 9ccb706acd8790330db3035330a532ff  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/Fulldom_hires.nc
 ncdump -h: netcdf Fulldom_hires {
 dimensions:
 	y = 3900 ;

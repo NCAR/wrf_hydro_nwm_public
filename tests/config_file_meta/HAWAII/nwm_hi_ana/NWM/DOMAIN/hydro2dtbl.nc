@@ -1,4 +1,4 @@
-md5sum: da7abdd2cac7b2d9df686ab6611f7fe3  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/hydro2dtbl.nc
+md5sum: da7abdd2cac7b2d9df686ab6611f7fe3  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/hydro2dtbl.nc
 ncdump -h: netcdf hydro2dtbl {
 dimensions:
 	south_north = 390 ;

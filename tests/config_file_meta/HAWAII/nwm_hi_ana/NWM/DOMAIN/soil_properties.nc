@@ -1,4 +1,4 @@
-md5sum: 534a619dbd424a34fd1c182ae6a61ef1  /glade/scratch_new/katelynw/NWM_Hawaii/to_repo/HI/NWM/DOMAIN/soil_properties.nc
+md5sum: 534a619dbd424a34fd1c182ae6a61ef1  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/soil_properties.nc
 ncdump -h: netcdf soil_properties {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
