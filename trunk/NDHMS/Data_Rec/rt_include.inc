@@ -1,5 +1,12 @@
    TYPE RT_FIELD
    type (overland_struct) :: overland
+   !class (reservoir_base_container), allocatable(:) :: reservoirs
+   !class (reservoir_base_container), allocatable :: reservoirs
+
+   class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
+
+  !type(reservoir_ptr), DIMENSION(:) :: RESERVOIRS !array of pointers to reservoirs
+
 
 
    INTEGER :: IX, JX
@@ -164,7 +171,13 @@
   !  type(domain), pointer :: resevoir_pointer
   !end type reservoir_ptr
 
+
   !type(reservoir_ptr), DIMENSION(:) :: RESERVOIRS !array of pointers to reservoirs
+
+
+  !type ptr
+  !  type(Reservoir), pointer :: resevoir_pointer
+  !end type ptr
 
 
   !REAL, DIMENSION(:), POINTER    :: RESERVOIRS !array of reservoirs

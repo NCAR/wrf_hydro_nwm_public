@@ -346,7 +346,7 @@ CONTAINS
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
      if(NLAKES .gt. 0) then
-        !allocate ( rt_domain(did)%RESERVOIRS(NLAKES) )    !allocate array of reservoirs
+        allocate ( rt_domain(did)%reservoirs(NLAKES) )    !allocate array of pointers to reservoirs
 
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
@@ -760,37 +760,42 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
-   !do lake_index = 1, NLAKES_total
+   do lake_index = 1, NLAKES_total
 
-   !  allocate( levelpool_struct :: rt_domain(did)%RESERVOIRS(lake_index))   !allocate a single levelpool reservoir,
+     allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)     !allocate a single levelpool reservoir
 
-
-   !  call rt_domain(did)%RESERVOIRS(lake_index)%init(   &
-   !        rt_domain(did)%ELEVLAKE(lake_index),         &
-   !        0.0, 0.0,                                    &       !passing 0.0 for routing_period and inflow_previous_timestep
-   !        rt_domain(did)%HRZAREA(lake_index),          &
-   !        rt_domain(did)%WEIRH(lake_index),            &
-   !        rt_domain(did)%WEIRC(lake_index),            &
-   !        rt_domain(did)%WEIRL(lake_index),            &
-   !        rt_domain(did)%ORIFICEE(lake_index),         &
-   !        rt_domain(did)%ORIFICEC(lake_index),         &
-   !        rt_domain(did)%ORIFICEA(lake_index),         &
-   !        rt_domain(did)%LAKEMAXH(lake_index),         &
-   !        rt_domain(did)%LAKEIDX(lake_index)           )
+     select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+        type is (levelpool_struct)
 
 
-   !end do
+          call rt_domain(did)%RESERVOIRS(lake_index)%init(   &
+               rt_domain(did)%ELEVLAKE(lake_index),         &
+               0.0, 0.0,                                    &       !passing 0.0 for routing_period and inflow_previous_timestep
+               rt_domain(did)%HRZAREA(lake_index),          &
+               rt_domain(did)%WEIRH(lake_index),            &
+               rt_domain(did)%WEIRC(lake_index),            &
+               rt_domain(did)%WEIRL(lake_index),            &
+               rt_domain(did)%ORIFICEE(lake_index),         &
+               rt_domain(did)%ORIFICEC(lake_index),         &
+               rt_domain(did)%ORIFICEA(lake_index),         &
+               rt_domain(did)%LAKEMAXH(lake_index),         &
+               rt_domain(did)%LAKEIDX(lake_index)           )
 
-   !if(allocated(rt_domain(did)%ELEVLAKE)) deallocate(rt_domain(did)%ELEVLAKE)
-   !if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
-   !if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
-   !if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
-   !if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
-   !if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
-   !if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
-   !if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
-   !if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
-   !if(allocated(rt_domain(did)%LAKEIDX)) deallocate(rt_domain(did)%LAKEIDX)
+     end select
+
+
+   end do
+
+   if(allocated(rt_domain(did)%ELEVLAKE)) deallocate(rt_domain(did)%ELEVLAKE)
+   if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
+   if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
+   if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
+   if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
+   if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
+   if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
+   if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
+   if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
+   if(allocated(rt_domain(did)%LAKEIDX)) deallocate(rt_domain(did)%LAKEIDX)
 
 
 

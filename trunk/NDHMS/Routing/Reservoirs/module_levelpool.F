@@ -148,33 +148,33 @@ module module_levelpool
     !subroutine run_levelpool_release()   !Nothing passed
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
-        !class(levelpool_struct)
 
 
-        !I think I should call LP physics code here
 
-        !first call to LP physics
+        !Update state variables
+        !reservoir_data%input%lateral_inflow =
 
-        !second call to LP physics
+        !Update state variables
+        !reservoir_data%state%routing_period =
 
 
-        !call LEVELPOOL(reservoir_data%parameters%lake_number,   &
-        !reservoir_data%state%inflow_previous_timestep,          &
-        !reservoir_data%input%inflow,                            &
-        !reservoir_data%output%outflow,                          &
-        !reservoir_data%input%lateral_inflow,                    &
-        !reservoir_data%state%routing_period,                    &
-        !reservoir_data%state%water_elevation,                   &
-        !reservoir_data%parameters%reservoir_area,               &
-        !reservoir_data%parameters%weir_elevation,               &
-        !reservoir_data%parameters%max_depth,                    &
-        !reservoir_data%parameters%weir_coeffecient,             &
-        !reservoir_data%parameters%weir_length,                  &
-        !reservoir_data%parameters%orifice_elevation,            &
-        !reservoir_data%parameters%orifice_coffecient,           &
-        !reservoir_data%,parameters%orifice_area                 &
 
-        !)
+        call LEVELPOOL(reservoir_data%parameters%lake_number,   &
+        reservoir_data%state%inflow_previous_timestep,          &
+        reservoir_data%input%inflow,                            &
+        reservoir_data%output%outflow,                          &
+        reservoir_data%input%lateral_inflow,                    &
+        reservoir_data%state%routing_period,                    &
+        reservoir_data%state%water_elevation,                   &
+        reservoir_data%parameters%reservoir_area,               &
+        reservoir_data%parameters%weir_elevation,               &
+        reservoir_data%parameters%max_depth,                    &
+        reservoir_data%parameters%weir_coeffecient,             &
+        reservoir_data%parameters%weir_length,                  &
+        reservoir_data%parameters%orifice_elevation,            &
+        reservoir_data%parameters%orifice_coffecient,           &
+        reservoir_data%,parameters%orifice_area                 &
+        )
 
 
     end subroutine run_levelpool_release

@@ -1384,7 +1384,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
 
 
-              !reservoirs[].release(DTCT, )   !Water elevation and lateral inflow too????
+              !reservoirs[i].release(DTCT, )   !Water elevation and lateral inflow too????
 
 #ifdef MPP_LAND
             endif

@@ -20,6 +20,7 @@ module module_reservoir_base
         real :: inflow
         real :: lateral_inflow
         real :: previous_day_inflow
+        real :: inflow_previous_timestep
 
         contains
 
@@ -56,6 +57,11 @@ module module_reservoir_base
 
 
     end type
+
+    type :: reservoir_base_container
+        class (reservoir_base_struct), pointer :: ptr
+    end type
+
 
 
     abstract interface
