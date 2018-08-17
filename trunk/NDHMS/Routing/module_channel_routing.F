@@ -58,6 +58,7 @@ MUSKING = (C1*quc)+(C2*qup)+(C3*qdp)
 end function MUSKING
 ! ----------------------------------------------------------------
 
+
 ! ------------------------------------------------
 !   SUBROUTINE LEVELPOOL
 ! ------------------------------------------------
@@ -127,7 +128,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.)
+      tmp2 = wc * wl * (dh ** 2./3.)
       discharge = tmp1 + tmp2
 
       if (H .gt. 0.0) then
@@ -159,7 +160,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.)
+      tmp2 = wc * wl * (dh ** 2./3.)
       discharge = tmp1 + tmp2
 
       if (H .gt. 0.0) then
@@ -191,7 +192,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.)
+      tmp2 = wc * wl * (dh ** 2./3.)
       discharge = tmp1 + tmp2
 
       if (H .gt. 0.0) then
@@ -225,7 +226,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    endif
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.)
+      tmp2 = wc * wl * (dh ** 2./3.)
       discharge = tmp1 + tmp2
 
       if (H .gt. 0.0) then
@@ -261,6 +262,8 @@ return
 ! ----------------------------------------------------------------
 end subroutine LEVELPOOL
 ! ----------------------------------------------------------------
+
+
 
 
 ! ------------------------------------------------
@@ -2103,6 +2106,10 @@ do nt = 1, nsteps
             call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
                  QLateral(k), DTRT_CH, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
                  WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
+
+
+            !reservoirs[].release(DTCT, )   !Water elevation and lateral inflow too????
+
 
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
             QLAKEI(lakeid)  = Quc           !save inflow to lake

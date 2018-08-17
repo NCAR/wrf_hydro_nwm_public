@@ -145,7 +145,7 @@
   ! VARIABLES FOR  RESERVOIRS
   REAL :: water_elevation
   REAL :: routing_period
-  REAL :: inflow_at_previous_timestep
+  REAL :: inflow_previous_timestep
   REAL :: inflow
   REAL :: previous_day_inflow
   REAL :: outflow
@@ -160,7 +160,14 @@
   REAL :: max_depth
   INTEGER :: lake_number
 
-  REAL, DIMENSION(:), POINTER    :: RESERVOIRS !array of reservoirs
+  !type reservoir_ptr
+  !  type(domain), pointer :: resevoir_pointer
+  !end type reservoir_ptr
+
+  !type(reservoir_ptr), DIMENSION(:) :: RESERVOIRS !array of pointers to reservoirs
+
+
+  !REAL, DIMENSION(:), POINTER    :: RESERVOIRS !array of reservoirs
 
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
