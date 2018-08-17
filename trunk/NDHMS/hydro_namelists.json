@@ -87,6 +87,17 @@
         }
     },
 
+    "nwm_hi_ana": {
+        "hydro_nlist": {
+            "compound_channel": false,
+            "out_dt": 15,
+            "output_channelbucket_influx": 0,
+            "aggfactrt": 10,
+            "dxrt": 100
+       },
+        "nudging_nlist": {}
+    },
+
     "nwm_channel-only": {
         "hydro_nlist": {
             "output_gw": 0,
