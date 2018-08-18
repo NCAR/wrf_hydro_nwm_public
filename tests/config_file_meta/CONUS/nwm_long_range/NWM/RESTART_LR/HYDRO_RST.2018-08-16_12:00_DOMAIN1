@@ -1,14 +1,14 @@
-md5sum: 86d72f978458b0e555de069a0c7076dd  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART/HYDRO_RST.2018-06-01_00:00_DOMAIN1
+md5sum: b786585ef85d98ff768eba9323beb14b  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART_LR/HYDRO_RST.2018-08-16_12:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;
 	ix = 4608 ;
 	iy = 3840 ;
-	ixrt = 18432 ;
-	iyrt = 15360 ;
+	ixrt = 4608 ;
+	iyrt = 3840 ;
 	links = 2729077 ;
 	basns = 2729077 ;
-	lakes = 1506 ;
+	lakes = 5461 ;
 variables:
 	float stc1(iy, ix) ;
 	float smc1(iy, ix) ;
@@ -42,9 +42,9 @@ variables:
 	float z_gwsubbas(links) ;
 
 // global attributes:
-		:his_out_counts = 24 ;
-		:Restart_Time = "2018-06-01_00:00:00" ;
-		:Since_Date = "2018-05-20_00:00:00" ;
+		:his_out_counts = 25194 ;
+		:Restart_Time = "2018-08-16_12:00:00" ;
+		:Since_Date = "2009-10-01_00:00:00" ;
 		:DTCT = 300.f ;
 		:channel_only = 0 ;
 		:channelBucket_only = 0 ;

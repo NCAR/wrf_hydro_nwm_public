@@ -1,4 +1,4 @@
-md5sum: eed2dfe05e897e2385a8eb1ab84b4452  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART/RESTART.2018060100_DOMAIN1
+md5sum: 482f8d581f218c2840c6d91fd6bf4452  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART_LR/RESTART.2018081612_DOMAIN1
 ncdump -h: netcdf RESTART {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
@@ -264,7 +264,7 @@ variables:
 // global attributes:
 		:TITLE = "RESTART FILE FROM HRLDAS v20150506" ;
 		:missing_value = -1.e+33f ;
-		:START_DATE = "2018-05-31_00:00:00" ;
+		:START_DATE = "2018-08-15_00:00:00" ;
 		:MAP_PROJ = 1 ;
 		:LAT1 = 20.07781f ;
 		:LON1 = -118.1045f ;
