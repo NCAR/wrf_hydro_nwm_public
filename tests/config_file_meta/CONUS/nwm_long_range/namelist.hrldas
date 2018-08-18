@@ -23,10 +23,10 @@
     soil_thick_input = 0.1, 0.3, 0.6, 1.0
     spatial_filename = './NWM/DOMAIN_LR/soil_properties_LongRange_NWMv2.0.nc'
     split_output_count = 1
-    start_day = 16
-    start_hour = 12
+    start_day = 1
+    start_hour = 0
     start_min = 0
-    start_month = 8
+    start_month = 6
     start_year = 2018
     supercooled_water_option = 1
     surface_drag_option = 1
