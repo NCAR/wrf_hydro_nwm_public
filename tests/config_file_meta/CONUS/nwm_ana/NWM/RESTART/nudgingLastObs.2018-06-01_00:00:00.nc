@@ -1,5 +1,5 @@
-md5sum: fecbb7c5c8817f6e5c23bc877bfc79d8  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART/nudgingLastObs.2018-08-16_12:00:00.nc
-ncdump -h: netcdf nudgingLastObs.2018-08-16_12\:00\:00 {
+md5sum: 999fe071d847a2127992f52dc4a7ee70  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART/nudgingLastObs.2018-06-01_00:00:00.nc
+ncdump -h: netcdf nudgingLastObs.2018-06-01_00\:00\:00 {
 dimensions:
 	timeStrLen = 19 ;
 	timeInd = 480 ;
@@ -26,5 +26,5 @@ variables:
 		nudge:long_name = "Amount of stream flow alteration" ;
 
 // global attributes:
-		:modelTimeAtOutput = "2018-08-16_12:00:00" ;
+		:modelTimeAtOutput = "2018-06-01_00:00:00" ;
 }

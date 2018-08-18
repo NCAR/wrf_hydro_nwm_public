@@ -14,7 +14,7 @@
     output_timestep = 3600
     pcp_partition_option = 1
     radiative_transfer_option = 3
-    restart_filename_requested = './NWM/RESTART_LR/RESTART.2018081612_DOMAIN1'
+    restart_filename_requested = './NWM/RESTART_LR/RESTART.2018060100_DOMAIN1'
     restart_frequency_hours = 1
     rst_bi_in = 0
     rst_bi_out = 0
