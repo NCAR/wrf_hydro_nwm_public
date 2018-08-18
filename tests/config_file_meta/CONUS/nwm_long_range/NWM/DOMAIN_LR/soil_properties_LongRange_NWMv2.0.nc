@@ -1,4 +1,4 @@
-md5sum: 95cc8dfd124ce5494218e79e0855c99b  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN_LR/soil_properties_LongRange_NWMv2.0.nc
+md5sum: d88e6dbae176baa43a7b2f72e895a03b  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN_LR/soil_properties_LongRange_NWMv2.0.nc
 ncdump -h: netcdf soil_properties_LongRange_NWMv2.0 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
