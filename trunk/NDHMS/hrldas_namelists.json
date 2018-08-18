@@ -52,6 +52,13 @@
         "wrf_hydro_offline": {}
     },
 
+    "nwm_hi_ana" : {
+        "noahlsm_offline": {
+            "snow_albedo_option": 2
+        },
+        "wrf_hydro_offline": {}
+    },
+
     "nwm_channel_only" : {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
