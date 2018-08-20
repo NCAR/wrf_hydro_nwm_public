@@ -5,6 +5,8 @@ module module_levelpool_state
 
     type, extends(reservoir_base_state_struct) :: levelpool_state_interface
 
+        real :: water_elevation
+
 
     contains
 
@@ -24,6 +26,7 @@ contains
 
         real, intent(inout)    :: water_elevation
 
+        this%water_elevation = water_elevation
 
 
     end subroutine levelpool_state_init

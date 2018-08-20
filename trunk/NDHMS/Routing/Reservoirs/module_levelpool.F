@@ -36,16 +36,16 @@ module module_levelpool
         orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
-        real, intent(INOUT) :: water_elevation
-        real, intent(IN)    :: reservoir_area            ! area of reservoir (km^2)
-        real, intent(IN)    :: weir_elevation            ! bottom of weir elevation
-        real, intent(IN)    :: weir_coeffecient          ! weir coeff.
-        real, intent(IN)    :: weir_length               ! weir length (m)
-        real, intent(IN)    :: orifice_elevation         ! orifice elevation
-        real, intent(IN)    :: orifice_coffecient        ! orifice coeff.
-        real, intent(IN)    :: orifice_area              ! orifice area (m^2)
-        real, intent(IN)    :: max_depth         ! max depth of reservoir before overtop (m)
-        integer, intent(IN) :: lake_number               ! lake number
+        real, intent(inout) :: water_elevation
+        real, intent(in)    :: reservoir_area            ! area of reservoir (km^2)
+        real, intent(in)    :: weir_elevation            ! bottom of weir elevation
+        real, intent(in)    :: weir_coeffecient          ! weir coeff.
+        real, intent(in)    :: weir_length               ! weir length (m)
+        real, intent(in)    :: orifice_elevation         ! orifice elevation
+        real, intent(in)    :: orifice_coffecient        ! orifice coeff.
+        real, intent(in)    :: orifice_area              ! orifice area (m^2)
+        real, intent(in)    :: max_depth         ! max depth of reservoir before overtop (m)
+        integer, intent(in) :: lake_number               ! lake number
 
 
 
@@ -148,10 +148,10 @@ module module_levelpool
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
 
-        real, intent(IN)    :: inflow
-        real, intent(IN)    :: lateral_inflow
-        real, intent(INOUT) :: water_elevation
-        real, intent(IN)    :: routing_period      ! routing period [s]
+        real, intent(in)    :: inflow
+        real, intent(in)    :: lateral_inflow
+        real, intent(inout) :: water_elevation
+        real, intent(in)    :: routing_period      ! routing period [s]
 
 
         !Update input variables
@@ -159,9 +159,7 @@ module module_levelpool
         reservoir_data%input%lateral_inflow = lateral_inflow
 
         !Update state variables
-        !reservoir_data%state%water_elevation = water_elevation
-
-        !reservoir_data%parameters%weir_length = 0.0
+        reservoir_data%state%water_elevation = water_elevation
 
 
         !call LEVELPOOL(reservoir_data%parameters%lake_number,   &
@@ -197,21 +195,21 @@ module module_levelpool
     !! ----------------------------  argument variables
     !! All elevations should be relative to a common base (often belev(k))
 
-    real, intent(INOUT) :: H       ! water elevation height (m)
-    real, intent(IN)    :: dt      ! routing period [s]
-    real, intent(IN)    :: qi0     ! inflow at previous timestep (cms)
-    real, intent(IN)    :: qi1     ! inflow at current timestep (cms)
-    real, intent(OUT)   :: qo1     ! outflow at current timestep
-    real, intent(IN)    :: ql      ! lateral inflow
-    real, intent(IN)    :: ar      ! area of reservoir (km^2)
-    real, intent(IN)    :: we      ! bottom of weir elevation
-    real, intent(IN)    :: wc      ! weir coeff.
-    real, intent(IN)    :: wl      ! weir length (m)
-    real, intent(IN)    :: oe      ! orifice elevation
-    real, intent(IN)    :: oc      ! orifice coeff.
-    real, intent(IN)    :: oa      ! orifice area (m^2)
-    real, intent(IN)    :: maxh    ! max depth of reservoir before overtop (m)
-    integer, intent(IN) :: ln      ! lake number
+    real, intent(inout) :: H       ! water elevation height (m)
+    real, intent(in)    :: dt      ! routing period [s]
+    real, intent(in)    :: qi0     ! inflow at previous timestep (cms)
+    real, intent(in)    :: qi1     ! inflow at current timestep (cms)
+    real, intent(out)   :: qo1     ! outflow at current timestep
+    real, intent(in)    :: ql      ! lateral inflow
+    real, intent(in)    :: ar      ! area of reservoir (km^2)
+    real, intent(in)    :: we      ! bottom of weir elevation
+    real, intent(in)    :: wc      ! weir coeff.
+    real, intent(in)    :: wl      ! weir length (m)
+    real, intent(in)    :: oe      ! orifice elevation
+    real, intent(in)    :: oc      ! orifice coeff.
+    real, intent(in)    :: oa      ! orifice area (m^2)
+    real, intent(in)    :: maxh    ! max depth of reservoir before overtop (m)
+    integer, intent(in) :: ln      ! lake number
 
     !!DJG Add lake option switch here...move up to namelist in future versions...
     integer :: LAKE_OPT            ! Lake model option (move to namelist later)
