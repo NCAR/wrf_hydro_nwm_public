@@ -767,10 +767,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
      select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
         type is (levelpool_struct)
 
-
                !call rt_domain(did)%RESERVOIRS(lake_index)%init(   &
                call lp%init(                                &
-
                rt_domain(did)%ELEVLAKE(lake_index),         &
                !0.0, 0.0,                                    &       !passing 0.0 for routing_period and inflow_previous_timestep
                rt_domain(did)%HRZAREA(lake_index),          &

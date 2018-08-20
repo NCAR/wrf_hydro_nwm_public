@@ -34,6 +34,7 @@ module module_levelpool
         reservoir_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coffecient, &
         orifice_area, max_depth, lake_number)
+
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation
@@ -44,7 +45,7 @@ module module_levelpool
         real, intent(in)    :: orifice_elevation         ! orifice elevation
         real, intent(in)    :: orifice_coffecient        ! orifice coeff.
         real, intent(in)    :: orifice_area              ! orifice area (m^2)
-        real, intent(in)    :: max_depth         ! max depth of reservoir before overtop (m)
+        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (m)
         integer, intent(in) :: lake_number               ! lake number
 
 
@@ -144,13 +145,15 @@ module module_levelpool
 
 
 
-    subroutine run_levelpool_release(reservoir_data, inflow, lateral_inflow, water_elevation, routing_period)   !inflow_previous_timestep also???
+    subroutine run_levelpool_release(reservoir_data, inflow, lateral_inflow, &
+        water_elevation, outflow, routing_period)   !inflow_previous_timestep also???
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
 
         real, intent(in)    :: inflow
         real, intent(in)    :: lateral_inflow
         real, intent(inout) :: water_elevation
+        real, intent(out)   :: outflow
         real, intent(in)    :: routing_period      ! routing period [s]
 
 
@@ -162,23 +165,28 @@ module module_levelpool
         reservoir_data%state%water_elevation = water_elevation
 
 
-        !call LEVELPOOL(reservoir_data%parameters%lake_number,   &
-        !reservoir_data%input%inflow_previous_timestep,          &
-        !reservoir_data%input%inflow,                            &
-        !reservoir_data%output%outflow,                          &
-        !reservoir_data%input%lateral_inflow,                    &
-        !routing_period,                                         &
-        !reservoir_data%state%water_elevation,                   &
-        !reservoir_data%parameters%reservoir_area,               &
-        !reservoir_data%parameters%weir_elevation,               &
-        !reservoir_data%parameters%max_depth,                    &
-        !reservoir_data%parameters%weir_coeffecient,             &
-        !reservoir_data%parameters%weir_length,                  &
-        !reservoir_data%parameters%orifice_elevation,            &
-        !reservoir_data%parameters%orifice_coffecient,           &
-        !reservoir_data%,parameters%orifice_area                 &
-        !)
+        call LEVELPOOL(reservoir_data%parameters%lake_number,   &
+        reservoir_data%input%inflow_previous_timestep,          &
+        reservoir_data%input%inflow,                            &
+        reservoir_data%output%outflow,                          &
+        reservoir_data%input%lateral_inflow,                    &
+        routing_period,                                         &
+        reservoir_data%state%water_elevation,                   &
+        reservoir_data%parameters%reservoir_area,               &
+        reservoir_data%parameters%weir_elevation,               &
+        reservoir_data%parameters%max_depth,                    &
+        reservoir_data%parameters%weir_coeffecient,             &
+        reservoir_data%parameters%weir_length,                  &
+        reservoir_data%parameters%orifice_elevation,            &
+        reservoir_data%parameters%orifice_coffecient,           &
+        reservoir_data%parameters%orifice_area                  &
+        )
 
+        !Update output variables
+        !reservoir_data%output%outflow = outflow
+        outflow = reservoir_data%output%outflow
+
+        reservoir_data%input%inflow_previous_timestep = inflow   ! set current inflow to inflow_previous_timestep
 
     end subroutine run_levelpool_release
 
