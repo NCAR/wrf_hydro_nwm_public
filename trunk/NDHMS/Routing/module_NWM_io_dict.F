@@ -1537,7 +1537,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
 end subroutine initRtDomainDict
 
-subroutine initLakeDict(lakeOutDict,diagFlag,procId)
+subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    use module_namelist, only: nlst_rt
    use netcdf
    implicit none
