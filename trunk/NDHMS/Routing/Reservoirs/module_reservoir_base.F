@@ -64,13 +64,13 @@ module module_reservoir_base
 
 
     abstract interface
-        subroutine run_release_interface(reservoir_data, inflow, lateral_inflow, routing_period)
+        subroutine run_release_interface(reservoir_data, inflow, lateral_inflow, water_elevation, routing_period)
             import :: reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
             real, intent(IN)    :: inflow
             real, intent(IN)    :: lateral_inflow
+            real, intent(INOUT) :: water_elevation
             real, intent(IN)    :: routing_period      ! routing period [s]
-
 
         end subroutine
     end interface
