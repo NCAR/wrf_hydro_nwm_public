@@ -16,7 +16,6 @@ module module_reservoir_base
 
     type :: reservoir_base_input_struct
 
-
         real :: inflow
         real :: lateral_inflow
         real :: previous_day_inflow
@@ -65,12 +64,14 @@ module module_reservoir_base
 
 
     abstract interface
-        subroutine run_release_interface(reservoir_data)   !Reservoir static data needed???
-        !subroutine run_release_interface()   !Nothing passed
-
+        subroutine run_release_interface(reservoir_data, inflow, lateral_inflow, routing_period)
             import :: reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
-            !class(reservoir_base_struct)
+            real, intent(IN)    :: inflow
+            real, intent(IN)    :: lateral_inflow
+            real, intent(IN)    :: routing_period      ! routing period [s]
+
+
         end subroutine
     end interface
 
@@ -86,6 +87,8 @@ module module_reservoir_base
         this%inflow = 0.0
         this%lateral_inflow = 0.0
         this%previous_day_inflow = 0.0
+        this%inflow_previous_timestep = 0.0
+
 
     end subroutine reservoir_base_input_struct_init
 
@@ -120,7 +123,6 @@ module module_reservoir_base
 
 
     end subroutine reservoir_base_output_struct_destroy
-
 
 
 

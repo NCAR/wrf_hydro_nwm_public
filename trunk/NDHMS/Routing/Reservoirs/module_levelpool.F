@@ -38,17 +38,13 @@ module module_levelpool
 
     !I don't need to pass in inflow, lat_in, prev_day_in, and outflow because they are derived from base input/output structs
     !Level Pool Constructor
-    subroutine levelpool_struct_init(this, water_elevation,  &    !Need to check 2 different sources of routing period
-        routing_period, inflow_previous_timestep,           &
-        reservoir_area, weir_elevation, weir_coeffecient, &     !reservoir_area of reservoir maybe later a static param to reservoir??
+    subroutine levelpool_struct_init(this, water_elevation,  &
+        reservoir_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coffecient, &
-        orifice_area, max_depth, lake_number)   !Need to figure out connecting this with LP params
-
+        orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
         real, intent(INOUT) :: water_elevation
-        real, intent(IN)    :: routing_period            ! routing period [s]
-        real, intent(IN)    :: inflow_previous_timestep
         real, intent(IN)    :: reservoir_area            ! area of reservoir (km^2)
         real, intent(IN)    :: weir_elevation            ! bottom of weir elevation
         real, intent(IN)    :: weir_coeffecient          ! weir coeff.
@@ -90,12 +86,12 @@ module module_levelpool
             call this%parameters%init( reservoir_area, weir_elevation, weir_coeffecient, &
                 weir_length, orifice_elevation, &
                 orifice_coffecient, orifice_area, &
-                max_depth, lake_number)
+                max_depth, lake_number )
 
 
 
             ! initialize levelpool state
-            call this%state%init( water_elevation, routing_period, inflow_previous_timestep )
+            call this%state%init( water_elevation )
 
 
             ! try to allocate levelpool parameters
@@ -144,27 +140,27 @@ module module_levelpool
 
 
 
-    subroutine run_levelpool_release(reservoir_data)   !Reservoir static data needed???
-    !subroutine run_levelpool_release()   !Nothing passed
+    subroutine run_levelpool_release(reservoir_data, inflow, lateral_inflow, routing_period)   !inflow_previous_timestep also???
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
 
+        real, intent(IN)    :: inflow
+        real, intent(IN)    :: lateral_inflow
+        real, intent(IN)    :: routing_period      ! routing period [s]
 
+
+        !Update input variables
+        reservoir_data%input%inflow = inflow
+        reservoir_data%input%lateral_inflow = lateral_inflow
 
         !Update state variables
-        !reservoir_data%input%lateral_inflow =
-
-        !Update state variables
-        !reservoir_data%state%routing_period =
-
-
 
         !call LEVELPOOL(reservoir_data%parameters%lake_number,   &
-        !reservoir_data%state%inflow_previous_timestep,          &
+        !reservoir_data%input%inflow_previous_timestep,          &
         !reservoir_data%input%inflow,                            &
         !reservoir_data%output%outflow,                          &
         !reservoir_data%input%lateral_inflow,                    &
-        !reservoir_data%state%routing_period,                    &
+        !routing_period,                                         &
         !reservoir_data%state%water_elevation,                   &
         !reservoir_data%parameters%reservoir_area,               &
         !reservoir_data%parameters%weir_elevation,               &

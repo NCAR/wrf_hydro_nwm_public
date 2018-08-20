@@ -17,17 +17,12 @@ module module_levelpool_state
 
 contains
 
-    subroutine levelpool_state_init(this, water_elevation, routing_period, &
-                                            inflow_previous_timestep)
+    subroutine levelpool_state_init(this, water_elevation)
 
         implicit none
         class(levelpool_state_interface), intent(inout) :: this ! the type object being initialized
 
         real, intent(inout)    :: water_elevation
-        real, intent(in)       :: inflow_previous_timestep
-        real, intent(in)       :: routing_period        ! routing period [s]
-
-
 
 
 
