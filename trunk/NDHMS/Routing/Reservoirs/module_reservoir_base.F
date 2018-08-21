@@ -53,6 +53,7 @@ module module_reservoir_base
         contains
 
         procedure (run_release_interface), deferred :: run_release
+        procedure (reservoir_test_interface),  deferred :: test
 
 
     end type
@@ -65,7 +66,7 @@ module module_reservoir_base
 
     abstract interface
         subroutine run_release_interface(reservoir_data, inflow, lateral_inflow, water_elevation, outflow, routing_period)
-            import :: reservoir_base_struct
+            import reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
             real, intent(in)    :: inflow
             real, intent(in)    :: lateral_inflow
@@ -76,7 +77,12 @@ module module_reservoir_base
         end subroutine
     end interface
 
-
+    abstract interface
+        subroutine reservoir_test_interface(this)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: this
+        end subroutine
+    end interface
 
     contains
 

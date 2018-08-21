@@ -21,6 +21,7 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
+        procedure :: test => test_levelpool
 
     end type levelpool_struct
 
@@ -145,11 +146,14 @@ module module_levelpool
 
 
 
-    subroutine run_levelpool_release(reservoir_data, inflow, lateral_inflow, &
-        water_elevation, outflow, routing_period)   !inflow_previous_timestep also???
+    subroutine run_levelpool_release(reservoir_data, &
+            inflow, &
+            lateral_inflow, &
+            water_elevation, &
+            outflow, &
+            routing_period)   !inflow_previous_timestep also???
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
-
         real, intent(in)    :: inflow
         real, intent(in)    :: lateral_inflow
         real, intent(inout) :: water_elevation
@@ -191,7 +195,10 @@ module module_levelpool
     end subroutine run_levelpool_release
 
 
-
+    subroutine test_levelpool(this)
+        implicit none
+        class(levelpool_struct), intent(inout) :: this
+    end subroutine test_levelpool
 
 
     ! ------------------------------------------------

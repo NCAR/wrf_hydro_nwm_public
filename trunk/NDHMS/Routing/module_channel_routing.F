@@ -27,6 +27,9 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 
 
 use module_levelpool
+use module_reservoir_base
+!use module_Routing
+use module_RT_data, only: rt_domain
 
 #endif
 implicit none
@@ -1179,10 +1182,12 @@ gwOption:   if(gwBaseSwCRT == 3) then
               !CALL LEVELPOOL(i,QLAKEIP(i), QLAKEI(i), QLAKEO(i), QLLAKE(i), &
               !  DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
               !  WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
-              !  QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 
+              ! I will change to "did"
+              call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEI(i), QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)   !Water elevation and lateral inflow too????
 
-              call reservoirs[i].run_release(QLAKEI(i), QLLAKE(i), RESHT(i), DTCT)   !Water elevation and lateral inflow too????
+              QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
+
 
 #ifdef MPP_LAND
             endif
@@ -1906,7 +1911,14 @@ do nt = 1, nsteps
             !     WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
 
 
-            call reservoirs[i].run_release(QLAKEI(i), QLLAKE(i), RESHT(i), DTRT_CH)   !Water elevation and lateral inflow too????
+            !CALL LEVELPOOL(i,QLAKEIP(i), QLAKEI(i), QLAKEO(i), QLLAKE(i), &
+            !  DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
+            !  WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
+
+
+
+            ! I will change to "did"
+            call rt_domain(1)%reservoirs(i)%ptr%run_release(Quc, QLateral(k), RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)   !Water elevation and lateral inflow too????
 
 
             !take out QLAKEO???
