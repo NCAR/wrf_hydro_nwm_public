@@ -94,38 +94,8 @@ module module_levelpool
 
 
 
-
-
             ! initialize levelpool state
             call this%state%init( water_elevation )
-
-
-            ! try to allocate levelpool parameters
-            !allocate ( this%parameters )
-            !if ( .not. associated(this%parameters) ) then
-            !    if the parameters structure could not be created write an error
-            !    write(0,*) "Failure to allocate levelpool parameters structure"
-            !else
-            !    ! initialize the parameters structure
-            !    call this%parameters%init( reservoir_area, weir_elevation, weir_coeffecient, &
-            !        weir_length, orifice_elevation, &
-            !        orifice_coffecient, orifice_area, &
-            !        max_depth, lake_number)
-            !end if
-            !this%pointer_allocation_guard = .true.
-
-
-
-            ! try to allocate levelpool state
-            !allocate ( this%state )
-            !if ( .not. associated(this%state) ) then
-            !     if the parameters structure could not be created write an error
-            !    write(0,*) "Failure to allocate levelpool state structure"
-            !else
-            !    ! initialize the state structure
-            !    call this%state%init( water_elevation )
-            !end if
-            !this%pointer_allocation_guard = .true.
 
 
         end if
@@ -151,7 +121,7 @@ module module_levelpool
             lateral_inflow, &
             water_elevation, &
             outflow, &
-            routing_period)   !inflow_previous_timestep also???
+            routing_period)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
         real, intent(in)    :: inflow
@@ -404,12 +374,6 @@ module module_levelpool
     ! ----------------------------------------------------------------
     end subroutine LEVELPOOL
     ! ----------------------------------------------------------------
-
-
-
-
-
-
 
 
 

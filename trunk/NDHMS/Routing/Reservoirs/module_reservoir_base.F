@@ -18,7 +18,6 @@ module module_reservoir_base
 
         real :: inflow
         real :: lateral_inflow
-        real :: previous_day_inflow
         real :: inflow_previous_timestep
 
         contains
@@ -93,7 +92,6 @@ module module_reservoir_base
 
         this%inflow = 0.0
         this%lateral_inflow = 0.0
-        this%previous_day_inflow = 0.0
         this%inflow_previous_timestep = 0.0
 
 
