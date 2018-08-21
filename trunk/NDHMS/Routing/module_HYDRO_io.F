@@ -33,6 +33,8 @@ module module_HYDRO_io
    use module_gw_gw2d_data, only: gw2d
    use netcdf
 
+   use module_nhd_data
+
    implicit none
 #include <netcdf.inc>
 
@@ -6123,15 +6125,25 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       if( nlst_rt(did)%channel_only .eq. 0) then
 
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-
-            call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
+            select type (gwd => rt_domain(did)%groundwater)
+                type is (nhd_groundwater_struct)
+                    call w_rst_crt_reach(ncid,gwd%state%z_gwsubbas, "z_gwsubbas"  &
 #ifdef MPP_LAND
-                 ,rt_domain(did)%gnlinksl  &
+                    ,rt_domain(did)%gnlinksl  &
 #endif
-                 )
+                    )
+                class default
+                    stop 'Unexpected groundwater type structure in RESTART_OUT_nc()'
+                    !call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
+#ifdef MPP_LAND
+                    !,rt_domain(did)%gnlinksl  &
+#endif
+                    !)
+            end select
          else
-            call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
-                 rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+            ! TODO update when simple ground water is complete
+            !call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
+            !     rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
          endif
 
       end if ! not channel_only : dont use buckets in channel only runs
@@ -6214,7 +6226,13 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-                     write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+                    select type ( gwd => rt_domain(did)%groundwater)
+                        type is (nhd_groundwater_struct)
+                            write(iunit,ERR=101) gwd%state%z_gwsubbas
+                        class default
+                            ! TODO update when simple groundwater is complete
+                            !write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+                    end select
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
                     write(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
@@ -6307,7 +6325,13 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-                     read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+                    select type ( gwd => rt_domain(did)%groundwater )
+                        type is (nhd_groundwater_struct)
+                            read(iunit,ERR=101) gwd%state%z_gwsubbas
+                        class default
+                        !TODO update when simple groundwater is complete
+                        !read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+                    end select
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
                    read(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
@@ -6828,13 +6852,14 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       rt_domain(did)%gnumbasns .gt. 0        ) then
 
       if( nlst_rt(did)%channel_only .eq. 0 ) then
-
-         if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-            call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
-         else
-            call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
-                 rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
-         endif
+            select type (gwd => rt_domain(did)%groundwater)
+                type is (nhd_groundwater_struct)
+                    call read_rst_crt_reach_nc(ncid,gwd%state%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
+                class default
+                    stop 'Unexpected groundwater type'
+                    !call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
+                    !    rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
+            end select
 
       end if !       if( nlst_rt(did)%channel_only .eq. 0 ) then
 
@@ -9193,6 +9218,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 #ifdef MPP_LAND
     if(my_id .eq. io_id ) then
 #endif
+       print * , "--DEBUG-- Starting readBucket_nhd"  ! DEBUG STATEMENT
        iret = nf_open(trim(infile), NF_NOWRITE, ncid)
 #ifdef MPP_LAND
        if(iret .ne. 0) then
@@ -9203,10 +9229,13 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                !print*, "nf_inq_dimid:  BasinDim"
                call hydro_stop("Failed read GBUCKETPARM - nf_inq_dimid:  BasinDim")
        endif
+       print * , "--DEBUG-- finding gnid"  ! DEBUG STATEMENT
        iret = nf_inq_dimlen(ncid, dimid, gnid)
     endif
+    print * , "--DEBUG-- broadcast gnid"  ! DEBUG STATEMENT
     call mpp_land_bcast_int1(gnid)
 #endif
+    print * , "--DEBUG-- allocating temps"  ! DEBUG STATEMENT
     allocate(tmpLinkid(gnid))
     allocate(tmpCoeff(gnid))
     allocate(tmpExp(gnid))
@@ -9216,6 +9245,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     if(my_id .eq. io_id ) then
 #endif
 !      read the file data.
+          print * , "--DEBUG-- reading parameters from netcdf file"  ! DEBUG STATEMENT
           iret = nf_inq_varid(ncid,"Coeff",  varid)
           if(iret /= 0) then
                print * , "could not find Coeff from ", infile
@@ -9250,19 +9280,28 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf_get_var_int(ncid, varid, tmpLinkid)
+
+          print * , "--DEBUG-- done reading parameters from netcdf file"  ! DEBUG STATEMENT
 #ifdef MPP_LAND
     endif
        if(gnid .gt. 0) then
+          print * , "--DEBUG-- broadcast of temp arrays"  ! DEBUG STATEMENT
           call mpp_land_bcast_real_1d(tmpCoeff)
           call mpp_land_bcast_real_1d(tmpExp)
           call mpp_land_bcast_real_1d(tmpz_max)
           call mpp_land_bcast_real_1d(tmpz_init)
           call mpp_land_bcast_int(gnid ,tmpLinkid)
+          print * , "--DEBUG-- broadcast of temp arrays complete"  ! DEBUG STATEMENT
        endif
 #endif
 
+       print * , "--DEBUG-- starting cache_block loop"  ! DEBUG STATEMENT
        nhdBuckMask = -999
+       print * , "--DEBUG-- seting nhdBuckMask to -999"  ! DEBUG STATEMENT
        cache_block = 128
+       print * , "--DEBUG-- seting cach_block to 128"  ! DEBUG STATEMENT
+       print * , "--DEBUG-- size of z_init = ", size(z_init)
+       print * , "--DEBUG-- size of tmpz_init = ", size(tmpz_init)
        do cache_idx = 0, gnid-1, cache_block
           cache_block_begin = cache_idx + 1
           cache_block_end = min(cache_idx + cache_block, gnid)
@@ -9270,15 +9309,25 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
              if(nhdBuckMask(k) /= -999) cycle
              do i = cache_block_begin, cache_block_end
                 if(LINKID(k) .eq. tmpLinkid(i)) then
+                   print * , "k = ", k
+                   print * , "i = ", i
+                   print * , "--DEBUG-- writing gw_buck_coeff "  ! DEBUG STATEMENT
                    gw_buck_coeff(k) = tmpCoeff(i)
+                   print * , "--DEBUG-- writing gw_buck_exp "  ! DEBUG STATEMENT
                    gw_buck_exp(k) = tmpExp(i)
+                   print * , "--DEBUG-- writing z_max "  ! DEBUG STATEMENT
                    z_max(k) = tmpz_max(i)
+                   print * , "--DEBUG-- writing z_init "  ! DEBUG STATEMENT
+                   print *, "tmpz_init(i) =", tmpz_init(i)
+                   print *, "z_init(i) =", z_init(k)
                    z_init(k) = tmpz_init(i)
+                   print * , "--DEBUG-- writing nhdBucketMask "  ! DEBUG STATEMENT
                    nhdBuckMask(k) = 1
                 endif
              end do
           end do
        end do
+       print * , "--DEBUG-- finished cache_block loop"  ! DEBUG STATEMENT
 
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
@@ -9942,15 +9991,25 @@ end subroutine output_chrt2
        if(nlst_rt(did)%channel_option .ne. 3) then
           call ReachLS_write_io(rt_domain(did)%groundwater%input%qin_gwsubbas,g_qin_gwsubbas)
           call ReachLS_write_io(rt_domain(did)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
-          call ReachLS_write_io(rt_domain(did)%z_gwsubbas,g_z_gwsubbas)
+          select type (gwd => rt_domain(did)%groundwater)
+            type is (nhd_groundwater_struct)
+                call ReachLS_write_io(gwd%state%z_gwsubbas,g_z_gwsubbas)
+            class default
+                stop 'unexpected groundwater type'
+          end select
           call ReachLS_write_io(rt_domain(did)%linkid,g_basnsInd)
        else
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%input%qin_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qin_gwsubbas)
           call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%output%qout_gwsubbas,  &
                  rt_domain(did)%basnsInd,g_qout_gwsubbas)
-          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,  &
-                 rt_domain(did)%basnsInd,g_z_gwsubbas)
+          select type (gwd => rt_domain(did)%groundwater)
+            type is (nhd_groundwater_struct)
+                call gw_write_io_real(rt_domain(did)%numbasns,gwd%state%z_gwsubbas, &
+                    rt_domain(did)%basnsInd,g_z_gwsubbas)
+            class default
+                stop 'unexpected groundwater type'
+          end select
           call gw_write_io_int(rt_domain(did)%numbasns,rt_domain(did)%basnsInd,  &
                  rt_domain(did)%basnsInd,g_basnsInd)
        endif

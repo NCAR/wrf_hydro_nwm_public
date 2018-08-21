@@ -10,6 +10,7 @@
 module module_NWM_io
 
 use module_version, only: get_code_version, get_nwm_version
+use module_nhd_data
 
 implicit none
 
@@ -4998,22 +4999,28 @@ subroutine output_gw_NWM(domainId,iGrid)
       endif
 
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
-         ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
-         ! reach-based routing has the GW physics initialized the same as with
-         ! gridded routing.
-         !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
-         call ReachLS_write_io(rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
-         !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
-         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas*1000.,g_z_gwsubbas)
-         call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+         select type (gwd => rt_domain(domainId)%groundwater)
+            type is (nhd_groundwater_struct)
+                ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
+                ! reach-based routing has the GW physics initialized the same as with
+                ! gridded routing.
+                !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
+                call ReachLS_write_io(rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
+                call ReachLS_write_io(rt_domain(domainId)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
+                !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
+                call ReachLS_write_io(gwd%state%z_gwsubbas*1000.,g_z_gwsubbas)
+                call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+            class default
+                ! TODO add error for wrong groundwater type
+         end select
       else
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%input%qin_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qout_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
-         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  &
-                               rt_domain(domainId)%basnsInd,g_z_gwsubbas)
+         ! TODO update this when simple groundwater module is completed
+         !call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  &
+         !                      rt_domain(domainId)%basnsInd,g_z_gwsubbas)
          call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
                               rt_domain(domainId)%basnsInd,g_basnsInd)
       endif
@@ -5027,7 +5034,14 @@ subroutine output_gw_NWM(domainId,iGrid)
       !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
       g_qin_gwsubbas = rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT
       g_qout_gwsubbas = rt_domain(domainId)%groundwater%output%qout_gwsubbas
-      g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
+      select type (gwd => rt_domain(domainId)%groundwater)
+        type is (nhd_groundwater_struct)
+            g_z_gwsubbas = gwd%state%z_gwsubbas
+        class default
+            ! TODO update when simple groundwater module is finished
+            !g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
+      end select
+
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
       g_basnsInd = rt_domain(domainId)%linkid

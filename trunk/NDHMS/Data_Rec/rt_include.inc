@@ -80,7 +80,7 @@
   !REAL,    allocatable, DIMENSION(:,:)   :: SOLDRAIN     !time-step drainage
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk  !GW basin mask grid
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk_lind  !GW basin mask grid tile maping index
-  REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
+  !REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
   !REAL,    allocatable, DIMENSION(:)     :: qin_gwsubbas !flow to GW bucket
   !REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
   REAL,    allocatable, DIMENSION(:)     :: gwbas_pix_ct !ct of strm pixels in
@@ -128,13 +128,13 @@
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
   REAL, allocatable, DIMENSION(:)      :: MannN      !mannings N
-  REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s) 
+  REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s)
   REAL, allocatable, DIMENSION(:)      :: ChSSlp ! channel side slope
   REAL, allocatable, DIMENSION(:)      :: Bw     ! Bottom width of channel
   REAL, allocatable, DIMENSION(:)      :: Tw     ! top width of channel
   REAL, allocatable, DIMENSION(:)      :: Tw_CC  ! top width of the (CC) compound channel
   REAL, allocatable, DIMENSION(:)      :: n_CC   ! mannings N of (CC) compound channel
-  
+
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING

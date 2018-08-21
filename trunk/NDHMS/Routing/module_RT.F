@@ -1143,8 +1143,8 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                         gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
                         call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
                             gwd%properties%gw_buck_coeff, gwd%properties%gw_buck_exp, &
-                            gwd%properties%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
-                            rt_domain(did)%nhdBuckMask )
+                            gwd%properties%z_max, gwd%state%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
+                            gwd%basin%nhd_bucket_mask )
                         !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
                         !for UDMP=1 so we convert units.
                         gwd%state%z_gwsubbas = gwd%state%z_gwsubbas/1000.
@@ -1228,7 +1228,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 
                     allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%numbasns))
                     !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
-                    allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
+                    !allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
                     allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
                     allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
                     allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
@@ -1244,7 +1244,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #endif
 
                     !Temporary hardwire...
-                    rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+                    !rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
 
                     !call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
                     !    rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
@@ -1273,7 +1273,12 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #endif
 
 #ifdef HYDRO_D
-                    print *, "Starting GW basin levels...",rt_domain(did)%z_gwsubbas
+                    select type (gwd => rt_domain(did)%groundwater)
+                        type is (nhd_groundwater_struct)
+                        print *, "Starting GW basin levels...",gwd%state%z_gwsubbas
+                    class default
+
+                    end select
 #endif
 
          ! BF gw2d model
