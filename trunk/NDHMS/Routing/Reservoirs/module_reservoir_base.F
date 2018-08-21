@@ -1,6 +1,7 @@
 module module_reservoir_base
 
 
+    !
     type, abstract :: reservoir_base_state_struct
 
 
