@@ -1188,6 +1188,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
               QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 
+              ! Leave updateLake_grid calls as is b/c they use arrays instead of single vars???
 
 #ifdef MPP_LAND
             endif
