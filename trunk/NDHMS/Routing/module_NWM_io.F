@@ -505,13 +505,15 @@ subroutine output_chrt_NWM(domainId)
    validTime = trim(nlst_rt(domainId)%olddate(1:4)//'-'//&
                     nlst_rt(domainId)%olddate(6:7)//'-'//&
                     nlst_rt(domainId)%olddate(9:10)//'_'//&
-                    nlst_rt(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst_rt(domainId)%olddate(12:13)//':'//&
+                    nlst_rt(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst_rt(domainId)%startdate(1:4)//'-'//&
                   nlst_rt(domainId)%startdate(6:7)//'-'//&
                   nlst_rt(domainId)%startdate(9:10)//'_'//&
-                  nlst_rt(domainId)%startdate(12:13)//&
-                  &':00:00') 
+                  nlst_rt(domainId)%startdate(12:13)//':'//&
+                  nlst_rt(domainId)%startdate(15:16)//&
+                  &':00') 
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
