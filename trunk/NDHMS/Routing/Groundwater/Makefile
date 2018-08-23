@@ -27,9 +27,8 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_properties.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_basin.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_groundwater_input.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_groundwater_output.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_groundwater_static_data.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_tests.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_data.F
 	ar -r ../../lib/libHYDRO.a module_UDMAP.o
 	ar -r ../../lib/libHYDRO.a module_groundwater_base.o
@@ -37,22 +36,27 @@ mod:
 	ar -r ../../lib/libHYDRO.a module_nhd_state.o
 	ar -r ../../lib/libHYDRO.a module_nhd_basin.o
 	ar -r ../../lib/libHYDRO.a module_groundwater_static_data.o
+	ar -r ../../lib/libHYDRO.a module_nhd_tests.o
 	ar -r ../../lib/libHYDRO.a module_nhd_data.o
-
+	
 	cp *.mod ../../mod
 test:
-	$(COMPILER90) $(F90FLAGS) $(MODFLAG) subsurface_tests.F
-	$(COMPILER90) -o subsurface_tests \
-		module_subsurface_grid_transform.o \
-		module_subsurface_properties.o \
-		module_subsurface_state.o \
-		module_subsurface.o \
-		../Overland/module_overland.o \
-		../Overland/module_overland_control.o \
-		../Overland/module_overland_routing_properties.o \
-		../Overland/module_overland_mass_balance.o \
-		../Overland/module_overland_streams_and_lakes.o \
-		subsurface_tests.o
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  groundwater_tests.F
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F
+	$(COMPILER90) $(NETCDFLIB) -o groundwater_tests \
+		module_groundwater_base.o \
+		module_nhd_properties.o \
+		module_nhd_state.o \
+		module_nhd_basin.o \
+		module_groundwater_static_data.o \
+		module_nhd_data.o \
+		module_UDMAP.o \
+		module_nhd_tests.o \
+		../../MPP/mpp_land.o \
+		../../MPP/CPL_WRF.o \
+		../../MPP/module_mpp_ReachLS.o\
+		groundwater_tests.o \
+		hydro_stop.o
 clean:
 	rm -f *.o
 	rm -f *.mod

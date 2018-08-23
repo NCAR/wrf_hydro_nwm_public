@@ -6,6 +6,7 @@ module module_nhd_data
     !use module_groundwater_input
     use module_groundwater_static_data
     use module_groundwater_base
+    use nhd_groundwater_tests
     implicit none
 
     type, extends(groundwater_base_data_struct) :: nhd_groundwater_struct
@@ -130,9 +131,15 @@ contains
     subroutine run_nhd_groundwater_timestep(ground_water_data)
         implicit none
         class(nhd_groundwater_struct), intent(inout) :: ground_water_data
+        logical :: rv
+
+        rv = nhd_data_info(ground_water_data)
+
+        !print *, "--DEBUG-- before call to bucket"
+        !flush(6)
 
         call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, ground_water_data%static_data%jx_lsm,&
-            ground_water_data%static_data%ix_rt, ground_water_data%static_data%jx_lsm, &
+            ground_water_data%static_data%ix_rt, ground_water_data%static_data%jx_rt, &
             ground_water_data%basin%num_basins, ground_water_data%aggregation%agg_factor, &
             ground_water_data%static_data%dt, ground_water_data%aggregation%infxswgt, &
             ground_water_data%input%infxsrt, ground_water_data%input%soldrain, &
@@ -143,6 +150,9 @@ contains
             ground_water_data%static_data%gwbaseswcrt, ground_water_data%static_data%ovrtswcrt, &
             ground_water_data%basin%num_basins, ground_water_data%basin%basin_area, &
             ground_water_data%basin%nhd_bucket_mask, ground_water_data%basin%channel_bucket_only)
+
+        !print *, "--DEBUG-- after call to bucket"
+        flush(6)
 
     end subroutine
 
@@ -195,7 +205,8 @@ contains
         integer :: AGGFACYRT, AGGFACTRT, AGGFACXRT, IXXRT, JYYRT
         real*8,  dimension(LNLINKSL) :: LQLateral
 
-
+        !print *, "--DEBUG-- start of groundwater phys"
+        !flush(6)
 
         !!!Initialize variables...
         net_perc = 0.
@@ -209,6 +220,8 @@ contains
 
             !Assign local value of runoff2 (drainage) for flux caluclation to buckets...
 
+            print *, "--DEBUG-- start of agg loop"
+            flush(6)
             do J=1,JX
                 do I=1,IX
                     do AGGFACYRT=AGGFACTRT-1,0,-1
@@ -241,6 +254,8 @@ contains
                     enddo
                 enddo
             enddo
+            !print *, "--DEBUG-- end of agg loop"
+            !flush(6)
 
 
             LQLateral = 0
@@ -259,6 +274,8 @@ contains
                     endif
                 end do
             end do
+            print *, "--DEBUG-- end of land grid accumulation loop"
+            flush(6)
 
 
 #ifdef MPP_LAND
@@ -267,6 +284,8 @@ contains
 #else
             net_perc = LQLateral        ! m^3
 #endif
+            !print *, "--DEBUG-- after update to net_perc"
+            !flush(6)
 
         endif !! if channelBucket_only .eq. 0 else
 
@@ -357,10 +376,137 @@ contains
         END DO                 ! End loop for GW bucket calcs...
 
         z_gwsubbas_tmp(1:numbasns) = z_gwsubbas(1:numbasns)     ! units (meters)
+        !print *, "--DEBUG-- end of groundwater phys"
+        !flush(6)
 
         return
 
         !------------------------------------------------------------------------------
     End subroutine simp_gw_buck_nhd
     !------------------------------------------------------------------------------
+
+        function nhd_data_info(nhd_data) result(rv)
+        implicit none
+        type (nhd_groundwater_struct) :: nhd_data
+        integer :: rv
+        logical, dimension(7) :: ptr_state
+        logical, dimension(7) :: data_state
+
+        rv = 0
+
+        ! Check to see if the output structure exists
+        print *, "Checking pointer association on data%input "
+        if ( associated(nhd_data%input) ) then
+            print *, "PASSED"
+            ptr_state(1) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(1) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the output structure exists
+        print *, "Checking pointer association on data%output "
+        if ( associated(nhd_data%output) ) then
+            print *, "PASSED"
+            ptr_state(2) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(2) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the aggregation structure exists
+        print *, "Checking pointer association on data%aggregation "
+        if ( associated(nhd_data%aggregation) ) then
+            print *, "PASSED"
+            ptr_state(3) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(3) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the state structure exists
+        print *, "Checking pointer association on data%state "
+        if ( associated(nhd_data%state) ) then
+            print *, "PASSED"
+            ptr_state(4) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(4) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the properties structure exists
+        print *, "Checking pointer association on data%properties "
+        if ( associated(nhd_data%properties) ) then
+            print *, "PASSED"
+            ptr_state(5) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(5) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the basin structure exists
+        print *, "Checking pointer association on data%basin "
+        if ( associated(nhd_data%basin) ) then
+            print *, "PASSED"
+            ptr_state(6) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(6) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the static_data structure exists
+        print *, "Checking pointer association on data%static_data "
+        if ( associated(nhd_data%static_data) ) then
+            print *, "PASSED"
+            ptr_state(7) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(7) = .false.
+        end if
+        print *, " "
+
+        ! Now check the data members of each substructure
+        if ( ptr_state(1) ) then
+            data_state(1) = test_input(nhd_data%input)
+        end if
+
+        if ( ptr_state(2) ) then
+            data_state(2) = test_output(nhd_data%output)
+        end if
+
+        if ( ptr_state(3) ) then
+            data_state(3) = test_aggregation(nhd_data%aggregation)
+        end if
+
+        if ( ptr_state(4) ) then
+            data_state(4) = test_state(nhd_data%state)
+        end if
+
+        if ( ptr_state(5) ) then
+            data_state(5) = test_nhd_basin(nhd_data%basin)
+        end if
+
+        if ( ptr_state(6) ) then
+            data_state(6) = test_nhd_properties(nhd_data%properties)
+        end if
+
+        if ( ptr_state(7) ) then
+            data_state(7) = test_nhd_static_data(nhd_data%static_data)
+        end if
+
+        if ( all(ptr_state) .and. all(data_state) ) then
+            print *, "========================================================================"
+            print *, "All Tests Passed"
+            print *, "========================================================================"
+        end if
+        rv = 1
+
+        flush(6)
+    end function nhd_data_info
 end module module_nhd_data

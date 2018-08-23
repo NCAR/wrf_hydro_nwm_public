@@ -20,9 +20,9 @@ module module_nhd_basin
 
         integer :: agg_factor
 
-        real, allocatable, dimension(:,:) :: cell_area
+        !real, allocatable, dimension(:,:) :: cell_area
 
-        real, allocatable, dimension(:,:) :: cell_area_lsm
+        !real, allocatable, dimension(:,:) :: cell_area_lsm
 
         ! guard variable for broken fortran pointers
         logical :: pointers_need_set = .true.
@@ -90,18 +90,6 @@ contains
         ! deallocate basin area
         if ( allocated(this%basin_area) ) then
             deallocate(this%basin_area)
-        else
-            allocation_error = .true.
-        end if
-
-        if ( allocated(this%cell_area) ) then
-            deallocate(this%cell_area)
-        else
-            allocation_error = .true.
-        end if
-
-        if ( allocated(this%cell_area_lsm) ) then
-            deallocate(this%cell_area_lsm)
         else
             allocation_error = .true.
         end if

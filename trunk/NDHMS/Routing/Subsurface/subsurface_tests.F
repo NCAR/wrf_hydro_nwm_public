@@ -25,7 +25,7 @@ program subsurface_tests
     write(6,*) "Testing Double Init"
     rv = double_init_test()
     write(6,*) "Test Complete"
-    contains
+contains
 
     function init_delete_test(ix,jx,nsoil) result(rv)
         use module_subsurface_data
@@ -78,7 +78,7 @@ program subsurface_tests
 
         call subsurface_data%destroy
 
-         ! check to see that io was deallocated
+        ! check to see that io was deallocated
         if ( .not. associated(subsurface_data%state) ) then
             write(6,*) "state type was disassociated"
         else
