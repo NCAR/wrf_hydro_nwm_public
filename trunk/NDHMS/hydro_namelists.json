@@ -3,15 +3,15 @@
         "hydro_nlist": {
             "aggfactrt": 4,
             "channel_option": 2,
-            "chanobs_domain": 0,
+            "chanobs_domain": 1,
             "chanrtswcrt": 1,
             "chrtout_domain": 1,
-            "chrtout_grid": 0,
+            "chrtout_grid": 1,
             "compound_channel": true,
             "dtrt_ch": 300,
             "dtrt_ter": 10,
             "dxrt": 250,
-            "frxst_pts_out": 0,
+            "frxst_pts_out": 1,
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
             "gw_restart": 1,
@@ -19,16 +19,16 @@
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
-            "io_config_outputs": 1,
+            "io_config_outputs": 0,
             "io_form_outputs": 2,
             "land_spatial_meta_flnm": "NULL_specified_in_domain.json",
-            "lsmout_domain": 0,
+            "lsmout_domain": 1,
             "nsoil": 4,
             "order_to_write": 1,
             "out_dt": 60,
             "outlake": 1,
             "output_channelbucket_influx": 2,
-            "output_gw": 0,
+            "output_gw": 1,
             "ovrtswcrt": 1,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
@@ -73,18 +73,26 @@
         "hydro_nlist": {
             "aggfactrt": 1,
             "dxrt": 1000,
-            "io_config_outputs": 4,
-            "io_form_outputs": 2,
             "output_channelbucket_influx": 2,
             "ovrtswcrt": 0,
             "rst_typ": 0,
-            "rtout_domain": 0,
             "subrtswcrt": 0
         },
         "nudging_nlist": {
             "maxagepairsbiaspersist": 24,
             "persistbias": false
         }
+    },
+
+    "nwm_hi_ana": {
+        "hydro_nlist": {
+            "compound_channel": false,
+            "out_dt": 60,
+            "output_channelbucket_influx": 2,
+            "aggfactrt": 10,
+            "dxrt": 100
+       },
+        "nudging_nlist": {}
     },
 
     "nwm_channel-only": {
@@ -100,7 +108,6 @@
             "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
-            "chrtout_grid": 1,
             "dtrt_ch": 10,
             "rstrt_swc": 1,
             "udmp_opt": 0

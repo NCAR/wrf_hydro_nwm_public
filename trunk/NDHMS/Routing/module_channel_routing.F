@@ -127,7 +127,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 2./3.)
+      tmp2 = wc * wl * (dh ** 3./2.)
       discharge = tmp1 + tmp2
       
       if (H .gt. 0.0) then
@@ -159,7 +159,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 2./3.) 
+      tmp2 = wc * wl * (dh ** 3./2.) 
       discharge = tmp1 + tmp2
       
       if (H .gt. 0.0) then 
@@ -191,7 +191,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 2./3.) 
+      tmp2 = wc * wl * (dh ** 3./2.) 
       discharge = tmp1 + tmp2
       
       if (H .gt. 0.0) then
@@ -225,7 +225,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    endif
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 2./3.)
+      tmp2 = wc * wl * (dh ** 3./2.)
       discharge = tmp1 + tmp2
       
       if (H .gt. 0.0) then 

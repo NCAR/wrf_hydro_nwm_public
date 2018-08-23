@@ -1,4 +1,4 @@
-md5sum: 73995f217b94244ddaac40ba17499e2a  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/soil_properties_FullRouting_NWMv2.0.nc
+md5sum: ebd31b8b9151f3048a33fe95237975e6  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/soil_properties_FullRouting_NWMv2.0.nc
 ncdump -h: netcdf soil_properties_FullRouting_NWMv2.0 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
