@@ -1,5 +1,5 @@
 ! Intended purpose is to provide a module for all subroutines related to
-! reservoir routing, including active management, level pool, and integrating live 
+! reservoir routing, including active management, level pool, and integrating live
 ! data feeds. As of NWMv2.0, this module stub can read in a timeslice file
 ! to incorporate data from external sources, should a data service become available.
 
@@ -64,7 +64,7 @@ subroutine read_reservoir_obs(domainId)
    diagFlag = 0
 #endif
 
-   ! Sync up processes. 
+   ! Sync up processes.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
       call mpp_land_sync()
@@ -74,7 +74,7 @@ subroutine read_reservoir_obs(domainId)
    ! Check to ensure the namelist option for reading in the reservoir discharge data
    ! has been set to 1. If not, return back to the main calling program.
    if(nlst_rt(domainId)%reservoir_data_ingest .eq. 0) then
-       ! No reservoir realtime data requested. 
+       ! No reservoir realtime data requested.
        return
    endif
 
@@ -91,7 +91,7 @@ subroutine read_reservoir_obs(domainId)
 
    ! Open up and read in the NetCDF file containing disharge data.
    if(myId .eq. 0) then
-      ! Initialize our missing flag to 0. If at any point we don't find a file, 
+      ! Initialize our missing flag to 0. If at any point we don't find a file,
       ! the flag value will go to 1 to indicate no files were found.
       missingFlag = 0
 
@@ -279,3 +279,166 @@ end subroutine nwmCheck
 
 end module module_reservoir_routing
 
+
+
+
+
+
+
+
+! ------------------------------------------------
+!   SUBROUTINE drive_CHANNEL
+! ------------------------------------------------
+! ------------------------------------------------
+     Subroutine drive_CHANNEL(latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
+       QSUBRT, LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
+       TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, CH_LNKRT, &
+       LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
+       QLateral, &
+       HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
+       RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+       ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
+       dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
+       NLINKSL, LINKID, node_area  &
+#ifdef MPP_LAND
+       , lake_index,link_location,mpp_nlinks,nlinks_index,yw_mpp_nlinks  &
+       , LNLINKSL, LLINKID  &
+       , gtoNode,toNodeInd,nToNodeInd &
+#endif
+       , CH_LNKRT_SL &
+       ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConstIn, &
+       gwChanCondConstOut, velocity)
+
+
+
+
+
+!   SUBROUTINE drive_CHANNEL for NHDPLUS
+! ------------------------------------------------
+
+     subroutine drive_CHANNEL_RSL(UDMP_OPT,KT, IXRT,JXRT,  &
+        LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
+        TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
+        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
+        CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
+        RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+        ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
+        QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
+        nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
+        LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
+#ifdef MPP_LAND
+        nlinks_index,mpp_nlinks,yw_mpp_nlinks, &
+        LNLINKSL, &
+        gtoNode,toNodeInd,nToNodeInd,   &
+#endif
+         CH_LNKRT_SL, landRunOff  &
+#ifdef WRF_HYDRO_NUDGING
+       , nudge &
+#endif
+       , accSfcLatRunoff, accBucket                  &
+       , qSfcLatRunoff,     qBucket                  &
+       , QLateral, velocity                          &
+       , HLINK                                       &
+       , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
+
+
+
+
+if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
+
+ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+     !!! for user defined Reach based Routing method.
+
+    call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
+       RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
+       RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
+       rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
+       RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
+       RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
+       RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
+       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, &
+       RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
+       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
+       RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
+       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
+       RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
+       RT_DOMAIN(did)%qout_gwsubbas, &
+       RT_DOMAIN(did)%LAKEIDA, RT_DOMAIN(did)%LAKEIDM, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%LAKEIDX   &
+#ifdef MPP_LAND
+       , RT_DOMAIN(did)%nlinks_index, RT_DOMAIN(did)%mpp_nlinks, RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL   &
+       , RT_DOMAIN(did)%gtoNode, RT_DOMAIN(did)%toNodeInd, RT_DOMAIN(did)%nToInd      &
+#endif
+       , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
+#ifdef WRF_HYDRO_NUDGING
+       , RT_DOMAIN(did)%nudge &
+#endif
+       , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
+       , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
+       , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       ,                                     RT_DOMAIN(did)%HLINK    &
+       , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
+       ,                                     nlst_rt(did)%SUBRTSWCRT &
+       , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
+       )
+
+else
+
+    call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
+       RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
+       nlst_rt(did)%SUBRTSWCRT, RT_DOMAIN(did)%QSUBRT, &
+       RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
+       RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
+       RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
+       RT_DOMAIN(did)%CH_NETLNK, rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%CH_LNKRT,&
+       rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH,&
+       RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
+       RT_DOMAIN(did)%QLateral, &
+       RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
+       RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &
+       RT_DOMAIN(did)%Bw,RT_DOMAIN(did)%Tw,RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
+       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH,&
+       RT_DOMAIN(did)%WEIRH,    &
+       RT_DOMAIN(did)%WEIRC, RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, &
+       RT_DOMAIN(did)%ORIFICEA, &
+       RT_DOMAIN(did)%ORIFICEE, RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
+       RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
+       RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &
+       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
+       RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option, &
+       RT_DOMAIN(did)%RETDEP_CHAN, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, &
+       RT_DOMAIN(did)%node_area  &
+#ifdef MPP_LAND
+       ,RT_DOMAIN(did)%lake_index,RT_DOMAIN(did)%link_location,&
+       RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
+       RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL,RT_DOMAIN(did)%LLINKID &
+       , rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd  &
+#endif
+       , rt_domain(did)%CH_LNKRT_SL   &
+       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
+       nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
+       nlst_rt(did)%gwChanCondConstOut,rt_domain(did)%velocity &
+       )
+endif
+
+    if((nlst_rt(did)%gwBaseSwCRT == 3) .and. (nlst_rt(did)%gwChanCondSw .eq. 1)) then
+
+           ! add/rm channel-aquifer exchange contribution
+
+           gw2d(did)%ho =  gw2d(did)%ho  &
+                        +(((gw2d(did)%qgw_chanrt*(-1)) * gw2d(did)%dt / gw2d(did)%dx**2) &
+                        /  gw2d(did)%poros)
+
+    endif
+  endif
+
+#ifdef HYDRO_D
+#ifndef NCEP_WCOSS
+           write(6,*) "*****yw******end drive_CHANNEL "
+#else
+           write(78,*) "*****yw******end drive_CHANNEL "
+#endif
+#endif
+
+      end subroutine driveChannelRouting
