@@ -518,8 +518,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
-       RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
-       ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
+       RESHT, HRZAREA, LAKEMAXH, &
+       ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area  &
 #ifdef MPP_LAND
@@ -594,11 +594,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
         !-- lake params
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
 
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
@@ -1546,8 +1541,7 @@ end subroutine drive_CHANNEL
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
         CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
-        RESHT, HRZAREA, LAKEMAXH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
-        ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
+        RESHT, HRZAREA, LAKEMAXH, CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
         nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
         LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
@@ -1633,11 +1627,7 @@ end subroutine drive_CHANNEL
 
        real, intent(IN), dimension(:)       :: HRZAREA  !-- horizontal area (km^2)
        real, intent(IN), dimension(:)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-       real, intent(IN), dimension(:)       :: WEIRC    !-- weir coefficient
-       real, intent(IN), dimension(:)       :: WEIRL    !-- weir length (m)
-       real, intent(IN), dimension(:)       :: ORIFICEC !-- orrifice coefficient
-       real, intent(IN), dimension(:)       :: ORIFICEA !-- orrifice area (m^2)
-       real, intent(IN), dimension(:)       :: ORIFICEE !-- orrifce elevation (m)
+
        integer, intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
        real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
