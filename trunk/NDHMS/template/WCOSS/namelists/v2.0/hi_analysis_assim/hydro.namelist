@@ -50,7 +50,7 @@ GW_RESTART = 1
 !!!! -------------------- MODEL OUTPUT CONTROL -------------------- !!!!
 
 ! Specify the output file write frequency...(minutes)
-out_dt = 15
+out_dt = 60
 
 ! Specify the number of output times to be contained within each output history file...(integer)
 !   SET = 1 WHEN RUNNING CHANNEL ROUTING ONLY/CALIBRATION SIMS!!!
