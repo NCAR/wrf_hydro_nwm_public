@@ -19,7 +19,8 @@ def run_tests(config: str,
               nnodes: int = 6,
               account: str = 'NRAL0017',
               walltime: str = '02:00:00',
-              queue = 'regular'):
+              queue: str = 'regular',
+              print_log: bool = False):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -33,6 +34,9 @@ def run_tests(config: str,
             nproc: Optional. The number of cores to use if running on cheyenne
             nnodes: Optional. The number of nodes to use if running on cheyenne
             account: Options. The account number to use if running on cheyenne
+            Walltime: Optional. Walltime for scheduler
+            queue: Optional, queue to use for scheduler
+            print_log: Optional, print text logs instead of HTML logs
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
@@ -63,8 +67,9 @@ def run_tests(config: str,
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
-    pytest_cmd = "pytest -v --tb=no --ignore=local -p no:cacheprovider "
-
+    pytest_cmd = "pytest -vv --tb=no --ignore=local -p no:cacheprovider "
+    if print_log:
+        pytest_cmd += " -s"
     # Ignore section: for cleaner tests with less skipps!
     # NWM
     # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
@@ -174,6 +179,11 @@ def main():
                         help='Queue to use if running on NCAR Cheyenne, options are regular, '
                              'premium, or shared')
 
+    parser.add_argument('--print',
+                        required=False,
+                        action='store_true',
+                        help='Print log to stdout instead of html')
+
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -196,6 +206,7 @@ def main():
     account = args.account
     walltime = args.walltime
     queue = args.queue
+    print_log = args.print
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -254,18 +265,19 @@ def main():
         print('### TESTING:  ---  ' + config + '  ---  ###')
         print(('#' * total_len) + '\n', flush=True)
 
-        test_result = run_tests(config = config,
-                                compiler = compiler,
-                                domain_dir = str(domain_dir),
-                                candidate_dir = str(candidate_copy),
-                                reference_dir = str(reference_copy),
-                                output_dir = str(output_dir),
-                                scheduler = scheduler,
-                                ncores = ncores,
-                                nnodes = nnodes,
-                                account = account,
-                                walltime = walltime,
-                                queue = queue)
+        test_result = run_tests(config=config,
+                                compiler=compiler,
+                                domain_dir=str(domain_dir),
+                                candidate_dir=str(candidate_copy),
+                                reference_dir=str(reference_copy),
+                                output_dir=str(output_dir),
+                                scheduler=scheduler,
+                                ncores=ncores,
+                                nnodes=nnodes,
+                                account=account,
+                                walltime=walltime,
+                                queue=queue,
+                                print_log=print_log)
 
         if test_result.returncode != 0:
             has_failure = True
