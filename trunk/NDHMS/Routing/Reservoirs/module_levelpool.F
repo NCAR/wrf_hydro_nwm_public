@@ -33,20 +33,20 @@ module module_levelpool
     !Level Pool Constructor
     subroutine levelpool_struct_init(this, water_elevation,  &
         reservoir_area, weir_elevation, weir_coeffecient, &
-        weir_length, orifice_elevation, orifice_coffecient, &
+        weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
 
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
-        real, intent(inout) :: water_elevation
+        real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: reservoir_area            ! area of reservoir (km^2)
-        real, intent(in)    :: weir_elevation            ! bottom of weir elevation
-        real, intent(in)    :: weir_coeffecient          ! weir coeff.
-        real, intent(in)    :: weir_length               ! weir length (m)
-        real, intent(in)    :: orifice_elevation         ! orifice elevation
-        real, intent(in)    :: orifice_coffecient        ! orifice coeff.
-        real, intent(in)    :: orifice_area              ! orifice area (m^2)
-        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (m)
+        real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
+        real, intent(in)    :: weir_coeffecient          ! weir coefficient
+        real, intent(in)    :: weir_length               ! weir length (meters)
+        real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
+        real, intent(in)    :: orifice_coefficient       ! orifice coefficient
+        real, intent(in)    :: orifice_area              ! orifice area (meters^2)
+        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
 
 
@@ -83,11 +83,12 @@ module module_levelpool
                 ! if the parameters structure could not be created write and error
                 write(0,*) "Failure to allocate levelpool parameters structure"
             else
+
             ! initialize levelpool parameters
-            call this%parameters%init( reservoir_area, weir_elevation, weir_coeffecient, &
-                weir_length, orifice_elevation, &
-                orifice_coffecient, orifice_area, &
-                max_depth, lake_number )
+            call this%parameters%init( reservoir_area,  &
+                weir_elevation, weir_coeffecient, weir_length, &
+                orifice_elevation, orifice_coefficient, &
+                orifice_area, max_depth, lake_number )
 
             end if
             this%pointer_allocation_guard = .true.
@@ -116,11 +117,8 @@ module module_levelpool
 
 
 
-    subroutine run_levelpool_release(reservoir_data, &
-            inflow, &
-            lateral_inflow, &
-            water_elevation, &
-            outflow, &
+    subroutine run_levelpool_release(reservoir_data, inflow, &
+            lateral_inflow, water_elevation, outflow, &
             routing_period)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
@@ -128,7 +126,7 @@ module module_levelpool
         real, intent(in)    :: lateral_inflow
         real, intent(inout) :: water_elevation
         real, intent(out)   :: outflow
-        real, intent(in)    :: routing_period      ! routing period [s]
+        real, intent(in)    :: routing_period      ! seconds
 
 
         !Update input variables
@@ -152,7 +150,7 @@ module module_levelpool
         reservoir_data%parameters%weir_coeffecient,             &
         reservoir_data%parameters%weir_length,                  &
         reservoir_data%parameters%orifice_elevation,            &
-        reservoir_data%parameters%orifice_coffecient,           &
+        reservoir_data%parameters%orifice_coefficient,           &
         reservoir_data%parameters%orifice_area                  &
         )
 

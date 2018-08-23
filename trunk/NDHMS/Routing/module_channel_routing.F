@@ -1183,8 +1183,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
               !  DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
               !  WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
 
-              ! I will change to "did"
-              call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEI(i), QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)   !Water elevation and lateral inflow too????
+              ! Domain ID (did) set to 1              ! Domain ID (did) set to 1
+              call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEI(i), QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)
 
               QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 
@@ -1918,7 +1918,7 @@ do nt = 1, nsteps
 
 
 
-            ! I will change to "did"
+            ! Domain ID (did) set to 1
             call rt_domain(1)%reservoirs(i)%ptr%run_release(Quc, QLateral(k), RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)   !Water elevation and lateral inflow too????
 
 
