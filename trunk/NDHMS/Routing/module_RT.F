@@ -346,7 +346,7 @@ CONTAINS
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
      if(NLAKES .gt. 0) then
-        allocate ( rt_domain(did)%reservoirs(NLAKES) )    !allocate array of pointers to reservoirs
+        allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
 
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
@@ -760,17 +760,19 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
+   ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-     allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)     !allocate a single levelpool reservoir
+     ! Allocate a single level pool reservoir
+     allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
+     ! Dynamically inspects for level pool type reservoir
      select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
         type is (levelpool_struct)
 
-               !call rt_domain(did)%RESERVOIRS(lake_index)%init(   &
+               ! Call to initialize a level pool type reservoir
                call lp%init(                                &
                rt_domain(did)%ELEVLAKE(lake_index),         &
-               !0.0, 0.0,                                    &       !passing 0.0 for routing_period and inflow_previous_timestep
                rt_domain(did)%HRZAREA(lake_index),          &
                rt_domain(did)%WEIRH(lake_index),            &
                rt_domain(did)%WEIRC(lake_index),            &
@@ -782,10 +784,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%LAKEIDX(lake_index)           )
 
      end select
-
-
    end do
 
+   ! Deallocate existing arrays that contain reservoir parameters/properties
    if(allocated(rt_domain(did)%ELEVLAKE)) deallocate(rt_domain(did)%ELEVLAKE)
    if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
    if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)

@@ -1,41 +1,51 @@
+! This module defines and instantiates objects
+! for a level pool type reservoir. The level
+! pool reservoir struct inherits input and
+! output stucts from the reservoir base
+! module and calls instantiation of these into
+! sub-objects. The level pool reservoir struct
+! also points to stucts for level pool parameters
+! and state and calls instantiation of these into
+! sub-objects. This module also contains the
+! subroutine to run level pool release that is
+! derived from the reservoir base struct interface
+! to run release. Running level pool release will
+! then call the LEVELPOOL subroutine, which
+! processes the given inputs, parameters, and
+! state for a particular level pool reservoir and
+! return the output/outflow.
 module module_levelpool
 
     use module_levelpool_parameters
     use module_levelpool_state
     use module_reservoir_base
-
-
     implicit none
 
-
+    ! Extend/derive level pool struct from the abstract base
+    ! struct for reservoirs.
     type, extends(reservoir_base_struct) :: levelpool_struct
 
+        ! Define pointers to sub-structs / sub-objects to and
+        ! held by a level pool reservoir object.
         type (levelpool_parameters_interface), pointer :: parameters => null()
         type (levelpool_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
 
-
-        contains
+    contains
 
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
-        procedure :: test => test_levelpool
-
     end type levelpool_struct
 
-
-    contains
-
-
+contains
 
     !Level Pool Constructor
     subroutine levelpool_struct_init(this, water_elevation,  &
         reservoir_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
-
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -49,96 +59,83 @@ module module_levelpool
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
 
-
-
         if (this%pointer_allocation_guard .eqv. .false. ) then
-
             ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write and error
+                ! if the input structure could not be created write an error
                 write(0,*) "Failure to allocate level pool input structure"
             else
                 ! initialize the input structure
                 call this%input%init()
             end if
 
-
-
             ! try to allocate output
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write and error
+                ! if the output structure could not be created write an error
                 write(0,*) "Failure to allocate level pool output structure"
             else
                 ! initialize the output structure
                 call this%output%init()
             end if
 
-
-
             ! try to allocate parameters
             allocate ( this%parameters )
             if ( .not. associated(this%parameters) ) then
-                ! if the parameters structure could not be created write and error
+                ! if the parameters structure could not be created write an error
                 write(0,*) "Failure to allocate levelpool parameters structure"
             else
-
-            ! initialize levelpool parameters
-            call this%parameters%init( reservoir_area,  &
-                weir_elevation, weir_coeffecient, weir_length, &
-                orifice_elevation, orifice_coefficient, &
-                orifice_area, max_depth, lake_number )
-
+                ! initialize levelpool parameters
+                call this%parameters%init( reservoir_area,  &
+                    weir_elevation, weir_coeffecient, weir_length, &
+                    orifice_elevation, orifice_coefficient, &
+                    orifice_area, max_depth, lake_number )
             end if
             this%pointer_allocation_guard = .true.
 
-
-
-            ! initialize levelpool state
-            call this%state%init( water_elevation )
-
-
+            ! try to allocate state
+            allocate ( this%state )
+            if ( .not. associated(this%state) ) then
+                ! if the state structure could not be created write an error
+                write(0,*) "Failure to allocate state parameters structure"
+            else
+                ! initialize levelpool state
+                call this%state%init( water_elevation )
+            end if
+            this%pointer_allocation_guard = .true.
         end if
 
-
     end subroutine levelpool_struct_init
-
-
 
     !Level Pool Destructor
     subroutine levelpool_struct_destroy(this)
         implicit none
-
         class(levelpool_struct), intent(inout) :: this ! object being destroyed
-
     end subroutine levelpool_struct_destroy
 
-
-
-
+    ! Subroutine for running release for a level pool reservoir,
+    ! which will then call the LEVELPOOL method/subroutine for processing the
+    ! inputs and returning the output.
     subroutine run_levelpool_release(reservoir_data, inflow, &
-            lateral_inflow, water_elevation, outflow, &
-            routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
-        real, intent(in)    :: inflow
-        real, intent(in)    :: lateral_inflow
-        real, intent(inout) :: water_elevation
-        real, intent(out)   :: outflow
-        real, intent(in)    :: routing_period      ! seconds
+        real, intent(in)    :: inflow               ! cubic meters per second (cms)
+        real, intent(in)    :: lateral_inflow       ! cubic meters per second (cms)
+        real, intent(inout) :: water_elevation      ! meters AMSL
+        real, intent(out)   :: outflow              ! cubic meters per second (cms)
+        real, intent(in)    :: routing_period       ! seconds
 
-
-        !Update input variables
+        ! Update input variables
         reservoir_data%input%inflow = inflow
         reservoir_data%input%lateral_inflow = lateral_inflow
 
-        !Update state variables
+        ! Update state variables
         reservoir_data%state%water_elevation = water_elevation
 
-
         call LEVELPOOL(reservoir_data%parameters%lake_number,   &
-        reservoir_data%input%inflow_previous_timestep,          &
+        reservoir_data%input%previous_timestep_inflow,          &
         reservoir_data%input%inflow,                            &
         reservoir_data%output%outflow,                          &
         reservoir_data%input%lateral_inflow,                    &
@@ -154,20 +151,13 @@ module module_levelpool
         reservoir_data%parameters%orifice_area                  &
         )
 
-        !Update output variables
-        !reservoir_data%output%outflow = outflow
+        ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
 
-        reservoir_data%input%inflow_previous_timestep = inflow   ! set current inflow to inflow_previous_timestep
+        ! Set current inflow to previous_timestep_inflow
+        reservoir_data%input%previous_timestep_inflow = inflow
 
     end subroutine run_levelpool_release
-
-
-    subroutine test_levelpool(this)
-        implicit none
-        class(levelpool_struct), intent(inout) :: this
-    end subroutine test_levelpool
-
 
     ! ------------------------------------------------
     !   SUBROUTINE LEVELPOOL
@@ -373,19 +363,4 @@ module module_levelpool
     end subroutine LEVELPOOL
     ! ----------------------------------------------------------------
 
-
-
-
-
 end module module_levelpool
-
-
-
-
-
-
-
-
-
-
-
