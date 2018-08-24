@@ -91,8 +91,8 @@ real    :: Htmp                ! Temporary assign of incoming lake el. (m)
 real :: sap                    ! local surface area values
 real :: discharge              ! storage discharge m^3/s
 real :: tmp1, tmp2
-real :: dh, dh1, dh2, dh3      ! height function and 3 order RK
-real :: It, Itdt_3, Itdt_2_3
+real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK 
+real :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs 
 real :: maxWeirDepth           !maximum capacity of weir
 real :: qldum                  !dummy ql to 0 out
 !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
@@ -116,8 +116,8 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 
    qldum = 0.0 
    It = qi0
-   Itdt_3   = (qi0 + (qi1 + qldum))/3
-   Itdt_2_3 = (qi0 + (qi1 + qldum))/3 + Itdt_3
+   Itdt_3   = qi0 + ((qi1 + qldum - qi0) * 0.33)
+   Itdt_2_3 = qi0 + ((qi1 + qldum - qi0) * 0.67)
    maxWeirDepth =  maxh - we   
 
 #ifdef HYDRO_D
@@ -139,7 +139,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    endif
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-      tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.))
       discharge = tmp1 + tmp2
       
@@ -151,7 +151,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       sap = ar * 1.0E6
      
    else if ( H .gt. oe ) then     !! only orifice flow,not full
-      discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+      discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
       sap = ar * 1.0E6
    else
       discharge = 0.0
@@ -179,7 +179,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    endif
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-      tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.)) 
       discharge = tmp1 + tmp2
       
@@ -190,8 +190,8 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 !      endif
       sap = ar * 1.0E6
 
-   else if ( H .gt. oe ) then     !! only orifice flow,not full
-      discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+   else if ( (H+dh1/3) .gt. oe ) then     !! only orifice flow,not full
+      discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
       sap = ar * 1.0E6
    else
       discharge = 0.0
@@ -219,7 +219,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    endif
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-      tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.)) 
       discharge = tmp1 + tmp2
       
@@ -230,8 +230,8 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 !      endif
       sap = ar * 1.0E6
      
-   else if ( H .gt. oe ) then     !! only orifice flow,not full
-      discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+   else if ( (H+dh2*0.667) .gt. oe ) then     !! only orifice flow,not full
+      discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
       sap = ar * 1.0E6
    else
       discharge = 0.0
@@ -261,7 +261,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       dh = maxWeirDepth 
    endif
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-      tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.))
       discharge = tmp1 + tmp2
       
@@ -273,7 +273,7 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       sap = ar * 1.0E6
      
    else if ( H .gt. oe ) then     !! only orifice flow,not full
-      discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
+      discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
       sap = ar * 1.0E6
    else
       discharge = 0.0
