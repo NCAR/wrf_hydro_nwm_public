@@ -518,7 +518,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
-       RESHT, HRZAREA, LAKEMAXH, &
+       RESHT, &
        ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area  &
@@ -592,9 +592,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 
         !-- lake params
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
@@ -1177,7 +1174,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               !  DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
               !  WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
 
-              ! Domain ID (did) set to 1              ! Domain ID (did) set to 1
+              ! Domain ID (did) set to 1
               call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEI(i), QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)
 
               QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
@@ -1541,7 +1538,7 @@ end subroutine drive_CHANNEL
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
         CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
-        RESHT, HRZAREA, LAKEMAXH, CVOL, QLAKEI, QLAKEO, LAKENODE, &
+        RESHT, CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
         nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
         LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
@@ -1624,10 +1621,6 @@ end subroutine drive_CHANNEL
        real, dimension(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
 
        !-- lake params
-
-       real, intent(IN), dimension(:)       :: HRZAREA  !-- horizontal area (km^2)
-       real, intent(IN), dimension(:)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-
        integer, intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
        real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)

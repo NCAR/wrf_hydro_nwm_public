@@ -781,7 +781,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%ORIFICEC(lake_index),         &
                rt_domain(did)%ORIFICEA(lake_index),         &
                rt_domain(did)%LAKEMAXH(lake_index),         &
-               rt_domain(did)%LAKEIDX(lake_index)           )
+               lake_index                                   )
 
      end select
    end do
@@ -796,7 +796,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
-   if(allocated(rt_domain(did)%LAKEIDX)) deallocate(rt_domain(did)%LAKEIDX)
 
 
 
