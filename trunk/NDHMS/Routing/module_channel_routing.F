@@ -94,6 +94,7 @@ real :: tmp1, tmp2
 real :: dh, dh1, dh2, dh3      ! height function and 3 order RK
 real :: It, Itdt_3, Itdt_2_3
 real :: maxWeirDepth           !maximum capacity of weir
+real :: qldum                  !dummy ql to 0 out
 !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
 !! -- determine from inflow hydrograph
 
@@ -112,12 +113,24 @@ if (LAKE_OPT.eq.1) then     ! If-block for simple pass through scheme....
    H = Htmp                  ! Set new lake water elevation to incoming lake el.
    
 else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
-   
+
+   qldum = 0.0 
    It = qi0
-   Itdt_3   = (qi0 + (qi1 + ql))/3
-   Itdt_2_3 = (qi0 + (qi1 + ql))/3 + Itdt_3
+   Itdt_3   = (qi0 + (qi1 + qldum))/3
+   Itdt_2_3 = (qi0 + (qi1 + qldum))/3 + Itdt_3
    maxWeirDepth =  maxh - we   
-   
+
+#ifdef HYDRO_D
+   write(6,*) "ADCHECK: levelpool_ini"
+   write(6,*) "lake_num=", ln
+   write(6,*) "qi0=",qi0, "qi1=",qi1, "qo1=",qo1
+   write(6,*) "ql=",ql, "qldum=",qldum, "dt=",dt, "H=",H
+   write(6,*) "ar=",ar, "maxh=",maxh
+   write(6,*) "we=",we, "wc=",wc, "wl=",wl
+   write(6,*) "oe=",oe, "oc=",oc, "oa=",oa
+   write(6,*) "Itdt_3=",Itdt_3, "Itdt_2_3=",Itdt_2_3, "maxWeirDepth=",maxWeirDepth        
+#endif
+ 
    !-- determine Q(dh) from elevation-discharge relationship
    !-- and dh1
    dh = H - we
@@ -127,15 +140,16 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.)
+      tmp2 = wc * wl * (dh ** (3./2.))
       discharge = tmp1 + tmp2
       
-      if (H .gt. 0.0) then
-         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-      else
-         sap  = 0.0
-      endif
-      
+!      if (H .gt. 0.0) then
+!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+!      else
+!         sap  = 0.0
+!      endif
+      sap = ar * 1.0E6
+     
    else if ( H .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
       sap = ar * 1.0E6
@@ -149,7 +163,14 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    else
       dh1 = 0.0
    endif
-   
+
+#ifdef HYDRO_D
+   write(6,*) "ADCHECK: levelpool_after_dh1"
+   write(6,*) "dh=",dh, "dh1=",dh1
+   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
+   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap      
+#endif
+
    !-- determine Q(H + dh1/3) from elevation-discharge relationship
    !-- dh2
    dh = (H+dh1/3) - we
@@ -159,15 +180,16 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.) 
+      tmp2 = wc * wl * (dh ** (3./2.)) 
       discharge = tmp1 + tmp2
       
-      if (H .gt. 0.0) then 
-         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-      else
-         sap  = 0.0
-      endif
-      
+!      if (H .gt. 0.0) then 
+!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+!      else
+!         sap  = 0.0
+!      endif
+      sap = ar * 1.0E6
+
    else if ( H .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
       sap = ar * 1.0E6
@@ -181,6 +203,13 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    else
       dh2 = 0.0
    endif
+
+#ifdef HYDRO_D
+   write(6,*) "ADCHECK: levelpool_after_dh2"
+   write(6,*) "dh=",dh, "dh2=",dh2
+   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
+   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap
+#endif
    
    !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
    !-- dh3
@@ -191,15 +220,16 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.) 
+      tmp2 = wc * wl * (dh ** (3./2.)) 
       discharge = tmp1 + tmp2
       
-      if (H .gt. 0.0) then
-         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-      else
-         sap = 0.0
-      endif
-      
+!      if (H .gt. 0.0) then
+!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+!      else
+!         sap = 0.0
+!      endif
+      sap = ar * 1.0E6
+     
    else if ( H .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
       sap = ar * 1.0E6
@@ -214,6 +244,13 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       dh3 = 0.0
    endif
     
+#ifdef HYDRO_D
+   write(6,*) "ADCHECK: levelpool_after_dh3"
+   write(6,*) "dh=",dh, "dh3=",dh3
+   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
+   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap
+#endif
+
    !-- determine dh and H
    dh = (dh1/4.) + (0.75*dh3)
    H = H + dh
@@ -225,15 +262,16 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    endif
    if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
       tmp1 = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
-      tmp2 = wc * wl * (dh ** 3./2.)
+      tmp2 = wc * wl * (dh ** (3./2.))
       discharge = tmp1 + tmp2
       
-      if (H .gt. 0.0) then 
-         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-      else
-         sap = 0.0
-      endif
-      
+!      if (H .gt. 0.0) then 
+!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
+!      else
+!         sap = 0.0
+!      endif
+      sap = ar * 1.0E6
+     
    else if ( H .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2 * 9.81 * ( H - oe ) )
       sap = ar * 1.0E6
@@ -249,6 +287,13 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    qo1  = discharge  ! return the flow rate from reservoir
    
+#ifdef HYDRO_D
+   write(6,*) "ADCHECK: levelpool_final"
+   write(6,*) "dh=",dh, "dh1=",dh1
+   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
+   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap
+#endif
+
 23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
 24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
    
