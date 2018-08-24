@@ -1170,16 +1170,20 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
             if(lake_index(i) .gt. 0)  then
 #endif
-              !CALL LEVELPOOL(i,QLAKEIP(i), QLAKEI(i), QLAKEO(i), QLLAKE(i), &
-              !  DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
-              !  WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
 
-              ! Domain ID (did) set to 1
+              ! Calls run_release for a single reservoir depending on its type as
+              ! in whether it uses level pool, machine learning, or persistence.
+              ! Inflow, lateral inflow, water elevation, and the routing period
+              ! are passed in. Updated outflow and water elevation are returned.
+              ! Domain ID (did) set to 1.
               call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEI(i), QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)
+
+              ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
+              !       inside the reservoir module, but it requires a redesign of the lake
+              !       MPI communication model.
 
               QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 
-              ! Leave updateLake_grid calls as is b/c they use arrays instead of single vars???
 
 #ifdef MPP_LAND
             endif
@@ -1192,6 +1196,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
+
+         ! TODO: Change updateLake_grid calls below to updated distributed reservoir
+         !       objects and not arrays as currently implemented.
          call updateLake_grid(QLLAKE, nlakes,lake_index)
          call updateLake_grid(RESHT,  nlakes,lake_index)
          call updateLake_grid(QLAKEO, nlakes,lake_index)
@@ -1888,22 +1895,18 @@ do nt = 1, nsteps
 
          lakeid = LAKEIDX(k)
          if(lakeid .ge. 0) then
-            !call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
-            !     QLateral(k), DTRT_CH, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
-            !     WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
 
+            ! Calls run_release for a single reservoir depending on its type as
+            ! in whether it uses level pool, machine learning, or persistence.
+            ! Inflow, lateral inflow, water elevation, and the routing period
+            ! are passed in. Updated outflow and water elevation are returned.
+            ! Domain ID (did) set to 1.
+            call rt_domain(1)%reservoirs(i)%ptr%run_release(Quc, QLateral(k), RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)
 
-            !CALL LEVELPOOL(i,QLAKEIP(i), QLAKEI(i), QLAKEO(i), QLLAKE(i), &
-            !  DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
-            !  WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
+            ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
+            !       inside the reservoir module, but it requires a redesign of the lake
+            !       MPI communication model.
 
-
-
-            ! Domain ID (did) set to 1
-            call rt_domain(1)%reservoirs(i)%ptr%run_release(Quc, QLateral(k), RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)   !Water elevation and lateral inflow too????
-
-
-            !take out QLAKEO???
 
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
             QLAKEI(lakeid)  = Quc           !save inflow to lake
