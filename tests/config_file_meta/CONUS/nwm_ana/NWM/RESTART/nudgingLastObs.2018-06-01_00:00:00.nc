@@ -1,4 +1,4 @@
-md5sum: 21a87d0f925b785e3110b78661a0bf3b  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART/nudgingLastObs.2018-06-01_00:00:00.nc
+md5sum: 999fe071d847a2127992f52dc4a7ee70  /glade/work/jamesmcc/domains/private/CONUS/NWM/RESTART/nudgingLastObs.2018-06-01_00:00:00.nc
 ncdump -h: netcdf nudgingLastObs.2018-06-01_00\:00\:00 {
 dimensions:
 	timeStrLen = 19 ;
