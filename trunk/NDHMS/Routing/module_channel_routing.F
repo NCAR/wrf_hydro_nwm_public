@@ -94,7 +94,7 @@ real :: tmp1, tmp2
 real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK 
 real :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs 
 real :: maxWeirDepth           !maximum capacity of weir
-real :: qldum                  !dummy ql to 0 out
+!real :: hdiff_vol, qdiff_vol   ! water balance check variables
 !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
 !! -- determine from inflow hydrograph
 
@@ -103,7 +103,8 @@ real :: qldum                  !dummy ql to 0 out
 !future versions...
 LAKE_OPT = 2
 Htmp = H   !temporary set of incoming lake water elevation...
-
+!hdiff_vol = 0.0
+!qdiff_vol = 0.0
 
 !!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
 !pool, .....
@@ -114,23 +115,15 @@ if (LAKE_OPT.eq.1) then     ! If-block for simple pass through scheme....
    
 else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
 
-   qldum = 0.0 
    It = qi0
-   Itdt_3   = qi0 + ((qi1 + qldum - qi0) * 0.33)
-   Itdt_2_3 = qi0 + ((qi1 + qldum - qi0) * 0.67)
-   maxWeirDepth =  maxh - we   
+   Itdt_3   = qi0 + ((qi1 + ql - qi0) * 0.33)
+   Itdt_2_3 = qi0 + ((qi1 + ql - qi0) * 0.67)
+   maxWeirDepth =  maxh - we
 
-#ifdef HYDRO_D
-   write(6,*) "ADCHECK: levelpool_ini"
-   write(6,*) "lake_num=", ln
-   write(6,*) "qi0=",qi0, "qi1=",qi1, "qo1=",qo1
-   write(6,*) "ql=",ql, "qldum=",qldum, "dt=",dt, "H=",H
-   write(6,*) "ar=",ar, "maxh=",maxh
-   write(6,*) "we=",we, "wc=",wc, "wl=",wl
-   write(6,*) "oe=",oe, "oc=",oc, "oa=",oa
-   write(6,*) "Itdt_3=",Itdt_3, "Itdt_2_3=",Itdt_2_3, "maxWeirDepth=",maxWeirDepth        
-#endif
- 
+   !assume vertically walled reservoir
+   !remove this when moving to a variable head area volume
+   sap = ar * 1.0E6 
+
    !-- determine Q(dh) from elevation-discharge relationship
    !-- and dh1
    dh = H - we
@@ -142,20 +135,10 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.))
       discharge = tmp1 + tmp2
-      
-!      if (H .gt. 0.0) then
-!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-!      else
-!         sap  = 0.0
-!      endif
-      sap = ar * 1.0E6
-     
    else if ( H .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
-      sap = ar * 1.0E6
    else
       discharge = 0.0
-      sap = ar * 1.0E6
    endif
    
    if (sap .gt. 0) then 
@@ -163,13 +146,6 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    else
       dh1 = 0.0
    endif
-
-#ifdef HYDRO_D
-   write(6,*) "ADCHECK: levelpool_after_dh1"
-   write(6,*) "dh=",dh, "dh1=",dh1
-   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
-   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap      
-#endif
 
    !-- determine Q(H + dh1/3) from elevation-discharge relationship
    !-- dh2
@@ -182,20 +158,10 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.)) 
       discharge = tmp1 + tmp2
-      
-!      if (H .gt. 0.0) then 
-!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-!      else
-!         sap  = 0.0
-!      endif
-      sap = ar * 1.0E6
-
    else if ( (H+dh1/3) .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
-      sap = ar * 1.0E6
    else
       discharge = 0.0
-      sap = ar * 1.0E6
    endif
    
    if (sap .gt. 0.0) then 
@@ -204,13 +170,6 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       dh2 = 0.0
    endif
 
-#ifdef HYDRO_D
-   write(6,*) "ADCHECK: levelpool_after_dh2"
-   write(6,*) "dh=",dh, "dh2=",dh2
-   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
-   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap
-#endif
-   
    !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
    !-- dh3
    dh = (H + (0.667*dh2)) - we
@@ -222,20 +181,10 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.)) 
       discharge = tmp1 + tmp2
-      
-!      if (H .gt. 0.0) then
-!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-!      else
-!         sap = 0.0
-!      endif
-      sap = ar * 1.0E6
-     
    else if ( (H+dh2*0.667) .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
-      sap = ar * 1.0E6
    else
       discharge = 0.0
-      sap = ar * 1.0E6
    endif
    
    if (sap .gt. 0.0) then 
@@ -244,13 +193,6 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       dh3 = 0.0
    endif
     
-#ifdef HYDRO_D
-   write(6,*) "ADCHECK: levelpool_after_dh3"
-   write(6,*) "dh=",dh, "dh3=",dh3
-   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
-   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap
-#endif
-
    !-- determine dh and H
    dh = (dh1/4.) + (0.75*dh3)
    H = H + dh
@@ -264,20 +206,10 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
       tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
       tmp2 = wc * wl * (dh ** (3./2.))
       discharge = tmp1 + tmp2
-      
-!      if (H .gt. 0.0) then 
-!         sap = (ar * 1.0E6 ) * (1 + (H - we) / H)
-!      else
-!         sap = 0.0
-!      endif
-      sap = ar * 1.0E6
-     
    else if ( H .gt. oe ) then     !! only orifice flow,not full
       discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
-      sap = ar * 1.0E6
    else
       discharge = 0.0
-      sap = ar * 1.0E6
    endif
    
    if(H .ge. maxh) then  ! overtop condition
@@ -287,12 +219,18 @@ else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
    
    qo1  = discharge  ! return the flow rate from reservoir
    
-#ifdef HYDRO_D
-   write(6,*) "ADCHECK: levelpool_final"
-   write(6,*) "dh=",dh, "dh1=",dh1
-   write(6,*) "tmp1=",tmp1, "tmp2=",tmp2
-   write(6,*) "H=",H, "discharge=",discharge, "sap=",sap
-#endif
+!#ifdef HYDRO_D
+!#ifndef NCEP_WCOSS
+!   ! Water balance check
+!   qdiff_vol = (qi1+ql-qo1)*dt !m3
+!   hdiff_vol = (H-Htmp)*sap    !m3
+!22 format(f8.4,2x,f8.4,2x,f8.4,2x,f8.4,2x,f8.4,2x,f6.0,2x,f20.1,2x,f20.1)
+!   open (unit=67, &
+!     file='lake_massbalance_out.txt', status='unknown',position='append')
+!   write(67,22) Htmp, H, qi1, ql, qo1, dt, qdiff_vol, hdiff_vol
+!   close(67) 
+!#endif
+!#endif
 
 23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
 24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
@@ -2142,7 +2080,7 @@ do nt = 1, nsteps
          lakeid = LAKEIDX(k)
          if(lakeid .ge. 0) then
             call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
-                 QLateral(k), DTRT_CH, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
+                 0.0, DTRT_CH, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
                  WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
             
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
