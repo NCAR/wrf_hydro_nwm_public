@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 
 
 def download_file_from_google_drive(id, destination):
+    print('downloading google drive file id ' + id + ' to ' + destination)
     URL = "https://docs.google.com/uc?export=download"
 
     session = requests.Session()
@@ -50,7 +51,6 @@ def main():
     file_id = args.file_id
     dest_file = args.dest_file
 
-    print('downloading google drive file id ' + file_id + ' to ' + dest_file)
     download_file_from_google_drive(file_id, dest_file)
 
 if __name__ == "__main__":

@@ -1,21 +1,23 @@
 import copy
 import datetime as dt
-import pickle
-import pytest
-import warnings
-import wrfhydropy
 import os
-import shutil
 import pathlib
+import pickle
+import sys
 import time
-import pandas as pd
+import warnings
 
-##################################
+import pandas as pd
+import pytest
+import wrfhydropy
+
+
+# #################################
 # Setup the test with a domain, a candidate, and a reference.
 # Get domain, reference, candidate, and optional output directory from command line arguments
 # Setup a domain
 
-#Utility function to wait for job completion
+# Utility function to wait for job completion
 def wait_job(sim):
     file = sim.jobs[0].job_dir.joinpath('WrfHydroJob_postrun.pkl')
     while True:
@@ -23,13 +25,15 @@ def wait_job(sim):
             break
         time.sleep(5)
 
-##################################
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+# #################################
 # Define tests
 
 
-def test_compile_candidate(candidate_sim,output_dir,capsys):
-    with capsys.disabled():
-        print("\nQuestion: The candidate compiles?", end='')
+def test_compile_candidate(candidate_sim, output_dir):
+    print("\nQuestion: The candidate compiles?\n", end='')
 
     compile_dir = output_dir / 'compile_candidate'
 
@@ -43,9 +47,8 @@ def test_compile_candidate(candidate_sim,output_dir,capsys):
         "Candidate code did not compile correctly."
 
 
-def test_compile_reference(reference_sim,output_dir,capsys):
-    with capsys.disabled():
-        print("\nQuestion: The reference compiles?", end='')
+def test_compile_reference(reference_sim, output_dir):
+    print("\nQuestion: The reference compiles?\n", end='')
 
     compile_dir = output_dir / 'compile_reference'
 
@@ -59,9 +62,8 @@ def test_compile_reference(reference_sim,output_dir,capsys):
         "Reference code did not compile correctly"
 
 
-def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The candidate runs successfully?", end='')
+def test_run_candidate(candidate_sim, output_dir, ncores):
+    print("\nQuestion: The candidate runs successfully?\n", end='')
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
@@ -70,7 +72,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
 
     # Job
     exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_candidate',exe_cmd=exe_command)
+    job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command)
     candidate_sim.add(job)
 
     # Run, catch warnings related to missing start and end job times
@@ -78,8 +80,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
         warnings.simplefilter("ignore")
         candidate_sim.compose()
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     candidate_sim.run()
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
@@ -95,9 +96,8 @@ def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
 
 
 # Run questions
-def test_run_reference(reference_sim, output_dir, ncores, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The reference runs successfully?", end='')
+def test_run_reference(reference_sim, output_dir, ncores):
+    print("\nQuestion: The reference runs successfully?\n", end='')
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
@@ -114,8 +114,7 @@ def test_run_reference(reference_sim, output_dir, ncores, capsys):
         warnings.simplefilter("ignore")
         reference_sim.compose()
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     reference_sim.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
@@ -130,11 +129,10 @@ def test_run_reference(reference_sim, output_dir, ncores, capsys):
         assert job.exit_status == 0, \
             "Reference code run exited with non-zero status"
 
-#Ncores question
-def test_ncores_candidate(output_dir, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The candidate outputs from a ncores run match outputs from"
-              " ncores-1 run?\n", end='')
+
+def test_ncores_candidate(output_dir,capsys):
+    print("\nQuestion: The candidate outputs from a ncores run match outputs from"
+          " ncores-1 run?\n", end='')
 
     candidate_sim_file = output_dir / 'run_candidate' / 'WrfHydroSim.pkl'
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
@@ -172,8 +170,7 @@ def test_ncores_candidate(output_dir, capsys):
         warnings.simplefilter("ignore")
         candidate_sim_ncores.compose(force=True)
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     candidate_sim_ncores.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
@@ -184,38 +181,35 @@ def test_ncores_candidate(output_dir, capsys):
     candidate_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_sim_ncores.output,
-                                               candidate_sim_expected.output)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_ncores.output,
+                                                       candidate_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        with capsys.disabled():
-            print(diffs.diff_counts)
+        eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                with capsys.disabled():
-                    print(getattr(diffs, key))
-    assert has_diffs == False, \
+                eprint(getattr(diffs, key))
+    assert has_diffs is False, \
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
 
-#Perfect restarts question
-def test_perfrestart_candidate(
-    output_dir,
-    capsys
-):
-    with capsys.disabled():
-        print("\nQuestion: The candidate outputs from a restart run match the outputs"
-              " from standard run?\n", end='')
+def test_perfrestart_candidate(output_dir):
+    print("\nQuestion: The candidate outputs from a restart run match the outputs from standard "
+          "run?\n", end='')
 
-    candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
-    if candidate_run_file.is_file() is False:
+    candidate_sim_file = output_dir / 'run_candidate' / 'WrfHydroSim.pkl'
+    candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
+    if candidate_collected_file.is_file() is False:
         pytest.skip('Candidate run object not found, skipping test.')
 
     # Load initial run model object and copy
-    candidate_sim_expected = pickle.load(candidate_run_file.open(mode="rb"))
-    candidate_sim_restart = copy.deepcopy(candidate_sim_expected)
+    candidate_sim = pickle.load(candidate_sim_file.open(mode="rb"))
+    candidate_sim_expected = pickle.load(candidate_collected_file.open(mode="rb"))
+    candidate_sim_restart = copy.deepcopy(candidate_sim)
 
     # Set run directory
     run_dir = output_dir.joinpath('restart_candidate')
@@ -228,33 +222,32 @@ def test_perfrestart_candidate(
                                    dt.timedelta(hours=2)
 
     # Get restart files from previous run and symlink into restart sim dir
-    ## Hydro
-    ### Loop through and use actual time listed in meta data, not filename or positional list index
+    # (Remember that we are in the run/sim dir)
+    # Hydro: Use actual time listed in meta data, not filename or positional list index
     for restart_file in candidate_sim_expected.output.restart_hydro:
         restart_time = restart_file.open().Restart_Time
-        restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
+        restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
         if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
 
-    ## LSM
-    ### Loop through and use actual time listed in meta data, not filename or positional list index
+    # LSM: Use actual time listed in meta data, not filename or positional list index
     for restart_file in candidate_sim_expected.output.restart_lsm:
         restart_time = restart_file.open().Times[0]
         restart_time = restart_time.astype(str).item(0)
-        restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
+        restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
         if restart_time == restart_job.model_start_time:
             candidate_lsm_restart_file = pathlib.Path(restart_file.name)
             candidate_lsm_restart_file.symlink_to(restart_file)
 
-    ## Nudging
-    ### Loop through and use actual time listed in meta data, not filename or positional list index
-    for restart_file in candidate_sim_expected.output.restart_nudging:
-        restart_time = restart_file.open().modelTimeAtOutput
-        restart_time = pd.to_datetime(restart_time,format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == restart_job.model_start_time:
-            candidate_nudging_restart_file = pathlib.Path(restart_file.name)
-            candidate_nudging_restart_file.symlink_to(restart_file)
+    # Nudging: Use actual time listed in meta data, not filename or positional list index
+    if candidate_sim_expected.output.restart_nudging is not None:
+        for restart_file in candidate_sim_expected.output.restart_nudging:
+            restart_time = restart_file.open().modelTimeAtOutput
+            restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
+            if restart_time == restart_job.model_start_time:
+                candidate_nudging_restart_file = pathlib.Path(restart_file.name)
+                candidate_nudging_restart_file.symlink_to(restart_file)
 
     # Compose and run
     # catch warnings related to missing start and end job times
@@ -262,8 +255,7 @@ def test_perfrestart_candidate(
         warnings.simplefilter("ignore")
         candidate_sim_restart.compose(force=True)
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     candidate_sim_restart.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
@@ -273,18 +265,18 @@ def test_perfrestart_candidate(
     candidate_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
-    diffs = wrfhydropy.outputdiffs.OutputDiffs(candidate_sim_restart.output,
-                                               candidate_sim_expected.output)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_restart.output,
+                                                       candidate_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        with capsys.disabled():
-            print(diffs.diff_counts)
+        eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                with capsys.disabled():
-                    print('\n' + key + '\n')
-                    print(getattr(diffs, key))
-    assert has_diffs == False, \
+                eprint('\n' + key + '\n')
+                eprint(getattr(diffs, key))
+    assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'
