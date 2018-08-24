@@ -123,7 +123,7 @@ contains
         class(levelpool_struct), intent(inout) :: reservoir_data
         real, intent(in)    :: inflow               ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow       ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation      ! meters AMSL
+        real, intent(inout) :: water_elevation      ! meters
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
 

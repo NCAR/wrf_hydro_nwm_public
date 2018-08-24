@@ -756,8 +756,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    end if
 
 
-
-
    NLAKES_total = rt_domain(did)%NLAKES
 
    ! For loop to cycle array of pointers to reservoirs
@@ -772,7 +770,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
                ! Call to initialize a level pool type reservoir
                call lp%init(                                &
-               rt_domain(did)%ELEVLAKE(lake_index),         &
+               rt_domain(did)%RESHT(lake_index),            &
                rt_domain(did)%HRZAREA(lake_index),          &
                rt_domain(did)%WEIRH(lake_index),            &
                rt_domain(did)%WEIRC(lake_index),            &
@@ -787,7 +785,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    end do
 
    ! Deallocate existing arrays that contain reservoir parameters/properties
-   if(allocated(rt_domain(did)%ELEVLAKE)) deallocate(rt_domain(did)%ELEVLAKE)
    if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
    if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
    if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
@@ -796,8 +793,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
-
-
 
 
    !ADCHANGE: Add lake reach output

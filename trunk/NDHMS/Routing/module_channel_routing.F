@@ -1195,7 +1195,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
          call updateLake_grid(QLLAKE, nlakes,lake_index)
          call updateLake_grid(RESHT,  nlakes,lake_index)
          call updateLake_grid(QLAKEO, nlakes,lake_index)
-         call updateLake_grid(QLLAKE, nlakes,lake_index)
+         call updateLake_grid(QLAKEI, nlakes,lake_index)
          call updateLake_grid(QLAKEIP,nlakes,lake_index)
     endif
 #endif
