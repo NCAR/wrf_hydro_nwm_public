@@ -138,18 +138,30 @@ contains
         !print *, "--DEBUG-- before call to bucket"
         !flush(6)
 
-        call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, ground_water_data%static_data%jx_lsm,&
-            ground_water_data%static_data%ix_rt, ground_water_data%static_data%jx_rt, &
-            ground_water_data%basin%num_basins, ground_water_data%aggregation%agg_factor, &
-            ground_water_data%static_data%dt, ground_water_data%aggregation%infxswgt, &
-            ground_water_data%input%infxsrt, ground_water_data%input%soldrain, &
-            ground_water_data%properties%cell_area, ground_water_data%properties%cell_area_lsm, &
-            ground_water_data%properties%gw_buck_coeff, ground_water_data%properties%gw_buck_exp, &
-            ground_water_data%properties%z_max, ground_water_data%state%z_gwsubbas, &
-            ground_water_data%output%qout_gwsubbas, ground_water_data%input%qin_gwsubbas, &
-            ground_water_data%static_data%gwbaseswcrt, ground_water_data%static_data%ovrtswcrt, &
-            ground_water_data%basin%num_basins, ground_water_data%basin%basin_area, &
-            ground_water_data%basin%nhd_bucket_mask, ground_water_data%basin%channel_bucket_only)
+        call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, &
+            ground_water_data%static_data%jx_lsm,&
+            ground_water_data%static_data%ix_rt, &
+            ground_water_data%static_data%jx_rt, &
+            ground_water_data%basin%num_basins, &
+            ground_water_data%aggregation%agg_factor, &
+            ground_water_data%static_data%dt, &
+            ground_water_data%aggregation%infxswgt, &
+            ground_water_data%input%infxsrt, &
+            ground_water_data%input%soldrain, &
+            ground_water_data%properties%cell_area, &
+            ground_water_data%properties%cell_area_lsm, &
+            ground_water_data%properties%gw_buck_coeff, &
+            ground_water_data%properties%gw_buck_exp, &
+            ground_water_data%properties%z_max, &
+            ground_water_data%state%z_gwsubbas, &
+            ground_water_data%output%qout_gwsubbas, &
+            ground_water_data%input%qin_gwsubbas, &
+            ground_water_data%static_data%gwbaseswcrt, &
+            ground_water_data%static_data%ovrtswcrt, &
+            ground_water_data%basin%num_basins, &
+            ground_water_data%basin%basin_area, &
+            ground_water_data%basin%nhd_bucket_mask, &
+            ground_water_data%basin%channel_bucket_only)
 
         !print *, "--DEBUG-- after call to bucket"
         flush(6)

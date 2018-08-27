@@ -84,7 +84,7 @@
   !REAL,    allocatable, DIMENSION(:)     :: qin_gwsubbas !flow to GW bucket
   !REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
   REAL,    allocatable, DIMENSION(:)     :: gwbas_pix_ct !ct of strm pixels in
-  REAL,    allocatable, DIMENSION(:)     :: basns_area   !basin area
+  !REAL,    allocatable, DIMENSION(:)     :: basns_area   !basin area
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
 
   REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm !GW bucket disch params

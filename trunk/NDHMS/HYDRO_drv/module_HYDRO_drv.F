@@ -49,6 +49,7 @@ module module_HYDRO_drv
 #endif
 
    use module_UDMAP, only: get_basn_area_nhd
+   use module_nhd_data
    use netcdf
 
    implicit none
@@ -1527,13 +1528,22 @@ if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0
    endif
 endif
 
-if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
-   if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-      call get_basn_area_nhd(rt_domain(did)%basns_area)
-   else
-      call get_basn_area(did)
-   endif
-endif
+select type (gwd => rt_domain(did)%groundwater)
+    type is (nhd_groundwater_struct)
+        call get_basn_area_nhd(gwd%basin%basin_area)
+    !type is (simple_groundwater_struct)
+    !    call get_basn_area(did)
+    class default
+        call HYDRO_stop("unexpected groundwater type")
+end select
+
+!if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
+!   if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+!      call get_basn_area_nhd(rt_domain(did)%basns_area)
+!   else
+!      call get_basn_area(did)
+!   endif
+!endif
 
 if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2 ) then
    call get_node_area(did)
