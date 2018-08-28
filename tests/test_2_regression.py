@@ -38,8 +38,10 @@ def test_regression_data(output_dir):
         eprint(data_diffs.diff_counts)
         for key, value in data_diffs.diff_counts.items():
             if value != 0:
+                diffs = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                eprint(getattr(data_diffs, key))
+                for diff in diffs:
+                    eprint(diff)
     assert has_data_diffs == False, \
         'Data values in outputs for candidate run do not match reference run'
 
@@ -72,7 +74,9 @@ def test_regression_metadata(output_dir):
         eprint(meta_data_diffs.diff_counts)
         for key, value in meta_data_diffs.diff_counts.items():
             if value != 0:
+                diffs = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                eprint(getattr(meta_data_diffs, key))
+                for diff in diffs:
+                    eprint(diff)
     assert has_data_diffs == False, \
         'Metadata and attributes in outputs for candidate run do not match reference run'
