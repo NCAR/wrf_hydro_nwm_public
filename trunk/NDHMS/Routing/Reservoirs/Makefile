@@ -26,14 +26,15 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_parameters.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_state.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_tests.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool.F
+
 
 	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
 	ar -r ../../lib/libHYDRO.a module_levelpool_parameters.o
 	ar -r ../../lib/libHYDRO.a module_levelpool_state.o
-	ar -r ../../lib/libHYDRO.a module_levelpool.o
 	ar -r ../../lib/libHYDRO.a module_levelpool_tests.o
+	ar -r ../../lib/libHYDRO.a module_levelpool.o
 
 	cp *.mod ../../mod
 

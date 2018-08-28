@@ -19,6 +19,7 @@ module module_levelpool
     use module_levelpool_parameters
     use module_levelpool_state
     use module_reservoir_base
+    use module_levelpool_tests
     implicit none
 
     ! Extend/derive level pool struct from the abstract base
@@ -127,6 +128,13 @@ contains
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
 
+        logical :: rv
+
+        rv = levelpool_data_info(reservoir_data)
+
+        !print *, "--DEBUG-- before call to LEVELPOOL"
+        !flush(6)
+
         ! Update input variables
         reservoir_data%input%inflow = inflow
         reservoir_data%input%lateral_inflow = lateral_inflow
@@ -147,7 +155,7 @@ contains
         reservoir_data%parameters%weir_coeffecient,             &
         reservoir_data%parameters%weir_length,                  &
         reservoir_data%parameters%orifice_elevation,            &
-        reservoir_data%parameters%orifice_coefficient,           &
+        reservoir_data%parameters%orifice_coefficient,          &
         reservoir_data%parameters%orifice_area                  &
         )
 
@@ -362,5 +370,44 @@ contains
     ! ----------------------------------------------------------------
     end subroutine LEVELPOOL
     ! ----------------------------------------------------------------
+
+
+    function levelpool_data_info(levelpool_data) result(rv)
+    implicit none
+    type (levelpool_struct) :: levelpool_data
+    integer :: rv
+    logical, dimension(1) :: ptr_state
+    logical, dimension(1) :: data_state
+
+    rv = 0
+
+
+    ! Check to see if the levelpool_parameters data structure exists
+    print *, "Checking pointer association on data%parameters "
+    if ( associated(levelpool_data%parameters) ) then
+        print *, "PASSED"
+        ptr_state(1) = .true.
+    else
+        print *, "FAILED"
+        ptr_state(1) = .false.
+    end if
+    print *, " "
+
+    ! Now check the data members of each substructure
+    if ( ptr_state(1) ) then
+        data_state(1) = test_levelpool_parameters(levelpool_data%parameters)
+    end if
+
+
+    if ( all(ptr_state) .and. all(data_state) ) then
+        print *, "========================================================================"
+        print *, "All Tests Passed"
+        print *, "========================================================================"
+    end if
+    rv = 1
+
+    !flush(6)
+end function levelpool_data_info
+
 
 end module module_levelpool
