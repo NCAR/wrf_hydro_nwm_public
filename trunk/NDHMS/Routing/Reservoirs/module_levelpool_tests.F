@@ -1,5 +1,4 @@
 module module_levelpool_tests
-    !use module_levelpool
     use module_levelpool_state
     use module_levelpool_parameters
     use module_reservoir_base
