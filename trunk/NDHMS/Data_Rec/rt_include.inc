@@ -76,7 +76,7 @@
   INTEGER :: gnumbasns
   INTEGER, allocatable, DIMENSION(:)     :: basnsInd ! basin index for tile
   INTEGER, allocatable, DIMENSION(:,:)   :: GWSUBBASMSK  !GW basin mask grid
-  REAL,    allocatable, DIMENSION(:,:)   :: qinflowbase  !strm inflow/baseflow from GW
+  !REAL,    allocatable, DIMENSION(:,:)   :: qinflowbase  !strm inflow/baseflow from GW
   !REAL,    allocatable, DIMENSION(:,:)   :: SOLDRAIN     !time-step drainage
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk  !GW basin mask grid
   INTEGER, allocatable, DIMENSION(:,:)   :: gw_strm_msk_lind  !GW basin mask grid tile maping index
@@ -88,7 +88,7 @@
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
 
   REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm !GW bucket disch params
-  INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask   ! bucket mask for NHDPLUS
+  !INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask   ! bucket mask for NHDPLUS
   INTEGER, allocatable, DIMENSION(:)     :: ct2_bas       !ct of lnd pixels in basn
   REAL,    allocatable, DIMENSION(:)     :: bas_pcp      !sub-basin avg'd pcp
   INTEGER                                :: bas

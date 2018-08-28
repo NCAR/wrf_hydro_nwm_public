@@ -230,8 +230,8 @@ CONTAINS
 
 
             !DJG Allocate routing and disaggregation arrays
-            allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
-            rt_domain(did)%qinflowbase = 0.0
+            !allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
+            !rt_domain(did)%qinflowbase = 0.0
 
             allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
             rt_domain(did)%gw_strm_msk   = 0
@@ -1156,7 +1156,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                 end select
 
                 !allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
-                allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
+                !allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
 
                 !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
                 allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
@@ -1551,7 +1551,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
             rt_domain(did)%LAKE_CT = 0
             rt_domain(did)%STRM_CT = 0
             rt_domain(did)%groundwater%input%soldrain = 0.0
-            rt_domain(did)%qinflowbase = 0.0
+            !rt_domain(did)%qinflowbase = 0.0
 
             !  rt_domain(did)%BASIN_MSK = 1
             ! !DJG Initialize mass balance check variables...

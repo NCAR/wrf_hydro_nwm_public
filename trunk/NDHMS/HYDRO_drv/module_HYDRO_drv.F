@@ -804,7 +804,7 @@ subroutine driveGwBaseflow(did)
                 !    rt_domain(did)%groundwater%input%soldrain, &
                 !    RT_DOMAIN(did)%z_gwsubbas,&
                 !    rt_domain(did)%groundwater%input%qin_gwsubbas,RT_DOMAIN(did)%groundwater%output%qout_gwsubbas,&
-                !    RT_DOMAIN(did)%qinflowbase,&
+                !    RT_DOMAIN(did)%groundwater&output%qinflowbase,&
                 !    RT_DOMAIN(did)%gw_strm_msk,RT_DOMAIN(did)%gwbas_pix_ct, &
                 !    rt_domain(did)%overland%properties%distance_to_neighbor,nlst_rt(did)%DT,&
                 !    RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
@@ -913,7 +913,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
        RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
        RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
-       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
+       rt_domain(did)%groundwater%output%qinflowbase, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
        RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
        rt_domain(did)%groundwater%output%qout_gwsubbas, &
        RT_DOMAIN(did)%LAKEIDA, RT_DOMAIN(did)%LAKEIDM, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%LAKEIDX   &
@@ -957,7 +957,7 @@ else
        RT_DOMAIN(did)%ORIFICEE, RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
        RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
        RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &
-       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
+       rt_domain(did)%groundwater%output%qinflowbase, RT_DOMAIN(did)%CHANXI, &
        RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option, &
        RT_DOMAIN(did)%RETDEP_CHAN, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, &
        RT_DOMAIN(did)%node_area  &

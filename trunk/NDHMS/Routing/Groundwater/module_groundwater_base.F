@@ -30,7 +30,7 @@ module module_groundwater_base
 
     type :: groundwater_base_output_struct
         real, allocatable, dimension(:) :: qout_gwsubbas  ! flow from the GW bucket
-        integer, allocatable, dimension(:,:) :: qinflowbase     ! inflow/baseflow from QW to stream network
+        real, allocatable, dimension(:,:) :: qinflowbase     ! inflow/baseflow from QW to stream network
 
     contains
 
