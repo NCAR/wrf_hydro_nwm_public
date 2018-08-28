@@ -1,4 +1,4 @@
-md5sum: 9296ee70d4e023549411f43e7e37d7cd  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/geo_em.d01.nc
+md5sum: f43e8dce508931db002e18fe3469fa26  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/geo_em.d01.nc
 ncdump -h: netcdf geo_em.d01 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
@@ -342,6 +342,14 @@ variables:
 		VAR_SSO:stagger = "M" ;
 		VAR_SSO:sr_x = 1 ;
 		VAR_SSO:sr_y = 1 ;
+	float XLAT_C(Time, south_north_stag, west_east_stag) ;
+		XLAT_C:FieldType = 104 ;
+		XLAT_C:MemoryOrder = "XY " ;
+		XLAT_C:units = "degrees latitude" ;
+		XLAT_C:description = "Latitude at grid cell corners" ;
+		XLAT_C:stagger = "CORNER" ;
+		XLAT_C:sr_x = 1 ;
+		XLAT_C:sr_y = 1 ;
 	float XLAT_M(Time, south_north, west_east) ;
 		XLAT_M:FieldType = 104 ;
 		XLAT_M:MemoryOrder = "XY " ;
@@ -366,6 +374,14 @@ variables:
 		XLAT_V:stagger = "V" ;
 		XLAT_V:sr_x = 1 ;
 		XLAT_V:sr_y = 1 ;
+	float XLONG_C(Time, south_north_stag, west_east_stag) ;
+		XLONG_C:FieldType = 104 ;
+		XLONG_C:MemoryOrder = "XY " ;
+		XLONG_C:units = "degrees longitude" ;
+		XLONG_C:description = "Longitude at grid cell corners" ;
+		XLONG_C:stagger = "CORNER" ;
+		XLONG_C:sr_x = 1 ;
+		XLONG_C:sr_y = 1 ;
 	float XLONG_M(Time, south_north, west_east) ;
 		XLONG_M:FieldType = 104 ;
 		XLONG_M:MemoryOrder = "XY " ;
@@ -413,8 +429,8 @@ variables:
 		:STAND_LON = -97.f ;
 		:POLE_LAT = 90.f ;
 		:POLE_LON = 0.f ;
-		:corner_lats = 41.42281f, 41.55636f, 41.51907f, 41.3856f, 41.42413f, 41.55769f, 41.51774f, 41.38428f, 41.41836f, 41.56082f, 41.52353f, 41.38115f, 0.f, 0.f, 0.f, 0.f ;
-		:corner_lons = -73.85333f, -73.80026f, -73.63379f, -73.68719f, -73.85928f, -73.80621f, -73.62784f, -73.68127f, -73.8551f, -73.79849f, -73.63202f, -73.689f, 0.f, 0.f, 0.f, 0.f ;
+		:corner_lats = 41.42281f, 41.55636f, 41.51907f, 41.3856f, 41.42413f, 41.55769f, 41.51774f, 41.38428f, 41.41836f, 41.56082f, 41.52353f, 41.38115f, 41.41969f, 41.56216f, 41.5222f, 41.37983f ;
+		:corner_lons = -73.85333f, -73.80026f, -73.63379f, -73.68719f, -73.85928f, -73.80621f, -73.62784f, -73.68127f, -73.8551f, -73.79849f, -73.63202f, -73.689f, -73.86105f, -73.80444f, -73.62604f, -73.68304f ;
 		:MAP_PROJ = 1 ;
 		:MMINLU = "USGS" ;
 		:NUM_LAND_CAT = 24 ;
@@ -437,7 +453,28 @@ variables:
 		:FLAG_LAKE_DEPTH = 1 ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;
 		:nco_openmp_thread_number = 1 ;
-		:history = "Sun Aug  5 17:31:16 2018: ncatted -O -a corner_lats,global,o,f,41.4228134155273,41.5563621520996,41.5190696716309,41.3856048583984,41.4241333007812,41.5576934814453,41.5177383422852,41.38427734375,41.4183578491211,41.5608215332031,41.5235252380371,41.3811531066895,0,0,0,0 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc\n",
-			"Sun Aug  5 17:31:16 2018: ncatted -O -a corner_lons,global,o,f,-73.8533325195312,-73.8002624511719,-73.6337890625,-73.6871948242188,-73.8592834472656,-73.8062133789062,-73.6278381347656,-73.6812744140625,-73.8551025390625,-73.7984924316406,-73.6320190429688,-73.6889953613281,0,0,0,0 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc\n",
-			"Sun Aug  5 17:31:14 2018: ncks -d west_east,4146,4160 -d south_north,2341,2356 -d west_east_stag,4146,4161 -d south_north_stag,2341,2357 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/geo_em.d01.conus_1km_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/geo_em.d0x.nc" ;
+		:history = "Fri Aug 24 11:14:03 2018: ncatted -O -a corner_lats,global,o,f,41.4228134155273,41.5563621520996,41.5190696716309,41.3856048583984,41.4241333007812,41.5576934814453,41.5177383422852,41.38427734375,41.4183578491211,41.5608215332031,41.5235252380371,41.3811531066895,41.4196891784668,41.5621604919434,41.5221977233887,41.3798332214355 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/geo_em.d0x.nc\n",
+			"Fri Aug 24 11:14:03 2018: ncatted -O -a corner_lons,global,o,f,-73.8533325195312,-73.8002624511719,-73.6337890625,-73.6871948242188,-73.8592834472656,-73.8062133789062,-73.6278381347656,-73.6812744140625,-73.8551025390625,-73.7984924316406,-73.6320190429688,-73.6889953613281,-73.8610534667969,-73.804443359375,-73.6260375976562,-73.6830444335938 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/geo_em.d0x.nc\n",
+			"Fri Aug 24 11:13:56 2018: ncks -d west_east,4146,4160 -d south_north,2341,2356 -d west_east_stag,4146,4161 -d south_north_stag,2341,2357 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/geo_em.d01.conus_1km_NWMv2.0_XLATC_XLONC.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/geo_em.d0x.nc\n",
+			"Wed Aug 22 18:05:18 2018: ncks -A -v XLONG_C ../../../nwmv12_finals/DOMAIN/geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC geo_em.d01.conus_1km_NWMv2.0_XLATC_XLONC.nc\n",
+			"Wed Aug 22 18:04:49 2018: ncks -A -v XLAT_C ../../../nwmv12_finals/DOMAIN/geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC geo_em.d01.conus_1km_NWMv2.0_XLATC_XLONC.nc" ;
+		:history_of_appended_files = "Wed Aug 22 18:05:18 2018: Appended file ../../../nwmv12_finals/DOMAIN/geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC had following \"history\" attribute:\n",
+			"Fri Dec 29 11:17:44 2017: ncks -A -v XLONG_C /glade/scratch/barlage/nwm/geo_em.d01.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC\n",
+			"Fri Dec 29 11:16:15 2017: ncks -A -v XLAT_C /glade/scratch/barlage/nwm/geo_em.d01.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC\n",
+			"Sat Apr 29 22:02:59 2017: ncks -A -v LANDUSEF landusef_new.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix\n",
+			"Sat Apr 29 22:02:12 2017: ncks -A -v SOILCTOP soilctop_new.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix\n",
+			"Sat Apr 29 21:59:20 2017: ncks -x -v SOILCTOP,LANDUSEF geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix\n",
+			"Sat Dec  5 16:05:33 2015: ncap2 -s where(LU_INDEX==24) LU_INDEX=23 geo_em.d01.nc.conus_1km_nlcd11 geo_em.d01.nc.conus_1km_nlcd11_glacfix\n",
+			"Wed Dec  2 17:47:01 2015: ncap2 -s where(LU_INDEX==16) LANDMASK=0; elsewhere LANDMASK=1 geo_em.d01.nc.conus_1km_nlcd11 geo_em.d01.nc.conus_1km_nlcd11a\n",
+			"Wed Dec  2 17:39:34 2015: ncks -A -v LU_INDEX out_tmp2.nc geo_em.d01.nc.conus_1km_nlcd11\n",
+			"Wed Aug 22 18:04:49 2018: Appended file ../../../nwmv12_finals/DOMAIN/geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC had following \"history\" attribute:\n",
+			"Fri Dec 29 11:17:44 2017: ncks -A -v XLONG_C /glade/scratch/barlage/nwm/geo_em.d01.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC\n",
+			"Fri Dec 29 11:16:15 2017: ncks -A -v XLAT_C /glade/scratch/barlage/nwm/geo_em.d01.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix_XLATC_XLONC\n",
+			"Sat Apr 29 22:02:59 2017: ncks -A -v LANDUSEF landusef_new.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix\n",
+			"Sat Apr 29 22:02:12 2017: ncks -A -v SOILCTOP soilctop_new.nc geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix\n",
+			"Sat Apr 29 21:59:20 2017: ncks -x -v SOILCTOP,LANDUSEF geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix geo_em.d01.nc.conus_1km_nlcd11_glacfix_soilctopfix\n",
+			"Sat Dec  5 16:05:33 2015: ncap2 -s where(LU_INDEX==24) LU_INDEX=23 geo_em.d01.nc.conus_1km_nlcd11 geo_em.d01.nc.conus_1km_nlcd11_glacfix\n",
+			"Wed Dec  2 17:47:01 2015: ncap2 -s where(LU_INDEX==16) LANDMASK=0; elsewhere LANDMASK=1 geo_em.d01.nc.conus_1km_nlcd11 geo_em.d01.nc.conus_1km_nlcd11a\n",
+			"Wed Dec  2 17:39:34 2015: ncks -A -v LU_INDEX out_tmp2.nc geo_em.d01.nc.conus_1km_nlcd11\n",
+			"" ;
 }
