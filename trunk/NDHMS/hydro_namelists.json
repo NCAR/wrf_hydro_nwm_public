@@ -11,7 +11,7 @@
             "dtrt_ch": 300,
             "dtrt_ter": 10,
             "dxrt": 250,
-            "frxst_pts_out": 1,
+            "frxst_pts_out": 0,
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
             "gw_restart": 1,
@@ -76,12 +76,24 @@
             "output_channelbucket_influx": 2,
             "ovrtswcrt": 0,
             "rst_typ": 0,
+            "rtout_domain": 0,
             "subrtswcrt": 0
         },
         "nudging_nlist": {
             "maxagepairsbiaspersist": 24,
             "persistbias": false
         }
+    },
+
+    "nwm_hi_ana": {
+        "hydro_nlist": {
+            "compound_channel": false,
+            "out_dt": 60,
+            "output_channelbucket_influx": 2,
+            "aggfactrt": 10,
+            "dxrt": 100
+       },
+        "nudging_nlist": {}
     },
 
     "nwm_channel-only": {
