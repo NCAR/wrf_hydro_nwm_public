@@ -19,7 +19,7 @@ MODFLAG := $(MODFLAG) -I ../../mod
 
 .PHONY: all mod test
 
-all: mod
+all: mod test
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules
