@@ -54,47 +54,46 @@ contains
 
         rv = .true.
 
-    !    print *, "========================================================================"
-    !    print *, "Checking the values of the level pool parameters data structure"
-    !    print *, " "
+        print *, "========================================================================"
+        print *, "Checking the values of the level pool parameters data structure"
+        print *, " "
 
-    !    print *, "Checking read on reservoir_area"
-    !    print *, o%reservoir_area
-    !    print *, " "
+        print *, "Checking read on reservoir_area"
+        print *, o%reservoir_area
+        print *, " "
 
-    !    print *, "Checking read on weir_elevation"
-    !    print *, o%weir_elevation
-    !    print *, " "
+        print *, "Checking read on weir_elevation"
+        print *, o%weir_elevation
+        print *, " "
 
-    !    print *, "Checking read on weir_coeffecient"
-    !    print *, o%weir_coeffecient
-    !    print *, " "
+        print *, "Checking read on weir_coeffecient"
+        print *, o%weir_coeffecient
+        print *, " "
 
-    !    print *, "Checking read on weir_length"
-    !    print *, o%weir_length
-    !    print *, " "
+        print *, "Checking read on weir_length"
+        print *, o%weir_length
+        print *, " "
 
-    !    print *, "Checking read on orifice_elevation"
-    !    print *, o%orifice_elevation
-    !    print *, " "
+        print *, "Checking read on orifice_elevation"
+        print *, o%orifice_elevation
+        print *, " "
 
-    !    print *, "Checking read on orifice_coefficient"
-    !    print *, o%orifice_coefficient
-    !    print *, " "
+        print *, "Checking read on orifice_coefficient"
+        print *, o%orifice_coefficient
+        print *, " "
 
-    !    print *, "Checking read on orifice_area"
-    !    print *, o%orifice_area
-    !    print *, " "
+        print *, "Checking read on orifice_area"
+        print *, o%orifice_area
+        print *, " "
 
-    !    print *, "Checking read on max_depth"
-    !    print *, o%max_depth
-    !    print *, " "
+        print *, "Checking read on max_depth"
+        print *, o%max_depth
+        print *, " "
 
-    !    print *, "Checking read on lake_number"
-    !    print *, o%lake_number
-    !    print *, " "
+        print *, "Checking read on lake_number"
+        print *, o%lake_number
+        print *, " "
 
     end function test_levelpool_parameters
 
 end module
-
