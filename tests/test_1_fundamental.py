@@ -1,9 +1,9 @@
 import copy
 import datetime as dt
-import math
 import os
 import pathlib
 import pickle
+import sys
 import time
 import warnings
 
@@ -25,13 +25,15 @@ def wait_job(sim):
             break
         time.sleep(5)
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 # #################################
 # Define tests
 
 
-def test_compile_candidate(candidate_sim, output_dir, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The candidate compiles?", end='')
+def test_compile_candidate(candidate_sim, output_dir):
+    print("\nQuestion: The candidate compiles?\n", end='')
 
     compile_dir = output_dir / 'compile_candidate'
 
@@ -45,9 +47,8 @@ def test_compile_candidate(candidate_sim, output_dir, capsys):
         "Candidate code did not compile correctly."
 
 
-def test_compile_reference(reference_sim, output_dir, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The reference compiles?", end='')
+def test_compile_reference(reference_sim, output_dir):
+    print("\nQuestion: The reference compiles?\n", end='')
 
     compile_dir = output_dir / 'compile_reference'
 
@@ -61,9 +62,8 @@ def test_compile_reference(reference_sim, output_dir, capsys):
         "Reference code did not compile correctly"
 
 
-def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The candidate runs successfully?", end='')
+def test_run_candidate(candidate_sim, output_dir, ncores):
+    print("\nQuestion: The candidate runs successfully?\n", end='')
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
@@ -80,8 +80,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
         warnings.simplefilter("ignore")
         candidate_sim.compose()
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     candidate_sim.run()
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
@@ -97,9 +96,8 @@ def test_run_candidate(candidate_sim, output_dir, ncores, capsys):
 
 
 # Run questions
-def test_run_reference(reference_sim, output_dir, ncores, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The reference runs successfully?", end='')
+def test_run_reference(reference_sim, output_dir, ncores):
+    print("\nQuestion: The reference runs successfully?\n", end='')
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
@@ -116,8 +114,7 @@ def test_run_reference(reference_sim, output_dir, ncores, capsys):
         warnings.simplefilter("ignore")
         reference_sim.compose()
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     reference_sim.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
@@ -133,10 +130,9 @@ def test_run_reference(reference_sim, output_dir, ncores, capsys):
             "Reference code run exited with non-zero status"
 
 
-def test_ncores_candidate(output_dir, capsys):
-    with capsys.disabled():
-        print("\nQuestion: The candidate outputs from a ncores run match outputs from"
-              " ncores-1 run?\n", end='')
+def test_ncores_candidate(output_dir,capsys):
+    print("\nQuestion: The candidate outputs from a ncores run match outputs from"
+          " ncores-1 run?\n", end='')
 
     candidate_sim_file = output_dir / 'run_candidate' / 'WrfHydroSim.pkl'
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
@@ -174,8 +170,7 @@ def test_ncores_candidate(output_dir, capsys):
         warnings.simplefilter("ignore")
         candidate_sim_ncores.compose(force=True)
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     candidate_sim_ncores.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
@@ -189,28 +184,22 @@ def test_ncores_candidate(output_dir, capsys):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_ncores.output,
-                                                   candidate_sim_expected.output)
+                                                       candidate_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        with capsys.disabled():
-            print(diffs.diff_counts)
+        eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                with capsys.disabled():
-                    print(getattr(diffs, key))
+                eprint(getattr(diffs, key))
     assert has_diffs is False, \
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
 
-def test_perfrestart_candidate(
-    output_dir,
-    capsys
-):
-    with capsys.disabled():
-        print("\nQuestion: The candidate outputs from a restart run match the outputs"
-              " from standard run?\n", end='')
+def test_perfrestart_candidate(output_dir):
+    print("\nQuestion: The candidate outputs from a restart run match the outputs from standard "
+          "run?\n", end='')
 
     candidate_sim_file = output_dir / 'run_candidate' / 'WrfHydroSim.pkl'
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
@@ -266,8 +255,7 @@ def test_perfrestart_candidate(
         warnings.simplefilter("ignore")
         candidate_sim_restart.compose(force=True)
 
-    with capsys.disabled():
-        print('\nwaiting for job to complete...', end='')
+    print('\nwaiting for job to complete...', end='')
     candidate_sim_restart.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
@@ -280,17 +268,15 @@ def test_perfrestart_candidate(
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_restart.output,
-                                                   candidate_sim_expected.output)
+                                                       candidate_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        with capsys.disabled():
-            print(diffs.diff_counts)
+        eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                with capsys.disabled():
-                    print('\n' + key + '\n')
-                    print(getattr(diffs, key))
+                eprint('\n' + key + '\n')
+                eprint(getattr(diffs, key))
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'
