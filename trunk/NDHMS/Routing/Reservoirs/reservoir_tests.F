@@ -1,5 +1,5 @@
 program reservoir_unit_tests
-    use level_pool_tests
+    use module_levelpool_tests
     use module_levelpool
 
     implicit none
