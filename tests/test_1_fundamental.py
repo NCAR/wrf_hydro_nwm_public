@@ -192,7 +192,10 @@ def test_ncores_candidate(output_dir,capsys):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                eprint(getattr(diffs, key))
+                diffs = getattr(diffs, key)
+                eprint('\n' + key + '\n')
+                for diff in diffs:
+                    eprint(diff)
     assert has_diffs is False, \
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
@@ -276,7 +279,9 @@ def test_perfrestart_candidate(output_dir):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
+                diffs = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                eprint(getattr(diffs, key))
+                for diff in diffs:
+                    eprint(diff)
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'
