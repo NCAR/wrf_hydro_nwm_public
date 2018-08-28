@@ -62,6 +62,11 @@ mod:
 
 
 
+test:
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG) module_reservoir_base.F
+	$(COMPILER90) $(NETCDFLIB) -o module_reservoir_base.o
+
+
 clean:
 	rm -f *.o
 	rm -f *.mod
