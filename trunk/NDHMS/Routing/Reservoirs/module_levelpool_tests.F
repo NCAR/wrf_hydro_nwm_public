@@ -1,9 +1,9 @@
 module module_levelpool_tests
-    !use module_levelpool
-    !use module_levelpool_state
-    !use module_levelpool_parameters
-    !use module_reservoir_base
-!contains
+    use module_levelpool
+    use module_levelpool_state
+    use module_levelpool_parameters
+    use module_reservoir_base
+contains
     ! test to see that each member of the input structure is correctly allocated and readable
     !function test_input(o) result(rv)
     !    type (reservoir_base_input_struct), intent(in) :: o
@@ -48,11 +48,11 @@ module module_levelpool_tests
 
 
     ! test to see the each member of the level pool parameters is correctly allocated and readable
-    !function test_levelpool_parameters(o) result(rv)
-    !    type (levelpool_parameters_interface), intent(in) :: o
-    !    logical rv
+    function test_levelpool_parameters(o) result(rv)
+        type (levelpool_parameters_interface), intent(in) :: o
+        logical rv
 
-    !    rv = .true.
+        rv = .true.
 
     !    print *, "========================================================================"
     !    print *, "Checking the values of the level pool parameters data structure"
@@ -94,7 +94,7 @@ module module_levelpool_tests
     !    print *, o%lake_number
     !    print *, " "
 
-    !end function test_levelpool_parameters
+    end function test_levelpool_parameters
 
 end module
 
