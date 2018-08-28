@@ -1,0 +1,39 @@
+program reservoir_unit_tests
+    use level_pool_tests
+    use module_levelpool
+
+    implicitnone
+
+    logical :: rv = .false.
+
+    rv = test_levelpool()
+
+    contains
+
+    !------------------------------------------------------------------------------!
+    !                              test_levelpool()                                !
+    ! this function verifies that the constructor for the levelpool type correctly !
+    ! initializes all data members                                                 !
+    !------------------------------------------------------------------------------!
+
+    function test_levelpool() result(rv)
+        implicit none
+
+        logical rv                        ! test result
+
+        type (levelpool_struct) :: levelpool_reservoir_data
+        integer :: call_status = 0
+
+        print *, "calling init for levelpool_struct"
+        call levelpool_reservoir_data%init(2., 4., 6., 8., 10., 12., 14., 16., 18., 20)
+
+        print *, "testing data in levelpool_struct"
+        call_status = levelpool_data_info(levelpool_reservoir_data)
+
+    end function test_levelpool
+
+end program
+
+
+
+

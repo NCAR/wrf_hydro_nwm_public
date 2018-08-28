@@ -13,7 +13,7 @@
 ! then call the LEVELPOOL subroutine, which
 ! processes the given inputs, parameters, and
 ! state for a particular level pool reservoir and
-! return the output/outflow.
+! returns the output/outflow.
 module module_levelpool
 
     use module_levelpool_parameters
