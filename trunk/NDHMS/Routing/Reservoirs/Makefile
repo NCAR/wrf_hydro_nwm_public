@@ -39,13 +39,28 @@ mod:
 
 #test:
 #     	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
-#		$(COMPILER90) $(NETCDFLIB) -o groundwater_tests \
+#		$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F
+#		$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
+#				module_reservoir_base.o \
+#				module_levelpool_parameters.o \
+#				module_levelpool_state.o \
+#				module_levelpool.o
+#				module_levelpool_tests.o \
+#				reservoir_tests.o \
+#				hydro_stop.o
+
+
+
+#     	$(COMPILER90) $(F90FLAGS) $(MODFLAG) module_reservoir_base.F
+#		$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
 #				module_reservoir_base.o \
 #				module_levelpool_parameters.o \
 #				module_levelpool_state.o \
 #				module_levelpool.o
 #				#module_levelpool_tests.o \
 #				#reservoir_tests.o
+
+
 
 clean:
 	rm -f *.o
