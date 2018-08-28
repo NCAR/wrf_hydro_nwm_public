@@ -14,12 +14,14 @@ from wrfhydropy import JSONNamelist
 # 5) This script skips non-existent files and ignores timeslices.
 
 domain_paths = [
+    "/glade/work/jamesmcc/domains/private/HAWAII",
     "/glade/work/jamesmcc/domains/public/croton_NY",
     "/glade/work/jamesmcc/domains/private/CONUS"
 ]
 
 configs = [
     'nwm_ana',
+    'nwm_hi_ana',
     'nwm_long_range'
 ]
 
@@ -98,13 +100,9 @@ for dd in domain_paths:
     domain_tag = dd.name
     
     for cc in configs:
-
-        print('')
-        print('    Config: ' + str(cc))
         
         # Make a meta data output dir for each configuration.
         config_dir = (this_path / domain_tag) / cc
-        config_dir.mkdir(parents=True, exist_ok=False)
         
         # Create the namelists
         domain_nlsts = ['hydro_namelists.json', 'hrldas_namelists.json']
@@ -113,13 +111,23 @@ for dd in domain_paths:
         
         for code, dom, ff in zip(domain_nlsts, code_nlsts, file_names):
 
-            print('        Namelist: ' + str(ff))
-            repo_namelists = JSONNamelist(code_path / code)
             domain_namelists = JSONNamelist(dd / dom)
-            
-            repo_config = repo_namelists.get_config(cc)
-            domain_config = domain_namelists.get_config(cc)
 
+            # If the configuartion is not found in the domain, skip it silently
+            try:
+                domain_config = domain_namelists.get_config(cc)
+            except KeyError:
+                continue
+
+            if not config_dir.exists() and ff == file_names[0]:
+                config_dir.mkdir(parents=True, exist_ok=False)
+                print('')
+                print('    Config: ' + str(cc))
+
+            print('        Namelist: ' + str(ff))
+            
+            repo_namelists = JSONNamelist(code_path / code)
+            repo_config = repo_namelists.get_config(cc)               
             patched_namelist = repo_config.patch(domain_config)
 
             # Write them out for completeness.
