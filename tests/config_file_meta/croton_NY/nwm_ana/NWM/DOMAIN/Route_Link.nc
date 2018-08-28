@@ -1,4 +1,4 @@
-md5sum: 205f79ead4377b3a23fd96d7fc4c11e7  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/Route_Link.nc
+md5sum: 6fc035a663361c22d2b977dac80c614c  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/Route_Link.nc
 ncdump -h: netcdf Route_Link {
 dimensions:
 	feature_id = 185 ;
@@ -90,7 +90,7 @@ variables:
 // global attributes:
 		:Convention = "CF-1.6" ;
 		:featureType = "timeSeries" ;
-		:history = "Sun Aug  5 17:31:41 2018: ncks -O -d feature_id,1,185 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/Route_Link.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/Route_Link.nc\n",
+		:history = "Fri Aug 24 11:14:52 2018: ncks -O -d feature_id,1,185 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/Route_Link.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/Route_Link.nc\n",
 			"Created Tue Feb 27 14:45:27 2018" ;
 		:processing_notes = "This file was produced Tue Feb 27 14:24:11 2018 by Kevin Sampson (NCAR) and has the following attributes: \n",
 			"   This file uses the NHDPlus v21 \"flattened\" geodatabase: NHDPlusV21_National_Flattened.gdb.\n",

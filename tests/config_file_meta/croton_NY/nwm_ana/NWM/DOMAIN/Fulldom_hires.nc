@@ -1,4 +1,4 @@
-md5sum: d6f929afba59ac905e6dca7a84411706  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/Fulldom_hires.nc
+md5sum: 6258947705219cfade2c7be7f014e5eb  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/Fulldom_hires.nc
 ncdump -h: netcdf Fulldom_hires {
 dimensions:
 	y = 64 ;
@@ -130,7 +130,7 @@ variables:
 // global attributes:
 		:Conventions = "CF-1.5" ;
 		:Source_Software = "WRF-Hydro GIS Pre-processor v5 (03/2018)" ;
-		:history = "Sun Aug  5 17:27:23 2018: ncks -O -d x,16584,16643 -d y,5932,5995 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/Fulldom_hires_netcdf_file_250m_FullRouting_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/Fulldom_hires.nc\n",
+		:history = "Fri Aug 24 11:13:55 2018: ncks -O -d x,16584,16643 -d y,5932,5995 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/Fulldom_hires_netcdf_file_250m_FullRouting_NWMv2.0.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/Fulldom_hires.nc\n",
 			"Tue Jan 16 08:46:51 2018: ncap2 -O -s RETDEPRTFAC=RETDEPRTFAC*0.0+1.0 Fulldom_hires_netcdf_file_250m_NWMv1.2_DEFAULT.nc Fulldom_hires_netcdf_file_250m_NWMv1.2_DEFAULT.nc\n",
 			"Tue Jan 16 08:44:50 2018: ncap2 -s LKSATFAC=LKSATFAC*0.0+1000.0 Fulldom_hires_netcdf_file_250m_NWMv1.2_calib2_ADJFL.nc Fulldom_hires_netcdf_file_250m_NWMv1.2_DEFAULT.nc\n",
 			"Mon Mar 27 18:43:54 2017: ncap2 -O -s RETDEPRTFAC=1.0 Fulldom_hires_netcdf_file_250m_NWMv1.2_calib1.nc Fulldom_hires_netcdf_file_250m_NWMv1.2_calib1.nc\n",
