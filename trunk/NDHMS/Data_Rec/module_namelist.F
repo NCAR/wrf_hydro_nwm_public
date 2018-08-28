@@ -190,6 +190,10 @@ CONTAINS
        endif
 #endif
 
+   if ( MOD(out_dt*60, nlst%dt)  .ne. 0) then
+      call hydro_stop("read_rt_nlst:: out_dt must be a multiple of the NOAH_TIMESTEP")
+   end if
+
 ! ADCHANGE: move these checks to more universal namelist checks...
    if ( io_config_outputs .eq. 4 ) RTOUT_DOMAIN = 0
 
