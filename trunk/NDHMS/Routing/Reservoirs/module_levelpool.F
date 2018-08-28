@@ -381,10 +381,9 @@ contains
 
     rv = 0
 
-
-    ! Check to see if the levelpool_parameters data structure exists
-    print *, "Checking pointer association on data%parameters "
-    if ( associated(levelpool_data%parameters) ) then
+    ! Check to see if the levelpool_state data structure exists
+    print *, "Checking pointer association on data%state "
+    if ( associated(levelpool_data%state) ) then
         print *, "PASSED"
         ptr_state(1) = .true.
     else
@@ -393,10 +392,28 @@ contains
     end if
     print *, " "
 
+    ! Check to see if the levelpool_parameters data structure exists
+    print *, "Checking pointer association on data%parameters "
+    if ( associated(levelpool_data%parameters) ) then
+        print *, "PASSED"
+        ptr_state(2) = .true.
+    else
+        print *, "FAILED"
+        ptr_state(2) = .false.
+    end if
+    print *, " "
+
     ! Now check the data members of each substructure
     if ( ptr_state(1) ) then
-        data_state(1) = test_levelpool_parameters(levelpool_data%parameters)
+        data_state(1) = test_levelpool_state(levelpool_data%state)
     end if
+
+    if ( ptr_state(2) ) then
+        data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
+    end if
+
+
+
 
 
     if ( all(ptr_state) .and. all(data_state) ) then

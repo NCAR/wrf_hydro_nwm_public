@@ -20,33 +20,26 @@ contains
 
 
 
-    ! test to see the each member of the state structure is correctly allocated and readable
-    !function test_state(o) result(rv)
-    !    type (levelpool_state_interface), intent(in) :: o
-    !    logical rv
+    ! test to see that each member of the state structure is correctly allocated and readable
+    function test_levelpool_state(o) result(rv)
+        type (levelpool_state_interface), intent(in) :: o
+        logical rv
 
-    !    rv = .true.
+        rv = .true.
 
-    !    print *, "========================================================================"
-    !    print *, "Checking the values of the aggregation structure"
-    !    print *, " "
+        print *, "========================================================================"
+        print *, "Checking the values of the level pool state data structure"
+        print *, " "
 
-    !    print *, "Checking allocation of state%z_gwsubbas"
-    !    if ( allocated(o%z_gwsubbas) ) then
-    !        print *, "PASSED"
+        print *, "Checking read on water_elevation"
+        print *, o%water_elevation
+        print *, " "
 
-    !        print *, "Checking read on state%z_gwsubbas"
-    !        print *, o%z_gwsubbas(1:16)
-    !    else
-    !        print *, "FAILED"
-    !        rv = .false.
-    !    end if
-
-    !end function test_state
+    end function test_levelpool_state
 
 
 
-    ! test to see the each member of the level pool parameters is correctly allocated and readable
+    ! test to see that each member of the parameters structure is correctly allocated and readable
     function test_levelpool_parameters(o) result(rv)
         type (levelpool_parameters_interface), intent(in) :: o
         logical rv

@@ -28,8 +28,8 @@ program reservoir_unit_tests
         print *, "calling init for levelpool_struct"
         call levelpool_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 20)
 
-    !    print *, "testing data in levelpool_struct"
-    !    !call_status = levelpool_data_info(levelpool_reservoir_data)
+        print *, "testing data in levelpool_struct"
+        call_status = levelpool_data_info(levelpool_reservoir_data)
 
     end function test_levelpool
 
