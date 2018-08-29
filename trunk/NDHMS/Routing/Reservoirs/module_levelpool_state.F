@@ -23,6 +23,7 @@ module module_levelpool_state
 
 contains
 
+    !Level Pool State Constructor
     subroutine levelpool_state_init(this, water_elevation)
         implicit none
         class(levelpool_state_interface), intent(inout) :: this ! the type object being initialized
@@ -34,6 +35,7 @@ contains
 
     end subroutine levelpool_state_init
 
+    !Level Pool State Destructor
     subroutine levelpool_state_destroy(this)
         implicit none
         class(levelpool_state_interface), intent(inout) :: this ! the type object being destroyed

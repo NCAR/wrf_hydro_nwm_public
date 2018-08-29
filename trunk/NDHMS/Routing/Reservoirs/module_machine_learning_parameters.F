@@ -1,17 +1,17 @@
 ! This module defines and instantiates objects
-! for a level pool type reservoir's
+! for a machine learning type reservoir's
 ! parameters/properties. Parameters holds
 ! static/unchanging variables that are
 ! set when the given reservoir object is
 ! initialized/instantiated.
-module module_levelpool_parameters
+module module_machine_learning_parameters
 
     use module_reservoir_base
     implicit none
 
-    ! Extend/derive level pool parameters from the abstract base
+    ! Extend/derive machine learning parameters from the abstract base
     ! struct for reservoir properties.
-    type, extends(reservoir_base_properties_struct) :: levelpool_parameters_interface
+    type, extends(reservoir_base_properties_struct) :: machine_learning_parameters_interface
         real :: reservoir_area           ! area of reservoir (km^2)
         real :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real :: weir_coeffecient         ! weir coefficient
@@ -24,19 +24,19 @@ module module_levelpool_parameters
 
     contains
 
-        procedure :: init => levelpool_parameters_init
-        procedure :: destroy => levelpool_parameters_destroy
+        procedure :: init => machine_learning_parameters_init
+        procedure :: destroy => machine_learning_parameters_destroy
 
-    end type levelpool_parameters_interface
+    end type machine_learning_parameters_interface
 
 contains
 
-    !Level Pool Parameters Constructor
-    subroutine levelpool_parameters_init(this, reservoir_area, &
+    !Machine Learning Parameters Constructor
+    subroutine machine_learning_parameters_init(this, reservoir_area, &
         weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
         orifice_coefficient, orifice_area, max_depth, lake_number)
         implicit none
-        class(levelpool_parameters_interface), intent(inout) :: this ! the type object being initialized
+        class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: reservoir_area           ! area of reservoir (km^2)
         real, intent(in)    :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient         ! weir coefficient
@@ -47,7 +47,7 @@ contains
         real, intent(in)    :: max_depth                ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number              ! lake number
 
-        ! Assign the values passed in to a particular level pool reservoir
+        ! Assign the values passed in to a particular machine learning reservoir
         ! parameter object's variables.
         this%reservoir_area = reservoir_area
         this%weir_elevation = weir_elevation
@@ -59,12 +59,12 @@ contains
         this%max_depth = max_depth
         this%lake_number = lake_number
 
-    end subroutine levelpool_parameters_init
+    end subroutine machine_learning_parameters_init
 
-    !Level Pool Parameters Destructor
-    subroutine levelpool_parameters_destroy(this)
+    !Machine Learning Parameters Destructor
+    subroutine machine_learning_parameters_destroy(this)
         implicit none
-        class(levelpool_parameters_interface), intent(inout) :: this ! the type object being destroyed
-    end subroutine levelpool_parameters_destroy
+        class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being destroyed
+    end subroutine machine_learning_parameters_destroy
 
-end module module_levelpool_parameters
+end module module_machine_learning_parameters
