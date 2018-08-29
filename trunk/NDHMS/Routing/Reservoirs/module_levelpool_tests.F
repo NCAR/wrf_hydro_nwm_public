@@ -28,6 +28,22 @@ contains
 
     end function test_input
 
+    ! test to see that each member of the output structure is correctly allocated and readable
+    function test_output(o) result(rv)
+        type (reservoir_base_output_struct), intent(in) :: o
+        logical rv
+
+        rv = .true.
+
+        print *, "========================================================================"
+        print *, "Checking the values of the output structure"
+        print *, " "
+
+        print *, "Checking read on outflow"
+        print *, o%outflow
+        print *, " "
+
+    end function test_output
 
     ! test to see that each member of the state structure is correctly allocated and readable
     function test_levelpool_state(o) result(rv)

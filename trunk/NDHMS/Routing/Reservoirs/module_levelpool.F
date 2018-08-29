@@ -414,6 +414,18 @@ contains
     end if
     print *, " "
 
+    ! Check to see if the levelpool_output data structure exists
+    print *, "Checking pointer association on data%output "
+    if ( associated(levelpool_data%output) ) then
+        print *, "PASSED"
+        ptr_state(4) = .true.
+    else
+        print *, "FAILED"
+        ptr_state(4) = .false.
+    end if
+    print *, " "
+
+
     ! Now check the data members of each substructure
     if ( ptr_state(1) ) then
         data_state(1) = test_levelpool_state(levelpool_data%state)
@@ -427,8 +439,9 @@ contains
         data_state(3) = test_input(levelpool_data%input)
     end if
 
-
-
+    if ( ptr_state(4) ) then
+        data_state(4) = test_output(levelpool_data%output)
+    end if
 
 
     if ( all(ptr_state) .and. all(data_state) ) then
