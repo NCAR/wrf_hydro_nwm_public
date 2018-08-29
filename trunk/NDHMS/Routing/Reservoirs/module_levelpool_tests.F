@@ -4,20 +4,29 @@ module module_levelpool_tests
     use module_reservoir_base
 contains
     ! test to see that each member of the input structure is correctly allocated and readable
-    !function test_input(o) result(rv)
-    !    type (reservoir_base_input_struct), intent(in) :: o
-    !    logical rv
+    function test_input(o) result(rv)
+        type (reservoir_base_input_struct), intent(in) :: o
+        logical rv
 
-    !    rv = .true.
+        rv = .true.
 
-    !    print *, "========================================================================"
-    !    print *, "Checking the values of the input structure"
-    !    print *, " "
+        print *, "========================================================================"
+        print *, "Checking the values of the input structure"
+        print *, " "
 
-    !end function test_input
+        print *, "Checking read on inflow"
+        print *, o%inflow
+        print *, " "
 
+        print *, "Checking read on lateral_inflow"
+        print *, o%lateral_inflow
+        print *, " "
 
+        print *, "Checking read on previous_timestep_inflow"
+        print *, o%previous_timestep_inflow
+        print *, " "
 
+    end function test_input
 
 
     ! test to see that each member of the state structure is correctly allocated and readable
