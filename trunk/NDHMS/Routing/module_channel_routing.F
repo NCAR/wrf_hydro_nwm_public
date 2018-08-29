@@ -66,8 +66,6 @@ end function MUSKING
 ! ----------------------------------------------------------------
 
 
-
-
 ! ------------------------------------------------
 !   FUNCTION Diffusive wave
 ! ------------------------------------------------
@@ -1906,7 +1904,6 @@ do nt = 1, nsteps
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
             !       inside the reservoir module, but it requires a redesign of the lake
             !       MPI communication model.
-
 
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
             QLAKEI(lakeid)  = Quc           !save inflow to lake

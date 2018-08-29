@@ -1,13 +1,12 @@
 import subprocess
-import socket
-import getpass
-
 import pathlib
 from argparse import ArgumentParser
 import shutil
+import socket
+import warnings
 
-from releaseapi import get_release_asset
-from gdrive_download import download_file_from_google_drive
+from utils.releaseapi import get_release_asset
+from utils.gdrive_download import download_file_from_google_drive
 
 def run_tests(config: str,
               compiler: str,
@@ -15,16 +14,19 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
-              scheduler: str = None,
-              ncores: int = 72,
-              nnodes: int = 2,
-              account: str = 'NRAL0017'):
+              scheduler: bool = False,
+              ncores: int = 216,
+              nnodes: int = 6,
+              account: str = 'NRAL0017',
+              walltime: str = '02:00:00',
+              queue: str = 'regular',
+              print_log: bool = False):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
             config: The config(s) to run, must be listed in hydro_namelist.json keys.
             E.g. nwm_ana gridded
-            compiler: The compiler to use, options are 'intel' or 'gfort'
+            compiler: The compiler to use, options are 'ifort' or 'gfort'
             domain_dir: The domain directory to use
             candidate_dir: The wrf-hydro code candidate directory to use, e.g. wrf_hydro_nwm_public
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
@@ -32,13 +34,49 @@ def run_tests(config: str,
             nproc: Optional. The number of cores to use if running on cheyenne
             nnodes: Optional. The number of nodes to use if running on cheyenne
             account: Options. The account number to use if running on cheyenne
+            Walltime: Optional. Walltime for scheduler
+            queue: Optional, queue to use for scheduler
+            print_log: Optional, print text logs instead of HTML logs
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
     candidate_source_dir = candidate_dir + '/trunk/NDHMS'
     reference_source_dir = reference_dir + '/trunk/NDHMS'
 
-    pytest_cmd = "pytest -v --ignore=local"
+    # Load modules and override nnodes/ncores if running on cheyenne
+    hostname = socket.gethostname()
+    module_cmd = ''
+    if 'cheyenne' in hostname:
+        if compiler.lower() == 'ifort':
+            module_cmd = 'module purge; module load intel/16.0.3 ncarenv/1.2 ncarcompilers/0.4.1 ' \
+                         'mpt/2.15f netcdf/4.4.1;'
+        elif compiler.lower() == 'gfort':
+            module_cmd = 'module purge; module load gnu/7.1.0 ncarenv/1.2 ncarcompilers/0.4.1 ' \
+                         'mpt/2.15 netcdf/4.4.1.1;'
+        if scheduler:
+            # reset ncores and nnodes defaults to scheduler defaults
+            if ncores == 2:
+                ncores = 216
+            if nnodes < 6:
+                warnings.warn('CONUS testing should run on a minimum of 6 nodes, setting nnodes '
+                              'to 6')
+                nnodes = 6
+
+
+    # HTML report
+    html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
+    html_report = str(pathlib.Path(output_dir).joinpath(html_report))
+
+    pytest_cmd = "pytest -vv --tb=no --ignore=local -p no:cacheprovider "
+    if print_log:
+        pytest_cmd += " -s"
+    # Ignore section: for cleaner tests with less skipps!
+    # NWM
+    # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
+    if config.lower().find('nwm') < 0:
+        pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
+
+    pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
     pytest_cmd += " --compiler " + compiler.lower()
     pytest_cmd += " --domain_dir " + domain_dir
@@ -47,18 +85,32 @@ def run_tests(config: str,
     pytest_cmd += " --output_dir " + output_dir
     pytest_cmd += " --ncores " + str(ncores)
 
-    if scheduler is not None:
-        pytest_cmd += " --scheduler " + scheduler
+    if scheduler:
+        pytest_cmd += " --scheduler "
         pytest_cmd += " --nnodes " + str(nnodes)
-
         pytest_cmd += " --account " + account
+        pytest_cmd += " --walltime " + walltime
+        pytest_cmd += " --queue " + queue
 
-    tests = subprocess.run(pytest_cmd, shell=True, cwd=candidate_dir)
+    subprocess_cmd = module_cmd + pytest_cmd
+    print(subprocess_cmd)
+    tests = subprocess.run(subprocess_cmd, shell=True, cwd=candidate_dir)
 
     return tests
 
+
 def main():
-    parser = ArgumentParser()
+    parser = ArgumentParser(description='Run WRF-Hydro test suite locally',
+                            epilog='Example usage: python -B run_tests.py '
+                                   '--config nwm_ana nwm_long_range '
+                                   '--compiler gfort '
+                                   '--candidate_dir '
+                                   '/glade/scratch/jmills/wrf_hydro_nwm_public_origin '
+                                   '--reference_dir '
+                                   '/glade/scratch/jmills/wrf_hydro_nwm_public_upstream '
+                                   '--domain_dir /glade/scratch/jmills/CONUS_V2 '
+                                   '--scheduler '
+                                   '--output_dir /glade/scratch/jmills/conus_v2_testing_gfort')
 
     parser.add_argument("--config",
                         required=True,
@@ -92,7 +144,6 @@ def main():
                              "specified, a small test domain will be retrieved and placed in the "
                              "specified output_dir and used for the testing domain")
 
-
     parser.add_argument('--ncores',
                         default='2',
                         required=False,
@@ -100,21 +151,38 @@ def main():
 
     parser.add_argument('--scheduler',
                         required=False,
+                        action='store_true',
                         help='Scheduler to use for testing, options are PBSCheyenne or do not '
                              'specify for no scheduler')
 
-
     parser.add_argument('--nnodes',
-                     default='2',
-                     required=False,
-                     help='Number of nodes to use for testing if running on scheduler')
-
+                        default='6',
+                        required=False,
+                        help='Number of nodes to use for testing if running on scheduler')
 
     parser.add_argument('--account',
                         default='NRAL0017',
                         required=False,
                         action='store',
                         help='Account number to use if using a scheduler.')
+
+    parser.add_argument('--walltime',
+                        default='02:00:00',
+                        required=False,
+                        action='store',
+                        help='Account number to use if using a scheduler.')
+
+    parser.add_argument('--queue',
+                        default='regular',
+                        required=False,
+                        action='store',
+                        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+                             'premium, or shared')
+
+    parser.add_argument('--print',
+                        required=False,
+                        action='store_true',
+                        help='Print log to stdout instead of html')
 
     args = parser.parse_args()
 
@@ -132,10 +200,13 @@ def main():
 
     compiler = args.compiler
     domain_tag = args.domain_tag
-    ncores = args.ncores
-    nnodes = args.nnodes
+    ncores = int(args.ncores)
+    nnodes = int(args.nnodes)
     scheduler = args.scheduler
     account = args.account
+    walltime = args.walltime
+    queue = args.queue
+    print_log = args.print
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -145,7 +216,7 @@ def main():
 
     # Get the domain if asked for
     if domain_tag is not None:
-        #Reset domain dir to be the downlaoded domain in the output dir
+        # Reset domain dir to be the downlaoded domain in the output dir
         domain_dir = output_dir.joinpath('example_case')
 
         if domain_tag == 'dev':
@@ -169,52 +240,62 @@ def main():
                            shell=True,
                            cwd=str(output_dir))
 
-    ## Make copy paths
+    # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
     reference_copy = output_dir.joinpath(reference_dir.name + '_ref_pytest')
 
-    ## Remove if exist and make if not
+    # Remove if exist and make if not
     if candidate_copy.is_dir():
         shutil.rmtree(str(candidate_copy))
     if reference_copy.is_dir():
         shutil.rmtree(str(reference_copy))
 
-    ## copy directories to avoid polluting user source code directories
-    shutil.copytree(str(candidate_dir),str(candidate_copy),symlinks=True)
-    shutil.copytree(str(reference_dir),str(reference_copy),symlinks=True)
+    # copy directories to avoid polluting user source code directories
+    shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
+    shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
 
     # run pytest for each supplied config
     has_failure = False
+    print("\n\n---------------- Starting WRF-Hydro Testing ----------------")
+    print("Testing the configs: " + ', '.join(config_list), flush=True)
     for config in config_list:
+        extra_spaces = 29
+        total_len = len(config) + extra_spaces
+        print('\n\n' + ('#' * total_len))
+        print('### TESTING:  ---  ' + config + '  ---  ###')
+        print(('#' * total_len) + '\n', flush=True)
 
-        print('\n\n############################')
-        print('### TESTING ' + config + ' ###')
-        print('############################\n\n',flush=True)
+        test_result = run_tests(config=config,
+                                compiler=compiler,
+                                domain_dir=str(domain_dir),
+                                candidate_dir=str(candidate_copy),
+                                reference_dir=str(reference_copy),
+                                output_dir=str(output_dir),
+                                scheduler=scheduler,
+                                ncores=ncores,
+                                nnodes=nnodes,
+                                account=account,
+                                walltime=walltime,
+                                queue=queue,
+                                print_log=print_log)
 
-        test_result = run_tests(config = config,
-                                compiler = compiler,
-                                domain_dir = str(domain_dir),
-                                candidate_dir = str(candidate_copy),
-                                reference_dir = str(reference_copy),
-                                output_dir = str(output_dir),
-                                scheduler = scheduler,
-                                ncores = ncores,
-                                nnodes = nnodes,
-                                account = account)
         if test_result.returncode != 0:
             has_failure = True
 
     # Exit with 1 if failure
     if has_failure:
-        print('\n\n############################')
-        print('### TESTING FAILED ###')
-        print('############################\n\n',flush=True)
+        print('\n\n'
+              '##################################')
+        print('###  ---  TESTING FAILED  ---  ###')
+        print('##################################\n\n', flush=True)
         exit(1)
     else:
-        print('\n\n############################')
-        print('### TESTING PASSED ###')
-        print('############################\n\n',flush=True)
+        print('\n\n'
+              '##################################')
+        print('###  ---  TESTING PASSED  ---  ###')
+        print('##################################\n\n', flush=True)
         exit(0)
+
 
 if __name__ == '__main__':
     main()

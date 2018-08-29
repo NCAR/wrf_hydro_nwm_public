@@ -9,6 +9,8 @@
 
 module module_NWM_io
 
+use module_version, only: get_code_version, get_nwm_version
+
 implicit none
 
 ! Module-wide variables
@@ -662,8 +664,12 @@ subroutine output_chrt_NWM(domainId)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -755,7 +761,9 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_att(ftn,featureVarId,'cf_role',trim(fileMeta%cfRole))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
+#ifndef NCEP_WCOSS
       ! Create channel lat/lon variables
+      ! NOTE: NWM current operations do not permit the output of latitude and longitude for streamflow. 
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
       iret = nf90_put_att(ftn,latVarId,'long_name',trim(fileMeta%latLName))
@@ -790,6 +798,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'units',trim(fileMeta%elevUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
+#endif
 
       ! Define deflation levels for these meta-variables. For now, we are going to
       ! default to a compression level of 2. Only compress if io_form_outputs is set to 1.
@@ -800,6 +809,7 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+#ifndef NCEP_WCOSS
          iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
          iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
@@ -808,6 +818,7 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
          iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')  
+#endif
       endif
 
       ! Allocate memory for the output variables, then place the real output
@@ -910,6 +921,7 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_var(ftn,varId,varMetaInt(2,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
       
+#ifndef NCEP_WCOSS
       iret = nf90_inq_varid(ftn,'latitude',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(1,:))
@@ -929,6 +941,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate elevation in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(3,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into elevation output variable.')
+#endif
 
       ! Place time values into time variables.
       iret = nf90_inq_varid(ftn,'time',varId)
@@ -1246,8 +1259,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total_valid_times attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
-         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"code_version",trim(get_code_version()))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
          iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
          iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -1827,8 +1844,12 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid times attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -2533,8 +2554,12 @@ subroutine output_lakes_NWM(domainId,iGrid)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -3038,8 +3063,12 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid times attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -3503,8 +3532,12 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid time attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -4472,8 +4505,12 @@ subroutine output_chanObs_NWM(domainId)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -5082,8 +5119,12 @@ subroutine output_gw_NWM(domainId,iGrid)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)

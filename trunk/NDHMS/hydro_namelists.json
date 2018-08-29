@@ -3,10 +3,10 @@
         "hydro_nlist": {
             "aggfactrt": 4,
             "channel_option": 2,
-            "chanobs_domain": 0,
+            "chanobs_domain": 1,
             "chanrtswcrt": 1,
             "chrtout_domain": 1,
-            "chrtout_grid": 0,
+            "chrtout_grid": 1,
             "compound_channel": true,
             "dtrt_ch": 300,
             "dtrt_ter": 10,
@@ -19,16 +19,16 @@
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
-            "io_config_outputs": 1,
+            "io_config_outputs": 0,
             "io_form_outputs": 2,
             "land_spatial_meta_flnm": "NULL_specified_in_domain.json",
-            "lsmout_domain": 0,
+            "lsmout_domain": 1,
             "nsoil": 4,
             "order_to_write": 1,
             "out_dt": 60,
             "outlake": 1,
             "output_channelbucket_influx": 2,
-            "output_gw": 0,
+            "output_gw": 1,
             "ovrtswcrt": 1,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
@@ -49,30 +49,12 @@
             "zsoil8": [-0.1, -0.4, -1.0, -2.0]
         },
         "nudging_nlist": {
-            "biaswindowbeforet0": "",
-            "invdisttimeweightbias": "",
-            "maxagepairsbiaspersist": "",
-            "minnumpairsbiaspersist": "",
-            "nlastobs": "",
-            "noconstinterfbias": "",
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": "",
-            "readtimesliceparallel": "",
-            "temporalpersistence": "",
-            "timeslicepath": "NULL_specified_in_domain.json"
-        }
-    },
-
-    "nwm_ana": {
-        "hydro_nlist": {},
-        "nudging_nlist": {
             "biaswindowbeforet0": false,
             "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 3,
             "minnumpairsbiaspersist": 1,
             "nlastobs": 480,
-            "noconstinterfbias": true,
+            "noconstinterfbias": false,
             "nudginglastobsfile": "NULL_specified_in_domain.json",
             "nudgingparamfile": "NULL_specified_in_domain.json",
             "persistbias": true,
@@ -82,32 +64,36 @@
         }
     },
 
+    "nwm_ana": {
+        "hydro_nlist": {},
+        "nudging_nlist": {}
+    },
+
     "nwm_long_range": {
         "hydro_nlist": {
             "aggfactrt": 1,
             "dxrt": 1000,
-            "io_config_outputs": 4,
-            "io_form_outputs": 2,
-            "output_channelbucket_influx": 0,
+            "output_channelbucket_influx": 2,
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
             "subrtswcrt": 0
         },
         "nudging_nlist": {
-            "biaswindowbeforet0": false,
-            "invdisttimeweightbias": true,
             "maxagepairsbiaspersist": 24,
-            "minnumpairsbiaspersist": 1,
-            "nlastobs": 480,
-            "noconstinterfbias": true,
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": false,
-            "readtimesliceparallel": true,
-            "temporalpersistence": true,
-            "timeslicepath": "NULL_specified_in_domain.json"
+            "persistbias": false
         }
+    },
+
+    "nwm_hi_ana": {
+        "hydro_nlist": {
+            "compound_channel": false,
+            "out_dt": 60,
+            "output_channelbucket_influx": 2,
+            "aggfactrt": 10,
+            "dxrt": 100
+       },
+        "nudging_nlist": {}
     },
 
     "nwm_channel-only": {
@@ -115,20 +101,7 @@
             "output_gw": 0,
             "lsmout_domain": 0
         },
-        "nudging_nlist": {
-            "biaswindowbeforet0": false,
-            "invdisttimeweightbias": true,
-            "maxagepairsbiaspersist": 3,
-            "minnumpairsbiaspersist": 1,
-            "nlastobs": 480,
-            "noconstinterfbias": true,
-            "nudginglastobsfile": "NULL_specified_in_domain.json",
-            "nudgingparamfile": "NULL_specified_in_domain.json",
-            "persistbias": true,
-            "readtimesliceparallel": true,
-            "temporalpersistence": true,
-            "timeslicepath": "NULL_specified_in_domain.json"
-        }
+        "nudging_nlist": {}
     },
 
     "gridded": {
@@ -136,12 +109,24 @@
             "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
-            "chrtout_grid": 1,
             "dtrt_ch": 10,
             "rstrt_swc": 1,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     },
 
     "reach": {
@@ -155,6 +140,19 @@
             "t0outputflag": 0,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     }
 }
