@@ -190,7 +190,7 @@ CONTAINS
        endif
 #endif
 
-   if ( MOD(out_dt*60, nlst%dt)  .ne. 0) then
+   if ( int(mod(out_dt*60, nlst%dt))  .ne. 0) then
       call hydro_stop("read_rt_nlst:: out_dt must be a multiple of the NOAH_TIMESTEP")
    end if
 
