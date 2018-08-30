@@ -1,7 +1,7 @@
-md5sum: 9a3b89bfa5adf4a0e20b7e522ba24af3  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/LAKEPARM.nc
+md5sum: 2bffd9ff8e3167bbfacbd160f9508dd6  /glade/work/jamesmcc/domains/private/HAWAII/NWM/DOMAIN/LAKEPARM.nc
 ncdump -h: netcdf LAKEPARM {
 dimensions:
-	feature_id = 10 ;
+	feature_id = 9 ;
 variables:
 	int lake_id(feature_id) ;
 		lake_id:long_name = "Lake ID" ;
