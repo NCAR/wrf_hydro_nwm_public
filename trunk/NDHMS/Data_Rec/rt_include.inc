@@ -1,12 +1,8 @@
    TYPE RT_FIELD
    type (overland_struct) :: overland
-   !class (reservoir_base_container), allocatable(:) :: reservoirs
-   !class (reservoir_base_container), allocatable :: reservoirs
 
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
-
-  !type(reservoir_ptr), DIMENSION(:) :: RESERVOIRS !array of pointers to reservoirs
-
+   integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
 
 
    INTEGER :: IX, JX
@@ -152,7 +148,7 @@
   ! VARIABLES FOR  RESERVOIRS
   REAL :: water_elevation
   REAL :: routing_period
-  REAL :: inflow_previous_timestep
+  REAL :: previous_timestep_inflow
   REAL :: inflow
   REAL :: previous_day_inflow
   REAL :: outflow
@@ -166,21 +162,6 @@
   REAL :: orifice_area
   REAL :: max_depth
   INTEGER :: lake_number
-
-  !type reservoir_ptr
-  !  type(domain), pointer :: resevoir_pointer
-  !end type reservoir_ptr
-
-
-  !type(reservoir_ptr), DIMENSION(:) :: RESERVOIRS !array of pointers to reservoirs
-
-
-  !type ptr
-  !  type(Reservoir), pointer :: resevoir_pointer
-  !end type ptr
-
-
-  !REAL, DIMENSION(:), POINTER    :: RESERVOIRS !array of reservoirs
 
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
