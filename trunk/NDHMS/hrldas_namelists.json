@@ -59,7 +59,7 @@
         "wrf_hydro_offline": {}
     },
 
-    "nwm_channel_only" : {
+    "nwm_channel-only" : {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
     },
