@@ -158,3 +158,5 @@ contains
         reservoir_data%input%previous_timestep_inflow = inflow
 
     end subroutine run_machine_learning_release
+
+end module module_machine_learning

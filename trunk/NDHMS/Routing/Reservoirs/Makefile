@@ -28,6 +28,7 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_tests.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_read_q_type.F
 
 
 	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
@@ -35,6 +36,7 @@ mod:
 	ar -r ../../lib/libHYDRO.a module_levelpool_state.o
 	ar -r ../../lib/libHYDRO.a module_levelpool_tests.o
 	ar -r ../../lib/libHYDRO.a module_levelpool.o
+	ar -r ../../lib/libHYDRO.a module_read_q_type.o
 
 	cp *.mod ../../mod
 
@@ -46,6 +48,7 @@ test:
 		module_levelpool_parameters.o \
 		module_levelpool_state.o \
 		module_levelpool.o \
+		module_read_q_type.o \
 		module_levelpool_tests.o \
 		reservoir_tests.o \
 		hydro_stop.o

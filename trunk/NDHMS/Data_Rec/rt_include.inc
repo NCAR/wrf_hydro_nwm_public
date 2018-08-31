@@ -4,7 +4,6 @@
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
 
-
    INTEGER :: IX, JX
    logical :: initialized
    logical :: restQSTRM

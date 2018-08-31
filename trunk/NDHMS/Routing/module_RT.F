@@ -37,6 +37,9 @@ MODULE module_Routing
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool
+   !use module_machine_learning
+   use module_read_q_type
+
    IMPLICIT NONE
 
 #ifdef OUTPUT_CHAN_CONN
@@ -758,12 +761,15 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
 
 
-   ! set reservoir type array values to 1 as default for levelpool type
+   ! Set reservoir type array values to 1 as default for levelpool type.
    rt_domain(did)%q_type = 1
 
-
-
    NLAKES_total = rt_domain(did)%NLAKES
+
+   ! Call subroutine to read text file that stores the reservoir ID/index
+   ! for the reservoir type (q_type) of reservoirs that are not the
+   ! default levelpool type.
+   call read_q_type(NLAKES_total, rt_domain(did)%q_type)
 
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
@@ -772,12 +778,14 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
     ! file that we read in and check the number. If number == 1
     ! then go to LP, if 2 then go to ML, if 3 then go to P.
 
-     ! Allocate a single level pool reservoir
-     allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+     if (rt_domain(did)%q_type(lake_index) == 1) then
 
-     ! Dynamically inspects for level pool type reservoir
-     select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-        type is (levelpool_struct)
+       ! Allocate a single level pool reservoir
+       allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       ! Dynamically inspects for level pool type reservoir
+       select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+          type is (levelpool_struct)
 
                ! Call to initialize a level pool type reservoir
                call lp%init(                                &
@@ -792,33 +800,36 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%LAKEMAXH(lake_index),         &
                lake_index                                   )
 
-     end select
+       end select
+
+     !else if (rt_domain(did)%q_type(lake_index) == 2) then
+
+       ! Allocate a single machine learning reservoir
+       !allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       ! Dynamically inspects for machine learning type reservoir
+       !select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+       !   type is (machine_learning_struct)
+
+       !          ! Call to initialize a machine learning type reservoir
+       !          call ml%init(                                &
+       !          rt_domain(did)%RESHT(lake_index),            &
+       !          rt_domain(did)%HRZAREA(lake_index),          &
+       !          rt_domain(did)%WEIRH(lake_index),            &
+       !          rt_domain(did)%WEIRC(lake_index),            &
+       !          rt_domain(did)%WEIRL(lake_index),            &
+       !          rt_domain(did)%ORIFICEE(lake_index),         &
+       !          rt_domain(did)%ORIFICEC(lake_index),         &
+       !          rt_domain(did)%ORIFICEA(lake_index),         &
+       !          rt_domain(did)%LAKEMAXH(lake_index),         &
+       !          lake_index                                   )
+
+       !end select
 
 
-     ! Allocate a single machine learning reservoir
-     !allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+     !else if (rt_domain(did)%q_type(lake_index) == 3) then
 
-     ! Dynamically inspects for machine learning type reservoir
-     !select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
-     !   type is (machine_learning_struct)
-
-     !          ! Call to initialize a machine learning type reservoir
-     !          call ml%init(                                &
-     !          rt_domain(did)%RESHT(lake_index),            &
-     !          rt_domain(did)%HRZAREA(lake_index),          &
-     !          rt_domain(did)%WEIRH(lake_index),            &
-     !          rt_domain(did)%WEIRC(lake_index),            &
-     !          rt_domain(did)%WEIRL(lake_index),            &
-     !          rt_domain(did)%ORIFICEE(lake_index),         &
-     !          rt_domain(did)%ORIFICEC(lake_index),         &
-     !          rt_domain(did)%ORIFICEA(lake_index),         &
-     !          rt_domain(did)%LAKEMAXH(lake_index),         &
-     !          lake_index                                   )
-
-     !end select
-
-
-
+     end if
 
    end do
 
