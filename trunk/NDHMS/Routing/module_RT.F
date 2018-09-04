@@ -774,10 +774,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-    ! Read the lake_index of the array of qtypes from our text
-    ! file that we read in and check the number. If number == 1
-    ! then go to LP, if 2 then go to ML, if 3 then go to P.
-
+     ! If q_type equals 1 then go to Level Pool, if 2 then go to
+     ! Machine Learning, and if 3 then go to Persistence.
      if (rt_domain(did)%q_type(lake_index) == 1) then
 
        ! Allocate a single level pool reservoir
