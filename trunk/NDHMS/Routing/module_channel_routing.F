@@ -1702,7 +1702,6 @@ end subroutine drive_CHANNEL
          call setup_stream_nudging(0)  !! always zero b/c at beginning of hydro timestep
 #endif /* WRF_HYDRO_NUDGING */
 
-
 !---------------------------------------------
 if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
 #ifdef HYDRO_D
@@ -1899,7 +1898,7 @@ do nt = 1, nsteps
             ! Inflow, lateral inflow, water elevation, and the routing period
             ! are passed in. Updated outflow and water elevation are returned.
             ! Domain ID (did) set to 1.
-            call rt_domain(1)%reservoirs(i)%ptr%run_release(Quc, 0.0, RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)
+            call rt_domain(1)%reservoirs(lakeid)%ptr%run_release(Quc, 0.0, RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)
 
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
             !       inside the reservoir module, but it requires a redesign of the lake

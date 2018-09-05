@@ -128,12 +128,9 @@ contains
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
 
-        logical :: rv
+        !logical :: rv
 
-        rv = levelpool_data_info(reservoir_data)
-
-        !print *, "--DEBUG-- before call to LEVELPOOL"
-        !flush(6)
+        !rv = levelpool_data_info(reservoir_data)
 
         ! Update input variables
         reservoir_data%input%inflow = inflow
@@ -372,87 +369,87 @@ contains
     ! ----------------------------------------------------------------
 
 
-    function levelpool_data_info(levelpool_data) result(rv)
-    implicit none
-    type (levelpool_struct) :: levelpool_data
-    integer :: rv
-    logical, dimension(1) :: ptr_state
-    logical, dimension(1) :: data_state
+    !function levelpool_data_info(levelpool_data) result(rv)
+    !implicit none
+    !type (levelpool_struct) :: levelpool_data
+    !integer :: rv
+    !logical, dimension(1) :: ptr_state
+    !logical, dimension(1) :: data_state
 
-    rv = 0
+    !rv = 0
 
     ! Check to see if the levelpool_state data structure exists
-    print *, "Checking pointer association on data%state "
-    if ( associated(levelpool_data%state) ) then
-        print *, "PASSED"
-        ptr_state(1) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(1) = .false.
-    end if
-    print *, " "
+    !print *, "Checking pointer association on data%state "
+    !if ( associated(levelpool_data%state) ) then
+    !    print *, "PASSED"
+    !    ptr_state(1) = .true.
+    !else
+    !    print *, "FAILED"
+    !    ptr_state(1) = .false.
+    !end if
+    !print *, " "
 
     ! Check to see if the levelpool_parameters data structure exists
-    print *, "Checking pointer association on data%parameters "
-    if ( associated(levelpool_data%parameters) ) then
-        print *, "PASSED"
-        ptr_state(2) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(2) = .false.
-    end if
-    print *, " "
+    !print *, "Checking pointer association on data%parameters "
+    !if ( associated(levelpool_data%parameters) ) then
+    !    print *, "PASSED"
+    !    ptr_state(2) = .true.
+    !else
+    !    print *, "FAILED"
+    !    ptr_state(2) = .false.
+    !end if
+    !print *, " "
 
     ! Check to see if the levelpool_input data structure exists
-    print *, "Checking pointer association on data%input "
-    if ( associated(levelpool_data%input) ) then
-        print *, "PASSED"
-        ptr_state(3) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(3) = .false.
-    end if
-    print *, " "
+    !print *, "Checking pointer association on data%input "
+    !if ( associated(levelpool_data%input) ) then
+    !    print *, "PASSED"
+    !    ptr_state(3) = .true.
+    !else
+    !    print *, "FAILED"
+    !    ptr_state(3) = .false.
+    !end if
+    !print *, " "
 
     ! Check to see if the levelpool_output data structure exists
-    print *, "Checking pointer association on data%output "
-    if ( associated(levelpool_data%output) ) then
-        print *, "PASSED"
-        ptr_state(4) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(4) = .false.
-    end if
-    print *, " "
+    !print *, "Checking pointer association on data%output "
+    !if ( associated(levelpool_data%output) ) then
+    !    print *, "PASSED"
+    !    ptr_state(4) = .true.
+    !else
+    !    print *, "FAILED"
+    !    ptr_state(4) = .false.
+    !end if
+    !print *, " "
 
 
     ! Now check the data members of each substructure
-    if ( ptr_state(1) ) then
-        data_state(1) = test_levelpool_state(levelpool_data%state)
-    end if
+    !if ( ptr_state(1) ) then
+    !    data_state(1) = test_levelpool_state(levelpool_data%state)
+    !end if
 
-    if ( ptr_state(2) ) then
-        data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
-    end if
+    !if ( ptr_state(2) ) then
+    !    data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
+    !end if
 
-    if ( ptr_state(3) ) then
-        data_state(3) = test_input(levelpool_data%input)
-    end if
+    !if ( ptr_state(3) ) then
+    !    data_state(3) = test_input(levelpool_data%input)
+    !end if
 
-    if ( ptr_state(4) ) then
-        data_state(4) = test_output(levelpool_data%output)
-    end if
+    !if ( ptr_state(4) ) then
+    !    data_state(4) = test_output(levelpool_data%output)
+    !end if
 
 
-    if ( all(ptr_state) .and. all(data_state) ) then
-        print *, "========================================================================"
-        print *, "All Tests Passed"
-        print *, "========================================================================"
-    end if
-    rv = 1
+    !if ( all(ptr_state) .and. all(data_state) ) then
+    !    print *, "========================================================================"
+    !    print *, "All Tests Passed"
+    !    print *, "========================================================================"
+    !end if
+    !rv = 1
 
     !flush(6)
-end function levelpool_data_info
+    !end function levelpool_data_info
 
 
 end module module_levelpool

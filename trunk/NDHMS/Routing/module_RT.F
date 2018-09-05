@@ -349,6 +349,7 @@ CONTAINS
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
      if(NLAKES .gt. 0) then
+
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
 
@@ -759,8 +760,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%gageMiss                                   )
    end if
 
-
-
    ! Set reservoir type array values to 1 as default for levelpool type.
    rt_domain(did)%q_type = 1
 
@@ -769,7 +768,12 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! Call subroutine to read text file that stores the reservoir ID/index
    ! for the reservoir type (q_type) of reservoirs that are not the
    ! default levelpool type.
-   call read_q_type(NLAKES_total, rt_domain(did)%q_type)
+   !call read_q_type(NLAKES_total, rt_domain(did)%q_type)
+
+   do lake_index = 1, NLAKES_total
+     nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
+
+   end do
 
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
@@ -824,22 +828,11 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
        !end select
 
-
      !else if (rt_domain(did)%q_type(lake_index) == 3) then
 
      end if
 
    end do
-
-   ! Deallocate existing arrays that contain reservoir parameters/properties
-   if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
-   if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
-   if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
-   if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
-   if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
-   if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
-   if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
-   if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
 
 
    !ADCHANGE: Add lake reach output
@@ -1597,6 +1590,16 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%overland%mass_balance%pre_infiltration_excess=0.
 
 end if ! end of neither channel_only nor channelBucket_only
+
+   ! Deallocate existing arrays that contain reservoir parameters/properties
+   if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
+   if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
+   if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
+   if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
+   if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
+   if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
+   if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
+   if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
 
 end subroutine LandRT_ini
 
