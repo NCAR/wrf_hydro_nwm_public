@@ -17,6 +17,7 @@ module module_nhd_data
         type (groundwater_static_struct), pointer :: static_data => null()
 
         logical :: pointer_allocation_guard = .false.
+        integer :: gnumlinks
 
     contains
 
@@ -24,11 +25,13 @@ module module_nhd_data
         procedure :: destroy => nhd_groundwater_struct_destroy
         procedure :: run_timestep => run_nhd_groundwater_timestep
     end type nhd_groundwater_struct
-
+! ------------------DEBUG---------------------!
+    integer :: g_num_links
+! ------------------DEBUG---------------------!
 contains
 
     !constructor for the ground water struct
-    subroutine nhd_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area)
+    subroutine nhd_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm)
         implicit none
         class (nhd_groundwater_struct), intent(inout) :: this ! object being initialized
         integer, intent(in) :: ix
@@ -43,6 +46,7 @@ contains
         integer, intent(in) :: cb_only
         integer, intent(in) :: agg_factor
         real, dimension(:,:), intent(in) :: cell_area
+        real, dimension(:,:), intent(in) :: cell_area_lsm
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -93,7 +97,7 @@ contains
                 write(0,*) "Failure to allocate groundwater properties structure"
             else
                 ! initialize the properties structure
-                call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area)
+                call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -129,14 +133,22 @@ contains
     end subroutine nhd_groundwater_struct_destroy
 
     subroutine run_nhd_groundwater_timestep(ground_water_data)
+        use debug_dump_variable
         implicit none
         class(nhd_groundwater_struct), intent(inout) :: ground_water_data
         logical :: rv
 
-        rv = nhd_data_info(ground_water_data)
+        !rv = nhd_data_info(ground_water_data)
 
-        !print *, "--DEBUG-- before call to bucket"
-        !flush(6)
+! ------------------DEBUG---------------------!
+        call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_before_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
+        g_num_links = ground_water_data%gnumlinks
+        write (6,*) "CHANNEL_BUCKET_ONLY = ", ground_water_data%basin%channel_bucket_only
+
+        write (6,*) "INFXSRT = ", ground_water_data%input%infxsrt
+        write (6,*) "SOIL DRAIN = ", ground_water_data%input%soldrain
+        write (6,*) "Cell Area Lsm = ", ground_water_data%properties%cell_area_lsm
+! ------------------DEBUG---------------------!
 
         call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, &
             ground_water_data%static_data%jx_lsm,&
@@ -163,6 +175,10 @@ contains
             ground_water_data%basin%nhd_bucket_mask, &
             ground_water_data%basin%channel_bucket_only)
 
+! ------------------DEBUG---------------------!
+        call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_after_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
+! ------------------DEBUG---------------------!
+
         !print *, "--DEBUG-- after call to bucket"
         flush(6)
 
@@ -185,6 +201,7 @@ contains
             nhdBuckMask,   channelBucket_only )
 
         use module_UDMAP, only: LNUMRSL, LUDRSL
+        use debug_dump_variable
 
         implicit none
 
@@ -232,8 +249,8 @@ contains
 
             !Assign local value of runoff2 (drainage) for flux caluclation to buckets...
 
-            print *, "--DEBUG-- start of agg loop"
-            flush(6)
+            !print *, "--DEBUG-- start of agg loop"
+            !flush(6)
             do J=1,JX
                 do I=1,IX
                     do AGGFACYRT=AGGFACTRT-1,0,-1
@@ -280,18 +297,22 @@ contains
                         if(OVRTSWCRT.ne.1) then
                             LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                                 *cellArea(ii,jj)
+                            write (6,*) "LQLateral2 = ", LQLateral(k), runoff1x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
                         endif
                         LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                             *cellArea(ii,jj)
+                        write (6,*) "LQLateral = ", LQLateral(k), runoff2x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
                     endif
                 end do
             end do
-            print *, "--DEBUG-- end of land grid accumulation loop"
-            flush(6)
+            !print *, "--DEBUG-- end of land grid accumulation loop"
+            !flush(6)
 
 
 #ifdef MPP_LAND
+            write (6,*) "LQLateral = ", LQLateral
             call updateLinkV(LQLateral, net_perc)      ! m^3
+            write (6,*) "net_perc = ", net_perc
 
 #else
             net_perc = LQLateral        ! m^3
@@ -313,6 +334,7 @@ contains
                 if(channelBucket_only .eq. 0) then
                     !! If not using channelBucket_only, save qin_gwsubbas
                     qin_gwsubbas(bas) = net_perc(bas)             !units (m^3)
+                    write(6,*) "updated qin_gwsubbas", bas, net_perc(bas)
                 else
                     !! If using channelBucket_only, get net_perc from the passed qin_gwsubbas
                     net_perc(bas)     = qin_gwsubbas(bas)         !units (m^3)
@@ -390,6 +412,10 @@ contains
         z_gwsubbas_tmp(1:numbasns) = z_gwsubbas(1:numbasns)     ! units (meters)
         !print *, "--DEBUG-- end of groundwater phys"
         !flush(6)
+
+        ! ------------------DEBUG---------------------!
+        call dump_float_1d_reach(qin_gwsubbas,"can_end_of_bucket_qin_gwsubbas.txt",g_num_links)
+! ------------------DEBUG---------------------!
 
         return
 

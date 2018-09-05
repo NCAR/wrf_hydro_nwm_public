@@ -27,7 +27,7 @@ module module_nhd_properties
 
 contains
 
-    subroutine nhd_properties_init(this,ix_lsm,jx_lsm,ix_rt,jx_rt,numbasins,cell_area)
+    subroutine nhd_properties_init(this,ix_lsm,jx_lsm,ix_rt,jx_rt,numbasins,cell_area,cell_area_lsm)
         implicit none
         class(nhd_properties_interface), intent(inout) :: this ! the type object being initalized
         integer, intent(in) :: ix_rt
@@ -36,6 +36,7 @@ contains
         integer, intent(in) :: jx_lsm                     ! y grid size
         integer, intent(in) :: numbasins                  ! number of basins
         real, dimension(:,:), intent(in) :: cell_area
+        real, dimension(:,:), intent(in) :: cell_area_lsm
 
         logical :: allocation_error = .false.
 
@@ -51,7 +52,7 @@ contains
         ! allocate distance_to_neighbor lsm, NOT on the routing grid
         if ( .not. allocated(this%cell_area_lsm) ) then
             allocate(this%cell_area_lsm(ix_lsm,jx_lsm))
-            this%cell_area_lsm = 0.0
+            this%cell_area_lsm = cell_area_lsm
         else
             allocation_error = .true.
         end if

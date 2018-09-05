@@ -29,7 +29,7 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_basin.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_groundwater_static_data.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_tests.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_data.F
+	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_nhd_data.F
 	ar -r ../../lib/libHYDRO.a module_UDMAP.o
 	ar -r ../../lib/libHYDRO.a module_groundwater_base.o
 	ar -r ../../lib/libHYDRO.a module_nhd_properties.o

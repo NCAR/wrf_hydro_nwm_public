@@ -576,7 +576,7 @@ module module_HYDRO_drv
      end subroutine HYDRO_time_adv
 
      subroutine HYDRO_exe(did)
-
+        use debug_dump_variable
 
         implicit none
         integer:: did
@@ -597,6 +597,10 @@ module module_HYDRO_drv
 !              ! does not run the NOAH LASF model, only read the parameter
 !              call read_land_par(did,lsm(did)%ix,lsm(did)%jx)
 !          endif
+
+! ------------------DEBUG---------------------!
+    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_start_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+! ------------------DEBUG---------------------!
 
 
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
@@ -677,6 +681,10 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    end if !! channel_only & channelBucket_only == 0
 
 
+! ------------------DEBUG---------------------!
+    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_before_driveGW_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+! ------------------DEBUG---------------------!
+
    ! step 4) baseflow or groundwater physics
    !! channelBucket_only can be anything: the only time you dont run this is if channel_only=1
    if(nlst_rt(did)%channel_only .eq. 0) then
@@ -696,6 +704,10 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
    end if !! channel_only == 0
+
+! ------------------DEBUG---------------------!
+    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_after_driveGW_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+! ------------------DEBUG---------------------!
 
    ! step 5) river channel physics
    call driveChannelRouting(did)
@@ -743,6 +755,10 @@ end if
            if(allocated(rt_domain(did)%subsurface%state%qsubrt))   RT_DOMAIN(did)%subsurface%state%qsubrt   = 0
 
 
+! ------------------DEBUG---------------------!
+    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_end_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+    call HYDRO_stop("Stoped for debbuging")
+! ------------------DEBUG---------------------!
 
       end subroutine HYDRO_exe
 

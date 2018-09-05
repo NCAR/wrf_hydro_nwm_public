@@ -1138,7 +1138,8 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                             RT_DOMAIN(did)%LNLINKSL, &
                             nlst_rt(did)%channelBucket_only, &
                             nlst_rt(did)%AGGFACTRT, &
-                            rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9))
+                            rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+                            rt_domain(did)%dist_lsm(:,:,9))
 
                         gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
                         call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), &
@@ -1152,6 +1153,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                         !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
                         !for UDMP=1 so we convert units.
                         gwd%state%z_gwsubbas = gwd%state%z_gwsubbas/1000.
+                        gwd%gnumlinks = rt_domain(1)%gnlinks
                     class default
                 end select
 
