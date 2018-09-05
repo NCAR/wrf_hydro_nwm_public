@@ -203,6 +203,7 @@ contains
         use module_UDMAP, only: LNUMRSL, LUDRSL
 #ifdef MPP_LAND
         use module_mpp_land, only: left_id, down_id
+        use MODULE_mpp_ReachLS, only: updateLinkV
 #endif
 
         implicit none
