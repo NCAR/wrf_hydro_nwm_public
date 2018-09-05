@@ -201,6 +201,9 @@ contains
             nhdBuckMask,   channelBucket_only )
 
         use module_UDMAP, only: LNUMRSL, LUDRSL
+#ifdef MPP_LAND
+        use module_mpp_land, only: left_id, down_id
+#endif
 
         implicit none
 
