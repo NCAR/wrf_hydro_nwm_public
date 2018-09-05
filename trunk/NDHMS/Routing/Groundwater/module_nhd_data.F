@@ -201,7 +201,6 @@ contains
             nhdBuckMask,   channelBucket_only )
 
         use module_UDMAP, only: LNUMRSL, LUDRSL
-        use debug_dump_variable
 
         implicit none
 
