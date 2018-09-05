@@ -1153,7 +1153,6 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                         !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
                         !for UDMP=1 so we convert units.
                         gwd%state%z_gwsubbas = gwd%state%z_gwsubbas/1000.
-                        gwd%gnumlinks = rt_domain(1)%gnlinks
                     class default
                 end select
 

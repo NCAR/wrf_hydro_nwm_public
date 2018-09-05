@@ -17,7 +17,7 @@ module module_nhd_data
         type (groundwater_static_struct), pointer :: static_data => null()
 
         logical :: pointer_allocation_guard = .false.
-        integer :: gnumlinks
+        !integer :: gnumlinks
 
     contains
 
@@ -26,7 +26,7 @@ module module_nhd_data
         procedure :: run_timestep => run_nhd_groundwater_timestep
     end type nhd_groundwater_struct
 ! ------------------DEBUG---------------------!
-    integer :: g_num_links
+!    integer :: g_num_links
 ! ------------------DEBUG---------------------!
 contains
 
@@ -141,13 +141,13 @@ contains
         !rv = nhd_data_info(ground_water_data)
 
 ! ------------------DEBUG---------------------!
-        call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_before_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
-        g_num_links = ground_water_data%gnumlinks
-        write (6,*) "CHANNEL_BUCKET_ONLY = ", ground_water_data%basin%channel_bucket_only
+        !call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_before_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
+        !g_num_links = ground_water_data%gnumlinks
+        !write (6,*) "CHANNEL_BUCKET_ONLY = ", ground_water_data%basin%channel_bucket_only
 
-        write (6,*) "INFXSRT = ", ground_water_data%input%infxsrt
-        write (6,*) "SOIL DRAIN = ", ground_water_data%input%soldrain
-        write (6,*) "Cell Area Lsm = ", ground_water_data%properties%cell_area_lsm
+        !write (6,*) "INFXSRT = ", ground_water_data%input%infxsrt
+        !write (6,*) "SOIL DRAIN = ", ground_water_data%input%soldrain
+        !write (6,*) "Cell Area Lsm = ", ground_water_data%properties%cell_area_lsm
 ! ------------------DEBUG---------------------!
 
         call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, &
@@ -176,7 +176,7 @@ contains
             ground_water_data%basin%channel_bucket_only)
 
 ! ------------------DEBUG---------------------!
-        call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_after_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
+        !call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_after_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
 ! ------------------DEBUG---------------------!
 
         !print *, "--DEBUG-- after call to bucket"
@@ -297,11 +297,11 @@ contains
                         if(OVRTSWCRT.ne.1) then
                             LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                                 *cellArea(ii,jj)
-                            write (6,*) "LQLateral2 = ", LQLateral(k), runoff1x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
+                            !write (6,*) "LQLateral2 = ", LQLateral(k), runoff1x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
                         endif
                         LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                             *cellArea(ii,jj)
-                        write (6,*) "LQLateral = ", LQLateral(k), runoff2x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
+                        !write (6,*) "LQLateral = ", LQLateral(k), runoff2x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
                     endif
                 end do
             end do
@@ -310,10 +310,7 @@ contains
 
 
 #ifdef MPP_LAND
-            write (6,*) "LQLateral = ", LQLateral
             call updateLinkV(LQLateral, net_perc)      ! m^3
-            write (6,*) "net_perc = ", net_perc
-
 #else
             net_perc = LQLateral        ! m^3
 #endif
@@ -334,7 +331,7 @@ contains
                 if(channelBucket_only .eq. 0) then
                     !! If not using channelBucket_only, save qin_gwsubbas
                     qin_gwsubbas(bas) = net_perc(bas)             !units (m^3)
-                    write(6,*) "updated qin_gwsubbas", bas, net_perc(bas)
+                    !write(6,*) "updated qin_gwsubbas", bas, net_perc(bas)
                 else
                     !! If using channelBucket_only, get net_perc from the passed qin_gwsubbas
                     net_perc(bas)     = qin_gwsubbas(bas)         !units (m^3)
@@ -414,8 +411,8 @@ contains
         !flush(6)
 
         ! ------------------DEBUG---------------------!
-        call dump_float_1d_reach(qin_gwsubbas,"can_end_of_bucket_qin_gwsubbas.txt",g_num_links)
-! ------------------DEBUG---------------------!
+        !call dump_float_1d_reach(qin_gwsubbas,"can_end_of_bucket_qin_gwsubbas.txt",g_num_links)
+        ! ------------------DEBUG---------------------!
 
         return
 

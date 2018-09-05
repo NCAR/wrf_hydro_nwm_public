@@ -599,7 +599,7 @@ module module_HYDRO_drv
 !          endif
 
 ! ------------------DEBUG---------------------!
-    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_start_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+!    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_start_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
 ! ------------------DEBUG---------------------!
 
 
@@ -682,7 +682,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 
 
 ! ------------------DEBUG---------------------!
-    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_before_driveGW_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+!    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_before_driveGW_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
 ! ------------------DEBUG---------------------!
 
    ! step 4) baseflow or groundwater physics
@@ -706,7 +706,7 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    end if !! channel_only == 0
 
 ! ------------------DEBUG---------------------!
-    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_after_driveGW_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+!    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_after_driveGW_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
 ! ------------------DEBUG---------------------!
 
    ! step 5) river channel physics
@@ -756,8 +756,8 @@ end if
 
 
 ! ------------------DEBUG---------------------!
-    call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_end_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
-    call HYDRO_stop("Stoped for debbuging")
+!   call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_end_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
+!    call HYDRO_stop("Stoped for debbuging")
 ! ------------------DEBUG---------------------!
 
       end subroutine HYDRO_exe
