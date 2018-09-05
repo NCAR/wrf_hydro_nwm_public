@@ -1,10 +1,10 @@
 &hydro_nlist
     aggfactrt = 10
     channel_option = 2
-    chanobs_domain = 0
+    chanobs_domain = 1
     chanrtswcrt = 1
     chrtout_domain = 1
-    chrtout_grid = 0
+    chrtout_grid = 1
     compound_channel = .false.
     dtrt_ch = 300
     dtrt_ter = 10
@@ -17,16 +17,16 @@
     gwbuckparm_file = './NWM/DOMAIN/GWBUCKPARM.nc'
     hydrotbl_f = './NWM/DOMAIN/hydro2dtbl.nc'
     igrid = 1
-    io_config_outputs = 1
+    io_config_outputs = 0
     io_form_outputs = 2
     land_spatial_meta_flnm = './NWM/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc'
-    lsmout_domain = 0
+    lsmout_domain = 1
     nsoil = 4
     order_to_write = 1
     out_dt = 60
     outlake = 1
     output_channelbucket_influx = 2
-    output_gw = 0
+    output_gw = 1
     ovrtswcrt = 1
     restart_file = './NWM/RESTART/HYDRO_RST.2018-08-01_00:00_DOMAIN1'
     route_lake_f = './NWM/DOMAIN/LAKEPARM.nc'

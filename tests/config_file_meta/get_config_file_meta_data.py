@@ -14,9 +14,9 @@ from wrfhydropy import JSONNamelist
 # 5) This script skips non-existent files and ignores timeslices.
 
 domain_paths = [
+    "/glade/work/jamesmcc/domains/private/CONUS",
     "/glade/work/jamesmcc/domains/private/HAWAII",
-    "/glade/work/jamesmcc/domains/public/croton_NY",
-    "/glade/work/jamesmcc/domains/private/CONUS"
+    "/glade/work/jamesmcc/domains/public/croton_NY"
 ]
 
 configs = [
@@ -100,6 +100,10 @@ for dd in domain_paths:
     domain_tag = dd.name
     
     for cc in configs:
+
+        if dd.name == 'croton_NY' and cc == 'nwm_long_range':
+            print("\n\n *** temporarily skipping croton_NY nwm_long_range until it is re-done **** \n\n")
+            continue
         
         # Make a meta data output dir for each configuration.
         config_dir = (this_path / domain_tag) / cc

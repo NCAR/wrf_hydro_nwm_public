@@ -17,12 +17,12 @@ from test_1_fundamental import wait_job
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+
 # Channel-only Run
 def test_run_candidate_channel_only(candidate_sim,
-    candidate_channel_only_sim,
-    output_dir,
-    ncores):
-
+                                    candidate_channel_only_sim,
+                                    output_dir,
+                                    ncores):
     if candidate_sim.model.model_config.lower().find('nwm') < 0:
         pytest.skip('Channel-only test only applicable to nwm_ana config')
 
@@ -68,10 +68,9 @@ def test_run_candidate_channel_only(candidate_sim,
 
 # Channel-only matches full-model?
 def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
-
     if candidate_channel_only_sim.model.model_config.lower().find('nwm') < 0:
         pytest.skip('Channel-only test only applicable to nwm_ana config')
-        
+
     print("\nQuestion: The candidate channel-only run output files match those of the full "
           "model?\n", end="")
 
@@ -127,10 +126,10 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
     # Dont compare metadata in this case, there are different dimensions
     # in the files that always result in a return code of 1.
-    nccmp_options = ['--data', '--force', '--quiet'] #, '--metadata']
+    nccmp_options = ['--data', '--force', '--quiet']  # , '--metadata']
 
     # Check diffs
-        # Run
+    # Run
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
@@ -145,15 +144,16 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
+                diffs = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                eprint(getattr(diffs, key))
+                for diff in diffs:
+                    eprint(diff)
     assert has_diffs == False, \
         'Outputs for candidate_channel_only run do not match outputs from candidate run'
 
 
 # Channel-only ncores question
 def test_ncores_candidate_channel_only(output_dir):
-
     candidate_channel_only_sim_file = \
         output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
     candidate_channel_only_collected_file = \
@@ -210,7 +210,7 @@ def test_ncores_candidate_channel_only(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_channel_only_sim_ncores.output,
-                                                   candidate_channel_only_sim_expected.output)
+                                                       candidate_channel_only_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -218,13 +218,15 @@ def test_ncores_candidate_channel_only(output_dir):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                eprint(getattr(diffs, key))
+                diffs = getattr(diffs, key)
+                eprint('\n' + key + '\n')
+                for diff in diffs:
+                    eprint(diff)
     assert has_diffs is False, \
         'Outputs for candidate_channel_only run with ncores do not match outputs with ncores-1'
 
 
 def test_perfrestart_candidate_channel_only(output_dir):
-
     candidate_channel_only_sim_file = \
         output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
     candidate_channel_only_collected_file = \
@@ -288,7 +290,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_channel_only_sim_restart.output,
-                                                   candidate_channel_only_sim_expected.output)
+                                                       candidate_channel_only_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -296,7 +298,9 @@ def test_perfrestart_candidate_channel_only(output_dir):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
+                diffs = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                eprint(getattr(diffs, key))
+                for diff in diffs:
+                    eprint(diff)
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'
