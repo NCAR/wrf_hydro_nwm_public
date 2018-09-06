@@ -17,5 +17,4 @@ before_install:
   - docker pull wrfhydro/dev:modeltesting
 
 script:
-  - docker run -it -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana gridded reach --domain_tag v5.0.1
-  - exit $?
+  - docker run -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana gridded reach --domain_tag v5.0.2
