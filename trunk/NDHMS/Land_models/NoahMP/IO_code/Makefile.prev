@@ -39,7 +39,7 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(NETCDFMOD) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $(*).f90
+	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(MODFLAG) $(NETCDFMOD)  $(*).f90
 	@echo ""
 
 .F.o:
@@ -49,11 +49,14 @@ module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f90
 	@echo ""
 
+
 #
 # Dependencies:
 #
 
 main_hrldas_driver.o:	$(OBJS_NoahMP) \
+#		        ../../../nudging/module_nudging_utils.o \
+#		        ../../../nudging/module_stream_nudging.o \
 			../../../MPP/mpp_land.o \
                         ../../../Routing/module_NWM_io.o
 $(OBJS_NoahMP):	module_hrldas_netcdf_io.o
