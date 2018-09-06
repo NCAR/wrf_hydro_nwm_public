@@ -17,16 +17,17 @@ from test_1_fundamental import wait_job
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+
 # Channel-only Run
 def test_run_candidate_channel_only(candidate_sim,
-    candidate_channel_only_sim,
-    output_dir,
-    ncores):
-
+                                    candidate_channel_only_sim,
+                                    output_dir,
+                                    ncores):
     if candidate_sim.model.model_config.lower().find('nwm') < 0:
         pytest.skip('Channel-only test only applicable to nwm_ana config')
 
     print("\nQuestion: The candidate channel-only mode runs successfully?\n", end='')
+    print('\n')
 
     # Dont recompile the model, just use the candidate's model.
     candidate_channel_only_sim.model = candidate_sim.model
@@ -68,12 +69,12 @@ def test_run_candidate_channel_only(candidate_sim,
 
 # Channel-only matches full-model?
 def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
-
     if candidate_channel_only_sim.model.model_config.lower().find('nwm') < 0:
         pytest.skip('Channel-only test only applicable to nwm_ana config')
-        
+
     print("\nQuestion: The candidate channel-only run output files match those of the full "
           "model?\n", end="")
+    print('\n')
 
     # Check for existence of simobjects
     candidate_run_file = \
@@ -127,10 +128,10 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
     # Dont compare metadata in this case, there are different dimensions
     # in the files that always result in a return code of 1.
-    nccmp_options = ['--data', '--force', '--quiet'] #, '--metadata']
+    nccmp_options = ['--data', '--force', '--quiet']  # , '--metadata']
 
     # Check diffs
-        # Run
+    # Run
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
@@ -155,7 +156,6 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
 # Channel-only ncores question
 def test_ncores_candidate_channel_only(output_dir):
-
     candidate_channel_only_sim_file = \
         output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
     candidate_channel_only_collected_file = \
@@ -166,6 +166,7 @@ def test_ncores_candidate_channel_only(output_dir):
 
     print("\nQuestion: The candidate_channel-only output files from an ncores runmatch those "
           "from an ncores-1 run?\n", end='')
+    print('\n')
 
     candidate_channel_only_sim = \
         pickle.load(candidate_channel_only_sim_file.open("rb"))
@@ -212,7 +213,7 @@ def test_ncores_candidate_channel_only(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_channel_only_sim_ncores.output,
-                                                   candidate_channel_only_sim_expected.output)
+                                                       candidate_channel_only_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -229,7 +230,6 @@ def test_ncores_candidate_channel_only(output_dir):
 
 
 def test_perfrestart_candidate_channel_only(output_dir):
-
     candidate_channel_only_sim_file = \
         output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
     candidate_channel_only_collected_file = \
@@ -240,6 +240,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
 
     print("\nQuestion: The candidate_channel_only outputs from a restart run match the outputs "
           "from standard run?\n", end='')
+    print('\n')
 
     # Load initial run model object and copy
     candidate_channel_only_sim = \
@@ -293,7 +294,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_channel_only_sim_restart.output,
-                                                   candidate_channel_only_sim_expected.output)
+                                                       candidate_channel_only_sim_expected.output)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
