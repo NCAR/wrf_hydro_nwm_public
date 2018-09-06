@@ -18,4 +18,3 @@ before_install:
 
 script:
   - docker run -it -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana nwm_long_range gridded reach --domain_tag dev
-  - exit $?
