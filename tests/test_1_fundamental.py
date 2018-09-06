@@ -34,6 +34,7 @@ def eprint(*args, **kwargs):
 
 def test_compile_candidate(candidate_sim, output_dir):
     print("\nQuestion: The candidate compiles?\n", end='')
+    print('\n')
 
     compile_dir = output_dir / 'compile_candidate'
 
@@ -49,6 +50,7 @@ def test_compile_candidate(candidate_sim, output_dir):
 
 def test_compile_reference(reference_sim, output_dir):
     print("\nQuestion: The reference compiles?\n", end='')
+    print('\n')
 
     compile_dir = output_dir / 'compile_reference'
 
@@ -64,6 +66,7 @@ def test_compile_reference(reference_sim, output_dir):
 
 def test_run_candidate(candidate_sim, output_dir, ncores):
     print("\nQuestion: The candidate runs successfully?\n", end='')
+    print('\n')
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
@@ -98,6 +101,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores):
 # Run questions
 def test_run_reference(reference_sim, output_dir, ncores):
     print("\nQuestion: The reference runs successfully?\n", end='')
+    print('\n')
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
@@ -133,6 +137,7 @@ def test_run_reference(reference_sim, output_dir, ncores):
 def test_ncores_candidate(output_dir,capsys):
     print("\nQuestion: The candidate outputs from a ncores run match outputs from"
           " ncores-1 run?\n", end='')
+    print('\n')
 
     candidate_sim_file = output_dir / 'run_candidate' / 'WrfHydroSim.pkl'
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
@@ -203,6 +208,7 @@ def test_ncores_candidate(output_dir,capsys):
 def test_perfrestart_candidate(output_dir):
     print("\nQuestion: The candidate outputs from a restart run match the outputs from standard "
           "run?\n", end='')
+    print('\n')
 
     candidate_sim_file = output_dir / 'run_candidate' / 'WrfHydroSim.pkl'
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'

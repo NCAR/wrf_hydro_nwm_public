@@ -6,6 +6,7 @@ candidate_run_file = pathlib.Path('run_candidate/WrfHydroSim_collected.pkl')
 #regression question
 def test_output_has_nans(output_dir,capsys):
     print("\nQuestion: Outputs from all tests are free of nans in data and attributes\n", end="")
+    print('\n')
 
     sim_files = output_dir.rglob('WrfHydroSim_collected.pkl')
 
