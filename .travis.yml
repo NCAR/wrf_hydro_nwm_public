@@ -17,4 +17,4 @@ before_install:
   - docker pull wrfhydro/dev:modeltesting
 
 script:
-  - docker run -e TRAVIS=1 -it -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana nwm_long_range gridded reach --domain_tag dev
+  - docker run -e TRAVIS=1 -t --color=auto -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana nwm_long_range gridded reach --domain_tag dev
