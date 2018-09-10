@@ -101,10 +101,6 @@ for dd in domain_paths:
     
     for cc in configs:
 
-        if dd.name == 'croton_NY' and cc == 'nwm_long_range':
-            print("\n\n *** temporarily skipping croton_NY nwm_long_range until it is re-done **** \n\n")
-            continue
-        
         # Make a meta data output dir for each configuration.
         config_dir = (this_path / domain_tag) / cc
         
