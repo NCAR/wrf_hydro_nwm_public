@@ -39,7 +39,7 @@
  OUTPUT_TIMESTEP  = 3600 
 
  ! Land surface model restart file write frequency
- RESTART_FREQUENCY_HOURS = 1
+ RESTART_FREQUENCY_HOURS = 4
 
  ! Split output after split_output_count output times.
  SPLIT_OUTPUT_COUNT = 1
