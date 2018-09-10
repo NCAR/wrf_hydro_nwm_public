@@ -163,6 +163,7 @@
     "gridded": {
         "hydro_nlist": {
             "gwbasmskfil": "NULL_specified_in_domain.json",
+            "output_channelbucket_influx": 0,
             "channel_option": 3,
             "chrtout_grid": 1,
             "dtrt_ch": 10,
@@ -175,9 +176,9 @@
     "reach": {
         "hydro_nlist": {
             "gwbasmskfil": "NULL_specified_in_domain.json",
+            "output_channelbucket_influx": 0,
             "dtrt_ch": 10,
             "outlake": 0,
-            "output_channelbucket_influx": 1,
             "rstrt_swc": 0,
             "t0outputflag": 0,
             "udmp_opt": 0
