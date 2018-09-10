@@ -133,7 +133,6 @@ contains
     end subroutine nhd_groundwater_struct_destroy
 
     subroutine run_nhd_groundwater_timestep(ground_water_data)
-        use debug_dump_variable
         implicit none
         class(nhd_groundwater_struct), intent(inout) :: ground_water_data
         logical :: rv
