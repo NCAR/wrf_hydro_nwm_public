@@ -170,7 +170,11 @@ contains
             ground_water_data%input%qin_gwsubbas, &
             ground_water_data%static_data%gwbaseswcrt, &
             ground_water_data%static_data%ovrtswcrt, &
+#ifdef MPP_LAND
+            ground_water_data%basin%lnlinksl, &
+#else
             ground_water_data%basin%num_basins, &
+#endif
             ground_water_data%basin%basin_area, &
             ground_water_data%basin%nhd_bucket_mask, &
             ground_water_data%basin%channel_bucket_only)
