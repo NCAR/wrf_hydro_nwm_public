@@ -16,8 +16,8 @@
 ! return the output/outflow.
 module module_machine_learning
 
-    use module_machine_learning_parameters
-    use module_machine_learning_state
+    !use module_machine_learning_parameters
+    !use module_machine_learning_state
     use module_reservoir_base
     implicit none
 
@@ -27,8 +27,8 @@ module module_machine_learning
 
         ! Define pointers to sub-structs / sub-objects to and
         ! held by a machine learning reservoir object.
-        type (machine_learning_parameters_interface), pointer :: parameters => null()
-        type (machine_learning_state_interface), pointer :: state => null()
+        !type (machine_learning_parameters_interface), pointer :: parameters => null()
+        !type (machine_learning_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
 
@@ -41,22 +41,20 @@ module module_machine_learning
 
 contains
 
+    !subroutine machine_learning_struct_init(this, water_elevation,  &
+    !    previous_day_water_elevation, previous_day_inflow, &
+    !    previous_day_release, current_storage, previous_day_storage, &
+    !    min_release, max_release, min_storage, max_storage, &
+    !    lake_number)
+
+
+
     !Machine Learning Constructor
     subroutine machine_learning_struct_init(this, water_elevation,  &
-        reservoir_area, weir_elevation, weir_coeffecient, &
-        weir_length, orifice_elevation, orifice_coefficient, &
-        orifice_area, max_depth, lake_number)
+        lake_number)
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
-        real, intent(in)    :: reservoir_area            ! area of reservoir (km^2)
-        real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
-        real, intent(in)    :: weir_coeffecient          ! weir coefficient
-        real, intent(in)    :: weir_length               ! weir length (meters)
-        real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
-        real, intent(in)    :: orifice_coefficient       ! orifice coefficient
-        real, intent(in)    :: orifice_area              ! orifice area (meters^2)
-        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
@@ -81,29 +79,26 @@ contains
             end if
 
             ! try to allocate parameters
-            allocate ( this%parameters )
-            if ( .not. associated(this%parameters) ) then
-                ! if the parameters structure could not be created write an error
-                write(0,*) "Failure to allocate machine_learning parameters structure"
-            else
-                ! initialize machine_learning parameters
-                call this%parameters%init( reservoir_area,  &
-                    weir_elevation, weir_coeffecient, weir_length, &
-                    orifice_elevation, orifice_coefficient, &
-                    orifice_area, max_depth, lake_number )
-            end if
-            this%pointer_allocation_guard = .true.
+            !allocate ( this%parameters )
+            !if ( .not. associated(this%parameters) ) then
+            !    ! if the parameters structure could not be created write an error
+            !    write(0,*) "Failure to allocate machine_learning parameters structure"
+            !else
+            !    ! initialize machine_learning parameters
+            !    call this%parameters%init( lake_number )
+            !end if
+            !this%pointer_allocation_guard = .true.
 
             ! try to allocate state
-            allocate ( this%state )
-            if ( .not. associated(this%state) ) then
-                ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate state parameters structure"
-            else
-                ! initialize machine_learning state
-                call this%state%init( water_elevation )
-            end if
-            this%pointer_allocation_guard = .true.
+            !allocate ( this%state )
+            !if ( .not. associated(this%state) ) then
+            !    ! if the state structure could not be created write an error
+            !    write(0,*) "Failure to allocate state parameters structure"
+            !else
+            !    ! initialize machine_learning state
+            !    call this%state%init( water_elevation )
+            !end if
+            !this%pointer_allocation_guard = .true.
         end if
 
     end subroutine machine_learning_struct_init
@@ -113,6 +108,11 @@ contains
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being destroyed
     end subroutine machine_learning_struct_destroy
+
+
+
+
+
 
     ! Subroutine for running release for a machine learning reservoir,
     ! which will then call the MACHINE_LEARNING method/subroutine for processing the
@@ -127,35 +127,35 @@ contains
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
 
-        ! Update input variables
-        reservoir_data%input%inflow = inflow
-        reservoir_data%input%lateral_inflow = lateral_inflow
+    !    ! Update input variables
+    !    reservoir_data%input%inflow = inflow
+    !    reservoir_data%input%lateral_inflow = lateral_inflow
 
-        ! Update state variables
-        reservoir_data%state%water_elevation = water_elevation
+    !    ! Update state variables
+    !    reservoir_data%state%water_elevation = water_elevation
 
-        call MACHINE_LEARNING(reservoir_data%parameters%lake_number,   &
-        reservoir_data%input%previous_timestep_inflow,          &
-        reservoir_data%input%inflow,                            &
-        reservoir_data%output%outflow,                          &
-        reservoir_data%input%lateral_inflow,                    &
-        routing_period,                                         &
-        reservoir_data%state%water_elevation,                   &
-        reservoir_data%parameters%reservoir_area,               &
-        reservoir_data%parameters%weir_elevation,               &
-        reservoir_data%parameters%max_depth,                    &
-        reservoir_data%parameters%weir_coeffecient,             &
-        reservoir_data%parameters%weir_length,                  &
-        reservoir_data%parameters%orifice_elevation,            &
-        reservoir_data%parameters%orifice_coefficient,           &
-        reservoir_data%parameters%orifice_area                  &
-        )
+    !    call MACHINE_LEARNING(reservoir_data%parameters%lake_number,   &
+    !    reservoir_data%input%previous_timestep_inflow,          &
+    !    reservoir_data%input%inflow,                            &
+    !    reservoir_data%output%outflow,                          &
+    !    reservoir_data%input%lateral_inflow,                    &
+    !    routing_period,                                         &
+    !    reservoir_data%state%water_elevation,                   &
+    !    reservoir_data%parameters%reservoir_area,               &
+    !    reservoir_data%parameters%weir_elevation,               &
+    !    reservoir_data%parameters%max_depth,                    &
+    !    reservoir_data%parameters%weir_coeffecient,             &
+    !    reservoir_data%parameters%weir_length,                  &
+    !    reservoir_data%parameters%orifice_elevation,            &
+    !    reservoir_data%parameters%orifice_coefficient,           &
+    !    reservoir_data%parameters%orifice_area                  &
+    !    )
 
-        ! Update output variable returned from this subroutine
-        outflow = reservoir_data%output%outflow
+    !    ! Update output variable returned from this subroutine
+    !    outflow = reservoir_data%output%outflow
 
-        ! Set current inflow to previous_timestep_inflow
-        reservoir_data%input%previous_timestep_inflow = inflow
+    !    ! Set current inflow to previous_timestep_inflow
+    !    reservoir_data%input%previous_timestep_inflow = inflow
 
     end subroutine run_machine_learning_release
 
