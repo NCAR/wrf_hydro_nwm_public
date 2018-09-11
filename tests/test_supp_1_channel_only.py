@@ -27,6 +27,7 @@ def test_run_candidate_channel_only(candidate_sim,
         pytest.skip('Channel-only test only applicable to nwm_ana config')
 
     print("\nQuestion: The candidate channel-only mode runs successfully?\n", end='')
+    print('\n')
 
     # Dont recompile the model, just use the candidate's model.
     candidate_channel_only_sim.model = candidate_sim.model
@@ -73,6 +74,7 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
     print("\nQuestion: The candidate channel-only run output files match those of the full "
           "model?\n", end="")
+    print('\n')
 
     # Check for existence of simobjects
     candidate_run_file = \
@@ -164,6 +166,7 @@ def test_ncores_candidate_channel_only(output_dir):
 
     print("\nQuestion: The candidate_channel-only output files from an ncores runmatch those "
           "from an ncores-1 run?\n", end='')
+    print('\n')
 
     candidate_channel_only_sim = \
         pickle.load(candidate_channel_only_sim_file.open("rb"))
@@ -237,6 +240,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
 
     print("\nQuestion: The candidate_channel_only outputs from a restart run match the outputs "
           "from standard run?\n", end='')
+    print('\n')
 
     # Load initial run model object and copy
     candidate_channel_only_sim = \

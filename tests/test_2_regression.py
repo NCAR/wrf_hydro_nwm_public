@@ -12,6 +12,7 @@ def eprint(*args, **kwargs):
 #regression question
 def test_regression_data(output_dir):
     print("\nQuestion: The candidate run data values match the reference run?\n", end="")
+    print('\n')
 
     # Check for existence of sim objects
     candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
@@ -48,6 +49,7 @@ def test_regression_data(output_dir):
 #regression question
 def test_regression_metadata(output_dir):
     print("\nQuestion: The candidate run output metadata match the reference run?\n", end="")
+    print('\n')
 
     # Check for existence of sim objects
     candidate_run_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
