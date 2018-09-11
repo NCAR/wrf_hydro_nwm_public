@@ -1,31 +1,32 @@
-module module_nhd_basin
+module module_simple_basin
     use module_groundwater_base
     !use module_UDMAP
     implicit none
 
+    !> type to contain information about the basins used in the simple groundwater scheme ground
+
     type, extends(groundwater_base_basin_struct) :: simple_basin_interface
 
-        ! the local number of basins
+        !> the local number of basins
         integer :: num_basins
 
-        ! the area of each basin
+        !> the area of each basin
         real, allocatable, dimension(:) :: basin_area
 
-        ! bucket mask for use with nhd plus stream network
+        !> bucket mask for use with nhd plus stream network
         integer, allocatable, dimension(:) :: nhd_bucket_mask
 
+        !> number of nhd links
         integer :: lnlinksl
 
+        !> channel bucket only flag
         integer :: channel_bucket_only
 
+        !> aggregation factor for routing to LSM domain mapping
         integer :: agg_factor
 
-        !real, allocatable, dimension(:,:) :: cell_area
-
-        !real, allocatable, dimension(:,:) :: cell_area_lsm
-
-        ! guard variable for broken fortran pointers
-        logical :: pointers_need_set = .true.
+        ! guard variable for fortran pointers behavior
+        logical, private :: pointers_need_set = .true.
 
     contains
 
@@ -102,4 +103,4 @@ contains
 
     end subroutine simple_basin_destroy
 
-end module module_nhd_basin
+end module module_simple_basin

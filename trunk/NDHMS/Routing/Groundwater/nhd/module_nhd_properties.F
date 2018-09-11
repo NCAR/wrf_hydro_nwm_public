@@ -1,22 +1,30 @@
+!> @brief NHD properties module for groundwater
+!!
+!! This module implements the data structures used to interact with the properties
+!! in the nhd implementation of an exponential bucket groundwater model
+
 module module_nhd_properties
     use module_groundwater_base
     implicit none
 
+    !> type used to contain information used to interact with property data about the modeled basins in the
+    !! nhd implementation of an exponential bucket groundwater bucket model
+
     type, extends(groundwater_base_properties_struct) :: nhd_properties_interface
 
-        ! centerpoint distance to each neighbor on the routing grid (m)
+        !> the area of each element of the routing grid, units: m
         real, allocatable, dimension(:,:) :: cell_area
 
-        ! centerpoint distance to each neighbor on the land surface grid (m)
+        !> the area of each element of the LSM grid, units: m
         real, allocatable, dimension(:,:) :: cell_area_lsm
 
-        ! Coefficient parameter in the GW exponential decay equation
+        !> Coefficient parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: gw_buck_coeff
 
-        ! Exponent parameter in the GW exponential decay equation
+        !> Exponent parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: gw_buck_exp
 
-        ! Max water table parameter in the GW exponential decay equation
+        !> Max water table parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: z_max
 
     contains
@@ -26,6 +34,16 @@ module module_nhd_properties
     end type nhd_properties_interface
 
 contains
+
+    !> Constructor for the nhd properties structure
+    !! @param this The nhd properties structure being allocated
+    !! @param ix_lsm The size of the x dimension of the lsm grids
+    !! @param jx_lsm The size of the y dimension of the lsm grids
+    !! @param ix_rt The size of the x dimension of the routing grids
+    !! @param jx_rt The size of the y dimension of the routing grids
+    !! @param numbasins The number of basins being modeled in this process
+    !! @param cell_area 2D array containing the area of each element of the local routing grid
+    !! @param cell_area_lsm 2D array contain the area of each element of the local LSM grid
 
     subroutine nhd_properties_init(this,ix_lsm,jx_lsm,ix_rt,jx_rt,numbasins,cell_area,cell_area_lsm)
         implicit none
@@ -86,6 +104,9 @@ contains
             &that where already allocated. The allocated members where not changed"
 
     end subroutine nhd_properties_init
+
+    !> Destructor for the nhd properties structure
+    !! @param this The nhd properties structure being destroyed
 
     subroutine nhd_properties_destroy(this)
         implicit none

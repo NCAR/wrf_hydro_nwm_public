@@ -1,9 +1,19 @@
+!> @brief NHD state module for groundwater
+!!
+!! This module implements the data structures used to interact with the state variables
+!! in the nhd implementation of an exponential bucket groundwater model
+
 module module_nhd_state
 
     use module_groundwater_base
     implicit none
 
+    !> type used to contain information used to interact with state variables for the modeled basins in the
+    !! nhd implementation of an exponential bucket groundwater bucket model
+
     type, extends(groundwater_base_state_struct) :: nhd_state_interface
+
+        !> The current water elevation in each groundwater basin modeled on the local process
         real, allocatable, dimension(:) :: z_gwsubbas
 
     contains
@@ -14,7 +24,10 @@ module module_nhd_state
 
 contains
 
-    ! allocate groundwater state variables
+    !> Constructor for nhd state struct
+    !! @params this The nhd state struct being allocated
+    !! @params numbasins The number of local basins being modeled by this process
+
     subroutine nhd_state_init(this, numbasins)
         implicit none
         class(nhd_state_interface), intent(inout) :: this ! the type object being destroyed
@@ -36,7 +49,8 @@ contains
 
     end subroutine nhd_state_init
 
-    ! deallocate groundwater state variables
+    !> Destructor for nhd state struct
+    !! @params this The nhd state struct being destroyed
     subroutine nhd_state_destroy(this)
         implicit none
         class(nhd_state_interface), intent(inout) :: this ! the type object being destroyed

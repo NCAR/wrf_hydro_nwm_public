@@ -1,31 +1,39 @@
+!> @brief NHD basin module for groundwater
+!!
+!! This module implements the data structures used to interact with the basin data
+!! in the exponential bucket groundwater model for nhd stream network
+
 module module_nhd_basin
+
     use module_groundwater_base
     !use module_UDMAP
     implicit none
 
+    !> type used to contain infomation used to interact with modeled basins in the
+    !! nhd groundwater bucket model
+
     type, extends(groundwater_base_basin_struct) :: nhd_basin_interface
 
-        ! the local number of basins
+        !> the local number of basins
         integer :: num_basins
 
-        ! the area of each basin
+        !> the area of each basin
         real, allocatable, dimension(:) :: basin_area
 
-        ! bucket mask for use with nhd plus stream network
+        !> bucket mask for use with nhd plus stream network
         integer, allocatable, dimension(:) :: nhd_bucket_mask
 
+        !> number of nhd links !FIX ME!
         integer :: lnlinksl
 
+        !> flag indicating if inflow comes from the overland and or subsurface routing grid or is sent directly
         integer :: channel_bucket_only
 
+        !> the aggregation factor from the routing to LSM domains
         integer :: agg_factor
 
-        !real, allocatable, dimension(:,:) :: cell_area
-
-        !real, allocatable, dimension(:,:) :: cell_area_lsm
-
-        ! guard variable for broken fortran pointers
-        logical :: pointers_need_set = .true.
+        !> guard variable for to know if fortran pointers have been allocated
+        logical, private :: pointers_need_set = .true.
 
     contains
 
@@ -34,6 +42,15 @@ module module_nhd_basin
     end type nhd_basin_interface
 
 contains
+
+    !> Constructor for the nhd basin type
+    !! @param this the nhd basin object being initalized
+    !! @param ixrt the x size of the routing grid
+    !! @param jxrt the y size of the routing grid
+    !! @param numbasins the number of local basins
+    !! @param num_local_links the number of local nhd links
+    !! @param cb_only flag indicating if physics will run in channel bucket only mode
+    !! @param aggfactrt the aggregation factor used to move from routing to LSM domain
 
     subroutine nhd_basin_init(this,ixrt, jxrt, numbasins, num_local_links, cb_only, aggfactrt )
         implicit none
@@ -80,6 +97,9 @@ contains
             &that where already allocated. The allocated members where not changed"
 
     end subroutine nhd_basin_init
+
+    !> Destructor for the nhd basin type
+    !! @param this The nhd basin object being destroyed
 
     subroutine nhd_basin_destroy(this)
         implicit none

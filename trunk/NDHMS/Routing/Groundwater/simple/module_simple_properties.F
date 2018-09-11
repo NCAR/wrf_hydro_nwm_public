@@ -1,22 +1,29 @@
+!> @brief simple properties module for groundwater
+!!
+!! This module implements the data structures used to interact with the properties
+!! in the simple exponential bucket groundwater model
 module module_simple_properties
     use module_groundwater_base
     implicit none
 
+    !> type used to contain information used to interact with property data about the modeled basins in the
+    !! simple exponential bucket groundwater bucket model
+
     type, extends(groundwater_base_properties_struct) :: simple_properties_interface
 
-        ! centerpoint distance to each neighbor on the routing grid (m)
+        !> centerpoint distance to each neighbor on the routing grid (m)
         real, allocatable, dimension(:,:) :: cell_area
 
-        ! centerpoint distance to each neighbor on the land surface grid (m)
+        !> centerpoint distance to each neighbor on the land surface grid (m)
         real, allocatable, dimension(:,:) :: cell_area_lsm
 
-        ! Coefficient parameter in the GW exponential decay equation
+        !> Coefficient parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: gw_buck_coeff
 
-        ! Exponent parameter in the GW exponential decay equation
+        !> Exponent parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: gw_buck_exp
 
-        ! Max water table parameter in the GW exponential decay equation
+        !> Max water table parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: z_max
 
     contains
@@ -26,6 +33,8 @@ module module_simple_properties
     end type simple_properties_interface
 
 contains
+
+    !> Constructor for the
 
     subroutine simple_properties_init(this,ix_lsm,jx_lsm,ix_rt,jx_rt,numbasins,cell_area,cell_area_lsm)
         implicit none

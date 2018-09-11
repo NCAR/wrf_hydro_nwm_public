@@ -1,3 +1,8 @@
+!> @brief NHD data module for groundwater
+!!
+!! Contains the data structures and code used to implement and exponential bucket model for simulation of groundwater
+!! in simulations that use the NHD stream network
+
 module module_nhd_data
     use module_nhd_state
     use module_nhd_basin
@@ -9,14 +14,23 @@ module module_nhd_data
     use nhd_groundwater_tests
     implicit none
 
+    !> data type that hold necessary data for exponential bucket groundwater model
+
     type, extends(groundwater_base_data_struct) :: nhd_groundwater_struct
 
+        !> sub structure to hold state data
         type (nhd_state_interface), pointer :: state => null()
+
+        !> sub structure to hold property data
         type (nhd_properties_interface), pointer :: properties => null()
+
+        !> sub structure to hold basin data
         type (nhd_basin_interface), pointer :: basin => null()
+
+        !> sub structure to hold static data
         type (groundwater_static_struct), pointer :: static_data => null()
 
-        logical :: pointer_allocation_guard = .false.
+        logical, private :: pointer_allocation_guard = .false.
         !integer :: gnumlinks
 
     contains
@@ -25,12 +39,26 @@ module module_nhd_data
         procedure :: destroy => nhd_groundwater_struct_destroy
         procedure :: run_timestep => run_nhd_groundwater_timestep
     end type nhd_groundwater_struct
-! ------------------DEBUG---------------------!
-!    integer :: g_num_links
-! ------------------DEBUG---------------------!
+    ! ------------------DEBUG---------------------!
+    !    integer :: g_num_links
+    ! ------------------DEBUG---------------------!
 contains
 
-    !constructor for the ground water struct
+    !> Constructor for the ground water struct.
+    !! @param this  The nhd ground water object being constructed
+    !! @param ix  The x dimension of the lsm grid
+    !! @param jx  The y dimension of the lsm grid
+    !! @param ixrt  The x dimension of the routing grid
+    !! @param jxrt  The y dimensions of the routing grid
+    !! @param dt  The size of the time step
+    !! @param gwbaseswcrt  Groundwater configuration option: 0 = disabled, 1 = exp bucket, 2 = passthrough.
+    !! @param ovrtswcrt  Overland routing contributes to groundwater: 0 = off, 1 = on
+    !! @param numbasins  The number of basins being modeled in this process
+    !! @param num_local_links  The number of nhd links modeled in this process
+    !! @param cb_only  The flag for channel bucket only
+    !! @param agg_factor  The aggregation factor between the lsm and routing domains
+    !! @param cell_area  2D array containing the area of each routing cell
+    !! @param cell_area_lsm  2D array contain the area of lsm cell
     subroutine nhd_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm)
         implicit none
         class (nhd_groundwater_struct), intent(inout) :: this ! object being initialized
@@ -126,28 +154,87 @@ contains
 
     end subroutine nhd_groundwater_struct_init
 
-    ! destructor for the ground water struct
+    !> Destructor for the ground water struct. Calling this subroutine will deallocate all memory allocated to a
+    !! nhd_ground_water structure. If one or more pointer where disassociated or deallocated from code outside this
+    !! module they will not be deallocated and an error message will be displayed.
+    !! @param this  The nhd groundwater struct being destroyed
+
     subroutine nhd_groundwater_struct_destroy(this)
         implicit none
         class (nhd_groundwater_struct), intent(inout) :: this ! object being destroyed
+
+        logical :: io_err = .false.
+
+        ! pointer allocation guard should be set if data structures where properly initalized
+        if (this%pointer_allocation_guard  ) then
+            !check each pointer then deallocate
+
+            ! check the input structure
+            if ( associated(this%input)) then
+                deallocate(this%input)
+            else
+                write(0,*) "Error the input structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+
+            ! check the output structure
+            if ( associated(this%output)) then
+                deallocate(this%output)
+            else
+                write(0,*) "Error the output structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+
+            ! check the aggregation structure
+            if ( associated(this%aggregation)) then
+                deallocate(this%aggregation)
+            else
+                write(0,*) "Error the aggregation structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+
+            ! check the state structure
+            if ( associated(this%state)) then
+                deallocate(this%state)
+            else
+                write(0,*) "Error the state structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+
+            ! check the properties structure
+            if ( associated(this%properties)) then
+                deallocate(this%properties)
+            else
+                write(0,*) "Error the properties structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+
+            ! check the output structure
+            if ( associated(this%basin)) then
+                deallocate(this%basin)
+            else
+                write(0,*) "Error the basin structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+
+            ! check the static_data structure
+            if ( associated(this%static_data)) then
+                deallocate(this%static_data)
+            else
+                write(0,*) "Error the static_data structure the nhd data object was not associated"
+                io_err = .true.
+            end if
+        end if
+
     end subroutine nhd_groundwater_struct_destroy
+
+    !> Run physics simulation for one timestep on this object
+    !! @param ground_water_data  The nhd groundwater struct contains data for simulation
 
     subroutine run_nhd_groundwater_timestep(ground_water_data)
         implicit none
         class(nhd_groundwater_struct), intent(inout) :: ground_water_data
         logical :: rv
-
-        !rv = nhd_data_info(ground_water_data)
-
-! ------------------DEBUG---------------------!
-        !call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_before_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
-        !g_num_links = ground_water_data%gnumlinks
-        !write (6,*) "CHANNEL_BUCKET_ONLY = ", ground_water_data%basin%channel_bucket_only
-
-        !write (6,*) "INFXSRT = ", ground_water_data%input%infxsrt
-        !write (6,*) "SOIL DRAIN = ", ground_water_data%input%soldrain
-        !write (6,*) "Cell Area Lsm = ", ground_water_data%properties%cell_area_lsm
-! ------------------DEBUG---------------------!
 
         call simp_gw_buck_nhd(ground_water_data%static_data%ix_lsm, &
             ground_water_data%static_data%jx_lsm,&
@@ -178,15 +265,33 @@ contains
             ground_water_data%basin%nhd_bucket_mask, &
             ground_water_data%basin%channel_bucket_only)
 
-! ------------------DEBUG---------------------!
-        !call dump_float_1d_reach(ground_water_data%input%qin_gwsubbas,"can_after_bucket_qin_gwsubbas.txt",ground_water_data%gnumlinks)
-! ------------------DEBUG---------------------!
-
-        !print *, "--DEBUG-- after call to bucket"
-        flush(6)
-
     end subroutine
 
+    !> physics code for the nhd groundwater bucket
+    !! @param ix  The size of the x dimension of the LSM grid
+    !! @param jx  The size of the y dimension of the LSM grid
+    !! @param ixrt  The size of the x dimension of the Routing grid
+    !! @param jxrt  The size of the y dimension of the Routing grid
+    !! @param numbasns  The number of nhd basins simulated in this process
+    !! @param AGGFACTRT  The aggregation factor used to move data from the LSM domain to routing domain
+    !! @param DT  The size of the current time step
+    !! @param INFXSWGT 2D array of aggregation weights
+    !! @param runoff1x_in Input water from overland routing grid
+    !! @param runoff2x_in Input water from subsurface routing grid
+    !! @param cellArea  2D array containing the area of each routing grid cell
+    !! @param area_lsm 2D array containing the area of each LSM grid cell
+    !! @param c 1D array containing the bucket coefficient for each modeled basin
+    !! @param exp 1D array containing the bucket exponent for each modeled basin
+    !! @param z_mx 1D array containing the maximum value of the bucket for each modeled basin
+    !! @param z_gwsubbas_tmp 1D array contain the inital water level at each basin, this value is updated to the final value after the time step
+    !! @param qout_gwsubbas 1D array giving flow out of each modeled bucket
+    !! @param qin_gwsubbas 1D array gving flow into each modeled bucket, only used if cb_only is set to 1
+    !! @param GWBASESWCRT  Groundwater configuration option: 0 = disabled, 1 = exp bucket, 2 = passthrough.
+    !! @param OVRTSWCRT  Overland routing contributes to groundwater: 0 = off, 1 = on
+    !! @param lnlinksl The number of nhd links !FIX ME!
+    !! @param basns_area 1D array containing the area of each local basin
+    !! @param nhdBuckMask 1D array containing the bucket mask for each local basin
+    !! @param cb_only flag 1 = run channel bucket only scheme, 0 = collect water from subsurface and or overland grids
 
     subroutine simp_gw_buck_nhd(           &
             ix,            jx,                &
@@ -199,7 +304,7 @@ contains
             z_mx,          z_gwsubbas_tmp,    &
             qout_gwsubbas, qin_gwsubbas,      &
             GWBASESWCRT,   OVRTSWCRT,         &
-            LNLINKSL,                         &
+            lnlinksl,                         &
             basns_area,                       &
             nhdBuckMask,   channelBucket_only )
 
@@ -238,7 +343,7 @@ contains
         integer                                           :: i,j,bas, k, m, ii,jj
 
         integer :: AGGFACYRT, AGGFACTRT, AGGFACXRT, IXXRT, JYYRT
-        real*8,  dimension(LNLINKSL) :: LQLateral
+        real*8,  dimension(lnlinksl) :: LQLateral
 
         !print *, "--DEBUG-- start of groundwater phys"
         !flush(6)
@@ -255,8 +360,6 @@ contains
 
             !Assign local value of runoff2 (drainage) for flux caluclation to buckets...
 
-            !print *, "--DEBUG-- start of agg loop"
-            !flush(6)
             do J=1,JX
                 do I=1,IX
                     do AGGFACYRT=AGGFACTRT-1,0,-1
@@ -289,8 +392,6 @@ contains
                     enddo
                 enddo
             enddo
-            !print *, "--DEBUG-- end of agg loop"
-            !flush(6)
 
 
             LQLateral = 0
@@ -303,16 +404,12 @@ contains
                         if(OVRTSWCRT.ne.1) then
                             LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                                 *cellArea(ii,jj)
-                            !write (6,*) "LQLateral2 = ", LQLateral(k), runoff1x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
                         endif
                         LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                             *cellArea(ii,jj)
-                        !write (6,*) "LQLateral = ", LQLateral(k), runoff2x(ii,jj), LUDRSL(k)%cellWeight(m)/1000, cellArea(ii,jj)
                     endif
                 end do
             end do
-            !print *, "--DEBUG-- end of land grid accumulation loop"
-            !flush(6)
 
 
 #ifdef MPP_LAND
@@ -320,8 +417,6 @@ contains
 #else
             net_perc = LQLateral        ! m^3
 #endif
-            !print *, "--DEBUG-- after update to net_perc"
-            !flush(6)
 
         endif !! if channelBucket_only .eq. 0 else
 
@@ -413,12 +508,6 @@ contains
         END DO                 ! End loop for GW bucket calcs...
 
         z_gwsubbas_tmp(1:numbasns) = z_gwsubbas(1:numbasns)     ! units (meters)
-        !print *, "--DEBUG-- end of groundwater phys"
-        !flush(6)
-
-        ! ------------------DEBUG---------------------!
-        !call dump_float_1d_reach(qin_gwsubbas,"can_end_of_bucket_qin_gwsubbas.txt",g_num_links)
-        ! ------------------DEBUG---------------------!
 
         return
 
@@ -426,7 +515,10 @@ contains
     End subroutine simp_gw_buck_nhd
     !------------------------------------------------------------------------------
 
-        function nhd_data_info(nhd_data) result(rv)
+    !> Check the contents and integrity of the data contained in a nhd groundwater struct
+    !> @param nhd_data The nhd groundwater struct to query
+
+    function nhd_data_info(nhd_data) result(rv)
         implicit none
         type (nhd_groundwater_struct) :: nhd_data
         integer :: rv

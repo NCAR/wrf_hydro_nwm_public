@@ -1,25 +1,37 @@
+!> @brief base classes for groundwater implementations
+!!
+!! This model contains virtual base classes for groundwater data structures
+!! for properties, basin details, and state. In addition concrete base classes
+!! are provided for input, output, and aggregation. The information in the concrete
+!! classes is the information provided by the current model implementation and changing
+!! this information would require modification of other parts of the model.
+
 module module_groundwater_base
 
+    !> Virtual base for groundwater state classes
     type, abstract ::  groundwater_base_state_struct
 
     end type
 
+    !> Virtual base for groundwater properties classes
     type, abstract ::  groundwater_base_properties_struct
 
     end type
 
+    !> Virtual base for groundwater basin classes
     type, abstract :: groundwater_base_basin_struct
 
     end type
 
+    !>  Base for groundwater input classes.
     type :: groundwater_base_input_struct
-        ! infiltration excess on LSM grid as updated by the LSM (passed from LSM to hydro)
+        !> Infiltration excess on LSM grid as updated by the LSM (passed from LSM to hydro)
         real, allocatable, dimension(:,:) :: infxsrt
 
-        ! drainage from bottom of soil column (from LSM)
+        !> Drainage from bottom of soil column (from LSM)
         real, allocatable, dimension(:,:) :: soldrain
 
-        ! flow to GW bucket
+        !> Flow to GW bucket (used for channel buckket only configuration)
         real, allocatable, dimension(:) :: qin_gwsubbas
 
     contains
@@ -28,9 +40,10 @@ module module_groundwater_base
         procedure :: destroy => groundwater_base_input_struct_destroy
     end type
 
+    !> Base class for groundwater output classes
     type :: groundwater_base_output_struct
-        real, allocatable, dimension(:) :: qout_gwsubbas  ! flow from the GW bucket
-        real, allocatable, dimension(:,:) :: qinflowbase     ! inflow/baseflow from QW to stream network
+        real, allocatable, dimension(:) :: qout_gwsubbas  !< flow from the GW bucket
+        real, allocatable, dimension(:,:) :: qinflowbase     !< inflow/baseflow from QW to stream network
 
     contains
 
@@ -38,10 +51,11 @@ module module_groundwater_base
         procedure :: destroy => groundwater_base_output_struct_destroy
     end type
 
+    !> Base class for ground water aggregation classes
     type :: groundwater_base_aggregation_struct
-        real, allocatable, dimension(:,:) :: infxswgt
+        real, allocatable, dimension(:,:) :: infxswgt   !< Aggregation weights
 
-        integer :: agg_factor
+        integer :: agg_factor !< The aggregation factor used to move from the LSM to routing domains
 
     contains
 
@@ -49,22 +63,28 @@ module module_groundwater_base
         procedure :: destroy => groundwater_base_aggregation_struct_destroy
     end type
 
+    !> Base class for ground water static classes
     type, abstract :: groundwater_base_static_struct
 
     end type
 
+    !> Virutal base class for ground water data
+    !!
+    !! All ground water implementations must extend this class to create a data structure.
+
     type, abstract :: groundwater_base_data_struct
 
-        type(groundwater_base_input_struct), pointer :: input
-        type(groundwater_base_output_struct), pointer :: output
-        type(groundwater_base_aggregation_struct), pointer :: aggregation
+        type(groundwater_base_input_struct), pointer :: input  !< structure to hold inputs to module
+        type(groundwater_base_output_struct), pointer :: output !< structure to hold outputs to module
+        type(groundwater_base_aggregation_struct), pointer :: aggregation !< structure to hold aggregation data for module
 
     contains
 
-        procedure (run_groundwater_time_step_interface), deferred ::run_timestep
+        procedure (run_groundwater_time_step_interface), deferred ::run_timestep !< abstract procedure establishing the run_timestep method.
 
     end type
 
+    !> Definition of run_groundwater_time_step_interface
     abstract interface
         subroutine run_groundwater_time_step_interface(ground_water_data)
             import :: groundwater_base_data_struct
@@ -74,7 +94,11 @@ module module_groundwater_base
 
 contains
 
-    !constructor for the ground water struct
+    !> Constructor for the groundwater base input structs
+    !! @param this The groundwater base input struct being constructed
+    !! @param ix The x size of the LSM data grids
+    !! @param jx the y size of the LSM data grids
+    !! @param numbasins The number of local basins
     subroutine groundwater_base_input_struct_init(this, ix, jx, numbasins)
         implicit none
         class (groundwater_base_input_struct), intent(inout) :: this ! object being initialized
@@ -114,7 +138,9 @@ contains
 
     end subroutine groundwater_base_input_struct_init
 
-    ! destructor for the ground water struct
+    !> Destructor for the groundwater base input structs
+    !! @param this The groundwater base input struct being destroyed
+
     subroutine groundwater_base_input_struct_destroy(this)
         implicit none
         class (groundwater_base_input_struct), intent(inout) :: this ! object being destroyed
@@ -148,7 +174,11 @@ contains
 
     end subroutine groundwater_base_input_struct_destroy
 
-    !constructor for the ground water struct
+    !> Constructor for the groundwater base output structs
+    !! @param this The groundwater base input struct being constructed
+    !! @param ixrt The x size of the routing data grids
+    !! @param jxrt the y size of the routing data grids
+    !! @param numbasins The number of local basins
     subroutine groundwater_base_output_struct_init(this,ixrt,jxrt, numbasins)
         implicit none
         class (groundwater_base_output_struct), intent(inout) :: this ! object being initialized
@@ -178,7 +208,9 @@ contains
 
     end subroutine groundwater_base_output_struct_init
 
-    ! destructor for the ground water struct
+    !> Destructor for the groundwater base output structs
+    !! @param this The groundwater base input struct being destroyed
+
     subroutine groundwater_base_output_struct_destroy(this)
         implicit none
         class (groundwater_base_output_struct), intent(inout) :: this ! object being destroyed
@@ -203,7 +235,11 @@ contains
 
     end subroutine groundwater_base_output_struct_destroy
 
-    ! create a groundwater aggregation object
+    !> Constructor for the groundwater base aggregation structs
+    !! @param this The groundwater base input struct being constructed
+    !! @param ixrt The x size of the routing data grids
+    !! @param jxrt the y size of the routing data grids
+    !! @param agg_factor The aggregation factor used to move from the LSM to routing domains
     subroutine groundwater_base_aggregation_struct_init(this,ixrt,jxrt,agg_factor)
         implicit none
         class (groundwater_base_aggregation_struct), intent(inout) :: this ! object being initalized
@@ -229,7 +265,8 @@ contains
 
     end subroutine groundwater_base_aggregation_struct_init
 
-    ! destroy a groundwater aggregation object
+    !> Destructor for the groundwater base aggregation structs
+    !! @param this The groundwater base input struct being destroyed
     subroutine groundwater_base_aggregation_struct_destroy(this)
         implicit none
         class (groundwater_base_aggregation_struct), intent(inout) :: this ! object being destroyed
