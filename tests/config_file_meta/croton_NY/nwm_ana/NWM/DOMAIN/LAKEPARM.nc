@@ -1,68 +1,86 @@
-md5sum: 732b39412306e6cc824009310f115e1a  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/LAKEPARM.nc
+md5sum: 6e518b330f13ab4c5cd6d260c15bac87  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/LAKEPARM.nc
 ncdump -h: netcdf LAKEPARM {
 dimensions:
-	nlakes = 1 ;
+	feature_id = 1 ;
 variables:
-	double LkArea(nlakes) ;
+	double LkArea(feature_id) ;
 		LkArea:long_name = "Gridded lake area (sq. km)" ;
 		LkArea:coordinates = "lat lon" ;
-	double LkMxE(nlakes) ;
+		LkArea:grid_mapping = "crs" ;
+	double LkMxE(feature_id) ;
 		LkMxE:long_name = "Maximum lake elevation (m ASL)" ;
 		LkMxE:coordinates = "lat lon" ;
-	double OrificeA(nlakes) ;
+		LkMxE:grid_mapping = "crs" ;
+	double OrificeA(feature_id) ;
 		OrificeA:long_name = "Orifice cross-sectional area (sq. m)" ;
 		OrificeA:coordinates = "lat lon" ;
-	double OrificeC(nlakes) ;
+		OrificeA:grid_mapping = "crs" ;
+	double OrificeC(feature_id) ;
 		OrificeC:long_name = "Orifice coefficient" ;
 		OrificeC:coordinates = "lat lon" ;
-	double OrificeE(nlakes) ;
+		OrificeC:grid_mapping = "crs" ;
+	double OrificeE(feature_id) ;
 		OrificeE:long_name = "Orifice elevation (m ASL)" ;
 		OrificeE:coordinates = "lat lon" ;
-	double WeirC(nlakes) ;
+		OrificeE:grid_mapping = "crs" ;
+	double WeirC(feature_id) ;
 		WeirC:long_name = "Weir coefficient" ;
 		WeirC:coordinates = "lat lon" ;
-	double WeirE(nlakes) ;
+		WeirC:grid_mapping = "crs" ;
+	double WeirE(feature_id) ;
+		WeirE:long_name = "Weir elevation (m ASL)" ;
 		WeirE:units = "m" ;
-		WeirE:long_name = "Weir Height (m ASL)" ;
 		WeirE:coordinates = "lat lon" ;
-	double WeirL(nlakes) ;
-		WeirL:long_name = "Weir length (m)" ;
+		WeirE:grid_mapping = "crs" ;
+	double WeirL(feature_id) ;
 		WeirL:coordinates = "lat lon" ;
-	int ascendingIndex(nlakes) ;
+		WeirL:grid_mapping = "crs" ;
+		WeirL:long_name = "Weir length (m)" ;
+	int ascendingIndex(feature_id) ;
 		ascendingIndex:long_name = "Index to use for sorting IDs (ascending)" ;
-	double ifd(nlakes) ;
-		ifd:long_name = "Initial Fractional Depth" ;
-		ifd:units = "ratio" ;
-	int lake_id(nlakes) ;
+		ascendingIndex:coordinates = "lat lon" ;
+		ascendingIndex:grid_mapping = "crs" ;
+	char crs ;
+		crs:transform_name = "latitude_longitude" ;
+		crs:grid_mapping_name = "latitude_longitude" ;
+		crs:esri_pe_string = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]];-400 -400 1000000000;-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision" ;
+		crs:spatial_ref = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]];-400 -400 1000000000;-100000 10000;-100000 10000;8.98315284119521E-09;0.001;0.001;IsHighPrecision" ;
+		crs:long_name = "CRS definition" ;
+		crs:longitude_of_prime_meridian = 0. ;
+		crs:_CoordinateAxes = "lat lon" ;
+		crs:semi_major_axis = 6378137. ;
+		crs:semi_minor_axis = 6356752.31424518 ;
+		crs:inverse_flattening = 298.257223563 ;
+	float ifd(feature_id) ;
+		ifd:long_name = "Initial fraction water depth" ;
+		ifd:coordinates = "lat lon" ;
+		ifd:grid_mapping = "crs" ;
+	int lake_id(feature_id) ;
 		lake_id:long_name = "Lake ID" ;
 		lake_id:cf_role = "timeseries_id" ;
-	float lat(nlakes) ;
-		lat:units = "degrees_north" ;
+		lake_id:coordinates = "lat lon" ;
+		lake_id:grid_mapping = "crs" ;
+	float lat(feature_id) ;
 		lat:long_name = "latitude of the lake centroid" ;
+		lat:units = "degrees_north" ;
 		lat:standard_name = "latitude" ;
-	float lon(nlakes) ;
-		lon:units = "degrees_east" ;
+	float lon(feature_id) ;
 		lon:long_name = "longitude of the lake centroid" ;
+		lon:units = "degrees_east" ;
 		lon:standard_name = "longitude" ;
-	double time(nlakes) ;
-		time:units = "days since 2000-01-01 00:00:00" ;
-		time:long_name = "time of measurement" ;
+	double time(feature_id) ;
 		time:standard_name = "time" ;
+		time:long_name = "time of measurement" ;
+		time:units = "days since 2000-01-01 00:00:00" ;
+		time:coordinates = "lat lon" ;
+		time:grid_mapping = "crs" ;
 
 // global attributes:
+		:Conventions = "CF-1.5" ;
 		:featureType = "timeSeries" ;
-		:nco_openmp_thread_number = 1 ;
-		:history = "Sun Aug  5 17:31:54 2018: ncks -O -d nlakes,1,1 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/LAKEPARM.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/LAKEPARM.nc\n",
-			"Tue Sep 12 11:35:56 2017: ncatted -O -a units,ifd,c,c,ratio LAKEPARM_2017_4.nc\n",
-			"Tue Sep 12 11:35:50 2017: ncatted -O -a long_name,ifd,c,c,Initial Fractional Depth LAKEPARM_2017_4.nc\n",
-			"Tue Sep 12 11:35:17 2017: ncap2 -s ifd[$nlakes]=0.9 LAKEPARM_2017_3.nc LAKEPARM_2017_4.nc\n",
-			"Tue Sep 12 11:28:46 2017: ncatted -O -a long_name,ifd,c,c,Initial Fractional Depth LAKEPARM_2017_3.nc\n",
-			"Tue Sep 12 11:28:17 2017: ncatted -O -a units,ifd,c,c,ratio LAKEPARM_2017_3.nc\n",
-			"Tue Sep 12 11:22:13 2017: ncap2 -s ifd=0.9 LAKEPARM_2017_2.nc LAKEPARM_2017_3.nc\n",
-			"Tue Sep 12 11:17:55 2017: ncks -O -x -v alt LAKEPARM_2017.nc LAKEPARM_2017_2.nc\n",
-			"Tue Sep 12 11:17:20 2017: ncks -O -x -v Discharge LAKEPARM_2017_04_14_subset_LK.nc LAKEPARM_2017.nc\n",
-			"Tue Sep 12 11:14:16 2017: ncrename -O -v LkMxH,LkMxE LAKEPARM_2017_04_14_subset_LK.nc\n",
-			"Tue Sep 12 11:13:45 2017: ncrename -O -v WeirH,WeirE LAKEPARM_2017_04_14_subset_LK.nc\n",
-			"Created Fri Apr 14 07:50:13 2017" ;
+		:history = "Fri Aug 24 11:15:10 2018: ncks -O -d feature_id,1,1 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/LAKEPARM.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/LAKEPARM.nc\n",
+			"Tue Aug  7 10:00:32 2018: ncap2 -s WeirL=WeirL*0+10 LAKEPARM_20180227_v2_lakes_lowres_params.nc LAKEPARM_20180227_v2_lakes_lowres_params_WeirL_10.nc\n",
+			"Created Tue Feb 27 15:18:40 2018" ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;
+		:nco_openmp_thread_number = 1 ;
 }

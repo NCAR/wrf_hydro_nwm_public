@@ -1,4 +1,4 @@
-md5sum: 60eba1d67985d77ca5cc776f005dd88a  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/spatialweights.nc
+md5sum: de54817aa94f338fb39449451ba5becb  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/spatialweights.nc
 ncdump -h: netcdf spatialweights {
 dimensions:
 	data = 812 ;
@@ -20,6 +20,6 @@ variables:
 		weight:long_name = "fraction of polygon(polyid) intersected by polygon identified by poly2" ;
 
 // global attributes:
-		:history = "Mon Aug  6 15:07:55 2018: ncks -O -d polyid,1,183 -d data,1,812 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/spatialweights.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/spatialweights.nc" ;
+		:history = "Thu Sep  6 17:56:56 2018: ncks -O -d polyid,1,183 -d data,1,812 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0_LongRange//0137462010/spatialweights.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0_LongRange//0137462010/spatialweights.nc" ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;
 }

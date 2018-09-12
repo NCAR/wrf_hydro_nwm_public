@@ -1,4 +1,4 @@
-md5sum: 4d83331b16f19ed57534ece25986f9f8  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1
+md5sum: 30ad05ac51347f0861c77d1870b97226  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;

@@ -1,4 +1,4 @@
-md5sum: 51ec2efd0237112b5ae7c41ed5831eab  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/GWBUCKPARM.nc
+md5sum: 3ecb294d4fb9e6d235bec257e3d64ea1  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/GWBUCKPARM.nc
 ncdump -h: netcdf GWBUCKPARM {
 dimensions:
 	BasinDim = 183 ;
@@ -20,7 +20,7 @@ variables:
 
 // global attributes:
 		:featureType = "point" ;
-		:history = "Sun Aug  5 17:31:42 2018: ncks -O -d BasinDim,1,183 /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/GWBUCKPARM.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/GWBUCKPARM.nc\n",
+		:history = "Fri Aug 24 11:14:53 2018: ncks -O -d BasinDim,1,183 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/GWBUCKPARM.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/GWBUCKPARM.nc\n",
 			"Fri Mar  2 09:34:12 2018: ncap2 -O -s Expon=Expon*0.0+3.0 GWBUCKPARM_NWMv1.2_DEFAULT.nc GWBUCKPARM_NWMv1.2_DEFAULT.nc\n",
 			"Fri Mar  2 09:33:34 2018: ncap2 -O -s Zmax=Zmax*0.0+50.0 GWBUCKPARM_NWMv1.2_DEFAULT.nc GWBUCKPARM_NWMv1.2_DEFAULT.nc\n",
 			"Tue Jan 16 09:10:53 2018: ncap2 -s Zmax=Zmax*0.0+50.0 GWBUCKPARM_NWMv1.2_DEFAULT.nc GWBUCKPARM_NWMv1.2_DEFAULT.nc\n",

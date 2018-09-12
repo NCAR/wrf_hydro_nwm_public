@@ -780,7 +780,6 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into longitude variable')
       iret = nf90_put_att(ftn,lonVarId,'units',trim(fileMeta%lonUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into longitude variable')
-#endif
 
       ! Create channel order variable
       iret = nf90_def_var(ftn,"order",nf90_int,dimId(1),orderVarId)
@@ -799,6 +798,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'units',trim(fileMeta%elevUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
+#endif
 
       ! Define deflation levels for these meta-variables. For now, we are going to
       ! default to a compression level of 2. Only compress if io_form_outputs is set to 1.
@@ -814,11 +814,11 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
          iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for longitude.') 
-#endif
          iret = nf90_def_var_deflate(ftn,orderVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
          iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')  
+#endif
       endif
 
       ! Allocate memory for the output variables, then place the real output
@@ -931,7 +931,6 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate longitude in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(2,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into longitude output variable.')
-#endif
 
       iret = nf90_inq_varid(ftn,'order',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate order in NetCDF file.')
@@ -942,6 +941,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate elevation in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(3,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into elevation output variable.')
+#endif
 
       ! Place time values into time variables.
       iret = nf90_inq_varid(ftn,'time',varId)

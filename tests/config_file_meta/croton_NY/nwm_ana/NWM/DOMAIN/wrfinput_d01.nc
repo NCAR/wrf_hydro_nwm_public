@@ -1,4 +1,4 @@
-md5sum: 85c0d734366f485e5fdc2a654dfc1415  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/wrfinput_d01.nc
+md5sum: 5ceacffb2663712c88b195f6cc29edd4  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/wrfinput_d01.nc
 ncdump -h: netcdf wrfinput_d01 {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
@@ -60,8 +60,8 @@ variables:
 	float SEAICE(Time, south_north, west_east) ;
 		SEAICE:_FillValue = -1.e+36f ;
 	float SHDMAX(Time, south_north, west_east) ;
-		SHDMAX:units = "%" ;
 		SHDMAX:_FillValue = -1.e+36f ;
+		SHDMAX:units = "%" ;
 	float SHDMIN(Time, south_north, west_east) ;
 		SHDMIN:units = "%" ;
 		SHDMIN:_FillValue = -1.e+36f ;
@@ -150,7 +150,7 @@ variables:
 		:FLAG_LAKE_DEPTH = 1 ;
 		:nco_openmp_thread_number = 1 ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;
-		:history = "Sun Aug  5 17:31:17 2018: ncks -O -d west_east,4146,4160 -d south_north,2341,2356 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/wrfinput.d01.conus_1km_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/wrfinput_d0x.nc" ;
+		:history = "Fri Aug 24 11:14:04 2018: ncks -O -d west_east,4146,4160 -d south_north,2341,2356 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/wrfinput.d01.conus_1km_NWMv2.0.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/wrfinput_d0x.nc" ;
 		:WEST-EAST_GRID_DIMENSION = 16 ;
 		:SOUTH-NORTH_GRID_DIMENSION = 17 ;
 }
