@@ -20,7 +20,7 @@
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
             "io_config_outputs": 0,
-            "io_form_outputs": 2,
+            "io_form_outputs": 4,
             "land_spatial_meta_flnm": "NULL_specified_in_domain.json",
             "lsmout_domain": 1,
             "nsoil": 4,
