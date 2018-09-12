@@ -26,7 +26,8 @@ module module_machine_learning_state
 contains
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this)
+    subroutine machine_learning_state_init(this, lake_number)
+        use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
         real, intent(inout) :: water_elevation     ! meters AMSL

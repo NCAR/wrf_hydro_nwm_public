@@ -66,9 +66,6 @@ contains
         this%lake_number = lake_number
 
 
-
-
-
         !Reservoir Parm NC file
         status = nf90_open(path = "RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !print *, "status", status

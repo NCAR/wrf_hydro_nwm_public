@@ -16,7 +16,7 @@
 ! return the output/outflow.
 module module_machine_learning
 
-    !use module_machine_learning_parameters
+    use module_machine_learning_parameters
     !use module_machine_learning_state
     use module_reservoir_base
     implicit none
@@ -27,7 +27,7 @@ module module_machine_learning
 
         ! Define pointers to sub-structs / sub-objects to and
         ! held by a machine learning reservoir object.
-        !type (machine_learning_parameters_interface), pointer :: parameters => null()
+        type (machine_learning_parameters_interface), pointer :: parameters => null()
         !type (machine_learning_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
@@ -50,11 +50,9 @@ contains
 
 
     !Machine Learning Constructor
-    subroutine machine_learning_struct_init(this, water_elevation,  &
-        lake_number)
+    subroutine machine_learning_struct_init(this, lake_number)
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
-        real, intent(inout) :: water_elevation           ! meters AMSL
         integer, intent(in) :: lake_number               ! lake number
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
@@ -79,15 +77,15 @@ contains
             end if
 
             ! try to allocate parameters
-            !allocate ( this%parameters )
-            !if ( .not. associated(this%parameters) ) then
-            !    ! if the parameters structure could not be created write an error
-            !    write(0,*) "Failure to allocate machine_learning parameters structure"
-            !else
-            !    ! initialize machine_learning parameters
-            !    call this%parameters%init( lake_number )
-            !end if
-            !this%pointer_allocation_guard = .true.
+            allocate ( this%parameters )
+            if ( .not. associated(this%parameters) ) then
+                ! if the parameters structure could not be created write an error
+                write(0,*) "Failure to allocate machine_learning parameters structure"
+            else
+                ! initialize machine_learning parameters
+                call this%parameters%init( lake_number )
+            end if
+            this%pointer_allocation_guard = .true.
 
             ! try to allocate state
             !allocate ( this%state )
