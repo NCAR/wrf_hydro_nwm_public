@@ -12,7 +12,9 @@ module module_machine_learning_state
     ! Extend/derive machine learning state from the abstract base
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
-        real :: water_elevation                 ! meters AMSL
+        real :: current_storage
+        real :: previous_day_storage
+        real :: previous_day_release
 
     contains
 
@@ -24,7 +26,7 @@ module module_machine_learning_state
 contains
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this, water_elevation)
+    subroutine machine_learning_state_init(this)
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
         real, intent(inout) :: water_elevation     ! meters AMSL
