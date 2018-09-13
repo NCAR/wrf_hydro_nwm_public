@@ -214,11 +214,14 @@ def test_perfrestart_candidate(output_dir):
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
-    # Get a new start time 4 days later
+    # Get a new start time halfway along the run, make sure the restart frequency accomodates
     restart_job = candidate_sim_restart.jobs[0]
     duration = restart_job.model_end_time - restart_job.model_start_time
-    duration_hr = int((duration.days * 24) + (duration.seconds / 3600))
-    restart_job.model_start_time = restart_job.model_start_time + dt.timedelta(hours=duration_hr)
+    delay_restart_hr = int((duration.total_seconds() / 3600)/2)
+    assert delay_restart_hr % candidate_sim_restart.jobs[0].restart_freq_hr == 0, \
+        "The restart delay is not a multiple of the restart frequency."
+    restart_job.model_start_time = \
+        restart_job.model_start_time + dt.timedelta(hours=delay_restart_hr)
 
     # Get restart files from previous run and symlink into restart sim dir
     # (Remember that we are in the run/sim dir)
