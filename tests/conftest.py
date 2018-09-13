@@ -1,5 +1,7 @@
+import pathlib
+import shutil
+
 import pytest
-from wrfhydropy import *
 
 
 def pytest_addoption(parser):
@@ -89,148 +91,44 @@ def pytest_addoption(parser):
                      help='Queue to use if running on NCAR Cheyenne, options are regular, '
                           'premium, or shared')
 
-def _make_sim(domain_dir,
-              compiler,
-              source_dir,
-              configuration,
-              option_suite,
-              ncores,
-              nnodes,
-              scheduler,
-              account,
-              walltime,
-              queue):
-    # model
-    model = Model(
-        compiler=compiler,
-        source_dir=source_dir,
-        model_config=configuration
-    )
 
-    # domain
-    domain = Domain(
-        domain_top_dir=domain_dir,
-        domain_config=configuration
-    )
+@pytest.fixture(scope="session")
+def candidate_sim_args(request):
 
-    # Job
-    # exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    # job = Job(job_id='test_job',exe_cmd=exe_command)
+    candidate_sim_dict = {
+        'domain_dir':request.config.getoption("--domain_dir"),
+        'compiler':request.config.getoption("--compiler"),
+        'reference_dir':request.config.getoption("--candidate_dir"),
+        'configuration':request.config.getoption("--config"),
+        'option_suite':request.config.getoption("--option_suite"),
+        'ncores':request.config.getoption("--ncores"),
+        'nnodes':request.config.getoption("--nnodes"),
+        'scheduler':request.config.getoption("--scheduler"),
+        'account':request.config.getoption("--account"),
+        'walltime':request.config.getoption("--walltime"),
+        'queue':request.config.getoption("--queue")
+    }
 
-    # simulation
-    sim = Simulation()
-    sim.add(model)
-    sim.add(domain)
-
-    # Update base namelists with option suite if specified
-    if option_suite is not None:
-        pass
-
-    if scheduler:
-        sim.add(schedulers.PBSCheyenne(account=account,
-                                       nproc=int(ncores),
-                                       nnodes=int(nnodes),
-                                       walltime=walltime,
-                                       queue=queue))
-
-    return sim
+    return candidate_sim_dict
 
 
 @pytest.fixture(scope="session")
-def candidate_sim(request):
+def reference_sim_args(request):
+    reference_sim_dict = {
+        'domain_dir':request.config.getoption("--domain_dir"),
+        'compiler':request.config.getoption("--compiler"),
+        'reference_dir':request.config.getoption("--reference_dir"),
+        'configuration':request.config.getoption("--config"),
+        'option_suite':request.config.getoption("--option_suite"),
+        'ncores':request.config.getoption("--ncores"),
+        'nnodes':request.config.getoption("--nnodes"),
+        'scheduler':request.config.getoption("--scheduler"),
+        'account':request.config.getoption("--account"),
+        'walltime':request.config.getoption("--walltime"),
+        'queue':request.config.getoption("--queue")
+    }
 
-    domain_dir = request.config.getoption("--domain_dir")
-    compiler = request.config.getoption("--compiler")
-    candidate_dir = request.config.getoption("--candidate_dir")
-    configuration = request.config.getoption("--config")
-    option_suite = request.config.getoption("--option_suite")
-    ncores = request.config.getoption("--ncores")
-    nnodes = request.config.getoption("--nnodes")
-    scheduler = request.config.getoption("--scheduler")
-    account = request.config.getoption("--account")
-    walltime = request.config.getoption("--walltime")
-    queue = request.config.getoption("--queue")
-
-    candidate_sim = _make_sim(
-        domain_dir=domain_dir,
-        compiler=compiler,
-        source_dir=candidate_dir,
-        configuration=configuration,
-        option_suite=option_suite,
-        ncores=ncores,
-        nnodes=nnodes,
-        scheduler=scheduler,
-        account=account,
-        walltime=walltime,
-        queue=queue
-    )
-
-    return candidate_sim
-
-@pytest.fixture(scope="session")
-def candidate_channel_only_sim(request):
-
-    domain_dir = request.config.getoption("--domain_dir")
-    compiler = request.config.getoption("--compiler")
-    candidate_dir = request.config.getoption("--candidate_dir")
-    configuration = request.config.getoption("--config")
-    option_suite = request.config.getoption("--option_suite")
-    ncores = request.config.getoption("--ncores")
-    nnodes = request.config.getoption("--nnodes")
-    scheduler = request.config.getoption("--scheduler")
-    account = request.config.getoption("--account")
-    walltime = request.config.getoption("--walltime")
-    queue = request.config.getoption("--queue")
-
-    candidate_channel_only_sim = _make_sim(
-        domain_dir=domain_dir,
-        compiler=compiler,
-        source_dir=candidate_dir,
-        configuration=configuration,
-        option_suite=option_suite,
-        ncores=ncores,
-        nnodes=nnodes,
-        scheduler=scheduler,
-        account=account,
-        walltime=walltime,
-        queue=queue
-    )
-
-    # Channel and bucket mode is forc_typ = 10.
-    candidate_channel_only_sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
-    return candidate_channel_only_sim
-
-
-@pytest.fixture(scope="session")
-def reference_sim(request):
-
-    domain_dir = request.config.getoption("--domain_dir")
-    compiler = request.config.getoption("--compiler")
-    reference_dir = request.config.getoption("--reference_dir")
-    configuration = request.config.getoption("--config")
-    option_suite = request.config.getoption("--option_suite")
-    ncores = request.config.getoption("--ncores")
-    nnodes = request.config.getoption("--nnodes")
-    scheduler = request.config.getoption("--scheduler")
-    account = request.config.getoption("--account")
-    walltime = request.config.getoption("--walltime")
-    queue = request.config.getoption("--queue")
-
-    reference_sim = _make_sim(
-        domain_dir=domain_dir,
-        compiler=compiler,
-        source_dir=reference_dir,
-        configuration=configuration,
-        option_suite=option_suite,
-        ncores=ncores,
-        nnodes=nnodes,
-        scheduler=scheduler,
-        account=account,
-        walltime=walltime,
-        queue=queue
-    )
-
-    return reference_sim
+    return reference_sim_dict
 
 
 @pytest.fixture(scope="session")

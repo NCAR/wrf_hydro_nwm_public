@@ -11,11 +11,7 @@ import pytest
 import wrfhydropy
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from test_1_fundamental import wait_job
-
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+from utilities import print_diffs, wait_job
 
 
 # Channel-only Run
@@ -29,6 +25,43 @@ def test_run_candidate_channel_only(candidate_sim,
     print("\nQuestion: The candidate channel-only mode runs successfully?\n", end='')
     print('\n')
 
+    ##################
+    # re-run candidate at shorter duration since requires hourly outputs
+
+    # Set run directory and change working directory to run dir for simulation
+    run_dir = output_dir / 'candidate_run_output_for_channel_only'
+    run_dir.mkdir(parents=True)
+    os.chdir(str(run_dir))
+
+    # Job
+    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
+    shorter_job = candidate_sim.jobs[0]
+    shorter_job.model_end_time = shorter_job.model_start_time + \
+                                   dt.timedelta(hours=3)
+    shorter_job.restart_freq = 1
+
+    # Run, catch warnings related to missing start and end job times
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        candidate_sim.compose()
+
+    print('\nwaiting for job to complete...', end='')
+    candidate_sim.run()
+    # Wait to collect until job has finished. All test runs are performed on a single job with
+    # job_id='test_job'
+    wait_job(candidate_sim)
+
+    candidate_sim.collect()
+    candidate_sim.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
+    # Check job run statuses
+    for job in candidate_sim.jobs:
+        assert job.exit_status == 0, \
+            "Candidate code run exited with non-zero status"
+
+    #########################
+    # Run channel only
+
     # Dont recompile the model, just use the candidate's model.
     candidate_channel_only_sim.model = candidate_sim.model
 
@@ -40,12 +73,12 @@ def test_run_candidate_channel_only(candidate_sim,
     os.chdir(str(run_dir))
 
     # Job
-    exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
+    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
     job = wrfhydropy.Job(job_id='run_candidate_channel_only', exe_cmd=exe_command)
     candidate_channel_only_sim.add(job)
 
     candidate_channel_only_sim.jobs[0]._hrldas_namelist['noahlsm_offline']['indir'] = \
-        str(output_dir / 'run_candidate')
+        str(output_dir / 'candidate_run_output_for_channel_only')
 
     # Run
     with warnings.catch_warnings():
@@ -78,7 +111,7 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
     # Check for existence of simobjects
     candidate_run_file = \
-        output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
+        output_dir / 'candidate_run_output_for_channel_only' / 'WrfHydroSim_collected.pkl'
     candidate_channel_only_run_file = \
         output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
 
@@ -143,13 +176,7 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        eprint(diffs.diff_counts)
-        for key, value in diffs.diff_counts.items():
-            if value != 0:
-                diffs = getattr(diffs, key)
-                eprint('\n' + key + '\n')
-                for diff in diffs:
-                    eprint(diff)
+        print_diffs(diffs)
     assert has_diffs == False, \
         'Outputs for candidate_channel_only run do not match outputs from candidate run'
 
@@ -218,13 +245,7 @@ def test_ncores_candidate_channel_only(output_dir):
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        eprint(diffs.diff_counts)
-        for key, value in diffs.diff_counts.items():
-            if value != 0:
-                diffs = getattr(diffs, key)
-                eprint('\n' + key + '\n')
-                for diff in diffs:
-                    eprint(diff)
+        print_diffs(diffs)
     assert has_diffs is False, \
         'Outputs for candidate_channel_only run with ncores do not match outputs with ncores-1'
 
@@ -299,12 +320,6 @@ def test_perfrestart_candidate_channel_only(output_dir):
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        eprint(diffs.diff_counts)
-        for key, value in diffs.diff_counts.items():
-            if value != 0:
-                diffs = getattr(diffs, key)
-                eprint('\n' + key + '\n')
-                for diff in diffs:
-                    eprint(diff)
+        print_diffs(diffs)
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'
