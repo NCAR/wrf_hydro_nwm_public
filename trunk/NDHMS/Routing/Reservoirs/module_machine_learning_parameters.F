@@ -56,7 +56,6 @@ contains
         integer :: minimum_releaseVarId, maximum_releaseVarId
         character, external :: nf90_strerror1
         integer, dimension(nf90_max_var_dims) :: dimIDs
-        integer :: elevation_acapVarId, area_acapVarId, storage_acapVarId
 
         integer :: status       ! Status of reading NetCDF
 

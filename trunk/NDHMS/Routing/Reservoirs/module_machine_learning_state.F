@@ -15,6 +15,7 @@ module module_machine_learning_state
         real :: current_storage
         real :: previous_day_storage
         real :: previous_day_release
+        real :: current_time        ! verify as 'real'???
 
     contains
 
@@ -26,15 +27,225 @@ module module_machine_learning_state
 contains
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this, lake_number)
+    subroutine machine_learning_state_init(this, current_time, lake_number)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(inout) :: water_elevation     ! meters AMSL
 
-        ! Assign the water elevation value passed in to a particular level pool reservoir
-        ! state object's variable for water elevation
-        this%water_elevation = water_elevation
+        integer, intent(in) :: lake_number              ! lake number
+
+        integer :: lake_index, lake_id_index
+
+        integer, allocatable, dimension (:) :: lake_id
+
+        integer :: Nlakes
+        integer :: ncid, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
+        integer :: activation_functionsVarId, number_of_nodesVarId, minimum_storageVarId, maximum_storageVarId, lake_idVarId, lake_id_single_VarId
+        integer :: minimum_releaseVarId, maximum_releaseVarId
+        character, external :: nf90_strerror1
+        integer, dimension(nf90_max_var_dims) :: dimIDs
+
+        integer :: status       ! Status of reading NetCDF
+
+
+        integer :: monthly_averages_rows !
+
+
+        real, allocatable, dimension (:)    ::long_term_release ! this represent a long-term average of the release to be used for previous day release at the very first day of calc!
+
+
+
+        real, allocatable, dimension (:,:)  :: ID_monthly_averages
+        real, allocatable, dimension (:,:)  :: release_monthly_averages
+        real, allocatable, dimension (:,:)  :: elevation_monthly_averages
+        real, allocatable, dimension (:,:)  :: inflow_monthly_averages
+        real, allocatable, dimension (:,:)  :: storage_monthly_averages
+
+
+        integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
+        integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
+
+
+
+
+        !Reservoir Parm NC file
+        status = nf90_open(path = "RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        !print *, "status", status
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
+
+
+
+
+
+        ! Monthly averages
+        status = nf90_inq_varid(ncid, "ID_monthly_averages", ID_monthly_averagesVarId)
+
+
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inq_varid(ncid, "release_monthly_averages", release_monthly_averagesVarId)
+
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inq_varid(ncid, "elevation_monthly_averages", elevation_monthly_averagesVarId)
+
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inq_varid(ncid, "inflow_monthly_averages", inflow_monthly_averagesVarId)
+
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inq_varid(ncid, "storage_monthly_averages", storage_monthly_averagesVarId)
+
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+
+
+
+
+
+
+
+        status = nf90_inquire_variable(ncid, lake_idVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(lake_id(Nlakes))
+
+
+
+
+
+
+        ! Monthly averages
+
+        status = nf90_inquire_variable(ncid, ID_monthly_averagesVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = monthly_averages_rows)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(2), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        allocate(ID_monthly_averages(monthly_averages_rows, Nlakes))
+
+
+        status = nf90_inquire_variable(ncid, release_monthly_averagesVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = monthly_averages_rows)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(2), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        allocate(release_monthly_averages(monthly_averages_rows, Nlakes))
+
+
+        status = nf90_inquire_variable(ncid, elevation_monthly_averagesVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = monthly_averages_rows)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(2), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        allocate(elevation_monthly_averages(monthly_averages_rows, Nlakes))
+
+
+
+        status = nf90_inquire_variable(ncid, inflow_monthly_averagesVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = monthly_averages_rows)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(2), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        allocate(inflow_monthly_averages(monthly_averages_rows, Nlakes))
+
+
+        status = nf90_inquire_variable(ncid, storage_monthly_averagesVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = monthly_averages_rows)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(2), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+        allocate(storage_monthly_averages(monthly_averages_rows, Nlakes))
+
+
+
+
+
+
+
+
+        status = nf90_get_var(ncid, lake_idVarId, lake_id)
+
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        !Monthly averages
+
+        status = nf90_get_var(ncid, ID_monthly_averagesVarId, ID_monthly_averages)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_get_var(ncid, release_monthly_averagesVarId, release_monthly_averages)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_get_var(ncid, elevation_monthly_averagesVarId, elevation_monthly_averages)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_get_var(ncid, inflow_monthly_averagesVarId, inflow_monthly_averages)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_get_var(ncid, storage_monthly_averagesVarId, storage_monthly_averages)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
+
+
+
+
+
+
+        do lake_index = 1, Nlakes
+            if (lake_id(lake_index) == lake_number) then
+                lake_id_index = lake_index
+            end if
+
+        end do
+
+
+
+
 
     end subroutine machine_learning_state_init
 
@@ -46,3 +257,62 @@ contains
     end subroutine machine_learning_state_destroy
 
 end module module_machine_learning_state
+
+
+
+! The functions that have been used for reading NetCDF file!
+function nf90_inq_varid(ncid, name, varid)
+    integer, intent(in) :: ncid
+    character (len = *), intent( in) :: name
+    real, intent(out) :: varid
+    integer :: nf90_inq_varid
+end function nf90_inq_varid
+
+
+function nf90_get_var(ncid, varid, values)
+    integer, intent( in) :: ncid, varid
+    real, intent(out) :: values
+    integer :: nf90_get_var
+end function nf90_get_var
+
+
+function nf90_strerror(ncerr)
+    integer, intent( in) :: ncerr
+    character(len = 80) :: nf90_strerror
+end function nf90_strerror
+
+subroutine handle_err(status)
+    implicit none
+    integer, intent ( in) :: status
+    character :: nf90_strerror
+    integer  :: nf90_noerr
+    if(status /= nf90_noerr) then
+        !print *, trim(nf90_strerror(status))
+        !print *, nf90_strerror(status) !FIXME this line deactivated, but we need to check on it!
+        stop "Stopped"
+    end if
+end subroutine handle_err
+
+function nf90_open(path, mode, ncid, chunksize)
+    character (len = *), intent(in   ) :: path
+    integer,             intent(in   ) :: mode
+    integer,             intent(  out) :: ncid
+    integer, optional,   intent(inout) :: chunksize
+    integer                            :: nf90_open
+end function nf90_open
+
+function nf90_inquire_variable(ncid, varid, name, xtype, ndims, dimids, nAtts)
+    integer,                         intent( in) :: ncid, varid
+    character (len = *),   optional, intent(out) :: name
+    integer, dimension(*), optional, intent(out) :: dimids
+    integer                                      :: nf90_inquire_variable
+end function nf90_inquire_variable
+
+
+function nf90_inquire_dimension(ncid, dimid, name, len)
+    integer,                       intent( in) :: ncid, dimid
+    character (len = *), optional, intent(out) :: name
+    integer,             optional, intent(out) :: len
+    integer                                    :: nf90_inquire_dimension
+end function nf90_inquire_dimension
+
