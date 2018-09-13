@@ -197,10 +197,10 @@ def test_ncores_candidate(output_dir,capsys):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                diffs = getattr(diffs, key)
+                diff_set = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                for diff in diffs:
-                    eprint(diff)
+                for a_diff in diff_set:
+                    eprint(a_diff)
     assert has_diffs is False, \
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
@@ -228,7 +228,7 @@ def test_perfrestart_candidate(output_dir):
     # Get a new start time 1 hour later
     restart_job = candidate_sim_restart.jobs[0]
     restart_job.model_start_time = restart_job.model_start_time + \
-                                   dt.timedelta(hours=2)
+                                   dt.timedelta(hours=96)
 
     # Get restart files from previous run and symlink into restart sim dir
     # (Remember that we are in the run/sim dir)
@@ -285,9 +285,9 @@ def test_perfrestart_candidate(output_dir):
         eprint(diffs.diff_counts)
         for key, value in diffs.diff_counts.items():
             if value != 0:
-                diffs = getattr(diffs, key)
+                diff_set = getattr(diffs, key)
                 eprint('\n' + key + '\n')
-                for diff in diffs:
-                    eprint(diff)
+                for a_diff in diff_set:
+                    eprint(a_diff)
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'
