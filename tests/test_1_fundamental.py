@@ -4,29 +4,20 @@ import os
 import pathlib
 import pickle
 import sys
-import time
 import warnings
 
 import pandas as pd
 import pytest
 import wrfhydropy
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from utilities import wait_job, print_diffs
+
 
 # #################################
 # Setup the test with a domain, a candidate, and a reference.
 # Get domain, reference, candidate, and optional output directory from command line arguments
 # Setup a domain
-
-# Utility function to wait for job completion
-def wait_job(sim):
-    file = sim.jobs[0].job_dir.joinpath('WrfHydroJob_postrun.pkl')
-    while True:
-        if file.exists():
-            break
-        time.sleep(5)
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
 
 # #################################
 # Define tests
@@ -74,8 +65,8 @@ def test_run_candidate(candidate_sim, output_dir, ncores):
     os.chdir(str(run_dir))
 
     # Job
-    exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command)
+    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
+    job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command, restart_freq = 24)
     candidate_sim.add(job)
 
     # Run, catch warnings related to missing start and end job times
@@ -109,8 +100,8 @@ def test_run_reference(reference_sim, output_dir, ncores):
     os.chdir(str(run_dir))
 
     # Job
-    exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_reference',exe_cmd=exe_command)
+    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
+    job = wrfhydropy.Job(job_id='run_reference', exe_cmd=exe_command, restart_freq = 24)
     reference_sim.add(job)
 
     # Run, catch warnings related to missing start and end job times
@@ -134,7 +125,7 @@ def test_run_reference(reference_sim, output_dir, ncores):
             "Reference code run exited with non-zero status"
 
 
-def test_ncores_candidate(output_dir,capsys):
+def test_ncores_candidate(output_dir):
     print("\nQuestion: The candidate outputs from a ncores run match outputs from"
           " ncores-1 run?\n", end='')
     print('\n')
@@ -167,7 +158,7 @@ def test_ncores_candidate(output_dir,capsys):
         candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - 1
     else:
         orig_exe_cmd = candidate_sim_ncores.jobs[0]._exe_cmd
-        orig_exe_cmd = orig_exe_cmd.replace('-np 2','-np 1')
+        orig_exe_cmd = orig_exe_cmd.replace('-np 2', '-np 1')
 
     # Recompose into new directory and run
     # catch warnings related to missing start and end job times
@@ -194,13 +185,7 @@ def test_ncores_candidate(output_dir,capsys):
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        eprint(diffs.diff_counts)
-        for key, value in diffs.diff_counts.items():
-            if value != 0:
-                diff_set = getattr(diffs, key)
-                eprint('\n' + key + '\n')
-                for a_diff in diff_set:
-                    eprint(a_diff)
+        print_diffs(diffs)
     assert has_diffs is False, \
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
@@ -225,7 +210,7 @@ def test_perfrestart_candidate(output_dir):
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
-    # Get a new start time 1 hour later
+    # Get a new start time 4 days later
     restart_job = candidate_sim_restart.jobs[0]
     restart_job.model_start_time = restart_job.model_start_time + \
                                    dt.timedelta(hours=96)
@@ -282,12 +267,6 @@ def test_perfrestart_candidate(output_dir):
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
-        eprint(diffs.diff_counts)
-        for key, value in diffs.diff_counts.items():
-            if value != 0:
-                diff_set = getattr(diffs, key)
-                eprint('\n' + key + '\n')
-                for a_diff in diff_set:
-                    eprint(a_diff)
+        print_diffs(diffs)
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'

@@ -67,7 +67,7 @@ def run_tests(config: str,
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
-    pytest_cmd = "pytest -vv --tb=no --ignore=local -p no:cacheprovider "
+    pytest_cmd = "pytest -vv --ignore=local -p no:cacheprovider "
     if print_log:
         pytest_cmd += " -s"
     # Ignore section: for cleaner tests with less skipps!

@@ -1,6 +1,9 @@
 import pytest
 from wrfhydropy import *
+import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from utilities import make_sim
 
 def pytest_addoption(parser):
 
@@ -89,52 +92,6 @@ def pytest_addoption(parser):
                      help='Queue to use if running on NCAR Cheyenne, options are regular, '
                           'premium, or shared')
 
-def _make_sim(domain_dir,
-              compiler,
-              source_dir,
-              configuration,
-              option_suite,
-              ncores,
-              nnodes,
-              scheduler,
-              account,
-              walltime,
-              queue):
-    # model
-    model = Model(
-        compiler=compiler,
-        source_dir=source_dir,
-        model_config=configuration
-    )
-
-    # domain
-    domain = Domain(
-        domain_top_dir=domain_dir,
-        domain_config=configuration
-    )
-
-    # Job
-    # exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    # job = Job(job_id='test_job',exe_cmd=exe_command)
-
-    # simulation
-    sim = Simulation()
-    sim.add(model)
-    sim.add(domain)
-
-    # Update base namelists with option suite if specified
-    if option_suite is not None:
-        pass
-
-    if scheduler:
-        sim.add(schedulers.PBSCheyenne(account=account,
-                                       nproc=int(ncores),
-                                       nnodes=int(nnodes),
-                                       walltime=walltime,
-                                       queue=queue))
-
-    return sim
-
 
 @pytest.fixture(scope="session")
 def candidate_sim(request):
@@ -151,7 +108,7 @@ def candidate_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    candidate_sim = _make_sim(
+    candidate_sim = make_sim(
         domain_dir=domain_dir,
         compiler=compiler,
         source_dir=candidate_dir,
@@ -182,7 +139,7 @@ def candidate_channel_only_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    candidate_channel_only_sim = _make_sim(
+    candidate_channel_only_sim = make_sim(
         domain_dir=domain_dir,
         compiler=compiler,
         source_dir=candidate_dir,
@@ -202,7 +159,7 @@ def candidate_channel_only_sim(request):
 
 
 @pytest.fixture(scope="session")
-def reference_sim(request):
+def reference_sim_args(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     compiler = request.config.getoption("--compiler")
@@ -216,7 +173,7 @@ def reference_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    reference_sim = _make_sim(
+    reference_sim = make_sim(
         domain_dir=domain_dir,
         compiler=compiler,
         source_dir=reference_dir,
