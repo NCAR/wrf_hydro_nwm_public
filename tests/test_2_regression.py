@@ -9,7 +9,8 @@ import wrfhydropy
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-#regression question
+
+# regression question
 def test_regression_data(output_dir):
     print("\nQuestion: The candidate run data values match the reference run?\n", end="")
     print('\n')
@@ -27,11 +28,13 @@ def test_regression_data(output_dir):
     candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))
     reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
 
-    #Check regression
+    # Check regression
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_run_expected.output,
-                                                   reference_run_expected.output)
+        data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
+            candidate_run_expected.output,
+            reference_run_expected.output
+        )
 
     # Assert all diff values are 0 and print diff stats if not
     has_data_diffs = any(value != 0 for value in data_diffs.diff_counts.values())
@@ -43,10 +46,11 @@ def test_regression_data(output_dir):
                 eprint('\n' + key + '\n')
                 for diff in diffs:
                     eprint(diff)
-    assert has_data_diffs == False, \
+    assert has_data_diffs is False, \
         'Data values in outputs for candidate run do not match reference run'
 
-#regression question
+
+# regression question
 def test_regression_metadata(output_dir):
     print("\nQuestion: The candidate run output metadata match the reference run?\n", end="")
     print('\n')

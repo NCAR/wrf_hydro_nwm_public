@@ -25,8 +25,10 @@ def wait_job(sim):
             break
         time.sleep(5)
 
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
 
 # #################################
 # Define tests
@@ -68,6 +70,8 @@ def test_run_candidate(candidate_sim, output_dir, ncores):
     print("\nQuestion: The candidate runs successfully?\n", end='')
     print('\n')
 
+    candidate_sim_copy = copy.deepcopy(candidate_sim)
+
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
     run_dir.mkdir(parents=True)
@@ -76,24 +80,24 @@ def test_run_candidate(candidate_sim, output_dir, ncores):
     # Job
     exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
     job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command)
-    candidate_sim.add(job)
+    candidate_sim_copy.add(job)
 
     # Run, catch warnings related to missing start and end job times
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        candidate_sim.compose()
+        candidate_sim_copy.compose()
 
     print('\nwaiting for job to complete...', end='')
-    candidate_sim.run()
+    candidate_sim_copy.run()
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    wait_job(candidate_sim)
+    wait_job(candidate_sim_copy)
 
-    candidate_sim.collect()
-    candidate_sim.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+    candidate_sim_copy.collect()
+    candidate_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check job run statuses
-    for job in candidate_sim.jobs:
+    for job in candidate_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Candidate code run exited with non-zero status"
 
@@ -103,6 +107,8 @@ def test_run_reference(reference_sim, output_dir, ncores):
     print("\nQuestion: The reference runs successfully?\n", end='')
     print('\n')
 
+    reference_sim_copy = copy.deepcopy(reference_sim)
+
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
     run_dir.mkdir(parents=True)
@@ -110,31 +116,31 @@ def test_run_reference(reference_sim, output_dir, ncores):
 
     # Job
     exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_reference',exe_cmd=exe_command)
-    reference_sim.add(job)
+    job = wrfhydropy.Job(job_id='run_reference', exe_cmd=exe_command)
+    reference_sim_copy.add(job)
 
     # Run, catch warnings related to missing start and end job times
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        reference_sim.compose()
+        reference_sim_copy.compose()
 
     print('\nwaiting for job to complete...', end='')
-    reference_sim.run()
+    reference_sim_copy.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    wait_job(reference_sim)
+    wait_job(reference_sim_copy)
 
-    reference_sim.collect()
-    reference_sim.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+    reference_sim_copy.collect()
+    reference_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check job run statuses
-    for job in reference_sim.jobs:
+    for job in reference_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Reference code run exited with non-zero status"
 
 
-def test_ncores_candidate(output_dir,capsys):
+def test_ncores_candidate(output_dir, capsys):
     print("\nQuestion: The candidate outputs from a ncores run match outputs from"
           " ncores-1 run?\n", end='')
     print('\n')
@@ -167,7 +173,7 @@ def test_ncores_candidate(output_dir,capsys):
         candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - 1
     else:
         orig_exe_cmd = candidate_sim_ncores.jobs[0]._exe_cmd
-        orig_exe_cmd = orig_exe_cmd.replace('-np 2','-np 1')
+        orig_exe_cmd = orig_exe_cmd.replace('-np 2', '-np 1')
 
     # Recompose into new directory and run
     # catch warnings related to missing start and end job times
@@ -227,8 +233,7 @@ def test_perfrestart_candidate(output_dir):
 
     # Get a new start time 1 hour later
     restart_job = candidate_sim_restart.jobs[0]
-    restart_job.model_start_time = restart_job.model_start_time + \
-                                   dt.timedelta(hours=96)
+    restart_job.model_start_time = restart_job.model_start_time + dt.timedelta(hours=96)
 
     # Get restart files from previous run and symlink into restart sim dir
     # (Remember that we are in the run/sim dir)
