@@ -11,7 +11,7 @@ import pytest
 import wrfhydropy
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from utilities import wait_job, print_diffs
+from utilities import wait_job, print_diffs, make_sim
 
 
 # #################################
@@ -23,10 +23,11 @@ from utilities import wait_job, print_diffs
 # Define tests
 
 
-def test_compile_candidate(candidate_sim, output_dir):
+def test_compile_candidate(candidate_sim_args, output_dir):
     print("\nQuestion: The candidate compiles?\n", end='')
     print('\n')
 
+    candidate_sim = make_sim(**candidate_sim_args)
     compile_dir = output_dir / 'compile_candidate'
 
     # Compile the model, catch warnings related to non-existant compile directory
@@ -39,10 +40,11 @@ def test_compile_candidate(candidate_sim, output_dir):
         "Candidate code did not compile correctly."
 
 
-def test_compile_reference(reference_sim, output_dir):
+def test_compile_reference(reference_sim_args, output_dir):
     print("\nQuestion: The reference compiles?\n", end='')
     print('\n')
 
+    reference_sim = make_sim(**reference_sim_args)
     compile_dir = output_dir / 'compile_reference'
 
     # Compile the model, catch warnings related to non-existant compile directory
@@ -55,11 +57,12 @@ def test_compile_reference(reference_sim, output_dir):
         "Reference code did not compile correctly"
 
 
-def test_run_candidate(candidate_sim, output_dir, ncores):
+def test_run_candidate(candidate_sim_args, output_dir, ncores):
     print("\nQuestion: The candidate runs successfully?\n", end='')
     print('\n')
 
     # Set run directory and change working directory to run dir for simulation
+    candidate_sim = make_sim(**candidate_sim_args)
     run_dir = output_dir / 'run_candidate'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
@@ -90,11 +93,12 @@ def test_run_candidate(candidate_sim, output_dir, ncores):
 
 
 # Run questions
-def test_run_reference(reference_sim, output_dir, ncores):
+def test_run_reference(reference_sim_args, output_dir, ncores):
     print("\nQuestion: The reference runs successfully?\n", end='')
     print('\n')
 
     # Set run directory and change working directory to run dir for simulation
+    reference_sim = make_sim(**reference_sim_args)
     run_dir = output_dir / 'run_reference'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))

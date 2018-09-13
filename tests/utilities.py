@@ -1,6 +1,6 @@
 import time
 import sys
-
+from wrfhydropy import *
 
 def wait_job(sim):
     """
@@ -41,16 +41,17 @@ def print_diffs(diffs):
 
 
 def make_sim(domain_dir,
-              compiler,
-              source_dir,
-              configuration,
-              option_suite,
-              ncores,
-              nnodes,
-              scheduler,
-              account,
-              walltime,
-              queue):
+             compiler,
+             source_dir,
+             configuration,
+             option_suite,
+             ncores,
+             nnodes,
+             scheduler,
+             account,
+             walltime,
+             queue,
+             channel_only = False):
     # model
     model = Model(
         compiler=compiler,
@@ -79,5 +80,9 @@ def make_sim(domain_dir,
                                        nnodes=int(nnodes),
                                        walltime=walltime,
                                        queue=queue))
+
+    # Channel and bucket mode is forc_typ = 10.
+    if channel_only:
+        sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
 
     return sim
