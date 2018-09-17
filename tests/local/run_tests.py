@@ -74,7 +74,7 @@ def run_tests(config: str,
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
-    pytest_cmd = "pytest -vv --ignore=local -p no:cacheprovider "
+    pytest_cmd = "pytest -vv --tb=no --ignore=local -p no:cacheprovider "
 
     if pdb:
         if pdb_x:
