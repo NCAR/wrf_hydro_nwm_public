@@ -68,7 +68,10 @@ def test_run_candidate(candidate_sim, output_dir, ncores):
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command)
+    job = wrfhydropy.Job(job_id='run_candidate',
+                         exe_cmd=exe_command,
+                         restart_freq_hr=24,
+                         output_freq_hr=24)
     candidate_sim_copy.add(job)
 
     # Run, catch warnings related to missing start and end job times
@@ -105,7 +108,10 @@ def test_run_reference(reference_sim, output_dir, ncores):
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_reference', exe_cmd=exe_command)
+    job = wrfhydropy.Job(job_id='run_reference',
+                         exe_cmd=exe_command,
+                         restart_freq_hr=24,
+                         output_freq_hr=24)
     reference_sim_copy.add(job)
 
     # Run, catch warnings related to missing start and end job times
@@ -151,7 +157,10 @@ def test_ncores_candidate(output_dir):
 
     # Make a new job based on the old job but with a new job ID
     old_job = candidate_sim.jobs[0]
-    new_job = wrfhydropy.Job(job_id='ncores_candidate', exe_cmd=old_job._exe_cmd)
+    new_job = wrfhydropy.Job(job_id='ncores_candidate',
+                             exe_cmd=old_job._exe_cmd,
+                             restart_freq_hr=24,
+                             output_freq_hr=24)
 
     # Remove old job and add new job
     candidate_sim_ncores.jobs.pop(0)
