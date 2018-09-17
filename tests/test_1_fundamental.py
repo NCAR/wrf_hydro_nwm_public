@@ -11,7 +11,7 @@ import pytest
 import wrfhydropy
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from utilities import wait_job, print_diffs, make_sim
+from utilities import wait_job, print_diffs
 
 
 # #################################

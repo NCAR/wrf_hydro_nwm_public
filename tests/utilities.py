@@ -1,6 +1,8 @@
-import time
 import sys
+import time
+
 from wrfhydropy import *
+
 
 def wait_job(sim):
     """

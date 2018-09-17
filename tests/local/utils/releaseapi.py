@@ -1,6 +1,7 @@
-import urllib.request
 import json
+import urllib.request
 from argparse import ArgumentParser
+
 
 def get_release_asset(download_dir: str,
                       repo_name: str,

@@ -1,7 +1,8 @@
 import pathlib
 import shutil
-import wrfhydropy
+
 import pytest
+import wrfhydropy
 
 
 def pytest_addoption(parser):

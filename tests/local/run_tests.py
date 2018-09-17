@@ -1,10 +1,12 @@
-import subprocess
 import pathlib
-from argparse import ArgumentParser
 import shutil
 import socket
+import subprocess
+import sys
 import warnings
+from argparse import ArgumentParser
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
 from utils.gdrive_download import download_file_from_google_drive
 
@@ -33,12 +35,15 @@ def run_tests(config: str,
             candidate_dir: The wrf-hydro code candidate directory to use, e.g. wrf_hydro_nwm_public
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
             output_dir: The directory to hold test outputs
-            nproc: Optional. The number of cores to use if running on cheyenne
+            scheduler: Use PBSCheyenne scheduler?
+            ncores: Optional. The number of cores to use if running on cheyenne
             nnodes: Optional. The number of nodes to use if running on cheyenne
             account: Options. The account number to use if running on cheyenne
-            Walltime: Optional. Walltime for scheduler
+            walltime: Optional. Walltime for scheduler
             queue: Optional, queue to use for scheduler
             print_log: Optional, print text logs instead of HTML logs
+            pdb: Drop down to python debugger in pytest?
+            pdb_x: Exit the debugger on success?
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
