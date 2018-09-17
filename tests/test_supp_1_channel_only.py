@@ -43,7 +43,8 @@ def test_run_candidate_channel_only(
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
     job = wrfhydropy.Job(job_id='run_candidate',
                          exe_cmd=exe_command,
-                         restart_freq_hr=24)
+                         restart_freq_hr=24,
+                         output_freq_hr=24)
     candidate_sim_copy.add(job)
 
     start_time, end_time = candidate_sim_copy.jobs[0]._solve_model_start_end_times()
@@ -89,7 +90,8 @@ def test_run_candidate_channel_only(
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
     job = wrfhydropy.Job(job_id='run_candidate_channel_only',
                          exe_cmd=exe_command,
-                         restart_freq_hr=24)
+                         restart_freq_hr=24,
+                         output_freq_hr=24)
     candidate_channel_only_sim_copy.add(job)
 
     start_time, end_time = candidate_channel_only_sim_copy.jobs[0]._solve_model_start_end_times()
@@ -227,7 +229,8 @@ def test_ncores_candidate_channel_only(output_dir):
     old_job = candidate_channel_only_sim.jobs[0]
     new_job = wrfhydropy.Job(job_id='ncores_candidate',
                              exe_cmd=old_job._exe_cmd,
-                             restart_freq_hr=24)
+                             restart_freq_hr=24,
+                             output_freq_hr=24)
 
     # Remove old job and add new job
     candidate_channel_only_sim_ncores.jobs.pop(0)
