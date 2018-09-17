@@ -172,7 +172,20 @@
         },
         "nudging_nlist": {}
     },
-    
+
+    "gridded_no_lakes": {
+        "hydro_nlist": {
+            "gwbasmskfil": "NULL_specified_in_domain.json",
+            "output_channelbucket_influx": 0,
+            "channel_option": 3,
+            "chrtout_grid": 1,
+            "dtrt_ch": 10,
+            "rstrt_swc": 1,
+            "udmp_opt": 0
+        },
+        "nudging_nlist": {}
+    },
+
     "reach": {
         "hydro_nlist": {
             "gwbasmskfil": "NULL_specified_in_domain.json",

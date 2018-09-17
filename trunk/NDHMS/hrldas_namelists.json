@@ -71,7 +71,10 @@
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
     },
-
+    "gridded_no_lakes": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
     "reach": {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
