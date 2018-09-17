@@ -130,6 +130,32 @@
         }
     },
 
+    "gridded_no_lakes": {
+        "hydro_nlist": {
+            "compound_channel": false,
+            "gwbasmskfil": "NULL_specified_in_domain.json",
+            "output_channelbucket_influx": 0,
+            "channel_option": 3,
+            "dtrt_ch": 10,
+            "rstrt_swc": 1,
+            "udmp_opt": 0
+        },
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
+    },
+
     "reach": {
         "hydro_nlist": {
             "compound_channel": false,
