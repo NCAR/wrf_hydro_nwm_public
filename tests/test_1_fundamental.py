@@ -23,11 +23,10 @@ from utilities import wait_job, print_diffs, make_sim
 # Define tests
 
 
-def test_compile_candidate(candidate_sim_args, output_dir):
+def test_compile_candidate(candidate_sim, output_dir):
     print("\nQuestion: The candidate compiles?\n", end='')
     print('\n')
 
-    candidate_sim = make_sim(**candidate_sim_args)
     compile_dir = output_dir / 'compile_candidate'
 
     # Compile the model, catch warnings related to non-existant compile directory
@@ -40,11 +39,10 @@ def test_compile_candidate(candidate_sim_args, output_dir):
         "Candidate code did not compile correctly."
 
 
-def test_compile_reference(reference_sim_args, output_dir):
+def test_compile_reference(reference_sim, output_dir):
     print("\nQuestion: The reference compiles?\n", end='')
     print('\n')
 
-    reference_sim = make_sim(**reference_sim_args)
     compile_dir = output_dir / 'compile_reference'
 
     # Compile the model, catch warnings related to non-existant compile directory
@@ -57,74 +55,76 @@ def test_compile_reference(reference_sim_args, output_dir):
         "Reference code did not compile correctly"
 
 
-def test_run_candidate(candidate_sim_args, output_dir, ncores):
+def test_run_candidate(candidate_sim, output_dir, ncores):
     print("\nQuestion: The candidate runs successfully?\n", end='')
     print('\n')
 
+    candidate_sim_copy = copy.deepcopy(candidate_sim)
+
     # Set run directory and change working directory to run dir for simulation
-    candidate_sim = make_sim(**candidate_sim_args)
     run_dir = output_dir / 'run_candidate'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command, restart_freq = 24)
-    candidate_sim.add(job)
+    job = wrfhydropy.Job(job_id='run_candidate', exe_cmd=exe_command)
+    candidate_sim_copy.add(job)
 
     # Run, catch warnings related to missing start and end job times
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        candidate_sim.compose()
+        candidate_sim_copy.compose()
 
     print('\nwaiting for job to complete...', end='')
-    candidate_sim.run()
+    candidate_sim_copy.run()
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    wait_job(candidate_sim)
+    wait_job(candidate_sim_copy)
 
-    candidate_sim.collect()
-    candidate_sim.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+    candidate_sim_copy.collect()
+    candidate_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check job run statuses
-    for job in candidate_sim.jobs:
+    for job in candidate_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Candidate code run exited with non-zero status"
 
 
 # Run questions
-def test_run_reference(reference_sim_args, output_dir, ncores):
+def test_run_reference(reference_sim, output_dir, ncores):
     print("\nQuestion: The reference runs successfully?\n", end='')
     print('\n')
 
+    reference_sim_copy = copy.deepcopy(reference_sim)
+
     # Set run directory and change working directory to run dir for simulation
-    reference_sim = make_sim(**reference_sim_args)
     run_dir = output_dir / 'run_reference'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_reference', exe_cmd=exe_command, restart_freq = 24)
-    reference_sim.add(job)
+    job = wrfhydropy.Job(job_id='run_reference', exe_cmd=exe_command)
+    reference_sim_copy.add(job)
 
     # Run, catch warnings related to missing start and end job times
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        reference_sim.compose()
+        reference_sim_copy.compose()
 
     print('\nwaiting for job to complete...', end='')
-    reference_sim.run()
+    reference_sim_copy.run()
 
     # Wait to collect until job has finished. All test runs are performed on a single job with
     # job_id='test_job'
-    wait_job(reference_sim)
+    wait_job(reference_sim_copy)
 
-    reference_sim.collect()
-    reference_sim.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+    reference_sim_copy.collect()
+    reference_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check job run statuses
-    for job in reference_sim.jobs:
+    for job in reference_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Reference code run exited with non-zero status"
 
@@ -214,10 +214,14 @@ def test_perfrestart_candidate(output_dir):
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
-    # Get a new start time 4 days later
+    # Get a new start time halfway along the run, make sure the restart frequency accomodates
     restart_job = candidate_sim_restart.jobs[0]
-    restart_job.model_start_time = restart_job.model_start_time + \
-                                   dt.timedelta(hours=96)
+    duration = restart_job.model_end_time - restart_job.model_start_time
+    delay_restart_hr = int((duration.total_seconds() / 3600)/2)
+    assert delay_restart_hr % candidate_sim_restart.jobs[0].restart_freq_hr == 0, \
+        "The restart delay is not a multiple of the restart frequency."
+    restart_job.model_start_time = \
+        restart_job.model_start_time + dt.timedelta(hours=delay_restart_hr)
 
     # Get restart files from previous run and symlink into restart sim dir
     # (Remember that we are in the run/sim dir)

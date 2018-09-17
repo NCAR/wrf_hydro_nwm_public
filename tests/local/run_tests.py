@@ -14,13 +14,15 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
-              scheduler: bool = False,
-              ncores: int = 216,
-              nnodes: int = 6,
-              account: str = 'NRAL0017',
-              walltime: str = '02:00:00',
-              queue: str = 'regular',
-              print_log: bool = False):
+              scheduler: bool=False,
+              ncores: int=216,
+              nnodes: int=6,
+              account: str='NRAL0017',
+              walltime: str='02:00:00',
+              queue: str='regular',
+              print_log: bool=False,
+              pdb: bool=False,
+              pdb_x: bool=False):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -68,6 +70,13 @@ def run_tests(config: str,
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
     pytest_cmd = "pytest -vv --ignore=local -p no:cacheprovider "
+
+    if pdb:
+        if pdb_x:
+            pytest_cmd += " -x --pdb"
+        else:
+            pytest_cmd += " --pdb"
+
     if print_log:
         pytest_cmd += " -s"
     # Ignore section: for cleaner tests with less skipps!
@@ -184,6 +193,17 @@ def main():
                         action='store_true',
                         help='Print log to stdout instead of html')
 
+    parser.add_argument('--pdb',
+                        required=False,
+                        action='store_true',
+                        help='pdb (debug) in pytest')
+
+    parser.add_argument('-x',
+                        required=False,
+                        action='store_true',
+                        help='Exit pdb on first failure.')
+
+
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -207,6 +227,8 @@ def main():
     walltime = args.walltime
     queue = args.queue
     print_log = args.print
+    pdb = args.pdb
+    pdb_x = args.x
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -277,7 +299,9 @@ def main():
                                 account=account,
                                 walltime=walltime,
                                 queue=queue,
-                                print_log=print_log)
+                                print_log=print_log,
+                                pdb=pdb,
+                                pdb_x=pdb_x)
 
         if test_result.returncode != 0:
             has_failure = True
