@@ -1,5 +1,8 @@
+import pathlib
+import shutil
+
 import pytest
-from wrfhydropy import *
+import wrfhydropy
 
 
 def pytest_addoption(parser):
@@ -89,6 +92,7 @@ def pytest_addoption(parser):
                      help='Queue to use if running on NCAR Cheyenne, options are regular, '
                           'premium, or shared')
 
+
 def _make_sim(domain_dir,
               compiler,
               source_dir,
@@ -100,25 +104,22 @@ def _make_sim(domain_dir,
               account,
               walltime,
               queue):
+
     # model
-    model = Model(
+    model = wrfhydropy.Model(
         compiler=compiler,
         source_dir=source_dir,
         model_config=configuration
     )
 
     # domain
-    domain = Domain(
+    domain = wrfhydropy.Domain(
         domain_top_dir=domain_dir,
         domain_config=configuration
     )
 
-    # Job
-    # exe_command = ('mpirun -np {0} ./wrf_hydro.exe').format(str(ncores))
-    # job = Job(job_id='test_job',exe_cmd=exe_command)
-
     # simulation
-    sim = Simulation()
+    sim = wrfhydropy.Simulation()
     sim.add(model)
     sim.add(domain)
 
@@ -127,11 +128,15 @@ def _make_sim(domain_dir,
         pass
 
     if scheduler:
-        sim.add(schedulers.PBSCheyenne(account=account,
-                                       nproc=int(ncores),
-                                       nnodes=int(nnodes),
-                                       walltime=walltime,
-                                       queue=queue))
+        sim.add(
+            wrfhydropy.schedulers.PBSCheyenne(
+                account=account,
+                nproc=int(ncores),
+                nnodes=int(nnodes),
+                walltime=walltime,
+                queue=queue
+            )
+        )
 
     return sim
 
