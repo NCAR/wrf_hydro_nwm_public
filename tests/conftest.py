@@ -105,7 +105,6 @@ def _make_sim(domain_dir,
               queue):
 
     # model
-    import wrfhydropy
     model = wrfhydropy.Model(
         compiler=compiler,
         source_dir=source_dir,
