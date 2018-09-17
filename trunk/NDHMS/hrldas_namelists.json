@@ -17,7 +17,7 @@
             "pcp_partition_option": 1,
             "radiative_transfer_option": 3,
             "restart_filename_requested": "NULL_specified_in_domain.json",
-            "restart_frequency_hours": 24,
+            "restart_frequency_hours": 1,
             "rst_bi_in": 0,
             "rst_bi_out": 0,
             "runoff_option": 3,
