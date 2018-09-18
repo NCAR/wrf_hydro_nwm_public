@@ -13,7 +13,7 @@
             "noah_timestep": 3600,
             "nsoil": 4,
             "outdir": "./",
-            "output_timestep": 86400,
+            "output_timestep": 3600,
             "pcp_partition_option": 1,
             "radiative_transfer_option": 3,
             "restart_filename_requested": "NULL_specified_in_domain.json",
@@ -65,6 +65,11 @@
     },
 
     "gridded": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
+
+    "gridded_no_lakes": {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
     },
