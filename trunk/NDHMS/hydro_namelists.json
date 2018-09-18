@@ -1,7 +1,7 @@
 {
     "base": {            
         "hydro_nlist": {
-            "aggfactrt": 1,
+            "aggfactrt": 4,
             "channel_option": 2,
             "chanobs_domain": 1,
             "chanrtswcrt": 1,
@@ -9,7 +9,7 @@
             "chrtout_grid": 0,
             "dtrt_ch": 300,
             "dtrt_ter": 10,
-            "dxrt": 1000,
+            "dxrt": 250,
             "frxst_pts_out": 0,
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
@@ -119,6 +119,8 @@
 
     "nwm_long_range": {
         "hydro_nlist": {
+            "aggfactrt": 1,
+            "dxrt": 1000,
             "ovrtswcrt": 0,
             "rtout_domain": 0,
             "subrtswcrt": 0
@@ -170,7 +172,20 @@
             "rstrt_swc": 1,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     },
 
     "gridded_no_lakes": {
@@ -183,7 +198,20 @@
             "rstrt_swc": 1,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     },
 
     "reach": {
@@ -196,6 +224,19 @@
             "t0outputflag": 0,
             "udmp_opt": 0
         },
-        "nudging_nlist": {}
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
     }
 }
