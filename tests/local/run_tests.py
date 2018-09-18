@@ -1,10 +1,12 @@
-import subprocess
 import pathlib
-from argparse import ArgumentParser
 import shutil
 import socket
+import subprocess
+import sys
 import warnings
+from argparse import ArgumentParser
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
 from utils.gdrive_download import download_file_from_google_drive
 
@@ -14,13 +16,15 @@ def run_tests(config: str,
               candidate_dir: str,
               reference_dir: str,
               output_dir: str,
-              scheduler: bool = False,
-              ncores: int = 216,
-              nnodes: int = 6,
-              account: str = 'NRAL0017',
-              walltime: str = '02:00:00',
-              queue: str = 'regular',
-              print_log: bool = False):
+              scheduler: bool=False,
+              ncores: int=216,
+              nnodes: int=6,
+              account: str='NRAL0017',
+              walltime: str='02:00:00',
+              queue: str='regular',
+              print_log: bool=False,
+              pdb: bool=False,
+              pdb_x: bool=False):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -31,12 +35,15 @@ def run_tests(config: str,
             candidate_dir: The wrf-hydro code candidate directory to use, e.g. wrf_hydro_nwm_public
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
             output_dir: The directory to hold test outputs
-            nproc: Optional. The number of cores to use if running on cheyenne
+            scheduler: Use PBSCheyenne scheduler?
+            ncores: Optional. The number of cores to use if running on cheyenne
             nnodes: Optional. The number of nodes to use if running on cheyenne
             account: Options. The account number to use if running on cheyenne
-            Walltime: Optional. Walltime for scheduler
+            walltime: Optional. Walltime for scheduler
             queue: Optional, queue to use for scheduler
             print_log: Optional, print text logs instead of HTML logs
+            pdb: Drop down to python debugger in pytest?
+            pdb_x: Exit the debugger on success?
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
@@ -67,7 +74,14 @@ def run_tests(config: str,
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
     html_report = str(pathlib.Path(output_dir).joinpath(html_report))
 
-    pytest_cmd = "pytest -vv --tb=no --ignore=local -p no:cacheprovider "
+    pytest_cmd = "pytest -vv --ignore=local -p no:cacheprovider "
+
+    if pdb:
+        if pdb_x:
+            pytest_cmd += " -x --pdb"
+        else:
+            pytest_cmd += " --pdb"
+
     if print_log:
         pytest_cmd += " -s"
     # Ignore section: for cleaner tests with less skipps!
@@ -184,6 +198,17 @@ def main():
                         action='store_true',
                         help='Print log to stdout instead of html')
 
+    parser.add_argument('--pdb',
+                        required=False,
+                        action='store_true',
+                        help='pdb (debug) in pytest')
+
+    parser.add_argument('-x',
+                        required=False,
+                        action='store_true',
+                        help='Exit pdb on first failure.')
+
+
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -207,6 +232,8 @@ def main():
     walltime = args.walltime
     queue = args.queue
     print_log = args.print
+    pdb = args.pdb
+    pdb_x = args.x
 
     # Make output dir if does not exist
     if output_dir.is_dir():
@@ -277,7 +304,9 @@ def main():
                                 account=account,
                                 walltime=walltime,
                                 queue=queue,
-                                print_log=print_log)
+                                print_log=print_log,
+                                pdb=pdb,
+                                pdb_x=pdb_x)
 
         if test_result.returncode != 0:
             has_failure = True
