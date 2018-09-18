@@ -73,7 +73,7 @@
         "hydro_nlist": {
             "aggfactrt": 1,
             "dxrt": 1000,
-            "output_channelbucket_influx": 2,
+            "output_channelbucket_influx": 0,
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
