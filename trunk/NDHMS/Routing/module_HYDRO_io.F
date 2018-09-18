@@ -34,6 +34,7 @@ module module_HYDRO_io
    use netcdf
 
    use module_nhd_data
+   use module_simple_groundwater_data
 
    implicit none
 #include <netcdf.inc>
@@ -1391,50 +1392,50 @@ end subroutine get_albedo12m_netcdf
 
   end subroutine get_gw_strm_msk_lind
 
-  subroutine SIMP_GW_IND(ix,jx,GWSUBBASMSK,numbasns,gnumbasns,basnsInd)
-! create an index of basin mask so that it is faster for parallel computation.
-     implicit none
-     integer, intent(in) ::  ix,jx
-     integer, intent(in),dimension(ix,jx) ::  GWSUBBASMSK
-     integer, intent(out):: gnumbasns
-     integer, intent(inout):: numbasns
-     integer, intent(inout),allocatable,dimension(:):: basnsInd
-
-     integer,dimension(numbasns):: tmpbuf
-
-     integer :: i,j,k
-
-
-     gnumbasns = numbasns
-     numbasns = 0
-     tmpbuf = -999.
-
-     do j = 1,jx
-        do i = 1, ix
-           if(GWSUBBASMSK(i,j) .gt.0) then
-                tmpbuf(GWSUBBASMSK(i,j)) = GWSUBBASMSK(i,j)
-           endif
-        end do
-     end do
-     do k = 1, gnumbasns
-         if(tmpbuf(k) .gt. 0) numbasns = numbasns + 1
-     end do
-
-     allocate(basnsInd(numbasns))
-
-     i = 1
-     do k = 1, gnumbasns
-         if(tmpbuf(k) .gt. 0) then
-             basnsInd(i) = tmpbuf(k)
-             i = i + 1
-         endif
-     end do
-#ifdef HYDRO_D
-     write(6,*) "check numbasns, gnumbasns : ", numbasns, gnumbasns
-#endif
-
-     return
-  end subroutine SIMP_GW_IND
+!  subroutine SIMP_GW_IND(ix,jx,GWSUBBASMSK,numbasns,gnumbasns,basnsInd)
+!! create an index of basin mask so that it is faster for parallel computation.
+!     implicit none
+!     integer, intent(in) ::  ix,jx
+!     integer, intent(in),dimension(ix,jx) ::  GWSUBBASMSK
+!     integer, intent(out):: gnumbasns
+!     integer, intent(inout):: numbasns
+!     integer, intent(inout),allocatable,dimension(:):: basnsInd
+!
+!     integer,dimension(numbasns):: tmpbuf
+!
+!     integer :: i,j,k
+!
+!
+!     gnumbasns = numbasns
+!     numbasns = 0
+!     tmpbuf = -999.
+!
+!     do j = 1,jx
+!        do i = 1, ix
+!           if(GWSUBBASMSK(i,j) .gt.0) then
+!                tmpbuf(GWSUBBASMSK(i,j)) = GWSUBBASMSK(i,j)
+!           endif
+!        end do
+!     end do
+!     do k = 1, gnumbasns
+!         if(tmpbuf(k) .gt. 0) numbasns = numbasns + 1
+!     end do
+!
+!     allocate(basnsInd(numbasns))
+!
+!     i = 1
+!     do k = 1, gnumbasns
+!         if(tmpbuf(k) .gt. 0) then
+!             basnsInd(i) = tmpbuf(k)
+!             i = i + 1
+!         endif
+!     end do
+!#ifdef HYDRO_D
+!     write(6,*) "check numbasns, gnumbasns : ", numbasns, gnumbasns
+!#endif
+!
+!     return
+!  end subroutine SIMP_GW_IND
 
 !Wei Yu
   subroutine read_GWBUCKPARM (inFile,numbasns,gnumbasns, basnsInd, &
@@ -6124,7 +6125,6 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       !call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
       if( nlst_rt(did)%channel_only .eq. 0) then
 
-         if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             select type (gwd => rt_domain(did)%groundwater)
                 type is (nhd_groundwater_struct)
                     call w_rst_crt_reach(ncid,gwd%state%z_gwsubbas, "z_gwsubbas"  &
@@ -6132,6 +6132,9 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                     ,rt_domain(did)%gnlinksl  &
 #endif
                     )
+                type is (simple_groundwater_struct)
+                    call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
+                        gwd%basin%basin_index, gwd%state%z_gwsubbas,"z_gwsubbas" )
                 class default
                     stop 'Unexpected groundwater type structure in RESTART_OUT_nc()'
                     !call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
@@ -6140,11 +6143,6 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
                     !)
             end select
-         else
-            ! TODO update when simple ground water is complete
-            !call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
-            !     rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
-         endif
 
       end if ! not channel_only : dont use buckets in channel only runs
 
@@ -6855,10 +6853,11 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
             select type (gwd => rt_domain(did)%groundwater)
                 type is (nhd_groundwater_struct)
                     call read_rst_crt_reach_nc(ncid,gwd%state%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
+                type is (simple_groundwater_struct)
+                    call read_rst_gwbucket_real(ncid,gwd%state%z_gwsubbas,rt_domain(did)%numbasns,&
+                        rt_domain(did)%gnumbasns,gwd%basin%basin_index, "z_gwsubbas")
                 class default
                     stop 'Unexpected groundwater type'
-                    !call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
-                    !    rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
             end select
 
       end if !       if( nlst_rt(did)%channel_only .eq. 0 ) then
@@ -9999,19 +9998,16 @@ end subroutine output_chrt2
           end select
           call ReachLS_write_io(rt_domain(did)%linkid,g_basnsInd)
        else
-          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%input%qin_gwsubbas,  &
-                 rt_domain(did)%basnsInd,g_qin_gwsubbas)
-          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%groundwater%output%qout_gwsubbas,  &
-                 rt_domain(did)%basnsInd,g_qout_gwsubbas)
           select type (gwd => rt_domain(did)%groundwater)
-            type is (nhd_groundwater_struct)
-                call gw_write_io_real(rt_domain(did)%numbasns,gwd%state%z_gwsubbas, &
-                    rt_domain(did)%basnsInd,g_z_gwsubbas)
+            type is (simple_groundwater_struct)
+                call gw_write_io_real(rt_domain(did)%numbasns, rt_domain(did)%groundwater%input%qin_gwsubbas, gwd%basin%basin_index, g_qin_gwsubbas)
+                call gw_write_io_real(rt_domain(did)%numbasns, rt_domain(did)%groundwater%output%qout_gwsubbas, gwd%basin%basin_index, g_qout_gwsubbas)
+                call gw_write_io_real(rt_domain(did)%numbasns, gwd%state%z_gwsubbas, gwd%basin%basin_index, g_z_gwsubbas)
+                call gw_write_io_int(rt_domain(did)%numbasns, gwd%basin%basin_index, gwd%basin%basin_index, g_basnsInd)
             class default
                 stop 'unexpected groundwater type'
           end select
-          call gw_write_io_int(rt_domain(did)%numbasns,rt_domain(did)%basnsInd,  &
-                 rt_domain(did)%basnsInd,g_basnsInd)
+
        endif
        if(my_id .eq. io_id) then
 !          open (unit=51,file='GW_inflow.txt',form='formatted',&
@@ -10057,10 +10053,14 @@ end subroutine output_chrt2
 !       close(52)
 !       close(53)
         if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
-          call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%numbasns, &
-                  trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
-                  rt_domain(did)%basnsInd,rt_domain(did)%groundwater%input%qin_gwsubbas, &
-                  rt_domain(did)%groundwater%output%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+            select type (gwd => rt_domain(did)%groundwater)
+            type is (simple_groundwater_struct)
+                call output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%numbasns, &
+                    trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
+                    gwd%basin%basin_index,rt_domain(did)%groundwater%input%qin_gwsubbas, &
+                    rt_domain(did)%groundwater%output%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+            class default
+            end select
         else
           call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%nlinksl, &
                   trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &

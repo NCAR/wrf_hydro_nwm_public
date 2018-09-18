@@ -32,11 +32,12 @@ MODULE module_Routing
     !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
     use module_HYDRO_io, only: read_routedim, read_routing_seq, read_chrouting1,read_simp_gw, get_nlinksl
 #endif
-    use module_HYDRO_io, only: readgw2d, simp_gw_ind,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd, read_NSIMLAKES
+    use module_HYDRO_io, only: readgw2d,read_GWBUCKPARM, get_gw_strm_msk_lind, readBucket_nhd, read_NSIMLAKES
     use module_HYDRO_utils
 
     use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
     use module_nhd_data
+    use module_simple_groundwater_data
     IMPLICIT NONE
 
 #ifdef OUTPUT_CHAN_CONN
@@ -1203,35 +1204,55 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
             if (nlst_rt(did)%GWBASESWCRT.ge.1) then
                 if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
 
-                    ! TODO INSERT ALLOCATION OF SIMPLE GROUNDWATER OBJECT HERE
 #ifdef HYDRO_D
                     print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
-#ifdef MPP_LAND
-                    call MPP_READ_SIMP_GW(              &
-#else
-                        call READ_SIMP_GW(                  &
-#endif
-                        rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
-                        rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
-                        rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
 
+                    ! create the simple groundwater object
+                    allocate( simple_groundwater_struct :: rt_domain(did)%groundwater)
 
-                    call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
-                        rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
+                    ! initalize the object
+                    select type (gwd => rt_domain(did)%groundwater)
+                        type is (simple_groundwater_struct)
+                        call gwd%init(rt_domain(did)%ix, &
+                            rt_domain(did)%jx, &
+                            rt_domain(did)%ixrt, &
+                            rt_domain(did)%jxrt, &
+                            nlst_rt(did)%dt, &
+                            nlst_rt(did)%gwbaseswcrt, &
+                            nlst_rt(did)%ovrtswcrt, &
+                            rt_domain(did)%numbasns, &
+                            rt_domain(did)%gnumbasns, &
+                            nlst_rt(did)%aggfactrt, &
+                            rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+                            rt_domain(did)%dist_lsm(:,:,9))
 
 #ifdef HYDRO_D
-                    write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
-
+                            write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
 #endif
+
 #ifdef MPP_LAND
-                    call collectSizeInd(rt_domain(did)%numbasns)
+                            call MPP_READ_SIMP_GW( &
+#else
+                            call READ_SIMP_GW( &
 #endif
+                                rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
+                                rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
+                                rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
 
-                    call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, rt_domain(did)%gw_strm_msk,&
-                        rt_domain(did)%numbasns,rt_domain(did)%basnsInd,rt_domain(did)%gw_strm_msk_lind)
 
-                    allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%numbasns))
+                            call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
+                                rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+
+#ifdef MPP_LAND
+                            call collectSizeInd(rt_domain(did)%numbasns)
+#endif
+                            call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, rt_domain(did)%gw_strm_msk,&
+                                rt_domain(did)%numbasns,gwd%basin%basin_index,rt_domain(did)%gw_strm_msk_lind)
+                            class default
+                    end select
+
+                    !allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%numbasns))
                     !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
                     !allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
                     allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
@@ -1259,8 +1280,11 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 
                     !!! Determine number of stream pixels per GW basin for distribution...
 #ifdef MPP_LAND
-                    call pix_ct_1(rt_domain(did)%gw_strm_msk,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
-                        rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
+                    select type (gwd => rt_domain(did)%groundwater)
+                        type is (simple_groundwater_struct)
+                            call pix_ct_1(rt_domain(did)%gw_strm_msk,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
+                                rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+                    end select
 #else
                     rt_domain(did)%gwbas_pix_ct = 0.
                     !         do k = 1, rt_domain(did)%numbasns

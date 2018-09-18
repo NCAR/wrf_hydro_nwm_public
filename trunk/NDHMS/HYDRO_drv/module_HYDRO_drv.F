@@ -1547,6 +1547,7 @@ endif
 select type (gwd => rt_domain(did)%groundwater)
     type is (nhd_groundwater_struct)
         call get_basn_area_nhd(gwd%basin%basin_area)
+    !FIXME
     !type is (simple_groundwater_struct)
     !    call get_basn_area(did)
     class default

@@ -39,12 +39,10 @@ module module_nhd_data
         procedure :: destroy => nhd_groundwater_struct_destroy
         procedure :: run_timestep => run_nhd_groundwater_timestep
     end type nhd_groundwater_struct
-    ! ------------------DEBUG---------------------!
-    !    integer :: g_num_links
-    ! ------------------DEBUG---------------------!
+
 contains
 
-    !> Constructor for the ground water struct.
+    !> Constructor for the nhd groundwater struct.
     !! @param this  The nhd ground water object being constructed
     !! @param ix  The x dimension of the lsm grid
     !! @param jx  The y dimension of the lsm grid
@@ -59,6 +57,7 @@ contains
     !! @param agg_factor  The aggregation factor between the lsm and routing domains
     !! @param cell_area  2D array containing the area of each routing cell
     !! @param cell_area_lsm  2D array contain the area of lsm cell
+
     subroutine nhd_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm)
         implicit none
         class (nhd_groundwater_struct), intent(inout) :: this ! object being initialized
@@ -154,7 +153,7 @@ contains
 
     end subroutine nhd_groundwater_struct_init
 
-    !> Destructor for the ground water struct. Calling this subroutine will deallocate all memory allocated to a
+    !> Destructor for the nhd groundwater struct. Calling this subroutine will deallocate all memory allocated to a
     !! nhd_ground_water structure. If one or more pointer where disassociated or deallocated from code outside this
     !! module they will not be deallocated and an error message will be displayed.
     !! @param this  The nhd groundwater struct being destroyed

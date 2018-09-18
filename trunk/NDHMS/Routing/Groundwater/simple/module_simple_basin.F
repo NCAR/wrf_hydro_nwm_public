@@ -7,26 +7,29 @@ module module_simple_basin
 
     type, extends(groundwater_base_basin_struct) :: simple_basin_interface
 
-        !> the local number of basins
+        !> The local number of basins
         integer :: num_basins
 
-        !> the area of each basin
+        !> global number of basins
+        integer :: global_num_basins
+
+        !> basin area
         real, allocatable, dimension(:) :: basin_area
 
-        !> bucket mask for use with nhd plus stream network
-        integer, allocatable, dimension(:) :: nhd_bucket_mask
+        !> basin index for tile
+        integer, allocatable, dimension(:) :: basin_index
 
-        !> number of nhd links
-        integer :: lnlinksl
+        !> Groundwater basin mask grid
+        integer, allocatable, dimension(:,:) :: stream_mask
 
-        !> channel bucket only flag
-        integer :: channel_bucket_only
+        !> Groundwater basin mask grid tile mapping index
+        integer, allocatable, dimension(:,:) :: stream_mask_index
 
-        !> aggregation factor for routing to LSM domain mapping
-        integer :: agg_factor
+        !> Groundwater subbasin mask grid
+        integer, allocatable, dimension(:,:) :: sub_basin_mask
 
-        ! guard variable for fortran pointers behavior
-        logical, private :: pointers_need_set = .true.
+        !> Count of grid pixels in each basin
+        real, allocatable, dimension(:) :: basin_stream_pixels
 
     contains
 
@@ -36,20 +39,24 @@ module module_simple_basin
 
 contains
 
-    subroutine simple_basin_init(this,ixrt, jxrt, numbasins, num_local_links, cb_only, aggfactrt )
+    !> Constructor for simple groundwater basin struct
+
+    subroutine simple_basin_init(this,ix, jx, ixrt, jxrt, numbasins, gnumbasins )
         implicit none
         class(simple_basin_interface), intent(inout) :: this ! the type object being initialized
-        integer, intent(in) :: ixrt
-        integer, intent(in) :: jxrt
-        integer, intent(in) :: numbasins                  ! number of basins
-        integer, intent(in) :: num_local_links
-        integer, intent(in) :: cb_only                    ! flag corresponding with namelist channelBucket_only flag
-        integer, intent(in) :: aggfactrt
+        integer, intent(in) :: ix           !< x dimension of the LSM Grid
+        integer, intent(in) :: jx           !< y dimension of the LSM Grid
+        integer, intent(in) :: ixrt         !< x dimension of the Routing Grid
+        integer, intent(in) :: jxrt         !< x dimension of the LSM Grid
+        integer, intent(in) :: numbasins    !< Local number of basins
+        integer, intent(in) :: gnumbasins   !< global number of basins
+
         !class(overland_struct), intent(inout) :: overland_data
 
         logical :: allocation_error = .false.
 
         this%num_basins = numbasins
+        this%global_num_basins = gnumbasins
 
         ! allocate basin area
         if ( .not. allocated(this%basin_area) ) then
@@ -58,26 +65,43 @@ contains
             allocation_error = .true.
         end if
 
-        !allocate nhd_bucket_mask
-        if ( .not. allocated(this%nhd_bucket_mask) ) then
-            allocate (this%nhd_bucket_mask(numbasins))
+        ! allocate sub_basin_mask
+        if ( .not. allocated(this%sub_basin_mask) ) then
+            allocate(this%sub_basin_mask(ix,jx))
+            this%sub_basin_mask = 0
         else
             allocation_error = .true.
         end if
 
-        ! set the flag for aggfactrt
-        this%agg_factor = aggfactrt
+        ! allocate stream_mask
+        if ( .not. allocated(this%stream_mask) ) then
+            allocate(this%stream_mask(ixrt,jxrt))
+            this%stream_mask = 0
+        else
+            allocation_error = .true.
+        end if
 
-        ! set the number of local nhdplus links
-        this%lnlinksl = num_local_links
+        ! allocate stream_mask_index
+        if ( .not. allocated(this%stream_mask_index) ) then
+            allocate(this%stream_mask_index(ixrt,jxrt))
+        else
+            allocation_error = .true.
+        end if
 
-        ! set the flag for channel bucket only
-        this%channel_bucket_only = cb_only
+        ! allocate basin_stream_pixels
+        if ( .not. allocated(this%basin_stream_pixels) ) then
+            allocate(this%basin_stream_pixels(numbasins))
+            this%basin_stream_pixels = 0.
+        else
+            allocation_error = .true.
+        end if
 
-        this%pointers_need_set = .false.
+        ! -- WARNING -- basin_index is not allocated here
+        !it will be allocated by SIMP_GW_IND() which can not be called until after the
+        !call too MPP_READ_SIMP_GW() or READ_SIMP_GW()
 
         if ( allocation_error ) &
-            write(0,*) "attempt to allocate data in members of groundwater properties structure&
+            write(0,*) "attempt to allocate data in members of simple groundwater basin structure&
             &that where already allocated. The allocated members where not changed"
 
     end subroutine simple_basin_init
@@ -95,12 +119,55 @@ contains
             allocation_error = .true.
         end if
 
-        this%pointers_need_set = .true.
-
         if ( allocation_error ) &
             write(0,*) "attempt to deallocate data in members of groundwater properties structure&
             &that where not allocated. The unallocated members where not changed"
 
     end subroutine simple_basin_destroy
+
+      subroutine SIMP_GW_IND(ix,jx,GWSUBBASMSK,numbasns,gnumbasns,basnsInd)
+! create an index of basin mask so that it is faster for parallel computation.
+     implicit none
+     integer, intent(in) ::  ix,jx
+     integer, intent(in),dimension(ix,jx) ::  GWSUBBASMSK
+     integer, intent(out):: gnumbasns
+     integer, intent(inout):: numbasns
+     integer, intent(inout),allocatable,dimension(:):: basnsInd
+
+     integer,dimension(numbasns):: tmpbuf
+
+     integer :: i,j,k
+
+
+     gnumbasns = numbasns
+     numbasns = 0
+     tmpbuf = -999.
+
+     do j = 1,jx
+        do i = 1, ix
+           if(GWSUBBASMSK(i,j) .gt.0) then
+                tmpbuf(GWSUBBASMSK(i,j)) = GWSUBBASMSK(i,j)
+           endif
+        end do
+     end do
+     do k = 1, gnumbasns
+         if(tmpbuf(k) .gt. 0) numbasns = numbasns + 1
+     end do
+
+     allocate(basnsInd(numbasns))
+
+     i = 1
+     do k = 1, gnumbasns
+         if(tmpbuf(k) .gt. 0) then
+             basnsInd(i) = tmpbuf(k)
+             i = i + 1
+         endif
+     end do
+#ifdef HYDRO_D
+     write(6,*) "check numbasns, gnumbasns : ", numbasns, gnumbasns
+#endif
+
+     return
+  end subroutine SIMP_GW_IND
 
 end module module_simple_basin

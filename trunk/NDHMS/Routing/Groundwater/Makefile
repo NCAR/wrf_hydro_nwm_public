@@ -29,12 +29,12 @@ mod:
 	ar -r ../../lib/libHYDRO.a module_UDMAP.o
 	ar -r ../../lib/libHYDRO.a module_groundwater_base.o
 	ar -r ../../lib/libHYDRO.a module_groundwater_static_data.o
-	
+
 	cp *.mod  ../../mod
 
 	#Build the modules
 	make -C nhd
-	#make -C simple
+	make -C simple
 test:
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  groundwater_tests.F
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F

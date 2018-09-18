@@ -93,7 +93,7 @@ contains
         this%pointers_need_set = .false.
 
         if ( allocation_error ) &
-            write(0,*) "attempt to allocate data in members of groundwater properties structure&
+            write(0,*) "attempt to allocate data in members of nhd groundwater basin structure&
             &that where already allocated. The allocated members where not changed"
 
     end subroutine nhd_basin_init
@@ -113,6 +113,14 @@ contains
         else
             allocation_error = .true.
         end if
+
+        ! deallocate nhd_bucket_mask
+        if ( allocated(this%nhd_bucket_mask) ) then
+            deallocate(this%nhd_bucket_mask)
+        else
+            allocation_error = .true.
+        end if
+
 
         this%pointers_need_set = .true.
 

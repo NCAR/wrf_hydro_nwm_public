@@ -345,45 +345,61 @@ contains
 !#endif
 !   end subroutine get_dist_crt
 
-   subroutine get_basn_area(did)
-      implicit none
-      integer :: did, ix,jx, k
-      real :: basns_area(rt_domain(did)%gnumbasns)
-      ! TODO FIX WHEN IMPLEMTINING SIMPLE GW MODULE
-      call HYDRO_stop("get_basn_area is currently disabled")
-!#ifdef MPP_LAND
-!      integer :: mask(global_nx, global_ny)
-!      real :: dist_lsm(global_nx, global_ny,9)
-!#else
-!      integer :: mask(rt_domain(did)%ix, rt_domain(did)%jx)
-!      real :: dist_lsm(rt_domain(did)%ix, rt_domain(did)%jx,9)
-!#endif
-!#ifdef MPP_LAND
-!      ix = global_nx
-!      jx = global_ny
-!      call write_IO_int(rt_domain(did)%GWSUBBASMSK,mask)
-!      do k = 1,  9
-!         call write_IO_real(rt_domain(did)%dist_lsm(:,:,k),dist_lsm(:,:,k))
-!      end do
-!#else
-!      ix = rt_domain(did)%ix
-!      jx = rt_domain(did)%jx
-!      mask = rt_domain(did)%GWSUBBASMSK
-!      dist_lsm = rt_domain(did)%dist_lsm
-!#endif
-!
-!#ifdef MPP_LAND
-!      if(my_id .eq. IO_id) then
-!         call get_area_g(basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
-!      end if
-!!      call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%basns_area)
-!
-!      call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
-!           rt_domain(did)%basnsInd, basns_area,rt_domain(did)%basns_area)
-!#else
-!      call get_area_g(rt_domain(did)%basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
-!#endif
-   end subroutine get_basn_area
+    subroutine get_basn_area(did)
+        use module_nhd_data
+        implicit none
+        integer :: did, ix,jx, k
+        real :: basns_area(rt_domain(did)%gnumbasns)
+
+#ifdef MPP_LAND
+        integer :: mask(global_nx, global_ny)
+        real :: dist_lsm(global_nx, global_ny,9)
+#else
+        integer :: mask(rt_domain(did)%ix, rt_domain(did)%jx)
+        real :: dist_lsm(rt_domain(did)%ix, rt_domain(did)%jx,9)
+#endif
+#ifdef MPP_LAND
+        ix = global_nx
+        jx = global_ny
+        call write_IO_int(rt_domain(did)%GWSUBBASMSK,mask)
+        do k = 1,  9
+            call write_IO_real(rt_domain(did)%dist_lsm(:,:,k),dist_lsm(:,:,k))
+        end do
+#else
+        ix = rt_domain(did)%ix
+        jx = rt_domain(did)%jx
+        mask = rt_domain(did)%GWSUBBASMSK
+        dist_lsm = rt_domain(did)%dist_lsm
+#endif
+
+#ifdef MPP_LAND
+        if(my_id .eq. IO_id) then
+            call get_area_g(basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+        end if
+        !call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%basns_area)
+
+        select type ( gwd => rt_domain(did)%groundwater )
+            class is (nhd_groundwater_struct)
+                call HYDRO_stop("Nhd_groundwater_object passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+            ! FIXME UNCOMMENT when simple groundwater module is done
+            !class is (simple_groundwater_struct)
+            !    call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
+            !    rt_domain(did)%basnsInd, basns_area,gwd%basin%basin_area)
+            class default
+                call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+
+        end select
+#else
+        select type ( gwd => rt_domain(did)%groundwater )
+            class is (nhd_groundwater_struct)
+                call HYDRO_stop("Nhd_groundwater_object passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+            ! FIXME UNCOMMENT when simple groundwater module is done
+            !class is (simple_groundwater_struct)
+            !call get_area_g(gwd%basin%basin_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+            class default
+                call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+#endif
+    end subroutine get_basn_area
 
    subroutine get_area_g(basns_area,GWSUBBASMSK, numbasns,ix,jx,dist)
       integer :: i,j, n, ix,jx, numbasns

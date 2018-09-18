@@ -1,4 +1,9 @@
-module module_simple_data
+!> @brief simple data module for groundwater
+!!
+!! Contains the data structures and code used to implement and exponential bucket model for simulation of groundwater
+!! in simulations that use the simple scheme
+
+module module_simple_groundwater_data
     use module_simple_state
     use module_simple_basin
     use module_simple_properties
@@ -6,14 +11,16 @@ module module_simple_data
     use module_groundwater_base
     implicit none
 
+    !> data type that hold necessary data for exponential bucket groundwater model
+
     type, extends(groundwater_base_data_struct) :: simple_groundwater_struct
 
-        type (simple_state_interface), pointer :: state => null()
-        type (simple_properties_interface), pointer :: properties => null()
-        type (simple_basin_interface), pointer :: basin => null()
-        type (groundwater_static_struct), pointer :: static_data => null()
+        type (simple_state_interface), pointer :: state => null()       !< structure to hold state variables
+        type (simple_properties_interface), pointer :: properties => null() !< structure to hold properties
+        type (simple_basin_interface), pointer :: basin => null()           !< structure to hold basin interface variables
+        type (groundwater_static_struct), pointer :: static_data => null()  !< structure to hold static variables
 
-        logical :: pointer_allocation_guard = .false.
+        logical, private :: pointer_allocation_guard = .false.
         !integer :: gnumlinks
 
     contains
@@ -22,13 +29,25 @@ module module_simple_data
         procedure :: destroy => simple_groundwater_struct_destroy
         procedure :: run_timestep => run_simple_groundwater_timestep
     end type simple_groundwater_struct
-! ------------------DEBUG---------------------!
-!    integer :: g_num_links
-! ------------------DEBUG---------------------!
+
 contains
 
-    !constructor for the ground water struct
-    subroutine simple_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm)
+    !> Constructor for the simple groundwater struct.
+    !! @param this  The simple ground water object being constructed
+    !! @param ix  The x dimension of the lsm grid
+    !! @param jx  The y dimension of the lsm grid
+    !! @param ixrt  The x dimension of the routing grid
+    !! @param jxrt  The y dimensions of the routing grid
+    !! @param dt  The size of the time step
+    !! @param gwbaseswcrt  Groundwater configuration option: 0 = disabled, 1 = exp bucket, 2 = passthrough.
+    !! @param ovrtswcrt  Overland routing contributes to groundwater: 0 = off, 1 = on
+    !! @param numbasins  The number of basins being modeled in this process
+    !! @param gnumbasins  The global number of basins
+    !! @param agg_factor  The aggregation factor between the lsm and routing domains
+    !! @param cell_area  2D array containing the area of each routing cell
+    !! @param cell_area_lsm  2D array contain the area of lsm cell
+
+    subroutine simple_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, gnumbasins, agg_factor, cell_area, cell_area_lsm)
         implicit none
         class (simple_groundwater_struct), intent(inout) :: this ! object being initialized
         integer, intent(in) :: ix
@@ -39,8 +58,7 @@ contains
         integer, intent(in) :: gwbaseswcrt
         integer, intent(in) :: ovrtswcrt
         integer, intent(in) :: numbasins
-        integer, intent(in) :: num_local_links
-        integer, intent(in) :: cb_only
+        integer, intent(in) :: gnumbasins
         integer, intent(in) :: agg_factor
         real, dimension(:,:), intent(in) :: cell_area
         real, dimension(:,:), intent(in) :: cell_area_lsm
@@ -105,7 +123,7 @@ contains
                 write(0,*) "Failure to allocate groundwater properties structure"
             else
                 ! initialize the basin structure
-                call this%basin%init(ix, jx, numbasins, num_local_links, cb_only, agg_factor)
+                call this%basin%init(ix, jx, ixrt, jxrt, numbasins, gnumbasins)
             end if
 
             ! try to allocate static data
@@ -123,7 +141,11 @@ contains
 
     end subroutine simple_groundwater_struct_init
 
-    ! destructor for the ground water struct
+    !> Destructor for the simple groundwater struct. Calling this subroutine will deallocate all memory allocated to a
+    !! nhd_ground_water structure. If one or more pointer where disassociated or deallocated from code outside this
+    !! module they will not be deallocated and an error message will be displayed.
+    !! @param this  The nhd groundwater struct being destroyed
+
     subroutine simple_groundwater_struct_destroy(this)
         implicit none
         class (simple_groundwater_struct), intent(inout) :: this ! object being destroyed
@@ -131,9 +153,9 @@ contains
 
     subroutine run_simple_groundwater_timestep(ground_water_data)
         implicit none
-        class(nhd_groundwater_struct), intent(inout) :: ground_water_data
+        class(simple_groundwater_struct), intent(inout) :: ground_water_data
         logical :: rv
 
     end subroutine
 
-end module module_nhd_data
+end module module_simple_groundwater_data

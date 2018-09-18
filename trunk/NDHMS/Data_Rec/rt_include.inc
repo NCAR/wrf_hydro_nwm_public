@@ -74,7 +74,7 @@
 !DJG   VARIABLES FOR GW/Baseflow
   INTEGER :: numbasns
   INTEGER :: gnumbasns
-  INTEGER, allocatable, DIMENSION(:)     :: basnsInd ! basin index for tile
+  !INTEGER, allocatable, DIMENSION(:)     :: basnsInd ! basin index for tile moved to simple_groundwater%basin%basin_index
   INTEGER, allocatable, DIMENSION(:,:)   :: GWSUBBASMSK  !GW basin mask grid
   !REAL,    allocatable, DIMENSION(:,:)   :: qinflowbase  !strm inflow/baseflow from GW
   !REAL,    allocatable, DIMENSION(:,:)   :: SOLDRAIN     !time-step drainage
