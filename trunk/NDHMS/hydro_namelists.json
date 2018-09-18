@@ -27,7 +27,7 @@
             "order_to_write": 1,
             "out_dt": 60,
             "outlake": 1,
-            "output_channelbucket_influx": 2,
+            "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
             "restart_file": "NULL_specified_in_domain.json",
