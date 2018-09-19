@@ -15,24 +15,41 @@ module module_machine_learning_state
         real :: current_storage
         real :: previous_day_storage
         real :: previous_day_release
-        real :: current_time        ! verify as 'real'???
+        integer :: start_day_of_year
+        integer :: start_month
+        integer :: start_year
+        real :: x_day_of_year
+        real :: y_day_of_year
+        real :: time_interval
+        !real :: current_time        ! verify as 'real'???
+
+        character(len=19) :: start_date
 
     contains
 
         procedure :: init => machine_learning_state_init
         procedure :: destroy => machine_learning_state_destroy
 
+
     end type machine_learning_state_interface
 
 contains
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this, current_time, lake_number)
+    subroutine machine_learning_state_init(this, start_date, lake_number)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
 
+        character(len=19), intent(in) :: start_date
+
         integer, intent(in) :: lake_number              ! lake number
+
+        integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
+
+        real :: pi
+
+
 
         integer :: lake_index, lake_id_index
 
@@ -62,10 +79,14 @@ contains
         real, allocatable, dimension (:,:)  :: storage_monthly_averages
 
 
+        real :: release_monthly_average, storage_monthly_average
+
         integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
         integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
 
 
+
+        this%start_date = start_date
 
 
         !Reservoir Parm NC file
@@ -245,6 +266,68 @@ contains
 
 
 
+        ! Check grab monthly avg from start date and set previous day storage and release to that.
+
+
+        !integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
+
+
+        read (this%start_date(6:7), *) start_month
+        read (this%start_date(9:10), *) start_day_of_month
+        read (this%start_date(1:4), *) start_year
+
+
+
+        release_monthly_average = release_monthly_averages(lake_id_index ,start_month)
+
+        storage_monthly_average = storage_monthly_averages(lake_id_index ,start_month)
+
+
+        this%previous_day_release = release_monthly_average
+
+        this%previous_day_storage = storage_monthly_average
+
+
+        this%current_storage = 0.0
+
+        this%time_interval = 0.0
+
+
+        months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        start_day_of_year = 0
+
+        if (((mod(start_year,4)==0 .and. mod(start_year,100)/=0) .or. mod(start_year,400)==0) .and. start_month>2) then
+            do month_loop_index = 1, start_month-1
+                start_day_of_year = start_day_of_year + months(month_loop_index)
+            end do
+            start_day_of_year = start_day_of_year + start_day_of_month + 1    ! add one day for leap year after February
+
+        else
+            do month_loop_index = 1, start_month-1
+                start_day_of_year = start_day_of_year + months(month_loop_index)
+            end do
+
+            start_day_of_year = start_day_of_year + start_day_of_month     ! non leap year or leap year before March
+        end if
+
+
+        this%start_year = start_year
+
+        this%start_month = start_month
+
+        this%start_day_of_year = start_day_of_year
+
+        pi = 3.14159265359
+
+
+        if (((mod(this%start_year,4)==0 .and. mod(this%start_year,100)/=0) .or. mod(this%start_year,400)==0) .and. this%start_month>2) then
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 366) !leap year after February
+            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 366)
+        else
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 365) !non leap year or leap year before March
+            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 365)
+        end if
 
 
     end subroutine machine_learning_state_init
@@ -255,6 +338,22 @@ contains
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being destroyed
 
     end subroutine machine_learning_state_destroy
+
+
+
+
+    !subroutine update_time(this, time_interval)
+    !    implicit none
+
+
+    !    real, intent(in) :: time_interval
+
+        !integer, intent(in) :: lake_number              ! lake number
+
+
+    !end subroutine update_time
+
+
 
 end module module_machine_learning_state
 

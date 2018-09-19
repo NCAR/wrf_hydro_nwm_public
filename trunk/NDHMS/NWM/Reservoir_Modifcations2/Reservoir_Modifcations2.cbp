@@ -80,6 +80,7 @@
 		<Unit filename="../../HYDRO_drv/Makefile" />
 		<Unit filename="../../HYDRO_drv/module_HYDRO_drv.F" />
 		<Unit filename="../../HYDRO_drv/module_HYDRO_drv.f" />
+		<Unit filename="../../HYDRO_drv/module_HYDRO_drvDAVID.F" />
 		<Unit filename="../../Land_models/Noah/GRAPHICS/HORIZ/Makefile" />
 		<Unit filename="../../Land_models/Noah/GRAPHICS/HORIZ/kwm_date_utilities.F" />
 		<Unit filename="../../Land_models/Noah/GRAPHICS/HORIZ/kwm_string_utilities.F" />
@@ -247,6 +248,7 @@
 		<Unit filename="../../Routing/module_NWM_io_dict.f" />
 		<Unit filename="../../Routing/module_RT.F" />
 		<Unit filename="../../Routing/module_RT.f" />
+		<Unit filename="../../Routing/module_RTDAVID.F" />
 		<Unit filename="../../Routing/module_UDMAP.F" />
 		<Unit filename="../../Routing/module_UDMAP.f" />
 		<Unit filename="../../Routing/module_channel_routing.F" />

@@ -19,12 +19,7 @@
 !  User controllable options: <if applicable>
 
 MODULE module_Routing
-
-
 #ifdef MPP_LAND
-
-   !use module_NoahMP_hrldas_driver
-
    use module_gw_baseflow, only: pix_ct_1
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw, read_routelink, get_nlinksl
@@ -41,6 +36,10 @@ MODULE module_Routing
    use module_HYDRO_utils
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
+   use module_levelpool
+   !use module_machine_learning
+   !use module_read_q_type
+
    IMPLICIT NONE
 
 #ifdef OUTPUT_CHAN_CONN
@@ -53,9 +52,6 @@ MODULE module_Routing
    real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
    integer, parameter :: r4 = selected_real_kind(4)
    real  ,  parameter :: zeroFlt=0.0000000000000000000_r4
-
-
-   integer mm, MONTH, YEAR, DAY, JULIAN
 
 CONTAINS
 
@@ -353,6 +349,10 @@ CONTAINS
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
      if(NLAKES .gt. 0) then
+
+        allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
+        allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
+
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -638,6 +638,8 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
+integer :: lake_index, NLAKES_total
+
 real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
 real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
 
@@ -758,38 +760,79 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%gageMiss                                   )
    end if
 
+   ! Set reservoir type array values to 1 as default for levelpool type.
+   rt_domain(did)%q_type = 1
 
+   NLAKES_total = rt_domain(did)%NLAKES
 
+   ! Call subroutine to read text file that stores the reservoir ID/index
+   ! for the reservoir type (q_type) of reservoirs that are not the
+   ! default levelpool type.
+   !call read_q_type(NLAKES_total, rt_domain(did)%q_type)
 
-   print *, " "
-   print *, " "
-   print *, "HIIIIIIIIII!!!!!! "
-   print *, "nlst_rt(did)%startdate(1:19)  at 239 in module_hrldas_HYDRO.F"
-   print *, nlst_rt(did)%startdate(1:19)
-   print *, " "
-   print *, nlst_rt(did)%startdate(6:7)
+   do lake_index = 1, NLAKES_total
+     nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
 
-   read (nlst_rt(did)%startdate(6:7), *) mm
+   end do
 
-   print *, mm
+   ! For loop to cycle array of pointers to reservoirs
+   do lake_index = 1, NLAKES_total
 
+     ! If q_type equals 1 then go to Level Pool, if 2 then go to
+     ! Machine Learning, and if 3 then go to Persistence.
+     if (rt_domain(did)%q_type(lake_index) == 1) then
 
+       ! Allocate a single level pool reservoir
+       allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-   print *, " "
-   print *, " "
+       ! Dynamically inspects for level pool type reservoir
+       select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+          type is (levelpool_struct)
 
+               ! Call to initialize a level pool type reservoir
+               call lp%init(                                &
+               rt_domain(did)%RESHT(lake_index),            &
+               rt_domain(did)%HRZAREA(lake_index),          &
+               rt_domain(did)%WEIRH(lake_index),            &
+               rt_domain(did)%WEIRC(lake_index),            &
+               rt_domain(did)%WEIRL(lake_index),            &
+               rt_domain(did)%ORIFICEE(lake_index),         &
+               rt_domain(did)%ORIFICEC(lake_index),         &
+               rt_domain(did)%ORIFICEA(lake_index),         &
+               rt_domain(did)%LAKEMAXH(lake_index),         &
+               lake_index                                   )
 
-   MONTH = 1
-   DAY = 5
-   YEAR = 2018
+       end select
 
+     !else if (rt_domain(did)%q_type(lake_index) == 2) then
 
-   !JULIAN = DAY-32075+1461*(YEAR+4800+(MONTH-14)/12)/4+367*(MONTH-2-(MONTH-14)/12*12)/12-3*((YEAR+4900+(MONTH-14)/12)/100)/4
+       ! Allocate a single machine learning reservoir
+       !allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-   print *, JULIAN
+       ! Dynamically inspects for machine learning type reservoir
+       !select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+       !   type is (machine_learning_struct)
 
-   print *, " "
-   print *, " "
+       !          ! Call to initialize a machine learning type reservoir
+       !          call ml%init(                                &
+       !          rt_domain(did)%RESHT(lake_index),            &
+       !          rt_domain(did)%HRZAREA(lake_index),          &
+       !          rt_domain(did)%WEIRH(lake_index),            &
+       !          rt_domain(did)%WEIRC(lake_index),            &
+       !          rt_domain(did)%WEIRL(lake_index),            &
+       !          rt_domain(did)%ORIFICEE(lake_index),         &
+       !          rt_domain(did)%ORIFICEC(lake_index),         &
+       !          rt_domain(did)%ORIFICEA(lake_index),         &
+       !          rt_domain(did)%LAKEMAXH(lake_index),         &
+       !          lake_index                                   )
+
+       !end select
+
+     !else if (rt_domain(did)%q_type(lake_index) == 3) then
+
+     end if
+
+   end do
 
 
    !ADCHANGE: Add lake reach output
@@ -1548,6 +1591,16 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 
 end if ! end of neither channel_only nor channelBucket_only
 
+   ! Deallocate existing arrays that contain reservoir parameters/properties
+   if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
+   if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
+   if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
+   if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
+   if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
+   if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
+   if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
+   if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
+
 end subroutine LandRT_ini
 
 
@@ -1581,4 +1634,6 @@ end subroutine LandRT_ini
        end subroutine deriveFromNode
 
 
+
 END MODULE module_Routing
+

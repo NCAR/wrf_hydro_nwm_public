@@ -24,13 +24,6 @@ use module_mpp_land
 use MODULE_mpp_ReachLS, only : updatelinkv,                   &
                                ReachLS_write_io, gbcastvalue, &
                                gbcastreal2,      linkls_s
-
-
-use module_levelpool
-use module_reservoir_base
-!use module_Routing
-use module_RT_data, only: rt_domain
-
 #endif
 implicit none
 
@@ -63,6 +56,193 @@ MUSKING = (C1*quc)+(C2*qup)+(C3*qdp)
 
 ! ----------------------------------------------------------------
 end function MUSKING
+! ----------------------------------------------------------------
+
+! ------------------------------------------------
+!   SUBROUTINE LEVELPOOL
+! ------------------------------------------------
+
+subroutine LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
+
+!! ----------------------------  argument variables
+!! All elevations should be relative to a common base (often belev(k))
+
+real, intent(INOUT) :: H       ! water elevation height (m)
+real, intent(IN)    :: dt      ! routing period [s]
+real, intent(IN)    :: qi0     ! inflow at previous timestep (cms)
+real, intent(IN)    :: qi1     ! inflow at current timestep (cms)
+real, intent(OUT)   :: qo1     ! outflow at current timestep
+real, intent(IN)    :: ql      ! lateral inflow
+real, intent(IN)    :: ar      ! area of reservoir (km^2)
+real, intent(IN)    :: we      ! bottom of weir elevation
+real, intent(IN)    :: wc      ! weir coeff.
+real, intent(IN)    :: wl      ! weir length (m)
+real, intent(IN)    :: oe      ! orifice elevation
+real, intent(IN)    :: oc      ! orifice coeff.
+real, intent(IN)    :: oa      ! orifice area (m^2)
+real, intent(IN)    :: maxh    ! max depth of reservoir before overtop (m)
+integer, intent(IN) :: ln      ! lake number
+
+!!DJG Add lake option switch here...move up to namelist in future versions...
+integer :: LAKE_OPT            ! Lake model option (move to namelist later)
+real    :: Htmp                ! Temporary assign of incoming lake el. (m)
+
+!! ----------------------------  local variables
+real :: sap                    ! local surface area values
+real :: discharge              ! storage discharge m^3/s
+real :: tmp1, tmp2
+real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK
+real :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs
+real :: maxWeirDepth           !maximum capacity of weir
+!real :: hdiff_vol, qdiff_vol   ! water balance check variables
+!! ----------------------------  subroutine body: from chow, mad mays. pg. 252
+!! -- determine from inflow hydrograph
+
+
+!!DJG Set hardwire for LAKE_OPT...move specification of this to namelist in
+!future versions...
+LAKE_OPT = 2
+Htmp = H   !temporary set of incoming lake water elevation...
+!hdiff_vol = 0.0
+!qdiff_vol = 0.0
+
+!!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
+!pool, .....
+if (LAKE_OPT.eq.1) then     ! If-block for simple pass through scheme....
+
+   qo1 = qi1                 ! Set outflow equal to inflow at current time
+   H = Htmp                  ! Set new lake water elevation to incoming lake el.
+
+else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
+
+   It = qi0
+   Itdt_3   = qi0 + ((qi1 + ql - qi0) * 0.33)
+   Itdt_2_3 = qi0 + ((qi1 + ql - qi0) * 0.67)
+   maxWeirDepth =  maxh - we
+
+   !assume vertically walled reservoir
+   !remove this when moving to a variable head area volume
+   sap = ar * 1.0E6
+
+   !-- determine Q(dh) from elevation-discharge relationship
+   !-- and dh1
+   dh = H - we
+   if (dh .gt. maxWeirDepth) then
+      dh = maxWeirDepth
+   endif
+
+   if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+      tmp2 = wc * wl * (dh ** (3./2.))
+      discharge = tmp1 + tmp2
+   else if ( H .gt. oe ) then     !! only orifice flow,not full
+      discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+   else
+      discharge = 0.0
+   endif
+
+   if (sap .gt. 0) then
+      dh1 = ((It - discharge)/sap)*dt
+   else
+      dh1 = 0.0
+   endif
+
+   !-- determine Q(H + dh1/3) from elevation-discharge relationship
+   !-- dh2
+   dh = (H+dh1/3) - we
+   if (dh .gt. maxWeirDepth) then
+      dh = maxWeirDepth
+   endif
+
+   if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
+      tmp2 = wc * wl * (dh ** (3./2.))
+      discharge = tmp1 + tmp2
+   else if ( (H+dh1/3) .gt. oe ) then     !! only orifice flow,not full
+      discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
+   else
+      discharge = 0.0
+   endif
+
+   if (sap .gt. 0.0) then
+      dh2 = ((Itdt_3 - discharge)/sap)*dt
+   else
+      dh2 = 0.0
+   endif
+
+   !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
+   !-- dh3
+   dh = (H + (0.667*dh2)) - we
+   if (dh .gt. maxWeirDepth) then
+      dh = maxWeirDepth
+   endif
+
+   if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
+      tmp2 = wc * wl * (dh ** (3./2.))
+      discharge = tmp1 + tmp2
+   else if ( (H+dh2*0.667) .gt. oe ) then     !! only orifice flow,not full
+      discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
+   else
+      discharge = 0.0
+   endif
+
+   if (sap .gt. 0.0) then
+      dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+   else
+      dh3 = 0.0
+   endif
+
+   !-- determine dh and H
+   dh = (dh1/4.) + (0.75*dh3)
+   H = H + dh
+
+   !-- compute final discharge
+   dh = H - we
+   if (dh .gt. maxWeirDepth) then
+      dh = maxWeirDepth
+   endif
+   if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
+      tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+      tmp2 = wc * wl * (dh ** (3./2.))
+      discharge = tmp1 + tmp2
+   else if ( H .gt. oe ) then     !! only orifice flow,not full
+      discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+   else
+      discharge = 0.0
+   endif
+
+   if(H .ge. maxh) then  ! overtop condition
+      discharge = qi1
+      H = maxh
+   endif
+
+   qo1  = discharge  ! return the flow rate from reservoir
+
+!#ifdef HYDRO_D
+!#ifndef NCEP_WCOSS
+!   ! Water balance check
+!   qdiff_vol = (qi1+ql-qo1)*dt !m3
+!   hdiff_vol = (H-Htmp)*sap    !m3
+!22 format(f8.4,2x,f8.4,2x,f8.4,2x,f8.4,2x,f8.4,2x,f6.0,2x,f20.1,2x,f20.1)
+!   open (unit=67, &
+!     file='lake_massbalance_out.txt', status='unknown',position='append')
+!   write(67,22) Htmp, H, qi1, ql, qo1, dt, qdiff_vol, hdiff_vol
+!   close(67)
+!#endif
+!#endif
+
+23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
+24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
+
+
+else   ! ELSE for LAKE_OPT....
+endif  ! ENDIF for LAKE_OPT....
+
+return
+
+! ----------------------------------------------------------------
+end subroutine LEVELPOOL
 ! ----------------------------------------------------------------
 
 
@@ -516,8 +696,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
-       RESHT, &
-       ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
+       RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+       ORIFICEE, ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area  &
 #ifdef MPP_LAND
@@ -590,6 +770,15 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 
         !-- lake params
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRH    !-- lake depth  (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
+        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
+
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
@@ -1168,20 +1357,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
             if(lake_index(i) .gt. 0)  then
 #endif
-
-              ! Calls run_release for a single reservoir depending on its type as
-              ! in whether it uses level pool, machine learning, or persistence.
-              ! Inflow, lateral inflow, water elevation, and the routing period
-              ! are passed in. Updated outflow and water elevation are returned.
-              ! Domain ID (did) set to 1.
-              call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEI(i), QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)
-
-              ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
-              !       inside the reservoir module, but it requires a redesign of the lake
-              !       MPI communication model.
-
-              QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
-
+              CALL LEVELPOOL(i,QLAKEIP(i), QLAKEI(i), QLAKEO(i), QLLAKE(i), &
+                DTCT, RESHT(i), HRZAREA(i), WEIRH(i), LAKEMAXH(i), WEIRC(i), &
+                WEIRL(i), ORIFICEE(i), ORIFICEC(i), ORIFICEA(i))
+                QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 
 #ifdef MPP_LAND
             endif
@@ -1194,14 +1373,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEO,NLAKES,99)
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEI,NLAKES,99)
 !yw      call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLAKEIP,NLAKES,99)
-
-         ! TODO: Change updateLake_grid calls below to updated distributed reservoir
-         !       objects and not arrays as currently implemented.
          call updateLake_grid(QLLAKE, nlakes,lake_index)
          call updateLake_grid(RESHT,  nlakes,lake_index)
          call updateLake_grid(QLAKEO, nlakes,lake_index)
-         !call updateLake_grid(QLAKEI, nlakes,lake_index)          !Bug to be fixed by NCAR
-         call updateLake_grid(QLLAKE, nlakes,lake_index)           !Bug to be fixed by NCAR
+         call updateLake_grid(QLLAKE, nlakes,lake_index)
          call updateLake_grid(QLAKEIP,nlakes,lake_index)
     endif
 #endif
@@ -1544,7 +1719,8 @@ end subroutine drive_CHANNEL
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
         CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
-        RESHT, CVOL, QLAKEI, QLAKEO, LAKENODE, &
+        RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+        ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
         nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
         LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
@@ -1627,6 +1803,15 @@ end subroutine drive_CHANNEL
        real, dimension(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
 
        !-- lake params
+
+       real, intent(IN), dimension(:)       :: HRZAREA  !-- horizontal area (km^2)
+       real, intent(IN), dimension(:)       :: LAKEMAXH !-- maximum lake depth  (m^2)
+       real, intent(IN), dimension(:)       :: WEIRH    !--  lake depth  (m^2)
+       real, intent(IN), dimension(:)       :: WEIRC    !-- weir coefficient
+       real, intent(IN), dimension(:)       :: WEIRL    !-- weir length (m)
+       real, intent(IN), dimension(:)       :: ORIFICEC !-- orrifice coefficient
+       real, intent(IN), dimension(:)       :: ORIFICEA !-- orrifice area (m^2)
+       real, intent(IN), dimension(:)       :: ORIFICEE !-- orrifce elevation (m)
        integer, intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
        real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
@@ -1702,6 +1887,7 @@ end subroutine drive_CHANNEL
          !! This establishes the data structure used to solve the nudges.
          call setup_stream_nudging(0)  !! always zero b/c at beginning of hydro timestep
 #endif /* WRF_HYDRO_NUDGING */
+
 
 !---------------------------------------------
 if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
@@ -1893,17 +2079,9 @@ do nt = 1, nsteps
 
          lakeid = LAKEIDX(k)
          if(lakeid .ge. 0) then
-
-            ! Calls run_release for a single reservoir depending on its type as
-            ! in whether it uses level pool, machine learning, or persistence.
-            ! Inflow, lateral inflow, water elevation, and the routing period
-            ! are passed in. Updated outflow and water elevation are returned.
-            ! Domain ID (did) set to 1.
-            call rt_domain(1)%reservoirs(lakeid)%ptr%run_release(Quc, 0.0, RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)
-
-            ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
-            !       inside the reservoir module, but it requires a redesign of the lake
-            !       MPI communication model.
+            call LEVELPOOL(lakeid,Qup, Quc, tmpQLINK(k,2), &
+                 0.0, DTRT_CH, RESHT(lakeid), HRZAREA(lakeid), WEIRH(lakeid), LAKEMAXH(lakeid), &
+                 WEIRC(lakeid), WEIRL(lakeid),ORIFICEE(lakeid), ORIFICEC(lakeid), ORIFICEA(lakeid))
 
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
             QLAKEI(lakeid)  = Quc           !save inflow to lake
