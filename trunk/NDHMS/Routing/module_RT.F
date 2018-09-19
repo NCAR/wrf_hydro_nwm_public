@@ -236,7 +236,7 @@ CONTAINS
 
             !allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
             !rt_domain(did)%gw_strm_msk   = 0
-            allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
+            !allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
 
             ! allocate land surface grid variables
             allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
@@ -1248,7 +1248,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                             call collectSizeInd(rt_domain(did)%numbasns)
 #endif
                             call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, gwd%basin%stream_mask, &
-                                rt_domain(did)%numbasns,gwd%basin%basin_index,rt_domain(did)%gw_strm_msk_lind)
+                                rt_domain(did)%numbasns,gwd%basin%basin_index,gwd%basin%stream_mask_index)
                             class default
                     end select
 
