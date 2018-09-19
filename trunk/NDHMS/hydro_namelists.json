@@ -27,7 +27,7 @@
             "order_to_write": 1,
             "out_dt": 60,
             "outlake": 1,
-            "output_channelbucket_influx": 2,
+            "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
             "restart_file": "NULL_specified_in_domain.json",
@@ -73,7 +73,7 @@
         "hydro_nlist": {
             "aggfactrt": 1,
             "dxrt": 1000,
-            "output_channelbucket_influx": 2,
+            "output_channelbucket_influx": 0,
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
@@ -105,6 +105,32 @@
     },
 
     "gridded": {
+        "hydro_nlist": {
+            "compound_channel": false,
+            "gwbasmskfil": "NULL_specified_in_domain.json",
+            "output_channelbucket_influx": 0,
+            "channel_option": 3,
+            "dtrt_ch": 10,
+            "rstrt_swc": 1,
+            "udmp_opt": 0
+        },
+        "nudging_nlist": {
+            "biaswindowbeforet0": "",
+            "invdisttimeweightbias": "",
+            "maxagepairsbiaspersist": "",
+            "minnumpairsbiaspersist": "",
+            "nlastobs": "",
+            "noconstinterfbias": "",
+            "nudginglastobsfile": "",
+            "nudgingparamfile": "",
+            "persistbias": "",
+            "readtimesliceparallel": "",
+            "temporalpersistence": "",
+            "timeslicepath": ""
+        }
+    },
+
+    "gridded_no_lakes": {
         "hydro_nlist": {
             "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
