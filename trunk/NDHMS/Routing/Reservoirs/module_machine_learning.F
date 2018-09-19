@@ -17,7 +17,7 @@
 module module_machine_learning
 
     use module_machine_learning_parameters
-    !use module_machine_learning_state
+    use module_machine_learning_state
     use module_reservoir_base
     implicit none
 
@@ -28,7 +28,7 @@ module module_machine_learning
         ! Define pointers to sub-structs / sub-objects to and
         ! held by a machine learning reservoir object.
         type (machine_learning_parameters_interface), pointer :: parameters => null()
-        !type (machine_learning_state_interface), pointer :: state => null()
+        type (machine_learning_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
 
@@ -50,9 +50,10 @@ contains
 
 
     !Machine Learning Constructor
-    subroutine machine_learning_struct_init(this, lake_number)
+    subroutine machine_learning_struct_init(this, start_date, lake_number)
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
+        character(len=19), intent(in) :: start_date
         integer, intent(in) :: lake_number               ! lake number
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
@@ -88,15 +89,15 @@ contains
             this%pointer_allocation_guard = .true.
 
             ! try to allocate state
-            !allocate ( this%state )
-            !if ( .not. associated(this%state) ) then
-            !    ! if the state structure could not be created write an error
-            !    write(0,*) "Failure to allocate state parameters structure"
-            !else
-            !    ! initialize machine_learning state
-            !    call this%state%init( water_elevation )
-            !end if
-            !this%pointer_allocation_guard = .true.
+            allocate ( this%state )
+            if ( .not. associated(this%state) ) then
+                ! if the state structure could not be created write an error
+                write(0,*) "Failure to allocate state parameters structure"
+            else
+                ! initialize machine_learning state
+                call this%state%init( start_date, lake_number )
+            end if
+            this%pointer_allocation_guard = .true.
         end if
 
     end subroutine machine_learning_struct_init
@@ -124,6 +125,28 @@ contains
         real, intent(inout) :: water_elevation      ! meters
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
+
+
+        !reservoir_data%state
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     !    ! Update input variables
     !    reservoir_data%input%inflow = inflow

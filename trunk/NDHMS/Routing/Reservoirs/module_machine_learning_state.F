@@ -13,22 +13,28 @@ module module_machine_learning_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
         real :: current_storage
+        real :: accumulated_storage
         real :: previous_day_storage
         real :: previous_day_release
+        real :: average_inflow
+        real :: time_interval
+        real :: update_time    ! if reals how can we set exactly equals == ?
+        integer :: time_count
+        !real :: current_time        ! verify as 'real'???
+        character(len=19) :: start_date  ! keep as state var??
         integer :: start_day_of_year
         integer :: start_month
         integer :: start_year
         real :: x_day_of_year
         real :: y_day_of_year
-        real :: time_interval
-        !real :: current_time        ! verify as 'real'???
 
-        character(len=19) :: start_date
+
 
     contains
 
         procedure :: init => machine_learning_state_init
         procedure :: destroy => machine_learning_state_destroy
+        !procedure :: update_time
 
 
     end type machine_learning_state_interface
@@ -322,12 +328,27 @@ contains
 
 
         if (((mod(this%start_year,4)==0 .and. mod(this%start_year,100)/=0) .or. mod(this%start_year,400)==0) .and. this%start_month>2) then
-            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 366) !leap year after February
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 366) ! leap year after February
             this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 366)
         else
-            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 365) !non leap year or leap year before March
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 365) ! non leap year or leap year before March
             this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 365)
         end if
+
+
+        this%time_interval = 0.0
+
+        this%update_time = 0.0
+
+        this%time_count = 0
+
+        this%current_storage = 0.0
+
+        this%accumulated_storage = 0.0
+
+        this%average_inflow = 0.0
+
+
 
 
     end subroutine machine_learning_state_init
@@ -344,11 +365,18 @@ contains
 
     !subroutine update_time(this, time_interval)
     !    implicit none
+    !    class(machine_learning_state_interface), intent(inout) :: this ! the type object
 
 
     !    real, intent(in) :: time_interval
 
         !integer, intent(in) :: lake_number              ! lake number
+
+    !    real :: storage_accum
+
+    !    real :: average_inflow
+
+    !    integer :: count
 
 
     !end subroutine update_time
