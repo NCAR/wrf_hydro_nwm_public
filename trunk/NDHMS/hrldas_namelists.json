@@ -9,7 +9,7 @@
             "glacier_option": 2,
             "hrldas_setup_file": "NULL_specified_in_domain.json",
             "indir": "NULL_specified_in_domain.json",
-            "khour": 3,
+            "khour": 144,
             "noah_timestep": 3600,
             "nsoil": 4,
             "outdir": "./",
@@ -62,16 +62,14 @@
         "wrf_hydro_offline": {}
     },
 
-    "nwm_channel-only" : {
-        "noahlsm_offline": {},
-        "wrf_hydro_offline": {}
-    },
-
     "gridded": {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
     },
-
+    "gridded_no_lakes": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
     "reach": {
         "noahlsm_offline": {},
         "wrf_hydro_offline": {}
