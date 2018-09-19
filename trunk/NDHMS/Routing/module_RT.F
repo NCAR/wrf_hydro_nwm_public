@@ -234,8 +234,8 @@ CONTAINS
             !allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
             !rt_domain(did)%qinflowbase = 0.0
 
-            allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
-            rt_domain(did)%gw_strm_msk   = 0
+            !allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
+            !rt_domain(did)%gw_strm_msk   = 0
             allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
 
             ! allocate land surface grid variables
@@ -1238,7 +1238,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #endif
                                 rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
                                 rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
-                                rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
+                                gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
 
 
                             call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
@@ -1247,7 +1247,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #ifdef MPP_LAND
                             call collectSizeInd(rt_domain(did)%numbasns)
 #endif
-                            call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, rt_domain(did)%gw_strm_msk,&
+                            call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, gwd%basin%stream_mask, &
                                 rt_domain(did)%numbasns,gwd%basin%basin_index,rt_domain(did)%gw_strm_msk_lind)
                             class default
                     end select
@@ -1282,29 +1282,34 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #ifdef MPP_LAND
                     select type (gwd => rt_domain(did)%groundwater)
                         type is (simple_groundwater_struct)
-                            call pix_ct_1(rt_domain(did)%gw_strm_msk,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
+                            call pix_ct_1(gwd%basin%stream_mask,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
                                 rt_domain(did)%gnumbasns,gwd%basin%basin_index)
                     end select
 #else
-                    rt_domain(did)%gwbas_pix_ct = 0.
-                    !         do k = 1, rt_domain(did)%numbasns
-                    !            bas = rt_domain(did)%basnsInd(k)
-                    do i=1,rt_domain(did)%ixrt
-                        do j=1,rt_domain(did)%jxrt
-                            if (rt_domain(did)%gw_strm_msk(i,j).gt.0) then
-                                bas = rt_domain(did)%gw_strm_msk(i,j)
-                                rt_domain(did)%gwbas_pix_ct(bas) = &
-                                    rt_domain(did)%gwbas_pix_ct(bas)  + 1.0
-                            endif
-                        end do
-                    end do
-                    !         end do
+                    select type (gwd => rt_domain(did)%groundwater)
+                        type is (simple_groundwater_struct)
+                            rt_domain(did)%gwbas_pix_ct = 0.
+                            !         do k = 1, rt_domain(did)%numbasns
+                            !            bas = rt_domain(did)%basnsInd(k)
+                            do i=1,rt_domain(did)%ixrt
+                                do j=1,rt_domain(did)%jxrt
+                                    if (gwd%basin%stream_mask(i,j).gt.0) then
+                                        bas = gwd%basin%stream_mask(i,j)
+                                        rt_domain(did)%gwbas_pix_ct(bas) = &
+                                            rt_domain(did)%gwbas_pix_ct(bas)  + 1.0
+                                    endif
+                                end do
+                            end do
+                            !         end do
+                    end select type
 #endif
 
 #ifdef HYDRO_D
                     select type (gwd => rt_domain(did)%groundwater)
                         type is (nhd_groundwater_struct)
-                        print *, "Starting GW basin levels...",gwd%state%z_gwsubbas
+                            print *, "Starting GW basin levels...",gwd%state%z_gwsubbas
+                        type is (simple_groundwater_struct)
+                            print *, "Starting GW basin levels...",gwd%state%z_gwsubbas
                     class default
 
                     end select
