@@ -117,17 +117,25 @@ contains
     ! which will then call the MACHINE_LEARNING method/subroutine for processing the
     ! inputs and returning the output.
     subroutine run_machine_learning_release(reservoir_data, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        outflow, routing_period)
         implicit none
         class(machine_learning_struct), intent(inout) :: reservoir_data
         real, intent(in)    :: inflow               ! cubic meters per second (cms)
-        real, intent(in)    :: lateral_inflow       ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation      ! meters
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
 
 
-        !reservoir_data%state
+
+
+
+
+        reservoir_data%input%inflow = inflow
+
+        reservoir_data%state%time_count = reservoir_data%state%time_count + 1
+
+        reservoir_data%state%average_inflow = reservoir_data%state%average_inflow + reservoir_data%input%inflow
+
+        reservoir_data%state%accumulated_storage = reservoir_data%input%inflow -
 
 
 

@@ -815,6 +815,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
        !          ! Call to initialize a machine learning type reservoir
        !          call ml%init(                                &
+       !          nlst_rt(did)%startdate(1:19),                &
+       !          lake_index,                                  &
+
        !          rt_domain(did)%RESHT(lake_index),            &
        !          rt_domain(did)%HRZAREA(lake_index),          &
        !          rt_domain(did)%WEIRH(lake_index),            &
