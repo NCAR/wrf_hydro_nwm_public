@@ -29,7 +29,10 @@ def test_run_candidate_channel_only(
     print('\n')
 
     candidate_sim_copy = copy.deepcopy(candidate_sim)
+    candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
+    candidate_channel_only_sim_copy.\
+        base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
 
     ##################
     # re-run candidate at shorter duration since requires hourly outputs
@@ -44,7 +47,7 @@ def test_run_candidate_channel_only(
     job = wrfhydropy.Job(job_id='run_candidate',
                          exe_cmd=exe_command,
                          restart_freq_hr=24,
-                         output_freq_hr=24)
+                         output_freq_hr=1)
     candidate_sim_copy.add(job)
 
     start_time, end_time = candidate_sim_copy.jobs[0]._solve_model_start_end_times()
@@ -91,7 +94,7 @@ def test_run_candidate_channel_only(
     job = wrfhydropy.Job(job_id='run_candidate_channel_only',
                          exe_cmd=exe_command,
                          restart_freq_hr=24,
-                         output_freq_hr=24)
+                         output_freq_hr=1)
     candidate_channel_only_sim_copy.add(job)
 
     start_time, end_time = candidate_channel_only_sim_copy.jobs[0]._solve_model_start_end_times()
@@ -221,7 +224,8 @@ def test_ncores_candidate_channel_only(output_dir):
     candidate_channel_only_sim_expected = \
         pickle.load(candidate_channel_only_collected_file.open("rb"))
     candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
-
+    candidate_channel_only_sim_ncores.\
+        base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     run_dir = output_dir / 'ncores_candidate_channel_only'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
@@ -230,7 +234,7 @@ def test_ncores_candidate_channel_only(output_dir):
     new_job = wrfhydropy.Job(job_id='ncores_candidate',
                              exe_cmd=old_job._exe_cmd,
                              restart_freq_hr=24,
-                             output_freq_hr=24)
+                             output_freq_hr=1)
 
     # Remove old job and add new job
     candidate_channel_only_sim_ncores.jobs.pop(0)
