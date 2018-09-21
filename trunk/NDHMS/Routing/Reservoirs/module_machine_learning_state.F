@@ -13,14 +13,17 @@ module module_machine_learning_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
         real :: current_storage
-        real :: accumulated_storage
+        !real :: accumulated_storage
         real :: previous_day_storage
         real :: previous_day_release
-        real :: average_inflow
-        real :: time_interval
-        real :: update_time    ! if reals how can we set exactly equals == ?
-        integer :: time_count
-        !real :: current_time        ! verify as 'real'???
+        real :: average_inflow_for_time_interval
+        real :: accumulated_inflow
+        integer :: routing_period
+        integer :: time_interval
+        integer :: update_time    ! if reals how can we set exactly equals == ?
+        !integer :: time_count
+        integer :: release_count
+        integer :: current_time        ! should be 'real' instead???
         character(len=19) :: start_date  ! keep as state var??
         integer :: start_day_of_year
         integer :: start_month
@@ -293,10 +296,21 @@ contains
 
         this%previous_day_storage = storage_monthly_average
 
+        !this%accumulated_storage = storage_monthly_average
 
-        this%current_storage = 0.0
+        this%current_storage = storage_monthly_average
 
-        this%time_interval = 0.0
+        this%time_interval = 86400
+
+        this%current_time = 0
+
+        this%update_time = 86400 ! seconds in 24 hours
+
+        this%routing_period = 0
+
+        this%average_inflow_for_time_interval = 0.0
+
+        this%accumulated_inflow = 0.0
 
 
         months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -336,17 +350,7 @@ contains
         end if
 
 
-        this%time_interval = 0.0
 
-        this%update_time = 0.0
-
-        this%time_count = 0
-
-        this%current_storage = 0.0
-
-        this%accumulated_storage = 0.0
-
-        this%average_inflow = 0.0
 
 
 
