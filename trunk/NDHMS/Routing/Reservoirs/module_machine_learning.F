@@ -108,7 +108,6 @@ contains
         class(machine_learning_struct), intent(inout) :: this ! object being destroyed
     end subroutine machine_learning_struct_destroy
 
-
     ! Subroutine for running release for a machine learning reservoir,
     ! which will then call the MACHINE_LEARNING method/subroutine for processing the
     ! inputs and returning the output.
@@ -121,7 +120,6 @@ contains
         real, intent(inout) :: water_elevation      ! meters
         real, intent(out)   :: outflow              ! cubic meters per second (cms)
         real, intent(in)    :: routing_period       ! seconds
-
 
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
