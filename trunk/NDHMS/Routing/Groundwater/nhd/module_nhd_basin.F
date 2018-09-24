@@ -30,7 +30,7 @@ module module_nhd_basin
         integer :: channel_bucket_only
 
         !> the aggregation factor from the routing to LSM domains
-        integer :: agg_factor
+        !integer :: agg_factor
 
         !> guard variable for to know if fortran pointers have been allocated
         logical, private :: pointers_need_set = .true.
@@ -82,7 +82,7 @@ contains
         end if
 
         ! set the flag for aggfactrt
-        this%agg_factor = aggfactrt
+        !this%agg_factor = aggfactrt
 
         ! set the number of local nhdplus links
         this%lnlinksl = num_local_links

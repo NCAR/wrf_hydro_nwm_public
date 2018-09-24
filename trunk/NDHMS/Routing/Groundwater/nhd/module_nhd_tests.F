@@ -106,6 +106,10 @@ contains
             rv = .false.
         end if
 
+        print *, "Checking read on agg_factor"
+        print *, o%agg_factor
+        print *, " "
+
     end function test_aggregation
 
     ! test to see the each member of the state structure is correctly allocated and readable
@@ -186,10 +190,6 @@ contains
             print *, "FAILED"
             rv = .false.
         end if
-
-        print *, "Checking read on basin agg_factor"
-        print *, o%agg_factor
-        print *, " "
 
         print *, "Checking read on basin channel_bucket_only"
         print *, o%channel_bucket_only

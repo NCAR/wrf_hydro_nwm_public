@@ -33,6 +33,7 @@ mod:
 	cp *.mod  ../../mod
 
 	#Build the modules
+	make -C bucket
 	make -C nhd
 	make -C simple
 test:
@@ -57,5 +58,6 @@ clean:
 	rm -f *.mod
 	rm -f groundwater_tests
 
+	make -C bucket clean
 	make -C nhd clean
 	make -C simple clean
