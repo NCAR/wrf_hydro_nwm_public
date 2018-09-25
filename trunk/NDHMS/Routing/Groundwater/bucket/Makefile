@@ -25,9 +25,9 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_bucket_properties.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_bucket_state.F
 	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_bucket_impl.F
-	ar -r ../../../lib/libHYDRO.a module_nhd_properties.o
-	ar -r ../../../lib/libHYDRO.a module_nhd_state.o
-	ar -r ../../../lib/libHYDRO.a module_nhd_data.o
+	ar -r ../../../lib/libHYDRO.a module_bucket_properties.o
+	ar -r ../../../lib/libHYDRO.a module_bucket_state.o
+	ar -r ../../../lib/libHYDRO.a module_bucket_impl.o
 	
 	cp *.mod ../../../mod
 clean:

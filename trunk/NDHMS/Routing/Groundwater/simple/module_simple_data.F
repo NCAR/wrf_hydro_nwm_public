@@ -4,24 +4,17 @@
 !! in simulations that use the simple scheme
 
 module module_simple_groundwater_data
-    use module_simple_state
+    use module_bucket_impl
     use module_simple_basin
-    use module_simple_properties
-    use module_groundwater_static_data
-    use module_groundwater_base
     implicit none
 
     !> data type that hold necessary data for exponential bucket groundwater model
 
-    type, extends(groundwater_base_data_struct) :: simple_groundwater_struct
+    type, extends(bucket_groundwater_struct) :: simple_groundwater_struct
 
-        type (simple_state_interface), pointer :: state => null()       !< structure to hold state variables
-        type (simple_properties_interface), pointer :: properties => null() !< structure to hold properties
         type (simple_basin_interface), pointer :: basin => null()           !< structure to hold basin interface variables
-        type (groundwater_static_struct), pointer :: static_data => null()  !< structure to hold static variables
 
         logical, private :: pointer_allocation_guard = .false.
-        !integer :: gnumlinks
 
     contains
 
@@ -63,59 +56,19 @@ contains
         real, dimension(:,:), intent(in) :: cell_area
         real, dimension(:,:), intent(in) :: cell_area_lsm
 
+        call bucket_groundwater_struct_init( &
+            this, &
+            ix, jx, &
+            ixrt, jxrt, &
+            dt, &
+            gwbaseswcrt, &
+            ovrtswcrt, &
+            numbasins, &
+            agg_factor, &
+            cell_area, &
+            cell_area_lsm)
+
         if (this%pointer_allocation_guard .eqv. .false. ) then
-            ! try to allocate input
-            allocate ( this%input )
-            if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater input structure"
-            else
-                ! initialize the input structure
-                call this%input%init(ix,jx,numbasins)
-            end if
-
-            ! try to allocate output
-            allocate ( this%output )
-            if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater output structure"
-            else
-                ! initialize the output structure
-                call this%output%init(ixrt,jxrt,numbasins)
-            end if
-
-            !try to allocate aggregation
-            allocate ( this%aggregation )
-            if ( .not. associated(this%aggregation) ) then
-                ! if the output structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater aggregation structure"
-            else
-                ! initialize the output structure
-                call this%aggregation%init(ixrt,jxrt,agg_factor)
-            end if
-
-            ! try to allocate state
-            allocate ( this%state )
-            if ( .not. associated(this%state) ) then
-                ! if the input structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater state structure"
-            else
-                ! initialize the state structure
-                call this%state%init(numbasins)
-            end if
-            this%pointer_allocation_guard = .true.
-
-            ! try to allocate properties
-            allocate ( this%properties )
-            if ( .not. associated(this%properties) ) then
-                ! if the properties structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater properties structure"
-            else
-                ! initialize the properties structure
-                call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)
-            end if
-            this%pointer_allocation_guard = .true.
-
             ! try to allocate basin
             allocate ( this%basin )
             if ( .not. associated(this%basin) ) then
@@ -124,16 +77,6 @@ contains
             else
                 ! initialize the basin structure
                 call this%basin%init(ix, jx, ixrt, jxrt, numbasins, gnumbasins)
-            end if
-
-            ! try to allocate static data
-            allocate ( this%static_data )
-            if ( .not. associated(this%static_data) ) then
-                ! if the static data structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater properties structure"
-            else
-                ! initialize the static data structure
-                call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
             end if
 
             this%pointer_allocation_guard = .true.
@@ -149,6 +92,26 @@ contains
     subroutine simple_groundwater_struct_destroy(this)
         implicit none
         class (simple_groundwater_struct), intent(inout) :: this ! object being destroyed
+
+        logical :: io_err = .false.
+
+        call bucket_groundwater_struct_destroy(this)
+
+        ! pointer allocation guard should be set if data structures where properly initalized
+        if (this%pointer_allocation_guard  ) then
+            !check each pointer then deallocate
+
+            ! check the output structure
+            if ( associated(this%basin)) then
+                deallocate(this%basin)
+            else
+                write(0,*) "Error the basin structure the simple groundwater object was not associated"
+                io_err = .true.
+            end if
+
+            this%pointer_allocation_guard = .false.
+        end if
+
     end subroutine simple_groundwater_struct_destroy
 
     subroutine run_simple_groundwater_timestep(ground_water_data)

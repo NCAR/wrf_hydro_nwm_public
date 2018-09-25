@@ -23,13 +23,13 @@ module module_bucket_impl
         !> sub structure to hold static data
         type (groundwater_static_struct), pointer :: static_data => null()
 
-        logical, private :: pointer_allocation_guard = .false.
+        logical, private :: bucket_pointer_allocation_guard = .false.
         !integer :: gnumlinks
 
     contains
 
-        procedure :: init => bucket_groundwater_struct_init
-        procedure :: destroy => bucket_groundwater_struct_destroy
+        procedure :: loss => groundwater_bucket_loss_func
+
     end type bucket_groundwater_struct
 
 contains
@@ -44,13 +44,11 @@ contains
     !! @param gwbaseswcrt  Groundwater configuration option: 0 = disabled, 1 = exp bucket, 2 = passthrough.
     !! @param ovrtswcrt  Overland routing contributes to groundwater: 0 = off, 1 = on
     !! @param numbasins  The number of basins being modeled in this process
-    !! @param num_local_links  The number of nhd links modeled in this process
-    !! @param cb_only  The flag for channel bucket only
     !! @param agg_factor  The aggregation factor between the lsm and routing domains
     !! @param cell_area  2D array containing the area of each routing cell
     !! @param cell_area_lsm  2D array contain the area of lsm cell
 
-    subroutine bucket_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm)
+    subroutine bucket_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, agg_factor, cell_area, cell_area_lsm)
         implicit none
         class (bucket_groundwater_struct), intent(inout) :: this ! object being initialized
         integer, intent(in) :: ix
@@ -61,13 +59,11 @@ contains
         integer, intent(in) :: gwbaseswcrt
         integer, intent(in) :: ovrtswcrt
         integer, intent(in) :: numbasins
-        integer, intent(in) :: num_local_links
-        integer, intent(in) :: cb_only
         integer, intent(in) :: agg_factor
         real, dimension(:,:), intent(in) :: cell_area
         real, dimension(:,:), intent(in) :: cell_area_lsm
 
-        if (this%pointer_allocation_guard .eqv. .false. ) then
+        if (this%bucket_pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
@@ -107,7 +103,6 @@ contains
                 ! initialize the state structure
                 call this%state%init(numbasins)
             end if
-            this%pointer_allocation_guard = .true.
 
             ! try to allocate properties
             allocate ( this%properties )
@@ -118,7 +113,6 @@ contains
                 ! initialize the properties structure
                 call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)
             end if
-            this%pointer_allocation_guard = .true.
 
             ! try to allocate static data
             allocate ( this%static_data )
@@ -130,7 +124,7 @@ contains
                 call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
             end if
 
-            this%pointer_allocation_guard = .true.
+            this%bucket_pointer_allocation_guard = .true.
         end if
 
     end subroutine bucket_groundwater_struct_init
@@ -147,7 +141,7 @@ contains
         logical :: io_err = .false.
 
         ! pointer allocation guard should be set if data structures where properly initalized
-        if (this%pointer_allocation_guard  ) then
+        if (this%bucket_pointer_allocation_guard  ) then
             !check each pointer then deallocate
 
             ! check the input structure
@@ -197,8 +191,15 @@ contains
                 write(0,*) "Error the static_data structure the nhd data object was not associated"
                 io_err = .true.
             end if
+
+            this%bucket_pointer_allocation_guard = .false.
         end if
 
     end subroutine bucket_groundwater_struct_destroy
+
+    subroutine groundwater_bucket_loss_func(this)
+        class(bucket_groundwater_struct) :: this
+
+    end subroutine
 
 end module module_bucket_impl

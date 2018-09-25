@@ -1,7 +1,7 @@
 module nhd_groundwater_tests
-    use module_nhd_state
+    use module_bucket_state
     use module_nhd_basin
-    use module_nhd_properties
+    use module_bucket_properties
     use module_groundwater_static_data
     use module_groundwater_base
 contains
@@ -114,7 +114,7 @@ contains
 
     ! test to see the each member of the state structure is correctly allocated and readable
     function test_state(o) result(rv)
-        type (nhd_state_interface), intent(in) :: o
+        class (bucket_state_interface), intent(in) :: o
         logical rv
 
         rv = .true.
@@ -208,7 +208,7 @@ contains
 
     ! test to see the each member of the properties structure is correctly allocated and readable
     function test_nhd_properties(o) result(rv)
-        type (nhd_properties_interface), intent(in) :: o
+        class (bucket_properties_interface), intent(in) :: o
         logical rv
 
         rv = .true.
