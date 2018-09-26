@@ -238,18 +238,6 @@ CONTAINS
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
            nlst_rt(did)%startdate(1:19) = olddate(1:19)
 
-
-           print *, " "
-           print *, " "
-           print *, "YOUUUUUUUUUUUUUUUUUUUUUU!!!!!! "
-           print *, "nlst_rt(did)%startdate(1:19)  at 239 in module_hrldas_HYDRO.F"
-           print *, nlst_rt(did)%startdate(1:19)
-           print *, " "
-           print *, " "
-           print *, " "
-           print *, " "
-
-
            nlst_rt(did)%nsoil = kk
 #ifdef MPP_LAND
            call mpp_land_bcast_int1(nlst_rt(did)%nsoil)

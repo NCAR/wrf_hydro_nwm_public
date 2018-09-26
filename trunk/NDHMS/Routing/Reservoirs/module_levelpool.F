@@ -19,7 +19,7 @@ module module_levelpool
     use module_levelpool_parameters
     use module_levelpool_state
     use module_reservoir_base
-    use module_levelpool_tests
+    !use module_levelpool_tests
     implicit none
 
     ! Extend/derive level pool struct from the abstract base
@@ -118,19 +118,16 @@ contains
     ! Subroutine for running release for a level pool reservoir,
     ! which will then call the LEVELPOOL method/subroutine for processing the
     ! inputs and returning the output.
-    subroutine run_levelpool_release(reservoir_data, inflow, &
+    subroutine run_levelpool_release(reservoir_data, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
-        real, intent(in)    :: inflow               ! cubic meters per second (cms)
-        real, intent(in)    :: lateral_inflow       ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation      ! meters
-        real, intent(out)   :: outflow              ! cubic meters per second (cms)
-        real, intent(in)    :: routing_period       ! seconds
-
-        !logical :: rv
-
-        !rv = levelpool_data_info(reservoir_data)
+        real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
+        real, intent(in)    :: inflow                   ! cubic meters per second (cms)
+        real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
+        real, intent(inout) :: water_elevation          ! meters
+        real, intent(out)   :: outflow                  ! cubic meters per second (cms)
+        real, intent(in)    :: routing_period           ! seconds
 
         ! Update input variables
         reservoir_data%input%inflow = inflow
@@ -140,7 +137,7 @@ contains
         reservoir_data%state%water_elevation = water_elevation
 
         call LEVELPOOL(reservoir_data%parameters%lake_number,   &
-        reservoir_data%input%previous_timestep_inflow,          &
+        previous_timestep_inflow,                               &
         reservoir_data%input%inflow,                            &
         reservoir_data%output%outflow,                          &
         reservoir_data%input%lateral_inflow,                    &
@@ -161,6 +158,9 @@ contains
 
         ! Set current inflow to previous_timestep_inflow
         reservoir_data%input%previous_timestep_inflow = inflow
+
+        ! Update water_elevation variable returned from this subroutine
+        water_elevation = reservoir_data%state%water_elevation
 
     end subroutine run_levelpool_release
 

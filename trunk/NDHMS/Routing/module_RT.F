@@ -804,6 +804,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
        end select
 
+
      !else if (rt_domain(did)%q_type(lake_index) == 2) then
 
        ! Allocate a single machine learning reservoir
@@ -836,7 +837,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
      end if
 
    end do
-
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D

@@ -492,24 +492,6 @@ subroutine output_chrt_NWM(domainId)
                     &"-"//nlst_rt(domainId)%startdate(9:10)//" "//&
                     nlst_rt(domainId)%startdate(12:13)//":"//&
                     nlst_rt(domainId)%startdate(15:16))
-
-
-
-   print *, " "
-   print *, " "
-   print *, " "
-   print *, " "
-   print *, " "
-   print *, " "
-   print *, "start date after 490 of module_NWM_io.F in Routing"
-   print *, startDate
-   print *, " "
-   print *, " "
-   print *, " "
-   print *, " "
-   print *, " "
-
-
    ! Second, utilize NoahMP date utilities to calculate the number of minutes
    ! from EPOCH to the beginning of the model simulation.
    call geth_idts(startDate,epochDate,minSinceEpoch1)

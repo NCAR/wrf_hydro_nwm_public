@@ -583,21 +583,6 @@ module module_NoahMP_hrldas_driver
         nlst_rt(did)%olddate(1:19) = olddate(1:19)
         nlst_rt(did)%startdate(1:19) = olddate(1:19)
         nlst_rt(did)%nsoil = -999999
-
-
-        print *, " "
-        print *, " "
-        print *, "HEYYYYYYYYYYYY!!!!!! "
-        print *, "nlst_rt(did)%olddate(1:19)  at 584"
-        print *, nlst_rt(did)%olddate(1:19)
-        print *, " "
-        print *, " "
-        print *, " "
-        print *, " "
-
-
-
-
 #ifdef MPP_LAND
         call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
 #endif
@@ -762,20 +747,7 @@ module module_NoahMP_hrldas_driver
   write(olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
        start_year, start_month, start_day, start_hour, start_min, 0
 
-
-  print *, "start date before 750"
-  print *, startdate
-  print *, " "
-
-
   startdate = olddate
-
-
-  print *, "start date after 750"
-  print *, startdate
-  print *, " "
-
-
 
 #ifdef MPP_LAND
    ix = ix_tmp
@@ -2030,12 +2002,6 @@ integer, intent(in)  :: itime ! time step of the LSM
    ! Go through each variable. For the first time the NWM output routine is
    ! called, the file is created and all output variables (desired per flags),
    ! are created in define mode.
-
-
-   print *, "start date at 2005, ifdef WRF_HYDRO"
-   print *, startdate
-   print *, " "
-
 
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,ITIME,startdate,olddate,ixpar,jxpar,1,float(IVGTYP),IVGTYP,1)
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ISLTYP),IVGTYP,2)

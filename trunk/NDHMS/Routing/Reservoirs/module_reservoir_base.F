@@ -91,15 +91,16 @@ module module_reservoir_base
     ! reservoir sub-types will derive from with the same given
     ! inputs and outputs.
     abstract interface
-        subroutine run_release_interface(reservoir_data, inflow, &
+        subroutine run_release_interface(reservoir_data, previous_timestep_inflow, inflow, &
             lateral_inflow, water_elevation, outflow, routing_period)
             import reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
-            real, intent(in)    :: inflow               ! cubic meters per second (cms)
-            real, intent(in)    :: lateral_inflow       ! cubic meters per second (cms)
-            real, intent(inout) :: water_elevation      ! meters AMSL
-            real, intent(out)   :: outflow              ! cubic meters per second (cms)
-            real, intent(in)    :: routing_period       ! seconds
+            real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
+            real, intent(in)    :: inflow                   ! cubic meters per second (cms)
+            real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
+            real, intent(inout) :: water_elevation          ! meters AMSL
+            real, intent(out)   :: outflow                  ! cubic meters per second (cms)
+            real, intent(in)    :: routing_period           ! seconds
 
         end subroutine
     end interface
