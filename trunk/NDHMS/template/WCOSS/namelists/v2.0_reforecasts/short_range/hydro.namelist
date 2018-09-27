@@ -29,7 +29,7 @@ IGRID = 1
 
 ! Specify the restart file write frequency...(minutes)
 ! A value of -99999 will output restarts on the first day of the month only.
-rst_dt = 240
+rst_dt = 999990
 
 ! Reset the LSM soil states from the high-res routing restart file (1=overwrite, 0=no overwrite)
 ! NOTE: Only turn this option on if overland or subsurface rotuing is active!
@@ -69,7 +69,7 @@ io_form_outputs = 2
 ! Realtime run configuration option:
 ! 0=all (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective,
 ! 6=diagnostic (includes all of 1-4 outputs combined)
-io_config_outputs = 1
+io_config_outputs = 2
 
 ! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes (default)
 t0OutputFlag = 1
@@ -92,7 +92,7 @@ CHRTOUT_GRID = 0             ! Netcdf grid of channel streamflow values (2d)
 LSMOUT_DOMAIN = 0            ! Netcdf grid of variables passed between LSM and routing components (2d)
                              !      0 = no output, 1 = output
                              !      NOTE: No scale_factor/add_offset available
-RTOUT_DOMAIN = 1             ! Netcdf grid of terrain routing variables on routing grid (2d)
+RTOUT_DOMAIN = 0             ! Netcdf grid of terrain routing variables on routing grid (2d)
                              !      0 = no output, 1 = output
 output_gw = 0                ! Netcdf GW output
                              !      0 = no output, 1 = output
@@ -193,7 +193,7 @@ nLastObs = 480
 
 ! If using temporalPersistence the last observation persists by default. 
 ! This option instead persists the bias after the last observation. 
-persistBias = .TRUE.
+persistBias = .FALSE.
 
 ! AnA (FALSE)  vs Forecast (TRUE) bias persistence.
 ! If persistBias: Does the window for calculating the bias end at 
@@ -202,13 +202,13 @@ persistBias = .TRUE.
 ! TRUE = window ends at init=t0(fcst) time. 
 ! (If commented out, Default=FALSE)
 ! Note: Perfect restart tests require this option to be .FALSE.
-biasWindowBeforeT0 = .FALSE.
+biasWindowBeforeT0 = .TRUE.
 
 ! If persistBias: Only use this many last (obs, modeled) pairs. (If Commented out, Default=-1*nLastObs)
 ! > 0: apply an age-based filter, units=hours.
 ! = 0: apply no additional filter, use all available/usable obs.
 ! < 0: apply an count-based filter, units=count
-maxAgePairsBiasPersist = 3
+maxAgePairsBiasPersist = 24
 
 ! If persistBias: The minimum number of last (obs, modeled) pairs, with age less than
 ! maxAgePairsBiasPersist, required to apply a bias correction. (default=8)

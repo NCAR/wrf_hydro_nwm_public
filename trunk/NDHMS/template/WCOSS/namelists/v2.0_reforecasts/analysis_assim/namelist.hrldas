@@ -15,7 +15,7 @@
 
  ! Specification of simulation length in days OR hours
  !KDAY = 1
- KHOUR = 28
+ KHOUR = 3
 
  ! Physics options (see the documentation for details)
  DYNAMIC_VEG_OPTION                = 4
@@ -36,10 +36,10 @@
  ! Timesteps in units of seconds
  FORCING_TIMESTEP = 3600 
  NOAH_TIMESTEP    = 3600 
- OUTPUT_TIMESTEP  = 3600 
+ OUTPUT_TIMESTEP  = 10800
 
  ! Land surface model restart file write frequency
- RESTART_FREQUENCY_HOURS = 4
+ RESTART_FREQUENCY_HOURS = 1
 
  ! Split output after split_output_count output times.
  SPLIT_OUTPUT_COUNT = 1
