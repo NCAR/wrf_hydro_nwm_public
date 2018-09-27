@@ -111,15 +111,17 @@ contains
     ! Subroutine for running release for a machine learning reservoir,
     ! which will then call the MACHINE_LEARNING method/subroutine for processing the
     ! inputs and returning the output.
-    subroutine run_machine_learning_release(reservoir_data, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+    subroutine run_machine_learning_release(reservoir_data, previous_timestep_inflow, &
+        inflow, lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
         class(machine_learning_struct), intent(inout) :: reservoir_data
-        real, intent(in)    :: inflow               ! cubic meters per second (cms)
-        real, intent(in)    :: lateral_inflow       ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation      ! meters
-        real, intent(out)   :: outflow              ! cubic meters per second (cms)
-        real, intent(in)    :: routing_period       ! seconds
+        real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
+        real, intent(in)    :: inflow                   ! cubic meters per second (cms)
+        real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
+        real, intent(inout) :: water_elevation          ! meters
+        real, intent(out)   :: outflow                  ! cubic meters per second (cms)
+        real, intent(in)    :: routing_period           ! seconds
+        real                :: pi                       ! real homemade pi
 
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
@@ -159,9 +161,45 @@ contains
         end if
 
         if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
-            reservoir_data%state%average_inflow_for_time_interval = reservoir_data%state%accumulated_inflow / reservoir_data%state%release_count
+            reservoir_data%state%average_inflow_for_time_interval = reservoir_data%state%accumulated_inflow &
+            / reservoir_data%state%release_count
 
-            ! Call ML model with (reservoir_data%state%previous_day_storage, reservoir_data%state%average_inflow_for_time_interval, and reservoir_data%output%outflow passed)
+            pi = 3.14159265359
+
+            if (((mod(reservoir_data%state%current_year,4)==0 .and. &
+               mod(reservoir_data%state%current_year,100)/=0) .or. &
+               mod(reservoir_data%state%current_year,400)==0)) then
+
+               if (reservoir_data%state%current_day_of_year == 366) then    ! if last day of leap year
+                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                    reservoir_data%state%current_day_of_year = 1
+
+               else
+                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+
+               end if
+
+               ! update x and y based on leap year
+               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 366)
+               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 366)
+
+            else
+               if (reservoir_data%state%current_day_of_year == 365) then    ! if last day of non leap year
+                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                    reservoir_data%state%current_day_of_year = 1
+
+               else
+                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+
+               end if
+
+               ! update x and y based on non leap year
+               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 365)
+               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 365)
+
+            end if
+
+            ! Call ML model with (reservoir_data%state%previous_day_storage, reservoir_data%state%average_inflow_for_time_interval, and reservoir_data%output%outflow passed, and day X and Y)
 
             reservoir_data%state%previous_day_storage = reservoir_data%state%current_storage
 

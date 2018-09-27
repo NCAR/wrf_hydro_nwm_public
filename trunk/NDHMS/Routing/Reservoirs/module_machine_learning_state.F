@@ -26,8 +26,11 @@ module module_machine_learning_state
         integer :: current_time        ! should be 'real' instead???
         character(len=19) :: start_date  ! keep as state var??
         integer :: start_day_of_year
+        integer :: current_day_of_year
         integer :: start_month
+        integer :: current_month
         integer :: start_year
+        integer :: current_year
         real :: x_day_of_year
         real :: y_day_of_year
 
@@ -334,18 +337,24 @@ contains
 
         this%start_year = start_year
 
+        this%current_year = start_year
+
         this%start_month = start_month
 
+        this%current_month = start_month
+
         this%start_day_of_year = start_day_of_year
+
+        this%current_day_of_year = start_day_of_year
 
         pi = 3.14159265359
 
 
         if (((mod(this%start_year,4)==0 .and. mod(this%start_year,100)/=0) .or. mod(this%start_year,400)==0) .and. this%start_month>2) then
-            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 366) ! leap year after February
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%start_day_of_year / 366) ! leap year after February
             this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 366)
         else
-            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi  * this%start_day_of_year / 365) ! non leap year or leap year before March
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%start_day_of_year / 365) ! non leap year or leap year before March
             this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 365)
         end if
 
