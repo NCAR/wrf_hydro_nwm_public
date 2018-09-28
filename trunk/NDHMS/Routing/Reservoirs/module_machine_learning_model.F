@@ -98,6 +98,7 @@ module module_machine_learning_model
 
 
 
+
     contains
 
         procedure :: init => machine_learning_model_init
@@ -110,7 +111,7 @@ contains
 
 
     !Machine Learning Model Constructor
-    subroutine machine_learning_model_init(this, start_date, lake_number)
+    subroutine machine_learning_model_init(this)
         use netcdf
         implicit none
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being initialized
@@ -126,6 +127,8 @@ contains
 
         integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
         integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
+
+        integer :: i, j, k
 
         status = nf90_open(path = "17all_res_acf_all_relu_nc.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status)
@@ -178,7 +181,7 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        allocate(bias(Nlayers, nodes))
+        allocate(this%bias(Nlayers, nodes))
 
 
 
@@ -193,7 +196,7 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        allocate(weights(Nlayers, nodes))
+        allocate(this%weights(Nlayers, nodes))
 
 
         status = nf90_inquire_variable(ncid, minimum_of_featuresVarId, dimids = dimIDs)
@@ -202,7 +205,7 @@ contains
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
         if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(minimum_of_features(Ninputs))
+        allocate(this%minimum_of_features(Ninputs))
 
 
         status = nf90_inquire_variable(ncid, maximum_of_featuresVarId, dimids = dimIDs)
@@ -211,7 +214,7 @@ contains
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
         if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(maximum_of_features(Ninputs))
+        allocate(this%maximum_of_features(Ninputs))
 
 
 
@@ -221,7 +224,7 @@ contains
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
         if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(activation_functions(Nlayers))
+        allocate(this%activation_functions(Nlayers))
 
 
         status = nf90_inquire_variable(ncid, number_of_nodesVarId, dimids = dimIDs)
@@ -230,10 +233,40 @@ contains
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
         if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(number_of_nodes(Nlayers))
+        allocate(this%number_of_nodes(Nlayers))
 
 
-        status = nf90_get_var(ncid, biasVarId, bias)
+
+
+
+
+        status = nf90_get_var(ncid, biasVarId, this%bias)
+
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        status = nf90_get_var(ncid, weightsVarId, this%weights)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+        status = nf90_get_var(ncid, minimum_of_featuresVarId, this%minimum_of_features)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_get_var(ncid, maximum_of_featuresVarId, this%maximum_of_features)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+        status = nf90_get_var(ncid, activation_functionsVarId, this%activation_functions)
+
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_get_var(ncid, number_of_nodesVarId, this%number_of_nodes)
 
 
         if (status /= nf90_noerr) call handle_err(status)
@@ -241,59 +274,32 @@ contains
 
 
 
-        status = nf90_get_var(ncid, weightsVarId, weights)
+        this%reshaped_weights = reshape(this%weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
 
-        if (status /= nf90_noerr) call handle_err(status)
+        this%reshaped_weights_1st = this%reshaped_weights(1:this%number_of_nodes(2),1:this%number_of_nodes(1),1) !(1:90,1:6,1)
 
+        this%reshaped_weights_2nd = this%reshaped_weights(:,:,2)
 
-        status = nf90_get_var(ncid, minimum_of_featuresVarId, minimum_of_features)
+        this%reshaped_weights_3rd = this%reshaped_weights(:,:,3)
 
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, maximum_of_featuresVarId, maximum_of_features)
-
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-        status = nf90_get_var(ncid, activation_functionsVarId, activation_functions)
-
-
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, number_of_nodesVarId, number_of_nodes)
-
-
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-
-
-        reshaped_weights = reshape(weights, (/number_of_nodes(2),number_of_nodes(3),4/))
-
-        reshaped_weights_1st = reshaped_weights(1:number_of_nodes(2),1:number_of_nodes(1),1) !(1:90,1:6,1)
-
-        reshaped_weights_2nd = reshaped_weights(:,:,2)
-
-        reshaped_weights_3rd = reshaped_weights(:,:,3)
-
-        reshaped_weights_4th = reshape(reshaped_weights(:,1,4),(/1, size(reshaped_weights(:,1,4))/))
+        this%reshaped_weights_4th = reshape(this%reshaped_weights(:,1,4),(/1, size(this%reshaped_weights(:,1,4))/))
 
 
         do k=1, (size(number_of_nodes)-1)
-            model_parameters(k)%link_bias= reshape(bias(:,k), (/size(bias(:,k)),1/))
+            this%model_parameters(k)%link_bias= reshape(bias(:,k), (/size(bias(:,k)),1/))
         end do
 
 
-        model_parameters(1)%link_weights= reshaped_weights_1st
+        this%model_parameters(1)%link_weights= this%reshaped_weights_1st
 
-        model_parameters(2)%link_weights= reshaped_weights_2nd
+        this%model_parameters(2)%link_weights= this%reshaped_weights_2nd
 
-        model_parameters(3)%link_weights= reshaped_weights_3rd
+        this%model_parameters(3)%link_weights= this%reshaped_weights_3rd
 
-        model_parameters(4)%link_weights= reshaped_weights_4th
+        this%model_parameters(4)%link_weights= this%reshaped_weights_4th
 
-        do k=1, (size(number_of_nodes)-1)
-            model_parameters(k)%link_activation_functions = activation_functions(k)
+        do k=1, (size(this%number_of_nodes)-1)
+            this%model_parameters(k)%link_activation_functions = this%activation_functions(k)
         end do
 
 
@@ -302,53 +308,53 @@ contains
         !WARNING: note if this is the case, we will need to train the model based on these new way of calculation of storage from acap files!
         !This code for linear interpolation needs some modifications as well!
 
-        nn_inputs%previous_pool_elevation = 184 !
+        this%nn_inputs%previous_pool_elevation = 184 !
 
 
-        nn_inputs%previous_release = 187.78992  !4.090795709653281126e-02
-        nn_inputs%previous_storage = 9.700250e+08  !2.938184733232386270e-01
-        nn_inputs%inflow = 192.46272  !3.645985341167530536e-02
-        nn_inputs%X_DOY = 4.93544852e-01
-        nn_inputs%Y_DOY = 4.16706726e-05
+        this%nn_inputs%previous_release = 187.78992  !4.090795709653281126e-02
+        this%nn_inputs%previous_storage = 9.700250e+08  !2.938184733232386270e-01
+        this%nn_inputs%inflow = 192.46272  !3.645985341167530536e-02
+        this%nn_inputs%X_DOY = 4.93544852e-01
+        this%nn_inputs%Y_DOY = 4.16706726e-05
 
 
         ! this has been intentionally deactivated;  Index([u'Release', u'Elevation', u'Inflow', u'DOX', u'DOY', u'Storage'], dtype='object') coming from ACF NetCDF file
-        minimum_of_features_final = (/minimum_of_features(1), minimum_of_features(6), minimum_of_features(3),&
-         minimum_of_features(2), minimum_of_features(4), minimum_of_features(5)/)
+        this%minimum_of_features_final = (/this%minimum_of_features(1), this%minimum_of_features(6), this%minimum_of_features(3),&
+         this%minimum_of_features(2), this%minimum_of_features(4), this%minimum_of_features(5)/)
 
-        maximum_of_features_final = (/maximum_of_features(1), maximum_of_features(6), maximum_of_features(3),&
-         maximum_of_features(2), maximum_of_features(4), maximum_of_features(5)/)
-
-
-
-        normalized_nn_inputs%previous_release = (nn_inputs%previous_release-minimum_of_features_final(1))&
-        /(maximum_of_features_final(1)-minimum_of_features_final(1))
-
-        normalized_nn_inputs%previous_storage = (nn_inputs%previous_storage-minimum_of_features_final(2))&
-        /(maximum_of_features_final(2)-minimum_of_features_final(2))
-
-        normalized_nn_inputs%inflow = (nn_inputs%inflow-minimum_of_features_final(3))&
-        /(maximum_of_features_final(3)-minimum_of_features_final(3))
-
-
-        normalized_nn_inputs%X_DOY = nn_inputs%X_DOY ! this variable is already
-        normalized_nn_inputs%Y_DOY = nn_inputs%Y_DOY
-
-        print *, "normalized_nn_inputs", normalized_nn_inputs
+        this%maximum_of_features_final = (/this%maximum_of_features(1), this%maximum_of_features(6), this%maximum_of_features(3),&
+         this%maximum_of_features(2), this%maximum_of_features(4), this%maximum_of_features(5)/)
 
 
 
-        y_min = minimum_of_features(1)! minimum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
-        y_max = maximum_of_features(1)! maximum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
+        this%normalized_nn_inputs%previous_release = (this%nn_inputs%previous_release - this%minimum_of_features_final(1))&
+        /(this%maximum_of_features_final(1) - this%minimum_of_features_final(1))
+
+        this%normalized_nn_inputs%previous_storage = (this%nn_inputs%previous_storage - this%minimum_of_features_final(2))&
+        /(this%maximum_of_features_final(2) - this%minimum_of_features_final(2))
+
+        this%normalized_nn_inputs%inflow = (this%nn_inputs%inflow - this%minimum_of_features_final(3))&
+        /(this%maximum_of_features_final(3) - this%minimum_of_features_final(3))
 
 
+        this%normalized_nn_inputs%X_DOY = this%nn_inputs%X_DOY ! this variable is already
+        this%normalized_nn_inputs%Y_DOY = this%nn_inputs%Y_DOY
+
+
+
+        this%y_min = this%minimum_of_features(1)! minimum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
+        this%y_max = this%maximum_of_features(1)! maximum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
+
+
+
+        ! Should we deallocate and should I just assign these as local instead????
         ! Deallocation of memory
 
-        deallocate(bias)
-        deallocate(weights)
-        deallocate(minimum_of_features)
-        deallocate(maximum_of_features)
-        deallocate(activation_functions)
+        deallocate(this%bias)
+        deallocate(this%weights)
+        deallocate(this%minimum_of_features)
+        deallocate(this%maximum_of_features)
+        deallocate(this%activation_functions)
         !deallocate(number_of_nodes)
 
 
@@ -378,8 +384,6 @@ contains
         class(machine_learning_model_struct), intent(inout) :: model_data
         !real ::
 
-
-
         type (NN_node), dimension (10), intent (IN) :: model_parameters_local
 
         real, allocatable, dimension(:) :: input_vector_local
@@ -388,65 +392,67 @@ contains
 
         type (NN_reservoir_in_out)  :: normalized_nn_inputs_local
 
+        integer :: i, j, k
+        real tmp
+
         ! Here input combination is assigned!
 
-        input_vector = (/normalized_nn_inputs_local%previous_release, normalized_nn_inputs_local%X_DOY,&
+        model_data%input_vector = (/normalized_nn_inputs_local%previous_release, normalized_nn_inputs_local%X_DOY,&
             normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
             normalized_nn_inputs_local%inflow/)
 
 
-        reshaped_input_vector_local = reshape(input_vector, (/ size(input_vector),1/))
+        reshaped_input_vector_local = reshape(model_data%input_vector, (/ size(model_data%input_vector),1/))
 
 
-        do k=1, (size(number_of_nodes)-1) ! this represents in which layer we stand (i.e., hidden layers+output layer)
-            nn_sum_matrix(:,:) = 0.0
-            reshaped_nn_sum_matrix(:) = 0.0
-            nn_sum_matrix_activated(:)= 0.0
-            do i = 1, number_of_nodes(k+1)! nodes;90
+        do k=1, (size(model_data%number_of_nodes)-1) ! this represents in which layer we stand (i.e., hidden layers+output layer)
+            model_data%nn_sum_matrix(:,:) = 0.0
+            model_data%reshaped_nn_sum_matrix(:) = 0.0
+            model_data%nn_sum_matrix_activated(:)= 0.0
+            do i = 1, model_data%number_of_nodes(k+1)! nodes;90
                 tmp = 0.0
-                do j= 1, number_of_nodes(k)
+                do j= 1, model_data%number_of_nodes(k)
                     if (k==1) then
                         tmp = tmp + model_parameters_local(k)%link_weights(i,j) * reshaped_input_vector_local(j,1) !reshaped_nn_inputs_local(j,1)
-                        nn_sum_matrix(i,1) = tmp
-                        nn_sum_matrix(i,1) = nn_sum_matrix(i,1) + model_parameters_local(k)%link_bias(i,1)
-                        reshaped_nn_sum_matrix(i) = nn_sum_matrix(i,1)
+                        model_data%nn_sum_matrix(i,1) = tmp
+                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_parameters_local(k)%link_bias(i,1)
+                        model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
                         if (model_parameters_local(k)%link_activation_functions(1)==0) then ! The focus will probably be on
-                            nn_sum_matrix_activated(i) = sigmoid(reshaped_nn_sum_matrix(i))
+                            model_data%nn_sum_matrix_activated(i) = sigmoid(model_data%reshaped_nn_sum_matrix(i))
                         else if (model_parameters_local(k)%link_activation_functions(1)==1) then
-                            nn_sum_matrix_activated(i) = relu(reshaped_nn_sum_matrix(i))
+                            model_data%nn_sum_matrix_activated(i) = relu(model_data%reshaped_nn_sum_matrix(i))
                         else
-                            nn_sum_matrix_activated(i) = tanh(reshaped_nn_sum_matrix(i))
+                            model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
                         end if
                     else
                         tmp = tmp + model_parameters_local(k)%link_weights(i,j) * reshaped_nn_sum_matrix_activated(j,1)
-                        nn_sum_matrix(i,1) = tmp
-                        nn_sum_matrix(i,1) = nn_sum_matrix(i,1) + model_parameters_local(k)%link_bias(i,1)
-                        reshaped_nn_sum_matrix(i) = nn_sum_matrix(i,1)
+                        model_data%nn_sum_matrix(i,1) = tmp
+                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_parameters_local(k)%link_bias(i,1)
+                        model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
                         if (model_parameters_local(k)%link_activation_functions(1)==0) then
-                            nn_sum_matrix_activated(i) = sigmoid(reshaped_nn_sum_matrix(i))
+                            model_data%nn_sum_matrix_activated(i) = sigmoid(model_data%reshaped_nn_sum_matrix(i))
                         else if (model_parameters_local(k)%link_activation_functions(1)==1) then
-                            nn_sum_matrix_activated(i) = relu(reshaped_nn_sum_matrix(i))
+                            model_data%nn_sum_matrix_activated(i) = relu(model_data%reshaped_nn_sum_matrix(i))
                         else
-                            nn_sum_matrix_activated(i) = tanh(reshaped_nn_sum_matrix(i))
+                            model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
                         end if
                     end if
 
                 end do
             end do
-            reshaped_nn_sum_matrix_activated = reshape(nn_sum_matrix_activated, (/ size(nn_sum_matrix_activated),1/))
+            model_data%reshaped_nn_sum_matrix_activated = reshape(model_data%nn_sum_matrix_activated, (/ size(model_data%nn_sum_matrix_activated),1/))
             print *, "k", k
 
         end do
 
-        normalized_simulated_release = nn_sum_matrix_activated(1)
+        model_data%normalized_simulated_release = model_data%nn_sum_matrix_activated(1)
 
 
 
         ! Simulated release should be denormalized
-        ml_simulated_release_local = normalized_simulated_release * (y_max - y_min) + y_min ! first array refers to "Release" values; we could instead introduce it as
-        print *, "ml_simulated_release at the original range (cms):",ml_simulated_release_local
-        ml_simulated_release = ml_simulated_release_local
-        print *, "ml_simulated_release(cms):", ml_simulated_release
+        ml_simulated_release_local = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
+        model_data%ml_simulated_release = ml_simulated_release_local
+
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIXME The corrector terms need to be added here (we already have them in the Python)
 
         !Calculate the reservoir storage at the current time (i.e., the storage that corresponds to the simulated release); this part will need revision for the operational version
@@ -458,35 +464,30 @@ contains
 
         ! !qo1 = revised_simulated_release ! the revised version of the simulated release is sent back to the same variable within "LEVELPOOL" subroutine!
 
-        contains
-
-        ! We have just considered "sigmoid" and "relu" activation functions; later we can consider other activation functions
-        real function sigmoid(z)
-            real :: z, a
-            a = 1.0/(1.0+ exp(-z))
-            sigmoid = a
-        end function sigmoid
-
-        real function relu (z)
-            real :: z, a
-            if (z > 0.0) then
-                a = z
-            else
-                a = 0.0
-            end if
-            relu = a
-        end function relu
-
-        !!############################################################################################################################################
 
 
 
-
+        !!##########################################################################################################################################
 
 
 
     end subroutine run_machine_learning_model
 
+    ! We have just considered "sigmoid" and "relu" activation functions; later we can consider other activation functions
+    real function sigmoid(z)
+        real :: z, a
+        a = 1.0/(1.0+ exp(-z))
+        sigmoid = a
+    end function sigmoid
 
+    real function relu (z)
+        real :: z, a
+        if (z > 0.0) then
+            a = z
+        else
+            a = 0.0
+        end if
+        relu = a
+    end function relu
 
 end module module_machine_learning_model
