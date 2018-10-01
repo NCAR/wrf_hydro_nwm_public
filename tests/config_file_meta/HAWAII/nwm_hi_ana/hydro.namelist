@@ -18,7 +18,7 @@
     hydrotbl_f = './NWM/DOMAIN/hydro2dtbl.nc'
     igrid = 1
     io_config_outputs = 0
-    io_form_outputs = 2
+    io_form_outputs = 4
     land_spatial_meta_flnm = './NWM/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc'
     lsmout_domain = 1
     nsoil = 4
@@ -33,9 +33,9 @@
     route_link_f = './NWM/DOMAIN/Route_Link.nc'
     rst_bi_in = 0
     rst_bi_out = 0
-    rst_dt = 60
+    rst_dt = 1440
     rst_typ = 1
-    rstrt_swc = 1
+    rstrt_swc = 0
     rt_option = 1
     rtout_domain = 1
     split_output_count = 1
