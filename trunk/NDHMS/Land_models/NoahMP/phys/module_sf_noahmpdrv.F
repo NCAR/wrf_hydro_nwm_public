@@ -75,16 +75,16 @@ CONTAINS
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
-               , wvtflag, wvt_ratio, NSUB, NTRACER & ! IN WVT
-		, SMOIS_SUB, SH2O_SUB                             & ! IN WVT
-                , QFX_TR, LH_TR, SFCRUNOFF_TR, UDRUNOFF_TR & !IN/OUT WVT
+               , wvtflag, wvt_ratio, NSUB, NTRACER             & ! IN WVT
+		, SMOIS_SUB, SH2O_SUB                          & ! IN WVT
+                , QFX_TR, LH_TR, SFCRUNOFF_TR, UDRUNOFF_TR     & !IN/OUT WVT
 		, SMOIS_TR, SH2O_TR, SNOW_TR, SNOWH_TR, CANWAT_TR &
 		, ACSNOM_TR, ACSNOW_TR, CANICEXY_TR, CANLIQXY_TR  &
-		, QSNOWXY_TR, WSLAKEXY_TR, WAXY_TR, WTXY_TR &
-		, ZSNSOXY_TR, SNICEXY_TR, SNLIQXY_TR & ! IN/OUT WVT variables
-                , SMCWTDXY_TR, DEEPRECHXY_TR, RECHXY_TR & ! INOUT
-                , RUNSFXY_TR, RUNSBXY_TR, ECANXY_TR &
-		, EDIRXY_TR, ETRANXY_TR=, FLUXXY_TR   & ! IN/OUT WVT variables
+		, QSNOWXY_TR, WSLAKEXY_TR, WAXY_TR, WTXY_TR       &
+		, ZSNSOXY_TR, SNICEXY_TR, SNLIQXY_TR              & ! IN/OUT WVT variables
+                , SMCWTDXY_TR, DEEPRECHXY_TR, RECHXY_TR           & ! INOUT
+                , RUNSFXY_TR, RUNSBXY_TR, ECANXY_TR               &
+		, EDIRXY_TR, ETRANXY_TR=, FLUXXY_TR               & ! IN/OUT WVT variables
 
                )
 !----------------------------------------------------------------
@@ -939,17 +939,17 @@ CONTAINS
 #ifdef WRF_HYDRO
             , sfcheadrt(i,j)                               &
 #endif
-            , WVTFLAG=WVTFLAG, WVT_RATIO=WVT_RATIO &      !IN
+            , WVTFLAG=WVTFLAG, WVT_RATIO=WVT_RATIO                      &      !IN
 	    , NSUB=NSUB, NTRACER=NTRACER, SMC_SUB=SMC_SUB, SMH2O_SUB=SMH2O_SUB  & ! IN
             , SMH2O_TR=SMH2O_TR, SMC_TR=SMC_TR, CANLIQ_TR=CANLIQ_TR, CANICE_TR=CANICE_TR & 
-	    , QSNOW_TR=QSNOW_TR,ZSNSO_TR=ZSNSO_TR, SNDPTH_TR=SNDPTH_TR, SWE_TR=SWE_TR &
+	    , QSNOW_TR=QSNOW_TR,ZSNSO_TR=ZSNSO_TR, SNDPTH_TR=SNDPTH_TR, SWE_TR=SWE_TR    &
 	    , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR,WA_TR=WA_TR,WT_TR=WT_TR, WSLAKE_TR=WSLAKE_TR & ! IN/OUT
             , SMCWTD_TR= SMCWTD_TR ,DEEPRECH_TR=DEEPRECH_TR , RECH_TR=RECH_TR       & ! INOUT
-            , ECAN_TR=ECAN_TR, ETRAN_TR=ETRAN_TR, ESOIL_TR=ESOIL_TR &
-	    , FCEV_TR=FCEV_TR, FCTR_TR=FCTR_TR, FGEV_TR=FGEV_TR     & ! OUT
-            , RUNSF_TR=RUNSF_TR, RUNSB_TR=RUNSB_TR, QSNBOT_TR=QSNBOT_TR & !OUT
-	    , PONDING_TR=PONDING_TR, PONDING1_TR=PONDING1_TR &  !OUT
-	    , PONDING2_TR=PONDING2_TR, FLUX_TR=FLUX_TR                 & ! OUT
+            , ECAN_TR=ECAN_TR, ETRAN_TR=ETRAN_TR, ESOIL_TR=ESOIL_TR      &
+	    , FCEV_TR=FCEV_TR, FCTR_TR=FCTR_TR, FGEV_TR=FGEV_TR          & ! OUT
+            , RUNSF_TR=RUNSF_TR, RUNSB_TR=RUNSB_TR, QSNBOT_TR=QSNBOT_TR  & !OUT
+	    , PONDING_TR=PONDING_TR, PONDING1_TR=PONDING1_TR             &  !OUT
+	    , PONDING2_TR=PONDING2_TR, FLUX_TR=FLUX_TR                   & ! OUT
             )            ! OUT :  
       end if
 		  
