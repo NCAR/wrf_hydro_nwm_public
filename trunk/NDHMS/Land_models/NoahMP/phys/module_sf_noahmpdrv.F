@@ -75,7 +75,7 @@ CONTAINS
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
-               ,  , wvtflag, wvt_ratio, NSUB, NTRACER & ! IN WVT
+               , wvtflag, wvt_ratio, NSUB, NTRACER & ! IN WVT
 		, SMOIS_SUB, SH2O_SUB                             & ! IN WVT
                 , QFX_TR, LH_TR, SFCRUNOFF_TR, UDRUNOFF_TR & !IN/OUT WVT
 		, SMOIS_TR, SH2O_TR, SNOW_TR, SNOWH_TR, CANWAT_TR &
