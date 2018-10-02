@@ -546,6 +546,7 @@ module module_NoahMP_hrldas_driver
   output_timestep         = -999
   restart_frequency_hours = -999
   tracer_sublayer         = -999       ! water tracer sublayers
+  wvtflag                = -999       ! flag for water tracer
 
 #ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
@@ -1932,7 +1933,16 @@ end if
    ! Timing information for SFLX:
 
     call system_clock(count=count_before_sflx, count_rate=clock_rate)
+    
+    if (OPT_WT .eq. 1) then
+      if (wvtflag == 2) then
+        wvt_ratio = 1.0
+      else
+        wvt_ratio == 0.0
+      end if
+    end if
 
+    if (wvtflag .lt. 0) then
          CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
 	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
 		 IVGTYP,   ISLTYP,   VEGFRA,   GVFMAX,       TMN,             &
@@ -1982,6 +1992,70 @@ end if
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
                 )
+		
+    else
+         CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
+	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
+		 IVGTYP,   ISLTYP,   VEGFRA,   GVFMAX,       TMN,             &
+		  XLAND,     XICE,     XICE_THRESHOLD,                        &
+                  IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
+	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
+	       IOPT_GLA, IOPT_RSF, IZ0TLND,                                   &
+		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
+		    P8W,   RAINBL,       SR,                                  &
+		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
+		 SMSTOT,SFCRUNOFF, UDRUNOFF,   ALBEDO,     SNOWC,      SMOIS, &
+		   SH2O,     TSLB,     SNOW,    SNOWH,    CANWAT,     ACSNOM, &
+		 ACSNOW,    EMISS,     QSFC,                                  &
+ 		     Z0,      ZNT,                                            & ! IN/OUT LSM eqv
+		ISNOWXY,     TVXY,     TGXY, CANICEXY,  CANLIQXY,      EAHXY, &
+		  TAHXY,     CMXY,     CHXY,   FWETXY,  SNEQVOXY,   ALBOLDXY, &
+		QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY,      WTXY,     TSNOXY, &
+		ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY,  RTMASSXY,   STMASSXY, &
+		 WOODXY, STBLCPXY, FASTCPXY,      LAI,    XSAIXY,    TAUSSXY, &
+	        SMOISEQ, SMCWTDXY,DEEPRECHXY,  RECHXY,                        & ! IN/OUT Noah MP only
+	         T2MVXY,   T2MBXY,   Q2MVXY,   Q2MBXY,                        &
+                 TRADXY,    NEEXY,    GPPXY,    NPPXY,    FVEGXY,    RUNSFXY, &
+	        RUNSBXY,   ECANXY,   EDIRXY,  ETRANXY,     FSAXY,     FIRAXY, &
+                 APARXY,    PSNXY,    SAVXY,    SAGXY,   RSSUNXY,    RSSHAXY, &
+               ALBSNDXY, ALBSNIXY,                                            & ! OUT Noah MP only
+                 BGAPXY,   WGAPXY,    TGVXY,    TGBXY,     CHVXY,      CHBXY, &
+		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
+		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
+	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &                          
+#ifdef SPATIAL_SOIL
+                 BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
+		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
+		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
+		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
+#endif
+#ifdef WRF_HYDRO
+                 sfcheadrt,INFXSRT,soldrain,                          &    !O
+#endif
+                ids,ide, jds,jde, kds,kde,                      &
+                ims,ime, jms,jme, kms,kme,                      &
+                its,ite, jts,jte, kts,kte,        &
+! variables below are optional
+                MP_RAINC =  RAINCV, MP_RAINNC =    RAINNCV, MP_SHCV = RAINSHV,&
+		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
+#ifdef WRF_HYDRO
+                , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
+                , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
+#endif
+                , wvtflag=wvtflag, wvt_ratio=wvt_ratio, NSUB=NSUB, NTRACER=NTRACER & ! IN WVT
+		, SMOIS_SUB=SMOIS_SUB, SH2O_SUB=SH2O_SUB                             & ! IN WVT
+                , QFX_TR=QFX_TR, LH_TR=LH_TR, SFCRUNOFF_TR=SFCRUNOFF_TR, UDRUNOFF_TR=UDRUNOFF_TR & !IN/OUT WVT
+		, SMOIS_TR=SMOIS_TR, SH2O_TR=SH2O_TR, SNOW_TR=SNOW_TR, SNOWH_TR=SNOWH_TR, CANWAT_TR=CANWAT_TR &
+		, ACSNOM_TR=ACSNOM_TR, ACSNOW_TR=ACSNOW_TR, CANICEXY_TR=CANICEXY_TR, CANLIQXY_TR=CANLIQXY_TR  &
+		, QSNOWXY_TR=QSNOWXY_TR, WSLAKEXY_TR=WSLAKEXY_TR, WAXY_TR=WAXY_TR, WTXY_TR=WTXY_TR &
+		, ZSNSOXY_TR=ZSNSOXY_TR, SNICEXY_TR=SNICEXY_TR, SNLIQXY_TR=SNLIQXY_TR & ! IN/OUT WVT variables
+                , SMCWTDXY_TR=SMCWTDXY_TR, DEEPRECHXY_TR=DEEPRECHXY_TR, RECHXY_TR=RECHXY_TR & ! INOUT
+                , RUNSFXY_TR=RUNSFXY_TR, RUNSBXY_TR=RUNSBXY_TR, ECANXY_TR=ECANXY_TR &
+		, EDIRXY_TR=EDIRXY_TR, ETRANXY_TR=ETRANXY_TR, FLUXXY_TR=FLUXXY_TR   & ! IN WVT variables
+ 
+                )
+	  
+    end if
 
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
           sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
@@ -2022,7 +2096,7 @@ end if
 
            ! convert RAINRATE back to mm/s for output
            RAINBL = RAINBL_tmp
-           call ldas_output(ITIME)
+           call ldas_output(ITIME, wvtflag)
 
 
         endif
@@ -2082,8 +2156,9 @@ end if
 end subroutine land_driver_exe
 
 !!===============================================================================
-subroutine  ldas_output(itime)
+subroutine  ldas_output(itime, wvtflag)
 integer, intent(in)  :: itime ! time step of the LSM  
+integer, intent(in)  :: wvtflag ! -999-no tracer capability, 0-2-with tracer capability
 
 !#ifdef WRF_HYDRO
 !if ( (io_config_outputs .eq. 0) ) then
@@ -2320,6 +2395,30 @@ integer, intent(in)  :: itime ! time step of the LSM
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SNOWT_AVG),IVGTYP,95)
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNDXY,IVGTYP,96)
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNIXY,IVGTYP,97)
+   
+   if (wvtflag .ge. 0) then
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LH_TR,IVGTYP,98)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ECANXY_TR,IVGTYP,99)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EDIRXY_TR,IVGTYP,100)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ETRANXY_TR,IVGTYP,101)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,UDRUNOFF_TR,IVGTYP,102)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SFCRUNOFF_TR,IVGTYP,103)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANLIQXY_TR,IVGTYP,104)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANICEXY_TR,IVGTYP,105)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WAXY_TR,IVGTYP,106)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WTXY_TR,IVGTYP,107)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNICEXY_TR,IVGTYP,108)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNLIQXY_TR,IVGTYP,109)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SH2O_TR,IVGTYP,110)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SMOIS_TR,IVGTYP,111)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,FLUX_TR,IVGTYP,112)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWH_TR,IVGTYP,113)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOW_TR,IVGTYP,114)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QSNOWXY_TR,IVGTYP,115)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOW_TR,IVGTYP,116)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOM_TR,IVGTYP,117)
+   end if
+   
 #endif /* WRF_HYDRO */
 
 !#ifdef WRF_HYDRO
