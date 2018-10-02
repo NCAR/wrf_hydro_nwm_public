@@ -299,6 +299,8 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EDIRXY_TR    ! soil surface evaporation rate (mm/s]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ETRANXY_TR   ! transpiration rate (mm/s)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  FLUXXY_TR    ! tracer flux at soil bottom [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_SUB    ! volumetric soil moisture in sublayers [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_SUB     ! volumetric liquid soil moisture in sublayers [m3/m3]
   !------namelist variables----------------
   character(len=256)                      :: track_start   ! YYYY-MM-DD
   character(len=256)                      :: track_end     ! YYYY-MM-DD
@@ -541,6 +543,7 @@ module module_NoahMP_hrldas_driver
   noah_timestep           = -999
   output_timestep         = -999
   restart_frequency_hours = -999
+  tracer_sublayer         = -999       ! water tracer sublayers
 
 #ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
@@ -602,7 +605,10 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = temp_time_scheme_option
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
-
+  !-----water tracer variables--------
+  IOPT_PM  = partial_mixing_option
+  NSUB     = tracer_sublayer
+  NTRACER  = sum(NSUB(1:nsoil))
 
   !!----------------------------------------------------------------------------
   !! channel_only
@@ -808,6 +814,14 @@ module module_NoahMP_hrldas_driver
 #ifdef WRF_HYDRO
     forcdate = olddate
 #endif
+
+!-----water tracer tracking times-------
+  write(wvtstart,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
+     track_start(1:4), track_start(5:6), track_start(7:8), track_start(9:10), track_start(11:12),0
+
+  write(wvtend,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
+     track_end(1:4), track_end(5:6), track_end(7:8), track_end(9:10), track_end(11:12),0
+!---------------------------------------
   
   ids = xstart
   ide = xend
@@ -1004,6 +1018,42 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( TERRAIN   (XSTART:XEND,YSTART:YEND) )  ! terrain height
   ALLOCATE ( GVFMIN    (XSTART:XEND,YSTART:YEND) )  ! annual minimum in vegetation fraction
   ALLOCATE ( GVFMAX    (XSTART:XEND,YSTART:YEND) )  ! annual maximum in vegetation fraction
+
+!------------------------------------------------------------------------
+! Needed for Water tracer capability
+!------------------------------------------------------------------------
+
+  ALLOCATE ( QFX_TR       (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [kg s-1 m-2]
+  ALLOCATE ( LH_TR        (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [W m-2]
+  ALLOCATE ( SFCRUNOFF_TR (XSTART:XEND,YSTART:YEND) )  ! accumulated surface runoff [m]
+  ALLOCATE ( UDRUNOFF_TR  (XSTART:XEND,YSTART:YEND) )  ! accumulated sub-surface runoff [m]
+  ALLOCATE ( SMOIS_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture [m3/m3]
+  ALLOCATE ( SH2O_TR      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture [m3/m3]
+  ALLOCATE ( SNOW_TR      (XSTART:XEND,YSTART:YEND) )  ! snow water equivalent [mm]
+  ALLOCATE ( SNOWH_TR     (XSTART:XEND,YSTART:YEND) )  ! physical snow depth [m]
+  ALLOCATE ( CANWAT_TR    (XSTART:XEND,YSTART:YEND) )  ! total canopy water + ice [mm]
+  ALLOCATE ( ACSNOM_TR    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow melt leaving pack
+  ALLOCATE ( ACSNOW_TR    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow on grid
+  ALLOCATE ( CANICEXY_TR  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted ice (mm)
+  ALLOCATE ( CANLIQXY_TR  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted liquid water (mm)
+  ALLOCATE ( QSNOWXY_TR   (XSTART:XEND,YSTART:YEND) )  ! snowfall on the ground [mm/s]
+  ALLOCATE ( WSLAKEXY_TR  (XSTART:XEND,YSTART:YEND) )  ! lake water storage [mm]
+  ALLOCATE ( WAXY_TR      (XSTART:XEND,YSTART:YEND) )  ! water in the "aquifer" [mm]
+  ALLOCATE ( WTXY_TR      (XSTART:XEND,YSTART:YEND) )  ! groundwater storage [mm]
+  ALLOCATE ( SMCWTDXY_TR  (XSTART:XEND,YSTART:YEND) )  ! soil moisture below the bottom of the column (m3m-3)
+  ALLOCATE ( DEEPRECHXY_TR(XSTART:XEND,YSTART:YEND) )  ! recharge to the water table when deep (m)
+  ALLOCATE ( RECHXY_TR    (XSTART:XEND,YSTART:YEND) )  ! recharge to the water table (diagnostic) (m)
+  ALLOCATE ( ZSNSOXY_TR   (XSTART:XEND,-NSNOW+1:NTRACER,YSTART:YEND) )  ! snow layer depth [m]
+  ALLOCATE ( SNICEXY_TR   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow layer ice [mm]
+  ALLOCATE ( SNLIQXY_TR   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow layer liquid water [mm]
+  ALLOCATE ( RUNSFXY_TR   (XSTART:XEND,YSTART:YEND) )  ! surface runoff [mm/s]
+  ALLOCATE ( RUNSBXY_TR   (XSTART:XEND,YSTART:YEND) )  ! subsurface runoff [mm/s]
+  ALLOCATE ( ECANXY_TR    (XSTART:XEND,YSTART:YEND) )  ! evaporation of intercepted water (mm/s)
+  ALLOCATE ( EDIRXY_TR    (XSTART:XEND,YSTART:YEND) )  ! soil surface evaporation rate (mm/s]
+  ALLOCATE ( ETRANXY_TR   (XSTART:XEND,YSTART:YEND) )  ! transpiration rate (mm/s)
+  ALLOCATE ( FLUXXY_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! tracer flux at soil bottom [m]
+  ALLOCATE ( SMOIS_SUB     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture in sublayers [m3/m3]
+  ALLOCATE ( SH2O_SUB      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture in sublayers [m3/m3]
 
 !------------------------------------------------------------------------
 ! Needed for MMF_RUNOFF (IOPT_RUN = 5); not part of MP driver in WRF
@@ -1210,6 +1260,40 @@ module module_NoahMP_hrldas_driver
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
   XICE_THRESHOLD = 0.5   ! fraction of grid determining seaice (from WRF)
+
+!------initialized water tracer variables---------
+  QFX_TR        = undefined_real
+  LH_TR         = undefined_real
+  SFCRUNOFF_TR  = 0.0
+  UDRUNOFF_TR   = 0.0
+  SMOIS_TR      = undefined_real
+  SH2O_TR       = undefined_real
+  SNOW_TR       = undefined_real
+  SNOWH_TR      = undefined_real
+  CANWAT_TR     = undefined_real
+  ACSNOM_TR     = 0.0
+  ACSNOW_TR     = 0.0
+  CANICEXY_TR   = undefined_real
+  CANLIQXY_TR   = undefined_real
+  QSNOWXY_TR    = undefined_real
+  WSLAKEXY_TR   = undefined_real
+  WAXY_TR       = undefined_real
+  WTXY_TR       = undefined_real
+  SMCWTDXY_TR   = undefined_real
+  DEEPRECHXY_TR = 0.0
+  RECHXY_TR     = 0.0
+  ZSNSOXY_TR    = undefined_real
+  SNICEXY_TR    = undefined_real
+  SNLIQXY_TR    = undefined_real
+  RUNSFXY_TR    = undefined_real
+  RUNSBXY_TR    = undefined_real
+  ECANXY_TR     = undefined_real
+  EDIRXY_TR     = undefined_real
+  ETRANXY_TR    = undefined_real
+  FLUXXY_TR     = undefined_real
+  SMOIS_SUB      = undefined_real
+  SH2O_SUB       = undefined_real
+!-------------------------------------------------
 
 !----------------------------------------------------------------------
 ! Read Landuse Type and Soil Texture and Other Information
