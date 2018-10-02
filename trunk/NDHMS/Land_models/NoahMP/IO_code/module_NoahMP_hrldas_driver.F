@@ -267,6 +267,55 @@ module module_NoahMP_hrldas_driver
    &            its,ite, jts,jte, kts,kte      ! t -> tile
 
 !------------------------------------------------------------------------
+! Needed for Water tracer capability
+!------------------------------------------------------------------------
+
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QFX_TR       ! latent heat flux [kg s-1 m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LH_TR        ! latent heat flux [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SFCRUNOFF_TR ! accumulated surface runoff [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  UDRUNOFF_TR  ! accumulated sub-surface runoff [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_TR     ! volumetric soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_TR      ! volumetric liquid soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW_TR      ! snow water equivalent [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH_TR     ! physical snow depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANWAT_TR    ! total canopy water + ice [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOM_TR    ! accumulated snow melt leaving pack
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOW_TR    ! accumulated snow on grid
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANICEXY_TR  ! canopy-intercepted ice (mm)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANLIQXY_TR  ! canopy-intercepted liquid water (mm)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSNOWXY_TR   ! snowfall on the ground [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WSLAKEXY_TR  ! lake water storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WAXY_TR      ! water in the "aquifer" [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WTXY_TR      ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SMCWTDXY_TR  ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  DEEPRECHXY_TR! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RECHXY_TR    ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY_TR   ! snow layer depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY_TR   ! snow layer ice [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY_TR   ! snow layer liquid water [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RUNSFXY_TR   ! surface runoff [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RUNSBXY_TR   ! subsurface runoff [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ECANXY_TR    ! evaporation of intercepted water (mm/s)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EDIRXY_TR    ! soil surface evaporation rate (mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ETRANXY_TR   ! transpiration rate (mm/s)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  FLUXXY_TR    ! tracer flux at soil bottom [m]
+  !------namelist variables----------------
+  character(len=256)                      :: track_start   ! YYYY-MM-DD
+  character(len=256)                      :: track_end     ! YYYY-MM-DD
+  integer                                 :: partial_mixing_option ! partial mixing option (0-complete mixing, 1-partial mixing)
+  integer, dimension(MAX_SOIL_LEVELS)     :: tracer_sublayer ! number of sublayers for tracer
+  !-----variables read fro namelist--------
+  character(len=19)                       :: wvtstart     ! YYYY-MM-DD_hh:mm:ss
+  character(len=19)                       :: wvtend       ! YYYY-MM-DD_hh:mm:ss
+  integer                                 :: IOPT_PM      ! partial mixing option (0-complete mixing, 1-partial mixing)
+  integer, dimension(MAX_SOIL_LEVELS)     :: NSUB         ! number of sublayer for tracer
+  integer                                 :: NTRACER      ! sum of NSUB
+  !------tracer flag and raio variables to "tag" water from precip------
+  INTEGER                                 :: wvtflag      ! 0->before track_start; 1->at track_start
+                                                          ! 2->during tracking period; 3->after track_end
+  REAL                                    :: wvt_ratio    ! ratio of tracer precip to total precip
+
+!------------------------------------------------------------------------
 ! Needed for NoahMP init
 !------------------------------------------------------------------------
 
@@ -423,7 +472,7 @@ module module_NoahMP_hrldas_driver
   integer            :: ystart = 1
   integer            ::   xend = 0
   integer            ::   yend = 0
-  integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
+  integer, PARAMETER    :: MAX_SOIL_LEVELS = 20   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
   integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
 
@@ -442,6 +491,8 @@ module module_NoahMP_hrldas_driver
        start_year, start_month, start_day, start_hour, start_min, &
        outdir, &
        restart_filename_requested, restart_frequency_hours, output_timestep, &
+
+       track_start, track_end, partial_mixing_option, tracer_sublayer, &
 
        dynamic_veg_option, canopy_stomatal_resistance_option, &
        btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
