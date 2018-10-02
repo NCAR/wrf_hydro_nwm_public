@@ -302,11 +302,13 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_SUB    ! volumetric soil moisture in sublayers [m3/m3]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_SUB     ! volumetric liquid soil moisture in sublayers [m3/m3]
   !------namelist variables----------------
+  integer                                 :: water_tracer_option ! 0-water tracer off, 1-water tracer on
   character(len=256)                      :: track_start   ! YYYY-MM-DD
   character(len=256)                      :: track_end     ! YYYY-MM-DD
   integer                                 :: partial_mixing_option ! partial mixing option (0-complete mixing, 1-partial mixing)
   integer, dimension(MAX_SOIL_LEVELS)     :: tracer_sublayer ! number of sublayers for tracer
   !-----variables read fro namelist--------
+  integer                                 :: OPT_WT       ! 0-water tracer off, 1-water tracer on
   character(len=19)                       :: wvtstart     ! YYYY-MM-DD_hh:mm:ss
   character(len=19)                       :: wvtend       ! YYYY-MM-DD_hh:mm:ss
   integer                                 :: IOPT_PM      ! partial mixing option (0-complete mixing, 1-partial mixing)
@@ -494,7 +496,7 @@ module module_NoahMP_hrldas_driver
        outdir, &
        restart_filename_requested, restart_frequency_hours, output_timestep, &
 
-       track_start, track_end, partial_mixing_option, tracer_sublayer, &
+       water_tracer_option, track_start, track_end, partial_mixing_option, tracer_sublayer, &
 
        dynamic_veg_option, canopy_stomatal_resistance_option, &
        btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
@@ -606,9 +608,12 @@ module module_NoahMP_hrldas_driver
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
   !-----water tracer variables--------
-  IOPT_PM  = partial_mixing_option
-  NSUB     = tracer_sublayer
-  NTRACER  = sum(NSUB(1:nsoil))
+  OPT_WT   = water_tracer_option
+  if (OPT_WT .eq. 1) then 
+    IOPT_PM  = partial_mixing_option
+    NSUB     = tracer_sublayer
+    NTRACER  = sum(NSUB(1:nsoil))
+  end if
 
   !!----------------------------------------------------------------------------
   !! channel_only
@@ -816,11 +821,13 @@ module module_NoahMP_hrldas_driver
 #endif
 
 !-----water tracer tracking times-------
-  write(wvtstart,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
-     track_start(1:4), track_start(5:6), track_start(7:8), track_start(9:10), track_start(11:12),0
+  if (OPT_WT .eq. 1) then 
+    write(wvtstart,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
+       track_start(1:4), track_start(5:6), track_start(7:8), track_start(9:10), track_start(11:12),0
 
-  write(wvtend,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
-     track_end(1:4), track_end(5:6), track_end(7:8), track_end(9:10), track_end(11:12),0
+    write(wvtend,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
+       track_end(1:4), track_end(5:6), track_end(7:8), track_end(9:10), track_end(11:12),0
+  end if
 !---------------------------------------
   
   ids = xstart
@@ -1022,7 +1029,7 @@ module module_NoahMP_hrldas_driver
 !------------------------------------------------------------------------
 ! Needed for Water tracer capability
 !------------------------------------------------------------------------
-
+if (OPT_WT .eq. 1) then 
   ALLOCATE ( QFX_TR       (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [kg s-1 m-2]
   ALLOCATE ( LH_TR        (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [W m-2]
   ALLOCATE ( SFCRUNOFF_TR (XSTART:XEND,YSTART:YEND) )  ! accumulated surface runoff [m]
@@ -1054,6 +1061,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( FLUXXY_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! tracer flux at soil bottom [m]
   ALLOCATE ( SMOIS_SUB     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture in sublayers [m3/m3]
   ALLOCATE ( SH2O_SUB      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture in sublayers [m3/m3]
+end if
 
 !------------------------------------------------------------------------
 ! Needed for MMF_RUNOFF (IOPT_RUN = 5); not part of MP driver in WRF
@@ -1262,6 +1270,7 @@ module module_NoahMP_hrldas_driver
   XICE_THRESHOLD = 0.5   ! fraction of grid determining seaice (from WRF)
 
 !------initialized water tracer variables---------
+if (OPT_WT .eq. 1) then 
   QFX_TR        = undefined_real
   LH_TR         = undefined_real
   SFCRUNOFF_TR  = 0.0
@@ -1293,6 +1302,7 @@ module module_NoahMP_hrldas_driver
   FLUXXY_TR     = undefined_real
   SMOIS_SUB      = undefined_real
   SH2O_SUB       = undefined_real
+end if
 !-------------------------------------------------
 
 !----------------------------------------------------------------------
@@ -1774,6 +1784,81 @@ end subroutine land_driver_ini
           T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
 	    P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, VEGFRA, update_veg, LAI, update_lai)
 #endif
+!------water tracer variables initiation-------
+if (OPT_WT .eq. 1) then 
+  if (olddate < wvtstart) then
+    wvtflag = 0
+  else
+    if (olddate(1:15) == wvtstart(1:15)) then
+      wvtflag = 1
+    else
+      if (olddate < wvtend) then
+        wvtflag = 2
+      else
+        wvtflag = 3
+      end if
+    end if
+  end if
+  ! call tell_wt_flag(olddate, wvtstart, wvtend, wvtflag)
+  if (wvtflag == 1) then
+        QFX_TR        = 0.0
+        LH_TR         = 0.0
+        SFCRUNOFF_TR  = 0.0
+        UDRUNOFF_TR   = 0.0
+        SMOIS_TR      = 0.0
+        SH2O_TR       = 0.0
+        SNOW_TR       = 0.0
+        SNOWH_TR      = 0.0
+        CANWAT_TR     = 0.0
+        ACSNOM_TR     = 0.0
+        ACSNOW_TR     = 0.0
+        CANICEXY_TR   = 0.0
+        CANLIQXY_TR   = 0.0
+        QSNOWXY_TR    = 0.0
+        WSLAKEXY_TR   = 0.0
+        WAXY_TR       = 0.0
+        WTXY_TR       = 0.0
+        ZSNSOXY_TR    = 0.0
+	K = 0
+        do I = 1, NSOIL
+           do J = 1,NSUB(I)
+              K = K + 1
+              ZSNSOXY_TR(:,K,:) = ZSNSOXY(:,I,:) + DZS(I)*(NSUB(I)-J)/NSUB(I)
+           end do
+        end do
+	smcwtdxy_TR   = 0.0
+        rechxy_TR     = 0.0
+        deeprechxy_TR = 0.0
+        SNICEXY_TR    = 0.0
+        SNLIQXY_TR    = 0.0
+        RUNSFXY_TR    = 0.0
+        RUNSBXY_TR    = 0.0
+        ECANXY_TR     = 0.0
+        EDIRXY_TR     = 0.0
+        ETRANXY_TR    = 0.0
+        SMOIS_SUB      = 0.0
+        SH2O_SUB       = 0.0
+        FLUXXY_TR      = 0.0
+        ! specicial care for SMOIS_SUB...
+        K = 0
+        DO I = 1, NSOIL
+              DO J =  NSUB(I), 1, -1
+                 K = K + 1
+                 SMOIS_SUB(:,K,:) = SMOIS(:,I,:)
+                 SH2O_SUB(:,K,:)  = SH2O(:,I,:)
+              END DO
+         !     if (I .eq. 1) then
+         !        SMOIS_SUB(:,2:NSUB(1),:) = SH2O_SUB(:,2:NSUB(1),:)
+         !        SMOIS_SUB(:,1,:) = SMOIS(:,I,:)*NSUB(1)-SH2O(:,I,:)*(NSUB(1)-1)
+         !     end if
+        END DO
+	! call initialized_wt(xxx)
+	wvtflag = 2
+  end if
+  
+end if
+
+!----------------------------------------------
 
 991  continue
 
