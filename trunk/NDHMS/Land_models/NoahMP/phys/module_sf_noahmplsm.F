@@ -5999,6 +5999,15 @@ end if
 #ifdef WRF_HYDRO
                         ,sfcheadrt                     &
 #endif
+                    , WVTFLAG,  NSUB,  NTRACER, SMC_SUB, SH2O_SUB, SICE_SUB          & !IN
+                    , PONDING_TR,   RAIN_TR,  SNOW_TR, QSNOW_TR, QRAIN_TR, SNOWHIN_TR & !IN
+                    , CANLIQ_TR, CANICE_TR, SNOWH_TR, SNEQV_TR                       & !INOUT
+                    , SNICE_TR,  SNLIQ_TR, ZSNSO_TR,  SH2O_TR, SMC_TR               & !INOUT
+                    , SICE_TR,     WA_TR,    WT_TR,DZSNSO_TR, WSLAKE_TR            & !INOUT
+                    , SMCWTD_TR,DEEPRECH_TR, RECH_TR                                 & !INOUT
+                    , CMC_TR,   ECAN_TR, ETRAN_TR, RUNSRF_TR, RUNSUB_TR           & !OUT
+                    , QIN_TR,   QDIS_TR, PONDING1_TR, PONDING2_TR                 & !OUT
+                    , QSNBOT_TR, EDIR_TR, FLUX_TR                            & !OUT
                     )  !out
 ! ----------------------------------------------------------------------  
 ! Code history:
