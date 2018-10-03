@@ -1682,7 +1682,11 @@ contains
                      T2MV   ,T2MB   ,FSRV   , &
                      FSRG   ,RSSUN  ,RSSHA  ,ALBSND  ,ALBSNI,BGAP   ,WGAP,TGV,TGB,&
                      Q1     ,Q2V    ,Q2B    ,Q2E    ,CHV  ,CHB, EMISSI,PAH  ,&
-		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2 )   !out 
+		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2 &
+		     , WVTFLAG, NSUB, NTRACER, SMC_SUB, SH2O_SUB               & !IN
+                     , SNOWH_TR, SNEQV_TR, SH2O_TR, SMC_TR, SNICE_TR,SNLIQ_TR  & !inout
+                     , QMELT_TR, PONDING_TR                                    & !OUT
+		     )   !out 
 !jref:end                            
 
 ! --------------------------------------------------------------------------------------------------
@@ -1845,6 +1849,24 @@ contains
 !  REAL                                              :: Q2E
   REAL,                               INTENT(OUT)   :: EMISSI
   REAL,                               INTENT(OUT)   :: PAH    !precipitation advected heat - total (W/m2)
+
+!----------------------------------------------------------------------
+! Needed for Water tracer capability
+!----------------------------------------------------------------------
+  INTEGER,                            OPTIONAL, INTENT(IN)    :: WVTFLAG
+  INTEGER, DIMENSION(1:NSOIL)       , OPTIONAL, INTENT(IN)    :: NSUB
+  INTEGER                           , OPTIONAL, INTENT(IN)    :: NTRACER
+  REAL   , DIMENSION(     1:NTRACER), OPTIONAL, INTENT(INOUT) :: SH2O_SUB
+  REAL   , DIMENSION(     1:NTRACER), OPTIONAL, INTENT(INOUT) :: SMC_SUB
+  REAL                              , OPTIONAL, INTENT(OUT)   :: QMELT_TR  !snowmelt [mm/s]
+  REAL                              , OPTIONAL, INTENT(OUT)   :: PONDING_TR!pounding at ground [mm]
+  REAL                              , OPTIONAL, INTENT(INOUT) :: SNOWH_TR  !snow height [m]
+  REAL                              , OPTIONAL, INTENT(INOUT) :: SNEQV_TR  !snow mass (mm)
+  REAL   , DIMENSION(     1:NTRACER), OPTIONAL, INTENT(INOUT) :: SH2O_TR   !liquid soil moisture [m3/m3]
+  REAL   , DIMENSION(     1:NTRACER), OPTIONAL, INTENT(INOUT) :: SMC_TR    !soil moisture (ice + liq.) [m3/m3]
+  REAL   , DIMENSION(-NSNOW+1:    0), OPTIONAL, INTENT(INOUT) :: SNICE_TR  !snow ice mass (kg/m2)
+  REAL   , DIMENSION(-NSNOW+1:    0), OPTIONAL, INTENT(INOUT) :: SNLIQ_TR  !snow liq mass (kg/m2)
+!----------------------------------------------------------------------
 
 ! local
   INTEGER                                           :: IZ     !do-loop index
@@ -2270,14 +2292,27 @@ contains
      END IF
 
 ! Energy released or consumed by snow & frozen soil
-
+if (present(WVTFLAG)) then
+ CALL PHASECHANGE (parameters,NSNOW   ,NSOIL   ,ISNOW   ,DT      ,FACT    , & !in
+                   DZSNSO  ,HCPCT   ,IST     ,ILOC    ,JLOC    , & !in
+                   STC     ,SNICE   ,SNLIQ   ,SNEQV   ,SNOWH   , & !inout
+                   SMC     ,SH2O    ,                            & !inout
+                   QMELT   ,IMELT   ,PONDING                     & !out
+		   , WVTFLAG=WVTFLAG, NSUB=NSUB, NTRACER=NTRACER & !wt in
+		   , SMC_SUB=SMC_SUB, SH2O_SUB=SH2O_SUB          & !wt IN
+                   , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR        & !wt inout
+		   , SNEQV_TR=SNEQV_TR, SNOWH_TR=SNOWH_TR        & !wt inout
+                   , SMC_TR=SMC_TR, SH2O_TR=SH2O_TR              & !wt inout
+                   , QMELT_TR=QMELT_TR, PONDING_TR=PONDING_TR    & !wt out
+		   )                     !out
+else
  CALL PHASECHANGE (parameters,NSNOW   ,NSOIL   ,ISNOW   ,DT      ,FACT    , & !in
                    DZSNSO  ,HCPCT   ,IST     ,ILOC    ,JLOC    , & !in
                    STC     ,SNICE   ,SNLIQ   ,SNEQV   ,SNOWH   , & !inout
                    SMC     ,SH2O    ,                            & !inout
                    QMELT   ,IMELT   ,PONDING )                     !out
 
-
+end if
   END SUBROUTINE ENERGY
 
 !== begin thermoprop ===============================================================================
