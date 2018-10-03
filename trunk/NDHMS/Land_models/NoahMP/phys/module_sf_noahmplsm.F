@@ -1683,9 +1683,9 @@ contains
                      FSRG   ,RSSUN  ,RSSHA  ,ALBSND  ,ALBSNI,BGAP   ,WGAP,TGV,TGB,&
                      Q1     ,Q2V    ,Q2B    ,Q2E    ,CHV  ,CHB, EMISSI,PAH  ,&
 		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2 &
-		     , WVTFLAG, NSUB, NTRACER, SMC_SUB, SH2O_SUB               & !IN
-                     , SNOWH_TR, SNEQV_TR, SH2O_TR, SMC_TR, SNICE_TR,SNLIQ_TR  & !inout
-                     , QMELT_TR, PONDING_TR                                    & !OUT
+		     , WVTFLAG, NSUB, NTRACER, SMC_SUB, SH2O_SUB               & !wt IN
+                     , SNOWH_TR, SNEQV_TR, SH2O_TR, SMC_TR, SNICE_TR,SNLIQ_TR  & !wt inout
+                     , QMELT_TR, PONDING_TR                                    & !wt OUT
 		     )   !out 
 !jref:end                            
 
@@ -5452,7 +5452,12 @@ end if
                           DZSNSO  ,HCPCT   ,IST     ,ILOC    ,JLOC    , & !in
                           STC     ,SNICE   ,SNLIQ   ,SNEQV   ,SNOWH   , & !inout
                           SMC     ,SH2O    ,                            & !inout
-                          QMELT   ,IMELT   ,PONDING )                     !out
+                          QMELT   ,IMELT   ,PONDING                     & !out
+			  , WVTFLAG, NSUB, NTRACER, SMC_SUB, SH2O_SUB   & !wt IN
+                          , SNICE_TR, SNLIQ_TR, SNEQV_TR, SNOWH_TR      & !wt inout
+                          , SMC_TR, SH2O_TR                             & !wt inout
+                          , QMELT_TR, PONDING_TR                        & !wt out
+			  )                     !out
 ! ----------------------------------------------------------------------
 ! melting/freezing of snow water and soil water
 ! ----------------------------------------------------------------------
@@ -5487,6 +5492,41 @@ end if
   REAL, DIMENSION(-NSNOW+1:0)    , INTENT(INOUT)  :: SNICE  !snow layer ice [mm]
   REAL, DIMENSION(-NSNOW+1:0)    , INTENT(INOUT)  :: SNLIQ  !snow layer liquid water [mm]
 
+!---------------------------------------------------------------------
+! Needed for Water tracer capability
+!---------------------------------------------------------------------
+  INTEGER,                           OPTIONAL, INTENT(IN)     :: WVTFLAG
+  INTEGER, DIMENSION(1:NSOIL),       OPTIONAL, INTENT(IN)     :: NSUB
+  INTEGER,                           OPTIONAL, INTENT(IN)     :: NTRACER
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT)  :: SH2O_SUB   !soil liquid water[m3/m3]
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT)  :: SMC_SUB    !total soil water [m3/m3]
+  REAL,                              OPTIONAL, INTENT(OUT)    :: QMELT_TR  !snowmelt rate [mm/s]
+  REAL,                              OPTIONAL, INTENT(OUT)    :: PONDING_TR!snowmelt when snow has no layer [mm]
+  REAL,                              OPTIONAL, INTENT(INOUT)  :: SNEQV_TR
+  REAL,                              OPTIONAL, INTENT(INOUT)  :: SNOWH_TR
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT)  :: SH2O_TR   !soil liquid water[m3/m3]
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT)  :: SMC_TR    !total soil water [m3/m3]
+  REAL, DIMENSION(-NSNOW+1:0)      , OPTIONAL, INTENT(INOUT)  :: SNICE_TR  !snow layer ice [mm]
+  REAL, DIMENSION(-NSNOW+1:0)      , OPTIONAL, INTENT(INOUT)  :: SNLIQ_TR  !snow layer liquid water [mm]
+  !------local water tracer variables--------
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: WMASS0_TR
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: WICE0_TR
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: WLIQ0_TR
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: MICE_TR      !soil/snow ice mass [mm]
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: MLIQ_TR      !soil/snow liquid water mass [mm]
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: WMASS0_SUB
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: WICE0_SUB
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: WLIQ0_SUB
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: MICE_SUB      !soil/snow ice mass [mm]
+  REAL, DIMENSION(-NSNOW+1:NTRACER) :: MLIQ_SUB      !soil/snow liquid water mass [mm]
+  REAL                              :: WMELTING_REST, WFREEZING_REST, SUPERCOOL_REST, WICE_REST
+  REAL                              :: TEMP1_TR     !temporary variables [kg/m2]
+  REAL                              :: PROPOR_TR
+  REAL                              :: PROPOR_TRL
+  REAL                              :: PROPOR_TRS
+  INTEGER                           :: K, ISUB
+!---------------------------------------------------------------------
+
 ! local
 
   INTEGER                         :: J         !do loop index
@@ -5510,7 +5550,19 @@ end if
     QMELT   = 0.
     PONDING = 0.
     XMF     = 0.
-
+    ! wt initialization
+    if (present(WVTFLAG)) then
+      QMELT_TR = 0.0
+      PONDING_TR = 0.0
+      PROPOR_TR  = 0.0
+      MICE  = 0.0
+      MLIQ  = 0.0
+      MICE_SUB = 0.0
+      MLIQ_SUB = 0.0
+      MICE_TR  = 0.0
+      MLIQ_TR  = 0.0
+    end if
+    
     DO J = -NSNOW+1, NSOIL
          SUPERCOOL(J) = 0.0
     END DO
@@ -5518,12 +5570,32 @@ end if
     DO J = ISNOW+1,0       ! all layers
          MICE(J) = SNICE(J)
          MLIQ(J) = SNLIQ(J)
+	 if (present(WVTFLAG)) then
+	   MICE_TR(J) = SNICE_TR(J)
+           MLIQ_TR(J) = SNLIQ_TR(J)
+           MICE_SUB(J) = SNICE(J)
+           MLIQ_SUB(J) = SNLIQ(J)
+	 end if
     END DO
 
     DO J = 1, NSOIL               ! soil
          MLIQ(J) =  SH2O(J)            * DZSNSO(J) * 1000.
          MICE(J) = (SMC(J) - SH2O(J))  * DZSNSO(J) * 1000.
     END DO
+    !------do wt calc-------
+    if (present(WVTFLAG)) then
+      ISUB = 0
+      DO J = 1, NSOIL
+        DO K = 1, NSUB(J)
+         ISUB = ISUB + 1
+         MLIQ_TR(ISUB)  =  SH2O_TR(ISUB)                * DZSNSO(J)/real(NSUB(J)) * 1000.
+         MICE_TR(ISUB)  = (SMC_TR(ISUB) - SH2O_TR(ISUB))* DZSNSO(J)/real(NSUB(J)) * 1000.
+         MLIQ_SUB(ISUB) = SH2O_SUB(ISUB)                * DZSNSO(J)/real(NSUB(J)) * 1000.
+         MICE_SUB(ISUB) = (SMC_SUB(ISUB)-SH2O_SUB(ISUB))* DZSNSO(J)/real(NSUB(J)) * 1000.
+       END DO
+      END DO
+    end if
+    !----wt calc end-------
 
     DO J = ISNOW+1,NSOIL       ! all layers
          IMELT(J)    = 0
@@ -5533,6 +5605,18 @@ end if
          WLIQ0(J)    = MLIQ(J)
          WMASS0(J)   = MICE(J) + MLIQ(J)
     ENDDO
+    !-------do wt calc--------
+    if (present(WVTFLAG)) then
+      DO J = ISNOW+1, NTRACER
+         WICE0_TR(J)    = MICE_TR(J)
+         WLIQ0_TR(J)    = MLIQ_TR(J)
+         WMASS0_TR(J)   = MICE_TR(J) + MLIQ_TR(J)
+         WICE0_SUB(J)   = MICE_SUB(J)
+         WLIQ0_SUB(J)   = MLIQ_SUB(J)
+         WMASS0_SUB(J)  = MICE_SUB(J) + MLIQ_SUB(J)
+       END DO
+    end if
+    !-------------------------
 
     if(ist == 1) then
       DO J = 1,NSOIL
@@ -5603,6 +5687,16 @@ end if
         QMELT   = MAX(0.,(TEMP1-SNEQV))/DT
         XMF     = HFUS*QMELT
         PONDING = TEMP1-SNEQV
+	!------do wt calc-------
+	if (present(WVTFLAG)) then
+	  TEMP1_TR   = SNEQV_TR
+	  call get_wt_ratio(TEMP1_TR, TEMP1, PROPER_TR)
+          SNEQV_TR   = MAX(0.,TEMP1_TR-XM(1)*PROPOR_TR)
+          SNOWH_TR   = MAX(0.,SNOWH*PROPOR_TR)
+	  QMELT_TR   = MAX(0.,(TEMP1_TR-SNEQV_TR))/DT
+          PONDING_TR = TEMP1_TR-SNEQV_TR
+	end if
+	!-----------------------
     ENDIF
 
 ! The rate of melting and freezing for snow and soil
@@ -5614,21 +5708,83 @@ end if
          IF (XM(J) > 0.) THEN                            
             MICE(J) = MAX(0., WICE0(J)-XM(J))
             HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
+	    !-----do wt calc------
+	    if (present(WVTFLAG)) then
+	      PROPOR_TRS = 0.0
+	      if (J <= 0) then !snow layer
+	        call get_wt_ratio(WICE0_TR(J), WICE0(J), PROPOR_TRS)
+		MICE_TR(J)  = MAX(0., WICE0_TR(J)-XM(J)*PROPOR_TRS)
+		MICE_SUB(J) = MAX(0., WICE0_TR(J)-XM(J))
+	      else
+	        WMELTING_REST = XM(J)
+		call MELTING_SUB(WMELTING_REST,XM(J), J, NSUB(J),       &
+		     WICE0_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))), &
+		     WICE_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))), &
+		     MICE_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))),  &
+		     MICE_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))))
+	      end if
+	    end if
+	    !---------------------
          ELSE IF (XM(J) < 0.) THEN                      
             IF (J <= 0) THEN                             ! snow
                MICE(J) = MIN(WMASS0(J), WICE0(J)-XM(J))  
+	       !-----do wt calc------
+	       if (present(WVTFLAG)) then
+	         call get_wt_ratio(WLIQ0_TR(J), WLIQ0(J), PROPOR_TRL)
+		 MICE_TR(J)  = MIN(WMASS0_TR(J), WICE0_TR(J)-XM(J)*PROPOR_TRL)
+		 MICE_SUB(J) = MIN(WMASS0_SUB(J), WICE0_SUB(J)-XM(J))
+	       end if
+	       !---------------------
             ELSE                                         ! soil
                IF (WMASS0(J) < SUPERCOOL(J)) THEN
                   MICE(J) = 0.
+		  !-----do wt calc-----
+		  if (present(WVTFLAG)) then
+		    MICE_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))) = 0.
+		    MICE_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))) = 0.
+		  end if
+		  !--------------------
                ELSE
                   MICE(J) = MIN(WMASS0(J) - SUPERCOOL(J),WICE0(J)-XM(J))
                   MICE(J) = MAX(MICE(J),0.0)
+		  !-----do wt calc-----
+		  if (present(WVTFLAG)) then
+		    WFREEZING_REST = XM(J)
+		    SUPERCOOL_REST = SUPERCOOL(J)
+		    call FREEZING_SUB(WFREEZING_REST, SUPERCOOL_REST, &
+		                      XM(J), SUPERCOOL(J), J, NSUB(J), WLIQ0(J), MICE(J),&
+				      WICE0_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)), &
+				      WICE_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)), &
+				      WLIQ_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)),  &
+				      WLIQ_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)), &
+				      WMASS0_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)), &
+				      WMASS0_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)),&
+				      MICE_TR(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J)),  &
+				      MICE_SUB(sum(NSUB(1:J))-NSUB(J)+1:sum(NSUB(1:J))  &
+				      )
+		  end if
+		  !--------------------
                ENDIF
             ENDIF
             HEATR = HM(J) - HFUS*(WICE0(J)-MICE(J))/DT
          ENDIF
 
          MLIQ(J) = MAX(0.,WMASS0(J)-MICE(J))
+	 !------do wt calc------
+	 if (present(WVTFLAG)) then
+	   if (J <=0 ) then
+	     MLIQ_TR(J) = MAX(0.,WMASS0_TR(J)-MICE_TR(J))
+	     MLIQ_TR(J) = MIN(MLIQ_TR(J), MLIQ(J))
+	   else
+	     DO K =1, NSUB(J)
+               ISUB       = sum(NSUB(1:J)) - NSUB(J) + K
+               MLIQ_SUB(ISUB) = MAX(0., WMASS0_SUB(ISUB)-MICE_SUB(ISUB))
+               MLIQ_TR(ISUB) = MAX(0.,WMASS0_TR(ISUB)-MICE_TR(ISUB))
+               MLIQ_TR(ISUB) = MIN(MLIQ_TR(ISUB), MLIQ_SUB(ISUB))
+             END DO
+	   end if
+	 end if
+	 !----------------------
 
          IF (ABS(HEATR) > 0.) THEN
             STC(J) = STC(J) + FACT(J)*HEATR
@@ -5646,6 +5802,12 @@ end if
 
          IF (J < 1) THEN
             QMELT = QMELT + MAX(0.,(WICE0(J)-MICE(J)))/DT
+	    !-----do wt calc------
+	    if (present(WVTFLAG)) then
+	      QMELT_TR = QMELT_TR + MAX(0.,(WICE0_TR(J)-MICE_TR(J)))/DT
+	      QMELT_TR = MIN(QMELT_TR, QMELT)
+	    end if
+	    !---------------------
          ENDIF
       ENDIF
     ENDDO
@@ -5653,11 +5815,28 @@ end if
     DO J = ISNOW+1,0             ! snow
        SNLIQ(J) = MLIQ(J)
        SNICE(J) = MICE(J)
+       !-----do wt calc-----
+       if (present(WVTFLAG)) then
+         SNLIQ_TR(J) = MLIQ_TR(J)
+	 SNICE_TR(J) = MICE_TR(J)
+       end if
+       !--------------------
     END DO
 
     DO J = 1, NSOIL              ! soil
        SH2O(J) =  MLIQ(J)            / (1000. * DZSNSO(J))
        SMC(J)  = (MLIQ(J) + MICE(J)) / (1000. * DZSNSO(J))
+       !-----do wt calc------
+       if (present(WVTFLAG)) then
+         DO K =1, NSUB(J)
+           ISUB           = sum(NSUB(1:J)) - NSUB(J) + K
+           SH2O_TR(ISUB)  =  MLIQ_TR(ISUB)                  / (1000. * DZSNSO(J)/real(NSUB(J)))
+           SMC_TR(ISUB)   = (MLIQ_TR(ISUB) + MICE_TR(ISUB)) / (1000. * DZSNSO(J)/real(NSUB(J)))
+           SH2O_SUB(ISUB) = MLIQ_SUB(ISUB)                  / (1000. * DZSNSO(J)/real(NSUB(J)))
+           SMC_SUB(ISUB)  = (MLIQ_SUB(ISUB)+MICE_SUB(ISUB)) / (1000. * DZSNSO(J)/real(NSUB(J)))
+         END DO
+       end if
+       !---------------------
     END DO
    
   END SUBROUTINE PHASECHANGE
