@@ -84,7 +84,7 @@ CONTAINS
 		, ZSNSOXY_TR, SNICEXY_TR, SNLIQXY_TR              & ! IN/OUT WVT variables
                 , SMCWTDXY_TR, DEEPRECHXY_TR, RECHXY_TR           & ! INOUT
                 , RUNSFXY_TR, RUNSBXY_TR, ECANXY_TR               &
-		, EDIRXY_TR, ETRANXY_TR=, FLUXXY_TR               & ! IN/OUT WVT variables
+		, EDIRXY_TR,  ETRANXY_TR, FLUXXY_TR               & ! IN/OUT WVT variables
 
                )
 !----------------------------------------------------------------
