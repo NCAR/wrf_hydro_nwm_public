@@ -1206,7 +1206,11 @@ contains
                           CANLIQ ,CANICE ,TV     ,SFCTMP ,TG     ,         & !in
                           QINTR  ,QDRIPR ,QTHROR ,QINTS  ,QDRIPS ,QTHROS , & !out
 			  PAHV   ,PAHG   ,PAHB   ,QRAIN  ,QSNOW  ,SNOWHIN, & !out
-			  FWET   ,CMC                                    )   !out
+			  FWET   ,CMC                                      &
+			  , WVTFLAG, WVT_RATIO                             & !wt in
+			  , CANLIQ_TR, CANICE_TR                           & !wt inout
+                          , QRAIN_TR, QSNOW_TR, SNOWHIN_TR, CMC_TR         & !wt out
+			  )   !out
 
 ! ------------------------ code history ------------------------------
 ! Michael Barlage: Oct 2013 - split CANWATER to calculate precip movement for 
@@ -1255,6 +1259,28 @@ contains
   REAL, INTENT(OUT)   :: CMC     !intercepted water (mm)
 ! --------------------------------------------------------------------
 
+!---------------------------------------------------------------------
+! Needed for Water tracer capability
+!---------------------------------------------------------------------
+  INTEGER, OPTIONAL, INTENT(IN) :: WVTFLAG
+  REAL,    OPTIONAL, INTENT(IN) :: WVT_RATIO
+  REAL, OPTIONAL, INTENT(INOUT) :: CANLIQ_TR  !intercepted liquid water (mm)
+  REAL, OPTIONAL, INTENT(INOUT) :: CANICE_TR  !intercepted ice mass (mm)
+  REAL, OPTIONAL, INTENT(OUT)   :: QRAIN_TR   !rain at ground srf (mm/s) [+]
+  REAL, OPTIONAL, INTENT(OUT)   :: QSNOW_TR   !snow at ground srf (mm/s) [+]
+  REAL, OPTIONAL, INTENT(OUT)   :: SNOWHIN_TR !snow depth increasing rate (m/s)
+  REAL, OPTIONAL, INTENT(OUT)   :: CMC_TR     !intercepted water (mm)
+  REAL                          :: QINTR_TR   !interception rate for rain (mm/s)
+  REAL                          :: QDRIPR_TR  !drip rate for rain (mm/s)
+  REAL                          :: QTHROR_TR  !throughfall for rain (mm/s)
+  REAL                          :: QINTS_TR   !interception (loading) rate for snowfall (mm/s)
+  REAL                          :: QDRIPS_TR  !drip (unloading) rate for intercepted snow (mm/s)
+  REAL                          :: QTHROS_TR  !throughfall of snowfall (mm/s)
+  REAL                          :: ICEDRIP_TR !canice unloading
+  REAL                          :: PROPOR_TR
+  REAL                          :: wt_undefined_value = -1.E36
+!---------------------------------------------------------------------
+
 ! ------------------------ local variables ---------------------------
   REAL                :: MAXSNO  !canopy capacity for snow interception (mm)
   REAL                :: MAXLIQ  !canopy capacity for rain interception (mm)
@@ -1284,6 +1310,20 @@ contains
       QSNOW   = 0.0
       SNOWHIN = 0.0
       ICEDRIP = 0.0
+      
+      !-----initiate tracer variables-------
+      if (present(wvtflag)) QINTR_TR   = 0.0
+      if (present(wvtflag)) QDRIPR_TR  = 0.0
+      if (present(wvtflag)) QTHROR_TR  = 0.0
+      if (present(wvtflag)) QINTS_TR   = 0.0
+      if (present(wvtflag)) QDRIPS_TR  = 0.0
+      if (present(wvtflag)) QTHROS_TR  = 0.0
+      if (present(wvtflag)) ICEDRIP_TR = 0.0
+      if (present(QRAIN_TR)) QRAIN_TR   = 0.0
+      if (present(QSNOW_TR)) QSNOW_TR   = 0.0
+      if (present(SNOWHIN_TR)) SNOWHIN_TR = 0.0
+      !-------------------------------------
+      
 !      print*, "precip_heat begin canopy balance:",canliq+canice+(rain+snow)*dt
 !      print*,  "precip_heat snow*3600.0:",snow*3600.0
 !      print*,  "precip_heat rain*3600.0:",rain*3600.0
@@ -1304,13 +1344,26 @@ contains
          QDRIPR = FVEG * RAIN - QINTR
          QTHROR = (1.-FVEG) * RAIN
          CANLIQ=MAX(0.,CANLIQ+QINTR*DT)
+	 ! do tracer calculation---------
+	 if (present(WVT_RATIO)) call tag_precip(QINTR, WVT_RATIO, QINTR_TR)
+	 if (present(WVT_RATIO)) call tag_precip(QDRIPR, WVT_RATIO, QDRIPR_TR)
+	 if (present(WVT_RATIO)) call tag_precip(QTHROR, WVT_RATIO, QTHROR_TR)
+	 if (present(CANLIQ_TR)) CANLIQ_TR = MAX(0.0, CANLIQ_TR+QINTR_TR*DT)
+	 !-------------------------------
       ELSE
          QINTR  = 0.
          QDRIPR = 0.
          QTHROR = RAIN
-	 IF(CANLIQ > 0.) THEN             ! FOR CASE OF CANOPY GETTING BURIED
+	 if (present(QINTR_TR)) QINTR_TR = 0.0     !wt calc
+	 if (present(QDRIPR_TR)) QDRIPR_TR = 0.0   !wt calc
+	 if (present(QTHROR_TR)) QTHROR_TR = 0.0   !wt calc
+ 	 IF(CANLIQ > 0.) THEN             ! FOR CASE OF CANOPY GETTING BURIED
 	   QDRIPR = QDRIPR + CANLIQ/DT
 	   CANLIQ = 0.0
+	   if (present(QDRIPR_TR)) then   !wt calc
+	     QDRIPR_TR = QDRIPR_TR + CANLIQ_TR/DT
+	     CANLIQ_TR = O.0
+	   end if
 	 END IF
       END IF
       
@@ -1329,6 +1382,8 @@ contains
       MAXSNO = 6.6*(0.27+46./BDFALL) * (ELAI+ ESAI)
 
       IF((ELAI+ ESAI).GT.0.) THEN
+         if (present(CANICE_TR)) call get_wt_ratio(CANICE_TR, CANICE, PROPOR_TR)  !wt calc
+      
          QINTS = FVEG * SNOW * FP
          QINTS = MIN(QINTS, (MAXSNO - CANICE)/DT * (1.-EXP(-SNOW*DT/MAXSNO)) )
          QINTS = MAX(QINTS, 0.)
@@ -1339,13 +1394,28 @@ contains
          QDRIPS = (FVEG * SNOW - QINTS) + ICEDRIP
          QTHROS = (1.0-FVEG) * SNOW
          CANICE= MAX(0.,CANICE + (QINTS - ICEDRIP)*DT)
+	 if (present(WVTFLAG)) then     !wt calc
+	   call tag_precip(QINTS, WVT_RATIO, QINTS_TR)
+	   ICEDRIP_TR = ICEDRIP*PROPOR_TR
+	   QDRIPS_TR  = FVEG*SNOW*WVT_RATIO - QINTS_TR + ICEDRIP_TR
+	   call tag_precip(QTHROS, WVT_RATIO, QTHROS_TR)
+	   CANICE_TR  = MAX(0.,CANICE_TR+(QINTS_TR-ICEDRIP_TR)*DT)
+	 end if
       ELSE
          QINTS  = 0.
          QDRIPS = 0.
          QTHROS = SNOW
+	 if (present(WVTFLAG)) then  !wt calc
+	   QINTS_TR = 0.0
+	   QDRIPS_TR = 0.0
+	   QTHROS_TR = QTHROS * WVT_RATIO
+	 end if
 	 IF(CANICE > 0.) THEN             ! FOR CASE OF CANOPY GETTING BURIED
 	   QDRIPS = QDRIPS + CANICE/DT
 	   CANICE = 0.0
+	   if (present(WVTFLAG)) then  ! wt calc
+	     QDRIPS_TR = QDRIPS_TR + CANICE_TR/DT
+	     CANICE_TR = 0.0
 	 END IF
       ENDIF
 !      print*, "precip_heat canopy through:",3600.0*(FVEG * SNOW - QINTS)
@@ -1363,6 +1433,7 @@ contains
 ! total canopy water
 
       CMC = CANLIQ + CANICE
+      if (present(WVTFLAG)) CMC_TR = CANLIQ_TR+CANICE+TR    !wt calc
 
 ! heat transported by snow/ice
 
@@ -1412,10 +1483,19 @@ contains
       QRAIN   = QDRIPR + QTHROR
       QSNOW   = QDRIPS + QTHROS
       SNOWHIN = QSNOW/BDFALL
+      ! wt calc
+      if (present(WVTFLAG)) then
+        QRAIN_TR = QDRIPR_TR + QTHROR_TR
+	QSNOW_TR = QDRIPS_TR + QTHROS_TR
+	SNOWHIN_TR = QSNOW_TR/BDFALL
+      end if
 
       IF (IST == 2 .AND. TG > TFRZ) THEN
          QSNOW   = 0.
          SNOWHIN = 0.
+	 if (present(WVTFLAG)) then
+	   QSNOW_TR = 0.
+	   SNOWIN_TR = 0.
       END IF
 !      print*,  "precip_heat qsnow*3600.0:",qsnow*3600.0
 !      print*,  "precip_heat qrain*3600.0:",qrain*3600.0
