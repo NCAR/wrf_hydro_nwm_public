@@ -116,13 +116,14 @@ contains
 
             ! try to allocate static data
             allocate ( this%static_data )
-            if ( .not. associated(this%static_data) ) then
-                ! if the static data structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater properties structure"
-            else
-                ! initialize the static data structure
-                call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
-            end if
+            this%static_data = groundwater_static_struct(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
+            ! if ( .not. associated(this%static_data) ) then
+            !     ! if the static data structure could not be created write and error
+            !     write(0,*) "Failure to allocate groundwater properties structure"
+            ! else
+            !     ! initialize the static data structure
+            !     call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
+            ! end if
 
             this%bucket_pointer_allocation_guard = .true.
         end if
