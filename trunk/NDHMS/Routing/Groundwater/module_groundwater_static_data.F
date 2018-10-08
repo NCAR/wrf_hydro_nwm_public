@@ -65,8 +65,8 @@ contains
     !> Destructor for the groundwater static struct.
     !! @param this  The nhd groundwater static object being destroyed
 
-    subroutine groundwater_static_struct_destroy(this)
-        implicit none
-        class (groundwater_static_struct), intent(inout) :: this ! object being destroyed
-    end subroutine groundwater_static_struct_destroy
+  subroutine groundwater_static_struct_destroy(this)
+    implicit none
+    type (groundwater_static_struct), intent(inout) :: this ! object being destroyed
+  end subroutine groundwater_static_struct_destroy
 end module module_groundwater_static_data

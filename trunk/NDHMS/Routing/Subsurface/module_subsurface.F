@@ -80,7 +80,7 @@ module module_subsurface_data
         if ( this%pointer_allocation_guard .eqv. .true.) then
             !write(0,*) "Testing pointers for deallocation"
             if ( associated( this%state ) ) then
-                call this%state%destroy
+                !call this%state%destroy
                 deallocate( this%state )
             end if
 

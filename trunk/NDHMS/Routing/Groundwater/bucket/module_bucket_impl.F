@@ -96,13 +96,14 @@ contains
 
             ! try to allocate state
             allocate ( this%state )
-            if ( .not. associated(this%state) ) then
-                ! if the input structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater state structure"
-            else
-                ! initialize the state structure
-                call this%state%init(numbasins)
-            end if
+            this%state = bucket_state_interface(numbasins)
+            ! if ( .not. associated(this%state) ) then
+            !     ! if the input structure could not be created write and error
+            !     write(0,*) "Failure to allocate groundwater state structure"
+            ! else
+            !     ! initialize the state structure
+            !     call this%state%init(numbasins)
+            ! end if
 
             ! try to allocate properties
             allocate ( this%properties )
