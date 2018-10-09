@@ -14,9 +14,11 @@ module module_machine_learning_state
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
         real :: current_storage
         !real :: accumulated_storage
-        real :: previous_day_storage
+        real :: average_storage_over_past_time_intervals
+		real :: totaled_storage
+		!real :: average_storage
         real :: previous_day_release
-        real :: average_inflow_for_time_interval
+        real :: average_inflow_over_past_time_intervals
         real :: accumulated_inflow
         integer :: routing_period
         integer :: time_interval
@@ -297,11 +299,13 @@ contains
 
         this%previous_day_release = release_monthly_average
 
-        this%previous_day_storage = storage_monthly_average
+        this%average_storage_over_past_time_intervals = storage_monthly_average
 
         !this%accumulated_storage = storage_monthly_average
 
         this%current_storage = storage_monthly_average
+		
+		this%totaled_storage = 0.0
 
         this%time_interval = 86400
 
@@ -311,7 +315,7 @@ contains
 
         this%routing_period = 0
 
-        this%average_inflow_for_time_interval = 0.0
+        this%average_inflow_over_past_time_intervals = 0.0
 
         this%accumulated_inflow = 0.0
 

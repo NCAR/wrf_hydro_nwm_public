@@ -1,3 +1,4 @@
+
 module module_machine_learning_model
 
     !use module_reservoir_base
@@ -8,15 +9,16 @@ module module_machine_learning_model
 
         !integer :: lake_id      ! lake id or COMID
 
-
+		integer :: model_number
+		
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
         REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
 
         integer :: Nlayers                     ! number of model layers (this is actually the number of layers + 1, to help us for matrix dimensions)
         integer :: Ninputs                     ! total number of inputs, note that we might not be using all as the inputs to the ML model!
         integer :: str_len ! it is supposed to be one of the dimensions for "input_names"; however, I had problem in reading/assigning "input_names"
-        integer :: Nlakes !
-        integer :: monthly_averages_rows !
+        !integer :: Nlakes !
+        !integer :: monthly_averages_rows !
 
         integer :: nodes   ! # of neurons which is a function of layers and model number
         real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
@@ -45,7 +47,6 @@ module module_machine_learning_model
 
 
         ! Parameter declaration for ml_res_sim_release subroutine
-        real :: inflow_previous_time      ! inflow at previous timestep (cms);  "qi0" at the "LEVELPOOL" subroutine
         real :: inflow_current_time       ! inflow at the current timestep (cms); "qi1" at the "LEVELPOOL" subroutine
         real :: revised_simulated_release     ! outflow at current timestep; "qo1" at the "LEVELPOOL" subroutine
         real :: normalized_simulated_release, ml_simulated_release, revised_release, desired_release, tmp, tmp1
@@ -74,10 +75,8 @@ module module_machine_learning_model
 
         type NN_reservoir_in_out
             REAL :: previous_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
-            REAL :: previous_storage !
-            REAL :: inflow  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
-            REAL :: pool_elevation !
-            REAL :: previous_pool_elevation !
+            REAL :: average_storage_over_past_time_intervals !
+            REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
             REAL :: current_storage !
             REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
             REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
@@ -90,12 +89,6 @@ module module_machine_learning_model
 
         real, allocatable, dimension(:) :: input_vector
         real, allocatable, dimension(:,:) :: reshaped_input_vector
-
-        real :: minRelease
-        real :: maxRelease
-        real :: minStorage
-        real :: maxStorage
-
 
 
 
@@ -111,29 +104,53 @@ contains
 
 
     !Machine Learning Model Constructor
-    subroutine machine_learning_model_init(this)
+    subroutine machine_learning_model_init(this, model_number)
         use netcdf
         implicit none
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being initialized
 
+		integer, intent(in) :: model_number
 
         integer :: ncid, status, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
-        integer :: activation_functionsVarId, number_of_nodesVarId, minimum_storageVarId, maximum_storageVarId, lake_idVarId
-        integer :: minimum_releaseVarId, maximum_releaseVarId
-        integer :: long_term_releaseVarId
+        integer :: activation_functionsVarId, number_of_nodesVarId]
+		!, minimum_storageVarId, maximum_storageVarId, lake_idVarId
+        !integer :: minimum_releaseVarId, maximum_releaseVarId
+        !integer :: long_term_releaseVarId
 
         character, external :: nf90_strerror1
         integer, dimension(nf90_max_var_dims) :: dimIDs
 
-        integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
-        integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
+        !integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
+        !integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
 
         integer :: i, j, k
 
-        status = nf90_open(path = "17all_res_acf_all_relu_nc.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        if (status /= nf90_noerr) call handle_err(status)
+		
+	contains
+	
+		this%model_number = model_number
+		
+	! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
+		
+		if (model_number == 1) then
+			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
+			if (status /= nf90_noerr) call handle_err(status)		
+		
+		
+		else if (model_number == 2) then
+			status = nf90_open(path = "ML_MODEL_PARM_CH.nc", mode = nf90_nowrite, ncid = ncid)                ! open existing NetCDF dataset
+			if (status /= nf90_noerr) call handle_err(status)		
+		
+		end if
+		
+		
+        !status = nf90_open(path = "17all_res_acf_all_relu_nc.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        !if (status /= nf90_noerr) call handle_err(status)
 
 
+		
+		
+			
 
         status = nf90_inq_varid(ncid, "bias", biasVarId)
 
@@ -308,16 +325,15 @@ contains
         !WARNING: note if this is the case, we will need to train the model based on these new way of calculation of storage from acap files!
         !This code for linear interpolation needs some modifications as well!
 
-        this%nn_inputs%previous_pool_elevation = 184 !
 
-
-        this%nn_inputs%previous_release = 187.78992  !4.090795709653281126e-02
-        this%nn_inputs%previous_storage = 9.700250e+08  !2.938184733232386270e-01
-        this%nn_inputs%inflow = 192.46272  !3.645985341167530536e-02
-        this%nn_inputs%X_DOY = 4.93544852e-01
-        this%nn_inputs%Y_DOY = 4.16706726e-05
-
-
+        this%nn_inputs%previous_release = 0.0
+        this%nn_inputs%average_storage_over_past_time_intervals = 0.0
+        this%nn_inputs%average_inflow_over_past_time_intervals = 0.0
+        this%nn_inputs%X_DOY = 0.0
+        this%nn_inputs%Y_DOY = 0.0		
+		
+	
+		
         ! this has been intentionally deactivated;  Index([u'Release', u'Elevation', u'Inflow', u'DOX', u'DOY', u'Storage'], dtype='object') coming from ACF NetCDF file
         this%minimum_of_features_final = (/this%minimum_of_features(1), this%minimum_of_features(6), this%minimum_of_features(3),&
          this%minimum_of_features(2), this%minimum_of_features(4), this%minimum_of_features(5)/)
@@ -327,18 +343,18 @@ contains
 
 
 
-        this%normalized_nn_inputs%previous_release = (this%nn_inputs%previous_release - this%minimum_of_features_final(1))&
-        /(this%maximum_of_features_final(1) - this%minimum_of_features_final(1))
+        !this%normalized_nn_inputs%previous_release = (this%nn_inputs%previous_release - this%minimum_of_features_final(1))&
+        !/(this%maximum_of_features_final(1) - this%minimum_of_features_final(1))
 
-        this%normalized_nn_inputs%previous_storage = (this%nn_inputs%previous_storage - this%minimum_of_features_final(2))&
-        /(this%maximum_of_features_final(2) - this%minimum_of_features_final(2))
+        !this%normalized_nn_inputs%previous_storage = (this%nn_inputs%previous_storage - this%minimum_of_features_final(2))&
+        !/(this%maximum_of_features_final(2) - this%minimum_of_features_final(2))
 
-        this%normalized_nn_inputs%inflow = (this%nn_inputs%inflow - this%minimum_of_features_final(3))&
-        /(this%maximum_of_features_final(3) - this%minimum_of_features_final(3))
+        !this%normalized_nn_inputs%inflow = (this%nn_inputs%inflow - this%minimum_of_features_final(3))&
+        !/(this%maximum_of_features_final(3) - this%minimum_of_features_final(3))
 
 
-        this%normalized_nn_inputs%X_DOY = this%nn_inputs%X_DOY ! this variable is already
-        this%normalized_nn_inputs%Y_DOY = this%nn_inputs%Y_DOY
+        !this%normalized_nn_inputs%X_DOY = this%nn_inputs%X_DOY ! this variable is already
+        !this%normalized_nn_inputs%Y_DOY = this%nn_inputs%Y_DOY
 
 
 
@@ -377,31 +393,67 @@ contains
 
 
     ! This subroutine performs matrix calculations to simulate reservoir release from a saved/trained ML model!
-    !subroutine run_machine_learning_model(this)
-    subroutine run_machine_learning_model(model_data)
+    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_release, average_storage_over_past_time_intervals, X_DOY, Y_DOY)
         implicit none
         !class(machine_learning_model_struct), intent(inout) :: this
         class(machine_learning_model_struct), intent(inout) :: model_data
         !real ::
 
-        type (NN_node), dimension (10), intent (IN) :: model_parameters_local
+        !type (NN_node), dimension (10), intent (IN) :: model_parameters_local
+		
+		
+		real, intent (in)   ::  average_inflow_over_past_time_intervals
+		real, intent (out)  ::  release		
+		real, intent (in)   ::  previous_release		
+		real, intent (in)   ::  average_storage_over_past_time_intervals
+		real, intent (in)   ::  X_DOY
+		real, intent (in)   ::  Y_DOY
+		
+		
 
         real, allocatable, dimension(:) :: input_vector_local
         real, allocatable, dimension(:,:) :: reshaped_input_vector_local
-        real, intent(OUT) :: ml_simulated_release_local
+        !real, intent(OUT) :: ml_simulated_release_local
 
-        type (NN_reservoir_in_out)  :: normalized_nn_inputs_local
+        !type (NN_reservoir_in_out)  :: normalized_nn_inputs_local
 
         integer :: i, j, k
         real tmp
 
+		
+        model_data%nn_inputs%previous_release = previous_release
+        model_data%nn_inputs%average_storage_over_past_time_intervals = average_storage_over_past_time_intervals
+        model_data%nn_inputs%average_inflow_over_past_time_intervals = average_inflow_over_past_time_intervals
+        model_data%nn_inputs%X_DOY = X_DOY
+        model_data%nn_inputs%Y_DOY = Y_DOY
+		
+		
+	    model_data%normalized_nn_inputs%previous_release = (model_data%nn_inputs%previous_release - model_data%minimum_of_features_final(1))&
+        /(model_data%maximum_of_features_final(1) - model_data%minimum_of_features_final(1))
+
+        model_data%normalized_nn_inputs%average_storage_over_past_time_intervals = (model_data%nn_inputs%average_storage_over_past_time_intervals - model_data%minimum_of_features_final(2))&
+        /(model_data%maximum_of_features_final(2) - model_data%minimum_of_features_final(2))
+
+        model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals = (model_data%nn_inputs%average_inflow_over_past_time_intervals - model_data%minimum_of_features_final(3))&
+        /(model_data%maximum_of_features_final(3) - model_data%minimum_of_features_final(3))
+
+
+        model_data%normalized_nn_inputs%X_DOY = model_data%nn_inputs%X_DOY ! this variable is already
+        model_data%normalized_nn_inputs%Y_DOY = model_data%nn_inputs%Y_DOY	
+		
+		
         ! Here input combination is assigned!
 
-        model_data%input_vector = (/normalized_nn_inputs_local%previous_release, normalized_nn_inputs_local%X_DOY,&
-            normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
-            normalized_nn_inputs_local%inflow/)
+			
+        !model_data%input_vector = (/normalized_nn_inputs_local%previous_release, normalized_nn_inputs_local%X_DOY,&
+        !    normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
+        !    normalized_nn_inputs_local%inflow/)			
 
+        model_data%input_vector = (/model_data%normalized_nn_inputs%previous_release, model_data%normalized_nn_inputs%X_DOY,&
+            model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%average_storage_over_past_time_intervals, &
+            model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)			
 
+			
         reshaped_input_vector_local = reshape(model_data%input_vector, (/ size(model_data%input_vector),1/))
 
 
@@ -413,25 +465,25 @@ contains
                 tmp = 0.0
                 do j= 1, model_data%number_of_nodes(k)
                     if (k==1) then
-                        tmp = tmp + model_parameters_local(k)%link_weights(i,j) * reshaped_input_vector_local(j,1) !reshaped_nn_inputs_local(j,1)
+                        tmp = tmp + model_data%model_parameters(k)%link_weights(i,j) * reshaped_input_vector_local(j,1) !reshaped_nn_inputs_local(j,1)
                         model_data%nn_sum_matrix(i,1) = tmp
-                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_parameters_local(k)%link_bias(i,1)
+                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(k)%link_bias(i,1)
                         model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
-                        if (model_parameters_local(k)%link_activation_functions(1)==0) then ! The focus will probably be on
+                        if (model_data%model_parameters(k)%link_activation_functions(1)==0) then ! The focus will probably be on
                             model_data%nn_sum_matrix_activated(i) = sigmoid(model_data%reshaped_nn_sum_matrix(i))
-                        else if (model_parameters_local(k)%link_activation_functions(1)==1) then
+                        else if (model_data%model_parameters(k)%link_activation_functions(1)==1) then
                             model_data%nn_sum_matrix_activated(i) = relu(model_data%reshaped_nn_sum_matrix(i))
                         else
                             model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
                         end if
                     else
-                        tmp = tmp + model_parameters_local(k)%link_weights(i,j) * reshaped_nn_sum_matrix_activated(j,1)
+                        tmp = tmp + model_data%model_parameters(k)%link_weights(i,j) * reshaped_nn_sum_matrix_activated(j,1)
                         model_data%nn_sum_matrix(i,1) = tmp
-                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_parameters_local(k)%link_bias(i,1)
+                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(k)%link_bias(i,1)
                         model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
-                        if (model_parameters_local(k)%link_activation_functions(1)==0) then
+                        if (model_data%model_parameters(k)%link_activation_functions(1)==0) then
                             model_data%nn_sum_matrix_activated(i) = sigmoid(model_data%reshaped_nn_sum_matrix(i))
-                        else if (model_parameters_local(k)%link_activation_functions(1)==1) then
+                        else if (model_data%model_parameters(k)%link_activation_functions(1)==1) then
                             model_data%nn_sum_matrix_activated(i) = relu(model_data%reshaped_nn_sum_matrix(i))
                         else
                             model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
@@ -450,9 +502,12 @@ contains
 
 
         ! Simulated release should be denormalized
-        ml_simulated_release_local = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
-        model_data%ml_simulated_release = ml_simulated_release_local
-
+        !ml_simulated_release_local = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
+        !model_data%ml_simulated_release = ml_simulated_release_local
+		
+		release = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
+		
+		
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIXME The corrector terms need to be added here (we already have them in the Python)
 
         !Calculate the reservoir storage at the current time (i.e., the storage that corresponds to the simulated release); this part will need revision for the operational version
@@ -491,3 +546,4 @@ contains
     end function relu
 
 end module module_machine_learning_model
+
