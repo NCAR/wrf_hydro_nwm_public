@@ -1,4 +1,4 @@
-! This module defines and instantiates objects
+!! This module defines and instantiates objects
 ! for a machine learning type reservoir. The machine
 ! learning reservoir struct inherits input and
 ! output stucts from the reservoir base
