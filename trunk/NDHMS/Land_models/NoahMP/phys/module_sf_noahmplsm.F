@@ -353,13 +353,13 @@ contains
 #ifdef WRF_HYDRO
                    ,SFCHEADRT                                                  & ! IN/OUT :
 #endif
-                   , WVTFLAG, WVT_RATIO, NSUB, NTRACER, SMC_SUB, SMH2O_SUB             & ! IN
-                   , SMH2O_TR, SMC_TR, CANLIQ_TR, CANICE_TR, QSNOW_TR,ZSNSO_TR & ! IN/OUT
-                   , SNDPTH_TR, SWE_TR, SNICE_TR, SNLIQ_TR,WA_TR,WT_TR, WSLAKE_TR & ! IN/OUT
-                   , SMCWTD_TR  ,DEEPRECH_TR , RECH_TR                          & ! INOUT
-                   , ECAN_TR, ETRAN_TR, ESOIL_TR,  FCEV_TR, FCTR_TR, FGEV_TR    & ! OUT
-                   , RUNSF_TR, RUNSB_TR, QSNBOT_TR, PONDING_TR, PONDING1_TR     & ! OUT
-                   , PONDING2_TR, FLUX_TR                                       & ! OUT
+                   , WVTFLAG, IOPT_PM, WVT_RATIO, NSUB, NTRACER, SMC_SUB, SMH2O_SUB & ! IN
+                   , SMH2O_TR, SMC_TR, CANLIQ_TR, CANICE_TR, QSNOW_TR,ZSNSO_TR      & ! IN/OUT
+                   , SNDPTH_TR, SWE_TR, SNICE_TR, SNLIQ_TR,WA_TR,WT_TR, WSLAKE_TR   & ! IN/OUT
+                   , SMCWTD_TR  ,DEEPRECH_TR , RECH_TR                              & ! INOUT
+                   , ECAN_TR, ETRAN_TR, ESOIL_TR,  FCEV_TR, FCTR_TR, FGEV_TR        & ! OUT
+                   , RUNSF_TR, RUNSB_TR, QSNBOT_TR, PONDING_TR, PONDING1_TR         & ! OUT
+                   , PONDING2_TR, FLUX_TR                                           & ! OUT
 
                    )
 
@@ -497,6 +497,7 @@ contains
 ! Needed for Water tracer capability (optional variables)
 !----------------------------------------------------------------------
   INTEGER,                         OPTIONAL, INTENT(IN)    :: WVTFLAG
+  INTEGER,                         OPTIONAL, INTENT(IN)    :: IOPT_PM   !partial mixing option: 1-active
   REAL,                            OPTIONAL, INTENT(IN)    :: WVT_RATIO !tracer ratio
   INTEGER,  DIMENSION( 1:NSOIL)  , OPTIONAL, INTENT(IN)    :: NSUB
   INTEGER                        , OPTIONAL, INTENT(IN)    :: NTRACER
@@ -856,9 +857,9 @@ contains
 #ifdef WRF_HYDRO
                         ,sfcheadrt                     &
 #endif
-                 , WVTFLAG=WVTFLAG, NSUB=NSUB, NTRACER=NTRACER   & !wt in
-		 , SMC_SUB=SMC_SUB, SH2O_SUB=SH2O_SUB, SICE_SUB=SICE_SUB      & !wt in
-                 ,PONDING_TR=PONDING_TR, RAIN_TR=RAIN_TR, SNOW_TR=SNOW_TR     & !wt in
+                 , WVTFLAG=WVTFLAG,IOPT_PM=IOPT_PM, NSUB=NSUB, NTRACER=NTRACER & !wt in
+		 , SMC_SUB=SMC_SUB, SH2O_SUB=SH2O_SUB, SICE_SUB=SICE_SUB       & !wt in
+                 ,PONDING_TR=PONDING_TR, RAIN_TR=RAIN_TR, SNOW_TR=SNOW_TR      & !wt in
 		 , QSNOW_TR=QSNOW_TR, QRAIN_TR=QRAIN_TR, SNOWHIN_TR=SNOWHIN_TR & !wt in
                  , CANLIQ_TR=CANLIQ_TR, CANICE_TR=CANICE_TR, SNOWH_TR=SNOWH_TR & !wt inout
 		 , SNEQV_TR=SNEQV_TR, SNICE_TR=SNICE_TR,  SNLIQ_TR=SNLIQ_TR    & !wt inout
@@ -5999,7 +6000,7 @@ end if
 #ifdef WRF_HYDRO
                         ,sfcheadrt                     &
 #endif
-                    , WVTFLAG,  NSUB,  NTRACER, SMC_SUB, SH2O_SUB, SICE_SUB           & !IN
+                    , WVTFLAG, IOPT_PM, NSUB,  NTRACER, SMC_SUB, SH2O_SUB, SICE_SUB   & !IN
                     , PONDING_TR,   RAIN_TR,  SNOW_TR, QSNOW_TR, QRAIN_TR, SNOWHIN_TR & !IN
                     , CANLIQ_TR, CANICE_TR, SNOWH_TR, SNEQV_TR                        & !INOUT
                     , SNICE_TR,  SNLIQ_TR, ZSNSO_TR,  SH2O_TR, SMC_TR                 & !INOUT
@@ -6097,6 +6098,7 @@ end if
 ! Needed for Water tracer capability
 !-----------------------------------------------------------------------
   INTEGER,                         OPTIONAL,INTENT(IN)    :: WVTFLAG
+  INTEGER,                         OPTIONAL,INTENT(IN)    :: IOPT_PM     !partial mixing option: 1-active
   INTEGER,     DIMENSION(1:NSOIL), OPTIONAL,INTENT(IN)    :: NSUB
   INTEGER                        , OPTIONAL,INTENT(IN)    :: NTRACER
   REAL, DIMENSION(     1:NTRACER), OPTIONAL,INTENT(INOUT) :: SH2O_SUB    !soil liquid water content [m3/m3]
@@ -6323,7 +6325,7 @@ end if
                             SH2O   ,SMC    ,ZWT    ,VEGTYP , & !inout
                             SMCWTD, DEEPRECH                      , & !inout
                             RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX  & !out
-			    , WVTFLAG=WVTFLAG, NSUB=NSUB, NTRACER=NTRACER               & !wt in
+			    , WVTFLAG=WVTFLAG,IOPT_PM=IOPT_PM,NSUB=NSUB,NTRACER=NTRACER & !wt in
 			    , SH2O_SUB=SH2O_SUB, SMC_SUB=SMC_SUB, DZSNSO_TR=DZSNSO_TR   & !wt IN
                             , QINSUR_TR=QINSUR_TR, SH2O_TR=SH2O_TR, SMC_TR=SMC_TR       & !wt inout
 			    , SMCWTD_TR=SMCWTD_TR, DEEPRECH_TR=DEEPRECH_TR              & !wt inout
@@ -7941,9 +7943,9 @@ end if
                         SH2O   ,SMC    ,ZWT    ,VEGTYP ,& !inout
                         SMCWTD, DEEPRECH                       ,& !inout
                         RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX  &
-			, WVTFLAG, NSUB, NTRACER, SH2O_SUB, SMC_SUB, DZSNSO_TR        & !wt in
-			, QINSUR_TR, SH2O_TR, SMC_TR, SMCWTD_TR, DEEPRECH_TR          & !wt IN INOUT
-                        , RUNSRF_TR, QDRAIN_TR, RUNSUB_TR, ETRAN_TR, QSEVA_TR, FLUX_TR) !wt out
+			, WVTFLAG, IOPT_PM, NSUB, NTRACER, SH2O_SUB, SMC_SUB, DZSNSO_TR & !wt in
+			, QINSUR_TR, SH2O_TR, SMC_TR, SMCWTD_TR, DEEPRECH_TR            & !wt IN INOUT
+                        , RUNSRF_TR, QDRAIN_TR, RUNSUB_TR, ETRAN_TR, QSEVA_TR, FLUX_TR)   !wt out
 
 ! ----------------------------------------------------------------------
 ! calculate surface runoff and soil moisture.
@@ -7985,6 +7987,7 @@ end if
 ! Needed for Water tracer capability
 !---------------------------------------------------------------------
   INTEGER,                           OPTIONAL, INTENT(IN)    :: WVTFLAG
+  INTEGER,                           OPTIONAL, INTENT(IN)    :: IOPT_PM    ! partial mixing option: 0-not active, 1-active
   INTEGER, DIMENSION(    1:NSOIL),   OPTIONAL, INTENT(IN)    :: NSUB
   INTEGER,                           OPTIONAL, INTENT(IN)    :: NTRACER
   REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT) :: SH2O_SUB   !soil liquid water content [m3/m3]
@@ -8273,10 +8276,10 @@ end if
    
    !-----wt calc-----
    if (present(WVTFLAG) then
-     call SMT_TR (NSUB, NTRACER, SH2O_SUB, DZSNSO_TR(1:NTRACER),    &
-                  SH2O, SH2O0, ZSOIL, DT, NSOIL,                    & !IN
-                  PDDUM, QSEVA, ETRANI, QDRAIN, RSAT,               & !IN
-                  SH2O_TR, PDDUM_TR, QSEVA_TR, ETRAN_TR,            &
+     call SMT_TR (IOPT_PM, NSUB, NTRACER, SH2O_SUB, DZSNSO_TR(1:NTRACER), &
+                  SH2O, SH2O0, ZSOIL, DT, NSOIL,                          & !IN
+                  PDDUM, QSEVA, ETRANI, QDRAIN, RSAT,                     & !IN
+                  SH2O_TR, PDDUM_TR, QSEVA_TR, ETRAN_TR,                  &
                   QDRAIN_TR,RSAT_TR, FLUX_TR)
      ! convert unit to mm/s
      QDRAIN_TR = QDRAIN_TR*1000.0
