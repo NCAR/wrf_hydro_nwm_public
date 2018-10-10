@@ -1,16 +1,36 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+! 
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+! 
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+! 
+!  User controllable options: <if applicable>
+
 module module_NoahMP_hrldas_driver
 
   USE module_hrldas_netcdf_io
   USE module_sf_noahmp_groundwater
-  USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm, noahmp_urban, groundwater_init
-  USE module_sf_urban, only: urban_param_init, urban_var_init
+  USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
   USE module_date_utilities
-  USE noahmp_tables, ONLY:  LOW_DENSITY_RESIDENTIAL_TABLE, HIGH_DENSITY_RESIDENTIAL_TABLE, &
-                            HIGH_INTENSITY_INDUSTRIAL_TABLE
 #ifdef MPP_LAND
-  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char
-  use module_mpp_land, only: check_land, my_id , node_info
+  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char, mpp_land_sync
+  use module_mpp_land, only: check_land, node_info, fatal_error_stop, numprocs
   use module_cpl_land, only: cpl_land_init
+#endif
+#ifdef WRF_HYDRO
+  use module_NWM_io, only: output_NoahMP_NWM
 #endif
 
   IMPLICIT NONE
@@ -21,14 +41,29 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
+   !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
    integer :: forc_typ, snow_assim, HRLDAS_ini_typ
+   !integer :: forc_typ, snow_assim
    REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
    real :: etpnd1
    character(len=19) :: forcDate
-   character(len = 256):: GEO_STATIC_FLNM
+   ! LRK - Remove GEO_STATIC_FLNM
+   !character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil    
    integer :: kk
    integer  :: finemesh, finemesh_factor
+ ! INOUT (new accumulator variables for output water balance) 
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
+   integer :: io_config_outputs=0
+   integer :: t0OutputFlag=0   
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K]
+   character(len=15), DIMENSION(100)        ::  IOCVARS
 #endif
 
   character(len=9), parameter :: version = "v20150506"
@@ -42,9 +77,9 @@ module module_NoahMP_hrldas_driver
 
   INTEGER                                 ::  ITIMESTEP ! timestep number
   INTEGER                                 ::  YR        ! 4-digit year
-  REAL                                    ::  JULIAN    ! Julian day
+  REAL                                    ::  JULIAN_IN ! Julian day
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  COSZEN    ! cosine zenith angle
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAT      ! latitude [rad]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAT_URB2D! latitude [rad]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  DZ8W      ! thickness of atmo layers [m]
   REAL                                    ::  DTBL      ! timestep [s]
   REAL,    ALLOCATABLE, DIMENSION(:)      ::  DZS       ! thickness of soil layers [m]
@@ -61,12 +96,10 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  ISICE     ! land cover category for ice
   INTEGER                                 ::  ISURBAN   ! land cover category for urban
   INTEGER                                 ::  ISWATER   ! land cover category for water
-  INTEGER                                 ::  ISLAKE    ! land cover category for lake
   INTEGER                                 ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1   
   INTEGER                                 ::  IOPT_CRS  ! canopy stomatal resistance (1-> Ball-Berry; 2->Jarvis)
   INTEGER                                 ::  IOPT_BTR  ! soil moisture factor for stomatal resistance (1-> Noah; 2-> CLM; 3-> SSiB)
   INTEGER                                 ::  IOPT_RUN  ! runoff and groundwater (1->SIMGM; 2->SIMTOP; 3->Schaake96; 4->BATS)
-  INTEGER                                 ::  IOPT_RIVER! river routing (1->on, 0->off)
   INTEGER                                 ::  IOPT_SFC  ! surface layer drag coeff (CH & CM) (1->M-O; 2->Chen97)
   INTEGER                                 ::  IOPT_FRZ  ! supercooled liquid water (1-> NY06; 2->Koren99)
   INTEGER                                 ::  IOPT_INF  ! frozen soil permeability (1-> NY06; 2->Koren99)
@@ -78,9 +111,6 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_GLA  ! glacier option (1->phase change; 2->simple)
   INTEGER                                 ::  IOPT_RSF  ! surface resistance option (1->Zeng; 2->simple)
   INTEGER                                 ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
-  INTEGER                                 ::  IOPT_SOIL  ! soil configuration option
-  INTEGER                                 ::  IOPT_PEDO  ! soil pedotransfer function option
-  INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.; 2->Gecros)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -89,7 +119,6 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GLW       ! longwave down at surface [W m-2]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  P8W       ! 3D pressure, valid at interface [Pa]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL, RAINBL_tmp    ! precipitation entering land model [mm]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWBL    ! snow entering land model [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SR        ! frozen precip ratio entering land model [-]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINCV    ! convective precip forcing [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINNCV   ! non-convective precip forcing [mm]
@@ -98,8 +127,10 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GRAUPELNCV! non-convective graupel forcing (subset of rainncv) [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  HAILNCV   ! non-convective hail forcing (subset of rainncv) [mm]
 
-! Spatially varying fields
+! New spatially varying fields
 
+  CHARACTER(LEN = 256)                    ::  spatial_filename 
+#ifdef SPATIAL_SOIL
   REAL, ALLOCATABLE, DIMENSION(:,:,:)     ::  bexp_3D    ! C-H B exponent
   REAL, ALLOCATABLE, DIMENSION(:,:,:)     ::  smcdry_3D  ! Soil Moisture Limit: Dry
   REAL, ALLOCATABLE, DIMENSION(:,:,:)     ::  smcwlt_3D  ! Soil Moisture Limit: Wilt
@@ -111,11 +142,14 @@ module module_NoahMP_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:,:,:)     ::  quartz_3D  ! Soil quartz content
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  refdk_2D   ! Reference Soil Conductivity
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  refkdt_2D  ! Soil Infiltration Parameter
-  REAL, ALLOCATABLE, DIMENSION(:,:,:)     ::  soilcomp   ! Soil sand and clay content [fraction]
-  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  soilcl1    ! Soil texture class with depth
-  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  soilcl2    ! Soil texture class with depth
-  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  soilcl3    ! Soil texture class with depth
-  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  soilcl4    ! Soil texture class with depth
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  slope_2D   ! Soil Drainage Parameter
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  cwpvt_2D   ! Canopy wind parameter
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  vcmx25_2D  ! VCmax at 25C
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  mp_2D      ! Slope of Ball-Berry rs-P relationship
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  hvt_2D     ! Canopy Height
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  mfsno_2D   ! Snow cover m parameter
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  rsurfexp_2D! exponent in the shape parameter for soil resistance option 1
+#endif
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
 
@@ -172,16 +206,11 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RTMASSXY  ! mass of fine roots [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STMASSXY  ! stem mass [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WOODXY    ! mass of wood (incl. woody roots) [g/m2]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GRAINXY   ! XING mass of grain!THREE
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GDDXY     ! XINGgrowingdegressday
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STBLCPXY  ! stable carbon in deep soil [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FASTCPXY  ! short-lived carbon, shallow soil [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LAI       ! leaf area index
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LAI_tmp       ! leaf area index
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XSAIXY    ! stem area index
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TAUSSXY   ! snow age factor
-
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  gecros_state   ! gecros crop model packed state vector
 
 ! OUT (with no Noah LSM equivalent) (as defined in WRF)
    
@@ -207,6 +236,8 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SAGXY     ! solar rad absorbed by ground (w/m2)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RSSUNXY   ! sunlit leaf stomatal resistance (s/m)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RSSHAXY   ! shaded leaf stomatal resistance (s/m)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ALBSNDXY  ! snow albedo (direct)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ALBSNIXY  ! snow albedo (diffuse)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  BGAPXY    ! between gap fraction
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WGAPXY    ! within gap fraction
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGVXY     ! under canopy ground temperature[K]
@@ -229,12 +260,64 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHUCXY    ! under canopy exchange coefficient 
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHV2XY    ! veg 2m exchange coefficient 
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHB2XY    ! bare 2m exchange coefficient 
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RS        ! Total stomatal resistance (s/m)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  Z0        ! roughness length output to WRF
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ZNT       ! roughness length output to WRF
   INTEGER   ::  ids,ide, jds,jde, kds,kde,  &  ! d -> domain
    &            ims,ime, jms,jme, kms,kme,  &  ! m -> memory
    &            its,ite, jts,jte, kts,kte      ! t -> tile
+
+!------------------------------------------------------------------------
+! Needed for Water tracer capability
+!------------------------------------------------------------------------
+
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QFX_TR       ! latent heat flux [kg s-1 m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LH_TR        ! latent heat flux [W m-2]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SFCRUNOFF_TR ! accumulated surface runoff [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  UDRUNOFF_TR  ! accumulated sub-surface runoff [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_TR     ! volumetric soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_TR      ! volumetric liquid soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW_TR      ! snow water equivalent [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH_TR     ! physical snow depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANWAT_TR    ! total canopy water + ice [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOM_TR    ! accumulated snow melt leaving pack
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOW_TR    ! accumulated snow on grid
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANICEXY_TR  ! canopy-intercepted ice (mm)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANLIQXY_TR  ! canopy-intercepted liquid water (mm)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSNOWXY_TR   ! snowfall on the ground [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WSLAKEXY_TR  ! lake water storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WAXY_TR      ! water in the "aquifer" [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WTXY_TR      ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SMCWTDXY_TR  ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  DEEPRECHXY_TR! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RECHXY_TR    ! groundwater storage [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY_TR   ! snow layer depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY_TR   ! snow layer ice [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY_TR   ! snow layer liquid water [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RUNSFXY_TR   ! surface runoff [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RUNSBXY_TR   ! subsurface runoff [mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ECANXY_TR    ! evaporation of intercepted water (mm/s)
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  EDIRXY_TR    ! soil surface evaporation rate (mm/s]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ETRANXY_TR   ! transpiration rate (mm/s)
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  FLUXXY_TR    ! tracer flux at soil bottom [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_SUB    ! volumetric soil moisture in sublayers [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_SUB     ! volumetric liquid soil moisture in sublayers [m3/m3]
+  !------namelist variables----------------
+  integer                                 :: water_tracer_option ! 0-water tracer off, 1-water tracer on
+  character(len=256)                      :: track_start   ! YYYY-MM-DD
+  character(len=256)                      :: track_end     ! YYYY-MM-DD
+  integer                                 :: partial_mixing_option ! partial mixing option (0-complete mixing, 1-partial mixing)
+  integer, dimension(MAX_SOIL_LEVELS)     :: tracer_sublayer ! number of sublayers for tracer
+  !-----variables read fro namelist--------
+  integer                                 :: OPT_WT       ! 0-water tracer off, 1-water tracer on
+  character(len=19)                       :: wvtstart     ! YYYY-MM-DD_hh:mm:ss
+  character(len=19)                       :: wvtend       ! YYYY-MM-DD_hh:mm:ss
+  integer                                 :: IOPT_PM      ! partial mixing option (0-complete mixing, 1-partial mixing)
+  integer, dimension(MAX_SOIL_LEVELS)     :: NSUB         ! number of sublayer for tracer
+  integer                                 :: NTRACER      ! sum of NSUB
+  !------tracer flag and raio variables to "tag" water from precip------
+  INTEGER                                 :: wvtflag      ! 0->before track_start; 1->at track_start
+                                                          ! 2->during tracking period; 3->after track_end
+  REAL                                    :: wvt_ratio    ! ratio of tracer precip to total precip
 
 !------------------------------------------------------------------------
 ! Needed for NoahMP init
@@ -262,153 +345,14 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QRFXY
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSPRINGXY
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSLATXY
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RECHCLIM
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RIVERMASK
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  NONRIVERXY
   REAL                                    ::  WTDDT  = 30.0    ! frequency of groundwater call [minutes]
   INTEGER                                 ::  STEPWTD          ! step of groundwater call
-  !---------Needed for RIVER ROUTING (IOPT_RIVER = 1)-------------------
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FDXY             ! flow direction
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SLOPEXY          ! grid-scale river channel slope
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  WIDTHXY          ! grid-scale river channel width
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LENGTHXY         ! grid-scale river channel length
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  MAXDEPTHXY       ! maximum river channel depth
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RIVERFLOWXY      ! volumetric flowrate at each grid outlet [m3/s]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RIVERDEPTHXY     ! water depth in flowing river channel [m]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FLOODHEIGHTXY    ! flood inundation depth above river channel maxdepth [m]
-  INTEGER                                 ::  NTSPLIT = 6      ! hardwired now, maybe move it to namelist later
-
-!------------------------------------------------------------------------
-! Needed for crop model (DVEG = 10)
-!------------------------------------------------------------------------
-
-  INTEGER, ALLOCATABLE, DIMENSION(:,:)   :: PGSXY
-  INTEGER, ALLOCATABLE, DIMENSION(:,:)   :: CROPCAT
-  REAL   , ALLOCATABLE, DIMENSION(:,:)   :: PLANTING
-  REAL   , ALLOCATABLE, DIMENSION(:,:)   :: HARVEST
-  REAL   , ALLOCATABLE, DIMENSION(:,:)   :: SEASON_GDD
-  REAL   , ALLOCATABLE, DIMENSION(:,:,:) :: CROPTYPE
-
-!------------------------------------------------------------------------
-! Single- and Multi-layer Urban Models
-!------------------------------------------------------------------------
-
-  INTEGER                                 ::  num_urban_atmosphere ! atmospheric levels including ZLVL for BEP/BEM models
-
-  REAL,    ALLOCATABLE                    ::  GMT       ! Hour of day (fractional) (needed for urban)
-  INTEGER, ALLOCATABLE                    ::  JULDAY    ! Integer day (needed for urban)
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  HRANG     ! hour angle (needed for urban)
-  REAL,    ALLOCATABLE                    ::  DECLIN    ! declination (needed for urban)
-  INTEGER                                 ::  num_roof_layers = 4
-  INTEGER                                 ::  num_road_layers = 4
-  INTEGER                                 ::  num_wall_layers = 4
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  cmr_sfcdif
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  chr_sfcdif
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  cmc_sfcdif
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  chc_sfcdif
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  cmgr_sfcdif
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  chgr_sfcdif
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  tr_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  tb_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  tg_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  tc_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  qc_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  uc_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  xxxr_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  xxxb_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  xxxg_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  xxxc_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  trl_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tbl_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tgl_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  sh_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  lh_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  g_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  rn_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ts_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  psim_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  psih_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  u10_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  v10_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GZ1OZ0_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  AKMS_URB2D
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  th2_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  q2_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ust_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:)      ::  dzr
-  REAL,    ALLOCATABLE, DIMENSION(:)      ::  dzb
-  REAL,    ALLOCATABLE, DIMENSION(:)      ::  dzg
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  cmcr_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  tgr_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tgrl_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  smr_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  drelr_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  drelb_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  drelg_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  flxhumr_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  flxhumb_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  flxhumg_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  frc_urb2d
-  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  utype_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  chs
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  chs2
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  cqs2
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  trb_urb4d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tw1_urb4d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tw2_urb4d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tgb_urb4d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tlev_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  qlev_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tw1lev_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tw2lev_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tglev_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  tflev_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  sf_ac_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  lf_ac_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  cm_ac_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  sfvent_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  lfvent_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sfwin1_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sfwin2_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sfw1_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sfw2_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sfr_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sfg_urb3d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  lp_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  hi_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  lb_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  hgt_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  mh_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  stdh_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  lf_urb2d
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  theta_urban
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  u_urban
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  v_urban
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  dz_urban
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  rho_urban
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  p_urban
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ust
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  a_u_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  a_v_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  a_t_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  a_q_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  a_e_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  b_u_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  b_v_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  b_t_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  b_q_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  b_e_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  dlg_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  dl_u_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  sf_bep
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  vl_bep
-  REAL                                    ::  height_urban
 
 !------------------------------------------------------------------------
 ! 2D variables not used in WRF - should be removed?
 !------------------------------------------------------------------------
 
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLONG       ! longitude
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLONIN      ! longitude
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TERRAIN     ! terrain height
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GVFMIN      ! annual minimum in vegetation fraction
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GVFMAX      ! annual maximum in vegetation fraction
@@ -424,7 +368,8 @@ module module_NoahMP_hrldas_driver
 ! Timing:
 !------------------------------------------------------------------------
 
-  INTEGER :: NTIME          ! timesteps
+  INTEGER :: NTIME          ! total timesteps
+  INTEGER :: ITIME          ! LSM time step
   integer :: clock_count_1 = 0
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
@@ -446,18 +391,16 @@ module module_NoahMP_hrldas_driver
     REAL, PARAMETER                     :: undefined_real = 9.9692099683868690E36 ! NetCDF float   FillValue
     INTEGER, PARAMETER                  :: undefined_int = -2147483647            ! NetCDF integer FillValue
     LOGICAL                             :: update_lai, update_veg
-    INTEGER                             :: spinup_loop
-    LOGICAL                             :: reset_spinup_date
 
 !---------------------------------------------------------------------
 !  File naming, parallel
 !---------------------------------------------------------------------
 
   character(len=19)  :: olddate, newdate, startdate
-  character          :: hgrid
-  integer            :: igrid
+  character          :: hgrid, hgrid_hydro
+  integer            :: igrid, igrid_hydro
   logical            :: lexist
-  integer            :: imode
+  integer            :: imode, iimode
   integer            :: ixfull
   integer            :: jxfull
   integer            :: ixpar
@@ -505,22 +448,6 @@ module module_NoahMP_hrldas_driver
   character(len=256) :: restart_filename_requested = " "
   integer            :: restart_frequency_hours
   integer            :: output_timestep
-  integer            :: spinup_loops
-
-  integer            :: sf_urban_physics = 0
-  integer            :: num_urban_layers = 360
-  integer            :: num_urban_hi     = 15 
-  real               :: urban_atmosphere_thickness = 2.0
-
-  character(len=256) :: forcing_name_T = "T2D"
-  character(len=256) :: forcing_name_Q = "Q2D"
-  character(len=256) :: forcing_name_U = "U2D"
-  character(len=256) :: forcing_name_V = "V2D"
-  character(len=256) :: forcing_name_P = "PSFC"
-  character(len=256) :: forcing_name_LW = "LWDOWN"
-  character(len=256) :: forcing_name_SW = "SWDOWN"
-  character(len=256) :: forcing_name_PR = "RAINRATE"
-  character(len=256) :: forcing_name_SN = ""
 
   integer            :: dynamic_veg_option
   integer            :: canopy_stomatal_resistance_option
@@ -536,63 +463,63 @@ module module_NoahMP_hrldas_driver
   integer            :: temp_time_scheme_option
   integer            :: glacier_option
   integer            :: surface_resistance_option
-  integer            :: river_routing_option
-
-  integer            :: soil_data_option = 1
-  integer            :: pedotransfer_option = 1
-  integer            :: crop_option = 0
 
   integer            :: split_output_count = 1
-  logical            :: skip_first_output = .false.
   integer            :: khour
   integer            :: kday
   real               :: zlvl 
   character(len=256) :: hrldas_setup_file = " "
-  character(len=256) :: mmf_river_file = " "
-  character(len=256) ::  spatial_filename = " "
+  character(len=256) :: mmf_runoff_file = " "
   character(len=256) :: external_veg_filename_template = " "
   character(len=256) :: external_lai_filename_template = " "
   integer            :: xstart = 1
   integer            :: ystart = 1
   integer            ::   xend = 0
   integer            ::   yend = 0
-  integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
+  integer, PARAMETER    :: MAX_SOIL_LEVELS = 20   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
+  integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
 
-  namelist / NOAHLSM_OFFLINE /    &
 #ifdef WRF_HYDRO
-       finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ, &
+  character(len=19)  :: tmpdate
+  character(len=1000) :: VARLIST
+  integer :: brkflag = 0
+  integer :: varind = 1
+  namelist /WRF_HYDRO_OFFLINE/ &
+       !LRK - Remove HRLDAS_ini_typ and GEO_STATIC_FLNM for WRF-Hydro
+       finemesh,finemesh_factor,forc_typ, snow_assim
+       !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
 #endif
+  namelist / NOAHLSM_OFFLINE /    &
        indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
        start_year, start_month, start_day, start_hour, start_min, &
-       outdir, skip_first_output, &
+       outdir, &
        restart_filename_requested, restart_frequency_hours, output_timestep, &
-       spinup_loops, &
-       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
-       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
+
+       water_tracer_option, track_start, track_end, partial_mixing_option, tracer_sublayer, &
 
        dynamic_veg_option, canopy_stomatal_resistance_option, &
        btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
        frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
        pcp_partition_option, tbot_option, temp_time_scheme_option, &
-       glacier_option, surface_resistance_option, river_routing_option, &
-
-       soil_data_option, pedotransfer_option, crop_option, &
-
-       sf_urban_physics,num_urban_layers,num_urban_hi,urban_atmosphere_thickness, &
+       glacier_option, surface_resistance_option, &
 
        split_output_count, & 
-       khour, kday, zlvl, hrldas_setup_file, mmf_river_file, &
+       khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
        spatial_filename, &
        external_veg_filename_template, external_lai_filename_template, &
-       xstart, xend, ystart, yend
+       xstart, xend, ystart, yend, rst_bi_out, rst_bi_in
 
   contains
 
   subroutine land_driver_ini(NTIME_out,wrfits,wrfite,wrfjts,wrfjte)
+     use module_HYDRO_drv, only: HYDRO_ini
+     use module_namelist, only: nlst_rt
+     use module_rt_data, only: rt_domain
+     use module_hrldas_HYDRO, only: open_print_mpp
      implicit  none
      integer:: NTIME_out
-
+     integer, parameter :: did=1
 
     ! initilization for stand alone parallel code.
     integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
@@ -617,18 +544,53 @@ module module_NoahMP_hrldas_driver
   forcing_timestep        = -999
   noah_timestep           = -999
   output_timestep         = -999
-  spinup_loops            = 0
   restart_frequency_hours = -999
+  tracer_sublayer         = -999       ! water tracer sublayers
+  wvtflag                = -999       ! flag for water tracer
 
+#ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
-  read(30, NOAHLSM_OFFLINE, iostat=ierr)
+  read(30, NML=NOAHLSM_OFFLINE, iostat=ierr)
+#else
+   open(11, form="FORMATTED")
+   read(11, NML=NOAHLSM_OFFLINE, iostat=ierr)
+#endif
   if (ierr /= 0) then
      write(*,'(/," ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE",/)')
+#ifndef NCEP_WCOSS
      rewind(30)
      read(30, NOAHLSM_OFFLINE)
-     stop " ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE"
+#else
+     rewind(11)
+     read(11, NOAHLSM_OFFLINE)
+#endif
+     stop "FATAL ERROR: Problem reading namelist NOAHLSM_OFFLINE"
   endif
+#ifdef WRF_HYDRO
+#ifndef NCEP_WCOSS
+  read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#else
+  read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#endif
+  if (ierr /= 0) then
+     write(*,'(/," ***** ERROR: Problem reading namelist WRF_HYDRO_OFFLINE",/)')
+#ifndef NCEP_WCOSS
+     rewind(30)
+     read(30, NOAHLSM_OFFLINE)
+#else
+     rewind(11)
+     read(11, NOAHLSM_OFFLINE)
+#endif
+     call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
+  endif
+
+#endif
+
+#ifndef NCEP_WCOSS
   close(30)
+#else
+  close(11)
+#endif
 
   dtbl = real(noah_timestep)
   num_soil_layers = nsoil      ! because surface driver uses the long form
@@ -646,10 +608,62 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = temp_time_scheme_option
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
-  IOPT_RIVER= river_routing_option
-  IOPT_SOIL = soil_data_option
-  IOPT_PEDO = pedotransfer_option
-  IOPT_CROP = crop_option
+  !-----water tracer variables--------
+  OPT_WT   = water_tracer_option
+  if (OPT_WT .eq. 1) then 
+    IOPT_PM  = partial_mixing_option
+    NSUB     = tracer_sublayer
+    NTRACER  = sum(NSUB(1:nsoil))
+  end if
+
+  !!----------------------------------------------------------------------------
+  !! channel_only
+  call updateNameList("channel_only",0)
+  if(forc_typ .eq. 9)  call updateNameList("channel_only",1)
+  call updateNameList("channelBucket_only",0)
+  if(forc_typ .eq. 10) call updateNameList("channelBucket_only",1)
+
+  if(forc_typ .eq. 9 .or. forc_typ .eq. 10) then
+     write(olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
+          start_year, start_month, start_day, start_hour, start_min, 0
+     forcdate = olddate
+     if ((khour < 0) .and. (kday < 0)) then
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+             "Namelist error: Either KHOUR or KDAY must be defined.")')
+        stop
+     else if (( khour < 0 ) .and. (kday > 0)) then
+        khour = kday * 24
+     else if ((khour > 0) .and. (kday > 0)) then
+        write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
+        stop
+     endif
+     NTIME=(KHOUR)*3600./nint(dtbl)
+     NTIME_out = NTIME 
+
+     if(.not. RT_DOMAIN(did)%initialized) then  
+        nlst_rt(did)%dt = real(noah_timestep)
+        nlst_rt(did)%khour = khour ! Adding kHOUR to be used in the NWM output routines.
+        nlst_rt(did)%olddate(1:19) = olddate(1:19)
+        nlst_rt(did)%startdate(1:19) = olddate(1:19)
+        nlst_rt(did)%nsoil = -999999
+#ifdef MPP_LAND
+        call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+#endif
+        allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
+        nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)       
+        call HYDRO_ini(ntime,did,ix0=1,jx0=1)
+        RT_DOMAIN(did)%initialized = .true.
+     endif ! if .not. RT_DOMAIN(did)%initialized
+
+     call open_print_mpp(6)
+     
+     return  !! no more init necessary if channel_only or channelBucket_only
+
+  endif
+  !!----------------------------------------------------------------------------
+  !! channel_only
+
+
 !---------------------------------------------------------------------
 !  NAMELIST end
 !---------------------------------------------------------------------
@@ -659,8 +673,7 @@ module module_NoahMP_hrldas_driver
 !---------------------------------------------------------------------
 
   update_lai = .true.   ! default: use LAI if present in forcing file
-  if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5 .or. &
-      dynamic_veg_option == 6 .or. dynamic_veg_option == 10) &
+  if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5 .or. dynamic_veg_option == 6) &
     update_lai = .false.
 
   update_veg = .false.  ! default: don't use VEGFRA if present in forcing file
@@ -668,26 +681,31 @@ module module_NoahMP_hrldas_driver
     update_veg = .true.
 
   if (nsoil < 0) then
-     stop " ***** ERROR: NSOIL must be set in the namelist."
+     stop "FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini()"// &
+          " - NSOIL must be set in the namelist."
   endif
 
   if ((khour < 0) .and. (kday < 0)) then
-     write(*, '(" ***** Namelist error: ************************************")')
+#ifdef HYDRO_D
+     write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                "Namelist error.")')
      write(*, '(" ***** ")')
      write(*, '(" *****      Either KHOUR or KDAY must be defined.")')
      write(*, '(" ***** ")')
+#endif
      stop
   else if (( khour < 0 ) .and. (kday > 0)) then
      khour = kday * 24
   else if ((khour > 0) .and. (kday > 0)) then
-     write(*, '("Namelist warning:  KHOUR and KDAY both defined.")')
+     write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
   else
      ! all is well.  KHOUR defined
   endif
 
   if (forcing_timestep < 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: *****************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini()- "// &
+                   "Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       FORCING_TIMESTEP needs to be set greater than zero.")')
         write(*, '(" ***** ")')
@@ -697,7 +715,8 @@ module module_NoahMP_hrldas_driver
 
   if (noah_timestep < 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: *****************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini()"// &
+                   " - Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       NOAH_TIMESTEP needs to be set greater than zero.")')
         write(*, '(" *****                     900 seconds is recommended.       ")')
@@ -712,7 +731,8 @@ module module_NoahMP_hrldas_driver
   if (output_timestep /= 0) then
      if (mod(output_timestep, noah_timestep) > 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: *********************************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                   "Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       OUTPUT_TIMESTEP should set to an integer multiple of NOAH_TIMESTEP.")')
         write(*, '(" *****            OUTPUT_TIMESTEP = ", I12, " seconds")') output_timestep
@@ -729,8 +749,8 @@ module module_NoahMP_hrldas_driver
   if (restart_frequency_hours /= 0) then
      if (mod(restart_frequency_hours*3600, noah_timestep) > 0) then
         write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
-        write(*, '(" ***** ")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                   "Namelist error.")')
         write(*, '(" *****       RESTART_FREQUENCY_HOURS (converted to seconds) should set to an ")')
         write(*, '(" *****       integer multiple of NOAH_TIMESTEP.")')
         write(*, '(" *****            RESTART_FREQUENCY_HOURS = ", I12, " hours:  ", I12, " seconds")') &
@@ -745,41 +765,10 @@ module module_NoahMP_hrldas_driver
   if (dynamic_veg_option == 2 .or. dynamic_veg_option == 5 .or. dynamic_veg_option == 6) then
      if ( canopy_stomatal_resistance_option /= 1) then
         write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
+        write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+                   "Namelist error.")')
         write(*, '(" ***** ")')
         write(*, '(" *****       CANOPY_STOMATAL_RESISTANCE_OPTION must be 1 when DYNAMIC_VEG_OPTION == 2/5/6")')
-        write(*, *)
-        stop
-     endif
-  endif
-
-  if (soil_data_option == 4 .and. spatial_filename == " ") then
-        write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
-        write(*, '(" ***** ")')
-        write(*, '(" *****       SPATIAL_FILENAME must be provided when SOIL_DATA_OPTION == 4")')
-        write(*, *)
-        stop
-  endif
-
-  if (sf_urban_physics == 2 .or. sf_urban_physics == 3) then
-     if ( urban_atmosphere_thickness <= 0.0) then
-        write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
-        write(*, '(" ***** ")')
-        write(*, '(" *****       When running BEP/BEM, URBAN_ATMOSPHERE_LEVELS must contain at least 3 levels")')
-        write(*, *)
-        stop
-     endif
-     num_urban_atmosphere = int(zlvl/urban_atmosphere_thickness)
-     if (zlvl - num_urban_atmosphere*urban_atmosphere_thickness >= 0.5*urban_atmosphere_thickness)  &
-            num_urban_atmosphere = num_urban_atmosphere + 1
-     if ( num_urban_atmosphere <= 2) then
-        write(*, *)
-        write(*, '(" ***** Namelist error: ******************************************************")')
-        write(*, '(" ***** ")')
-        write(*, '(" *****       When running BEP/BEM, num_urban_atmosphere must contain at least 3 levels, ")')
-        write(*, '(" *****        decrease URBAN_ATMOSPHERE_THICKNESS")')
         write(*, *)
         stop
      endif
@@ -814,7 +803,7 @@ module module_NoahMP_hrldas_driver
 #endif
 
   call read_hrldas_hdrinfo(hrldas_setup_file, ix, jx, xstart, xend, ystart, yend, &
-       iswater, islake, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
+       iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
        igrid, mapproj)
   write(hgrid,'(I1)') igrid
 
@@ -831,6 +820,16 @@ module module_NoahMP_hrldas_driver
 #ifdef WRF_HYDRO
     forcdate = olddate
 #endif
+
+!-----water tracer tracking times-------
+  if (OPT_WT .eq. 1) then 
+    write(wvtstart,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
+       track_start(1:4), track_start(5:6), track_start(7:8), track_start(9:10), track_start(11:12),0
+
+    write(wvtend,'(A4,"-",A2,"-",A2,"_",A2,":",A2,":",A2)') &
+       track_end(1:4), track_end(5:6), track_end(7:8), track_end(9:10), track_end(11:12),0
+  end if
+!---------------------------------------
   
   ids = xstart
   ide = xend
@@ -850,12 +849,6 @@ module module_NoahMP_hrldas_driver
   jme = yend
   kms = 1
   kme = 2
-  
-  if (sf_urban_physics == 2 .or. sf_urban_physics == 3) then
-    kde = num_urban_atmosphere
-    kte = num_urban_atmosphere
-    kme = num_urban_atmosphere
-  endif
 
 !---------------------------------------------------------------------
 !  Allocate multi-dimension fields for subwindow calculation
@@ -870,7 +863,7 @@ module module_NoahMP_hrldas_driver
   ystartpar = 1
 
   ALLOCATE ( COSZEN    (XSTART:XEND,YSTART:YEND) )    ! cosine zenith angle
-  ALLOCATE ( XLAT      (XSTART:XEND,YSTART:YEND) )    ! latitude [rad]
+  ALLOCATE ( XLAT_URB2D(XSTART:XEND,YSTART:YEND) )    ! latitude [rad]
   ALLOCATE ( DZ8W      (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! thickness of atmo layers [m]
   ALLOCATE ( DZS       (1:NSOIL)                   )  ! thickness of soil layers [m]
   ALLOCATE ( IVGTYP    (XSTART:XEND,YSTART:YEND) )    ! vegetation type
@@ -887,7 +880,6 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( GLW       (XSTART:XEND,YSTART:YEND) )    ! longwave down at surface [W m-2]
   ALLOCATE ( P8W       (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D pressure, valid at interface [Pa]
   ALLOCATE ( RAINBL    (XSTART:XEND,YSTART:YEND) )    ! total precipitation entering land model [mm]
-  ALLOCATE ( SNOWBL    (XSTART:XEND,YSTART:YEND) )    ! snow entering land model [mm]
   ALLOCATE ( RAINBL_tmp    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
   ALLOCATE ( SR        (XSTART:XEND,YSTART:YEND) )    ! frozen precip ratio entering land model [-]
   ALLOCATE ( RAINCV    (XSTART:XEND,YSTART:YEND) )    ! convective precip forcing [mm]
@@ -897,6 +889,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( GRAUPELNCV(XSTART:XEND,YSTART:YEND) )    ! non-convective graupel forcing (subset of rainncv) [mm]
   ALLOCATE ( HAILNCV   (XSTART:XEND,YSTART:YEND) )    ! non-convective hail forcing (subset of rainncv) [mm]
 
+#ifdef SPATIAL_SOIL
   ALLOCATE ( bexp_3d    (XSTART:XEND,1:NSOIL,YSTART:YEND) )    ! C-H B exponent
   ALLOCATE ( smcdry_3D  (XSTART:XEND,1:NSOIL,YSTART:YEND) )    ! Soil Moisture Limit: Dry
   ALLOCATE ( smcwlt_3D  (XSTART:XEND,1:NSOIL,YSTART:YEND) )    ! Soil Moisture Limit: Wilt
@@ -908,11 +901,14 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( quartz_3D  (XSTART:XEND,1:NSOIL,YSTART:YEND) )    ! Soil quartz content
   ALLOCATE ( refdk_2D   (XSTART:XEND,YSTART:YEND) )            ! Reference Soil Conductivity
   ALLOCATE ( refkdt_2D  (XSTART:XEND,YSTART:YEND) )            ! Soil Infiltration Parameter
-  ALLOCATE ( soilcomp   (XSTART:XEND,1:2*NSOIL,YSTART:YEND) )  ! Soil sand and clay content [fraction]
-  ALLOCATE ( soilcl1    (XSTART:XEND,YSTART:YEND) )            ! Soil texture class with depth
-  ALLOCATE ( soilcl2    (XSTART:XEND,YSTART:YEND) )            ! Soil texture class with depth
-  ALLOCATE ( soilcl3    (XSTART:XEND,YSTART:YEND) )            ! Soil texture class with depth
-  ALLOCATE ( soilcl4    (XSTART:XEND,YSTART:YEND) )            ! Soil texture class with depth
+  ALLOCATE ( slope_2D   (XSTART:XEND,YSTART:YEND) )            ! Soil Drainage Parameter
+  ALLOCATE ( cwpvt_2D   (XSTART:XEND,YSTART:YEND) )            ! Canopy wind parameter
+  ALLOCATE ( vcmx25_2D  (XSTART:XEND,YSTART:YEND) )            ! VCmax at 25C
+  ALLOCATE ( mp_2D      (XSTART:XEND,YSTART:YEND) )            ! Slope of Ball-Berry rs-P relationship
+  ALLOCATE ( hvt_2D     (XSTART:XEND,YSTART:YEND) )            ! Canopy Height
+  ALLOCATE ( mfsno_2D   (XSTART:XEND,YSTART:YEND) )            ! Snow cover m parameter
+  ALLOCATE ( rsurfexp_2D(XSTART:XEND,YSTART:YEND) )            ! exponent in the shape parameter for soil resistance option 1
+#endif
 
 ! INOUT (with generic LSM equivalent) (as defined in WRF)
 
@@ -969,16 +965,11 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( RTMASSXY  (XSTART:XEND,YSTART:YEND) )  ! mass of fine roots [g/m2]
   ALLOCATE ( STMASSXY  (XSTART:XEND,YSTART:YEND) )  ! stem mass [g/m2]
   ALLOCATE ( WOODXY    (XSTART:XEND,YSTART:YEND) )  ! mass of wood (incl. woody roots) [g/m2]
-  ALLOCATE ( GRAINXY   (XSTART:XEND,YSTART:YEND) )  ! mass of grain XING [g/m2]
-  ALLOCATE ( GDDXY     (XSTART:XEND,YSTART:YEND) )  ! growing degree days XING FOUR
   ALLOCATE ( STBLCPXY  (XSTART:XEND,YSTART:YEND) )  ! stable carbon in deep soil [g/m2]
   ALLOCATE ( FASTCPXY  (XSTART:XEND,YSTART:YEND) )  ! short-lived carbon, shallow soil [g/m2]
   ALLOCATE ( LAI       (XSTART:XEND,YSTART:YEND) )  ! leaf area index
-  ALLOCATE ( LAI_tmp   (XSTART:XEND,YSTART:YEND) )  ! leaf area index
   ALLOCATE ( XSAIXY    (XSTART:XEND,YSTART:YEND) )  ! stem area index
   ALLOCATE ( TAUSSXY   (XSTART:XEND,YSTART:YEND) )  ! snow age factor
-
-  ALLOCATE ( gecros_state(XSTART:XEND,60,YSTART:YEND) )   ! gecros crop model packed state vector
   
 ! OUT (with no Noah LSM equivalent) (as defined in WRF)
    
@@ -1004,6 +995,8 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( SAGXY     (XSTART:XEND,YSTART:YEND) )  ! solar rad absorbed by ground (w/m2)
   ALLOCATE ( RSSUNXY   (XSTART:XEND,YSTART:YEND) )  ! sunlit leaf stomatal resistance (s/m)
   ALLOCATE ( RSSHAXY   (XSTART:XEND,YSTART:YEND) )  ! shaded leaf stomatal resistance (s/m)
+  ALLOCATE ( ALBSNDXY  (XSTART:XEND,1:2,YSTART:YEND) )  ! snow albedo (direct)
+  ALLOCATE ( ALBSNIXY  (XSTART:XEND,1:2,YSTART:YEND) )  ! snow albedo (diffuse)
   ALLOCATE ( BGAPXY    (XSTART:XEND,YSTART:YEND) )  ! between gap fraction
   ALLOCATE ( WGAPXY    (XSTART:XEND,YSTART:YEND) )  ! within gap fraction
   ALLOCATE ( TGVXY     (XSTART:XEND,YSTART:YEND) )  ! under canopy ground temperature[K]
@@ -1026,14 +1019,50 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( CHUCXY    (XSTART:XEND,YSTART:YEND) )  ! under canopy exchange coefficient 
   ALLOCATE ( CHV2XY    (XSTART:XEND,YSTART:YEND) )  ! veg 2m exchange coefficient 
   ALLOCATE ( CHB2XY    (XSTART:XEND,YSTART:YEND) )  ! bare 2m exchange coefficient 
-  ALLOCATE ( RS        (XSTART:XEND,YSTART:YEND) )  ! Total stomatal resistance (s/m)
   ALLOCATE ( Z0        (XSTART:XEND,YSTART:YEND) )  ! roughness length output to WRF 
   ALLOCATE ( ZNT       (XSTART:XEND,YSTART:YEND) )  ! roughness length output to WRF 
 
-  ALLOCATE ( XLONG     (XSTART:XEND,YSTART:YEND) )  ! longitude
+  ALLOCATE ( XLONIN    (XSTART:XEND,YSTART:YEND) )  ! longitude
   ALLOCATE ( TERRAIN   (XSTART:XEND,YSTART:YEND) )  ! terrain height
   ALLOCATE ( GVFMIN    (XSTART:XEND,YSTART:YEND) )  ! annual minimum in vegetation fraction
   ALLOCATE ( GVFMAX    (XSTART:XEND,YSTART:YEND) )  ! annual maximum in vegetation fraction
+
+!------------------------------------------------------------------------
+! Needed for Water tracer capability
+!------------------------------------------------------------------------
+if (OPT_WT .eq. 1) then 
+  ALLOCATE ( QFX_TR       (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [kg s-1 m-2]
+  ALLOCATE ( LH_TR        (XSTART:XEND,YSTART:YEND) )  ! latent heat flux [W m-2]
+  ALLOCATE ( SFCRUNOFF_TR (XSTART:XEND,YSTART:YEND) )  ! accumulated surface runoff [m]
+  ALLOCATE ( UDRUNOFF_TR  (XSTART:XEND,YSTART:YEND) )  ! accumulated sub-surface runoff [m]
+  ALLOCATE ( SMOIS_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture [m3/m3]
+  ALLOCATE ( SH2O_TR      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture [m3/m3]
+  ALLOCATE ( SNOW_TR      (XSTART:XEND,YSTART:YEND) )  ! snow water equivalent [mm]
+  ALLOCATE ( SNOWH_TR     (XSTART:XEND,YSTART:YEND) )  ! physical snow depth [m]
+  ALLOCATE ( CANWAT_TR    (XSTART:XEND,YSTART:YEND) )  ! total canopy water + ice [mm]
+  ALLOCATE ( ACSNOM_TR    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow melt leaving pack
+  ALLOCATE ( ACSNOW_TR    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow on grid
+  ALLOCATE ( CANICEXY_TR  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted ice (mm)
+  ALLOCATE ( CANLIQXY_TR  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted liquid water (mm)
+  ALLOCATE ( QSNOWXY_TR   (XSTART:XEND,YSTART:YEND) )  ! snowfall on the ground [mm/s]
+  ALLOCATE ( WSLAKEXY_TR  (XSTART:XEND,YSTART:YEND) )  ! lake water storage [mm]
+  ALLOCATE ( WAXY_TR      (XSTART:XEND,YSTART:YEND) )  ! water in the "aquifer" [mm]
+  ALLOCATE ( WTXY_TR      (XSTART:XEND,YSTART:YEND) )  ! groundwater storage [mm]
+  ALLOCATE ( SMCWTDXY_TR  (XSTART:XEND,YSTART:YEND) )  ! soil moisture below the bottom of the column (m3m-3)
+  ALLOCATE ( DEEPRECHXY_TR(XSTART:XEND,YSTART:YEND) )  ! recharge to the water table when deep (m)
+  ALLOCATE ( RECHXY_TR    (XSTART:XEND,YSTART:YEND) )  ! recharge to the water table (diagnostic) (m)
+  ALLOCATE ( ZSNSOXY_TR   (XSTART:XEND,-NSNOW+1:NTRACER,YSTART:YEND) )  ! snow layer depth [m]
+  ALLOCATE ( SNICEXY_TR   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow layer ice [mm]
+  ALLOCATE ( SNLIQXY_TR   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND) )  ! snow layer liquid water [mm]
+  ALLOCATE ( RUNSFXY_TR   (XSTART:XEND,YSTART:YEND) )  ! surface runoff [mm/s]
+  ALLOCATE ( RUNSBXY_TR   (XSTART:XEND,YSTART:YEND) )  ! subsurface runoff [mm/s]
+  ALLOCATE ( ECANXY_TR    (XSTART:XEND,YSTART:YEND) )  ! evaporation of intercepted water (mm/s)
+  ALLOCATE ( EDIRXY_TR    (XSTART:XEND,YSTART:YEND) )  ! soil surface evaporation rate (mm/s]
+  ALLOCATE ( ETRANXY_TR   (XSTART:XEND,YSTART:YEND) )  ! transpiration rate (mm/s)
+  ALLOCATE ( FLUXXY_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! tracer flux at soil bottom [m]
+  ALLOCATE ( SMOIS_SUB     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture in sublayers [m3/m3]
+  ALLOCATE ( SH2O_SUB      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture in sublayers [m3/m3]
+end if
 
 !------------------------------------------------------------------------
 ! Needed for MMF_RUNOFF (IOPT_RUN = 5); not part of MP driver in WRF
@@ -1052,167 +1081,6 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( QRFXY       (XSTART:XEND,YSTART:YEND) )  ! 
   ALLOCATE ( QSPRINGXY   (XSTART:XEND,YSTART:YEND) )  ! 
   ALLOCATE ( QSLATXY     (XSTART:XEND,YSTART:YEND) )  ! 
-  ALLOCATE ( RECHCLIM    (XSTART:XEND,YSTART:YEND) )  ! 
-  ALLOCATE ( RIVERMASK   (XSTART:XEND,YSTART:YEND) )  ! 
-  ALLOCATE ( NONRIVERXY  (XSTART:XEND,YSTART:YEND) )  ! 
-  !-------Needed for RIVER_ROUTING_OPTION (IOPT_RIVER=1)-----------------
-  IF (IOPT_RIVER .eq. 1 ) THEN
-    ALLOCATE ( FDXY        (XSTART:XEND,YSTART:YEND) )  ! flow direction
-    ALLOCATE ( SLOPEXY     (XSTART:XEND,YSTART:YEND) )  ! river channel slope
-    ALLOCATE ( WIDTHXY     (XSTART:XEND,YSTART:YEND) )  ! river channel width
-    ALLOCATE ( LENGTHXY    (XSTART:XEND,YSTART:YEND) )  ! river channel length
-    ALLOCATE ( MAXDEPTH    (XSTART:XEND,YSTART:YEND) )  ! maximum river channel depth (river bank height)
-    ALLOCATE ( RIVERFLOWXY (XSTART:XEND,YSTART:YEND) )  ! river flowrate
-    ALLOCATE ( RIVERDEPTHXY(XSTART:XEND,YSTART:YEND) )  ! river water depth
-    ALLOCATE (FLOODHEIGHTXY(XSTART:XEND,YSTART:YEND) )  ! flood inundation depth
-  END IF
-!------------------------------------------------------------------------
-! Needed for crop model (DVEG = 10)
-!------------------------------------------------------------------------
-
-  ALLOCATE ( PGSXY       (XSTART:XEND,  YSTART:YEND) )
-  ALLOCATE ( CROPCAT     (XSTART:XEND,  YSTART:YEND) )
-  ALLOCATE ( PLANTING    (XSTART:XEND,  YSTART:YEND) )
-  ALLOCATE ( HARVEST     (XSTART:XEND,  YSTART:YEND) )
-  ALLOCATE ( SEASON_GDD  (XSTART:XEND,  YSTART:YEND) )
-  ALLOCATE ( CROPTYPE    (XSTART:XEND,5,YSTART:YEND) )
-
-!------------------------------------------------------------------------
-! Single- and Multi-layer Urban Models
-!------------------------------------------------------------------------
-
-IF(SF_URBAN_PHYSICS > 0 )  THEN  ! any urban model
-
-  ALLOCATE ( sh_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( lh_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( g_urb2d        (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( rn_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( ts_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( HRANG          (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( DECLIN                                                    )  !
-  ALLOCATE ( GMT                                                       )  !
-  ALLOCATE ( JULDAY                                                    )  !
-  ALLOCATE ( frc_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( utype_urb2d    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( lp_urb2d       (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( lb_urb2d       (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( hgt_urb2d      (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( ust            (XSTART:XEND,                 YSTART:YEND) )  !
-
-!ENDIF
-         
-!IF(SF_URBAN_PHYSICS == 1 ) THEN  ! single layer urban model
-         
-  ALLOCATE ( cmr_sfcdif     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( chr_sfcdif     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( cmc_sfcdif     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( chc_sfcdif     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( cmgr_sfcdif    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( chgr_sfcdif    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( tr_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( tb_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( tg_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( tc_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( qc_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( uc_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( xxxr_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( xxxb_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( xxxg_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( xxxc_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( trl_urb3d      (XSTART:XEND, nsoil,          YSTART:YEND) )  ! 
-  ALLOCATE ( tbl_urb3d      (XSTART:XEND, nsoil,          YSTART:YEND) )  ! 
-  ALLOCATE ( tgl_urb3d      (XSTART:XEND, nsoil,          YSTART:YEND) )  ! 
-
-  ALLOCATE ( psim_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( psih_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( u10_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( v10_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( GZ1OZ0_urb2d   (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( AKMS_URB2D     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( th2_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( q2_urb2d       (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( ust_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-
-  ALLOCATE ( dzr            (             nsoil                      ) )  !
-  ALLOCATE ( dzb            (             nsoil                      ) )  !
-  ALLOCATE ( dzg            (             nsoil                      ) )  !
-  ALLOCATE ( cmcr_urb2d     (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( tgr_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( tgrl_urb3d     (XSTART:XEND, nsoil,          YSTART:YEND) )  ! 
-  ALLOCATE ( smr_urb3d      (XSTART:XEND, nsoil,          YSTART:YEND) )  ! 
-  ALLOCATE ( drelr_urb2d    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( drelb_urb2d    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( drelg_urb2d    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( flxhumr_urb2d  (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( flxhumb_urb2d  (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( flxhumg_urb2d  (XSTART:XEND,                 YSTART:YEND) )  ! 
-
-  ALLOCATE ( frc_urb2d      (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( utype_urb2d    (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( chs            (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( chs2           (XSTART:XEND,                 YSTART:YEND) )  ! 
-  ALLOCATE ( cqs2           (XSTART:XEND,                 YSTART:YEND) )  ! 
-
-  ALLOCATE ( mh_urb2d       (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( stdh_urb2d     (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( lf_urb2d       (XSTART:XEND, 4,              YSTART:YEND) )  !
-
-!ENDIF
-
-!IF(SF_URBAN_PHYSICS == 2 .or. SF_URBAN_PHYSICS == 3) THEN  ! BEP or BEM urban models
-         
-  ALLOCATE ( trb_urb4d      (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tw1_urb4d      (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tw2_urb4d      (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tgb_urb4d      (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( sfw1_urb3d     (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( sfw2_urb3d     (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( sfr_urb3d      (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( sfg_urb3d      (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-
-  ALLOCATE ( hi_urb2d       (XSTART:XEND, num_urban_hi,   YSTART:YEND) )  !
-
-  ALLOCATE ( theta_urban    (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE (     u_urban    (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE (     v_urban    (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE (    dz_urban    (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE (   rho_urban    (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE (     p_urban    (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-
-  ALLOCATE ( a_u_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( a_v_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( a_t_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( a_q_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( a_e_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( b_u_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( b_v_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( b_t_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( b_q_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( b_e_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( dlg_bep        (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( dl_u_bep       (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( sf_bep         (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-  ALLOCATE ( vl_bep         (XSTART:XEND,KDS:KDE,         YSTART:YEND) )  !
-
-!ENDIF
-
-!IF(SF_URBAN_PHYSICS == 3) THEN  ! BEM urban model
-         
-  ALLOCATE ( tlev_urb3d     (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( qlev_urb3d     (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tw1lev_urb3d   (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tw2lev_urb3d   (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tglev_urb3d    (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( tflev_urb3d    (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( sf_ac_urb3d    (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( lf_ac_urb3d    (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( cm_ac_urb3d    (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( sfvent_urb3d   (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( lfvent_urb3d   (XSTART:XEND,                 YSTART:YEND) )  !
-  ALLOCATE ( sfwin1_urb3d   (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-  ALLOCATE ( sfwin2_urb3d   (XSTART:XEND,num_urban_layers,YSTART:YEND) )  !
-
-ENDIF
 
 !------------------------------------------------------------------------
 
@@ -1222,19 +1090,30 @@ ENDIF
 #ifdef WRF_HYDRO
    allocate( greenfrac   (XSTART:XEND,YSTART:YEND))
    greenfrac = 0
+
+   ALLOCATE ( ACCPRCP  (XSTART:XEND,YSTART:YEND) )  ! accumulated precip [mm]
+   ALLOCATE ( ACCECAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated canopy evap [mm]
+   ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
+   ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
+
+   ALLOCATE ( SOILSAT_TOP  (XSTART:XEND,YSTART:YEND) )  ! top 2 layer soil saturation [fraction]
+   ALLOCATE ( SOILSAT  (XSTART:XEND,YSTART:YEND) )  ! column integrated soil saturation [fraction]
+   ALLOCATE ( SOILICE  (XSTART:XEND,YSTART:YEND) )  ! fraction of soil moisture that is ice [fraction]
+   ALLOCATE ( SNOWT_AVG  (XSTART:XEND,YSTART:YEND) )  ! snowpack average temperature (by layer mass) [K]
+
+ ! Initialize accumulator variables to 0
+   ACCPRCP = 0.0
+   ACCECAN = 0.0
+   ACCETRAN = 0.0
+   ACCEDIR = 0.0
 #endif
 
   COSZEN     = undefined_real
-  XLAT       = undefined_real
+  XLAT_URB2D = undefined_real
   DZ8W       = undefined_real
   DZS        = undefined_real
   IVGTYP     = undefined_int
   ISLTYP     = undefined_int
-  SOILCL1    = undefined_real
-  SOILCL2    = undefined_real
-  SOILCL3    = undefined_real
-  SOILCL4    = undefined_real
-  SOILCOMP   = undefined_real
   VEGFRA     = undefined_real
   GVFMAX     = undefined_real
   TMN        = undefined_real
@@ -1248,7 +1127,6 @@ ENDIF
   GLW        = undefined_real
   P8W        = undefined_real
   RAINBL     = undefined_real
-  SNOWBL     = undefined_real
   RAINBL_tmp = undefined_real
   SR         = undefined_real
   RAINCV     = undefined_real
@@ -1301,10 +1179,9 @@ ENDIF
   STBLCPXY   = undefined_real
   FASTCPXY   = undefined_real
   LAI        = undefined_real
-  LAI_tmp    = undefined_real
   XSAIXY     = undefined_real
   TAUSSXY    = undefined_real
-  XLONG      = undefined_real
+  XLONIN     = undefined_real
   SEAICE     = undefined_real
   SMCWTDXY   = undefined_real
   DEEPRECHXY = 0.0
@@ -1338,6 +1215,8 @@ ENDIF
   SAGXY      = undefined_real
   RSSUNXY    = undefined_real
   RSSHAXY    = undefined_real
+  ALBSNDXY   = undefined_real
+  ALBSNIXY   = undefined_real
   BGAPXY     = undefined_real
   WGAPXY     = undefined_real
   TGVXY      = undefined_real
@@ -1360,7 +1239,6 @@ ENDIF
   CHUCXY     = undefined_real
   CHV2XY     = undefined_real
   CHB2XY     = undefined_real
-  RS         = undefined_real
   TERRAIN    = undefined_real
   GVFMIN     = undefined_real
   GVFMAX     = undefined_real
@@ -1377,41 +1255,63 @@ ENDIF
   QRFXY      = undefined_real
   QSPRINGXY  = undefined_real
   QSLATXY    = undefined_real
-  IF (IOPT_RIVER .EQ. 1) THEN
-    FDXY          = undefined_real
-    SLOPEXY       = undefined_real
-    WIDTHXY       = undefined_real
-    LENGTHXY      = undefined_real
-    MAXDEPTHXY    = undefined_real
-    RIVERFLOWXY   = undefined_real
-    RIVERDEPTHXY  = undefined_real
-    FLOODHEIGHTXY = undefined_real
-  END IF
   CHSTARXY   = undefined_real
   Z0         = undefined_real
   ZNT        = undefined_real
-  PGSXY      = undefined_int
-  CROPCAT    = undefined_int
-  PLANTING   = undefined_real
-  HARVEST    = undefined_real
-  SEASON_GDD = undefined_real
-  CROPTYPE   = undefined_real
-  
-IF(SF_URBAN_PHYSICS > 0 )  THEN  ! any urban model
-  HRANG      = undefined_real
-  DECLIN     = undefined_real
-ENDIF
+ 
+#ifdef WRF_HYDRO
+  SOILSAT_TOP = undefined_real 
+  SOILSAT     = undefined_real
+  SOILICE     = undefined_real
+  SNOWT_AVG   = undefined_real
+#endif
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
   XICE_THRESHOLD = 0.5   ! fraction of grid determining seaice (from WRF)
+
+!------initialized water tracer variables---------
+if (OPT_WT .eq. 1) then 
+  QFX_TR        = undefined_real
+  LH_TR         = undefined_real
+  SFCRUNOFF_TR  = 0.0
+  UDRUNOFF_TR   = 0.0
+  SMOIS_TR      = undefined_real
+  SH2O_TR       = undefined_real
+  SNOW_TR       = undefined_real
+  SNOWH_TR      = undefined_real
+  CANWAT_TR     = undefined_real
+  ACSNOM_TR     = 0.0
+  ACSNOW_TR     = 0.0
+  CANICEXY_TR   = undefined_real
+  CANLIQXY_TR   = undefined_real
+  QSNOWXY_TR    = undefined_real
+  WSLAKEXY_TR   = undefined_real
+  WAXY_TR       = undefined_real
+  WTXY_TR       = undefined_real
+  SMCWTDXY_TR   = undefined_real
+  DEEPRECHXY_TR = 0.0
+  RECHXY_TR     = 0.0
+  ZSNSOXY_TR    = undefined_real
+  SNICEXY_TR    = undefined_real
+  SNLIQXY_TR    = undefined_real
+  RUNSFXY_TR    = undefined_real
+  RUNSBXY_TR    = undefined_real
+  ECANXY_TR     = undefined_real
+  EDIRXY_TR     = undefined_real
+  ETRANXY_TR    = undefined_real
+  FLUXXY_TR     = undefined_real
+  SMOIS_SUB      = undefined_real
+  SH2O_SUB       = undefined_real
+end if
+!-------------------------------------------------
 
 !----------------------------------------------------------------------
 ! Read Landuse Type and Soil Texture and Other Information
 !----------------------------------------------------------------------
  
   CALL READLAND_HRLDAS(HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,     &
-       ISWATER, ISLAKE, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT, XLONG, XLAND, SEAICE,MSFTX,MSFTY)
+       ISWATER, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND, SEAICE,MSFTX,MSFTY)
   
   WHERE(SEAICE > 0.0) XICE = 1.0
 
@@ -1419,25 +1319,12 @@ ENDIF
 ! For spatially-varying soil parameters, read in necessary extra fields
 !------------------------------------------------------------------------
 
-  if (soil_data_option == 2) then
-    CALL READ_SOIL_TEXTURE(HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND, &
-                      NSOIL,IVGTYP,SOILCL1,SOILCL2,SOILCL3,SOILCL4,ISICE,ISWATER)
-
-    ISLTYP = nint(SOILCL1(:,:))
-
-  end if
-  
-  if (soil_data_option == 3) then
-    CALL READ_SOIL_COMPOSITION(HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND, &
-                      NSOIL,IVGTYP,ISICE,ISWATER, &
-		      SOILCOMP)
-  end if
-  
-  if (soil_data_option == 4) then
+#ifdef SPATIAL_SOIL
     CALL READ_3D_SOIL(SPATIAL_FILENAME, XSTART, XEND, YSTART, YEND, &
                       NSOIL,BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,  &
-		      DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,REFDK_2D,REFKDT_2D)
-  end if
+		      DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,REFDK_2D,REFKDT_2D,&
+		      SLOPE_2D,CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D)
+#endif
   
 !------------------------------------------------------------------------
 ! For IOPT_RUN = 5 (MMF groundwater), read in necessary extra fields
@@ -1445,25 +1332,8 @@ ENDIF
 !------------------------------------------------------------------------
 
   if (runoff_option == 5) then
-    CALL READ_MMF_RUNOFF(HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,&
-                         FDEPTHXY,EQZWT,RECHCLIM,RIVERBEDXY)
-    if (river_routing_option == 1) then
-      CALL READ_MMF_RIVER(MMF_RIVER_FILE, XSTART, XEND, YSTART, YEND, &
-                           FDXY, SLOPEXY, WIDTHXY, LENGTHXY, MAXDEPTHXY)
-    end if
-  end if
-
-!------------------------------------------------------------------------
-! For DVEG = 10 (crop model), read in necessary extra fields
-!------------------------------------------------------------------------
-
-  CROPTYPE   = 0       ! make default 0% crops everywhere
-  PLANTING   = 126     ! default planting date
-  HARVEST    = 290     ! default harvest date
-  SEASON_GDD = 1605    ! default total seasonal growing degree days
-  if (dynamic_veg_option == 10) then
-    CALL READ_CROP_INPUT(HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,&
-                         CROPTYPE,PLANTING,HARVEST,SEASON_GDD)
+    CALL READ_MMF_RUNOFF(MMF_RUNOFF_FILE, XSTART, XEND, YSTART, YEND,&
+                         ZWTXY,EQZWT,RIVERBEDXY,RIVERCONDXY,PEXPXY,FDEPTHXY)
   end if
 
 !----------------------------------------------------------------------
@@ -1478,9 +1348,21 @@ ENDIF
   if (restart_filename_requested /= " ") then
      restart_flag = .TRUE.
 
+  if(rst_bi_in .eq. 0) then
+
+#ifdef WRF_HYDRO
+      tmpdate = olddate
+#endif
+
      call find_restart_file(rank, trim(restart_filename_requested), startdate, khour, olddate, restart_flnm)
 
      call read_restart(trim(restart_flnm), xstart, xend, xstart, ixfull, jxfull, nsoil, olddate)
+
+#ifdef WRF_HYDRO
+      olddate = tmpdate 
+#endif
+
+       ITIMESTEP = 2
 
 #ifdef MPP_LAND
      call mpp_land_bcast_char(19,OLDDATE(1:19))
@@ -1516,8 +1398,6 @@ ENDIF
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "RTMASS"  , RTMASSXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "STMASS"  , STMASSXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WOOD"    , WOODXY   )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "GRAIN"   , GRAINXY  )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "GDD"     , GDDXY    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "STBLCP"  , STBLCPXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FASTCP"  , FASTCPXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "LAI"     , LAI      )
@@ -1531,7 +1411,13 @@ ENDIF
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSFC"    , QSFC     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF",SFCRUNOFF   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF" ,UDRUNOFF    )
-    ! below for opt_run = 5
+#ifdef WRF_HYDRO
+     if(checkRstV("ACCPRCP") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCPRCP"  ,ACCPRCP    )
+     if(checkRstV("ACCECAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCECAN"  ,ACCECAN    )
+     if(checkRstV("ACCEDIR") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCEDIR"  ,ACCEDIR    )
+     if(checkRstV("ACCETRAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCETRAN" ,ACCETRAN    )
+#endif
+! below for opt_run = 5
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMOISEQ"   , SMOISEQ    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "AREAXY"    , AREAXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMCWTDXY"  , SMCWTDXY   )
@@ -1547,150 +1433,37 @@ ENDIF
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "RIVERBEDXY" ,RIVERBEDXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "EQZWT"      ,EQZWT      )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PEXPXY"     ,PEXPXY     )
+  else  !  rst_bi_in
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,OLDDATE(1:19))
+#endif
+     ITIMESTEP = 2
+     call lsm_rst_bi_in()
+  endif
 
-     IF(SF_URBAN_PHYSICS > 0 )  THEN  ! any urban model
-
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "SH_URB2D"  ,     SH_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "LH_URB2D"  ,     LH_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,       "G_URB2D"  ,      G_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "RN_URB2D"  ,     RN_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "TS_URB2D"  ,     TS_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "FRC_URB2D"  ,    FRC_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "UTYPE_URB2D"  ,  UTYPE_URB2D  )
-
-     ENDIF
-         
-     IF(SF_URBAN_PHYSICS == 1 ) THEN  ! single layer urban model
-         
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "CMR_SFCDIF" ,    CMR_SFCDIF )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "CHR_SFCDIF" ,    CHR_SFCDIF )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "CMC_SFCDIF" ,    CMC_SFCDIF )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "CHC_SFCDIF" ,    CHC_SFCDIF )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "CMGR_SFCDIF" ,   CMGR_SFCDIF )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "CHGR_SFCDIF" ,   CHGR_SFCDIF )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "TR_URB2D"  ,     TR_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "TB_URB2D"  ,     TB_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "TG_URB2D"  ,     TG_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "TC_URB2D"  ,     TC_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "QC_URB2D"  ,     QC_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,      "UC_URB2D"  ,     UC_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "XXXR_URB2D"  ,   XXXR_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "XXXB_URB2D"  ,   XXXB_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "XXXG_URB2D"  ,   XXXG_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "XXXC_URB2D"  ,   XXXC_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TRL_URB3D"  ,    TRL_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TBL_URB3D"  ,    TBL_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TGL_URB3D"  ,    TGL_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "CMCR_URB2D"  ,   CMCR_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TGR_URB2D"  ,    TGR_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "TGRL_URB3D"  ,   TGRL_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "SMR_URB3D"  ,    SMR_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "DRELR_URB2D"  ,  DRELR_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "DRELB_URB2D"  ,  DRELB_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "DRELG_URB2D"  ,  DRELG_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLXHUMR_URB2D"  ,FLXHUMR_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLXHUMB_URB2D"  ,FLXHUMB_URB2D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLXHUMG_URB2D"  ,FLXHUMG_URB2D  )
-
-     ENDIF
-
-     IF(SF_URBAN_PHYSICS == 2 .or. SF_URBAN_PHYSICS == 3) THEN  ! BEP or BEM urban models
-         
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TRB_URB4D"  ,    TRB_URB4D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TW1_URB4D"  ,    TW1_URB4D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TW2_URB4D"  ,    TW2_URB4D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "TGB_URB4D"  ,    TGB_URB4D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "SFW1_URB3D"  ,   SFW1_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "SFW2_URB3D"  ,   SFW2_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "SFR_URB3D"  ,    SFR_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,     "SFG_URB3D"  ,    SFG_URB3D  )
-
-     ENDIF
-
-     IF(SF_URBAN_PHYSICS == 3) THEN  ! BEM urban model
-         
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "TLEV_URB3D"  ,   TLEV_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,    "QLEV_URB3D"  ,   QLEV_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,  "TW1LEV_URB3D"  , TW1LEV_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,  "TW2LEV_URB3D"  , TW2LEV_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "TGLEV_URB3D"  ,  TGLEV_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "TFLEV_URB3D"  ,  TFLEV_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "SF_AC_URB3D"  ,  SF_AC_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "LF_AC_URB3D"  ,  LF_AC_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,   "CM_AC_URB3D"  ,  CM_AC_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,  "SFVENT_URB3D"  , SFVENT_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,  "LFVENT_URB3D"  , LFVENT_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,  "SFWIN1_URB3D"  , SFWIN1_URB3D  )
-       call get_from_restart(xstart, xend, xstart, ixfull, jxfull,  "SFWIN2_URB3D"  , SFWIN2_URB3D  )
-
-     ENDIF
-     
      STEPWTD = nint(WTDDT*60./DTBL)
      STEPWTD = max(STEPWTD,1)
 
 ! Must still call NOAHMP_INIT even in restart to set up parameter arrays (also done in WRF)
 
-     CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, XLAT, &   ! call from WRF phys_init
+     CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
                     TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
                      TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
                 CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
                   FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   TSNOXY,  ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY, RTMASSXY, &
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
-                 GRAINXY,    GDDXY,                                                   &
-                CROPTYPE,  CROPCAT,                                                   &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .true.,                                                   &
-                  .true.,runoff_option, crop_option,                                 &
-                  sf_urban_physics,                         &  ! urban scheme
+                  .true.,runoff_option,                                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
                      ,smoiseq  ,smcwtdxy ,rechxy   ,deeprechxy, areaxy ,dx, dy, msftx, msfty,&
                      wtddt    ,stepwtd  ,dtbl  ,qrfsxy ,qspringsxy  ,qslatxy,                  &
-                     fdepthxy ,terrain       ,riverbedxy ,eqzwt ,rivercondxy ,pexpxy,              &
-                     rechclim ,gecros_state                 &
+                     fdepthxy ,terrain ,riverbedxy ,eqzwt ,rivercondxy ,pexpxy              &
                      )
-
-         IF(SF_URBAN_PHYSICS > 0 ) THEN  !urban
-         
-                CALL urban_param_init(DZR,DZB,DZG,num_soil_layers,sf_urban_physics)
-
-                CALL urban_var_init(ISURBAN,TSK,TSLB,TMN,IVGTYP,                        & !urban
-                      ims,ime,jms,jme,kms,kme,num_soil_layers,                          & !urban
-                      LOW_DENSITY_RESIDENTIAL_TABLE,                                    &
-		      HIGH_DENSITY_RESIDENTIAL_TABLE,                                   &
-		      HIGH_INTENSITY_INDUSTRIAL_TABLE,                                  &
-                      .true.,sf_urban_physics,                                          & !urban
-                      XXXR_URB2D,    XXXB_URB2D,    XXXG_URB2D,XXXC_URB2D,              & !urban
-                        TR_URB2D,      TB_URB2D,      TG_URB2D,  TC_URB2D, QC_URB2D,    & !urban
-                       TRL_URB3D,     TBL_URB3D,     TGL_URB3D,                         & !urban
-                        SH_URB2D,      LH_URB2D,       G_URB2D,  RN_URB2D, TS_URB2D,    & !urban
-                num_urban_layers,                                                       & !urban
-                    num_urban_hi,                                                       & !urban
-                       TRB_URB4D,     TW1_URB4D,     TW2_URB4D, TGB_URB4D,              & !urban
-                      TLEV_URB3D,    QLEV_URB3D,                                        & !urban
-                    TW1LEV_URB3D,  TW2LEV_URB3D,                                        & !urban
-                     TGLEV_URB3D,   TFLEV_URB3D,                                        & !urban
-                     SF_AC_URB3D,   LF_AC_URB3D,   CM_AC_URB3D,                         & !urban
-                    SFVENT_URB3D,  LFVENT_URB3D,                                        & !urban
-                    SFWIN1_URB3D,  SFWIN2_URB3D,                                        & !urban
-                      SFW1_URB3D,    SFW2_URB3D,     SFR_URB3D, SFG_URB3D,              & !urban
-                        LP_URB2D,      HI_URB2D,      LB_URB2D,                         & !urban
-                       HGT_URB2D,      MH_URB2D,    STDH_URB2D,                         & !urban
-                        LF_URB2D,                                                       & !urban
-                      CMCR_URB2D,     TGR_URB2D,    TGRL_URB3D, SMR_URB3D,              & !urban
-                     DRELR_URB2D,   DRELB_URB2D,   DRELG_URB2D,                         & !urban
-                   FLXHUMR_URB2D, FLXHUMB_URB2D, FLXHUMG_URB2D,                         & !urban
-                         A_U_BEP,       A_V_BEP,       A_T_BEP,   A_Q_BEP,              & !multi-layer urban
-                         A_E_BEP,       B_U_BEP,       B_V_BEP,                         & !multi-layer urban
-                         B_T_BEP,       B_Q_BEP,       B_E_BEP,   DLG_BEP,              & !multi-layer urban
-                        DL_U_BEP,        SF_BEP,        VL_BEP,                         & !multi-layer urban
-                       FRC_URB2D,   UTYPE_URB2D)                                          !urban
-
-          ENDIF
-
-  else
+  else  ! for none restart
 
      restart_flag = .FALSE.
 
@@ -1703,163 +1476,106 @@ ENDIF
      SNOW      =  undefined_real
      SNOWH     =  undefined_real
 
-#ifdef WRF_HYDRO
-  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
+! LRK - Remove HRLDAS_ini_typ for WRF-Hydro. Originally, there was a fork 
+!       for difference forcing types, or if the user desired a different
+!       reading from wrfinput. However, for WRF-Hydro uses, we only use
+!       option 1 at this point, so removing all other potential options,
+!       which was 0 before. This will force the user to place SHDMIN/SHDMAX
+!       into the wrfinput file now as opposed to allowing it to be read 
+!       in from the geogrid file.
+!#ifdef WRF_HYDRO
+!  if((forc_typ .gt. 2) .and. (forc_typ .ne. 6) ) HRLDAS_ini_typ = 0
 
-  if(HRLDAS_ini_typ .eq. 1) then
-     ! read initial parameters and conditions from the HRLDAS forcing data
-     if(forc_typ .eq. 2) then
-          inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
-     else
-          inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          ".LDASIN_DOMAIN"//hgrid
-     endif
+!  if(HRLDAS_ini_typ .eq. 1) then
+!     ! read initial parameters and conditions from the HRLDAS forcing data
+!     if(forc_typ .eq. 2) then
+!          inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          startdate(15:16)//".LDASIN_DOMAIN"//hgrid
+!     else
+!          inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          ".LDASIN_DOMAIN"//hgrid
+!     endif
 
-#else
+!#else
 
-     inflnm = trim(indir)//"/"//&
-          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
-          ".LDASIN_DOMAIN"//hgrid
-#endif
+!     inflnm = trim(indir)//"/"//&
+!          startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
+!          ".LDASIN_DOMAIN"//hgrid
+!#endif
 
      CALL READINIT_HRLDAS(HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
           TSLB, CANWAT, TSK, SNOW, SNOWH, FNDSNOWH)
 	  
-     VEGFRA    =  undefined_real
-     LAI       =  undefined_real
-     GVFMIN    =  undefined_real
-     GVFMAX    =  undefined_real
+!yw     VEGFRA    =  undefined_real
+!yw     LAI       =  undefined_real
+!yw     GVFMIN    =  undefined_real
+!yw     GVFMAX    =  undefined_real
 
      CALL READVEG_HRLDAS(HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           OLDDATE, IVGTYP, VEGFRA, LAI, GVFMIN, GVFMAX)
 
-#ifdef WRF_HYDRO
-  else   !  HRLDAS_ini_typ        
+!#ifdef WRF_HYDRO
+!  else   !  HRLDAS_ini_typ        
 
-#ifdef MPP_LAND
-    call HYDRO_HRLDAS_ini_mpp   &
-#else
-    call HYDRO_HRLDAS_ini   &
-#endif
-       (trim(hrldas_setup_file), xend-xstart+1,yend-ystart+1, &
-       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
+!#ifdef MPP_LAND
+!    call HYDRO_HRLDAS_ini_mpp   &
+!#else
+!    call HYDRO_HRLDAS_ini   &
+!#endif
+!       (trim(hrldas_setup_file), xend-xstart+1,yend-ystart+1, &
+!       nsoil,SMOIS(:,1:NSOIL,:),TSLB(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), CANWAT, TSK,SNOW,SNOWH,lai,VEGFRA,IVGTYP,FNDSNOWH)
+!       if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
 
-       greenfrac = 0.0
-#ifdef MPP_LAND
-       call get_greenfrac_mpp &
-#else
-       call get_greenfrac &
-#endif
-        (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, SHDMAX)
-       !yw GVFMAX = maxval(greenfrac)
-  endif
-#endif
+!       greenfrac = 0.0
+!#ifdef MPP_LAND
+!        call get_greenfrac_mpp &
+!#else
+!      call get_greenfrac &
+!#endif
+!         (trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate, GVFMAX)
+!        !yw GVFMAX = maxval(greenfrac)
+!	if(maxval(GVFMAX) .le. 1)  GVFMAX = GVFMAX * 100
+!  endif   ! initialization type
+!#endif
 
 !     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
 
      FNDSOILW = .FALSE.
-     CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, XLAT, &   ! call from WRF phys_init
+     CALL NOAHMP_INIT(    LLANDUSE,     SNOW,    SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
                     TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
                      TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
                 CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
                   FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   TSNOXY,  ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY, RTMASSXY, &
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
-                 GRAINXY,    GDDXY,                                                   &
-                CROPTYPE,  CROPCAT,                                                   &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .false.,                                                   &
-                  .true.,runoff_option, crop_option,                                 &
-                  sf_urban_physics,                         &  ! urban scheme
+                  .true.,runoff_option,                                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
                      ,smoiseq  ,smcwtdxy ,rechxy   ,deeprechxy, areaxy ,dx, dy, msftx, msfty,&
                      wtddt    ,stepwtd  ,dtbl  ,qrfsxy ,qspringsxy  ,qslatxy,                  &
-                     fdepthxy ,terrain       ,riverbedxy ,eqzwt ,rivercondxy ,pexpxy,              &
-                     rechclim ,gecros_state                 &
+                     fdepthxy ,terrain ,riverbedxy ,eqzwt ,rivercondxy ,pexpxy              &
                      )
-
-         if(iopt_run == 5) then
-              call groundwater_init (                                           &
-                 num_soil_layers, dzs, isltyp, ivgtyp, wtddt ,                  &
-                 fdepthxy   , terrain , riverbedxy, eqzwt     ,                 &
-                 rivercondxy, pexpxy  , areaxy    , zwtxy     ,                 &
-                 smois      , sh2o    , smoiseq   , smcwtdxy  , deeprechxy,     &
-                 rechxy     , qslatxy , qrfsxy    , qspringsxy,                 &
-                 rechclim   ,                                                   &
-                 ids,ide, jds,jde, kds,kde,                                     &
-                 ims,ime, jms,jme, kms,kme,                                     &
-                 ims,ime, jms,jme, kms,kme,                                     &
-                 its,ite, jts,jte, kts,kte )
-              if (iopt_river == 1) then
-                 call river_init (                                              &
-!                     eqriverdepth, slopexy, widthxy,                            &
-                     riverflowxy, riverdepthxy, flooddepthxy)
-              end if
-         endif
 
       TAUSSXY = 0.0   ! Need to be added to _INIT later
 
-         IF(SF_URBAN_PHYSICS > 0 ) THEN  !urban
 
-                 CALL urban_param_init(DZR,DZB,DZG,num_soil_layers,sf_urban_physics)
-
-                CALL urban_var_init(ISURBAN,TSK,TSLB,TMN,IVGTYP,                        & !urban
-                      ims,ime,jms,jme,kms,kme,num_soil_layers,                          & !urban
-                      LOW_DENSITY_RESIDENTIAL_TABLE,                                    &
-		      HIGH_DENSITY_RESIDENTIAL_TABLE,                                   &
-		      HIGH_INTENSITY_INDUSTRIAL_TABLE,                                  &
-                      .false.,sf_urban_physics,                                          & !urban
-                      XXXR_URB2D,    XXXB_URB2D,    XXXG_URB2D,XXXC_URB2D,              & !urban
-                        TR_URB2D,      TB_URB2D,      TG_URB2D,  TC_URB2D, QC_URB2D,    & !urban
-                       TRL_URB3D,     TBL_URB3D,     TGL_URB3D,                         & !urban
-                        SH_URB2D,      LH_URB2D,       G_URB2D,  RN_URB2D, TS_URB2D,    & !urban
-                num_urban_layers,                                                       & !urban
-                    num_urban_hi,                                                       & !urban
-                       TRB_URB4D,     TW1_URB4D,     TW2_URB4D, TGB_URB4D,              & !urban
-                      TLEV_URB3D,    QLEV_URB3D,                                        & !urban
-                    TW1LEV_URB3D,  TW2LEV_URB3D,                                        & !urban
-                     TGLEV_URB3D,   TFLEV_URB3D,                                        & !urban
-                     SF_AC_URB3D,   LF_AC_URB3D,   CM_AC_URB3D,                         & !urban
-                    SFVENT_URB3D,  LFVENT_URB3D,                                        & !urban
-                    SFWIN1_URB3D,  SFWIN2_URB3D,                                        & !urban
-                      SFW1_URB3D,    SFW2_URB3D,     SFR_URB3D, SFG_URB3D,              & !urban
-                        LP_URB2D,      HI_URB2D,      LB_URB2D,                         & !urban
-                       HGT_URB2D,      MH_URB2D,    STDH_URB2D,                         & !urban
-                        LF_URB2D,                                                       & !urban
-                      CMCR_URB2D,     TGR_URB2D,    TGRL_URB3D, SMR_URB3D,              & !urban
-                     DRELR_URB2D,   DRELB_URB2D,   DRELG_URB2D,                         & !urban
-                   FLXHUMR_URB2D, FLXHUMB_URB2D, FLXHUMG_URB2D,                         & !urban
-                         A_U_BEP,       A_V_BEP,       A_T_BEP,   A_Q_BEP,              & !multi-layer urban
-                         A_E_BEP,       B_U_BEP,       B_V_BEP,                         & !multi-layer urban
-                         B_T_BEP,       B_Q_BEP,       B_E_BEP,   DLG_BEP,              & !multi-layer urban
-                        DL_U_BEP,        SF_BEP,        VL_BEP,                         & !multi-layer urban
-                       FRC_URB2D,   UTYPE_URB2D)                                          !urban
-
-          ENDIF
-
-          IF(SF_URBAN_PHYSICS > 1 ) THEN  !urban
-	    do i = 1, num_urban_atmosphere-1
-              dz_urban(:,i,:) = urban_atmosphere_thickness  ! thickness of full levels
-	    end do
-	    dz_urban(:,num_urban_atmosphere,:) =                                   &
-                  2*(zlvl - urban_atmosphere_thickness*(num_urban_atmosphere-1))
-	    print*, dz_urban(1,:,1)
-	  ENDIF
-
-  endif
-
-  NTIME=(KHOUR)*3600./nint(dtbl)*(spinup_loops+1)
-  spinup_loop = 0
-  reset_spinup_date = .false.
-
-  print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
+  endif  ! end of restart if block
   
+  NTIME=(KHOUR)*3600./nint(dtbl)
+
+#ifdef HYDRO_D
+  print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
+#endif
+
+  ! assinging the KHOUR to be used in the NWM output routing for global metadata
+  nlst_rt(did)%khour = khour
+
   call system_clock(count=clock_count_1)   ! Start a timer
 
 
@@ -1883,12 +1599,69 @@ ENDIF
    do kk = 2, NSOIL
       zsoil(kk) = zsoil(kk-1)-soil_thick_input(kk)
    end do
-   
+#ifdef HYDRO_D
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
+#endif
 
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
          olddate,zsoil(1:NSOIL))
+
+call get_iocflag(1, io_config_outputs)
+
+#ifdef WRF_HYDRO
+if (io_config_outputs .gt. 0) then
+     ACCPRCP = 0.0
+     ACCECAN = 0.0
+     ACCEDIR = 0.0
+     ACCETRAN = 0.0
+     SFCRUNOFF = 0.0
+     UDRUNOFF = 0.0
+     ACSNOM = 0.0
+     ACSNOW = 0.0
+endif
+#endif
+
+   !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
+   if (io_config_outputs .eq. 0) then
+        VARLIST = 'IVGTYP,ISLTYP,FVEG,LAI,SAI,SWFORC,COSZ,LWFORC,RAINRATE,EMISS,FSA,FIRA,GRDFLX,HFX,LH,ECAN,EDIR,ALBEDO,' // &
+                  'ETRAN,UGDRNOFF,SFCRNOFF,CANLIQ,CANICE,ZWT,WA,WT,ACCPRCP,ACCECAN,ACCEDIR,ACCETRAN,SAV,TR,EVC,IRC,SHC,' // &
+                  'IRG,SHG,EVG,GHV,SAG,IRB,SHB,EVB,GHB,TRAD,TG,TV,TAH,TGV,TGB,T2MV,T2MB,Q2MV,Q2MB,EAH,FWET,ZSNSO_SN,SNICE,' // &
+                  'SNLIQ,SOIL_T,SOIL_W,SNOW_T,SOIL_M,SNOWH,SNEQV,QSNOW,ISNOW,FSNO,ACSNOW,ACSNOM,CM,CH,CHV,CHB,CHLEAF,CHUC,' // &
+                  'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
+                  'SOILSAT,SNOWT_AVG'
+   endif
+   if (io_config_outputs .eq. 1) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+   endif
+   if (io_config_outputs .eq. 2) then 
+        VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+   endif
+   if (io_config_outputs .eq. 3) then
+        VARLIST = 'UGDRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SNOWT_AVG,SOILICE,ACCET,CANWAT' 
+   endif
+   if (io_config_outputs .eq. 4) then 
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNEQV,SOILSAT_TOP,SOILSAT,ACCET,CANWAT,PET'
+   endif
+   if (io_config_outputs .eq. 5) then
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACCET,SNEQV,SNOWH,FSNO,SOIL_M,SOIL_W,TRAD,FIRA,FSA,LH,HFX'
+   endif
+   if (io_config_outputs .eq. 6) then
+        VARLIST = 'UGDRNOFF,SFCRNOFF,ACSNOM,SNOWH,SNEQV,ACCECAN,ACCETRAN,ACCEDIR,SNLIQ,ISNOW,SOIL_T,FSNO,SOIL_M,GRDFLX,HFX,LH,FIRA,FSA,TRAD,SOILSAT_TOP,SOILSAT,SNOWT_AVG,SOILICE,ACCET,CANWAT'
+   endif
+
+   !!--- Parse into character array. Constructor not valid with uneven 
+   !!--- strings in f90 so using brute force. 
+   do while (brkflag .eq. 0)
+        if (index(VARLIST, ',') .eq. 0) then 
+                IOCVARS(varind) = adjustl(VARLIST)
+                brkflag = 1
+        else 
+                IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
+                VARLIST = VARLIST((index(VARLIST, ',')+1):)
+                varind = varind + 1
+        endif
+   end do
 
    if(finemesh .ne. 0 ) then
        if(restart_flag) then
@@ -1901,17 +1674,76 @@ ENDIF
 #endif
 
    NTIME_out = NTIME 
-   
+
+#ifdef WRF_HYDRO
+   call get_t0OutputFlag(1, t0OutputFlag)
+#ifdef MPP_LAND
+   if(my_id .eq. io_id) &
+       print*, "t0OutputFlag: ", t0OutputFlag  
+#endif     
+
+! ldas_output subroutine will be called when 
+! the t0OutputFlag is 1 in the hydro.namelist
+! the ldas_output requires one variables ITIME 
+! which is the LSM timestep, we declare it here
+! since it does not exist at this point
+  ITIME = 0
+  if(t0OutputFlag .eq. 1) call ldas_output(ITIME)
+!#else
+!  if (restart_filename_requested == " ") then
+!     if(t0OutputFlag .eq. 1) call ldas_output()
+!  endif
+!#endif
+#endif
+
 end subroutine land_driver_ini
 
 !===============================================================================
   subroutine land_driver_exe(itime)
+  use module_hydro_io, only: read_channel_only
      implicit  none
      integer :: itime          ! timestep loop
 
 !---------------------------------------------------------------------------------
 ! Read the forcing data.
 !---------------------------------------------------------------------------------
+
+#ifdef MPP_LAND
+     call mpp_land_bcast_char(19,OLDDATE(1:19))
+#endif
+
+#ifdef WRF_HYDRO
+!      if(forc_typ .eq. 8) then
+!          call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
+!          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+!          return
+!      endif
+#endif
+
+#ifdef WRF_HYDRO
+      if(forc_typ .eq. 8) then
+          call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call geth_newdate(newdate, olddate, nint(dtbl))
+          olddate = newdate
+          return
+      endif
+      if(forc_typ .eq. 9 .or. forc_typ .eq. 10) then
+         !! JLM:: fix hgrid: This becomes 1 eventhough 3 is specified in hydro.namelist
+         !! JLM: This is initalized by read_hrldas_hdrinfo
+         !! JLM: Appears that we should differentiate the LSM and HYDRO igrids, define a local 
+         !! JLM: igrid for this purpose.
+         !! JLM: ?*?* hrldas_drv_HYDRO.F should be made a module *?*?
+         !! JLM:  Simple modification which forces type, rank and kind checking...
+          call getNameList('igrid', igrid_hydro)  !! get hydro namelist info :: case sensitive
+          write(hgrid_hydro,'(I1)') igrid_hydro
+          call read_channel_only(olddate, hgrid_hydro, indir, forcing_timestep)
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call geth_newdate(newdate, olddate, nint(dtbl))
+          olddate = newdate
+          return
+      endif
+#endif
 
 ! For HRLDAS, we're assuming (for now) that each time period is in a 
 ! separate file.  So we can open a new one right now.
@@ -1923,32 +1755,24 @@ end subroutine land_driver_ini
      ! Build a filename template
      inflnm_template = trim(indir)//"/<date>.LDASIN_DOMAIN"//hgrid
 
-#ifdef MPP_LAND
-     call mpp_land_bcast_char(19,OLDDATE(1:19))
-#endif
 
 #ifdef WRF_HYDRO
 
-#ifdef MPP_LAND
-     call mpp_land_bcast_char(19,forcDate(1:19))
-#endif
      if(finemesh .ne. 0) goto 991
     
      if(forc_typ .eq. 0) then
         CALL READFORC_HRLDAS(INFLNM_TEMPLATE, FORCING_TIMESTEP, OLDDATE,  &
              XSTART, XEND, YSTART, YEND,                                  &
-       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
-       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
-	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai, reset_spinup_date, startdate)
-        VEGFRA = VEGFRA * 100.
+	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, VEGFRA, update_veg, LAI, update_lai)
      else
         if(olddate == forcDate) then
-           LAI_tmp = LAI
            CALL HYDRO_frocing_drv(trim(indir), forc_typ,snow_assim,olddate,                      &
                xstart, xend, ystart, yend,    &
                T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
                GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,SNOWH,ITIME,FORCING_TIMESTEP,prcp0)
+
+               if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
 
            call geth_newdate(newdate, forcDate, FORCING_TIMESTEP)
            forcDate = newdate
@@ -1958,11 +1782,84 @@ end subroutine land_driver_ini
 #else
      CALL READFORC_HRLDAS(INFLNM_TEMPLATE, FORCING_TIMESTEP, OLDDATE,  &
           XSTART, XEND, YSTART, YEND,                                  &
-       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
-       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
           T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
-	    P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai, reset_spinup_date, startdate)
+	    P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, VEGFRA, update_veg, LAI, update_lai)
 #endif
+!------water tracer variables initiation-------
+if (OPT_WT .eq. 1) then 
+  if (olddate < wvtstart) then
+    wvtflag = 0
+  else
+    if (olddate(1:15) == wvtstart(1:15)) then
+      wvtflag = 1
+    else
+      if (olddate < wvtend) then
+        wvtflag = 2
+      else
+        wvtflag = 3
+      end if
+    end if
+  end if
+  ! call tell_wt_flag(olddate, wvtstart, wvtend, wvtflag)
+  if (wvtflag == 1) then
+        QFX_TR        = 0.0
+        LH_TR         = 0.0
+        SFCRUNOFF_TR  = 0.0
+        UDRUNOFF_TR   = 0.0
+        SMOIS_TR      = 0.0
+        SH2O_TR       = 0.0
+        SNOW_TR       = 0.0
+        SNOWH_TR      = 0.0
+        CANWAT_TR     = 0.0
+        ACSNOM_TR     = 0.0
+        ACSNOW_TR     = 0.0
+        CANICEXY_TR   = 0.0
+        CANLIQXY_TR   = 0.0
+        QSNOWXY_TR    = 0.0
+        WSLAKEXY_TR   = 0.0
+        WAXY_TR       = 0.0
+        WTXY_TR       = 0.0
+        ZSNSOXY_TR    = 0.0
+	K = 0
+        do I = 1, NSOIL
+           do J = 1,NSUB(I)
+              K = K + 1
+              ZSNSOXY_TR(:,K,:) = ZSNSOXY(:,I,:) + DZS(I)*(NSUB(I)-J)/NSUB(I)
+           end do
+        end do
+	smcwtdxy_TR   = 0.0
+        rechxy_TR     = 0.0
+        deeprechxy_TR = 0.0
+        SNICEXY_TR    = 0.0
+        SNLIQXY_TR    = 0.0
+        RUNSFXY_TR    = 0.0
+        RUNSBXY_TR    = 0.0
+        ECANXY_TR     = 0.0
+        EDIRXY_TR     = 0.0
+        ETRANXY_TR    = 0.0
+        SMOIS_SUB      = 0.0
+        SH2O_SUB       = 0.0
+        FLUXXY_TR      = 0.0
+        ! specicial care for SMOIS_SUB...
+        K = 0
+        DO I = 1, NSOIL
+              DO J =  NSUB(I), 1, -1
+                 K = K + 1
+                 SMOIS_SUB(:,K,:) = SMOIS(:,I,:)
+                 SH2O_SUB(:,K,:)  = SH2O(:,I,:)
+              END DO
+         !     if (I .eq. 1) then
+         !        SMOIS_SUB(:,2:NSUB(1),:) = SH2O_SUB(:,2:NSUB(1),:)
+         !        SMOIS_SUB(:,1,:) = SMOIS(:,I,:)*NSUB(1)-SH2O(:,I,:)*(NSUB(1)-1)
+         !     end if
+        END DO
+	! call initialized_wt(xxx)
+	wvtflag = 2
+  end if
+  
+end if
+
+!----------------------------------------------
 
 991  continue
 
@@ -1974,7 +1871,6 @@ end subroutine land_driver_ini
      where(XLAND > 1.5)     GLW        = 0.0
      where(XLAND > 1.5)  SWDOWN        = 0.0
      where(XLAND > 1.5) RAINBL_tmp     = 0.0
-     where(XLAND > 1.5) SNOWBL         = 0.0
 
      QV_CURR(:,1,:) = QV_CURR(:,1,:)/(1.0 - QV_CURR(:,1,:))  ! Assuming input forcing are specific hum.;
                                                              ! WRF wants mixing ratio at driver level
@@ -1984,50 +1880,23 @@ end subroutine land_driver_ini
      V_PHY(:,2,:)   = V_PHY(:,1,:)    ! 
      QV_CURR(:,2,:) = QV_CURR(:,1,:)  ! 
      RAINBL = RAINBL_tmp * DTBL       ! RAINBL in WRF is [mm]
-     SNOWBL = SNOWBL * DTBL           ! 
      SR         = 0.0                 ! Will only use component if opt_snf=4
      RAINCV     = 0.0
      RAINNCV    = RAINBL
      RAINSHV    = 0.0
-     SNOWNCV    = SNOWBL
+     SNOWNCV    = 0.0
      GRAUPELNCV = 0.0
      HAILNCV    = 0.0
      DZ8W = 2*ZLVL                    ! 2* to be consistent with WRF model level
-
-     IF(SF_URBAN_PHYSICS == 2 .or. SF_URBAN_PHYSICS == 3) THEN  ! BEP or BEM urban models
-       where(XLAND < 1.5)     p_urban(:,kde,:) = p8w(:,1,:)
-       where(XLAND < 1.5)   rho_urban(:,kde,:) = p8w(:,1,:)/287.04/t_phy(:,1,:)
-       where(XLAND < 1.5) theta_urban(:,kde,:) = t_phy(:,1,:)*(100000.0/p8w(:,1,:))**(0.285714)
-       where(XLAND < 1.5)     u_urban(:,kde,:) = u_phy(:,1,:)
-       where(XLAND < 1.5)     v_urban(:,kde,:) = v_phy(:,1,:)
-       height_urban = 0.5*(dz_urban(1,kde,1) + dz_urban(1,kde-1,1))
-
-!      IF(ITIME == 0) THEN  ! BEP or BEM urban models
-       DO I = KDE-1, KDS, -1
-         where(XLAND < 1.5)     p_urban(:,i,:) = p8w(:,1,:)*exp(9.8*height_urban/287.04/t_phy(:,1,:))
-         where(XLAND < 1.5)   rho_urban(:,i,:) = p_urban(:,i,:)/287.04/t_phy(:,1,:)
-         where(XLAND < 1.5) theta_urban(:,i,:) = t_phy(:,1,:)*(100000.0/p_urban(:,i,:))**(0.285714)
-         where(XLAND < 1.5)     u_urban(:,i,:) = u_urban(:,kde,:)*log(zlvl-height_urban)/log(zlvl)
-         where(XLAND < 1.5)     v_urban(:,i,:) = v_urban(:,kde,:)*log(zlvl-height_urban)/log(zlvl)
-         height_urban = height_urban + urban_atmosphere_thickness
-       END DO    
-!      ENDIF
-     ENDIF
-
 !------------------------------------------------------------------------
 ! Noah-MP updates we can do before spatial loop.
 !------------------------------------------------------------------------
 
-   ! create a few fields that are IN in WRF - coszen, julian,yr
+   ! create a few fields that are IN in WRF - coszen, julian_in,yr
 
     DO J = YSTART,YEND
     DO I = XSTART,XEND
-      IF(SF_URBAN_PHYSICS == 0) THEN
-        CALL CALC_DECLIN(OLDDATE(1:19),XLAT(I,J), XLONG(I,J),COSZEN(I,J),JULIAN)
-      ELSE
-        CALL CALC_DECLIN(OLDDATE(1:19),XLAT(I,J), XLONG(I,J),COSZEN(I,J),JULIAN, &
-                         HRANG(I,J), DECLIN, GMT, JULDAY)
-      ENDIF
+      CALL CALC_DECLIN(OLDDATE(1:19),XLAT_URB2D(I,J), XLONIN(I,J),COSZEN(I,J),JULIAN_IN)
     END DO
     END DO
 
@@ -2062,18 +1931,25 @@ end subroutine land_driver_ini
      sflx_count_sum = 0 ! Timing
 
    ! Timing information for SFLX:
-    call system_clock(count=count_before_sflx, count_rate=clock_rate)
 
-         CALL noahmplsm(ITIMESTEP,       YR,   JULIAN,   COSZEN,  XLAT,XLONG, &
+    call system_clock(count=count_before_sflx, count_rate=clock_rate)
+    
+    if (OPT_WT .eq. 1) then
+      if (wvtflag == 2) then
+        wvt_ratio = 1.0
+      else
+        wvt_ratio == 0.0
+      end if
+    end if
+
+    if (wvtflag .lt. 0) then
+         CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
 	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
 		 IVGTYP,   ISLTYP,   VEGFRA,   GVFMAX,       TMN,             &
-		  XLAND,     XICE,     XICE_THRESHOLD,   CROPCAT,             &
-               PLANTING,  HARVEST,SEASON_GDD,                               &
+		  XLAND,     XICE,     XICE_THRESHOLD,                        &
                   IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
 	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
-	       IOPT_GLA, IOPT_RSF,IOPT_SOIL,IOPT_PEDO,IOPT_CROP,              &
-               IZ0TLND, sf_urban_physics,                                     &
-	       SOILCOMP,  SOILCL1,  SOILCL2,   SOILCL3,  SOILCL4,             &
+	       IOPT_GLA, IOPT_RSF, IZ0TLND,                                   &
 		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
 		    P8W,   RAINBL,       SR,                                  &
 		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
@@ -2086,19 +1962,22 @@ end subroutine land_driver_ini
 		QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY,      WTXY,     TSNOXY, &
 		ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY,  RTMASSXY,   STMASSXY, &
 		 WOODXY, STBLCPXY, FASTCPXY,      LAI,    XSAIXY,    TAUSSXY, &
-	        SMOISEQ, SMCWTDXY,DEEPRECHXY,  RECHXY,   GRAINXY,      GDDXY,PGSXY, & ! IN/OUT Noah MP only
-               GECROS_STATE,                                                  & ! IN/OUT gecros model
+	        SMOISEQ, SMCWTDXY,DEEPRECHXY,  RECHXY,                        & ! IN/OUT Noah MP only
 	         T2MVXY,   T2MBXY,   Q2MVXY,   Q2MBXY,                        &
                  TRADXY,    NEEXY,    GPPXY,    NPPXY,    FVEGXY,    RUNSFXY, &
 	        RUNSBXY,   ECANXY,   EDIRXY,  ETRANXY,     FSAXY,     FIRAXY, &
                  APARXY,    PSNXY,    SAVXY,    SAGXY,   RSSUNXY,    RSSHAXY, &
+               ALBSNDXY, ALBSNIXY,                                            & ! OUT Noah MP only
                  BGAPXY,   WGAPXY,    TGVXY,    TGBXY,     CHVXY,      CHBXY, &
 		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
 		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
-	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,        RS,             &                          
-!                 BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
-!		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
-!		 REFDK_2D,REFKDT_2D,                                          &
+	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &                          
+#ifdef SPATIAL_SOIL
+                 BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
+		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
+		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
+		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
+#endif
 #ifdef WRF_HYDRO
                  sfcheadrt,INFXSRT,soldrain,                          &    !O
 #endif
@@ -2107,66 +1986,79 @@ end subroutine land_driver_ini
                 its,ite, jts,jte, kts,kte,        &
 ! variables below are optional
                 MP_RAINC =  RAINCV, MP_RAINNC =    RAINNCV, MP_SHCV = RAINSHV,&
-		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV )
+		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
+#ifdef WRF_HYDRO
+                , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
+                , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
+#endif
+                )
+		
+    else
+         CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
+	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
+		 IVGTYP,   ISLTYP,   VEGFRA,   GVFMAX,       TMN,             &
+		  XLAND,     XICE,     XICE_THRESHOLD,                        &
+                  IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
+	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
+	       IOPT_GLA, IOPT_RSF, IZ0TLND,                                   &
+		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
+		    P8W,   RAINBL,       SR,                                  &
+		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
+		 SMSTOT,SFCRUNOFF, UDRUNOFF,   ALBEDO,     SNOWC,      SMOIS, &
+		   SH2O,     TSLB,     SNOW,    SNOWH,    CANWAT,     ACSNOM, &
+		 ACSNOW,    EMISS,     QSFC,                                  &
+ 		     Z0,      ZNT,                                            & ! IN/OUT LSM eqv
+		ISNOWXY,     TVXY,     TGXY, CANICEXY,  CANLIQXY,      EAHXY, &
+		  TAHXY,     CMXY,     CHXY,   FWETXY,  SNEQVOXY,   ALBOLDXY, &
+		QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY,      WTXY,     TSNOXY, &
+		ZSNSOXY,  SNICEXY,  SNLIQXY, LFMASSXY,  RTMASSXY,   STMASSXY, &
+		 WOODXY, STBLCPXY, FASTCPXY,      LAI,    XSAIXY,    TAUSSXY, &
+	        SMOISEQ, SMCWTDXY,DEEPRECHXY,  RECHXY,                        & ! IN/OUT Noah MP only
+	         T2MVXY,   T2MBXY,   Q2MVXY,   Q2MBXY,                        &
+                 TRADXY,    NEEXY,    GPPXY,    NPPXY,    FVEGXY,    RUNSFXY, &
+	        RUNSBXY,   ECANXY,   EDIRXY,  ETRANXY,     FSAXY,     FIRAXY, &
+                 APARXY,    PSNXY,    SAVXY,    SAGXY,   RSSUNXY,    RSSHAXY, &
+               ALBSNDXY, ALBSNIXY,                                            & ! OUT Noah MP only
+                 BGAPXY,   WGAPXY,    TGVXY,    TGBXY,     CHVXY,      CHBXY, &
+		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
+		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
+	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &                          
+#ifdef SPATIAL_SOIL
+                 BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
+		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
+		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
+		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
+#endif
+#ifdef WRF_HYDRO
+                 sfcheadrt,INFXSRT,soldrain,                          &    !O
+#endif
+                ids,ide, jds,jde, kds,kde,                      &
+                ims,ime, jms,jme, kms,kme,                      &
+                its,ite, jts,jte, kts,kte,        &
+! variables below are optional
+                MP_RAINC =  RAINCV, MP_RAINNC =    RAINNCV, MP_SHCV = RAINSHV,&
+		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
+#ifdef WRF_HYDRO
+                , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
+                , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
+#endif
+                , wvtflag=wvtflag, iopt_pm=iopt_pm, wvt_ratio=wvt_ratio, NSUB=NSUB, NTRACER=NTRACER   & ! IN WVT
+		, SMOIS_SUB=SMOIS_SUB, SH2O_SUB=SH2O_SUB                                              & ! IN WVT
+                , QFX_TR=QFX_TR, LH_TR=LH_TR, SFCRUNOFF_TR=SFCRUNOFF_TR, UDRUNOFF_TR=UDRUNOFF_TR      & !IN/OUT WVT
+		, SMOIS_TR=SMOIS_TR, SH2O_TR=SH2O_TR, SNOW_TR=SNOW_TR, SNOWH_TR=SNOWH_TR, CANWAT_TR=CANWAT_TR &
+		, ACSNOM_TR=ACSNOM_TR, ACSNOW_TR=ACSNOW_TR, CANICEXY_TR=CANICEXY_TR, CANLIQXY_TR=CANLIQXY_TR  &
+		, QSNOWXY_TR=QSNOWXY_TR, WSLAKEXY_TR=WSLAKEXY_TR, WAXY_TR=WAXY_TR, WTXY_TR=WTXY_TR   &
+		, ZSNSOXY_TR=ZSNSOXY_TR, SNICEXY_TR=SNICEXY_TR, SNLIQXY_TR=SNLIQXY_TR                & ! IN/OUT WVT variables
+                , SMCWTDXY_TR=SMCWTDXY_TR, DEEPRECHXY_TR=DEEPRECHXY_TR, RECHXY_TR=RECHXY_TR          & ! INOUT
+                , RUNSFXY_TR=RUNSFXY_TR, RUNSBXY_TR=RUNSBXY_TR, ECANXY_TR=ECANXY_TR                  &
+		, EDIRXY_TR=EDIRXY_TR, ETRANXY_TR=ETRANXY_TR, FLUXXY_TR=FLUXXY_TR                    & ! IN WVT variables
+ 
+                )
+	  
+    end if
 
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
           sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
-
-         IF(SF_URBAN_PHYSICS == 2 .or. SF_URBAN_PHYSICS == 3) THEN  ! BEP or BEM urban models
-           dz8w = dz_urban
-           u_phy = u_urban
-           v_phy = v_urban
-         ENDIF
-
-         IF(SF_URBAN_PHYSICS > 0 ) THEN  !urban
-         
-	   call noahmp_urban (sf_urban_physics,     NUM_SOIL_LAYERS,     IVGTYP,ITIMESTEP,  & ! IN : Model configuration 
-                               DTBL,         COSZEN,           XLAT,                        & ! IN : Time/Space-related
-                              T_PHY,        QV_CURR,          U_PHY,      V_PHY,   SWDOWN,  & ! IN : Forcing
-		                GLW,            P8W,         RAINBL,       DZ8W,      ZNT,  & ! IN : Forcing
-                                TSK,            HFX,            QFX,         LH,   GRDFLX,  & ! IN/OUT : LSM 
-		             ALBEDO,          EMISS,           QSFC,                        & ! IN/OUT : LSM 
-                            ids,ide,        jds,jde,        kds,kde,                        &
-                            ims,ime,        jms,jme,        kms,kme,                        &
-                            its,ite,        jts,jte,        kts,kte,                        &
-                         cmr_sfcdif,     chr_sfcdif,     cmc_sfcdif,                        &
-	                 chc_sfcdif,    cmgr_sfcdif,    chgr_sfcdif,                        &
-                           tr_urb2d,       tb_urb2d,       tg_urb2d,                        & !H urban
-	                   tc_urb2d,       qc_urb2d,       uc_urb2d,                        & !H urban
-                         xxxr_urb2d,     xxxb_urb2d,     xxxg_urb2d, xxxc_urb2d,            & !H urban
-                          trl_urb3d,      tbl_urb3d,      tgl_urb3d,                        & !H urban
-                           sh_urb2d,       lh_urb2d,        g_urb2d,   rn_urb2d,  ts_urb2d, & !H urban
-                         psim_urb2d,     psih_urb2d,      u10_urb2d,  v10_urb2d,            & !O urban
-                       GZ1OZ0_urb2d,     AKMS_URB2D,                                        & !O urban
-                          th2_urb2d,       q2_urb2d,      ust_urb2d,                        & !O urban
-                             declin,          hrang,                                        & !I urban
-                    num_roof_layers,num_wall_layers,num_road_layers,                        & !I urban
-                                dzr,            dzb,            dzg,                        & !I urban
-                         cmcr_urb2d,      tgr_urb2d,     tgrl_urb3d,  smr_urb3d,            & !H urban
-                        drelr_urb2d,    drelb_urb2d,    drelg_urb2d,                        & !H urban
-                      flxhumr_urb2d,  flxhumb_urb2d,  flxhumg_urb2d,                        & !H urban
-                             julday,             yr,                                        & !H urban
-                          frc_urb2d,    utype_urb2d,                                        & !I urban
-                                chs,           chs2,           cqs2,                        & !H
-                   num_urban_layers,   num_urban_hi,                                        & !I multi-layer urban
-                          trb_urb4d,      tw1_urb4d,      tw2_urb4d,  tgb_urb4d,            & !H multi-layer urban
-                         tlev_urb3d,     qlev_urb3d,                                        & !H multi-layer urban
-                       tw1lev_urb3d,   tw2lev_urb3d,                                        & !H multi-layer urban
-                        tglev_urb3d,    tflev_urb3d,                                        & !H multi-layer urban
-                        sf_ac_urb3d,    lf_ac_urb3d,    cm_ac_urb3d,                        & !H multi-layer urban
-                       sfvent_urb3d,   lfvent_urb3d,                                        & !H multi-layer urban
-                       sfwin1_urb3d,   sfwin2_urb3d,                                        & !H multi-layer urban
-                         sfw1_urb3d,     sfw2_urb3d,      sfr_urb3d,  sfg_urb3d,            & !H multi-layer urban
-                           lp_urb2d,       hi_urb2d,       lb_urb2d,  hgt_urb2d,            & !H multi-layer urban
-                           mh_urb2d,     stdh_urb2d,       lf_urb2d,                        & !SLUCM
-                        theta_urban,      rho_urban,        p_urban,        ust,            & !I multi-layer urban
-                                gmt,         julday,          XLONG,       XLAT,            & !I multi-layer urban
-                            a_u_bep,        a_v_bep,        a_t_bep,    a_q_bep,            & !O multi-layer urban
-                            a_e_bep,        b_u_bep,        b_v_bep,                        & !O multi-layer urban
-                            b_t_bep,        b_q_bep,        b_e_bep,    dlg_bep,            & !O multi-layer urban
-                           dl_u_bep,         sf_bep,         vl_bep)                          !O multi-layer urban
-	 
-	 ENDIF 
 
   IF(RUNOFF_OPTION.EQ.5.AND.MOD(ITIME,STEPWTD).EQ.0)THEN
            CALL wrf_message('calling WTABLE' )
@@ -2183,57 +2075,6 @@ end subroutine land_driver_ini
                IDS,IDE, JDS,JDE, KDS,KDE,                                 &
                IMS,IME, JMS,JME, KMS,KME,                                 &
                ITS,ITE, JTS,JTE, KTS,KTE )
- 
-           if (RIVER_ROUTING_OPTION .EQ. 1) THEN
-             CALL wrf_message('calling RIVERS' )
-
-             CALL RIVERS_MMF_NOAHMP(                                      &
-                 NTSPLIT, DTBL,     WTDDT,                                &  !IN
-                 FDXY,    RUNSFXY,  QRFXY,  QSPRINGXY,                    &  !IN
-                 SLOPEXY, WIDTHXY, LENGTHXY, MAXDEPTHXY, AREAXY,          &  !IN
-                 RIVERFLOWXY, RIVERDEPTHXY, FLOODHEIGHTXY,                &  !INOUT
-                 IDS,IDE, JDS,JDE, KDS,KDE,                               &  !IN
-                 IMS,IME, JMS,JME, KMS,KME,                               &  !IN
-                 ITS,ITE, JTS,JTE, KTS,KTE )                                 !IN
-
-           end if
-
-!         IF(SF_URBAN_PHYSICS.eq.1) THEN
-!           DO j=jts,jte                                           !urban
-!             DO i=its,ite                                         !urban
-!              IF( IVGTYP(I,J) == ISURBAN .or. IVGTYP(I,J) == 31 .or. &  !urban
-!                  IVGTYP(I,J) == 32 .or. IVGTYP(I,J) == 33 ) THEN !urban
-!                 Q2(I,J)  = (FVEGXY(I,J)*Q2MVXY(I,J) + (1.-FVEGXY(I,J))*Q2MBXY(I,J))*(1.-FRC_URB2D(I,J)) +   &
-!                             Q2_URB2D(I,J)*FRC_URB2D(I,J)
-!                 T2(I,J)  = (FVEGXY(I,J)*T2MVXY(I,J) + (1.-FVEGXY(I,J))*T2MBXY(I,J))*(1.-FRC_URB2D(I,J)) +   &
-!                             (TH2_URB2D(i,j)/((1.E5/PSFC(i,j))**RCP))*FRC_URB2D(I,J)
-!                 TH2(I,J) = T2(i,j)*(1.E5/PSFC(i,j))**RCP
-!                 U10(I,J)  = U10_URB2D(I,J)                       !urban
-!                 V10(I,J)  = V10_URB2D(I,J)                       !urban
-!                 PSIM(I,J) = PSIM_URB2D(I,J)                      !urban
-!                 PSIH(I,J) = PSIH_URB2D(I,J)                      !urban
-!                 GZ1OZ0(I,J) = GZ1OZ0_URB2D(I,J)                  !urban
-!                 AKHS(I,J) = CHS(I,J)                             !urban
-!                 AKMS(I,J) = AKMS_URB2D(I,J)                      !urban
-!               END IF                                             !urban
-!             ENDDO                                                !urban
-!           ENDDO                                                  !urban
-!         ENDIF
-
-!         IF((SF_URBAN_PHYSICS.eq.2).OR.(SF_URBAN_PHYSICS.eq.3)) THEN
-!           DO j=j_start(ij),j_end(ij)                             !urban
-!             DO i=i_start(ij),i_end(ij)                           !urban
-!              IF( IVGTYP(I,J) == ISURBAN .or. IVGTYP(I,J) == 31 .or. &  !urban
-!                  IVGTYP(I,J) == 32 .or. IVGTYP(I,J) == 33 ) THEN !urban
-!                T2(I,J)   = TH_PHY(i,1,j)/((1.E5/PSFC(I,J))**RCP) !urban
-!                TH2(I,J) = TH_PHY(i,1,j) !urban
-!                Q2(I,J)   = qv_curr(i,1,j)  !urban
-!                U10(I,J)  = U_phy(I,1,J)                       !urban
-!                V10(I,J)  = V_phy(I,1,J)                       !urban
-!               END IF                                             !urban
-!             ENDDO                                                !urban
-!           ENDDO                                                  !urban
-!         ENDIF
 
  ENDIF
 
@@ -2243,146 +2084,22 @@ end subroutine land_driver_ini
 
  ENDIF   ! SKIP FIRST TIMESTEP
 
+#ifdef WRF_HYDRO
+     call geth_newdate(newdate, olddate, nint(dtbl))
+     olddate = newdate
+     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
+#endif
+
 ! Output for history
      OUTPUT_FOR_HISTORY: if (output_timestep > 0) then
-        if (mod(ITIME*noah_timestep, output_timestep) == 0 .and. .not. skip_first_output ) then
+        if (mod(ITIME*noah_timestep, output_timestep) == 0) then
 
-           call prepare_output_file (trim(outdir), version, &
-                igrid, output_timestep, llanduse, split_output_count, hgrid,                &
-                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
-                iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
-                nsoil, nsnow, dzs, startdate, olddate, spinup_loop, spinup_loops, IVGTYP, ISLTYP)
+           ! convert RAINRATE back to mm/s for output
+           RAINBL = RAINBL_tmp
+           call ldas_output(ITIME, wvtflag)
 
-           DEFINE_MODE_LOOP : do imode = 1, 2
 
-              call set_output_define_mode(imode)
-
-              ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
-
-        ! Properties - Assigned or predicted
-              call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
-              call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
-              call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
-              call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"                     )
-              call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
-        ! Forcing
-              call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
-              call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"                    , "W m{-2}"               )
-              call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"               )
-              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
-        ! Grid energy budget terms
-              call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
-              call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
-              call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
-              call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
-              call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
-              call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
-              call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
-              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
-              call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
-              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
-        ! Grid water budget terms - in addition to above
-              call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
-              call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
-              call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
-              call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
-              call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
-              call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
-              call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
-        ! Additional needed to close the canopy energy budget
-              call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
-              call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
-              call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat"                       , "W m{-2}"             )
-              call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad"                      , "W m{-2}"             )
-              call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat"                   , "W m{-2}"             )
-        ! Additional needed to close the under canopy ground energy budget
-              call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad"                      , "W m{-2}"             )
-              call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat"                   , "W m{-2}"             )
-              call add_to_output(EVGXY      , "EVG"     , "Ground evap heat"                       , "W m{-2}"             )
-              call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}"             )
-        ! Needed to close the bare ground energy budget
-              call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}"        )
-              call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}"             )
-              call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}"             )
-              call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
-              call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
-        ! Above-soil temperatures
-              call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
-              call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
-              call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
-              call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
-              call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"                   )
-              call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"                   )
-              call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"                   )
-              call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare"                       , "K"                   )
-        ! Above-soil moisture
-              call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"               )
-              call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare"                   , "kg/kg"               )
-              call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"                    )
-              call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"              )
-        ! Snow and soil - 3D terms
-              call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
-              call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
-              call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
-              call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
-              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
-              call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
-              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
-        ! Snow - 2D terms
-              call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
-              call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
-              call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
-              call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
-              call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
-              call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
-              call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
-        ! Exchange coefficients
-              call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
-              call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
-              call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"             )
-              call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"             )
-              call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"             )
-              call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"             )
-              call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"             )
-              call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"             )
-        ! Carbon allocation model
-              call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass"                            , "g m{-2}"               )
-              call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots"                   , "g m{-2}"               )
-              call add_to_output(STMASSXY   , "STMASS"  , "Stem mass"                            , "g m{-2}"               )
-              call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"               )
-              call add_to_output(GRAINXY    , "GRAIN"   , "Mass of grain "                       , "g m{-2}"               ) !XING!THREE
-              call add_to_output(GDDXY      , "GDD"     , "Growing degree days(10) "             , ""                      ) !XING
-              call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"               )
-              call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"               )
-              call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2"   )
-              call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"     )
-              call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"     )
-              call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis"                   , "umol CO@ m{-2} s{-1}")
-              call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"             )
-
-        ! Carbon allocation model
-	    IF(RUNOFF_OPTION == 5) THEN
-              call add_to_output(SMCWTDXY   , "SMCWTD"   , "Leaf mass"                            , "g m{-2}"               )
-              call add_to_output(RECHXY     , "RECH"     , "Mass of fine roots"                   , "g m{-2}"               )
-              call add_to_output(QRFSXY     , "QRFS"     , "Stem mass"                            , "g m{-2}"               )
-              call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"               )
-              call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"               )
-              if (RIVER_ROUTING_OPTION == 1) THEN
-                call add_to_output(RIVERFLOWXY, "RIVERFLOW" , "grid-scale River flow "            , "m{3} s{-1}"            )
-                call add_to_output(RIVERDEPTHXY, "RIVERDEPTH", "grid-scale river depth"           , "m"                     )
-                call add_to_output(FLOODHEIGHTXY,"FLOODHEIGHT", "grid-scale flood height"         , "m"                     )
-  
-              end if
-	    ENDIF
-
-           enddo DEFINE_MODE_LOOP
-
-           call finalize_output_file(split_output_count,itime)
-                   
-	endif
-	   
-	if(skip_first_output) skip_first_output = .false.
-
+        endif
      endif OUTPUT_FOR_HISTORY
 
      if (IVGTYP(xstart,ystart)==ISWATER) then
@@ -2397,28 +2114,33 @@ end subroutine land_driver_ini
 
       if ( (restart_frequency_hours .gt. 0) .and. &
            (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
-       call lsm_restart()
+       if(rst_bi_out .eq. 0) then
+           call lsm_restart()
+       else
+           call lsm_rst_bi_out()
+       endif
+#ifdef WRF_HYDRO
       else
        if (restart_frequency_hours <= 0) then
           if ( (olddate( 9:10) == "01") .and. (olddate(12:13) == "00") .and. &
                (olddate(15:16) == "00") .and. (olddate(18:19) == "00") ) then
-                call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
+               if(rst_bi_out .eq. 0) then
+                   call lsm_restart()  ! jlm - i moved all the restart code to a subroutine. 
+               else
+                   call lsm_rst_bi_out()
+               endif
           endif
        endif
+#endif
       endif
 
 !------------------------------------------------------------------------
 ! Advance the time 
 !------------------------------------------------------------------------
-
+#ifndef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
-
-     if(itime > 0 .and. spinup_loops > 0 .and. mod(itime,ntime/(spinup_loops+1)) == 0) then
-       spinup_loop = spinup_loop + 1
-       call geth_newdate(olddate, startdate, nint(dtbl))
-       reset_spinup_date = .true.
-     end if
+#endif
 
 ! update the timer
      call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -2428,210 +2150,779 @@ end subroutine land_driver_ini
           timing_sum, real(sflx_count_sum) / real(clock_rate)
      clock_count_1 = clock_count_2
 
-#ifdef WRF_HYDRO
-      call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
-#endif
+
+      ITIMESTEP = ITIMESTEP + 1
 
 end subroutine land_driver_exe
 
 !!===============================================================================
+subroutine  ldas_output(itime, wvtflag)
+integer, intent(in)  :: itime ! time step of the LSM  
+integer, intent(in)  :: wvtflag ! -999-no tracer capability, 0-2-with tracer capability
+
+!#ifdef WRF_HYDRO
+!if ( (io_config_outputs .eq. 0) ) then
+!#endif
+!#ifndef WRF_HYDRO
+!           call prepare_output_file (trim(outdir), version, &
+!                igrid, output_timestep, llanduse, split_output_count, hgrid,                &
+!                ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                         &
+!                iswater, mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,          &
+!                nsoil, nsnow, dzs, startdate, olddate, IVGTYP, ISLTYP)
+!
+!           DEFINE_MODE_LOOP : do imode = 1, 2
+!
+!              call set_output_define_mode(imode)
+!
+!              ! For 3D arrays, we need to know whether the Z dimension is snow layers, or soil layers.
+!
+!        ! Properties - Assigned or predicted
+!              call add_to_output(IVGTYP     , "IVGTYP"  , "Dominant vegetation category"         , "category"              )
+!              call add_to_output(ISLTYP     , "ISLTYP"  , "Dominant soil category"               , "category"              )
+!              call add_to_output(FVEGXY     , "FVEG"    , "Green Vegetation Fraction"              , "-"                   )
+!              call add_to_output(LAI        , "LAI"     , "Leaf area index"                      , "-"                     )
+!              call add_to_output(XSAIXY     , "SAI"     , "Stem area index"                      , "-"                     )
+!        ! Forcing
+!              call add_to_output(SWDOWN     , "SWFORC"  , "Shortwave forcing"                    , "W m{-2}"               )
+!              call add_to_output(COSZEN     , "COSZ"    , "Cosine of zenith angle"                    , "W m{-2}"               )
+!              call add_to_output(GLW        , "LWFORC"  , "Longwave forcing"                    , "W m{-2}"               )
+!              call add_to_output(RAINBL     , "RAINRATE", "Precipitation rate"                   , "kg m{-2} s{-1}"        )
+!        ! Grid energy budget terms
+!              call add_to_output(EMISS      , "EMISS"   , "Grid emissivity"                    , ""               )
+!              call add_to_output(FSAXY      , "FSA"     , "Total absorbed SW radiation"          , "W m{-2}"               )         
+!              call add_to_output(FIRAXY     , "FIRA"    , "Total net LW radiation to atmosphere" , "W m{-2}"               )
+!              call add_to_output(GRDFLX     , "GRDFLX"  , "Heat flux into the soil"              , "W m{-2}"               )
+!              call add_to_output(HFX        , "HFX"     , "Total sensible heat to atmosphere"    , "W m{-2}"               )
+!              call add_to_output(LH         , "LH"      , "Total latent heat to atmosphere"    , "W m{-2}"               )
+!              call add_to_output(ECANXY     , "ECAN"    , "Canopy water evaporation rate"        , "kg m{-2} s{-1}"        )
+!              call add_to_output(EDIRXY     , "EDIR"    , "Direct from soil evaporation rate"    , "kg m{-2} s{-1}"        )
+!              call add_to_output(ALBEDO     , "ALBEDO"  , "Surface albedo"                         , "-"                   )
+!              call add_to_output(ETRANXY    , "ETRAN"   , "Transpiration rate"                   , "kg m{-2} s{-1}"        )
+!        ! Grid water budget terms - in addition to above
+!              call add_to_output(UDRUNOFF   , "UGDRNOFF", "Accumulated underground runoff"       , "mm"                    )
+!              call add_to_output(SFCRUNOFF  , "SFCRNOFF", "Accumulatetd surface runoff"          , "mm"                    )
+!              call add_to_output(CANLIQXY   , "CANLIQ"  , "Canopy liquid water content"          , "mm"                    )
+!              call add_to_output(CANICEXY   , "CANICE"  , "Canopy ice water content"             , "mm"                    )
+!              call add_to_output(ZWTXY      , "ZWT"     , "Depth to water table"                 , "m"                     )
+!              call add_to_output(WAXY       , "WA"      , "Water in aquifer"                     , "kg m{-2}"              )
+!              call add_to_output(WTXY       , "WT"      , "Water in aquifer and saturated soil"  , "kg m{-2}"              )
+!        ! Additional needed to close the canopy energy budget
+!              call add_to_output(SAVXY      , "SAV"     , "Solar radiative heat flux absorbed by vegetation", "W m{-2}"    )
+!              call add_to_output(TRXY       , "TR"      , "Transpiration heat"                     , "W m{-2}"             )
+!              call add_to_output(EVCXY      , "EVC"     , "Canopy evap heat"                       , "W m{-2}"             )
+!              call add_to_output(IRCXY      , "IRC"     , "Canopy net LW rad"                      , "W m{-2}"             )
+!              call add_to_output(SHCXY      , "SHC"     , "Canopy sensible heat"                   , "W m{-2}"             )
+!        ! Additional needed to close the under canopy ground energy budget
+!              call add_to_output(IRGXY      , "IRG"     , "Ground net LW rad"                      , "W m{-2}"             )
+!              call add_to_output(SHGXY      , "SHG"     , "Ground sensible heat"                   , "W m{-2}"             )
+!              call add_to_output(EVGXY      , "EVG"     , "Ground evap heat"                       , "W m{-2}"             )
+!              call add_to_output(GHVXY      , "GHV"     , "Ground heat flux + to soil vegetated"   , "W m{-2}"             )
+!        ! Needed to close the bare ground energy budget
+!              call add_to_output(SAGXY      , "SAG"     , "Solar radiative heat flux absorbed by ground", "W m{-2}"        )
+!              call add_to_output(IRBXY      , "IRB"     , "Net LW rad to atm bare"                 , "W m{-2}"             )
+!              call add_to_output(SHBXY      , "SHB"     , "Sensible heat to atm bare"              , "W m{-2}"             )
+!              call add_to_output(EVBXY      , "EVB"     , "Evaporation heat to atm bare"           , "W m{-2}"             )
+!              call add_to_output(GHBXY      , "GHB"     , "Ground heat flux + to soil bare"        , "W m{-2}"             )
+!        ! Above-soil temperatures
+!              call add_to_output(TRADXY     , "TRAD"    , "Surface radiative temperature"        , "K"                     )
+!              call add_to_output(TGXY       , "TG"      , "Ground temperature"                   , "K"                     )
+!              call add_to_output(TVXY       , "TV"      , "Vegetation temperature"               , "K"                     )
+!              call add_to_output(TAHXY      , "TAH"     , "Canopy air temperature"               , "K"                     )
+!              call add_to_output(TGVXY      , "TGV"     , "Ground surface Temp vegetated"          , "K"                   )
+!              call add_to_output(TGBXY      , "TGB"     , "Ground surface Temp bare"               , "K"                   )
+!              call add_to_output(T2MVXY     , "T2MV"    , "2m Air Temp vegetated"                  , "K"                   )
+!              call add_to_output(T2MBXY     , "T2MB"    , "2m Air Temp bare"                       , "K"                   )
+!        ! Above-soil moisture
+!              call add_to_output(Q2MVXY     , "Q2MV"    , "2m mixing ratio vegetated"              , "kg/kg"               )
+!              call add_to_output(Q2MBXY     , "Q2MB"    , "2m mixing ratio bare"                   , "kg/kg"               )
+!              call add_to_output(EAHXY      , "EAH"     , "Canopy air vapor pressure"            , "Pa"                    )
+!              call add_to_output(FWETXY     , "FWET"    , "Wetted or snowed fraction of canopy"  , "fraction"              )
+!        ! Snow and soil - 3D terms
+!              call add_to_output(ZSNSOXY(:,-nsnow+1:0,:),  "ZSNSO_SN" , "Snow layer depths from snow surface", "m", "SNOW")
+!              call add_to_output(SNICEXY    , "SNICE"   , "Snow layer ice"                       , "mm"             , "SNOW")
+!              call add_to_output(SNLIQXY    , "SNLIQ"   , "Snow layer liquid water"              , "mm"             , "SNOW")
+!              call add_to_output(TSLB       , "SOIL_T"  , "soil temperature"                     , "K"              , "SOIL")
+!              call add_to_output(SH2O       , "SOIL_W"  , "liquid volumetric soil moisture"      , "m3 m-3"         , "SOIL")
+!              call add_to_output(TSNOXY     , "SNOW_T"  , "snow temperature"                     , "K"              , "SNOW")
+!              call add_to_output(SMOIS      , "SOIL_M"  , "volumetric soil moisture"             , "m{3} m{-3}"     , "SOIL")
+!        ! Snow - 2D terms
+!              call add_to_output(SNOWH      , "SNOWH"   , "Snow depth"                           , "m"                     )
+!              call add_to_output(SNOW       , "SNEQV"   , "Snow water equivalent"                , "kg m{-2}"              )
+!              call add_to_output(QSNOWXY    , "QSNOW"   , "Snowfall rate"                        , "mm s{-1}"              )
+!              call add_to_output(ISNOWXY    , "ISNOW"   , "Number of snow layers"                , "count"                 )
+!              call add_to_output(SNOWC      , "FSNO"    , "Snow-cover fraction on the ground"      , ""                    )
+!              call add_to_output(ACSNOW     , "ACSNOW"  , "accumulated snow fall"                  , "mm"                  )
+!              call add_to_output(ACSNOM     , "ACSNOM"  , "accumulated melting water out of snow bottom" , "mm"            )
+!        ! Exchange coefficients
+!              call add_to_output(CMXY       , "CM"      , "Momentum drag coefficient"            , ""                      )
+!              call add_to_output(CHXY       , "CH"      , "Sensible heat exchange coefficient"   , ""                      )
+!              call add_to_output(CHVXY      , "CHV"     , "Exchange coefficient vegetated"         , "m s{-1}"             )
+!              call add_to_output(CHBXY      , "CHB"     , "Exchange coefficient bare"              , "m s{-1}"             )
+!              call add_to_output(CHLEAFXY   , "CHLEAF"  , "Exchange coefficient leaf"              , "m s{-1}"             )
+!              call add_to_output(CHUCXY     , "CHUC"    , "Exchange coefficient bare"              , "m s{-1}"             )
+!              call add_to_output(CHV2XY     , "CHV2"    , "Exchange coefficient 2-meter vegetated" , "m s{-1}"             )
+!              call add_to_output(CHB2XY     , "CHB2"    , "Exchange coefficient 2-meter bare"      , "m s{-1}"             )
+!        ! Carbon allocation model
+!              call add_to_output(LFMASSXY   , "LFMASS"  , "Leaf mass"                            , "g m{-2}"               )
+!              call add_to_output(RTMASSXY   , "RTMASS"  , "Mass of fine roots"                   , "g m{-2}"               )
+!              call add_to_output(STMASSXY   , "STMASS"  , "Stem mass"                            , "g m{-2}"               )
+!              call add_to_output(WOODXY     , "WOOD"    , "Mass of wood and woody roots"         , "g m{-2}"               )
+!              call add_to_output(STBLCPXY   , "STBLCP"  , "Stable carbon in deep soil"           , "g m{-2}"               )
+!              call add_to_output(FASTCPXY   , "FASTCP"  , "Short-lived carbon in shallow soil"   , "g m{-2}"               )
+!              call add_to_output(NEEXY      , "NEE"     , "Net ecosystem exchange"                 , "g m{-2} s{-1} CO2"   )
+!              call add_to_output(GPPXY      , "GPP"     , "Net instantaneous assimilation"         , "g m{-2} s{-1} C"     )
+!              call add_to_output(NPPXY      , "NPP"     , "Net primary productivity"               , "g m{-2} s{-1} C"     )
+!              call add_to_output(PSNXY      , "PSN"     , "Total photosynthesis"                   , "umol CO@ m{-2} s{-1}")
+!              call add_to_output(APARXY     , "APAR"    , "Photosynthesis active energy by canopy" , "W m{-2}"             )
+!
+!        ! Carbon allocation model
+!	    IF(RUNOFF_OPTION == 5) THEN
+!              call add_to_output(SMCWTDXY   , "SMCWTD"   , "Leaf mass"                            , "g m{-2}"               )
+!              call add_to_output(RECHXY     , "RECH"     , "Mass of fine roots"                   , "g m{-2}"               )
+!              call add_to_output(QRFSXY     , "QRFS"     , "Stem mass"                            , "g m{-2}"               )
+!              call add_to_output(QSPRINGSXY , "QSPRINGS" , "Mass of wood and woody roots"         , "g m{-2}"               )
+!              call add_to_output(QSLATXY    , "QSLAT"    , "Stable carbon in deep soil"           , "g m{-2}"               )
+!	    ENDIF
+!
+!           enddo DEFINE_MODE_LOOP
+!
+!           call finalize_output_file(split_output_count)
+!#ifdef WRF_HYDRO
+!else
+!#endif
+!#endif /* WRF_HYDRO */
+
+#ifdef WRF_HYDRO
+   ! Logan add begin
+   ! Go through each variable. For the first time the NWM output routine is
+   ! called, the file is created and all output variables (desired per flags),
+   ! are created in define mode. 
+
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,ITIME,startdate,olddate,ixpar,jxpar,1,float(IVGTYP),IVGTYP,1)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ISLTYP),IVGTYP,2)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FVEGXY,IVGTYP,3)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LAI,IVGTYP,4)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,XSAIXY,IVGTYP,5)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SWDOWN,IVGTYP,6)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,COSZEN,IVGTYP,7)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,GLW,IVGTYP,8)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,RAINBL,IVGTYP,9)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EMISS,IVGTYP,10)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FSAXY,IVGTYP,11)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FIRAXY,IVGTYP,12)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,GRDFLX,IVGTYP,13)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,HFX,IVGTYP,14)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LH,IVGTYP,15)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ECANXY,IVGTYP,16)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EDIRXY,IVGTYP,17)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ALBEDO,IVGTYP,18)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ETRANXY,IVGTYP,19)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,UDRUNOFF,IVGTYP,20)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SFCRUNOFF,IVGTYP,21)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANLIQXY,IVGTYP,22)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANICEXY,IVGTYP,23)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ZWTXY,IVGTYP,24)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WAXY,IVGTYP,25)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WTXY,IVGTYP,26)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACCPRCP,IVGTYP,27)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACCECAN,IVGTYP,28)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACCEDIR,IVGTYP,29)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACCETRAN,IVGTYP,30)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SAVXY,IVGTYP,31)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TRXY,IVGTYP,32)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EVCXY,IVGTYP,33)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,IRCXY,IVGTYP,34)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SHCXY,IVGTYP,35)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,IRGXY,IVGTYP,36)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SHGXY,IVGTYP,37)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EVGXY,IVGTYP,38)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,GHVXY,IVGTYP,39)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SAGXY,IVGTYP,40)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,IRBXY,IVGTYP,41)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SHBXY,IVGTYP,42)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EVBXY,IVGTYP,43)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,GHBXY,IVGTYP,44)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TRADXY,IVGTYP,45)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TGXY,IVGTYP,46)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TVXY,IVGTYP,47)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TAHXY,IVGTYP,48)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TGVXY,IVGTYP,49)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,TGBXY,IVGTYP,50)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,T2MVXY,IVGTYP,51)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,T2MBXY,IVGTYP,52)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,Q2MVXY,IVGTYP,53)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,Q2MBXY,IVGTYP,54)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EAHXY,IVGTYP,55)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FWETXY,IVGTYP,56)
+   !call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ZSNOXY(:,-nsnow+1:0,:)),IVGTYP,57)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNICEXY,IVGTYP,58)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNLIQXY,IVGTYP,59)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,TSLB,IVGTYP,60)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SH2O,IVGTYP,61)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,TSNOXY,IVGTYP,62)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SMOIS,IVGTYP,63)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWH,IVGTYP,64)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOW,IVGTYP,65)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QSNOWXY,IVGTYP,66)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ISNOWXY),IVGTYP,67)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWC,IVGTYP,68)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOW,IVGTYP,69)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOM,IVGTYP,70)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CMXY,IVGTYP,71)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHXY,IVGTYP,72)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHVXY,IVGTYP,73)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHBXY,IVGTYP,74)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHLEAFXY,IVGTYP,75)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHUCXY,IVGTYP,76)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHV2XY,IVGTYP,77)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CHB2XY,IVGTYP,78)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LFMASSXY,IVGTYP,79)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,RTMASSXY,IVGTYP,80)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,STMASSXY,IVGTYP,81)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WOODXY,IVGTYP,82)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,STBLCPXY,IVGTYP,83)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FASTCPXY,IVGTYP,84)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,NEEXY,IVGTYP,85)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,GPPXY,IVGTYP,86)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,NPPXY,IVGTYP,87)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNXY,IVGTYP,88)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,APARXY,IVGTYP,89)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(ACCECAN+ACCEDIR+ACCETRAN),IVGTYP,90)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(CANLIQXY+CANICEXY),IVGTYP,91)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILICE),IVGTYP,92)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT_TOP),IVGTYP,93)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT),IVGTYP,94)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SNOWT_AVG),IVGTYP,95)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNDXY,IVGTYP,96)
+   call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNIXY,IVGTYP,97)
+   
+   if (wvtflag .ge. 0) then
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LH_TR,IVGTYP,98)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ECANXY_TR,IVGTYP,99)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EDIRXY_TR,IVGTYP,100)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ETRANXY_TR,IVGTYP,101)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,UDRUNOFF_TR,IVGTYP,102)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SFCRUNOFF_TR,IVGTYP,103)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANLIQXY_TR,IVGTYP,104)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANICEXY_TR,IVGTYP,105)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WAXY_TR,IVGTYP,106)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WTXY_TR,IVGTYP,107)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNICEXY_TR,IVGTYP,108)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNLIQXY_TR,IVGTYP,109)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SH2O_TR,IVGTYP,110)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SMOIS_TR,IVGTYP,111)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,FLUX_TR,IVGTYP,112)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWH_TR,IVGTYP,113)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOW_TR,IVGTYP,114)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QSNOWXY_TR,IVGTYP,115)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOW_TR,IVGTYP,116)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOM_TR,IVGTYP,117)
+   end if
+   
+#endif /* WRF_HYDRO */
+
+!#ifdef WRF_HYDRO
+!endif
+!#endif
+
+end subroutine  ldas_output
+
+!!===============================================================================
 subroutine lsm_restart()
   implicit none 
+  character(len=256):: tmpStr
+  integer :: ncid
   
+#ifdef HYDRO_D
   print*, 'Write restart at '//olddate(1:13)
+#endif
 
-  call prepare_restart_file (trim(outdir), version, igrid, llanduse, olddate, startdate, & 
-       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                               &
-       nsoil, nsnow, num_urban_layers, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,   &
+  call prepare_restart_file (trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
+       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
+       nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
        cen_lon, iswater, ivgtyp)
+
+   write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+
+
+#ifdef MPP_LAND
+  if(my_id .eq. io_id) then
+#endif
+     ierr = nf90_open(trim(tmpStr),  NF90_WRITE, ncid)
+     call define_rst_variables(ncid)
+#ifdef MPP_LAND
+  endif
+#endif
   
-  call add_to_restart(TSLB      , "SOIL_T", layers="SOIL")
-  call add_to_restart(TSNOXY    , "SNOW_T", layers="SNOW")
-  call add_to_restart(SMOIS     , "SMC"   , layers="SOIL")
-  call add_to_restart(SH2O      , "SH2O"  , layers="SOIL")
-  call add_to_restart(ZSNSOXY   , "ZSNSO" , layers="SOSN")
-  call add_to_restart(SNICEXY   , "SNICE" , layers="SNOW")
-  call add_to_restart(SNLIQXY   , "SNLIQ" , layers="SNOW")
-  call add_to_restart(QSNOWXY   , "QSNOW" )
-  call add_to_restart(FWETXY    , "FWET"  )
-  call add_to_restart(SNEQVOXY  , "SNEQVO")
-  call add_to_restart(EAHXY     , "EAH"   )
-  call add_to_restart(TAHXY     , "TAH"   )
-  call add_to_restart(ALBOLDXY  , "ALBOLD")
-  call add_to_restart(CMXY      , "CM"    )
-  call add_to_restart(CHXY      , "CH"    )
-  call add_to_restart(ISNOWXY   , "ISNOW" )
-  call add_to_restart(CANLIQXY  , "CANLIQ")
-  call add_to_restart(CANICEXY  , "CANICE")
-  call add_to_restart(SNOW      , "SNEQV" )
-  call add_to_restart(SNOWH     , "SNOWH" )
-  call add_to_restart(TVXY      , "TV"    )
-  call add_to_restart(TGXY      , "TG"    )
-  call add_to_restart(ZWTXY     , "ZWT"   )
-  call add_to_restart(WAXY      , "WA"    )
-  call add_to_restart(WTXY      , "WT"    )
-  call add_to_restart(WSLAKEXY  , "WSLAKE")
-  call add_to_restart(LFMASSXY  , "LFMASS")
-  call add_to_restart(RTMASSXY  , "RTMASS")
-  call add_to_restart(STMASSXY  , "STMASS")
-  call add_to_restart(WOODXY    , "WOOD"  )
-  call add_to_restart(GRAINXY   , "GRAIN" )
-  call add_to_restart(GDDXY     , "GDD"   )
-  call add_to_restart(STBLCPXY  , "STBLCP")
-  call add_to_restart(FASTCPXY  , "FASTCP")
-  call add_to_restart(LAI       , "LAI"   )
-  call add_to_restart(XSAIXY    , "SAI"   )
-  call add_to_restart(VEGFRA    , "VEGFRA")
-  call add_to_restart(GVFMIN    , "GVFMIN")
-  call add_to_restart(GVFMAX    , "GVFMAX")
-  call add_to_restart(ACSNOM    , "ACMELT")
-  call add_to_restart(ACSNOW    , "ACSNOW")
-  call add_to_restart(TAUSSXY   , "TAUSS" )
-  call add_to_restart(QSFC      , "QSFC"  )
-  call add_to_restart(SFCRUNOFF , "SFCRUNOFF")
-  call add_to_restart(UDRUNOFF  , "UDRUNOFF" )
-  ! below for opt_run = 5
-  call add_to_restart(SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
-  call add_to_restart(AREAXY    , "AREAXY"     )
-  call add_to_restart(SMCWTDXY  , "SMCWTDXY"   )
-  call add_to_restart(DEEPRECHXY, "DEEPRECHXY" )
-  call add_to_restart(QSLATXY   , "QSLATXY"    )
-  call add_to_restart(QRFSXY    , "QRFSXY"     )
-  call add_to_restart(QSPRINGSXY, "QSPRINGSXY" )
-  call add_to_restart(RECHXY    , "RECHXY"     )
-  call add_to_restart(QRFXY     , "QRFXY"      )
-  call add_to_restart(QSPRINGXY , "QSPRINGXY"  )
-  call add_to_restart(FDEPTHXY , "FDEPTHXY"  )
-  call add_to_restart(RIVERCONDXY , "RIVERCONDXY"  )
-  call add_to_restart(RIVERBEDXY , "RIVERBEDXY"  )
-  call add_to_restart(EQZWT , "EQZWT"  )
-  call add_to_restart(PEXPXY , "PEXPXY"  )
+  call add_to_restart(ncid,TSLB      , "SOIL_T", layers="SOIL")
+  call add_to_restart(ncid,TSNOXY    , "SNOW_T", layers="SNOW")
+  call add_to_restart(ncid,SMOIS     , "SMC"   , layers="SOIL")
+  call add_to_restart(ncid,SH2O      , "SH2O"  , layers="SOIL")
+  call add_to_restart(ncid,ZSNSOXY   , "ZSNSO" , layers="SOSN")
+  call add_to_restart(ncid,SNICEXY   , "SNICE" , layers="SNOW")
+  call add_to_restart(ncid,SNLIQXY   , "SNLIQ" , layers="SNOW")
+  call add_to_restart(ncid,QSNOWXY   , "QSNOW" )
+  call add_to_restart(ncid,FWETXY    , "FWET"  )
+  call add_to_restart(ncid,SNEQVOXY  , "SNEQVO")
+  call add_to_restart(ncid,EAHXY     , "EAH"   )
+  call add_to_restart(ncid,TAHXY     , "TAH"   )
+  call add_to_restart(ncid,ALBOLDXY  , "ALBOLD")
+  call add_to_restart(ncid,CMXY      , "CM"    )
+  call add_to_restart(ncid,CHXY      , "CH"    )
+  call add_to_restart(ncid,ISNOWXY   , "ISNOW" )
+  call add_to_restart(ncid,CANLIQXY  , "CANLIQ")
+  call add_to_restart(ncid,CANICEXY  , "CANICE")
+  call add_to_restart(ncid,SNOW      , "SNEQV" )
+  call add_to_restart(ncid,SNOWH     , "SNOWH" )
+  call add_to_restart(ncid,TVXY      , "TV"    )
+  call add_to_restart(ncid,TGXY      , "TG"    )
+  call add_to_restart(ncid,ZWTXY     , "ZWT"   )
+  call add_to_restart(ncid,WAXY      , "WA"    )
+  call add_to_restart(ncid,WTXY      , "WT"    )
+  call add_to_restart(ncid,WSLAKEXY  , "WSLAKE")
+  call add_to_restart(ncid,LFMASSXY  , "LFMASS")
+  call add_to_restart(ncid,RTMASSXY  , "RTMASS")
+  call add_to_restart(ncid,STMASSXY  , "STMASS")
+  call add_to_restart(ncid,WOODXY    , "WOOD"  )
+  call add_to_restart(ncid,STBLCPXY  , "STBLCP")
+  call add_to_restart(ncid,FASTCPXY  , "FASTCP")
+  call add_to_restart(ncid,LAI       , "LAI"   )
+  call add_to_restart(ncid,XSAIXY    , "SAI"   )
+  call add_to_restart(ncid,VEGFRA    , "VEGFRA")
+  call add_to_restart(ncid,GVFMIN    , "GVFMIN")
+  call add_to_restart(ncid,GVFMAX    , "GVFMAX")
+  call add_to_restart(ncid,ACSNOM    , "ACMELT")
+  call add_to_restart(ncid,ACSNOW    , "ACSNOW")
+  call add_to_restart(ncid,TAUSSXY   , "TAUSS" )
+  call add_to_restart(ncid,QSFC      , "QSFC"  )
+  call add_to_restart(ncid,SFCRUNOFF , "SFCRUNOFF")
+  call add_to_restart(ncid,UDRUNOFF  , "UDRUNOFF" )
+#ifdef WRF_HYDRO
+  call add_to_restart(ncid,ACCPRCP   , "ACCPRCP" )
+  call add_to_restart(ncid,ACCECAN   , "ACCECAN" )
+  call add_to_restart(ncid,ACCEDIR   , "ACCEDIR" )
+  call add_to_restart(ncid,ACCETRAN  , "ACCETRAN" )
+#endif
+! below for opt_run = 5
+  call add_to_restart(ncid,SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
+  call add_to_restart(ncid,AREAXY    , "AREAXY"     )
+  call add_to_restart(ncid,SMCWTDXY  , "SMCWTDXY"   )
+  call add_to_restart(ncid,DEEPRECHXY, "DEEPRECHXY" )
+  call add_to_restart(ncid,QSLATXY   , "QSLATXY"    )
+  call add_to_restart(ncid,QRFSXY    , "QRFSXY"     )
+  call add_to_restart(ncid,QSPRINGSXY, "QSPRINGSXY" )
+  call add_to_restart(ncid,RECHXY    , "RECHXY"     )
+  call add_to_restart(ncid,QRFXY     , "QRFXY"      )
+  call add_to_restart(ncid,QSPRINGXY , "QSPRINGXY"  )
+  call add_to_restart(ncid,FDEPTHXY , "FDEPTHXY"  )
+  call add_to_restart(ncid,RIVERCONDXY , "RIVERCONDXY"  )
+  call add_to_restart(ncid,RIVERBEDXY , "RIVERBEDXY"  )
+  call add_to_restart(ncid,EQZWT , "EQZWT"  )
+  call add_to_restart(ncid,PEXPXY , "PEXPXY"  )
 
-  IF(SF_URBAN_PHYSICS > 0 )  THEN  ! any urban model
-
-      call add_to_restart(     SH_URB2D  ,      "SH_URB2D" )
-      call add_to_restart(     LH_URB2D  ,      "LH_URB2D" )
-      call add_to_restart(      G_URB2D  ,       "G_URB2D" )
-      call add_to_restart(     RN_URB2D  ,      "RN_URB2D" )
-      call add_to_restart(     TS_URB2D  ,      "TS_URB2D" )
-      call add_to_restart(    FRC_URB2D  ,     "FRC_URB2D" )
-      call add_to_restart(  UTYPE_URB2D  ,   "UTYPE_URB2D" )
-
-  ENDIF
-         
-  IF(SF_URBAN_PHYSICS == 1 ) THEN  ! single layer urban model
-         
-      call add_to_restart(    CMR_SFCDIF ,     "CMR_SFCDIF" )
-      call add_to_restart(    CHR_SFCDIF ,     "CHR_SFCDIF" )
-      call add_to_restart(    CMC_SFCDIF ,     "CMC_SFCDIF" )
-      call add_to_restart(    CHC_SFCDIF ,     "CHC_SFCDIF" )
-      call add_to_restart(   CMGR_SFCDIF ,    "CMGR_SFCDIF" )
-      call add_to_restart(   CHGR_SFCDIF ,    "CHGR_SFCDIF" )
-      call add_to_restart(     TR_URB2D  ,      "TR_URB2D" )
-      call add_to_restart(     TB_URB2D  ,      "TB_URB2D" )
-      call add_to_restart(     TG_URB2D  ,      "TG_URB2D" )
-      call add_to_restart(     TC_URB2D  ,      "TC_URB2D" )
-      call add_to_restart(     QC_URB2D  ,      "QC_URB2D" )
-      call add_to_restart(     UC_URB2D  ,      "UC_URB2D" )
-      call add_to_restart(   XXXR_URB2D  ,    "XXXR_URB2D" )
-      call add_to_restart(   XXXB_URB2D  ,    "XXXB_URB2D" )
-      call add_to_restart(   XXXG_URB2D  ,    "XXXG_URB2D" )
-      call add_to_restart(   XXXC_URB2D  ,    "XXXC_URB2D" )
-      call add_to_restart(    TRL_URB3D  ,     "TRL_URB3D", layers="SOIL" )
-      call add_to_restart(    TBL_URB3D  ,     "TBL_URB3D", layers="SOIL" )
-      call add_to_restart(    TGL_URB3D  ,     "TGL_URB3D", layers="SOIL" )
-      call add_to_restart(   CMCR_URB2D  ,    "CMCR_URB2D" )
-      call add_to_restart(    TGR_URB2D  ,     "TGR_URB2D" )
-      call add_to_restart(   TGRL_URB3D  ,    "TGRL_URB3D", layers="SOIL" )
-      call add_to_restart(    SMR_URB3D  ,     "SMR_URB3D", layers="SOIL" )
-      call add_to_restart(  DRELR_URB2D  ,   "DRELR_URB2D" )
-      call add_to_restart(  DRELB_URB2D  ,   "DRELB_URB2D" )
-      call add_to_restart(  DRELG_URB2D  ,   "DRELG_URB2D" )
-      call add_to_restart(FLXHUMR_URB2D  , "FLXHUMR_URB2D" )
-      call add_to_restart(FLXHUMB_URB2D  , "FLXHUMB_URB2D" )
-      call add_to_restart(FLXHUMG_URB2D  , "FLXHUMG_URB2D" )
-
-  ENDIF
-
-  IF(SF_URBAN_PHYSICS == 2 .or. SF_URBAN_PHYSICS == 3) THEN  ! BEP or BEM urban models
-         
-      call add_to_restart(    TRB_URB4D  ,     "TRB_URB4D", layers="URBN" )
-      call add_to_restart(    TW1_URB4D  ,     "TW1_URB4D", layers="URBN" )
-      call add_to_restart(    TW2_URB4D  ,     "TW2_URB4D", layers="URBN" )
-      call add_to_restart(    TGB_URB4D  ,     "TGB_URB4D", layers="URBN" )
-      call add_to_restart(   SFW1_URB3D  ,    "SFW1_URB3D", layers="URBN" )
-      call add_to_restart(   SFW2_URB3D  ,    "SFW2_URB3D", layers="URBN" )
-      call add_to_restart(    SFR_URB3D  ,     "SFR_URB3D", layers="URBN" )
-      call add_to_restart(    SFG_URB3D  ,     "SFG_URB3D", layers="URBN" )
-
-  ENDIF
-
-  IF(SF_URBAN_PHYSICS == 3) THEN  ! BEM urban model
-         
-      call add_to_restart(   TLEV_URB3D  ,    "TLEV_URB3D", layers="URBN" )
-      call add_to_restart(   QLEV_URB3D  ,    "QLEV_URB3D", layers="URBN" )
-      call add_to_restart( TW1LEV_URB3D  ,  "TW1LEV_URB3D", layers="URBN" )
-      call add_to_restart( TW2LEV_URB3D  ,  "TW2LEV_URB3D", layers="URBN" )
-      call add_to_restart(  TGLEV_URB3D  ,   "TGLEV_URB3D", layers="URBN" )
-      call add_to_restart(  TFLEV_URB3D  ,   "TFLEV_URB3D", layers="URBN" )
-      call add_to_restart(  SF_AC_URB3D  ,   "SF_AC_URB3D" )
-      call add_to_restart(  LF_AC_URB3D  ,   "LF_AC_URB3D" )
-      call add_to_restart(  CM_AC_URB3D  ,   "CM_AC_URB3D" )
-      call add_to_restart( SFVENT_URB3D  ,  "SFVENT_URB3D" )
-      call add_to_restart( LFVENT_URB3D  ,  "LFVENT_URB3D" )
-      call add_to_restart( SFWIN1_URB3D  ,  "SFWIN1_URB3D", layers="URBN" )
-      call add_to_restart( SFWIN2_URB3D  ,  "SFWIN2_URB3D", layers="URBN" )
-
-  ENDIF
+#ifdef MPP_LAND
+  if(my_id .eq. io_id) then
+     ierr = nf90_close(ncid)
+  endif
+#endif
 
   call finalize_restart_file()
 
 end subroutine lsm_restart
 
+subroutine lsm_rst_bi_out()
+  implicit none 
+  integer :: iunit, ierr
+  character(len=256) :: output_flnm, str_tmp
+  integer  :: i0,ie, i, istep, mkdirStatus
+
+
+#ifdef MPP_LAND
+  call mpp_land_sync()
+
+
+ i0 = 0
+ istep = 64
+ ie = istep
+ do i = 0, numprocs,istep
+   if(my_id .ge. i0 .and. my_id .lt. ie) then
+#endif
+
+  write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13),igrid
+  iunit =56 
+
+#ifdef MPP_LAND
+             if(my_id .lt. 10) then
+                  write(str_tmp,'(I1)') my_id
+             else if(my_id .lt. 100) then
+                  write(str_tmp,'(I2)') my_id
+             else if(my_id .lt. 1000) then
+                  write(str_tmp,'(I3)') my_id
+             else if(my_id .lt. 10000) then
+                  write(str_tmp,'(I4)') my_id
+             else if(my_id .lt. 100000) then
+                  write(str_tmp,'(I5)') my_id
+             else
+                continue
+             endif
+  open(iunit,file="restart/"//trim(output_flnm)//"."//trim(str_tmp),form="unformatted",ERR=102, access="sequential")
+#else
+  open(iunit,file="restart/"//trim(output_flnm),form="unformatted",ERR=102, access="sequential")
+#endif
+
+  write(iunit,ERR=101) TSLB  
+  write(iunit,ERR=101) TSNOXY
+  write(iunit,ERR=101) SMOIS     
+  write(iunit,ERR=101) SH2O      
+  write(iunit,ERR=101) ZSNSOXY   
+  write(iunit,ERR=101) SNICEXY   
+  write(iunit,ERR=101) SNLIQXY   
+  write(iunit,ERR=101) QSNOWXY   
+  write(iunit,ERR=101) FWETXY    
+  write(iunit,ERR=101) SNEQVOXY  
+  write(iunit,ERR=101) EAHXY     
+  write(iunit,ERR=101) TAHXY     
+  write(iunit,ERR=101) ALBOLDXY  
+  write(iunit,ERR=101) CMXY      
+  write(iunit,ERR=101) CHXY      
+  write(iunit,ERR=101) ISNOWXY   
+  write(iunit,ERR=101) CANLIQXY  
+  write(iunit,ERR=101) CANICEXY  
+  write(iunit,ERR=101) SNOW      
+  write(iunit,ERR=101) SNOWH     
+  write(iunit,ERR=101) TVXY      
+  write(iunit,ERR=101) TGXY      
+  write(iunit,ERR=101) ZWTXY     
+  write(iunit,ERR=101) WAXY      
+  write(iunit,ERR=101) WTXY      
+  write(iunit,ERR=101) WSLAKEXY  
+  write(iunit,ERR=101) LFMASSXY  
+  write(iunit,ERR=101) RTMASSXY  
+  write(iunit,ERR=101) STMASSXY  
+  write(iunit,ERR=101) WOODXY    
+  write(iunit,ERR=101) STBLCPXY  
+  write(iunit,ERR=101) FASTCPXY  
+  write(iunit,ERR=101) LAI       
+  write(iunit,ERR=101) XSAIXY    
+  write(iunit,ERR=101) VEGFRA    
+  write(iunit,ERR=101) GVFMIN    
+  write(iunit,ERR=101) GVFMAX    
+  write(iunit,ERR=101) ACSNOM    
+  write(iunit,ERR=101) ACSNOW    
+  write(iunit,ERR=101) TAUSSXY   
+  write(iunit,ERR=101) QSFC      
+  write(iunit,ERR=101) SFCRUNOFF    
+  write(iunit,ERR=101) UDRUNOFF     
+! #ifndef REALTIME
+! #ifdef WRF_HYDRO
+!   write(iunit,ERR=101) ACCPRCP   
+!   write(iunit,ERR=101) ACCECAN   
+!   write(iunit,ERR=101) ACCEDIR   
+!   write(iunit,ERR=101) ACCETRAN  
+! #endif
+! #endif
+! ! below for opt_run = 5
+!   if(IOPT_RUN .eq. 5) then
+!      write(iunit,ERR=101) SMOISEQ   
+!      write(iunit,ERR=101) AREAXY    
+!      write(iunit,ERR=101) SMCWTDXY  
+!      write(iunit,ERR=101) DEEPRECHXY
+!      write(iunit,ERR=101) QSLATXY   
+!      write(iunit,ERR=101) QRFSXY    
+!      write(iunit,ERR=101) QSPRINGSXY
+!      write(iunit,ERR=101) RECHXY    
+!      write(iunit,ERR=101) QRFXY     
+!      write(iunit,ERR=101) QSPRINGXY 
+!      write(iunit,ERR=101) FDEPTHXY 
+!      write(iunit,ERR=101) RIVERCONDXY 
+!      write(iunit,ERR=101) RIVERBEDXY 
+!      write(iunit,ERR=101) EQZWT 
+!      write(iunit,ERR=101) PEXPXY 
+!   endif
+
+  close(iunit)
+
+#ifdef MPP_LAND
+    endif
+    call mpp_land_sync()
+    i0 = i0 + istep
+    ie = ie + istep
+  end do ! end do of i loop
+#endif
+
+  return
+101  continue
+#ifdef MPP_LAND
+  call fatal_error_stop("FATAL ERROR: failed to write lsm restartfile")
+#else
+  stop "failed to write lsm restart file"
+#endif
+102  continue
+#ifdef MPP_LAND
+  call fatal_error_stop("FATAL ERROR: failed to open lsm restartfile")
+#else
+  stop "FATAL ERROR: failed to open restart file"
+#endif
+end subroutine lsm_rst_bi_out
+
+subroutine lsm_rst_bi_in()
+  implicit none 
+  integer :: iunit, ierr
+  character(len=256):: str_tmp
+  integer  :: i0,ie, i, istep
+
+  iunit = 56
+#ifdef MPP_LAND
+ i0 = 0
+ istep = 64
+ ie = istep
+ do i = 0, numprocs,istep
+   if(my_id .ge. i0 .and. my_id .lt. ie) then
+
+             if(my_id .lt. 10) then
+                  write(str_tmp,'(I1)') my_id
+             else if(my_id .lt. 100) then
+                  write(str_tmp,'(I2)') my_id
+             else if(my_id .lt. 1000) then
+                  write(str_tmp,'(I3)') my_id
+             else if(my_id .lt. 10000) then
+                  write(str_tmp,'(I4)') my_id
+             else if(my_id .lt. 100000) then
+                  write(str_tmp,'(I5)') my_id
+             else
+                continue
+             endif
+  open(iunit,file=trim(restart_filename_requested)//"."//trim(str_tmp),form="unformatted",ERR=101, access="sequential")
+#else
+  open(iunit,file=trim(restart_filename_requested),form="unformatted",ERR=101, access="sequential")
+#endif
+
+
+  read(iunit,ERR=101) TSLB  
+  read(iunit,ERR=101) TSNOXY
+  read(iunit,ERR=101) SMOIS     
+  read(iunit,ERR=101) SH2O      
+  read(iunit,ERR=101) ZSNSOXY   
+  read(iunit,ERR=101) SNICEXY   
+  read(iunit,ERR=101) SNLIQXY   
+  read(iunit,ERR=101) QSNOWXY   
+  read(iunit,ERR=101) FWETXY    
+  read(iunit,ERR=101) SNEQVOXY  
+  read(iunit,ERR=101) EAHXY     
+  read(iunit,ERR=101) TAHXY     
+  read(iunit,ERR=101) ALBOLDXY  
+  read(iunit,ERR=101) CMXY      
+  read(iunit,ERR=101) CHXY      
+  read(iunit,ERR=101) ISNOWXY   
+  read(iunit,ERR=101) CANLIQXY  
+  read(iunit,ERR=101) CANICEXY  
+  read(iunit,ERR=101) SNOW      
+  read(iunit,ERR=101) SNOWH     
+  read(iunit,ERR=101) TVXY      
+  read(iunit,ERR=101) TGXY      
+  read(iunit,ERR=101) ZWTXY     
+  read(iunit,ERR=101) WAXY      
+  read(iunit,ERR=101) WTXY      
+  read(iunit,ERR=101) WSLAKEXY  
+  read(iunit,ERR=101) LFMASSXY  
+  read(iunit,ERR=101) RTMASSXY  
+  read(iunit,ERR=101) STMASSXY  
+  read(iunit,ERR=101) WOODXY    
+  read(iunit,ERR=101) STBLCPXY  
+  read(iunit,ERR=101) FASTCPXY  
+  read(iunit,ERR=101) LAI       
+  read(iunit,ERR=101) XSAIXY    
+  read(iunit,ERR=101) VEGFRA    
+  read(iunit,ERR=101) GVFMIN    
+  read(iunit,ERR=101) GVFMAX    
+  read(iunit,ERR=101) ACSNOM    
+  read(iunit,ERR=101) ACSNOW    
+  read(iunit,ERR=101) TAUSSXY   
+  read(iunit,ERR=101) QSFC      
+  read(iunit,ERR=101) SFCRUNOFF    
+  read(iunit,ERR=101) UDRUNOFF     
+! #ifndef REALTIME
+! #ifdef WRF_HYDRO
+!   read(iunit,ERR=101) ACCPRCP   
+!   read(iunit,ERR=101) ACCECAN   
+!   read(iunit,ERR=101) ACCEDIR   
+!   read(iunit,ERR=101) ACCETRAN  
+! #endif
+! #endif
+! ! below for opt_run = 5
+!   if(IOPT_RUN .eq. 5) then
+!       read(iunit,ERR=101) SMOISEQ   
+!       read(iunit,ERR=101) AREAXY    
+!       read(iunit,ERR=101) SMCWTDXY  
+!       read(iunit,ERR=101) DEEPRECHXY
+!       read(iunit,ERR=101) QSLATXY   
+!       read(iunit,ERR=101) QRFSXY    
+!       read(iunit,ERR=101) QSPRINGSXY
+!       read(iunit,ERR=101) RECHXY    
+!       read(iunit,ERR=101) QRFXY     
+!       read(iunit,ERR=101) QSPRINGXY 
+!       read(iunit,ERR=101) FDEPTHXY 
+!       read(iunit,ERR=101) RIVERCONDXY 
+!       read(iunit,ERR=101) RIVERBEDXY 
+!       read(iunit,ERR=101) EQZWT 
+!       read(iunit,ERR=101) PEXPXY 
+!   endif
+  close(iunit)
+
+#ifdef MPP_LAND
+    endif
+    call mpp_land_sync()
+    i0 = i0 + istep
+    ie = ie + istep
+  end do ! end do of i loop
+#endif
+
+  return
+
+101  continue
+#ifdef MPP_LAND
+  call fatal_error_stop("FATAL ERROR: failed to read in lsm restartfile "   &
+          //trim(restart_filename_requested)//"."//trim(str_tmp))
+#else
+  stop "FATAL ERROR: failed to read lsm restart file"
+#endif
+end subroutine lsm_rst_bi_in
+
+
+   subroutine define_rst_variables(ncid)
+      implicit none
+      integer ncid
+!      character(len=*) :: tmpStr
+
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_open")
+      ierr = nf90_redef(ncid)
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// & 
+                             "Problem nf90_redef")
+! add the variables
+
+  call define_rst_var(ncid,TSLB      , "SOIL_T", layers="SOIL")
+  call define_rst_var(ncid,TSNOXY    , "SNOW_T", layers="SNOW")
+  call define_rst_var(ncid,SMOIS     , "SMC"   , layers="SOIL")
+  call define_rst_var(ncid,SH2O      , "SH2O"  , layers="SOIL")
+  call define_rst_var(ncid,ZSNSOXY   , "ZSNSO" , layers="SOSN")
+  call define_rst_var(ncid,SNICEXY   , "SNICE" , layers="SNOW")
+  call define_rst_var(ncid,SNLIQXY   , "SNLIQ" , layers="SNOW")
+  call define_rst_var(ncid,QSNOWXY   , "QSNOW" )
+  call define_rst_var(ncid,FWETXY    , "FWET"  )
+  call define_rst_var(ncid,SNEQVOXY  , "SNEQVO")
+  call define_rst_var(ncid,EAHXY     , "EAH"   )
+  call define_rst_var(ncid,TAHXY     , "TAH"   )
+  call define_rst_var(ncid,ALBOLDXY  , "ALBOLD")
+  call define_rst_var(ncid,CMXY      , "CM"    )
+  call define_rst_var(ncid,CHXY      , "CH"    )
+  call define_rst_var(ncid,ISNOWXY   , "ISNOW" )
+  call define_rst_var(ncid,CANLIQXY  , "CANLIQ")
+  call define_rst_var(ncid,CANICEXY  , "CANICE")
+  call define_rst_var(ncid,SNOW      , "SNEQV" )
+  call define_rst_var(ncid,SNOWH     , "SNOWH" )
+  call define_rst_var(ncid,TVXY      , "TV"    )
+  call define_rst_var(ncid,TGXY      , "TG"    )
+  call define_rst_var(ncid,ZWTXY     , "ZWT"   )
+  call define_rst_var(ncid,WAXY      , "WA"    )
+  call define_rst_var(ncid,WTXY      , "WT"    )
+  call define_rst_var(ncid,WSLAKEXY  , "WSLAKE")
+  call define_rst_var(ncid,LFMASSXY  , "LFMASS")
+  call define_rst_var(ncid,RTMASSXY  , "RTMASS")
+  call define_rst_var(ncid,STMASSXY  , "STMASS")
+  call define_rst_var(ncid,WOODXY    , "WOOD"  )
+  call define_rst_var(ncid,STBLCPXY  , "STBLCP")
+  call define_rst_var(ncid,FASTCPXY  , "FASTCP")
+  call define_rst_var(ncid,LAI       , "LAI"   )
+  call define_rst_var(ncid,XSAIXY    , "SAI"   )
+  call define_rst_var(ncid,VEGFRA    , "VEGFRA")
+  call define_rst_var(ncid,GVFMIN    , "GVFMIN")
+  call define_rst_var(ncid,GVFMAX    , "GVFMAX")
+  call define_rst_var(ncid,ACSNOM    , "ACMELT")
+  call define_rst_var(ncid,ACSNOW    , "ACSNOW")
+  call define_rst_var(ncid,TAUSSXY   , "TAUSS" )
+  call define_rst_var(ncid,QSFC      , "QSFC"  )
+  call define_rst_var(ncid,SFCRUNOFF , "SFCRUNOFF")
+  call define_rst_var(ncid,UDRUNOFF  , "UDRUNOFF" )
+#ifdef WRF_HYDRO
+  call define_rst_var(ncid,ACCPRCP   , "ACCPRCP" )
+  call define_rst_var(ncid,ACCECAN   , "ACCECAN" )
+  call define_rst_var(ncid,ACCEDIR   , "ACCEDIR" )
+  call define_rst_var(ncid,ACCETRAN  , "ACCETRAN" )
+#endif
+! below for opt_run = 5
+  call define_rst_var(ncid,SMOISEQ   , "SMOISEQ"  , layers="SOIL"  )
+  call define_rst_var(ncid,AREAXY    , "AREAXY"     )
+  call define_rst_var(ncid,SMCWTDXY  , "SMCWTDXY"   )
+  call define_rst_var(ncid,DEEPRECHXY, "DEEPRECHXY" )
+  call define_rst_var(ncid,QSLATXY   , "QSLATXY"    )
+  call define_rst_var(ncid,QRFSXY    , "QRFSXY"     )
+  call define_rst_var(ncid,QSPRINGSXY, "QSPRINGSXY" )
+  call define_rst_var(ncid,RECHXY    , "RECHXY"     )
+  call define_rst_var(ncid,QRFXY     , "QRFXY"      )
+  call define_rst_var(ncid,QSPRINGXY , "QSPRINGXY"  )
+  call define_rst_var(ncid,FDEPTHXY , "FDEPTHXY"  )
+  call define_rst_var(ncid,RIVERCONDXY , "RIVERCONDXY"  )
+  call define_rst_var(ncid,RIVERBEDXY , "RIVERBEDXY"  )
+  call define_rst_var(ncid,EQZWT , "EQZWT"  )
+  call define_rst_var(ncid,PEXPXY , "PEXPXY"  )
+      ierr = nf90_enddef(ncid)
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// &
+                             "Problem nf90_enddef")
+      call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                             "Problem nf90_close")
+
+   end subroutine define_rst_variables
+
+end module module_NoahMP_hrldas_driver
+
+!subroutine wrf_message(msg)
+!  implicit none
+!  character(len=*), intent(in) :: msg
+!  print*, msg
+!end subroutine wrf_message
+
+logical function wrf_dm_on_monitor() result(l)
+  l = .TRUE.
+  return
+end function wrf_dm_on_monitor
+
+
+!------------------------------------------------------------------------------------
 !------------------------------------------------------------------------------------
 
-SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN, &
-                         HRANG_OUT, DECLIN_OUT, GMT_OUT, JULDAY_OUT )
+SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN )
 
   USE MODULE_DATE_UTILITIES
 !---------------------------------------------------------------------
    IMPLICIT NONE
 !---------------------------------------------------------------------
 
+   REAL, PARAMETER :: DEGRAD = 3.14159265/180.
+   REAL, PARAMETER :: DPD    = 360./365.
 ! !ARGUMENTS:
    CHARACTER(LEN=19), INTENT(IN)  :: NOWDATE    ! YYYY-MM-DD_HH:MM:SS
    REAL,              INTENT(IN)  :: LATITUDE
    REAL,              INTENT(IN)  :: LONGITUDE
    REAL,              INTENT(OUT) :: COSZ
    REAL,              INTENT(OUT) :: JULIAN
-   REAL,    OPTIONAL, INTENT(OUT) :: HRANG_OUT
-   REAL,    OPTIONAL, INTENT(OUT) :: DECLIN_OUT
-   REAL,    OPTIONAL, INTENT(OUT) :: GMT_OUT
-   INTEGER, OPTIONAL, INTENT(OUT) :: JULDAY_OUT
+   REAL                           :: HRANG
+   REAL                           :: DECLIN
    REAL                           :: OBECL
    REAL                           :: SINOB
    REAL                           :: SXLONG
    REAL                           :: ARG
    REAL                           :: TLOCTIM
-   REAL                           :: HRANG
-   REAL                           :: DECLIN
-   REAL                           :: GMT
-   INTEGER                        :: JULDAY
    INTEGER                        :: IDAY
    INTEGER                        :: IHOUR
    INTEGER                        :: IMINUTE
    INTEGER                        :: ISECOND
 
-   REAL, PARAMETER :: DEGRAD = 3.14159265/180.
-   REAL, PARAMETER :: DPD    = 360./365.
-
    CALL GETH_IDTS(NOWDATE(1:10), NOWDATE(1:4)//"-01-01", IDAY)
    READ(NOWDATE(12:13), *) IHOUR
    READ(NOWDATE(15:16), *) IMINUTE
    READ(NOWDATE(18:19), *) ISECOND
-   GMT = REAL(IHOUR) + IMINUTE/60.0 + ISECOND/3600.0
-   JULIAN = REAL(IDAY) + GMT/24.
-   JULDAY = IDAY
+   JULIAN = REAL(IDAY) + REAL(IHOUR)/24.
 
 !
 ! FOR SHORT WAVE RADIATION
@@ -2654,25 +2945,8 @@ SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN, &
    TLOCTIM = AMOD(TLOCTIM+24.0, 24.0)
    HRANG=15.*(TLOCTIM-12.)*DEGRAD
    COSZ=SIN(LATITUDE*DEGRAD)*SIN(DECLIN)+COS(LATITUDE*DEGRAD)*COS(DECLIN)*COS(HRANG)
-   
-   IF (PRESENT(HRANG_OUT ))  HRANG_OUT = HRANG
-   IF (PRESENT(DECLIN_OUT)) DECLIN_OUT = DECLIN
-   IF (PRESENT(GMT_OUT   ))    GMT_OUT = GMT
-   IF (PRESENT(JULDAY_OUT)) JULDAY_OUT = JULDAY
 
  END SUBROUTINE CALC_DECLIN
 
-
-end module module_NoahMP_hrldas_driver
-
-!subroutine wrf_message(msg)
-!  implicit none
-!  character(len=*), intent(in) :: msg
-!  print*, msg
-!end subroutine wrf_message
-
-logical function wrf_dm_on_monitor() result(l)
-  l = .TRUE.
-  return
-end function wrf_dm_on_monitor
-
+!
+!------------------------------------------------------------------------------------------
