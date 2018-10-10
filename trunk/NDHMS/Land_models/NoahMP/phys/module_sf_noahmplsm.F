@@ -7940,7 +7940,10 @@ end if
                         QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC, & !in
                         SH2O   ,SMC    ,ZWT    ,VEGTYP ,& !inout
                         SMCWTD, DEEPRECH                       ,& !inout
-                        RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX )   !out
+                        RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX  &
+			, WVTFLAG, NSUB, NTRACER, SH2O_SUB, SMC_SUB, DZSNSO_TR        & !wt in
+			, QINSUR_TR, SH2O_TR, SMC_TR, SMCWTD_TR, DEEPRECH_TR          & !wt IN INOUT
+                        , RUNSRF_TR, QDRAIN_TR, RUNSUB_TR, ETRAN_TR, QSEVA_TR, FLUX_TR) !wt out
 
 ! ----------------------------------------------------------------------
 ! calculate surface runoff and soil moisture.
@@ -7977,6 +7980,42 @@ end if
   REAL, INTENT(OUT)                       :: RUNSUB !subsurface runoff [mm/s] 
   REAL, INTENT(OUT)                       :: FCRMAX !maximum of FCR (-)
   REAL, DIMENSION(1:NSOIL), INTENT(OUT)   :: WCND   !hydraulic conductivity (m/s)
+  
+!---------------------------------------------------------------------
+! Needed for Water tracer capability
+!---------------------------------------------------------------------
+  INTEGER,                           OPTIONAL, INTENT(IN)    :: WVTFLAG
+  INTEGER, DIMENSION(    1:NSOIL),   OPTIONAL, INTENT(IN)    :: NSUB
+  INTEGER,                           OPTIONAL, INTENT(IN)    :: NTRACER
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT) :: SH2O_SUB   !soil liquid water content [m3/m3]
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT) :: SMC_SUB
+  REAL, DIMENSION(-NSNOW+1:NTRACER), OPTIONAL, INTENT(IN)    :: DZSNSO_TR
+  REAL,                              OPTIONAL, INTENT(IN)    :: QINSUR_TR !water input on soil surface [mm/s]
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(INOUT) :: SH2O_TR   !soil liquid water content [m3/m3]
+  REAL, DIMENSION(       1:NSOIL),   OPTIONAL, INTENT(INOUT) :: SMC_TR    !total soil water content [m3/m3]
+  REAL,                              OPTIONAL, INTENT(INOUT) :: SMCWTD_TR !soil moisture between bottom of the soil and the water table [m3/m3]
+  REAL,                              OPTIONAL, INTENT(INOUT) :: DEEPRECH_TR
+  REAL,                              OPTIONAL, INTENT(OUT)   :: QDRAIN_TR !soil-bottom free drainage [mm/s]
+  REAL,                              OPTIONAL, INTENT(OUT)   :: RUNSRF_TR !surface runoff [mm0/s]
+  REAL,                              OPTIONAL, INTENT(OUT)   :: RUNSUB_TR !subsurface runoff [mm/s]
+  REAL,                              OPTIONAL, INTENT(OUT)   :: ETRAN_TR  ! transpirtation (m/s) to mm/s
+  REAL,                              OPTIONAL, INTENT(OUT)   :: QSEVA_TR  ! soil evaporation (m/s)
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL, INTENT(OUT)   :: FLUX_TR   ! tracer flux at the bottom of each layer
+  !------------local vars---------------------------------------------
+  REAL                                    :: PDDUM_TR  !infiltration rate at surface (m/s)
+  REAL                                    :: WPLUS_TR  !saturation excess of the total soil [m]
+  REAL                                    :: RSAT_TR   !accumulation of WPLUS (saturation excess) [m]
+  REAL, DIMENSION(1:NTRACER)              :: MLIQ_TR   !
+  REAL, DIMENSION(1:NTRACER)              :: SH2O0
+  REAL                                    :: XS_TR     !
+  REAL                                    :: QDRAIN_SAVE_TR !
+  REAL                                    :: PROPOR_TR
+  REAL, DIMENSION(1:NTRACER)              :: MLIQ_SEUDO, MLIQ_OLD    !used for limiting MLIQ > watmin
+  REAL, DIMENSION(1:NTRACER)              :: DEF_ARRAY  !used for limiting MLIQ > watmin
+  REAL                                    :: XS_LOWER
+  INTEGER                                 :: IZ_TR1, BACK_N, ISUBA, ISUBB
+  LOGICAL                                 :: BACK_FLAG
+!---------------------------------------------------------------------
 
 ! local
   INTEGER                                 :: K,IZ   !do-loop index
@@ -8013,12 +8052,34 @@ end if
     RUNSRF = 0.0
     PDDUM  = 0.0
     RSAT   = 0.0
+    !-----wt flag-----
+    if (present(WVTFLAG)) then
+      RUNSRF_TR = 0.0
+      PDDUM_TR  = 0.0
+      RSAT_TR   = 0.0
+      RUNSUB_TR = 0.0
+      QSEVA_TR  = 0.0
+    end if
+    !-----------------
 
 ! for the case when snowmelt water is too large
 
     DO K = 1,NSOIL
        EPORE   = MAX ( 1.E-4 , ( parameters%SMCMAX(K) - SICE(K) ) )
        RSAT    = RSAT + MAX(0.,SH2O(K)-EPORE)*DZSNSO(K)  
+       !-----wt calc-----
+       if (present(WVTFLAG)) then
+         if (K .eq. 1) then
+	   CALL TOPSOIL_SAT(NSUB(1),DZSNSO_TR(1:NSUB(1)), RSAT, &
+                           SH2O_SUB(1:NSUB(1)), SH2O_TR(1:NSUB(1)), RSAT_TR)
+	 else
+	   ISUBA = SUM(NSUB(1:K))-NSUB(K)+1
+           ISUBB = SUM(NSUB(1:K))
+           CALL SOIL_SAT(NSUB(K),DZSNSO_TR(ISUBA),RSAT, &
+                         SH2O_SUB(ISUBA:ISUBB), SH2O_TR(ISUBA:ISUBB),RSAT_TR)
+	 end if
+       end if
+       !-----------------
        SH2O(K) = MIN(EPORE,SH2O(K))             
     END DO
 
@@ -8104,6 +8165,14 @@ end if
          PDDUM  = QINSUR - RUNSRF                       ! m/s
        END IF
     END IF
+    !-----wt calc-----
+    if (present(WVTFLAG)) then
+      call get_wt_ratio(QINSUR_TR, QINSUR, PROPOR_TR)
+      RUNSRF_TR = RUNSRF * PROPOR_TR
+      PDDUM_TR  = PDDUM * PROPOR_TR
+      SH2O0 = SH2O    ! SAVE SH2O BEFRORE SSTEP
+    end if
+    !-----------------
 
 ! determine iteration times and finer time step
 
@@ -8201,6 +8270,20 @@ end if
         SH2O(IZ)     = MLIQ(IZ) / (DZSNSO(IZ)*1000.)
       END DO
    END IF
+   
+   !-----wt calc-----
+   if (present(WVTFLAG) then
+     call SMT_TR (NSUB, NTRACER, SH2O_SUB, DZSNSO_TR(1:NTRACER),    &
+                  SH2O, SH2O0, ZSOIL, DT, NSOIL,                    & !IN
+                  PDDUM, QSEVA, ETRANI, QDRAIN, RSAT,               & !IN
+                  SH2O_TR, PDDUM_TR, QSEVA_TR, ETRAN_TR,            &
+                  QDRAIN_TR,RSAT_TR, FLUX_TR)
+     ! convert unit to mm/s
+     QDRAIN_TR = QDRAIN_TR*1000.0
+     RUNSRF_TR = RUNSRF_TR*1000.0 + RSAT_TR*1000.0/DT
+     ETRAN_TR  = ETRAN_TR*1000.0
+   end if
+   !-----------------
 
   END SUBROUTINE SOILWATER
 
