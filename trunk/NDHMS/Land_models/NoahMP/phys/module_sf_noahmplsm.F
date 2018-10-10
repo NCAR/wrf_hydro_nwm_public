@@ -5999,15 +5999,15 @@ end if
 #ifdef WRF_HYDRO
                         ,sfcheadrt                     &
 #endif
-                    , WVTFLAG,  NSUB,  NTRACER, SMC_SUB, SH2O_SUB, SICE_SUB          & !IN
+                    , WVTFLAG,  NSUB,  NTRACER, SMC_SUB, SH2O_SUB, SICE_SUB           & !IN
                     , PONDING_TR,   RAIN_TR,  SNOW_TR, QSNOW_TR, QRAIN_TR, SNOWHIN_TR & !IN
-                    , CANLIQ_TR, CANICE_TR, SNOWH_TR, SNEQV_TR                       & !INOUT
-                    , SNICE_TR,  SNLIQ_TR, ZSNSO_TR,  SH2O_TR, SMC_TR               & !INOUT
-                    , SICE_TR,     WA_TR,    WT_TR,DZSNSO_TR, WSLAKE_TR            & !INOUT
-                    , SMCWTD_TR,DEEPRECH_TR, RECH_TR                                 & !INOUT
-                    , CMC_TR,   ECAN_TR, ETRAN_TR, RUNSRF_TR, RUNSUB_TR           & !OUT
-                    , QIN_TR,   QDIS_TR, PONDING1_TR, PONDING2_TR                 & !OUT
-                    , QSNBOT_TR, EDIR_TR, FLUX_TR                            & !OUT
+                    , CANLIQ_TR, CANICE_TR, SNOWH_TR, SNEQV_TR                        & !INOUT
+                    , SNICE_TR,  SNLIQ_TR, ZSNSO_TR,  SH2O_TR, SMC_TR                 & !INOUT
+                    , SICE_TR,     WA_TR,    WT_TR,DZSNSO_TR, WSLAKE_TR               & !INOUT
+                    , SMCWTD_TR,DEEPRECH_TR, RECH_TR                                  & !INOUT
+                    , CMC_TR,   ECAN_TR, ETRAN_TR, RUNSRF_TR, RUNSUB_TR               & !OUT
+                    , QIN_TR,   QDIS_TR, PONDING1_TR, PONDING2_TR                     & !OUT
+                    , QSNBOT_TR, EDIR_TR, FLUX_TR                                     & !OUT
                     )  !out
 ! ----------------------------------------------------------------------  
 ! Code history:
@@ -6093,6 +6093,62 @@ end if
   LOGICAL                           , INTENT(IN)   :: FROZEN_GROUND ! used to define latent heat pathway
   LOGICAL                           , INTENT(IN)   :: FROZEN_CANOPY ! used to define latent heat pathway
 
+!-----------------------------------------------------------------------
+! Needed for Water tracer capability
+!-----------------------------------------------------------------------
+  INTEGER,                         OPTIONAL,INTENT(IN)    :: WVTFLAG
+  INTEGER,     DIMENSION(1:NSOIL), OPTIONAL,INTENT(IN)    :: NSUB
+  INTEGER                        , OPTIONAL,INTENT(IN)    :: NTRACER
+  REAL, DIMENSION(     1:NTRACER), OPTIONAL,INTENT(INOUT) :: SH2O_SUB    !soil liquid water content [m3/m3]
+  REAL, DIMENSION(     1:NTRACER), OPTIONAL,INTENT(INOUT) :: SICE_SUB    !soil ice content [m3/m3]
+  REAL, DIMENSION(     1:NTRACER), OPTIONAL,INTENT(INOUT) :: SMC_SUB     !total soil water content [m3/m3]
+  REAL                           , OPTIONAL,INTENT(IN)    :: RAIN_TR     !rainfall (mm/s) ! MB/AN: v3.7
+  REAL                           , OPTIONAL,INTENT(IN)    :: SNOW_TR     !snowfall (mm/s) ! MB/AN: v3.7
+  REAL                           , OPTIONAL,INTENT(IN)    :: QSNOW_TR   !snow at ground srf (mm/s) [+]
+  REAL                           , OPTIONAL,INTENT(IN)    :: QRAIN_TR   !rain at ground srf (mm) [+]
+  REAL                           , OPTIONAL,INTENT(IN)    :: SNOWHIN_TR !snow depth increasing rate (m/s)
+  REAL,                            OPTIONAL,INTENT(INOUT) :: CANLIQ_TR  !intercepted liquid water (mm)
+  REAL,                            OPTIONAL,INTENT(INOUT) :: CANICE_TR  !intercepted ice mass (mm)
+  REAL,                            OPTIONAL,INTENT(INOUT) :: SNOWH_TR   !snow height [m]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: SNEQV_TR   !snow water eqv. [mm]
+  REAL, DIMENSION(-NSNOW+1:    0), OPTIONAL,INTENT(INOUT) :: SNICE_TR   !snow layer ice [mm]
+  REAL, DIMENSION(-NSNOW+1:    0), OPTIONAL,INTENT(INOUT) :: SNLIQ_TR   !snow layer liquid water [mm]
+  REAL,DIMENSION(-NSNOW+1:NTRACER),OPTIONAL,INTENT(INOUT) :: ZSNSO_TR   !depth of snow/soil layer-bottom
+  REAL,DIMENSION(-NSNOW+1:NTRACER),OPTIONAL,INTENT(INOUT) :: DZSNSO_TR  !snow/soil layer thickness [m]
+  REAL,DIMENSION(       1:NTRACER),OPTIONAL,INTENT(INOUT) :: SH2O_TR    !soil liquid water content [m3/m3]
+  REAL,DIMENSION(       1:NTRACER),OPTIONAL,INTENT(INOUT) :: SICE_TR    !soil ice content [m3/m3]
+  REAL,DIMENSION(       1:NTRACER),OPTIONAL,INTENT(INOUT) :: SMC_TR     !total soil water content [m3/m3]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: WA_TR      !water storage in aquifer [mm]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: WT_TR      !water storage in aquifer
+                                                            !+ stuarated soil
+                                                            ![mm]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: WSLAKE_TR  !water storage in lake (can be -) (mm)
+  REAL                           , OPTIONAL,INTENT(INOUT) :: PONDING_TR ![mm]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: SMCWTD_TR !soil water content between bottom of the soil and water table [m3/m3]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: DEEPRECH_TR !recharge to or from the water table when deep [m]
+  REAL,                            OPTIONAL,INTENT(INOUT) :: RECH_TR !recharge to or from the water table when shallow [m] (diagnostic)
+  REAL,                            OPTIONAL,INTENT(OUT)   :: CMC_TR     !intercepted water per ground area (mm)
+  REAL,                            OPTIONAL,INTENT(OUT)   :: ECAN_TR    !evap of intercepted water (mm/s) [+]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: ETRAN_TR   !transpiration rate (mm/s) [+]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: RUNSRF_TR  !surface runoff [mm/s]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: RUNSUB_TR  !baseflow (sturation excess) [mm/s]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: QIN_TR     !groundwater recharge [mm/s]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: QDIS_TR    !groundwater discharge [mm/s]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: PONDING1_TR
+  REAL,                            OPTIONAL,INTENT(OUT)   :: PONDING2_TR
+  REAL,                            OPTIONAL,INTENT(OUT)   :: QSNBOT_TR  !melting water out of snow bottom [mm/s]
+  REAL,                            OPTIONAL,INTENT(OUT)   :: EDIR_TR    !mm/s
+  REAL, DIMENSION(     1:NTRACER), OPTIONAL,INTENT(OUT)   :: FLUX_TR    !m
+  !------------------local vars----------------------------------------
+  REAL                                           :: QINSUR_TR  !water input on soil surface [m/s]
+  REAL                                           :: QDRAIN_TR  !soil-bottom free drainage [mm/s]
+  REAL                                           :: QSEVA_TR   !soil evaporation [m/s]
+  REAL                                           :: SNOFLOW_TR !glacier flow [mm/s]
+  REAL                                           :: PROPOR_TR
+  REAL                                           :: SMMASS, MSICE_REST, MEVAP_REST !for frozen ground
+  REAL,  DIMENSION(1:NSUB(1))                    :: MSICE_SUB, MSH2O_SUB, MSICE_TR, MSH2O_TR
+!-----------------------------------------------------------------------
+  
 
 ! local
   INTEGER                                        :: IZ
