@@ -9,7 +9,7 @@ module module_machine_learning_model
 
         !integer :: lake_id      ! lake id or COMID
 
-		integer :: model_number
+	integer :: model_number
 		
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
         REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
@@ -109,11 +109,11 @@ contains
         implicit none
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being initialized
 
-		integer, intent(in) :: model_number
+	integer, intent(in) :: model_number
 
         integer :: ncid, status, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
         integer :: activation_functionsVarId, number_of_nodesVarId]
-		!, minimum_storageVarId, maximum_storageVarId, lake_idVarId
+	!, minimum_storageVarId, maximum_storageVarId, lake_idVarId
         !integer :: minimum_releaseVarId, maximum_releaseVarId
         !integer :: long_term_releaseVarId
 
@@ -128,7 +128,7 @@ contains
 		
 	contains
 	
-		this%model_number = model_number
+	this%model_number = model_number
 		
 	! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
 		
@@ -428,7 +428,7 @@ contains
         model_data%nn_inputs%Y_DOY = Y_DOY
 		
 		
-	    model_data%normalized_nn_inputs%previous_release = (model_data%nn_inputs%previous_release - model_data%minimum_of_features_final(1))&
+	model_data%normalized_nn_inputs%previous_release = (model_data%nn_inputs%previous_release - model_data%minimum_of_features_final(1))&
         /(model_data%maximum_of_features_final(1) - model_data%minimum_of_features_final(1))
 
         model_data%normalized_nn_inputs%average_storage_over_past_time_intervals = (model_data%nn_inputs%average_storage_over_past_time_intervals - model_data%minimum_of_features_final(2))&

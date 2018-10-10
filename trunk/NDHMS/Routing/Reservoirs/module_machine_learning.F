@@ -39,8 +39,8 @@ module module_machine_learning
     use module_machine_learning_state
 
     use module_reservoir_base
-	
-	use module_machine_learning_model
+
+    use module_machine_learning_model
 
     implicit none
 
@@ -54,9 +54,9 @@ module module_machine_learning
 	
 	
 	
-	class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
+    class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
 	
-	integer, allocatable, dimension(:) :: machine_learning_model_numbers
+    integer, allocatable, dimension(:) :: machine_learning_model_numbers
 	
 
     ! Extend/derive machine learning struct from the abstract base
@@ -64,8 +64,6 @@ module module_machine_learning
     ! struct for reservoirs.
 
     type, extends(reservoir_base_struct) :: machine_learning_struct
-
-
 
         ! Define pointers to sub-structs / sub-objects to and
 
@@ -75,13 +73,10 @@ module module_machine_learning
 
         type (machine_learning_state_interface), pointer :: state => null()
 
-
-
         logical :: pointer_allocation_guard = .false.
 	
 
     contains
-
 
 
         procedure :: init => machine_learning_struct_init
@@ -97,7 +92,6 @@ module module_machine_learning
 contains
 
 
-
     !Machine Learning Constructor
 
     subroutine machine_learning_struct_init(this, start_date, model_number, number_of_unique_models, &
@@ -109,40 +103,38 @@ contains
 
         character(len=19), intent(in) :: start_date
 		
-		integer, intent(in) :: model_number
+	integer, intent(in) :: model_number
 
-		integer, intent(in) :: number_of_unique_models
+	integer, intent(in) :: number_of_unique_models
 		
         integer, intent(in) :: lake_number               ! lake number
-														 ! TODO: potentially change to lake_id for this and 
-														 ! LP and Pers modules. lake_number is used in LP
-														 ! which has been submitted to a PR.
-
+							 ! TODO: potentially change to lake_id for this and 
+							 ! LP and Pers modules. lake_number is used in LP
+							 ! which has been submitted to a PR.
 														 
-		integer :: model_counter, model_index												 
-														 
-
-	contains
+	integer :: model_counter, model_index												 
+												 
+    contains
 		
-		! Model Initialization
-		! This if statement is only entered on first machine learning reservoir
+	! Model Initialization
+	! This if statement is only entered on first machine learning reservoir
         if ( .not. allocated(machine_learning_models) ) then
 		
-			! Allocates array of pointers to machine learning models.
+       	    ! Allocates array of pointers to machine learning models.
             allocate(machine_learning_models(number_of_unique_models))
 
-			! Allocates array of machine learning model numbers that match 
-			! the indices of the machine learning models array.
+	    ! Allocates array of machine learning model numbers that match 
+	    ! the indices of the machine learning models array.
             allocate(machine_learning_model_numbers(number_of_unique_models))	
 
-			machine_learning_model_numbers = 0	  ! set model number array values to 0		
+	    machine_learning_model_numbers = 0	  ! set model number array values to 0		
 			
-			do model_counter = 1, number_of_unique_models
-			     nullify(machine_learning_models(model_counter)%ptr)
+	    do model_counter = 1, number_of_unique_models
+	       nullify(machine_learning_models(model_counter)%ptr)
 
-			end do
+	    end do
 			
-		end if
+       end if
 		
 		model_index = 0
 		do model_counter = 1, number_of_unique_models
@@ -315,28 +307,16 @@ contains
 
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
 
-
-
         reservoir_data%input%inflow = inflow
-
-
 
         reservoir_data%state%release_count = reservoir_data%state%release_count + 1
 
-
-
         reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
 
-
-
         reservoir_data%state%current_storage = reservoir_data%state%current_storage &
-
         + reservoir_data%input%inflow - reservoir_data%output%outflow
 		
-		
-		reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
-
-
+	reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
         ! FIXME: Remove below print statements and write same info to a log file.
 
@@ -353,7 +333,6 @@ contains
             !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
 
             !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
-
 
 
         ! FIXME: Remove below print statements and write same info to a log file.
@@ -380,11 +359,7 @@ contains
 
             !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
 
-
-
         end if
-
-
 
         if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
 
@@ -392,11 +367,7 @@ contains
 
             / reservoir_data%state%release_count
 
-
-
             pi = 3.14159265359
-
-
 
             if (((mod(reservoir_data%state%current_year,4)==0 .and. &
 
@@ -405,23 +376,15 @@ contains
                mod(reservoir_data%state%current_year,400)==0)) then
 
 
-
                if (reservoir_data%state%current_day_of_year == 366) then    ! if last day of leap year
-
                     reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-
                     reservoir_data%state%current_day_of_year = 1
-
-
 
                else
 
                     reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
 
-
-
                end if
-
 
 
                ! update x and y based on leap year
@@ -429,7 +392,6 @@ contains
                reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 366)
 
                reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 366)
-
 
 
             else
@@ -440,17 +402,11 @@ contains
 
                     reservoir_data%state%current_day_of_year = 1
 
-
-
                else
 
                     reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
 
-
-
                end if
-
-
 
                ! update x and y based on non leap year
 
@@ -458,49 +414,34 @@ contains
 
                reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 365)
 
-
-
             end if
-
 			
 			
             ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
-			select type (ml => machine_learning_model_numbers(reservoir_data%parameters%model_index)%ptr)
+		select type (ml => machine_learning_model_numbers(reservoir_data%parameters%model_index)%ptr)
 				
-			call ml%run_machine_learning_model(reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-					reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
-					reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)			
+		call ml%run_machine_learning_model(reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
+			reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
+			reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)			
 
 
             !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
-
+		
+            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
+					
+	    reservoir_data%state%totaled_storage = 0.0
 			
-			reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
-			
-			
-			reservoir_data%state%totaled_storage = 0.0
-			
-
             reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
 
-
-			reservoir_data%state%previous_day_release = reservoir_data%output%outflow
-
+	    reservoir_data%state%previous_day_release = reservoir_data%output%outflow
 
             reservoir_data%state%release_count = 0
 
-
-
             reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
-
-
 
         end if
 
-
-
         ! FIXME: Remove below print statements and write same info to a log file.
-
         ! Also have option to set the outflow to the max_release.
 
         if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
@@ -510,8 +451,6 @@ contains
             print *, "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
 
             print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
-
-
 
         ! FIXME: Remove below print statements and write same info to a log file.
 
@@ -531,13 +470,8 @@ contains
 
         end if
 
-
-
         outflow = reservoir_data%output%outflow
 
-
     end subroutine run_machine_learning_release
-
-
 
 end module module_machine_learning
