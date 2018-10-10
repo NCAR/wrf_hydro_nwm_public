@@ -75,7 +75,7 @@ CONTAINS
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
-               , wvtflag, wvt_ratio, NSUB, NTRACER             & ! IN WVT
+                , wvtflag, iopt_pm, wvt_ratio, NSUB, NTRACER   & ! IN WVT
 		, SMOIS_SUB, SH2O_SUB                          & ! IN WVT
                 , QFX_TR, LH_TR, SFCRUNOFF_TR, UDRUNOFF_TR     & !IN/OUT WVT
 		, SMOIS_TR, SH2O_TR, SNOW_TR, SNOWH_TR, CANWAT_TR &
@@ -299,6 +299,7 @@ CONTAINS
 
 !------------------optional in/out for water tracer capability-------------------
     INTEGER,                                       , OPTIONAL, INTENT(IN   ) ::  WVTFLAG    ! start calculate when >1
+    INTEGER,                                       , OPTIONAL, INTENT(IN   ) ::  IOPT_PM    ! partial mixing option: 1-active
     REAL,                                          , OPTIONAL, INTENT(IN   ) ::  WVT_RATIO  ! tracer ratio
     INTEGER, DIMENSION(1:NSOIL),                   , OPTIONAL, INTENT(IN)    ::  NSUB
     INTEGER,                                       , OPTIONAL, INTENT(IN)    ::  NTRACER
@@ -939,7 +940,7 @@ CONTAINS
 #ifdef WRF_HYDRO
             , sfcheadrt(i,j)                               &
 #endif
-            , WVTFLAG=WVTFLAG, WVT_RATIO=WVT_RATIO                      &      !IN
+            , WVTFLAG=WVTFLAG, IOPT_PM=IOPT_PM, WVT_RATIO=WVT_RATIO             &  !IN
 	    , NSUB=NSUB, NTRACER=NTRACER, SMC_SUB=SMC_SUB, SMH2O_SUB=SMH2O_SUB  & ! IN
             , SMH2O_TR=SMH2O_TR, SMC_TR=SMC_TR, CANLIQ_TR=CANLIQ_TR, CANICE_TR=CANICE_TR & 
 	    , QSNOW_TR=QSNOW_TR,ZSNSO_TR=ZSNSO_TR, SNDPTH_TR=SNDPTH_TR, SWE_TR=SWE_TR    &
