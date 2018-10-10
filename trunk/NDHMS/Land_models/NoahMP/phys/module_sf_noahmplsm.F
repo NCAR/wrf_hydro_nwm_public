@@ -6140,13 +6140,13 @@ end if
   REAL,                            OPTIONAL,INTENT(OUT)   :: EDIR_TR    !mm/s
   REAL, DIMENSION(     1:NTRACER), OPTIONAL,INTENT(OUT)   :: FLUX_TR    !m
   !------------------local vars----------------------------------------
-  REAL                                           :: QINSUR_TR  !water input on soil surface [m/s]
-  REAL                                           :: QDRAIN_TR  !soil-bottom free drainage [mm/s]
-  REAL                                           :: QSEVA_TR   !soil evaporation [m/s]
-  REAL                                           :: SNOFLOW_TR !glacier flow [mm/s]
-  REAL                                           :: PROPOR_TR
-  REAL                                           :: SMMASS, MSICE_REST, MEVAP_REST !for frozen ground
-  REAL,  DIMENSION(1:NSUB(1))                    :: MSICE_SUB, MSH2O_SUB, MSICE_TR, MSH2O_TR
+  REAL                                                    :: QINSUR_TR  !water input on soil surface [m/s]
+  REAL                                                    :: QDRAIN_TR  !soil-bottom free drainage [mm/s]
+  REAL                                                    :: QSEVA_TR   !soil evaporation [m/s]
+  REAL                                                    :: SNOFLOW_TR !glacier flow [mm/s]
+  REAL                                                    :: PROPOR_TR
+  REAL                                                    :: SMMASS, MSICE_REST, MEVAP_REST !for frozen ground
+  REAL,  DIMENSION(1:NSUB(1))                             :: MSICE_SUB, MSH2O_SUB, MSICE_TR, MSH2O_TR
 !-----------------------------------------------------------------------
   
 
@@ -6176,9 +6176,31 @@ end if
    SNOFLOW         = 0.
    RUNSUB          = 0.
    QINSUR          = 0.
+   
+   if (present(WVTFLAG)) then
+     SNOFLOW_TR        = 0.
+     RUNSUB_TR         = 0.
+     QINSUR_TR         = 0.
+     EDIR_TR           = 0.
+   end if
 
 ! canopy-intercepted snowfall/rainfall, drips, and throughfall
 
+ if (present(WVTFLAG)) then
+   CALL CANWATER (parameters,VEGTYP ,DT     , & !in
+                  FCEV   ,FCTR   ,ELAI   , & !in
+                  ESAI   ,TG     ,FVEG   ,ILOC   , JLOC, & !in
+                  BDFALL ,FROZEN_CANOPY  , & !in     
+                  CANLIQ ,CANICE ,TV     ,                 & !inout
+                  CMC    ,ECAN   ,ETRAN  , & !out
+                  FWET                     &
+		  , WVTFLAG  =WVTFLAG        & !wt in
+		  , CANLIQ_TR=CANLIQ_TR    & !wt inout
+		  , CANICE_TR=CANICE_TR    & !wt inout
+		  , CMC_TR   =CMC_TR       & !wt out
+		  , ECAN_TR  =ECAN_TR)  
+		  
+ else
    CALL CANWATER (parameters,VEGTYP ,DT     , & !in
                   FCEV   ,FCTR   ,ELAI   , & !in
                   ESAI   ,TG     ,FVEG   ,ILOC   , JLOC, & !in
@@ -6186,6 +6208,8 @@ end if
                   CANLIQ ,CANICE ,TV     ,                 & !inout
                   CMC    ,ECAN   ,ETRAN  , & !out
                   FWET      )                           !out
+		  
+ end if
 
 ! sublimation, frost, evaporation, and dew
 
@@ -6201,14 +6225,46 @@ end if
      ENDIF
      QSDEW = QDEW - QSNFRO
 
+   if (present(WVTFLAG)) then
+     CALL SNOWWATER (parameters,NSNOW  ,NSOIL  ,IMELT  ,DT     ,ZSOIL  , & !in
+          &          SFCTMP ,SNOWHIN,QSNOW  ,QSNFRO ,QSNSUB , & !in
+          &          QRAIN  ,FICEOLD,ILOC   ,JLOC   ,         & !in
+          &          ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  , & !inout
+          &          SH2O   ,SICE   ,STC    ,ZSNSO  ,DZSNSO , & !inout
+          &          QSNBOT ,SNOFLOW,PONDING1       ,PONDING2 & !out
+	  &          , WVTFLAG=WVTFLAG, NSUB=NSUB, NTRACER=NTRACER   & !wt in
+	             , SH2O_SUB=SH2O_SUB, SICE_SUB=SICE_SUB, SNOWHIN_TR=SNOWHIN_TR & !wt in
+		     , QSNOW_TR=QSNOW_TR, QRAIN_TR=QRAIN_TR          & !wt in
+                     , SNOWH_TR=SNOWH_TR, SNEQV_TR=SNEQV_TR          & !wt inout
+		     , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR          & !wt INOUT
+                     , SH2O_TR=SH2O_TR, SICE_TR=SICE_TR, ZSNSO_TR=ZSNSO_TR & !wt inout
+		     , DZSNSO_TR=DZSNSO_TR,EDIR_TR=EDIR_TR           & !wt INOUT
+                     , QSNBOT_TR=QSNBOT_TR,SNOFLOW_TR=SNOFLOW_TR     & !wt INOUT
+		     , PONDING1_TR=PONDING1_TR, PONDING2_TR=PONDING2_TR)  !wt out
+   else
      CALL SNOWWATER (parameters,NSNOW  ,NSOIL  ,IMELT  ,DT     ,ZSOIL  , & !in
           &          SFCTMP ,SNOWHIN,QSNOW  ,QSNFRO ,QSNSUB , & !in
           &          QRAIN  ,FICEOLD,ILOC   ,JLOC   ,         & !in
           &          ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  , & !inout
           &          SH2O   ,SICE   ,STC    ,ZSNSO  ,DZSNSO , & !inout
           &          QSNBOT ,SNOFLOW,PONDING1       ,PONDING2)  !out
+	  
+   end if
 
    IF(FROZEN_GROUND) THEN
+     ! -----wt calc-----
+     if (present(WVTFLAG))  then
+       if ((QSDEW-QSEVA) .lt. 0.0) then
+         call TOPSOIL_SUB (NSUB(1), DZSNSO_TR(1:NSUB(1)), DT, QSEVA-QSDEW,&
+                          SH2O_SUB(1:NSUB(1)), SICE_SUB(1:NSUB(1)), &
+                          SH2O_TR(1:NSUB(1)), SICE_TR(1:NSUB(1)), EDIR_TR)		  
+       else
+         SICE_TR(1) = SICE_TR(1) + (QSDEW-QSEVA)*0.0*DT/(DZSNSO_TR(1)*1000.0)
+          SICE_SUB(1) = SICE_SUB(1) + (QSDEW-QSEVA)*DT/(DZSNSO_TR(1)*1000.0)
+          EDIR_TR = EDIR_TR - (QSDEW-QSEVA)*0.0
+       end if
+     end if
+     !-----wt calc ends------
       SICE(1) =  SICE(1) + (QSDEW-QSEVA)*DT/(DZSNSO(1)*1000.)
       QSDEW = 0.0
       QSEVA = 0.0
@@ -6222,12 +6278,15 @@ end if
 
     !PONDING: melting water from snow when there is no layer
     QINSUR = (PONDING+PONDING1+PONDING2)/DT * 0.001
+    if (present(WVTFLAG)) QINSUR_TR = (PONDING_TR+PONDING1_TR+PONDING2_TR)/DT * 0.001 !wt calc
 !    QINSUR = PONDING/DT * 0.001
 
     IF(ISNOW == 0) THEN
        QINSUR = QINSUR+(QSNBOT + QSDEW + QRAIN) * 0.001
+       if (present(WVTFLAG)) QINSUR_TR = QINSUR_TR+(QSNBOT_TR + QSDEW*0.0 + QRAIN_TR) * 0.001 !wt calc
     ELSE
        QINSUR = QINSUR+(QSNBOT + QSDEW) * 0.001
+       if (present(WVTFLAG)) QINSUR_TR = QINSUR_TR+(QSNBOT_TR + QSDEW*0.0) * 0.001   !wt calc
     ENDIF
 
     QSEVA  = QSEVA * 0.001 
@@ -6244,14 +6303,42 @@ end if
 
     IF (IST == 2) THEN                                        ! lake
        RUNSRF = 0.
+       if (present(WVTFLAG)) RUNSRF_TR = 0.                   !wt calc
        IF(WSLAKE >= WSLMAX) RUNSRF = QINSUR*1000.             !mm/s
+       !-----wt calc------
+       if (present(WVTFLAG)) then
+         if (WSLAKE >= WSLMAX) then
+	   RUNSRF_TR = QINSUR_TR*1000.
+	 end if
+	 call get_wt_ratio(WSLAKE_TR, WSLAKE, PROPOR_TR)
+	 WSLAKE_TR = WSLAKE_TR + (QINSUR_TR-QSEVA*PROPOR_TR)*1000.*DT -RUNSRF_TR*DT
+	 EDIR_TR   = EDIR_TR  + QSEVA*PROPOR_TR*1000.
+       end if
+       !------------------
        WSLAKE = WSLAKE + (QINSUR-QSEVA)*1000.*DT -RUNSRF*DT   !mm
     ELSE                                                      ! soil
+      if (present(WVTFLAG)) then
+       CALL      SOILWATER (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
+                            QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC , & !in
+                            SH2O   ,SMC    ,ZWT    ,VEGTYP , & !inout
+                            SMCWTD, DEEPRECH                      , & !inout
+                            RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX  & !out
+			    , WVTFLAG=WVTFLAG, NSUB=NSUB, NTRACER=NTRACER               & !wt in
+			    , SH2O_SUB=SH2O_SUB, SMC_SUB=SMC_SUB, DZSNSO_TR=DZSNSO_TR   & !wt IN
+                            , QINSUR_TR=QINSUR_TR, SH2O_TR=SH2O_TR, SMC_TR=SMC_TR       & !wt inout
+			    , SMCWTD_TR=SMCWTD_TR, DEEPRECH_TR=DEEPRECH_TR              & !wt inout
+                            , RUNSRF_TR=RUNSRF_TR, QDRAIN_TR=QDRAIN_TR                  & !wt out
+			    , RUNSUB_TR=RUNSUB_TR, ETRAN_TR=ETRAN_TR                    & !wt out
+			    , QSEVA_TR=QSEVA_TR,  FLUX_TR=FLUX_TR)                        !wt out
+			    
+                 EDIR_TR = EDIR_TR + QSEVA_TR*1000.    !unit: mm/s
+      else 
        CALL      SOILWATER (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
                             QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC , & !in
                             SH2O   ,SMC    ,ZWT    ,VEGTYP , & !inout
                            SMCWTD, DEEPRECH                       , & !inout
                             RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX )   !out
+      end if
  
        IF(OPT_RUN == 1) THEN 
           CALL GROUNDWATER (parameters,NSNOW  ,NSOIL  ,DT     ,SICE   ,ZSOIL  , & !in
@@ -6263,11 +6350,20 @@ end if
 
        IF(OPT_RUN == 3 .or. OPT_RUN == 4) THEN 
           RUNSUB       = RUNSUB + QDRAIN        !mm/s
+	  if (present(WVTFLAG)) RUNSUB_TR = RUNSUB_TR + QDRAIN_TR    ! wt calc
        END IF
 
        DO IZ = 1,NSOIL
            SMC(IZ) = SH2O(IZ) + SICE(IZ)
        ENDDO
+       !-----wt calc------
+       if (present(WVTFLAG)) then
+         DO IZ = 1, NTRACER
+           SMC_TR(IZ) = SH2O_TR(IZ) + SICE_TR(IZ)
+           SMC_SUB(IZ) = SH2O_SUB(IZ) + SICE_SUB(IZ)
+         END DO
+       end if
+       !------------------
  
        IF(OPT_RUN == 5) THEN
           CALL SHALLOWWATERTABLE (parameters,NSNOW  ,NSOIL, ZSOIL, DT       , & !in
@@ -6282,6 +6378,7 @@ end if
     ENDIF
 
     RUNSUB       = RUNSUB + SNOFLOW         !mm/s
+    if (present(WVTFLAG)) RUNSUB_TR = RUNSUB_TR + SNOFLOW_TR   !wt calc
 
   END SUBROUTINE WATER
 
@@ -6293,7 +6390,9 @@ end if
                        BDFALL ,FROZEN_CANOPY  ,  & !in      
                        CANLIQ ,CANICE ,TV     ,                 & !inout
                        CMC    ,ECAN   ,ETRAN  , & !out
-                       FWET      )                           !out
+                       FWET                     & !out
+		       , WVTFLAG, CANLIQ_TR, CANICE_TR  & !wt inout
+		       , CMC_TR, ECAN_TR  )               !wt out
 
 ! ------------------------ code history ------------------------------
 ! canopy hydrology
@@ -6326,6 +6425,16 @@ end if
   REAL, INTENT(OUT)   :: ETRAN   !transpiration rate (mm/s) [+]
   REAL, INTENT(OUT)   :: FWET    !wetted or snowed fraction of the canopy (-)
 ! --------------------------------------------------------------------
+! Needed for Water tracer capability
+!---------------------------------------------------------------------
+  INTEGER, OPTIONAL, INTENT(IN)    :: WVTFLAG
+  REAL,    OPTIONAL, INTENT(INOUT) :: CANLIQ_TR  !intercepted liquid water (mm)
+  REAL,    OPTIONAL, INTENT(INOUT) :: CANICE_TR  !intercepted ice mass (mm)
+  REAL,    OPTIONAL, INTENT(OUT)   :: CMC_TR     !intercepted water (mm)
+  REAL,    OPTIONAL, INTENT(OUT)   :: ECAN_TR    !evaporation of intercepted water (mm/s) [+]
+  REAL                             :: PRO_LIQ    !ratio: liq_tracer/liq
+  REAL                             :: PRO_ICE    !ratio: ice_tracer/ice 
+!---------------------------------------------------------------------
 
 ! ------------------------ local variables ---------------------------
   REAL                :: MAXSNO  !canopy capacity for snow interception (mm)
@@ -6341,6 +6450,7 @@ end if
 ! initialization
 
       ECAN    = 0.0
+      if (present(WVTFLAG)) ECAN_TR = 0.0    !wt calc
 
 ! --------------------------- liquid water ------------------------------
 ! maximum canopy water
@@ -6363,12 +6473,20 @@ end if
         QFROC = ABS( MIN( FCEV/HSUB, 0. ) )
       ENDIF
 
+    !-----wt calc-----
+    if (present(WVTFLAG)) then
+      call get_wt_ratio(CANLIQ_TR, CANLIQ, PRO_LIQ)
+      call get_wt_ratio(CANICE_TR, CANICE, PRO_ICE)
+    end if
+
 ! canopy water balance. for convenience allow dew to bring CANLIQ above
 ! maxh2o or else would have to re-adjust drip
 
        QEVAC = MIN(CANLIQ/DT,QEVAC)
        CANLIQ=MAX(0.,CANLIQ+(QDEWC-QEVAC)*DT)
+       if (present(WVTFLAG)) CANLIQ_TR=MAX(0.,CANLIQ_TR+(QDEWC*0.0-QEVAC*PRO_LIQ)*DT) !wt calc
        IF(CANLIQ <= 1.E-06) CANLIQ = 0.0
+       if (present(WVTFLAG)) CANLIQ_TR=min(CANLIQ, CANLIQ_TR)   !wt calc
 
 ! --------------------------- canopy ice ------------------------------
 ! for canopy ice
@@ -6377,7 +6495,9 @@ end if
 
       QSUBC = MIN(CANICE/DT,QSUBC) 
       CANICE= MAX(0.,CANICE + (QFROC-QSUBC)*DT)
+      if (present(WVTFLAG)) CANICE_TR= MAX(0.,CANICE_TR + (QFROC*0.0-QSUBC*PRO_ICE)*DT)  !wt calc
       IF(CANICE.LE.1.E-6) CANICE = 0.
+      if (present(WVTFLAG)) CANICE_TR = min(CANICE, CANICE_TR)   !wt calc
      
 ! wetted fraction of canopy
 
@@ -6398,6 +6518,12 @@ end if
          CANICE = MAX(0.,CANICE - QMELTC*DT)
          CANLIQ = MAX(0.,CANLIQ + QMELTC*DT)
          TV     = FWET*TFRZ + (1.-FWET)*TV
+	 !-----wt calc------
+	 if (present(WVTFLAG)) then
+	   CANICE_TR = MAX(0.,CANICE_TR - QMELTC*PRO_ICE*DT)
+           CANLIQ_TR = MAX(0.,CANLIQ_TR + QMELTC*PRO_ICE*DT)
+	 end if
+	 !------------------
       ENDIF
 
       IF(CANLIQ.GT.1.E-6.AND.TV.LT.TFRZ) THEN
@@ -6405,6 +6531,12 @@ end if
          CANLIQ = MAX(0.,CANLIQ - QFRZC*DT)
          CANICE = MAX(0.,CANICE + QFRZC*DT)
          TV     = FWET*TFRZ + (1.-FWET)*TV
+	 !-----wt calc------
+	 if (present(WVTFLAG)) then
+	   CANLIQ_TR = MAX(0.,CANLIQ_TR - QFRZC*PRO_LIQ*DT)
+           CANICE_TR = MAX(0.,CANICE_TR + QFRZC*PRO_LIQ*DT)
+	 end if
+	 !------------------
       ENDIF
 
 ! total canopy water
@@ -6414,6 +6546,12 @@ end if
 ! total canopy evaporation
 
       ECAN = QEVAC + QSUBC - QDEWC - QFROC
+      !-----wt calc------
+      if (present(WVTFLAG)) then
+        CMC_TR = CANLIQ_TR + CANICE_TR
+	ECAN_TR = QEVAC*PRO_LIQ + QSUBC*PRO_ICE - QDEWC*0.0 - QFROC*0.0
+      end if
+      !------------------
 
   END SUBROUTINE CANWATER
 
