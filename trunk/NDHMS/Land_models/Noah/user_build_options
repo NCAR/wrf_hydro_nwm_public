@@ -52,21 +52,26 @@ else
 PRECIP_DOUBLE = 
 endif
 
+ifeq ($(NCEP_WCOSS),1)
+NCEP_WCOSS = -DNCEP_WCOSS
+else
+NCEP_WCOSS =
+endif
 
-RM		=	rm -f  
-RMD		=	rm -f    
-COMPILER90=	mpif90
-F90FLAGS  =     -Mfree -c -byteswapio -g -Kieee -Mbounds
-LDFLAGS  =      $(F90FLAGS)
-MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod 
-LDFLAGS	=	
-CPP	=       cpp
-CPPFLAGS	=       -C -P -traditional -DMPP_LAND -I../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE)
-LIBS 	=	
-NETCDFINC	=	$(NETCDF_INC) 
-NETCDFLIB	=	-L$(NETCDF_LIB) -lnetcdff -lnetcdf
-NETCDF_INC = /glade/apps/opt/netcdf/4.3.0/pgi/13.3/include
-NETCDF_LIB = /glade/apps/opt/netcdf/4.3.0/pgi/13.3/lib
+RMD	    = rm -f
+COMPILER90  = mpif90
+FORMAT_FREE = -FR
+BYTESWAPIO  = -convert big_endian
+F90FLAGS    = -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise $(FORMAT_FREE) $(BYTESWAPIO)
+MODFLAG	    = -I./ -I ../../MPP -I ../MPP -I ../mod
+LDFLAGS	    =
+CPP	    = cpp
+CPPFLAGS    = -P -traditional -nostdinc -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE) $(NCEP_WCOSS)
+LIBS 	    =	
+NETCDFINC   = $(NETCDF_INC)
+NETCDFLIB   = -L$(NETCDF_LIB) -lnetcdff -lnetcdf
+NETCDF_INC = /glade/u/apps/ch/opt/netcdf/4.6.1/intel/17.0.1//include
+NETCDF_LIB = /glade/u/apps/ch/opt/netcdf/4.6.1/intel/17.0.1//lib
 
 # flag from HRLDAS
 COMPILERF90 = $(COMPILER90)

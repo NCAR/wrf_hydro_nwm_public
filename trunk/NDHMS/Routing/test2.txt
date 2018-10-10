@@ -1,0 +1,27 @@
+module_GW_baseflow.F:        DT,            INFXSWGT,          &
+module_GW_baseflow.F:   real, intent(in),dimension(ixrt,jxrt)             :: INFXSWGT
+module_GW_baseflow.F:                        *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+module_GW_baseflow.F:                      *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+module_HYDRO_io.F:      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
+module_HYDRO_io.F:      call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%INFXSWGT
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%SH2OWGT
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%INFXSWGT
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%SH2OWGT
+module_HYDRO_io.F:         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
+module_HYDRO_io.F:         call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
+module_RT.F:     allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%INFXSWGT    = 0.0                
+module_RT.F:     allocate( rt_domain(did)%SH2OWGT   	(IXRT,JXRT,NSOIL) )
+module_RT.F:     rt_domain(did)%SH2OWGT     = 0.0
+module_RT.F:   rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+module_RT.F:   rt_domain(did)%SH2OWGT = 1.
+Noah_distr_routing.F:             RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
+Noah_distr_routing.F:             rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
+Noah_distr_routing.F:               SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
+Noah_distr_routing.F:               LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
+Noah_distr_routing.F:        real,INTENT(IN),DIMENSION(IXRT,JXRT)::INFXSWGT,OVROUGHRTFAC, &
+Noah_distr_routing.F:        real,INTENT(IN),DIMENSION(IXRT,JXRT,NSOIL)::SH2OWGT
+Noah_distr_routing.F:                   INFXSWGT(IXXRT,JYYRT)/dist(IXXRT,JYYRT,9)
+Noah_distr_routing.F:                   SMCRT(IXXRT,JYYRT,KRT)=SH2OX(I,J,KRT)*SH2OWGT(IXXRT,JYYRT,KRT)
+Noah_distr_routing.F:                       "SMCRT=",SMCRT(IXXRT,JYYRT,KRT),"SH2OWGT=",SH2OWGT(IXXRT,JYYRT,KRT),&

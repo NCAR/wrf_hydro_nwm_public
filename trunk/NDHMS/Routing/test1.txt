@@ -1,0 +1,1220 @@
+module_channel_routing.F:use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
+module_channel_routing.F:      !if(rt_domain(1)%gages(idx + linkls_s(my_id+1) - 1) .ne. rt_domain(1)%gageMiss) then
+module_channel_routing.F:      !   print*, rt_domain(1)%gages(idx+linkls_s(my_id+1)-1)
+module_channel_routing.F:!     if(rt_domain(1)%gages(idx) .ne. rt_domain(1)%gageMiss) then
+module_channel_routing.F:!        print*, rt_domain(1)%gages(idx)
+module_channel_routing.F:         use module_RT_data, only: rt_domain
+module_channel_routing.F:         use module_RT_data, only: rt_domain
+module_channel_routing.F:         real g_cd(rt_domain(did)%gnlinks)
+module_channel_routing.F:         call write_chanel_real(cd,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,nlinks,g_cd)
+module_channel_routing.F:            write(unit,*) "rt_domain(did)%gnlinks = ",rt_domain(did)%gnlinks
+module_channel_routing.F:       use module_RT_data, only: rt_domain
+module_channel_routing.F:   use module_RT_data, only: rt_domain
+module_channel_routing.F:   real,dimension(rt_domain(1)%nlinksl) :: inVar
+module_channel_routing.F:   real:: g_var(rt_domain(1)%gnlinksl)
+module_gw_gw2d.F:   use module_rt_data, only: rt_domain
+module_gw_gw2d.F:                            RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%distance_to_neighbor,          &
+module_gw_gw2d.F:      allocate(gw2d(did)%qsgw     (rt_domain(did)%ix,rt_domain(did)%jx))
+module_gw_gw2d.F:  real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
+module_gw_gw2d.F:  ztrans = (rt_domain(did)%elrt + nlst_rt(did)%zsoil8(nsoil)) - gw2d(did)%ho
+module_gw_gw2d.F:        if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
+module_gw_gw2d.F:	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qdarcyRT(i,j))
+module_gw_gw2d.F:	else if(ztrans(i,j) < 0 .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
+module_gw_gw2d.F:	     if(zres >= rt_domain(did)%sldpth(k)*100.) then
+module_gw_gw2d.F:! 	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
+module_gw_gw2d.F:	       zres = zres - rt_domain(did)%sldpth(k)*100.
+module_gw_gw2d.F:	       if(zres > (0.5 * rt_domain(did)%sldpth(k)*100.)) then
+module_gw_gw2d.F:		 frac = zres / (rt_domain(did)%sldpth(k) * 100.)
+module_gw_gw2d.F:! 	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
+module_gw_gw2d.F:    do j=1,rt_domain(did)%jx
+module_gw_gw2d.F:     do i=1,rt_domain(did)%ix
+module_HYDRO_io.F:   use module_RT_data, only: rt_domain
+module_HYDRO_io.F:    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:    seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:        allocate(rt_domain(did)%map_l2g(NLINKS))
+module_HYDRO_io.F:        rt_domain(did)%map_l2g = -1
+module_HYDRO_io.F:                  rt_domain(did)%map_l2g(CH_NETLNK(i,j)) = GCH_NETLNK(i,j)
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "ix", rt_domain(did)%ix, dimid_ix)  !-- make a decimated grid
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "iy", rt_domain(did)%jx, dimid_jx)
+module_HYDRO_io.F:        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
+module_HYDRO_io.F:        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
+module_HYDRO_io.F:        call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+module_HYDRO_io.F:        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
+module_HYDRO_io.F:        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
+module_HYDRO_io.F:        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
+module_HYDRO_io.F:        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
+module_HYDRO_io.F:        call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt" )
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "ix", rt_domain(did)%ix, dimid_ix)  !-- make a decimated grid
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "iy", rt_domain(did)%jx, dimid_jx)
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "ixrt", rt_domain(did)%ixrt , dimid_ixrt)  !-- make a decimated grid
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "iyrt", rt_domain(did)%jxrt, dimid_jxrt)
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinks, dimid_links)
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinksl, dimid_links)
+module_HYDRO_io.F:       iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
+module_HYDRO_io.F:       if(rt_domain(did)%nlakes .gt. 0) then
+module_HYDRO_io.F:          iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+module_HYDRO_io.F:         if(rt_domain(did)%nlakes .gt. 0) then
+module_HYDRO_io.F:   iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
+module_HYDRO_io.F:   call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
+module_HYDRO_io.F:   call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
+module_HYDRO_io.F:   call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+module_HYDRO_io.F:   !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
+module_HYDRO_io.F:   !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
+module_HYDRO_io.F:   !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  ) 
+module_HYDRO_io.F:   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  ) 
+module_HYDRO_io.F:   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain"  ) 
+module_HYDRO_io.F:   call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt"  ) 
+module_HYDRO_io.F:      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux, "QBDRYRT" )
+module_HYDRO_io.F:      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT, "infxswgt" )
+module_HYDRO_io.F:      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing, "sfcheadsubrt" )
+module_HYDRO_io.F:      call w_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT, "sh2owgt" )
+module_HYDRO_io.F:      call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
+module_HYDRO_io.F:      !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retention_depth, "RETDEPRT" )
+module_HYDRO_io.F:         call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%HLINK,"hlink" &
+module_HYDRO_io.F:              ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+module_HYDRO_io.F:         call w_rst_crt_reach(ncid,rt_domain(did)%HLINK, "hlink"  &
+module_HYDRO_io.F:              ,rt_domain(did)%gnlinksl&
+module_HYDRO_io.F:        !call checkReach(99,rt_domain(did)%HLINK)
+module_HYDRO_io.F:         call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,1),"qlink1" &
+module_HYDRO_io.F:              ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+module_HYDRO_io.F:         call w_rst_crt_reach(ncid,rt_domain(did)%QLINK(:,1), "qlink1"  &
+module_HYDRO_io.F:              ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:         call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,2),"qlink2" &
+module_HYDRO_io.F:              ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+module_HYDRO_io.F:         call w_rst_crt_reach(ncid,rt_domain(did)%QLINK(:,2), "qlink2"  &
+module_HYDRO_io.F:              ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:!                        call w_rst_crt_reach(ncid,rt_domain(did)%accSfcLatRunoff, "accSfcLatRunoff"  &
+module_HYDRO_io.F:!                                ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:!                        call w_rst_crt_reach(ncid,rt_domain(did)%accQLateral, "accQLateral"  &
+module_HYDRO_io.F:!                                ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:!                        call w_rst_crt_reach(ncid,rt_domain(did)%qSfcLatRunoff, "qSfcLatRunoff"  &
+module_HYDRO_io.F:!                                ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:!                        call w_rst_crt_reach(ncid,rt_domain(did)%accBucket, "accBucket"  &
+module_HYDRO_io.F:!                                ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:         call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%cvol,"cvol" &
+module_HYDRO_io.F:              ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+module_HYDRO_io.F:!         call w_rst_crt_reach(ncid,rt_domain(did)%cvol, "cvol"  &
+module_HYDRO_io.F:!              ,rt_domain(did)%gnlinksl &
+module_HYDRO_io.F:!              call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%resht,"resht" &
+module_HYDRO_io.F:!                 ,rt_domain(did)%map_l2g, rt_domain(did)%gnlinks  &
+module_HYDRO_io.F:      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
+module_HYDRO_io.F:           ,rt_domain(did)%lake_index  &
+module_HYDRO_io.F:      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+module_HYDRO_io.F:           ,rt_domain(did)%lake_index  &
+module_HYDRO_io.F:          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
+module_HYDRO_io.F:      !call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+module_HYDRO_io.F:            call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
+module_HYDRO_io.F:                 ,rt_domain(did)%gnlinksl  &
+module_HYDRO_io.F:            call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
+module_HYDRO_io.F:                 rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
+module_HYDRO_io.F:!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gwbas_pix_ct,"gwbas_pix_ct" )
+module_HYDRO_io.F:!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_exp,"gw_buck_exp" )
+module_HYDRO_io.F:!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_max,"z_max" )
+module_HYDRO_io.F:!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%gw_buck_coeff,"gw_buck_coeff" )
+module_HYDRO_io.F:!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,"qin_gwsubbas" )
+module_HYDRO_io.F:!             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%qinflowbase,"qinflowbase")
+module_HYDRO_io.F:!             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,"qout_gwsubbas" )
+module_HYDRO_io.F:          call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho, "HEAD" )
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%his_out_counts
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%stc
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%smc
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%sh2ox
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%SMCMAX1
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%SMCREF1
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%SMCWLT1
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%INFXSRT
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%soldrain
+module_HYDRO_io.F:          write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%HLINK
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%QLINK(:,1)
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%QLINK(:,2)
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%cvol
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%resht
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%qlakeo
+module_HYDRO_io.F:                   write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
+module_HYDRO_io.F:                     write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%INFXSWGT
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%SH2OWGT
+module_HYDRO_io.F:                    write(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
+module_HYDRO_io.F:                    !write(iunit,ERR=101) rt_domain(did)%RETDEPRT
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%his_out_counts
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%stc
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%smc
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%sh2ox
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%SMCMAX1
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%SMCREF1
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%SMCWLT1
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%INFXSRT
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%soldrain
+module_HYDRO_io.F:          read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_lsm
+module_HYDRO_io.F:          if(nlst_rt(did)%SUBRTSWCRT.EQ.0.and.nlst_rt(did)%OVRTSWCRT.EQ.0) rt_domain(did)%overland%control%surface_water_head_lsm = 0
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%HLINK
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%QLINK(:,1)
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%QLINK(:,2)
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%cvol
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%resht
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%qlakeo
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
+module_HYDRO_io.F:                     read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%overland%control%boundary_flux
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%INFXSWGT
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%overland%control%surface_water_head_routing
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%SH2OWGT
+module_HYDRO_io.F:                   read(iunit,ERR=101) rt_domain(did)%QSTRMVOLRT_ACC
+module_HYDRO_io.F:                   !read(iunit,ERR=101) rt_domain(did)%RETDEPRT
+module_HYDRO_io.F:   iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+module_HYDRO_io.F:!yw call mpp_land_bcast_int1(rt_domain(did)%out_counts)
+module_HYDRO_io.F:rt_domain(did)%out_counts = 1
+module_HYDRO_io.F:      call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
+module_HYDRO_io.F:      call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
+module_HYDRO_io.F:      call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
+module_HYDRO_io.F:      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt")
+module_HYDRO_io.F:      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%overland%control%surface_water_head_lsm,"sfcheadrt")
+module_HYDRO_io.F:      call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%soldrain,"soldrain")
+module_HYDRO_io.F:   !call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
+module_HYDRO_io.F:   !call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1")
+module_HYDRO_io.F:   !call read_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1")
+module_HYDRO_io.F:         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
+module_HYDRO_io.F:         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing,"sfcheadsubrt")
+module_HYDRO_io.F:         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux,"QBDRYRT")
+module_HYDRO_io.F:         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC,"qstrmvolrt")
+module_HYDRO_io.F:         !call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retention_depth,"RETDEPRT")
+module_HYDRO_io.F:         call read_rst_rt_nc3(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,nlst_rt(did)%nsoil,rt_domain(did)%SH2OWGT,"sh2owgt")
+module_HYDRO_io.F:         call read_rst_crt_stream_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+module_HYDRO_io.F:         call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+module_HYDRO_io.F:         call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+module_HYDRO_io.F:         call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
+module_HYDRO_io.F:         call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL,fatalErr=.FALSE.)
+module_HYDRO_io.F:         call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:         call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:         !call read_rst_crt_reach_nc(ncid,rt_domain(did)%CVOL,"cvol",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:         !call read_rst_crt_reach_nc(ncid,rt_domain(did)%accSfcLatRunoff,"accSfcLatRunoff",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:         !call read_rst_crt_reach_nc(ncid,rt_domain(did)%accQLateral,"accQLateral",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:         !call read_rst_crt_reach_nc(ncid,rt_domain(did)%qSfcLatRunoff,"qSfcLatRunoff",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:         !call read_rst_crt_reach_nc(ncid,rt_domain(did)%accBucket,"accBucket",rt_domain(did)%GNLINKS)
+module_HYDRO_io.F:      if(rt_domain(did)%NLAKES .gt. 0) then
+module_HYDRO_io.F:         call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
+module_HYDRO_io.F:         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+module_HYDRO_io.F:            call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
+module_HYDRO_io.F:      rt_domain(did)%gnumbasns .gt. 0        ) then
+module_HYDRO_io.F:            call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
+module_HYDRO_io.F:            call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
+module_HYDRO_io.F:                 rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
+module_HYDRO_io.F:!                      rt_domain(did)%gnumbasns .gt. 0        ) 
+module_HYDRO_io.F:         call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho,"HEAD")
+module_HYDRO_io.F:!! rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake=0.!rt_domain(did)%surface_water_to_channel=0.
+module_HYDRO_io.F:                  varTmp(rt_domain(did)%ascendIndex(ss)+1)=var(ss)
+module_HYDRO_io.F:           real,dimension(rt_domain(did)%gnlinks) :: g_dayMean, chlat, chlon
+module_HYDRO_io.F:           integer,dimension(rt_domain(did)%gnlinks) :: STRMFRXSTPTS
+module_HYDRO_io.F:           call write_chanel_int(RT_DOMAIN(did)%STRMFRXSTPTS,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,STRMFRXSTPTS)
+module_HYDRO_io.F:           call write_chanel_real(dayMean,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,g_dayMean)
+module_HYDRO_io.F:           call write_chanel_real(RT_DOMAIN(did)%CHLON,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,chlon)
+module_HYDRO_io.F:           call write_chanel_real(RT_DOMAIN(did)%CHLAT,rt_domain(did)%map_l2g,rt_domain(did)%gnlinks,rt_domain(did)%nlinks,chlat)
+module_HYDRO_io.F:           do i = 1, rt_domain(did)%gnlinks
+module_HYDRO_io.F:     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:        seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:               allocate(g_qin_gwsubbas(rt_domain(did)%gnumbasns))
+module_HYDRO_io.F:               allocate(g_qout_gwsubbas(rt_domain(did)%gnumbasns))
+module_HYDRO_io.F:               allocate(g_z_gwsubbas(rt_domain(did)%gnumbasns))
+module_HYDRO_io.F:               allocate(g_basnsInd(rt_domain(did)%gnumbasns))
+module_HYDRO_io.F:               gnbasns = rt_domain(did)%gnumbasns
+module_HYDRO_io.F:               allocate(g_qin_gwsubbas(rt_domain(did)%gnlinksl))
+module_HYDRO_io.F:               allocate(g_qout_gwsubbas(rt_domain(did)%gnlinksl))
+module_HYDRO_io.F:               allocate(g_z_gwsubbas(rt_domain(did)%gnlinksl))
+module_HYDRO_io.F:               allocate(g_basnsInd(rt_domain(did)%gnlinksl))
+module_HYDRO_io.F:               gnbasns = rt_domain(did)%gnlinksl 
+module_HYDRO_io.F:          call ReachLS_write_io(rt_domain(did)%qin_gwsubbas,g_qin_gwsubbas)
+module_HYDRO_io.F:          call ReachLS_write_io(rt_domain(did)%qout_gwsubbas,g_qout_gwsubbas)
+module_HYDRO_io.F:          call ReachLS_write_io(rt_domain(did)%z_gwsubbas,g_z_gwsubbas)
+module_HYDRO_io.F:          call ReachLS_write_io(rt_domain(did)%linkid,g_basnsInd)
+module_HYDRO_io.F:          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,  &
+module_HYDRO_io.F:                 rt_domain(did)%basnsInd,g_qin_gwsubbas)
+module_HYDRO_io.F:          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,  & 
+module_HYDRO_io.F:                 rt_domain(did)%basnsInd,g_qout_gwsubbas)
+module_HYDRO_io.F:          call gw_write_io_real(rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,  & 
+module_HYDRO_io.F:                 rt_domain(did)%basnsInd,g_z_gwsubbas)
+module_HYDRO_io.F:          call gw_write_io_int(rt_domain(did)%numbasns,rt_domain(did)%basnsInd,  &
+module_HYDRO_io.F:                 rt_domain(did)%basnsInd,g_basnsInd)
+module_HYDRO_io.F:!          write (51,951) i,nlst_rt(did)%olddate,rt_domain(did)%qin_gwsubbas(i)
+module_HYDRO_io.F:!          write (52,951) i,nlst_rt(did)%olddate,rt_domain(did)%qout_gwsubbas(i)
+module_HYDRO_io.F:!          write (53,951) i,nlst_rt(did)%olddate,rt_domain(did)%z_gwsubbas(i)
+module_HYDRO_io.F:                  rt_domain(did)%basnsInd,rt_domain(did)%qin_gwsubbas, &
+module_HYDRO_io.F:                  rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+module_HYDRO_io.F:                  rt_domain(did)%linkid,rt_domain(did)%qin_gwsubbas, &
+module_HYDRO_io.F:                  rt_domain(did)%qout_gwsubbas, rt_domain(did)%z_gwsubbas  )
+module_HYDRO_io.F:     seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_HYDRO_io.F:      call hdtbl_out_nc(did,ncid, count,count_flag,"SMCMAX1",rt_domain(did)%SMCMAX1,"",ixd,jxd)
+module_HYDRO_io.F:      call hdtbl_out_nc(did,ncid, count,count_flag,"SMCREF1",rt_domain(did)%SMCREF1,"",ixd,jxd)
+module_HYDRO_io.F:      call hdtbl_out_nc(did,ncid, count,count_flag,"SMCWLT1",rt_domain(did)%SMCWLT1,"",ixd,jxd)
+module_HYDRO_io.F:      call hdtbl_out_nc(did,ncid, count,count_flag,"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D,"",ixd,jxd)
+module_HYDRO_io.F:      call hdtbl_out_nc(did,ncid, count,count_flag,"LKSAT",rt_domain(did)%LKSAT,"",ixd,jxd)
+module_HYDRO_io.F:   call read2dlsm(did,trim(nlst_rt(did)%hydrotbl_f),"SMCMAX1",rt_domain(did)%SMCMAX1)
+module_HYDRO_io.F:   call read2dlsm(did,trim(nlst_rt(did)%hydrotbl_f),"SMCREF1",rt_domain(did)%SMCREF1)
+module_HYDRO_io.F:   call read2dlsm(did,trim(nlst_rt(did)%hydrotbl_f),"SMCWLT1",rt_domain(did)%SMCWLT1)
+module_HYDRO_io.F:   call read2dlsm(did,trim(nlst_rt(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D)
+module_HYDRO_io.F:   call read2dlsm(did,trim(nlst_rt(did)%hydrotbl_f),"LKSAT",rt_domain(did)%LKSAT)
+module_HYDRO_io.F:     call get_2d_netcdf(trim(varName), ncid, varOut, units, rt_domain(did)%ix, rt_domain(did)%jx, &
+module_HYDRO_io.F:use module_RT_data, only: rt_domain
+module_HYDRO_io.F:len = size(rt_domain(did)%QLATERAL,1)
+module_HYDRO_io.F:                              rt_domain(did)%GNLINKSL, fatalErr=.true. )
+module_HYDRO_io.F:                                 rt_domain(did)%GNLINKSL, fatalErr=.true.)
+module_HYDRO_io.F:      rt_domain(did)%qout_gwsubbas = qBucket_in
+module_HYDRO_io.F:      rt_domain(did)%QLateral      = qBucket_in + qSfcLatRunoff_in
+module_HYDRO_io.F:                                 rt_domain(did)%GNLINKSL, fatalErr=.true.)
+module_HYDRO_io.F:      rt_domain(did)%qin_gwsubbas = qBucket_in
+module_HYDRO_io.F:      rt_domain(did)%QLateral     = qSfcLatRunoff_in
+module_HYDRO_io.F:        rt_domain(did)%GNLINKSL, fatalErr=.true.)
+module_HYDRO_io.F:        rt_domain(did)%GNLINKSL, fatalErr=.true.)
+module_HYDRO_io.F:      rt_domain(did)%qout_gwsubbas = & 
+module_HYDRO_io.F:           real( (accBucket_in - rt_domain(did)%accBucket)/nlst_rt(did)%DT )
+module_HYDRO_io.F:      rt_domain(did)%QLateral      = &
+module_HYDRO_io.F:           real( rt_domain(did)%qout_gwsubbas +     &
+module_HYDRO_io.F:                 (accSfcLatRunoff_in - rt_domain(did)%accSfcLatRunoff)/nlst_rt(did)%DT )
+module_HYDRO_io.F:      if(any(rt_domain(did)%QLateral .lt. 0)) &
+module_HYDRO_io.F:           rt_domain(did)%QLateral      = real( (accSfcLatRunoff_in)/nlst_rt(did)%DT )
+module_HYDRO_io.F:      if(any(rt_domain(did)%qout_gwsubbas .lt. 0)) &
+module_HYDRO_io.F:           rt_domain(did)%qout_gwsubbas = real( (accBucket_in)/nlst_rt(did)%DT )
+module_HYDRO_io.F:      rt_domain(did)%accBucket     = accBucket_in
+module_HYDRO_io.F:      rt_domain(did)%accSfcLatRunoff = accSfcLatRunoff_in
+module_HYDRO_utils.F:  use module_RT_data, only: rt_domain
+module_HYDRO_utils.F:        call decompose_RT_real(dist(:,:,k),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,k), &
+module_HYDRO_utils.F:                global_rt_nx,global_rt_ny,rt_domain(did)%ixrt,rt_domain(did)%jxrt)
+module_HYDRO_utils.F:      real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt):: latrt, lonrt
+module_HYDRO_utils.F:         iret =  get2d_real("LONGITUDE",lonrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt,&
+module_HYDRO_utils.F:         iret =  get2d_real("LATITUDE",latrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt,&
+module_HYDRO_utils.F:         call get_dist_ll(rt_domain(did)%overland%properties%distance_to_neighbor,latrt,lonrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt)
+module_HYDRO_utils.F:          call write_io_real(rt_domain(did)%lat_lsm,latitude) 
+module_HYDRO_utils.F:          call write_io_real(rt_domain(did)%lon_lsm,longitude) 
+module_HYDRO_utils.F:        call decompose_data_real(dist(:,:,k),rt_domain(did)%dist_lsm(:,:,k))
+module_HYDRO_utils.F:        call get_dist_ll(rt_domain(did)%dist_lsm,rt_domain(did)%lat_lsm,rt_domain(did)%lon_lsm,  &
+module_HYDRO_utils.F:                      rt_domain(did)%ix,rt_domain(did)%jx)
+module_HYDRO_utils.F:        call get_dxdy_mp(rt_domain(did)%dist_lsm,rt_domain(did)%ix,rt_domain(did)%jx, &
+module_HYDRO_utils.F:         call get_dxdy_mp(rt_domain(did)%overland%properties%distance_to_neighbor,rt_domain(did)%ixrt,rt_domain(did)%jxrt, &
+module_HYDRO_utils.F:           call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%distance_to_neighbor(:,:,k),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_HYDRO_utils.F:!        if(rt_domain(did)%overland%properties%distance_to_neighbor(1,1,9) .eq. -999)   &
+module_HYDRO_utils.F:!           call get_dist_ll(rt_domain(did)%overland%properties%distance_to_neighbor,rt_domain(did)%latval,rt_domain(did)%lonval,  &
+module_HYDRO_utils.F:!                      rt_domain(did)%ixrt,rt_domain(did)%jxrt)
+module_HYDRO_utils.F:!        if(rt_domain(did)%overland%properties%distance_to_neighbor(1,1,9) .eq. -999)   &
+module_HYDRO_utils.F:!           call get_dxdy_mp(rt_domain(did)%overland%properties%distance_to_neighbor,rt_domain(did)%ixrt,rt_domain(did)%jxrt, &
+module_HYDRO_utils.F:!       call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%distance_to_neighbor(:,:,k),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_HYDRO_utils.F:      real :: basns_area(rt_domain(did)%gnumbasns)
+module_HYDRO_utils.F:      integer :: mask(rt_domain(did)%ix, rt_domain(did)%jx)
+module_HYDRO_utils.F:      real :: dist_lsm(rt_domain(did)%ix, rt_domain(did)%jx,9) 
+module_HYDRO_utils.F:      call write_IO_int(rt_domain(did)%GWSUBBASMSK,mask) 
+module_HYDRO_utils.F:         call write_IO_real(rt_domain(did)%dist_lsm(:,:,k),dist_lsm(:,:,k)) 
+module_HYDRO_utils.F:      ix = rt_domain(did)%ix
+module_HYDRO_utils.F:      jx = rt_domain(did)%jx
+module_HYDRO_utils.F:      mask = rt_domain(did)%GWSUBBASMSK
+module_HYDRO_utils.F:      dist_lsm = rt_domain(did)%dist_lsm
+module_HYDRO_utils.F:         call get_area_g(basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+module_HYDRO_utils.F:!      call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%basns_area)
+module_HYDRO_utils.F:      call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
+module_HYDRO_utils.F:           rt_domain(did)%basnsInd, basns_area,rt_domain(did)%basns_area)
+module_HYDRO_utils.F:      call get_area_g(rt_domain(did)%basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+module_HYDRO_utils.F:       call get_area_g(rt_domain(did)%node_area,rt_domain(did)%CH_NETLNK, &
+module_HYDRO_utils.F:         rt_domain(did)%NLINKS,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%distance_to_neighbor)
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:         gsize = rt_domain(domainId)%gnlinksl
+module_NWM_io.F:         gsize = rt_domain(domainId)%gnlinks
+module_NWM_io.F:         call write_chanel_real(strFlowLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,1))
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%QLINK(:,2),rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,2))
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%CHLAT,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlat)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%CHLON,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlon)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%HLINK,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_hlink)
+module_NWM_io.F:         call write_chanel_int(RT_DOMAIN(domainId)%ORDER,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_order)
+module_NWM_io.F:         call write_chanel_int(RT_DOMAIN(domainId)%linkid,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_linkid)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%ZELEV,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_zelev)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%QLateral,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_QLateral)
+module_NWM_io.F:         call write_chanel_real(velocityLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_velocity)
+module_NWM_io.F:            call write_chanel_real(RT_DOMAIN(domainID)%nudge,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_nudge)
+module_NWM_io.F:      gSize = rt_domain(domainId)%nlinksl
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:      gSize = rt_domain(domainId)%NLAKES
+module_NWM_io.F:      gSize = rt_domain(domainId)%NLAKES
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:   gNumLnks = rt_domain(domainId)%gnlinks
+module_NWM_io.F:   lNumLnks = rt_domain(domainId)%NLINKS
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:  use module_rt_data, only: rt_domain
+module_NWM_io.F:   waterVal = rt_domain(domainId)%iswater
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:   allocate(localRealTmp(rt_domain(domainId)%ix,rt_domain(domainId)%jx))
+module_NWM_io.F:         do iTmp2 = 1,rt_domain(domainId)%ix
+module_NWM_io.F:            do jTmp2 = 1,rt_domain(domainId)%jx
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,1)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,1)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,1)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,2)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,2)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,2)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,3)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,3)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,3)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%stc(iTmp2,jTmp2,4)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%smc(iTmp2,jTmp2,4)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%sh2ox(iTmp2,jTmp2,4)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
+module_NWM_io.F:                  varRealTmp = rt_domain(domainId)%overland%control%surface_water_head_lsm(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:   seconds_since = int(nlst_rt(1)%out_dt*60*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:         gSize = rt_domain(domainId)%gnlinksl
+module_NWM_io.F:         gSize = rt_domain(domainId)%gnlinks
+module_NWM_io.F:      frxstPtsLocal = rt_domain(domainId)%STRMFRXSTPTS
+module_NWM_io.F:         call write_chanel_int(frxstPtsLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_STRMFRXSTPTS)
+module_NWM_io.F:         call write_chanel_real(strFlowLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,1))
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%QLINK(:,2),rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,2))
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%CHLAT,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlat)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%CHLON,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlon)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%HLINK,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_hlink)
+module_NWM_io.F:      gSize = rt_domain(domainId)%nlinks
+module_NWM_io.F:      g_STRMFRXSTPTS = rt_domain(domainId)%STRMFRXSTPTS
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_NWM_io.F:         gSize = rt_domain(domainId)%gnlinksl
+module_NWM_io.F:         gSize = rt_domain(domainId)%gnlinks
+module_NWM_io.F:      frxstPtsLocal = rt_domain(domainId)%STRMFRXSTPTS
+module_NWM_io.F:         call write_chanel_int(frxstPtsLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_STRMFRXSTPTS)
+module_NWM_io.F:         call write_chanel_real(strFlowLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,1))
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%QLINK(:,2),rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_qlink(:,2))
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%CHLAT,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlat)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%CHLON,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlon)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%HLINK,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_hlink)
+module_NWM_io.F:         call write_chanel_int(RT_DOMAIN(domainId)%linkid,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_linkid)
+module_NWM_io.F:         call write_chanel_int(RT_DOMAIN(domainId)%ORDER,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_order)
+module_NWM_io.F:         call write_chanel_real(RT_DOMAIN(domainId)%ZELEV,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_zelev)
+module_NWM_io.F:      gSize = rt_domain(domainId)%nlinks
+module_NWM_io.F:      g_STRMFRXSTPTS = rt_domain(domainId)%STRMFRXSTPTS
+module_NWM_io.F:   use module_rt_data, only: rt_domain
+module_NWM_io.F:   gnbasns = rt_domain(domainId)%gnumbasns
+module_NWM_io.F:         allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:         allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:         allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:         allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:         call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
+module_NWM_io.F:         call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas,g_qout_gwsubbas)
+module_NWM_io.F:         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas*1000.,g_z_gwsubbas)
+module_NWM_io.F:         call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+module_NWM_io.F:         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
+module_NWM_io.F:                               rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
+module_NWM_io.F:         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qout_gwsubbas,  & 
+module_NWM_io.F:                               rt_domain(domainId)%basnsInd,g_qout_gwsubbas)
+module_NWM_io.F:         call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  & 
+module_NWM_io.F:                               rt_domain(domainId)%basnsInd,g_z_gwsubbas)
+module_NWM_io.F:         call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
+module_NWM_io.F:                              rt_domain(domainId)%basnsInd,g_basnsInd)
+module_NWM_io.F:      allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:      allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:      allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:      allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
+module_NWM_io.F:      g_qin_gwsubbas = rt_domain(domainId)%qin_gwsubbas/nlst_rt(domainId)%DT
+module_NWM_io.F:      g_qout_gwsubbas = rt_domain(domainId)%qout_gwsubbas
+module_NWM_io.F:      g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
+module_NWM_io.F:      g_basnsInd = rt_domain(domainId)%linkid
+module_NWM_io.F:   minSinceSim = int(nlst_rt(1)%out_dt*(rt_domain(1)%out_counts-1))
+module_RT.F:      use module_RT_data, only: rt_domain
+module_RT.F:      if(rt_domain(did)%allo_status .eq. 1) return
+module_RT.F:      rt_domain(did)%allo_status = 1
+module_RT.F:      rt_domain(did)%ix = ix
+module_RT.F:      rt_domain(did)%jx = jx
+module_RT.F:      rt_domain(did)%ixrt = ixrt
+module_RT.F:      rt_domain(did)%jxrt = jxrt
+module_RT.F:!     ixrt = rt_domain(did)%ixrt
+module_RT.F:!     jxrt = rt_domain(did)%jxrt
+module_RT.F:      call rt_domain(did)%overland%init(ix,jx,ixrt,jxrt)
+module_RT.F:!         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
+module_RT.F:      if(rt_domain(did)%NLINKS .lt. rt_domain(did)%NLINKSL) then
+module_RT.F:          rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
+module_RT.F:      NLINKS = rt_domain(did)%NLINKS
+module_RT.F:      NLAKES = rt_domain(did)%NLAKES
+module_RT.F:      NLINKSL = rt_domain(did)%NLINKSL
+module_RT.F:      rt_domain(did)%nlinksize = nsizes
+module_RT.F:      if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
+module_RT.F:      if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
+module_RT.F:      if(rt_domain(did)%NLINKSL .eq. 0) NLINKSL = 1
+module_RT.F:      rt_domain(did)%iswater = 0
+module_RT.F:      rt_domain(did)%isurban = 0
+module_RT.F:      rt_domain(did)%isoilwater = 0
+module_RT.F:     allocate( rt_domain(did)%DSMC   	(NSOIL) )
+module_RT.F:     rt_domain(did)%dsmc = 0 
+module_RT.F:     allocate( rt_domain(did)%SMCRTCHK    	(NSOIL) )
+module_RT.F:     rt_domain(did)%SMCRTCHK = 0
+module_RT.F:     allocate( rt_domain(did)%SH2OAGGRT   	(NSOIL) )
+module_RT.F:     rt_domain(did)%SH2OAGGRT = 0
+module_RT.F:     allocate( rt_domain(did)%STCAGGRT   	(NSOIL) )
+module_RT.F:     rt_domain(did)%STCAGGRT = 0
+module_RT.F:     allocate( rt_domain(did)%SMCAGGRT   	(NSOIL) )
+module_RT.F:     rt_domain(did)%SMCAGGRT = 0
+module_RT.F:     allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
+module_RT.F:     rt_domain(did)%SMCRT   	= 0.0                
+module_RT.F:     allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
+module_RT.F:     !allocate( rt_domain(did)%overland%properties%surface_slope_x  	(IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%overland%properties%surface_slope_x  	= 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%properties%surface_slope_y   	(IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%overland%properties%surface_slope_y   	= 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%properties%water_surface_slope   	(IXRT,JXRT,8) )
+module_RT.F:     !rt_domain(did)%overland%properties%water_surface_slope   	= -999               
+module_RT.F:     !allocate( rt_domain(did)%overland%properties%max_water_surface_slope_index   	(IXRT,JXRT,3) )
+module_RT.F:     !rt_domain(did)%overland%properties%max_water_surface_slope_index   	= 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%properties%roughness   (IXRT,JXRT) )
+module_RT.F:     !allocate( rt_domain(did)%QSUBBDRYTRT   (IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%QSUBBDRYTRT = 0.0
+module_RT.F:     allocate( rt_domain(did)%OVROUGHRTFAC   (IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%overland%properties%roughness   = 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%properties%retention_depth    (IXRT,JXRT) )
+module_RT.F:     allocate( rt_domain(did)%RETDEPRTFAC    (IXRT,JXRT) )
+module_RT.F:     !allocate( rt_domain(did)%overland%control%surface_water_head_routing(IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%overland%control%surface_water_head_routing= 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%control%infiltration_excess   (IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%overland%control%infiltration_excess   = 0.0                
+module_RT.F:     allocate( rt_domain(did)%INFXSWGT    (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%INFXSWGT    = 0.0                
+module_RT.F:     allocate( rt_domain(did)%LKSATRT     (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%LKSATRT     = 0.0                
+module_RT.F:     allocate( rt_domain(did)%LKSATFAC    (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%LKSATFAC    = 0.0                
+module_RT.F:     allocate( rt_domain(did)%QSUBRT      (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%QSUBRT      = 0.0                
+module_RT.F:     allocate( rt_domain(did)%ZWATTABLRT  (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%ZWATTABLRT  = 0.0                
+module_RT.F:     allocate( rt_domain(did)%QSUBBDRYRT  (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%QSUBBDRYRT  = 0.0                
+module_RT.F:     allocate( rt_domain(did)%SOLDEPRT    (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%SOLDEPRT    = 0.0                
+module_RT.F:     allocate( rt_domain(did)%q_sfcflx_x  (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%q_sfcflx_x  = 0.0                
+module_RT.F:     allocate( rt_domain(did)%q_sfcflx_y  (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%q_sfcflx_y  = 0.0                
+module_RT.F:     allocate( rt_domain(did)%SMCMAXRT   	(IXRT,JXRT,NSOIL) )
+module_RT.F:     rt_domain(did)%SMCMAXRT   	= 0.0                
+module_RT.F:     allocate( rt_domain(did)%SMCWLTRT   	(IXRT,JXRT,NSOIL) )
+module_RT.F:     rt_domain(did)%SMCWLTRT   	= 0.0                
+module_RT.F:     allocate( rt_domain(did)%SH2OWGT   	(IXRT,JXRT,NSOIL) )
+module_RT.F:     rt_domain(did)%SH2OWGT     = 0.0
+module_RT.F:     allocate( rt_domain(did)%INFXSAGGRT 	(IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%INFXSAGGRT 	= 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%control%dhrt   	(IXRT,JXRT) ) ! moved to overland control
+module_RT.F:     !rt_domain(did)%overland%control%dhrt   	= 0.0                 ! moved to overland control
+module_RT.F:     !allocate( rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel (IXRT,JXRT) )              ! moved to overland streams and lakes
+module_RT.F:     !rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0                                ! moved to overland streams and lakes
+module_RT.F:     allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
+module_RT.F:     allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%QSTRMVOLRT_ACC  = 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%control%boundary_flux   	(IXRT,JXRT) )
+module_RT.F:     !rt_domain(did)%overland%control%boundary_flux   	= 0.0     
+module_RT.F:     allocate( rt_domain(did)%SUB_RESID (ixrt,jxrt) )
+module_RT.F:     rt_domain(did)%SUB_RESID = 0.0                
+module_RT.F:     allocate( rt_domain(did)%SMCREFRT    	(IXRT,JXRT,NSOIL) )
+module_RT.F:     allocate( rt_domain(did)%ELRT   	(IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%ELRT   	= 0.0                
+module_RT.F:     !allocate( rt_domain(did)%overland%streams_and_lakes%lake_mask 	(IXRT,JXRT) ) ! moved to overland%stream_and_lakes
+module_RT.F:     !rt_domain(did)%overland%streams_and_lakes%lake_mask 	= -9999               ! moved to overland%streams_and_lakes
+module_RT.F:     !allocate( rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake(IXRT,JXRT) )                              ! moved to overland%streams_and_lakes
+module_RT.F:     !!rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake= 0.0                                               ! moved to overland%streams_and_lakes
+module_RT.F:     allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
+module_RT.F:     allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%LAKE_INFLORT_DUM= 0.0                
+module_RT.F:     allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
+module_RT.F:     allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
+module_RT.F:     rt_domain(did)%LONVAL = 0.0
+module_RT.F:     rt_domain(did)%LATVAL = 0.0                
+module_RT.F:  allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
+module_RT.F:  rt_domain(did)%qinflowbase = 0.0           
+module_RT.F:  allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
+module_RT.F:           rt_domain(did)%gw_strm_msk   = 0         
+module_RT.F:  allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
+module_RT.F:  allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
+module_RT.F:            rt_domain(did)%SMC   = 0.25           
+module_RT.F:  allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
+module_RT.F:            rt_domain(did)%SICE  = 0.
+module_RT.F:  ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
+module_RT.F:  ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
+module_RT.F:  ! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
+module_RT.F:  ! allocate( rt_domain(did)%SICE  (IX,JX,NSOIL) )
+module_RT.F:  allocate( rt_domain(did)%SMCMAX1  (IX,JX) )
+module_RT.F:            rt_domain(did)%SMCMAX1   = 0.0
+module_RT.F:           !rt_domain(did)%SMCMAX1   = 0.434          
+module_RT.F:  allocate( rt_domain(did)%STC  (IX,JX,NSOIL) )
+module_RT.F:            rt_domain(did)%STC   = 282.0          
+module_RT.F:  allocate( rt_domain(did)%SH2OX(IX,JX,NSOIL) )
+module_RT.F:            rt_domain(did)%SH2OX = rt_domain(did)%SMC   
+module_RT.F:  allocate( rt_domain(did)%SMCWLT1  (IX,JX) )
+module_RT.F:            rt_domain(did)%SMCWLT1   = 0.0            
+module_RT.F:  allocate( rt_domain(did)%SMCREF1  (IX,JX) )
+module_RT.F:            rt_domain(did)%SMCREF1   = 0.0            
+module_RT.F:  allocate( rt_domain(did)%VEGTYP   (IX,JX) )
+module_RT.F:            rt_domain(did)%VEGTYP    = 0            
+module_RT.F:  allocate( rt_domain(did)%OV_ROUGH2d   (IX,JX) )
+module_RT.F:  allocate( rt_domain(did)%SOILTYP   (IX,JX) )
+module_RT.F:  allocate( rt_domain(did)%GWSUBBASMSK   (IX,JX) )
+module_RT.F:            rt_domain(did)%GWSUBBASMSK    = 0              
+module_RT.F:  allocate( rt_domain(did)%SLDPTH(NSOIL) )
+module_RT.F:            rt_domain(did)%SLDPTH = 0.0           
+module_RT.F:  allocate( rt_domain(did)%SO8LD_D   (IX,JX,3) )
+module_RT.F:            rt_domain(did)%SO8LD_D    = 0.0           
+module_RT.F:  allocate( rt_domain(did)%SO8LD_Vmax   (IX,JX) )
+module_RT.F:            rt_domain(did)%SO8LD_Vmax    = 0.0            
+module_RT.F:  !allocate( rt_domain(did)%sfcheadrt   (IX,JX) ) !moved to overland control structure
+module_RT.F:  !          rt_domain(did)%sfcheadrt    = 0.0    !moved to overland control structure
+module_RT.F:  allocate( rt_domain(did)%INFXSRT   (IX,JX) )
+module_RT.F:            rt_domain(did)%INFXSRT    = 0.0            
+module_RT.F:  allocate( rt_domain(did)%TERRAIN   (IX,JX) )
+module_RT.F:            rt_domain(did)%TERRAIN    = 0.0            
+module_RT.F:  allocate( rt_domain(did)%LKSAT   (IX,JX) )
+module_RT.F:            rt_domain(did)%LKSAT    = 0.0            
+module_RT.F:  allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
+module_RT.F:            rt_domain(did)%SOLDRAIN    = 0.0            
+module_RT.F:  allocate( rt_domain(did)%dist_lsm (ix,jx,9) )
+module_RT.F:            rt_domain(did)%dist_lsm = 0.0 
+module_RT.F:  allocate( rt_domain(did)%lat_lsm (ix,jx) )
+module_RT.F:  allocate( rt_domain(did)%lon_lsm (ix,jx) )
+module_RT.F:  rt_domain(did)%timestep_flag = 1    ! default is cold start
+module_RT.F:  !allocate( rt_domain(did)%overland%properties%distance_to_neighbor (ixrt,jxrt,9) ) ! moved to overland%properties
+module_RT.F:  !rt_domain(did)%overland%properties%distance_to_neighbor = -999                    ! moved to overland%properties
+module_RT.F:     !allocate( rt_domain(did)%overland%streams_and_lakes%ch_netrt   	(IXRT,JXRT) ) !moved to overland%streams_and_lakes
+module_RT.F:     !rt_domain(did)%overland%streams_and_lakes%ch_netrt   	= 0.0                 !moved to overland%streams_and_lakes
+module_RT.F:     allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%CH_LNKRT = 0.0
+module_RT.F:     allocate( rt_domain(did)%CH_NETLNK (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%CH_NETLNK = 0.0               
+module_RT.F:     allocate( rt_domain(did)%GCH_NETLNK (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%GCH_NETLNK = 0.0           
+module_RT.F:     allocate( rt_domain(did)%LAKE_INDEX(NLAKES) )
+module_RT.F:     rt_domain(did)%lake_index = -99
+module_RT.F:     allocate( rt_domain(did)%nlinks_INDEX(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%Link_location(ixrt,jxrt) )
+module_RT.F:     allocate( rt_domain(did)%CH_LNKRT_SL (IXRT,JXRT) )
+module_RT.F:     rt_domain(did)%CH_LNKRT_SL = -99         
+module_RT.F:     rt_domain(did)%MAXORDER = -9999
+module_RT.F:!tmp       NLINKS = rt_domain(did)%NLINKSL
+module_RT.F:!tmp       NLAKES = rt_domain(did)%NLINKSL
+module_RT.F:     allocate( rt_domain(did)%LINKID(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%gages(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%TO_NODE(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%FROM_NODE(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%CHLAT(nsizes) )   !-latitutde of channel grid point
+module_RT.F:     allocate( rt_domain(did)%CHLON(nsizes) )   !-longitude of channel grid point
+module_RT.F:     allocate( rt_domain(did)%ZELEV(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%TYPEL(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%ORDER(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%QLINK(nsizes,2) )
+module_RT.F:     allocate( rt_domain(did)%nudge(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%MUSK(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%MUSX(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%CHANLEN(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%MannN(nsizes))
+module_RT.F:     allocate( rt_domain(did)%So(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%ChSSlp(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%Bw(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%Tw(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%Tw_CC(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%n_CC(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%LAKEIDA(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%LAKEIDX(nsizes) )
+module_RT.F:        allocate( rt_domain(did)%LAKEIDM(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%HRZAREA(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%WEIRH(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%WEIRC(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%WEIRL(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%ORIFICEC(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%ORIFICEA(NLAKES) )
+module_RT.F:        allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+module_RT.F:         rt_domain(did)%HRZAREA = 0.0        
+module_RT.F:         rt_domain(did)%WEIRH = 0.0        
+module_RT.F:         rt_domain(did)%WEIRC = 0.0        
+module_RT.F:         rt_domain(did)%WEIRL = 0.0        
+module_RT.F:         rt_domain(did)%LAKEMAXH = 0.0        
+module_RT.F:         rt_domain(did)%ELEVLAKE= 0.0        
+module_RT.F:         rt_domain(did)%ORIFICEC = 0.0        
+module_RT.F:         rt_domain(did)%ORIFICEA = 0.0        
+module_RT.F:         rt_domain(did)%ORIFICEE = 0.0        
+module_RT.F:!    allocate( rt_domain(did)%LAKEMAXH(nsizes) )
+module_RT.F:!    allocate( rt_domain(did)%WEIRC(nsizes) )
+module_RT.F:!    allocate( rt_domain(did)%WEIRL(nsizes) )
+module_RT.F:!    allocate( rt_domain(did)%ORIFICEC(nsizes) )
+module_RT.F:!    allocate( rt_domain(did)%ORIFICEA(nsizes) )
+module_RT.F:!    allocate( rt_domain(did)%ORIFICEE(nsizes) )
+module_RT.F:           allocate( rt_domain(did)%accSfcLatRunoff(1) )
+module_RT.F:           allocate( rt_domain(did)%accBucket(      1) )
+module_RT.F:           allocate( rt_domain(did)%qSfcLatRunoff(  nsizes) )
+module_RT.F:           allocate( rt_domain(did)%qBucket(        nsizes) )
+module_RT.F:           allocate( rt_domain(did)%qBtmVertRunoff(     1) )
+module_RT.F:             allocate( rt_domain(did)%qBtmVertRunoff(nsizes) )
+module_RT.F:             rt_domain(did)%qBtmVertRunoff  = zeroFlt
+module_RT.F:           allocate( rt_domain(did)%accSfcLatRunoff(nsizes) )
+module_RT.F:           allocate( rt_domain(did)%accBucket(      nsizes) )
+module_RT.F:           allocate( rt_domain(did)%qSfcLatRunoff(       1) )
+module_RT.F:           allocate( rt_domain(did)%qBucket(             1) )
+module_RT.F:           rt_domain(did)%accSfcLatRunoff = zeroDbl
+module_RT.F:           rt_domain(did)%accBucket       = zeroDbl
+module_RT.F:           rt_domain(did)%qSfcLatRunoff   = zeroFlt
+module_RT.F:           rt_domain(did)%qBucket         = zeroFlt
+module_RT.F:	allocate( rt_domain(did)%QLateral(nsizes) )
+module_RT.F:	allocate( rt_domain(did)%velocity(nsizes) )
+module_RT.F:	rt_domain(did)%QLateral  = zeroFlt
+module_RT.F:	rt_domain(did)%velocity  = zeroFlt
+module_RT.F:       NLINKS = rt_domain(did)%NLINKS
+module_RT.F:       NLAKES = rt_domain(did)%NLAKES 
+module_RT.F:     allocate( rt_domain(did)%LINK(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%STRMFRXSTPTS(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%CHANXI(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%CHANYJ(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%CVOL(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%LATLAKE(NLAKES) )
+module_RT.F:     allocate( rt_domain(did)%LONLAKE(NLAKES) )
+module_RT.F:!    allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
+module_RT.F:     allocate( rt_domain(did)%LAKENODE(nsizes) )
+module_RT.F:     allocate( rt_domain(did)%RESHT(NLAKES),STAT=istatus )
+module_RT.F:     allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
+module_RT.F:     allocate( rt_domain(did)%QLAKEO(NLAKES),STAT=istatus )
+module_RT.F:     allocate( rt_domain(did)%HLINK(nsizes) )  !--used for diffusion only
+module_RT.F:     allocate( rt_domain(did)%node_area(nsizes) )
+module_RT.F:      rt_domain(did)%LINK = 0.0        
+module_RT.F:      rt_domain(did)%gages = rt_domain(did)%gageMiss
+module_RT.F:      rt_domain(did)%TO_NODE = 0.0        
+module_RT.F:      rt_domain(did)%FROM_NODE = 0        
+module_RT.F:      rt_domain(did)%TYPEL = -999       
+module_RT.F:      rt_domain(did)%ORDER = 0.0        
+module_RT.F:      rt_domain(did)%STRMFRXSTPTS = 0.0        
+module_RT.F:      rt_domain(did)%MUSK = 0.0        
+module_RT.F:      rt_domain(did)%MUSX = 0.0        
+module_RT.F:      rt_domain(did)%CHANXI = 0.0        
+module_RT.F:      rt_domain(did)%CHANYJ = 0.0        
+module_RT.F:      rt_domain(did)%CHLAT = 0.0         !-latitutde of channel grid point
+module_RT.F:      rt_domain(did)%CHLON = 0.0         !-longitude of channel grid point
+module_RT.F:      rt_domain(did)%CHANLEN = 0.0        
+module_RT.F:      rt_domain(did)%ChSSlp = 0.0        
+module_RT.F:      rt_domain(did)%Bw = 0.0        
+module_RT.F:      rt_domain(did)%Tw = 0.0        
+module_RT.F:      rt_domain(did)%Tw_CC = 0.0        
+module_RT.F:      rt_domain(did)%n_CC = 0.0        
+module_RT.F:      rt_domain(did)%ZELEV = 0.0        
+module_RT.F:      rt_domain(did)%CVOL = 0.0        
+module_RT.F:      rt_domain(did)%LAKEIDA = 0
+module_RT.F:      rt_domain(did)%LAKEIDX = 0
+module_RT.F:      rt_domain(did)%LATLAKE = 0.0        
+module_RT.F:      rt_domain(did)%LONLAKE = 0.0        
+module_RT.F:!     rt_domain(did)%ELEVLAKE = 0.0        
+module_RT.F:      rt_domain(did)%LAKENODE = 0.0        
+module_RT.F:      rt_domain(did)%RESHT = 0.0                    
+module_RT.F:      rt_domain(did)%QLAKEI = 0.0                     
+module_RT.F:      rt_domain(did)%QLAKEO = 0.0                     
+module_RT.F:      rt_domain(did)%QLINK = 0        
+module_RT.F:      rt_domain(did)%nudge = 0
+module_RT.F:      rt_domain(did)%HLINK = -999.  !--default to -999 if not found in the restart.
+module_RT.F:      rt_domain(did)%MannN = 0.0        
+module_RT.F:      rt_domain(did)%LINKID = 0.0        
+module_RT.F:      rt_domain(did)%So = 0.01
+module_RT.F:     rt_domain(did)%restQSTRM = .true.
+module_RT.F:  rt_domain(did)%out_counts = 0
+module_RT.F:  rt_domain(did)%his_out_counts = 0
+module_RT.F:  rt_domain(did)%rst_counts = 1
+module_RT.F:use module_RT_data, only: rt_domain
+module_RT.F:!INTEGER, dimension( rt_domain(did)%ixrt,GCH_NETLNK(ixrt,jxrt)) :: GCH_NETLNK, CH_NETLNK
+module_RT.F:ix = rt_domain(did)%ix 
+module_RT.F:jx = rt_domain(did)%jx 
+module_RT.F:ixrt = rt_domain(did)%ixrt 
+module_RT.F:jxrt = rt_domain(did)%jxrt 
+module_RT.F:      call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+module_RT.F:   call mpp_land_bcast_int1(rt_domain(did)%NLINKSL)
+module_RT.F:      rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
+module_RT.F:      call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   & 
+module_RT.F:           rt_domain(did)%linklsS, rt_domain(did)%linklsE )
+module_RT.F:      rt_domain(did)%GNLINKSL = 1
+module_RT.F:      rt_domain(did)%NLINKSL = 1
+module_RT.F:        call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+module_RT.F:   call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+module_RT.F:        rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+module_RT.F:   call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
+module_RT.F:                          GCH_NETLNK, rt_domain(did)%GNLINKS, &
+module_RT.F:              rt_domain(did)%NLINKS, &
+module_RT.F:              rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt , rt_domain(did)%nlakes)
+module_RT.F:   call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+module_RT.F:      rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
+module_RT.F:      call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   & 
+module_RT.F:           rt_domain(did)%linklsS, rt_domain(did)%linklsE )
+module_RT.F:      rt_domain(did)%linklsS = 1
+module_RT.F:      rt_domain(did)%linklsE = rt_domain(did)%NLINKSL
+module_RT.F:      rt_domain(did)%GNLINKSL = 1
+module_RT.F:      rt_domain(did)%NLINKSL = 1
+module_RT.F:   call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+module_RT.F:call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+module_RT.F:     rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+module_RT.F:   rt_domain(did)%CH_NETLNK = CH_NETLNK
+module_RT.F:   rt_domain(did)%GCH_NETLNK = GCH_NETLNK
+module_RT.F:use module_RT_data, only: rt_domain
+module_RT.F:           rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
+module_RT.F:           rt_domain(did)%CH_LNKRT, &
+module_RT.F:           rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
+module_RT.F:           rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
+module_RT.F:   !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
+module_RT.F:             rt_domain(did)%IXRT,         rt_domain(did)%JXRT,       &
+module_RT.F:             rt_domain(did)%ELRT,         rt_domain(did)%overland%streams_and_lakes%ch_netrt,        &
+module_RT.F:             rt_domain(did)%CH_LNKRT,     rt_domain(did)%overland%streams_and_lakes%lake_mask, & 
+module_RT.F:             rt_domain(did)%FROM_NODE,    rt_domain(did)%TO_NODE, &
+module_RT.F:             rt_domain(did)%TYPEL,        rt_domain(did)%ORDER, &
+module_RT.F:             rt_domain(did)%MAXORDER,     rt_domain(did)%NLINKS, &
+module_RT.F:             rt_domain(did)%NLAKES,       rt_domain(did)%CHANLEN, &
+module_RT.F:             rt_domain(did)%MannN,        rt_domain(did)%So, &
+module_RT.F:             rt_domain(did)%ChSSlp,       rt_domain(did)%Bw, &
+module_RT.F:             rt_domain(did)%Tw,                              & 
+module_RT.F:             rt_domain(did)%Tw_CC,                           & 
+module_RT.F:             rt_domain(did)%n_CC,                            & 
+module_RT.F:             rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
+module_RT.F:             rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
+module_RT.F:             rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
+module_RT.F:             rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
+module_RT.F:             rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
+module_RT.F:             rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
+module_RT.F:             rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
+module_RT.F:             rt_domain(did)%CH_NETLNK,    rt_domain(did)%CHANXI,          &
+module_RT.F:             rt_domain(did)%CHANYJ,       rt_domain(did)%CHLAT,           &
+module_RT.F:             rt_domain(did)%CHLON,        nlst_rt(did)%channel_option,    &
+module_RT.F:             rt_domain(did)%latval,       rt_domain(did)%lonval,          &
+module_RT.F:             rt_domain(did)%STRMFRXSTPTS, nlst_rt(did)%geo_finegrid_flnm, &
+module_RT.F:             nlst_rt(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst_rt(did)%UDMP_OPT   & !! no comma
+module_RT.F:             ,rt_domain(did)%g_IXRT,      rt_domain(did)%g_JXRT      &
+module_RT.F:             ,rt_domain(did)%gnlinks,     rt_domain(did)%GCH_NETLNK  &
+module_RT.F:             ,rt_domain(did)%map_l2g,     rt_domain(did)%link_location, &
+module_RT.F:             rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index, &
+module_RT.F:             rt_domain(did)%nlinks_index &
+module_RT.F:           rt_domain(did)%TO_NODE,       rt_domain(did)%TYPEL,      &
+module_RT.F:           rt_domain(did)%ORDER,         rt_domain(did)%MAXORDER,   &
+module_RT.F:           rt_domain(did)%NLAKES,        rt_domain(did)%MUSK,       &
+module_RT.F:           rt_domain(did)%MUSX,                                     &
+module_RT.F:           rt_domain(did)%QLINK,         rt_domain(did)%CHANLEN,    &
+module_RT.F:           rt_domain(did)%MannN,         rt_domain(did)%So,         &
+module_RT.F:           rt_domain(did)%ChSSlp,        rt_domain(did)%Bw,         &
+module_RT.F:           rt_domain(did)%Tw,                                       & 
+module_RT.F:           rt_domain(did)%Tw_CC,                                    & 
+module_RT.F:           rt_domain(did)%n_CC,                                     & 
+module_RT.F:           rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
+module_RT.F:           rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
+module_RT.F:           rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
+module_RT.F:           rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
+module_RT.F:           rt_domain(did)%ORIFICEE,      rt_domain(did)%LATLAKE,    &
+module_RT.F:           rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
+module_RT.F:           rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
+module_RT.F:           rt_domain(did)%ZELEV,         rt_domain(did)%CHLAT,      &
+module_RT.F:           rt_domain(did)%CHLON,         rt_domain(did)%NLINKSL,    &
+module_RT.F:           rt_domain(did)%LINKID,        rt_domain(did)%GNLINKSL,   &
+module_RT.F:           rt_domain(did)%NLINKS,        rt_domain(did)%gages,      &
+module_RT.F:           rt_domain(did)%gageMiss                                   )
+module_RT.F:  call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
+module_RT.F:           rt_domain(did)%CHLAT,     &   !! Channel grid lat
+module_RT.F:           rt_domain(did)%CHLON,     &   !! Channel grid lat
+module_RT.F:           rt_domain(did)%CHANLEN,   &   !! The distance between channel grid centers in m.
+module_RT.F:           rt_domain(did)%FROM_NODE, &   !! Index of a given cell and ...
+module_RT.F:           rt_domain(did)%TO_NODE,   &   !!   ... the index which it flows to.
+module_RT.F:           rt_domain(did)%CHANXI,    &   !! Index on fine/routing 
+module_RT.F:           rt_domain(did)%CHANYJ,    &   !!   grid of grid cells.
+module_RT.F:           rt_domain(did)%TYPEL,     &   !! Link type
+module_RT.F:           rt_domain(did)%LAKENODE   &   !! Lake indexing
+module_RT.F:         !          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
+module_RT.F:         call UDMP_ini( rt_domain(did)%GNLINKSL, rt_domain(did)%ixrt,      &
+module_RT.F:              rt_domain(did)%jxrt,     rt_domain(did)%overland%streams_and_lakes%ch_netrt , &
+module_RT.F:              rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9)                         )
+module_RT.F:           rt_domain(did)%LNLINKSL = LNUMRSL
+module_RT.F:           allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+module_RT.F:               rt_domain(did)%LLINKID(k) = LUDRSL(k)%myid
+module_RT.F:           allocate (buf(rt_domain(did)%GNLINKS) )
+module_RT.F:           do j = 1, rt_domain(did)%jxrt
+module_RT.F:              do i = 1, rt_domain(did)%ixrt
+module_RT.F:                 if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
+module_RT.F:                        (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then 
+module_RT.F:                    if(rt_domain(did)%CH_LNKRT(i,j) .gt. 0) then
+module_RT.F:                       k = rt_domain(did)%CH_LNKRT(i,j)
+module_RT.F:           rt_domain(did)%LNLINKSL = 0
+module_RT.F:           do k = 1, rt_domain(did)%GNLINKS
+module_RT.F:                    rt_domain(did)%LNLINKSL = rt_domain(did)%LNLINKSL + 1
+module_RT.F:           write(6,*) "LNLINKSL, NLINKS, GNLINKS =",rt_domain(did)%LNLINKSL,rt_domain(did)%NLINKSL,rt_domain(did)%GNLINKSL
+module_RT.F:           allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
+module_RT.F:           do i = 1, rt_domain(did)%GNLINKS
+module_RT.F:                   rt_domain(did)%LLINKID(k) = buf(i)
+module_RT.F:      new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
+module_RT.F:      if(right_id .ge. 0) new_end_i = rt_domain(did)%ixrt - 1
+module_RT.F:      if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
+module_RT.F:            do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
+module_RT.F:               cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
+module_RT.F:               cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
+module_RT.F:                     if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+module_RT.F:                        rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+module_RT.F:      call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
+module_RT.F:      call getToInd(rt_domain(did)%LINKID,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
+module_RT.F:        do k = 1, rt_domain(did)%NLINKSL
+module_RT.F:            do j = 1, rt_domain(did)%jxrt
+module_RT.F:               do i = 1, rt_domain(did)%ixrt
+module_RT.F:                         if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LINKID(k) ) then
+module_RT.F:                            rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+module_RT.F:!!$        rt_domain(did)%STRMFRXSTPTS = -9999  !! existing info useless for link-based routing
+module_RT.F:!!$        do ll=1,rt_domain(did)%NLINKSL
+module_RT.F:!!$           if(trim(rt_domain(did)%gages(ll)) .ne. trim(rt_domain(did)%gageMiss)) then
+module_RT.F:!!$              rt_domain(did)%STRMFRXSTPTS(count) = ll
+module_RT.F:!yw       allocate(tmp_int(rt_domain(did)%GNLINKS))
+module_RT.F:!yw       allocate(tmp_real(rt_domain(did)%GNLINKS))
+module_RT.F:   rt_domain(did)%overland%properties%retention_depth = 0.001   ! units (mm)  
+module_RT.F:   rt_domain(did)%RETDEP_CHAN = 0.001
+module_RT.F:   rt_domain(did)%overland%properties%water_surface_slope = -999
+module_RT.F:   do j=2,rt_domain(did)%JXRT-1
+module_RT.F:      do i=2,rt_domain(did)%IXRT-1
+module_RT.F:         rt_domain(did)%overland%properties%surface_slope_x(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,3)
+module_RT.F:         rt_domain(did)%overland%properties%surface_slope_y(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,1)
+module_RT.F:            if (rt_domain(did)%overland%properties%surface_slope_x(i,j).gt.rt_domain(did)%overland%properties%surface_slope_y(i,j)) then
+module_RT.F:               Vmax=rt_domain(did)%overland%properties%surface_slope_x(i,j)
+module_RT.F:               Vmax=rt_domain(did)%overland%properties%surface_slope_y(i,j)
+module_RT.F:               rt_domain(did)%overland%properties%retention_depth(i,j)=0.
+module_RT.F:               rt_domain(did)%RETDEPFRAC=Vmax/0.1
+module_RT.F:               rt_domain(did)%overland%properties%retention_depth(i,j)=rt_domain(did)%overland%properties%retention_depth(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+module_RT.F:               if (rt_domain(did)%overland%properties%retention_depth(i,j).lt.0.) rt_domain(did)%overland%properties%retention_depth(i,j)=0.
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,1) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,1)
+module_RT.F:         rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i
+module_RT.F:         rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j + 1 
+module_RT.F:         rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 1 
+module_RT.F:         Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,1)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,2) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,2)  
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,2) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i + 1
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j + 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 2
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,2)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,3) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,3)
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,3) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i + 1
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j  
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 3
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,3)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,4) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j-1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,4)  
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,4) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i + 1
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j - 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 4
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,4)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,5) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j-1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,5)
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,5) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j - 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 5
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,5)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,6) = & 
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j-1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,6)  
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,6) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i - 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j - 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 6
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,6)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,7) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,7)
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,7) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i - 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j  
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 7
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,7)
+module_RT.F:         rt_domain(did)%overland%properties%water_surface_slope(i,j,8) = &
+module_RT.F:              (rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i-1,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,8)  
+module_RT.F:         if(rt_domain(did)%overland%properties%water_surface_slope(i,j,8) .gt. Vmax ) then
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,1) = i - 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,2) = j + 1 
+module_RT.F:            rt_domain(did)%overland%properties%max_water_surface_slope_index(i,j,3) = 8
+module_RT.F:            Vmax = rt_domain(did)%overland%properties%water_surface_slope(i,j,8)
+module_RT.F:               rt_domain(did)%overland%properties%retention_depth(i,j)=0.
+module_RT.F:               rt_domain(did)%RETDEPFRAC=Vmax/0.75
+module_RT.F:               rt_domain(did)%overland%properties%retention_depth(i,j)=rt_domain(did)%overland%properties%retention_depth(i,j)*(1.-rt_domain(did)%RETDEPFRAC)
+module_RT.F:               if (rt_domain(did)%overland%properties%retention_depth(i,j).lt.0.) rt_domain(did)%overland%properties%retention_depth(i,j)=0.
+module_RT.F:   rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
+module_RT.F:   rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
+module_RT.F:   !where (rt_domain(did)%CH_NETRT .ge. 0) rt_domain(did)%RETDEPRT = 5.0
+module_RT.F:   where (rt_domain(did)%overland%streams_and_lakes%ch_netrt .ge. 0) &
+module_RT.F:        rt_domain(did)%overland%properties%retention_depth = 5.0
+module_RT.F:   if(right_id .lt. 0) rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT,:)= &
+module_RT.F:        rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT-1,:)
+module_RT.F:   if(left_id  .lt. 0) rt_domain(did)%overland%properties%surface_slope_x(1,:)=rt_domain(did)%overland%properties%surface_slope_x(2,:)
+module_RT.F:   if(up_id    .lt. 0) rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT)= &
+module_RT.F:        rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT-1)
+module_RT.F:   if(down_id  .lt. 0) rt_domain(did)%overland%properties%surface_slope_y(:,1)=rt_domain(did)%overland%properties%surface_slope_y(:,2)
+module_RT.F:   rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT,:)=rt_domain(did)%overland%properties%surface_slope_x(rt_domain(did)%IXRT-1,:)
+module_RT.F:   rt_domain(did)%overland%properties%surface_slope_x(1,:)=rt_domain(did)%overland%properties%surface_slope_x(2,:)
+module_RT.F:   rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT)=rt_domain(did)%overland%properties%surface_slope_y(:,rt_domain(did)%JXRT-1)
+module_RT.F:   rt_domain(did)%overland%properties%surface_slope_y(:,1)=rt_domain(did)%overland%properties%surface_slope_y(:,2)
+module_RT.F:   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_RT.F:   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_RT.F:   call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_y,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_RT.F:      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%water_surface_slope(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_RT.F:      call MPP_LAND_COM_INTEGER(rt_domain(did)%overland%properties%max_water_surface_slope_index(:,:,i),rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+module_RT.F:   allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%nlinksL))
+module_RT.F:   rt_domain(did)%qout_gwsubbas = 0
+module_RT.F:      rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
+module_RT.F:      RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
+module_RT.F:      allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
+module_RT.F:      allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
+module_RT.F:      allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
+module_RT.F:      allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
+module_RT.F:      rt_domain(did)%qin_gwsubbas = 0
+module_RT.F:      rt_domain(did)%z_gwsubbas = 0
+module_RT.F:      rt_domain(did)%gwbas_pix_ct = 0
+module_RT.F:      rt_domain(did)%bas_pcp = 0
+module_RT.F:      rt_domain(did)%gw_buck_coeff = 0.04
+module_RT.F:      rt_domain(did)%gw_buck_exp  = 0.2
+module_RT.F:      rt_domain(did)%z_max = 0.1
+module_RT.F:      rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+module_RT.F:      call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
+module_RT.F:           rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
+module_RT.F:           rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
+module_RT.F:           rt_domain(did)%nhdBuckMask )     
+module_RT.F:      rt_domain(did)%z_gwsubbas = rt_domain(did)%z_gwsubbas/1000.
+module_RT.F:         rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
+module_RT.F:         rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
+module_RT.F:         rt_domain(did)%gw_strm_msk,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
+module_RT.F:         call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
+module_RT.F:              rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
+module_RT.F:         write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
+module_RT.F:         call collectSizeInd(rt_domain(did)%numbasns)
+module_RT.F:         call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, rt_domain(did)%gw_strm_msk,&
+module_RT.F:              rt_domain(did)%numbasns,rt_domain(did)%basnsInd,rt_domain(did)%gw_strm_msk_lind)
+module_RT.F:         allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%qin_gwsubbas (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
+module_RT.F:         allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
+module_RT.F:         rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+module_RT.F:         call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
+module_RT.F:              rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
+module_RT.F:              rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
+module_RT.F:              rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
+module_RT.F:         call pix_ct_1(rt_domain(did)%gw_strm_msk,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
+module_RT.F:              rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd)
+module_RT.F:         rt_domain(did)%gwbas_pix_ct = 0.
+module_RT.F:         !         do k = 1, rt_domain(did)%numbasns
+module_RT.F:         !            bas = rt_domain(did)%basnsInd(k)
+module_RT.F:         do i=1,rt_domain(did)%ixrt
+module_RT.F:            do j=1,rt_domain(did)%jxrt
+module_RT.F:               if (rt_domain(did)%gw_strm_msk(i,j).gt.0) then
+module_RT.F:                  bas = rt_domain(did)%gw_strm_msk(i,j)
+module_RT.F:                  rt_domain(did)%gwbas_pix_ct(bas) = & 
+module_RT.F:                       rt_domain(did)%gwbas_pix_ct(bas)  + 1.0
+module_RT.F:         print *, "Starting GW basin levels...",rt_domain(did)%z_gwsubbas
+module_RT.F:         gw2d(did)%elev = rt_domain(did)%elrt
+module_RT.F:           allocate(tmpRESHT(rt_domain(did)%nlakes))
+module_RT.F:           tmpRESHT = rt_domain(did)%RESHT
+module_RT.F:        call updateLake_seq(rt_domain(did)%RESHT, rt_domain(did)%NLAKES,tmpRESHT)
+module_RT.F:        do j=1,rt_domain(did)%NLINKS
+module_RT.F:             if (rt_domain(did)%ORDER(j) .eq. 1) then    !-- smallest stream reach
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:             elseif (rt_domain(did)%ORDER(j) .eq. 2) then
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:             elseif (rt_domain(did)%ORDER(j) .eq. 3) then
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:             elseif (rt_domain(did)%ORDER(j) .eq. 4) then
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:             elseif (rt_domain(did)%ORDER(j) .eq. 5) then
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:             elseif (rt_domain(did)%ORDER(j) .eq. 6) then
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:             elseif (rt_domain(did)%ORDER(j) .ge. 7) then
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+module_RT.F:               if(rt_domain(did)%Bw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Bw(j) = BOTWID(5)
+module_RT.F:               if(rt_domain(did)%Tw(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw(j) = TOPWID(5)
+module_RT.F:               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%Tw_CC(j) = TOPWIDCC(5)
+module_RT.F:               if(rt_domain(did)%n_CC(j) .eq. 0.0) then 
+module_RT.F:                rt_domain(did)%n_CC(j) = NCC(5)
+module_RT.F:               if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
+module_RT.F:                rt_domain(did)%ChSSlp(j) = CHAN_SS(5)
+module_RT.F:              if(rt_domain(did)%MannN(j) .eq. 0.0) then 
+module_RT.F:               rt_domain(did)%MannN(j) = CHMann(5)
+module_RT.F:               rt_domain(did)%HLINK(j) = HLINK_INIT(5)
+module_RT.F:            rt_domain(did)%CVOL(j) = (rt_domain(did)%Bw(j)+ 1/rt_domain(did)%ChSSLP(j)*rt_domain(did)%HLINK(j))*rt_domain(did)%HLINK(j)*rt_domain(did)%CHANLEN(j) !-- initalize channel volume
+module_RT.F:          do j=1,rt_domain(did)%NLAKES
+module_RT.F:                rt_domain(did)%RESHT(j) = rt_domain(did)%ORIFICEE(j) + &
+module_RT.F:                  ((rt_domain(did)%LAKEMAXH(j) - rt_domain(did)%ORIFICEE(j) )* rt_domain(did)%ELEVLAKE(j)) 
+module_RT.F:   rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+module_RT.F:   rt_domain(did)%SH2OWGT = 1.
+module_RT.F:   rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
+module_RT.F:   rt_domain(did)%QSUBRT = 0.0
+module_RT.F:   rt_domain(did)%ZWATTABLRT = 0.0
+module_RT.F:   rt_domain(did)%QSUBBDRYRT = 0.0
+module_RT.F:   rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0
+module_RT.F:   rt_domain(did)%overland%control%boundary_flux = 0.0
+module_RT.F:   rt_domain(did)%overland%control%surface_water_head_routing = 0.0
+module_RT.F:   rt_domain(did)%overland%control%infiltration_excess = 0.0
+module_RT.F:   rt_domain(did)%overland%control%dhrt = 0.0
+module_RT.F:   rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake = 0.0
+module_RT.F:   rt_domain(did)%LAKE_CT = 0
+module_RT.F:   rt_domain(did)%STRM_CT = 0
+module_RT.F:   rt_domain(did)%SOLDRAIN = 0.0
+module_RT.F:   rt_domain(did)%qinflowbase = 0.0
+module_RT.F:   !  rt_domain(did)%BASIN_MSK = 1
+module_RT.F:   rt_domain(did)%SMC_INIT=0.
+module_RT.F:   rt_domain(did)%DSMC=0.
+module_RT.F:   rt_domain(did)%DACRAIN=0.
+module_RT.F:   rt_domain(did)%DSFCEVP=0.
+module_RT.F:   rt_domain(did)%DCANEVP=0.
+module_RT.F:   rt_domain(did)%DEDIR=0.
+module_RT.F:   rt_domain(did)%DETT=0.
+module_RT.F:   rt_domain(did)%DEPND=0.
+module_RT.F:   rt_domain(did)%DESNO=0.
+module_RT.F:   rt_domain(did)%DSFCRNFF=0.
+module_RT.F:   rt_domain(did)%DQBDRY=0.
+module_RT.F:   rt_domain(did)%overland%mass_balance%pre_infiltration_excess=0.
+module_RT.F:            integer :: tmp(rt_domain(did)%nlinks)
+module_RT.F:            do i = 1, rt_domain(did)%nlinks
+module_RT.F:                if(rt_domain(did)%to_node(i) .gt. 0) then
+module_RT.F:                    kk = rt_domain(did)%to_node(i)
+module_RT.F:            allocate(rt_domain(did)%pnode(rt_domain(did)%nlinks,maxv+1) )
+module_RT.F:            rt_domain(did)%maxv_p = maxv+1
+module_RT.F:            rt_domain(did)%pnode = -99
+module_RT.F:            rt_domain(did)%pnode(:,1) = 1
+module_RT.F:            do i = 1, rt_domain(did)%nlinks
+module_RT.F:                if(rt_domain(did)%to_node(i) .gt. 0) then
+module_RT.F:                    j = rt_domain(did)%to_node(i)
+module_RT.F:                    rt_domain(did)%pnode(j,1) = rt_domain(did)%pnode(j,1) + 1
+module_RT.F:                    kk = rt_domain(did)%pnode(j,1)
+module_RT.F:                    rt_domain(did)%pnode(j,kk) = i
+Noah_distr_routing.F:           use module_RT_data, only: rt_domain
+Noah_distr_routing.F:             rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
+Noah_distr_routing.F:             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%distance_to_neighbor, &
+Noah_distr_routing.F:             rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
+Noah_distr_routing.F:             rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
+Noah_distr_routing.F:             rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
+Noah_distr_routing.F:	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
+Noah_distr_routing.F:             use module_RT_data, only: rt_domain
+Noah_distr_routing.F:                     nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%surface_slope_x,       &
+Noah_distr_routing.F:                     rt_domain(did)%overland%properties%surface_slope_y,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
+Noah_distr_routing.F:                     rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
+Noah_distr_routing.F:                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
+Noah_distr_routing.F:                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope)
+Noah_distr_routing.F:             use module_RT_data, only: rt_domain
+Noah_distr_routing.F:                 !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mask, &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%overland%properties%roughness, &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%properties%surface_slope_x, rt_domain(did)%overland%properties%surface_slope_y, rt_domain(did)%overland%control%surface_water_head_routing,  &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%control%dhrt, rt_domain(did)%overland%streams_and_lakes%ch_netrt, rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel,&
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,rt_domain(did)%overland%control%boundary_flux, &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%streams_and_lakes%accumulated_surface_water_to_channel,rt_domain(did)%overland%control%boundary_flux_total, rt_domain(did)%overland%streams_and_lakes%accumulated_surface_water_to_lake,&
+Noah_distr_routing.F:                 !         rt_domain(did)%q_sfcflx_x,rt_domain(did)%q_sfcflx_y, &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%properties%distance_to_neighbor, rt_domain(did)%overland%properties%water_surface_slope, rt_domain(did)%overland%properties%max_water_surface_slope_index , &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%mass_balance%post_soil_moisture_content,rt_domain(did)%overland%mass_balance%pre_infiltration_excess,rt_domain(did)%overland%mass_balance%post_infiltration_excess, &
+Noah_distr_routing.F:                 !         rt_domain(did)%overland%mass_balance%pre_soil_moisture_content,rt_domain(did)%overland%mass_balance%accumulated_change_in_soil_moisture )
+Noah_distr_routing.F:                          rt_domain(did)%overland, &
+Noah_distr_routing.F:                          rt_domain(did)%ixrt, &
+Noah_distr_routing.F:                          rt_domain(did)%jxrt, &
+Noah_distr_routing.F:                          rt_domain(did)%q_sfcflx_x, &
+Noah_distr_routing.F:                          rt_domain(did)%q_sfcflx_y &
+Noah_distr_routing.F:                rt_domain(did)%overland%control%infiltration_excess = 0.0

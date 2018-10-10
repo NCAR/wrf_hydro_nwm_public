@@ -75,6 +75,17 @@ CONTAINS
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
+               , wvtflag, wvt_ratio, NSUB, NTRACER             & ! IN WVT
+		, SMOIS_SUB, SH2O_SUB                          & ! IN WVT
+                , QFX_TR, LH_TR, SFCRUNOFF_TR, UDRUNOFF_TR     & !IN/OUT WVT
+		, SMOIS_TR, SH2O_TR, SNOW_TR, SNOWH_TR, CANWAT_TR &
+		, ACSNOM_TR, ACSNOW_TR, CANICEXY_TR, CANLIQXY_TR  &
+		, QSNOWXY_TR, WSLAKEXY_TR, WAXY_TR, WTXY_TR       &
+		, ZSNSOXY_TR, SNICEXY_TR, SNLIQXY_TR              & ! IN/OUT WVT variables
+                , SMCWTDXY_TR, DEEPRECHXY_TR, RECHXY_TR           & ! INOUT
+                , RUNSFXY_TR, RUNSBXY_TR, ECANXY_TR               &
+		, EDIRXY_TR,  ETRANXY_TR, FLUXXY_TR               & ! IN/OUT WVT variables
+
                )
 !----------------------------------------------------------------
     USE MODULE_SF_NOAHMPLSM
@@ -286,6 +297,45 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWT_AVG   ! average snowpack temperature (by layer mass) [K]
 #endif
 
+!------------------optional in/out for water tracer capability-------------------
+    INTEGER,                                       , OPTIONAL, INTENT(IN   ) ::  WVTFLAG    ! start calculate when >1
+    REAL,                                          , OPTIONAL, INTENT(IN   ) ::  WVT_RATIO  ! tracer ratio
+    INTEGER, DIMENSION(1:NSOIL),                   , OPTIONAL, INTENT(IN)    ::  NSUB
+    INTEGER,                                       , OPTIONAL, INTENT(IN)    ::  NTRACER
+    REAL,  DIMENSION( ims:ime, 1:ntracer, jms:jme ), OPTIONAL, INTENT(INOUT) ::  SMOIS_SUB   ! volumetric soil moisture [m3/m3]
+    REAL,  DIMENSION( ims:ime, 1:ntracer, jms:jme ), OPTIONAL, INTENT(INOUT) ::  SH2O_SUB    ! volumetric liquid soil moisture [m3/m3]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  QFX_TR        ! latent heat flux [kg s-1 m-2]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  LH_TR         ! latent heat flux [W m-2]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SFCRUNOFF_TR  ! accumulated surface runoff [m]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  UDRUNOFF_TR   ! accumulated sub-surface runoff [m]
+    REAL,  DIMENSION( ims:ime, 1:ntracer, jms:jme ), OPTIONAL, INTENT(INOUT) ::  SMOIS_TR      ! volumetric soil moisture [m3/m3]
+    REAL,  DIMENSION( ims:ime, 1:ntracer, jms:jme ), OPTIONAL, INTENT(INOUT) ::  SH2O_TR       ! volumetric liquid soil moisture [m3/m3]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOW_TR       ! snow water equivalent [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWH_TR      ! physical snow depth [m]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  CANWAT_TR     ! total canopy water + ice [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACSNOM_TR     ! accumulated snow melt leaving pack
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACSNOW_TR     ! accumulated snow on grid
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  CANICEXY_TR   ! canopy-intercepted ice (mm)
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  CANLIQXY_TR   ! canopy-intercepted liquid water (mm)
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  QSNOWXY_TR    ! snowfall on the ground [mm/s]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  WSLAKEXY_TR   ! lake water storage [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  WAXY_TR       ! water in the "aquifer" [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  WTXY_TR       ! groundwater storage [mm]
+    REAL,  DIMENSION( ims:ime,-2:ntracer, jms:jme ), OPTIONAL, INTENT(INOUT) ::  ZSNSOXY_TR    ! snow layer depth [m]
+    REAL,    DIMENSION( ims:ime,-2:0,     jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNICEXY_TR     ! snow layer ice [mm]
+    REAL,    DIMENSION( ims:ime,-2:0,     jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNLIQXY_TR    ! snow layer liquid water [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(OUT  ) ::  RUNSFXY_TR     ! surface runoff [mm/s]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(OUT  ) ::  RUNSBXY_TR    ! subsurface runoff [mm/s]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(OUT  ) ::  ECANXY_TR     ! evaporation of intercepted water (mm/s)
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(OUT  ) ::  EDIRXY_TR     ! soil surface evaporation rate (mm/s]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(OUT  ) ::  ETRANXY_TR    ! transpiration rate (mm/s)
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SMCWTDXY_TR   ! soil moisture content in the layer to the water table when deep
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  DEEPRECHXY_TR ! recharge to the water table when deep
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  RECHXY_TR     ! recharge to the water table (diagnostic)
+    REAL, DIMENSION( ims:ime, 1:ntracer,  jms:jme ), OPTIONAL, INTENT(OUT)   ::  FLUXXY_TR     ! tracer flux at soil bottom [m]
+    
+!--------------------------------------------------------------------------------
+
 ! 1D equivalent of 2D/3D fields
 
 ! IN only
@@ -418,6 +468,42 @@ CONTAINS
   REAL   :: PAHG    !precipitation advected heat - under canopy net (W/m2)
   REAL   :: PAHB    !precipitation advected heat - bare ground net (W/m2)
   REAL   :: PAH     !precipitation advected heat - total (W/m2)
+
+!----------------------------------------------------------------------------
+! Needed for Water tracer capability
+!----------------------------------------------------------------------------
+    REAL,   DIMENSION( 1:NTRACER)       :: SMC_SUB
+    REAL,   DIMENSION( 1:NTRACER)       :: SMH2O_SUB
+    REAL,   DIMENSION( 1:NTRACER)       :: SMC_TR          ! vol. soil moisture (m3/m3)
+    REAL,   DIMENSION( 1:NTRACER)       :: SMH2O_TR        ! vol. soil liquid water (m3/m3)
+    REAL                                :: SWE_TR          ! snow water equivalent (mm)
+    REAL                                :: SNDPTH_TR       ! snow depth (m)
+    REAL                                :: CANICE_TR       ! canopy-intercepted ice(mm)
+    REAL                                :: CANLIQ_TR       ! canopy-intercepted liquid water (mm)
+    REAL                                :: QSNOW_TR        ! snowfall on the ground [mm/s]
+    REAL                                :: WSLAKE_TR       ! lake water storage [mm]
+    REAL                                :: WA_TR           ! water in the "aquifer" [mm]
+    REAL                                :: WT_TR           ! groundwater storage [mm]
+    REAL                                :: SMCWTD_TR       ! soil moisture content in the layer to the water table when deep
+    REAL                                :: DEEPRECH_TR     ! recharge to the water table when deep
+    REAL                                :: RECH_TR         ! recharge to the water table (diagnostic)
+    REAL, DIMENSION(-2:NTRACER)         :: ZSNSO_TR
+    REAL, DIMENSION(-2:              0) :: SNICE_TR        ! snow layer ice [mm]
+    REAL, DIMENSION(-2:              0) :: SNLIQ_TR        ! snow layer liquid water [mm]
+    REAL                                :: RUNSF_TR        ! surface runoff [mm/s]
+    REAL                                :: RUNSB_TR        ! subsurface runoff [mm/s]
+    REAL                                :: ECAN_TR         ! evaporation of intercepted water (mm/s)
+    REAL                                :: ETRAN_TR        ! transpiration rate (mm/s)
+    REAL                                :: ESOIL_TR        ! soil surface evaporation rate (mm/s]
+    REAL                                :: FCEV_TR         ! canopy evaporation heat (w/m2) [+ to atm]
+    REAL                                :: FGEV_TR         ! ground evaporation heat (w/m2) [+ to atm]
+    REAL                                :: FCTR_TR         ! transpiration heat flux (w/m2) [+ to atm]
+    REAL                                :: QSNBOT_TR       ! snowmelt out bottom of pack [mm/s]
+    REAL                                :: PONDING_TR      ! snowmelt with no pack [mm]
+    REAL                                :: PONDING1_TR     ! snowmelt with no pack [mm]
+    REAL                                :: PONDING2_TR     ! snowmelt with no pack [mm]
+    REAL, DIMENSION( 1:NTRACER)         :: FLUX_TR         ! tracer flux at soil layer bottom [m]
+!------------------------------------------------------------------------------
 
 ! Intermediate terms
 
@@ -616,6 +702,27 @@ CONTAINS
        RECH                  = 0.
        DEEPRECH              = 0.
 
+!--------water tracer variable transfer-------
+       if (present(SMOIS_SUB)) SMC_SUB (    1:NTRACER)  = SMOIS_SUB   (I,      1:NTRACER,J)
+       if (present(SH2O_SUB))  SMH2O_SUB(   1:NTRACER)  = SH2O_SUB    (I,      1:NTRACER,J)
+       if (present(SMOI_TR))   SMC_TR  (    1:NTRACER)  = SMOIS_TR   (I,      1:NTRACER,J)  ! soil total moisture [m3/m3]
+       if (present(SH2O_TR))   SMH2O_TR(    1:NTRACER)  = SH2O_TR    (I,      1:NTRACER,J)  ! soil liquid moisture [m3/m3]
+       if (present(SNOW_TR))   SWE_TR                   = SNOW_TR    (I,J)                ! snow water equivalent [mm]
+       if (present(SNOWH_TR))  SNDPTH_TR                = SNOWH_TR   (I,J)                ! snow depth [m]
+       if (present(CANLIQXY_TR)) CANLIQ_TR              = CANLIQXY_TR(I,J)                ! canopy liquid water [mm]
+       if (present(CANICEXY_TR)) CANICE_TR              = CANICEXY_TR(I,J)                ! canopy frozen water [mm]
+       if (present(QSNOWXY_TR)) QSNOW_TR                = QSNOWXY_TR (I,J)                ! snow falling on ground
+       if (present(WSLAKEXY_TR)) WSLAKE_TR              = WSLAKEXY_TR(I,J)                ! lake water storage (can be neg.) (mm)
+       if (present(WAXY_TR))   WA_TR                    = WAXY_TR    (I,J)                ! water storage in aquifer [mm]
+       if (present(WTXY_TR))   WT_TR                    = WTXY_TR    (I,J)                ! water in aquifer&saturated soil [mm]
+       if (present(ZSNSOXY_TR)) ZSNSO_TR(-NSNOW+1:NTRACER) = ZSNSOXY_TR (I,-NSNOW+1:NTRACER,J) ! depth to layer interface
+       if (present(SNICEXY_TR)) SNICE_TR(-NSNOW+1:    0) = SNICEXY_TR (I,-NSNOW+1:    0,J) ! snow layer ice content
+       if (present(SNLIQXY_TR)) SNLIQ_TR(-NSNOW+1:    0) = SNLIQXY_TR (I,-NSNOW+1:    0,J) ! snow layer water content
+       if (present(SMCWTDXY_TR)) SMCWTD_TR                = SMCWTDXY_TR(I,J)
+       if (present(RECHXY_TR))   RECH_TR                  = 0.
+       if (present(DEEPRECH_TR)) DEEPRECH_TR              = 0.
+!---------------------------------------------
+
        SLOPETYP     = 1                               ! set underground runoff slope term
        IST          = 1                               ! MP surface type: 1 = land; 2 = lake
        SOILCOLOR    = 4                               ! soil color: assuming a middle color category ?????????
@@ -646,7 +753,7 @@ CONTAINS
        parameters%mfsno  = MFSNO_2D(I,J)          ! Snow cover m parameter
        parameters%rsurf_exp = RSURFEXP_2D(I,J)    ! exponent in the shape parameter for soil resistance option 1
 #endif
-       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters)
+       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters, NSOIL=NSOIL,ZSOIL=ZSOIL)
        
        if (HVT_TABLE(VEGTYP) > 0.0) then
          parameters%hvb = parameters%hvt * HVB_TABLE(VEGTYP) / HVT_TABLE(VEGTYP)
@@ -763,6 +870,7 @@ CONTAINS
 
     ELSE
          ICE=0                              ! Neither sea ice or land ice.
+      if (wvtflag .lt. 1) then 
          CALL NOAHMP_SFLX (parameters, &
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
             DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
@@ -797,7 +905,54 @@ CONTAINS
             , sfcheadrt(i,j)                               &
 #endif
             )            ! OUT :
-                  
+      else
+	CALL NOAHMP_SFLX (parameters, &
+            I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
+            DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
+            FVEG    , FVGMAX  , VEGTYP  , ICE     , IST     ,           & ! IN : Vegetation/Soil characteristics
+            SMCEQ   ,                                                   & ! IN : Vegetation/Soil characteristics
+            T_ML    , P_ML    , PSFC    , U_ML    , V_ML    , Q_ML    , & ! IN : Forcing
+            QC      , SWDN    , LWDN    ,                               & ! IN : Forcing
+	    PRCPCONV, PRCPNONC, PRCPSHCV, PRCPSNOW, PRCPGRPL, PRCPHAIL, & ! IN : Forcing
+            TBOT    , CO2PP   , O2PP    , FOLN    , FICEOLD , Z_ML    , & ! IN : Forcing
+            ALBOLD  , SNEQVO  ,                                         & ! IN/OUT : 
+            STC     , SMH2O   , SMC     , TAH     , EAH     , FWET    , & ! IN/OUT : 
+            CANLIQ  , CANICE  , TV      , TG      , QSFC1D  , QSNOW   , & ! IN/OUT : 
+            ISNOW   , ZSNSO   , SNDPTH  , SWE     , SNICE   , SNLIQ   , & ! IN/OUT : 
+            ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT : 
+            STMASS  , WOOD    , STBLCP  , FASTCP  , PLAI    , PSAI    , & ! IN/OUT : 
+            CM      , CH      , TAUSS   ,                               & ! IN/OUT : 
+            SMCWTD  ,DEEPRECH , RECH    ,                               & ! IN/OUT :
+            Z0WRF   ,                                                   &
+            FSA     , FSR     , FIRA    , FSH     , SSOIL   , FCEV    , & ! OUT : 
+            FGEV    , FCTR    , ECAN    , ETRAN   , ESOIL   , TRAD    , & ! OUT : 
+            TGB     , TGV     , T2MV    , T2MB    , Q2MV    , Q2MB    , & ! OUT : 
+            RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , & ! OUT : 
+            FSNO    , NEE     , GPP     , NPP     , FVEGMP  , SALB    , & ! OUT : 
+            QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT : 
+            ALBSND  , ALBSNI  ,                                         & ! OUT :
+            BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT : 
+            SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
+	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
+	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE   , PAHV    , & 
+            PAHG    , PAHB    , PAH                                     &
+#ifdef WRF_HYDRO
+            , sfcheadrt(i,j)                               &
+#endif
+            , WVTFLAG=WVTFLAG, WVT_RATIO=WVT_RATIO                      &      !IN
+	    , NSUB=NSUB, NTRACER=NTRACER, SMC_SUB=SMC_SUB, SMH2O_SUB=SMH2O_SUB  & ! IN
+            , SMH2O_TR=SMH2O_TR, SMC_TR=SMC_TR, CANLIQ_TR=CANLIQ_TR, CANICE_TR=CANICE_TR & 
+	    , QSNOW_TR=QSNOW_TR,ZSNSO_TR=ZSNSO_TR, SNDPTH_TR=SNDPTH_TR, SWE_TR=SWE_TR    &
+	    , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR,WA_TR=WA_TR,WT_TR=WT_TR, WSLAKE_TR=WSLAKE_TR & ! IN/OUT
+            , SMCWTD_TR= SMCWTD_TR ,DEEPRECH_TR=DEEPRECH_TR , RECH_TR=RECH_TR       & ! INOUT
+            , ECAN_TR=ECAN_TR, ETRAN_TR=ETRAN_TR, ESOIL_TR=ESOIL_TR      &
+	    , FCEV_TR=FCEV_TR, FCTR_TR=FCTR_TR, FGEV_TR=FGEV_TR          & ! OUT
+            , RUNSF_TR=RUNSF_TR, RUNSB_TR=RUNSB_TR, QSNBOT_TR=QSNBOT_TR  & !OUT
+	    , PONDING_TR=PONDING_TR, PONDING1_TR=PONDING1_TR             &  !OUT
+	    , PONDING2_TR=PONDING2_TR, FLUX_TR=FLUX_TR                   & ! OUT
+            )            ! OUT :  
+      end if
+		  
             QFX(I,J) = ECAN + ESOIL + ETRAN
             LH       (I,J)                = FCEV + FGEV + FCTR
 
@@ -966,6 +1121,38 @@ CONTAINS
              RECHXY   (I,J)                = RECHXY(I,J) + RECH*1.E3 !RECHARGE TO THE WATER TABLE
              DEEPRECHXY(I,J)               = DEEPRECHXY(I,J) + DEEPRECH
              SMCWTDXY(I,J)                 = SMCWTD
+	    
+	     !-------water tracer variables------------
+	     if(present(SFCRUNOFF_TR)) SFCRUNOFF_TR(I,J)                = SFCRUNOFF_TR(I,J) + RUNSF_TR * DT
+             if(present(UDRUNOFF_TR))  UDRUNOFF_TR (I,J)                = UDRUNOFF_TR(I,J)  + RUNSB_TR * DT
+             if(present(RECHXY_TR))    RECHXY_TR   (I,J)                = RECHXY_TR(I,J) + RECH_TR*1.E3 !RECHARGE TO THE WATER TABLE
+             if(present(DEEPRECHXY_TR)) DEEPRECHXY_TR(I,J)              = DEEPRECHXY_TR(I,J) + DEEPRECH_TR
+             if(present(CANLIQ_TR))    CANWAT_TR   (I,J)                = CANLIQ_TR + CANICE_TR
+             if(present(ACSNOW_TR))    ACSNOW_TR   (I,J)                = ACSNOW_TR(I,J) +  PRECIP_IN(I,J) * FPICE * WVT_RATIO
+             if(present(ACSNOM_TR))    ACSNOM_TR   (I,J)                = ACSNOM_TR(I,J) + QSNBOT_TR*DT + PONDING_TR + PONDING1_TR + PONDING2_TR
+	     if(present(SMOIS_SUB))   SMOIS_SUB    (I,    1:NTRACER,J)  = SMC_SUB   (      1:NTRACER)
+             if(present(SH2O_SUB))    SH2O_SUB     (I,    1:NTRACER,J)  = SMH2O_SUB (      1:NTRACER)
+             if(present(SMOIS_TR))     SMOIS_TR    (I,    1:NTRACER,J)  = SMC_TR   (      1:NTRACER)
+             if(present(SH2O_TR))      SH2O_TR     (I,    1:NTRACER,J)  = SMH2O_TR (      1:NTRACER)
+             if(present(SNOW_TR))      SNOW_TR     (I,J)                = SWE_TR
+             if(present(SNOWH_TR))     SNOWH_TR    (I,J)                = SNDPTH_TR
+             if(present(CANLIQXY_TR))  CANLIQXY_TR (I,J)                = CANLIQ_TR
+             if(present(CANICEXY_TR))  CANICEXY_TR (I,J)                = CANICE_TR
+             if(present(QSNOWXY_TR))   QSNOWXY_TR  (I,J)                = QSNOW_TR
+             if(present(WSLAKEXY_TR))  WSLAKEXY_TR (I,J)                = WSLAKE_TR
+             if(present(WAXY_TR))      WAXY_TR     (I,J)                = WA_TR
+             if(present(WTXY_TR))      WTXY_TR     (I,J)                = WT_TR
+             if(present(ZSNSOXY_TR)) ZSNSOXY_TR  (I,-NSNOW+1:NTRACER,J) = ZSNSO_TR (-NSNOW+1:NTRACER)
+             if(present(SNICEXY_TR))   SNICEXY_TR  (I,-NSNOW+1:    0,J) = SNICE_TR (-NSNOW+1:    0)
+             if(present(SNLIQXY_TR))   SNLIQXY_TR  (I,-NSNOW+1:    0,J) = SNLIQ_TR (-NSNOW+1:    0)
+             if(present(SMCWTDXY_TR))  SMCWTDXY_TR(I,J)                 = SMCWTD_TR
+             if(present(RUNSFXY_TR))   RUNSFXY_TR  (I,J)                = RUNSF_TR
+             if(present(RUNSBXY_TR))   RUNSBXY_TR  (I,J)                = RUNSB_TR
+             if(present(ECANXY_TR))    ECANXY_TR   (I,J)                = ECAN_TR
+             if(present(EDIRXY_TR))    EDIRXY_TR   (I,J)                = ESOIL_TR
+             if(present(ETRANXY_TR))   ETRANXY_TR  (I,J)                = ETRAN_TR
+             if(present(FLUXXY_TR))    FLUXXY_TR   (I,   1:NTRACER, J)  = FLUX_TR
+	     !------------------------------------------
 
           ENDIF                                                         ! endif of land-sea test
 
@@ -976,7 +1163,7 @@ CONTAINS
   END SUBROUTINE noahmplsm
 !------------------------------------------------------
 
-SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameters)
+SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameters,NSOIL, ZSOIL)
 
   USE NOAHMP_TABLES
   USE MODULE_SF_NOAHMPLSM
@@ -987,6 +1174,12 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   INTEGER, INTENT(IN)    :: SOILTYPE
   INTEGER, INTENT(IN)    :: SLOPETYPE
   INTEGER, INTENT(IN)    :: SOILCOLOR
+  !-----optional input variables if layers are set to be >4--------
+  INTEGER, INTENT(IN), OPTIONAL :: NSOIL
+  if (present(NSOIL)) REAL, DIMENSION(1:NSOIL), INTENT(IN),OPTIONAL: ZSOIL !COULD BE PROBLEMATIC BECAUSE IT USES NSOIL TO DEFINE DIMENSION
+  REAL, DIMENSION(1:4)  :: ZSOIL_OLD = (/0.1, 0.4, 1.0, 2.0/)
+  INTEGER               :: IZ
+  !----------------------------------------------------------------
     
   type (noahmp_parameters), intent(inout) :: parameters
     
@@ -1063,6 +1256,16 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   parameters%TOPT   =   TOPT_TABLE(VEGTYPE)       !Optimum transpiration air temperature [K]
   parameters%RSMAX  =  RSMAX_TABLE(VEGTYPE)       !Maximal stomatal resistance [s m-1]
 
+!----------for layers > 4, change root depth---------
+  if (present(NSOIL)) then
+    do IZ = 1, NSOIL
+      IF (abs(-ZSOIL(IZ) - ZSOIL_OLD(parameters%NROOT)) < 1E-6) THEN
+        parameters%NROOT = IZ
+      END IF
+    end do
+  end if
+!----------------------------------------------------
+
 !------------------------------------------------------------------------------------------!
 ! Transfer rad parameters
 !------------------------------------------------------------------------------------------!
@@ -1125,6 +1328,17 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
     parameters%MP     =     MP_TABLE(VEGTYPE)       !slope of conductance-to-photosynthesis relationship
    parameters%RSURF_EXP  =   RSURF_EXP_TABLE
 #endif
+
+!-------for a simplified way to assign b, dksat, dwsat-----------
+!-------should assign them in the 3-D variables------------------
+!if (present(NSOIL)) then
+!  parameters%BEXP  =  5.0
+!  do IZ = 1,NSOIL
+!     parameters%DKSAT(IZ)  = (8.7/3600)*exp(ZSOIL(IZ)/0.56)
+!     parameters%DWSAT(IZ)  = DWSAT_TABLE(SOILTYPE)
+!  end do
+!end if
+!----------------------------------------------------------------
 
 ! ----------------------------------------------------------------------
 ! Transfer GENPARM parameters
