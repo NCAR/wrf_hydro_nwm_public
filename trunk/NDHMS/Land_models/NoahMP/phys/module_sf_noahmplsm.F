@@ -6562,7 +6562,12 @@ end if
                         QRAIN  ,FICEOLD,ILOC   ,JLOC   ,         & !in
                         ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  , & !inout
                         SH2O   ,SICE   ,STC    ,ZSNSO  ,DZSNSO , & !inout
-                        QSNBOT ,SNOFLOW,PONDING1       ,PONDING2)  !out
+                        QSNBOT ,SNOFLOW,PONDING1       ,PONDING2 & !out
+			, WVTFLAG, NSUB,  NTRACER, SH2O_SUB, SICE_SUB & !wt in
+			, SNOWHIN_TR, QSNOW_TR, QRAIN_TR              & !wt IN
+                        , SNOWH_TR, SNEQV_TR, SNICE_TR, SNLIQ_TR      & !wt INOUT
+                        , SH2O_TR, SICE_TR, ZSNSO_TR, DZSNSO_TR,EDIR_TR  & !wt INOUT
+                        , QSNBOT_TR, SNOFLOW_TR, PONDING1_TR, PONDING2_TR) !wt out
 ! ----------------------------------------------------------------------
   IMPLICIT NONE
 ! ----------------------------------------------------------------------
@@ -6601,6 +6606,36 @@ end if
   REAL,                              INTENT(OUT) :: PONDING1
   REAL,                              INTENT(OUT) :: PONDING2
 
+!----------------------------------------------------------------------
+! Needed for Water tracer capability
+!----------------------------------------------------------------------
+  INTEGER,                           OPTIONAL,INTENT(IN)    :: WVTFLAG
+  INTEGER, DIMENSION(1:NSOIL),       OPTIONAL,INTENT(IN)    :: NSUB
+  INTEGER,                           OPTIONAL,INTENT(IN)    :: NTRACER
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL,INTENT(INOUT) :: SH2O_SUB   !soil liquid moisture (m3/m3)
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL,INTENT(INOUT) :: SICE_SUB   !soil ice moisture (m3/m3)
+  REAL,                              OPTIONAL,INTENT(IN)    :: SNOWHIN_TR!snow depth increasing rate (m/s)
+  REAL,                              OPTIONAL,INTENT(IN)    :: QSNOW_TR  !snow at ground srf (mm/s) [+]
+  REAL,                              OPTIONAL,INTENT(IN)    :: QRAIN_TR  !snow surface rain rate[mm/s]
+  REAL,                              OPTIONAL,INTENT(INOUT) :: SNOWH_TR  !snow height [m]
+  REAL,                              OPTIONAL,INTENT(INOUT) :: SNEQV_TR  !snow water eqv. [mm]
+  REAL, DIMENSION(-NSNOW+1:      0), OPTIONAL,INTENT(INOUT) :: SNICE_TR  !snow layer ice [mm]
+  REAL, DIMENSION(-NSNOW+1:      0), OPTIONAL,INTENT(INOUT) :: SNLIQ_TR  !snow layer liquid water [mm]
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL,INTENT(INOUT) :: SH2O_TR   !soil liquid moisture (m3/m3)
+  REAL, DIMENSION(       1:NTRACER), OPTIONAL,INTENT(INOUT) :: SICE_TR   !soil ice moisture (m3/m3)
+  REAL, DIMENSION(-NSNOW+1:NTRACER), OPTIONAL,INTENT(INOUT) :: ZSNSO_TR  !depth of snow/soil layer-bottom
+  REAL, DIMENSION(-NSNOW+1:NTRACER), OPTIONAL,INTENT(INOUT) :: DZSNSO_TR !snow/soil layer thickness [m]
+  REAL,                              OPTIONAL,INTENT(INOUT) :: EDIR_TR   ! mm/s
+  REAL,                              OPTIONAL,INTENT(OUT)   :: QSNBOT_TR !melting water out of snow bottom [mm/s]
+  REAL,                              OPTIONAL,INTENT(OUT)   :: SNOFLOW_TR!glacier flow [mm]
+  REAL,                              OPTIONAL,INTENT(OUT)   :: PONDING1_TR
+  REAL,                              OPTIONAL,INTENT(OUT)   :: PONDING2_TR
+  !------------local vars---------------------------------------------
+  REAL                                                      :: undefined_value = -1.E36
+  REAL                                                      :: PROPOR_TR
+  INTEGER                                                   :: K, ISUB
+!----------------------------------------------------------------------
+
 ! local
   INTEGER :: IZ,i
   REAL    :: BDSNOW  !bulk density of snow (kg/m3)
@@ -6608,34 +6643,99 @@ end if
    SNOFLOW = 0.0
    PONDING1 = 0.0
    PONDING2 = 0.0
+   !-----wt calc------
+   if (present(WVTFLAG)) then
+     SNOFLOW_TR = 0.0
+     PONDING1_TR = 0.0
+     PONDING2_TR = 0.0
+   end if
+   !------------------
 
+ if (present(WVTFLAG)) then
    CALL SNOWFALL (parameters,NSOIL  ,NSNOW  ,DT     ,QSNOW  ,SNOWHIN, & !in
                   SFCTMP ,ILOC   ,JLOC   ,                 & !in
                   ISNOW  ,SNOWH  ,DZSNSO ,STC    ,SNICE  , & !inout
-                  SNLIQ  ,SNEQV  )                           !inout
+                  SNLIQ  ,SNEQV                            & !inout
+		  , WVTFLAG=WVTFLAG, NTRACER=NTRACER         & !wt in
+		  , QSNOW_TR=QSNOW_TR, SNOWHIN_TR=SNOWHIN_TR & !wt inout
+		  , SNOWH_TR=SNOWH_TR, DZSNSO_TR=DZSNSO_TR   & !wt inout
+		  , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR, SNEQV_TR=SNEQV_TR)   !wt inout	  
+ else
+   CALL SNOWFALL (parameters,NSOIL  ,NSNOW  ,DT     ,QSNOW  ,SNOWHIN, & !in
+                  SFCTMP ,ILOC   ,JLOC   ,                 & !in
+                  ISNOW  ,SNOWH  ,DZSNSO ,STC    ,SNICE  , & !inout
+                  SNLIQ  ,SNEQV  )                           !inout	  
+  end if
 
 ! MB: do each if block separately
 
-   IF(ISNOW < 0) &        ! when multi-layer
+   IF(ISNOW < 0) then       ! when multi-layer
+   IF (present(WVTFLAG)) then
+    CALL  COMPACT (parameters,NSNOW  ,NSOIL  ,DT     ,STC    ,SNICE  , & !in
+                  SNLIQ  ,ZSOIL  ,IMELT  ,FICEOLD,ILOC   , JLOC ,& !in
+                  ISNOW  ,DZSNSO ,ZSNSO                          & !inout
+		  , WVTFLAG=WVTFLAG, NTRACER=NTRACER, DZSNSO_TR=DZSNSO_TR)  !wt inout
+   else
    CALL  COMPACT (parameters,NSNOW  ,NSOIL  ,DT     ,STC    ,SNICE  , & !in
                   SNLIQ  ,ZSOIL  ,IMELT  ,FICEOLD,ILOC   , JLOC ,& !in
                   ISNOW  ,DZSNSO ,ZSNSO  )                   !inout
+   end if
+   END IF
 
-   IF(ISNOW < 0) &        !when multi-layer
+   IF(ISNOW < 0) THEN        !when multi-layer
+   if (present(WVTFLAG)) then
+   CALL  COMBINE (parameters,NSNOW  ,NSOIL  ,ILOC   ,JLOC   ,         & !in
+                  ISNOW  ,SH2O   ,STC    ,SNICE  ,SNLIQ  , & !inout
+                  DZSNSO ,SICE   ,SNOWH  ,SNEQV  ,         & !inout
+                  PONDING1       ,PONDING2                 & !out
+		  , WVTFLAG=WVTFLAG, NSUB=NSUB, NTRACER=NTRACER  & !wt in
+		  , SH2O_SUB=SH2O_SUB, SICE_SUB=SICE_SUB, DT=DT  & !wt in
+		  , SH2O_TR=SH2O_TR, SNICE_TR=SNICE_TR           & !wt inout
+		  , SNLIQ_TR=SNLIQ_TR, DZSNSO_TR=DZSNSO_TR       & !wt inout
+		  , SICE_TR=SICE_TR, SNOWH_TR=SNOWH_TR           & !wt inout
+		  , SNEQV_TR=SNEQV_TR, PONDING1_TR=PONDING1_TR   & !wt out
+		  , PONDING2_TR=PONDING2_TR)                       !wt out
+   else
    CALL  COMBINE (parameters,NSNOW  ,NSOIL  ,ILOC   ,JLOC   ,         & !in
                   ISNOW  ,SH2O   ,STC    ,SNICE  ,SNLIQ  , & !inout
                   DZSNSO ,SICE   ,SNOWH  ,SNEQV  ,         & !inout
                   PONDING1       ,PONDING2)                  !out
+   end if
+   END IF
 
-   IF(ISNOW < 0) &        !when multi-layer
+   IF(ISNOW < 0) THEN        !when multi-layer
+   if (present(WVTFLAG)) then
+   CALL   DIVIDE (parameters,NSNOW  ,NSOIL  ,                         & !in
+                  ISNOW  ,STC    ,SNICE  ,SNLIQ  ,DZSNSO              & !inout
+		  , WVTFLAG=WVTFLAG, NTRACER=NTRACER                  & !wt in
+		  , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR, DZSNSO_TR=DZSNSO_TR) !wt inout
+   else
    CALL   DIVIDE (parameters,NSNOW  ,NSOIL  ,                         & !in
                   ISNOW  ,STC    ,SNICE  ,SNLIQ  ,DZSNSO )   !inout
+   end if
+   END IF
 
+   if (present(WVTFLAG)) then
+   CALL  SNOWH2O (parameters,NSNOW  ,NSOIL  ,DT     ,QSNFRO ,QSNSUB , & !in 
+                  QRAIN  ,ILOC   ,JLOC   ,                 & !in
+                  ISNOW  ,DZSNSO ,SNOWH  ,SNEQV  ,SNICE  , & !inout
+                  SNLIQ  ,SH2O   ,SICE   ,STC    ,         & !inout
+                  QSNBOT ,PONDING1       ,PONDING2         & !out
+		  , WVTFLAG=WVTFLAG, NSUB=NSUB,NTRACER=NTRACER    & !wt in
+		  , SH2O_SUB=SH2O_SUB, SICE_SUB=SICE_SUB          & !wt in
+		  , QRAIN_TR=QRAIN_TR, DZSNSO_TR=DZSNSO_TR        & !wt in
+		  , SNOWH_TR=SNOWH_TR, SNEQV_TR= SNEQV_TR         & !wt inout
+                  , SNICE_TR=SNICE_TR, SNLIQ_TR=SNLIQ_TR          & !wt inout
+		  , SH2O_TR=SH2O_TR, SICE_TR=SICE_TR              & !wt inout
+		  , EDIR_TR=EDIR_TR, QSNBOT_TR=QSNBOT_TR          & !wt inout
+		  , PONDING1_TR=PONDING1_TR, PONDING2_TR=PONDING2_TR) !wt out
+   else
    CALL  SNOWH2O (parameters,NSNOW  ,NSOIL  ,DT     ,QSNFRO ,QSNSUB , & !in 
                   QRAIN  ,ILOC   ,JLOC   ,                 & !in
                   ISNOW  ,DZSNSO ,SNOWH  ,SNEQV  ,SNICE  , & !inout
                   SNLIQ  ,SH2O   ,SICE   ,STC    ,         & !inout
                   QSNBOT ,PONDING1       ,PONDING2)           !out
+   end if
 
 !set empty snow layers to zero
 
@@ -6645,24 +6745,43 @@ end if
         stc(iz)   = 0.
         dzsnso(iz)= 0.
         zsnso(iz) = 0.
+	!-----wt calc------
+	if (present(WVTFLAG)) then
+	  snice_tr(iz) = 0.
+          snliq_tr(iz) = 0.
+          dzsnso_tr(iz)= 0.
+          zsnso_tr(iz) = 0.
+	end if
+	!------------------
    enddo
 
 !to obtain equilibrium state of snow in glacier region
        
    IF(SNEQV > 5000.) THEN   ! 5000 mm -> maximum water depth
+      if (present(WVTFLAG)) call get_wt_ratio(SNEQV_TR, SNEQV, PROPOR_TR)  !wt calc
       BDSNOW      = SNICE(0) / DZSNSO(0)
       SNOFLOW     = (SNEQV - 5000.)
+      if (present(WVTFLAG)) SNOFLOW_TR  = SNOFLOW*PROPOR_TR  !wt calc
       SNICE(0)    = SNICE(0)  - SNOFLOW 
       DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
       SNOFLOW     = SNOFLOW / DT
+      !-----wt calc------
+      if (present(WVTFLAG)) then
+        SNICE_TR(0)    = SNICE_TR(0)  - SNOFLOW_TR
+	DZSNSO_TR(0)   = DZSNSO_TR(0) - SNOFLOW_TR/BDSNOW
+        SNOFLOW_TR     = SNOFLOW_TR / DT
+      end if
+      !------------------
    END IF
 
 ! sum up snow mass for layered snow
 
    IF(ISNOW < 0) THEN  ! MB: only do for multi-layer
        SNEQV = 0.
+       if (present(WVTFLAG)) SNEQV_TR = 0.  !wt calc
        DO IZ = ISNOW+1,0
              SNEQV = SNEQV + SNICE(IZ) + SNLIQ(IZ)
+	     if (present(WVTFLAG)) SNEQV_TR = SNEQV_TR + SNICE_TR(IZ) + SNLIQ_TR(IZ)  !wt calc
        ENDDO
    END IF
 
@@ -6670,12 +6789,25 @@ end if
 
    DO IZ = ISNOW+1, 0
         DZSNSO(IZ) = -DZSNSO(IZ)
+	if (present(WVTFLAG)) DZSNSO_TR(IZ) = -DZSNSO_TR(IZ)   !wt calc
    END DO
 
    DZSNSO(1) = ZSOIL(1)
+   if (present(WVTFLAG)) DZSNSO_TR(1) = ZSOIL(1)/NSUB(1)   !wt calc
    DO IZ = 2,NSOIL
         DZSNSO(IZ) = (ZSOIL(IZ) - ZSOIL(IZ-1))
    END DO
+   !-----wt calc------
+   if (present(WVTFLAG)) then
+     ISUB = 0
+     DO IZ = 1, NSOIL
+       DO K = 1, NSUB(IZ)
+         ISUB = ISUB+1
+         DZSNSO_TR(ISUB) = DZSNSO(IZ)/NSUB(IZ)
+       END DO
+     END DO
+   end if
+   !------------------
 
    ZSNSO(ISNOW+1) = DZSNSO(ISNOW+1)
    DO IZ = ISNOW+2 ,NSOIL
@@ -6685,6 +6817,18 @@ end if
    DO IZ = ISNOW+1 ,NSOIL
        DZSNSO(IZ) = -DZSNSO(IZ)
    END DO
+   !-----wt calc------
+   if (present(WVTFLAG)) then
+     ZSNSO_TR(ISNOW+1) = DZSNSO_TR(ISNOW+1)
+     do IZ = ISNOW+2, NTRACER
+       ZSNSO_TR(IZ) = ZSNSO_TR(IZ-1) + DZSNSO_TR(IZ)
+     end do
+     
+     do iz = ISNOW+1, NTRACER
+       DZSNSO_TR(IZ) = -DZSNSO_TR(IZ)
+     end do
+   end if
+   !------------------
 
   END SUBROUTINE SNOWWATER
 
