@@ -352,7 +352,7 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
-
+        allocate ( rt_domain(did)%model_number(NLAKES) )  ! allocate array to specify machine learning model number
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -638,7 +638,7 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
-integer :: lake_index, NLAKES_total
+integer :: lake_index, NLAKES_total, number_of_unique_models
 
 real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
 real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
@@ -763,12 +763,16 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! Set reservoir type array values to 1 as default for levelpool type.
    rt_domain(did)%q_type = 1
 
+   ! Set model number array values to 0 as default for no
+   ! machine learning model for level pool or persistence reservoirs.
+   rt_domain(did)%model_number = 0
+
    NLAKES_total = rt_domain(did)%NLAKES
 
    ! Call subroutine to read text file that stores the reservoir ID/index
    ! for the reservoir type (q_type) of reservoirs that are not the
    ! default levelpool type.
-   !call read_q_type(NLAKES_total, rt_domain(did)%q_type)
+   ! call read_q_type(NLAKES_total, rt_domain(did)%q_type, rt_domain(did)%model_number, number_of_unique_models)
 
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
@@ -817,8 +821,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
        !          ! Call to initialize a machine learning type reservoir
        !          call ml%init(                                &
        !          nlst_rt(did)%startdate(1:19),                &
-       !          lake_index                                   &
-       !       mlmdoelnum                                             )
+       !          rt_domain(did)%model_number(lake_index),	  &
+	   !   		  number_of_unique_models,					  &
+       !          lake_index                                   )                                      )
 
        !end select
 

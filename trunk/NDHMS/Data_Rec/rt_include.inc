@@ -3,6 +3,7 @@
 
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
+   integer, allocatable, dimension(:) :: model_number ! model number for machine learning reservoir
 
    INTEGER :: IX, JX
    logical :: initialized
