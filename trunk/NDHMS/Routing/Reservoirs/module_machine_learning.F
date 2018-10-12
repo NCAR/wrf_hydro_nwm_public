@@ -1,209 +1,156 @@
 ! This module defines and instantiates objects
-
 ! for a machine learning type reservoir. The machine
-
 ! learning reservoir struct inherits input and
-
 ! output stucts from the reservoir base
-
 ! module and calls instantiation of these into
-
 ! sub-objects. The machine learning reservoir struct
-
 ! also points to stucts for machine learning parameters
-
 ! and state and calls instantiation of these into
-
 ! sub-objects. This module also contains the
-
 ! subroutine to run machine learning release that is
-
 ! derived from the reservoir base struct interface
-
 ! to run release. Running machine learning release will
-
 ! then call the MACHINE_LEARNING subroutine, which
-
 ! processes the given inputs, parameters, and
-
 ! state for a particular machine learning reservoir and
-
 ! return the output/outflow.
+
+!#define days_in_year 365
+!#define days_in_leap_year 366
+!#define pi 3.14159265359
 
 module module_machine_learning
 
-
-
     use module_machine_learning_parameters
-
     use module_machine_learning_state
-
     use module_reservoir_base
-
-    use module_machine_learning_model
+    !use module_machine_learning_model
 
     implicit none
 
+    !type :: machine_learning_model_container
+    !    class (machine_learning_model_struct), pointer :: ptr
+    !end type
 
-
-    type :: machine_learning_model_container
-
-        class (machine_learning_model_struct), pointer :: ptr
-
-    end type	
-	
-	
-	
-    class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
-	
-    integer, allocatable, dimension(:) :: machine_learning_model_numbers
-	
+    !class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
+    !integer, allocatable, dimension(:) :: machine_learning_model_numbers
 
     ! Extend/derive machine learning struct from the abstract base
-
     ! struct for reservoirs.
-
     type, extends(reservoir_base_struct) :: machine_learning_struct
 
         ! Define pointers to sub-structs / sub-objects to and
-
         ! held by a machine learning reservoir object.
-
         type (machine_learning_parameters_interface), pointer :: parameters => null()
-
         type (machine_learning_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
-	
 
     contains
 
-
         procedure :: init => machine_learning_struct_init
-
         procedure :: destroy => machine_learning_struct_destroy
-
         procedure :: run_release => run_machine_learning_release
 
     end type machine_learning_struct
 
-
-
 contains
 
-
     !Machine Learning Constructor
-
     subroutine machine_learning_struct_init(this, start_date, model_number, number_of_unique_models, &
 				lake_number)
 
         implicit none
-
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
-
         character(len=19), intent(in) :: start_date
-		
-	integer, intent(in) :: model_number
-
-	integer, intent(in) :: number_of_unique_models
-		
+        integer, intent(in) :: model_number
+        integer, intent(in) :: number_of_unique_models
         integer, intent(in) :: lake_number               ! lake number
-							 ! TODO: potentially change to lake_id for this and 
+							 ! TODO: potentially change to lake_id for this and
 							 ! LP and Pers modules. lake_number is used in LP
 							 ! which has been submitted to a PR.
-														 
-	integer :: model_counter, model_index												 
-												 
-    contains
-		
+        integer :: model_counter, model_index
+
+
 	! Model Initialization
 	! This if statement is only entered on first machine learning reservoir
-        if ( .not. allocated(machine_learning_models) ) then
-		
+!        if ( .not. allocated(machine_learning_models) ) then
+
        	    ! Allocates array of pointers to machine learning models.
-            allocate(machine_learning_models(number_of_unique_models))
+!            allocate(machine_learning_models(number_of_unique_models))
 
-	    ! Allocates array of machine learning model numbers that match 
+	    ! Allocates array of machine learning model numbers that match
 	    ! the indices of the machine learning models array.
-            allocate(machine_learning_model_numbers(number_of_unique_models))	
+!            allocate(machine_learning_model_numbers(number_of_unique_models))
 
-	    machine_learning_model_numbers = 0	  ! set model number array values to 0		
-			
-	    do model_counter = 1, number_of_unique_models
-	       nullify(machine_learning_models(model_counter)%ptr)
+!	    machine_learning_model_numbers = 0	  ! set model number array values to 0
 
-	    end do
-			
-       end if
-		
-		model_index = 0
-		do model_counter = 1, number_of_unique_models
-			
+!	    do model_counter = 1, number_of_unique_models
+!	       nullify(machine_learning_models(model_counter)%ptr)
+
+!	    end do
+
+!       end if
+
+!		model_index = 0
+!		do model_counter = 1, number_of_unique_models
+
 			! If the model has already been initialized, and the passed model number
-			! matches the model number in the array, then assign that slot to 
+			! matches the model number in the array, then assign that slot to
 			! model_index
-			if (machine_learning_model_numbers(model_counter) == model_number) then
-				model_index = model_counter
-				exit
-			
+!			if (machine_learning_model_numbers(model_counter) == model_number) then
+!				model_index = model_counter
+!				exit
+
 			! Check if any slot is zero, which means a machine learning model has
-			! not been initialized or assigned to that slot.			
-			else if (machine_learning_model_numbers(model_counter) == 0) then
-				machine_learning_model_numbers(model_counter) = model_number			
-				model_index = model_counter
-				
-				machine_learning_models(model_counter) 
-				
-				allocate(machine_learning_model_struct :: &
-				machine_learning_model_numbers(model_counter)%ptr
-	
-				select type (ml => machine_learning_model_numbers(model_counter)%ptr)
-				
-				call ml%machine_learning_model_init(model_number)
-						
-				exit
-				
-			end if
-		
-		end do								 
-														 
-														 
+			! not been initialized or assigned to that slot.
+!			else if (machine_learning_model_numbers(model_counter) == 0) then
+!				machine_learning_model_numbers(model_counter) = model_number
+!				model_index = model_counter
+
+!				machine_learning_models(model_counter)
+
+!				allocate(machine_learning_model_struct :: &
+!				machine_learning_model_numbers(model_counter)%ptr
+
+!				select type (ml => machine_learning_model_numbers(model_counter)%ptr)
+
+!				call ml%machine_learning_model_init(model_number)
+
+!				exit
+
+!			end if
+
+!		end do
+
+
         if (this%pointer_allocation_guard .eqv. .false. ) then
 
             ! try to allocate input
-
             allocate ( this%input )
 
             if ( .not. associated(this%input) ) then
-
                 ! if the input structure could not be created write an error
-
                 write(0,*) "Failure to allocate machine learning input structure"
 
             else
 
                 ! initialize the input structure
-
                 call this%input%init()
 
             end if
-
-
 
             ! try to allocate output
 
             allocate ( this%output )
 
             if ( .not. associated(this%output) ) then
-
                 ! if the output structure could not be created write an error
-
                 write(0,*) "Failure to allocate machine learning output structure"
 
             else
 
                 ! initialize the output structure
-
                 call this%output%init()
 
             end if
@@ -211,19 +158,15 @@ contains
 
 
             ! try to allocate parameters
-
             allocate ( this%parameters )
 
             if ( .not. associated(this%parameters) ) then
-
                 ! if the parameters structure could not be created write an error
-
                 write(0,*) "Failure to allocate machine_learning parameters structure"
 
             else
 
                 ! initialize machine_learning parameters
-
                 call this%parameters%init( model_number, model_index, lake_number )
 
             end if
@@ -231,21 +174,16 @@ contains
             this%pointer_allocation_guard = .true.
 
 
-
             ! try to allocate state
-
             allocate ( this%state )
 
             if ( .not. associated(this%state) ) then
-
                 ! if the state structure could not be created write an error
-
                 write(0,*) "Failure to allocate state parameters structure"
 
             else
 
                 ! initialize machine_learning state
-
                 call this%state%init( start_date, lake_number )
 
             end if
@@ -253,16 +191,12 @@ contains
             this%pointer_allocation_guard = .true.
 
         end if
-		
 
     end subroutine machine_learning_struct_init
 
 
-
     !Machine Learning Destructor
-
     subroutine machine_learning_struct_destroy(this)
-
         implicit none
 
         class(machine_learning_struct), intent(inout) :: this ! object being destroyed
@@ -272,206 +206,38 @@ contains
 
 
     ! Subroutine for running release for a machine learning reservoir,
-
     ! which will then call the MACHINE_LEARNING method/subroutine for processing the
-
     ! inputs and returning the output.
-
     subroutine run_machine_learning_release(reservoir_data, previous_timestep_inflow, &
-
         inflow, lateral_inflow, water_elevation, outflow, routing_period)
 
         implicit none
-
         class(machine_learning_struct), intent(inout) :: reservoir_data
-
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
-
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
-
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-
         real, intent(inout) :: water_elevation          ! meters
-
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
-
         real, intent(in)    :: routing_period           ! seconds
-
-        real                :: pi                       ! real homemade pi
-
-
-
-        !update_time initially set to 86400, seconds in 24 hours
-
-        !time_interval also set to 86400
-
-        reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
-
-        reservoir_data%input%inflow = inflow
-
-        reservoir_data%state%release_count = reservoir_data%state%release_count + 1
-
-        reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
-
-        reservoir_data%state%current_storage = reservoir_data%state%current_storage &
-        + reservoir_data%input%inflow - reservoir_data%output%outflow
-		
-	reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
-
-        ! FIXME: Remove below print statements and write same info to a log file.
-
-        ! Also have option to set the current_storage to the max_storage and change the outflow accordingly.
-
-        if (reservoir_data%state%current_storage > reservoir_data%parameters%max_storage) then
-
-            print *, "Current storage has exceeded the max storage for reservoir ", reservoir_data%parameters%lake_number
-
-            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
-
-            !reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
-
-            !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
-
-            !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
-
-
-        ! FIXME: Remove below print statements and write same info to a log file.
-
-        ! Also have option to set if < reservoir_data%parameters%min_storage then current storage would equal min_storage
-
-        ! and outflow would change accordingly.
-
-        ! Need further discussion about accuracy of the model with using min_storage vs. zero.
-
-        else if (reservoir_data%state%current_storage < 0.0) then
-
-            print *, "Current storage has reached below zero for reservoir ", reservoir_data%parameters%lake_number
-
-            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
-
-            reservoir_data%state%current_storage = 0.0
-
-            reservoir_data%output%outflow = 0.0
-
-            !reservoir_data%state%current_storage = reservoir_data%parameters%min_storage
-
-            !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
-
-            !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
-
-        end if
-
-        if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
-
-            reservoir_data%state%average_inflow_over_past_time_intervals = reservoir_data%state%accumulated_inflow &
-
-            / reservoir_data%state%release_count
-
-            pi = 3.14159265359
-
-            if (((mod(reservoir_data%state%current_year,4)==0 .and. &
-
-               mod(reservoir_data%state%current_year,100)/=0) .or. &
-
-               mod(reservoir_data%state%current_year,400)==0)) then
-
-
-               if (reservoir_data%state%current_day_of_year == 366) then    ! if last day of leap year
-                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-                    reservoir_data%state%current_day_of_year = 1
-
-               else
-
-                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
-
-               end if
-
-
-               ! update x and y based on leap year
-
-               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 366)
-
-               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 366)
-
-
-            else
-
-               if (reservoir_data%state%current_day_of_year == 365) then    ! if last day of non leap year
-
-                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-
-                    reservoir_data%state%current_day_of_year = 1
-
-               else
-
-                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
-
-               end if
-
-               ! update x and y based on non leap year
-
-               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 365)
-
-               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 365)
-
-            end if
-			
-			
-            ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
-		select type (ml => machine_learning_model_numbers(reservoir_data%parameters%model_index)%ptr)
-				
-		call ml%run_machine_learning_model(reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-			reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
-			reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)			
-
-
-            !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
-		
-            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
-					
-	    reservoir_data%state%totaled_storage = 0.0
-			
-            reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
-
-	    reservoir_data%state%previous_day_release = reservoir_data%output%outflow
-
-            reservoir_data%state%release_count = 0
-
-            reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
-
-        end if
-
-        ! FIXME: Remove below print statements and write same info to a log file.
-        ! Also have option to set the outflow to the max_release.
-
-        if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
-
-            !reservoir_data%output%outflow = reservoir_data%parameters%max_release
-
-            print *, "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
-
-            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
-
-        ! FIXME: Remove below print statements and write same info to a log file.
-
-        ! Also have option to set if < reservoir_data%parameters%min_release.
-
-        ! Need further discussion about accuracy of the model with using min_release vs. zero.
-
-        else if (reservoir_data%output%outflow < 0.0) then
-
-            print *, "Current outflow has reached below zero for reservoir ", reservoir_data%parameters%lake_number
-
-            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
-
-            reservoir_data%output%outflow = 0.0
-
-            !reservoir_data%output%outflow = reservoir_data%parameters%min_release
-
-        end if
-
-        outflow = reservoir_data%output%outflow
+		integer				:: boundary_passed
+		logical				:: leap_year
 
     end subroutine run_machine_learning_release
 
+
+
 end module module_machine_learning
+
+
+!logical function check_leap_year(current_year)
+!	real current_year
+!
+!	if (((mod(current_year,4)==0 .and. &
+!	   mod(current_year,100)/=0) .or. &
+!	   mod(current_year,400)==0)) then
+!	   check_leap_year = .TRUE.
+
+!	else
+!	   check_leap_year = .FALSE.
+
+!end function check_leap_year

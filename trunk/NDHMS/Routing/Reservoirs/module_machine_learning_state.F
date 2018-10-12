@@ -4,6 +4,9 @@
 ! that are only relevant to the given machine learning
 ! reservoir object and not other modules or areas
 ! of the system.
+
+#define pi 3.14159265359
+
 module module_machine_learning_state
 
     use module_reservoir_base
@@ -61,7 +64,7 @@ contains
 
         integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
 
-        real :: pi
+        !real :: pi
 
 
 
@@ -304,7 +307,7 @@ contains
         !this%accumulated_storage = storage_monthly_average
 
         this%current_storage = storage_monthly_average
-		
+
 		this%totaled_storage = 0.0
 
         this%time_interval = 86400
@@ -351,7 +354,7 @@ contains
 
         this%current_day_of_year = start_day_of_year
 
-        pi = 3.14159265359
+        !pi = 3.14159265359
 
 
         if (((mod(this%start_year,4)==0 .and. mod(this%start_year,100)/=0) .or. mod(this%start_year,400)==0) .and. this%start_month>2) then
