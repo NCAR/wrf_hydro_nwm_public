@@ -15,9 +15,9 @@
 ! state for a particular machine learning reservoir and
 ! return the output/outflow.
 
-!#define days_in_year 365
-!#define days_in_leap_year 366
-!#define pi 3.14159265359
+#define days_in_year 365
+#define days_in_leap_year 366
+#define pi 3.14159265359
 
 module module_machine_learning
 
@@ -205,6 +205,20 @@ contains
 
 
 
+	! Pre-Warn Subroutine
+	subroutine pre_warn(reservoir_data, boundary_passed)
+		implicit none
+
+		integer, intent(in) :: boundary_passed
+        class(machine_learning_struct), intent(inout) :: reservoir_data ! object
+	    write(6,*) "Current storage has reached below zero for reservoir ", reservoir_data%parameters%lake_number
+        write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+
+	end subroutine pre_warn
+
+
+
+
     ! Subroutine for running release for a machine learning reservoir,
     ! which will then call the MACHINE_LEARNING method/subroutine for processing the
     ! inputs and returning the output.
@@ -220,24 +234,225 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
 		integer				:: boundary_passed
-		logical				:: leap_year
+		logical         	:: leap_year
+		!logical             :: is_leap_year
+        !integer             :: status, ncid, lake_idVarId
+
+        !update_time initially set to 86400, seconds in 24 hours
+        !time_interval also set to 86400
+        reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
+
+        reservoir_data%input%inflow = inflow
+
+        reservoir_data%state%release_count = reservoir_data%state%release_count + 1
+
+        reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
+
+        reservoir_data%state%current_storage = reservoir_data%state%current_storage &
+        + reservoir_data%input%inflow - reservoir_data%output%outflow
+
+		reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
+
+        ! FIXME: Remove below print statements and write same info to a log file.
+        ! Also have option to set the current_storage to the max_storage and change the outflow accordingly.
+
+        if (reservoir_data%state%current_storage > reservoir_data%parameters%max_storage) then
+
+			boundary_passed = 1
+
+			call pre_warn(reservoir_data, boundary_passed)
+
+            write(6,*) "Current storage has exceeded the max storage for reservoir ", reservoir_data%parameters%lake_number
+
+            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+
+            !reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
+
+            !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
+
+            !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
+
+
+        ! FIXME: Remove below print statements and write same info to a log file.
+        ! Also have option to set if < reservoir_data%parameters%min_storage then current storage would equal min_storage
+        ! and outflow would change accordingly.
+        ! Need further discussion about accuracy of the model with using min_storage vs. zero.
+
+        else if (reservoir_data%state%current_storage < 0.0) then
+
+			boundary_passed = 0
+			call pre_warn(reservoir_data, boundary_passed)
+
+            reservoir_data%state%current_storage = 0.0
+            reservoir_data%output%outflow = 0.0
+
+            !reservoir_data%state%current_storage = reservoir_data%parameters%min_storage
+
+            !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
+
+            !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
+
+
+			write(6,*) "Current storage has reached below zero for reservoir ", reservoir_data%parameters%lake_number
+            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+
+        end if
+
+        if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
+            reservoir_data%state%average_inflow_over_past_time_intervals = reservoir_data%state%accumulated_inflow &
+            / reservoir_data%state%release_count
+
+            !status = nf90_open(path = "RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+
+
+			!leap_year = check_leap_year(current_year = reservoir_data%state%current_year, is_leap_year = is_leap_year)
+            !leap_year = check_leap_year()
+
+            !lake_idVarId = 5
+            !ncid = 1
+
+
+            !status = nf90_inq_varidd(ncid, "lake_id", lake_idVarId)
+
+
+            !leap_year = .true.
+
+			if (leap_year(reservoir_data%state%current_year)) then
+
+													!make # days in year a macro for leap and non leap
+               if (reservoir_data%state%current_day_of_year == 366) then    ! if last day of leap year
+                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                    reservoir_data%state%current_day_of_year = 1
+
+               else
+                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+
+               end if
+
+			   ! MAKE FUNCTION ALSO?????
+               ! update x and y based on leap year
+               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 366)
+
+               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 366)
+
+
+            else
+
+								!make # days in year a macro for leap and non leap
+               if (reservoir_data%state%current_day_of_year == 365) then    ! if last day of non leap year
+
+                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+
+                    reservoir_data%state%current_day_of_year = 1
+
+               else
+
+                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+
+               end if
+
+               ! update x and y based on non leap year
+
+               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / 365)
+
+               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / 365)
+
+            end if
+
+
+            ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
+!		select type (ml => machine_learning_model_numbers(reservoir_data%parameters%model_index)%ptr)
+
+!		call ml%run_machine_learning_model(reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
+!			reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
+!			reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
+
+            !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
+
+            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
+
+            reservoir_data%state%totaled_storage = 0.0
+
+            reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
+
+            reservoir_data%state%previous_day_release = reservoir_data%output%outflow
+
+            reservoir_data%state%release_count = 0
+
+            reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
+
+        end if
+
+        ! FIXME: Remove below print statements and write same info to a log file.
+        ! Also have option to set the outflow to the max_release.
+        if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
+
+            !reservoir_data%output%outflow = reservoir_data%parameters%max_release
+
+            print *, "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
+            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
+
+        ! FIXME: Remove below print statements and write same info to a log file.
+        ! Also have option to set if < reservoir_data%parameters%min_release.
+        ! Need further discussion about accuracy of the model with using min_release vs. zero.
+
+        else if (reservoir_data%output%outflow < 0.0) then
+            print *, "Current outflow has reached below zero for reservoir ", reservoir_data%parameters%lake_number
+            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
+            reservoir_data%output%outflow = 0.0
+            !reservoir_data%output%outflow = reservoir_data%parameters%min_release
+
+        end if
+
+        outflow = reservoir_data%output%outflow
 
     end subroutine run_machine_learning_release
-
 
 
 end module module_machine_learning
 
 
-!logical function check_leap_year(current_year)
-!	real current_year
-!
-!	if (((mod(current_year,4)==0 .and. &
-!	   mod(current_year,100)/=0) .or. &
-!	   mod(current_year,400)==0)) then
-!	   check_leap_year = .TRUE.
 
-!	else
-!	   check_leap_year = .FALSE.
+!function check_leap_year(current_year, is_leap_year)
+logical function leap_year(current_year)
+	integer, intent(in) :: current_year
+    !logical, intent(out) :: is_leap_year
 
+
+	if (((mod(current_year,4)==0 .and. &
+	   mod(current_year,100)/=0) .or. &
+	   mod(current_year,400)==0)) then
+	   leap_year = .TRUE.
+
+
+	else
+	   leap_year = .FALSE.
+
+    end if
+
+
+end function leap_year
+
+
+!logical function check_leap_year()
+
+!return
 !end function check_leap_year
+
+
+
+
+!function nf90_inq_varidd(ncid, name, varid)
+
+!    integer, intent(in) :: ncid
+
+!    character (len = *), intent( in) :: name
+
+!    real, intent(out) :: varid
+
+!    integer :: nf90_inq_varid
+
+!end function nf90_inq_varidd
+
+
+

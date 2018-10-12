@@ -257,7 +257,6 @@ end module module_machine_learning_parameters
 
 
 ! The functions that have been used for reading NetCDF file!
-
 function nf90_inq_varid(ncid, name, varid)
     integer, intent(in) :: ncid
     character (len = *), intent( in) :: name
