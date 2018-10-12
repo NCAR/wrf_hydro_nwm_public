@@ -63,4 +63,4 @@ CPPFLAGS	=        -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec
 
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)
-NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
+#NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
