@@ -250,6 +250,8 @@ contains
 		integer				:: boundary_passed
 		logical         	:: leap_year
 		!logical             :: is_leap_year
+		logical             :: okay_run_machine_learning_model
+		real                :: pre_modify_storage
 
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
@@ -266,6 +268,8 @@ contains
 
 		reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
+		okay_run_machine_learning_model = .true.
+
         ! FIXME: Remove below print statements and write same info to a log file.
         ! Also have option to set the current_storage to the max_storage and change the outflow accordingly.
 
@@ -273,7 +277,9 @@ contains
 
 			boundary_passed = 1 ! set boundary_passed to 1 for exceeding upper boundary
 
-			call pre_warn(reservoir_data, boundary_passed)
+			reservoir_data%state%current_storage = pre_modify_storage(reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
+			reservoir_data%parameters%max_storage, reservoir_data%input%inflow, reservoir_data%state%current_time, &
+            reservoir_data%parameters%lake_number, boundary_passed)
 
             !reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
 
@@ -287,13 +293,17 @@ contains
         ! and outflow would change accordingly.
         ! Need further discussion about accuracy of the model with using min_storage vs. zero.
 
+        !Need macro or some other way to set min storage here to 0.0 or min_storage???
         else if (reservoir_data%state%current_storage < 0.0) then
 
 			boundary_passed = 0    ! set boundary_passed to 0 for exceeding lower boundary
-			call pre_warn(reservoir_data, boundary_passed)
 
-            reservoir_data%state%current_storage = 0.0
+			reservoir_data%state%current_storage = pre_modify_storage(reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
+			reservoir_data%parameters%max_storage, reservoir_data%input%inflow, reservoir_data%state%current_time, &
+            reservoir_data%parameters%lake_number, boundary_passed)
+
             reservoir_data%output%outflow = 0.0
+            okay_run_machine_learning_model = .false.
 
             !reservoir_data%state%current_storage = reservoir_data%parameters%min_storage
 
@@ -309,11 +319,6 @@ contains
 
 			!leap_year = check_leap_year(current_year = reservoir_data%state%current_year, is_leap_year = is_leap_year)
             !leap_year = check_leap_year()
-
-            !lake_idVarId = 5
-            !ncid = 1
-
-
             !leap_year = .true.
 
 			if (leap_year(reservoir_data%state%current_year)) then
@@ -360,11 +365,14 @@ contains
 
 
             ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
-!		select type (ml => machine_learning_model_numbers(reservoir_data%parameters%model_index)%ptr)
+!		    select type (ml => machine_learning_model_numbers(reservoir_data%parameters%model_index)%ptr)
 
-!		call ml%run_machine_learning_model(reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-!			reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
-!			reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
+            if (okay_run_machine_learning_model) then
+
+!		        call ml%run_machine_learning_model(reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
+!			        reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
+!			        reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
+            end if
 
             !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
 
@@ -413,10 +421,10 @@ end module module_machine_learning
 
 
 
-real function pre_modify(storage, min_storage, max_storage, inflow, current_time, lake_number, boundary_passed)
+real function pre_modify_storage(storage, min_storage, max_storage, inflow, current_time, lake_number, boundary_passed)
 		implicit none
 
-		real,    intent(inout) :: storage
+		real,    intent(in) :: storage
 		real,    intent(in)    :: min_storage
 		real,    intent(in)    :: max_storage
 		real,    intent(in)    :: inflow
@@ -430,7 +438,7 @@ real function pre_modify(storage, min_storage, max_storage, inflow, current_time
             ", has exceeded the max storage: ", max_storage, &
             ", for reservoir ", lake_number
 
-            storage = max_storage
+            pre_modify_storage = max_storage
 
         ! FIXME: Change 6 to macro for WCOS
 	    else if (boundary_passed == 0) then
@@ -438,14 +446,14 @@ real function pre_modify(storage, min_storage, max_storage, inflow, current_time
             ", has reached below the minimum storage: ", min_storage, &
             ". for reservoir ", lake_number
 
-            storage = min_storage
+            pre_modify_storage = min_storage
         end if
 
         ! FIXME: Change 6 to macro for WCOS
         write(6,*) " at ", current_time, " seconds after model start time."
         write(6,*) "Current inflow: ", inflow
 
-end function pre_modify
+end function pre_modify_storage
 
 
 !function check_leap_year(current_year, is_leap_year)
@@ -462,7 +470,6 @@ logical function leap_year(current_year)
 	   leap_year = .FALSE.
 
     end if
-
 
 end function leap_year
 
