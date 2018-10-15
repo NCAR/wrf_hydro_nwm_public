@@ -211,12 +211,26 @@ contains
 
 		integer, intent(in) :: boundary_passed
         class(machine_learning_struct), intent(inout) :: reservoir_data ! object
-	    write(6,*) "Current storage has reached below zero for reservoir ", reservoir_data%parameters%lake_number
+
+        ! FIXME: Change 6 to macro for WCOS
+        if (boundary_passed == 1) then
+            write(6,*) "Current storage has exceeded the max storage for reservoir ", reservoir_data%parameters%lake_number
+
+        ! FIXME: Change 6 to macro for WCOS
+	    else if (boundary_passed == 0) then
+            write(6,*) "Current storage has reached below zero for reservoir ", reservoir_data%parameters%lake_number
+        end if
+
+        ! FIXME: Change 6 to macro for WCOS
+        write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+        write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+        write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+        write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
         write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
+
+
 	end subroutine pre_warn
-
-
 
 
     ! Subroutine for running release for a machine learning reservoir,
@@ -236,7 +250,6 @@ contains
 		integer				:: boundary_passed
 		logical         	:: leap_year
 		!logical             :: is_leap_year
-        !integer             :: status, ncid, lake_idVarId
 
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
@@ -258,13 +271,9 @@ contains
 
         if (reservoir_data%state%current_storage > reservoir_data%parameters%max_storage) then
 
-			boundary_passed = 1
+			boundary_passed = 1 ! set boundary_passed to 1 for exceeding upper boundary
 
 			call pre_warn(reservoir_data, boundary_passed)
-
-            write(6,*) "Current storage has exceeded the max storage for reservoir ", reservoir_data%parameters%lake_number
-
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
             !reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
 
@@ -280,7 +289,7 @@ contains
 
         else if (reservoir_data%state%current_storage < 0.0) then
 
-			boundary_passed = 0
+			boundary_passed = 0    ! set boundary_passed to 0 for exceeding lower boundary
 			call pre_warn(reservoir_data, boundary_passed)
 
             reservoir_data%state%current_storage = 0.0
@@ -292,27 +301,17 @@ contains
 
             !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
 
-
-			write(6,*) "Current storage has reached below zero for reservoir ", reservoir_data%parameters%lake_number
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
-
         end if
 
         if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
             reservoir_data%state%average_inflow_over_past_time_intervals = reservoir_data%state%accumulated_inflow &
             / reservoir_data%state%release_count
 
-            !status = nf90_open(path = "RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-
-
 			!leap_year = check_leap_year(current_year = reservoir_data%state%current_year, is_leap_year = is_leap_year)
             !leap_year = check_leap_year()
 
             !lake_idVarId = 5
             !ncid = 1
-
-
-            !status = nf90_inq_varidd(ncid, "lake_id", lake_idVarId)
 
 
             !leap_year = .true.
@@ -413,17 +412,51 @@ end module module_machine_learning
 
 
 
+
+real function pre_modify(storage, min_storage, max_storage, inflow, current_time, lake_number, boundary_passed)
+		implicit none
+
+		real,    intent(inout) :: storage
+		real,    intent(in)    :: min_storage
+		real,    intent(in)    :: max_storage
+		real,    intent(in)    :: inflow
+		integer, intent(in)    :: current_time
+		integer, intent(in)    :: boundary_passed
+        integer, intent(in)    :: lake_number
+
+        ! FIXME: Change 6 to macro for WCOS
+        if (boundary_passed == 1) then
+            write(6,*) "Current storage: ", storage, &
+            ", has exceeded the max storage: ", max_storage, &
+            ", for reservoir ", lake_number
+
+            storage = max_storage
+
+        ! FIXME: Change 6 to macro for WCOS
+	    else if (boundary_passed == 0) then
+            write(6,*) "Current storage: ", storage, &
+            ", has reached below the minimum storage: ", min_storage, &
+            ". for reservoir ", lake_number
+
+            storage = min_storage
+        end if
+
+        ! FIXME: Change 6 to macro for WCOS
+        write(6,*) " at ", current_time, " seconds after model start time."
+        write(6,*) "Current inflow: ", inflow
+
+end function pre_modify
+
+
 !function check_leap_year(current_year, is_leap_year)
 logical function leap_year(current_year)
 	integer, intent(in) :: current_year
     !logical, intent(out) :: is_leap_year
 
-
 	if (((mod(current_year,4)==0 .and. &
 	   mod(current_year,100)/=0) .or. &
 	   mod(current_year,400)==0)) then
 	   leap_year = .TRUE.
-
 
 	else
 	   leap_year = .FALSE.
@@ -438,21 +471,4 @@ end function leap_year
 
 !return
 !end function check_leap_year
-
-
-
-
-!function nf90_inq_varidd(ncid, name, varid)
-
-!    integer, intent(in) :: ncid
-
-!    character (len = *), intent( in) :: name
-
-!    real, intent(out) :: varid
-
-!    integer :: nf90_inq_varid
-
-!end function nf90_inq_varidd
-
-
 
