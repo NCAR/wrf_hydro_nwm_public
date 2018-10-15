@@ -30,7 +30,7 @@ module module_machine_learning_parameters
         real :: max_storage                                   ! maximum storage
         real :: min_release                                   ! minimum release
         real :: max_release                                   ! maximum release
-		integer :: model_number								  ! machine learning model number
+		integer :: model_id								  ! machine learning model number
 		integer :: model_index								  ! machine learning model index
         integer :: lake_number                                ! lake number
 
@@ -45,206 +45,147 @@ contains
 
     !Machine Learning Parameters Constructor
 
-    subroutine machine_learning_parameters_init(this, model_number, model_index, lake_number)
+    !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
+    subroutine machine_learning_parameters_init(this, model_index, lake_number)
         use netcdf
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
 
-		integer, intent(in) :: model_number				! machine learning model number
+		!integer, intent(in) :: model_id				! machine learning model number
 		integer, intent(in) :: model_index				! machine learning model index in model array
         integer, intent(in) :: lake_number              ! lake number
 
         integer :: lake_index, lake_id_index
 
         integer, allocatable, dimension (:) :: lake_id
+        integer, allocatable, dimension (:) :: model_id
         real, allocatable, dimension (:)    :: minimum_storage
         real, allocatable, dimension (:)    :: maximum_storage
         real, allocatable, dimension (:)    :: minimum_release
         real, allocatable, dimension (:)    :: maximum_release
 
-        integer :: Nlakes
-
-        integer :: ncid, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
-
-        integer :: activation_functionsVarId, number_of_nodesVarId, minimum_storageVarId, maximum_storageVarId, lake_idVarId, lake_id_single_VarId
-
+        integer :: Nlakes, ncid
+        integer :: lake_idVarId, model_idVarId
+        integer :: minimum_storageVarId, maximum_storageVarId
         integer :: minimum_releaseVarId, maximum_releaseVarId
-
         character, external :: nf90_strerror1
-
         integer, dimension(nf90_max_var_dims) :: dimIDs
-
         integer :: status       ! Status of reading NetCDF
 
 
         ! Assign the values passed in to a particular machine learning reservoir
-
         ! parameter object's variables.
-
-		this%model_number = model_number
-
+		this%model_id = model_id
 		this%model_index = model_index
-
         this%lake_number = lake_number
 
-
-        !Reservoir Parm NC file
-
-        status = nf90_open(path = "RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-
-        !print *, "status", status
-
+        ! Machine Learning Reservoir Parm NC file
+        ! LEAVE THIS HARD CODED????
+        status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
+        if (status /= nf90_noerr) call handle_err(status)
 
-
+        status = nf90_inq_varid(ncid, "model_id", lake_idVarId)
         if(status /= nf90_NoErr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "maximum_release", maximum_releaseVarId)
-
-
         if(status /= nf90_NoErr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "minimum_release", minimum_releaseVarId)
-
-
         if(status /= nf90_NoErr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "maximum_storage", maximum_storageVarId)
-
-
         if(status /= nf90_NoErr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "minimum_storage", minimum_storageVarId)
-
-
         if(status /= nf90_NoErr) call handle_err(status)
-
 
 
         status = nf90_inquire_variable(ncid, lake_idVarId, dimids = dimIDs)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
-
         allocate(lake_id(Nlakes))
 
+        status = nf90_inquire_variable(ncid, model_idVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+        allocate(model_id(Nlakes))
 
         status = nf90_inquire_variable(ncid, maximum_releaseVarId, dimids = dimIDs)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         allocate(maximum_release(Nlakes))
 
-
         status = nf90_inquire_variable(ncid, minimum_releaseVarId, dimids = dimIDs)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         allocate(minimum_release(Nlakes))
 
-
         status = nf90_inquire_variable(ncid, maximum_storageVarId, dimids = dimIDs)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
         allocate(maximum_storage(Nlakes))
 
-
         status = nf90_inquire_variable(ncid, minimum_storageVarId, dimids = dimIDs)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
-
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-
         if(status /= nf90_NoErr) call handle_err(status)
-
-
-
         allocate(minimum_storage(Nlakes))
 
 
-
         status = nf90_get_var(ncid, lake_idVarId, lake_id)
-
-
-
         if (status /= nf90_noerr) call handle_err(status)
 
+        status = nf90_get_var(ncid, model_idVarId, model_id)
+        if (status /= nf90_noerr) call handle_err(status)
 
         status = nf90_get_var(ncid, maximum_releaseVarId, maximum_release)
-
-
         if (status /= nf90_noerr) call handle_err(status)
-
 
         status = nf90_get_var(ncid, minimum_releaseVarId, minimum_release)
-
-
         if (status /= nf90_noerr) call handle_err(status)
-
 
         status = nf90_get_var(ncid, maximum_storageVarId, maximum_storage)
-
-
         if (status /= nf90_noerr) call handle_err(status)
 
-
         status = nf90_get_var(ncid, minimum_storageVarId, minimum_storage)
-
-
         if (status /= nf90_noerr) call handle_err(status)
 
 
         do lake_index = 1, Nlakes
             if (lake_id(lake_index) == this%lake_number) then
                 lake_id_index = lake_index
-
             end if
-
         end do
 
-
+        this%model_id    = model_id(lake_id_index)
         this%min_storage = minimum_storage(lake_id_index)
         this%max_storage = maximum_storage(lake_id_index)
         this%min_release = minimum_release(lake_id_index)
         this%max_release = maximum_release(lake_id_index)
 
+
+        !find out how many unique models here
+
+
+
+
+
         deallocate(lake_id)
+        deallocate(model_id)
         deallocate(minimum_storage)
         deallocate(maximum_storage)
         deallocate(minimum_release)
         deallocate(maximum_release)
 
     end subroutine machine_learning_parameters_init
-
 
 
     !Machine Learning Parameters Destructor
