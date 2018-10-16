@@ -15,22 +15,33 @@ module module_machine_learning_model
     integer :: number_of_unique_models
 
 
-    type :: machine_learning_model_struct
+    type NN_reservoir_in_out
+        REAL :: previous_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
+        REAL :: average_storage_over_past_time_intervals !
+        REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
+        REAL :: current_storage !
+        REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
+        REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
 
-        !integer :: lake_id      ! lake id or COMID
+    end type NN_reservoir_in_out
+
+
+    type NN_node
+        real, allocatable, dimension (:,:) :: link_weights
+        real, allocatable, dimension (:,:) :: link_bias
+        integer, dimension (10) :: link_activation_functions ! FIXME, I had a hard time setting this into an allocatable dimension; so I had to fix it to a constant maximum number of layer = 10
+
+    end type NN_node
+
+
+
+    type :: machine_learning_model_struct
 
         integer :: model_number
 
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
         REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
 
-        integer :: Nlayers                     ! number of model layers (this is actually the number of layers + 1, to help us for matrix dimensions)
-        integer :: Ninputs                     ! total number of inputs, note that we might not be using all as the inputs to the ML model!
-        integer :: str_len ! it is supposed to be one of the dimensions for "input_names"; however, I had problem in reading/assigning "input_names"
-        !integer :: Nlakes !
-        !integer :: monthly_averages_rows !
-
-        integer :: nodes   ! # of neurons which is a function of layers and model number
         real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
         real, allocatable, dimension (:,:,:) :: reshaped_weights !
         real, allocatable, dimension (:,:)   :: reshaped_weights_1st
@@ -49,12 +60,6 @@ module module_machine_learning_model
         real, allocatable, dimension (:)     :: maximum_of_features_final
 
 
-        real :: mmm
-        real :: nnn
-        real, allocatable, dimension(:)     :: y_linear_interp
-        real :: slope
-
-
         ! Parameter declaration for ml_res_sim_release subroutine
         real :: inflow_current_time       ! inflow at the current timestep (cms); "qi1" at the "LEVELPOOL" subroutine
         real :: revised_simulated_release     ! outflow at current timestep; "qo1" at the "LEVELPOOL" subroutine
@@ -69,28 +74,8 @@ module module_machine_learning_model
         real, dimension (1000) :: reshaped_nn_sum_matrix ! a reshaped version of the "nn_sum_matrix"
         real, dimension (1000) :: nn_sum_matrix_activated ! the output of the NN by applying the transfer function on "nn_sum_matrix"
 
-        real, allocatable, dimension (:) :: softmax, linear
-
-
-        type NN_node
-            real, allocatable, dimension (:,:) :: link_weights
-            real, allocatable, dimension (:,:) :: link_bias
-            integer, dimension (10) :: link_activation_functions ! FIXME, I had a hard time setting this into an allocatable dimension; so I had to fix it to a constant maximum number of layer = 10
-
-        end type NN_node
 
         type (NN_node), dimension (10)  :: model_parameters
-
-
-        type NN_reservoir_in_out
-            REAL :: previous_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
-            REAL :: average_storage_over_past_time_intervals !
-            REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
-            REAL :: current_storage !
-            REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
-            REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
-
-        end type NN_reservoir_in_out
 
         type (NN_reservoir_in_out)  :: nn_inputs ! the dimension should apparently represent the number of inputs
         type (NN_reservoir_in_out)  :: normalized_nn_inputs
@@ -98,7 +83,6 @@ module module_machine_learning_model
 
         real, allocatable, dimension(:) :: input_vector
         real, allocatable, dimension(:,:) :: reshaped_input_vector
-
 
 
     contains
@@ -121,25 +105,18 @@ contains
         integer, intent(in) :: model_number
 
         integer :: ncid, status, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
-        integer :: activation_functionsVarId, number_of_nodesVarId]
-        !, minimum_storageVarId, maximum_storageVarId, lake_idVarId
-        !integer :: minimum_releaseVarId, maximum_releaseVarId
-        !integer :: long_term_releaseVarId
+        integer :: activation_functionsVarId, number_of_nodesVarId
+
+        integer :: Nlayers                     ! number of model layers (this is actually the number of layers + 1, to help us for matrix dimensions)
+        integer :: Ninputs                     ! total number of inputs, note that we might not be using all as the inputs to the ML model!
+        integer :: nodes   ! # of neurons which is a function of layers and model number
 
         character, external :: nf90_strerror1
         integer, dimension(nf90_max_var_dims) :: dimIDs
 
-        !integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
-        !integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
-
         integer :: i, j, k
 
-
-	contains
-
-	this%model_number = model_number
-
-	! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
+        ! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
 
 		if (model_number == 1) then
 			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
@@ -152,13 +129,11 @@ contains
 
 		end if
 
+        this%model_number = model_number
+
 
         !status = nf90_open(path = "17all_res_acf_all_relu_nc.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !if (status /= nf90_noerr) call handle_err(status)
-
-
-
-
 
 
         status = nf90_inq_varid(ncid, "bias", biasVarId)
@@ -311,8 +286,8 @@ contains
         this%reshaped_weights_4th = reshape(this%reshaped_weights(:,1,4),(/1, size(this%reshaped_weights(:,1,4))/))
 
 
-        do k=1, (size(number_of_nodes)-1)
-            this%model_parameters(k)%link_bias= reshape(bias(:,k), (/size(bias(:,k)),1/))
+        do k=1, (size(this%number_of_nodes)-1)
+            this%model_parameters(k)%link_bias= reshape(this%bias(:,k), (/size(this%bias(:,k)),1/))
         end do
 
 
@@ -485,7 +460,7 @@ contains
                             model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
                         end if
                     else
-                        tmp = tmp + model_data%model_parameters(k)%link_weights(i,j) * reshaped_nn_sum_matrix_activated(j,1)
+                        tmp = tmp + model_data%model_parameters(k)%link_weights(i,j) * model_data%reshaped_nn_sum_matrix_activated(j,1)
                         model_data%nn_sum_matrix(i,1) = tmp
                         model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(k)%link_bias(i,1)
                         model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
