@@ -30,7 +30,7 @@ module module_machine_learning_parameters
         real :: max_storage                                   ! maximum storage
         real :: min_release                                   ! minimum release
         real :: max_release                                   ! maximum release
-		integer :: model_id								  ! machine learning model number
+		integer :: model_id								      ! machine learning model number
 		integer :: model_index								  ! machine learning model index
         integer :: lake_number                                ! lake number
 
@@ -46,19 +46,25 @@ contains
     !Machine Learning Parameters Constructor
 
     !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
-    subroutine machine_learning_parameters_init(this, model_index, lake_number)
+    !subroutine machine_learning_parameters_init(this, model_index, lake_number)
+    subroutine machine_learning_parameters_init(this, lake_number, number_of_unique_models)
         use netcdf
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
 
 		!integer, intent(in) :: model_id				! machine learning model number
-		integer, intent(in) :: model_index				! machine learning model index in model array
+		!integer, intent(in) :: model_index				! machine learning model index in model array
         integer, intent(in) :: lake_number              ! lake number
+        integer, intent(inout) :: number_of_unique_models
+
 
         integer :: lake_index, lake_id_index
 
+        integer :: idx_mod_id_arr, idx_unique_arr
+
         integer, allocatable, dimension (:) :: lake_id
-        integer, allocatable, dimension (:) :: model_id
+        integer, allocatable, dimension (:) :: model_id_array
+        integer, allocatable, dimension (:) :: unique_models_array
         real, allocatable, dimension (:)    :: minimum_storage
         real, allocatable, dimension (:)    :: maximum_storage
         real, allocatable, dimension (:)    :: minimum_release
@@ -75,8 +81,8 @@ contains
 
         ! Assign the values passed in to a particular machine learning reservoir
         ! parameter object's variables.
-		this%model_id = model_id
-		this%model_index = model_index
+		!this%model_id = model_id
+		!this%model_index = model_index
         this%lake_number = lake_number
 
         ! Machine Learning Reservoir Parm NC file
@@ -113,7 +119,9 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
         if(status /= nf90_NoErr) call handle_err(status)
-        allocate(model_id(Nlakes))
+        allocate(model_id_array(Nlakes))
+
+        allocate(unique_models_array(Nlakes))
 
         status = nf90_inquire_variable(ncid, maximum_releaseVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -143,7 +151,7 @@ contains
         status = nf90_get_var(ncid, lake_idVarId, lake_id)
         if (status /= nf90_noerr) call handle_err(status)
 
-        status = nf90_get_var(ncid, model_idVarId, model_id)
+        status = nf90_get_var(ncid, model_idVarId, model_id_array)
         if (status /= nf90_noerr) call handle_err(status)
 
         status = nf90_get_var(ncid, maximum_releaseVarId, maximum_release)
@@ -165,21 +173,47 @@ contains
             end if
         end do
 
-        this%model_id    = model_id(lake_id_index)
+        this%model_id    = model_id_array(lake_id_index)
         this%min_storage = minimum_storage(lake_id_index)
         this%max_storage = maximum_storage(lake_id_index)
         this%min_release = minimum_release(lake_id_index)
         this%max_release = maximum_release(lake_id_index)
 
 
-        !find out how many unique models here
+        if (number_of_unique_models == 0) then
+
+            ! Find out how many unique models here
+            do idx_mod_id_arr = 1, Nlakes
+                do idx_unique_arr = 1, Nlakes
+
+                    if (model_id_array(idx_mod_id_arr) == unique_models_array(idx_unique_arr)) then
+                        exit
+
+                    else if (unique_models_array(idx_unique_arr) == 0) then
+                        unique_models_array(idx_unique_arr) = model_id_array(idx_mod_id_arr)
+                        exit
+                    end if
+
+                end do
+            end do
 
 
+            !number_of_unique_models = 0
+            do idx_unique_arr = 1, Nlakes
+                if (unique_models_array(idx_unique_arr) == 0) then
+                    unique_models_array(idx_unique_arr) = model_id_array(idx_mod_id_arr)
+                    exit
 
+                else
+                    number_of_unique_models = number_of_unique_models + 1
+                end if
+            end do
+        end if
 
 
         deallocate(lake_id)
-        deallocate(model_id)
+        deallocate(model_id_array)
+        deallocate(unique_models_array)
         deallocate(minimum_storage)
         deallocate(maximum_storage)
         deallocate(minimum_release)

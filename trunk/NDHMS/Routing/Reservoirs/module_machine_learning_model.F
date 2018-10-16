@@ -5,12 +5,22 @@ module module_machine_learning_model
     implicit none
 
 
+    type :: machine_learning_model_container
+        class (machine_learning_model_struct), pointer :: ptr
+    end type
+
+    class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
+    integer, allocatable, dimension(:) :: machine_learning_model_ids
+
+    integer :: number_of_unique_models
+
+
     type :: machine_learning_model_struct
 
         !integer :: lake_id      ! lake id or COMID
 
-	integer :: model_number
-		
+        integer :: model_number
+
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
         REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
 
@@ -43,7 +53,6 @@ module module_machine_learning_model
         real :: nnn
         real, allocatable, dimension(:)     :: y_linear_interp
         real :: slope
-
 
 
         ! Parameter declaration for ml_res_sim_release subroutine
@@ -109,11 +118,11 @@ contains
         implicit none
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being initialized
 
-	integer, intent(in) :: model_number
+        integer, intent(in) :: model_number
 
         integer :: ncid, status, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
         integer :: activation_functionsVarId, number_of_nodesVarId]
-	!, minimum_storageVarId, maximum_storageVarId, lake_idVarId
+        !, minimum_storageVarId, maximum_storageVarId, lake_idVarId
         !integer :: minimum_releaseVarId, maximum_releaseVarId
         !integer :: long_term_releaseVarId
 
@@ -125,32 +134,32 @@ contains
 
         integer :: i, j, k
 
-		
+
 	contains
-	
+
 	this%model_number = model_number
-		
+
 	! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
-		
+
 		if (model_number == 1) then
 			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
-			if (status /= nf90_noerr) call handle_err(status)		
-		
-		
+			if (status /= nf90_noerr) call handle_err(status)
+
+
 		else if (model_number == 2) then
 			status = nf90_open(path = "ML_MODEL_PARM_CH.nc", mode = nf90_nowrite, ncid = ncid)                ! open existing NetCDF dataset
-			if (status /= nf90_noerr) call handle_err(status)		
-		
+			if (status /= nf90_noerr) call handle_err(status)
+
 		end if
-		
-		
+
+
         !status = nf90_open(path = "17all_res_acf_all_relu_nc.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !if (status /= nf90_noerr) call handle_err(status)
 
 
-		
-		
-			
+
+
+
 
         status = nf90_inq_varid(ncid, "bias", biasVarId)
 
@@ -330,10 +339,10 @@ contains
         this%nn_inputs%average_storage_over_past_time_intervals = 0.0
         this%nn_inputs%average_inflow_over_past_time_intervals = 0.0
         this%nn_inputs%X_DOY = 0.0
-        this%nn_inputs%Y_DOY = 0.0		
-		
-	
-		
+        this%nn_inputs%Y_DOY = 0.0
+
+
+
         ! this has been intentionally deactivated;  Index([u'Release', u'Elevation', u'Inflow', u'DOX', u'DOY', u'Storage'], dtype='object') coming from ACF NetCDF file
         this%minimum_of_features_final = (/this%minimum_of_features(1), this%minimum_of_features(6), this%minimum_of_features(3),&
          this%minimum_of_features(2), this%minimum_of_features(4), this%minimum_of_features(5)/)
@@ -400,16 +409,15 @@ contains
         !real ::
 
         !type (NN_node), dimension (10), intent (IN) :: model_parameters_local
-		
-		
+
 		real, intent (in)   ::  average_inflow_over_past_time_intervals
-		real, intent (out)  ::  release		
-		real, intent (in)   ::  previous_release		
+		real, intent (out)  ::  release
+		real, intent (in)   ::  previous_release
 		real, intent (in)   ::  average_storage_over_past_time_intervals
 		real, intent (in)   ::  X_DOY
 		real, intent (in)   ::  Y_DOY
-		
-		
+
+
 
         real, allocatable, dimension(:) :: input_vector_local
         real, allocatable, dimension(:,:) :: reshaped_input_vector_local
@@ -420,14 +428,14 @@ contains
         integer :: i, j, k
         real tmp
 
-		
+
         model_data%nn_inputs%previous_release = previous_release
         model_data%nn_inputs%average_storage_over_past_time_intervals = average_storage_over_past_time_intervals
         model_data%nn_inputs%average_inflow_over_past_time_intervals = average_inflow_over_past_time_intervals
         model_data%nn_inputs%X_DOY = X_DOY
         model_data%nn_inputs%Y_DOY = Y_DOY
-		
-		
+
+
 	model_data%normalized_nn_inputs%previous_release = (model_data%nn_inputs%previous_release - model_data%minimum_of_features_final(1))&
         /(model_data%maximum_of_features_final(1) - model_data%minimum_of_features_final(1))
 
@@ -439,21 +447,21 @@ contains
 
 
         model_data%normalized_nn_inputs%X_DOY = model_data%nn_inputs%X_DOY ! this variable is already
-        model_data%normalized_nn_inputs%Y_DOY = model_data%nn_inputs%Y_DOY	
-		
-		
+        model_data%normalized_nn_inputs%Y_DOY = model_data%nn_inputs%Y_DOY
+
+
         ! Here input combination is assigned!
 
-			
+
         !model_data%input_vector = (/normalized_nn_inputs_local%previous_release, normalized_nn_inputs_local%X_DOY,&
         !    normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
-        !    normalized_nn_inputs_local%inflow/)			
+        !    normalized_nn_inputs_local%inflow/)
 
         model_data%input_vector = (/model_data%normalized_nn_inputs%previous_release, model_data%normalized_nn_inputs%X_DOY,&
             model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%average_storage_over_past_time_intervals, &
-            model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)			
+            model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)
 
-			
+
         reshaped_input_vector_local = reshape(model_data%input_vector, (/ size(model_data%input_vector),1/))
 
 
@@ -504,10 +512,10 @@ contains
         ! Simulated release should be denormalized
         !ml_simulated_release_local = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
         !model_data%ml_simulated_release = ml_simulated_release_local
-		
+
 		release = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
-		
-		
+
+
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIXME The corrector terms need to be added here (we already have them in the Python)
 
         !Calculate the reservoir storage at the current time (i.e., the storage that corresponds to the simulated release); this part will need revision for the operational version

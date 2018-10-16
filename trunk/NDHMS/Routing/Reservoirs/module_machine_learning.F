@@ -24,16 +24,16 @@ module module_machine_learning
     use module_machine_learning_parameters
     use module_machine_learning_state
     use module_reservoir_base
-    !use module_machine_learning_model
+    use module_machine_learning_model
 
     implicit none
 
-    type :: machine_learning_model_container
-        class (machine_learning_model_struct), pointer :: ptr
-    end type
+    !type :: machine_learning_model_container
+    !    class (machine_learning_model_struct), pointer :: ptr
+    !end type
 
-    class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
-    integer, allocatable, dimension(:) :: machine_learning_model_ids
+    !class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
+    !integer, allocatable, dimension(:) :: machine_learning_model_ids
 
     ! Extend/derive machine learning struct from the abstract base
     ! struct for reservoirs.
@@ -57,19 +57,22 @@ module module_machine_learning
 contains
 
     !Machine Learning Constructor
-    subroutine machine_learning_struct_init(this, start_date, model_id, number_of_unique_models, &
-				lake_number)
+    !subroutine machine_learning_struct_init(this, start_date, model_id, number_of_unique_models, &
+	!			lake_number)
+    subroutine machine_learning_struct_init(this, start_date, lake_number)
 
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
         character(len=19), intent(in) :: start_date
-        integer, intent(in) :: model_id
-        integer, intent(in) :: number_of_unique_models
+        !integer, intent(in) :: model_id
+        !integer, intent(in) :: number_of_unique_models
         integer, intent(in) :: lake_number               ! lake number
 							 ! TODO: potentially change to lake_id for this and
 							 ! LP and Pers modules. lake_number is used in LP
 							 ! which has been submitted to a PR.
-        integer :: model_counter, model_index
+        !integer :: model_counter, model_index
+
+        integer :: model_counter, model_index, model_id
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
 
@@ -104,6 +107,15 @@ contains
 
 
 
+
+            if ( .not. allocated(machine_learning_models) ) then
+                number_of_unique_models = 0
+                ! get_unique_number_of_models = .true.
+            end if
+            !else
+            !    get_unique_number_of_models = .false.
+
+
             ! try to allocate parameters
             allocate ( this%parameters )
 
@@ -114,8 +126,8 @@ contains
             else
 
                 ! initialize machine_learning parameters
-                call this%parameters%init( model_id, model_index, lake_number )
-
+                !call this%parameters%init( model_id, model_index, lake_number, number_of_unique_models )
+                call this%parameters%init( lake_number, number_of_unique_models )
             end if
 
             this%pointer_allocation_guard = .true.
@@ -159,30 +171,36 @@ contains
 
         end if
 
-		model_index = 0
+		this%parameters%model_index = 0
 		do model_counter = 1, number_of_unique_models
 
 			! If the model has already been initialized, and the passed model number
 			! matches the model number in the array, then assign that slot to
 			! model_index
-			if (machine_learning_model_ids(model_counter) == model_id) then
-				model_index = model_counter
+			if (machine_learning_model_ids(model_counter) == this%parameters%model_id) then
+				this%parameters%model_index = model_counter
 				exit
 
 			! Check if any slot is zero, which means a machine learning model has
 			! not been initialized or assigned to that slot.
 			else if (machine_learning_model_ids(model_counter) == 0) then
-				machine_learning_model_ids(model_counter) = model_id
-				model_index = model_counter
 
-				machine_learning_models(model_counter)
+                ! Assign the model id to the given slot.
+				machine_learning_model_ids(model_counter) = this%parameters%model_id
+				this%parameters%model_index = model_counter
+
+				!machine_learning_models(model_counter) !??????????
 
 				allocate(machine_learning_model_struct :: &
-				machine_learning_model_ids(model_counter)%ptr
+				machine_learning_models(model_counter)%ptr  ! should this be ml_models instead????
+				!machine_learning_model_ids(model_counter)%ptr  ! should this be ml_models instead????
 
-				select type (ml => machine_learning_model_ids(model_counter)%ptr)
+				!select type (ml => machine_learning_model_ids(model_counter)%ptr)
+                select type (ml => machine_learning_models(model_counter)%ptr)
 
-				call ml%machine_learning_model_init(model_id)
+
+                ! Calls initialization of a particular Machine Learning model.
+				call ml%machine_learning_model_init(this%parameters%model_id)
 
 				exit
 
@@ -348,9 +366,11 @@ contains
             ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
 !		    select type (ml => machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr)
 
+
             if (okay_run_machine_learning_model) then
 
 !		        call machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
+!		        call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
 !                    (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
 !			        reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
 !			        reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)

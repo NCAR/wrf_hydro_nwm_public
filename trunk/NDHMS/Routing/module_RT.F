@@ -809,23 +809,23 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
        end select
 
 
-     else if (rt_domain(did)%q_type(lake_index) == 2) then
+!     else if (rt_domain(did)%q_type(lake_index) == 2) then
 
        ! Allocate a single machine learning reservoir
-       allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+!       allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        ! Dynamically inspects for machine learning type reservoir
-       select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
-          type is (machine_learning_struct)
+ !      select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+ !         type is (machine_learning_struct)
 
                  ! Call to initialize a machine learning type reservoir
-                 call ml%init(                                &
-                 nlst_rt(did)%startdate(1:19),                &
+ !                call ml%init(                                &
+ !                nlst_rt(did)%startdate(1:19),                &
        !          rt_domain(did)%model_number(lake_index),	  &
 	   !   		  number_of_unique_models,					  &
-                 lake_index                                   )                                      )
+!                 lake_index                                   )                                      )
 
-       end select
+ !      end select
 
      !else if (rt_domain(did)%q_type(lake_index) == 3) then
 
