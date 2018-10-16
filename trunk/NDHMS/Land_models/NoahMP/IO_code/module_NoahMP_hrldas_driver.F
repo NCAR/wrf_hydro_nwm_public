@@ -24,6 +24,7 @@ module module_NoahMP_hrldas_driver
   USE module_sf_noahmp_groundwater
   USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
   USE module_date_utilities
+!  USE module_sf_watertracer, only: tell_wt_flag, initialized_wt 
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char, mpp_land_sync
   use module_mpp_land, only: check_land, node_info, fatal_error_stop, numprocs
@@ -275,9 +276,9 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SFCRUNOFF_TR ! accumulated surface runoff [m]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  UDRUNOFF_TR  ! accumulated sub-surface runoff [m]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_TR     ! volumetric soil moisture [m3/m3]
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_TR      ! volumetric liquid soil moisture [m3/m3]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW_TR      ! snow water equivalent [mm]
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH_TR     ! physical snow depth [m]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2OXY_TR      ! volumetric liquid soil moisture [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWXY_TR      ! snow water equivalent [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWHXY_TR     ! physical snow depth [m]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANWAT_TR    ! total canopy water + ice [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOM_TR    ! accumulated snow melt leaving pack
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACSNOW_TR    ! accumulated snow on grid
@@ -300,24 +301,23 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ETRANXY_TR   ! transpiration rate (mm/s)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  FLUXXY_TR    ! tracer flux at soil bottom [m]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS_SUB    ! volumetric soil moisture in sublayers [m3/m3]
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O_SUB     ! volumetric liquid soil moisture in sublayers [m3/m3]
+  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2OXY_SUB     ! volumetric liquid soil moisture in sublayers [m3/m3]
   !------namelist variables----------------
   integer                                 :: water_tracer_option ! 0-water tracer off, 1-water tracer on
   character(len=256)                      :: track_start   ! YYYY-MM-DD
   character(len=256)                      :: track_end     ! YYYY-MM-DD
   integer                                 :: partial_mixing_option ! partial mixing option (0-complete mixing, 1-partial mixing)
-  integer, dimension(MAX_SOIL_LEVELS)     :: tracer_sublayer ! number of sublayers for tracer
   !-----variables read fro namelist--------
   integer                                 :: OPT_WT       ! 0-water tracer off, 1-water tracer on
   character(len=19)                       :: wvtstart     ! YYYY-MM-DD_hh:mm:ss
   character(len=19)                       :: wvtend       ! YYYY-MM-DD_hh:mm:ss
   integer                                 :: IOPT_PM      ! partial mixing option (0-complete mixing, 1-partial mixing)
-  integer, dimension(MAX_SOIL_LEVELS)     :: NSUB         ! number of sublayer for tracer
   integer                                 :: NTRACER      ! sum of NSUB
   !------tracer flag and raio variables to "tag" water from precip------
   INTEGER                                 :: wvtflag      ! 0->before track_start; 1->at track_start
                                                           ! 2->during tracking period; 3->after track_end
   REAL                                    :: wvt_ratio    ! ratio of tracer precip to total precip
+  INTEGER                                 :: K
 
 !------------------------------------------------------------------------
 ! Needed for NoahMP init
@@ -478,6 +478,8 @@ module module_NoahMP_hrldas_driver
   integer            ::   yend = 0
   integer, PARAMETER    :: MAX_SOIL_LEVELS = 20   ! maximum soil levels in namelist
   REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
+  integer, dimension(MAX_SOIL_LEVELS)     :: tracer_sublayer ! number of sublayers for tracer
+  integer, dimension(MAX_SOIL_LEVELS)     :: NSUB         ! number of sublayer for tracer
   integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
 
 #ifdef WRF_HYDRO
@@ -610,11 +612,15 @@ module module_NoahMP_hrldas_driver
   IOPT_RSF = surface_resistance_option
   !-----water tracer variables--------
   OPT_WT   = water_tracer_option
+  NTRACER  = 1
   if (OPT_WT .eq. 1) then 
     IOPT_PM  = partial_mixing_option
     NSUB     = tracer_sublayer
     NTRACER  = sum(NSUB(1:nsoil))
   end if
+  print *, "FLAG1"
+  print *, "OPT_WT", OPT_WT
+  print *, "NTRACER", NTRACER 
 
   !!----------------------------------------------------------------------------
   !! channel_only
@@ -1036,9 +1042,9 @@ if (OPT_WT .eq. 1) then
   ALLOCATE ( SFCRUNOFF_TR (XSTART:XEND,YSTART:YEND) )  ! accumulated surface runoff [m]
   ALLOCATE ( UDRUNOFF_TR  (XSTART:XEND,YSTART:YEND) )  ! accumulated sub-surface runoff [m]
   ALLOCATE ( SMOIS_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture [m3/m3]
-  ALLOCATE ( SH2O_TR      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture [m3/m3]
-  ALLOCATE ( SNOW_TR      (XSTART:XEND,YSTART:YEND) )  ! snow water equivalent [mm]
-  ALLOCATE ( SNOWH_TR     (XSTART:XEND,YSTART:YEND) )  ! physical snow depth [m]
+  ALLOCATE ( SH2OXY_TR    (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture [m3/m3]
+  ALLOCATE ( SNOWXY_TR    (XSTART:XEND,YSTART:YEND) )  ! snow water equivalent [mm]
+  ALLOCATE ( SNOWHXY_TR   (XSTART:XEND,YSTART:YEND) )  ! physical snow depth [m]
   ALLOCATE ( CANWAT_TR    (XSTART:XEND,YSTART:YEND) )  ! total canopy water + ice [mm]
   ALLOCATE ( ACSNOM_TR    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow melt leaving pack
   ALLOCATE ( ACSNOW_TR    (XSTART:XEND,YSTART:YEND) )  ! accumulated snow on grid
@@ -1061,7 +1067,7 @@ if (OPT_WT .eq. 1) then
   ALLOCATE ( ETRANXY_TR   (XSTART:XEND,YSTART:YEND) )  ! transpiration rate (mm/s)
   ALLOCATE ( FLUXXY_TR     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! tracer flux at soil bottom [m]
   ALLOCATE ( SMOIS_SUB     (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric soil moisture in sublayers [m3/m3]
-  ALLOCATE ( SH2O_SUB      (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture in sublayers [m3/m3]
+  ALLOCATE ( SH2OXY_SUB    (XSTART:XEND,1:NTRACER,YSTART:YEND) )     ! volumetric liquid soil moisture in sublayers [m3/m3]
 end if
 
 !------------------------------------------------------------------------
@@ -1277,9 +1283,9 @@ if (OPT_WT .eq. 1) then
   SFCRUNOFF_TR  = 0.0
   UDRUNOFF_TR   = 0.0
   SMOIS_TR      = undefined_real
-  SH2O_TR       = undefined_real
-  SNOW_TR       = undefined_real
-  SNOWH_TR      = undefined_real
+  SH2OXY_TR       = undefined_real
+  SNOWXY_TR       = undefined_real
+  SNOWHXY_TR      = undefined_real
   CANWAT_TR     = undefined_real
   ACSNOM_TR     = 0.0
   ACSNOW_TR     = 0.0
@@ -1302,8 +1308,10 @@ if (OPT_WT .eq. 1) then
   ETRANXY_TR    = undefined_real
   FLUXXY_TR     = undefined_real
   SMOIS_SUB      = undefined_real
-  SH2O_SUB       = undefined_real
+  SH2OXY_SUB     = undefined_real
 end if
+print *, "FLAG2"
+print *, "NTRACER", NTRACER
 !-------------------------------------------------
 
 !----------------------------------------------------------------------
@@ -1688,14 +1696,15 @@ endif
 ! which is the LSM timestep, we declare it here
 ! since it does not exist at this point
   ITIME = 0
-  if(t0OutputFlag .eq. 1) call ldas_output(ITIME)
+  if(t0OutputFlag .eq. 1) call ldas_output(ITIME, wvtflag)
 !#else
 !  if (restart_filename_requested == " ") then
 !     if(t0OutputFlag .eq. 1) call ldas_output()
 !  endif
 !#endif
 #endif
-
+print *, "FLAG3"
+print *, "NTRACER", NTRACER
 end subroutine land_driver_ini
 
 !===============================================================================
@@ -1800,6 +1809,9 @@ if (OPT_WT .eq. 1) then
       end if
     end if
   end if
+print *, "FLAG4"
+print *, "wvtflag", wvtflag
+print *, "NTRACER", NTRACER
   ! call tell_wt_flag(olddate, wvtstart, wvtend, wvtflag)
   if (wvtflag == 1) then
         QFX_TR        = 0.0
@@ -1807,9 +1819,9 @@ if (OPT_WT .eq. 1) then
         SFCRUNOFF_TR  = 0.0
         UDRUNOFF_TR   = 0.0
         SMOIS_TR      = 0.0
-        SH2O_TR       = 0.0
-        SNOW_TR       = 0.0
-        SNOWH_TR      = 0.0
+        SH2OXY_TR       = 0.0
+        SNOWXY_TR       = 0.0
+        SNOWHXY_TR      = 0.0
         CANWAT_TR     = 0.0
         ACSNOM_TR     = 0.0
         ACSNOW_TR     = 0.0
@@ -1838,7 +1850,7 @@ if (OPT_WT .eq. 1) then
         EDIRXY_TR     = 0.0
         ETRANXY_TR    = 0.0
         SMOIS_SUB      = 0.0
-        SH2O_SUB       = 0.0
+        SH2OXY_SUB       = 0.0
         FLUXXY_TR      = 0.0
         ! specicial care for SMOIS_SUB...
         K = 0
@@ -1846,7 +1858,7 @@ if (OPT_WT .eq. 1) then
               DO J =  NSUB(I), 1, -1
                  K = K + 1
                  SMOIS_SUB(:,K,:) = SMOIS(:,I,:)
-                 SH2O_SUB(:,K,:)  = SH2O(:,I,:)
+                 SH2OXY_SUB(:,K,:) = SH2O(:,I,:)
               END DO
          !     if (I .eq. 1) then
          !        SMOIS_SUB(:,2:NSUB(1),:) = SH2O_SUB(:,2:NSUB(1),:)
@@ -1858,7 +1870,8 @@ if (OPT_WT .eq. 1) then
   end if
   
 end if
-
+print *, "FLAG5"
+print *, "NTRACER", NTRACER
 !----------------------------------------------
 
 991  continue
@@ -1938,11 +1951,15 @@ end if
       if (wvtflag == 2) then
         wvt_ratio = 1.0
       else
-        wvt_ratio == 0.0
+        wvt_ratio = 0.0
       end if
     end if
 
-    if (wvtflag .lt. 0) then
+print *, "FLAG6"
+
+    if (wvtflag .le. 0) then
+print *, "FLAG7"
+print *, "NTRACER", NTRACER
          CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
 	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
 		 IVGTYP,   ISLTYP,   VEGFRA,   GVFMAX,       TMN,             &
@@ -1991,9 +2008,13 @@ end if
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
-                )
-		
+                , NTRACER=NTRACER)
+
+print *, "NTRACER", NTRACER
+print *, "FLAG8"
     else
+print *, "FLAG9"
+print *, "NTRACER", NTRACER
          CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
 	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
 		 IVGTYP,   ISLTYP,   VEGFRA,   GVFMAX,       TMN,             &
@@ -2042,10 +2063,10 @@ end if
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
-                , wvtflag=wvtflag, iopt_pm=iopt_pm, wvt_ratio=wvt_ratio, NSUB=NSUB, NTRACER=NTRACER   & ! IN WVT
-		, SMOIS_SUB=SMOIS_SUB, SH2O_SUB=SH2O_SUB                                              & ! IN WVT
+                , NTRACER=NTRACER, wvtflag=wvtflag, iopt_pm=iopt_pm, wvt_ratio=wvt_ratio, NSUB=NSUB           & ! IN WVT
+		, SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB                                              & ! IN WVT
                 , QFX_TR=QFX_TR, LH_TR=LH_TR, SFCRUNOFF_TR=SFCRUNOFF_TR, UDRUNOFF_TR=UDRUNOFF_TR      & !IN/OUT WVT
-		, SMOIS_TR=SMOIS_TR, SH2O_TR=SH2O_TR, SNOW_TR=SNOW_TR, SNOWH_TR=SNOWH_TR, CANWAT_TR=CANWAT_TR &
+		, SMOIS_TR=SMOIS_TR, SH2OXY_TR=SH2OXY_TR, SNOWXY_TR=SNOWXY_TR, SNOWHXY_TR=SNOWHXY_TR, CANWAT_TR=CANWAT_TR &
 		, ACSNOM_TR=ACSNOM_TR, ACSNOW_TR=ACSNOW_TR, CANICEXY_TR=CANICEXY_TR, CANLIQXY_TR=CANLIQXY_TR  &
 		, QSNOWXY_TR=QSNOWXY_TR, WSLAKEXY_TR=WSLAKEXY_TR, WAXY_TR=WAXY_TR, WTXY_TR=WTXY_TR   &
 		, ZSNSOXY_TR=ZSNSOXY_TR, SNICEXY_TR=SNICEXY_TR, SNLIQXY_TR=SNLIQXY_TR                & ! IN/OUT WVT variables
@@ -2054,7 +2075,8 @@ end if
 		, EDIRXY_TR=EDIRXY_TR, ETRANXY_TR=ETRANXY_TR, FLUXXY_TR=FLUXXY_TR                    & ! IN WVT variables
  
                 )
-	  
+print *, "FLAG9-1" 
+
     end if
 
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
@@ -2084,6 +2106,7 @@ end if
 
  ENDIF   ! SKIP FIRST TIMESTEP
 
+print *, "FLAG9-2"
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
@@ -2096,12 +2119,14 @@ end if
 
            ! convert RAINRATE back to mm/s for output
            RAINBL = RAINBL_tmp
+print *, "FLAG9-3"
            call ldas_output(ITIME, wvtflag)
 
 
         endif
      endif OUTPUT_FOR_HISTORY
 
+print *, "FLAG9-4"
      if (IVGTYP(xstart,ystart)==ISWATER) then
        write(*,'(" ***DATE=", A19)', advance="NO") olddate
      else
@@ -2114,6 +2139,7 @@ end if
 
       if ( (restart_frequency_hours .gt. 0) .and. &
            (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
+print *, "FLAG9-5"
        if(rst_bi_out .eq. 0) then
            call lsm_restart()
        else
@@ -2121,6 +2147,7 @@ end if
        endif
 #ifdef WRF_HYDRO
       else
+print *, "FLAG9-6"
        if (restart_frequency_hours <= 0) then
           if ( (olddate( 9:10) == "01") .and. (olddate(12:13) == "00") .and. &
                (olddate(15:16) == "00") .and. (olddate(18:19) == "00") ) then
@@ -2152,6 +2179,7 @@ end if
 
 
       ITIMESTEP = ITIMESTEP + 1
+print *, "FLAG10"
 
 end subroutine land_driver_exe
 
@@ -2397,6 +2425,10 @@ integer, intent(in)  :: wvtflag ! -999-no tracer capability, 0-2-with tracer cap
    call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNIXY,IVGTYP,97)
    
    if (wvtflag .ge. 0) then
+print *, "FLAG009-4"
+print *, "wvtflag", wvtflag
+print *, "LH_TR", LH_TR(0,0)
+print *, "LH", LH_TR(0,0)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LH_TR,IVGTYP,98)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ECANXY_TR,IVGTYP,99)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EDIRXY_TR,IVGTYP,100)
@@ -2409,11 +2441,11 @@ integer, intent(in)  :: wvtflag ! -999-no tracer capability, 0-2-with tracer cap
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,WTXY_TR,IVGTYP,107)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNICEXY_TR,IVGTYP,108)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,3,SNLIQXY_TR,IVGTYP,109)
-     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SH2O_TR,IVGTYP,110)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SH2OXY_TR,IVGTYP,110)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SMOIS_TR,IVGTYP,111)
-     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,FLUX_TR,IVGTYP,112)
-     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWH_TR,IVGTYP,113)
-     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOW_TR,IVGTYP,114)
+!     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,4,FLUXXY_TR,IVGTYP,112)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWHXY_TR,IVGTYP,113)
+     call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWXY_TR,IVGTYP,114)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QSNOWXY_TR,IVGTYP,115)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOW_TR,IVGTYP,116)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOM_TR,IVGTYP,117)
