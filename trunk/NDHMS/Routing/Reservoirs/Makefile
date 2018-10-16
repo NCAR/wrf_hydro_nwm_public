@@ -31,7 +31,7 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_parameters.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_model.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning.F
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_read_q_type.F
 
 
@@ -43,7 +43,7 @@ mod:
 	ar -r ../../lib/libHYDRO.a module_machine_learning_parameters.o
 	ar -r ../../lib/libHYDRO.a module_machine_learning_state.o
 	ar -r ../../lib/libHYDRO.a module_machine_learning_model.o
-	#ar -r ../../lib/libHYDRO.a module_machine_learning.o
+	ar -r ../../lib/libHYDRO.a module_machine_learning.o
 	#ar -r ../../lib/libHYDRO.a module_read_q_type.o
 
 	cp *.mod ../../mod

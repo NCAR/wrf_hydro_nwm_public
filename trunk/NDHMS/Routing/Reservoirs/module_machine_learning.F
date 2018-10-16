@@ -192,15 +192,17 @@ contains
 				!machine_learning_models(model_counter) !??????????
 
 				allocate(machine_learning_model_struct :: &
-				machine_learning_models(model_counter)%ptr  ! should this be ml_models instead????
+				machine_learning_models(model_counter)%ptr)  ! should this be ml_models instead????
 				!machine_learning_model_ids(model_counter)%ptr  ! should this be ml_models instead????
 
 				!select type (ml => machine_learning_model_ids(model_counter)%ptr)
-                select type (ml => machine_learning_models(model_counter)%ptr)
-
+                !select type (ml => machine_learning_models(model_counter)%ptr)
 
                 ! Calls initialization of a particular Machine Learning model.
-				call ml%machine_learning_model_init(this%parameters%model_id)
+				!call ml%machine_learning_model_init(this%parameters%model_id)
+
+                !call machine_learning_models(model_counter)%ptr%machine_learning_model_init(this%parameters%model_id)
+                call machine_learning_models(model_counter)%ptr%init(this%parameters%model_id)
 
 				exit
 
@@ -370,10 +372,10 @@ contains
             if (okay_run_machine_learning_model) then
 
 !		        call machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
-!		        call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
-!                    (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-!			        reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
-!			        reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
+		        call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
+                    (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
+			        reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
+			        reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
             end if
 
             !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
