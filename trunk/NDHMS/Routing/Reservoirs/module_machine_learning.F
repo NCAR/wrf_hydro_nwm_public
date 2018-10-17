@@ -25,7 +25,7 @@ module module_machine_learning
     use module_machine_learning_state
     use module_reservoir_base
     use module_machine_learning_model
-    !use module_machine_learning_tests
+    use module_machine_learning_tests
 
     implicit none
 
