@@ -28,12 +28,11 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_tests.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_parameters.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_state.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_model.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_tests.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning.F
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_read_q_type.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_parameters.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_state.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_model.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning_tests.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning.F
 
 
 	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
@@ -41,26 +40,30 @@ mod:
 	ar -r ../../lib/libHYDRO.a module_levelpool_state.o
 	ar -r ../../lib/libHYDRO.a module_levelpool_tests.o
 	ar -r ../../lib/libHYDRO.a module_levelpool.o
-	#ar -r ../../lib/libHYDRO.a module_machine_learning_parameters.o
-	#ar -r ../../lib/libHYDRO.a module_machine_learning_state.o
-	#ar -r ../../lib/libHYDRO.a module_machine_learning_model.o
-	#ar -r ../../lib/libHYDRO.a module_machine_learning_tests.o
-	#ar -r ../../lib/libHYDRO.a module_machine_learning.o
-	#ar -r ../../lib/libHYDRO.a module_read_q_type.o
+	ar -r ../../lib/libHYDRO.a module_machine_learning_parameters.o
+	ar -r ../../lib/libHYDRO.a module_machine_learning_state.o
+	ar -r ../../lib/libHYDRO.a module_machine_learning_model.o
+	ar -r ../../lib/libHYDRO.a module_machine_learning_tests.o
+	ar -r ../../lib/libHYDRO.a module_machine_learning.o
 
 	cp *.mod ../../mod
 
-test:
-	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
-	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
-	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
-		module_reservoir_base.o \
-		module_levelpool_parameters.o \
-		module_levelpool_state.o \
-		module_levelpool.o \
-		module_levelpool_tests.o \
-		reservoir_tests.o \
-		hydro_stop.o
+#test:
+#	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
+#	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
+#	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
+#		module_reservoir_base.o \
+#		module_levelpool_parameters.o \
+#		module_levelpool_state.o \
+#		module_levelpool.o \
+#		module_levelpool_tests.o \
+#		module_machine_learning_parameters.o \
+#		module_machine_learning_state.o \
+#		module_machine_learning_model.o	\
+#		module_machine_learning.o \
+#		reservoir_tests.o \
+#		module_machine_learning_tests.o \
+#		hydro_stop.o
 
 
 
@@ -83,4 +86,4 @@ test:
 clean:
 	rm -f *.o
 	rm -f *.mod
-	rm -f reservoir_tests
+	#rm -f reservoir_tests

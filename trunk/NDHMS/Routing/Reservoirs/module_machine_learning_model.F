@@ -2,6 +2,8 @@
 module module_machine_learning_model
 
     !use module_reservoir_base
+
+    use netcdf
     implicit none
 
 

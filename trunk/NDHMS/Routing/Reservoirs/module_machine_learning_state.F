@@ -9,6 +9,7 @@
 
 module module_machine_learning_state
 
+    use netcdf
     use module_reservoir_base
     implicit none
 
@@ -408,58 +409,58 @@ end module module_machine_learning_state
 
 
 ! The functions that have been used for reading NetCDF file!
-function nf90_inq_varid(ncid, name, varid)
-    integer, intent(in) :: ncid
-    character (len = *), intent( in) :: name
-    real, intent(out) :: varid
-    integer :: nf90_inq_varid
-end function nf90_inq_varid
+!function nf90_inq_varid(ncid, name, varid)
+!    integer, intent(in) :: ncid
+!    character (len = *), intent( in) :: name
+!    real, intent(out) :: varid
+!    integer :: nf90_inq_varid
+!end function nf90_inq_varid
 
 
-function nf90_get_var(ncid, varid, values)
-    integer, intent( in) :: ncid, varid
-    real, intent(out) :: values
-    integer :: nf90_get_var
-end function nf90_get_var
+!function nf90_get_var(ncid, varid, values)
+!    integer, intent( in) :: ncid, varid
+!    real, intent(out) :: values
+!    integer :: nf90_get_var
+!end function nf90_get_var
 
 
-function nf90_strerror(ncerr)
-    integer, intent( in) :: ncerr
-    character(len = 80) :: nf90_strerror
-end function nf90_strerror
+!function nf90_strerror(ncerr)
+!    integer, intent( in) :: ncerr
+!    character(len = 80) :: nf90_strerror
+!end function nf90_strerror
 
-subroutine handle_err(status)
-    implicit none
-    integer, intent ( in) :: status
-    character :: nf90_strerror
-    integer  :: nf90_noerr
-    if(status /= nf90_noerr) then
+!subroutine handle_err(status)
+!    implicit none
+!    integer, intent ( in) :: status
+!    character :: nf90_strerror
+!    integer  :: nf90_noerr
+!    if(status /= nf90_noerr) then
         !print *, trim(nf90_strerror(status))
         !print *, nf90_strerror(status) !FIXME this line deactivated, but we need to check on it!
-        stop "Stopped"
-    end if
-end subroutine handle_err
+!        stop "Stopped"
+!    end if
+!end subroutine handle_err
 
-function nf90_open(path, mode, ncid, chunksize)
-    character (len = *), intent(in   ) :: path
-    integer,             intent(in   ) :: mode
-    integer,             intent(  out) :: ncid
-    integer, optional,   intent(inout) :: chunksize
-    integer                            :: nf90_open
-end function nf90_open
+!function nf90_open(path, mode, ncid, chunksize)
+!    character (len = *), intent(in   ) :: path
+!    integer,             intent(in   ) :: mode
+!    integer,             intent(  out) :: ncid
+!    integer, optional,   intent(inout) :: chunksize
+!    integer                            :: nf90_open
+!end function nf90_open
 
-function nf90_inquire_variable(ncid, varid, name, xtype, ndims, dimids, nAtts)
-    integer,                         intent( in) :: ncid, varid
-    character (len = *),   optional, intent(out) :: name
-    integer, dimension(*), optional, intent(out) :: dimids
-    integer                                      :: nf90_inquire_variable
-end function nf90_inquire_variable
+!function nf90_inquire_variable(ncid, varid, name, xtype, ndims, dimids, nAtts)
+!    integer,                         intent( in) :: ncid, varid
+!    character (len = *),   optional, intent(out) :: name
+!    integer, dimension(*), optional, intent(out) :: dimids
+!    integer                                      :: nf90_inquire_variable
+!end function nf90_inquire_variable
 
 
-function nf90_inquire_dimension(ncid, dimid, name, len)
-    integer,                       intent( in) :: ncid, dimid
-    character (len = *), optional, intent(out) :: name
-    integer,             optional, intent(out) :: len
-    integer                                    :: nf90_inquire_dimension
-end function nf90_inquire_dimension
+!function nf90_inquire_dimension(ncid, dimid, name, len)
+!    integer,                       intent( in) :: ncid, dimid
+!    character (len = *), optional, intent(out) :: name
+!    integer,             optional, intent(out) :: len
+!    integer                                    :: nf90_inquire_dimension
+!end function nf90_inquire_dimension
 
