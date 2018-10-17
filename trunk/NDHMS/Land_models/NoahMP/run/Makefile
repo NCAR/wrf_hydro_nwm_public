@@ -26,6 +26,7 @@ OBJS = \
 	../phys/module_sf_noahmplsm.o \
 	../phys/module_sf_noahmp_glacier.o \
 	../phys/module_sf_noahmp_groundwater.o \
+	../phys/module_sf_lake.o \
 	../Utility_routines/module_wrf_utilities.o \
 	../Utility_routines/module_model_constants.o \
 	../Utility_routines/module_date_utilities.o \

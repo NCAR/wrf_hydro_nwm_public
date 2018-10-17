@@ -23,6 +23,7 @@ module module_NoahMP_hrldas_driver
   USE module_hrldas_netcdf_io
   USE module_sf_noahmp_groundwater
   USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
+  USE module_sf_lake, only: lake, lakeini, nlevsoil, nlevlake, nlevsnow
   USE module_date_utilities
   USE orchestrator_base
   USE config_base, only: wrf_hydro, noah_lsm
@@ -99,7 +100,8 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  ISICE     ! land cover category for ice
   INTEGER                                 ::  ISURBAN   ! land cover category for urban
   INTEGER                                 ::  ISWATER   ! land cover category for water
-  INTEGER                                 ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1
+  INTEGER                                 ::  ISLAKE    ! land cover category for lake
+  INTEGER                                 ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1   
   INTEGER                                 ::  IOPT_CRS  ! canopy stomatal resistance (1-> Ball-Berry; 2->Jarvis)
   INTEGER                                 ::  IOPT_BTR  ! soil moisture factor for stomatal resistance (1-> Noah; 2-> CLM; 3-> SSiB)
   INTEGER                                 ::  IOPT_RUN  ! runoff and groundwater (1->SIMGM; 2->SIMTOP; 3->Schaake96; 4->BATS)
@@ -301,6 +303,43 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSLATXY
   REAL                                    ::  WTDDT  = 30.0    ! frequency of groundwater call [minutes]
   INTEGER                                 ::  STEPWTD          ! step of groundwater call
+
+!------------------------------------------------------------------------
+! Needed for lake model (sf_lake_physics = 1)
+!------------------------------------------------------------------------
+
+  INTEGER                             :: lakeflag
+  INTEGER                             :: lake_depth_flag
+  LOGICAL, ALLOCATABLE, DIMENSION(:,:):: lake2d
+
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: lake_depth
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: lakedepth2d
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: savedtke12d
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: snowdp2d
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: h2osno2d
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: snl2d
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: t_grnd2d
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: lakemask
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: t2        ! temporary add these since they dont exist
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: th2       ! temporary add these since they dont exist
+  REAL, ALLOCATABLE, DIMENSION(:,:)   :: q2        ! temporary add these since they dont exist
+
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: t_lake3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: lake_icefrac3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: z_lake3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: dz_lake3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: t_soisno3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: h2osoi_ice3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: h2osoi_liq3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: h2osoi_vol3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: z3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: dz3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: zi3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: watsat3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: csol3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: tkmg3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: tkdry3d
+  REAL, ALLOCATABLE, DIMENSION(:,:,:) :: tksatu3d
 
 !------------------------------------------------------------------------
 ! 2D variables not used in WRF - should be removed?
@@ -633,7 +672,7 @@ module module_NoahMP_hrldas_driver
 
     call read_hrldas_hdrinfo(noah_lsm%hrldas_setup_file, ix, jx, &
          noah_lsm%xstart, noah_lsm%xend, noah_lsm%ystart, noah_lsm%yend, &
-         iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
+         iswater, islake, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
          igrid, mapproj)
   write(hgrid,'(I1)') igrid
 
@@ -877,6 +916,45 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( QSLATXY     (XSTART:XEND,YSTART:YEND) )  !
 
 !------------------------------------------------------------------------
+! Needed for lake model (sf_lake_physics = 1)
+!------------------------------------------------------------------------
+
+!IF(SF_LAKE_PHYSICS == 1 )  THEN
+
+  ALLOCATE ( lake2d(XSTART:XEND,YSTART:YEND))
+
+  ALLOCATE (  lake_depth(XSTART:XEND,YSTART:YEND))
+  ALLOCATE ( lakedepth2d(XSTART:XEND,YSTART:YEND))
+  ALLOCATE ( savedtke12d(XSTART:XEND,YSTART:YEND))
+  ALLOCATE (    snowdp2d(XSTART:XEND,YSTART:YEND))
+  ALLOCATE (    h2osno2d(XSTART:XEND,YSTART:YEND))
+  ALLOCATE (       snl2d(XSTART:XEND,YSTART:YEND))
+  ALLOCATE (    t_grnd2d(XSTART:XEND,YSTART:YEND))
+  ALLOCATE (    lakemask(XSTART:XEND,YSTART:YEND))
+  ALLOCATE (          t2(XSTART:XEND,YSTART:YEND)) ! temporary add these since they dont exist
+  ALLOCATE (         th2(XSTART:XEND,YSTART:YEND)) ! temporary add these since they dont exist
+  ALLOCATE (          q2(XSTART:XEND,YSTART:YEND)) ! temporary add these since they dont exist
+
+  ALLOCATE (       t_lake3d(XSTART:XEND,          1:nlevlake,YSTART:YEND)) 
+  ALLOCATE ( lake_icefrac3d(XSTART:XEND,          1:nlevlake,YSTART:YEND)) 
+  ALLOCATE (       z_lake3d(XSTART:XEND,          1:nlevlake,YSTART:YEND)) 
+  ALLOCATE (      dz_lake3d(XSTART:XEND,          1:nlevlake,YSTART:YEND)) 
+  ALLOCATE (     t_soisno3d(XSTART:XEND,-nlevsnow+1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (   h2osoi_ice3d(XSTART:XEND,-nlevsnow+1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (   h2osoi_liq3d(XSTART:XEND,-nlevsnow+1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (   h2osoi_vol3d(XSTART:XEND,-nlevsnow+1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (            z3d(XSTART:XEND,-nlevsnow+1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (           dz3d(XSTART:XEND,-nlevsnow+1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (           zi3d(XSTART:XEND,-nlevsnow+0:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (       watsat3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (         csol3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (         tkmg3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (        tkdry3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
+  ALLOCATE (       tksatu3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
+
+!ENDIF
+
+!------------------------------------------------------------------------
 
   ALLOCATE ( CHSTARXY  (XSTART:XEND,YSTART:YEND) )  ! for consistency with MP_init; delete later
   ALLOCATE ( SEAICE    (XSTART:XEND,YSTART:YEND) )  ! seaice fraction
@@ -1095,6 +1173,24 @@ module module_NoahMP_hrldas_driver
                          ZWTXY,EQZWT,RIVERBEDXY,RIVERCONDXY,PEXPXY,FDEPTHXY)
   end if
 
+!------------------------------------------------------------------------
+! For sf_lake_physics = 1 and use_lake_depth = 1, read LAKE_DEPTH
+!------------------------------------------------------------------------
+
+  if (noah_lsm%sf_lake_physics == 1) then
+     lakemask = 0
+     where(ivgtyp ==  islake) lakemask = 1
+
+     lakeflag = 1
+     if(iswater < 0) lakeflag = 0
+
+     lake_depth_flag = 0
+     if(noah_lsm%use_lakedepth == 1) then
+       CALL READ_LAKE_DEPTH(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,LAKE_DEPTH)
+       lake_depth_flag = 1
+     end if
+  end if
+  
 !----------------------------------------------------------------------
 ! Initialize Model State
 !----------------------------------------------------------------------
@@ -1222,6 +1318,23 @@ module module_NoahMP_hrldas_driver
                      wtddt    ,stepwtd  ,dtbl  ,qrfsxy ,qspringsxy  ,qslatxy,                  &
                      fdepthxy ,terrain ,riverbedxy ,eqzwt ,rivercondxy ,pexpxy              &
                      )
+
+         IF ( noah_lsm%sf_lake_physics == 1 ) THEN
+ 
+             call  lakeini(ivgtyp,          isltyp,        terrain,           state%snow,           & !i
+                           noah_lsm%lake_min_elev,   .true.,        noah_lsm%lakedepth_default, lake_depth,     &
+                           lakedepth2d,     savedtke12d,   snowdp2d,          h2osno2d,       & !o
+                           snl2d,           t_grnd2d,      t_lake3d,          lake_icefrac3d, &
+                           z_lake3d,        dz_lake3d,     t_soisno3d,        h2osoi_ice3d,   &
+                           h2osoi_liq3d,    h2osoi_vol3d,  z3d,               dz3d,           &
+                           zi3d,            watsat3d,      csol3d,            tkmg3d,         &
+                           iswater,         xice,          xice_threshold,     xland,  tsk,   &
+                           lakemask,        lakeflag,                                         &
+                           lake_depth_flag, noah_lsm%use_lakedepth,                                    &
+                           tkdry3d,         tksatu3d,      lake2d,                            &
+                           its,ite,jts,jte,ims,ime,jms,jme)
+         ENDIF
+ 
   else  ! for none restart
 
      restart_flag = .FALSE.
@@ -1323,6 +1436,26 @@ module module_NoahMP_hrldas_driver
 
       TAUSSXY = 0.0   ! Need to be added to _INIT later
 
+         IF ( noah_lsm%sf_lake_physics == 1 ) THEN
+ 
+             call  lakeini(ivgtyp,          isltyp,        terrain,           state%snow,           & !i
+                           noah_lsm%lake_min_elev,   .false.,       noah_lsm%lakedepth_default, lake_depth,     &
+                           lakedepth2d,     savedtke12d,   snowdp2d,          h2osno2d,       & !o
+                           snl2d,           t_grnd2d,      t_lake3d,          lake_icefrac3d, &
+                           z_lake3d,        dz_lake3d,     t_soisno3d,        h2osoi_ice3d,   &
+                           h2osoi_liq3d,    h2osoi_vol3d,  z3d,               dz3d,           &
+                           zi3d,            watsat3d,      csol3d,            tkmg3d,         &
+                           iswater,         xice,          xice_threshold,     xland,  tsk,   &
+                           lakemask,        lakeflag,                                         &
+                           lake_depth_flag, noah_lsm%use_lakedepth,                                    &
+                           tkdry3d,         tksatu3d,      lake2d,                            &
+                           its,ite,jts,jte,ims,ime,jms,jme)
+
+            where(ivgtyp ==  islake)  emiss = 0.98  ! WRF seems to assume an emissivity over lake
+            where(ivgtyp ==  islake) albedo = 0.08  ! WRF seems to assume an albedo over lake
+
+         ENDIF
+ 
 
   endif  ! end of restart if block
 
@@ -1549,14 +1682,14 @@ end subroutine land_driver_ini
 
 991  continue
 
-     where(XLAND > 1.5)   T_PHY(:,1,:) = 0.0  ! Prevent some overflow problems with ifort compiler [MB:20150812]
-     where(XLAND > 1.5)   U_PHY(:,1,:) = 0.0
-     where(XLAND > 1.5)   V_PHY(:,1,:) = 0.0
-     where(XLAND > 1.5) QV_CURR(:,1,:) = 0.0
-     where(XLAND > 1.5)     P8W(:,1,:) = 0.0
-     where(XLAND > 1.5)     GLW        = 0.0
-     where(XLAND > 1.5)  SWDOWN        = 0.0
-     where(XLAND > 1.5) RAINBL_tmp     = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER)   T_PHY(:,1,:) = 0.0  ! Prevent some overflow problems with ifort compiler [MB:20150812]
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER)   U_PHY(:,1,:) = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER)   V_PHY(:,1,:) = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER) QV_CURR(:,1,:) = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER)     P8W(:,1,:) = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER)     GLW        = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER)  SWDOWN        = 0.0
+     where(XLAND > 1.5 .and. IVGTYP == ISWATER) RAINBL_tmp     = 0.0
 
      QV_CURR(:,1,:) = QV_CURR(:,1,:)/(1.0 - QV_CURR(:,1,:))  ! Assuming input forcing are specific hum.;
                                                              ! WRF wants mixing ratio at driver level
@@ -1673,6 +1806,31 @@ end subroutine land_driver_ini
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
           sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
 
+         IF ( noah_lsm%sf_lake_physics == 1 ) THEN
+
+         CALL Lake(  t_phy        ,p8w            ,dz8w         ,qv_curr         ,&  !i
+                     u_phy        ,v_phy          ,glw          ,emiss           ,&
+                     rainbl       ,dtbl           ,swdown       ,albedo          ,&
+                     xlat_urb2d   ,z_lake3d       ,dz_lake3d    ,lakedepth2d     ,&
+                     watsat3d     ,csol3d         ,tkmg3d       ,tkdry3d         ,&
+                     tksatu3d     ,ivgtyp         ,terrain      ,xland           ,&
+                     iswater      ,xice           ,xice_threshold, noah_lsm%lake_min_elev ,&
+                     ids          ,ide            ,jds          ,jde             ,&
+                     kds          ,kde            ,ims          ,ime             ,&
+                     jms          ,jme            ,kms          ,kme             ,&
+                     its          ,ite            ,jts          ,jte             ,&
+                     kts          ,kte                                           ,&
+                     h2osno2d     ,snowdp2d       ,snl2d        ,z3d             ,&  !h
+                     dz3d         ,zi3d           ,h2osoi_vol3d ,h2osoi_liq3d    ,&
+                     h2osoi_ice3d ,t_grnd2d       ,t_soisno3d   ,t_lake3d        ,&
+                     savedtke12d  ,lake_icefrac3d                                ,&
+                     lakemask                                                    ,&
+                     hfx          ,lh             ,grdflx       ,tsk             ,&  !o
+                     qfx          ,t2             ,th2          ,q2 )
+ 
+ 
+         ENDIF
+ 
   IF(noah_lsm%RUNOFF_OPTION.EQ.5.AND.MOD(ITIME,STEPWTD).EQ.0)THEN
            CALL wrf_message('calling WTABLE' )
 

@@ -63,6 +63,7 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_times_remember
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
+  integer, private :: dimid_lake_layers_remember
 
   interface define_rst_var
      module procedure define_3d_real,define_2d_real,define_2d_int
@@ -393,7 +394,7 @@ contains
 
   subroutine read_hrldas_hdrinfo(wrfinput_flnm, ix, jx, &
        xstart, xend, ystart, yend,                      &
-       iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
+       iswater, islake, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
 #ifdef _PARALLEL_
        igrid, mapproj, dum2d_ptr)
 #else
@@ -412,6 +413,7 @@ contains
     integer,            intent(inout) :: xend, yend     ! Subwindow definition
 #endif
     integer,            intent(out)   :: iswater   ! vegetation category corresponding to water bodies
+    integer,            intent(out)   :: islake    ! vegetation category corresponding to lakes
     integer,            intent(out)   :: isurban   ! vegetation category corresponding to urban areas
     integer,            intent(out)   :: isice     ! vegetation category corresponding to ice areas
     character(len=256), intent(out)   :: llanduse  ! Landuse dataset (USGS or MODI)
@@ -505,6 +507,9 @@ contains
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISWATER", iswater)
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
                        "Problems finding global attribute 'ISWATER'")
+
+    ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISLAKE", islake)
+    call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'ISLAKE'")
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISURBAN", isurban)
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
@@ -680,7 +685,7 @@ contains
     ! by setting soil category to water when vegetation category is water, and
     ! vice-versa.
     where (vegtyp == ISWATER) soltyp = 14
-    where (soltyp == 14) vegtyp = ISWATER
+    where (soltyp == 14 .and. vegtyp /= ISWATER) soltyp = 8
 
   end subroutine readland_hrldas
 
@@ -761,6 +766,41 @@ contains
 
 
   end subroutine read_mmf_runoff
+
+!---------------------------------------------------------------------------------------------------------
+  subroutine read_lake_depth(wrfinput_flnm,xstart,xend,ystart,yend,lake_depth)
+    implicit none
+    character(len=*),          intent(in)  :: wrfinput_flnm
+    integer,                   intent(in)  :: xstart, xend, ystart, yend
+    real,    dimension(xstart:xend,  ystart:yend), intent(out) :: lake_depth
+    
+    character(len=24)  :: name
+    integer :: ierr,iret
+    integer :: ncid, varid
+
+    ! Open the NetCDF file.
+    write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+    ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("read_lake_depth:  Problem opening wrfinput file: ''", A, "''")') trim(wrfinput_flnm)
+       stop
+    endif
+
+! Get lake depth (LAKE_DEPTH)
+    name = "LAKE_DEPTH"
+    iret = nf90_inq_varid(ncid,  name,  varid)
+    if (iret == 0) then
+      ierr = nf90_get_var(ncid, varid, lake_depth, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+    else
+      stop "Problem retrieving LAKE_DEPTH with use_lake_depth = 1"
+    endif
+
+! Close the NetCDF file
+    ierr = nf90_close(ncid)
+    if (ierr /= 0) stop "MODULE_NOAHLSM_HRLDAS_INPUT: read_lake_depth :  NF90_CLOSE"
+
+
+  end subroutine read_lake_depth
 
 !---------------------------------------------------------------------------------------------------------
 
@@ -2191,7 +2231,7 @@ contains
     integer :: ncid
 
     integer :: dimid_ix, dimid_jx, dimid_times, dimid_datelen, varid, n
-    integer :: dimid_dum, dimid_layers, dimid_snow_layers
+    integer :: dimid_dum, dimid_layers, dimid_snow_layers, dimid_lake_layers
     integer :: iret
     character(len=256) :: output_flnm
     character(len=19)  :: date19
@@ -2232,6 +2272,7 @@ contains
        !iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
        iret = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
        iret = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
+       iret = nf90_def_dim(ncid, "lake_layers", 10, dimid_lake_layers)
 
        iret = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "OUTPUT FROM HRLDAS "//version)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
@@ -2288,6 +2329,7 @@ contains
     dimid_times_remember = dimid_times
     dimid_layers_remember = dimid_layers
     dimid_snow_layers_remember = dimid_snow_layers
+    dimid_lake_layers_remember = dimid_lake_layers
     iswater_remember = iswater
 
     allocate(vegtyp_remember(ixpar,jxpar))
@@ -2525,6 +2567,8 @@ contains
           		zdimid = dimid_layers_remember
        		elseif (snow_or_soil == "SNOW") then
           		zdimid = dimid_snow_layers_remember
+                elseif (snow_or_soil == "LAKE") then
+                        zdimid = dimid_lake_layers_remember
        		else
           		write(*,'("SNOW_OR_SOIL unrecognized: ", A)') adjustl(trim(snow_or_soil))
           stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_output_3d() - SNOW_OR_SOIL"
@@ -2821,7 +2865,7 @@ contains
     character(len=256) :: output_flnm
     integer :: ierr
     integer :: varid
-    integer :: dimid_times, dimid_datelen, dimid_ix, dimid_jx, dimid_dum, dimid_layers, dimid_snow_layers, dimid_sosn_layers
+    integer :: dimid_times, dimid_datelen, dimid_ix, dimid_jx, dimid_dum, dimid_layers, dimid_snow_layers, dimid_sosn_layers, dimid_lake_layers
     character(len=19) :: date19
     integer :: rank
 
@@ -2871,6 +2915,7 @@ contains
     ierr = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
     ierr = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
     ierr = nf90_def_dim(ncid, "sosn_layers", nsnow+nsoil, dimid_sosn_layers)
+    ierr = nf90_def_dim(ncid, "lake_layers", 10, dimid_lake_layers)
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "RESTART FILE FROM HRLDAS "//version)
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
