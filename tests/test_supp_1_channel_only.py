@@ -269,7 +269,8 @@ def test_ncores_candidate_channel_only(output_dir):
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_ncores.output,
-            candidate_channel_only_sim_expected.output
+            candidate_channel_only_sim_expected.output,
+            exclude_vars=None
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -352,7 +353,8 @@ def test_perfrestart_candidate_channel_only(output_dir):
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_restart.output,
-            candidate_channel_only_sim_expected.output
+            candidate_channel_only_sim_expected.output,
+            exclude_vars=None
         )
 
     # Assert all diff values are 0 and print diff stats if not
