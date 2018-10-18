@@ -36,7 +36,7 @@ def test_regression_data(output_dir):
         data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_run_expected.output,
             reference_run_expected.output,
-            exclude_vars=exclude_vars
+            exclude_vars=EXCLUDE_VARS
         )
 
     # Assert all diff values are 0 and print diff stats if not

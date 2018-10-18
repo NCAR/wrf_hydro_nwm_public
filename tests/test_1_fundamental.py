@@ -20,7 +20,7 @@ from utilities import wait_job, print_diffs
 # Setup a domain
 
 #List variabls to ignore in tests, primarily accumulation variables
-exclude_vars = ['ACMELT',
+EXCLUDE_VARS = ['ACMELT',
                 'ACSNOW',
                 'SFCRUNOFF',
                 'UDRUNOFF',
@@ -206,7 +206,7 @@ def test_ncores_candidate(output_dir):
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_ncores.output,
                                                        candidate_sim_expected.output,
-                                                       exclude_vars=exclude_vars)
+                                                       exclude_vars=EXCLUDE_VARS)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -293,7 +293,7 @@ def test_perfrestart_candidate(output_dir):
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_restart.output,
                                                        candidate_sim_expected.output,
-                                                       exclude_vars=exclude_vars)
+                                                       exclude_vars=EXCLUDE_VARS)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
