@@ -27,7 +27,7 @@
             "order_to_write": 1,
             "out_dt": 60,
             "outlake": 1,
-            "output_channelbucket_influx": 2,
+            "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
             "restart_file": "NULL_specified_in_domain.json",
@@ -73,7 +73,6 @@
         "hydro_nlist": {
             "aggfactrt": 1,
             "dxrt": 1000,
-            "output_channelbucket_influx": 2,
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
@@ -89,7 +88,6 @@
         "hydro_nlist": {
             "compound_channel": false,
             "out_dt": 60,
-            "output_channelbucket_influx": 2,
             "aggfactrt": 10,
             "dxrt": 100
        },
@@ -108,7 +106,6 @@
         "hydro_nlist": {
             "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
-            "output_channelbucket_influx": 0,
             "channel_option": 3,
             "dtrt_ch": 10,
             "rstrt_swc": 1,
@@ -134,7 +131,6 @@
         "hydro_nlist": {
             "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
-            "output_channelbucket_influx": 0,
             "channel_option": 3,
             "dtrt_ch": 10,
             "rstrt_swc": 1,
@@ -160,7 +156,6 @@
         "hydro_nlist": {
             "compound_channel": false,
             "gwbasmskfil": "NULL_specified_in_domain.json",
-            "output_channelbucket_influx": 0,
             "dtrt_ch": 10,
             "outlake": 0,
             "rstrt_swc": 0,
