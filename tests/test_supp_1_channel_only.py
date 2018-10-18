@@ -14,7 +14,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs, wait_job
 
 # Exclude accumulation variables from comparisons
-exclude_accum_vars = [
+EXCLUDE_ACCUM_VARS = [
     'ACMELT',
     'ACSNOW',
     'SFCRUNOFF',
@@ -284,7 +284,7 @@ def test_ncores_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_ncores.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=exclude_accum_vars
+            exclude_vars=EXCLUDE_ACCUM_VARS
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -368,7 +368,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_restart.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=exclude_accum_vars
+            exclude_vars=EXCLUDE_ACCUM_VARS
         )
 
     # Assert all diff values are 0 and print diff stats if not
