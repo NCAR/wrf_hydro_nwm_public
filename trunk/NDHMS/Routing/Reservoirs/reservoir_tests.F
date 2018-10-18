@@ -11,7 +11,7 @@ program reservoir_unit_tests
     rv = test_levelpool()
 
 
-    rv = .false.
+    !rv = .false.
 
     rv = test_machine_learning()
 
@@ -55,13 +55,29 @@ program reservoir_unit_tests
         logical rv                        ! test result
 
         type (machine_learning_struct) :: machine_learning_reservoir_data
+
+        type (machine_learning_model_struct) :: machine_learning_model_data
+
         integer :: call_status = 0
 
         print *, "calling init for machine_learning_struct"
-        call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 25)
+        call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 166758723)
+        !call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 1233515)
+
+
+        print *, "calling init for machine_learning_model_struct"
+        !call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 166758723)
+        call machine_learning_model_data%init(2)
+
+
 
         print *, "testing data in machine_learning_struct"
         call_status = machine_learning_data_info(machine_learning_reservoir_data)
+
+
+        print *, "testing data in machine_learning_model_struct"
+        call_status = machine_learning_model_data_info(machine_learning_model_data)
+
 
     end function test_machine_learning
 

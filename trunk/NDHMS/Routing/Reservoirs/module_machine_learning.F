@@ -153,9 +153,15 @@ contains
         end if
 
 
+        print *, "19"
+
+
         ! Model Initialization
         ! This if statement is only entered on first machine learning reservoir
         if ( .not. allocated(machine_learning_models) ) then
+
+            print *, "20"
+
 
        	    ! Allocates array of pointers to machine learning models.
             allocate(machine_learning_models(number_of_unique_models))
@@ -170,16 +176,24 @@ contains
                 nullify(machine_learning_models(model_counter)%ptr)
             end do
 
+            print *, "21"
+
+
         end if
+
+        print *, "22"
 
 		this%parameters%model_index = 0
 		do model_counter = 1, number_of_unique_models
+
+            print *, "23"
 
 			! If the model has already been initialized, and the passed model number
 			! matches the model number in the array, then assign that slot to
 			! model_index
 			if (machine_learning_model_ids(model_counter) == this%parameters%model_id) then
 				this%parameters%model_index = model_counter
+                print *, "24"
 				exit
 
 			! Check if any slot is zero, which means a machine learning model has
@@ -190,6 +204,7 @@ contains
 				machine_learning_model_ids(model_counter) = this%parameters%model_id
 				this%parameters%model_index = model_counter
 
+                print *, "25"
 				!machine_learning_models(model_counter) !??????????
 
 				allocate(machine_learning_model_struct :: &
@@ -202,8 +217,17 @@ contains
                 ! Calls initialization of a particular Machine Learning model.
 				!call ml%machine_learning_model_init(this%parameters%model_id)
 
+                print *, "26"
+
+
+                print *, this%parameters%model_id
+
+                print *, model_counter
+
                 !call machine_learning_models(model_counter)%ptr%machine_learning_model_init(this%parameters%model_id)
                 call machine_learning_models(model_counter)%ptr%init(this%parameters%model_id)
+
+                print *, "27"
 
 				exit
 
@@ -372,6 +396,7 @@ contains
 
             if (okay_run_machine_learning_model) then
 
+                ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
 !		        call machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
 		        call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
                     (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
@@ -478,6 +503,7 @@ contains
     print *, " "
 
 
+
     ! Now check the data members of each substructure
     if ( ptr_state(1) ) then
         data_state(1) = test_machine_learning_state(machine_learning_data%state)
@@ -505,6 +531,55 @@ contains
 
     flush(6)
     end function machine_learning_data_info
+
+
+
+
+
+
+    function machine_learning_model_data_info(machine_learning_model_data) result(rv)
+    implicit none
+    type (machine_learning_model_struct) :: machine_learning_model_data
+    integer :: rv
+    logical, dimension(1) :: ptr_state
+    logical, dimension(1) :: data_state
+
+    rv = 0
+
+    ! Check to see if the machine_learning_model data structure exists
+    print *, "Checking pointer association on model data "
+    !if ( associated(machine_learning_model_data) ) then
+    !    print *, "PASSED"
+    !    ptr_state(1) = .true.
+    !else
+    !    print *, "FAILED"
+    !    ptr_state(1) = .false.
+    !end if
+    print *, " "
+
+
+    data_state(1) = test_machine_learning_model(machine_learning_model_data)
+
+
+    if ( all(data_state) ) then
+    !if ( all(ptr_state) .and. all(data_state) ) then
+        print *, "========================================================================"
+        print *, "All Model Tests Passed"
+        print *, "========================================================================"
+    end if
+    rv = 1
+
+    flush(6)
+    end function machine_learning_model_data_info
+
+
+
+
+
+
+
+
+
 
 
 end module module_machine_learning

@@ -54,6 +54,9 @@ module module_machine_learning_state
 
 contains
 
+    !TAKE OUT ELEVATION STUFF????
+
+
     !Machine Learning State Constructor
     subroutine machine_learning_state_init(this, start_date, lake_number)
         use netcdf
@@ -103,19 +106,21 @@ contains
         integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
         integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
 
+        print *, "6"
 
 
         this%start_date = start_date
 
 
         !Reservoir Parm NC file
-        status = nf90_open(path = "RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !print *, "status", status
         if (status /= nf90_noerr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
 
 
+        print *, "7"
 
 
 
@@ -145,6 +150,7 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
+        print *, "8"
 
 
 
@@ -162,6 +168,7 @@ contains
 
 
 
+        print *, "9"
 
 
 
@@ -193,6 +200,9 @@ contains
         allocate(release_monthly_averages(monthly_averages_rows, Nlakes))
 
 
+        print *, "10"
+
+
         status = nf90_inquire_variable(ncid, elevation_monthly_averagesVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
 
@@ -204,6 +214,9 @@ contains
 
 
         allocate(elevation_monthly_averages(monthly_averages_rows, Nlakes))
+
+
+        print *, "11"
 
 
 
@@ -235,6 +248,7 @@ contains
 
 
 
+        print *, "12"
 
 
 
@@ -244,6 +258,8 @@ contains
 
         if (status /= nf90_noerr) call handle_err(status)
 
+
+        print *, "13"
 
 
         !Monthly averages
@@ -271,10 +287,11 @@ contains
 
 
 
+        print *, "14"
 
 
 
-
+        lake_id_index = 0
 
         do lake_index = 1, Nlakes
             if (lake_id(lake_index) == lake_number) then
@@ -283,6 +300,7 @@ contains
 
         end do
 
+        print *, "15"
 
 
         ! Check grab monthly avg from start date and set previous day storage and release to that.
@@ -296,10 +314,31 @@ contains
         read (this%start_date(1:4), *) start_year
 
 
+        print *, "16"
 
-        release_monthly_average = release_monthly_averages(lake_id_index ,start_month)
+        print *, release_monthly_averages
 
-        storage_monthly_average = storage_monthly_averages(lake_id_index ,start_month)
+        print *, "release_monthly_average"
+
+        print *, release_monthly_average
+
+        print *, lake_id_index
+
+        print *, start_month
+
+        print *, lake_id
+
+
+
+        release_monthly_average = release_monthly_averages(lake_id_index, start_month)
+
+        print *, "16.05"
+
+
+
+        storage_monthly_average = storage_monthly_averages(lake_id_index, start_month)
+
+        print *, "16.1"
 
 
         this%previous_day_release = release_monthly_average
@@ -309,6 +348,9 @@ contains
         !this%accumulated_storage = storage_monthly_average
 
         this%current_storage = storage_monthly_average
+
+        print *, "16.2"
+
 
 		this%totaled_storage = 0.0
 
@@ -329,11 +371,18 @@ contains
 
         start_day_of_year = 0
 
+        print *, "16.5"
+
+
         if (((mod(start_year,4)==0 .and. mod(start_year,100)/=0) .or. mod(start_year,400)==0) .and. start_month>2) then
             do month_loop_index = 1, start_month-1
                 start_day_of_year = start_day_of_year + months(month_loop_index)
             end do
             start_day_of_year = start_day_of_year + start_day_of_month + 1    ! add one day for leap year after February
+
+
+        print *, "16.6"
+
 
         else
             do month_loop_index = 1, start_month-1
@@ -342,6 +391,9 @@ contains
 
             start_day_of_year = start_day_of_year + start_day_of_month     ! non leap year or leap year before March
         end if
+
+
+        print *, "17"
 
 
         this%start_year = start_year
@@ -368,6 +420,7 @@ contains
         end if
 
 
+        print *, "18"
 
 
 

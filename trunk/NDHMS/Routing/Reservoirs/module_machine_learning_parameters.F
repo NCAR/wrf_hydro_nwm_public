@@ -83,13 +83,21 @@ contains
 
         ! Machine Learning Reservoir Parm NC file
         ! LEAVE THIS HARD CODED????
+
+        print *, "Before opening ML_RESERVOIR_PARM.nc"
+
+
         status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status)
+
+
+        print *, "After opening ML_RESERVOIR_PARM.nc"
+
 
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
         if (status /= nf90_noerr) call handle_err(status)
 
-        status = nf90_inq_varid(ncid, "model_id", lake_idVarId)
+        status = nf90_inq_varid(ncid, "model_id", model_idVarId)
         if(status /= nf90_NoErr) call handle_err(status)
 
         status = nf90_inq_varid(ncid, "maximum_release", maximum_releaseVarId)
@@ -105,19 +113,36 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
+        print *, "1"
+
+
         status = nf90_inquire_variable(ncid, lake_idVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
+
+        print *, "1.2"
+
+
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
         if(status /= nf90_NoErr) call handle_err(status)
         allocate(lake_id(Nlakes))
 
+        print *, "1.5"
+
         status = nf90_inquire_variable(ncid, model_idVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
+
+        print *, "1.55"
+
+
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
         if(status /= nf90_NoErr) call handle_err(status)
         allocate(model_id_array(Nlakes))
 
         allocate(unique_models_array(Nlakes))
+
+
+        print *, "1.6"
+
 
         status = nf90_inquire_variable(ncid, maximum_releaseVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -143,6 +168,8 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
         allocate(minimum_storage(Nlakes))
 
+        print *, "2"
+
 
         status = nf90_get_var(ncid, lake_idVarId, lake_id)
         if (status /= nf90_noerr) call handle_err(status)
@@ -163,6 +190,8 @@ contains
         if (status /= nf90_noerr) call handle_err(status)
 
 
+        print *, "3"
+
         do lake_index = 1, Nlakes
             if (lake_id(lake_index) == this%lake_number) then
                 lake_id_index = lake_index
@@ -174,6 +203,9 @@ contains
         this%max_storage = maximum_storage(lake_id_index)
         this%min_release = minimum_release(lake_id_index)
         this%max_release = maximum_release(lake_id_index)
+
+
+        print *, "4"
 
 
         if (number_of_unique_models == 0) then
@@ -205,6 +237,8 @@ contains
                 end if
             end do
         end if
+
+        print *, "5"
 
 
         deallocate(lake_id)

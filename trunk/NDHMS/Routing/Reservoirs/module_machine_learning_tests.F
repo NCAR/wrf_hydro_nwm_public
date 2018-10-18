@@ -1,6 +1,7 @@
 module module_machine_learning_tests
     use module_machine_learning_state
     use module_machine_learning_parameters
+    use module_machine_learning_model
     use module_reservoir_base
 contains
     ! test to see that each member of the input structure is correctly allocated and readable
@@ -180,5 +181,60 @@ contains
         print *, " "
 
     end function test_machine_learning_parameters
+
+
+
+
+    ! test to see that each member of the model structure is correctly allocated and readable
+    function test_machine_learning_model(o) result(rv)
+        type (machine_learning_model_struct), intent(in) :: o
+        logical rv
+
+        rv = .true.
+
+        print *, "========================================================================"
+        print *, "Checking the values of the machine learning model data structure"
+        print *, " "
+
+        print *, "Checking read on model_number"
+        print *, o%model_number
+        print *, " "
+
+        print *, "Checking read on X_DOY "
+        print *, o%X_DOY
+        print *, " "
+
+        print *, "Checking read on Y_DOY "
+        print *, o%Y_DOY
+        print *, " "
+
+
+
+        print *, "Checking allocation of reshaped_weights"
+        if ( allocated(o%reshaped_weights ) ) then
+            print *, "PASSED"
+
+            print *, "Checking read on reshaped_weights "
+            print *, o%reshaped_weights(1:4,1:4,1:4)
+        else
+            print *, "FAILED"
+            rv = .false.
+        end if
+
+
+        print *, "Checking allocation of link_weights"
+        if ( allocated(o%model_parameters(1)%link_weights ) ) then
+            print *, "PASSED"
+
+            print *, "Checking read on link_weights "
+            print *, o%model_parameters(1)%link_weights(1:4,1:4)
+        else
+            print *, "FAILED"
+            rv = .false.
+        end if
+
+
+
+    end function test_machine_learning_model
 
 end module

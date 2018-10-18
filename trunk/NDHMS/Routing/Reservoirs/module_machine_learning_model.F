@@ -121,6 +121,10 @@ contains
 
         ! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
 
+
+        print *, "28"
+
+
 		if (model_number == 1) then
 			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
 			if (status /= nf90_noerr) call handle_err(status)
@@ -139,9 +143,25 @@ contains
         !if (status /= nf90_noerr) call handle_err(status)
 
 
+!!!!!!!!!!!!!!!!!!!!!!!!
+
+        print *, "29"
+
+
+
+        print *, this%minimum_of_features
+
+
+
         status = nf90_inq_varid(ncid, "bias", biasVarId)
 
         if(status /= nf90_NoErr) call handle_err(status)
+
+        print *, "biasVarId 1", biasVarId
+
+
+!!!!!!!!!!!!!!!!
+
 
 
         status = nf90_inq_varid(ncid, "weights", weightsVarId)
@@ -173,10 +193,20 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
+        print *, "30"
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         ! How big is the netCDF variable, that is, what are the lengths of
         !   its constituent dimensions?
         status = nf90_inquire_variable(ncid, biasVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
+
+
+        print *, "biasVarId 2", biasVarId
+
 
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -186,6 +216,22 @@ contains
 
 
         allocate(this%bias(Nlayers, nodes))
+        !allocate(this%bias(nodes, Nlayers))
+
+        print *, "31"
+        print *, Nlayers
+        print *, nodes
+        !print *, this%bias
+
+
+        print *, "Nlayers 1", Nlayers
+
+        print *, "nodes 1", nodes
+
+        !print *, "bias 1", bias
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
@@ -200,8 +246,17 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
+
+
+        print *, "Nlayers 2", Nlayers
+
+        print *, "nodes 2", nodes
+
+
+
         allocate(this%weights(Nlayers, nodes))
 
+        print *, "32"
 
         status = nf90_inquire_variable(ncid, minimum_of_featuresVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -220,7 +275,7 @@ contains
 
         allocate(this%maximum_of_features(Ninputs))
 
-
+        print *, "33"
 
         status = nf90_inquire_variable(ncid, activation_functionsVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -229,6 +284,14 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
         allocate(this%activation_functions(Nlayers))
+
+
+        print *, "Nlayers 3", Nlayers
+
+        print *, "nodes 3", nodes
+
+
+
 
 
         status = nf90_inquire_variable(ncid, number_of_nodesVarId, dimids = dimIDs)
@@ -241,6 +304,16 @@ contains
 
 
 
+        print *, "Nlayers 4", Nlayers
+
+        print *, "nodes 4", nodes
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!1
+        print *, "34"
+
+        print *, this%minimum_of_features
 
 
 
@@ -250,31 +323,43 @@ contains
         if (status /= nf90_noerr) call handle_err(status)
 
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+
+
+
+        print *, "34.1"
 
         status = nf90_get_var(ncid, weightsVarId, this%weights)
 
         if (status /= nf90_noerr) call handle_err(status)
 
+        print *, "34.2"
 
         status = nf90_get_var(ncid, minimum_of_featuresVarId, this%minimum_of_features)
 
         if (status /= nf90_noerr) call handle_err(status)
 
+        print *, "34.3"
+
         status = nf90_get_var(ncid, maximum_of_featuresVarId, this%maximum_of_features)
 
         if (status /= nf90_noerr) call handle_err(status)
 
+        print *, "34.4"
 
         status = nf90_get_var(ncid, activation_functionsVarId, this%activation_functions)
 
-
         if (status /= nf90_noerr) call handle_err(status)
+
+
+        print *, "34.5"
 
         status = nf90_get_var(ncid, number_of_nodesVarId, this%number_of_nodes)
 
-
         if (status /= nf90_noerr) call handle_err(status)
 
+
+        print *, "35"
 
 
 
@@ -289,10 +374,14 @@ contains
         this%reshaped_weights_4th = reshape(this%reshaped_weights(:,1,4),(/1, size(this%reshaped_weights(:,1,4))/))
 
 
+        print *, "36"
+
         do k=1, (size(this%number_of_nodes)-1)
             this%model_parameters(k)%link_bias= reshape(this%bias(:,k), (/size(this%bias(:,k)),1/))
         end do
 
+
+        print *, "37"
 
         this%model_parameters(1)%link_weights= this%reshaped_weights_1st
 
@@ -306,6 +395,8 @@ contains
             this%model_parameters(k)%link_activation_functions = this%activation_functions(k)
         end do
 
+
+        print *, "38"
 
         !Linear interpolation to calculate "previous storage" based on the "previous pool elevation" using a linear interpolation on "acap" table!
         !FIXME Nels suggested to use "binary search" for this purpose;
@@ -328,6 +419,8 @@ contains
         this%maximum_of_features_final = (/this%maximum_of_features(1), this%maximum_of_features(6), this%maximum_of_features(3),&
          this%maximum_of_features(2), this%maximum_of_features(4), this%maximum_of_features(5)/)
 
+
+        print *, "39"
 
 
         !this%normalized_nn_inputs%previous_release = (this%nn_inputs%previous_release - this%minimum_of_features_final(1))&
@@ -353,11 +446,11 @@ contains
         ! Should we deallocate and should I just assign these as local instead????
         ! Deallocation of memory
 
-        deallocate(this%bias)
-        deallocate(this%weights)
-        deallocate(this%minimum_of_features)
-        deallocate(this%maximum_of_features)
-        deallocate(this%activation_functions)
+        !deallocate(this%bias)
+        !deallocate(this%weights)
+        !deallocate(this%minimum_of_features)
+        !deallocate(this%maximum_of_features)
+        !deallocate(this%activation_functions)
         !deallocate(number_of_nodes)
 
 
