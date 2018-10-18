@@ -10,7 +10,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs
 
 # Ignore reference time in regression test because it depends on wall time of model run
-exclude_vars = ['reference_time']
+EXCLUDE_VARS = ['reference_time']
 
 # regression question
 def test_regression_data(output_dir):
@@ -70,7 +70,7 @@ def test_regression_metadata(output_dir):
         warnings.simplefilter("ignore")
         meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(candidate_run_expected.output,
                                                                      reference_run_expected.output,
-                                                                     exclude_vars=exclude_vars)
+                                                                     exclude_vars=EXCLUDE_VARS)
 
     # Assert all diff values are 0 and print diff stats if not
     has_metadata_diffs = any(value != 0 for value in meta_data_diffs.diff_counts.values())
