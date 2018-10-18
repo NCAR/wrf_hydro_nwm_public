@@ -13,13 +13,27 @@ import wrfhydropy
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs, wait_job
 
+# Exclude accumulation variables from comparisons
+exclude_accum_vars = [
+    'ACMELT',
+    'ACSNOW',
+    'SFCRUNOFF',
+    'UDRUNOFF',
+    'ACCPRCP',
+    'ACCECAN',
+    'ACCEDIR',
+    'ACCETRAN',
+    'qstrmvolrt',
+    'reference_time',
+    'lake_inflort'
+]
 
 # Channel-only Run
 def test_run_candidate_channel_only(
-    candidate_sim,
-    candidate_channel_only_sim,
-    output_dir,
-    ncores
+        candidate_sim,
+        candidate_channel_only_sim,
+        output_dir,
+        ncores
 ):
 
     if candidate_sim.model.model_config.lower().find('nwm') < 0:
@@ -31,7 +45,7 @@ def test_run_candidate_channel_only(
     candidate_sim_copy = copy.deepcopy(candidate_sim)
     candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_copy.\
+    candidate_channel_only_sim_copy. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
 
     ##################
@@ -224,7 +238,7 @@ def test_ncores_candidate_channel_only(output_dir):
     candidate_channel_only_sim_expected = \
         pickle.load(candidate_channel_only_collected_file.open("rb"))
     candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_ncores.\
+    candidate_channel_only_sim_ncores. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     run_dir = output_dir / 'ncores_candidate_channel_only'
     run_dir.mkdir(parents=True)
@@ -270,7 +284,7 @@ def test_ncores_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_ncores.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=None
+            exclude_vars=exclude_accum_vars
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -354,7 +368,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_restart.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=None
+            exclude_vars=exclude_accum_vars
         )
 
     # Assert all diff values are 0 and print diff stats if not
