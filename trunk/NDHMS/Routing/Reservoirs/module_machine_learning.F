@@ -286,7 +286,18 @@ contains
 
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
+
+        print *, "release started"
+
+
+        print *, "current time"
+        print *, reservoir_data%state%current_time
+
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
+
+        print *, "current time"
+        print *, reservoir_data%state%current_time
+
 
         reservoir_data%state%release_count = reservoir_data%state%release_count + 1
 
@@ -298,8 +309,17 @@ contains
 
         reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
 
+
+        print *, "current storage"
+        print *, reservoir_data%state%current_storage
+
+
         reservoir_data%state%current_storage = reservoir_data%state%current_storage &
         + reservoir_data%input%inflow - reservoir_data%output%outflow
+
+        print *, "current storage"
+        print *, reservoir_data%state%current_storage
+
 
 		reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
@@ -355,6 +375,9 @@ contains
             !leap_year = check_leap_year()
             !leap_year = .true.
 
+            print *, "update time"
+
+
 			if (leap_year(reservoir_data%state%current_year)) then
 
                if (reservoir_data%state%current_day_of_year == days_in_leap_year) then    ! if last day of leap year
@@ -393,8 +416,33 @@ contains
             ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
 !		    select type (ml => machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr)
 
+            print *, 'reservoir_data%state%x_day_of_year'
+            print *, reservoir_data%state%x_day_of_year
+
+
+            print *, 'reservoir_data%state%y_day_of_year'
+            print *, reservoir_data%state%y_day_of_year
+
+
 
             if (okay_run_machine_learning_model) then
+
+
+                print *, "run ML"
+
+                print *, 'reservoir_data%state%average_inflow_over_past_time_intervals'
+
+                print *, reservoir_data%state%average_inflow_over_past_time_intervals
+
+                print *, 'reservoir_data%state%average_storage_over_past_time_intervals'
+
+                print *, reservoir_data%state%average_storage_over_past_time_intervals
+
+                !reservoir_data%state%previous_day_release = 187.78992
+                !reservoir_data%state%previous_day_release = 0.0
+
+                print *, 'reservoir_data%state%previous_day_release'
+                print *, reservoir_data%state%previous_day_release
 
                 ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
 !		        call machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &

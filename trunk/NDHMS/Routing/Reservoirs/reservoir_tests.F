@@ -60,9 +60,15 @@ program reservoir_unit_tests
 
         integer :: call_status = 0
 
+        real :: outflow, water_elevation
+
+        water_elevation = 0.0
+
         print *, "calling init for machine_learning_struct"
-        call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 166758723)
+        !call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 166758723)
         !call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 1233515)
+        call machine_learning_reservoir_data%init("2017-09-29_17:24:22" , 166758723)
+
 
 
         print *, "calling init for machine_learning_model_struct"
@@ -77,6 +83,17 @@ program reservoir_unit_tests
 
         print *, "testing data in machine_learning_model_struct"
         call_status = machine_learning_model_data_info(machine_learning_model_data)
+
+
+        print *, "calling release for machine_learning_struct"
+        !call machine_learning_reservoir_data%run_machine_learning_release(reservoir_data, previous_timestep_inflow, &
+        !inflow, lateral_inflow, water_elevation, outflow, routing_period)
+
+        call machine_learning_reservoir_data%run_release(0.0, &
+        192.46272, 0.0, water_elevation, outflow, 86400.0)
+
+        print *, "outflow"
+        print *, outflow
 
 
     end function test_machine_learning
