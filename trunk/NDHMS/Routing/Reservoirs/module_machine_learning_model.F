@@ -19,7 +19,7 @@ module module_machine_learning_model
 
 
     type NN_reservoir_in_out
-        REAL :: previous_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
+        REAL :: previous_day_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
         REAL :: average_storage_over_past_time_intervals !
         REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
         REAL :: current_storage !
@@ -404,7 +404,7 @@ contains
         !This code for linear interpolation needs some modifications as well!
 
 
-        this%nn_inputs%previous_release = 0.0
+        this%nn_inputs%previous_day_release = 0.0
         this%nn_inputs%average_storage_over_past_time_intervals = 0.0
         this%nn_inputs%average_inflow_over_past_time_intervals = 0.0
         this%nn_inputs%X_DOY = 0.0
@@ -423,7 +423,7 @@ contains
         print *, "39"
 
 
-        !this%normalized_nn_inputs%previous_release = (this%nn_inputs%previous_release - this%minimum_of_features_final(1))&
+        !this%normalized_nn_inputs%previous_day_release = (this%nn_inputs%previous_day_release - this%minimum_of_features_final(1))&
         !/(this%maximum_of_features_final(1) - this%minimum_of_features_final(1))
 
         !this%normalized_nn_inputs%previous_storage = (this%nn_inputs%previous_storage - this%minimum_of_features_final(2))&
@@ -473,7 +473,7 @@ contains
 
 
     ! This subroutine performs matrix calculations to simulate reservoir release from a saved/trained ML model!
-    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_release, average_storage_over_past_time_intervals, X_DOY, Y_DOY)
+    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_day_release, average_storage_over_past_time_intervals, X_DOY, Y_DOY)
         implicit none
         !class(machine_learning_model_struct), intent(inout) :: this
         class(machine_learning_model_struct), intent(inout) :: model_data
@@ -483,7 +483,7 @@ contains
 
 		real, intent (in)   ::  average_inflow_over_past_time_intervals
 		real, intent (out)  ::  release
-		real, intent (in)   ::  previous_release
+		real, intent (in)   ::  previous_day_release
 		real, intent (in)   ::  average_storage_over_past_time_intervals
 		real, intent (in)   ::  X_DOY
 		real, intent (in)   ::  Y_DOY
@@ -500,14 +500,14 @@ contains
         real tmp
 
 
-        model_data%nn_inputs%previous_release = previous_release
+        model_data%nn_inputs%previous_day_release = previous_day_release
         model_data%nn_inputs%average_storage_over_past_time_intervals = average_storage_over_past_time_intervals
         model_data%nn_inputs%average_inflow_over_past_time_intervals = average_inflow_over_past_time_intervals
         model_data%nn_inputs%X_DOY = X_DOY
         model_data%nn_inputs%Y_DOY = Y_DOY
 
 
-	model_data%normalized_nn_inputs%previous_release = (model_data%nn_inputs%previous_release - model_data%minimum_of_features_final(1))&
+	model_data%normalized_nn_inputs%previous_day_release = (model_data%nn_inputs%previous_day_release - model_data%minimum_of_features_final(1))&
         /(model_data%maximum_of_features_final(1) - model_data%minimum_of_features_final(1))
 
         model_data%normalized_nn_inputs%average_storage_over_past_time_intervals = (model_data%nn_inputs%average_storage_over_past_time_intervals - model_data%minimum_of_features_final(2))&
@@ -524,11 +524,11 @@ contains
         ! Here input combination is assigned!
 
 
-        !model_data%input_vector = (/normalized_nn_inputs_local%previous_release, normalized_nn_inputs_local%X_DOY,&
+        !model_data%input_vector = (/normalized_nn_inputs_local%previous_day_release, normalized_nn_inputs_local%X_DOY,&
         !    normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
         !    normalized_nn_inputs_local%inflow/)
 
-        model_data%input_vector = (/model_data%normalized_nn_inputs%previous_release, model_data%normalized_nn_inputs%X_DOY,&
+        model_data%input_vector = (/model_data%normalized_nn_inputs%previous_day_release, model_data%normalized_nn_inputs%X_DOY,&
             model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%average_storage_over_past_time_intervals, &
             model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)
 

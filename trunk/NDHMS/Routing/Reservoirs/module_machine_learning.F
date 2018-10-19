@@ -59,7 +59,7 @@ contains
 
     !Machine Learning Constructor
     !subroutine machine_learning_struct_init(this, start_date, model_id, number_of_unique_models, &
-	!			lake_number)
+    !lake_number)
     subroutine machine_learning_struct_init(this, start_date, lake_number)
 
         implicit none
@@ -68,9 +68,9 @@ contains
         !integer, intent(in) :: model_id
         !integer, intent(in) :: number_of_unique_models
         integer, intent(in) :: lake_number               ! lake number
-							 ! TODO: potentially change to lake_id for this and
-							 ! LP and Pers modules. lake_number is used in LP
-							 ! which has been submitted to a PR.
+                                                         ! TODO: potentially change to lake_id for this and
+                                                         ! LP and Pers modules. lake_number is used in LP
+                                                         ! which has been submitted to a PR.
         !integer :: model_counter, model_index
 
         integer :: model_counter, model_index, model_id
@@ -163,14 +163,14 @@ contains
             print *, "20"
 
 
-       	    ! Allocates array of pointers to machine learning models.
+            ! Allocates array of pointers to machine learning models.
             allocate(machine_learning_models(number_of_unique_models))
 
             ! Allocates array of machine learning model numbers that match
             ! the indices of the machine learning models array.
             allocate(machine_learning_model_ids(number_of_unique_models))
 
-            machine_learning_model_ids = 0	  ! set model number array values to 0
+            machine_learning_model_ids = 0 ! set model number array values to 0
 
             do model_counter = 1, number_of_unique_models
                 nullify(machine_learning_models(model_counter)%ptr)
@@ -183,57 +183,57 @@ contains
 
         print *, "22"
 
-		this%parameters%model_index = 0
-		do model_counter = 1, number_of_unique_models
+        this%parameters%model_index = 0
+        do model_counter = 1, number_of_unique_models
 
-            print *, "23"
+        print *, "23"
 
-			! If the model has already been initialized, and the passed model number
-			! matches the model number in the array, then assign that slot to
-			! model_index
-			if (machine_learning_model_ids(model_counter) == this%parameters%model_id) then
-				this%parameters%model_index = model_counter
-                print *, "24"
-				exit
+                ! If the model has already been initialized, and the passed model number
+                ! matches the model number in the array, then assign that slot to
+                ! model_index
+                if (machine_learning_model_ids(model_counter) == this%parameters%model_id) then
+                        this%parameters%model_index = model_counter
+                        print *, "24"
+                        exit
 
-			! Check if any slot is zero, which means a machine learning model has
-			! not been initialized or assigned to that slot.
-			else if (machine_learning_model_ids(model_counter) == 0) then
+                ! Check if any slot is zero, which means a machine learning model has
+                ! not been initialized or assigned to that slot.
+                else if (machine_learning_model_ids(model_counter) == 0) then
 
-                ! Assign the model id to the given slot.
-				machine_learning_model_ids(model_counter) = this%parameters%model_id
-				this%parameters%model_index = model_counter
+                        ! Assign the model id to the given slot.
+                        machine_learning_model_ids(model_counter) = this%parameters%model_id
+                        this%parameters%model_index = model_counter
 
-                print *, "25"
-				!machine_learning_models(model_counter) !??????????
+                        print *, "25"
+                        !machine_learning_models(model_counter) !??????????
 
-				allocate(machine_learning_model_struct :: &
-				machine_learning_models(model_counter)%ptr)  ! should this be ml_models instead????
-				!machine_learning_model_ids(model_counter)%ptr  ! should this be ml_models instead????
+                        allocate(machine_learning_model_struct :: &
+                        machine_learning_models(model_counter)%ptr)  ! should this be ml_models instead????
+                        !machine_learning_model_ids(model_counter)%ptr  ! should this be ml_models instead????
 
-				!select type (ml => machine_learning_model_ids(model_counter)%ptr)
-                !select type (ml => machine_learning_models(model_counter)%ptr)
+                        !select type (ml => machine_learning_model_ids(model_counter)%ptr)
+                        !select type (ml => machine_learning_models(model_counter)%ptr)
 
-                ! Calls initialization of a particular Machine Learning model.
-				!call ml%machine_learning_model_init(this%parameters%model_id)
+                        ! Calls initialization of a particular Machine Learning model.
+                        !call ml%machine_learning_model_init(this%parameters%model_id)
 
-                print *, "26"
+                        print *, "26"
 
 
-                print *, this%parameters%model_id
+                        print *, this%parameters%model_id
 
-                print *, model_counter
+                        print *, model_counter
 
-                !call machine_learning_models(model_counter)%ptr%machine_learning_model_init(this%parameters%model_id)
-                call machine_learning_models(model_counter)%ptr%init(this%parameters%model_id)
+                        !call machine_learning_models(model_counter)%ptr%machine_learning_model_init(this%parameters%model_id)
+                        call machine_learning_models(model_counter)%ptr%init(this%parameters%model_id)
 
-                print *, "27"
+                        print *, "27"
 
-				exit
+                        exit
 
-			end if
+                end if
 
-		end do
+        end do
 
     end subroutine machine_learning_struct_init
 
@@ -248,20 +248,20 @@ contains
 
 
 
-	! Pre-Warn Subroutine
-	subroutine pre_warn(inflow, current_time, lake_number)
-		implicit none
+    ! Pre-Warn Subroutine
+    subroutine pre_warn(inflow, current_time, lake_number)
+        implicit none
 
-		real,    intent(in) :: inflow
-		integer, intent(in) :: current_time
-		integer, intent(in) :: lake_number
+        real,    intent(in) :: inflow
+        integer, intent(in) :: current_time
+        integer, intent(in) :: lake_number
 
         ! FIXME: Change 6 to macro for WCOS
         write(6,*) "WARNING: Current inflow ", inflow, &
         " cms, has reached below zero for reservoir ", &
         lake_number, " at ", current_time, " seconds after model start time."
 
-	end subroutine pre_warn
+    end subroutine pre_warn
 
 
     ! Subroutine for running release for a machine learning reservoir,
@@ -278,11 +278,11 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
-		integer				:: boundary_passed
-		logical         	:: leap_year
-		!logical             :: is_leap_year
-		logical             :: okay_run_machine_learning_model
-		real                :: pre_modify_storage
+        integer             :: boundary_passed
+	logical             :: leap_year
+        !logical            :: is_leap_year
+	logical             :: okay_run_machine_learning_model
+	real                :: pre_modify_storage
 
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
@@ -321,39 +321,38 @@ contains
         print *, reservoir_data%state%current_storage
 
 
-		reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
+        reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
-		okay_run_machine_learning_model = .true.
+        okay_run_machine_learning_model = .true.
 
         ! FIXME: Remove below print statements and write same info to a log file.
         ! Also have option to set the current_storage to the max_storage and change the outflow accordingly.
 
         if (reservoir_data%state%current_storage > reservoir_data%parameters%max_storage) then
 
-			boundary_passed = 1 ! set boundary_passed to 1 for exceeding upper boundary
+                boundary_passed = 1 ! set boundary_passed to 1 for exceeding upper boundary
 
-			reservoir_data%state%current_storage = pre_modify_storage(reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
-			reservoir_data%parameters%max_storage, reservoir_data%input%inflow, reservoir_data%state%current_time, &
-            reservoir_data%parameters%lake_number, boundary_passed)
+                reservoir_data%state%current_storage = pre_modify_storage(reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
+                reservoir_data%parameters%max_storage, reservoir_data%input%inflow, reservoir_data%state%current_time, &
+                reservoir_data%parameters%lake_number, boundary_passed)
 
-            !reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
+                !reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
 
-            !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
+                !reservoir_data%output%outflow = ((reservoir_data%state%average_storage_over_past_time_intervals - reservoir_data%state%current_storage) &
 
-            !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
+                !+ reservoir_data%input%inflow  * ( 24 * 3600 )) / ( 24 * 3600 )
 
         ! FIXME: Remove below print statements and write same info to a log file.
         ! Also have option to set if < reservoir_data%parameters%min_storage then current storage would equal min_storage
         ! and outflow would change accordingly.
         ! Need further discussion about accuracy of the model with using min_storage vs. zero.
-
         !Need macro or some other way to set min storage here to 0.0 or min_storage???
         else if (reservoir_data%state%current_storage < 0.0) then
 
-			boundary_passed = 0    ! set boundary_passed to 0 for exceeding lower boundary
+            boundary_passed = 0    ! set boundary_passed to 0 for exceeding lower boundary
 
-			reservoir_data%state%current_storage = pre_modify_storage(reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
-			reservoir_data%parameters%max_storage, reservoir_data%input%inflow, reservoir_data%state%current_time, &
+            reservoir_data%state%current_storage = pre_modify_storage(reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
+            reservoir_data%parameters%max_storage, reservoir_data%input%inflow, reservoir_data%state%current_time, &
             reservoir_data%parameters%lake_number, boundary_passed)
 
             reservoir_data%output%outflow = 0.0
@@ -371,14 +370,14 @@ contains
             reservoir_data%state%average_inflow_over_past_time_intervals = reservoir_data%state%accumulated_inflow &
             / reservoir_data%state%release_count
 
-			!leap_year = check_leap_year(current_year = reservoir_data%state%current_year, is_leap_year = is_leap_year)
+            !leap_year = check_leap_year(current_year = reservoir_data%state%current_year, is_leap_year = is_leap_year)
             !leap_year = check_leap_year()
             !leap_year = .true.
 
             print *, "update time"
 
 
-			if (leap_year(reservoir_data%state%current_year)) then
+            if (leap_year(reservoir_data%state%current_year)) then
 
                if (reservoir_data%state%current_day_of_year == days_in_leap_year) then    ! if last day of leap year
                     reservoir_data%state%current_year = reservoir_data%state%current_year + 1
@@ -389,20 +388,16 @@ contains
 
                end if
 
-			   ! MAKE FUNCTION ALSO?????
+               ! MAKE FUNCTION ALSO?????
                ! update x and y based on leap year
                reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
-
                reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
-
 
             else
 
                if (reservoir_data%state%current_day_of_year == days_in_year) then    ! if last day of non leap year
-
                     reservoir_data%state%current_year = reservoir_data%state%current_year + 1
                     reservoir_data%state%current_day_of_year = 1
-
                else
 
                     reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
@@ -414,7 +409,7 @@ contains
             end if
 
             ! Call ML model with (reservoir_data%state%average_storage_over_past_time_intervals, reservoir_data%state%average_inflow_over_past_time_intervals, and reservoir_data%output%outflow passed, and day X and Y)
-!		    select type (ml => machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr)
+            !select type (ml => machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr)
 
             print *, 'reservoir_data%state%x_day_of_year'
             print *, reservoir_data%state%x_day_of_year
@@ -445,11 +440,11 @@ contains
                 print *, reservoir_data%state%previous_day_release
 
                 ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
-!		        call machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
-		        call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
+                ! call machine_learning_model_ids(reservoir_data%parameters%model_index)%ptr%run_machine_learning_model &
+                call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
                     (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-			        reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
-			        reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
+                    reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
+                    reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
             end if
 
             !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
@@ -581,10 +576,6 @@ contains
     end function machine_learning_data_info
 
 
-
-
-
-
     function machine_learning_model_data_info(machine_learning_model_data) result(rv)
     implicit none
     type (machine_learning_model_struct) :: machine_learning_model_data
@@ -622,28 +613,19 @@ contains
 
 
 
-
-
-
-
-
-
-
-
 end module module_machine_learning
 
 
 
 
 real function pre_modify_storage(storage, min_storage, max_storage, inflow, current_time, lake_number, boundary_passed)
-		implicit none
-
-		real,    intent(in)    :: storage
-		real,    intent(in)    :: min_storage
-		real,    intent(in)    :: max_storage
-		real,    intent(in)    :: inflow
-		integer, intent(in)    :: current_time
-		integer, intent(in)    :: boundary_passed
+        implicit none
+	real,    intent(in)    :: storage
+	real,    intent(in)    :: min_storage
+	real,    intent(in)    :: max_storage
+	real,    intent(in)    :: inflow
+        integer, intent(in)    :: current_time
+        integer, intent(in)    :: boundary_passed
         integer, intent(in)    :: lake_number
 
         ! FIXME: Change 6 to macro for WCOS
@@ -655,7 +637,7 @@ real function pre_modify_storage(storage, min_storage, max_storage, inflow, curr
             pre_modify_storage = max_storage
 
         ! FIXME: Change 6 to macro for WCOS
-	    else if (boundary_passed == 0) then
+        else if (boundary_passed == 0) then
             write(6,*) "WARNING: Current storage, ", storage, &
             " cubic meters, has reached below the minimum storage: ", min_storage, &
             " cubic meters, for reservoir ", lake_number
@@ -672,16 +654,16 @@ end function pre_modify_storage
 
 !function check_leap_year(current_year, is_leap_year)
 logical function leap_year(current_year)
-	integer, intent(in) :: current_year
+    integer, intent(in) :: current_year
     !logical, intent(out) :: is_leap_year
 
-	if (((mod(current_year,4)==0 .and. &
-	   mod(current_year,100)/=0) .or. &
-	   mod(current_year,400)==0)) then
-	   leap_year = .TRUE.
+    if (((mod(current_year,4)==0 .and. &
+        mod(current_year,100)/=0) .or. &
+        mod(current_year,400)==0)) then
+        leap_year = .TRUE.
 
-	else
-	   leap_year = .FALSE.
+    else
+        leap_year = .FALSE.
 
     end if
 
