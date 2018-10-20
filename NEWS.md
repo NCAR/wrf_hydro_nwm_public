@@ -1,3 +1,8 @@
+## Bug fixes
+- Gridded routing lake inflows were not preserved in restarts, therefore solution to the level-pool scheme on intial timestep after model restart had slightly different initial conditions. This was fixed by preserving last timestep lake inflows in the restart files.
+- The lake level-pool scheme had a number of internal bugs fixed, which should improve lake level and outflow behavior.
+- Hard-coded values for minutes and seconds in output metadata were removed to allow for correct sub-hourly outputs
+
 # WRF-Hydro v5.0.0
 
 ## High-Level Highlights:
