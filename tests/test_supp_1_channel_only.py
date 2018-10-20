@@ -13,20 +13,47 @@ import wrfhydropy
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs, wait_job
 
-# Exclude accumulation variables from comparisons
-EXCLUDE_ACCUM_VARS = [
-    'ACMELT',
-    'ACSNOW',
-    'SFCRUNOFF',
-    'UDRUNOFF',
-    'ACCPRCP',
-    'ACCECAN',
-    'ACCEDIR',
-    'ACCETRAN',
+
+EXCLUDE_VARS_CHAN_ONLY = [
+    'stc1',
+    'smc1',
+    'sh2ox1',
+    'stc2',
+    'smc2',
+    'sh2ox2',
+    'stc3',
+    'smc3',
+    'sh2ox3',
+    'stc4',
+    'smc4',
+    'sh2ox4',
+    'infxsrt',
+    'soldrain',
+    'sfcheadrt',
+    'QBDRYRT',
+    'infxswgt',
+    'sfcheadsubrt',
+    'sh2owgt1',
+    'sh2owgt2',
+    'sh2owgt3',
+    'sh2owgt4',
     'qstrmvolrt',
-    'reference_time',
+    'hlink',
     'lake_inflort'
 ]
+
+#List variabls to ignore in tests, primarily accumulation variables
+EXCLUDE_VARS = ['ACMELT',
+                'ACSNOW',
+                'SFCRUNOFF',
+                'UDRUNOFF',
+                'ACCPRCP',
+                'ACCECAN',
+                'ACCEDIR',
+                'ACCETRAN',
+                'qstrmvolrt',
+                'reference_time',
+                'lake_inflort']
 
 # Channel-only Run
 def test_run_candidate_channel_only(
@@ -161,34 +188,6 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
     candidate_run_expected = pickle.load(candidate_run_file.open("rb"))
     candidate_channel_only_run_expected = pickle.load(candidate_channel_only_run_file.open("rb"))
 
-    exclude_vars = [
-        'stc1',
-        'smc1',
-        'sh2ox1',
-        'stc2',
-        'smc2',
-        'sh2ox2',
-        'stc3',
-        'smc3',
-        'sh2ox3',
-        'stc4',
-        'smc4',
-        'sh2ox4',
-        'infxsrt',
-        'soldrain',
-        'sfcheadrt',
-        'QBDRYRT',
-        'infxswgt',
-        'sfcheadsubrt',
-        'sh2owgt1',
-        'sh2owgt2',
-        'sh2owgt3',
-        'sh2owgt4',
-        'qstrmvolrt',
-        'hlink',
-        'lake_inflort'
-    ]
-
     # We still compare these:
     # 'qlink1'
     # 'qlink2'
@@ -208,7 +207,7 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
             candidate_run_expected.output,
             candidate_channel_only_run_expected.output,
             nccmp_options=nccmp_options,
-            exclude_vars=exclude_vars
+            exclude_vars=EXCLUDE_VARS_CHAN_ONLY
         )
 
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -284,7 +283,7 @@ def test_ncores_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_ncores.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=EXCLUDE_ACCUM_VARS
+            exclude_vars=EXCLUDE_VARS
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -368,7 +367,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_restart.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=EXCLUDE_ACCUM_VARS
+            exclude_vars=EXCLUDE_VARS
         )
 
     # Assert all diff values are 0 and print diff stats if not
