@@ -7,7 +7,7 @@
     glacier_option = 2
     hrldas_setup_file = './NWM/DOMAIN/wrfinput.d01.conus_1km_NWMv2.0.nc'
     indir = './FORCING'
-    khour = 3
+    khour = 144
     noah_timestep = 3600
     nsoil = 4
     outdir = './'
@@ -15,7 +15,7 @@
     pcp_partition_option = 1
     radiative_transfer_option = 3
     restart_filename_requested = './NWM/RESTART/RESTART.2018060100_DOMAIN1'
-    restart_frequency_hours = 1
+    restart_frequency_hours = 24
     rst_bi_in = 0
     rst_bi_out = 0
     runoff_option = 3

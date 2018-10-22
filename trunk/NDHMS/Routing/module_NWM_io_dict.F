@@ -732,7 +732,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"]
-   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.001,0.001,0.001,&
+   chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.00001,0.00001,0.001,&
                                  0.01,0.01]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0]
