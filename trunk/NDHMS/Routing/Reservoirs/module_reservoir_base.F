@@ -80,6 +80,15 @@ module module_reservoir_base
         ! a sub-type of reservoir.
         procedure (run_release_interface), deferred :: run_release
 
+        procedure (reservoir_timestep_pre_conditions_warn), deferred    :: timestep_pre_conditions_warn
+        procedure (reservoir_timestep_pre_conditions_modify), deferred  :: timestep_pre_conditions_modify
+        procedure (reservoir_timestep_post_conditions_warn), deferred   :: timestep_post_conditions_warn
+        procedure (reservoir_timestep_post_conditions_modify), deferred :: timestep_post_conditions_modify
+        procedure (reservoir_update_pre_conditions_warn), deferred      :: update_pre_conditions_warn
+        procedure (reservoir_update_pre_conditions_modify), deferred    :: update_pre_conditions_modify
+        procedure (reservoir_update_post_conditions_warn), deferred     :: update_post_conditions_warn
+        procedure (reservoir_update_post_conditions_modify), deferred   :: update_post_conditions_modify
+
     end type
 
     ! Defines a pointer to a reservoir base struct
@@ -102,7 +111,68 @@ module module_reservoir_base
             real, intent(out)   :: outflow                  ! cubic meters per second (cms)
             real, intent(in)    :: routing_period           ! seconds
 
-        end subroutine
+        end subroutine run_release_interface
+
+
+
+        subroutine reservoir_timestep_pre_conditions_warn()
+
+
+        end subroutine reservoir_timestep_pre_conditions_warn
+
+
+
+        subroutine reservoir_timestep_pre_conditions_modify()
+
+
+        end subroutine reservoir_timestep_pre_conditions_modify
+
+
+
+        subroutine reservoir_timestep_post_conditions_warn()
+
+
+        end subroutine reservoir_timestep_post_conditions_warn
+
+
+
+        subroutine reservoir_timestep_post_conditions_modify()
+
+
+        end subroutine reservoir_timestep_post_conditions_modify
+
+
+
+
+        subroutine reservoir_update_pre_conditions_warn()
+
+
+        end subroutine reservoir_update_pre_conditions_warn
+
+
+
+        subroutine reservoir_update_pre_conditions_modify()
+
+
+        end subroutine reservoir_update_pre_conditions_modify
+
+
+
+        subroutine reservoir_update_post_conditions_warn()
+
+
+        end subroutine reservoir_update_post_conditions_warn
+
+
+
+        subroutine reservoir_update_post_conditions_modify()
+
+
+        end subroutine reservoir_update_post_conditions_modify
+
+
+
+
     end interface
 
 contains

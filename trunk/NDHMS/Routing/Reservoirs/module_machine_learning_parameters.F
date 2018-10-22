@@ -13,7 +13,7 @@
 module module_machine_learning_parameters
 
     use netcdf
-    use reservoir_utilities
+    use module_reservoir_utilities
     use module_reservoir_base
     implicit none
 

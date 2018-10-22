@@ -4,7 +4,7 @@ module module_machine_learning_model
     !use module_reservoir_base
 
     use netcdf
-    use reservoir_utilities
+    use module_reservoir_utilities
     implicit none
 
 
@@ -121,10 +121,6 @@ contains
 
         ! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
 
-
-        print *, "28"
-
-
 		if (model_number == 1) then
 			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
 			if (status /= nf90_noerr) call handle_err(status)
@@ -136,32 +132,13 @@ contains
 
 		end if
 
+
         this%model_number = model_number
-
-
-        !status = nf90_open(path = "17all_res_acf_all_relu_nc.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        !if (status /= nf90_noerr) call handle_err(status)
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!
-
-        print *, "29"
-
-
-
-        print *, this%minimum_of_features
-
 
 
         status = nf90_inq_varid(ncid, "bias", biasVarId)
 
         if(status /= nf90_NoErr) call handle_err(status)
-
-        print *, "biasVarId 1", biasVarId
-
-
-!!!!!!!!!!!!!!!!
-
 
 
         status = nf90_inq_varid(ncid, "weights", weightsVarId)
@@ -193,19 +170,11 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        print *, "30"
-
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         ! How big is the netCDF variable, that is, what are the lengths of
         !   its constituent dimensions?
         status = nf90_inquire_variable(ncid, biasVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
-
-
-        print *, "biasVarId 2", biasVarId
 
 
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
@@ -218,23 +187,6 @@ contains
         allocate(this%bias(Nlayers, nodes))
         !allocate(this%bias(nodes, Nlayers))
 
-        print *, "31"
-        print *, Nlayers
-        print *, nodes
-        !print *, this%bias
-
-
-        print *, "Nlayers 1", Nlayers
-
-        print *, "nodes 1", nodes
-
-        !print *, "bias 1", bias
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
 
         status = nf90_inquire_variable(ncid, weightsVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -246,17 +198,7 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-
-
-        print *, "Nlayers 2", Nlayers
-
-        print *, "nodes 2", nodes
-
-
-
         allocate(this%weights(Nlayers, nodes))
-
-        print *, "32"
 
         status = nf90_inquire_variable(ncid, minimum_of_featuresVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
@@ -275,8 +217,6 @@ contains
 
         allocate(this%maximum_of_features(Ninputs))
 
-        print *, "33"
-
         status = nf90_inquire_variable(ncid, activation_functionsVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
 
@@ -284,14 +224,6 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
         allocate(this%activation_functions(Nlayers))
-
-
-        print *, "Nlayers 3", Nlayers
-
-        print *, "nodes 3", nodes
-
-
-
 
 
         status = nf90_inquire_variable(ncid, number_of_nodesVarId, dimids = dimIDs)
@@ -304,62 +236,35 @@ contains
 
 
 
-        print *, "Nlayers 4", Nlayers
-
-        print *, "nodes 4", nodes
-
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!1
-        print *, "34"
-
-        print *, this%minimum_of_features
-
-
-
         status = nf90_get_var(ncid, biasVarId, this%bias)
 
 
         if (status /= nf90_noerr) call handle_err(status)
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-
-
-
-        print *, "34.1"
-
         status = nf90_get_var(ncid, weightsVarId, this%weights)
 
         if (status /= nf90_noerr) call handle_err(status)
 
-        print *, "34.2"
 
         status = nf90_get_var(ncid, minimum_of_featuresVarId, this%minimum_of_features)
 
         if (status /= nf90_noerr) call handle_err(status)
 
-        print *, "34.3"
 
         status = nf90_get_var(ncid, maximum_of_featuresVarId, this%maximum_of_features)
 
         if (status /= nf90_noerr) call handle_err(status)
 
-        print *, "34.4"
 
         status = nf90_get_var(ncid, activation_functionsVarId, this%activation_functions)
 
         if (status /= nf90_noerr) call handle_err(status)
 
 
-        print *, "34.5"
-
         status = nf90_get_var(ncid, number_of_nodesVarId, this%number_of_nodes)
 
         if (status /= nf90_noerr) call handle_err(status)
-
-
-        print *, "35"
 
 
 
@@ -374,14 +279,10 @@ contains
         this%reshaped_weights_4th = reshape(this%reshaped_weights(:,1,4),(/1, size(this%reshaped_weights(:,1,4))/))
 
 
-        print *, "36"
-
         do k=1, (size(this%number_of_nodes)-1)
             this%model_parameters(k)%link_bias= reshape(this%bias(:,k), (/size(this%bias(:,k)),1/))
         end do
 
-
-        print *, "37"
 
         this%model_parameters(1)%link_weights= this%reshaped_weights_1st
 
@@ -396,8 +297,6 @@ contains
         end do
 
 
-        print *, "38"
-
         !Linear interpolation to calculate "previous storage" based on the "previous pool elevation" using a linear interpolation on "acap" table!
         !FIXME Nels suggested to use "binary search" for this purpose;
         !WARNING: note if this is the case, we will need to train the model based on these new way of calculation of storage from acap files!
@@ -411,7 +310,6 @@ contains
         this%nn_inputs%Y_DOY = 0.0
 
 
-
         ! this has been intentionally deactivated;  Index([u'Release', u'Elevation', u'Inflow', u'DOX', u'DOY', u'Storage'], dtype='object') coming from ACF NetCDF file
         this%minimum_of_features_final = (/this%minimum_of_features(1), this%minimum_of_features(6), this%minimum_of_features(3),&
          this%minimum_of_features(2), this%minimum_of_features(4), this%minimum_of_features(5)/)
@@ -420,8 +318,7 @@ contains
          this%maximum_of_features(2), this%maximum_of_features(4), this%maximum_of_features(5)/)
 
 
-        print *, "39"
-
+        !THESE BELOW ARE USE FURTHER DOWN IN THE CODE I THINK. CHECK SLACK. CAN TAKE THESE OUT I THINK.
 
         !this%normalized_nn_inputs%previous_day_release = (this%nn_inputs%previous_day_release - this%minimum_of_features_final(1))&
         !/(this%maximum_of_features_final(1) - this%minimum_of_features_final(1))
@@ -454,7 +351,6 @@ contains
         !deallocate(number_of_nodes)
 
 
-
     end subroutine machine_learning_model_init
 
 
@@ -466,10 +362,6 @@ contains
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being destroyed
 
     end subroutine machine_learning_model_destroy
-
-
-
-
 
 
     ! This subroutine performs matrix calculations to simulate reservoir release from a saved/trained ML model!
@@ -489,7 +381,6 @@ contains
 		real, intent (in)   ::  Y_DOY
 
 
-
         real, allocatable, dimension(:) :: input_vector_local
         real, allocatable, dimension(:,:) :: reshaped_input_vector_local
         !real, intent(OUT) :: ml_simulated_release_local
@@ -507,7 +398,7 @@ contains
         model_data%nn_inputs%Y_DOY = Y_DOY
 
 
-	model_data%normalized_nn_inputs%previous_day_release = (model_data%nn_inputs%previous_day_release - model_data%minimum_of_features_final(1))&
+        model_data%normalized_nn_inputs%previous_day_release = (model_data%nn_inputs%previous_day_release - model_data%minimum_of_features_final(1))&
         /(model_data%maximum_of_features_final(1) - model_data%minimum_of_features_final(1))
 
         model_data%normalized_nn_inputs%average_storage_over_past_time_intervals = (model_data%nn_inputs%average_storage_over_past_time_intervals - model_data%minimum_of_features_final(2))&
@@ -522,7 +413,6 @@ contains
 
 
         ! Here input combination is assigned!
-
 
         !model_data%input_vector = (/normalized_nn_inputs_local%previous_day_release, normalized_nn_inputs_local%X_DOY,&
         !    normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
@@ -572,7 +462,6 @@ contains
                 end do
             end do
             model_data%reshaped_nn_sum_matrix_activated = reshape(model_data%nn_sum_matrix_activated, (/ size(model_data%nn_sum_matrix_activated),1/))
-            print *, "k", k
 
         end do
 
