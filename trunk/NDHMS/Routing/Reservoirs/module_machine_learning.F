@@ -274,7 +274,7 @@ contains
         reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
 
         reservoir_data%state%current_storage = reservoir_data%state%current_storage &
-        + reservoir_data%input%inflow - reservoir_data%output%outflow
+        + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
         reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
