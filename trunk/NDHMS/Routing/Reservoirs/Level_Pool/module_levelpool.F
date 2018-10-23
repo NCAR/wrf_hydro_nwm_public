@@ -19,7 +19,7 @@ module module_levelpool
     use module_levelpool_parameters
     use module_levelpool_state
     use module_reservoir_base
-    use module_levelpool_tests
+    !use module_levelpool_tests
     implicit none
 
     ! Extend/derive level pool struct from the abstract base
@@ -38,6 +38,16 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
+
+        procedure :: timestep_pre_conditions_warn => no_op
+        procedure :: timestep_pre_conditions_modify => no_op
+        procedure :: timestep_post_conditions_warn => no_op
+        procedure :: timestep_post_conditions_modify => no_op
+        procedure :: update_pre_conditions_warn => no_op
+        procedure :: update_pre_conditions_modify => no_op
+        procedure :: update_post_conditions_warn => no_op
+        procedure :: update_post_conditions_modify => no_op
+
     end type levelpool_struct
 
 contains
@@ -114,6 +124,12 @@ contains
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being destroyed
     end subroutine levelpool_struct_destroy
+
+    subroutine no_op(reservoir_data)
+        implicit none
+        class(levelpool_struct), intent(inout) :: reservoir_data
+    end subroutine no_op
+
 
     ! Subroutine for running release for a level pool reservoir,
     ! which will then call the LEVELPOOL method/subroutine for processing the
@@ -352,88 +368,88 @@ contains
     ! ----------------------------------------------------------------
 
 
-    function levelpool_data_info(levelpool_data) result(rv)
-    implicit none
-    type (levelpool_struct) :: levelpool_data
-    integer :: rv
-    logical, dimension(1) :: ptr_state
-    logical, dimension(1) :: data_state
+!    function levelpool_data_info(levelpool_data) result(rv)
+!    implicit none
+!    type (levelpool_struct) :: levelpool_data
+!    integer :: rv
+!    logical, dimension(1) :: ptr_state
+!    logical, dimension(1) :: data_state
 
-    rv = 0
+!    rv = 0
 
     ! Check to see if the levelpool_state data structure exists
-    print *, "Checking pointer association on data%state "
-    if ( associated(levelpool_data%state) ) then
-        print *, "PASSED"
-        ptr_state(1) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(1) = .false.
-    end if
-    print *, " "
+!    print *, "Checking pointer association on data%state "
+!    if ( associated(levelpool_data%state) ) then
+!        print *, "PASSED"
+!        ptr_state(1) = .true.
+!    else
+!        print *, "FAILED"
+!        ptr_state(1) = .false.
+!    end if
+!    print *, " "
 
     ! Check to see if the levelpool_parameters data structure exists
-    print *, "Checking pointer association on data%parameters "
-    if ( associated(levelpool_data%parameters) ) then
-        print *, "PASSED"
-        ptr_state(2) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(2) = .false.
-    end if
-    print *, " "
+!    print *, "Checking pointer association on data%parameters "
+!    if ( associated(levelpool_data%parameters) ) then
+!        print *, "PASSED"
+!        ptr_state(2) = .true.
+!    else
+!        print *, "FAILED"
+!        ptr_state(2) = .false.
+!    end if
+!    print *, " "
 
     ! Check to see if the levelpool_input data structure exists
-    print *, "Checking pointer association on data%input "
-    if ( associated(levelpool_data%input) ) then
-        print *, "PASSED"
-        ptr_state(3) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(3) = .false.
-    end if
-    print *, " "
+!    print *, "Checking pointer association on data%input "
+!    if ( associated(levelpool_data%input) ) then
+!        print *, "PASSED"
+!        ptr_state(3) = .true.
+!    else
+!        print *, "FAILED"
+!        ptr_state(3) = .false.
+!    end if
+!    print *, " "
 
     ! Check to see if the levelpool_output data structure exists
-    print *, "Checking pointer association on data%output "
-    if ( associated(levelpool_data%output) ) then
-        print *, "PASSED"
-        ptr_state(4) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(4) = .false.
-    end if
-    print *, " "
+!    print *, "Checking pointer association on data%output "
+!    if ( associated(levelpool_data%output) ) then
+!        print *, "PASSED"
+!        ptr_state(4) = .true.
+!    else
+!        print *, "FAILED"
+!        ptr_state(4) = .false.
+!    end if
+!    print *, " "
 
 
     ! Now check the data members of each substructure
-    if ( ptr_state(1) ) then
-        data_state(1) = test_levelpool_state(levelpool_data%state)
-    end if
+!    if ( ptr_state(1) ) then
+!        data_state(1) = test_levelpool_state(levelpool_data%state)
+!    end if
 
-    if ( ptr_state(2) ) then
-        data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
-    end if
+!    if ( ptr_state(2) ) then
+!        data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
+!    end if
 
-    if ( ptr_state(3) ) then
-        data_state(3) = test_input(levelpool_data%input)
-    end if
+!    if ( ptr_state(3) ) then
+!        data_state(3) = test_input(levelpool_data%input)
+!    end if
 
-    if ( ptr_state(4) ) then
-        data_state(4) = test_output(levelpool_data%output)
-    end if
+!    if ( ptr_state(4) ) then
+!        data_state(4) = test_output(levelpool_data%output)
+!    end if
 
 
-    if ( all(ptr_state) .and. all(data_state) ) then
-        print *, "========================================================================"
-        print *, "All Tests Passed"
-        print *, "========================================================================"
-    end if
-    rv = 1
+!    if ( all(ptr_state) .and. all(data_state) ) then
+!        print *, "========================================================================"
+!        print *, "All Tests Passed"
+!        print *, "========================================================================"
+!    end if
+!    rv = 1
 
     !flush(6)
 
-end function levelpool_data_info
+!end function levelpool_data_info
 
 
 end module module_levelpool

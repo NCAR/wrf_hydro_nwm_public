@@ -80,14 +80,14 @@ module module_reservoir_base
         ! a sub-type of reservoir.
         procedure (run_release_interface), deferred :: run_release
 
-        procedure (reservoir_timestep_pre_conditions_warn), deferred    :: timestep_pre_conditions_warn
-        procedure (reservoir_timestep_pre_conditions_modify), deferred  :: timestep_pre_conditions_modify
-        procedure (reservoir_timestep_post_conditions_warn), deferred   :: timestep_post_conditions_warn
-        procedure (reservoir_timestep_post_conditions_modify), deferred :: timestep_post_conditions_modify
-        procedure (reservoir_update_pre_conditions_warn), deferred      :: update_pre_conditions_warn
-        procedure (reservoir_update_pre_conditions_modify), deferred    :: update_pre_conditions_modify
-        procedure (reservoir_update_post_conditions_warn), deferred     :: update_post_conditions_warn
-        procedure (reservoir_update_post_conditions_modify), deferred   :: update_post_conditions_modify
+        procedure (reservoir_timestep_pre_conditions_warn_interface), deferred    :: timestep_pre_conditions_warn
+        procedure (reservoir_timestep_pre_conditions_modify_interface), deferred  :: timestep_pre_conditions_modify
+        procedure (reservoir_timestep_post_conditions_warn_interface), deferred   :: timestep_post_conditions_warn
+        procedure (reservoir_timestep_post_conditions_modify_interface), deferred :: timestep_post_conditions_modify
+        procedure (reservoir_update_pre_conditions_warn_interface), deferred      :: update_pre_conditions_warn
+        procedure (reservoir_update_pre_conditions_modify_interface), deferred    :: update_pre_conditions_modify
+        procedure (reservoir_update_post_conditions_warn_interface), deferred     :: update_post_conditions_warn
+        procedure (reservoir_update_post_conditions_modify_interface), deferred   :: update_post_conditions_modify
 
     end type
 
@@ -115,62 +115,68 @@ module module_reservoir_base
 
 
 
-        subroutine reservoir_timestep_pre_conditions_warn()
+        subroutine reservoir_timestep_pre_conditions_warn_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
 
-
-        end subroutine reservoir_timestep_pre_conditions_warn
-
-
-
-        subroutine reservoir_timestep_pre_conditions_modify()
-
-
-        end subroutine reservoir_timestep_pre_conditions_modify
+        end subroutine reservoir_timestep_pre_conditions_warn_interface
 
 
 
-        subroutine reservoir_timestep_post_conditions_warn()
+        subroutine reservoir_timestep_pre_conditions_modify_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
 
-
-        end subroutine reservoir_timestep_post_conditions_warn
-
-
-
-        subroutine reservoir_timestep_post_conditions_modify()
-
-
-        end subroutine reservoir_timestep_post_conditions_modify
+        end subroutine reservoir_timestep_pre_conditions_modify_interface
 
 
 
+        subroutine reservoir_timestep_post_conditions_warn_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
 
-        subroutine reservoir_update_pre_conditions_warn()
-
-
-        end subroutine reservoir_update_pre_conditions_warn
-
-
-
-        subroutine reservoir_update_pre_conditions_modify()
-
-
-        end subroutine reservoir_update_pre_conditions_modify
+        end subroutine reservoir_timestep_post_conditions_warn_interface
 
 
 
-        subroutine reservoir_update_post_conditions_warn()
+        subroutine reservoir_timestep_post_conditions_modify_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine reservoir_timestep_post_conditions_modify_interface
 
 
-        end subroutine reservoir_update_post_conditions_warn
+
+
+        subroutine reservoir_update_pre_conditions_warn_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine reservoir_update_pre_conditions_warn_interface
 
 
 
-        subroutine reservoir_update_post_conditions_modify()
+        subroutine reservoir_update_pre_conditions_modify_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine reservoir_update_pre_conditions_modify_interface
 
 
-        end subroutine reservoir_update_post_conditions_modify
+
+        subroutine reservoir_update_post_conditions_warn_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine reservoir_update_post_conditions_warn_interface
 
 
+
+        subroutine reservoir_update_post_conditions_modify_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine reservoir_update_post_conditions_modify_interface
 
 
     end interface

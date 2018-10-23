@@ -53,6 +53,16 @@ module module_machine_learning
         procedure :: destroy => machine_learning_struct_destroy
         procedure :: run_release => run_machine_learning_release
 
+        procedure :: timestep_pre_conditions_warn => machine_learning_timestep_pre_conditions_warn
+        procedure :: timestep_pre_conditions_modify => machine_learning_timestep_pre_conditions_modify
+        procedure :: timestep_post_conditions_warn => machine_learning_timestep_post_conditions_warn
+        procedure :: timestep_post_conditions_modify => machine_learning_timestep_post_conditions_modify
+        procedure :: update_pre_conditions_warn => machine_learning_update_pre_conditions_warn
+        procedure :: update_pre_conditions_modify => machine_learning_update_pre_conditions_modify
+        procedure :: update_post_conditions_warn => machine_learning_update_post_conditions_warn
+        procedure :: update_post_conditions_modify => machine_learning_update_post_conditions_modify
+
+
     end type machine_learning_struct
 
 contains
@@ -65,13 +75,10 @@ contains
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
         character(len=19), intent(in) :: start_date
-        !integer, intent(in) :: model_id
-        !integer, intent(in) :: number_of_unique_models
         integer, intent(in) :: lake_number               ! lake number
                                                          ! TODO: potentially change to lake_id for this and
                                                          ! LP and Pers modules. lake_number is used in LP
                                                          ! which has been submitted to a PR.
-        !integer :: model_counter, model_index
 
         integer :: model_counter, model_index, model_id
 
@@ -193,9 +200,7 @@ contains
 
                         !machine_learning_models(model_counter) !??????????
 
-                        allocate(machine_learning_model_struct :: &
-                        machine_learning_models(model_counter)%ptr)  ! should this be ml_models instead????
-                        !machine_learning_model_ids(model_counter)%ptr  ! should this be ml_models instead????
+                        allocate(machine_learning_model_struct :: machine_learning_models(model_counter)%ptr)
 
                         !select type (ml => machine_learning_model_ids(model_counter)%ptr)
                         !select type (ml => machine_learning_models(model_counter)%ptr)
