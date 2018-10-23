@@ -461,26 +461,26 @@ contains
         print *, " "
 
         ! Check to see if the state structure exists
-        print *, "Checking pointer association on data%state "
-        if ( associated(nhd_data%state) ) then
-            print *, "PASSED"
-            ptr_state(4) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(4) = .false.
-        end if
-        print *, " "
+        ! print *, "Checking pointer association on data%state "
+        ! if ( associated(nhd_data%state) ) then
+        !     print *, "PASSED"
+        !     ptr_state(4) = .true.
+        ! else
+        !     print *, "FAILED"
+        !     ptr_state(4) = .false.
+        ! end if
+        ! print *, " "
 
-        ! Check to see if the properties structure exists
-        print *, "Checking pointer association on data%properties "
-        if ( associated(nhd_data%properties) ) then
-            print *, "PASSED"
-            ptr_state(5) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(5) = .false.
-        end if
-        print *, " "
+        ! ! Check to see if the properties structure exists
+        ! print *, "Checking pointer association on data%properties "
+        ! if ( associated(nhd_data%properties) ) then
+        !     print *, "PASSED"
+        !     ptr_state(5) = .true.
+        ! else
+        !     print *, "FAILED"
+        !     ptr_state(5) = .false.
+        ! end if
+        ! print *, " "
 
         ! Check to see if the basin structure exists
         print *, "Checking pointer association on data%basin "
@@ -494,15 +494,15 @@ contains
         print *, " "
 
         ! Check to see if the static_data structure exists
-        print *, "Checking pointer association on data%static_data "
-        if ( associated(nhd_data%static_data) ) then
-            print *, "PASSED"
-            ptr_state(7) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(7) = .false.
-        end if
-        print *, " "
+        ! print *, "Checking pointer association on data%static_data "
+        ! if ( associated(nhd_data%static_data) ) then
+        !     print *, "PASSED"
+        !     ptr_state(7) = .true.
+        ! else
+        !     print *, "FAILED"
+        !     ptr_state(7) = .false.
+        ! end if
+        ! print *, " "
 
         ! Now check the data members of each substructure
         if ( ptr_state(1) ) then

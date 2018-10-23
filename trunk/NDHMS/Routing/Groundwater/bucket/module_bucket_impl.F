@@ -12,16 +12,19 @@ module module_bucket_impl
 
     !> base data type that hold necessary data for exponential bucket groundwater model
 
-    type, abstract, extends(groundwater_base_data_struct) :: bucket_groundwater_struct
+    type, extends(groundwater_base_data_struct) :: bucket_groundwater_struct
 
         !> sub structure to hold state data
-        type (bucket_state_interface), pointer :: state => null()
+        !type (bucket_state_interface), pointer :: state => null()
+        type (bucket_state_interface) :: state
 
         !> sub structure to hold property data
-        type (bucket_properties_interface), pointer :: properties => null()
+        !type (bucket_properties_interface), pointer :: properties => null()
+        type (bucket_properties_interface) :: properties
 
         !> sub structure to hold static data
-        type (groundwater_static_struct), pointer :: static_data => null()
+        !type (groundwater_static_struct), pointer :: static_data => null()
+        type (groundwater_static_struct) :: static_data
 
         logical, private :: bucket_pointer_allocation_guard = .false.
         !integer :: gnumlinks
@@ -29,6 +32,7 @@ module module_bucket_impl
     contains
 
         procedure :: loss => groundwater_bucket_loss_func
+        procedure :: run_timestep => run_groundwater_time_step_dummy
 
     end type bucket_groundwater_struct
 
@@ -95,7 +99,7 @@ contains
             end if
 
             ! try to allocate state
-            allocate ( this%state )
+            !allocate ( this%state )
             this%state = bucket_state_interface(numbasins)
             ! if ( .not. associated(this%state) ) then
             !     ! if the input structure could not be created write and error
@@ -106,17 +110,17 @@ contains
             ! end if
 
             ! try to allocate properties
-            allocate ( this%properties )
-            if ( .not. associated(this%properties) ) then
-                ! if the properties structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater properties structure"
-            else
-                ! initialize the properties structure
-                call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)
-            end if
+            !allocate ( this%properties )
+            this%properties = bucket_properties_interface(ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)
+            ! if ( .not. associated(this%properties) ) then
+            !     ! if the properties structure could not be created write and error
+            !     write(0,*) "Failure to allocate groundwater properties structure"
+            ! else
+            !     ! initialize the properties structure
+            !     call this%properties%init( ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)
+            ! end if
 
             ! try to allocate static data
-            allocate ( this%static_data )
             this%static_data = groundwater_static_struct(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
             ! if ( .not. associated(this%static_data) ) then
             !     ! if the static data structure could not be created write and error
@@ -125,8 +129,7 @@ contains
             !     ! initialize the static data structure
             !     call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
             ! end if
-
-            this%bucket_pointer_allocation_guard = .true.
+            ! this%bucket_pointer_allocation_guard = .true.
         end if
 
     end subroutine bucket_groundwater_struct_init
@@ -171,28 +174,28 @@ contains
             end if
 
             ! check the state structure
-            if ( associated(this%state)) then
-                deallocate(this%state)
-            else
-                write(0,*) "Error the state structure the nhd data object was not associated"
-                io_err = .true.
-            end if
+            ! if ( associated(this%state)) then
+            !     deallocate(this%state)
+            ! else
+            !     write(0,*) "Error the state structure the nhd data object was not associated"
+            !     io_err = .true.
+            ! end if
 
-            ! check the properties structure
-            if ( associated(this%properties)) then
-                deallocate(this%properties)
-            else
-                write(0,*) "Error the properties structure the nhd data object was not associated"
-                io_err = .true.
-            end if
+            ! ! check the properties structure
+            ! if ( associated(this%properties)) then
+            !     deallocate(this%properties)
+            ! else
+            !     write(0,*) "Error the properties structure the nhd data object was not associated"
+            !     io_err = .true.
+            ! end if
 
             ! check the static_data structure
-            if ( associated(this%static_data)) then
-                deallocate(this%static_data)
-            else
-                write(0,*) "Error the static_data structure the nhd data object was not associated"
-                io_err = .true.
-            end if
+            ! if ( associated(this%static_data)) then
+            !     deallocate(this%static_data)
+            ! else
+            !     write(0,*) "Error the static_data structure the nhd data object was not associated"
+            !     io_err = .true.
+            ! end if
 
             this%bucket_pointer_allocation_guard = .false.
         end if
@@ -204,4 +207,9 @@ contains
 
     end subroutine
 
+    subroutine run_groundwater_time_step_dummy (ground_water_data)
+      class(bucket_groundwater_struct), intent(inout) :: ground_water_data
+      
+    end subroutine  run_groundwater_time_step_dummy
+      
 end module module_bucket_impl

@@ -42,8 +42,9 @@ contains
     !! @param gwbaseswcrt  Groundwater configuration option: 0 = disabled, 1 = exp bucket, 2 = passthrough.
     !! @param ovrtswcrt  Overland routing contributes to groundwater: 0 = off, 1 = on
   
-  type (groundwater_static_struct) function groundwater_static_struct_init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
+  type(groundwater_static_struct) function groundwater_static_struct_init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
     implicit none
+
     integer, intent(in) :: ix
     integer, intent(in) :: jx
     integer, intent(in) :: ixrt
