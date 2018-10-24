@@ -429,36 +429,36 @@ contains
 
         ! Check to see if the output structure exists
         print *, "Checking pointer association on data%input "
-        if ( associated(nhd_data%input) ) then
-            print *, "PASSED"
-            ptr_state(1) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(1) = .false.
-        end if
-        print *, " "
+        ! if ( associated(nhd_data%input) ) then
+        !     print *, "PASSED"
+        !     ptr_state(1) = .true.
+        ! else
+        !     print *, "FAILED"
+        !     ptr_state(1) = .false.
+        ! end if
+        ! print *, " "
 
-        ! Check to see if the output structure exists
-        print *, "Checking pointer association on data%output "
-        if ( associated(nhd_data%output) ) then
-            print *, "PASSED"
-            ptr_state(2) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(2) = .false.
-        end if
-        print *, " "
+        ! ! Check to see if the output structure exists
+        ! print *, "Checking pointer association on data%output "
+        ! if ( associated(nhd_data%output) ) then
+        !     print *, "PASSED"
+        !     ptr_state(2) = .true.
+        ! else
+        !     print *, "FAILED"
+        !     ptr_state(2) = .false.
+        ! end if
+        ! print *, " "
 
-        ! Check to see if the aggregation structure exists
-        print *, "Checking pointer association on data%aggregation "
-        if ( associated(nhd_data%aggregation) ) then
-            print *, "PASSED"
-            ptr_state(3) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(3) = .false.
-        end if
-        print *, " "
+        ! ! Check to see if the aggregation structure exists
+        ! print *, "Checking pointer association on data%aggregation "
+        ! if ( associated(nhd_data%aggregation) ) then
+        !     print *, "PASSED"
+        !     ptr_state(3) = .true.
+        ! else
+        !     print *, "FAILED"
+        !     ptr_state(3) = .false.
+        ! end if
+        ! print *, " "
 
         ! Check to see if the state structure exists
         ! print *, "Checking pointer association on data%state "

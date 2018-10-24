@@ -74,9 +74,9 @@ module module_groundwater_base
 
     type, abstract :: groundwater_base_data_struct
 
-        type(groundwater_base_input_struct), pointer :: input  !< structure to hold inputs to module
-        type(groundwater_base_output_struct), pointer :: output !< structure to hold outputs to module
-        type(groundwater_base_aggregation_struct), pointer :: aggregation !< structure to hold aggregation data for module
+        type(groundwater_base_input_struct) :: input  !< structure to hold inputs to module
+        type(groundwater_base_output_struct) :: output !< structure to hold outputs to module
+        type(groundwater_base_aggregation_struct) :: aggregation !< structure to hold aggregation data for module
 
     contains
 

@@ -69,34 +69,34 @@ contains
 
         if (this%bucket_pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
-            allocate ( this%input )
-            if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater input structure"
-            else
+            ! allocate ( this%input )
+            ! if ( .not. associated(this%input) ) then
+            !     ! if the input structure could not be created write and error
+            !     write(0,*) "Failure to allocate groundwater input structure"
+            ! else
                 ! initialize the input structure
-                call this%input%init(ix,jx,numbasins)
-            end if
+           call this%input%init(ix,jx,numbasins)
+            !end if
 
             ! try to allocate output
-            allocate ( this%output )
-            if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater output structure"
-            else
+            !allocate ( this%output )
+            ! if ( .not. associated(this%output) ) then
+            !     ! if the output structure could not be created write and error
+            !     write(0,*) "Failure to allocate groundwater output structure"
+            ! else
                 ! initialize the output structure
-                call this%output%init(ixrt,jxrt,numbasins)
-            end if
+           call this%output%init(ixrt,jxrt,numbasins)
+            !end if
 
             !try to allocate aggregation
-            allocate ( this%aggregation )
-            if ( .not. associated(this%aggregation) ) then
-                ! if the output structure could not be created write and error
-                write(0,*) "Failure to allocate groundwater aggregation structure"
-            else
+            !allocate ( this%aggregation )
+            ! if ( .not. associated(this%aggregation) ) then
+            !     ! if the output structure could not be created write and error
+            !     write(0,*) "Failure to allocate groundwater aggregation structure"
+            ! else
                 ! initialize the output structure
-                call this%aggregation%init(ixrt,jxrt,agg_factor)
-            end if
+           call this%aggregation%init(ixrt,jxrt,agg_factor)
+           ! end if
 
             ! try to allocate state
             !allocate ( this%state )
@@ -150,28 +150,28 @@ contains
             !check each pointer then deallocate
 
             ! check the input structure
-            if ( associated(this%input)) then
-                deallocate(this%input)
-            else
-                write(0,*) "Error the input structure the nhd data object was not associated"
-                io_err = .true.
-            end if
+            ! if ( associated(this%input)) then
+            !     deallocate(this%input)
+            ! else
+            !     write(0,*) "Error the input structure the nhd data object was not associated"
+            !     io_err = .true.
+            ! end if
 
-            ! check the output structure
-            if ( associated(this%output)) then
-                deallocate(this%output)
-            else
-                write(0,*) "Error the output structure the nhd data object was not associated"
-                io_err = .true.
-            end if
+            ! ! check the output structure
+            ! if ( associated(this%output)) then
+            !     deallocate(this%output)
+            ! else
+            !     write(0,*) "Error the output structure the nhd data object was not associated"
+            !     io_err = .true.
+            ! end if
 
-            ! check the aggregation structure
-            if ( associated(this%aggregation)) then
-                deallocate(this%aggregation)
-            else
-                write(0,*) "Error the aggregation structure the nhd data object was not associated"
-                io_err = .true.
-            end if
+            ! ! check the aggregation structure
+            ! if ( associated(this%aggregation)) then
+            !     deallocate(this%aggregation)
+            ! else
+            !     write(0,*) "Error the aggregation structure the nhd data object was not associated"
+            !     io_err = .true.
+            ! end if
 
             ! check the state structure
             ! if ( associated(this%state)) then
