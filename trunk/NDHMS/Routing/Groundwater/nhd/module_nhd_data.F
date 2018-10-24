@@ -9,6 +9,10 @@ module module_nhd_data
     use nhd_groundwater_tests
     implicit none
 
+  interface nhd_groundwater_struct
+     procedure nhd_groundwater_struct_init
+  end interface nhd_groundwater_struct
+
     !> data type that hold necessary data for exponential bucket groundwater model
 
     type, extends(bucket_groundwater_struct) :: nhd_groundwater_struct
@@ -30,7 +34,7 @@ module module_nhd_data
 
     contains
 
-        procedure :: init => nhd_groundwater_struct_init
+        !procedure :: init => nhd_groundwater_struct_init
         procedure :: destroy => nhd_groundwater_struct_destroy
         procedure :: run_timestep => run_nhd_groundwater_timestep
     end type nhd_groundwater_struct
@@ -53,9 +57,9 @@ contains
     !! @param cell_area  2D array containing the area of each routing cell
     !! @param cell_area_lsm  2D array contain the area of lsm cell
 
-    subroutine nhd_groundwater_struct_init(this, ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm)
+  function nhd_groundwater_struct_init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt, numbasins, num_local_links, cb_only, agg_factor, cell_area, cell_area_lsm) result(res)
         implicit none
-        class (nhd_groundwater_struct), intent(inout) :: this ! object being initialized
+        type (nhd_groundwater_struct) :: res ! object being initialized
         integer, intent(in) :: ix
         integer, intent(in) :: jx
         integer, intent(in) :: ixrt
@@ -71,7 +75,7 @@ contains
         real, dimension(:,:), intent(in) :: cell_area_lsm
 
         call bucket_groundwater_struct_init( &
-            this, &
+            res, &
             ix, jx, &
             ixrt, jxrt, &
             dt, &
@@ -82,21 +86,21 @@ contains
             cell_area, &
             cell_area_lsm)
 
-        if (this%pointer_allocation_guard .eqv. .false. ) then
+        if (res%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate basin
-            allocate ( this%basin )
-            if ( .not. associated(this%basin) ) then
+            allocate ( res%basin )
+            if ( .not. associated(res%basin) ) then
                 ! if the basin structure could not be created write and error
                 write(0,*) "Failure to allocate groundwater properties structure"
             else
                 ! initialize the basin structure
-                call this%basin%init(ix, jx, numbasins, num_local_links, cb_only, agg_factor)
+                call res%basin%init(ix, jx, numbasins, num_local_links, cb_only, agg_factor)
             end if
 
-            this%pointer_allocation_guard = .true.
+            res%pointer_allocation_guard = .true.
         end if
 
-    end subroutine nhd_groundwater_struct_init
+    end function nhd_groundwater_struct_init
 
     !> Destructor for the nhd groundwater struct. Calling this subroutine will deallocate all memory allocated to a
     !! nhd_ground_water structure. If one or more pointer where disassociated or deallocated from code outside this

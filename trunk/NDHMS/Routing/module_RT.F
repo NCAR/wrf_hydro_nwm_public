@@ -1114,144 +1114,161 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
         end if ! end of neither channel_only nor channelBucket_only
 
         if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+           
+           ! allocate the ground water object
+           allocate( nhd_groundwater_struct :: rt_domain(did)%groundwater)
+           
+           !allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%nlinksL))
+           !rt_domain(did)%groundwater%output%qout_gwsubbas = 0
+           ! use different baseflow for NHDPlus
+           if (nlst_rt(did)%GWBASESWCRT.ge.1) then
+              
+              rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
+              RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
+              
+              select type (gwd => rt_domain(did)%groundwater)
+              type is (nhd_groundwater_struct)
+                 gwd = nhd_groundwater_struct(rt_domain(did)%IX, &
+                      rt_domain(did)%JX, &
+                      rt_domain(did)%IXRT, &
+                      rt_domain(did)%JXRT, &
+                      nlst_rt(did)%dt, &
+                      nlst_rt(did)%GWBASESWCRT, &
+                      nlst_rt(did)%OVRTSWCRT, &
+                      rt_domain(did)%numbasns, &
+                      RT_DOMAIN(did)%LNLINKSL, &
+                      nlst_rt(did)%channelBucket_only, &
+                      nlst_rt(did)%AGGFACTRT, &
+                      rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+                      rt_domain(did)%dist_lsm(:,:,9))
 
-            ! allocate the ground water object
-            allocate( nhd_groundwater_struct :: rt_domain(did)%groundwater)
+! Alessandro: module_RT should not know any internal structure of nhd or any other subclass
+! the readBucket_nhd function should be invoked in the costructor of nhd
 
-            !allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%nlinksL))
-            !rt_domain(did)%groundwater%output%qout_gwsubbas = 0
-            ! use different baseflow for NHDPlus
-            if (nlst_rt(did)%GWBASESWCRT.ge.1) then
-
-                rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
-                RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
-
-                select type (gwd => rt_domain(did)%groundwater)
-                    type is (nhd_groundwater_struct)
-                        call gwd%init(rt_domain(did)%IX, &
-                            rt_domain(did)%JX, &
-                            rt_domain(did)%IXRT, &
-                            rt_domain(did)%JXRT, &
-                            nlst_rt(did)%dt, &
-                            nlst_rt(did)%GWBASESWCRT, &
-                            nlst_rt(did)%OVRTSWCRT, &
-                            rt_domain(did)%numbasns, &
-                            RT_DOMAIN(did)%LNLINKSL, &
-                            nlst_rt(did)%channelBucket_only, &
-                            nlst_rt(did)%AGGFACTRT, &
-                            rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                            rt_domain(did)%dist_lsm(:,:,9))
-
-                        gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
-                        call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), &
-                            rt_domain(did)%numbasns, &
-                            gwd%properties%gw_buck_coeff, &
-                            gwd%properties%gw_buck_exp, &
-                            gwd%properties%z_max, &
-                            gwd%state%z_gwsubbas, &
-                            rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
-                            gwd%basin%nhd_bucket_mask )
-                        !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
-                        !for UDMP=1 so we convert units.
-                        gwd%state%z_gwsubbas = gwd%state%z_gwsubbas/1000.
-                    class default
-                end select
-
-                !allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
-                !allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
-
-                !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
-                allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
-                allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
-                allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
-                !allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
-                allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
-                !allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
-                !allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
-                !allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
-
-                !rt_domain(did)%groundwater%input%qin_gwsubbas = 0
-                !rt_domain(did)%z_gwsubbas = 0
-                rt_domain(did)%gwbas_pix_ct = 0
-                rt_domain(did)%bas_pcp = 0
-
-                !rt_domain(did)%gw_buck_coeff = 0.04
-                !rt_domain(did)%gw_buck_exp  = 0.2
-                !rt_domain(did)%z_max = 0.1
-
-                !Temporary hardwire...
-                !rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
-
-                !call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
-                !    rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
-                !    rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
-                !    rt_domain(did)%nhdBuckMask )
-                !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
-                !for UDMP=1 so we convert units.
-                !rt_domain(did)%z_gwsubbas = rt_domain(did)%z_gwsubbas/1000.
-
+                 ! call gwd%init(rt_domain(did)%IX, &
+                 !      rt_domain(did)%JX, &
+                 !      rt_domain(did)%IXRT, &
+                 !      rt_domain(did)%JXRT, &
+                 !      nlst_rt(did)%dt, &
+                 !      nlst_rt(did)%GWBASESWCRT, &
+                 !      nlst_rt(did)%OVRTSWCRT, &
+                 !      rt_domain(did)%numbasns, &
+                 !      RT_DOMAIN(did)%LNLINKSL, &
+                 !      nlst_rt(did)%channelBucket_only, &
+                 !      nlst_rt(did)%AGGFACTRT, &
+                 !      rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+                 !      rt_domain(did)%dist_lsm(:,:,9))
+                 
+                 gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+                 call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), &
+                      rt_domain(did)%numbasns, &
+                      gwd%properties%gw_buck_coeff, &
+                      gwd%properties%gw_buck_exp, &
+                      gwd%properties%z_max, &
+                      gwd%state%z_gwsubbas, &
+                      rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
+                      gwd%basin%nhd_bucket_mask )
+                 !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
+                 !for UDMP=1 so we convert units.
+                 gwd%state%z_gwsubbas = gwd%state%z_gwsubbas/1000.
+              class default
+              end select
+              
+              !allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns  ))
+              !allocate (rt_domain(did)%nhdBuckMask(rt_domain(did)%numbasns  ))  ! default is -999
+              
+              !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
+              allocate (rt_domain(did)%gwbas_pix_ct (rt_domain(did)%numbasns))
+              allocate (rt_domain(did)%ct2_bas (rt_domain(did)%numbasns))
+              allocate (rt_domain(did)%bas_pcp (rt_domain(did)%numbasns))
+              !allocate (rt_domain(did)%gw_buck_coeff (rt_domain(did)%numbasns))
+              allocate (rt_domain(did)%bas_id (rt_domain(did)%numbasns))
+              !allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
+              !allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
+              !allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
+              
+              !rt_domain(did)%groundwater%input%qin_gwsubbas = 0
+              !rt_domain(did)%z_gwsubbas = 0
+              rt_domain(did)%gwbas_pix_ct = 0
+              rt_domain(did)%bas_pcp = 0
+              
+              !rt_domain(did)%gw_buck_coeff = 0.04
+              !rt_domain(did)%gw_buck_exp  = 0.2
+              !rt_domain(did)%z_max = 0.1
+              
+              !Temporary hardwire...
+              !rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+              
+              !call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
+              !    rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
+              !    rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
+              !    rt_domain(did)%nhdBuckMask )
+              !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
+              !for UDMP=1 so we convert units.
+              !rt_domain(did)%z_gwsubbas = rt_domain(did)%z_gwsubbas/1000.
+              
 #ifdef HYDRO_D
-                write(6,*) "finish readBucket_nhd "
-                call flush(6)
+              write(6,*) "finish readBucket_nhd "
+              call flush(6)
 #endif
-            endif
-
+           endif
+           
         else
-
-            !---------------------------------------------------------------------
+           
+           !---------------------------------------------------------------------
             !DJG  If GW/Baseflow activated...Read in req'd fields...
             !----------------------------------------------------------------------
-            if (nlst_rt(did)%GWBASESWCRT.ge.1) then
-                if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
+           if (nlst_rt(did)%GWBASESWCRT.ge.1) then
+              if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
 
 #ifdef HYDRO_D
-                    print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
+                 print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
 
-                    ! create the simple groundwater object
-                    allocate( simple_groundwater_struct :: rt_domain(did)%groundwater)
-
-                    ! initalize the object
-                    select type (gwd => rt_domain(did)%groundwater)
-                        type is (simple_groundwater_struct)
-                        call gwd%init(rt_domain(did)%ix, &
-                            rt_domain(did)%jx, &
-                            rt_domain(did)%ixrt, &
-                            rt_domain(did)%jxrt, &
-                            nlst_rt(did)%dt, &
-                            nlst_rt(did)%gwbaseswcrt, &
-                            nlst_rt(did)%ovrtswcrt, &
-                            rt_domain(did)%numbasns, &
-                            rt_domain(did)%gnumbasns, &
-                            nlst_rt(did)%aggfactrt, &
-                            rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                            rt_domain(did)%dist_lsm(:,:,9))
-
+                 ! create the simple groundwater object
+                 allocate( simple_groundwater_struct :: rt_domain(did)%groundwater)
+                 
+                 ! initalize the object
+                 select type (gwd => rt_domain(did)%groundwater)
+                 type is (simple_groundwater_struct)
+                    call gwd%init(rt_domain(did)%ix, &
+                         rt_domain(did)%jx, &
+                         rt_domain(did)%ixrt, &
+                         rt_domain(did)%jxrt, &
+                         nlst_rt(did)%dt, &
+                         nlst_rt(did)%gwbaseswcrt, &
+                         nlst_rt(did)%ovrtswcrt, &
+                         rt_domain(did)%numbasns, &
+                         rt_domain(did)%gnumbasns, &
+                         nlst_rt(did)%aggfactrt, &
+                         rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+                         rt_domain(did)%dist_lsm(:,:,9))
+                    
 #ifdef HYDRO_D
-                            write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
+                    write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
 #endif
-
+                    
 #ifdef MPP_LAND
-                            call MPP_READ_SIMP_GW( &
+                    call MPP_READ_SIMP_GW( &
 #else
-                            call READ_SIMP_GW( &
+                         call READ_SIMP_GW( &
 #endif
-                                rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
-                                rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
-                                gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
-
-
-                            call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
-                                rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+                         rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
+                         rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
+                         gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
+                    
+                    
+                    call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
+                         rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
 
 #ifdef MPP_LAND
-                            call collectSizeInd(rt_domain(did)%numbasns)
+                    call collectSizeInd(rt_domain(did)%numbasns)
 #endif
-                            call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, gwd%basin%stream_mask, &
-                                rt_domain(did)%numbasns,gwd%basin%basin_index,gwd%basin%stream_mask_index)
-                            class default
-                    end select
-
+                    call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, gwd%basin%stream_mask, &
+                         rt_domain(did)%numbasns,gwd%basin%basin_index,gwd%basin%stream_mask_index)
+                 class default
+                 end select
+                 
                     !allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%numbasns))
                     !allocate (rt_domain(did)%groundwater%input%qin_gwsubbas (rt_domain(did)%numbasns))
                     !allocate (rt_domain(did)%z_gwsubbas (rt_domain(did)%numbasns))
