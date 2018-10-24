@@ -33,6 +33,7 @@ module module_bucket_impl
 
         procedure :: loss => groundwater_bucket_loss_func
         procedure :: run_timestep => run_groundwater_time_step_dummy
+        procedure :: set_gwsubbas => set_state_gwsubbas
 
     end type bucket_groundwater_struct
 
@@ -133,6 +134,14 @@ contains
         end if
 
     end subroutine bucket_groundwater_struct_init
+
+    subroutine set_state_gwsubbas(this, z_gwsubbas)
+      implicit none
+      class (bucket_groundwater_struct), intent(inout) :: this
+      real :: z_gwsubbas
+
+      this%state%z_gwsubbas = z_gwsubbas
+    end subroutine set_state_gwsubbas
 
     !> Destructor for the nhd groundwater struct. Calling this subroutine will deallocate all memory allocated to a
     !! nhd_ground_water structure. If one or more pointer where disassociated or deallocated from code outside this

@@ -35,8 +35,9 @@ module module_nhd_data
     contains
 
         !procedure :: init => nhd_groundwater_struct_init
-        procedure :: destroy => nhd_groundwater_struct_destroy
-        procedure :: run_timestep => run_nhd_groundwater_timestep
+      !procedure :: readBucket
+      procedure :: destroy => nhd_groundwater_struct_destroy
+      procedure :: run_timestep => run_nhd_groundwater_timestep
     end type nhd_groundwater_struct
 
 contains
@@ -101,6 +102,21 @@ contains
         end if
 
     end function nhd_groundwater_struct_init
+
+    ! subroutine readBucket(this, infile, numbasns, LINKID)
+    !   use module_HYDRO_io, only : readBucket_nhd
+    !   implicit none
+
+    !   class (nhd_groundwater_struct), intent(inout) :: this
+    !   character(len=*) :: infile
+    !   integer :: numbasns
+    !   integer, dimension(numbasns) :: LINKID
+
+    !   call readBucket_nhd(infile, numbasns, this%properties%gw_buck_coeff, &
+    !        this%properties%gw_buck_exp, this%properties%z_max, this%state%z_gwsubbas, &
+    !        LINKID, this%basin%nhd_bucket_mask)
+
+    ! end subroutine readBucket
 
     !> Destructor for the nhd groundwater struct. Calling this subroutine will deallocate all memory allocated to a
     !! nhd_ground_water structure. If one or more pointer where disassociated or deallocated from code outside this

@@ -1159,7 +1159,14 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                  !      rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                  !      rt_domain(did)%dist_lsm(:,:,9))
                  
-                 gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+                 !gwd%state%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+                 call gwd%set_gwsubbas(0.05)
+
+                 ! Needs some adjustments to the Makefile dependecy
+                 ! call gwd%readBucket(trim(nlst_rt(did)%GWBUCKPARM_file), &
+                 !      rt_domain(did)%numbasns, &
+                 !      rt_domain(did)%LINKID(1:rt_domain(did)%numbasns))
+
                  call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), &
                       rt_domain(did)%numbasns, &
                       gwd%properties%gw_buck_coeff, &
@@ -1168,6 +1175,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                       gwd%state%z_gwsubbas, &
                       rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
                       gwd%basin%nhd_bucket_mask )
+
                  !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
                  !for UDMP=1 so we convert units.
                  gwd%state%z_gwsubbas = gwd%state%z_gwsubbas/1000.
