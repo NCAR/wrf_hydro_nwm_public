@@ -57,23 +57,23 @@ mod:
 
 
 
-#test:
-#	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
-#	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
-#	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
-#		module_reservoir_utilities.o \
-#		module_reservoir_base.o \
-#		module_levelpool_parameters.o \
-#		module_levelpool_state.o \
-#		module_levelpool.o \
-#		module_levelpool_tests.o \
-#		module_machine_learning_parameters.o \
-#		module_machine_learning_state.o \
-#		module_machine_learning_model.o	\
-#		module_machine_learning.o \
-#		reservoir_tests.o \
-#		module_machine_learning_tests.o \
-#		hydro_stop.o
+test: mod
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
+	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
+		module_reservoir_utilities.o \
+		module_reservoir_base.o \
+		Level_Pool/module_levelpool_parameters.o \
+		Level_Pool/module_levelpool_state.o \
+		Level_Pool/module_levelpool_tests.o \
+		Level_Pool/module_levelpool.o \
+		Machine_Learning/module_machine_learning_parameters.o \
+		Machine_Learning/module_machine_learning_state.o \
+		Machine_Learning/module_machine_learning_model.o \
+		Machine_Learning/module_machine_learning_tests.o \
+		Machine_Learning/module_machine_learning.o \
+		reservoir_tests.o \
+		hydro_stop.o
 
 
 
@@ -96,7 +96,7 @@ mod:
 clean:
 	rm -f *.o
 	rm -f *.mod
-#	rm -f reservoir_tests
+	rm -f reservoir_tests
 
 	make -C Level_Pool clean
 	make -C Machine_Learning clean

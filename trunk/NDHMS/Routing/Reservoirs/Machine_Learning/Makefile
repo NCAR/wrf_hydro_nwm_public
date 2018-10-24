@@ -39,4 +39,4 @@ mod:
 clean:
 	rm -f *.o
 	rm -f *.mod
-	rm -f reservoir_tests
+	#rm -f reservoir_tests
