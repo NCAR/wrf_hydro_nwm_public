@@ -23,7 +23,7 @@ all: mod test
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules
-	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_parameters.F
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_state.F
@@ -36,7 +36,7 @@ mod:
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_machine_learning.F
 
 
-	#ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
+	ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
 	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
 	#ar -r ../../lib/libHYDRO.a module_levelpool_parameters.o
 	#ar -r ../../lib/libHYDRO.a module_levelpool_state.o
@@ -52,7 +52,7 @@ mod:
 
 	#Build the modules
 	make -C Level_Pool
-	#make -C Machine_Learning
+	make -C Machine_Learning
 
 
 
@@ -99,4 +99,4 @@ clean:
 #	rm -f reservoir_tests
 
 	make -C Level_Pool clean
-#	make -C Machine_Learning clean
+	make -C Machine_Learning clean

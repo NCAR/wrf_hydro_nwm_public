@@ -40,7 +40,7 @@ module module_levelpool
         procedure :: run_release => run_levelpool_release
 
         procedure :: timestep_pre_conditions_warn => no_op
-        procedure :: timestep_pre_conditions_modify => no_op
+        procedure :: timestep_pre_conditions_modify => no_op2
         procedure :: timestep_post_conditions_warn => no_op
         procedure :: timestep_post_conditions_modify => no_op
         procedure :: update_pre_conditions_warn => no_op
@@ -129,6 +129,13 @@ contains
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
     end subroutine no_op
+
+
+    subroutine no_op2(reservoir_data, run_model)
+        implicit none
+        class(levelpool_struct), intent(inout) :: reservoir_data
+        logical, intent(inout) :: run_model
+    end subroutine no_op2
 
 
     ! Subroutine for running release for a level pool reservoir,

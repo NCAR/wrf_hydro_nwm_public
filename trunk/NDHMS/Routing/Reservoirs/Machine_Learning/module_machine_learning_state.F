@@ -11,6 +11,7 @@ module module_machine_learning_state
 
     use netcdf
     use module_reservoir_utilities
+    !use module_machine_learning_utilities
     use module_reservoir_base
     implicit none
 

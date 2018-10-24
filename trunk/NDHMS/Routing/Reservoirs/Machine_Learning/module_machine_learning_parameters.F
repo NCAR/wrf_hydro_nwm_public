@@ -14,6 +14,7 @@ module module_machine_learning_parameters
 
     use netcdf
     use module_reservoir_utilities
+    !use module_machine_learning_utilities
     use module_reservoir_base
     implicit none
 
@@ -208,6 +209,8 @@ contains
         print *, "4"
 
 
+        !CHECK RECORDINGS ABOUT BELOW. IF I NEED TO REMOVE ONE OF THE LINES?????
+
         if (number_of_unique_models == 0) then
 
             ! Find out how many unique models here
@@ -225,7 +228,7 @@ contains
                 end do
             end do
 
-
+            !CHANGE ARRAY NAME TO UNIQUE MODELS
             !number_of_unique_models = 0
             do idx_unique_arr = 1, Nlakes
                 if (unique_models_array(idx_unique_arr) == 0) then
