@@ -2,8 +2,6 @@
    type (overland_struct) :: overland
 
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
-   integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
-   integer, allocatable, dimension(:) :: model_number ! model number for machine learning reservoir
 
    INTEGER :: IX, JX
    logical :: initialized
@@ -172,6 +170,7 @@
   REAL, allocatable, DIMENSION(:)    :: ORIFICEC   !coefficient of orifice
   REAL, allocatable, DIMENSION(:)    :: ORIFICEA   !orifice opening area (m^2)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
+  REAL, allocatable, DIMENSION(:) :: q_type
   REAL, allocatable, DIMENSION(:)    :: LATLAKE, LONLAKE,ELEVLAKE ! lake info
 
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDX ! integer index for lakes, mapped to linkid

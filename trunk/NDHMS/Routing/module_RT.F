@@ -363,6 +363,8 @@ CONTAINS
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+        allocate( rt_domain(did)%q_type(NLAKES) )
+
 
          rt_domain(did)%HRZAREA = 0.0
          rt_domain(did)%WEIRH = 0.0
@@ -373,6 +375,7 @@ CONTAINS
          rt_domain(did)%ORIFICEC = 0.0
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
+         rt_domain(did)%q_type = 0.0
 
      endif
 
@@ -709,6 +712,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
+             rt_domain(did)%q_type,                                &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -749,7 +753,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
-           rt_domain(did)%ORIFICEE,      rt_domain(did)%LATLAKE,    &
+           rt_domain(did)%ORIFICEE,      rt_domain(did)%q_type,     &
+           rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
            nlst_rt(did)%route_link_f,    nlst_rt(did)%route_lake_f, &
@@ -1598,6 +1603,7 @@ end if ! end of neither channel_only nor channelBucket_only
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
+   if(allocated(rt_domain(did)%q_type)) deallocate(rt_domain(did)%q_type)
 
 end subroutine LandRT_ini
 
