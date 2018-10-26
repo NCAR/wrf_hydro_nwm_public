@@ -37,7 +37,7 @@ MODULE module_Routing
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool
-   !use module_machine_learning
+   use module_machine_learning
    !use module_read_q_type
 
    IMPLICIT NONE
@@ -352,7 +352,6 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
-        !allocate ( rt_domain(did)%model_number(NLAKES) )  ! allocate array to specify machine learning model number
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -363,7 +362,6 @@ CONTAINS
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
-        allocate( rt_domain(did)%q_type(NLAKES) )
 
 
          rt_domain(did)%HRZAREA = 0.0
@@ -766,7 +764,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    end if
 
    ! Set reservoir type array values to 1 as default for levelpool type.
-   rt_domain(did)%q_type = 1
+
 
    ! Set model number array values to 0 as default for no
    ! machine learning model for level pool or persistence reservoirs.
@@ -784,12 +782,24 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    end do
 
+
+   print *, "Before loop through lakes init"
+
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
+        print *, "Reservoir index: ", lake_index
+        print *, "Reservoir ID: ", rt_domain(did)%LAKEIDM(lake_index)
+        print *, "q_type: ", rt_domain(did)%q_type(lake_index)
+
+
      ! If q_type equals 1 then go to Level Pool, if 2 then go to
      ! Machine Learning, and if 3 then go to Persistence.
-     if (rt_domain(did)%q_type(lake_index) == 1) then
+     if (rt_domain(did)%q_type(lake_index) == 1.0) then
+
+        print *, "q_type = 1. Allocate LP reservoir"
+
+
 
        ! Allocate a single level pool reservoir
        allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
@@ -797,6 +807,10 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
        ! Dynamically inspects for level pool type reservoir
        select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
           type is (levelpool_struct)
+
+
+                print *, "Entered select for LP"
+
 
                ! Call to initialize a level pool type reservoir
                call lp%init(                                &
@@ -809,28 +823,32 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%ORIFICEC(lake_index),         &
                rt_domain(did)%ORIFICEA(lake_index),         &
                rt_domain(did)%LAKEMAXH(lake_index),         &
-               lake_index                                   )
+               rt_domain(did)%LAKEIDM(lake_index)           )
+               !lake_index                                   )
 
        end select
 
 
-!     else if (rt_domain(did)%q_type(lake_index) == 2) then
+     else if (rt_domain(did)%q_type(lake_index) == 2.0) then
 
        ! Allocate a single machine learning reservoir
-!       allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+       allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       print *, "q_type = 2. Allocate ML reservoir"
+
 
        ! Dynamically inspects for machine learning type reservoir
- !      select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
- !         type is (machine_learning_struct)
+       select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+          type is (machine_learning_struct)
+
+
+                print *, "Entered select for ML"
+
 
                  ! Call to initialize a machine learning type reservoir
- !                call ml%init(                                &
- !                nlst_rt(did)%startdate(1:19),                &
-       !          rt_domain(did)%model_number(lake_index),	  &
-	   !   		  number_of_unique_models,					  &
-!                 lake_index                                   )                                      )
-
- !      end select
+                 !call ml%init(nlst_rt(did)%startdate(1:19), lake_index)
+                 call ml%init(nlst_rt(did)%startdate(1:19), rt_domain(did)%LAKEIDM(lake_index))
+       end select
 
      !else if (rt_domain(did)%q_type(lake_index) == 3) then
 

@@ -159,6 +159,8 @@ contains
 
         end if
 
+        ! Set currently outflow to the historic monthly average release
+        this%output%outflow = this%state%previous_day_release
 
         ! Model Initialization
         ! This if statement is only entered on first machine learning reservoir
@@ -248,11 +250,20 @@ contains
         logical             :: run_machine_learning_model
         real                :: pre_modify_storage
 
+
+        real :: current_time_real_print
+
         !update_time initially set to 86400, seconds in 24 hours
         !time_interval also set to 86400
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
 
         reservoir_data%state%release_count = reservoir_data%state%release_count + 1
+
+
+        print *, "ML Timestep for Lake: ", reservoir_data%parameters%lake_number
+        print *, "Current time is: ", reservoir_data%state%current_time
+        print *, "Current inflow is: ", reservoir_data%input%inflow
+
 
         ! Timestep pre warn to check inflow
         call reservoir_data%timestep_pre_conditions_warn()
@@ -281,6 +292,11 @@ contains
             call reservoir_data%update_preprocessing()
 
 
+            print *, "ML Update for Lake: ", reservoir_data%parameters%lake_number
+            print *, "Current time is: ", reservoir_data%state%current_time
+            print *, "average inflow is: ", reservoir_data%state%average_inflow_over_past_time_intervals
+
+
             if (run_machine_learning_model) then
 
                 ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
@@ -290,6 +306,62 @@ contains
                     reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
                     reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
             end if
+
+
+
+
+        if (reservoir_data%parameters%lake_number == 166758703) then
+            !Writing the results into some text files!
+
+            !open (111,file="lakeids.txt",status="unknown")
+            !write (111, "(4A15)") "Lake_IDs"
+            ! Write (111, "(F25.10)") reservoir_data%parameters%lake_number
+
+
+            current_time_real_print = real(reservoir_data%state%current_time)
+
+            open (112,file="current_time.txt",status="unknown")
+            write (112, "(4A15)") "Current_Time"
+             !Write (112, "(I5)") reservoir_data%state%current_time
+             Write (112, "(F15.5)") current_time_real_print
+
+
+
+            open (113,file="current_inflow.txt",status="unknown")
+            write (113, "(4A15)") "Current_Inflow"
+             Write (113, "(F15.5)") reservoir_data%input%inflow
+
+            open (114,file="average_inflow.txt",status="unknown")
+            write (114, "(4A15)") "Average_Inflow"
+             Write (114, "(F15.5)") reservoir_data%state%average_inflow_over_past_time_intervals
+
+
+            open (115,file="x_doy.txt",status="unknown")
+            write (115, "(4A15)") "X_DOY"
+             Write (115, "(F15.5)") reservoir_data%state%x_day_of_year
+
+
+            open (116,file="y_doy.txt",status="unknown")
+            write (116, "(4A15)") "Y_DOY"
+             Write (116, "(F15.5)") reservoir_data%state%y_day_of_year
+
+
+            open (117,file="average_storage.txt",status="unknown")
+            write (117, "(4A15)") "Average_Storage"
+             Write (117, "(F15.5)") reservoir_data%state%average_storage_over_past_time_intervals
+
+
+            open (118,file="previous_day_release.txt",status="unknown")
+            write (118, "(4A15)") "Previous_Day_Release"
+             Write (118, "(F15.5)") reservoir_data%state%previous_day_release
+
+
+            open (119,file="outflow.txt",status="unknown")
+            write (119, "(4A15)") "Outflow"
+             Write (119, "(F15.5)") reservoir_data%output%outflow
+
+        end if
+
 
             !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
 
@@ -312,6 +384,8 @@ contains
         call reservoir_data%update_post_conditions_modify()
 
         outflow = reservoir_data%output%outflow
+
+        print *, "Outflow is: ", outflow
 
     end subroutine run_machine_learning_release
 

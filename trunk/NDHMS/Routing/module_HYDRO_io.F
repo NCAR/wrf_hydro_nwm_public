@@ -9020,6 +9020,12 @@ call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .
 !remove the alt var. and add initial fractional depth var. LKR/DY
 call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,      'read_route_lake_netcdf', .FALSE.)
 
+
+print *, "after call to get 1d from netcdf line 9017"
+print *, q_type
+
+
+
 iRet = nf90_close(ncId)
 if (iRet /= nf90_noErr) then
    write(*,'("read_route_lake_netcdf: Problem closing: ''", A, "''")') trim(route_lake_file)
