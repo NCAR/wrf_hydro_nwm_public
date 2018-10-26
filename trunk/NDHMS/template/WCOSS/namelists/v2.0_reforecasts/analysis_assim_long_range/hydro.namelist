@@ -79,7 +79,7 @@ t0OutputFlag = 1
 ! 0=None (default), 1=channel influxes (qSfcLatRunoff, qBucket)
 ! 2=channel+bucket fluxes    (qSfcLatRunoff, qBucket, qBtmVertRunoff_toBucket)
 ! 3=channel accumulations    (accSfcLatRunoff, accBucket) *** NOT TESTED ***
-output_channelBucket_influx = 2
+output_channelBucket_influx = 0
 
 ! Output netcdf file control
 CHRTOUT_DOMAIN = 1           ! Netcdf point timeseries output at all channel points (1d)
