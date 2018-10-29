@@ -64,6 +64,8 @@ module module_machine_learning
         procedure :: update_post_conditions_warn => machine_learning_update_post_conditions_warn
         procedure :: update_post_conditions_modify => machine_learning_update_post_conditions_modify
         procedure :: update_preprocessing => update_preprocessing
+        procedure :: write_machine_learning_restart_variables => write_machine_learning_restart_variables
+
 
     end type machine_learning_struct
 
@@ -72,11 +74,12 @@ contains
     !Machine Learning Constructor
     !subroutine machine_learning_struct_init(this, start_date, model_id, number_of_unique_models, &
     !lake_number)
-    subroutine machine_learning_struct_init(this, start_date, lake_number)
+    subroutine machine_learning_struct_init(this, start_date, restart_flag, lake_number)
 
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
         character(len=19), intent(in) :: start_date
+        integer, intent(in) :: restart_flag
         integer, intent(in) :: lake_number               ! lake number
                                                          ! TODO: potentially change to lake_id for this and
                                                          ! LP and Pers modules. lake_number is used in LP
@@ -151,7 +154,7 @@ contains
             else
 
                 ! initialize machine_learning state
-                call this%state%init( start_date, lake_number )
+                call this%state%init( start_date, restart_flag, lake_number )
 
             end if
 
@@ -159,8 +162,16 @@ contains
 
         end if
 
+
+
+        !we need an outflow to update current_storage before we calculate the first outflow. I init it to historical b/c that is all we have on the first run. This should be different for a restart though.
+
         ! Set currently outflow to the historic monthly average release
-        this%output%outflow = this%state%previous_day_release
+        !this%output%outflow = this%state%previous_day_release
+
+
+
+
 
         ! Model Initialization
         ! This if statement is only entered on first machine learning reservoir
@@ -272,8 +283,10 @@ contains
 
         reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
 
-        reservoir_data%state%current_storage = reservoir_data%state%current_storage &
-        + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
+
+        !CHANGE TO ONLY RUN AFTER TIME 0
+        !reservoir_data%state%current_storage = reservoir_data%state%current_storage &
+        !+ reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
         reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
@@ -296,6 +309,13 @@ contains
             print *, "Current time is: ", reservoir_data%state%current_time
             print *, "average inflow is: ", reservoir_data%state%average_inflow_over_past_time_intervals
 
+            !!!!!!!!!!!!!!!!!!!!!!
+            !CHANGE TO NOT RUN AT FIRST UPDATE TIME 00:00
+            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
+
+            reservoir_data%state%totaled_storage = 0.0
+            !!!!!!!!!!!!!!!
+
 
             if (run_machine_learning_model) then
 
@@ -309,8 +329,8 @@ contains
 
 
 
-
-        if (reservoir_data%parameters%lake_number == 166758703) then
+        !temp
+        if (reservoir_data%parameters%lake_number == 166758723) then
             !Writing the results into some text files!
 
             !open (111,file="lakeids.txt",status="unknown")
@@ -365,9 +385,9 @@ contains
 
             !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_storage
 
-            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
+            !reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
 
-            reservoir_data%state%totaled_storage = 0.0
+            !reservoir_data%state%totaled_storage = 0.0
 
             reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
 
@@ -382,6 +402,10 @@ contains
         !NEED TO COMPLETE THIS CALL
         ! Timestep post modify outflow
         call reservoir_data%update_post_conditions_modify()
+
+
+        reservoir_data%state%current_storage = reservoir_data%state%current_storage &
+        + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
         outflow = reservoir_data%output%outflow
 
@@ -560,6 +584,17 @@ contains
 
 
 
+
+
+    subroutine write_machine_learning_restart_variables(reservoir_data)
+        class(machine_learning_struct), intent(inout) :: reservoir_data
+
+
+
+
+
+
+    end subroutine write_machine_learning_restart_variables
 
 
 

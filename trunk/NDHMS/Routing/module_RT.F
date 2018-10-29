@@ -847,7 +847,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
                  ! Call to initialize a machine learning type reservoir
                  !call ml%init(nlst_rt(did)%startdate(1:19), lake_index)
-                 call ml%init(nlst_rt(did)%startdate(1:19), rt_domain(did)%LAKEIDM(lake_index))
+                 call ml%init(nlst_rt(did)%startdate(1:19), rt_domain(did)%timestep_flag, &
+                      rt_domain(did)%LAKEIDM(lake_index))
        end select
 
      !else if (rt_domain(did)%q_type(lake_index) == 3) then
@@ -1621,7 +1622,7 @@ end if ! end of neither channel_only nor channelBucket_only
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
-   if(allocated(rt_domain(did)%q_type)) deallocate(rt_domain(did)%q_type)
+   !if(allocated(rt_domain(did)%q_type)) deallocate(rt_domain(did)%q_type)
 
 end subroutine LandRT_ini
 

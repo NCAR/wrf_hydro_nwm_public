@@ -33,6 +33,9 @@ module module_HYDRO_io
    use module_gw_gw2d_data, only: gw2d
    use netcdf
 
+   use module_machine_learning
+   !use module_machine_learning, only:
+
    implicit none
 #include <netcdf.inc>
 
@@ -5767,6 +5770,30 @@ end subroutine mpp_output_chrt
         end subroutine output_lsm
 
 
+    !NEED TO FIGURE OUT WHERE TO CALLL THIS IN THE RESTART_OUT_NC SUBROUTINE
+    !subroutine restart_select_machine_learning_reservoirs()
+    !    real, allocatable, dimension(:) :: temp_current_storage_array
+
+    !    integer :: lake_index
+
+
+    !    allocate (temp_current_storage_array(rt_domain(did)%nlakes))
+
+!        do lake_index = 1, rt_domain(did)%nlakes
+!            if (rt_domain(did)%q_type(lake_index) == 2.0) then
+
+!                temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%current_storage
+!            end if
+!        end do
+
+
+
+!    end subroutine restart_select_machine_learning_reservoirs
+
+
+
+
+
    subroutine RESTART_OUT_nc(outFile,did)
 
 
@@ -5781,6 +5808,23 @@ end subroutine mpp_output_chrt
              dimid_ixrt, dimid_jxrt, varid, &
              dimid_links, dimid_basns, dimid_soil, dimid_lakes
     integer :: iret
+
+
+
+    real, allocatable, dimension(:) :: temp_current_storage_array
+    integer :: lake_index
+
+
+    allocate (temp_current_storage_array(rt_domain(did)%nlakes))
+
+    do lake_index = 1, rt_domain(did)%nlakes
+        if (rt_domain(did)%q_type(lake_index) == 2.0) then
+
+            temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%current_storage
+        end if
+    end do
+
+
 
 
 #ifdef MPP_LAND

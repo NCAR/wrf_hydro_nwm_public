@@ -10,6 +10,8 @@
 module module_machine_learning_state
 
     use netcdf
+    use module_HYDRO_io, only : RESTART_OUT_nc
+    use module_namelist, only: nlst_rt
     use module_reservoir_utilities
     !use module_machine_learning_utilities
     use module_reservoir_base
@@ -59,12 +61,14 @@ contains
 
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this, start_date, lake_number)
+    subroutine machine_learning_state_init(this, start_date, restart_flag, lake_number)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
 
         character(len=19), intent(in) :: start_date
+
+        integer, intent(in) :: restart_flag
 
         integer, intent(in) :: lake_number              ! lake number
 
@@ -342,30 +346,46 @@ contains
         print *, "16.1"
 
 
-        this%previous_day_release = release_monthly_average
-
-        this%average_storage_over_past_time_intervals = storage_monthly_average
-
-        !this%accumulated_storage = storage_monthly_average
-
-        this%current_storage = storage_monthly_average
-
-        print *, "16.2"
 
 
-		this%totaled_storage = 0.0
+        if (restart_flag == 1) then
 
-        this%time_interval = 86400
 
-        this%current_time = 0
+            this%previous_day_release = release_monthly_average
 
-        this%update_time = 86400 ! seconds in 24 hours
+            this%average_storage_over_past_time_intervals = storage_monthly_average
 
-        this%routing_period = 0
+            !this%accumulated_storage = storage_monthly_average
 
-        this%average_inflow_over_past_time_intervals = 0.0
+            this%current_storage = storage_monthly_average
 
-        this%accumulated_inflow = 0.0
+            print *, "16.2"
+
+
+            this%totaled_storage = 0.0
+
+            this%time_interval = 86400   ! seconds in 24 hours
+
+            this%current_time = 0
+
+            this%update_time = 0
+
+            this%routing_period = 0
+
+            this%average_inflow_over_past_time_intervals = 0.0
+
+            this%accumulated_inflow = 0.0
+
+
+        else
+
+
+
+
+
+
+
+        end if
 
 
         months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
