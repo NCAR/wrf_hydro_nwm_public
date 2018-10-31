@@ -465,7 +465,7 @@ contains
         ! Note to user: This calculates the storage for the next timestep given the current storage,
         ! current inflow, and last machine learning model calculated outflow/release at update time or
         ! updated outflow/release from this subroutine. The outflow/release is bounded by the minimum
-        ! inflow. If the next timestep calculated storage is less than or equal cubic meters, then
+        ! inflow. If the next timestep calculated storage is less than or equal 0.0 cubic meters, then
         ! outflow/release will be altered to drain the storage to 0.0 between the current and the
         ! next timestep. The outflow/release will then be set to 0.0 once the storage reaches
         ! 0.0 in order for the storage to accumulate and will remain at this value until the next
