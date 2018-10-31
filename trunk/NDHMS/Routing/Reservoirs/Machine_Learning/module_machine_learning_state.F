@@ -5,13 +5,15 @@
 ! reservoir object and not other modules or areas
 ! of the system.
 
+! Time between running machine learning model to update the outflow
+#define update_time_interval 86400
 #define pi 3.14159265359
 
 module module_machine_learning_state
 
     use netcdf
-    use module_HYDRO_io, only : RESTART_OUT_nc
-    use module_namelist, only: nlst_rt
+    !use module_HYDRO_io, only : RESTART_OUT_nc
+    !use module_namelist, only: nlst_rt
     use module_reservoir_utilities
     !use module_machine_learning_utilities
     use module_reservoir_base
@@ -20,7 +22,9 @@ module module_machine_learning_state
     ! Extend/derive machine learning state from the abstract base
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
-        real :: current_storage
+        !real :: current_storage
+        real :: current_time_storage
+        real :: end_time_storage
         !real :: accumulated_storage
         real :: average_storage_over_past_time_intervals
 		real :: totaled_storage
@@ -68,7 +72,8 @@ contains
 
         character(len=19), intent(in) :: start_date
 
-        integer, intent(in) :: restart_flag
+        integer, intent(in) :: restart_flag              ! signals if NWM is on a restart or not
+                                                         ! 1 is cold start and 99 is restart
 
         integer, intent(in) :: lake_number              ! lake number
 
@@ -347,7 +352,7 @@ contains
 
 
 
-
+        ! If cold start
         if (restart_flag == 1) then
 
 
@@ -357,14 +362,16 @@ contains
 
             !this%accumulated_storage = storage_monthly_average
 
-            this%current_storage = storage_monthly_average
+            !this%current_storage = storage_monthly_average
+            this%current_time_storage = storage_monthly_average
 
             print *, "16.2"
 
+            this%end_time_storage = storage_monthly_average
 
             this%totaled_storage = 0.0
 
-            this%time_interval = 86400   ! seconds in 24 hours
+            this%time_interval = update_time_interval   ! seconds in 24 hours
 
             this%current_time = 0
 
@@ -376,13 +383,8 @@ contains
 
             this%accumulated_inflow = 0.0
 
-
-        else
-
-
-
-
-
+        ! Restart
+        !else
 
 
         end if

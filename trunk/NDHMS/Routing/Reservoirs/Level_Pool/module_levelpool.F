@@ -131,9 +131,10 @@ contains
     end subroutine no_op
 
 
-    subroutine no_op2(reservoir_data, run_model)
+    subroutine no_op2(reservoir_data, routing_period, run_model)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
+        real, intent(in)       :: routing_period
         logical, intent(inout) :: run_model
     end subroutine no_op2
 

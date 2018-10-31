@@ -21,7 +21,7 @@ module module_machine_learning_model
 
     type NN_reservoir_in_out
         REAL :: previous_day_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
-        REAL :: average_storage_over_past_time_intervals !
+        !REAL :: average_storage_over_past_time_intervals  !
         REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
         REAL :: current_storage !
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
@@ -305,7 +305,7 @@ contains
 
 
         this%nn_inputs%previous_day_release = 0.0
-        this%nn_inputs%average_storage_over_past_time_intervals = 0.0
+        this%nn_inputs%current_storage = 0.0
         this%nn_inputs%average_inflow_over_past_time_intervals = 0.0
         this%nn_inputs%X_DOY = 0.0
         this%nn_inputs%Y_DOY = 0.0
@@ -366,7 +366,8 @@ contains
 
 
     ! This subroutine performs matrix calculations to simulate reservoir release from a saved/trained ML model!
-    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_day_release, average_storage_over_past_time_intervals, X_DOY, Y_DOY)
+    !subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_day_release, average_storage_over_past_time_intervals, X_DOY, Y_DOY)
+    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_day_release, current_storage, X_DOY, Y_DOY)
         implicit none
         !class(machine_learning_model_struct), intent(inout) :: this
         class(machine_learning_model_struct), intent(inout) :: model_data
@@ -377,7 +378,8 @@ contains
 		real, intent (in)   ::  average_inflow_over_past_time_intervals
 		real, intent (out)  ::  release
 		real, intent (in)   ::  previous_day_release
-		real, intent (in)   ::  average_storage_over_past_time_intervals
+		!real, intent (in)   ::  average_storage_over_past_time_intervals
+		real, intent (in)   ::  current_storage
 		real, intent (in)   ::  X_DOY
 		real, intent (in)   ::  Y_DOY
 
@@ -393,7 +395,7 @@ contains
 
 
         model_data%nn_inputs%previous_day_release = previous_day_release
-        model_data%nn_inputs%average_storage_over_past_time_intervals = average_storage_over_past_time_intervals
+        model_data%nn_inputs%current_storage = current_storage
         model_data%nn_inputs%average_inflow_over_past_time_intervals = average_inflow_over_past_time_intervals
         model_data%nn_inputs%X_DOY = X_DOY
         model_data%nn_inputs%Y_DOY = Y_DOY
@@ -402,7 +404,7 @@ contains
         model_data%normalized_nn_inputs%previous_day_release = (model_data%nn_inputs%previous_day_release - model_data%minimum_of_features_final(1))&
         /(model_data%maximum_of_features_final(1) - model_data%minimum_of_features_final(1))
 
-        model_data%normalized_nn_inputs%average_storage_over_past_time_intervals = (model_data%nn_inputs%average_storage_over_past_time_intervals - model_data%minimum_of_features_final(2))&
+        model_data%normalized_nn_inputs%current_storage = (model_data%nn_inputs%current_storage - model_data%minimum_of_features_final(2))&
         /(model_data%maximum_of_features_final(2) - model_data%minimum_of_features_final(2))
 
         model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals = (model_data%nn_inputs%average_inflow_over_past_time_intervals - model_data%minimum_of_features_final(3))&
@@ -420,7 +422,7 @@ contains
         !    normalized_nn_inputs_local%inflow/)
 
         model_data%input_vector = (/model_data%normalized_nn_inputs%previous_day_release, model_data%normalized_nn_inputs%X_DOY,&
-            model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%average_storage_over_past_time_intervals, &
+            model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%current_storage, &
             model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)
 
 

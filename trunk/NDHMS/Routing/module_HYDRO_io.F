@@ -5817,12 +5817,12 @@ end subroutine mpp_output_chrt
 
     allocate (temp_current_storage_array(rt_domain(did)%nlakes))
 
-    do lake_index = 1, rt_domain(did)%nlakes
-        if (rt_domain(did)%q_type(lake_index) == 2.0) then
+    !do lake_index = 1, rt_domain(did)%nlakes
+    !    if (rt_domain(did)%q_type(lake_index) == 2.0) then
 
-            temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%current_storage
-        end if
-    end do
+    !        temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%state%current_storage
+    !    end if
+    !end do
 
 
 

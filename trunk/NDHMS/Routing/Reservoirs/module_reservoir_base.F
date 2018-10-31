@@ -123,9 +123,10 @@ module module_reservoir_base
 
 
 
-        subroutine reservoir_timestep_pre_conditions_modify_interface(reservoir_data, run_model)
+        subroutine reservoir_timestep_pre_conditions_modify_interface(reservoir_data, routing_period, run_model)
             import reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
+            real, intent(in)       :: routing_period
             logical, intent(inout) :: run_model
 
         end subroutine reservoir_timestep_pre_conditions_modify_interface
