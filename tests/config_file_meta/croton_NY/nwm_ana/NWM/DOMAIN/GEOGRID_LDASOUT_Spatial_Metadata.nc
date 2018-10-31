@@ -1,4 +1,4 @@
-md5sum: 142f038de005820da814e382ab12831b  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc
+md5sum: 5a053f48bd31a0e48d26bf3fb3994f8f  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc
 ncdump -h: netcdf GEOGRID_LDASOUT_Spatial_Metadata {
 dimensions:
 	x = 15 ;
@@ -40,7 +40,7 @@ variables:
 		:GDAL_DataType = "Generic" ;
 		:Source_Software = "WRF-Hydro GIS Pre-processor v5 (03/2018)" ;
 		:proj4 = "+proj=lcc +units=m +a=6370000.0 +b=6370000.0 +lat_1=30.0 +lat_2=60.0 +lat_0=40.0 +lon_0=-97.0 +x_0=0 +y_0=0 +k_0=1.0 +nadgrids=@null +wktext  +no_defs " ;
-		:history = "Sun Aug  5 17:27:23 2018: ncks -O -d x,4146,4160 -d y,2341,2356 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata_1km_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/GEOGRID_LDASOUT_Spatial_Metadata.nc\n",
+		:history = "Fri Aug 24 11:13:56 2018: ncks -O -d x,4146,4160 -d y,2341,2356 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata_1km_NWMv2.0.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0//0137462010/GEOGRID_LDASOUT_Spatial_Metadata.nc\n",
 			"Created Thu Aug 02 19:39:09 2018" ;
 		:processing_notes = "Created: Thu Aug 02 19:38:45 2018" ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;

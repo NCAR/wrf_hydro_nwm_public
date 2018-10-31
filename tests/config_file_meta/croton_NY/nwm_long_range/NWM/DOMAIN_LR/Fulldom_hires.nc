@@ -1,4 +1,4 @@
-md5sum: 0a46e7cb379e54ecf85fd04a960b13c9  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/Fulldom_hires.nc
+md5sum: e9505c9d024b0cebaa7019b609c60351  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/Fulldom_hires.nc
 ncdump -h: netcdf Fulldom_hires {
 dimensions:
 	y = 16 ;
@@ -120,7 +120,7 @@ variables:
 // global attributes:
 		:Conventions = "CF-1.5" ;
 		:Source_Software = "WRF-Hydro GIS Pre-processor v5 (03/2018)" ;
-		:history = "Mon Aug  6 15:07:41 2018: ncks -O -d x,4146,4160 -d y,1483,1498 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/Fulldom_hires_netcdf_file_1km_LongRange_NWMv2.0.nc /glade/u/home/arezoo/scratch/for/for_Joe/0137462010/Fulldom_hires.nc\n",
+		:history = "Thu Sep  6 17:56:43 2018: ncks -O -d x,4146,4160 -d y,1483,1498 /glade/p_old/nwc/nwmv20_finals/CONUS/DOMAIN/Fulldom_hires_netcdf_file_1km_LongRange_NWMv2.0.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0_LongRange//0137462010/Fulldom_hires.nc\n",
 			"Tue Apr 10 15:20:44 2018: ncap2 -O -s LKSATFAC=OVROUGHRTFAC*0.0+1000.0 Fulldom_hires_netcdf_file_1km_NWMv1.1_DEFAULT.nc Fulldom_hires_netcdf_file_1km_NWMv1.1_DEFAULT.nc\n",
 			"Fri Nov 11 15:48:10 2016: ncrename -v Band1,TOPOGRAPHY Fulldom_hires_netcdf_file_1km_NWMv1.1_newdem.nc Fulldom_hires_netcdf_file_1km_NWMv1.1_newdem.nc\n",
 			"Fri Nov 11 15:47:37 2016: ncks -x -v TOPOGRAPHY Fulldom_hires_netcdf_file_1km_NWMv1.1_newdem.nc Fulldom_hires_netcdf_file_1km_NWMv1.1_newdem.nc\n",
