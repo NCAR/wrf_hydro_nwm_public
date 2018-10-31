@@ -415,6 +415,12 @@ contains
 
             !reservoir_data%state%totaled_storage = 0.0
 
+            call reservoir_data%machine_learning_update_post_conditions_modify()
+
+            ! This is run to update the end_time_storage with the newly calculated release
+            reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
+            + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
+
             reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
 
             reservoir_data%state%previous_day_release = reservoir_data%output%outflow
@@ -423,7 +429,7 @@ contains
 
             reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
 
-            call reservoir_data%machine_learning_update_post_conditions_modify()
+
 
         end if
 
@@ -462,6 +468,8 @@ contains
         real, intent(in)       :: routing_period
         logical, intent(inout) :: run_model
 
+
+        ! OLD NOTE
         ! Note to user: This calculates the storage for the next timestep given the current storage,
         ! current inflow, and last machine learning model calculated outflow/release at update time or
         ! updated outflow/release from this subroutine. The outflow/release is bounded by the minimum
@@ -475,6 +483,32 @@ contains
         ! days but would not be updated for the rest of the month to account for an increased inflow that
         ! would fill the reservoir and could eventually warrant an increase in the release/outflow, but this
         ! release/outflow increase could not be simulated and updated until the end of the month update time.
+
+
+
+
+
+        ! Note to user:
+        ! In order to conserve mass, when a reservoir's storage would become 0 or less, the current release
+        ! must be adjusted to avoid releasing water that isn't in the reservoir. To determine conditions
+        ! when this could happen, this function calculates the storage balance for the duration of the current
+        ! timestep (dt) based on current storage condition (at the beginning of the time period), inflow for
+        ! the timestep, and the latest release value valid for the timestep.
+
+        ! If the current conditions would cause the storage to become less than or equal to 0.0 cubic meters,
+        ! then the outflow/release will be altered to provide the available storage over the timestep
+        ! (given as R = (S + I*dt)/dt ). This will cause storage at the end of the timestep to be 0. From this
+        ! point, the outflow/release is boudnded by the mimimum inflow provided until the next update time when
+        ! the machine learning model will be run again.
+
+        ! Therefore, the user's choice of time_interval has a significant impact on this simulated outflow/release
+        ! behavior in this edge case.  Release cannot increase again until the next update time occurs. This does,
+        ! however, allow the reservoir to fill back up once inflow increases to exceed current outflow/release
+        ! since storage would then become > 0.
+
+        ! If one wants to allow the release to continue to rise as inflow rises, you can set R = I*dt once storage
+        ! has been depleted. This passes on inflow to outflow until an update time occurs, in which case the ML
+        ! model and its post conditions are responsible for calculating an appropriate release.
 
         if (reservoir_data%state%end_time_storage <= 0.0 .AND. reservoir_data%state%current_time &
            < reservoir_data%state%update_time) then
@@ -565,7 +599,7 @@ contains
     subroutine machine_learning_update_post_conditions_modify(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-        !real :: projected_next_day_storage
+        real :: projected_next_time_interval_storage
 
         ! FIXME: Remove below print statements and write same info to a log file.
         ! Also have option to set the outflow to the max_release.
@@ -589,26 +623,29 @@ contains
         end if
 
 
-        ! projected_next_day_storage is only calculated as a boundary condition to update the release
-        reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
+        ! projected_next_time_interval_storage is only calculated as a boundary condition to update the release
+        !reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
+        !- reservoir_data%output%outflow * reservoir_data%state%time_interval
+
+        projected_next_time_interval_storage = reservoir_data%state%current_time_storage &
         - reservoir_data%output%outflow * reservoir_data%state%time_interval
 
 
-        if (reservoir_data%state%end_time_storage > reservoir_data%parameters%max_storage) then
+        if (projected_next_time_interval_storage > reservoir_data%parameters%max_storage) then
 
-            reservoir_data%output%outflow = (reservoir_data%state%end_time_storage - reservoir_data%parameters%max_storage) &
+            reservoir_data%output%outflow = (projected_next_time_interval_storage - reservoir_data%parameters%max_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
 
-        else if (reservoir_data%state%end_time_storage < reservoir_data%parameters%min_storage .AND. &
-                reservoir_data%state%end_time_storage > 0.0) then
+        else if (projected_next_time_interval_storage < reservoir_data%parameters%min_storage .AND. &
+                projected_next_time_interval_storage > 0.0) then
 
-            reservoir_data%output%outflow = (reservoir_data%state%end_time_storage - reservoir_data%parameters%min_storage) &
+            reservoir_data%output%outflow = (projected_next_time_interval_storage - reservoir_data%parameters%min_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
 
-        else if (reservoir_data%state%end_time_storage <= 0.0) then
-            reservoir_data%output%outflow = reservoir_data%state%end_time_storage / reservoir_data%state%time_interval
+        else if (projected_next_time_interval_storage <= 0.0) then
+            reservoir_data%output%outflow = projected_next_time_interval_storage / reservoir_data%state%time_interval
 
         end if
 
