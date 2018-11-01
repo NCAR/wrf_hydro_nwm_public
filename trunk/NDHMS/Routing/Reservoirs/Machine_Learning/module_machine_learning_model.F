@@ -366,33 +366,22 @@ contains
 
 
     ! This subroutine performs matrix calculations to simulate reservoir release from a saved/trained ML model!
-    !subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_time_release, average_storage_over_past_time_intervals, X_DOY, Y_DOY)
-    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, release, previous_time_release, current_storage, X_DOY, Y_DOY)
+    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, previous_time_release, current_storage, X_DOY, Y_DOY, release)
         implicit none
-        !class(machine_learning_model_struct), intent(inout) :: this
         class(machine_learning_model_struct), intent(inout) :: model_data
-        !real ::
-
-        !type (NN_node), dimension (10), intent (IN) :: model_parameters_local
 
 		real, intent (in)   ::  average_inflow_over_past_time_intervals
 		real, intent (out)  ::  release
 		real, intent (in)   ::  previous_time_release
-		!real, intent (in)   ::  average_storage_over_past_time_intervals
 		real, intent (in)   ::  current_storage
 		real, intent (in)   ::  X_DOY
 		real, intent (in)   ::  Y_DOY
 
-
         real, allocatable, dimension(:) :: input_vector_local
         real, allocatable, dimension(:,:) :: reshaped_input_vector_local
-        !real, intent(OUT) :: ml_simulated_release_local
-
-        !type (NN_reservoir_in_out)  :: normalized_nn_inputs_local
 
         integer :: i, j, k
         real tmp
-
 
         model_data%nn_inputs%previous_time_release = previous_time_release
         model_data%nn_inputs%current_storage = current_storage

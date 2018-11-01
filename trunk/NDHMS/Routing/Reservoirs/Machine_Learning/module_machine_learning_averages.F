@@ -1,25 +1,15 @@
-! This module defines and instantiates objects
-! for a machine learning type reservoir. The machine
-! learning reservoir struct inherits input and
-! output stucts from the reservoir base
-! module and calls instantiation of these into
-! sub-objects. The machine learning reservoir struct
-! also points to stucts for machine learning parameters
-! and state and calls instantiation of these into
-! sub-objects. This module also contains the
-! subroutine to run machine learning release that is
-! derived from the reservoir base struct interface
-! to run release. Running machine learning release will
-! then call the MACHINE_LEARNING subroutine, which
-! processes the given inputs, parameters, and
-! state for a particular machine learning reservoir and
-! return the output/outflow.
+! This module is equivalent to module_machine_learning
+! except that the release function passes average storage
+! and average inflow over the previous time interval to
+! the machine learning model. It is recommended to not
+! use this module at this time except for evaluation
+! purposes.
 
 #define days_in_year 365
 #define days_in_leap_year 366
 #define pi 3.14159265359
 
-module module_machine_learning
+module module_machine_learning_averages
 
     use module_machine_learning_parameters
     use module_machine_learning_state
@@ -219,6 +209,8 @@ contains
 
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
 
+        reservoir_data%state%release_count = reservoir_data%state%release_count + 1
+
         ! Update end time storage from current inflow and previous timestep outflow
         reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
@@ -227,14 +219,23 @@ contains
 
         call reservoir_data%timestep_pre_conditions_warn()
 
+        reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
+
         print *, "ML Timestep for Lake: ", reservoir_data%parameters%lake_number
         print *, "Current time is: ", reservoir_data%state%current_time
         print *, "Current inflow is: ", reservoir_data%input%inflow
 
+        ! Add current storage to the running total, totaled_storage
+        reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_time_storage
+
+        ! Timestep pre modify storage
         call reservoir_data%timestep_pre_conditions_modify(routing_period)
 
         ! If update time, then run machine learning model to calculate new outflow value
         if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
+
+            reservoir_data%state%average_inflow_over_past_time_intervals = reservoir_data%state%accumulated_inflow &
+            / reservoir_data%state%release_count
 
             ! Check leap year and update day x and y
             call reservoir_data%update_preprocessing()
@@ -243,13 +244,17 @@ contains
 
             print *, "ML Update for Lake: ", reservoir_data%parameters%lake_number
             print *, "Current time is: ", reservoir_data%state%current_time
+            print *, "average inflow is: ", reservoir_data%state%average_inflow_over_past_time_intervals
+
+            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%totaled_storage / reservoir_data%state%release_count
+
+            reservoir_data%state%totaled_storage = 0.0
 
             ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
             call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
-                (reservoir_data%input%inflow, reservoir_data%state%previous_time_release, &
-                reservoir_data%state%current_time_storage, reservoir_data%state%x_day_of_year, &
+                (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%state%previous_time_release, &
+                reservoir_data%state%average_storage_over_past_time_intervals, & reservoir_data%state%x_day_of_year, &
                 reservoir_data%state%y_day_of_year, reservoir_data%output%outflow)
-
 
         !temp
         if (reservoir_data%parameters%lake_number == 166758723) then
@@ -267,9 +272,14 @@ contains
              Write (112, "(F15.5)") current_time_real_print
 
 
+
             open (113,file="current_inflow.txt",status="unknown")
             write (113, "(4A15)") "Current_Inflow"
              Write (113, "(F15.5)") reservoir_data%input%inflow
+
+            open (114,file="average_inflow.txt",status="unknown")
+            write (114, "(4A15)") "Average_Inflow"
+             Write (114, "(F15.5)") reservoir_data%state%average_inflow_over_past_time_intervals
 
 
             open (115,file="x_doy.txt",status="unknown")
@@ -282,9 +292,9 @@ contains
              Write (116, "(F15.5)") reservoir_data%state%y_day_of_year
 
 
-            open (117,file="current_time_storage.txt",status="unknown")
-            write (117, "(4A15)") "Current_Time_Storage"
-             Write (117, "(F15.5)") reservoir_data%state%current_time_storage
+            open (117,file="average_storage.txt",status="unknown")
+            write (117, "(4A15)") "Average_Storage"
+             Write (117, "(F15.5)") reservoir_data%state%average_storage_over_past_time_intervals
 
 
             open (118,file="previous_time_release.txt",status="unknown")
@@ -298,13 +308,21 @@ contains
 
         end if
 
+            reservoir_data%state%average_storage_over_past_time_intervals = reservoir_data%state%current_time_storage
+
+            reservoir_data%state%totaled_storage = 0.0
+
             call reservoir_data%update_post_conditions_modify()
 
             ! This is run to update the end_time_storage with the newly calculated release
             reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
             + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
+            reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
+
             reservoir_data%state%previous_time_release = reservoir_data%output%outflow
+
+            reservoir_data%state%release_count = 0
 
             reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
 
@@ -439,8 +457,8 @@ contains
     subroutine machine_learning_update_pre_conditions_modify(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-        if (reservoir_data%input%inflow < 0.0) then
-            reservoir_data%input%inflow = 0.0
+        if (reservoir_data%state%average_inflow_over_past_time_intervals < 0.0) then
+            reservoir_data%state%average_inflow_over_past_time_intervals = 0.0
         end if
 
     end subroutine machine_learning_update_pre_conditions_modify
@@ -675,4 +693,5 @@ contains
         flush(6)
     end function machine_learning_model_data_info
 
-end module module_machine_learning
+end module module_machine_learning_averages
+
