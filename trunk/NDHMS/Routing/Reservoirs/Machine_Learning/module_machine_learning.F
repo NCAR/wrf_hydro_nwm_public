@@ -168,7 +168,7 @@ contains
         !we need an outflow to update current_storage before we calculate the first outflow. I init it to historical b/c that is all we have on the first run. This should be different for a restart though.
 
         ! Set currently outflow to the historic monthly average release
-        !this%output%outflow = this%state%previous_day_release
+        !this%output%outflow = this%state%previous_time_release
 
 
 
@@ -272,9 +272,6 @@ contains
         reservoir_data%state%release_count = reservoir_data%state%release_count + 1
 
 
-        print *, "ML Timestep for Lake: ", reservoir_data%parameters%lake_number
-        print *, "Current time is: ", reservoir_data%state%current_time
-        print *, "Current inflow is: ", reservoir_data%input%inflow
 
         ! Update current storage from current inflow and previous timestep outflow
         !reservoir_data%state%current_storage = reservoir_data%state%current_time_storage &
@@ -291,7 +288,14 @@ contains
 
         reservoir_data%input%inflow = inflow
 
-        reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
+        !reservoir_data%state%accumulated_inflow = reservoir_data%state%accumulated_inflow + reservoir_data%input%inflow
+
+
+
+        print *, "ML Timestep for Lake: ", reservoir_data%parameters%lake_number
+        print *, "Current time is: ", reservoir_data%state%current_time
+        print *, "Current inflow is: ", reservoir_data%input%inflow
+
 
 
         !reservoir_data%state%current_storage = reservoir_data%state%current_storage &
@@ -303,14 +307,16 @@ contains
         !run_machine_learning_model = .true.
 
         ! Timestep pre modify storage
-        call reservoir_data%timestep_pre_conditions_modify(routing_period, run_machine_learning_model)
+        call reservoir_data%timestep_pre_conditions_modify(routing_period)
 
         ! Add current storage to the running total, totaled_storage
-        reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
+        !reservoir_data%state%totaled_storage = reservoir_data%state%totaled_storage + reservoir_data%state%current_storage
 
 
         ! If update time, then run machine learning model to calculate new outflow value
         if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
+
+            !MOVE TO OTHER CLASS
             reservoir_data%state%average_inflow_over_past_time_intervals = reservoir_data%state%accumulated_inflow &
             / reservoir_data%state%release_count
 
@@ -318,7 +324,7 @@ contains
             !call update_pre_conditions_modify()
             call reservoir_data%update_preprocessing()
 
-            call machine_learning_update_pre_conditions_modify()
+            call reservoir_data%update_pre_conditions_modify()
 
             print *, "ML Update for Lake: ", reservoir_data%parameters%lake_number
             print *, "Current time is: ", reservoir_data%state%current_time
@@ -341,16 +347,29 @@ contains
 
             !if (run_machine_learning_model) then
 
+
+            !!!!!
+            !CHANGE NAME OF PREV DAY  RELEASE TO PREV TIME RELEASE!!
+            !!!!
+
+!move OUTFLOW TO END OF LIST
+
             ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
             ! TODO: Make outputs from function in consistent location in the call order across all modules
             call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
-                (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-                reservoir_data%state%previous_day_release, reservoir_data%state%current_time_storage, &
+                (reservoir_data%input%inflow, reservoir_data%output%outflow, &
+                reservoir_data%state%previous_time_release, reservoir_data%state%current_time_storage, &
                 reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
 
+
+
+!            call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
+!                (reservoir_data%IN%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
+!                reservoir_data%state%previous_time_release, reservoir_data%state%current_time_storage, &
+!                reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
                 !call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
                 !    (reservoir_data%state%average_inflow_over_past_time_intervals, reservoir_data%output%outflow, &
-                !    reservoir_data%state%previous_day_release, reservoir_data%state%average_storage_over_past_time_intervals, &
+                !    reservoir_data%state%previous_time_release, reservoir_data%state%average_storage_over_past_time_intervals, &
                 !    reservoir_data%state%x_day_of_year, reservoir_data%state%y_day_of_year)
             !end if
 
@@ -398,9 +417,9 @@ contains
              Write (117, "(F15.5)") reservoir_data%state%average_storage_over_past_time_intervals
 
 
-            open (118,file="previous_day_release.txt",status="unknown")
-            write (118, "(4A15)") "Previous_Day_Release"
-             Write (118, "(F15.5)") reservoir_data%state%previous_day_release
+            open (118,file="previous_time_release.txt",status="unknown")
+            write (118, "(4A15)") "Previous_Time_Release"
+             Write (118, "(F15.5)") reservoir_data%state%previous_time_release
 
 
             open (119,file="outflow.txt",status="unknown")
@@ -415,17 +434,23 @@ contains
 
             !reservoir_data%state%totaled_storage = 0.0
 
-            call reservoir_data%machine_learning_update_post_conditions_modify()
+            call reservoir_data%update_post_conditions_modify()
 
             ! This is run to update the end_time_storage with the newly calculated release
             reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
             + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
-            reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
+            !reservoir_data%state%accumulated_inflow = reservoir_data%input%inflow
 
-            reservoir_data%state%previous_day_release = reservoir_data%output%outflow
 
-            reservoir_data%state%release_count = 0
+
+            reservoir_data%state%previous_time_release = reservoir_data%output%outflow
+
+
+            !MOVE
+            !reservoir_data%state%release_count = 0
+
+
 
             reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
 
@@ -463,30 +488,9 @@ contains
 
 
     !subroutine machine_learning_timestep_pre_conditions_modify(reservoir_data, run_machine_learning_model)
-    subroutine machine_learning_timestep_pre_conditions_modify(reservoir_data, routing_period, run_model)
+    subroutine machine_learning_timestep_pre_conditions_modify(reservoir_data, routing_period)
         class(machine_learning_struct), intent(inout) :: reservoir_data
         real, intent(in)       :: routing_period
-        logical, intent(inout) :: run_model
-
-
-        ! OLD NOTE
-        ! Note to user: This calculates the storage for the next timestep given the current storage,
-        ! current inflow, and last machine learning model calculated outflow/release at update time or
-        ! updated outflow/release from this subroutine. The outflow/release is bounded by the minimum
-        ! inflow. If the next timestep calculated storage is less than or equal 0.0 cubic meters, then
-        ! outflow/release will be altered to drain the storage to 0.0 between the current and the
-        ! next timestep. The outflow/release will then be set to 0.0 once the storage reaches
-        ! 0.0 in order for the storage to accumulate and will remain at this value until the next
-        ! update time when the machine learning model will be run again. Therefore, the user's choice of
-        ! of time_interval has a significant impact on this simulated outflow/release behavior. For instance,
-        ! if the time_interval is 1 month, then the release could be changed to 0.0 within the first couple
-        ! days but would not be updated for the rest of the month to account for an increased inflow that
-        ! would fill the reservoir and could eventually warrant an increase in the release/outflow, but this
-        ! release/outflow increase could not be simulated and updated until the end of the month update time.
-
-
-
-
 
         ! Note to user:
         ! In order to conserve mass, when a reservoir's storage would become 0 or less, the current release
@@ -510,17 +514,16 @@ contains
         ! has been depleted. This passes on inflow to outflow until an update time occurs, in which case the ML
         ! model and its post conditions are responsible for calculating an appropriate release.
 
+        ! The logical 'and' below is not necessary because if otherwise this check updates outflow and
+        ! end_time_storage before an update time, those variables would be overwritten after a new release
+        ! is calculated from the machine learning model. The logical 'and' is left here for emphasis on
+        ! the importance it has on timesteps that are not also update times.
         if (reservoir_data%state%end_time_storage <= 0.0 .AND. reservoir_data%state%current_time &
            < reservoir_data%state%update_time) then
 
             ! FIXME: Remove below print statements and write same info to a log file.
-            ! Also have option to set if < reservoir_data%parameters%min_storage then current storage would equal min_storage
-            ! and outflow would change accordingly.
-            ! Need further discussion about accuracy of the model with using min_storage vs. zero.
             ! FIXME: Change 6 to macro for WCOS
-            write(6,*) "WARNING: Current storage, ", reservoir_data%state%end_time_storage, &
-            !" cubic meters, has reached below the minimum storage: ", min_storage, &
-            !" cubic meters,
+            write(6,*) "WARNING: End time storage, ", reservoir_data%state%end_time_storage, &
             " cubic meters, has reached at or below 0.0 cubic meters for reservoir ", reservoir_data%parameters%lake_number, &
             " at ", reservoir_data%state%current_time, " seconds after model start time."
             write(6,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
@@ -528,18 +531,25 @@ contains
             reservoir_data%output%outflow = (reservoir_data%state%current_time_storage &
             + reservoir_data%input%inflow * routing_period) / routing_period
 
+            reservoir_data%state%end_time_storage = 0.0
+
             if (reservoir_data%output%outflow < 0.0) then
                 reservoir_data%output%outflow = 0.0
             end if
 
-            !run_model = .false.
 
+
+        ! ADD TO PRE TIMESTEP WARNING GOING BELOW MIN STORAGE - FOR END TIME
+
+        !MOVE THIS TO PRE TIMESTEP WARNING ONLY - FOR END TIME
+
+        !SAY: CALCULATED STORAGE FOR THIS TIMESTEP WILL EXCEED THE MAX BOUNDARY FOR RESERVORIR ----.
 
         ! FIXME: Remove below print statements and write same info to a log file.
         ! Also have option to set the current_storage to the max_storage and change the outflow accordingly.
         else if (reservoir_data%state%end_time_storage > reservoir_data%parameters%max_storage) then
 
-            write(6,*) "WARNING: Current storage, ", reservoir_data%state%current_storage, &
+            write(6,*) "WARNING: Current storage, ", reservoir_data%state%end_time_storage, &
             " cubic meters, has exceeded the max storage: ", reservoir_data%parameters%max_storage, &
             " cubic meters, for reservoir ", reservoir_data%parameters%lake_number, &
             " at ", reservoir_data%state%current_time, " seconds after model start time."
@@ -580,6 +590,9 @@ contains
     subroutine machine_learning_update_pre_conditions_modify(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
+
+    !CHANGE THIS TO CURENT INFLOW  ONLY. BUT ONLY A COPY TO A STATE VAR INSTEAD OF AVERAGE INFLOW
+
         if (reservoir_data%state%average_inflow_over_past_time_intervals < 0.0) then
             reservoir_data%state%average_inflow_over_past_time_intervals = 0.0
         end if
@@ -591,6 +604,14 @@ contains
     subroutine machine_learning_update_post_conditions_warn(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
+        ! FIXME: Remove below print statements and write same info to a log file.
+        ! Also have option to set the outflow to the max_release.
+        if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
+
+            print *, "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
+            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
+
+        end if
 
     end subroutine machine_learning_update_post_conditions_warn
 
@@ -602,53 +623,43 @@ contains
         real :: projected_next_time_interval_storage
 
         ! FIXME: Remove below print statements and write same info to a log file.
-        ! Also have option to set the outflow to the max_release.
-        if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
-
-            !reservoir_data%output%outflow = reservoir_data%parameters%max_release
-
-            print *, "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
-            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
-
-        ! FIXME: Remove below print statements and write same info to a log file.
-        ! Also have option to set if < reservoir_data%parameters%min_release.
-        ! Need further discussion about accuracy of the model with using min_release vs. zero.
-
-        else if (reservoir_data%output%outflow < 0.0) then
-            print *, "Current outflow has reached below zero for reservoir ", reservoir_data%parameters%lake_number
+        if (reservoir_data%output%outflow < 0.0) then
+            print *, "Machine Learning calculations return a negative outflow for reservoir ", reservoir_data%parameters%lake_number
             print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
             reservoir_data%output%outflow = 0.0
-            !reservoir_data%output%outflow = reservoir_data%parameters%min_release
 
         end if
 
+        ! The projected_next_time_interval_storage is only calculated as a boundary condition to update the release
+        ! and this storage is calculated assuming a constant flow rate over the time interval. If the time interval
+        ! is too large relative to the channel routing period, this may not be an appropriate calculation.
 
-        ! projected_next_time_interval_storage is only calculated as a boundary condition to update the release
-        !reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
-        !- reservoir_data%output%outflow * reservoir_data%state%time_interval
-
-        projected_next_time_interval_storage = reservoir_data%state%current_time_storage &
-        - reservoir_data%output%outflow * reservoir_data%state%time_interval
-
+        !projected_next_time_interval_storage = reservoir_data%state%current_time_storage &
+        !+ (reservoir_data&input&inflow - reservoir_data%output%outflow) * reservoir_data%state%time_interval
 
         if (projected_next_time_interval_storage > reservoir_data%parameters%max_storage) then
 
-            reservoir_data%output%outflow = (projected_next_time_interval_storage - reservoir_data%parameters%max_storage) &
+            reservoir_data%output%outflow = (reservoir_data%state%current_time_storage - reservoir_data%parameters%max_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
+            print *, "Modified release to maintain prevent maximum storage exceedance for reservoir ", reservoir_data%parameters%lake_number
+            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage < reservoir_data%parameters%min_storage .AND. &
                 projected_next_time_interval_storage > 0.0) then
 
-            reservoir_data%output%outflow = (projected_next_time_interval_storage - reservoir_data%parameters%min_storage) &
+            reservoir_data%output%outflow = (reservoir_data%state%current_time_storage - reservoir_data%parameters%min_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
+            print *, "Modified release to maintain minimum storage for reservoir ", reservoir_data%parameters%lake_number
+            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage <= 0.0) then
-            reservoir_data%output%outflow = projected_next_time_interval_storage / reservoir_data%state%time_interval
+            reservoir_data%output%outflow = reservoir_data%state%current_time_storage / reservoir_data%state%time_interval
+            print *,  "Modified release to conserve mass for reservoir ", reservoir_data%parameters%lake_number
+            print *, "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         end if
-
 
     end subroutine machine_learning_update_post_conditions_modify
 

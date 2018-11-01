@@ -29,7 +29,7 @@ module module_machine_learning_state
         real :: average_storage_over_past_time_intervals
 		real :: totaled_storage
 		!real :: average_storage
-        real :: previous_day_release
+        real :: previous_time_release
         real :: average_inflow_over_past_time_intervals
         real :: accumulated_inflow
         integer :: routing_period
@@ -356,7 +356,7 @@ contains
         if (restart_flag == 1) then
 
 
-            this%previous_day_release = release_monthly_average
+            this%previous_time_release = release_monthly_average
 
             this%average_storage_over_past_time_intervals = storage_monthly_average
 
