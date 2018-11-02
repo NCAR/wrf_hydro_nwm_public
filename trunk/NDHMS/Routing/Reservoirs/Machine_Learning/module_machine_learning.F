@@ -476,8 +476,8 @@ contains
         ! and this storage is calculated assuming a constant flow rate over the time interval. If the time interval
         ! is too large relative to the channel routing period, this may not be an appropriate calculation.
 
-        !projected_next_time_interval_storage = reservoir_data%state%current_time_storage &
-        !+ (reservoir_data&input&inflow - reservoir_data%output%outflow) * reservoir_data%state%time_interval
+        projected_next_time_interval_storage = reservoir_data%state%current_time_storage &
+        + (reservoir_data&input&inflow - reservoir_data%output%outflow) * reservoir_data%state%time_interval
 
         if (projected_next_time_interval_storage > reservoir_data%parameters%max_storage) then
 
