@@ -61,7 +61,10 @@ module module_machine_learning_state
 
 contains
 
-    !TAKE OUT ELEVATION STUFF????
+!!!!!!
+!CAN WE JUST DO THE INQUIRE DIMENSION ONCE??????
+!!!!!!
+
 
 
     !Machine Learning State Constructor
@@ -77,9 +80,9 @@ contains
 
         integer, intent(in) :: lake_number              ! lake number
 
-        integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
+        integer :: time_interval
 
-        !real :: pi
+        integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
 
 
 
@@ -89,8 +92,8 @@ contains
 
         integer :: Nlakes
         integer :: ncid, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
-        integer :: activation_functionsVarId, number_of_nodesVarId, minimum_storageVarId, maximum_storageVarId, lake_idVarId, lake_id_single_VarId
-        integer :: minimum_releaseVarId, maximum_releaseVarId
+        integer :: activation_functionsVarId, number_of_nodesVarId, minimum_storageVarId, maximum_storageVarId, lake_idVarId
+        integer :: minimum_releaseVarId, maximum_releaseVarId, time_intervalVarId
         character, external :: nf90_strerror1
         integer, dimension(nf90_max_var_dims) :: dimIDs
 
@@ -99,7 +102,7 @@ contains
 
         integer :: monthly_averages_rows !
 
-
+        !REMOVE???????
         real, allocatable, dimension (:)    ::long_term_release ! this represent a long-term average of the release to be used for previous day release at the very first day of calc!
 
 
@@ -109,6 +112,7 @@ contains
         real, allocatable, dimension (:,:)  :: elevation_monthly_averages
         real, allocatable, dimension (:,:)  :: inflow_monthly_averages
         real, allocatable, dimension (:,:)  :: storage_monthly_averages
+        integer, allocatable, dimension (:) :: time_intervals
 
 
         real :: release_monthly_average, storage_monthly_average
@@ -127,10 +131,21 @@ contains
         !print *, "status", status
         if (status /= nf90_noerr) call handle_err(status)
 
+
+
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
 
 
         print *, "7"
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        status = nf90_inq_varid(ncid, "time_interval", time_intervalVarId)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
 
 
 
@@ -180,6 +195,25 @@ contains
 
         print *, "9"
 
+
+        print *, 'lake_id'
+        print *, lake_id
+
+
+
+        status = nf90_inquire_variable(ncid, time_intervalVarId, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(time_intervals(Nlakes))
+
+
+
+
+        print *, 'time_intervals'
+        print *, time_intervals
 
 
         ! Monthly averages
@@ -272,6 +306,13 @@ contains
         print *, "13"
 
 
+        status = nf90_get_var(ncid, time_intervalVarId, time_intervals)
+
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
         !Monthly averages
 
         status = nf90_get_var(ncid, ID_monthly_averagesVarId, ID_monthly_averages)
@@ -296,6 +337,9 @@ contains
 
 
 
+        print *, 'lake_id'
+        print *, lake_id
+
 
         print *, "14"
 
@@ -311,6 +355,15 @@ contains
         end do
 
         print *, "15"
+
+
+        print *, 'time_intervals'
+        print *, time_intervals
+
+        time_interval = time_intervals(lake_id_index)
+
+        print *, 'time_interval'
+        print *, time_interval
 
 
         ! Check grab monthly avg from start date and set previous day storage and release to that.
@@ -371,7 +424,16 @@ contains
 
             this%totaled_storage = 0.0
 
+
+            ! Gets time interval from macro at top of file
             this%time_interval = update_time_interval   ! seconds in 24 hours
+
+
+
+            ! Gets time interval from netcdf
+            !this%time_interval = time_interval   ! seconds in 24 hours
+
+
 
             this%current_time = 0
 

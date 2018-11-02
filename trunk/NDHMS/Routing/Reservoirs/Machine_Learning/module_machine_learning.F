@@ -217,6 +217,12 @@ contains
 
         real :: current_time_real_print
 
+        ! If first call to release
+        if (reservoir_data%state%current_time == 0) then
+            reservoir_data%state%update_time = routing_period
+
+        end if
+
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
 
         ! Update end time storage from current inflow and previous timestep outflow

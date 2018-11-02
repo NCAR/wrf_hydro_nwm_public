@@ -137,6 +137,10 @@ contains
         print *, o%y_day_of_year
         print *, " "
 
+        print *, "Checking read on time_interval"
+        print *, o%time_interval
+        print *, " "
+
     end function test_machine_learning_state
 
 

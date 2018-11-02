@@ -785,6 +785,10 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    print *, "Before loop through lakes init"
 
+
+   print *, 'nlst_rt(did)%t0OutputFlag'
+   print *, nlst_rt(did)%t0OutputFlag
+
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 

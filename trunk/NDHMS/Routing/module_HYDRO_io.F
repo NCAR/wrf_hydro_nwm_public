@@ -5811,18 +5811,29 @@ end subroutine mpp_output_chrt
 
 
 
-    real, allocatable, dimension(:) :: temp_current_storage_array
+    real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
     integer :: lake_index
 
 
-    allocate (temp_current_storage_array(rt_domain(did)%nlakes))
+    allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
 
-    !do lake_index = 1, rt_domain(did)%nlakes
-    !    if (rt_domain(did)%q_type(lake_index) == 2.0) then
+    do lake_index = 1, rt_domain(did)%nlakes
+        if (rt_domain(did)%q_type(lake_index) == 2.0) then
 
-    !        temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%state%current_storage
-    !    end if
-    !end do
+            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+            !builds
+            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+            select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+                type is (machine_learning_struct)
+
+                    temp_machine_learning_current_time_storage_array(lake_index) = ml%state%current_time_storage
+            end select
+
+
+        end if
+    end do
 
 
 
@@ -5949,6 +5960,8 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
+            iret = nf_def_var(ncid,"machine_learning_current_time_storage",NF_FLOAT,1,(/dimid_lakes/),varid)
+
          endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
