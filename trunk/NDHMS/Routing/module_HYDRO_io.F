@@ -5770,30 +5770,6 @@ end subroutine mpp_output_chrt
         end subroutine output_lsm
 
 
-    !NEED TO FIGURE OUT WHERE TO CALLL THIS IN THE RESTART_OUT_NC SUBROUTINE
-    !subroutine restart_select_machine_learning_reservoirs()
-    !    real, allocatable, dimension(:) :: temp_current_storage_array
-
-    !    integer :: lake_index
-
-
-    !    allocate (temp_current_storage_array(rt_domain(did)%nlakes))
-
-!        do lake_index = 1, rt_domain(did)%nlakes
-!            if (rt_domain(did)%q_type(lake_index) == 2.0) then
-
-!                temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%current_storage
-!            end if
-!        end do
-
-
-
-!    end subroutine restart_select_machine_learning_reservoirs
-
-
-
-
-
    subroutine RESTART_OUT_nc(outFile,did)
 
 
@@ -5825,8 +5801,11 @@ end subroutine mpp_output_chrt
             !builds
             !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
 
+            print *, 'restart setting storage for reservoir at index: ', lake_index
+
             select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
                 type is (machine_learning_struct)
+                    print *, 'entered select'
 
                     temp_machine_learning_current_time_storage_array(lake_index) = ml%state%current_time_storage
             end select
@@ -5836,7 +5815,8 @@ end subroutine mpp_output_chrt
     end do
 
 
-
+    print *, 'temp_machine_learning_current_time_storage_array'
+    print *, temp_machine_learning_current_time_storage_array
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
@@ -6174,6 +6154,17 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
            ,rt_domain(did)%lake_index  &
 #endif
            )
+
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,temp_machine_learning_current_time_storage_array,"machine_learning_current_time_storage" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
+
+      if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
+
+
+
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
@@ -6712,6 +6703,16 @@ character(len=*) inFile
 integer :: ierr, iret,ncid, did
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
+
+
+
+    real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
+    integer :: lake_index
+
+
+    allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
+
+
 
 
 #ifdef MPP_LAND
