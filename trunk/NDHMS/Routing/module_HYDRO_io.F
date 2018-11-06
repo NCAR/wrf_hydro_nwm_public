@@ -5793,6 +5793,8 @@ end subroutine mpp_output_chrt
 
     allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
 
+    temp_machine_learning_current_time_storage_array = 0.0
+
     do lake_index = 1, rt_domain(did)%nlakes
         if (rt_domain(did)%q_type(lake_index) == 2.0) then
 
@@ -6712,7 +6714,7 @@ integer :: i, j
 
     allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
 
-
+    temp_machine_learning_current_time_storage_array = 0.0
 
 
 #ifdef MPP_LAND
@@ -6879,7 +6881,35 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
+         call read_rst_crt_nc(ncid,temp_machine_learning_current_time_storage_array,rt_domain(did)%NLAKES,"machine_learning_current_time_storage")
       endif
+
+
+
+        do lake_index = 1, rt_domain(did)%nlakes
+            if (rt_domain(did)%q_type(lake_index) == 2.0) then
+
+                !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+                !builds
+                !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+                print *, 'restart read at index: ', lake_index
+
+                select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+                    type is (machine_learning_struct)
+                        print *, 'entered select on read'
+
+                        ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index)
+                end select
+
+
+            end if
+        end do
+
+        if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
+
+
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then

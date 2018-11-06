@@ -406,7 +406,7 @@ contains
 
 
         ! If cold start
-        if (restart_flag == 1) then
+        !if (restart_flag == 1) then
 
 
             this%previous_time_release = release_monthly_average
@@ -449,7 +449,7 @@ contains
         !else
 
 
-        end if
+        !end if
 
 
         months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
