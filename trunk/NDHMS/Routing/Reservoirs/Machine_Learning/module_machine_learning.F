@@ -17,6 +17,7 @@
 
 #define days_in_year 365
 #define days_in_leap_year 366
+#define seconds_in_day 86400
 #define pi 3.14159265359
 
 module module_machine_learning
@@ -224,6 +225,7 @@ contains
 
         ! If first call to release
         if (reservoir_data%state%current_time == 0) then
+
             reservoir_data%state%update_time = routing_period
 
         end if
@@ -231,7 +233,7 @@ contains
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
 
         ! Check for new day and update day x and y
-        call reservoir_data%update_preprocessing()
+        call reservoir_data%timestep_preprocessing()
 
 
         ! Update end time storage from current inflow and previous timestep outflow
@@ -252,7 +254,7 @@ contains
         if (reservoir_data%state%current_time >= reservoir_data%state%update_time) then
 
             ! Check leap year and update day x and y
-            call reservoir_data%update_preprocessing()
+            !call reservoir_data%update_preprocessing()
 
             call reservoir_data%update_pre_conditions_modify()
 
@@ -521,6 +523,7 @@ contains
 
         if (reservoir_data%output%outflow < 0.0) then
             reservoir_data%output%outflow = 0.0
+        end if
 
     end subroutine machine_learning_update_post_conditions_modify
 
@@ -529,37 +532,42 @@ contains
 
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-        if (leap_year(reservoir_data%state%current_year)) then
+        if (reservoir_data%state%current_time >= reservoir_data%state%new_day_time) then
+            reservoir_data%state%new_day_time = reservoir_data%state%new_day_time + seconds_in_day
 
-           if (reservoir_data%state%current_day_of_year == days_in_leap_year) then    ! if last day of leap year
-                reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-                reservoir_data%state%current_day_of_year = 1
 
-           else
-                reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+            if (leap_year(reservoir_data%state%current_year)) then
 
-           end if
+               if (reservoir_data%state%current_day_of_year == days_in_leap_year) then    ! if last day of leap year
+                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                    reservoir_data%state%current_day_of_year = 1
 
-           ! MAKE FUNCTION ALSO?????
-           ! update x and y based on leap year
-           reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
-           reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
+               else
+                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
 
-        else
+               end if
 
-           if (reservoir_data%state%current_day_of_year == days_in_year) then    ! if last day of non leap year
-                reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-                reservoir_data%state%current_day_of_year = 1
-           else
+               ! MAKE FUNCTION ALSO?????
+               ! update x and y based on leap year
+               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
+               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
 
-                reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
-           end if
+            else
 
-           ! update x and y based on non leap year
-           reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
-           reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
+               if (reservoir_data%state%current_day_of_year == days_in_year) then    ! if last day of non leap year
+                    reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                    reservoir_data%state%current_day_of_year = 1
+               else
+
+                    reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+               end if
+
+               ! update x and y based on non leap year
+               reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
+               reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
+            end if
+
         end if
-
 
     end subroutine timestep_preprocessing
 

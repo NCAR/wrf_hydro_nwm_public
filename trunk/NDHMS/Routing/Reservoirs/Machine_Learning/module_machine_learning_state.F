@@ -7,6 +7,7 @@
 
 ! Time between running machine learning model to update the outflow
 #define update_time_interval 86400
+#define seconds_in_day 86400
 #define pi 3.14159265359
 
 module module_machine_learning_state
@@ -439,6 +440,8 @@ contains
             this%current_time = 0
 
             this%update_time = 0
+
+            this%new_day_time = seconds_in_day
 
             this%routing_period = 0
 
