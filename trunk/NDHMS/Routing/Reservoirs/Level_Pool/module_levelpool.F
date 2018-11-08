@@ -38,6 +38,8 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
+        procedure :: write_to_restart_file => no_op3
+        procedure :: read_from_restart_file => no_op
 
         procedure :: timestep_pre_conditions_warn => no_op
         procedure :: timestep_pre_conditions_modify => no_op2
@@ -136,6 +138,14 @@ contains
         class(levelpool_struct), intent(inout) :: reservoir_data
         real, intent(in)       :: routing_period
     end subroutine no_op2
+
+
+    subroutine no_op3(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid)
+        implicit none
+        class(levelpool_struct), intent(inout) :: reservoir_data
+        integer, intent(inout) :: iret, ncid, NF_FLOAT, varid
+        integer, dimension(:), intent(in) :: dimid_lakes
+    end subroutine no_op3
 
 
     ! Subroutine for running release for a level pool reservoir,

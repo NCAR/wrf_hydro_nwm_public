@@ -31,6 +31,7 @@ module module_HYDRO_io
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d
+   use module_io_utilities
    use netcdf
 
    use module_machine_learning
@@ -5787,9 +5788,13 @@ end subroutine mpp_output_chrt
 
 
 
+
     real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
     integer :: lake_index
 
+
+    integer :: aa, bb, cc, dd, ee
+    real :: ff
 
     allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
 
@@ -5942,7 +5947,12 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
-            iret = nf_def_var(ncid,"machine_learning_current_time_storage",NF_FLOAT,1,(/dimid_lakes/),varid)
+            !iret = nf_def_var(ncid,"machine_learning_current_time_storage",NF_FLOAT,1,(/dimid_lakes/),varid)
+
+            !dd = nf_def_var(aa,"machine_learning_current_time_storage",ff,1,(/bb/),cc)
+
+            dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
+
 
          endif
 

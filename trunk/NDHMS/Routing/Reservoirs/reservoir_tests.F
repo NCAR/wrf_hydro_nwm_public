@@ -96,6 +96,8 @@ program reservoir_unit_tests
         print *, outflow
 
 
+    !TEST FOR NEGATVIE INFLOW AND THINGS THAT OUTPUT THE PRE/POST COND WARNS/MODS FOR TIMESTEP/UPDATE
+
     end function test_machine_learning
 
 

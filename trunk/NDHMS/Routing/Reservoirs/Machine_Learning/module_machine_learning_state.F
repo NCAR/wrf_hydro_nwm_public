@@ -35,6 +35,7 @@ module module_machine_learning_state
         integer :: routing_period
         integer :: time_interval
         integer :: update_time    ! if reals how can we set exactly equals == ?
+        integer :: new_day_time
         !integer :: time_count
         integer :: release_count
         integer :: current_time        ! should be 'real' instead???

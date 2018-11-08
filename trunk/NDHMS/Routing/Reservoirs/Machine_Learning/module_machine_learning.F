@@ -21,6 +21,7 @@
 
 module module_machine_learning
 
+    use netcdf
     use module_machine_learning_parameters
     use module_machine_learning_state
     use module_reservoir_base
@@ -30,6 +31,7 @@ module module_machine_learning
     use module_machine_learning_tests
 
     implicit none
+
 
     ! Extend/derive machine learning struct from the abstract base
     ! struct for reservoirs.
@@ -47,6 +49,8 @@ module module_machine_learning
         procedure :: init => machine_learning_struct_init
         procedure :: destroy => machine_learning_struct_destroy
         procedure :: run_release => run_machine_learning_release
+        procedure :: write_to_restart_file => machine_learning_write_to_restart_file
+        procedure :: read_from_restart_file => machine_learning_read_from_restart_file
 
         procedure :: timestep_pre_conditions_warn => machine_learning_timestep_pre_conditions_warn
         procedure :: timestep_pre_conditions_modify => machine_learning_timestep_pre_conditions_modify
@@ -57,7 +61,8 @@ module module_machine_learning
         procedure :: update_post_conditions_warn => machine_learning_update_post_conditions_warn
         procedure :: update_post_conditions_modify => machine_learning_update_post_conditions_modify
         procedure :: update_preprocessing => update_preprocessing
-        procedure :: write_machine_learning_restart_variables => write_machine_learning_restart_variables
+        procedure :: timestep_preprocessing => timestep_preprocessing
+
 
     end type machine_learning_struct
 
@@ -224,6 +229,10 @@ contains
         end if
 
         reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
+
+        ! Check for new day and update day x and y
+        call reservoir_data%update_preprocessing()
+
 
         ! Update end time storage from current inflow and previous timestep outflow
         reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
@@ -447,6 +456,7 @@ contains
 
         if (reservoir_data%input%inflow < 0.0) then
             reservoir_data%input%inflow = 0.0
+
         end if
 
     end subroutine machine_learning_update_pre_conditions_modify
@@ -509,7 +519,50 @@ contains
 
         end if
 
+        if (reservoir_data%output%outflow < 0.0) then
+            reservoir_data%output%outflow = 0.0
+
     end subroutine machine_learning_update_post_conditions_modify
+
+
+    subroutine timestep_preprocessing(reservoir_data)
+
+        class(machine_learning_struct), intent(inout) :: reservoir_data
+
+        if (leap_year(reservoir_data%state%current_year)) then
+
+           if (reservoir_data%state%current_day_of_year == days_in_leap_year) then    ! if last day of leap year
+                reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                reservoir_data%state%current_day_of_year = 1
+
+           else
+                reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+
+           end if
+
+           ! MAKE FUNCTION ALSO?????
+           ! update x and y based on leap year
+           reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
+           reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
+
+        else
+
+           if (reservoir_data%state%current_day_of_year == days_in_year) then    ! if last day of non leap year
+                reservoir_data%state%current_year = reservoir_data%state%current_year + 1
+                reservoir_data%state%current_day_of_year = 1
+           else
+
+                reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
+           end if
+
+           ! update x and y based on non leap year
+           reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
+           reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
+        end if
+
+
+    end subroutine timestep_preprocessing
+
 
 
     ! make function or subroutine???????????
@@ -551,15 +604,25 @@ contains
     end subroutine update_preprocessing
 
 
+    subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid)
+        implicit none
+        class(machine_learning_struct), intent(inout) :: reservoir_data
+        integer, intent(inout) :: iret, ncid, NF_FLOAT, varid
+        integer, dimension(:), intent(in) :: dimid_lakes
 
-    subroutine write_machine_learning_restart_variables(reservoir_data)
+        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
+        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, dimid_lakes, varid)
+
+
+    end subroutine machine_learning_write_to_restart_file
+
+
+    subroutine machine_learning_read_from_restart_file(reservoir_data)
+        implicit none
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
 
-
-
-    end subroutine write_machine_learning_restart_variables
-
+    end subroutine machine_learning_read_from_restart_file
 
 
     function machine_learning_data_info(machine_learning_data) result(rv)
