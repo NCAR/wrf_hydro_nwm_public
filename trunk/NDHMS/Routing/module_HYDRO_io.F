@@ -31,7 +31,7 @@ module module_HYDRO_io
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d
-   !use module_io_utilities
+   use module_io_utilities
    use netcdf
 
    use module_machine_learning
