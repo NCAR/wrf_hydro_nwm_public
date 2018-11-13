@@ -77,13 +77,9 @@ contains
         print *, o%average_inflow_over_past_time_intervals
         print *, " "
 
-        print *, "Checking read on accumulated_inflow"
-        print *, o%accumulated_inflow
-        print *, " "
-
-        print *, "Checking read on routing_period"
-        print *, o%routing_period
-        print *, " "
+        !print *, "Checking read on accumulated_inflow"
+        !print *, o%accumulated_inflow
+        !print *, " "
 
         print *, "Checking read on time_interval"
         print *, o%time_interval

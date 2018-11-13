@@ -33,7 +33,6 @@ module module_machine_learning_state
         real :: previous_time_release
         real :: average_inflow_over_past_time_intervals
         real :: accumulated_inflow
-        integer :: routing_period
         integer :: time_interval
         integer :: update_time    ! if reals how can we set exactly equals == ?
         integer :: new_day_time
@@ -442,8 +441,6 @@ contains
             this%update_time = 0
 
             this%new_day_time = seconds_in_day
-
-            this%routing_period = 0
 
             this%average_inflow_over_past_time_intervals = 0.0
 

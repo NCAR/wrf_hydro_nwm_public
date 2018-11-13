@@ -226,11 +226,11 @@ contains
         ! If first call to release
         if (reservoir_data%state%current_time == 0) then
 
-            reservoir_data%state%update_time = routing_period
+            reservoir_data%state%update_time = int(routing_period)
 
         end if
 
-        reservoir_data%state%current_time = reservoir_data%state%current_time + routing_period
+        reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
         ! Check for new day and update day x and y
         call reservoir_data%timestep_preprocessing()
