@@ -30,6 +30,8 @@ module module_machine_learning
     !use module_machine_learning_utilities
     use module_reservoir_utilities
     use module_machine_learning_tests
+    use module_io_utilities
+
 
     implicit none
 
@@ -612,13 +614,18 @@ contains
     end subroutine update_preprocessing
 
 
-    subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid)
+    subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
+    !subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class(machine_learning_struct), intent(inout) :: reservoir_data
-        integer, intent(inout) :: iret, ncid, NF_FLOAT, varid
+        integer, intent(inout) :: iret, ncid
+        integer, intent(in) :: NF_FLOAT, varid, nlakes, lake_index
         integer, dimension(:), intent(in) :: dimid_lakes
 
-        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
+        ! Works
+        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
+
+
         !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, dimid_lakes, varid)
 
 

@@ -140,11 +140,12 @@ contains
     end subroutine no_op2
 
 
-    subroutine no_op3(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid)
+    subroutine no_op3(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
-        integer, intent(inout) :: iret, ncid, NF_FLOAT, varid
-        integer, dimension(:), intent(in) :: dimid_lakes
+            integer, intent(inout) :: iret, ncid
+            integer, intent(in) :: NF_FLOAT, varid, nlakes, lake_index
+            integer, dimension(:), intent(in) :: dimid_lakes
     end subroutine no_op3
 
 

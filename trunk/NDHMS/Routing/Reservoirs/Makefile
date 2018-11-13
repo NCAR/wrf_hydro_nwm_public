@@ -25,6 +25,7 @@ mod:
 	#Build each sub module then build the module that depends on all sub modules
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_io.F
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_parameters.F
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_state.F
 	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_tests.F
@@ -38,6 +39,7 @@ mod:
 
 	ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
 	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
+	ar -r ../../lib/libHYDRO.a module_reservoir_io.o
 	#ar -r ../../lib/libHYDRO.a module_levelpool_parameters.o
 	#ar -r ../../lib/libHYDRO.a module_levelpool_state.o
 	#ar -r ../../lib/libHYDRO.a module_levelpool_tests.o
@@ -63,6 +65,7 @@ test: mod
 	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
 		module_reservoir_utilities.o \
 		module_reservoir_base.o \
+		module_reservoir_io.o \
 		Level_Pool/module_levelpool_parameters.o \
 		Level_Pool/module_levelpool_state.o \
 		Level_Pool/module_levelpool_tests.o \

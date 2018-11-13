@@ -35,6 +35,7 @@ module module_HYDRO_io
    use netcdf
 
    use module_machine_learning
+   !use module_reservoir_io
    !use module_machine_learning, only:
 
    implicit none
@@ -5954,6 +5955,36 @@ end subroutine mpp_output_chrt
             dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
 
 
+
+            do lake_index = 1, rt_domain(did)%nlakes
+                if (rt_domain(did)%q_type(lake_index) == 2.0) then
+
+                    !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+                    !builds
+                    !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+                    print *, 'restart read at index: ', lake_index
+
+                    select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+                        type is (machine_learning_struct)
+                            print *, 'entered select on read'
+
+                            !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index)
+
+                               !call ml%write_to_restart_file(iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
+
+                               !call ml%write_to_restart_file(iret, ncid, NF_FLOAT, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
+
+                               !call ml%write_to_restart_file(iret, ncid, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
+
+                    end select
+
+                end if
+            end do
+
+
+
          endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
@@ -6891,7 +6922,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
-         call read_rst_crt_nc(ncid,temp_machine_learning_current_time_storage_array,rt_domain(did)%NLAKES,"machine_learning_current_time_storage")
+         !call read_rst_crt_nc(ncid,temp_machine_learning_current_time_storage_array,rt_domain(did)%NLAKES,"machine_learning_current_time_storage")
       endif
 
 
@@ -6910,7 +6941,14 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                     type is (machine_learning_struct)
                         print *, 'entered select on read'
 
-                        ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index)
+                        !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index)
+
+                           !call ml%write_to_restart_file(iret, ncid, NF_FLOAT, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
+
+                           !call ml%write_to_restart_file(iret, ncid, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
+
+
+
                 end select
 
 
