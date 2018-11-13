@@ -13,7 +13,7 @@ FFLAGS=-c -free -O3
 MODFLAG := $(MODFLAG) -I ../../mod
 
 %.o : %.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $<
+	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $<
 
 .PHONY: all mod
 
@@ -21,7 +21,7 @@ all: mod
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_io_utilities.F
+	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_io_utilities.F
 
 	ar -r ../../lib/libHYDRO.a module_io_utilities.o
 

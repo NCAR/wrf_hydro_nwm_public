@@ -31,7 +31,7 @@ module module_HYDRO_io
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d
-   !use module_io_utilities
+   use module_io_utilities
    use netcdf
 
    use module_machine_learning
@@ -6529,29 +6529,29 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
            return
         end subroutine w_rst_nc3
 
-        subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName &
-#ifdef MPP_LAND
-                 ,nodelist     &
-#endif
-                  )
-           implicit none
-           integer:: ncid,n,varid , iret
-           character(len=*) varName
-           real inVar(n)
-#ifdef MPP_LAND
-           integer:: nodelist(n)
-           if(n .eq. 0) return
+!        subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName &
+!#ifdef MPP_LAND
+!                 ,nodelist     &
+!#endif
+!                  )
+!           implicit none
+!           integer:: ncid,n,varid , iret
+!           character(len=*) varName
+!           real inVar(n)
+!#ifdef MPP_LAND
+!           integer:: nodelist(n)
+!           if(n .eq. 0) return
 
-           call write_lake_real(inVar,nodelist,n)
-           if(my_id .eq. IO_id) then
-#endif
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
-#ifdef MPP_LAND
-           endif
-#endif
-           return
-        end subroutine w_rst_crt_nc1_lake
+!           call write_lake_real(inVar,nodelist,n)
+ !          if(my_id .eq. IO_id) then
+!#endif
+!              iret = nf_inq_varid(ncid,varName, varid)
+!              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+!#ifdef MPP_LAND
+!           endif
+!#endif
+!           return
+!        end subroutine w_rst_crt_nc1_lake
 
         subroutine w_rst_crt_reach_real(ncid,inVar,varName &
 #ifdef MPP_LAND
