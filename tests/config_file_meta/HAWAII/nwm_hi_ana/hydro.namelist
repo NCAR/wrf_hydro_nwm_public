@@ -25,7 +25,7 @@
     order_to_write = 1
     out_dt = 60
     outlake = 1
-    output_channelbucket_influx = 2
+    output_channelbucket_influx = 0
     output_gw = 1
     ovrtswcrt = 1
     restart_file = './NWM/RESTART/HYDRO_RST.2018-08-01_00:00_DOMAIN1'
