@@ -1,4 +1,4 @@
-md5sum: 85e5ae2e14de3edfd83af494c34b65e0  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART_LR/HYDRO_RST.2011-08-26_00:00_DOMAIN1
+md5sum: a1d033410a3bec9db9c92e3ed5a16c26  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART_LR/HYDRO_RST.2011-08-26_00:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;
@@ -38,6 +38,7 @@ variables:
 	float qlink2(links) ;
 	float resht(lakes) ;
 	float qlakeo(lakes) ;
+	float qlakei(lakes) ;
 	float lake_inflort(iyrt, ixrt) ;
 	float z_gwsubbas(links) ;
 
