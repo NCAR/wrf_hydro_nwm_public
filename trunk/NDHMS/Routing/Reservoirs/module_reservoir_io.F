@@ -11,14 +11,15 @@ contains
 
 
 
-    subroutine reservoir_write_to_restart_file2(reservoirs, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
-    !subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, dimid_lakes, varid, nlakes, lake_index)
+    subroutine reservoir_write_to_restart_file2(reservoirs, q_type, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
         implicit none
-        !class(machine_learning_struct), intent(inout) :: reservoir_data
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
         integer, intent(inout) :: iret, ncid
-        integer, intent(in) :: NF_FLOAT, varid, nlakes, lake_index
+        integer, intent(in) :: NF_FLOAT, varid, nlakes
+        integer, intent(in) :: lake_index(nlakes)
         integer, dimension(:), intent(in) :: dimid_lakes
+        real, dimension(:), intent(in) :: q_type
+
 
 
         ! use below

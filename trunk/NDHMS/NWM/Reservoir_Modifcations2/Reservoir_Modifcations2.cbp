@@ -234,6 +234,7 @@
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/ML_RESERVOIR_PARM.nc" />
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/Makefile" />
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning.F" />
+		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_currents.F" />
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_model.F" />
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_parameters.F" />
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_state.F" />
@@ -241,10 +242,14 @@
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_utilities.F" />
 		<Unit filename="../../Routing/Reservoirs/Makefile" />
 		<Unit filename="../../Routing/Reservoirs/module_reservoir_base.F" />
+		<Unit filename="../../Routing/Reservoirs/module_reservoir_io.F" />
 		<Unit filename="../../Routing/Reservoirs/module_reservoir_utilities.F" />
 		<Unit filename="../../Routing/Reservoirs/q_types.txt" />
+		<Unit filename="../../Routing/Reservoirs/reservoir_io.F" />
 		<Unit filename="../../Routing/Reservoirs/reservoir_tests.F" />
 		<Unit filename="../../Routing/Reservoirs/rt_include_old_file.inc" />
+		<Unit filename="../../Routing/io/Makefile" />
+		<Unit filename="../../Routing/io/module_io_utilities.F" />
 		<Unit filename="../../Routing/module_GW_baseflow.F" />
 		<Unit filename="../../Routing/module_GW_baseflow.f" />
 		<Unit filename="../../Routing/module_HYDRO_io.F" />

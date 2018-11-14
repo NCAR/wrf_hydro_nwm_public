@@ -35,7 +35,7 @@ module module_HYDRO_io
    use netcdf
 
    use module_machine_learning
-   !use module_reservoir_io
+   use module_reservoir_io
    !use module_machine_learning, only:
 
    implicit none
@@ -5954,6 +5954,10 @@ end subroutine mpp_output_chrt
 
             dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
 
+
+
+            call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, iret, ncid, &
+            NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
 
 
             do lake_index = 1, rt_domain(did)%nlakes
