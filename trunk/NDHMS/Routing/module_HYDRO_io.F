@@ -5948,11 +5948,19 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
+
+
+
             !iret = nf_def_var(ncid,"machine_learning_current_time_storage",NF_FLOAT,1,(/dimid_lakes/),varid)
 
             !dd = nf_def_var(aa,"machine_learning_current_time_storage",ff,1,(/bb/),cc)
 
             dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
+
+
+            !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
+
+            iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
 
 
 
