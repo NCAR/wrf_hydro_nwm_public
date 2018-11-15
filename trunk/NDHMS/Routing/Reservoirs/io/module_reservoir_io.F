@@ -4,7 +4,7 @@ module module_reservoir_io
     use module_io_utilities
     use netcdf
 
-    !use module_machine_learning
+    use module_machine_learning
 
     implicit none
 
