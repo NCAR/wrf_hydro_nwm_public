@@ -14,7 +14,7 @@ module module_reservoir_io
 contains
 
 
-    subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
+    subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_type, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
@@ -23,11 +23,30 @@ contains
         integer, intent(in) :: lake_index(nlakes)
         integer, dimension(:), intent(in) :: dimid_lakes
         real, dimension(:), intent(in) :: q_types, inflows, outflows, water_elevations
+        character(len=*), intent(in) :: old_date
+
 
         integer :: e
         integer :: lake_index_for_q_type
 
+        character(len=2) :: tmpStr
+        character(len=64) :: outFile   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
+
+
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
+
+
+        outFile = "reservoir_rst."//old_date(1:16)
+
+
+!#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
+       iret = nf90_create(trim(outFile), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
+!#ifdef HYDRO_D
+       write(6,*) "yyywww using large netcdf file definition. "
+       call flush(6)
+!#endif
+
+
 
             !dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
 

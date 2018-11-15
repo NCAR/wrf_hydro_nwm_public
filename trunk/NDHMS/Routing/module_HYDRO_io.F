@@ -5969,7 +5969,7 @@ end subroutine mpp_output_chrt
 
 
             call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+            nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
 
 
             do lake_index = 1, rt_domain(did)%nlakes
