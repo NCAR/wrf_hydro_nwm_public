@@ -59,7 +59,7 @@ mod:
 
 
 
-
+#module_reservoir_io not added below due to build errors
 test: mod
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
@@ -75,7 +75,6 @@ test: mod
 		Machine_Learning/module_machine_learning_model.o \
 		Machine_Learning/module_machine_learning_tests.o \
 		Machine_Learning/module_machine_learning.o \
-		io/module_reservoir_io.o \
 		reservoir_tests.o \
 		hydro_stop.o
 

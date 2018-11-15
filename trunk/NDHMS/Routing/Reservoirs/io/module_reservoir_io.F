@@ -87,11 +87,11 @@ contains
 
 
 
+        !call test123()
 
 
-
-        !call w_rst_crt_nc1_lake(ncid, nlakes, reservoir_data%state%current_time_storage, "machine_learning_current_time_storage", &
-        !       lake_index)
+        call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
+               lake_index)
 
 
 
