@@ -342,6 +342,15 @@ module module_NoahMP_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:,:,:) :: tksatu3d
 
 !------------------------------------------------------------------------
+! Needed for wrf_hydro lake model
+!------------------------------------------------------------------------
+  INTEGER                             :: ilake
+  INTEGER                             :: nlakes
+
+  REAL, ALLOCATABLE, DIMENSION(:)     :: lake_precip
+  REAL, ALLOCATABLE, DIMENSION(:)     :: lake_evap
+
+!------------------------------------------------------------------------
 ! 2D variables not used in WRF - should be removed?
 !------------------------------------------------------------------------
 
@@ -1496,8 +1505,11 @@ module module_NoahMP_hrldas_driver
 #endif
 
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
-         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep), &
+         infxsrt,sfcheadrt,soldrain,nlakes,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep),          &
          olddate,zsoil(1:NSOIL))
+
+   allocate(lake_precip(nlakes))
+   allocate(lake_evap(nlakes))
 
 call get_iocflag(1, io_config_outputs)
 
@@ -1829,6 +1841,10 @@ end subroutine land_driver_ini
                      qfx          ,t2             ,th2          ,q2 )
  
  
+         do ilake = 1, nlakes
+	   lake_precip(ilake) = 0.0
+	   lake_evap(ilake) = 0.0
+	 end do
          ENDIF
  
   IF(noah_lsm%RUNOFF_OPTION.EQ.5.AND.MOD(ITIME,STEPWTD).EQ.0)THEN
@@ -1858,7 +1874,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
-     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,nlakes,ix,jx,NSOIL) 
 #endif
 
 ! Output for history

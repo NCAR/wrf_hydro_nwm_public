@@ -461,6 +461,9 @@ CONTAINS
      allocate( rt_domain(did)%QLAKEI(NLAKES),STAT=istatus )
      allocate( rt_domain(did)%QLAKEO(NLAKES),STAT=istatus )
 
+     allocate( rt_domain(did)%lake_precip(NLAKES) )
+     allocate( rt_domain(did)%lake_evap(NLAKES) )
+
      allocate( rt_domain(did)%HLINK(nsizes) )  !--used for diffusion only
 
      allocate( rt_domain(did)%node_area(nsizes) )

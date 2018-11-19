@@ -158,6 +158,8 @@
 
   ! VARIABLES FOR  RESERVOIRS
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
+  REAL, allocatable, DIMENSION(:)      :: lake_precip  ! precip on lake object
+  REAL, allocatable, DIMENSION(:)      :: lake_evap    ! evaporation of lake object
 !-- lake params
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
