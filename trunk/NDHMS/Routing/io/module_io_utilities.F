@@ -10,7 +10,7 @@ module module_io_utilities
    contains
 
             subroutine test123()
-
+                print *, 'in subroutine test123'
             end subroutine test123
 
 
@@ -25,6 +25,9 @@ module module_io_utilities
 #endif
                       )
 
+
+
+
             !subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName,nodelist)
 
                implicit none
@@ -35,12 +38,31 @@ module module_io_utilities
                integer:: nodelist(n)
                if(n .eq. 0) return
 
-               call write_lake_real(inVar,nodelist,n)
+               !call write_lake_real(inVar,nodelist,n)
                if(my_id .eq. IO_id) then
 #endif
                   iret = nf90_inq_varid(ncid,varName, varid)
                   !iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
                   iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
+
+print *, 'ncid'
+print *,ncid
+print *,'n'
+print *,n
+print *,'inVar'
+print *, inVar
+print *,'varName'
+print *,varName
+print *,'nodelist'
+print *,nodelist
+
+
+#ifdef MPP_LAND
+            print *, 'yes mpp'
+#else
+            print *, 'no mpp'
+#endif
+
 
 
 #ifdef MPP_LAND

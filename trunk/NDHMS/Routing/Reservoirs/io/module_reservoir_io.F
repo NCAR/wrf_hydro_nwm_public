@@ -21,7 +21,8 @@ contains
         integer, intent(inout) :: iret, ncid, varid
         integer, intent(in) :: NF_FLOAT, nlakes
         integer, intent(in) :: lake_index(nlakes)
-        integer, dimension(:), intent(in) :: dimid_lakes
+        !integer, dimension(:), intent(in) :: dimid_lakes
+        integer, intent(out) :: dimid_lakes
         real, dimension(:), intent(in) :: q_types, inflows, outflows, water_elevations
         character(len=*), intent(in) :: old_date
 
@@ -30,21 +31,43 @@ contains
         integer :: lake_index_for_q_type
 
         character(len=2) :: tmpStr
-        character(len=64) :: outFile   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
+        character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
 
 
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
 
 
-        outFile = "reservoir_rst."//old_date(1:16)
+
+        out_file = "reservoir_rst."//old_date(1:16)
+
+
+
+        print *, 'reservoir restart write in reservoir_io'
+
+
+       iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
+
+
+
+
 
 
 !#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf90_create(trim(outFile), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
+       !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
 !#ifdef HYDRO_D
-       write(6,*) "yyywww using large netcdf file definition. "
-       call flush(6)
+       !write(6,*) "yyywww using large netcdf file definition. "
+       !call flush(6)
 !#endif
+!#else
+
+
+       !iret = nf90_create(trim(out_file), NF90_CLOBBER, ncid)
+
+
+
+          !iret = nf90_def_dim(ncid, "lakes", nlakes, (/dimid_lakes(1)/))
+          iret = nf90_def_dim(ncid, "lakes", nlakes, dimid_lakes)
+
 
 
 
@@ -53,14 +76,25 @@ contains
             !iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
 
 
-        ! use below
+
         !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
 
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Works but need to verify dimid_lakes
-        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
+!        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
+
+!        iret = nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid)
+
+        iret = nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid)
+
+!        iret = nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid)
+
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
 
         !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, dimid_lakes, varid)
         !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
@@ -77,6 +111,7 @@ contains
 
 
         allocate (temp_machine_learning_current_time_storage_array(nlakes))
+
 
         temp_machine_learning_current_time_storage_array = 0.0
 
@@ -106,15 +141,30 @@ contains
 
 
 
-        !call test123()
+        call test123()
 
 
-        call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
+        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
+        !       lake_index)
+
+
+        !call w_rst_crt_nc1_lake(ncid, nlakes, inflows, "inflows", &
+        !       lake_index)
+
+
+        call w_rst_crt_nc1_lake(ncid, nlakes, outflows, "outflows", &
                lake_index)
 
+        !call w_rst_crt_nc1_lake(ncid, nlakes, water_elevations, "water_elevations", &
+        !       lake_index)
 
 
 
+
+
+!DEALLOCATE TEMP ML ARRAYS!!!
+
+        iret = nf90_close(ncid)
 
 
     end subroutine reservoir_write_to_restart_file2
@@ -122,6 +172,27 @@ contains
 
 
 
+    subroutine reservoir_read_from_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
+        implicit none
+        class (reservoir_base_container), dimension(:), intent(in):: reservoirs
+        integer, intent(inout) :: iret, ncid, varid
+        integer, intent(in) :: NF_FLOAT, nlakes
+        integer, intent(in) :: lake_index(nlakes)
+        integer, dimension(:), intent(in) :: dimid_lakes
+        real, dimension(:), intent(in) :: q_types
+        real, dimension(:), intent(out) :: inflows, outflows, water_elevations
+
+        character(len=*), intent(in) :: old_date
+
+
+        integer :: e
+        integer :: lake_index_for_q_type
+
+        character(len=2) :: tmpStr
+        character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
+
+
+        real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
 
 
 
@@ -130,6 +201,7 @@ contains
 
 
 
+    end subroutine reservoir_read_from_restart_file2
 
 
 

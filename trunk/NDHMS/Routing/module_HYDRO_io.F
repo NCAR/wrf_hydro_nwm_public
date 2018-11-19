@@ -34,9 +34,7 @@ module module_HYDRO_io
    use module_io_utilities
    use netcdf
 
-   use module_machine_learning
    use module_reservoir_io
-   !use module_machine_learning, only:
 
    implicit none
 #include <netcdf.inc>
@@ -5788,43 +5786,11 @@ end subroutine mpp_output_chrt
     integer :: iret
 
 
+    logical :: write_reservoir_restart
+
+    write_reservoir_restart = .false.
 
 
-    real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
-    integer :: lake_index
-
-
-    integer :: aa, bb, cc, dd, ee
-    real :: ff
-
-    allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
-
-    temp_machine_learning_current_time_storage_array = 0.0
-
-    do lake_index = 1, rt_domain(did)%nlakes
-        if (rt_domain(did)%q_type(lake_index) == 2.0) then
-
-            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
-
-            !builds
-            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
-
-            print *, 'restart setting storage for reservoir at index: ', lake_index
-
-            select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
-                type is (machine_learning_struct)
-                    print *, 'entered select'
-
-                    temp_machine_learning_current_time_storage_array(lake_index) = ml%state%current_time_storage
-            end select
-
-
-        end if
-    end do
-
-
-    print *, 'temp_machine_learning_current_time_storage_array'
-    print *, temp_machine_learning_current_time_storage_array
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
@@ -5845,25 +5811,37 @@ end subroutine mpp_output_chrt
 #endif
 
 
+print *, '1.0'
+
 #ifdef MPP_LAND
        call mpp_land_bcast_int1(iret)
 #endif
 
        if (iret /= 0) then
+        print *, '2.0'
+
           call hydro_stop("In RESTART_OUT_nc() - Problem nf_create")
        endif
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
 #endif
+    print *, '3.0'
 
    if( nlst_rt(did)%channel_only       .eq. 0 .and. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
 
+        print *, '4.0'
+
 ! define dimension for variables
           iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
 
+        print *, '5.0'
+
+
 #ifdef MPP_LAND
+print *, '6.0'
+
           iret = nf_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
           iret = nf_def_dim(ncid, "iy", global_ny, dimid_jx)
           iret = nf_def_dim(ncid, "ixrt", global_rt_nx , dimid_ixrt)  !-- make a decimated grid
@@ -5887,6 +5865,8 @@ end subroutine mpp_output_chrt
           iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
        endif
 
+print *, '7.0'
+
        !define variables
        if( nlst_rt(did)%channel_only       .eq. 0 .and. &
             nlst_rt(did)%channelBucket_only .eq. 0         ) then
@@ -5901,6 +5881,7 @@ end subroutine mpp_output_chrt
              iret = nf_def_var(ncid,"smc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
              iret = nf_def_var(ncid,"sh2ox"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           end do
+print *, '8.0'
 
           !iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           !iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
@@ -5910,6 +5891,7 @@ end subroutine mpp_output_chrt
           iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
 
        end if  ! neither channel_only nor channelBucket_only
+print *, '9.0'
 
    if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       nlst_rt(did)%OVRTSWCRT   .eq. 1 .or. &
@@ -5917,6 +5899,7 @@ end subroutine mpp_output_chrt
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then
+            print *, '10.0'
 
             iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
@@ -5936,6 +5919,7 @@ end subroutine mpp_output_chrt
       end if  ! neither channel_only nor channelBucket_only
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
+print *, '11.0'
 
 !yw based on Laura request, hlink will do the restart for reach method.
 !         if(nlst_rt(did)%channel_option .eq. 3) &
@@ -5950,55 +5934,20 @@ end subroutine mpp_output_chrt
             iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
 
 
-
-            !iret = nf_def_var(ncid,"machine_learning_current_time_storage",NF_FLOAT,1,(/dimid_lakes/),varid)
-
-            !dd = nf_def_var(aa,"machine_learning_current_time_storage",ff,1,(/bb/),cc)
-
-            dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
-
-
-            !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
-
-            iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
-
-
-
+            ! Old call
             !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, iret, ncid, &
             !NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
 
 
-            call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+            write_reservoir_restart = .true.
 
 
-            do lake_index = 1, rt_domain(did)%nlakes
-                if (rt_domain(did)%q_type(lake_index) == 2.0) then
+            print *, 'before call to reservoir write to restart in hydro io'
 
-                    !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            !nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
 
-                    !builds
-                    !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
-
-                    print *, 'restart read at index: ', lake_index
-
-                    select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
-                        type is (machine_learning_struct)
-                            print *, 'entered select on read'
-
-                            !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index)
-
-                               !call ml%write_to_restart_file(iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
-
-                               !call ml%write_to_restart_file(iret, ncid, NF_FLOAT, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
-
-                               !call ml%write_to_restart_file(iret, ncid, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
-
-                    end select
-
-                end if
-            end do
-
+            print *, 'after call to reservoir write to restart in hydro io'
 
 
          endif
@@ -6006,6 +5955,7 @@ end subroutine mpp_output_chrt
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
              nlst_rt(did)%channelBucket_only .eq. 0         ) &
              iret = nf_def_var(ncid,"lake_inflort",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+print *, '12.0'
 
          !! JLM: who wants these? They can be put back if someone cares.
          !! But just calculate accQLateral locally so the redundant variable isnt held in
@@ -6018,8 +5968,10 @@ end subroutine mpp_output_chrt
          !endif
 
       end if ! CHANRTSWCRT .eq. 1
+print *, '13.0'
 
       if(nlst_rt(did)%GWBASESWCRT.eq.1) then
+print *, '14.0'
 
          if( nlst_rt(did)%channel_only .eq. 0) then
 
@@ -6045,6 +5997,7 @@ end subroutine mpp_output_chrt
       if(nlst_rt(did)%gwBaseSwCRT .eq. 3)then
          iret = nf_def_var(ncid,"HEAD",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
       end if
+print *, '15.0'
 
    end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                    nlst_rt(did)%OVRTSWCRT   .eq. 1 .or. &
@@ -6062,14 +6015,17 @@ end subroutine mpp_output_chrt
 
    !! end definition
    iret = nf_enddef(ncid)
+print *, '16.0'
 
 
 #ifdef MPP_LAND
 endif  ! my_id .eq. io_id
 #endif
+print *, '17.0'
 
 if( nlst_rt(did)%channel_only       .eq. 0 .and. &
      nlst_rt(did)%channelBucket_only .eq. 0         ) then
+print *, '18.0'
 
    call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
    call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
@@ -6098,10 +6054,12 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
       !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retention_depth, "RETDEPRT" )
+print *, '19.0'
 
    end if ! neither channel_only nor channelBucket_only
 
    if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
+print *, '20.0'
 
 
       if(nlst_rt(did)%channel_option .eq. 3) then
@@ -6196,17 +6154,21 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                  )
 
 
+    print *, 'before hydro_io call to w_rst_crt_nc1_lake'
+print *, '21.0'
+
+
       call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
 #ifdef MPP_LAND
            ,rt_domain(did)%lake_index  &
 #endif
            )
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
       call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
 #ifdef MPP_LAND
@@ -6214,14 +6176,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
            )
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,temp_machine_learning_current_time_storage_array,"machine_learning_current_time_storage" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
-
-      if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
-
+    print *, 'after hydro_io call to w_rst_crt_nc1_lake'
 
 
 
@@ -6270,11 +6225,27 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                nlst_rt(did)%OVRTSWCRT   .eq. 1 .or. &
 !                nlst_rt(did)%GWBASESWCRT .ne. 0       )
 
+print *, '22.0'
 
 #ifdef MPP_LAND
         if(IO_id.eq.my_id) &
 #endif
         iret = nf_close(ncid)
+print *, '23.0'
+
+
+    if (write_reservoir_restart) then
+
+
+            print *, 'end of sub before call to reservoir write to restart in hydro io'
+
+            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            !nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+
+            call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, dimid_lakes, varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+
+    end if
 
         return
         end subroutine RESTART_OUT_nc
@@ -6764,14 +6735,9 @@ integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
 
 
+logical :: read_reservoir_restart
 
-    real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
-    integer :: lake_index
-
-
-    allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
-
-    temp_machine_learning_current_time_storage_array = 0.0
+read_reservoir_restart = .false.
 
 
 #ifdef MPP_LAND
@@ -6938,41 +6904,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
-         !call read_rst_crt_nc(ncid,temp_machine_learning_current_time_storage_array,rt_domain(did)%NLAKES,"machine_learning_current_time_storage")
       endif
-
-
-
-        do lake_index = 1, rt_domain(did)%nlakes
-            if (rt_domain(did)%q_type(lake_index) == 2.0) then
-
-                !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
-
-                !builds
-                !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
-
-                print *, 'restart read at index: ', lake_index
-
-                select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
-                    type is (machine_learning_struct)
-                        print *, 'entered select on read'
-
-                        !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index)
-
-                           !call ml%write_to_restart_file(iret, ncid, NF_FLOAT, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
-
-                           !call ml%write_to_restart_file(iret, ncid, dimid_lakes, varid, rt_domain(did)%nlakes, rt_domain(did)%lake_index)
-
-
-
-                end select
-
-
-            end if
-        end do
-
-        if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
-
 
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
