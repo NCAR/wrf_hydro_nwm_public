@@ -14,17 +14,19 @@ module module_reservoir_io
 contains
 
 
+    !subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_type, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
         integer, intent(inout) :: iret, ncid, varid
-        integer, intent(in) :: NF_FLOAT, nlakes
+        integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, nlakes, channel_only, channel_bucket_only
         integer, intent(in) :: lake_index(nlakes)
         !integer, dimension(:), intent(in) :: dimid_lakes
         integer, intent(out) :: dimid_lakes
+        real, intent(in) :: DTCT
         real, dimension(:), intent(in) :: q_types, inflows, outflows, water_elevations
-        character(len=*), intent(in) :: old_date
+        character(len=*), intent(in) :: old_date, since_date
 
 
         integer :: e
@@ -82,9 +84,9 @@ contains
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Works but need to verify dimid_lakes
-!        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
+        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
 
-!        iret = nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid)
+        iret = nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid)
 
         iret = nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid)
 
@@ -108,6 +110,8 @@ contains
         !!!!!!!!!!!!!!!!!!!!!
 
 
+
+        iret = nf90_enddef(ncid)
 
 
         allocate (temp_machine_learning_current_time_storage_array(nlakes))
@@ -138,18 +142,20 @@ contains
 
 
 
+        print *, 'outflows in reservoir_io'
 
+        print *, outflows
 
 
         call test123()
 
 
-        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
-        !       lake_index)
+        call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
+               lake_index)
 
 
-        !call w_rst_crt_nc1_lake(ncid, nlakes, inflows, "inflows", &
-        !       lake_index)
+        call w_rst_crt_nc1_lake(ncid, nlakes, inflows, "inflows", &
+               lake_index)
 
 
         call w_rst_crt_nc1_lake(ncid, nlakes, outflows, "outflows", &

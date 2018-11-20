@@ -42,8 +42,20 @@ module module_io_utilities
                if(my_id .eq. IO_id) then
 #endif
                   iret = nf90_inq_varid(ncid,varName, varid)
+
+
+                print *, 'inq_varid'
+
+                if(iret /= nf90_NoErr) call handle_err2(iret)
+
+
+
                   !iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
                   iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
+
+                print *, 'put var'
+                if(iret /= nf90_NoErr) call handle_err2(iret)
+
 
 print *, 'ncid'
 print *,ncid
@@ -72,4 +84,27 @@ print *,nodelist
             end subroutine w_rst_crt_nc1_lake
 
 
+
+    subroutine handle_err2(status)
+        implicit none
+        integer, intent ( in) :: status
+        character :: nf90_strerror
+        integer  :: nf90_noerr
+        if(status /= nf90_noerr) then
+            print *, trim(nf90_strerror(status))
+            print *, nf90_strerror(status) !FIXME this line deactivated, but we need to check on it!
+            print *, status
+            !stop "Stopped"
+        end if
+
+    end subroutine handle_err2
+
+
 end module module_io_utilities
+
+
+function nf90_strerror(ncerr)
+integer, intent( in) :: ncerr
+character(len = 80) :: nf90_strerror
+
+end function nf90_strerror

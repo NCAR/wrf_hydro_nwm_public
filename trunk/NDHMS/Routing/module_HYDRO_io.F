@@ -6164,11 +6164,11 @@ print *, '21.0'
 #endif
            )
 
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
-!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
       call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
 #ifdef MPP_LAND
