@@ -14,6 +14,10 @@ module module_reservoir_io
 contains
 
 
+
+
+
+
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, &
     water_elevations, old_date, since_date, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, his_out_counts, channel_only, &
@@ -202,28 +206,60 @@ contains
 
 
 
-    subroutine reservoir_read_from_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
+
+    subroutine reservoir_read_from_restart_file2(reservoirs, in_file, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
+        character(len=*) in_file
         integer, intent(inout) :: iret, ncid, varid
         integer, intent(in) :: NF_FLOAT, nlakes
         integer, intent(in) :: lake_index(nlakes)
-        integer, dimension(:), intent(in) :: dimid_lakes
+        !integer, dimension(:), intent(in) :: dimid_lakes
+        integer, intent(out) :: dimid_lakes
         real, dimension(:), intent(in) :: q_types
         real, dimension(:), intent(out) :: inflows, outflows, water_elevations
 
         character(len=*), intent(in) :: old_date
 
+        character(len = 32) :: time_stamp
+        character(len = 32) :: reservoir_file_prefix
+        character(len = 64) :: reservoir_restart_file_name
+
 
         integer :: e
-        integer :: lake_index_for_q_type
+        integer :: lake_index_for_q_type, NF_NOWRITE
 
         character(len=2) :: tmpStr
-        character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
+        !character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
 
 
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
 
+
+
+        read (in_file(11: ), *) time_stamp
+
+
+        print *, 'time_stamp'
+        print *, time_stamp
+
+        reservoir_file_prefix = 'reservoir_rst.'
+
+        reservoir_restart_file_name = reservoir_file_prefix//time_stamp
+
+        print *, 'reservoir_restart_file_name'
+        print *, reservoir_restart_file_name
+
+
+        !open a netcdf file
+        iret = nf90_open(trim(reservoir_restart_file_name), NF_NOWRITE, ncid)
+
+
+
+        allocate (temp_machine_learning_current_time_storage_array(nlakes))
+
+
+        temp_machine_learning_current_time_storage_array = 0.0
 
 
 

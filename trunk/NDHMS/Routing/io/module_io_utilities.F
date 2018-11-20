@@ -85,6 +85,59 @@ print *,nodelist
 
 
 
+
+      subroutine read_rst_crt_nc(ncid,var,n,varStr)
+         implicit none
+         integer ::  ireg, ncid, varid, n, iret
+         real,dimension(n) ::  var
+         character(len=*) :: varStr
+
+         if( n .le. 0)  return
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) &
+#endif
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
+#ifdef MPP_LAND
+         call mpp_land_bcast_int1(iret)
+#endif
+            if (iret /= 0) then
+#ifdef HYDRO_D
+               print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
+               return
+            endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) then
+#endif
+            !iret = nf90_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
+
+#ifdef MPP_LAND
+         endif
+         if(n .gt. 0) then
+             call mpp_land_bcast_real(n,var)
+         endif
+#endif
+         return
+      end subroutine read_rst_crt_nc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     subroutine handle_err2(status)
         implicit none
         integer, intent ( in) :: status
