@@ -207,19 +207,19 @@ contains
 
 
 
-    subroutine reservoir_read_from_restart_file2(reservoirs, in_file, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, NF_GLOBAL, dimid_lakes, varid, nlakes, lake_index)
+    subroutine reservoir_read_from_restart_file2(reservoirs, in_file, q_types, inflows, outflows, water_elevations, iret, ncid, NF_FLOAT, NF_GLOBAL, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
         character(len=*) in_file
-        integer, intent(inout) :: iret, ncid, varid
+        integer, intent(inout) :: iret, ncid
         integer, intent(in) :: NF_FLOAT, NF_GLOBAL, nlakes
         integer, intent(in) :: lake_index(nlakes)
         !integer, dimension(:), intent(in) :: dimid_lakes
-        integer, intent(out) :: dimid_lakes
+        !integer, intent(out) :: dimid_lakes
         real, dimension(:), intent(in) :: q_types
         real, dimension(:), intent(out) :: inflows, outflows, water_elevations
 
-        character(len=*), intent(in) :: old_date
+        !character(len=*), intent(in) :: old_date
 
         character(len = 32) :: time_stamp
         character(len = 32) :: reservoir_file_prefix
@@ -313,6 +313,7 @@ contains
         end do
 
 
+     iret =  nf90_close(ncid)
 
 
     end subroutine reservoir_read_from_restart_file2

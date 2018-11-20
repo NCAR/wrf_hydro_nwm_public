@@ -6734,7 +6734,7 @@ subroutine RESTART_IN_NC(inFile,did)
 
 implicit none
 character(len=*) inFile
-integer :: ierr, iret,ncid, did
+integer :: ierr, iret,ncid, did, ncid_reservoirs
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
 
@@ -6908,7 +6908,23 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
+
+
+
+         !call reservoir_read_from_restart_file2(rt_domain(did)%reservoirs, inFile, rt_domain(did)%q_type, &
+         !rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+         !iret, ncid_reservoirs, NF_FLOAT, NF_GLOBAL, dimid_lakes, varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+
+         call reservoir_read_from_restart_file2(rt_domain(did)%reservoirs, inFile, rt_domain(did)%q_type, &
+         rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+         iret, ncid_reservoirs, NF_FLOAT, NF_GLOBAL, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+
+
+
+
       endif
+
+
 
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
