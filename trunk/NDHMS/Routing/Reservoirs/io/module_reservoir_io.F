@@ -15,12 +15,13 @@ contains
 
 
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
-    subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
-    !subroutine reservoir_write_to_restart_file2(reservoirs, q_type, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
+    subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, &
+    water_elevations, old_date, since_date, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, channel_only, &
+    channel_bucket_only, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
         integer, intent(inout) :: iret, ncid, varid
-        integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, nlakes, channel_only, channel_bucket_only
+        integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlakes, channel_only, channel_bucket_only
         integer, intent(in) :: lake_index(nlakes)
         !integer, dimension(:), intent(in) :: dimid_lakes
         integer, intent(out) :: dimid_lakes
