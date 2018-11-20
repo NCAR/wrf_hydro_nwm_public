@@ -310,6 +310,9 @@ contains
                         print *, 'entered select'
 
                         ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
+
+                        ml%state%previous_time_release = outflows(lake_index_for_q_type)
+
                 end select
 
 
