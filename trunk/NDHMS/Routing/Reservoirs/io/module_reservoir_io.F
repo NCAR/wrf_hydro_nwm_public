@@ -16,12 +16,12 @@ contains
 
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, &
-    water_elevations, old_date, since_date, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, channel_only, &
+    water_elevations, old_date, since_date, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, his_out_counts, channel_only, &
     channel_bucket_only, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
         integer, intent(inout) :: iret, ncid, varid
-        integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlakes, channel_only, channel_bucket_only
+        integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlakes, his_out_counts, channel_only, channel_bucket_only
         integer, intent(in) :: lake_index(nlakes)
         !integer, dimension(:), intent(in) :: dimid_lakes
         integer, intent(out) :: dimid_lakes
@@ -109,6 +109,29 @@ contains
         ! Builds now b/c varid set to inout instead of just in
         !iret = nf90_def_var(1, "machine_learning_current_time_storage", 2, 1, varid)
         !!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+       !         put global attribute
+       !iret = nf90_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,his_out_counts)
+       !iret = nf90_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,old_date)
+       !iret = nf90_put_att_text(ncid,NF_GLOBAL,"Since_Date",19,since_date)
+       !iret = nf90_put_att_real(ncid,NF_GLOBAL,"DTCT",NF_REAL, 1,DTCT)
+       !iret = nf90_put_att_int(ncid, NF_GLOBAL, "channel_only", NF_INT, 1, &
+       !     channel_only)
+       !iret = nf90_put_att_int(ncid, NF_GLOBAL, "channel_bucket_only", NF_INT, 1, &
+       !     channel_bucket_only)
+
+
+
+       !         put global attribute
+       iret = nf90_put_att(ncid,NF_GLOBAL,"his_out_counts",his_out_counts)
+       iret = nf90_put_att(ncid,NF_GLOBAL,"Restart_Time",old_date)
+       iret = nf90_put_att(ncid,NF_GLOBAL,"Since_Date",since_date)
+       iret = nf90_put_att(ncid,NF_GLOBAL,"DTCT",DTCT)
+       iret = nf90_put_att(ncid, NF_GLOBAL, "channel_only", channel_only)
+       iret = nf90_put_att(ncid, NF_GLOBAL, "channel_bucket_only", channel_bucket_only)
 
 
 
