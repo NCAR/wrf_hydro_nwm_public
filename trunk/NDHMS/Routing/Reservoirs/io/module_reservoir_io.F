@@ -207,12 +207,12 @@ contains
 
 
 
-    subroutine reservoir_read_from_restart_file2(reservoirs, in_file, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
+    subroutine reservoir_read_from_restart_file2(reservoirs, in_file, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, NF_GLOBAL, dimid_lakes, varid, nlakes, lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(in):: reservoirs
         character(len=*) in_file
         integer, intent(inout) :: iret, ncid, varid
-        integer, intent(in) :: NF_FLOAT, nlakes
+        integer, intent(in) :: NF_FLOAT, NF_GLOBAL, nlakes
         integer, intent(in) :: lake_index(nlakes)
         !integer, dimension(:), intent(in) :: dimid_lakes
         integer, intent(out) :: dimid_lakes
@@ -225,6 +225,7 @@ contains
         character(len = 32) :: reservoir_file_prefix
         character(len = 64) :: reservoir_restart_file_name
 
+        character(len = 64) :: since_date
 
         integer :: e
         integer :: lake_index_for_q_type, NF_NOWRITE
@@ -255,6 +256,13 @@ contains
         iret = nf90_open(trim(reservoir_restart_file_name), NF_NOWRITE, ncid)
 
 
+        if (iret /= 0) then
+           write(*,'("Problem opening file: ''", A, "''")') &
+                trim(reservoir_restart_file_name)
+           call hydro_stop("In reservoir_read_from_restart_file() - Problem opening file")
+        endif
+
+
 
         allocate (temp_machine_learning_current_time_storage_array(nlakes))
 
@@ -262,7 +270,47 @@ contains
         temp_machine_learning_current_time_storage_array = 0.0
 
 
+       !iret = NF90_GET_ATT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts)
+       !iret = NF90_GET_ATT(ncid, NF_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
+       iret = NF90_GET_ATT(ncid,NF_GLOBAL,"Since_Date",since_date)
 
+
+        call read_rst_crt_nc(ncid,outflows, nlakes, "outflows")
+
+        print *, 'outflows from read'
+        print *, outflows
+
+
+
+        call read_rst_crt_nc(ncid, temp_machine_learning_current_time_storage_array, nlakes, "machine_learning_current_time_storage")
+
+
+        print *, 'temp_machine_learning_current_time_storage_array from read'
+        print *, temp_machine_learning_current_time_storage_array
+
+
+
+
+        do lake_index_for_q_type = 1, nlakes
+            if (q_types(lake_index_for_q_type) == 2.0) then
+
+                !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+                !builds
+                !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+                print *, 'restart getting storage for reservoir at index: ', lake_index_for_q_type
+
+                select type (ml => reservoirs(lake_index_for_q_type)%ptr)
+                    type is (machine_learning_struct)
+                        print *, 'entered select'
+
+                        ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
+                end select
+
+
+            end if
+        end do
 
 
 
