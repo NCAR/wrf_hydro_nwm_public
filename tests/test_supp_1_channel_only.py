@@ -13,6 +13,46 @@ import wrfhydropy
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs, wait_job
 
+EXCLUDE_VARS_CHAN_ONLY = [
+    'stc1',
+    'smc1',
+    'sh2ox1',
+    'stc2',
+    'smc2',
+    'sh2ox2',
+    'stc3',
+    'smc3',
+    'sh2ox3',
+    'stc4',
+    'smc4',
+    'sh2ox4',
+    'infxsrt',
+    'soldrain',
+    'sfcheadrt',
+    'QBDRYRT',
+    'infxswgt',
+    'sfcheadsubrt',
+    'sh2owgt1',
+    'sh2owgt2',
+    'sh2owgt3',
+    'sh2owgt4',
+    'qstrmvolrt',
+    'hlink',
+    'lake_inflort'
+]
+
+#List variabls to ignore in tests, primarily accumulation variables
+EXCLUDE_VARS = ['ACMELT',
+                'ACSNOW',
+                'SFCRUNOFF',
+                'UDRUNOFF',
+                'ACCPRCP',
+                'ACCECAN',
+                'ACCEDIR',
+                'ACCETRAN',
+                'qstrmvolrt',
+                'reference_time',
+                'lake_inflort']
 
 EXCLUDE_VARS_CHAN_ONLY = [
     'stc1',
