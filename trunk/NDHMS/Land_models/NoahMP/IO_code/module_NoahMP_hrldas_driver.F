@@ -1522,6 +1522,8 @@ module module_NoahMP_hrldas_driver
 
    allocate(lake_precip(nlakes))
    allocate(lake_evap(nlakes))
+   lake_precip = 0.0
+   lake_evap   = 0.0
 
 call get_iocflag(1, io_config_outputs)
 
