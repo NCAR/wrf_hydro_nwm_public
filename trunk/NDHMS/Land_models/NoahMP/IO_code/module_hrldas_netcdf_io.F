@@ -803,6 +803,41 @@ contains
   end subroutine read_lake_depth
 
 !---------------------------------------------------------------------------------------------------------
+  subroutine read_lake_id(wrfinput_flnm,xstart,xend,ystart,yend,lake_id)
+    implicit none
+    character(len=*),          intent(in)  :: wrfinput_flnm
+    integer,                   intent(in)  :: xstart, xend, ystart, yend
+    integer,    dimension(xstart:xend,  ystart:yend), intent(out) :: lake_id
+    
+    character(len=24)  :: name
+    integer :: ierr,iret
+    integer :: ncid, varid
+
+    ! Open the NetCDF file.
+    write(*,'("wrfinput_flnm: ''", A, "''")') trim(wrfinput_flnm)
+    ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("read_lake_id:  Problem opening wrfinput file: ''", A, "''")') trim(wrfinput_flnm)
+       stop
+    endif
+
+! Get lake ID (LAKE_ID)
+    name = "LAKE_ID"
+    iret = nf90_inq_varid(ncid,  name,  varid)
+    if (iret == 0) then
+      ierr = nf90_get_var(ncid, varid, lake_id, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+    else
+      stop "Problem retrieving LAKE_ID"
+    endif
+
+! Close the NetCDF file
+    ierr = nf90_close(ncid)
+    if (ierr /= 0) stop "MODULE_NOAHLSM_HRLDAS_INPUT: read_lake_id :  NF90_CLOSE"
+
+
+  end subroutine read_lake_id
+
+!---------------------------------------------------------------------------------------------------------
 
   subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
                           nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &

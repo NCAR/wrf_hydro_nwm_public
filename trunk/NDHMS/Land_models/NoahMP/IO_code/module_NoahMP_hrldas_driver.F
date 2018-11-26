@@ -350,6 +350,8 @@ module module_NoahMP_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:)     :: lake_precip
   REAL, ALLOCATABLE, DIMENSION(:)     :: lake_evap
 
+  INTEGER, ALLOCATABLE, DIMENSION(:,:)   :: lake_id
+
 !------------------------------------------------------------------------
 ! 2D variables not used in WRF - should be removed?
 !------------------------------------------------------------------------
@@ -961,6 +963,12 @@ module module_NoahMP_hrldas_driver
   ALLOCATE (        tkdry3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
   ALLOCATE (       tksatu3d(XSTART:XEND,          1:nlevsoil,YSTART:YEND)) 
 
+!------------------------------------------------------------------------
+! Needed for wrf_hydro lake model
+!------------------------------------------------------------------------
+
+  ALLOCATE ( lake_id(XSTART:XEND,YSTART:YEND))
+
 !ENDIF
 
 !------------------------------------------------------------------------
@@ -1198,6 +1206,10 @@ module module_NoahMP_hrldas_driver
        CALL READ_LAKE_DEPTH(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,LAKE_DEPTH)
        lake_depth_flag = 1
      end if
+
+     lake_id = 0
+     call read_lake_id(hrldas_setup_file, xstart, xend, ystart, yend, lake_id)
+
   end if
   
 !----------------------------------------------------------------------
