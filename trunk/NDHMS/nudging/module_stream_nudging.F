@@ -2275,7 +2275,8 @@ logical :: persistBias_local
 integer :: linkInd
 character(len=19)  :: hydroTime !! actual time of the routing model
 real :: theInnov, weighting, theBias
-integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd
+integer :: tt, oo, ll, jj, nObsTt, staticInd, obsInd, i
+logical :: link_found
 real,    parameter :: smallestWeight=1.e-8
 !! persistence related variables in following block
 integer :: whGageId, flowMonth, whThresh, lastObsDt, prstDtErrInt, obsDtInt, pairCount
