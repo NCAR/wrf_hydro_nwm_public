@@ -166,6 +166,15 @@ contains
                         print *, 'entered select'
 
                         temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
+
+
+                        print *, 'select current time storage'
+                        print *, ml%state%current_time_storage
+
+
+                        print *, 'select outflow'
+                        print *, ml%output%outflow
+
                 end select
 
 
