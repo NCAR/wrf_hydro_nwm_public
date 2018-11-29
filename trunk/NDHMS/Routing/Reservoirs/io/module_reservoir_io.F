@@ -200,9 +200,15 @@ contains
 
 
 
-!DEALLOCATE TEMP ML ARRAYS!!!
-
         iret = nf90_close(ncid)
+
+        print *, 'temp_machine_learning_current_time_storage_array'
+        print *, temp_machine_learning_current_time_storage_array
+
+
+
+        if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
+
 
 
     end subroutine reservoir_write_to_restart_file2

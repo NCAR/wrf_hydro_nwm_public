@@ -241,6 +241,7 @@
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_tests.F" />
 		<Unit filename="../../Routing/Reservoirs/Machine_Learning/module_machine_learning_utilities.F" />
 		<Unit filename="../../Routing/Reservoirs/Makefile" />
+		<Unit filename="../../Routing/Reservoirs/io/module_reservoir_io.F" />
 		<Unit filename="../../Routing/Reservoirs/module_reservoir_base.F" />
 		<Unit filename="../../Routing/Reservoirs/module_reservoir_io.F" />
 		<Unit filename="../../Routing/Reservoirs/module_reservoir_utilities.F" />
