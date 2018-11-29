@@ -24,7 +24,7 @@ module module_machine_learning_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
         !real :: current_storage
-        real :: current_time_storage
+        real*4 :: current_time_storage
         real :: end_time_storage
         !real :: accumulated_storage
         real :: average_storage_over_past_time_intervals
