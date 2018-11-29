@@ -272,7 +272,7 @@ contains
 
         !temp
         if (reservoir_data%parameters%lake_number == 166758723) then
-            !Writing the results into some text files!
+            Writing the results into some text files!
 
             !open (111,file="lakeids.txt",status="unknown")
             !write (111, "(4A15)") "Lake_IDs"
@@ -305,6 +305,9 @@ contains
             write (117, "(4A15)") "Current_Time_Storage"
              Write (117, "(F15.5)") reservoir_data%state%current_time_storage
 
+
+            print *, (117, "(4A15)") "Current_Time_Storage"
+            print *, (117, "(F15.5)") reservoir_data%state%current_time_storage
 
             open (118,file="previous_time_release.txt",status="unknown")
             write (118, "(4A15)") "Previous_Time_Release"
