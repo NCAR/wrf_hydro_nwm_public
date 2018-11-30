@@ -2155,7 +2155,7 @@ subroutine output_rt_NWM(domainId,iGrid)
                         localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
                         localRealTmp(iTmp,jTmp) = fileMeta%fillReal(iTmp2)
                      else
-                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))*scaleFactorReciprocal)!/fileMeta%scaleFactor(iTmp2))
+                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))*scaleFactorReciprocal)
                         localRealTmp(iTmp,jTmp) = varRealTmp
                      endif
                   endif
