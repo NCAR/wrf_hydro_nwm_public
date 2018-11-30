@@ -5788,6 +5788,68 @@ end subroutine mpp_output_chrt
 
     logical :: write_reservoir_restart
 
+
+
+
+
+
+
+
+    integer :: lake_index
+
+
+    integer :: aa, bb, cc, dd, ee
+    real :: ff
+
+    !allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
+
+    !temp_machine_learning_current_time_storage_array = 0.0
+
+    do lake_index = 1, rt_domain(did)%nlakes
+        if (rt_domain(did)%q_type(lake_index) == 2.0) then
+
+            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+            !builds
+            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+            print *, 'hydro io restart setting storage for reservoir at index: ', lake_index
+
+            select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+                type is (machine_learning_struct)
+                    print *, 'Hydro io entered select'
+
+                    print *, 'hydro io current time storage'
+
+                    print *, ml%state%current_time_storage
+            end select
+
+
+        end if
+    end do
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     write_reservoir_restart = .false.
 
 
