@@ -112,7 +112,7 @@ use module_reservoir_base
 
             print *, 'hydro drv restart setting storage for reservoir at index: ', lake_index
 
-            select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+            select type (ml => rt_domain(1)%reservoirs(lake_index)%ptr)
             !select type (ml => reservoirs(lake_index)%ptr)
                 type is (machine_learning_struct)
                     print *, 'Hydro drv entered select'
