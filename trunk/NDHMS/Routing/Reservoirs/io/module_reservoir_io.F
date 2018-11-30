@@ -23,7 +23,7 @@ contains
     water_elevations, old_date, since_date, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, his_out_counts, channel_only, &
     channel_bucket_only, dimid_lakes, varid, nlakes, lake_index)
         implicit none
-        class (reservoir_base_container), dimension(:), intent(in):: reservoirs
+        class (reservoir_base_container), dimension(:), intent(inout):: reservoirs
         integer, intent(inout) :: did, iret, ncid, varid
         integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlakes, his_out_counts, channel_only, channel_bucket_only
         integer, intent(in) :: lake_index(nlakes)
