@@ -405,6 +405,9 @@ contains
         print *, "16.1"
 
 
+        print *, 'storage_monthly_average'
+        print *, storage_monthly_average
+
 
         ! If cold start
         !if (restart_flag == 1) then
@@ -420,6 +423,8 @@ contains
             this%current_time_storage = storage_monthly_average
 
             print *, "16.2"
+
+            print *, this%current_time_storage
 
             this%end_time_storage = storage_monthly_average
 
