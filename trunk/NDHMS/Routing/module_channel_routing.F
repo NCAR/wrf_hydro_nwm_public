@@ -25,6 +25,7 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
                                ReachLS_write_io, gbcastvalue, &
                                gbcastreal2,      linkls_s
 
+use module_machine_learning
 
 use module_levelpool
 use module_reservoir_base
@@ -1184,10 +1185,49 @@ gwOption:   if(gwBaseSwCRT == 3) then
               QLAKEIP(i) = QLAKEI(i)  !-- store total lake inflow for this timestep
 
 
+
+
+
+
 #ifdef MPP_LAND
             endif
 #endif
            enddo
+
+
+
+
+
+
+
+    do i = 1, rt_domain(1)%nlakes
+        if (rt_domain(1)%q_type(i) == 2.0) then
+
+            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+            !builds
+            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+            !print *, 'ch routing restart setting storage for reservoir at index: ', lake_index
+
+            select type (ml => rt_domain(1)%reservoirs(i)%ptr)
+            !select type (ml => reservoirs(lake_index)%ptr)
+                type is (machine_learning_struct)
+                    print *, 'ch routing entered select'
+
+                    print *, 'ch routing current time storage'
+
+                    print *, ml%state%current_time_storage
+            end select
+
+
+        end if
+    end do
+
+
+
+
+
 #ifdef MPP_LAND
     if(NLAKES .gt. 0) then
 !yw       call MPP_CHANNEL_COM_REAL(LAKE_MSKRT,ixrt,jxrt,QLLAKE,NLAKES,99)
@@ -1905,6 +1945,42 @@ do nt = 1, nsteps
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
             !       inside the reservoir module, but it requires a redesign of the lake
             !       MPI communication model.
+
+
+
+
+
+    do lakeid = 1, rt_domain(1)%nlakes
+        if (rt_domain(1)%q_type(lakeid) == 2.0) then
+
+            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+            !builds
+            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+            !print *, 'ch routing restart setting storage for reservoir at index: ', lake_index
+
+            select type (ml => rt_domain(1)%reservoirs(lakeid)%ptr)
+            !select type (ml => reservoirs(lake_index)%ptr)
+                type is (machine_learning_struct)
+                    print *, 'ch routing entered select'
+
+                    print *, 'ch routing current time storage'
+
+                    print *, ml%state%current_time_storage
+            end select
+
+
+        end if
+    end do
+
+
+
+
+
+
+
+
 
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
             QLAKEI(lakeid)  = Quc           !save inflow to lake
