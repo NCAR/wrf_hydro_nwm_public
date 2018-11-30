@@ -34,6 +34,7 @@ module module_HYDRO_io
    use module_io_utilities
    use netcdf
 
+   use module_reservoir_base
    use module_reservoir_io
 
    implicit none
@@ -5770,7 +5771,7 @@ end subroutine mpp_output_chrt
         end subroutine output_lsm
 
 
-   subroutine RESTART_OUT_nc(outFile,did)
+   subroutine RESTART_OUT_nc(outFile,did,reservoirs)
 
 
    implicit none
@@ -5779,6 +5780,9 @@ end subroutine mpp_output_chrt
    integer :: n
    character(len=2) :: tmpStr
    character(len=*) outFile
+
+   class (reservoir_base_container), dimension(:), intent(inout):: reservoirs
+
 
     integer :: ncid,irt, dimid_ix, dimid_jx,  &
              dimid_ixrt, dimid_jxrt, varid, &
@@ -5815,7 +5819,8 @@ end subroutine mpp_output_chrt
 
             print *, 'hydro io restart setting storage for reservoir at index: ', lake_index
 
-            select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+            !select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
+            select type (ml => reservoirs(lake_index)%ptr)
                 type is (machine_learning_struct)
                     print *, 'Hydro io entered select'
 
@@ -6304,7 +6309,8 @@ print *, '23.0'
             !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
             !nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
 
-            call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            call reservoir_write_to_restart_file2(reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
             nlst_rt(did)%olddate, nlst_rt(did)%sincedate, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlst_rt(did)%DTCT, rt_domain(did)%his_out_counts, &
             nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, dimid_lakes, &
             varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))

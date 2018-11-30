@@ -132,7 +132,7 @@ module module_HYDRO_drv
       else
 #endif
              call   RESTART_OUT_nc(trim("HYDRO_RST."//nlst_rt(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)),  did)
+                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)),  did, rt_domain(did)%reservoirs)
 #ifdef MPP_LAND
       endif
 #endif
