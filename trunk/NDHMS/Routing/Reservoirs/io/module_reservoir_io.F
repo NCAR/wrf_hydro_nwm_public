@@ -176,9 +176,9 @@ contains
                         !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
 
 
-                        call ml%get_reservoir_variables(machine_learning_current_time_storage)
+                        !call ml%get_reservoir_variables(machine_learning_current_time_storage)
 
-                        temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+                        !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
 
 
 
@@ -188,9 +188,9 @@ contains
                         !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
 
 
-                        print *, 'reservoir io select current time storage'
+                        !print *, 'reservoir io select current time storage'
                         !print *, ml%state%current_time_storage
-                        print *, machine_learning_current_time_storage
+                        !print *, machine_learning_current_time_storage
 
 
                         !print *, 'select outflow'
@@ -200,9 +200,12 @@ contains
 
 
 
+                call reservoirs(lake_index_for_q_type)%ptr%get_variables(machine_learning_current_time_storage)
 
+                temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
 
-
+                print *, 'reservoir io current time storage'
+                print *, machine_learning_current_time_storage
 
 
 

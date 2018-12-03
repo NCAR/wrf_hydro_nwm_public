@@ -38,6 +38,8 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
+        procedure :: get_variables => levelpool_get_variables
+
         procedure :: write_to_restart_file => no_op3
         procedure :: read_from_restart_file => no_op
 
@@ -126,6 +128,18 @@ contains
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being destroyed
     end subroutine levelpool_struct_destroy
+
+
+
+    subroutine levelpool_get_variables(reservoir_data, storage)
+        implicit none
+        class(levelpool_struct), intent(inout) :: reservoir_data
+
+        real, intent(out) :: storage
+
+    end subroutine levelpool_get_variables
+
+
 
     subroutine no_op(reservoir_data)
         implicit none

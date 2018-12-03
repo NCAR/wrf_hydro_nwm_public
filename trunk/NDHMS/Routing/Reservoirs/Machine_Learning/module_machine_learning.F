@@ -54,6 +54,8 @@ module module_machine_learning
         procedure :: run_release => run_machine_learning_release
         procedure :: write_to_restart_file => machine_learning_write_to_restart_file
         procedure :: read_from_restart_file => machine_learning_read_from_restart_file
+        procedure :: get_variables => machine_learning_get_variables
+
 
         procedure :: timestep_pre_conditions_warn => machine_learning_timestep_pre_conditions_warn
         procedure :: timestep_pre_conditions_modify => machine_learning_timestep_pre_conditions_modify
@@ -66,7 +68,6 @@ module module_machine_learning
         procedure :: update_preprocessing => update_preprocessing
         procedure :: timestep_preprocessing => timestep_preprocessing
 
-        procedure :: get_reservoir_variables => get_machine_learning_variables
 
     end type machine_learning_struct
 
@@ -621,15 +622,15 @@ contains
 
 
 
-    subroutine get_machine_learning_variables(reservoir_data, machine_learning_current_time_storage)
+    subroutine machine_learning_get_variables(reservoir_data, storage)
         implicit none
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-        real, intent(out) :: machine_learning_current_time_storage
+        real, intent(out) :: storage
 
-        machine_learning_current_time_storage = reservoir_data%state%current_time_storage
+        storage = reservoir_data%state%current_time_storage
 
-    end subroutine get_machine_learning_variables
+    end subroutine machine_learning_get_variables
 
 
 
