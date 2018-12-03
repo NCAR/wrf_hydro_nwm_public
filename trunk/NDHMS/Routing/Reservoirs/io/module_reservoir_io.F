@@ -21,15 +21,16 @@ contains
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, &
     water_elevations, old_date, since_date, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, his_out_counts, channel_only, &
-    channel_bucket_only, dimid_lakes, varid, nlakes, lake_index)
+    channel_bucket_only, dimid_lakes, varid, nlakes, lake_index, local_lake_index)
         implicit none
         class (reservoir_base_container), dimension(:), intent(inout):: reservoirs
         integer, intent(inout) :: did, iret, ncid, varid
         integer, intent(in) :: NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlakes, his_out_counts, channel_only, channel_bucket_only
-        integer, intent(in) :: lake_index(nlakes)
+        integer, intent(in) :: lake_index(nlakes)  ! this is the rt_domain%lake_index
         !integer, dimension(:), intent(in) :: dimid_lakes
         integer, intent(out) :: dimid_lakes
         real, intent(in) :: DTCT
+        integer, dimension(:), intent(in) :: local_lake_index ! this is the rt_domain%LAKEIDX, which might be the same as rt_domain%lake_index. Not sure.
         real, dimension(:), intent(in) :: q_types, inflows, outflows, water_elevations
         character(len=*), intent(in) :: old_date, since_date
 
@@ -46,7 +47,7 @@ contains
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
 
 
-
+        if (nlakes <= 0) return
 
         !write(did_string,'(I5)') did
 
@@ -154,7 +155,17 @@ contains
 
         temp_machine_learning_current_time_storage_array = 0.0
 
+
+
+
+
         do lake_index_for_q_type = 1, nlakes
+
+            if (local_lake_index(lake_index_for_q_type) < 0) continue
+
+
+
+
             if (q_types(lake_index_for_q_type) == 2.0) then
 
                 !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage

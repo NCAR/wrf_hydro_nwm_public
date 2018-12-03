@@ -6240,7 +6240,7 @@ print *, '23.0'
 
     !if (write_reservoir_restart) then
 
-if (.true.) then
+    !if (.true.) then
 
             print *, 'end of sub before call to reservoir write to restart in hydro io'
 
@@ -6248,14 +6248,13 @@ if (.true.) then
             !nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
 
             !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            call reservoir_write_to_restart_file2(reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            !call reservoir_write_to_restart_file2(reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+            call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
             nlst_rt(did)%olddate, nlst_rt(did)%sincedate, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlst_rt(did)%DTCT, rt_domain(did)%his_out_counts, &
             nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, dimid_lakes, &
-            varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
+            varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index), rt_domain(did)%LAKEIDX)
 
 
-
-    end if
 
         return
         end subroutine RESTART_OUT_nc
