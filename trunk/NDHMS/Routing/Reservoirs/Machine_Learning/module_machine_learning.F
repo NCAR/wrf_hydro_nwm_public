@@ -340,6 +340,9 @@ contains
 
         print *, "Outflow is: ", outflow
 
+        print *, 'Release current storage'
+        print *, reservoir_data%state%current_time_storage
+
     end subroutine run_machine_learning_release
 
 
@@ -629,6 +632,11 @@ contains
         real, intent(out) :: storage
 
         storage = reservoir_data%state%current_time_storage
+
+
+
+        print *, 'In ML get var subroutine current storage'
+        print *, reservoir_data%state%current_time_storage
 
     end subroutine machine_learning_get_variables
 
