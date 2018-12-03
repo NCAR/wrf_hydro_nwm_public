@@ -66,6 +66,7 @@ module module_machine_learning
         procedure :: update_preprocessing => update_preprocessing
         procedure :: timestep_preprocessing => timestep_preprocessing
 
+        procedure :: get_reservoir_variables => get_machine_learning_variables
 
     end type machine_learning_struct
 
@@ -617,6 +618,25 @@ contains
     end subroutine update_preprocessing
 
 
+
+
+
+    subroutine get_machine_learning_variables(reservoir_data, machine_learning_current_time_storage)
+        implicit none
+        class(machine_learning_struct), intent(inout) :: reservoir_data
+
+        real, intent(out) :: machine_learning_current_time_storage
+
+        machine_learning_current_time_storage = reservoir_data%state%current_time_storage
+
+    end subroutine get_machine_learning_variables
+
+
+
+
+
+
+
     subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     !subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, dimid_lakes, varid, nlakes, lake_index)
         implicit none
@@ -641,6 +661,14 @@ contains
 
 
     end subroutine machine_learning_read_from_restart_file
+
+
+
+
+
+
+
+
 
 
     function machine_learning_data_info(machine_learning_data) result(rv)

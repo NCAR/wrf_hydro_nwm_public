@@ -162,14 +162,15 @@ contains
                 print *, 'restart setting storage for reservoir at index: ', lake_index_for_q_type
 
 
-                allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
+                !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
+                !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
 
 
                 select type (ml => reservoirs(lake_index_for_q_type)%ptr)
                     type is (machine_learning_struct)
                         print *, 'entered select'
 
-                        !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
+                        temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
 
 
                         !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
