@@ -47,6 +47,9 @@ contains
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
 
 
+
+        integer :: array_size
+
         if (nlakes <= 0) return
 
         !write(did_string,'(I5)') did
@@ -171,6 +174,21 @@ contains
 
         print *, 'nlakes'
         print *, nlakes
+
+
+        print *, 'local lake index array size'
+        print *, shape(local_lake_index)
+
+        !array_size = int(shape(local_lake_index))
+
+        do lake_index_for_q_type = 1, 10000
+            if (local_lake_index(lake_index_for_q_type) >= 0) then
+                print *, 'lake idx greater than 0'
+                print *, lake_index_for_q_type
+            end if
+
+        end do
+
 
 
         do lake_index_for_q_type = 1, nlakes
