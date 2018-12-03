@@ -6238,8 +6238,9 @@ print *, '22.0'
 print *, '23.0'
 
 
-    if (write_reservoir_restart) then
+    !if (write_reservoir_restart) then
 
+if (.true.) then
 
             print *, 'end of sub before call to reservoir write to restart in hydro io'
 
