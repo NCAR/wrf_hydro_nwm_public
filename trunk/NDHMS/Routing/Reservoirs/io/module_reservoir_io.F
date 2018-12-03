@@ -156,10 +156,21 @@ contains
         temp_machine_learning_current_time_storage_array = 0.0
 
 
+        print *, 'local lake index array vals'
 
+        print *, local_lake_index
 
 
         do lake_index_for_q_type = 1, nlakes
+
+            print *, 'local lake index val'
+            print *, local_lake_index(lake_index_for_q_type)
+
+
+            if (local_lake_index(lake_index_for_q_type) < 0) then
+                print *, 'local lake index val less than 0'
+            end if
+
 
             if (local_lake_index(lake_index_for_q_type) < 0) continue
 
