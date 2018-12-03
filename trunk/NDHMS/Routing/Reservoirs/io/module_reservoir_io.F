@@ -42,7 +42,10 @@ contains
         character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
 
 
+        real :: machine_learning_current_time_storage
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
+
+
 
 
         !write(did_string,'(I5)') did
@@ -168,22 +171,39 @@ contains
 
                 select type (ml => reservoirs(lake_index_for_q_type)%ptr)
                     type is (machine_learning_struct)
-                        print *, 'entered select'
+                        print *, 'reservoir io entered select'
 
-                        temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
+                        !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
 
 
+                        call ml%get_reservoir_variables(machine_learning_current_time_storage)
+
+                        temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+
+
+
+
+
+                        ! Different approach
                         !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
 
 
-                        print *, 'select current time storage'
-                        print *, ml%state%current_time_storage
+                        print *, 'reservoir io select current time storage'
+                        !print *, ml%state%current_time_storage
+                        print *, machine_learning_current_time_storage
 
 
-                        print *, 'select outflow'
-                        print *, ml%output%outflow
+                        !print *, 'select outflow'
+                        !print *, ml%output%outflow
 
                 end select
+
+
+
+
+
+
+
 
 
             end if
