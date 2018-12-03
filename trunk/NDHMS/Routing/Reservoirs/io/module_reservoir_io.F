@@ -156,9 +156,21 @@ contains
         temp_machine_learning_current_time_storage_array = 0.0
 
 
+
+        print *, 'q_types'
+        print *, q_types
+
+
         print *, 'local lake index array vals'
 
         print *, local_lake_index
+
+
+        print *, 'lake_index array'
+        print *, lake_index
+
+        print *, 'nlakes'
+        print *, nlakes
 
 
         do lake_index_for_q_type = 1, nlakes
@@ -172,10 +184,10 @@ contains
             end if
 
 
-            if (local_lake_index(lake_index_for_q_type) < 0) continue
+            !if (local_lake_index(lake_index_for_q_type) < 0) continue
 
 
-
+            if (local_lake_index(lake_index_for_q_type) >= 0) then
 
             if (q_types(lake_index_for_q_type) == 2.0) then
 
@@ -231,7 +243,9 @@ contains
 
 
 
-            end if
+            end if  ! for q_types
+
+            end if ! for local_lake_index
         end do
 
 
