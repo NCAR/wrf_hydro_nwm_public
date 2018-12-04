@@ -248,6 +248,9 @@ contains
 
         reservoir_data%input%inflow = inflow
 
+        ! Update state variables
+        reservoir_data%state%water_elevation = water_elevation
+
         call reservoir_data%timestep_pre_conditions_warn()
 
         print *, "ML Timestep for Lake: ", reservoir_data%parameters%lake_number
