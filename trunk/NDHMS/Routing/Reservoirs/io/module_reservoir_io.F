@@ -21,7 +21,7 @@ contains
     !subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, water_elevations, old_date, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
     subroutine reservoir_write_to_restart_file2(reservoirs, q_types, inflows, outflows, &
     water_elevations, old_date, since_date, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, DTCT, his_out_counts, channel_only, &
-    channel_bucket_only, dimid_lakes, varid, nlakes, lake_index, local_lake_index)
+    channel_bucket_only, dimid_lakes, varid, nlakes, lake_index, local_lake_index, nlinksize)
         implicit none
         class (reservoir_base_container), dimension(:), intent(inout):: reservoirs
         integer, intent(inout) :: did, iret, ncid, varid
@@ -33,7 +33,7 @@ contains
         integer, dimension(:), intent(in) :: local_lake_index ! this is the rt_domain%LAKEIDX, which might be the same as rt_domain%lake_index. Not sure.
         real, dimension(:), intent(in) :: q_types, inflows, outflows, water_elevations
         character(len=*), intent(in) :: old_date, since_date
-
+        integer, intent(in) :: nlinksize
 
         integer :: e
         integer :: lake_index_for_q_type
@@ -181,7 +181,7 @@ contains
 
         !array_size = int(shape(local_lake_index))
 
-        do lake_index_for_q_type = 1, 10000
+        do lake_index_for_q_type = 1, nlinksize
             if (local_lake_index(lake_index_for_q_type) >= 0) then
                 print *, 'lake idx greater than 0'
                 print *, lake_index_for_q_type

@@ -30,6 +30,7 @@ module module_machine_learning_parameters
 		integer :: model_id								      ! machine learning model number
 		integer :: model_index								  ! machine learning model index
         integer :: lake_number                                ! lake number
+        real    :: reservoir_area
 
     contains
 
@@ -44,13 +45,14 @@ contains
 
     !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
     !subroutine machine_learning_parameters_init(this, model_index, lake_number)
-    subroutine machine_learning_parameters_init(this, lake_number, number_of_unique_models)
+    subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, number_of_unique_models)
         !use netcdf
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
 
 		!integer, intent(in) :: model_id				! machine learning model number
 		!integer, intent(in) :: model_index				! machine learning model index in model array
+        real, intent(in)     :: reservoir_area          ! area of reservoir (km^2)
         integer, intent(in) :: lake_number              ! lake number
         integer, intent(inout) :: number_of_unique_models
 
@@ -80,6 +82,9 @@ contains
         ! parameter object's variables.
 		!this%model_id = model_id
 		!this%model_index = model_index
+
+        this%reservoir_area = reservoir_area
+
         this%lake_number = lake_number
 
         ! Machine Learning Reservoir Parm NC file

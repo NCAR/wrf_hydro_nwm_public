@@ -6252,7 +6252,7 @@ print *, '23.0'
             call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
             nlst_rt(did)%olddate, nlst_rt(did)%sincedate, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlst_rt(did)%DTCT, rt_domain(did)%his_out_counts, &
             nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, dimid_lakes, &
-            varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index), rt_domain(did)%LAKEIDX)
+            varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index), rt_domain(did)%LAKEIDX, rt_domain(did)%nlinksize)
 
 
 

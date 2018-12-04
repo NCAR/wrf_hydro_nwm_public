@@ -24,6 +24,7 @@ module module_machine_learning_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
         !real :: current_storage
+        real  :: water_elevation
         real*4 :: current_time_storage
         real :: end_time_storage
         !real :: accumulated_storage
@@ -69,10 +70,12 @@ contains
 
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this, start_date, restart_flag, lake_number)
+    subroutine machine_learning_state_init(this, water_elevation, start_date, restart_flag, lake_number)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
+
+        real, intent(inout) :: water_elevation
 
         character(len=19), intent(in) :: start_date
 
@@ -123,6 +126,8 @@ contains
 
         print *, "6"
 
+
+        this%water_elevation = water_elevation
 
         this%start_date = start_date
 

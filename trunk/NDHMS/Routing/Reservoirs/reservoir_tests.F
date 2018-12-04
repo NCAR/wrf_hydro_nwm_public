@@ -67,7 +67,7 @@ program reservoir_unit_tests
         print *, "calling init for machine_learning_struct"
         !call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 1, 166758723)
         !call machine_learning_reservoir_data%init("2017-08-25_17:24:22" , 1, 1233515)
-        call machine_learning_reservoir_data%init("2017-09-29_17:24:22" , 1, 166758723)
+        call machine_learning_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723)
 
 
 
