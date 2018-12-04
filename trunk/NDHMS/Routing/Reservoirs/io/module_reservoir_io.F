@@ -39,6 +39,12 @@ contains
         integer :: e
         integer :: lake_index_for_q_type
 
+        integer :: lake_id
+
+        character(len=32) :: lake_id_string
+        character(len=64) :: reservoir_name
+
+
         character(len=1) :: did_string
         character(len=2) :: tmpStr
         character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
@@ -46,6 +52,13 @@ contains
 
         real :: machine_learning_current_time_storage
         real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
+
+        real, allocatable, dimension(:) :: temp_reservoir_array
+
+
+        real :: inflow, outflow, water_elevation
+
+
 
 
 
@@ -107,7 +120,7 @@ contains
 
         iret = nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid)
 
-!        iret = nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid)
+        iret = nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid)
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -183,6 +196,161 @@ contains
         print *, 'local lake index array size'
         print *, shape(local_lake_index)
 
+
+
+
+
+
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+        do lake_index_for_q_type = 1, nlinksize
+            if (local_lake_index(lake_index_for_q_type) >= 0) then
+                print *, 'lake idx greater than 0'
+                print *, lake_index_for_q_type
+
+                print *, local_lake_index(lake_index_for_q_type)
+
+
+            lake_id = local_lake_index(lake_index_for_q_type)
+
+            write(lake_id_string, '(i10)') lake_id
+
+
+            reservoir_name = trim("reservoir_" // lake_id_string)
+
+            inflow = inflows(lake_id)
+
+            outflow = outflows(lake_id)
+
+            water_elevation = water_elevations(lake_id)
+
+
+            allocate(temp_reservoir_array(4))
+
+            temp_reservoir_array(1) = inflow
+
+            temp_reservoir_array(2) = outflow
+
+            temp_reservoir_array(3) = water_elevation
+
+            temp_reservoir_array(4) = 0.0
+
+
+            if (q_types(lake_id) == 2.0) then
+
+                            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+                            !builds
+                            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+                            print *, 'restart setting storage for reservoir at index: ', lake_index_for_q_type
+
+
+                            !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
+                            !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
+
+
+                            select type (ml => reservoirs(lake_index_for_q_type)%ptr)
+                                type is (machine_learning_struct)
+                                    print *, 'reservoir io entered select'
+
+                                    !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
+
+
+                                    temp_reservoir_array(4) = ml%state%current_time_storage
+
+
+                                    !call ml%get_reservoir_variables(machine_learning_current_time_storage)
+
+                                    !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+
+
+
+
+
+                                    ! Different approach
+                                    !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
+
+
+                                    !print *, 'reservoir io select current time storage'
+                                    !print *, ml%state%current_time_storage
+                                    !print *, machine_learning_current_time_storage
+
+
+                                    !print *, 'select outflow'
+                                    !print *, ml%output%outflow
+
+                            end select
+
+
+
+                            !call reservoirs(lake_index_for_q_type)%ptr%get_variables(machine_learning_current_time_storage)
+
+                            !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+
+                            !print *, 'reservoir io current time storage'
+                            !print *, machine_learning_current_time_storage
+
+
+
+            end if  ! for q_types
+
+
+
+        print *, reservoir_name
+
+        print *, 'temp_reservoir_array'
+
+        print *, temp_reservoir_array
+
+
+
+
+        call w_rst_crt_nc1_lake(ncid, 4, temp_reservoir_array, reservoir_name, &
+               lake_index)
+
+
+
+
+
+
+
+
+
+
+        end if ! for local_lake_index
+    end do
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         !array_size = int(shape(local_lake_index))
 
         do lake_index_for_q_type = 1, nlinksize
@@ -191,9 +359,76 @@ contains
                 print *, lake_index_for_q_type
 
                 print *, local_lake_index(lake_index_for_q_type)
-            end if
 
-        end do
+
+            lake_id = local_lake_index(lake_index_for_q_type)
+
+
+            if (q_types(lake_id) == 2.0) then
+
+                            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
+
+                            !builds
+                            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+
+                            print *, 'restart setting storage for reservoir at index: ', lake_index_for_q_type
+
+
+                            !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
+                            !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
+
+
+                            select type (ml => reservoirs(lake_index_for_q_type)%ptr)
+                                type is (machine_learning_struct)
+                                    print *, 'reservoir io entered select'
+
+                                    temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
+
+
+                                    !call ml%get_reservoir_variables(machine_learning_current_time_storage)
+
+                                    !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+
+
+
+
+
+                                    ! Different approach
+                                    !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
+
+
+                                    !print *, 'reservoir io select current time storage'
+                                    !print *, ml%state%current_time_storage
+                                    !print *, machine_learning_current_time_storage
+
+
+                                    !print *, 'select outflow'
+                                    !print *, ml%output%outflow
+
+                            end select
+
+
+
+                            call reservoirs(lake_index_for_q_type)%ptr%get_variables(machine_learning_current_time_storage)
+
+                            temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+
+                            print *, 'reservoir io current time storage'
+                            print *, machine_learning_current_time_storage
+
+
+
+            end if  ! for q_types
+
+        end if ! for local_lake_index
+    end do
+
+
+
+
+            !end if
+
+        !end do
 
 
 
@@ -211,67 +446,10 @@ contains
             !if (local_lake_index(lake_index_for_q_type) < 0) continue
 
 
-            if (local_lake_index(lake_index_for_q_type) >= 0) then
 
+            !end if  ! for q_types
 
-
-            if (q_types(lake_index_for_q_type) == 2.0) then
-
-                !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
-
-                !builds
-                !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
-
-                print *, 'restart setting storage for reservoir at index: ', lake_index_for_q_type
-
-
-                !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
-                !allocate( machine_learning_struct :: reservoirs(lake_index_for_q_type)%ptr)
-
-
-                select type (ml => reservoirs(lake_index_for_q_type)%ptr)
-                    type is (machine_learning_struct)
-                        print *, 'reservoir io entered select'
-
-                        !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
-
-
-                        !call ml%get_reservoir_variables(machine_learning_current_time_storage)
-
-                        !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
-
-
-
-
-
-                        ! Different approach
-                        !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
-
-
-                        !print *, 'reservoir io select current time storage'
-                        !print *, ml%state%current_time_storage
-                        !print *, machine_learning_current_time_storage
-
-
-                        !print *, 'select outflow'
-                        !print *, ml%output%outflow
-
-                end select
-
-
-
-                call reservoirs(lake_index_for_q_type)%ptr%get_variables(machine_learning_current_time_storage)
-
-                temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
-
-                print *, 'reservoir io current time storage'
-                print *, machine_learning_current_time_storage
-
-
-
-            end if  ! for q_types
-
-            end if ! for local_lake_index
+            !end if ! for local_lake_index
         end do
 
 
@@ -285,16 +463,16 @@ contains
         call test123()
 
 
-        call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
-               lake_index)
+        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
+        !       lake_index)
 
 
-        call w_rst_crt_nc1_lake(ncid, nlakes, inflows, "inflows", &
-               lake_index)
+        !call w_rst_crt_nc1_lake(ncid, nlakes, inflows, "inflows", &
+        !       lake_index)
 
 
-        call w_rst_crt_nc1_lake(ncid, nlakes, outflows, "outflows", &
-               lake_index)
+        !call w_rst_crt_nc1_lake(ncid, nlakes, outflows, "outflows", &
+        !       lake_index)
 
         !call w_rst_crt_nc1_lake(ncid, nlakes, water_elevations, "water_elevations", &
         !       lake_index)
@@ -305,8 +483,8 @@ contains
 
         iret = nf90_close(ncid)
 
-        print *, 'temp_machine_learning_current_time_storage_array'
-        print *, temp_machine_learning_current_time_storage_array
+        !print *, 'temp_machine_learning_current_time_storage_array'
+        !print *, temp_machine_learning_current_time_storage_array
 
 
 
