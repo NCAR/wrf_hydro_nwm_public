@@ -189,6 +189,8 @@ contains
             if (local_lake_index(lake_index_for_q_type) >= 0) then
                 print *, 'lake idx greater than 0'
                 print *, lake_index_for_q_type
+
+                print *, local_lake_index(lake_index_for_q_type)
             end if
 
         end do
