@@ -202,6 +202,7 @@ contains
 
 
 
+            allocate(temp_reservoir_array(4))
 
 
 
@@ -230,7 +231,6 @@ contains
             water_elevation = water_elevations(lake_id)
 
 
-            allocate(temp_reservoir_array(4))
 
             temp_reservoir_array(1) = inflow
 
@@ -489,6 +489,8 @@ contains
 
 
         if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
+
+        if(allocated(temp_reservoir_array)) deallocate(temp_machine_learning_current_time_storage_array)
 
 
 
