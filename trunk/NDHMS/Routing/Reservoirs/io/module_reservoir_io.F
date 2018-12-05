@@ -222,6 +222,8 @@ contains
             write(lake_id_string, '(i10)') lake_id
 
 
+            !trim(lake_id_string)
+
             reservoir_name = trim("reservoir_" // lake_id_string)
 
             inflow = inflows(lake_id)
@@ -265,7 +267,6 @@ contains
                                     temp_reservoir_array(4) = ml%state%current_time_storage
 
 
-                                    !call ml%get_reservoir_variables(machine_learning_current_time_storage)
 
                                     !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
 
@@ -289,7 +290,6 @@ contains
 
 
 
-                            !call reservoirs(lake_index_for_q_type)%ptr%get_variables(machine_learning_current_time_storage)
 
                             !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
 
@@ -385,7 +385,6 @@ contains
                                     temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
 
 
-                                    !call ml%get_reservoir_variables(machine_learning_current_time_storage)
 
                                     !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
 
@@ -406,15 +405,6 @@ contains
                                     !print *, ml%output%outflow
 
                             end select
-
-
-
-                            call reservoirs(lake_index_for_q_type)%ptr%get_variables(machine_learning_current_time_storage)
-
-                            temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
-
-                            print *, 'reservoir io current time storage'
-                            print *, machine_learning_current_time_storage
 
 
 
@@ -490,7 +480,7 @@ contains
 
         if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
 
-        if(allocated(temp_reservoir_array)) deallocate(temp_machine_learning_current_time_storage_array)
+        if(allocated(temp_reservoir_array)) deallocate(temp_reservoir_array)
 
 
 

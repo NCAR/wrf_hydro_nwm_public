@@ -82,8 +82,6 @@ module module_reservoir_base
         procedure (reservoir_write_to_restart_file), deferred :: write_to_restart_file
         procedure (reservoir_read_from_restart_file), deferred :: read_from_restart_file
 
-        procedure (reservoir_get_variables), deferred :: get_variables
-
         procedure (reservoir_timestep_pre_conditions_warn_interface), deferred    :: timestep_pre_conditions_warn
         procedure (reservoir_timestep_pre_conditions_modify_interface), deferred  :: timestep_pre_conditions_modify
         procedure (reservoir_timestep_post_conditions_warn_interface), deferred   :: timestep_post_conditions_warn
@@ -123,14 +121,6 @@ module module_reservoir_base
         !    class(reservoir_base_struct), intent(inout) :: reservoir_data
         !    integer, intent(inout) :: iret, ncid, NF_FLOAT, varid
         !    integer, dimension(:), intent(in) :: dimid_lakes
-
-
-        subroutine reservoir_get_variables(reservoir_data, storage)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-            real, intent(out) :: storage
-
-        end subroutine reservoir_get_variables
 
 
         subroutine reservoir_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
