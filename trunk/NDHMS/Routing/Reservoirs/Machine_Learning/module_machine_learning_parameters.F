@@ -1,13 +1,8 @@
 ! This module defines and instantiates objects
-
 ! for a machine learning type reservoir's
-
 ! parameters/properties. Parameters holds
-
 ! static/unchanging variables that are
-
 ! set when the given reservoir object is
-
 ! initialized/instantiated.
 
 module module_machine_learning_parameters
@@ -46,7 +41,6 @@ contains
     !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
     !subroutine machine_learning_parameters_init(this, model_index, lake_number)
     subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, number_of_unique_models)
-        !use netcdf
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
 
@@ -90,14 +84,8 @@ contains
         ! Machine Learning Reservoir Parm NC file
         ! LEAVE THIS HARD CODED????
 
-        print *, "Before opening ML_RESERVOIR_PARM.nc"
-
-
         status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status)
-
-
-        print *, "After opening ML_RESERVOIR_PARM.nc"
 
 
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
@@ -119,25 +107,18 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        print *, "1"
-
 
         status = nf90_inquire_variable(ncid, lake_idVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
-
-        print *, "1.2"
 
 
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
         if(status /= nf90_NoErr) call handle_err(status)
         allocate(lake_id(Nlakes))
 
-        print *, "1.5"
 
         status = nf90_inquire_variable(ncid, model_idVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
-
-        print *, "1.55"
 
 
         status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
@@ -145,9 +126,6 @@ contains
         allocate(model_id_array(Nlakes))
 
         allocate(unique_models_array(Nlakes))
-
-
-        print *, "1.6"
 
 
         status = nf90_inquire_variable(ncid, maximum_releaseVarId, dimids = dimIDs)
@@ -174,8 +152,6 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
         allocate(minimum_storage(Nlakes))
 
-        print *, "2"
-
 
         status = nf90_get_var(ncid, lake_idVarId, lake_id)
         if (status /= nf90_noerr) call handle_err(status)
@@ -196,7 +172,6 @@ contains
         if (status /= nf90_noerr) call handle_err(status)
 
 
-        print *, "3"
 
         do lake_index = 1, Nlakes
             if (lake_id(lake_index) == this%lake_number) then
@@ -210,8 +185,6 @@ contains
         this%min_release = minimum_release(lake_id_index)
         this%max_release = maximum_release(lake_id_index)
 
-
-        print *, "4"
 
 
         !CHECK RECORDINGS ABOUT BELOW. IF I NEED TO REMOVE ONE OF THE LINES?????
@@ -267,64 +240,3 @@ contains
     end subroutine machine_learning_parameters_destroy
 
 end module module_machine_learning_parameters
-
-
-! The functions that have been used for reading NetCDF file!
-!function nf90_inq_varid(ncid, name, varid)
-!    integer, intent(in) :: ncid
-!    character (len = *), intent( in) :: name
-!    real, intent(out) :: varid
-!    integer :: nf90_inq_varid
-!end function nf90_inq_varid
-
-
-!function nf90_get_var(ncid, varid, values)
-!    integer, intent( in) :: ncid, varid
-!    real, intent(out) :: values
-!    integer :: nf90_get_var
-!end function nf90_get_var
-
-
-!function nf90_strerror(ncerr)
-!    integer, intent( in) :: ncerr
-!    character(len = 80) :: nf90_strerror
-!end function nf90_strerror
-
-
-!subroutine handle_err(status)
-!    implicit none
-!    integer, intent ( in) :: status
-!    character :: nf90_strerror
-!    integer  :: nf90_noerr
-!    if(status /= nf90_noerr) then
-        !print *, trim(nf90_strerror(status))
-        !print *, nf90_strerror(status) !FIXME this line deactivated, but we need to check on it!
-!        stop "Stopped"
-!    end if
-
-!end subroutine handle_err
-
-
-!function nf90_open(path, mode, ncid, chunksize)
-!    character (len = *), intent(in   ) :: path
-!    integer,             intent(in   ) :: mode
-!    integer,             intent(  out) :: ncid
-!    integer, optional,   intent(inout) :: chunksize
-!    integer                            :: nf90_open
-!end function nf90_open
-
-
-!function nf90_inquire_variable(ncid, varid, name, xtype, ndims, dimids, nAtts)
-!    integer,                         intent( in) :: ncid, varid
-!    character (len = *),   optional, intent(out) :: name
-!    integer, dimension(*), optional, intent(out) :: dimids
-!    integer                                      :: nf90_inquire_variable
-!end function nf90_inquire_variable
-
-
-!function nf90_inquire_dimension(ncid, dimid, name, len)
-!    integer,                       intent( in) :: ncid, dimid
-!    character (len = *), optional, intent(out) :: name
-!    integer,             optional, intent(out) :: len
-!    integer                                    :: nf90_inquire_dimension
-!end function nf90_inquire_dimension

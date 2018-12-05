@@ -13,34 +13,27 @@
 module module_machine_learning_state
 
     use netcdf
-    !use module_HYDRO_io, only : RESTART_OUT_nc
-    !use module_namelist, only: nlst_rt
     use module_reservoir_utilities
-    !use module_machine_learning_utilities
     use module_reservoir_base
     implicit none
 
     ! Extend/derive machine learning state from the abstract base
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
-        !real :: current_storage
         real  :: water_elevation
         real*4 :: current_time_storage
         real :: end_time_storage
-        !real :: accumulated_storage
         real :: average_storage_over_past_time_intervals
 		real :: totaled_storage
-		!real :: average_storage
         real :: previous_time_release
         real :: average_inflow_over_past_time_intervals
         real :: accumulated_inflow
         integer :: time_interval
-        integer :: update_time    ! if reals how can we set exactly equals == ?
+        integer :: update_time
         integer :: new_day_time
-        !integer :: time_count
         integer :: release_count
-        integer :: current_time        ! should be 'real' instead???
-        character(len=19) :: start_date  ! keep as state var??
+        integer :: current_time
+        character(len=19) :: start_date
         integer :: start_day_of_year
         integer :: current_day_of_year
         integer :: start_month
@@ -56,8 +49,6 @@ module module_machine_learning_state
 
         procedure :: init => machine_learning_state_init
         procedure :: destroy => machine_learning_state_destroy
-        !procedure :: update_time
-
 
     end type machine_learning_state_interface
 
@@ -74,24 +65,14 @@ contains
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
-
         real, intent(inout) :: water_elevation
-
         character(len=19), intent(in) :: start_date
-
         integer, intent(in) :: restart_flag              ! signals if NWM is on a restart or not
                                                          ! 1 is cold start and 99 is restart
-
         integer, intent(in) :: lake_number              ! lake number
-
         integer :: time_interval
-
         integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
-
-
-
         integer :: lake_index, lake_id_index
-
         integer, allocatable, dimension (:) :: lake_id
 
         integer :: Nlakes
@@ -104,12 +85,10 @@ contains
         integer :: status       ! Status of reading NetCDF
 
 
-        integer :: monthly_averages_rows !
+        integer :: monthly_averages_rows
 
         !REMOVE???????
         real, allocatable, dimension (:)    ::long_term_release ! this represent a long-term average of the release to be used for previous day release at the very first day of calc!
-
-
 
         real, allocatable, dimension (:,:)  :: ID_monthly_averages
         real, allocatable, dimension (:,:)  :: release_monthly_averages
@@ -123,8 +102,6 @@ contains
 
         integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
         integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
-
-        print *, "6"
 
 
         this%water_elevation = water_elevation
@@ -142,7 +119,6 @@ contains
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
 
 
-        print *, "7"
 
         if (status /= nf90_noerr) call handle_err(status)
 
@@ -181,14 +157,6 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        print *, "8"
-
-
-
-
-
-
-
         status = nf90_inquire_variable(ncid, lake_idVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
 
@@ -196,15 +164,6 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
 
         allocate(lake_id(Nlakes))
-
-
-
-        print *, "9"
-
-
-        print *, 'lake_id'
-        print *, lake_id
-
 
 
         status = nf90_inquire_variable(ncid, time_intervalVarId, dimids = dimIDs)
@@ -215,11 +174,6 @@ contains
 
         allocate(time_intervals(Nlakes))
 
-
-
-
-        print *, 'time_intervals'
-        print *, time_intervals
 
 
         ! Monthly averages
@@ -250,9 +204,6 @@ contains
         allocate(release_monthly_averages(monthly_averages_rows, Nlakes))
 
 
-        print *, "10"
-
-
         status = nf90_inquire_variable(ncid, elevation_monthly_averagesVarId, dimids = dimIDs)
         if(status /= nf90_NoErr) call handle_err(status)
 
@@ -264,10 +215,6 @@ contains
 
 
         allocate(elevation_monthly_averages(monthly_averages_rows, Nlakes))
-
-
-        print *, "11"
-
 
 
         status = nf90_inquire_variable(ncid, inflow_monthly_averagesVarId, dimids = dimIDs)
@@ -296,20 +243,10 @@ contains
         allocate(storage_monthly_averages(monthly_averages_rows, Nlakes))
 
 
-
-
-        print *, "12"
-
-
-
-
         status = nf90_get_var(ncid, lake_idVarId, lake_id)
 
 
         if (status /= nf90_noerr) call handle_err(status)
-
-
-        print *, "13"
 
 
         status = nf90_get_var(ncid, time_intervalVarId, time_intervals)
@@ -343,14 +280,6 @@ contains
 
 
 
-        print *, 'lake_id'
-        print *, lake_id
-
-
-        print *, "14"
-
-
-
         lake_id_index = 0
 
         do lake_index = 1, Nlakes
@@ -360,16 +289,8 @@ contains
 
         end do
 
-        print *, "15"
-
-
-        print *, 'time_intervals'
-        print *, time_intervals
 
         time_interval = time_intervals(lake_id_index)
-
-        print *, 'time_interval'
-        print *, time_interval
 
 
         ! Check grab monthly avg from start date and set previous day storage and release to that.
@@ -383,35 +304,14 @@ contains
         read (this%start_date(1:4), *) start_year
 
 
-        print *, "16"
-
-        print *, release_monthly_averages
-
-        print *, "release_monthly_average"
-
-        print *, release_monthly_average
-
-        print *, lake_id_index
-
-        print *, start_month
-
-        print *, lake_id
-
-
 
         release_monthly_average = release_monthly_averages(lake_id_index, start_month)
 
-        print *, "16.05"
 
 
 
         storage_monthly_average = storage_monthly_averages(lake_id_index, start_month)
 
-        print *, "16.1"
-
-
-        print *, 'storage_monthly_average'
-        print *, storage_monthly_average
 
 
         ! If cold start
@@ -422,14 +322,7 @@ contains
 
             this%average_storage_over_past_time_intervals = storage_monthly_average
 
-            !this%accumulated_storage = storage_monthly_average
-
-            !this%current_storage = storage_monthly_average
             this%current_time_storage = storage_monthly_average
-
-            print *, "16.2"
-
-            print *, this%current_time_storage
 
             this%end_time_storage = storage_monthly_average
 
@@ -467,17 +360,12 @@ contains
 
         start_day_of_year = 0
 
-        print *, "16.5"
-
 
         if (((mod(start_year,4)==0 .and. mod(start_year,100)/=0) .or. mod(start_year,400)==0) .and. start_month>2) then
             do month_loop_index = 1, start_month-1
                 start_day_of_year = start_day_of_year + months(month_loop_index)
             end do
             start_day_of_year = start_day_of_year + start_day_of_month + 1    ! add one day for leap year after February
-
-
-        print *, "16.6"
 
 
         else
@@ -487,9 +375,6 @@ contains
 
             start_day_of_year = start_day_of_year + start_day_of_month     ! non leap year or leap year before March
         end if
-
-
-        print *, "17"
 
 
         this%start_year = start_year
@@ -504,8 +389,6 @@ contains
 
         this%current_day_of_year = start_day_of_year
 
-        !pi = 3.14159265359
-
 
         if (((mod(this%start_year,4)==0 .and. mod(this%start_year,100)/=0) .or. mod(this%start_year,400)==0) .and. this%start_month>2) then
             this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%start_day_of_year / 366) ! leap year after February
@@ -514,11 +397,6 @@ contains
             this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%start_day_of_year / 365) ! non leap year or leap year before March
             this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%start_day_of_year / 365)
         end if
-
-
-        print *, "18"
-
-
 
 
 
@@ -532,85 +410,4 @@ contains
     end subroutine machine_learning_state_destroy
 
 
-
-
-    !subroutine update_time(this, time_interval)
-    !    implicit none
-    !    class(machine_learning_state_interface), intent(inout) :: this ! the type object
-
-
-    !    real, intent(in) :: time_interval
-
-        !integer, intent(in) :: lake_number              ! lake number
-
-    !    real :: storage_accum
-
-    !    real :: average_inflow
-
-    !    integer :: count
-
-
-    !end subroutine update_time
-
-
-
 end module module_machine_learning_state
-
-
-
-! The functions that have been used for reading NetCDF file!
-!function nf90_inq_varid(ncid, name, varid)
-!    integer, intent(in) :: ncid
-!    character (len = *), intent( in) :: name
-!    real, intent(out) :: varid
-!    integer :: nf90_inq_varid
-!end function nf90_inq_varid
-
-
-!function nf90_get_var(ncid, varid, values)
-!    integer, intent( in) :: ncid, varid
-!    real, intent(out) :: values
-!    integer :: nf90_get_var
-!end function nf90_get_var
-
-
-!function nf90_strerror(ncerr)
-!    integer, intent( in) :: ncerr
-!    character(len = 80) :: nf90_strerror
-!end function nf90_strerror
-
-!subroutine handle_err(status)
-!    implicit none
-!    integer, intent ( in) :: status
-!    character :: nf90_strerror
-!    integer  :: nf90_noerr
-!    if(status /= nf90_noerr) then
-        !print *, trim(nf90_strerror(status))
-        !print *, nf90_strerror(status) !FIXME this line deactivated, but we need to check on it!
-!        stop "Stopped"
-!    end if
-!end subroutine handle_err
-
-!function nf90_open(path, mode, ncid, chunksize)
-!    character (len = *), intent(in   ) :: path
-!    integer,             intent(in   ) :: mode
-!    integer,             intent(  out) :: ncid
-!    integer, optional,   intent(inout) :: chunksize
-!    integer                            :: nf90_open
-!end function nf90_open
-
-!function nf90_inquire_variable(ncid, varid, name, xtype, ndims, dimids, nAtts)
-!    integer,                         intent( in) :: ncid, varid
-!    character (len = *),   optional, intent(out) :: name
-!    integer, dimension(*), optional, intent(out) :: dimids
-!    integer                                      :: nf90_inquire_variable
-!end function nf90_inquire_variable
-
-
-!function nf90_inquire_dimension(ncid, dimid, name, len)
-!    integer,                       intent( in) :: ncid, dimid
-!    character (len = *), optional, intent(out) :: name
-!    integer,             optional, intent(out) :: len
-!    integer                                    :: nf90_inquire_dimension
-!end function nf90_inquire_dimension
-
