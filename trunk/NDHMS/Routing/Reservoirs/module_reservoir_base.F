@@ -79,8 +79,6 @@ module module_reservoir_base
         ! it cannot be implemented for a base reservoir but only for
         ! a sub-type of reservoir.
         procedure (run_release_interface), deferred           :: run_release
-        procedure (reservoir_write_to_restart_file), deferred :: write_to_restart_file
-        procedure (reservoir_read_from_restart_file), deferred :: read_from_restart_file
 
         procedure (reservoir_timestep_pre_conditions_warn_interface), deferred    :: timestep_pre_conditions_warn
         procedure (reservoir_timestep_pre_conditions_modify_interface), deferred  :: timestep_pre_conditions_modify
@@ -116,39 +114,11 @@ module module_reservoir_base
         end subroutine run_release_interface
 
 
-        !subroutine reservoir_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid)
-        !    import reservoir_base_struct
-        !    class(reservoir_base_struct), intent(inout) :: reservoir_data
-        !    integer, intent(inout) :: iret, ncid, NF_FLOAT, varid
-        !    integer, dimension(:), intent(in) :: dimid_lakes
-
-
-        subroutine reservoir_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
-        !subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, dimid_lakes, varid, nlakes, lake_index)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-            integer, intent(inout) :: iret, ncid
-            integer, intent(in) :: NF_FLOAT, varid, nlakes, lake_index
-            integer, dimension(:), intent(in) :: dimid_lakes
-
-
-
-        end subroutine reservoir_write_to_restart_file
-
-
-        subroutine reservoir_read_from_restart_file(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_read_from_restart_file
-
-
         subroutine reservoir_timestep_pre_conditions_warn_interface(reservoir_data)
             import reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
 
         end subroutine reservoir_timestep_pre_conditions_warn_interface
-
 
 
         subroutine reservoir_timestep_pre_conditions_modify_interface(reservoir_data, routing_period)

@@ -52,8 +52,6 @@ module module_machine_learning
         procedure :: init => machine_learning_struct_init
         procedure :: destroy => machine_learning_struct_destroy
         procedure :: run_release => run_machine_learning_release
-        procedure :: write_to_restart_file => machine_learning_write_to_restart_file
-        procedure :: read_from_restart_file => machine_learning_read_from_restart_file
 
         procedure :: timestep_pre_conditions_warn => machine_learning_timestep_pre_conditions_warn
         procedure :: timestep_pre_conditions_modify => machine_learning_timestep_pre_conditions_modify
@@ -630,40 +628,6 @@ contains
 
 
     end subroutine update_preprocessing
-
-
-    subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, NF_FLOAT, dimid_lakes, varid, nlakes, lake_index)
-    !subroutine machine_learning_write_to_restart_file(reservoir_data, iret, ncid, dimid_lakes, varid, nlakes, lake_index)
-        implicit none
-        class(machine_learning_struct), intent(inout) :: reservoir_data
-        integer, intent(inout) :: iret, ncid
-        integer, intent(in) :: NF_FLOAT, varid, nlakes, lake_index
-        integer, dimension(:), intent(in) :: dimid_lakes
-
-        ! Works
-        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
-
-
-        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, dimid_lakes, varid)
-
-
-    end subroutine machine_learning_write_to_restart_file
-
-
-    subroutine machine_learning_read_from_restart_file(reservoir_data)
-        implicit none
-        class(machine_learning_struct), intent(inout) :: reservoir_data
-
-
-    end subroutine machine_learning_read_from_restart_file
-
-
-
-
-
-
-
-
 
 
     function machine_learning_data_info(machine_learning_data) result(rv)
