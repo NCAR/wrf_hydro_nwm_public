@@ -88,58 +88,6 @@ use module_reservoir_base
       character(len=19) str_tmp
 #endif
 
-
-
-
-
-    integer :: lake_index
-
-
-    integer :: aa, bb, cc, dd, ee
-    real :: ff
-
-    !allocate (temp_machine_learning_current_time_storage_array(rt_domain(did)%nlakes))
-
-    !temp_machine_learning_current_time_storage_array = 0.0
-
-    do lake_index = 1, rt_domain(did)%nlakes
-        if (rt_domain(did)%q_type(lake_index) == 2.0) then
-
-            !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
-
-            !builds
-            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
-
-            print *, 'hydro drv restart setting storage for reservoir at index: ', lake_index
-
-            select type (ml => rt_domain(1)%reservoirs(lake_index)%ptr)
-            !select type (ml => reservoirs(lake_index)%ptr)
-                type is (machine_learning_struct)
-                    print *, 'Hydro drv entered select'
-
-                    print *, 'hydro drv current time storage'
-
-                    print *, ml%state%current_time_storage
-            end select
-
-
-        end if
-    end do
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       rst_out = -99
 #ifdef MPP_LAND
    if(IO_id .eq. my_id) then

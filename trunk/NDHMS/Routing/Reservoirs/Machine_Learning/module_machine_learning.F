@@ -234,11 +234,11 @@ contains
 
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
-        ! Check for new day and update day x and y
+        ! Check for a new day and update x and y for the day of the year (DoY)
         call reservoir_data%timestep_preprocessing()
 
 
-        ! Update end time storage from current inflow and previous timestep outflow
+        ! Update storage from the most recent model states
         reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 

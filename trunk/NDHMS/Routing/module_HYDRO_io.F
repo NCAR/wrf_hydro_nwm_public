@@ -6162,23 +6162,23 @@ print *, '20.0'
 print *, '21.0'
 
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
+!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
+!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
     print *, 'after hydro_io call to w_rst_crt_nc1_lake'
 
@@ -6249,6 +6249,7 @@ print *, '23.0'
 
             !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
             !call reservoir_write_to_restart_file2(reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
+
             call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
             nlst_rt(did)%olddate, nlst_rt(did)%sincedate, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlst_rt(did)%DTCT, rt_domain(did)%his_out_counts, &
             nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, dimid_lakes, &

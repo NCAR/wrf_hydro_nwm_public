@@ -19,7 +19,7 @@ module module_io_utilities
 
 
             ! Originally from HYDRO_io.F
-            subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName &
+            subroutine w_rst_crt_nc1_lake(ncid,n,inVar, array_index, varName &
 #ifdef MPP_LAND
                      ,nodelist     &
 #endif
@@ -31,7 +31,7 @@ module module_io_utilities
             !subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName,nodelist)
 
                implicit none
-               integer:: ncid,n,varid , iret
+               integer:: ncid,n,varid , iret, array_index
                character(len=*) varName
                real inVar(n)
 #ifdef MPP_LAND
@@ -51,7 +51,9 @@ module module_io_utilities
 
 
                   !iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
-                  iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
+                  !iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
+
+                  iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/n/))
 
 
 
