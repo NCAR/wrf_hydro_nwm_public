@@ -100,6 +100,19 @@ if [[ $theArgument -eq 4 ]] || [[ $theArgument == luna ]]; then
     echo "Configured: ifort on Luna"
 fi
 
+if [[ $theArgument -eq 5 ]] || [[ $theArgument == ifort_omp ]]; then
+    ## theia login machines self identify as "tfe" and have
+    ## their own intel macros. We handle luna more explicitly... 
+    if [[ $HOSTNAME != *tfe* ]]; then
+	cp arc/macros.mpp.ifort.omp macros 
+	echo "Configured: ifort"
+    else
+	cp arc/macros.mpp.ifort.theia macros
+	echo "Configured: ifort on Theia"
+    fi
+    cp arc/Makefile.mpp Makefile.comm
+fi
+
 ## The above result in a new macros file which was
 ## previously deleted. If it does not exist, none
 ## were chosen.
