@@ -1,8 +1,6 @@
 
 module module_machine_learning_model
 
-    !use module_reservoir_base
-
     use netcdf
     use module_reservoir_utilities
     !use module_machine_learning_utilities
@@ -21,7 +19,6 @@ module module_machine_learning_model
 
     type NN_reservoir_in_out
         REAL :: previous_time_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
-        !REAL :: average_storage_over_past_time_intervals  !
         REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
         REAL :: current_storage !
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
@@ -36,7 +33,6 @@ module module_machine_learning_model
         integer, dimension (10) :: link_activation_functions ! FIXME, I had a hard time setting this into an allocatable dimension; so I had to fix it to a constant maximum number of layer = 10
 
     end type NN_node
-
 
 
     type :: machine_learning_model_struct
@@ -298,12 +294,6 @@ contains
         end do
 
 
-        !Linear interpolation to calculate "previous storage" based on the "previous pool elevation" using a linear interpolation on "acap" table!
-        !FIXME Nels suggested to use "binary search" for this purpose;
-        !WARNING: note if this is the case, we will need to train the model based on these new way of calculation of storage from acap files!
-        !This code for linear interpolation needs some modifications as well!
-
-
         this%nn_inputs%previous_time_release = 0.0
         this%nn_inputs%current_storage = 0.0
         this%nn_inputs%average_inflow_over_past_time_intervals = 0.0
@@ -311,29 +301,11 @@ contains
         this%nn_inputs%Y_DOY = 0.0
 
 
-        ! this has been intentionally deactivated;  Index([u'Release', u'Elevation', u'Inflow', u'DOX', u'DOY', u'Storage'], dtype='object') coming from ACF NetCDF file
         this%minimum_of_features_final = (/this%minimum_of_features(1), this%minimum_of_features(6), this%minimum_of_features(3),&
          this%minimum_of_features(2), this%minimum_of_features(4), this%minimum_of_features(5)/)
 
         this%maximum_of_features_final = (/this%maximum_of_features(1), this%maximum_of_features(6), this%maximum_of_features(3),&
          this%maximum_of_features(2), this%maximum_of_features(4), this%maximum_of_features(5)/)
-
-
-        !THESE BELOW ARE USE FURTHER DOWN IN THE CODE I THINK. CHECK SLACK. CAN TAKE THESE OUT I THINK.
-
-        !this%normalized_nn_inputs%previous_time_release = (this%nn_inputs%previous_time_release - this%minimum_of_features_final(1))&
-        !/(this%maximum_of_features_final(1) - this%minimum_of_features_final(1))
-
-        !this%normalized_nn_inputs%previous_storage = (this%nn_inputs%previous_storage - this%minimum_of_features_final(2))&
-        !/(this%maximum_of_features_final(2) - this%minimum_of_features_final(2))
-
-        !this%normalized_nn_inputs%inflow = (this%nn_inputs%inflow - this%minimum_of_features_final(3))&
-        !/(this%maximum_of_features_final(3) - this%minimum_of_features_final(3))
-
-
-        !this%normalized_nn_inputs%X_DOY = this%nn_inputs%X_DOY ! this variable is already
-        !this%normalized_nn_inputs%Y_DOY = this%nn_inputs%Y_DOY
-
 
 
         this%y_min = this%minimum_of_features(1)! minimum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
@@ -405,11 +377,6 @@ contains
 
 
         ! Here input combination is assigned!
-
-        !model_data%input_vector = (/normalized_nn_inputs_local%previous_time_release, normalized_nn_inputs_local%X_DOY,&
-        !    normalized_nn_inputs_local%Y_DOY, normalized_nn_inputs_local%previous_storage, &
-        !    normalized_nn_inputs_local%inflow/)
-
         model_data%input_vector = (/model_data%normalized_nn_inputs%previous_time_release, model_data%normalized_nn_inputs%X_DOY,&
             model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%current_storage, &
             model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)
@@ -460,30 +427,8 @@ contains
         model_data%normalized_simulated_release = model_data%nn_sum_matrix_activated(1)
 
 
-
         ! Simulated release should be denormalized
-        !ml_simulated_release_local = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
-        !model_data%ml_simulated_release = ml_simulated_release_local
-
 		release = model_data%normalized_simulated_release * (model_data%y_max - model_data%y_min) + model_data%y_min ! first array refers to "Release" values; we could instead introduce it as
-
-
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIXME The corrector terms need to be added here (we already have them in the Python)
-
-        !Calculate the reservoir storage at the current time (i.e., the storage that corresponds to the simulated release); this part will need revision for the operational version
-
-        !FIXME Copied from Python
-
-
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!End of the corrector terms
-
-        ! !qo1 = revised_simulated_release ! the revised version of the simulated release is sent back to the same variable within "LEVELPOOL" subroutine!
-
-
-
-
-        !!##########################################################################################################################################
-
 
 
     end subroutine run_machine_learning_model

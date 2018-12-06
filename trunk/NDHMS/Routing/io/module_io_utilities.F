@@ -53,6 +53,8 @@ module module_io_utilities
                   !iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
                   iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 
+
+
                 print *, 'put var'
                 if(iret /= nf90_NoErr) call handle_err2(iret)
 
