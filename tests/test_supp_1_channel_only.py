@@ -377,14 +377,21 @@ def test_perfrestart_candidate_channel_only(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
+            key1 = 'hydro_nlist'
+            key2 = 'restart_file'
+            restart_job._hydro_namelist[key1][key2] = candidate_hydro_restart_file
 
     # Nudging: Use actual time listed in meta data not filename or positional list index
-    for restart_file in candidate_channel_only_sim_expected.output.restart_nudging:
-        restart_time = restart_file.open().modelTimeAtOutput
-        restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == restart_job.model_start_time:
-            candidate_nudging_restart_file = pathlib.Path(restart_file.name)
-            candidate_nudging_restart_file.symlink_to(restart_file)
+    if candidate_channel_only_sim_expected.output.restart_nudging is not None:
+        for restart_file in candidate_channel_only_sim_expected.output.restart_nudging:
+            restart_time = restart_file.open().modelTimeAtOutput
+            restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
+            if restart_time == restart_job.model_start_time:
+                candidate_nudging_restart_file = pathlib.Path(restart_file.name)
+                candidate_nudging_restart_file.symlink_to(restart_file)
+                key1 = 'nudging_nlist'
+                key2 = 'nudginglastobsfile'
+                restart_job._hydro_namelist[key1][key2] = candidate_nudging_restart_file
 
     # Compose and run
     # Catch warnings related to missing start and end job times
