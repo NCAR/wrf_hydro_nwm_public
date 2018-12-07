@@ -20,10 +20,7 @@ module module_io_utilities
 
             ! Originally from HYDRO_io.F
             subroutine w_rst_crt_nc1_lake(ncid,n,inVar, array_index, varName &
-#ifdef MPP_LAND
-                     ,nodelist     &
-#endif
-                      )
+                     ,nodelist)
 
 
 
@@ -34,26 +31,97 @@ module module_io_utilities
                integer:: ncid,n,varid , iret, array_index
                character(len=*) varName
                real inVar(n)
-#ifdef MPP_LAND
                integer:: nodelist(n)
                if(n .eq. 0) return
 
-               !call write_lake_real(inVar,nodelist,n)
-               if(my_id .eq. IO_id) then
-#endif
-                  iret = nf90_inq_varid(ncid,varName, varid)
 
+                print *, 'varid before'
+                print *, varid
+
+               iret = nf90_inq_varid(ncid,varName, varid)
+
+
+                print *, 'varid after'
+                print *, varid
+
+
+                print *, 'array_index'
+                print *, array_index
 
                 print *, 'inq_varid'
 
                 if(iret /= nf90_NoErr) call handle_err2(iret)
 
-
+                !call flush(6)
 
                   !iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+
+
+
+                    ! prints all
                   !iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 
-                  iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/n/))
+
+                !prints first
+                !iret = nf90_put_var(ncid, varid, inVar, (/1/), (/1/))
+
+
+
+                !prints very large and very small vals
+                !iret = nf90_put_var(ncid, varid, inVar, (/1/), count = (/array_index/))
+
+
+                !prints second outflow in first slot when entire outflow array passed
+                !iret = nf90_put_var(ncid, varid, (/inVar(2)/), (/1/), (/1/))
+
+
+
+
+                !prints second outflow in second slot when entire array passed
+                !iret = nf90_put_var(ncid, varid, (/inVar(2)/), (/2/), (/1/))
+
+
+
+                !prints a given outflow array of size 1 passed in and places in slot 2
+                !iret = nf90_put_var(ncid, varid, inVar, (/2/), (/1/))
+
+                iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/))
+
+
+                !prints very large numbers
+                !iret = nf90_put_var(ncid, varid, (/inVar(2)/), (/1/), (/15/))
+
+
+
+                !pass in all outputs and prints nothing
+                !iret = nf90_put_var(ncid, varid, inVar, (/15/), (/n/))
+
+
+
+                  !iret = nf90_put_var(ncid, varid, inVar, (/1/), (/1/))
+
+
+
+
+
+
+
+
+                  !iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/n/))
+
+
+                  !iret = nf90_put_var(ncid, varid, inVar, (/array_index/))
+
+
+                    !iret = nf90_put_var(ncid, varid, inVar, (/1/), (/1/))
+
+
+                !iret = nf90_put_var(ncid, varid, inVar, (/1/))
+
+
+                !iret = nf90_put_var(ncid, varid, inVar(1), start = (/1/))
+
+                print *, 'inVar'
 
 
 
@@ -73,17 +141,6 @@ print *,'nodelist'
 print *,nodelist
 
 
-#ifdef MPP_LAND
-            print *, 'yes mpp'
-#else
-            print *, 'no mpp'
-#endif
-
-
-
-#ifdef MPP_LAND
-               endif
-#endif
                return
             end subroutine w_rst_crt_nc1_lake
 
