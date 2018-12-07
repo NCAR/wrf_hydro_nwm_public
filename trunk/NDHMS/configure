@@ -105,7 +105,7 @@ if [[ $theArgument -eq 5 ]] || [[ $theArgument == ifort_omp ]]; then
     ## their own intel macros. We handle luna more explicitly... 
     if [[ $HOSTNAME != *tfe* ]]; then
 	cp arc/macros.mpp.ifort.omp macros 
-	echo "Configured: ifort"
+	echo "Configured: ifort with OpenMP"
     else
 	cp arc/macros.mpp.ifort.theia macros
 	echo "Configured: ifort on Theia"
