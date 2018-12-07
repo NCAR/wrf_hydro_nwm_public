@@ -152,8 +152,8 @@ MODULE MODULE_MPP_LAND
       CALL mpi_initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
            call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )  ! stand alone land model.
-      endif
            HYDRO_COMM_WORLD = MPI_COMM_WORLD
+      endif
            call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
            call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
 !     create 2d logical mapping of the CPU.

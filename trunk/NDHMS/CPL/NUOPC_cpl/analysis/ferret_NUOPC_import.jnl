@@ -1,0 +1,124 @@
+ ! FERRET v6.96 Script
+ ! >ferret -gif -script ferret_NUOPC_import.jnl [Grid File] [Restart File]
+ ! Author: Daniel Rosen
+ ! Organization: NESII/CIRES/NOAA
+ ! Email: daniel.rosen@noaa.gov
+ ! Date: 2017-02-27
+
+CANCEL MODE LOGO
+
+SAY *** Generating NUOPC restart SHADE plots ***
+SAY 
+
+! Load grid file and compute output file label
+USE $1
+SET VARIABLE/TITLE="Longitude" lon_center[d=1]; \
+SET VARIABLE/TITLE="Latitude" lat_center[d=1]; \
+
+! Load file and compute output file prefix and plot label prefix
+USE $2
+DEFINE SYMBOL filename `"$2"`
+DEFINE SYMBOL cindex `STRINDEX("($filename)","_")`
+DEFINE SYMBOL rindex `STRINDEX("($filename)","_RSTRT_")`
+DEFINE SYMBOL gindex `STRINDEX("($filename)","_DEBUG_")`
+DEFINE SYMBOL iindex `STRINDEX("($filename)","_IMP_")`
+DEFINE SYMBOL eindex `STRINDEX("($filename)","_EXP_")`
+DEFINE SYMBOL tindex `STRRINDEX("($filename)",":")`
+DEFINE SYMBOL dindex `STRRINDEX("($filename)","_D")`
+DEFINE SYMBOL xindex `STRRINDEX("($filename)",".nc")`
+DEFINE SYMBOL comp `SUBSTRING("($filename)",1,($cindex)-1)`
+DEFINE SYMBOL datetime `SUBSTRING("($filename)",($tindex)-16,19)`
+DEFINE SYMBOL domain `SUBSTRING("($filename)",($dindex)+1,($xindex)-($dindex)-1)`
+IF `($rindex) GT 0` THEN
+ DEFINE SYMBOL lmode Restart
+ DEFINE SYMBOL fmode RST
+ELIF `($gindex) GT 0` THEN
+ DEFINE SYMBOL lmode Debug
+ DEFINE SYMBOL fmode DBG
+ENDIF
+IF `($iindex) GT 0` THEN
+ DEFINE SYMBOL lstate Import
+ DEFINE SYMBOL fstate IMP
+ELIF `($eindex) GT 0` THEN
+ DEFINE SYMBOL lstate Export
+ DEFINE SYMBOL fstate EXP
+ENDIF
+
+DEFINE SYMBOL fprefix plot_($fmode)_($domain)_($comp)_($fstate)_($datetime)
+DEFINE SYMBOL lprefix ($lmode) ($domain) ($comp) ($lstate) ($datetime)
+
+! Print datasets
+SHOW DATA/BRIEF
+
+! Define single level variables
+LET fnames = {                              \
+"surface_runoff_amount",                    \
+"subsurface_runoff_amount",                 \
+"soil_moisture_fraction_layer_1",           \
+"soil_moisture_fraction_layer_2",           \
+"soil_moisture_fraction_layer_3",           \
+"soil_moisture_fraction_layer_4",           \
+"liquid_fraction_of_soil_moisture_layer_1", \
+"liquid_fraction_of_soil_moisture_layer_2", \
+"liquid_fraction_of_soil_moisture_layer_3", \
+"liquid_fraction_of_soil_moisture_layer_4", \
+"soil_temperature_layer_1",                 \
+"soil_temperature_layer_2",                 \
+"soil_temperature_layer_3",                 \
+"soil_temperature_layer_4"                  \
+}
+
+! Define single level variable titles
+LET ftitles = {                    \
+"Surface Runoff",                  \
+"Subsurface Runoff",               \
+"Soil Moisture Content LV1",       \
+"Soil Moisture Content LV2",       \
+"Soil Moisture Content LV3",       \
+"Soil Moisture Content LV4",       \
+"Fraction of Liquid Moisture LV1", \
+"Fraction of Liquid Moisture LV2", \
+"Fraction of Liquid Moisture LV3", \
+"Fraction of Liquid Moisture LV4", \
+"Soil Temperature LV1",            \
+"Soil Temperature LV2",            \
+"Soil Temperature LV3",            \
+"Soil Temperature LV4"             \
+}
+
+! Define single level forcing variable scales
+LET fminvals  = { 0,        0,        0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   260, 260, 260, 260 }
+LET fmaxvals  = { 0.000100, 0.000100, 0.42,  0.42,  0.42,  0.42,  0.42,  0.42,  0.42,  0.42,  320, 320, 320, 320 }
+LET fstepvals = { 0.000002, 0.000001, 0.007, 0.007, 0.007, 0.007, 0.007, 0.007, 0.007, 0.007, 1,   1,   1,   1   }
+LET fminoutlr = { 0,        0,        0,     0,     0,     0,     0,     0,     0,     0,     250, 250, 250, 250 } 
+LET fmaxoutlr = { 0.01,     0.001,    1,     1,     1,     1,     1,     1,     1,     1,     350, 350, 350, 350 }
+
+! Create SHADE plots for single level forcing variables
+SAY
+SAY *** Plotting single level forcing variables ***
+REPEAT/RANGE=1:`fnames,return=isize`/NAME=vctr ( \
+DEFINE SYMBOL vindex `vctr`; \
+DEFINE SYMBOL vtitle `ftitles[i=($vindex)]`  ; \
+DEFINE SYMBOL vname  `fnames[i=($vindex)]`   ; \
+DEFINE SYMBOL vmin   `fminvals[i=($vindex)]` ; \
+DEFINE SYMBOL vmax   `fmaxvals[i=($vindex)]` ; \
+DEFINE SYMBOL vstep  `fstepvals[i=($vindex)]`; \
+DEFINE SYMBOL vmnol  `fminoutlr[i=($vindex)]`; \
+DEFINE SYMBOL vmxol  `fmaxoutlr[i=($vindex)]`; \
+SET VARIABLE/BAD=-9999/TITLE="($vtitle)" ($vname)[d=2]; \
+SAY ($vtitle) (outliers,min,max,outliers)=\
+(($vmnol),($vmin),($vmax),($vmxol)); \
+SHADE/LEVELS="(($vmnol))(($vmin),($vmax),($vstep))(($vmxol))"/\
+KEY=CONTINUOUS/TITLE="($lprefix) ($vtitle)" \
+($vname)[d=2], lon_center[d=1], lat_center[d=1]; \
+FRAME/FILE=($fprefix)_($vname).gif \
+)
+
+! Create compressed tar archive of all .gif files
+SAY
+SAY *** Creating plots.tar.gz archive ***
+SPAWN tar -czf plots.tar.gz *.gif
+
+SAY
+
+exit
