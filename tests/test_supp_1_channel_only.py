@@ -54,12 +54,53 @@ EXCLUDE_VARS = ['ACMELT',
                 'reference_time',
                 'lake_inflort']
 
+EXCLUDE_VARS_CHAN_ONLY = [
+    'stc1',
+    'smc1',
+    'sh2ox1',
+    'stc2',
+    'smc2',
+    'sh2ox2',
+    'stc3',
+    'smc3',
+    'sh2ox3',
+    'stc4',
+    'smc4',
+    'sh2ox4',
+    'infxsrt',
+    'soldrain',
+    'sfcheadrt',
+    'QBDRYRT',
+    'infxswgt',
+    'sfcheadsubrt',
+    'sh2owgt1',
+    'sh2owgt2',
+    'sh2owgt3',
+    'sh2owgt4',
+    'qstrmvolrt',
+    'hlink',
+    'lake_inflort'
+]
+
+#List variabls to ignore in tests, primarily accumulation variables
+EXCLUDE_VARS = ['ACMELT',
+                'ACSNOW',
+                'SFCRUNOFF',
+                'UDRUNOFF',
+                'ACCPRCP',
+                'ACCECAN',
+                'ACCEDIR',
+                'ACCETRAN',
+                'qstrmvolrt',
+                'reference_time',
+                'lake_inflort']
+
 # Channel-only Run
 def test_run_candidate_channel_only(
-    candidate_sim,
-    candidate_channel_only_sim,
-    output_dir,
-    ncores
+        candidate_sim,
+        candidate_channel_only_sim,
+        output_dir,
+        ncores
 ):
 
     if candidate_sim.model.model_config.lower().find('nwm') < 0:
@@ -71,7 +112,7 @@ def test_run_candidate_channel_only(
     candidate_sim_copy = copy.deepcopy(candidate_sim)
     candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_copy.\
+    candidate_channel_only_sim_copy. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
 
     ##################
@@ -236,7 +277,7 @@ def test_ncores_candidate_channel_only(output_dir):
     candidate_channel_only_sim_expected = \
         pickle.load(candidate_channel_only_collected_file.open("rb"))
     candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_ncores.\
+    candidate_channel_only_sim_ncores. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     run_dir = output_dir / 'ncores_candidate_channel_only'
     run_dir.mkdir(parents=True)
