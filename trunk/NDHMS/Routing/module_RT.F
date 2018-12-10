@@ -38,6 +38,7 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool
    use module_machine_learning
+   use module_read_timeslice_data
    !use module_read_q_type
 
    IMPLICIT NONE
@@ -776,6 +777,10 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! for the reservoir type (q_type) of reservoirs that are not the
    ! default levelpool type.
    ! call read_q_type(NLAKES_total, rt_domain(did)%q_type, rt_domain(did)%model_number, number_of_unique_models)
+
+
+   allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data%ptr )
+
 
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)

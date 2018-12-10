@@ -1,4 +1,4 @@
-module read_timslice_data
+module module_read_timeslice_data
 
     !use module_namelist,      only: nlst_rt
 
@@ -544,7 +544,7 @@ end function nfeb
 
 
 
-end module read_timslice_data
+end module module_read_timeslice_data
 
 
 
