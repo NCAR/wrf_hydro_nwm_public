@@ -16,6 +16,13 @@ module module_read_timeslice_data
     type :: read_timslice_data_struct
 
         character(len=19) :: current_time
+        character(len=19) :: start_date
+
+    contains
+
+        procedure :: init => read_timslice_data_struct_init
+        procedure :: destroy => read_timslice_data_struct_destroy
+
 
 
     end type read_timslice_data_struct
@@ -26,8 +33,25 @@ module module_read_timeslice_data
 contains
 
 
+        subroutine read_timslice_data_struct_init(this, start_date)
+
+            implicit none
+            class(read_timslice_data_struct), intent(inout) :: this ! object being initialized
+
+            character(len=19), intent(in) :: start_date
+
+            this%start_date = start_date
 
 
+        end subroutine read_timslice_data_struct_init
+
+
+        subroutine read_timslice_data_struct_destroy(this)
+
+            implicit none
+            class(read_timslice_data_struct), intent(inout) :: this ! object being destroyed
+
+        end subroutine read_timslice_data_struct_destroy
 
 
 

@@ -782,6 +782,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data%ptr )
 
 
+   call rt_domain(did)%read_timeslice_data%ptr%init(nlst_rt(did)%startdate(1:19))
+
+
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
 
