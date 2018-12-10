@@ -1,17 +1,37 @@
-module orchestrator
-  use groundwater_base
+module orchestrator_base
+  !use groundwater_base
+  use io_manager_base
   implicit none
 
-  public:
-  !class(FluxAggregator_) :: flux_aggregator
-  class(Groundwater_) :: groundwater
-  !class(TimeManager_) :: time_manager
-  !class(IOManager_) :: IO_manager
-  !class(Configuration_) :: configuration
-  !class(SpatialObject_) :: spatial_object
-
+  interface orchestrator_
+     procedure orchestrator_init
+  end interface orchestrator_
+  
+  type orchestrator_
+     
+     !class(FluxAggregator_) :: flux_aggregator
+     !class(Groundwater_) :: groundwater
+     !class(TimeManager_) :: time_manager
+     class(IOManager_) :: IO_manager
+     !class(Configuration_) :: configuration
+     !class(SpatialObject_) :: spatial_object
+     
+   contains
+     
+     
+  end type orchestrator_
+  
 contains
 
+  type(groundwater_static_struct) function orchestrator_init()
+
+    write(*,*) 'In orchestrator constructor'
+
+    ! Read configuration and decide how to assemble the various components
+    ! Assuming IO_Manager_serial_ selected
+    orchestrator_init%IO_manager = IOManager_serial()
+    
+  end function orchestrator_init
 
 
-end module orchestrator
+end module orchestrator_base
