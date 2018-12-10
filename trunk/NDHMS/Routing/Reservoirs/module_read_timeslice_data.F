@@ -8,6 +8,20 @@ module read_timslice_data
     implicit none
 
 
+    type :: read_timslice_data_container
+        class (read_timslice_data_struct), pointer :: ptr
+    end type
+
+
+    type :: read_timslice_data_struct
+
+        character(len=19) :: current_time
+
+
+    end type read_timslice_data_struct
+
+
+
 
 contains
 
@@ -42,9 +56,10 @@ subroutine setup_read_timeslice()
     integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 
 
+!!!!!!!!!!!
     !lsmTime = nlst_rt(did)%olddate
     !initTime = nlst_rt(did)%startdate
-
+!!!!!!!!!!
 
 
 
