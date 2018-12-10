@@ -85,6 +85,10 @@ module module_io_utilities
                 !prints a given outflow array of size 1 passed in and places in slot 2
                 !iret = nf90_put_var(ncid, varid, inVar, (/2/), (/1/))
 
+
+                !iret = nf90_var_par_access(ncid, varid, nf90_collective)
+
+
                 iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/))
 
 
@@ -120,8 +124,6 @@ module module_io_utilities
 
 
                 !iret = nf90_put_var(ncid, varid, inVar(1), start = (/1/))
-
-                print *, 'inVar'
 
 
 

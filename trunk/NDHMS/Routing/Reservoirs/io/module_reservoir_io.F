@@ -6,6 +6,10 @@ module module_reservoir_io
 
     use module_machine_learning
 
+    !use mpi, only: MPI_INFO_NULL
+    !NEED THEN IFDEF PARALLEL LIKE IN MODULE_HRLDAS_NETCDF_IO.F??????
+
+
     implicit none
 
 
@@ -59,11 +63,25 @@ contains
 
 
 
+       ! MPI stuff: number of processors, rank of this processor, and error
+       ! code.
+       integer :: p, my_rank, ierr
+
+
 
 
         integer :: array_size
 
         if (nlakes <= 0) return
+
+
+       ! Initialize MPI, learn local rank and total number of processors.
+       !call MPI_Init(ierr)
+       !call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+       !call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)
+
+
+
 
         !write(did_string,'(I5)') did
 
@@ -76,10 +94,35 @@ contains
         print *, 'reservoir restart write in reservoir_io'
 
 
-       iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
+       ! original
+       !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
+
+
+        !!!!!!!!!
+        !Creates reservoir restart files
+       !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid, MPI_COMM_WORLD, info = MPI_INFO_NULL)
+
+        iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_NETCDF4), ncid, comm = MPI_COMM_WORLD, info = MPI_INFO_NULL)
+
+        !!!!!!!
+
+
+        !call check( nf90_create(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, info = MPI_INFO_NULL) )
+
+        !iret = nf90_create(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, info = MPI_INFO_NULL)
+
+       !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_NETCDF4), ncid, MPI_COMM_WORLD, info = MPI_INFO_NULL)
 
 
 
+        !iret = nf90_var_par_access(ncid, varid, nf90_collective)
+
+
+        ! setting the 'comm =' does not create reservoir restarts
+       !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid, comm = MPI_COMM_WORLD)
+
+
+        !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid, MPI_COMM_WORLD, MPI_INFO_NULL)
 
 
 
@@ -548,6 +591,16 @@ contains
 
 
     end subroutine reservoir_read_from_restart_file2
+
+
+   subroutine check(status)
+     integer, intent ( in) :: status
+
+     if(status /= nf90_noerr) then
+       print *, trim(nf90_strerror(status))
+       stop 2
+     end if
+   end subroutine check
 
 
 

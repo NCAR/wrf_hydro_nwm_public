@@ -329,13 +329,8 @@ contains
             this%totaled_storage = 0.0
 
 
-            ! Gets time interval from macro at top of file
-            this%time_interval = update_time_interval   ! seconds in 24 hours
-
-
-
             ! Gets time interval from netcdf
-            !this%time_interval = time_interval   ! seconds in 24 hours
+            this%time_interval = time_interval
 
 
 

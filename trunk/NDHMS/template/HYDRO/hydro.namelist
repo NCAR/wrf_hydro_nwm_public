@@ -150,6 +150,11 @@ compound_channel = .FALSE.
 ! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
+! Specify the Machine Learning Reservoir parameter file
+machine_learing_parameter_file = "./DOMAIN/ML_RESERVOIR_PARM.nc"
+
+! Specify the Machine Learning Reservoir model files
+
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
 
