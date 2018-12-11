@@ -63,8 +63,9 @@ if [[ -z $theArgument ]]; then
     echo "     1           pgi  PGI parallel"
     echo "     2         gfort  gfortran parallel"
     echo "     3         ifort  intel parallel (incl. Theia)"
-    echo "     4          luna  ifort parallel (WCOSS Luna)"
-    echo "     5 intel.cray_xc  intel parallel (cray_xc)"
+    echo "     4          luna  intel parallel (WCOSS Luna)"
+    echo "     5     ifort_omp  intel openmp
+    echo "     6 intel.cray_xc  intel parallel (cray_xc)"
     echo "     0          exit  exit"
     echo 
     read -p "Enter selection: " theArgument
@@ -112,7 +113,7 @@ if [[ "$theArgument" == "4" ]] || [[ "$theArgument" == "luna" ]]; then
     echo "Configured: ifort on Luna"
 fi
 
-if [[ $theArgument -eq 5 ]] || [[ $theArgument == ifort_omp ]]; then
+if [[ "$theArgument" == "5" ]] || [[ "$theArgument" == "ifort_omp" ]]; then
     ## theia login machines self identify as "tfe" and have
     ## their own intel macros. We handle luna more explicitly... 
     if [[ $HOSTNAME != *tfe* ]]; then
@@ -123,7 +124,9 @@ if [[ $theArgument -eq 5 ]] || [[ $theArgument == ifort_omp ]]; then
 	echo "Configured: ifort on Theia"
     fi
     cp arc/Makefile.mpp Makefile.comm
-elif [[ "$theArgument" == "5" ]] || [[ "$theArgument" == "intel.cray_xc" ]]; then
+fi
+
+if [[ "$theArgument" == "6" ]] || [[ "$theArgument" == "intel.cray_xc" ]]; then
     cp arc/macros.mpp.intel.cray_xc macros
     cp arc/Makefile.mpp Makefile.comm
     echo "Configured: ifort on cray_xc"
