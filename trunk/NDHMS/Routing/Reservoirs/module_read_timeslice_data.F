@@ -8,6 +8,189 @@ module module_read_timeslice_data
     implicit none
 
 
+!========================
+! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
+! How observations from the past are carried forward.
+! This type is extended in module_stream_nudging
+type lastObsStructure
+   character(len=15)                            :: usgsId
+   real,              allocatable, dimension(:) :: lastObsDischarge
+   real,              allocatable, dimension(:) :: lastObsModelDischarge
+   character(len=19), allocatable, dimension(:) :: lastObsTime
+   real,              allocatable, dimension(:) :: lastObsQuality
+end type lastObsStructure
+
+
+type obsStructure
+   character(len=15) :: usgsId        ! the 15 char USGS identifier.
+   character(len=19) :: obsTime       ! observation at gage dims: nGages
+   real              :: obsDischarge  ! observation at gage dims: nGages
+   real              :: obsQC         ! quality control factpr [0,1]
+   integer           :: obsStaticInd  ! the index to the obsStaticStr where static info is kept
+   real              :: innov         ! obs-modeled
+end type obsStructure
+
+type obsTimeStructure
+   character(len=19) :: time
+   character(len=19) :: updateTime
+   integer, allocatable, dimension(:) :: allCellInds  ! cell indices affected at this time
+   integer, allocatable, dimension(:) :: nGageCell    ! number of gages for each affected cell ind
+   type(obsStructure),   allocatable, dimension(:) :: obsStr ! the obs at this file time / timeslice
+end type obsTimeStructure
+
+! The top level structure used to solve the nudges
+type(obsTimeStructure), allocatable, dimension(:) :: obsTimeStr ! size=nObsTimes
+
+!========================
+! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
+! How observations from the past are carried forward.
+! Type defined in module_nudging_io.F
+type(lastObsStructure), allocatable, dimension(:) :: lastObsStr
+
+!========================
+! This holds static information for a given gage for a given cycle (when R, G, and tau) do not
+! change.
+! The "lastObs" variables are not exactly static... they were an afterthought and this was
+! by far the best place for them to live.
+type, extends(lastObsStructure) :: obsStaticStructure
+   !! Inherited components
+   !!character(len=15) :: usgsId        ! the 15 char USGS identifier.
+   !!real              :: lastObsDischarge(:)       ! last observed discharge
+   !!character(len=19) :: lastObsTime(:)            ! time of last obs discharge (.le.hydroTime)
+   !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
+   !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
+   !! New components
+   integer :: obsCellInd    ! index of obs on model channel network, for distance calc
+   real    :: R, G, tau     ! the nudging parameters at this gage.
+   integer, allocatable, dimension(:) ::  cellsAffected  ! indices of cells affected
+   real,    allocatable, dimension(:) ::  dist           ! optional: dist to affected cells, optional
+   real,    allocatable, dimension(:) ::  ws             ! spatial cressman weights at affected cells discharge.
+end type obsStaticStructure
+
+! The static obs/gage information - store here to perform calculations
+! only once per cycle.
+! Currently the dimensions of this are fixed to 10000 which should
+! work for the forseeable future. May want to consider some routine for
+! augmenting this size if necessary.
+type(obsStaticStructure), allocatable, dimension(:) :: obsStaticStr
+
+!! The number of up/down stream links which can be collected
+!! using R to solve which links are "neighboring".
+!! This value applies to both directions, it's the number
+!! of links per R.
+integer, parameter :: maxNeighLinksDim=5000
+
+!========================
+! Node and gage collocation - For reach based routing, corresponds to the "gage" column
+! of RouteLink.nc.
+type nodeGageStructure
+   integer,           allocatable, dimension(:) :: nodeId
+   character(len=15), allocatable, dimension(:) :: usgsId
+end type nodeGageStructure
+type(nodeGageStructure) :: nodeGageTmp, nodeGageStr
+integer :: nGagesDomain   ! the number of gages specified
+
+!========================
+! Nudging parameters structure, corresponding to NudgeParams.nc file.
+!! for dealloction purposes, might be better to put the dimension onthe derived type.
+type nudgingParamStructure
+   character(len=15), allocatable, dimension(:)     :: usgsId
+   real,              allocatable, dimension(:)     :: R
+   real,              allocatable, dimension(:)     :: G
+   real,              allocatable, dimension(:)     :: tau
+   real,              allocatable, dimension(:,:,:) :: qThresh  !! gage, month, nThresh
+   real,              allocatable, dimension(:,:,:) :: expCoeff !! gage, month, nThresh
+end type nudgingParamStructure
+type(nudgingParamStructure) :: nudgingParamsTmp, nudgingParamsStr
+
+!========================
+! Network reExpression structure, corresponding to netwkReExFile.nc
+type netwkReExpStructure
+   integer*4, allocatable, dimension(:) :: go
+   integer*4, allocatable, dimension(:) :: start
+   integer*4, allocatable, dimension(:) :: end
+end type netwkReExpStructure
+type(netwkReExpStructure) :: downNetwkStr, upNetwkStr
+
+!========================
+! Track gages from NWIS not in our param file and not in the intersection or
+! the Route_Link gages and the gages in the parameter file.
+integer, parameter :: maxNwisNotRLAndParamsCount=20000
+character(len=15), dimension(maxNwisNotRLAndParamsCount) :: nwisNotRLAndParams
+integer :: nwisNotRLAndParamsCount
+
+!========================
+! Random data
+real, allocatable, dimension(:) :: t0Discharge
+
+!========================
+! Control book keeping
+logical :: nudgeThisLsmTimeStep
+
+!! JLM: these options are hardcoded/hardwired for now, evnt go in namelist
+integer,            parameter :: obsResolutionInt = 15 ! minutes
+real,               parameter :: obsCheckFreq     = 90 ! minutes
+logical,            parameter :: filterObsToDom   = .TRUE.
+character(len=15),  parameter :: missingGage = '               '
+logical,            parameter :: nudgeWAdvance = .FALSE.
+character(len=4),   parameter :: nudgingClockType = 'wall'
+logical,            parameter :: sanityQcDischarge = .true.
+logical,            parameter :: readTimesliceErrFatal = .false.
+logical,            parameter :: futureLastObsFatal = .true.
+logical,            parameter :: futureLastObsZero  = .false.
+real,               parameter :: invDistTimeWeightExp = 5.000
+real,               parameter :: noConstInterfCoeff   = 1.0 !0.500
+
+! hydro.namelist: &NUDGING_nlist  variables.
+character(len=256) :: nudgingParamFile
+character(len=256) :: netwkReExFile
+character(len=256) :: nudgingLastObsFile    !! passed by namelist
+character(len=256) :: nudgingLastObsFileTry !! either the passed or, if not passed, a default
+logical            :: readTimesliceParallel
+logical            :: temporalPersistence
+logical            :: persistBias
+logical            :: biasWindowBeforeT0
+integer            :: nTimesLastObs   !! aka nlst_rt(did)%nLastObs
+integer            :: minNumPairsBiasPersist
+integer            :: maxAgePairsBiasPersist
+logical            :: invDistTimeWeightBias
+logical            :: noConstInterfBias
+
+!========================
+! Space book keeping
+logical :: nudgeSpatial = .true.  !! is spatial interpolation of nudging active?
+integer,   parameter :: did=1     !! 1 for WRF-uncoupled runs...
+
+!========================
+! Time book keeping
+real    :: maxTau
+integer :: nObsTimes
+character(len=19) :: lsmTime, initTime
+integer :: lsmDt                                   !1234567890123456789
+character(len=19), parameter :: missingLastObsTime='9999999999999999999'
+character(len=2) :: obsResolution
+logical :: gotT0Discharge
+
+#ifdef HYDRO_D
+integer, parameter :: flushUnit=6
+logical, parameter :: flushAll=.true.
+#endif
+
+!========================
+! Parallel book keeping
+real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on image 0
+
+
+
+
+
+
+
+
+
+
+
+
     type :: read_timslice_data_container
         class (read_timslice_data_struct), pointer :: ptr
     end type
@@ -15,14 +198,14 @@ module module_read_timeslice_data
 
     type :: read_timslice_data_struct
 
-        character(len=19) :: current_time
+        character(len=19) :: current_date
         character(len=19) :: start_date
 
     contains
 
         procedure :: init => read_timslice_data_struct_init
         procedure :: destroy => read_timslice_data_struct_destroy
-
+        procedure :: setup_read => setup_read_timeslice
 
 
     end type read_timslice_data_struct
@@ -40,7 +223,12 @@ contains
 
             character(len=19), intent(in) :: start_date
 
+            print *, 'in timeslice object init'
+
             this%start_date = start_date
+
+            this%current_date = start_date
+
 
 
         end subroutine read_timslice_data_struct_init
@@ -56,17 +244,19 @@ contains
 
 
 
-subroutine setup_read_timeslice()
+subroutine setup_read_timeslice(this, hydroDT)
 
     implicit none
 
+    class(read_timslice_data_struct), intent(inout) :: this
 
 
-    !integer,           intent(in) :: hydroDT ! the number of seconds of hydro advance from lsmTime
+
+    integer,           intent(in) :: hydroDT ! the number of seconds of hydro advance from lsmTime
     !integer :: ff
     integer :: ii, tt, oo
     character(len=19) :: hydroTime, obsHydroTime ! hydro model time and corresponding observation
-    !character(len=19), dimension(nObsTimes) :: obsTimes ! obs times in the current window
+    character(len=19), dimension(nObsTimes) :: obsTimes ! obs times in the current window
     integer :: oldDiff, nShiftLeft
 
     logical, allocatable, dimension(:) :: theMask
@@ -80,10 +270,28 @@ subroutine setup_read_timeslice()
     integer :: nGages, nCellsInR, cc, nLinkAff, nStatic, iiImage
 
 
+    character(len=19) :: lsmTime, initTime    ! set global to belong to structure in nudging
+
+
+
 !!!!!!!!!!!
-    !lsmTime = nlst_rt(did)%olddate
-    !initTime = nlst_rt(did)%startdate
+    lsmTime = this%current_date
+    initTime = this%start_date
 !!!!!!!!!!
+
+
+
+    call geth_newdate(hydroTime, lsmTime, hydroDT)
+
+
+    ! Calculate the closest multiple of obsResolution to the hydroTime
+    obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
+
+
+    !INCLUDE??????
+    !if(flushAll) flush(flushUnit)
+
+
 
 
 
@@ -565,6 +773,45 @@ if (mod(year,4).eq.0) then
    endif
 endif
 end function nfeb
+
+
+
+function round_resolution_minute(time, resolution)
+implicit none
+character(len=19)             :: round_resolution_minute ! return value
+character(len=19), intent(in) :: time         ! time to round
+integer                       :: resolution   ! the time resolution in minutes
+
+integer :: diffMin
+real    :: resolutionInv, theMinute, theSecond, resMin
+character(len=19) :: roundTime, timeCopy
+
+! nearest defines a time resolution
+resolutionInv = 1./resolution
+!1234567890123456789
+!YYYY-MM-DD_HH:mm:ss
+read(time(15:16),*) theMinute
+read(time(18:19),*) theSecond
+theMinute = theMinute + (theSecond/60.)
+! What fraction of the time resolution is the current time?
+resMin = (theMinute * resolutionInv)
+! Round to the time resolution.
+! nint doesnt document its rounding rule on gfortran! boo.
+if(resMin - floor(resMin) .ge. .5) resMin=ceiling(resMin)
+if(resMin - floor(resMin) .lt. .5) resMin=floor(resMin)
+! Convert back to regular minutes.
+resMin = resMin / resolutionInv
+! To get the exact right time, some floor/ceil operations are helpful.
+timeCopy = time
+timeCopy(18:19) = '00' ! Floor of theMinute in string form
+! nint is needed b/c resMin is real and often slightly off integer,
+! and this is exacerbated by *60
+diffMin = (nint(resMin) - floor(theMinute))*60
+!print*, nint(resMin), floor(theMinute), timeCopy, diffMin
+call geth_newdate(round_resolution_minute, timeCopy, diffMin)
+
+end function round_resolution_minute
+
 
 
 

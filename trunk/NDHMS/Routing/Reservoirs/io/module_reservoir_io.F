@@ -77,11 +77,18 @@ contains
 
        ! Initialize MPI, learn local rank and total number of processors.
        !call MPI_Init(ierr)
-       !call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
-       !call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)
+       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+       call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)
 
 
+        print *, 'p'
+        print *, p
+        print *, 'my_rank'
+        print *, my_rank
 
+
+!if (my_rank /= 0) then
+!if (my_rank == 3) then
 
         !write(did_string,'(I5)') did
 
@@ -97,14 +104,51 @@ contains
        ! original
        !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid)
 
+        !print *, 'iret'
+        !print *, iret
+
+            !iret =  nf90_close(ncid)
+
+
+
+
+!end if
+
+
+
+!if (my_rank == 9) then
 
         !!!!!!!!!
         !Creates reservoir restart files
        !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_64BIT_OFFSET), ncid, MPI_COMM_WORLD, info = MPI_INFO_NULL)
 
-        iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_NETCDF4), ncid, comm = MPI_COMM_WORLD, info = MPI_INFO_NULL)
+        !iret = nf90_create(trim(out_file), ior(NF90_CLOBBER, NF90_NETCDF4), ncid, comm = MPI_COMM_WORLD, info = MPI_INFO_NULL)
 
         !!!!!!!
+
+print *, 'before create'
+
+print *, MPI_COMM_WORLD
+
+print *, MPI_INFO_NULL
+
+
+
+        call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
+            info = MPI_INFO_NULL) )
+
+
+        !iret = nf90_create(trim(out_file), NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL)
+
+        !iret = nf90_create(trim(out_file), iOR(NF90_CLOBBER, NF90_NETCDF4), ncid, MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL)
+
+
+        !iret = nf90_create(trim(out_file), NF90_NOCLOBBER, ncid, MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL)
+
+
 
 
         !call check( nf90_create(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, info = MPI_INFO_NULL) )
@@ -407,8 +451,12 @@ contains
 
 
 !if (lake_id == 3) then
+
+!works
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
         call w_rst_crt_nc1_lake(ncid, 1, outflow, lake_id, "outflows", &
                lake_index)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
 
 !end if
@@ -464,6 +512,11 @@ contains
         !print *, 'temp_machine_learning_current_time_storage_array'
         !print *, temp_machine_learning_current_time_storage_array
 
+        print *, 'iret'
+        print *, iret
+
+
+!end if
 
 
         if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)

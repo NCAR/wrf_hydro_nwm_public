@@ -353,6 +353,7 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
+        allocate ( rt_domain(did)%read_timeslice_data(1) )
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -779,10 +780,20 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! call read_q_type(NLAKES_total, rt_domain(did)%q_type, rt_domain(did)%model_number, number_of_unique_models)
 
 
-   allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data%ptr )
+   allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data(1)%ptr )
+
+   !allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data%ptr )
+   !allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data )
 
 
-   call rt_domain(did)%read_timeslice_data%ptr%init(nlst_rt(did)%startdate(1:19))
+    print *, 'call read timeslice object init'
+
+   call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19))
+
+
+
+   !call rt_domain(did)%read_timeslice_data%ptr%init(nlst_rt(did)%startdate(1:19))
+   !call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19))
 
 
    do lake_index = 1, NLAKES_total

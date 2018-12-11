@@ -89,7 +89,17 @@ module module_io_utilities
                 !iret = nf90_var_par_access(ncid, varid, nf90_collective)
 
 
+
+                !works
+                !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/))
+                !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
 
 
                 !prints very large numbers

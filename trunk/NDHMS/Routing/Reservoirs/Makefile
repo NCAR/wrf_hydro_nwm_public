@@ -63,9 +63,11 @@ mod:
 
 #module_reservoir_io not added below due to build errors
 test: mod
-	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
+	#$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
+	$(COMPILER90) $(F90FLAGS) $(MODFLAG) -I$(NETCDFINC) parallel_tests.F
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
-	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
+	#$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
+	$(COMPILER90) $(NETCDFLIB) -o parallel_tests \
 		module_reservoir_utilities.o \
 		module_reservoir_base.o \
 		module_read_timeslice_data.o \
@@ -78,7 +80,7 @@ test: mod
 		Machine_Learning/module_machine_learning_model.o \
 		Machine_Learning/module_machine_learning_tests.o \
 		Machine_Learning/module_machine_learning.o \
-		reservoir_tests.o \
+		parallel_tests.o \
 		hydro_stop.o
 
 
@@ -103,6 +105,7 @@ clean:
 	rm -f *.o
 	rm -f *.mod
 	rm -f reservoir_tests
+	rm -f parallel_tests
 
 	make -C Level_Pool clean
 	make -C Machine_Learning clean
