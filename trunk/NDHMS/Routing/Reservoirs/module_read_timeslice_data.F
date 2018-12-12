@@ -200,6 +200,7 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
 
         character(len=19) :: current_date
         character(len=19) :: start_date
+        character(len=256) :: timeslice_path
 
     contains
 
@@ -216,18 +217,23 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
 contains
 
 
-        subroutine read_timslice_data_struct_init(this, start_date)
+        subroutine read_timslice_data_struct_init(this, start_date, timeslice_path)
 
             implicit none
             class(read_timslice_data_struct), intent(inout) :: this ! object being initialized
 
             character(len=19), intent(in) :: start_date
 
+            character(len=256), intent(in) :: timeslice_path
+
+
             print *, 'in timeslice object init'
 
             this%start_date = start_date
 
             this%current_date = start_date
+
+            this%timeslice_path = timeslice_path
 
 
 
@@ -273,6 +279,10 @@ subroutine setup_read_timeslice(this, hydroDT)
     character(len=19) :: lsmTime, initTime    ! set global to belong to structure in nudging
 
 
+    character(len=256) :: timeslice_file_name  !! the corresponding obs file.
+
+
+    integer :: obsResolutionInt
 
 !!!!!!!!!!!
     lsmTime = this%current_date
@@ -281,21 +291,59 @@ subroutine setup_read_timeslice(this, hydroDT)
 
 
 
-    call geth_newdate(hydroTime, lsmTime, hydroDT)
+    !call geth_newdate(hydroTime, lsmTime, hydroDT)
 
 
     ! Calculate the closest multiple of obsResolution to the hydroTime
-    obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
+    !obsHydroTime = round_resolution_minute(hydroTime, obsResolutionInt)
 
 
     !INCLUDE??????
     !if(flushAll) flush(flushUnit)
 
 
+    obsResolutionInt = 15
+
+
+    timeslice_file_name = find_timeslice_file(initTime, obsResolution, this%timeslice_path)
 
 
 
 end subroutine setup_read_timeslice
+
+
+function find_timeslice_file(date, obsResolution, timeslice_path)
+    implicit none
+    character(len=256) :: find_timeslice_file      ! Output
+    character(len=19), intent(in) :: date          ! Input
+    character(len=2),  intent(in) :: obsResolution ! Input
+
+    character(len=256), intent(in) :: timeslice_path
+    !Internals
+    character(len=256) :: tmpTimeSlice
+    logical :: fileExists
+
+!#ifdef HYDRO_D
+!print*,'Ndg: start find_timeslice_file'
+!call flush(6)
+!#endif
+
+    find_timeslice_file=''
+    ! is there a file with this name?
+    ! note files are not resolved below minutes.
+    tmpTimeSlice = trim(timeslice_path) // date // "." // &
+                        obsResolution // 'min.usgsTimeSlice.ncdf'
+    inquire(FILE=tmpTimeSlice, EXIST=fileExists)
+    if (fileExists) find_timeslice_file = trim(tmpTimeSlice)
+
+    !#ifdef HYDRO_D
+    print*,'Reservoirs: timeSlice file: ', tmpTimeSlice
+    print*,'Reservoirs: file found: ', fileExists
+    print*,'Reservoirs: finish find_timeslice_file'
+    call flush(6)
+    !#endif
+
+end function find_timeslice_file
 
 
 

@@ -788,7 +788,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
     print *, 'call read timeslice object init'
 
-   call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19))
+   call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19), nlst_rt(did)%timeSlicePath)
 
 
 
