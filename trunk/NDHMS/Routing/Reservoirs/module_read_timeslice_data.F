@@ -206,7 +206,7 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
 
         procedure :: init => read_timslice_data_struct_init
         procedure :: destroy => read_timslice_data_struct_destroy
-        procedure :: setup_read => setup_read_timeslice
+        procedure :: setup_read_timeslice => setup_read_timeslice
 
 
     end type read_timslice_data_struct
@@ -233,8 +233,24 @@ contains
 
             this%current_date = start_date
 
-            this%timeslice_path = timeslice_path
 
+
+
+            !this%timeslice_path = timeslice_path
+
+
+            this%timeslice_path = '/home/jdmattern/Documents/test_runs/run_without_restart_david2/Timeslices/'
+
+            print *, 'start date'
+
+            print *, start_date
+
+            print *, 'timeslice path'
+
+            print *, this%timeslice_path
+
+
+            call this%setup_read_timeslice(0)
 
 
         end subroutine read_timslice_data_struct_init
@@ -291,6 +307,9 @@ subroutine setup_read_timeslice(this, hydroDT)
 
 
 
+    print *, 'start date'
+    print *, initTime
+
     !call geth_newdate(hydroTime, lsmTime, hydroDT)
 
 
@@ -305,7 +324,37 @@ subroutine setup_read_timeslice(this, hydroDT)
     obsResolutionInt = 15
 
 
-    timeslice_file_name = find_timeslice_file(initTime, obsResolution, this%timeslice_path)
+    obsResolution = '15'
+
+    print *, 'timeslice path in setup read'
+    print *, this%timeslice_path
+
+
+    !call geth_newdate(hydroTime, initTime, hydroDT)
+
+
+    !print *, 'hydrotime'
+    !print *, hydroTime
+
+
+    !initTime(11) = '_'
+    !initTime(14) = '_'
+
+
+    !print *, 'start date new'
+    !print *, initTime
+
+    hydroTime = initTime(:13) // '_' // initTime(15:16) // '_' // initTime(18:)
+
+
+
+
+    print *, 'hydrotime'
+    print *, hydroTime
+
+
+
+    timeslice_file_name = find_timeslice_file(hydroTime, obsResolution, this%timeslice_path)
 
 
 
@@ -327,6 +376,10 @@ function find_timeslice_file(date, obsResolution, timeslice_path)
 !print*,'Ndg: start find_timeslice_file'
 !call flush(6)
 !#endif
+
+    print *, 'timeslice path in setup find timeslice file'
+    print *, timeslice_path
+
 
     find_timeslice_file=''
     ! is there a file with this name?
