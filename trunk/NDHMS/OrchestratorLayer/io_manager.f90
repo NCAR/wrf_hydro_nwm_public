@@ -1,36 +1,33 @@
 module io_manager_base
+  use netcdf_layer_base
   implicit none
   
   type :: IOManager_
-     class(NetCDF_layer_) :: netcdf_layer
+     logical :: parallel = .false.
+     class(NetCDF_layer_),allocatable :: netcdf_layer
    contains
      procedure (write_restart_signature), pass(object), deferred :: write_rt
   end type IOManager_
-  
-  abstract interface
-     subroutine write_restart_signature(object, in_buff, out_buff)
-       use iso_fortran_env
-       import IOManager_
-       class(IOManager_), intent(in) :: object
-     end subroutine write_restart_signature
-  end interface
 
-  ! This type should go in a different file
-  type, extends(IOManager_) :: IOManager_serial_
-     
-   contains
-     procedure, pass(object) :: write_rt => write_rt_serial
-     
-  end type IOManager_serial_
-  
+  interface IOManager_
+     module procedure IOManager_init
+  end interface IOManager_
+    
 contains
 
-  subroutine write_rt_serial(object)
+  type(IOManager_) function IOManager_init(parallel)
     implicit none
-    class(IOManager_serial) :: object
 
-    write(*,*) 'Writing the restart file in serial'
+    logical, optional, intent(in) :: parallel
 
-  end subroutine write_restart_serial
+    if(.not.present(parallel) .or. (present(parallel) .and. parallel .eqv. .false.)) then
+       IOManager_init%parallel = .false.
+       allocate(NetCDF_serial_ :: IOManager_init%netcdf_layer)
+    else
+       IOManager_init%parallel = .true.
+       allocate(NetCDF_parallel_ :: IOManager_init%netcdf_layer)
+    end if
+    
+  end function IOManager_init
   
 end module io_manager_base

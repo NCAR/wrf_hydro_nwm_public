@@ -1,6 +1,7 @@
 module netcdf_layer_base
   use netcdf
   implicit none
+  include 'mpif.h'
   
   type, abstract :: NetCDF_layer_
      procedure (nf90_open), pointer, nopass :: open_file => nf90_open
@@ -14,7 +15,9 @@ module netcdf_layer_base
 
   abstract interface
 
-     function create_file_signature(path, cmode, initialsize, chunksize, ncid) result(nf90_create)
+     function create_file_signature(object, path, cmode, initialsize, chunksize, ncid) result(nf90_create)
+       import NetCDF_layer_
+       class(NetCDF_layer_), intent(in   ) :: object
        character (len = *), intent(in   ) :: path
        integer,             intent(in   ) :: cmode
        integer, optional,   intent(in   ) :: initialsize
@@ -29,10 +32,10 @@ module netcdf_layer_base
    contains
      procedure, pass(object) :: create_file => create_file_serial
   end type NetCDF_serial_
-  
+
   type, extends(NetCDF_layer_) :: NetCDF_parallel_
      integer :: MPI_communicator
-     integer, parameter :: default_info = MPI_INFO_NULL
+     integer :: default_info = MPI_INFO_NULL
    contains
      procedure, pass(object) :: create_file => create_file_parallel
   end type NetCDF_parallel_
