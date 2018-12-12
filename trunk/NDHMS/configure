@@ -3,6 +3,14 @@
 theArgument=$1
 
 ###################################
+## Setup the HOSTNAME if not set
+
+if [ -z ${HOSTNAME+x} ]; then
+  HOSTNAME=`hostname`
+  echo "Configured: hostname=$HOSTNAME"
+fi
+
+###################################
 ## Setup the NetCDF include and LIB variables.
 ## If Neither is set and $NETCDF is not set,
 ## then try nc-config. If that fails, all fails.
@@ -50,13 +58,14 @@ if [[ -z $theArgument ]]; then
     echo "Please select from following supported linux compilers"
     echo "using either the number or key (not case sensitive):"
     echo 
-    echo "Number    Key  Description"
-    echo "--------------------------------------------"
-    echo "     1    pgi  PGI parallel"
-    echo "     2  gfort  gfortran parallel"
-    echo "     3  ifort  intel parallel (incl. Theia)"
-    echo "     4   luna  ifort parallel (WCOSS Luna)"
-    echo "     0   exit  exit"
+    echo "Number           Key  Description"
+    echo "---------------------------------------------------"
+    echo "     1           pgi  PGI parallel"
+    echo "     2         gfort  gfortran parallel"
+    echo "     3         ifort  intel parallel (incl. Theia)"
+    echo "     4          luna  ifort parallel (WCOSS Luna)"
+    echo "     5 intel.cray_xc  intel parallel (cray_xc)"
+    echo "     0          exit  exit"
     echo 
     read -p "Enter selection: " theArgument
     echo
@@ -69,35 +78,44 @@ theArgument=`echo $theArgument | tr '[:upper:]' '[:lower:]'`
 ###################################
 ## What to do with the choice
 
-if [[ $theArgument -eq 1 ]] || [[ $theArgument == pgi ]]; then
+if [[ "$theArgument" == "1" ]] || [[ "$theArgument" == "pgi" ]]; then
     cp arc/macros.mpp.linux macros 
     cp arc/Makefile.mpp Makefile.comm 
     echo "Configured: PGI"
 fi
 
-if [[ $theArgument -eq 2 ]] || [[ $theArgument == gfort ]]; then
+if [[ "$theArgument" == "2" ]] || [[ "$theArgument" == "gfort" ]]; then
     cp arc/macros.mpp.gfort macros 
     cp arc/Makefile.mpp Makefile.comm
     echo "Configured: gfort"
 fi
 
-if [[ $theArgument -eq 3 ]] || [[ $theArgument == ifort ]]; then
+if [[ "$theArgument" == "3" ]] || [[ "$theArgument" == "ifort" ]]; then
     ## theia login machines self identify as "tfe" and have
     ## their own intel macros. We handle luna more explicitly... 
-    if [[ $HOSTNAME != *tfe* ]]; then
+    if [[ $HOSTNAME = *tfe* ]]; then
+        cp arc/macros.mpp.ifort.theia macros
+        echo "Configured: ifort on Theia"
+    elif [[ $HOSTNAME = *gordon* ]]; then
+        cp arc/macros.mpp.intel.cray_xc macros
+        echo "Configured: ifort on Gordon"
+    else
 	cp arc/macros.mpp.ifort macros 
 	echo "Configured: ifort"
-    else
-	cp arc/macros.mpp.ifort.theia macros
-	echo "Configured: ifort on Theia"
     fi
     cp arc/Makefile.mpp Makefile.comm
 fi
 
-if [[ $theArgument -eq 4 ]] || [[ $theArgument == luna ]]; then
+if [[ "$theArgument" == "4" ]] || [[ "$theArgument" == "luna" ]]; then
     cp arc/macros.mpp.ifort.luna macros 
     cp arc/Makefile.mpp Makefile.comm
     echo "Configured: ifort on Luna"
+fi
+
+if [[ "$theArgument" == "5" ]] || [[ "$theArgument" == "intel.cray_xc" ]]; then
+    cp arc/macros.mpp.intel.cray_xc macros
+    cp arc/Makefile.mpp Makefile.comm
+    echo "Configured: ifort on cray_xc"
 fi
 
 ## The above result in a new macros file which was

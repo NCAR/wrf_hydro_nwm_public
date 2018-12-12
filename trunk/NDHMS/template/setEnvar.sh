@@ -6,7 +6,7 @@
 export WRF_HYDRO=1
 
 # Enhanced diagnostic output for debugging: 0=Off, 1=On.
-export HYDRO_D=1
+export HYDRO_D=0
 
 # Spatially distributed parameters for NoahMP: 0=Off, 1=On.
 export SPATIAL_SOIL=0

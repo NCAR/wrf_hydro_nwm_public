@@ -1,8 +1,8 @@
-md5sum: 530b1f406f4232146448e141a3de6e50  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/nudgingParams_NWMv2.0.nc
+md5sum: ad71fd9bb0271f8867828b939043fa99  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/nudgingParams_NWMv2.0.nc
 ncdump -h: netcdf nudgingParams_NWMv2.0 {
 dimensions:
 	stationIdStrLen = 15 ;
-	stationIdInd = UNLIMITED ; // (7542 currently)
+	stationIdInd = UNLIMITED ; // (7541 currently)
 	threshInd = 1 ;
 	monthInd = 12 ;
 	threshCatInd = 2 ;

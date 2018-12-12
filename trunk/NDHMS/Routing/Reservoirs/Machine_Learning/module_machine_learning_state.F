@@ -314,6 +314,10 @@ contains
 
 
 
+
+
+!IF ML RESERVOIR IS SET TO READ FROM TIMESLCE THEN USE THAT FOR PREV TIME RELEASE INSTEAD OF HISTORICAL
+
         ! If cold start
         !if (restart_flag == 1) then
 

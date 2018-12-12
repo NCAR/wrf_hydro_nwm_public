@@ -54,12 +54,53 @@ EXCLUDE_VARS = ['ACMELT',
                 'reference_time',
                 'lake_inflort']
 
+EXCLUDE_VARS_CHAN_ONLY = [
+    'stc1',
+    'smc1',
+    'sh2ox1',
+    'stc2',
+    'smc2',
+    'sh2ox2',
+    'stc3',
+    'smc3',
+    'sh2ox3',
+    'stc4',
+    'smc4',
+    'sh2ox4',
+    'infxsrt',
+    'soldrain',
+    'sfcheadrt',
+    'QBDRYRT',
+    'infxswgt',
+    'sfcheadsubrt',
+    'sh2owgt1',
+    'sh2owgt2',
+    'sh2owgt3',
+    'sh2owgt4',
+    'qstrmvolrt',
+    'hlink',
+    'lake_inflort'
+]
+
+#List variabls to ignore in tests, primarily accumulation variables
+EXCLUDE_VARS = ['ACMELT',
+                'ACSNOW',
+                'SFCRUNOFF',
+                'UDRUNOFF',
+                'ACCPRCP',
+                'ACCECAN',
+                'ACCEDIR',
+                'ACCETRAN',
+                'qstrmvolrt',
+                'reference_time',
+                'lake_inflort']
+
 # Channel-only Run
 def test_run_candidate_channel_only(
-    candidate_sim,
-    candidate_channel_only_sim,
-    output_dir,
-    ncores
+        candidate_sim,
+        candidate_channel_only_sim,
+        output_dir,
+        ncores
 ):
 
     if candidate_sim.model.model_config.lower().find('nwm') < 0:
@@ -71,7 +112,7 @@ def test_run_candidate_channel_only(
     candidate_sim_copy = copy.deepcopy(candidate_sim)
     candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_copy.\
+    candidate_channel_only_sim_copy. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
 
     ##################
@@ -236,7 +277,7 @@ def test_ncores_candidate_channel_only(output_dir):
     candidate_channel_only_sim_expected = \
         pickle.load(candidate_channel_only_collected_file.open("rb"))
     candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_ncores.\
+    candidate_channel_only_sim_ncores. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     run_dir = output_dir / 'ncores_candidate_channel_only'
     run_dir.mkdir(parents=True)
@@ -336,14 +377,21 @@ def test_perfrestart_candidate_channel_only(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
+            key1 = 'hydro_nlist'
+            key2 = 'restart_file'
+            restart_job._hydro_namelist[key1][key2] = candidate_hydro_restart_file
 
     # Nudging: Use actual time listed in meta data not filename or positional list index
-    for restart_file in candidate_channel_only_sim_expected.output.restart_nudging:
-        restart_time = restart_file.open().modelTimeAtOutput
-        restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == restart_job.model_start_time:
-            candidate_nudging_restart_file = pathlib.Path(restart_file.name)
-            candidate_nudging_restart_file.symlink_to(restart_file)
+    if candidate_channel_only_sim_expected.output.restart_nudging is not None:
+        for restart_file in candidate_channel_only_sim_expected.output.restart_nudging:
+            restart_time = restart_file.open().modelTimeAtOutput
+            restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
+            if restart_time == restart_job.model_start_time:
+                candidate_nudging_restart_file = pathlib.Path(restart_file.name)
+                candidate_nudging_restart_file.symlink_to(restart_file)
+                key1 = 'nudging_nlist'
+                key2 = 'nudginglastobsfile'
+                restart_job._hydro_namelist[key1][key2] = candidate_nudging_restart_file
 
     # Compose and run
     # Catch warnings related to missing start and end job times
