@@ -64,7 +64,7 @@ if [[ -z $theArgument ]]; then
     echo "     2         gfort  gfortran parallel"
     echo "     3         ifort  intel parallel (incl. Theia)"
     echo "     4          luna  intel parallel (WCOSS Luna)"
-    echo "     5     ifort_omp  intel openmp
+    echo "     5     ifort_omp  intel openmp"
     echo "     6 intel.cray_xc  intel parallel (cray_xc)"
     echo "     0          exit  exit"
     echo 
