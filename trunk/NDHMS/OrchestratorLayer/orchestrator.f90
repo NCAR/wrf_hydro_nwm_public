@@ -18,6 +18,8 @@ module orchestrator_base
    contains
 
   end type orchestrator_
+
+  type(orchestrator_) :: OL
   
 contains
 

@@ -13,7 +13,7 @@ OBJS = \
 	module_GW_baseflow.o \
 	module_gw_gw2d.o \
 	module_HYDRO_io.o \
- 	module_RT.o \
+	module_RT.o \
 	Noah_distr_routing.o \
 	module_channel_routing.o \
 	module_lsm_forcing.o \
@@ -67,6 +67,7 @@ module_NWM_io: module_HYDRO_utils.o \
                module_NWM_io_dict.o \
                module_HYDRO_io.o \
                module_date_utilities_rt.o \
+	       ../OrchestratorLayer/orchestrator.o \
                ../Data_Rec/module_namelist.o \
                ../Data_Rec/module_RT_data.o \
 	       ../utils/module_version.o
@@ -107,7 +108,7 @@ else
 module_channel_routing.o: module_UDMAP.o\
 			  ../nudging/module_date_utils_nudging.o \
 		          ../nudging/module_nudging_utils.o \
-          		  ../nudging/module_stream_nudging.o
+	 		  ../nudging/module_stream_nudging.o
 endif
 
 clean:	

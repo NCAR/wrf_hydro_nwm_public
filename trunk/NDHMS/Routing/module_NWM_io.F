@@ -10,7 +10,7 @@
 module module_NWM_io
 
 use module_version, only: get_code_version, get_nwm_version
-
+use orchestrator_base
 implicit none
 
 ! Module-wide variables

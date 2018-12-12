@@ -4,6 +4,8 @@ all:
 	(make -f Makefile.comm BASIC)
 
 BASIC:
+	(cd IO; make -f Makefile)
+	(cd OrchestratorLayer; make -f Makefile)
 	(cd utils     ; make -f Makefile)
 	make -C Routing/Overland
 	(cd MPP     ; make -f Makefile)
