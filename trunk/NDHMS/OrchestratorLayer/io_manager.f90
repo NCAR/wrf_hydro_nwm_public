@@ -6,7 +6,6 @@ module io_manager_base
      logical :: parallel = .false.
      class(NetCDF_layer_),allocatable :: netcdf_layer
    contains
-     procedure (write_restart_signature), pass(object), deferred :: write_rt
   end type IOManager_
 
   interface IOManager_
