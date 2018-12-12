@@ -7,6 +7,10 @@ module netcdf_layer_base
      procedure (nf90_open), pointer, nopass :: open_file => nf90_open
      procedure (nf90_def_dim), pointer, nopass :: def_dim => nf90_def_dim
      procedure (nf90_inq_varid), pointer, nopass :: inq_varid => nf90_inq_varid
+     procedure (nf90_close), pointer, nopass :: close_file => nf90_close
+
+     procedure (), pointer, nopass :: put_var => nf_put_var
+     procedure (), pointer, nopass :: get_var => nf_get_var
      procedure (), pointer, nopass :: put_att => nf_put_att
      procedure (), pointer, nopass :: def_var => nf_def_var
    contains
@@ -15,6 +19,8 @@ module netcdf_layer_base
 
   integer, external :: nf_put_att
   integer, external :: nf_def_var
+  integer, external :: nf_put_var
+  integer, external :: nf_get_var
 
   abstract interface
 
