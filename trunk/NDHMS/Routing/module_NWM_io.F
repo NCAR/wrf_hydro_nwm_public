@@ -534,7 +534,8 @@ subroutine output_chrt_NWM(domainId)
       if(nlst_rt(domainId)%channel_option .ne. 3) then
          ! Read in index values from Routelink that will be used to sort output
          ! variables by ascending feature_id.
-         iret = nf90_open(trim(nlst_rt(1)%route_link_f),NF90_NOWRITE,ncid=ftnRt)
+         iret = OL%IO_Manager%netcdf_layer%open_file(trim(nlst_rt(1)%route_link_f),NF90_NOWRITE,ncid=ftnRt)
+         !iret = nf90_open(trim(nlst_rt(1)%route_link_f),NF90_NOWRITE,ncid=ftnRt)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to open RouteLink file for index extraction')
          iret = nf90_inq_varid(ftnRt,'ascendingIndex',indVarId)
          if(iret .ne. 0) then
