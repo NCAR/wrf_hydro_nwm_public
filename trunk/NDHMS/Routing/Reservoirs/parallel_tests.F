@@ -49,6 +49,11 @@
        ! Loop indexes, and error handling.
        integer :: x, y, stat
 
+    !real, parameter :: oneHundred = 100.0000000000000
+
+
+
+
        ! Initialize MPI, learn local rank and total number of processors.
        call MPI_Init(ierr)
        call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)

@@ -213,13 +213,19 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
 
         character(len=19)  :: timeIn, updateTimeIn  !! the time of file/slice and when it was updated
         character(len=2)   :: sliceResoIn           !! the temporal resolution of the slice
-        character(len=19), allocatable, dimension(:) :: gageTimeIn      !!
-        real,              allocatable, dimension(:) :: gageQCIn        !!
-        character(len=15), allocatable, dimension(:) :: usgsIdIn        !! USGS ID
-        real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
+        !character(len=19), allocatable, dimension(:) :: gageTimeIn      !!
+        !real,              allocatable, dimension(:) :: gageQCIn        !!
+        !character(len=15), allocatable, dimension(:) :: usgsIdIn        !! USGS ID
+        !real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
 
 
         logical          :: readTimesliceErrFatal = .false.
+
+    character(len=15),  allocatable, dimension(:) :: gageId
+    character(len=19),  allocatable, dimension(:) :: gageTime
+    real,               allocatable, dimension(:) :: gageQC
+    real,               allocatable, dimension(:) :: gageDischarge
+
 
 
 
@@ -228,7 +234,7 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
         procedure :: init => read_timslice_data_struct_init
         procedure :: destroy => read_timslice_data_struct_destroy
         procedure :: setup_read_timeslice => setup_read_timeslice
-
+        procedure :: read_timeslice_file => read_timeslice_file
 
     end type read_timslice_data_struct
 
@@ -325,7 +331,9 @@ subroutine setup_read_timeslice(this, hydroDT)
     integer :: errStatus
 
 
+    character(len=15), allocatable, dimension(:) :: gageID
 
+    allocate(gageID(3))
 
 !!!!!!!!!!!
     lsmTime = this%current_date
@@ -391,17 +399,38 @@ subroutine setup_read_timeslice(this, hydroDT)
 
 
 !!!MOVE TO W/IN TIMESLICE FILE TO STRUCT???
-   call read_timeslice_file(timeslice_file_name,             &
-                            sanityQcDischarge,    &
-                            this%timeIn,               &
-                            this%updateTimeIn,         &
-                            this%sliceResoIn,          &
-                            this%usgsIdIn,             &
-                            this%gageTimeIn,           &
-                            this%gageQCIn,             &
-                            this%gageDischargeIn,      &
-                            readTimesliceErrFatal,&
-                            errStatus             )
+!   call this%read_timeslice_file(timeslice_file_name,             &
+!                            sanityQcDischarge,    &
+ !                           this%timeIn,               &
+  !                          this%updateTimeIn,         &
+   !                         this%sliceResoIn,          &
+    !                        this%usgsIdIn,             &
+     !                       this%gageTimeIn,           &
+      !                      this%gageQCIn,             &
+       !                     this%gageDischargeIn,      &
+         !                   readTimesliceErrFatal,&
+        !                    errStatus             )
+
+
+   call this%read_timeslice_file(timeslice_file_name,             &
+                            sanityQcDischarge, gageID)
+
+
+ !print *,"this%timeIn"
+
+
+ ! print *,this%timeIn
+  ! print *,"this%usgsIdIn"
+   ! print *,this%usgsIdIn
+    ! print *,"this%gageTimeIn"
+     ! print *,this%gageTimeIn
+
+      ! print *,"this%gageDischargeIn"
+
+       ! print *,this%gageDischargeIn
+
+
+
 
 
 
@@ -410,40 +439,93 @@ end subroutine setup_read_timeslice
 
 
 
+subroutine read_timeslice_file(this, timeSliceFile, sanityQcDischarge, gageId)
 
 
-subroutine read_timeslice_file(  &
-     timeSliceFile,              &  !! IN: char, file path/name
-     sanityQcDischarge,          &  !! IN: perform sanity check qc?
-     sliceTime,                  &  !! OUT: the file time.
-     updateTime,                 &  !! OUT: the time the file was updated.
-     sliceResolution,            &  !! OUT: temporal resolution of the file in minutes.
-     gageId,                     &  !! OUT: integer, the USGS gage ID.
-     gageTime,                   &  !! OUT: output converted for comparision to model time??
-     gageQC,                     &  !! OUT: quality control flag for discharge
-     gageDischarge,              &  !! OUT: real, the m3/s observed discharge
-     fatalErr,                   &  !! IN:  logical, are IO errors fatal?
-     errStatus                   &  !! OUT: count of errors encountered
-                                 )
+!subroutine read_timeslice_file(  &
+!     timeSliceFile,              &  !! IN: char, file path/name
+!     sanityQcDischarge,          &  !! IN: perform sanity check qc?
+!     sliceTime,                  &  !! OUT: the file time.
+!     updateTime,                 &  !! OUT: the time the file was updated.
+!     sliceResolution,            &  !! OUT: temporal resolution of the file in minutes.
+!     gageId,                     &  !! OUT: integer, the USGS gage ID.
+!     gageTime,                   &  !! OUT: output converted for comparision to model time??
+!     gageQC,                     &  !! OUT: quality control flag for discharge
+!     gageDischarge,              &  !! OUT: real, the m3/s observed discharge
+!     fatalErr,                   &  !! IN:  logical, are IO errors fatal?
+!     errStatus                   &  !! OUT: count of errors encountered
+!                                 )
 
     implicit none
+
+    class(read_timslice_data_struct), intent(inout) :: this
+
+
+!    character(len=256), intent(in)                :: timeSliceFile
+!    logical,            intent(in)                :: sanityQcDischarge
+!    character(len=19),  intent(out)               :: sliceTime
+!    character(len=19),  intent(out)               :: updateTime
+!    character(len=2),   intent(out)               :: sliceResolution
+    character(len=15),  intent(out), dimension(:) :: gageId
+!    character(len=19),  intent(out), dimension(:) :: gageTime
+!    real,               intent(out), dimension(:) :: gageQC
+!    real,               intent(out), dimension(:) :: gageDischarge
+!    logical,            intent(in)                :: fatalErr
+!    integer,            intent(out)               :: errStatus
+
+
+
     character(len=256), intent(in)                :: timeSliceFile
     logical,            intent(in)                :: sanityQcDischarge
-    character(len=19),  intent(out)               :: sliceTime
-    character(len=19),  intent(out)               :: updateTime
-    character(len=2),   intent(out)               :: sliceResolution
-    character(len=15),  intent(out), dimension(:) :: gageId
-    character(len=19),  intent(out), dimension(:) :: gageTime
-    real,               intent(out), dimension(:) :: gageQC
-    real,               intent(out), dimension(:) :: gageDischarge
-    logical,            intent(in)                :: fatalErr
-    integer,            intent(out)               :: errStatus
+
+
+    character(len=19)               :: sliceTime
+    character(len=19)               :: updateTime
+    character(len=2)             :: sliceResolution
+
+
+    !character(len=15),  intent(out), dimension(:) :: gageId
+    !character(len=19),  intent(out), dimension(:) :: gageTime
+    !real,               intent(out), dimension(:) :: gageQC
+    !real,               intent(out), dimension(:) :: gageDischarge
+
+
+    logical                           :: fatalErr
+    integer                         :: errStatus
+
+
+
+        !character(len=19), allocatable, dimension(:) :: gageTimeIn      !!
+        !real,              allocatable, dimension(:) :: gageQCIn        !!
+        !character(len=15), allocatable, dimension(:) :: usgsIdIn        !! USGS ID
+        !real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
+
+
+
+        character(len=54), allocatable, dimension(:) :: gageId1
+        !character(len=*), dimension(:) ::
+
+
+
 
     integer*2, allocatable, dimension(:) :: gageQCIn
     integer :: iRet, ncId, fileNameLen, errStatusOut
     character(len=19) :: caller
     real, parameter :: zero = 0.0000000000000
     real, parameter :: oneHundred = 100.0000000000000
+
+
+    integer :: status
+    integer :: dischargeVarId, gageIdVarId, gageTimeVarId , gageQCVarId
+
+    integer :: Nlakes
+
+        integer, dimension(nf90_max_var_dims) :: dimIDs
+
+
+
+        real, allocatable, dimension (:)    :: gageDischarge1
+
 
 !#ifdef HYDRO_D
 !print*,'Ndg: start read_timeslice_file'
@@ -464,41 +546,240 @@ subroutine read_timeslice_file(  &
     !! global atts
     iRet = nf90_get_att(ncid, nf90_global, 'sliceCenterTimeUTC',         sliceTime)
     if (iRet /= nf90_NoErr) errStatus=errStatus+1
+
+
+    print *, 'sliceTime'
+    print *, sliceTime
+
+
     iRet = nf90_get_att(ncid, nf90_global, 'fileUpdateTimeUTC',          updateTime)
     if (iRet /= nf90_NoErr) errStatus=errStatus+1
+
+        print *, 'updateTime'
+    print *, updateTime
+
+
     iRet = nf90_get_att(ncid, nf90_global, 'sliceTimeResolutionMinutes', sliceResolution)
     if (iRet /= nf90_NoErr) errStatus=errStatus+1
+
+
+        print *, 'sliceResolution'
+    print *, sliceResolution
+
+
+
+
+
 
     ! variables
     call get_1d_netcdf_text(ncid, 'stationId', gageId,        caller, &
                             fatalErr, errStatusOut)
     errStatus=errStatus+errStatusOut
-    call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, &
-                            fatalErr, errStatusOut)
-    errStatus=errStatus+errStatusOut
-    call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, &
+
+            print *, 'gageId'
+    print *, gageId
+
+
+    !call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, &
+     !                       fatalErr, errStatusOut)
+    !errStatus=errStatus+errStatusOut
+
+    !            print *, 'gageTime'
+   ! print *, gageTime
+
+
+
+    !call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, &
+    !                        fatalErr, errStatusOut)
+    !errStatus=errStatus+errStatusOut
+
+
+
+
+        status = nf90_inq_varid(ncid, "stationId", gageIdVarId)
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inquire_variable(ncid, gageIdVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+        !allocate(this%gageId(Nlakes))
+
+
+
+
+
+
+
+        print *, 'nlakes'
+        print *, nlakes
+
+
+        !allocate(gageId1(Nlakes))
+
+
+        !status = nf90_get_var(ncid, gageIdVarId, gageId1)
+
+        !status = nf90_get_var(ncid, gageIdVarId, this%gageId)
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+print *, 'gageId'
+!print *,this%gageId
+print *,gageId1
+
+
+
+        status = nf90_inq_varid(ncid, "time", gageTimeVarId)
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inquire_variable(ncid, gageTimeVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        !allocate(this%gageTime(Nlakes))
+
+
+        !status = nf90_get_var(ncid, gageTimeVarId, this%gageTime)
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        print *, 'gageTimeVarId'
+        print *, gageTimeVarId
+
+
+        print *, 'nlakes'
+        print *, nlakes
+
+
+
+print *, 'gageTime'
+print *,this%gageTime
+
+
+        status = nf90_inq_varid(ncid, "discharge", dischargeVarId)
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inquire_variable(ncid, dischargeVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        allocate(this%gageDischarge(Nlakes))
+
+
+        status = nf90_get_var(ncid, dischargeVarId, this%gageDischarge)
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+print *, 'gageDischarge'
+print *,this%gageDischarge
+
+
+        status = nf90_inq_varid(ncid, "discharge_quality", gageQCVarId)
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        status = nf90_inquire_variable(ncid, gageQCVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        !if(status /= nf90_NoErr) call handle_err(status)
+        allocate(this%gageQC(Nlakes))
+
+
+        status = nf90_get_var(ncid, gageQCVarId, this%gageQC)
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+print *, 'gageQC'
+print *,this%gageQC
+
+
+
+        print *, 'nlakes'
+        print *, nlakes
+
+
+        allocate(this%gageId(Nlakes))
+
+
+    call get_1d_netcdf_text(ncid, 'stationId', this%gageId,        caller, &
                             fatalErr, errStatusOut)
     errStatus=errStatus+errStatusOut
 
-    !! the quality short integer needs scaled
-    allocate(gageQCIn(size(gageQC)))
-    call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, &
-                            fatalErr, errStatusOut)
+
+
+        print *, 'this%gageId'
+        print *, this%gageId
+
+
+
+        allocate(this%gageTime(Nlakes))
+
+
+    call get_1d_netcdf_text(ncid, 'time',      this%gageTime,      caller, &
+                           fatalErr, errStatusOut)
     errStatus=errStatus+errStatusOut
-    gageQC=gageQCIn/oneHundred
-    deallocate(gageQCIn)
+
+                print *, 'this%gageTime'
+    print *, this%gageTime
+
+
+
+    !            print *, 'gageDischarge'
+   ! print *, gageDischarge1
+
+
+
+    !            print *, 'gageQC'
+    !print *, gageQC
+
+    !! the quality short integer needs scaled
+    !allocate(gageQCIn(size(gageQC)))
+    !call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, &
+    !                        fatalErr, errStatusOut)
+    !errStatus=errStatus+errStatusOut
+
+
+
+
+     !           print *, 'gageQCIn'
+    !print *, gageQCIn
+
+
+    print *, oneHundred
+
+
+    !gageQC=gageQCIn/oneHundred
+
+    !gageQC=gageQCIn/100.0
+
+
+    this%gageQC = this%gageQC/oneHundred
+
+
+    print *, '5.5'
+
+    !deallocate(gageQCIn)
+
+    print *, '6'
+
 
     !! JLM TODO fix temporary hardwire QC sanity checks
     if (sanityQcDischarge) then
        !! First, quality check on the quality flag!
-       where(gageQC .lt. 0 .or. gageQC .gt. 1) gageQC=0
+       where(this%gageQC .lt. 0 .or. this%gageQC .gt. 1) this%gageQC=0
        !! Now flow QC.
-       where(gageDischarge .le. 0.000) gageQC=0
+       where(this%gageDischarge .le. 0.000) this%gageQC=0
        !! peak flow on MS river *2
        !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
        !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
-       where(gageDischarge .ge. 90000.0) gageQC=0
-       if(any(gageQc .eq. 0)) then
+       where(this%gageDischarge .ge. 90000.0) this%gageQC=0
+       if(any(this%gageQc .eq. 0)) then
           write(6,*) 'Ndg: some gageQC set to zero'
        endif
     endif
