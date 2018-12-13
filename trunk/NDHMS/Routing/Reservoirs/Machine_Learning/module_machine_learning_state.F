@@ -61,7 +61,8 @@ contains
 
 
     !Machine Learning State Constructor
-    subroutine machine_learning_state_init(this, water_elevation, start_date, restart_flag, lake_number)
+    subroutine machine_learning_state_init(this, water_elevation, start_date, restart_flag, lake_number, &
+        gage_ids, gage_discharges)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
@@ -70,6 +71,10 @@ contains
         integer, intent(in) :: restart_flag              ! signals if NWM is on a restart or not
                                                          ! 1 is cold start and 99 is restart
         integer, intent(in) :: lake_number              ! lake number
+        character(len=15), intent(in), dimension(:) :: gage_ids
+        real, intent(in), dimension(:) :: gage_discharges
+
+
         integer :: time_interval
         integer :: start_month, start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
         integer :: lake_index, lake_id_index

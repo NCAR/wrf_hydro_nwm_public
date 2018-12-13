@@ -70,7 +70,8 @@ module module_machine_learning
 contains
 
     !Machine Learning Constructor
-    subroutine machine_learning_struct_init(this, water_elevation, reservoir_area, start_date, restart_flag, lake_number)
+    subroutine machine_learning_struct_init(this, water_elevation, reservoir_area, start_date, restart_flag, &
+        lake_number, gage_ids, gage_discharges)
 
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
@@ -83,6 +84,9 @@ contains
                                                          ! TODO: potentially change to lake_id for this and
                                                          ! LP and Pers modules. lake_number is used in LP
                                                          ! which has been submitted to a PR.
+        character(len=15), intent(in), dimension(:) :: gage_ids
+        real, intent(in), dimension(:) :: gage_discharges
+
         integer :: model_counter, model_index, model_id
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
@@ -142,7 +146,8 @@ contains
             else
 
                 ! initialize machine_learning state
-                call this%state%init( water_elevation, start_date, restart_flag, lake_number )
+                call this%state%init( water_elevation, start_date, restart_flag, lake_number, &
+                gage_ids, gage_discharges )
 
             end if
 
