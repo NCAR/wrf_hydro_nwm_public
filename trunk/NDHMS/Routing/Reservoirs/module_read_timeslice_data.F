@@ -2,7 +2,7 @@ module module_read_timeslice_data
 
     !use module_namelist,      only: nlst_rt
 
-
+    use netcdf
 
 
     implicit none
@@ -202,6 +202,27 @@ real, allocatable, dimension(:) :: chanlen_image0    !A global version kept on i
         character(len=19) :: start_date
         character(len=256) :: timeslice_path
 
+
+
+
+        integer :: nGages
+        integer, allocatable, dimension(:) :: whSliceInDom
+        integer :: nWhSliceInDom
+        integer :: count, ww, errStatus
+
+
+        character(len=19)  :: timeIn, updateTimeIn  !! the time of file/slice and when it was updated
+        character(len=2)   :: sliceResoIn           !! the temporal resolution of the slice
+        character(len=19), allocatable, dimension(:) :: gageTimeIn      !!
+        real,              allocatable, dimension(:) :: gageQCIn        !!
+        character(len=15), allocatable, dimension(:) :: usgsIdIn        !! USGS ID
+        real,              allocatable, dimension(:) :: gageDischargeIn !! m3/s
+
+
+        logical          :: readTimesliceErrFatal = .false.
+
+
+
     contains
 
         procedure :: init => read_timslice_data_struct_init
@@ -300,6 +321,12 @@ subroutine setup_read_timeslice(this, hydroDT)
 
     integer :: obsResolutionInt
 
+
+    integer :: errStatus
+
+
+
+
 !!!!!!!!!!!
     lsmTime = this%current_date
     initTime = this%start_date
@@ -358,7 +385,152 @@ subroutine setup_read_timeslice(this, hydroDT)
 
 
 
+      !call timeslice_file_to_struct(tt) ! uses obsTimeStr%time to get file
+
+
+
+
+!!!MOVE TO W/IN TIMESLICE FILE TO STRUCT???
+   call read_timeslice_file(timeslice_file_name,             &
+                            sanityQcDischarge,    &
+                            this%timeIn,               &
+                            this%updateTimeIn,         &
+                            this%sliceResoIn,          &
+                            this%usgsIdIn,             &
+                            this%gageTimeIn,           &
+                            this%gageQCIn,             &
+                            this%gageDischargeIn,      &
+                            readTimesliceErrFatal,&
+                            errStatus             )
+
+
+
+
 end subroutine setup_read_timeslice
+
+
+
+
+
+subroutine read_timeslice_file(  &
+     timeSliceFile,              &  !! IN: char, file path/name
+     sanityQcDischarge,          &  !! IN: perform sanity check qc?
+     sliceTime,                  &  !! OUT: the file time.
+     updateTime,                 &  !! OUT: the time the file was updated.
+     sliceResolution,            &  !! OUT: temporal resolution of the file in minutes.
+     gageId,                     &  !! OUT: integer, the USGS gage ID.
+     gageTime,                   &  !! OUT: output converted for comparision to model time??
+     gageQC,                     &  !! OUT: quality control flag for discharge
+     gageDischarge,              &  !! OUT: real, the m3/s observed discharge
+     fatalErr,                   &  !! IN:  logical, are IO errors fatal?
+     errStatus                   &  !! OUT: count of errors encountered
+                                 )
+
+    implicit none
+    character(len=256), intent(in)                :: timeSliceFile
+    logical,            intent(in)                :: sanityQcDischarge
+    character(len=19),  intent(out)               :: sliceTime
+    character(len=19),  intent(out)               :: updateTime
+    character(len=2),   intent(out)               :: sliceResolution
+    character(len=15),  intent(out), dimension(:) :: gageId
+    character(len=19),  intent(out), dimension(:) :: gageTime
+    real,               intent(out), dimension(:) :: gageQC
+    real,               intent(out), dimension(:) :: gageDischarge
+    logical,            intent(in)                :: fatalErr
+    integer,            intent(out)               :: errStatus
+
+    integer*2, allocatable, dimension(:) :: gageQCIn
+    integer :: iRet, ncId, fileNameLen, errStatusOut
+    character(len=19) :: caller
+    real, parameter :: zero = 0.0000000000000
+    real, parameter :: oneHundred = 100.0000000000000
+
+!#ifdef HYDRO_D
+!print*,'Ndg: start read_timeslice_file'
+!write(*,'("Ndg: read_timeslice_file: ''", A, "''")') trim(timeSliceFile)
+!call flush(6)
+!#endif
+
+    caller = 'read_timeslice_file'
+    errStatus=0
+
+    iRet = nf90_open(trim(timeSliceFile), nf90_nowrite, ncid)
+    if (iRet /= nf90_NoErr) then
+       write(*,'("Problem opening timeSliceFile: ''", A, "''")') trim(timeSliceFile)
+       if(fatalErr) call hydro_stop('read_timeslice_file')
+       errStatus=errStatus+1
+    endif
+
+    !! global atts
+    iRet = nf90_get_att(ncid, nf90_global, 'sliceCenterTimeUTC',         sliceTime)
+    if (iRet /= nf90_NoErr) errStatus=errStatus+1
+    iRet = nf90_get_att(ncid, nf90_global, 'fileUpdateTimeUTC',          updateTime)
+    if (iRet /= nf90_NoErr) errStatus=errStatus+1
+    iRet = nf90_get_att(ncid, nf90_global, 'sliceTimeResolutionMinutes', sliceResolution)
+    if (iRet /= nf90_NoErr) errStatus=errStatus+1
+
+    ! variables
+    call get_1d_netcdf_text(ncid, 'stationId', gageId,        caller, &
+                            fatalErr, errStatusOut)
+    errStatus=errStatus+errStatusOut
+    call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, &
+                            fatalErr, errStatusOut)
+    errStatus=errStatus+errStatusOut
+    call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, &
+                            fatalErr, errStatusOut)
+    errStatus=errStatus+errStatusOut
+
+    !! the quality short integer needs scaled
+    allocate(gageQCIn(size(gageQC)))
+    call get_1d_netcdf_int2(ncid, 'discharge_quality', gageQCIn,        caller, &
+                            fatalErr, errStatusOut)
+    errStatus=errStatus+errStatusOut
+    gageQC=gageQCIn/oneHundred
+    deallocate(gageQCIn)
+
+    !! JLM TODO fix temporary hardwire QC sanity checks
+    if (sanityQcDischarge) then
+       !! First, quality check on the quality flag!
+       where(gageQC .lt. 0 .or. gageQC .gt. 1) gageQC=0
+       !! Now flow QC.
+       where(gageDischarge .le. 0.000) gageQC=0
+       !! peak flow on MS river *2
+       !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
+       !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
+       where(gageDischarge .ge. 90000.0) gageQC=0
+       if(any(gageQc .eq. 0)) then
+          write(6,*) 'Ndg: some gageQC set to zero'
+       endif
+    endif
+
+    iRet = nf90_close(ncId)
+    if (iRet /= nf90_NoErr) then
+       write(*,'("Problem closing timeSliceFile: ''", A, "''")') trim(timeSliceFile)
+       if(fatalErr) call hydro_stop('read_timeslice_file')
+       errStatus=errStatus+1
+    endif
+
+!#ifdef HYDRO_D
+!print*,'Ndg: finish read_timeslice_file'
+!call flush(6)!
+!#endif
+
+end subroutine read_timeslice_file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function find_timeslice_file(date, obsResolution, timeslice_path)
@@ -850,6 +1022,107 @@ if (punct .and. (oldlen.ge.11) .and. (newlen.ge.11)) ndate(11:11) = sp
 
 end subroutine geth_newdate
 
+
+
+subroutine get_1d_netcdf_int2(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
+integer*4,               intent(in)  :: ncid !! the file identifier
+character(len=*),        intent(in)  :: varName
+integer*2, dimension(:), intent(out) :: var
+character(len=*),        intent(in)  :: callingRoutine
+logical,                 intent(in)  :: fatal_if_error
+integer,                 intent(out) :: errStatus
+integer :: varid, iret
+errStatus=0
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_int2: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int2")
+   errStatus=errStatus+1
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_int2: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int2")
+   errStatus=errStatus+1
+end if
+end subroutine get_1d_netcdf_int2
+
+
+subroutine get_1d_netcdf_int4(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
+integer*4,             intent(in)  :: ncid !! the file identifier
+character(len=*),      intent(in)  :: varName
+integer, dimension(:), intent(out) :: var
+character(len=*),      intent(in)  :: callingRoutine
+logical,               intent(in)  :: fatal_if_error
+integer,               intent(out) :: errStatus
+integer :: varid, iret
+errStatus=0
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_int4: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int4")
+   errStatus=errStatus+1
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_int4: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_int4")
+   errStatus=errStatus+1
+end if
+end subroutine get_1d_netcdf_int4
+
+
+subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
+integer,            intent(in)  :: ncid !! the file identifier
+character(len=*),   intent(in)  :: varName
+real, dimension(:), intent(out) :: var
+character(len=*),   intent(in)  :: callingRoutine
+logical,            intent(in)  :: fatal_if_error
+integer,            intent(out) :: errStatus
+integer :: varId, iRet
+errStatus=0
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
+   errStatus=errStatus+1
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_real: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
+   errStatus=errStatus+1
+end if
+end subroutine get_1d_netcdf_real
+
+
+
+subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+implicit none
+character(len=*), dimension(:), intent(out) :: var
+integer,                        intent(in)  :: ncid !! the file identifier
+character(len=*),               intent(in)  :: varName
+character(len=*),               intent(in)  :: callingRoutine
+logical,                        intent(in)  :: fatal_if_error
+integer,                        intent(out) :: errStatus
+integer :: varId, iRet
+errStatus=0
+iRet = nf90_inq_varid(ncid, varName, varid)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_text: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+   errStatus=errStatus+1
+end if
+iRet = nf90_get_var(ncid, varid, var)
+if (iret /= nf90_NoErr) then
+   print*, trim(callingRoutine) // ": get_1d_netcdf_text: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+   errStatus=errStatus+1
+end if
+end subroutine get_1d_netcdf_text
 
 
 
