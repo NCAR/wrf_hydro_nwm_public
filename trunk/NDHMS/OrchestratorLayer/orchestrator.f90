@@ -19,9 +19,11 @@ module orchestrator_base
 
   end type orchestrator_
 
-  type(orchestrator_) :: OL
+  type(orchestrator_) :: orchestrator
   
 contains
+
+!We may want routines to access the various components
 
   type(orchestrator_) function orchestrator_init()
     
