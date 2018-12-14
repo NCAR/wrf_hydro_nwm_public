@@ -71,7 +71,7 @@ contains
 
     !Machine Learning Constructor
     subroutine machine_learning_struct_init(this, water_elevation, reservoir_area, start_date, restart_flag, &
-        lake_number, gage_ids, gage_discharges)
+        lake_number, gage_ids, gage_qualities, gage_discharges)
 
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
@@ -85,7 +85,7 @@ contains
                                                          ! LP and Pers modules. lake_number is used in LP
                                                          ! which has been submitted to a PR.
         character(len=15), intent(in), dimension(:) :: gage_ids
-        real, intent(in), dimension(:) :: gage_discharges
+        real, intent(in), dimension(:) :: gage_qualities, gage_discharges
 
         integer :: model_counter, model_index, model_id
 
@@ -147,7 +147,7 @@ contains
 
                 ! initialize machine_learning state
                 call this%state%init( water_elevation, start_date, restart_flag, lake_number, &
-                gage_ids, gage_discharges )
+                gage_ids, gage_qualities, gage_discharges )
 
             end if
 

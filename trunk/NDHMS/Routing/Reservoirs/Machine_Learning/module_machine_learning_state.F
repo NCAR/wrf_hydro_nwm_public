@@ -62,7 +62,7 @@ contains
 
     !Machine Learning State Constructor
     subroutine machine_learning_state_init(this, water_elevation, start_date, restart_flag, lake_number, &
-        gage_ids, gage_discharges)
+        gage_ids, gage_qualities, gage_discharges)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
@@ -72,7 +72,7 @@ contains
                                                          ! 1 is cold start and 99 is restart
         integer, intent(in) :: lake_number              ! lake number
         character(len=15), intent(in), dimension(:) :: gage_ids
-        real, intent(in), dimension(:) :: gage_discharges
+        real, intent(in), dimension(:) :: gage_qualities, gage_discharges
 
 
         integer :: time_interval
@@ -83,7 +83,7 @@ contains
         integer :: Nlakes
         integer :: ncid, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
         integer :: activation_functionsVarId, number_of_nodesVarId, minimum_storageVarId, maximum_storageVarId, lake_idVarId
-        integer :: minimum_releaseVarId, maximum_releaseVarId, time_intervalVarId
+        integer :: time_intervalVarId, gage_ids_of_ML_lakes1_var_id, gage_ids_of_ML_lakes2_var_id
         character, external :: nf90_strerror1
         integer, dimension(nf90_max_var_dims) :: dimIDs
 
@@ -102,12 +102,17 @@ contains
         real, allocatable, dimension (:,:)  :: storage_monthly_averages
         integer, allocatable, dimension (:) :: time_intervals
 
+        integer, allocatable, dimension (:)  :: gage_ids_of_ML_lakes1
+        integer, allocatable, dimension (:)  :: gage_ids_of_ML_lakes2
+
+        integer :: timeslice_gage_id_integer, gage2_id_integer, timeslice_gage1_id_index, timeslice_gage2_id_index
+
+        real :: gage1_discharge, gage2_discharge
 
         real :: release_monthly_average, storage_monthly_average
 
         integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
         integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
-
 
         this%water_elevation = water_elevation
 
@@ -133,6 +138,58 @@ contains
 
         if (status /= nf90_noerr) call handle_err(status)
 
+
+
+        status = nf90_inq_varid(ncid, "gage_id1", gage_ids_of_ML_lakes1_var_id)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+        status = nf90_inq_varid(ncid, "gage_id2", gage_ids_of_ML_lakes2_var_id)
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        status = nf90_inquire_variable(ncid, gage_ids_of_ML_lakes1_var_id, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(gage_ids_of_ML_lakes1(Nlakes))
+
+
+        status = nf90_get_var(ncid, gage_ids_of_ML_lakes1_var_id, gage_ids_of_ML_lakes1)
+
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+        print *, 'gage_ids_of_ML_lakes1'
+        print *, gage_ids_of_ML_lakes1
+
+
+
+
+
+        status = nf90_inquire_variable(ncid, gage_ids_of_ML_lakes2_var_id, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(gage_ids_of_ML_lakes2(Nlakes))
+
+
+        status = nf90_get_var(ncid, gage_ids_of_ML_lakes2_var_id, gage_ids_of_ML_lakes2)
+
+
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        print *, 'gage_ids_of_ML_lakes2'
+        print *, gage_ids_of_ML_lakes2
 
 
 
@@ -313,12 +370,28 @@ contains
         release_monthly_average = release_monthly_averages(lake_id_index, start_month)
 
 
-
+print *, '--------------------------------------------------------------------------------------'
+print *, '--------------------------------------------------------------------------------------'
+print *, '--------------------------------------------------------------------------------------'
 
         storage_monthly_average = storage_monthly_averages(lake_id_index, start_month)
 
 
+        print *, 'lake_id_index'
 
+        print *, lake_id_index
+
+
+        print *, 'gage_ids_of_ML_lakes1(lake_id_index)'
+
+
+        print *, gage_ids_of_ML_lakes1(lake_id_index)
+
+
+
+
+
+        !integer :: gage1_id_integer, gage2_id_integer, timeslice_gage1_id_index, timeslice_gage2_id_index
 
 
 !IF ML RESERVOIR IS SET TO READ FROM TIMESLCE THEN USE THAT FOR PREV TIME RELEASE INSTEAD OF HISTORICAL
@@ -326,8 +399,122 @@ contains
         ! If cold start
         !if (restart_flag == 1) then
 
+                    !BEST TO USE -999????????????
+            if (gage_ids_of_ML_lakes1(lake_id_index) /= -999) then
 
-            this%previous_time_release = release_monthly_average
+                print *, 'not null'
+
+                print *, 'size(gage_ids)'
+
+                print *, size(gage_ids)
+
+                do timeslice_gage1_id_index = 1, size(gage_ids)
+
+                    print *, 'timeslice_gage1_id_index'
+
+                    print *, timeslice_gage1_id_index
+
+                    read(gage_ids(timeslice_gage1_id_index), *) timeslice_gage_id_integer
+
+                    print *, 'timeslice_gage_id_integer'
+                    print *,timeslice_gage_id_integer
+
+                    if (gage_ids_of_ML_lakes1(lake_id_index) == timeslice_gage_id_integer) then
+
+                        !if (gage_qualities(timeslice_gage1_id_index) == 100) then
+
+                        !    gage1_discharge = gage_discharges(timeslice_gage_id_index)
+
+                        !else
+
+
+                        gage1_discharge = gage_discharges(timeslice_gage1_id_index)
+
+                            print *, 'gage1_discharge'
+                            print *, gage1_discharge
+
+
+                    end if
+
+                end do
+
+
+                if (gage_ids_of_ML_lakes2(lake_id_index) /= -999) then
+                    print *, 'second gage id loop'
+
+                    do timeslice_gage2_id_index = 1, size(gage_ids)
+
+                        print *, 'timeslice_gage2_id_index'
+                        print *, timeslice_gage2_id_index
+
+
+                        read(gage_ids(timeslice_gage2_id_index), *) timeslice_gage_id_integer
+
+                        if (gage_ids_of_ML_lakes2(lake_id_index) == timeslice_gage_id_integer) then
+
+                            gage2_discharge = gage_discharges(timeslice_gage2_id_index)
+
+
+                            print *, 'gage2_discharge'
+                            print *, gage2_discharge
+
+                        end if
+
+                    end do
+
+                    if (gage_qualities(timeslice_gage1_id_index) == 100 .and. gage_qualities(timeslice_gage2_id_index) == 100) then
+
+                        this%previous_time_release = gage2_discharge - gage1_discharge
+
+                        print *, 'this%previous_time_release = gage2_discharge - gage1_discharge'
+
+
+                    else
+                        this%previous_time_release = release_monthly_average
+
+                        print *, 'this%previous_time_release = release_monthly_average'
+
+                    end if
+
+
+
+                else
+
+
+                    if (gage_qualities(timeslice_gage1_id_index) == 100) then
+
+                        this%previous_time_release = gage1_discharge
+
+                    else
+                        this%previous_time_release = release_monthly_average
+
+                    end if
+
+
+                end if
+
+
+
+                print *, '(gage_qualities(timeslice_gage1_id_index))'
+                print *, (gage_qualities(timeslice_gage1_id_index))
+
+
+
+            else
+
+                print *, 'null'
+
+
+                this%previous_time_release = release_monthly_average
+
+            end if
+
+
+            print *, 'this%previous_time_release'
+
+            print *, this%previous_time_release
+
+
 
             this%average_storage_over_past_time_intervals = storage_monthly_average
 

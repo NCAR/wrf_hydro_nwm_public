@@ -52,6 +52,17 @@
     !real, parameter :: oneHundred = 100.0000000000000
 
 
+    integer :: num_int
+    character(len=15) :: num_char
+
+
+    num_char = '    89'
+
+    print *, num_int
+
+    read(num_char,*)num_int
+
+        print *, num_int
 
 
        ! Initialize MPI, learn local rank and total number of processors.

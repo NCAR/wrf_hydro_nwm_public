@@ -854,6 +854,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                  rt_domain(did)%timestep_flag,                  &
                  rt_domain(did)%LAKEIDM(lake_index),            &
                  rt_domain(did)%read_timeslice_data(1)%ptr%gageId,    &
+                 rt_domain(did)%read_timeslice_data(1)%ptr%gageQC, &
                  rt_domain(did)%read_timeslice_data(1)%ptr%gageDischarge    )
        end select
 
