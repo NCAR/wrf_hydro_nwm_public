@@ -42,6 +42,7 @@ module module_machine_learning_state
         integer :: current_year
         real :: x_day_of_year
         real :: y_day_of_year
+        logical :: previous_release_set_from_timeslice
 
 
 
@@ -117,6 +118,8 @@ contains
         this%water_elevation = water_elevation
 
         this%start_date = start_date
+
+        this%previous_release_set_from_timeslice = .false.
 
 
         !Reservoir Parm NC file
@@ -439,59 +442,62 @@ print *, '----------------------------------------------------------------------
                 end do
 
 
-                if (gage_ids_of_ML_lakes2(lake_id_index) /= -999) then
-                    print *, 'second gage id loop'
+                !if (gage_ids_of_ML_lakes2(lake_id_index) /= -999) then
+                !    print *, 'second gage id loop'
 
-                    do timeslice_gage2_id_index = 1, size(gage_ids)
+                !    do timeslice_gage2_id_index = 1, size(gage_ids)
 
-                        print *, 'timeslice_gage2_id_index'
-                        print *, timeslice_gage2_id_index
-
-
-                        read(gage_ids(timeslice_gage2_id_index), *) timeslice_gage_id_integer
-
-                        if (gage_ids_of_ML_lakes2(lake_id_index) == timeslice_gage_id_integer) then
-
-                            gage2_discharge = gage_discharges(timeslice_gage2_id_index)
+                !        print *, 'timeslice_gage2_id_index'
+                !        print *, timeslice_gage2_id_index
 
 
-                            print *, 'gage2_discharge'
-                            print *, gage2_discharge
+                !        read(gage_ids(timeslice_gage2_id_index), *) timeslice_gage_id_integer
 
-                        end if
+                !        if (gage_ids_of_ML_lakes2(lake_id_index) == timeslice_gage_id_integer) then
 
-                    end do
-
-                    if (gage_qualities(timeslice_gage1_id_index) == 100 .and. gage_qualities(timeslice_gage2_id_index) == 100) then
-
-                        this%previous_time_release = gage2_discharge - gage1_discharge
-
-                        print *, 'this%previous_time_release = gage2_discharge - gage1_discharge'
+                !            gage2_discharge = gage_discharges(timeslice_gage2_id_index)
 
 
-                    else
-                        this%previous_time_release = release_monthly_average
+                !            print *, 'gage2_discharge'
+                !            print *, gage2_discharge
 
-                        print *, 'this%previous_time_release = release_monthly_average'
+                !        end if
 
-                    end if
+                !    end do
+
+                !    if (gage_qualities(timeslice_gage1_id_index) == 100 .and. gage_qualities(timeslice_gage2_id_index) == 100) then
+
+                !        this%previous_time_release = gage2_discharge - gage1_discharge
+
+                !        print *, 'this%previous_time_release = gage2_discharge - gage1_discharge'
+
+
+                !    else
+                !        this%previous_time_release = release_monthly_average
+
+                !        print *, 'this%previous_time_release = release_monthly_average'
+
+                !    end if
 
 
 
-                else
+                !else
 
 
                     if (gage_qualities(timeslice_gage1_id_index) == 100) then
 
                         this%previous_time_release = gage1_discharge
 
+                        this%previous_release_set_from_timeslice = .true.
+
+
                     else
                         this%previous_time_release = release_monthly_average
 
                     end if
 
 
-                end if
+                !end if
 
 
 
