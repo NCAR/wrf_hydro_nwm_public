@@ -793,7 +793,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
     print *, nlst_rt(did)%reservoir_timeslice_path
 
-   call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19), nlst_rt(did)%timeSlicePath)
+   call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19), nlst_rt(did)%reservoir_timeslice_path)
 
 
 

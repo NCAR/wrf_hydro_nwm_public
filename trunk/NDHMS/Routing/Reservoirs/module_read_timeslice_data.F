@@ -261,12 +261,13 @@ contains
             this%current_date = start_date
 
 
+            print *, 'timeslice path passed'
+            print *, timeslice_path
+
+            this%timeslice_path = timeslice_path
 
 
-            !this%timeslice_path = timeslice_path
-
-
-            this%timeslice_path = '/home/jdmattern/Documents/test_runs/run_without_restart_david2/Timeslices/'
+            !this%timeslice_path = '/home/jdmattern/Documents/test_runs/run_without_restart_david2/Timeslices/'
 
             print *, 'start date'
 
@@ -696,7 +697,7 @@ print *,this%gageDischarge
 
 
 print *, 'gageQC'
-print *,this%gageQC
+!print *,this%gageQC
 
 
 
