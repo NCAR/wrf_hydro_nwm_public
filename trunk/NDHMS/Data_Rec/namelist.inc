@@ -41,7 +41,8 @@
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
           character(len=256) :: route_lake_f=""
-          character(len=256) :: machine_learing_parameter_file=""
+          character(len=256) :: machine_learning_parameter_file=""
+          character(len=256), allocatable, dimension(:) :: machine_learning_model_parameter_files
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""

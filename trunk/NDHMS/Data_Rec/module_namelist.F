@@ -51,7 +51,7 @@ CONTAINS
           character(len=256) :: route_link_f=""
           logical            :: compound_channel
           character(len=256) :: route_lake_f=""
-          character(len=256) :: machine_learing_parameter_file
+          character(len=256) :: machine_learning_parameter_file
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""
@@ -117,7 +117,7 @@ CONTAINS
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-                    machine_learing_parameter_file ,route_direction_f,route_order_f,gwbasmskfil, &
+                    machine_learning_parameter_file ,route_direction_f,route_order_f,gwbasmskfil, &
                     geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -405,7 +405,7 @@ CONTAINS
     nlst%route_chan_f = route_chan_f
     nlst%route_link_f = route_link_f
     nlst%route_lake_f =route_lake_f
-    nlst%machine_learing_parameter_file = machine_learing_parameter_file
+    nlst%machine_learning_parameter_file = machine_learning_parameter_file
     nlst%route_direction_f =  route_direction_f
     nlst%route_order_f =  route_order_f
     nlst%gwbasmskfil =  gwbasmskfil
@@ -468,7 +468,7 @@ CONTAINS
     write(6,*) " nlst%route_link_f ", route_link_f
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
-    write(6,*) " nlst%machine_learing_parameter_file ", machine_learing_parameter_file
+    write(6,*) " nlst%machine_learning_parameter_file ", machine_learning_parameter_file
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
@@ -711,8 +711,8 @@ subroutine rt_nlst_check(nlst)
       if(len(trim(nlst%route_lake_f)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a route_lake_f to ouptut and run lakes.')
       endif
-      if(len(trim(nlst%machine_learing_parameter_file)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learing_parameter_file for &
+      if(len(trim(nlst%machine_learning_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_parameter_file for &
          inputs to machine learning type reservoirs.')
       endif
    endif
@@ -720,9 +720,9 @@ subroutine rt_nlst_check(nlst)
       inquire(file=trim(nlst%route_lake_f),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_lake_f not found.')
    endif
-   if(len(trim(nlst%machine_learing_parameter_file)) .ne. 0) then
-      inquire(file=trim(nlst%machine_learing_parameter_file),exist=fileExists)
-      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learing_parameter_file not found.')
+   if(len(trim(nlst%machine_learning_parameter_file)) .ne. 0) then
+      inquire(file=trim(nlst%machine_learning_parameter_file),exist=fileExists)
+      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_parameter_file not found.')
    endif
    ! Only allow lakes to be ran with gridded routing or NWM routing
    if(len(trim(nlst%route_lake_f)) .ne. 0) then

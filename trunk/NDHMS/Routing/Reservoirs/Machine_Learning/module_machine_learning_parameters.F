@@ -40,14 +40,14 @@ contains
 
     !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
     !subroutine machine_learning_parameters_init(this, model_index, lake_number)
-    subroutine machine_learning_parameters_init(this, machine_learing_parameter_file, &
+    subroutine machine_learning_parameters_init(this, machine_learning_parameter_file, &
         reservoir_area, lake_number, number_of_unique_models)
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
 
 		!integer, intent(in) :: model_id				! machine learning model number
 		!integer, intent(in) :: model_index				! machine learning model index in model array
-        character(len=256), intent(in) :: machine_learing_parameter_file
+        character(len=256), intent(in) :: machine_learning_parameter_file
         real, intent(in)     :: reservoir_area          ! area of reservoir (km^2)
         integer, intent(in) :: lake_number              ! lake number
         integer, intent(inout) :: number_of_unique_models
@@ -87,7 +87,7 @@ contains
         ! LEAVE THIS HARD CODED????
 
         !status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        status = nf90_open(path = machine_learing_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status)
 
 

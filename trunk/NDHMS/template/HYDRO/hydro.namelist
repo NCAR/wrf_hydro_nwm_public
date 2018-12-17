@@ -151,7 +151,7 @@ compound_channel = .FALSE.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
 ! Specify the Machine Learning Reservoir parameter file
-machine_learing_parameter_file = "./DOMAIN/ML_RESERVOIR_PARM.nc"
+machine_learning_parameter_file = "./DOMAIN/ML_RESERVOIR_PARM.nc"
 
 ! Specify the Machine Learning Reservoir model files
 machine_learning_model_files = "./DOMAIN/ML_MODEL_PARM_ACF.nc", "./DOMAIN/ML_MODEL_PARM_ACF.nc"

@@ -63,14 +63,14 @@ contains
 
     !Machine Learning State Constructor
     subroutine machine_learning_state_init(this, water_elevation, start_date, &
-        machine_learing_parameter_file, restart_flag, lake_number, gage_ids, &
+        machine_learning_parameter_file, restart_flag, lake_number, gage_ids, &
         gage_qualities, gage_discharges)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
         real, intent(inout) :: water_elevation
         character(len=19), intent(in) :: start_date
-        character(len=256), intent(in) :: machine_learing_parameter_file
+        character(len=256), intent(in) :: machine_learning_parameter_file
         integer, intent(in) :: restart_flag              ! signals if NWM is on a restart or not
                                                          ! 1 is cold start and 99 is restart
         integer, intent(in) :: lake_number              ! lake number
@@ -126,7 +126,7 @@ contains
 
         !Reservoir Parm NC file
         !status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        status = nf90_open(path = machine_learing_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !print *, "status", status
         if (status /= nf90_noerr) call handle_err(status)
 
