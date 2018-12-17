@@ -42,7 +42,8 @@
           character(len=256) :: route_link_f=""
           character(len=256) :: route_lake_f=""
           character(len=256) :: machine_learning_parameter_file=""
-          character(len=256), allocatable, dimension(:) :: machine_learning_model_parameter_files
+          character(len=256) :: reservoir_timeslice_path=""
+          !character(len=256), allocatable, dimension(:) :: machine_learning_model_parameter_files
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""
@@ -65,6 +66,7 @@
           integer :: rtFlag
           integer ::khour
 
+
 !#ifdef WRF_HYDRO_NUDGING
        character(len=256) :: nudgingParamFile
        character(len=256) :: netwkReExFile
@@ -80,7 +82,7 @@
        character(len=256) :: timeSlicePath
        integer            :: nLastObs
 !#endif
-
+       !character(len=256) :: timeSlicePath
 
    END TYPE namelist_rt_field
 

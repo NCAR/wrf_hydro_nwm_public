@@ -789,9 +789,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
     print *, 'call read timeslice object init'
 
 
-    print *, 'timeslicepath in modulert'
+    print *, 'reservoir_timeslice_path in modulert'
 
-    print *, nlst_rt(did)%timeSlicePath
+    print *, nlst_rt(did)%reservoir_timeslice_path
 
    call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19), nlst_rt(did)%timeSlicePath)
 
