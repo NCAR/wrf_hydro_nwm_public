@@ -70,14 +70,14 @@ module module_machine_learning
 contains
 
     !Machine Learning Constructor
-    subroutine machine_learning_struct_init(this, water_elevation, reservoir_area, start_date, restart_flag, &
-        lake_number, gage_ids, gage_qualities, gage_discharges)
-
+    subroutine machine_learning_struct_init(this, water_elevation, reservoir_area, start_date, &
+        machine_learing_parameter_file, restart_flag, lake_number, gage_ids, gage_qualities, gage_discharges)
         implicit none
         class(machine_learning_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: reservoir_area            ! area of reservoir (km^2)
         character(len=19), intent(in) :: start_date
+        character(len=256), intent(in) :: machine_learing_parameter_file
         integer, intent(in) :: restart_flag              ! signals if NWM is on a restart or not
                                                          ! 1 is cold start and 99 is restart
         integer, intent(in) :: lake_number               ! lake number
@@ -131,7 +131,8 @@ contains
             else
 
                 ! initialize machine_learning parameters
-                call this%parameters%init( reservoir_area, lake_number, number_of_unique_models )
+                call this%parameters%init( machine_learing_parameter_file, &
+                reservoir_area, lake_number, number_of_unique_models )
             end if
 
             this%pointer_allocation_guard = .true.
@@ -146,8 +147,8 @@ contains
             else
 
                 ! initialize machine_learning state
-                call this%state%init( water_elevation, start_date, restart_flag, lake_number, &
-                gage_ids, gage_qualities, gage_discharges )
+                call this%state%init( water_elevation, start_date, machine_learing_parameter_file, &
+                restart_flag, lake_number, gage_ids, gage_qualities, gage_discharges )
 
             end if
 

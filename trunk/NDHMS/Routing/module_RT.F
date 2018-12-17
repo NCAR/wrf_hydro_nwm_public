@@ -800,6 +800,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    !call rt_domain(did)%read_timeslice_data%ptr%init(nlst_rt(did)%startdate(1:19))
    !call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19))
 
+    print *, 'nlst_rt(did)%machine_learing_parameter_file'
+    print *, nlst_rt(did)%machine_learing_parameter_file
 
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
@@ -851,6 +853,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                  call ml%init(rt_domain(did)%RESHT(lake_index), &
                  rt_domain(did)%HRZAREA(lake_index),            &
                  nlst_rt(did)%startdate(1:19),                  &
+                 nlst_rt(did)%machine_learing_parameter_file,   &
                  rt_domain(did)%timestep_flag,                  &
                  rt_domain(did)%LAKEIDM(lake_index),            &
                  rt_domain(did)%read_timeslice_data(1)%ptr%gageId,    &

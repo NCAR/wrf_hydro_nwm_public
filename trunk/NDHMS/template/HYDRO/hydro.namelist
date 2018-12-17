@@ -154,6 +154,7 @@ route_lake_f = "./DOMAIN/LAKEPARM.nc"
 machine_learing_parameter_file = "./DOMAIN/ML_RESERVOIR_PARM.nc"
 
 ! Specify the Machine Learning Reservoir model files
+machine_learning_model_files = "./DOMAIN/ML_MODEL_PARM_ACF.nc", "./DOMAIN/ML_MODEL_PARM_ACF.nc"
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
