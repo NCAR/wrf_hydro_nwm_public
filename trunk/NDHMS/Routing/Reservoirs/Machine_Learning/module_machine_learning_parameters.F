@@ -101,8 +101,21 @@ contains
         !call read_netcdf_real_1d_array(ncid, "maximum_release", maximum_release)
 
 
-print *, 'maximum_release'
-print *, maximum_release
+!print *, 'maximum_release'
+!print *, maximum_release
+
+
+
+        call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
+
+
+
+        call read_machine_learning_netcdf_integer_parameters(ncid, lake_id_index, "model_id", this%model_id)
+
+
+
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
+
 
 
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
@@ -259,6 +272,137 @@ print *, maximum_release
 
 
 
+    subroutine read_machine_learning_netcdf_lake_id(ncid, lake_number, netcdf_array_name, lake_id_index)
+        integer, intent(in) :: ncid, lake_number
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: lake_id_index
+        integer, allocatable, dimension(:) :: temp_lake_id_array
+        integer :: var_id, number_of_lakes, status, lake_index
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(temp_lake_id_array(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_lake_id_array)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        print *, 'number_of_lakes'
+        print *, number_of_lakes
+
+        print *, 'temp_lake_id_array'
+        print *, temp_lake_id_array
+
+        do lake_index = 1, number_of_lakes
+            if (temp_lake_id_array(lake_index) == lake_number) then
+                lake_id_index = lake_index
+            end if
+        end do
+
+        print *, 'lake_id_index'
+        print *, lake_id_index
+
+        deallocate(temp_lake_id_array)
+
+    end subroutine read_machine_learning_netcdf_lake_id
+
+
+    subroutine read_machine_learning_netcdf_integer_parameters(ncid, lake_id_index, netcdf_array_name, returned_integer_parameter)
+        integer, intent(in) :: ncid, lake_id_index
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: returned_integer_parameter
+        integer, allocatable, dimension(:) :: temp_integer_array
+        integer :: var_id, number_of_lakes, status
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(temp_integer_array(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_integer_array)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        print *, 'number_of_lakes'
+        print *, number_of_lakes
+
+        print *, 'temp_integer_array'
+        print *, temp_integer_array
+
+        returned_integer_parameter = temp_integer_array(lake_id_index)
+
+        print *, 'returned_integer_parameter'
+        print *, returned_integer_parameter
+
+
+        deallocate(temp_integer_array)
+
+
+    end subroutine read_machine_learning_netcdf_integer_parameters
+
+
+
+
+
+    subroutine read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, netcdf_array_name, returned_real_parameter)
+        integer, intent(in) :: ncid, lake_id_index
+        character(len=*), intent(in) :: netcdf_array_name
+        real, intent(out) :: returned_real_parameter
+        real, allocatable, dimension(:) :: temp_real_array
+        integer :: var_id, number_of_lakes, status
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        allocate(temp_real_array(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_real_array)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        print *, 'number_of_lakes'
+        print *, number_of_lakes
+
+        print *, 'temp_real_array'
+        print *, temp_real_array
+
+        returned_real_parameter = temp_real_array(lake_id_index)
+
+        print *, 'returned_real_parameter'
+        print *, returned_real_parameter
+
+
+        deallocate(temp_real_array)
+
+
+
+
+    end subroutine read_machine_learning_netcdf_real_parameters
+
+
+
+
+
     subroutine open_netcdf(file_path, ncid)
         character(len=256), intent(in) :: file_path
         integer, intent(out) ::ncid
@@ -323,11 +467,11 @@ print *, maximum_release
 
 
 
-    subroutine get_netcdf_1d_array_dimension
+    !subroutine get_netcdf_1d_array_dimension
 
 
 
-    end subroutine get_netcdf_1d_array_dimension
+    !end subroutine get_netcdf_1d_array_dimension
 
 
 

@@ -136,15 +136,15 @@ print *, MPI_INFO_NULL
 
 !if (my_rank == 3) then
 
-        call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, &
-            info = MPI_INFO_NULL) )
+        !call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL) )
 
         !call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
         !    info = MPI_INFO_NULL) )
 
 
 
-        !call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid) )
+        call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid) )
 
 
 
