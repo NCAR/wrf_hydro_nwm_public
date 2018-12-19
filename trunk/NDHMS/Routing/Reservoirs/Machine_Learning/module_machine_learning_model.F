@@ -42,19 +42,19 @@ module module_machine_learning_model
         REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
         REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
 
-        real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
+        !real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
         real, allocatable, dimension (:,:,:) :: reshaped_weights !
         real, allocatable, dimension (:,:)   :: reshaped_weights_1st
         real, allocatable, dimension (:,:)   :: reshaped_weights_2nd
         real, allocatable, dimension (:,:)   :: reshaped_weights_3rd
         real, allocatable, dimension (:,:)   :: reshaped_weights_4th
 
-        real, allocatable, dimension (:,:)   :: bias ! Bias has one dimension less than that for the weights!
+        !real, allocatable, dimension (:,:)   :: bias ! Bias has one dimension less than that for the weights!
 
-        integer, allocatable, dimension (:)  :: activation_functions ! is just a function of layer
+        !integer, allocatable, dimension (:)  :: activation_functions ! is just a function of layer
         integer, allocatable, dimension (:)  :: number_of_nodes ! is just a function of layer; number of computational nodes (i.e., neurons); first element represents the number of inputs to the model
-        real, allocatable, dimension (:)     :: minimum_of_features ! is a function of the size of the inputs
-        real, allocatable, dimension (:)     :: maximum_of_features	! is a function of the size of the inputs
+        !real, allocatable, dimension (:)     :: minimum_of_features ! is a function of the size of the inputs
+        !real, allocatable, dimension (:)     :: maximum_of_features	! is a function of the size of the inputs
 
         real, allocatable, dimension (:)     :: minimum_of_features_final
         real, allocatable, dimension (:)     :: maximum_of_features_final
@@ -102,14 +102,24 @@ contains
         implicit none
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being initialized
 
+
+        real, allocatable, dimension (:,:)   :: bias ! Bias has one dimension less than that for the weights!
+        real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
+        real, allocatable, dimension (:)     :: minimum_of_features ! is a function of the size of the inputs
+        real, allocatable, dimension (:)     :: maximum_of_features	! is a function of the size of the inputs
+        integer, allocatable, dimension (:)  :: activation_functions ! is just a function of layer
+
+
         integer, intent(in) :: model_number
 
-        integer :: ncid, status, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
+        integer :: ncid, var_id, status, biasVarId, minimum_of_featuresVarId, maximum_of_featuresVarId, weightsVarId, input_namesVarId
         integer :: activation_functionsVarId, number_of_nodesVarId
 
         integer :: Nlayers                     ! number of model layers (this is actually the number of layers + 1, to help us for matrix dimensions)
         integer :: Ninputs                     ! total number of inputs, note that we might not be using all as the inputs to the ML model!
+        integer :: number_of_inputs
         integer :: nodes   ! # of neurons which is a function of layers and model number
+        integer :: number_of_layers
 
         character, external :: nf90_strerror1
         integer, dimension(nf90_max_var_dims) :: dimIDs
@@ -133,139 +143,204 @@ contains
         this%model_number = model_number
 
 
-        status = nf90_inq_varid(ncid, "bias", biasVarId)
+
+
+
+        call read_machine_learning_model_netcdf_real_2D_parameters(ncid, "bias", var_id, number_of_layers, nodes)
+
+        allocate(bias(number_of_layers, nodes))
+
+        status = nf90_get_var(ncid, var_id, bias)
 
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        status = nf90_inq_varid(ncid, "weights", weightsVarId)
+
+        call read_machine_learning_model_netcdf_real_2D_parameters(ncid, "weights", var_id, number_of_layers, nodes)
+
+        allocate(weights(number_of_layers, nodes))
+
+        status = nf90_get_var(ncid, var_id, weights)
 
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        status = nf90_inq_varid(ncid, "minimum_of_features", minimum_of_featuresVarId)
 
+        call read_machine_learning_model_netcdf_real_1D_parameters(ncid, "minimum_of_features", var_id, number_of_inputs)
 
-        if(status /= nf90_NoErr) call handle_err(status)
+        allocate(minimum_of_features(number_of_inputs))
 
-
-        status = nf90_inq_varid(ncid, "maximum_of_features", maximum_of_featuresVarId)
-
+        status = nf90_get_var(ncid, var_id, minimum_of_features)
 
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        status = nf90_inq_varid(ncid, "activation_functions_ID", activation_functionsVarId)
 
+        call read_machine_learning_model_netcdf_real_1D_parameters(ncid, "maximum_of_features", var_id, number_of_inputs)
+
+        allocate(maximum_of_features(number_of_inputs))
+
+        status = nf90_get_var(ncid, var_id, maximum_of_features)
+
+        if(status /= nf90_NoErr) call handle_err(status)
+
+
+
+        call read_machine_learning_model_netcdf_integer_1D_parameters(ncid, "activation_functions_ID", var_id, number_of_layers)
+
+        allocate(activation_functions(number_of_layers))
+
+        status = nf90_get_var(ncid, var_id, activation_functions)
 
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-        status = nf90_inq_varid(ncid, "number_of_nodes", number_of_nodesVarId)
 
+        call read_machine_learning_model_netcdf_integer_1D_parameters(ncid, "number_of_nodes", var_id, number_of_layers)
+
+        allocate(this%number_of_nodes(number_of_layers))
+
+        status = nf90_get_var(ncid, var_id, this%number_of_nodes)
 
         if(status /= nf90_NoErr) call handle_err(status)
+
+
+
+
+        !status = nf90_inq_varid(ncid, "bias", biasVarId)
+
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        !status = nf90_inq_varid(ncid, "weights", weightsVarId)
+
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        !status = nf90_inq_varid(ncid, "minimum_of_features", minimum_of_featuresVarId)
+
+
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        !status = nf90_inq_varid(ncid, "maximum_of_features", maximum_of_featuresVarId)
+
+
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        !status = nf90_inq_varid(ncid, "activation_functions_ID", activation_functionsVarId)
+
+
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+
+        !status = nf90_inq_varid(ncid, "number_of_nodes", number_of_nodesVarId)
+
+
+        !if(status /= nf90_NoErr) call handle_err(status)
 
 
 
         ! How big is the netCDF variable, that is, what are the lengths of
         !   its constituent dimensions?
-        status = nf90_inquire_variable(ncid, biasVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_variable(ncid, biasVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
 
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        if(status /= nf90_NoErr) call handle_err(status)
+       ! status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        status = nf90_inquire_dimension(ncid, dimIDs(2), len = nodes)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_dimension(ncid, dimIDs(2), len = nodes)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
 
-        allocate(this%bias(Nlayers, nodes))
+        !allocate(this%bias(Nlayers, nodes))
         !allocate(this%bias(nodes, Nlayers))
 
 
-        status = nf90_inquire_variable(ncid, weightsVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_variable(ncid, weightsVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        status = nf90_inquire_dimension(ncid, dimIDs(2), len = nodes)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-
-        allocate(this%weights(Nlayers, nodes))
-
-        status = nf90_inquire_variable(ncid, minimum_of_featuresVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        allocate(this%minimum_of_features(Ninputs))
+        !status = nf90_inquire_dimension(ncid, dimIDs(2), len = nodes)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
 
-        status = nf90_inquire_variable(ncid, maximum_of_featuresVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !allocate(this%weights(Nlayers, nodes))
 
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_variable(ncid, minimum_of_featuresVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(this%maximum_of_features(Ninputs))
+        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        status = nf90_inquire_variable(ncid, activation_functionsVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        allocate(this%activation_functions(Nlayers))
+        !allocate(this%minimum_of_features(Ninputs))
 
 
-        status = nf90_inquire_variable(ncid, number_of_nodesVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_variable(ncid, maximum_of_featuresVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        if(status /= nf90_NoErr) call handle_err(status)
+        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(this%number_of_nodes(Nlayers))
+        !allocate(this%maximum_of_features(Ninputs))
 
+        !status = nf90_inquire_variable(ncid, activation_functionsVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
+        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        status = nf90_get_var(ncid, biasVarId, this%bias)
-
-
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-        status = nf90_get_var(ncid, weightsVarId, this%weights)
-
-        if (status /= nf90_noerr) call handle_err(status)
+        !allocate(this%activation_functions(Nlayers))
 
 
-        status = nf90_get_var(ncid, minimum_of_featuresVarId, this%minimum_of_features)
+        !status = nf90_inquire_variable(ncid, number_of_nodesVarId, dimids = dimIDs)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-        if (status /= nf90_noerr) call handle_err(status)
+        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
+        !if(status /= nf90_NoErr) call handle_err(status)
 
-
-        status = nf90_get_var(ncid, maximum_of_featuresVarId, this%maximum_of_features)
-
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-        status = nf90_get_var(ncid, activation_functionsVarId, this%activation_functions)
-
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-        status = nf90_get_var(ncid, number_of_nodesVarId, this%number_of_nodes)
-
-        if (status /= nf90_noerr) call handle_err(status)
+        !allocate(this%number_of_nodes(Nlayers))
 
 
 
-        this%reshaped_weights = reshape(this%weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
+        !status = nf90_get_var(ncid, biasVarId, this%bias)
+
+
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+        !status = nf90_get_var(ncid, weightsVarId, this%weights)
+
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+        !status = nf90_get_var(ncid, minimum_of_featuresVarId, this%minimum_of_features)
+
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+        !status = nf90_get_var(ncid, maximum_of_featuresVarId, this%maximum_of_features)
+
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+        !status = nf90_get_var(ncid, activation_functionsVarId, this%activation_functions)
+
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+        !status = nf90_get_var(ncid, number_of_nodesVarId, this%number_of_nodes)
+
+        !if (status /= nf90_noerr) call handle_err(status)
+
+
+
+        !this%reshaped_weights = reshape(this%weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
+        this%reshaped_weights = reshape(weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
 
         this%reshaped_weights_1st = this%reshaped_weights(1:this%number_of_nodes(2),1:this%number_of_nodes(1),1) !(1:90,1:6,1)
 
@@ -277,7 +352,7 @@ contains
 
 
         do k=1, (size(this%number_of_nodes)-1)
-            this%model_parameters(k)%link_bias= reshape(this%bias(:,k), (/size(this%bias(:,k)),1/))
+            this%model_parameters(k)%link_bias= reshape(bias(:,k), (/size(bias(:,k)),1/))
         end do
 
 
@@ -290,7 +365,7 @@ contains
         this%model_parameters(4)%link_weights= this%reshaped_weights_4th
 
         do k=1, (size(this%number_of_nodes)-1)
-            this%model_parameters(k)%link_activation_functions = this%activation_functions(k)
+            this%model_parameters(k)%link_activation_functions = activation_functions(k)
         end do
 
 
@@ -301,27 +376,27 @@ contains
         this%nn_inputs%Y_DOY = 0.0
 
 
-        this%minimum_of_features_final = (/this%minimum_of_features(1), this%minimum_of_features(6), this%minimum_of_features(3),&
-         this%minimum_of_features(2), this%minimum_of_features(4), this%minimum_of_features(5)/)
+        this%minimum_of_features_final = (/minimum_of_features(1), minimum_of_features(6), minimum_of_features(3),&
+         minimum_of_features(2), minimum_of_features(4), minimum_of_features(5)/)
 
-        this%maximum_of_features_final = (/this%maximum_of_features(1), this%maximum_of_features(6), this%maximum_of_features(3),&
-         this%maximum_of_features(2), this%maximum_of_features(4), this%maximum_of_features(5)/)
+        this%maximum_of_features_final = (/maximum_of_features(1), maximum_of_features(6), maximum_of_features(3),&
+         maximum_of_features(2), maximum_of_features(4), maximum_of_features(5)/)
 
 
-        this%y_min = this%minimum_of_features(1)! minimum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
-        this%y_max = this%maximum_of_features(1)! maximum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
+        this%y_min = minimum_of_features(1)! minimum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
+        this%y_max = maximum_of_features(1)! maximum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
 
 
 
         ! Should we deallocate and should I just assign these as local instead????
         ! Deallocation of memory
 
-        !deallocate(this%bias)
-        !deallocate(this%weights)
-        !deallocate(this%minimum_of_features)
-        !deallocate(this%maximum_of_features)
-        !deallocate(this%activation_functions)
-        !deallocate(number_of_nodes)
+        deallocate(bias)
+        deallocate(weights)
+        deallocate(minimum_of_features)
+        deallocate(maximum_of_features)
+        deallocate(activation_functions)
+
 
 
     end subroutine machine_learning_model_init
@@ -432,6 +507,76 @@ contains
 
 
     end subroutine run_machine_learning_model
+
+
+
+
+
+
+
+    subroutine read_machine_learning_model_netcdf_integer_1D_parameters(ncid, netcdf_array_name, var_id, number_of_inputs)
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: var_id, number_of_inputs
+        integer :: status
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_inputs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+    end subroutine read_machine_learning_model_netcdf_integer_1D_parameters
+
+
+
+    subroutine read_machine_learning_model_netcdf_real_1D_parameters(ncid, netcdf_array_name, var_id, number_of_inputs)
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: var_id, number_of_inputs
+        integer :: status
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_inputs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+    end subroutine read_machine_learning_model_netcdf_real_1D_parameters
+
+
+    subroutine read_machine_learning_model_netcdf_real_2D_parameters(ncid, netcdf_array_name, var_id, number_of_layers, number_of_nodes)
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: var_id, number_of_layers, number_of_nodes
+        integer :: status
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_layers)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_nodes)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+    end subroutine read_machine_learning_model_netcdf_real_2D_parameters
+
+
+
+
 
     ! We have just considered "sigmoid" and "relu" activation functions; later we can consider other activation functions
     real function sigmoid(z)
