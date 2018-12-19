@@ -92,11 +92,11 @@ module module_io_utilities
 
                 !works
                 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/))
+                !iret = nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/))
                 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-
+                call check(nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/)))
 
 
 
@@ -199,10 +199,53 @@ print *,nodelist
 
 
 
+    subroutine open_netcdf(file_path, ncid)
+        character(len=256), intent(in) :: file_path
+        integer, intent(out) ::ncid
+        integer :: status
+
+        status = nf90_open(path = file_path, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        if (status /= nf90_noerr) call handle_err2(status)
+
+    end subroutine open_netcdf
 
 
+    subroutine read_netcdf_real_1d_array(ncid, netcdf_array_name, array_out)
+        integer, intent(in) :: ncid
+        character(len=256), intent(in) :: netcdf_array_name
+        real, dimension(:), intent(out) :: array_out
+        real, allocatable, dimension(:) :: temp_array
+        integer :: var_id, array_length, status
+        integer, dimension(nf90_max_var_dims) :: dimIDs
 
 
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err2(status)
+
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err2(status)
+        status = nf90_inquire_dimension(ncid, dimIDs(1), len = array_length)
+        if(status /= nf90_NoErr) call handle_err2(status)
+        allocate(temp_array(array_length))
+
+
+        status = nf90_get_var(ncid, var_id, temp_array)
+        if (status /= nf90_noerr) call handle_err2(status)
+
+        print *, 'temp_array'
+        print *, temp_array
+
+        array_out = temp_array
+
+        print *, 'array_out'
+        print *, array_out
+
+
+        deallocate(temp_array)
+
+
+    end subroutine read_netcdf_real_1d_array
 
 
 
@@ -224,6 +267,19 @@ print *,nodelist
         end if
 
     end subroutine handle_err2
+
+
+
+   subroutine check(status)
+     integer, intent ( in) :: status
+
+     if(status /= nf90_noerr) then
+       print *, trim(nf90_strerror(status))
+       stop 2
+     end if
+   end subroutine check
+
+
 
 
 end module module_io_utilities

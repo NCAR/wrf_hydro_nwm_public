@@ -264,10 +264,10 @@ contains
             print *, 'timeslice path passed'
             print *, timeslice_path
 
-            this%timeslice_path = timeslice_path
+            !this%timeslice_path = timeslice_path
 
 
-            !this%timeslice_path = '/home/jdmattern/Documents/test_runs/run_without_restart_david2/Timeslices/'
+            this%timeslice_path = '/home/jdmattern/Documents/test_runs/run_without_restart_david2/Timeslices/'
 
             print *, 'start date'
 

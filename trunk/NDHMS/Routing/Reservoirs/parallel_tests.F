@@ -84,23 +84,23 @@
        ! HDF5/netCDF-4 file to be created. The comm and info parameters
        ! cause parallel I/O to be enabled.
 
-       !call check( nf90_create(FILE_NAME, NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, &
-       !     info = MPI_INFO_NULL) )
-
-
-        print *, MPI_COMM_WORLD
-        print *, MPI_INFO_NULL
-
-
-        call check( nf90_create(FILE_NAME, NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
+       call check( nf90_create(FILE_NAME, NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, &
             info = MPI_INFO_NULL) )
 
 
+        !print *, MPI_COMM_WORLD
+        !print *, MPI_INFO_NULL
 
-       print *, 'after create'
 
-        print *, MPI_COMM_WORLD
-        print *, MPI_INFO_NULL
+        !call check( nf90_create(FILE_NAME, NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL) )
+
+
+
+       !print *, 'after create'
+
+        !print *, MPI_COMM_WORLD
+        !print *, MPI_INFO_NULL
 
        ! Define the dimensions. NetCDF will hand back an ID for
        ! each. Metadata operations must take place on all processors.

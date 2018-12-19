@@ -3,7 +3,6 @@ module module_reservoir_io
     use module_reservoir_base
     use module_io_utilities
     use netcdf
-
     use module_machine_learning
 
     !use mpi, only: MPI_INFO_NULL
@@ -97,6 +96,8 @@ contains
         out_file = "reservoir_rst."//old_date(1:16)//"_DOMAIN1"
 
 
+        print *, out_file
+
 
         print *, 'reservoir restart write in reservoir_io'
 
@@ -133,9 +134,29 @@ print *, MPI_COMM_WORLD
 print *, MPI_INFO_NULL
 
 
+!if (my_rank == 3) then
 
-        call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
+        call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, &
             info = MPI_INFO_NULL) )
+
+        !call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL) )
+
+
+
+        !call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid) )
+
+
+
+
+
+
+        print *, "File created"
+
+
+
+
+
 
 
         !iret = nf90_create(trim(out_file), NF90_NETCDF4, ncid, MPI_COMM_WORLD, &
@@ -183,12 +204,22 @@ print *, MPI_INFO_NULL
 
 
 
+
+
+
+
+
           !iret = nf90_def_dim(ncid, "lakes", nlakes, (/dimid_lakes(1)/))
-          iret = nf90_def_dim(ncid, "lakes", nlakes, dimid_lakes)
 
 
+          !Works
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          !iret = nf90_def_dim(ncid, "lakes", nlakes, dimid_lakes)
+          !!!!!!!!!!!!!!!!!!!!!
 
 
+        call check(nf90_def_dim(ncid, "lakes", nlakes, dimid_lakes))
+        print *, "Created lakes dim"
             !dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
 
             !iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
@@ -200,15 +231,25 @@ print *, MPI_INFO_NULL
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Works but need to verify dimid_lakes
-        iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
+        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
 
-        iret = nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid)
+        !iret = nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid)
 
-        iret = nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid)
+        !iret = nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid)
 
-        iret = nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid)
+        !iret = nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid)
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        call check(nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid))
+        print *, "Created machine_learning var"
+        call check(nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid))
+
+
+        call check(nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid))
+
+
+        call check(nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid))
 
 
         print*, 'dimid_lakes'
@@ -228,6 +269,7 @@ print *, MPI_INFO_NULL
 
 
 
+
        !         put global attribute
        !iret = nf90_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,his_out_counts)
        !iret = nf90_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,old_date)
@@ -241,16 +283,36 @@ print *, MPI_INFO_NULL
 
 
        !         put global attribute
-       iret = nf90_put_att(ncid,NF_GLOBAL,"his_out_counts",his_out_counts)
-       iret = nf90_put_att(ncid,NF_GLOBAL,"Restart_Time",old_date)
-       iret = nf90_put_att(ncid,NF_GLOBAL,"Since_Date",since_date)
-       iret = nf90_put_att(ncid,NF_GLOBAL,"DTCT",DTCT)
-       iret = nf90_put_att(ncid, NF_GLOBAL, "channel_only", channel_only)
-       iret = nf90_put_att(ncid, NF_GLOBAL, "channel_bucket_only", channel_bucket_only)
+       !iret = nf90_put_att(ncid,NF_GLOBAL,"his_out_counts",his_out_counts)
+       !iret = nf90_put_att(ncid,NF_GLOBAL,"Restart_Time",old_date)
+       !iret = nf90_put_att(ncid,NF_GLOBAL,"Since_Date",since_date)
+       !iret = nf90_put_att(ncid,NF_GLOBAL,"DTCT",DTCT)
+       !iret = nf90_put_att(ncid, NF_GLOBAL, "channel_only", channel_only)
+       !iret = nf90_put_att(ncid, NF_GLOBAL, "channel_bucket_only", channel_bucket_only)
+
+
+        call check(nf90_put_att(ncid,NF90_GLOBAL,"his_out_counts",his_out_counts))
+        call check(nf90_put_att(ncid,NF90_GLOBAL,"Restart_Time",old_date))
+        call check(nf90_put_att(ncid,NF90_GLOBAL,"Since_Date",since_date))
+        call check(nf90_put_att(ncid,NF90_GLOBAL,"DTCT",DTCT))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "channel_only", channel_only))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "channel_bucket_only", channel_bucket_only))
+
+
+        !iret = nf90_enddef(ncid)
+
+        call check(nf90_enddef(ncid))
 
 
 
-        iret = nf90_enddef(ncid)
+
+        !call check(nf90_close(ncid))
+
+
+        !call check(nf90_open(trim(out_file), NF90_NETCDF4, ncid, comm = MPI_COMM_WORLD, &
+        !    info = MPI_INFO_NULL) )
+
+
 
 
         allocate (temp_machine_learning_current_time_storage_array(1))
@@ -393,9 +455,11 @@ print *, MPI_INFO_NULL
 
                             end select
 
+                            !!!!!Works
+                            !call w_rst_crt_nc1_lake(ncid, 1, machine_learning_current_time_storage, lake_id, "machine_learning_current_time_storage", &
+                            !lake_index)
 
-                            call w_rst_crt_nc1_lake(ncid, 1, machine_learning_current_time_storage, lake_id, "machine_learning_current_time_storage", &
-                            lake_index)
+
 
                             !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
 
@@ -507,7 +571,9 @@ print *, MPI_INFO_NULL
         !       lake_index)
 
 
-        iret = nf90_close(ncid)
+        !iret = nf90_close(ncid)
+        call check(nf90_close(ncid))
+
 
         !print *, 'temp_machine_learning_current_time_storage_array'
         !print *, temp_machine_learning_current_time_storage_array
@@ -643,17 +709,18 @@ print *, MPI_INFO_NULL
      iret =  nf90_close(ncid)
 
 
+
     end subroutine reservoir_read_from_restart_file2
 
 
-   subroutine check(status)
-     integer, intent ( in) :: status
+   !subroutine check(status)
+   !  integer, intent ( in) :: status
 
-     if(status /= nf90_noerr) then
-       print *, trim(nf90_strerror(status))
-       stop 2
-     end if
-   end subroutine check
+   !  if(status /= nf90_noerr) then
+   !    print *, trim(nf90_strerror(status))
+   !    stop 2
+   !  end if
+   !end subroutine check
 
 
 

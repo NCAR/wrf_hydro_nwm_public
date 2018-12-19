@@ -11,6 +11,7 @@ module module_machine_learning_parameters
     use module_reservoir_utilities
     !use module_machine_learning_utilities
     use module_reservoir_base
+    !use module_io_utilities
     implicit none
 
     ! Extend/derive machine learning parameters from the abstract base
@@ -40,14 +41,17 @@ contains
 
     !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
     !subroutine machine_learning_parameters_init(this, model_index, lake_number)
-    subroutine machine_learning_parameters_init(this, machine_learning_parameter_file, &
-        reservoir_area, lake_number, number_of_unique_models)
+    !subroutine machine_learning_parameters_init(this, machine_learning_parameter_file, &
+    !    reservoir_area, lake_number, number_of_unique_models)
+        subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, number_of_unique_models)
+
+
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
 
 		!integer, intent(in) :: model_id				! machine learning model number
 		!integer, intent(in) :: model_index				! machine learning model index in model array
-        character(len=256), intent(in) :: machine_learning_parameter_file
+        !character(len=256), intent(in) :: machine_learning_parameter_file
         real, intent(in)     :: reservoir_area          ! area of reservoir (km^2)
         integer, intent(in) :: lake_number              ! lake number
         integer, intent(inout) :: number_of_unique_models
@@ -86,9 +90,19 @@ contains
         ! Machine Learning Reservoir Parm NC file
         ! LEAVE THIS HARD CODED????
 
-        !status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        print *, 'before open reservoir parm'
+
+        status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        !status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status)
+
+        print *, 'after open reservoir parm'
+
+        !call read_netcdf_real_1d_array(ncid, "maximum_release", maximum_release)
+
+
+print *, 'maximum_release'
+print *, maximum_release
 
 
         status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
@@ -241,5 +255,81 @@ contains
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being destroyed
     end subroutine machine_learning_parameters_destroy
+
+
+
+
+    subroutine open_netcdf(file_path, ncid)
+        character(len=256), intent(in) :: file_path
+        integer, intent(out) ::ncid
+        integer :: status
+
+        status = nf90_open(path = file_path, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        if (status /= nf90_noerr) call handle_err(status)
+
+    end subroutine open_netcdf
+
+
+    subroutine read_netcdf_real_1d_array(ncid, netcdf_array_name, array_out)
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: netcdf_array_name
+        real, dimension(:), intent(out) :: array_out
+        real, allocatable, dimension(:) :: temp_array
+        integer :: var_id, array_length, status
+        integer, dimension(nf90_max_var_dims) :: dimIDs
+
+        print *, 'before inq varid'
+
+        print *, netcdf_array_name, ncid
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        !status = nf90_inq_varid(ncid, "maximum_release", var_id)
+        if (status /= nf90_noerr) call handle_err(status)
+
+
+        print *, 'after inq varid'
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dimIDs)
+        if(status /= nf90_NoErr) call handle_err(status)
+
+        print *, 'after inq var'
+
+        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = array_length)
+        !if(status /= nf90_NoErr) call handle_err(status)
+
+        print *, 'after inq dimension'
+        print *, array_length
+
+        !allocate(temp_array(array_length))
+
+        print *, 'after allocate temp array'
+
+        status = nf90_get_var(ncid, var_id, array_out)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        !print *, 'temp_array'
+        !print *, temp_array
+
+        !array_out = temp_array
+
+        print *, 'array_out'
+        print *, array_out
+
+
+        deallocate(temp_array)
+
+
+    end subroutine read_netcdf_real_1d_array
+
+
+
+    subroutine get_netcdf_1d_array_dimension
+
+
+
+    end subroutine get_netcdf_1d_array_dimension
+
+
+
 
 end module module_machine_learning_parameters

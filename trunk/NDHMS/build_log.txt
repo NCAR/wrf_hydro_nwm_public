@@ -1,0 +1,465 @@
+configure: Sourcing setEnvar.sh for the compile options.
+make[1]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+rm -f *.o *.mod *.stb *~ *.f Noah_hrldas_beta
+make[1]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+(make -f Makefile.comm clean)
+make[1]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS'
+(cd utils     ; make -f Makefile clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+rm -f *.o *.mod *.stb *~ *.F90
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+(cd MPP; make -f Makefile clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+make -C Routing/io clean
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/io'
+rm -f *.o
+rm -f *.mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/io'
+make -C Routing/Overland clean
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+rm -f *.o 
+rm -f *.mod
+rm -f overland_tests
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+make -C Routing/Reservoirs clean
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+rm -f *.o
+rm -f *.mod
+rm -f reservoir_tests
+rm -f parallel_tests
+make -C Level_Pool clean
+make[3]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+rm -f *.o
+rm -f *.mod
+#rm -f reservoir_tests
+make[3]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+make -C Machine_Learning clean
+make[3]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Machine_Learning'
+rm -f *.o
+rm -f *.mod
+#rm -f reservoir_tests
+make[3]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Machine_Learning'
+make -C io clean
+make[3]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/io'
+rm -f *.o
+rm -f *.mod
+#rm -f reservoir_tests
+make[3]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/io'
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+(cd Data_Rec; make -f Makefile clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Data_Rec'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Data_Rec'
+(cd HYDRO_drv; make -f Makefile clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+(cd Routing;    make -f Makefile clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)
+make[1]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS'
+make[1]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+(cd Utility_routines;		make clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+rm -f *.o *.mod *.stb *~ *.f90
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+(cd phys;			make clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+rm -f *.o *.mod *.stb *~ *.f90
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+(cd IO_code;			make clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+rm -f *.o *.mod *.stb *~ *.f90
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+(cd run;			make clean)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+rm -f *~ hrldas.exe
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+make[1]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+if [ 0 -eq 1 ]; then \
+	(cd Rapid_routing; make -f makefile.cpl clean); \
+fi
+(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
+(rm -f Run/wrf_hydro.exe   )
+(make -f Makefile.comm BASIC)
+make[1]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS'
+(cd utils     ; make -f Makefile)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+Utils Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_version.F > module_version.F90
+mpif90   -o module_version.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4  -DNWM_VERSION=\"none\" -DWRF_HYDRO_VERSION=\"v5.1.0-alpha11\"  -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_version.F90
+
+ar -r ../lib/libHYDRO.a module_version.o
+cp *.mod ../mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+(cd MPP     ; make -f Makefile)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+
+rm -f CPL_WRF.o CPL_WRF.mod CPL_WRF.stb *~ *.f
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include CPL_WRF.F > CPL_WRF.f
+mpif90   -o CPL_WRF.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" CPL_WRF.f
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -c CPL_WRF.F
+ar -r ../lib/libHYDRO.a CPL_WRF.o
+
+rm -f mpp_land.o mpp_land.mod mpp_land.stb *~
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -c mpp_land.F
+ar -r ../lib/libHYDRO.a mpp_land.o
+
+rm -f module_mpp_ReachLS.o module_mpp_ReachLS.mod module_mpp_ReachLS.stb *~
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -c module_mpp_ReachLS.F
+ar -r ../lib/libHYDRO.a module_mpp_ReachLS.o
+
+rm -f module_mpp_GWBUCKET.o module_mpp_GWBUCKET.mod module_mpp_GWBUCKET.stb *~
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -c module_mpp_GWBUCKET.F
+ar -r ../lib/libHYDRO.a module_mpp_GWBUCKET.o
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+make -C Routing/io
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/io'
+#Build each sub module then build the module that depends on all sub modules
+mpif90   -DMPP_LAND -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_io_utilities.F
+ar -r ../../lib/libHYDRO.a module_io_utilities.o
+cp *.mod ../../mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/io'
+make -C Routing/Overland
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+#Build each sub module then build the module that depends on all sub modules	
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    -I/usr/include module_overland_control.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    -I/usr/include module_overland_streams_and_lakes.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    -I/usr/include module_overland_routing_properties.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    -I/usr/include module_overland_mass_balance.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    -I/usr/include module_overland.F
+ar -r ../../lib/libHYDRO.a module_overland_control.o
+ar -r ../../lib/libHYDRO.a module_overland_streams_and_lakes.o
+ar -r ../../lib/libHYDRO.a module_overland_routing_properties.o
+ar -r ../../lib/libHYDRO.a module_overland_mass_balance.o
+ar -r ../../lib/libHYDRO.a module_overland.o
+cp *.mod ../../mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+make -C Routing/Reservoirs
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+#Build each sub module then build the module that depends on all sub modules
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_reservoir_utilities.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_reservoir_base.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_read_timeslice_data.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_reservoir_io.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_levelpool_parameters.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_levelpool_state.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_levelpool_tests.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_levelpool.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_machine_learning_parameters.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_machine_learning_state.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_machine_learning_model.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_machine_learning_tests.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include module_machine_learning.F
+ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
+ar -r ../../lib/libHYDRO.a module_reservoir_base.o
+ar -r ../../lib/libHYDRO.a module_read_timeslice_data.o
+#ar -r ../../lib/libHYDRO.a module_reservoir_io.o
+#ar -r ../../lib/libHYDRO.a module_levelpool_parameters.o
+#ar -r ../../lib/libHYDRO.a module_levelpool_state.o
+#ar -r ../../lib/libHYDRO.a module_levelpool_tests.o
+#ar -r ../../lib/libHYDRO.a module_levelpool.o
+#ar -r ../../lib/libHYDRO.a module_machine_learning_parameters.o
+#ar -r ../../lib/libHYDRO.a module_machine_learning_state.o
+#ar -r ../../lib/libHYDRO.a module_machine_learning_model.o
+#ar -r ../../lib/libHYDRO.a module_machine_learning_tests.o
+#ar -r ../../lib/libHYDRO.a module_machine_learning.o
+cp *.mod ../../mod
+#Build the modules
+make -C Level_Pool
+make[3]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+#Build each sub module then build the module that depends on all sub modules
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_levelpool_parameters.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_levelpool_state.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_levelpool_tests.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_levelpool.F
+ar -r ../../../lib/libHYDRO.a module_levelpool_parameters.o
+ar -r ../../../lib/libHYDRO.a module_levelpool_state.o
+ar -r ../../../lib/libHYDRO.a module_levelpool_tests.o
+ar -r ../../../lib/libHYDRO.a module_levelpool.o
+cp *.mod ../../../mod
+make[3]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+make -C Machine_Learning
+make[3]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Machine_Learning'
+#Build each sub module then build the module that depends on all sub modules
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_machine_learning_parameters.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_machine_learning_state.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_machine_learning_model.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_machine_learning_tests.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_machine_learning.F
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_machine_learning_utilities.F
+ar -r ../../../lib/libHYDRO.a module_machine_learning_parameters.o
+ar -r ../../../lib/libHYDRO.a module_machine_learning_state.o
+ar -r ../../../lib/libHYDRO.a module_machine_learning_model.o
+ar -r ../../../lib/libHYDRO.a module_machine_learning_tests.o
+ar -r ../../../lib/libHYDRO.a module_machine_learning.o
+#ar -r ../../../lib/libHYDRO.a module_machine_learning_utilities.o
+cp *.mod ../../../mod
+make[3]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Machine_Learning'
+make -C io
+make[3]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/io'
+#Build each sub module then build the module that depends on all sub modules
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../../../MPP -I ../../../mod -I/usr/include module_reservoir_io.F
+ar -r ../../../lib/libHYDRO.a module_reservoir_io.o
+cp *.mod ../../../mod
+make[3]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/io'
+#mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4  -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod reservoir_tests.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4  -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod -I/usr/include parallel_tests.F
+mpif90   -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4  -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I ../../mod hydro_stop.F
+#mpif90   -L/usr/lib64 -lnetcdff -lnetcdf -o reservoir_tests \
+mpif90   -L/usr/lib64 -lnetcdff -lnetcdf -o parallel_tests \
+	module_reservoir_utilities.o \
+	module_reservoir_base.o \
+	module_read_timeslice_data.o \
+	Level_Pool/module_levelpool_parameters.o \
+	Level_Pool/module_levelpool_state.o \
+	Level_Pool/module_levelpool_tests.o \
+	Level_Pool/module_levelpool.o \
+	Machine_Learning/module_machine_learning_parameters.o \
+	Machine_Learning/module_machine_learning_state.o \
+	Machine_Learning/module_machine_learning_model.o \
+	Machine_Learning/module_machine_learning_tests.o \
+	Machine_Learning/module_machine_learning.o \
+	parallel_tests.o \
+	hydro_stop.o
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+make -C Debug_Utilities/
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Debug_Utilities'
+
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include debug_dump_variable.F > debug_dump_variable.f
+mpif90   -o debug_dump_variable.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I../mod debug_dump_variable.f
+#rm -f debug_dump_variable.f
+
+ar -r ../lib/libHYDRO.a debug_dump_variable.o
+cp *.mod ../mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Debug_Utilities'
+(cd Routing; make -f Makefile)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_date_utilities_rt.F > module_date_utilities_rt.f
+mpif90   -o module_date_utilities_rt.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_date_utilities_rt.f
+
+ar -r ../lib/libHYDRO.a module_date_utilities_rt.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include ../Data_Rec/module_namelist.F > ../Data_Rec/module_namelist.f
+mpif90   -o ../Data_Rec/module_namelist.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include ../Data_Rec/module_namelist.f
+
+ar -r ../lib/libHYDRO.a ../Data_Rec/module_namelist.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include ../Data_Rec/module_RT_data.F > ../Data_Rec/module_RT_data.f
+mpif90   -o ../Data_Rec/module_RT_data.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include ../Data_Rec/module_RT_data.f
+
+ar -r ../lib/libHYDRO.a ../Data_Rec/module_RT_data.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_UDMAP.F > module_UDMAP.f
+mpif90   -o module_UDMAP.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_UDMAP.f
+
+ar -r ../lib/libHYDRO.a module_UDMAP.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_HYDRO_utils.F > module_HYDRO_utils.f
+mpif90   -o module_HYDRO_utils.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_HYDRO_utils.f
+
+ar -r ../lib/libHYDRO.a module_HYDRO_utils.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_noah_chan_param_init_rt.F > module_noah_chan_param_init_rt.f
+mpif90   -o module_noah_chan_param_init_rt.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_noah_chan_param_init_rt.f
+
+ar -r ../lib/libHYDRO.a module_noah_chan_param_init_rt.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_GW_baseflow.F > module_GW_baseflow.f
+mpif90   -o module_GW_baseflow.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_GW_baseflow.f
+
+ar -r ../lib/libHYDRO.a module_GW_baseflow.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include ../Data_Rec/module_gw_gw2d_data.F > ../Data_Rec/module_gw_gw2d_data.f
+mpif90   -o ../Data_Rec/module_gw_gw2d_data.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include ../Data_Rec/module_gw_gw2d_data.f
+
+ar -r ../lib/libHYDRO.a ../Data_Rec/module_gw_gw2d_data.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_HYDRO_io.F > module_HYDRO_io.f
+mpif90   -o module_HYDRO_io.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_HYDRO_io.f
+
+ar -r ../lib/libHYDRO.a module_HYDRO_io.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_gw_gw2d.F > module_gw_gw2d.f
+mpif90   -o module_gw_gw2d.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_gw_gw2d.f
+
+ar -r ../lib/libHYDRO.a module_gw_gw2d.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_RT.F > module_RT.f
+mpif90   -o module_RT.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_RT.f
+
+ar -r ../lib/libHYDRO.a module_RT.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include Noah_distr_routing.F > Noah_distr_routing.f
+mpif90   -o Noah_distr_routing.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include Noah_distr_routing.f
+
+ar -r ../lib/libHYDRO.a Noah_distr_routing.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_channel_routing.F > module_channel_routing.f
+mpif90   -o module_channel_routing.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_channel_routing.f
+
+ar -r ../lib/libHYDRO.a module_channel_routing.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_lsm_forcing.F > module_lsm_forcing.f
+mpif90   -o module_lsm_forcing.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_lsm_forcing.f
+
+ar -r ../lib/libHYDRO.a module_lsm_forcing.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_NWM_io_dict.F > module_NWM_io_dict.f
+mpif90   -o module_NWM_io_dict.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_NWM_io_dict.f
+
+ar -r ../lib/libHYDRO.a module_NWM_io_dict.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_NWM_io.F > module_NWM_io.f
+mpif90   -o module_NWM_io.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_NWM_io.f
+
+ar -r ../lib/libHYDRO.a module_NWM_io.o
+cp *.mod ../mod
+Routing Makefile:
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_reservoir_routing.F > module_reservoir_routing.f
+mpif90   -o module_reservoir_routing.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include module_reservoir_routing.f
+
+ar -r ../lib/libHYDRO.a module_reservoir_routing.o
+cp *.mod ../mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+(cd HYDRO_drv;   make -f Makefile)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_HYDRO_drv.F > module_HYDRO_drv.f
+mpif90   -o module_HYDRO_drv.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I/usr/include -I../mod module_HYDRO_drv.f
+
+ar -r ../lib/libHYDRO.a module_HYDRO_drv.o
+cp *.mod ../mod
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+make[1]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS'
+make[1]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include module_hrldas_HYDRO.F > module_hrldas_HYDRO.f
+mpif90   -o module_hrldas_HYDRO.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I./ -I ../../MPP -I ../../mod -I/usr/include module_hrldas_HYDRO.f
+rm -f module_hrldas_HYDRO.f
+
+ar -r ../../lib/libHYDRO.a module_hrldas_HYDRO.o
+cp *.mod ../../mod
+
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -I/usr/include hrldas_drv_HYDRO.F > hrldas_drv_HYDRO.f
+mpif90   -o hrldas_drv_HYDRO.o -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I./ -I ../../MPP -I ../../mod -I/usr/include hrldas_drv_HYDRO.f
+rm -f hrldas_drv_HYDRO.f
+
+ar -r ../../lib/libHYDRO.a hrldas_drv_HYDRO.o
+cp *.mod ../../mod
+make[1]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+if [ 0 -eq 1 ]; then \
+	(cd lib;rm -f librapid.a); \
+fi
+if [ 0 -eq 1 ]; then \
+	(cd Rapid_routing; make -f makefile.cpl rapid); \
+fi
+make[1]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+(cd Utility_routines;		make)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+
+rm -f module_date_utilities.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_date_utilities.F > module_date_utilities.f90
+mpif90   -o module_date_utilities.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_date_utilities.f90
+
+
+rm -f module_model_constants.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_model_constants.F > module_model_constants.f90
+mpif90   -o module_model_constants.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_model_constants.f90
+
+
+rm -f module_wrf_utilities.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_wrf_utilities.F > module_wrf_utilities.f90
+mpif90   -o module_wrf_utilities.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_wrf_utilities.f90
+
+
+rm -f kwm_string_utilities.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ kwm_string_utilities.F > kwm_string_utilities.f90
+mpif90   -o kwm_string_utilities.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    kwm_string_utilities.f90
+
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+(cd phys;			make)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+
+rm -f module_sf_noahmplsm.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_sf_noahmplsm.F > module_sf_noahmplsm.f90
+mpif90   -o module_sf_noahmplsm.o -c -I../Utility_routines -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_sf_noahmplsm.f90
+
+
+rm -f module_sf_noahmp_glacier.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_sf_noahmp_glacier.F > module_sf_noahmp_glacier.f90
+mpif90   -o module_sf_noahmp_glacier.o -c -I../Utility_routines -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_sf_noahmp_glacier.f90
+
+
+rm -f module_sf_noahmp_groundwater.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_sf_noahmp_groundwater.F > module_sf_noahmp_groundwater.f90
+mpif90   -o module_sf_noahmp_groundwater.o -c -I../Utility_routines -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_sf_noahmp_groundwater.f90
+
+
+rm -f module_sf_noahmpdrv.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_ module_sf_noahmpdrv.F > module_sf_noahmpdrv.f90
+mpif90   -o module_sf_noahmpdrv.o -c -I../Utility_routines -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    module_sf_noahmpdrv.f90
+
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+(cd IO_code;			make)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+
+rm -f module_hrldas_netcdf_io.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_  -I /usr/include module_hrldas_netcdf_io.F > module_hrldas_netcdf_io.f90
+mpif90   -o module_hrldas_netcdf_io.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I ../MPP -I../Utility_routines -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I /usr/include module_hrldas_netcdf_io.f90
+
+
+rm -f module_NoahMP_hrldas_driver.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_  module_NoahMP_hrldas_driver.F > module_NoahMP_hrldas_driver.f90
+mpif90   -o module_NoahMP_hrldas_driver.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4   -I"./" -I"../../MPP" -I"../MPP" -I"../mod" -I. \
+-I../phys -I../Utility_routines -I../../../mod -I /usr/include module_NoahMP_hrldas_driver.f90
+
+
+rm -f main_hrldas_driver.f90
+cpp -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" -DHYDRO_D -DWRF_HYDRO   -DWRFIO_NCD_LARGE_FILE_SUPPORT     -D_HRLDAS_OFFLINE_  main_hrldas_driver.F > main_hrldas_driver.f90
+mpif90   -o main_hrldas_driver.o -c -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4    -I ../MPP -I. \
+-I../phys -I../Utility_routines -I../../../mod -I../../../MPP -I /usr/include main_hrldas_driver.f90
+
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+(cd run;			make)
+make[2]: Entering directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+
+echo "    -Wl,-rpath, -L -lhdf5 -lz"
+    -Wl,-rpath, -L -lhdf5 -lz
+mpif90   -o hrldas.exe -I../IO_code -I../phys ../IO_code/main_hrldas_driver.o ../IO_code/module_hrldas_netcdf_io.o ../phys/module_sf_noahmpdrv.o ../phys/module_sf_noahmplsm.o ../phys/module_sf_noahmp_glacier.o ../phys/module_sf_noahmp_groundwater.o ../Utility_routines/module_wrf_utilities.o ../Utility_routines/module_model_constants.o ../Utility_routines/module_date_utilities.o ../Utility_routines/kwm_string_utilities.o ../IO_code/module_NoahMP_hrldas_driver.o  -L../../../lib  -lHYDRO  -L/usr/lib64 -lnetcdff -lnetcdf   
+
+make[2]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+make[1]: Leaving directory `/home/jdmattern/Documents/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+
+*****************************************************************
+Make was successful
+
+*****************************************************************
+The environment variables used in the compile:
+HYDRO_D=1
+NCEP_WCOSS=0
+SPATIAL_SOIL=0
+WRF_HYDRO=1
+WRF_HYDRO_NUDGING=0
+WRF_HYDRO_RAPID=0
+WRFIO_NCD_LARGE_FILE_SUPPORT=1
