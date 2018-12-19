@@ -24,7 +24,7 @@ MODULE module_Routing
    use module_HYDRO_io, only: mpp_read_routedim, read_routing_seq, mpp_read_chrouting_new, &
                               mpp_read_simp_gw, read_routelink, get_nlinksl
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
-   USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, &
+                           USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, &
                                mpp_land_bcast_int, mpp_land_bcast_int1, &
                                updateLake_seq
    use module_mpp_GWBUCKET, only : collectSizeInd
@@ -991,6 +991,8 @@ endif
 
       cache_block = 256
       num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
+!$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
+!$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
       do j = new_start_j, new_end_j
          do cache_idx = 0, num_blocks - 1
             cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
@@ -1008,6 +1010,8 @@ endif
             end do
          end do
       end do
+
+!$omp end parallel do
 
       call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
