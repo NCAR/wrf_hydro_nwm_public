@@ -152,10 +152,10 @@ contains
             else
 
                 ! initialize machine_learning state
-                !call this%state%init( water_elevation, start_date, machine_learning_parameter_file, &
-                !restart_flag, lake_number, gage_ids, gage_qualities, gage_discharges )
+                !call this%state%init( start_date, machine_learning_parameter_file, &
+                !restart_flag, lake_number, water_elevation )
 
-                call this%state%init( water_elevation, start_date, restart_flag, lake_number )
+                call this%state%init( start_date, restart_flag, lake_number, water_elevation )
 
 print *, '1.9'
             end if

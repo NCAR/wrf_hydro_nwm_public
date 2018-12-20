@@ -137,12 +137,12 @@ print *, '1.19'
 
 		if (model_number == 1) then
 			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
-			if (status /= nf90_noerr) call handle_err(status)
+			if (status /= nf90_noerr) call handle_err(status, "ML_MODEL_PARM_ACF.nc")
 
 
 		else if (model_number == 2) then
 			status = nf90_open(path = "ML_MODEL_PARM_CH.nc", mode = nf90_nowrite, ncid = ncid)                ! open existing NetCDF dataset
-			if (status /= nf90_noerr) call handle_err(status)
+			if (status /= nf90_noerr) call handle_err(status, "ML_MODEL_PARM_CH.nc")
 
 		end if
 
@@ -154,87 +154,87 @@ print *, '2.1'
         call read_machine_learning_model_netcdf_real_2D_parameters(ncid, "bias", var_id, number_of_layers, nodes)
         allocate(bias(number_of_layers, nodes))
         status = nf90_get_var(ncid, var_id, bias)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "bias")
 
 print *, '2.2'
         call read_machine_learning_model_netcdf_real_2D_parameters(ncid, "weights", var_id, number_of_layers, nodes)
         allocate(weights(number_of_layers, nodes))
         status = nf90_get_var(ncid, var_id, weights)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "weights")
 
 print *, '2.3'
         call read_machine_learning_model_netcdf_real_1D_parameters(ncid, "minimum_of_features", var_id, number_of_inputs)
         allocate(minimum_of_features(number_of_inputs))
         status = nf90_get_var(ncid, var_id, minimum_of_features)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "minimum_of_features")
 
 print *, '2.4'
         call read_machine_learning_model_netcdf_real_1D_parameters(ncid, "maximum_of_features", var_id, number_of_inputs)
         allocate(maximum_of_features(number_of_inputs))
         status = nf90_get_var(ncid, var_id, maximum_of_features)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "maximum_of_features")
 
 print *, '2.5'
         call read_machine_learning_model_netcdf_integer_1D_parameters(ncid, "activation_functions_ID", var_id, number_of_layers)
         allocate(activation_functions(number_of_layers))
         status = nf90_get_var(ncid, var_id, activation_functions)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "activation_functions_ID")
 
 print *, '2.6'
         call read_machine_learning_model_netcdf_integer_1D_parameters(ncid, "number_of_nodes", var_id, number_of_layers)
         allocate(this%number_of_nodes(number_of_layers))
         status = nf90_get_var(ncid, var_id, this%number_of_nodes)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "number_of_nodes")
 
 
 print *, '2.7'
 
         !status = nf90_inq_varid(ncid, "bias", biasVarId)
 
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !status = nf90_inq_varid(ncid, "weights", weightsVarId)
 
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !status = nf90_inq_varid(ncid, "minimum_of_features", minimum_of_featuresVarId)
 
 
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !status = nf90_inq_varid(ncid, "maximum_of_features", maximum_of_featuresVarId)
 
 
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !status = nf90_inq_varid(ncid, "activation_functions_ID", activation_functionsVarId)
 
 
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !status = nf90_inq_varid(ncid, "number_of_nodes", number_of_nodesVarId)
 
 
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
 
         ! How big is the netCDF variable, that is, what are the lengths of
         !   its constituent dimensions?
         !status = nf90_inquire_variable(ncid, biasVarId, dimids = dimIDs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
        ! status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(2), len = nodes)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !allocate(this%bias(Nlayers, nodes))
@@ -242,48 +242,48 @@ print *, '2.7'
 
 
         !status = nf90_inquire_variable(ncid, weightsVarId, dimids = dimIDs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(2), len = nodes)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
 
         !allocate(this%weights(Nlayers, nodes))
 
         !status = nf90_inquire_variable(ncid, minimum_of_featuresVarId, dimids = dimIDs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !allocate(this%minimum_of_features(Ninputs))
 
 
         !status = nf90_inquire_variable(ncid, maximum_of_featuresVarId, dimids = dimIDs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Ninputs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !allocate(this%maximum_of_features(Ninputs))
 
         !status = nf90_inquire_variable(ncid, activation_functionsVarId, dimids = dimIDs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !allocate(this%activation_functions(Nlayers))
 
 
         !status = nf90_inquire_variable(ncid, number_of_nodesVarId, dimids = dimIDs)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlayers)
-        !if(status /= nf90_NoErr) call handle_err(status)
+        !if(status /= nf90_NoErr) call handle_err(status, )
 
         !allocate(this%number_of_nodes(Nlayers))
 
@@ -292,32 +292,32 @@ print *, '2.7'
         !status = nf90_get_var(ncid, biasVarId, this%bias)
 
 
-        !if (status /= nf90_noerr) call handle_err(status)
+        !if (status /= nf90_noerr) call handle_err(status, )
 
 
         !status = nf90_get_var(ncid, weightsVarId, this%weights)
 
-        !if (status /= nf90_noerr) call handle_err(status)
+        !if (status /= nf90_noerr) call handle_err(status, )
 
 
         !status = nf90_get_var(ncid, minimum_of_featuresVarId, this%minimum_of_features)
 
-        !if (status /= nf90_noerr) call handle_err(status)
+        !if (status /= nf90_noerr) call handle_err(status, )
 
 
         !status = nf90_get_var(ncid, maximum_of_featuresVarId, this%maximum_of_features)
 
-        !if (status /= nf90_noerr) call handle_err(status)
+        !if (status /= nf90_noerr) call handle_err(status, )
 
 
         !status = nf90_get_var(ncid, activation_functionsVarId, this%activation_functions)
 
-        !if (status /= nf90_noerr) call handle_err(status)
+        !if (status /= nf90_noerr) call handle_err(status, )
 
 
         !status = nf90_get_var(ncid, number_of_nodesVarId, this%number_of_nodes)
 
-        !if (status /= nf90_noerr) call handle_err(status)
+        !if (status /= nf90_noerr) call handle_err(status, )
 
 
 print *, '2.8'
@@ -504,13 +504,13 @@ print *, '3.1'
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_inputs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
     end subroutine read_machine_learning_model_netcdf_integer_1D_parameters
 
@@ -524,13 +524,13 @@ print *, '3.1'
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_inputs)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
     end subroutine read_machine_learning_model_netcdf_real_1D_parameters
 
@@ -543,16 +543,16 @@ print *, '3.1'
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_layers)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_nodes)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
     end subroutine read_machine_learning_model_netcdf_real_2D_parameters
 

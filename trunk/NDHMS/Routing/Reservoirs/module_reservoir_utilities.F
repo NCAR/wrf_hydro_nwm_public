@@ -22,11 +22,12 @@ contains
 
     ! MAKE BELOW SUBROUTINE SEPARATE FROM THE DERIVED RESERVOIR BASE CLASS????
 
-    subroutine handle_err(status)
+    subroutine handle_err(status, variable_error)
         implicit none
-        integer, intent ( in) :: status
+        integer, intent (in) :: status
+        character(len=32), intent (in) :: variable_error
         if(status /= nf90_noerr) then
-            print *, trim(nf90_strerror(status))
+            print *, trim(nf90_strerror(status)), ': ', variable_error
             stop "Stopped"
         end if
 

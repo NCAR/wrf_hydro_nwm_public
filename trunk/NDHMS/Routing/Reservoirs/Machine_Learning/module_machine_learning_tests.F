@@ -61,21 +61,21 @@ contains
         print *, o%current_time_storage
         print *, " "
 
-        print *, "Checking read on average_storage_over_past_time_intervals"
-        print *, o%average_storage_over_past_time_intervals
-        print *, " "
+        !print *, "Checking read on average_storage_over_past_time_intervals"
+        !print *, o%average_storage_over_past_time_intervals
+        !print *, " "
 
-        print *, "Checking read on totaled_storage"
-        print *, o%totaled_storage
-        print *, " "
+        !print *, "Checking read on totaled_storage"
+        !print *, o%totaled_storage
+        !print *, " "
 
         print *, "Checking read on previous_time_release"
         print *, o%previous_time_release
         print *, " "
 
-        print *, "Checking read on average_inflow_over_past_time_intervals"
-        print *, o%average_inflow_over_past_time_intervals
-        print *, " "
+        !print *, "Checking read on average_inflow_over_past_time_intervals"
+        !print *, o%average_inflow_over_past_time_intervals
+        !print *, " "
 
         !print *, "Checking read on accumulated_inflow"
         !print *, o%accumulated_inflow
@@ -89,37 +89,37 @@ contains
         print *, o%update_time
         print *, " "
 
-        print *, "Checking read on release_count"
-        print *, o%release_count
-        print *, " "
+        !print *, "Checking read on release_count"
+        !print *, o%release_count
+        !print *, " "
 
         print *, "Checking read on current_time"
         print *, o%current_time
         print *, " "
 
-        print *, "Checking read on start_date"
-        print *, o%start_date
-        print *, " "
+        !print *, "Checking read on start_date"
+        !print *, o%start_date
+        !print *, " "
 
-        print *, "Checking read on start_day_of_year"
-        print *, o%start_day_of_year
-        print *, " "
+        !print *, "Checking read on start_day_of_year"
+        !print *, o%start_day_of_year
+        !print *, " "
 
         print *, "Checking read on current_day_of_year"
         print *, o%current_day_of_year
         print *, " "
 
-        print *, "Checking read on start_month"
-        print *, o%start_month
-        print *, " "
+        !print *, "Checking read on start_month"
+        !print *, o%start_month
+        !print *, " "
 
-        print *, "Checking read on current_month"
-        print *, o%current_month
-        print *, " "
+        !print *, "Checking read on current_month"
+        !print *, o%current_month
+        !print *, " "
 
-        print *, "Checking read on start_year"
-        print *, o%start_year
-        print *, " "
+        !print *, "Checking read on start_year"
+        !print *, o%start_year
+        !print *, " "
 
         print *, "Checking read on current_year"
         print *, o%current_year

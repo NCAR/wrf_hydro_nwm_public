@@ -58,7 +58,6 @@ contains
         real, allocatable, dimension (:)    :: maximum_release
 
         integer :: ncid, var_id, lake_id_index, number_of_lakes
-        !integer, dimension(nf90_max_var_dims) :: dimIDs
         integer :: status       ! Status of reading NetCDF
         integer :: idx_mod_id_arr, idx_unique_arr
 
@@ -79,13 +78,9 @@ contains
 
         status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, "ML_RESERVOIR_PARM.nc")
 
         print *, 'after open reservoir parm'
-
-
-
-
 
 
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
@@ -95,10 +90,10 @@ contains
         allocate(model_id_array(number_of_lakes))
         allocate(unique_models_array(number_of_lakes))
         status = nf90_get_var(ncid, var_id, model_id_array)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, "model_id")
         this%model_id = model_id_array(lake_id_index)
 
-        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_releasesss", this%max_release)
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
 
         call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "minimum_release", this%min_release)
 
@@ -188,18 +183,18 @@ print *, unique_models_array
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         allocate(temp_lake_id_array(number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_lake_id_array)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         print *, 'number_of_lakes'
         print *, number_of_lakes
@@ -231,13 +226,13 @@ print *, unique_models_array
 
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
     end subroutine read_machine_learning_netcdf_model_ids
 
@@ -252,18 +247,18 @@ print *, unique_models_array
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         allocate(temp_real_array(number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_real_array)
-        if (status /= nf90_noerr) call handle_err(status)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
         print *, 'number_of_lakes'
         print *, number_of_lakes
