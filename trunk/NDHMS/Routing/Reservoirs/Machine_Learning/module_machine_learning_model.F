@@ -14,7 +14,7 @@ module module_machine_learning_model
     class (machine_learning_model_container), allocatable, dimension(:) :: machine_learning_models
     integer, allocatable, dimension(:) :: machine_learning_model_ids
 
-    integer :: number_of_unique_models
+    integer :: number_of_unique_ml_models
 
 
     type NN_reservoir_in_out

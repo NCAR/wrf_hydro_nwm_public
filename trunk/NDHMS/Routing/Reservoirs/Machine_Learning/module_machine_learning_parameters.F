@@ -16,17 +16,16 @@ module module_machine_learning_parameters
 
     ! Extend/derive machine learning parameters from the abstract base
     ! struct for reservoir properties.
-
     type, extends(reservoir_base_properties_struct) :: machine_learning_parameters_interface
 
-        real :: min_storage                                   ! minimum storage
-        real :: max_storage                                   ! maximum storage
-        real :: min_release                                   ! minimum release
-        real :: max_release                                   ! maximum release
-		integer :: model_id								      ! machine learning model number
-		integer :: model_index								  ! machine learning model index
-        integer :: lake_number                                ! lake number
-        real    :: reservoir_area
+        real    :: min_storage                  ! minimum storage
+        real    :: max_storage                  ! maximum storage
+        real    :: min_release                  ! minimum release
+        real    :: max_release                  ! maximum release
+        integer :: model_id	                    ! machine learning model number
+        integer :: model_index	                ! machine learning model index
+        integer :: lake_number                  ! lake number
+        real    :: reservoir_area               ! area of reservoir (km^2)
 
     contains
 
@@ -39,28 +38,16 @@ contains
 
     !Machine Learning Parameters Constructor
 
-    !subroutine machine_learning_parameters_init(this, model_id, model_index, lake_number)
-    !subroutine machine_learning_parameters_init(this, model_index, lake_number)
     !subroutine machine_learning_parameters_init(this, machine_learning_parameter_file, &
-    !    reservoir_area, lake_number, number_of_unique_models)
-        subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, number_of_unique_models)
-
+    !    reservoir_area, lake_number, number_of_unique_ml_models)
+        subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, number_of_unique_ml_models)
 
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
-
-		!integer, intent(in) :: model_id				! machine learning model number
-		!integer, intent(in) :: model_index				! machine learning model index in model array
         !character(len=256), intent(in) :: machine_learning_parameter_file
-        real, intent(in)     :: reservoir_area          ! area of reservoir (km^2)
-        integer, intent(in) :: lake_number              ! lake number
-        integer, intent(inout) :: number_of_unique_models
-
-        integer :: var_id
-
-        integer :: lake_index, lake_id_index
-
-        integer :: idx_mod_id_arr, idx_unique_arr
+        real, intent(in)        :: reservoir_area           ! area of reservoir (km^2)
+        integer, intent(in)     :: lake_number              ! lake number
+        integer, intent(inout)  :: number_of_unique_ml_models
 
         integer, allocatable, dimension (:) :: lake_id
         integer, allocatable, dimension (:) :: model_id_array
@@ -70,13 +57,10 @@ contains
         real, allocatable, dimension (:)    :: minimum_release
         real, allocatable, dimension (:)    :: maximum_release
 
-        integer :: Nlakes, ncid, number_of_lakes
-        integer :: lake_idVarId, model_idVarId
-        integer :: minimum_storageVarId, maximum_storageVarId
-        integer :: minimum_releaseVarId, maximum_releaseVarId
-        character, external :: nf90_strerror1
-        integer, dimension(nf90_max_var_dims) :: dimIDs
+        integer :: ncid, var_id, lake_id_index, number_of_lakes
+        !integer, dimension(nf90_max_var_dims) :: dimIDs
         integer :: status       ! Status of reading NetCDF
+        integer :: idx_mod_id_arr, idx_unique_arr
 
 
         ! Assign the values passed in to a particular machine learning reservoir
@@ -114,7 +98,7 @@ contains
         if(status /= nf90_NoErr) call handle_err(status)
         this%model_id = model_id_array(lake_id_index)
 
-        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_releasesss", this%max_release)
 
         call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "minimum_release", this%min_release)
 
@@ -142,7 +126,7 @@ print *, unique_models_array
 
         !CHECK RECORDINGS ABOUT BELOW. IF I NEED TO REMOVE ONE OF THE LINES?????
 
-        if (number_of_unique_models == 0) then
+        if (number_of_unique_ml_models == 0) then
 
             ! Find out how many unique models here
             do idx_mod_id_arr = 1, number_of_lakes
@@ -162,14 +146,14 @@ print *, unique_models_array
                     print *, '1.2'
 
             !CHANGE ARRAY NAME TO UNIQUE MODELS
-            !number_of_unique_models = 0
+            !number_of_unique_ml_models = 0
             do idx_unique_arr = 1, number_of_lakes
                 if (unique_models_array(idx_unique_arr) == 0) then
                     unique_models_array(idx_unique_arr) = model_id_array(idx_mod_id_arr)
                     exit
 
                 else
-                    number_of_unique_models = number_of_unique_models + 1
+                    number_of_unique_ml_models = number_of_unique_ml_models + 1
                 end if
             end do
         end if

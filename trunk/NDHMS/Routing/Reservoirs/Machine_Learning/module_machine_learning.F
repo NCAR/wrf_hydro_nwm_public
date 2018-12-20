@@ -88,8 +88,6 @@ contains
                                                          ! LP and Pers modules. lake_number is used in LP
                                                          ! which has been submitted to a PR.
 
-        !character(len=15), intent(in), dimension(:) :: gage_ids
-        !real, intent(in), dimension(:) :: gage_qualities, gage_discharges
 
         integer :: model_counter, model_index, model_id
 
@@ -122,7 +120,7 @@ contains
             end if
 
             if ( .not. allocated(machine_learning_models) ) then
-                number_of_unique_models = 0
+                number_of_unique_ml_models = 0
             end if
 
             ! try to allocate parameters
@@ -136,9 +134,9 @@ contains
 
                 ! initialize machine_learning parameters
                 !call this%parameters%init( machine_learning_parameter_file, &
-                !reservoir_area, lake_number, number_of_unique_models )
+                !reservoir_area, lake_number, number_of_unique_ml_models )
 
-                call this%parameters%init( reservoir_area, lake_number, number_of_unique_models )
+                call this%parameters%init( reservoir_area, lake_number, number_of_unique_ml_models )
             end if
 
             this%pointer_allocation_guard = .true.
@@ -172,15 +170,15 @@ print *, '1.10'
         if ( .not. allocated(machine_learning_models) ) then
 print *, '1.11'
             ! Allocates array of pointers to machine learning models.
-            allocate(machine_learning_models(number_of_unique_models))
+            allocate(machine_learning_models(number_of_unique_ml_models))
 print *, '1.12'
             ! Allocates array of machine learning model numbers that match
             ! the indices of the machine learning models array.
-            allocate(machine_learning_model_ids(number_of_unique_models))
+            allocate(machine_learning_model_ids(number_of_unique_ml_models))
 print *, '1.13'
             machine_learning_model_ids = 0 ! set model number array values to 0
 
-            do model_counter = 1, number_of_unique_models
+            do model_counter = 1, number_of_unique_ml_models
                 nullify(machine_learning_models(model_counter)%ptr)
             end do
 print *, '1.14'
@@ -192,7 +190,7 @@ print *, '1.14'
 
 
         this%parameters%model_index = 0
-        do model_counter = 1, number_of_unique_models
+        do model_counter = 1, number_of_unique_ml_models
 print *, '1.15'
 
 
