@@ -496,65 +496,7 @@ print *, '3.1'
 
 
 
-    subroutine read_machine_learning_model_netcdf_integer_1D_parameters(ncid, netcdf_array_name, var_id, number_of_inputs)
-        integer, intent(in) :: ncid
-        character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: var_id, number_of_inputs
-        integer :: status
-        integer, dimension(nf90_max_var_dims) :: dim_ids
 
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_inputs)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-    end subroutine read_machine_learning_model_netcdf_integer_1D_parameters
-
-
-
-    subroutine read_machine_learning_model_netcdf_real_1D_parameters(ncid, netcdf_array_name, var_id, number_of_inputs)
-        integer, intent(in) :: ncid
-        character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: var_id, number_of_inputs
-        integer :: status
-        integer, dimension(nf90_max_var_dims) :: dim_ids
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_inputs)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-    end subroutine read_machine_learning_model_netcdf_real_1D_parameters
-
-
-    subroutine read_machine_learning_model_netcdf_real_2D_parameters(ncid, netcdf_array_name, var_id, number_of_layers, number_of_nodes)
-        integer, intent(in) :: ncid
-        character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: var_id, number_of_layers, number_of_nodes
-        integer :: status
-        integer, dimension(nf90_max_var_dims) :: dim_ids
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_layers)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_nodes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-    end subroutine read_machine_learning_model_netcdf_real_2D_parameters
 
 
 

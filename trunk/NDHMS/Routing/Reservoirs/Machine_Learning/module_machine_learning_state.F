@@ -56,11 +56,9 @@ contains
         integer, intent(in)             :: lake_number              ! lake number
         real, intent(inout)             :: water_elevation
 
-        integer :: start_month
-        integer :: ncid, lake_id_index
-        integer :: status                               ! Status of reading NetCDF
         real    :: release_monthly_average, storage_monthly_average
-
+        integer :: ncid, lake_id_index, start_month
+        integer :: status                               ! Status of reading NetCDF
 
         this%water_elevation = water_elevation
 
@@ -73,11 +71,8 @@ contains
 
         print *, 'ml state after open parm'
 
-
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
-
-        call read_machine_learning_netcdf_integer_parameters(ncid, lake_id_index, "time_interval", this%time_interval)
-
+        call read_machine_learning_netcdf_integer_1D_parameters(ncid, lake_id_index, "time_interval", this%time_interval)
         call get_current_times(start_date, start_month, this%current_year, this%current_day_of_year)
 
         this%current_time = 0
@@ -86,10 +81,8 @@ contains
         this%x_day_of_year = 0.0
         this%y_day_of_year = 0.0
 
-print *, '1.7'
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "release_monthly_averages", release_monthly_average)
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "storage_monthly_averages", storage_monthly_average)
-
 
         this%previous_time_release = release_monthly_average
         this%current_time_storage = storage_monthly_average
@@ -105,159 +98,5 @@ print *, '1.8'
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being destroyed
 
     end subroutine machine_learning_state_destroy
-
-
-    subroutine get_current_times(start_date, start_month, current_year, current_day_of_year)
-        implicit none
-        character(len=19), intent(in)   :: start_date
-        integer, intent(out) :: start_month, current_year, current_day_of_year
-        integer :: start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
-
-        read (start_date(6:7), *) start_month
-        read (start_date(9:10), *) start_day_of_month
-        read (start_date(1:4), *) start_year
-
-        months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-
-        start_day_of_year = 0
-
-        if (((mod(start_year,4)==0 .and. mod(start_year,100)/=0) .or. mod(start_year,400)==0) .and. start_month>2) then
-            do month_loop_index = 1, start_month-1
-                start_day_of_year = start_day_of_year + months(month_loop_index)
-            end do
-            start_day_of_year = start_day_of_year + start_day_of_month + 1    ! add one day for leap year after February
-
-        else
-            do month_loop_index = 1, start_month-1
-                start_day_of_year = start_day_of_year + months(month_loop_index)
-            end do
-
-            start_day_of_year = start_day_of_year + start_day_of_month     ! non leap year or leap year before March
-        end if
-
-        current_year = start_year
-        current_day_of_year = start_day_of_year
-
-    end subroutine get_current_times
-
-
-    subroutine read_machine_learning_netcdf_lake_id(ncid, lake_number, netcdf_array_name, lake_id_index)
-        integer, intent(in) :: ncid, lake_number
-        character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: lake_id_index
-        integer, allocatable, dimension(:) :: temp_lake_id_array
-        integer :: var_id, number_of_lakes, status, lake_index
-        integer, dimension(nf90_max_var_dims) :: dim_ids
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        allocate(temp_lake_id_array(number_of_lakes))
-
-        status = nf90_get_var(ncid, var_id, temp_lake_id_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-
-        do lake_index = 1, number_of_lakes
-            if (temp_lake_id_array(lake_index) == lake_number) then
-                lake_id_index = lake_index
-            end if
-        end do
-
-        print *, 'lake_id_index'
-        print *, lake_id_index
-
-
-        if(allocated(temp_lake_id_array)) deallocate(temp_lake_id_array)
-
-
-    end subroutine read_machine_learning_netcdf_lake_id
-
-
-    subroutine read_machine_learning_netcdf_integer_parameters(ncid, lake_id_index, netcdf_array_name, returned_integer_parameter)
-        integer, intent(in) :: ncid, lake_id_index
-        character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: returned_integer_parameter
-        integer, allocatable, dimension(:) :: temp_integer_array
-        integer :: var_id, number_of_lakes, status
-        integer, dimension(nf90_max_var_dims) :: dim_ids
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        allocate(temp_integer_array(number_of_lakes))
-
-        status = nf90_get_var(ncid, var_id, temp_integer_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_integer_array'
-        print *, temp_integer_array
-
-        returned_integer_parameter = temp_integer_array(lake_id_index)
-
-        print *, 'returned_integer_parameter'
-        print *, returned_integer_parameter
-
-        if(allocated(temp_integer_array)) deallocate(temp_integer_array)
-
-    end subroutine read_machine_learning_netcdf_integer_parameters
-
-
-    subroutine read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, netcdf_array_name, returned_real_parameter)
-        integer, intent(in) :: ncid, lake_id_index, start_month
-        character(len=*), intent(in) :: netcdf_array_name
-        real, intent(out) :: returned_real_parameter
-        real, allocatable, dimension(:,:) :: temp_real_2D_array
-        integer :: var_id, number_of_lakes, monthly_averages_rows, status
-        integer, dimension(nf90_max_var_dims) :: dim_ids
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = monthly_averages_rows)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        allocate(temp_real_2D_array(monthly_averages_rows, number_of_lakes))
-
-        status = nf90_get_var(ncid, var_id, temp_real_2D_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_real_2D_array'
-        print *, temp_real_2D_array
-
-        returned_real_parameter = temp_real_2D_array(lake_id_index, start_month)
-
-        print *, 'returned_real_parameter'
-        print *, returned_real_parameter
-
-
-        if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)
-
-    end subroutine read_machine_learning_netcdf_real_2D_parameters
-
 
 end module module_machine_learning_state
