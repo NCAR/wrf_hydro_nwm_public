@@ -88,8 +88,6 @@ contains
         this%current_time_storage = storage_monthly_average
         this%end_time_storage = storage_monthly_average
 
-print *, '1.8'
-
     end subroutine machine_learning_state_init
 
     !Machine Learning State Destructor
