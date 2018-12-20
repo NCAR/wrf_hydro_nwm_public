@@ -52,7 +52,6 @@ CONTAINS
           logical            :: compound_channel
           character(len=256) :: route_lake_f=""
           character(len=256) :: machine_learning_parameter_file=""
-          character(len=256) :: reservoir_timeslice_path = ""
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""
@@ -118,7 +117,7 @@ CONTAINS
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-                    machine_learning_parameter_file, reservoir_timeslice_path, &
+                    machine_learning_parameter_file, &
                     route_direction_f,route_order_f,gwbasmskfil, &
                     geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
@@ -408,7 +407,6 @@ CONTAINS
     nlst%route_link_f = route_link_f
     nlst%route_lake_f =route_lake_f
     nlst%machine_learning_parameter_file = machine_learning_parameter_file
-    nlst%reservoir_timeslice_path = reservoir_timeslice_path
     nlst%route_direction_f =  route_direction_f
     nlst%route_order_f =  route_order_f
     nlst%gwbasmskfil =  gwbasmskfil
@@ -472,7 +470,6 @@ CONTAINS
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
     write(6,*) " nlst%machine_learning_parameter_file ", machine_learning_parameter_file
-    write(6,*) " nlst%reservoir_timeslice_path ", reservoir_timeslice_path
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
@@ -718,10 +715,6 @@ subroutine rt_nlst_check(nlst)
       if(len(trim(nlst%machine_learning_parameter_file)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_parameter_file for &
          inputs to machine learning type reservoirs.')
-      endif
-      if(len(trim(nlst%reservoir_timeslice_path)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
-         timeslice files used by reservoirs.')
       endif
    endif
    if(len(trim(nlst%route_lake_f)) .ne. 0) then

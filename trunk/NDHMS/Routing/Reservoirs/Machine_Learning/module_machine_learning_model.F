@@ -19,10 +19,10 @@ module module_machine_learning_model
 
     type NN_reservoir_in_out
         REAL :: previous_time_release ! We will probably need to have a dimension of "DIMENSION(NLAKES)"!
-        REAL :: average_inflow_over_past_time_intervals  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
+        REAL :: inflow  ! which corresponds to "QLAKEI": lake inflow (cms) or "qi1"
         REAL :: current_storage !
-        REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
-        REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
+        REAL :: x_day_of_year ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
+        REAL :: y_day_of_year ! day of the year! some lines of the code need to be added for this
 
     end type NN_reservoir_in_out
 
@@ -39,15 +39,15 @@ module module_machine_learning_model
 
         integer :: model_number
 
-        REAL :: X_DOY ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
-        REAL :: Y_DOY ! day of the year! some lines of the code need to be added for this
+        REAL :: x_day_of_year ! day of the year; some lines of the code need to be added for this; could be added to "reservoir_init"
+        REAL :: y_day_of_year ! day of the year! some lines of the code need to be added for this
 
         !real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
-        real, allocatable, dimension (:,:,:) :: reshaped_weights !
-        real, allocatable, dimension (:,:)   :: reshaped_weights_1st
-        real, allocatable, dimension (:,:)   :: reshaped_weights_2nd
-        real, allocatable, dimension (:,:)   :: reshaped_weights_3rd
-        real, allocatable, dimension (:,:)   :: reshaped_weights_4th
+        !real, allocatable, dimension (:,:,:) :: reshaped_weights !
+        !real, allocatable, dimension (:,:)   :: reshaped_weights_1st
+        !real, allocatable, dimension (:,:)   :: reshaped_weights_2nd
+        !real, allocatable, dimension (:,:)   :: reshaped_weights_3rd
+        !real, allocatable, dimension (:,:)   :: reshaped_weights_4th
 
         !real, allocatable, dimension (:,:)   :: bias ! Bias has one dimension less than that for the weights!
 
@@ -109,6 +109,13 @@ contains
         real, allocatable, dimension (:)     :: maximum_of_features	! is a function of the size of the inputs
         integer, allocatable, dimension (:)  :: activation_functions ! is just a function of layer
 
+        real, allocatable, dimension (:,:,:) :: reshaped_weights !
+        real, allocatable, dimension (:,:)   :: reshaped_weights_1st
+        real, allocatable, dimension (:,:)   :: reshaped_weights_2nd
+        real, allocatable, dimension (:,:)   :: reshaped_weights_3rd
+        real, allocatable, dimension (:,:)   :: reshaped_weights_4th
+
+
 
         integer, intent(in) :: model_number
 
@@ -125,7 +132,7 @@ contains
         integer, dimension(nf90_max_var_dims) :: dimIDs
 
         integer :: i, j, k
-
+print *, '1.19'
         ! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
 
 		if (model_number == 1) then
@@ -139,73 +146,48 @@ contains
 
 		end if
 
-
+print *, '2.0'
         this%model_number = model_number
 
-
-
-
+print *, '2.1'
 
         call read_machine_learning_model_netcdf_real_2D_parameters(ncid, "bias", var_id, number_of_layers, nodes)
-
         allocate(bias(number_of_layers, nodes))
-
         status = nf90_get_var(ncid, var_id, bias)
-
         if(status /= nf90_NoErr) call handle_err(status)
 
-
-
+print *, '2.2'
         call read_machine_learning_model_netcdf_real_2D_parameters(ncid, "weights", var_id, number_of_layers, nodes)
-
         allocate(weights(number_of_layers, nodes))
-
         status = nf90_get_var(ncid, var_id, weights)
-
         if(status /= nf90_NoErr) call handle_err(status)
 
-
-
+print *, '2.3'
         call read_machine_learning_model_netcdf_real_1D_parameters(ncid, "minimum_of_features", var_id, number_of_inputs)
-
         allocate(minimum_of_features(number_of_inputs))
-
         status = nf90_get_var(ncid, var_id, minimum_of_features)
-
         if(status /= nf90_NoErr) call handle_err(status)
 
-
-
+print *, '2.4'
         call read_machine_learning_model_netcdf_real_1D_parameters(ncid, "maximum_of_features", var_id, number_of_inputs)
-
         allocate(maximum_of_features(number_of_inputs))
-
         status = nf90_get_var(ncid, var_id, maximum_of_features)
-
         if(status /= nf90_NoErr) call handle_err(status)
 
-
-
+print *, '2.5'
         call read_machine_learning_model_netcdf_integer_1D_parameters(ncid, "activation_functions_ID", var_id, number_of_layers)
-
         allocate(activation_functions(number_of_layers))
-
         status = nf90_get_var(ncid, var_id, activation_functions)
-
         if(status /= nf90_NoErr) call handle_err(status)
 
-
-
+print *, '2.6'
         call read_machine_learning_model_netcdf_integer_1D_parameters(ncid, "number_of_nodes", var_id, number_of_layers)
-
         allocate(this%number_of_nodes(number_of_layers))
-
         status = nf90_get_var(ncid, var_id, this%number_of_nodes)
-
         if(status /= nf90_NoErr) call handle_err(status)
 
 
-
+print *, '2.7'
 
         !status = nf90_inq_varid(ncid, "bias", biasVarId)
 
@@ -338,31 +320,30 @@ contains
         !if (status /= nf90_noerr) call handle_err(status)
 
 
+print *, '2.8'
+        reshaped_weights = reshape(weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
 
-        !this%reshaped_weights = reshape(this%weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
-        this%reshaped_weights = reshape(weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
+        reshaped_weights_1st = reshaped_weights(1:this%number_of_nodes(2),1:this%number_of_nodes(1),1) !(1:90,1:6,1)
 
-        this%reshaped_weights_1st = this%reshaped_weights(1:this%number_of_nodes(2),1:this%number_of_nodes(1),1) !(1:90,1:6,1)
+        reshaped_weights_2nd = reshaped_weights(:,:,2)
 
-        this%reshaped_weights_2nd = this%reshaped_weights(:,:,2)
+        reshaped_weights_3rd = reshaped_weights(:,:,3)
 
-        this%reshaped_weights_3rd = this%reshaped_weights(:,:,3)
+        reshaped_weights_4th = reshape(reshaped_weights(:,1,4),(/1, size(reshaped_weights(:,1,4))/))
 
-        this%reshaped_weights_4th = reshape(this%reshaped_weights(:,1,4),(/1, size(this%reshaped_weights(:,1,4))/))
-
-
+print *, '2.9'
         do k=1, (size(this%number_of_nodes)-1)
             this%model_parameters(k)%link_bias= reshape(bias(:,k), (/size(bias(:,k)),1/))
         end do
 
 
-        this%model_parameters(1)%link_weights= this%reshaped_weights_1st
+        this%model_parameters(1)%link_weights= reshaped_weights_1st
 
-        this%model_parameters(2)%link_weights= this%reshaped_weights_2nd
+        this%model_parameters(2)%link_weights= reshaped_weights_2nd
 
-        this%model_parameters(3)%link_weights= this%reshaped_weights_3rd
+        this%model_parameters(3)%link_weights= reshaped_weights_3rd
 
-        this%model_parameters(4)%link_weights= this%reshaped_weights_4th
+        this%model_parameters(4)%link_weights= reshaped_weights_4th
 
         do k=1, (size(this%number_of_nodes)-1)
             this%model_parameters(k)%link_activation_functions = activation_functions(k)
@@ -371,9 +352,9 @@ contains
 
         this%nn_inputs%previous_time_release = 0.0
         this%nn_inputs%current_storage = 0.0
-        this%nn_inputs%average_inflow_over_past_time_intervals = 0.0
-        this%nn_inputs%X_DOY = 0.0
-        this%nn_inputs%Y_DOY = 0.0
+        this%nn_inputs%inflow = 0.0
+        this%nn_inputs%x_day_of_year = 0.0
+        this%nn_inputs%y_day_of_year = 0.0
 
 
         this%minimum_of_features_final = (/minimum_of_features(1), minimum_of_features(6), minimum_of_features(3),&
@@ -387,18 +368,22 @@ contains
         this%y_max = maximum_of_features(1)! maximum of the reservoir release from the pickle file meaning from the dataset that the model has been trained on!
 
 
+print *, '3.0'
 
-        ! Should we deallocate and should I just assign these as local instead????
-        ! Deallocation of memory
+        if(allocated(bias)) deallocate(bias)
+        if(allocated(weights)) deallocate(weights)
+        if(allocated(minimum_of_features)) deallocate(minimum_of_features)
+        if(allocated(maximum_of_features)) deallocate(maximum_of_features)
+        if(allocated(activation_functions)) deallocate(activation_functions)
+        if(allocated(reshaped_weights)) deallocate(reshaped_weights)
+        if(allocated(reshaped_weights_1st)) deallocate(reshaped_weights_1st)
+        if(allocated(reshaped_weights_2nd)) deallocate(reshaped_weights_2nd)
+        if(allocated(reshaped_weights_3rd)) deallocate(reshaped_weights_3rd)
+        if(allocated(reshaped_weights_4th)) deallocate(reshaped_weights_4th)
 
-        deallocate(bias)
-        deallocate(weights)
-        deallocate(minimum_of_features)
-        deallocate(maximum_of_features)
-        deallocate(activation_functions)
 
 
-
+print *, '3.1'
     end subroutine machine_learning_model_init
 
 
@@ -413,28 +398,29 @@ contains
 
 
     ! This subroutine performs matrix calculations to simulate reservoir release from a saved/trained ML model!
-    subroutine run_machine_learning_model(model_data, average_inflow_over_past_time_intervals, previous_time_release, current_storage, X_DOY, Y_DOY, release)
+    subroutine run_machine_learning_model(model_data, inflow, previous_time_release, current_storage, x_day_of_year, y_day_of_year, release)
         implicit none
         class(machine_learning_model_struct), intent(inout) :: model_data
 
-		real, intent (in)   ::  average_inflow_over_past_time_intervals
+		real, intent (in)   ::  inflow
 		real, intent (out)  ::  release
 		real, intent (in)   ::  previous_time_release
 		real, intent (in)   ::  current_storage
-		real, intent (in)   ::  X_DOY
-		real, intent (in)   ::  Y_DOY
+		real, intent (in)   ::  x_day_of_year
+		real, intent (in)   ::  y_day_of_year
 
         real, allocatable, dimension(:) :: input_vector_local
         real, allocatable, dimension(:,:) :: reshaped_input_vector_local
 
-        integer :: i, j, k
+        !integer :: i, j, k
+        integer :: i, j, layer_index
         real tmp
 
         model_data%nn_inputs%previous_time_release = previous_time_release
         model_data%nn_inputs%current_storage = current_storage
-        model_data%nn_inputs%average_inflow_over_past_time_intervals = average_inflow_over_past_time_intervals
-        model_data%nn_inputs%X_DOY = X_DOY
-        model_data%nn_inputs%Y_DOY = Y_DOY
+        model_data%nn_inputs%inflow = inflow
+        model_data%nn_inputs%x_day_of_year = x_day_of_year
+        model_data%nn_inputs%y_day_of_year = y_day_of_year
 
 
         model_data%normalized_nn_inputs%previous_time_release = (model_data%nn_inputs%previous_time_release - model_data%minimum_of_features_final(1))&
@@ -443,50 +429,50 @@ contains
         model_data%normalized_nn_inputs%current_storage = (model_data%nn_inputs%current_storage - model_data%minimum_of_features_final(2))&
         /(model_data%maximum_of_features_final(2) - model_data%minimum_of_features_final(2))
 
-        model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals = (model_data%nn_inputs%average_inflow_over_past_time_intervals - model_data%minimum_of_features_final(3))&
+        model_data%normalized_nn_inputs%inflow = (model_data%nn_inputs%inflow - model_data%minimum_of_features_final(3))&
         /(model_data%maximum_of_features_final(3) - model_data%minimum_of_features_final(3))
 
 
-        model_data%normalized_nn_inputs%X_DOY = model_data%nn_inputs%X_DOY ! this variable is already
-        model_data%normalized_nn_inputs%Y_DOY = model_data%nn_inputs%Y_DOY
+        model_data%normalized_nn_inputs%x_day_of_year = model_data%nn_inputs%x_day_of_year ! this variable is already
+        model_data%normalized_nn_inputs%y_day_of_year = model_data%nn_inputs%y_day_of_year
 
 
         ! Here input combination is assigned!
-        model_data%input_vector = (/model_data%normalized_nn_inputs%previous_time_release, model_data%normalized_nn_inputs%X_DOY,&
-            model_data%normalized_nn_inputs%Y_DOY, model_data%normalized_nn_inputs%current_storage, &
-            model_data%normalized_nn_inputs%average_inflow_over_past_time_intervals/)
+        model_data%input_vector = (/model_data%normalized_nn_inputs%previous_time_release, model_data%normalized_nn_inputs%x_day_of_year,&
+            model_data%normalized_nn_inputs%y_day_of_year, model_data%normalized_nn_inputs%current_storage, &
+            model_data%normalized_nn_inputs%inflow/)
 
 
         reshaped_input_vector_local = reshape(model_data%input_vector, (/ size(model_data%input_vector),1/))
 
 
-        do k=1, (size(model_data%number_of_nodes)-1) ! this represents in which layer we stand (i.e., hidden layers+output layer)
+        do layer_index=1, (size(model_data%number_of_nodes)-1) ! this represents in which layer we stand (i.e., hidden layers+output layer)
             model_data%nn_sum_matrix(:,:) = 0.0
             model_data%reshaped_nn_sum_matrix(:) = 0.0
             model_data%nn_sum_matrix_activated(:)= 0.0
-            do i = 1, model_data%number_of_nodes(k+1)! nodes;90
+            do i = 1, model_data%number_of_nodes(layer_index+1)! nodes;90
                 tmp = 0.0
-                do j= 1, model_data%number_of_nodes(k)
-                    if (k==1) then
-                        tmp = tmp + model_data%model_parameters(k)%link_weights(i,j) * reshaped_input_vector_local(j,1) !reshaped_nn_inputs_local(j,1)
+                do j= 1, model_data%number_of_nodes(layer_index)
+                    if (layer_index==1) then
+                        tmp = tmp + model_data%model_parameters(layer_index)%link_weights(i,j) * reshaped_input_vector_local(j,1) !reshaped_nn_inputs_local(j,1)
                         model_data%nn_sum_matrix(i,1) = tmp
-                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(k)%link_bias(i,1)
+                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(layer_index)%link_bias(i,1)
                         model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
-                        if (model_data%model_parameters(k)%link_activation_functions(1)==0) then ! The focus will probably be on
+                        if (model_data%model_parameters(layer_index)%link_activation_functions(1)==0) then ! The focus will probably be on
                             model_data%nn_sum_matrix_activated(i) = sigmoid(model_data%reshaped_nn_sum_matrix(i))
-                        else if (model_data%model_parameters(k)%link_activation_functions(1)==1) then
+                        else if (model_data%model_parameters(layer_index)%link_activation_functions(1)==1) then
                             model_data%nn_sum_matrix_activated(i) = relu(model_data%reshaped_nn_sum_matrix(i))
                         else
                             model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
                         end if
                     else
-                        tmp = tmp + model_data%model_parameters(k)%link_weights(i,j) * model_data%reshaped_nn_sum_matrix_activated(j,1)
+                        tmp = tmp + model_data%model_parameters(layer_index)%link_weights(i,j) * model_data%reshaped_nn_sum_matrix_activated(j,1)
                         model_data%nn_sum_matrix(i,1) = tmp
-                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(k)%link_bias(i,1)
+                        model_data%nn_sum_matrix(i,1) = model_data%nn_sum_matrix(i,1) + model_data%model_parameters(layer_index)%link_bias(i,1)
                         model_data%reshaped_nn_sum_matrix(i) = model_data%nn_sum_matrix(i,1)
-                        if (model_data%model_parameters(k)%link_activation_functions(1)==0) then
+                        if (model_data%model_parameters(layer_index)%link_activation_functions(1)==0) then
                             model_data%nn_sum_matrix_activated(i) = sigmoid(model_data%reshaped_nn_sum_matrix(i))
-                        else if (model_data%model_parameters(k)%link_activation_functions(1)==1) then
+                        else if (model_data%model_parameters(layer_index)%link_activation_functions(1)==1) then
                             model_data%nn_sum_matrix_activated(i) = relu(model_data%reshaped_nn_sum_matrix(i))
                         else
                             model_data%nn_sum_matrix_activated(i) = tanh(model_data%reshaped_nn_sum_matrix(i))
@@ -507,10 +493,6 @@ contains
 
 
     end subroutine run_machine_learning_model
-
-
-
-
 
 
 

@@ -101,7 +101,6 @@ contains
         !REMOVE???????
         real, allocatable, dimension (:)    ::long_term_release ! this represent a long-term average of the release to be used for previous day release at the very first day of calc!
 
-        real, allocatable, dimension (:,:)  :: ID_monthly_averages
         real, allocatable, dimension (:,:)  :: release_monthly_averages
         real, allocatable, dimension (:,:)  :: elevation_monthly_averages
         real, allocatable, dimension (:,:)  :: inflow_monthly_averages
@@ -117,7 +116,7 @@ contains
 
         real :: release_monthly_average, storage_monthly_average
 
-        integer :: ID_monthly_averagesVarId, release_monthly_averagesVarId, elevation_monthly_averagesVarId
+        integer :: release_monthly_averagesVarId, elevation_monthly_averagesVarId
         integer :: inflow_monthly_averagesVarId, storage_monthly_averagesVarId
 
         this%water_elevation = water_elevation
@@ -126,6 +125,8 @@ contains
 
         this%previous_release_set_from_timeslice = .false.
 
+        print *, 'ml state before open parm'
+
 
         !Reservoir Parm NC file
         status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
@@ -133,6 +134,7 @@ contains
         !print *, "status", status
         if (status /= nf90_noerr) call handle_err(status)
 
+        print *, 'ml state after open parm'
 
 
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
@@ -210,10 +212,6 @@ contains
 
 
         ! Monthly averages
-        status = nf90_inq_varid(ncid, "ID_monthly_averages", ID_monthly_averagesVarId)
-
-
-        if(status /= nf90_NoErr) call handle_err(status)
 
 
         status = nf90_inq_varid(ncid, "release_monthly_averages", release_monthly_averagesVarId)
@@ -255,18 +253,6 @@ contains
 
 
         ! Monthly averages
-
-        status = nf90_inquire_variable(ncid, ID_monthly_averagesVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = monthly_averages_rows)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inquire_dimension(ncid, dimIDs(2), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-
-        allocate(ID_monthly_averages(monthly_averages_rows, Nlakes))
 
 
         status = nf90_inquire_variable(ncid, release_monthly_averagesVarId, dimids = dimIDs)
@@ -335,10 +321,6 @@ contains
 
 
         !Monthly averages
-
-        status = nf90_get_var(ncid, ID_monthly_averagesVarId, ID_monthly_averages)
-
-        if (status /= nf90_noerr) call handle_err(status)
 
         status = nf90_get_var(ncid, release_monthly_averagesVarId, release_monthly_averages)
 
@@ -476,10 +458,10 @@ print *, '----------------------------------------------------------------------
         end if
 
 
-
+print *, '1.7'
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "release_monthly_averages", release_monthly_average)
 
-
+print *, '1.8'
 
 
     end subroutine machine_learning_state_init
@@ -515,14 +497,6 @@ print *, '----------------------------------------------------------------------
         status = nf90_get_var(ncid, var_id, temp_lake_id_array)
         if (status /= nf90_noerr) call handle_err(status)
 
-        print *, 'STATE ---------------------'
-
-
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_lake_id_array'
-        print *, temp_lake_id_array
 
         do lake_index = 1, number_of_lakes
             if (temp_lake_id_array(lake_index) == lake_number) then
@@ -533,7 +507,9 @@ print *, '----------------------------------------------------------------------
         print *, 'lake_id_index'
         print *, lake_id_index
 
-        deallocate(temp_lake_id_array)
+
+        if(allocated(temp_lake_id_array)) deallocate(temp_lake_id_array)
+
 
     end subroutine read_machine_learning_netcdf_lake_id
 
@@ -545,6 +521,7 @@ print *, '----------------------------------------------------------------------
         integer, allocatable, dimension(:) :: temp_integer_array
         integer :: var_id, number_of_lakes, status
         integer, dimension(nf90_max_var_dims) :: dim_ids
+
 
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
@@ -573,7 +550,7 @@ print *, '----------------------------------------------------------------------
         print *, returned_integer_parameter
 
 
-        deallocate(temp_integer_array)
+        if(allocated(temp_integer_array)) deallocate(temp_integer_array)
 
 
     end subroutine read_machine_learning_netcdf_integer_parameters
@@ -619,8 +596,7 @@ print *, '----------------------------------------------------------------------
         print *, returned_real_parameter
 
 
-        deallocate(temp_real_2D_array)
-
+        if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)
 
     end subroutine read_machine_learning_netcdf_real_2D_parameters
 

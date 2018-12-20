@@ -201,25 +201,25 @@ contains
         print *, " "
 
         print *, "Checking read on X_DOY "
-        print *, o%X_DOY
+        print *, o%x_day_of_year
         print *, " "
 
         print *, "Checking read on Y_DOY "
-        print *, o%Y_DOY
+        print *, o%y_day_of_year
         print *, " "
 
 
 
-        print *, "Checking allocation of reshaped_weights"
-        if ( allocated(o%reshaped_weights ) ) then
-            print *, "PASSED"
+        !print *, "Checking allocation of reshaped_weights"
+        !if ( allocated(o%reshaped_weights ) ) then
+        !    print *, "PASSED"
 
-            print *, "Checking read on reshaped_weights "
-            print *, o%reshaped_weights(1:4,1:4,1:4)
-        else
-            print *, "FAILED"
-            rv = .false.
-        end if
+        !    print *, "Checking read on reshaped_weights "
+        !    print *, o%reshaped_weights(1:4,1:4,1:4)
+        !else
+        !    print *, "FAILED"
+        !    rv = .false.
+        !end if
 
 
         print *, "Checking allocation of link_weights"

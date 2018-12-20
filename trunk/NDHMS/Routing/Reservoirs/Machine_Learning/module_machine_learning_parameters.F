@@ -56,6 +56,7 @@ contains
         integer, intent(in) :: lake_number              ! lake number
         integer, intent(inout) :: number_of_unique_models
 
+        integer :: var_id
 
         integer :: lake_index, lake_id_index
 
@@ -69,7 +70,7 @@ contains
         real, allocatable, dimension (:)    :: minimum_release
         real, allocatable, dimension (:)    :: maximum_release
 
-        integer :: Nlakes, ncid
+        integer :: Nlakes, ncid, number_of_lakes
         integer :: lake_idVarId, model_idVarId
         integer :: minimum_storageVarId, maximum_storageVarId
         integer :: minimum_releaseVarId, maximum_releaseVarId
@@ -98,122 +99,44 @@ contains
 
         print *, 'after open reservoir parm'
 
-        !call read_netcdf_real_1d_array(ncid, "maximum_release", maximum_release)
 
 
-!print *, 'maximum_release'
-!print *, maximum_release
 
 
 
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
 
 
+        call read_machine_learning_netcdf_model_ids(ncid, "model_id", var_id, number_of_lakes)
+        allocate(model_id_array(number_of_lakes))
+        allocate(unique_models_array(number_of_lakes))
+        status = nf90_get_var(ncid, var_id, model_id_array)
+        if(status /= nf90_NoErr) call handle_err(status)
+        this%model_id = model_id_array(lake_id_index)
 
-        call read_machine_learning_netcdf_integer_parameters(ncid, lake_id_index, "model_id", this%model_id)
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
 
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "minimum_release", this%min_release)
 
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_storage", this%max_storage)
+
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "minimum_storage", this%min_storage)
+
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
+
+        call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
 
         call read_machine_learning_netcdf_real_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
 
 
-
-        status = nf90_inq_varid(ncid, "lake_id", lake_idVarId)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_inq_varid(ncid, "model_id", model_idVarId)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inq_varid(ncid, "maximum_release", maximum_releaseVarId)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inq_varid(ncid, "minimum_release", minimum_releaseVarId)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inq_varid(ncid, "maximum_storage", maximum_storageVarId)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        status = nf90_inq_varid(ncid, "minimum_storage", minimum_storageVarId)
-        if(status /= nf90_NoErr) call handle_err(status)
+        print *, '1.1'
 
 
+print *, 'model_id_array'
+print *, model_id_array
+print *, 'unique_models_array'
+print *, unique_models_array
 
-        status = nf90_inquire_variable(ncid, lake_idVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-        allocate(lake_id(Nlakes))
-
-
-        status = nf90_inquire_variable(ncid, model_idVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-        allocate(model_id_array(Nlakes))
-
-        allocate(unique_models_array(Nlakes))
-
-
-        status = nf90_inquire_variable(ncid, maximum_releaseVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-        allocate(maximum_release(Nlakes))
-
-        status = nf90_inquire_variable(ncid, minimum_releaseVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-        allocate(minimum_release(Nlakes))
-
-        status = nf90_inquire_variable(ncid, maximum_storageVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-        allocate(maximum_storage(Nlakes))
-
-        status = nf90_inquire_variable(ncid, minimum_storageVarId, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-        status = nf90_inquire_dimension(ncid, dimIDs(1), len = Nlakes)
-        if(status /= nf90_NoErr) call handle_err(status)
-        allocate(minimum_storage(Nlakes))
-
-
-        status = nf90_get_var(ncid, lake_idVarId, lake_id)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, model_idVarId, model_id_array)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, maximum_releaseVarId, maximum_release)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, minimum_releaseVarId, minimum_release)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, maximum_storageVarId, maximum_storage)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        status = nf90_get_var(ncid, minimum_storageVarId, minimum_storage)
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-
-        do lake_index = 1, Nlakes
-            if (lake_id(lake_index) == this%lake_number) then
-                lake_id_index = lake_index
-            end if
-        end do
-
-        this%model_id    = model_id_array(lake_id_index)
-        this%min_storage = minimum_storage(lake_id_index)
-        this%max_storage = maximum_storage(lake_id_index)
-        this%min_release = minimum_release(lake_id_index)
-        this%max_release = maximum_release(lake_id_index)
 
 
 
@@ -222,8 +145,8 @@ contains
         if (number_of_unique_models == 0) then
 
             ! Find out how many unique models here
-            do idx_mod_id_arr = 1, Nlakes
-                do idx_unique_arr = 1, Nlakes
+            do idx_mod_id_arr = 1, number_of_lakes
+                do idx_unique_arr = 1, number_of_lakes
 
                     if (model_id_array(idx_mod_id_arr) == unique_models_array(idx_unique_arr)) then
                         exit
@@ -236,9 +159,11 @@ contains
                 end do
             end do
 
+                    print *, '1.2'
+
             !CHANGE ARRAY NAME TO UNIQUE MODELS
             !number_of_unique_models = 0
-            do idx_unique_arr = 1, Nlakes
+            do idx_unique_arr = 1, number_of_lakes
                 if (unique_models_array(idx_unique_arr) == 0) then
                     unique_models_array(idx_unique_arr) = model_id_array(idx_mod_id_arr)
                     exit
@@ -249,16 +174,14 @@ contains
             end do
         end if
 
-        print *, "5"
+        print *, '1.3'
+
+        if(allocated(model_id_array)) deallocate(model_id_array)
+        if(allocated(unique_models_array)) deallocate(unique_models_array)
 
 
-        deallocate(lake_id)
-        deallocate(model_id_array)
-        deallocate(unique_models_array)
-        deallocate(minimum_storage)
-        deallocate(maximum_storage)
-        deallocate(minimum_release)
-        deallocate(maximum_release)
+
+        print *, '1.4'
 
     end subroutine machine_learning_parameters_init
 
@@ -309,17 +232,17 @@ contains
         print *, 'lake_id_index'
         print *, lake_id_index
 
-        deallocate(temp_lake_id_array)
+        if(allocated(temp_lake_id_array)) deallocate(temp_lake_id_array)
 
     end subroutine read_machine_learning_netcdf_lake_id
 
 
-    subroutine read_machine_learning_netcdf_integer_parameters(ncid, lake_id_index, netcdf_array_name, returned_integer_parameter)
-        integer, intent(in) :: ncid, lake_id_index
+    subroutine read_machine_learning_netcdf_model_ids(ncid, netcdf_array_name, var_id, number_of_lakes)
+        integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: returned_integer_parameter
+        integer, intent(out) :: var_id, number_of_lakes
         integer, allocatable, dimension(:) :: temp_integer_array
-        integer :: var_id, number_of_lakes, status
+        integer :: status
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
 
@@ -332,29 +255,7 @@ contains
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
         if(status /= nf90_NoErr) call handle_err(status)
 
-        allocate(temp_integer_array(number_of_lakes))
-
-        status = nf90_get_var(ncid, var_id, temp_integer_array)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_integer_array'
-        print *, temp_integer_array
-
-        returned_integer_parameter = temp_integer_array(lake_id_index)
-
-        print *, 'returned_integer_parameter'
-        print *, returned_integer_parameter
-
-
-        deallocate(temp_integer_array)
-
-
-    end subroutine read_machine_learning_netcdf_integer_parameters
-
-
+    end subroutine read_machine_learning_netcdf_model_ids
 
 
 
@@ -392,86 +293,11 @@ contains
         print *, returned_real_parameter
 
 
-        deallocate(temp_real_array)
-
+        if(allocated(temp_real_array)) deallocate(temp_real_array)
 
 
 
     end subroutine read_machine_learning_netcdf_real_parameters
-
-
-
-
-
-    subroutine open_netcdf(file_path, ncid)
-        character(len=256), intent(in) :: file_path
-        integer, intent(out) ::ncid
-        integer :: status
-
-        status = nf90_open(path = file_path, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        if (status /= nf90_noerr) call handle_err(status)
-
-    end subroutine open_netcdf
-
-
-    subroutine read_netcdf_real_1d_array(ncid, netcdf_array_name, array_out)
-        integer, intent(in) :: ncid
-        character(len=*), intent(in) :: netcdf_array_name
-        real, dimension(:), intent(out) :: array_out
-        real, allocatable, dimension(:) :: temp_array
-        integer :: var_id, array_length, status
-        integer, dimension(nf90_max_var_dims) :: dimIDs
-
-        print *, 'before inq varid'
-
-        print *, netcdf_array_name, ncid
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        !status = nf90_inq_varid(ncid, "maximum_release", var_id)
-        if (status /= nf90_noerr) call handle_err(status)
-
-
-        print *, 'after inq varid'
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dimIDs)
-        if(status /= nf90_NoErr) call handle_err(status)
-
-        print *, 'after inq var'
-
-        !status = nf90_inquire_dimension(ncid, dimIDs(1), len = array_length)
-        !if(status /= nf90_NoErr) call handle_err(status)
-
-        print *, 'after inq dimension'
-        print *, array_length
-
-        !allocate(temp_array(array_length))
-
-        print *, 'after allocate temp array'
-
-        status = nf90_get_var(ncid, var_id, array_out)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        !print *, 'temp_array'
-        !print *, temp_array
-
-        !array_out = temp_array
-
-        print *, 'array_out'
-        print *, array_out
-
-
-        deallocate(temp_array)
-
-
-    end subroutine read_netcdf_real_1d_array
-
-
-
-    !subroutine get_netcdf_1d_array_dimension
-
-
-
-    !end subroutine get_netcdf_1d_array_dimension
 
 
 

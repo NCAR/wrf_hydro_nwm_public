@@ -38,8 +38,6 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool
    use module_machine_learning
-   use module_read_timeslice_data
-   !use module_read_q_type
 
    IMPLICIT NONE
 
@@ -353,7 +351,6 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
-        allocate ( rt_domain(did)%read_timeslice_data(1) )
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -765,42 +762,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%gageMiss                                   )
    end if
 
-   ! Set reservoir type array values to 1 as default for levelpool type.
-
-
-   ! Set model number array values to 0 as default for no
-   ! machine learning model for level pool or persistence reservoirs.
-   !rt_domain(did)%model_number = 0
-
    NLAKES_total = rt_domain(did)%NLAKES
 
-   ! Call subroutine to read text file that stores the reservoir ID/index
-   ! for the reservoir type (q_type) of reservoirs that are not the
-   ! default levelpool type.
-   ! call read_q_type(NLAKES_total, rt_domain(did)%q_type, rt_domain(did)%model_number, number_of_unique_models)
-
-
-   allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data(1)%ptr )
-
-   !allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data%ptr )
-   !allocate ( read_timslice_data_struct :: rt_domain(did)%read_timeslice_data )
-
-
-    print *, 'call read timeslice object init'
-
-
-    print *, 'reservoir_timeslice_path in modulert'
-
-    print *, nlst_rt(did)%reservoir_timeslice_path
-
-   call rt_domain(did)%read_timeslice_data(1)%ptr%init(nlst_rt(did)%startdate(1:19), nlst_rt(did)%reservoir_timeslice_path)
-
-
-
-   !call rt_domain(did)%read_timeslice_data%ptr%init(nlst_rt(did)%startdate(1:19))
-   !call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19))
-
-    print *, 'nlst_rt(did)%machine_learning_parameter_file'
+    !print *, 'nlst_rt(did)%machine_learning_parameter_file'
     !print *, nlst_rt(did)%machine_learning_parameter_file
 
 
@@ -862,9 +826,6 @@ print *, '1.1'
    !nlst_rt(did)%machine_learning_parameter_file,   &
 
 
-                                  !rt_domain(did)%read_timeslice_data(1)%ptr%gageId,    &
-                 !rt_domain(did)%read_timeslice_data(1)%ptr%gageQC, &
-                 !rt_domain(did)%read_timeslice_data(1)%ptr%gageDischarge    )
        end select
 
      !else if (rt_domain(did)%q_type(lake_index) == 3) then

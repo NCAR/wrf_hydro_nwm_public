@@ -2,8 +2,6 @@
    type (overland_struct) :: overland
 
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
-   class (read_timslice_data_container), allocatable, dimension(:) :: read_timeslice_data
-   !class (read_timslice_data_container), pointer :: read_timeslice_data
 
    INTEGER :: IX, JX
    logical :: initialized

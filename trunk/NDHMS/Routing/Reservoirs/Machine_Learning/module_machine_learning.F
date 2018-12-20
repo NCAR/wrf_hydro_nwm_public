@@ -145,6 +145,7 @@ contains
 
             ! try to allocate state
             allocate ( this%state )
+            print *, 'allocated state ----------'
 
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created write an error
@@ -158,34 +159,42 @@ contains
 
                 call this%state%init( water_elevation, start_date, restart_flag, lake_number )
 
-
+print *, '1.9'
             end if
 
             this%pointer_allocation_guard = .true.
 
         end if
 
+print *, '1.10'
         ! Model Initialization
         ! This if statement is only entered on first machine learning reservoir
         if ( .not. allocated(machine_learning_models) ) then
-
+print *, '1.11'
             ! Allocates array of pointers to machine learning models.
             allocate(machine_learning_models(number_of_unique_models))
-
+print *, '1.12'
             ! Allocates array of machine learning model numbers that match
             ! the indices of the machine learning models array.
             allocate(machine_learning_model_ids(number_of_unique_models))
-
+print *, '1.13'
             machine_learning_model_ids = 0 ! set model number array values to 0
 
             do model_counter = 1, number_of_unique_models
                 nullify(machine_learning_models(model_counter)%ptr)
             end do
-
+print *, '1.14'
         end if
+
+
+
+
+
 
         this%parameters%model_index = 0
         do model_counter = 1, number_of_unique_models
+print *, '1.15'
+
 
                 ! If the model has already been initialized, and the passed model number
                 ! matches the model number in the array, then assign that slot to
@@ -193,20 +202,20 @@ contains
                 if (machine_learning_model_ids(model_counter) == this%parameters%model_id) then
                         this%parameters%model_index = model_counter
                         exit
-
+print *, '1.16'
                 ! Check if any slot is zero, which means a machine learning model has
                 ! not been initialized or assigned to that slot.
                 else if (machine_learning_model_ids(model_counter) == 0) then
-
+print *, '1.17'
                         ! Assign the model id to the given slot.
                         machine_learning_model_ids(model_counter) = this%parameters%model_id
                         this%parameters%model_index = model_counter
-
+print *, '1.18'
                         allocate(machine_learning_model_struct :: machine_learning_models(model_counter)%ptr)
 
                         ! Calls initialization of a particular Machine Learning model.
                         call machine_learning_models(model_counter)%ptr%init(this%parameters%model_id)
-
+print *, '3.2'
                         exit
 
                 end if
