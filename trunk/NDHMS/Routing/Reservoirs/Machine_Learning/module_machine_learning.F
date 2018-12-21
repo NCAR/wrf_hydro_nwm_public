@@ -27,14 +27,11 @@ module module_machine_learning
     use module_machine_learning_state
     use module_reservoir_base
     use module_machine_learning_model
-    !use module_machine_learning_utilities
     use module_reservoir_utilities
     use module_machine_learning_tests
     use module_io_utilities
 
-
     implicit none
-
 
     ! Extend/derive machine learning struct from the abstract base
     ! struct for reservoirs.
@@ -52,7 +49,6 @@ module module_machine_learning
         procedure :: init => machine_learning_struct_init
         procedure :: destroy => machine_learning_struct_destroy
         procedure :: run_release => run_machine_learning_release
-
         procedure :: timestep_pre_conditions_warn => machine_learning_timestep_pre_conditions_warn
         procedure :: timestep_pre_conditions_modify => machine_learning_timestep_pre_conditions_modify
         procedure :: timestep_post_conditions_warn => machine_learning_timestep_post_conditions_warn
@@ -63,7 +59,6 @@ module module_machine_learning
         procedure :: update_post_conditions_modify => machine_learning_update_post_conditions_modify
         procedure :: update_preprocessing => update_preprocessing
         procedure :: timestep_preprocessing => timestep_preprocessing
-
 
     end type machine_learning_struct
 
@@ -87,7 +82,6 @@ contains
                                                          ! TODO: potentially change to lake_id for this and
                                                          ! LP and Pers modules. lake_number is used in LP
                                                          ! which has been submitted to a PR.
-
 
         integer :: model_counter, model_index, model_id
 
@@ -143,7 +137,6 @@ contains
 
             ! try to allocate state
             allocate ( this%state )
-            print *, 'allocated state ----------'
 
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created write an error
@@ -157,42 +150,33 @@ contains
 
                 call this%state%init( start_date, restart_flag, lake_number, water_elevation )
 
-print *, '1.9'
             end if
 
             this%pointer_allocation_guard = .true.
 
         end if
 
-print *, '1.10'
         ! Model Initialization
         ! This if statement is only entered on first machine learning reservoir
         if ( .not. allocated(machine_learning_models) ) then
-print *, '1.11'
+
             ! Allocates array of pointers to machine learning models.
             allocate(machine_learning_models(number_of_unique_ml_models))
-print *, '1.12'
+
             ! Allocates array of machine learning model numbers that match
             ! the indices of the machine learning models array.
             allocate(machine_learning_model_ids(number_of_unique_ml_models))
-print *, '1.13'
+
             machine_learning_model_ids = 0 ! set model number array values to 0
 
             do model_counter = 1, number_of_unique_ml_models
                 nullify(machine_learning_models(model_counter)%ptr)
             end do
-print *, '1.14'
+
         end if
-
-
-
-
-
 
         this%parameters%model_index = 0
         do model_counter = 1, number_of_unique_ml_models
-print *, '1.15'
-
 
                 ! If the model has already been initialized, and the passed model number
                 ! matches the model number in the array, then assign that slot to
@@ -200,20 +184,20 @@ print *, '1.15'
                 if (machine_learning_model_ids(model_counter) == this%parameters%model_id) then
                         this%parameters%model_index = model_counter
                         exit
-print *, '1.16'
+
                 ! Check if any slot is zero, which means a machine learning model has
                 ! not been initialized or assigned to that slot.
                 else if (machine_learning_model_ids(model_counter) == 0) then
-print *, '1.17'
+
                         ! Assign the model id to the given slot.
                         machine_learning_model_ids(model_counter) = this%parameters%model_id
                         this%parameters%model_index = model_counter
-print *, '1.18'
+
                         allocate(machine_learning_model_struct :: machine_learning_models(model_counter)%ptr)
 
                         ! Calls initialization of a particular Machine Learning model.
                         call machine_learning_models(model_counter)%ptr%init(this%parameters%model_id)
-print *, '3.2'
+
                         exit
 
                 end if
@@ -270,10 +254,6 @@ print *, '3.2'
         reservoir_data%state%water_elevation = water_elevation
 
         call reservoir_data%timestep_pre_conditions_warn()
-
-        print *, "ML Timestep for Lake: ", reservoir_data%parameters%lake_number
-        print *, "Current time is: ", reservoir_data%state%current_time
-        print *, "Current inflow is: ", reservoir_data%input%inflow
 
         call reservoir_data%timestep_pre_conditions_modify(routing_period)
 
@@ -336,8 +316,6 @@ print *, '3.2'
         ! Also have option to set the end_time_storage to the min_storage and change the outflow accordingly.
         else if (reservoir_data%state%end_time_storage < reservoir_data%parameters%min_storage .and. &
                  reservoir_data%state%end_time_storage > 0.0) then
-
-            !SAY 'REQUIREMENT' BELOW????
 
             write(6,*) "WARNING: Calculated storage for this timestep, ", reservoir_data%state%end_time_storage, &
             " cubic meters, will fall below the minimum storage requirement of: ", reservoir_data%parameters%min_storage, &
@@ -403,29 +381,22 @@ print *, '3.2'
     end subroutine machine_learning_timestep_pre_conditions_modify
 
 
-
     subroutine machine_learning_timestep_post_conditions_warn(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-
     end subroutine machine_learning_timestep_post_conditions_warn
-
 
 
     subroutine machine_learning_timestep_post_conditions_modify(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-
     end subroutine machine_learning_timestep_post_conditions_modify
-
 
 
     subroutine machine_learning_update_pre_conditions_warn(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
-
     end subroutine machine_learning_update_pre_conditions_warn
-
 
 
     subroutine machine_learning_update_pre_conditions_modify(reservoir_data)
@@ -547,7 +518,6 @@ print *, '3.2'
     end subroutine timestep_preprocessing
 
 
-
     subroutine update_preprocessing(reservoir_data)
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
@@ -638,7 +608,6 @@ print *, '3.2'
             ptr_state(4) = .false.
         end if
         print *, " "
-
 
 
         ! Now check the data members of each substructure

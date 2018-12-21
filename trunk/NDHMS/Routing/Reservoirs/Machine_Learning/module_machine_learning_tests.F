@@ -200,13 +200,13 @@ contains
         print *, o%model_number
         print *, " "
 
-        print *, "Checking read on X_DOY "
-        print *, o%x_day_of_year
-        print *, " "
+        !print *, "Checking read on X_DOY "
+        !print *, o%x_day_of_year
+        !print *, " "
 
-        print *, "Checking read on Y_DOY "
-        print *, o%y_day_of_year
-        print *, " "
+        !print *, "Checking read on Y_DOY "
+        !print *, o%y_day_of_year
+        !print *, " "
 
 
 

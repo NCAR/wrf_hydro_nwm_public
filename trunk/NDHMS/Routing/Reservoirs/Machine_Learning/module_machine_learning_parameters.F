@@ -9,7 +9,6 @@ module module_machine_learning_parameters
 
     use netcdf
     use module_reservoir_utilities
-    !use module_machine_learning_utilities
     use module_reservoir_base
     !use module_io_utilities
     implicit none
@@ -84,7 +83,6 @@ contains
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being destroyed
     end subroutine machine_learning_parameters_destroy
-
 
 
     subroutine get_model_id(ncid, lake_id_index, number_of_unique_ml_models, model_id)

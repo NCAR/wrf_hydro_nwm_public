@@ -76,20 +76,11 @@ contains
         status = nf90_get_var(ncid, var_id, temp_lake_id_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_lake_id_array'
-        print *, temp_lake_id_array
-
         do lake_index = 1, number_of_lakes
             if (temp_lake_id_array(lake_index) == lake_number) then
                 lake_id_index = lake_index
             end if
         end do
-
-        print *, 'lake_id_index'
-        print *, lake_id_index
 
         if(allocated(temp_lake_id_array)) deallocate(temp_lake_id_array)
 
@@ -138,16 +129,7 @@ contains
         status = nf90_get_var(ncid, var_id, temp_integer_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_integer_array'
-        print *, temp_integer_array
-
         returned_integer_parameter = temp_integer_array(lake_id_index)
-
-        print *, 'returned_integer_parameter'
-        print *, returned_integer_parameter
 
         if(allocated(temp_integer_array)) deallocate(temp_integer_array)
 
@@ -176,16 +158,7 @@ contains
         status = nf90_get_var(ncid, var_id, temp_real_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_real_array'
-        print *, temp_real_array
-
         returned_real_parameter = temp_real_array(lake_id_index)
-
-        print *, 'returned_real_parameter'
-        print *, returned_real_parameter
 
         if(allocated(temp_real_array)) deallocate(temp_real_array)
 
@@ -217,16 +190,7 @@ contains
         status = nf90_get_var(ncid, var_id, temp_real_2D_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        print *, 'number_of_lakes'
-        print *, number_of_lakes
-
-        print *, 'temp_real_2D_array'
-        print *, temp_real_2D_array
-
         returned_real_parameter = temp_real_2D_array(lake_id_index, start_month)
-
-        print *, 'returned_real_parameter'
-        print *, returned_real_parameter
 
         if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)
 
