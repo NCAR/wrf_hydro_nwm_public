@@ -38,7 +38,6 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
-
         procedure :: timestep_pre_conditions_warn => no_op
         procedure :: timestep_pre_conditions_modify => no_op2
         procedure :: timestep_post_conditions_warn => no_op

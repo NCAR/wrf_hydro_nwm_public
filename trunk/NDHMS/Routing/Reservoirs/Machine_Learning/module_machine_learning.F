@@ -15,6 +15,9 @@
 ! state for a particular machine learning reservoir and
 ! return the output/outflow.
 
+! FIXME: Change value for WCOS
+#define log_warning 6
+
 #define days_in_year 365
 #define days_in_leap_year 366
 #define seconds_in_day 86400
@@ -57,7 +60,6 @@ module module_machine_learning
         procedure :: update_pre_conditions_modify => machine_learning_update_pre_conditions_modify
         procedure :: update_post_conditions_warn => machine_learning_update_post_conditions_warn
         procedure :: update_post_conditions_modify => machine_learning_update_post_conditions_modify
-        procedure :: update_preprocessing => update_preprocessing
         procedure :: timestep_preprocessing => timestep_preprocessing
 
     end type machine_learning_struct
@@ -144,7 +146,7 @@ contains
 
             else
 
-                ! initialize machine_learning state
+                ! Initialize machine_learning state
                 !call this%state%init( start_date, machine_learning_parameter_file, &
                 !restart_flag, lake_number, water_elevation )
 
@@ -229,28 +231,25 @@ contains
         real, intent(in)    :: routing_period           ! seconds
         logical             :: leap_year
 
-        real :: current_time_real_print
-
         ! If first call to release
         if (reservoir_data%state%current_time == 0) then
-
             reservoir_data%state%update_time = int(routing_period)
-
         end if
 
+        ! Update the current time
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
         ! Check for a new day and update x and y for the day of the year (DoY)
         call reservoir_data%timestep_preprocessing()
 
-
         ! Update storage from the most recent model states
         reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
+        ! Update input variable
         reservoir_data%input%inflow = inflow
 
-        ! Update state variables
+        ! Update state variable
         reservoir_data%state%water_elevation = water_elevation
 
         call reservoir_data%timestep_pre_conditions_warn()
@@ -262,7 +261,9 @@ contains
 
             call reservoir_data%update_pre_conditions_modify()
 
-            ! TODO: Put outputs from a subroutine/function at the end of the list consistently across all modules in NWM
+            ! TODO: Put outputs from a subroutine/function at the end of the list consistently
+            ! across all modules in NWM
+            ! Runs the reservoir's corresponding machine learning model
             call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
                 (reservoir_data%input%inflow, reservoir_data%state%previous_time_release, &
                 reservoir_data%state%current_time_storage, reservoir_data%state%x_day_of_year, &
@@ -276,17 +277,20 @@ contains
 
             reservoir_data%state%previous_time_release = reservoir_data%output%outflow
 
+            ! Set the next time for update to be run
             reservoir_data%state%update_time = reservoir_data%state%update_time + reservoir_data%state%time_interval
 
         end if
 
         reservoir_data%state%current_time_storage = reservoir_data%state%end_time_storage
 
+        ! Calculate new water elevation
         reservoir_data%state%water_elevation = reservoir_data%state%current_time_storage / (reservoir_data%parameters%reservoir_area * 1.0E6)
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = reservoir_data%state%water_elevation
 
+        ! Update outflow variable returned from this subroutine
         outflow = reservoir_data%output%outflow
 
     end subroutine run_machine_learning_release
@@ -297,8 +301,7 @@ contains
 
         if (reservoir_data%input%inflow < 0.0) then
 
-            ! FIXME: Change 6 to macro for WCOS
-            write(6,*) "WARNING: Current inflow ", reservoir_data%input%inflow, &
+            write(log_warning,*) "WARNING: Current inflow ", reservoir_data%input%inflow, &
             " cms, has reached below zero for reservoir ", &
             reservoir_data%parameters%lake_number, " at ", reservoir_data%state%current_time, " seconds after model start time."
 
@@ -307,21 +310,21 @@ contains
         ! Also have option to set the end_time_storage to the max_storage and change the outflow accordingly.
         if (reservoir_data%state%end_time_storage > reservoir_data%parameters%max_storage) then
 
-            write(6,*) "WARNING: Calculated storage for this timestep, ", reservoir_data%state%end_time_storage, &
+            write(log_warning,*) "WARNING: Calculated storage for this timestep, ", reservoir_data%state%end_time_storage, &
             " cubic meters, will exceed the maximum storage boundary of: ", reservoir_data%parameters%max_storage, &
             " cubic meters, for reservoir ", reservoir_data%parameters%lake_number, &
             " at ", reservoir_data%state%current_time, " seconds after model start time."
-            write(6,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
+            write(log_warning,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
 
         ! Also have option to set the end_time_storage to the min_storage and change the outflow accordingly.
         else if (reservoir_data%state%end_time_storage < reservoir_data%parameters%min_storage .and. &
                  reservoir_data%state%end_time_storage > 0.0) then
 
-            write(6,*) "WARNING: Calculated storage for this timestep, ", reservoir_data%state%end_time_storage, &
+            write(log_warning,*) "WARNING: Calculated storage for this timestep, ", reservoir_data%state%end_time_storage, &
             " cubic meters, will fall below the minimum storage requirement of: ", reservoir_data%parameters%min_storage, &
             " cubic meters, for reservoir ", reservoir_data%parameters%lake_number, &
             " at ", reservoir_data%state%current_time, " seconds after model start time."
-            write(6,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
+            write(log_warning,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
 
         end if
 
@@ -361,11 +364,10 @@ contains
         if (reservoir_data%state%end_time_storage <= 0.0 .AND. reservoir_data%state%current_time &
            < reservoir_data%state%update_time) then
 
-            ! FIXME: Change 6 to macro for WCOS
-            write(6,*) "WARNING: End time storage, ", reservoir_data%state%end_time_storage, &
+            write(log_warning,*) "WARNING: End time storage, ", reservoir_data%state%end_time_storage, &
             " cubic meters, has reached at or below 0.0 cubic meters for reservoir ", reservoir_data%parameters%lake_number, &
             " at ", reservoir_data%state%current_time, " seconds after model start time."
-            write(6,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
+            write(log_warning,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
 
             reservoir_data%output%outflow = (reservoir_data%state%current_time_storage &
             + reservoir_data%input%inflow * routing_period) / routing_period
@@ -416,8 +418,8 @@ contains
         ! Also have option to set the outflow to the max_release.
         if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
 
-            write(6,*) "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+            write(log_warning,*) "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
+            write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         end if
 
@@ -430,8 +432,8 @@ contains
         real :: projected_next_time_interval_storage
 
         if (reservoir_data%output%outflow < 0.0) then
-            write(6,*) "Machine Learning calculations return a negative outflow for reservoir ", reservoir_data%parameters%lake_number
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+            write(log_warning,*) "Machine Learning calculations return a negative outflow for reservoir ", reservoir_data%parameters%lake_number
+            write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
             reservoir_data%output%outflow = 0.0
 
         end if
@@ -448,8 +450,8 @@ contains
             reservoir_data%output%outflow = (reservoir_data%state%current_time_storage - reservoir_data%parameters%max_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
-            write(6,*) "Modified release to maintain prevent maximum storage exceedance for reservoir ", reservoir_data%parameters%lake_number
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+            write(log_warning,*) "Modified release to maintain prevent maximum storage exceedance for reservoir ", reservoir_data%parameters%lake_number
+            write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage < reservoir_data%parameters%min_storage .AND. &
                 projected_next_time_interval_storage > 0.0) then
@@ -457,13 +459,13 @@ contains
             reservoir_data%output%outflow = (reservoir_data%state%current_time_storage - reservoir_data%parameters%min_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
-            write(6,*) "Modified release to maintain minimum storage for reservoir ", reservoir_data%parameters%lake_number
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+            write(log_warning,*) "Modified release to maintain minimum storage for reservoir ", reservoir_data%parameters%lake_number
+            write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage <= 0.0) then
             reservoir_data%output%outflow = reservoir_data%state%current_time_storage / reservoir_data%state%time_interval
-            write(6,*)  "Modified release to conserve mass for reservoir ", reservoir_data%parameters%lake_number
-            write(6,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
+            write(log_warning,*)  "Modified release to conserve mass for reservoir ", reservoir_data%parameters%lake_number
+            write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         end if
 
@@ -473,14 +475,11 @@ contains
 
     end subroutine machine_learning_update_post_conditions_modify
 
-
     subroutine timestep_preprocessing(reservoir_data)
-
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
         if (reservoir_data%state%current_time >= reservoir_data%state%new_day_time) then
             reservoir_data%state%new_day_time = reservoir_data%state%new_day_time + seconds_in_day
-
 
             if (leap_year(reservoir_data%state%current_year)) then
 
@@ -490,16 +489,13 @@ contains
 
                else
                     reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
-
                end if
 
-               ! MAKE FUNCTION ALSO?????
-               ! update x and y based on leap year
+               ! Update x and y based on leap year
                reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
                reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
 
             else
-
                if (reservoir_data%state%current_day_of_year == days_in_year) then    ! if last day of non leap year
                     reservoir_data%state%current_year = reservoir_data%state%current_year + 1
                     reservoir_data%state%current_day_of_year = 1
@@ -508,7 +504,7 @@ contains
                     reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
                end if
 
-               ! update x and y based on non leap year
+               ! Update x and y based on non leap year
                reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
                reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
             end if
@@ -518,44 +514,7 @@ contains
     end subroutine timestep_preprocessing
 
 
-    subroutine update_preprocessing(reservoir_data)
-        class(machine_learning_struct), intent(inout) :: reservoir_data
-
-        if (leap_year(reservoir_data%state%current_year)) then
-
-           if (reservoir_data%state%current_day_of_year == days_in_leap_year) then    ! if last day of leap year
-                reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-                reservoir_data%state%current_day_of_year = 1
-
-           else
-                reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
-
-           end if
-
-           ! MAKE FUNCTION ALSO?????
-           ! update x and y based on leap year
-           reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
-           reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_leap_year)
-
-        else
-
-           if (reservoir_data%state%current_day_of_year == days_in_year) then    ! if last day of non leap year
-                reservoir_data%state%current_year = reservoir_data%state%current_year + 1
-                reservoir_data%state%current_day_of_year = 1
-           else
-
-                reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
-           end if
-
-           ! update x and y based on non leap year
-           reservoir_data%state%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
-           reservoir_data%state%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * reservoir_data%state%current_day_of_year / days_in_year)
-        end if
-
-
-    end subroutine update_preprocessing
-
-
+    !Testing
     function machine_learning_data_info(machine_learning_data) result(rv)
         implicit none
         type (machine_learning_struct) :: machine_learning_data

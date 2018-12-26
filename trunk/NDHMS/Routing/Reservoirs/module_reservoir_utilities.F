@@ -4,6 +4,8 @@ module module_reservoir_utilities
     implicit none
 
 contains
+
+    ! Determine if leap year
     logical function leap_year(current_year)
         integer, intent(in) :: current_year
 
@@ -14,16 +16,15 @@ contains
 
         else
             leap_year = .FALSE.
-
         end if
 
     end function leap_year
 
-
+    ! Get the start month, current year, and current day of year
     subroutine get_current_times(start_date, start_month, current_year, current_day_of_year)
         implicit none
         character(len=19), intent(in)   :: start_date
-        integer, intent(out) :: start_month, current_year, current_day_of_year
+        integer, intent(out)            :: start_month, current_year, current_day_of_year
         integer :: start_day_of_month, start_year, start_day_of_year, months(12), month_loop_index
 
         read (start_date(6:7), *) start_month
@@ -31,21 +32,24 @@ contains
         read (start_date(1:4), *) start_year
 
         months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-
         start_day_of_year = 0
 
-        if (((mod(start_year,4)==0 .and. mod(start_year,100)/=0) .or. mod(start_year,400)==0) .and. start_month>2) then
+        ! If leap year and after February
+        if (leap_year(start_year) .and. start_month>2) then
             do month_loop_index = 1, start_month-1
                 start_day_of_year = start_day_of_year + months(month_loop_index)
             end do
-            start_day_of_year = start_day_of_year + start_day_of_month + 1    ! add one day for leap year after February
+
+            ! add one day for leap year after February
+            start_day_of_year = start_day_of_year + start_day_of_month + 1
 
         else
             do month_loop_index = 1, start_month-1
                 start_day_of_year = start_day_of_year + months(month_loop_index)
             end do
 
-            start_day_of_year = start_day_of_year + start_day_of_month     ! non leap year or leap year before March
+            ! non leap year or leap year before March
+            start_day_of_year = start_day_of_year + start_day_of_month
         end if
 
         current_year = start_year
@@ -53,7 +57,8 @@ contains
 
     end subroutine get_current_times
 
-
+    ! Read lake id from machine learning parameters NetCDF and determine the lake_id_index, which
+    ! is the index of the particular reservoir's values in all of the parameter arrays.
     subroutine read_machine_learning_netcdf_lake_id(ncid, lake_number, netcdf_array_name, lake_id_index)
         integer, intent(in) :: ncid, lake_number
         character(len=*), intent(in) :: netcdf_array_name
@@ -86,7 +91,7 @@ contains
 
     end subroutine read_machine_learning_netcdf_lake_id
 
-
+    ! Read the machine learning model id array from the machine learning parameters NetCDF
     subroutine read_machine_learning_netcdf_model_ids(ncid, netcdf_array_name, var_id, number_of_lakes)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
@@ -106,7 +111,7 @@ contains
 
     end subroutine read_machine_learning_netcdf_model_ids
 
-
+    ! Read integer one dimension parameter arrays from the machine learning parameters NetCDF
     subroutine read_machine_learning_netcdf_integer_1D_parameters(ncid, lake_id_index, netcdf_array_name, returned_integer_parameter)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
@@ -135,7 +140,7 @@ contains
 
     end subroutine read_machine_learning_netcdf_integer_1D_parameters
 
-
+    ! Read real one dimension parameter arrays from the machine learning parameters NetCDF
     subroutine read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, netcdf_array_name, returned_real_parameter)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
@@ -164,7 +169,7 @@ contains
 
     end subroutine read_machine_learning_netcdf_real_1D_parameters
 
-
+    ! Read real two dimension parameter arrays from the machine learning parameters NetCDF
     subroutine read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, netcdf_array_name, returned_real_parameter)
         integer, intent(in) :: ncid, lake_id_index, start_month
         character(len=*), intent(in) :: netcdf_array_name
@@ -196,7 +201,7 @@ contains
 
     end subroutine read_machine_learning_netcdf_real_2D_parameters
 
-
+    ! Read integer one dimension parameter arrays from the machine learning model parameters NetCDF
     subroutine read_machine_learning_model_netcdf_integer_1D_parameters(ncid, netcdf_array_name, var_id, number_of_inputs)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
@@ -215,7 +220,7 @@ contains
 
     end subroutine read_machine_learning_model_netcdf_integer_1D_parameters
 
-
+    ! Read real one dimension parameter arrays from the machine learning model parameters NetCDF
     subroutine read_machine_learning_model_netcdf_real_1D_parameters(ncid, netcdf_array_name, var_id, number_of_inputs)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
@@ -234,7 +239,7 @@ contains
 
     end subroutine read_machine_learning_model_netcdf_real_1D_parameters
 
-
+    ! Read real two dimension parameter arrays from the machine learning model parameters NetCDF
     subroutine read_machine_learning_model_netcdf_real_2D_parameters(ncid, netcdf_array_name, var_id, number_of_layers, number_of_nodes)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
@@ -256,7 +261,7 @@ contains
 
     end subroutine read_machine_learning_model_netcdf_real_2D_parameters
 
-
+    ! Handle NetCDF error
     subroutine handle_err(status, variable_error)
         implicit none
         integer, intent (in) :: status
@@ -267,6 +272,5 @@ contains
         end if
 
     end subroutine handle_err
-
 
 end module module_reservoir_utilities

@@ -5,7 +5,6 @@
 ! reservoir object and not other modules or areas
 ! of the system.
 
-! Time between running machine learning model to update the outflow
 #define seconds_in_day 86400
 #define pi 3.14159265359
 
@@ -55,12 +54,20 @@ contains
                                                                     ! 1 is cold start and 99 is restart
         integer, intent(in)             :: lake_number              ! lake number
         real, intent(inout)             :: water_elevation
+        real                            :: release_monthly_average, storage_monthly_average
+        integer                         :: ncid, lake_id_index, start_month
+        integer                         :: status                    ! Status of reading NetCDF
 
-        real    :: release_monthly_average, storage_monthly_average
-        integer :: ncid, lake_id_index, start_month
-        integer :: status                               ! Status of reading NetCDF
-
+        ! Assign the values passed in to a particular machine learning reservoir
+        ! state object's variables.
         this%water_elevation = water_elevation
+
+        ! Initialize time variables
+        this%current_time = 0
+        this%update_time = 0
+        this%new_day_time = seconds_in_day
+        this%x_day_of_year = 0.0
+        this%y_day_of_year = 0.0
 
         print *, 'ml state before open parm'
 
@@ -71,16 +78,10 @@ contains
 
         print *, 'ml state after open parm'
 
+        ! Read relevant parameters from machine learning parameter NetCDF
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
         call read_machine_learning_netcdf_integer_1D_parameters(ncid, lake_id_index, "time_interval", this%time_interval)
         call get_current_times(start_date, start_month, this%current_year, this%current_day_of_year)
-
-        this%current_time = 0
-        this%update_time = 0
-        this%new_day_time = seconds_in_day
-        this%x_day_of_year = 0.0
-        this%y_day_of_year = 0.0
-
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "release_monthly_averages", release_monthly_average)
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "storage_monthly_averages", storage_monthly_average)
 

@@ -68,7 +68,6 @@ module module_machine_learning_model
 
 contains
 
-
     !Machine Learning Model Constructor
     subroutine machine_learning_model_init(this, model_number)
         use netcdf
@@ -96,6 +95,9 @@ contains
 
         ! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
 
+
+print *, 'before model parm'
+
 		if (model_number == 1) then
 			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
 			if (status /= nf90_noerr) call handle_err(status, "ML_MODEL_PARM_ACF.nc")
@@ -107,7 +109,7 @@ contains
 
 		end if
 
-
+print *, 'after model parm open'
 
 
         this%model_number = model_number
@@ -195,7 +197,6 @@ contains
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being destroyed
 
     end subroutine machine_learning_model_destroy
-
 
     ! This subroutine is called from a machine learning reservoir's release function and performs
     ! matrix calculations to simulate reservoir release from a saved/trained ML model!
