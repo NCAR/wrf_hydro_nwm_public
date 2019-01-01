@@ -18,18 +18,18 @@ program reservoir_unit_tests
 
     rv2 = test_machine_learning()
 
-    !rv3 = test_machine_learning_dates()
+    rv3 = test_machine_learning_dates()
 
     rv4 = test_machine_learning_boundary_conditions()
 
-    if (rv1 .and. rv2 .and. rv3) then
+    if (rv1 .and. rv2 .and. rv3 .and. rv4) then
         print *, "========================================================================"
-        print *, 'All tests passed'
+        print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
 
     else
         print *, "========================================================================"
-        print *, 'Not all tests passed'
+        print *, 'Not All Reservoir Tests Passed'
         print *, "========================================================================"
     end if
 
@@ -58,7 +58,6 @@ program reservoir_unit_tests
         rv = levelpool_data_info(levelpool_reservoir_data)
 
     end function test_levelpool
-
 
 
     !------------------------------------------------------------------------------!
@@ -127,10 +126,9 @@ program reservoir_unit_tests
     end function test_machine_learning
 
 
-
     !------------------------------------------------------------------------------!
     !                       test_test_machine_learning_dates()                                !
-    ! This tests multi-year day tracking including switching to a new year
+    ! This function tests multi-year day tracking including switching to a new year
     ! and accounting for a leap year. This runs 15 minute timesteps from
     ! Nov 29, 2015 to Mar 4, 2018.                                              !
     !------------------------------------------------------------------------------!
@@ -185,107 +183,84 @@ program reservoir_unit_tests
     end function test_machine_learning_dates
 
 
-!make arrays of inflows w/ negatives and other out of range. Set routing period to 300 seconds.
-! Assert equal to array of outflows. Test new year, and leap year after february
-
-
-    !TEST FOR NEGATVIE INFLOW AND THINGS THAT OUTPUT THE PRE/POST COND WARNS/MODS FOR TIMESTEP/UPDATE
-
-
     !------------------------------------------------------------------------------!
-    !                   test_machine_learning_boundary_conditions()                                !
-    ! this function verifies that the constructor for the machine_learning type correctly !
-    ! initializes all data members                                                 !
+    !                   test_machine_learning_boundary_conditions()                !               !
+    ! This function tests for the Machine Learning Release Boundary Conditions     !
+    ! being hit and respective variables being modified including negative inflow  !
+    ! and negative end time storage.                                               !
     !------------------------------------------------------------------------------!
 
     function test_machine_learning_boundary_conditions() result(rv)
         implicit none
 
-        logical rv, rv1, rv2, rv3                        ! test result
+        logical rv, rv1, rv2                       ! test result
 
-        type (machine_learning_struct) :: machine_learning_reservoir_data
+        type (machine_learning_struct) :: machine_learning_reservoir_data2
 
-        type (machine_learning_model_struct) :: machine_learning_model_data
+        type (machine_learning_model_struct) :: machine_learning_model_data2
 
-        real :: inflow, outflow, water_elevation
+        real :: outflow, water_elevation
 
         integer :: timestep_count
 
         water_elevation = 0.0
+        outflow = 99.3830719
 
         rv = .false.
         rv1 = .false.
         rv2 = .false.
-        rv3 = .false.
 
-        print *, "calling init for machine_learning_struct"
-        call machine_learning_reservoir_data%init(water_elevation, 0.0, "2015-11-29_05:24:22" , 1, 166758723)
+        call machine_learning_reservoir_data2%init(water_elevation, 0.0, "2015-11-29_05:24:22" , 1, 166758723)
 
+        call machine_learning_model_data2%init(2)
 
-        print *, "calling init for machine_learning_model_struct"
-        call machine_learning_model_data%init(2)
+        do timestep_count = 1, 2880
+            call machine_learning_reservoir_data2%run_release(0.0, &
+            outflow, 0.0, water_elevation, outflow, 900.0)
+        end do
 
+        call machine_learning_reservoir_data2%run_release(0.0, &
+        -300.0, 0.0, water_elevation, outflow, 900.0)
 
-        print *, "testing data in machine_learning_struct"
-        rv1 = machine_learning_data_info(machine_learning_reservoir_data)
-
-        print *, "testing data in machine_learning_model_struct"
-        rv2 = machine_learning_model_data_info(machine_learning_model_data)
-
-        print *, "calling release for machine_learning_struct"
-
-        !do timestep_count = 1, 2879
-        !    call machine_learning_reservoir_data%run_release(0.0, &
-        !    outflow, 0.0, water_elevation, outflow, 900.0)
-        !end do
-
-        print *, 'storage', machine_learning_reservoir_data%state%end_time_storage
-
-        call machine_learning_reservoir_data%run_release(0.0, &
-        -100000.0, 0.0, water_elevation, outflow, 900.0)
-
-        print *, 'storage', machine_learning_reservoir_data%state%end_time_storage
-
-
-        print *, 'inflow', machine_learning_reservoir_data%input%inflow
-
-        print *, 'outflow: ', outflow
-
-
-        call machine_learning_reservoir_data%run_release(0.0, &
-        !-300.0, 0.0, water_elevation, outflow, 900.0)
-        -1111111300.0, 0.0, water_elevation, outflow, 900.0)
-
-        print *, 'storage', machine_learning_reservoir_data%state%end_time_storage
-
-
-        print *, 'inflow', machine_learning_reservoir_data%input%inflow
-
-        print *, 'outflow: ', outflow
-
-
-
-
-        if (machine_learning_reservoir_data%input%inflow == 0.00 .and. outflow == 99.3558960) then
+        if (machine_learning_reservoir_data2%input%inflow == 0.00 .and. outflow == 99.3807678) then
             rv1 = .true.
-            print *, 'Machine Learning Negative Inflow on Update Test Passed'
+            print *, "========================================================================"
+            print *, 'Machine Learning Negative Inflow Pre Update Test Passed'
+            print *, "========================================================================"
         else
-            print *, 'Machine Learning Negative Inflow on Update Test Failed'
-            print *, 'Inflow should be returned to 0.00, and Outflow should be 99.3558960'
+            print *, "========================================================================"
+            print *, 'Machine Learning Negative Inflow Pre Update Test Failed'
+            print *, 'Inflow should be returned to 0.00, and Outflow should be 99.3807678'
+            print *, "========================================================================"
         endif
 
+        call machine_learning_reservoir_data2%run_release(0.0, &
+        -1111111300.0, 0.0, water_elevation, outflow, 900.0)
 
+        call machine_learning_reservoir_data2%run_release(0.0, &
+        outflow, 0.0, water_elevation, outflow, 900.0)
 
+        if (machine_learning_reservoir_data2%state%end_time_storage == 0.00 .and. outflow == 1064957.38 ) then
+            rv2 = .true.
+            print *, "========================================================================"
+            print *, 'Machine Learning Negative End Time Storage Pre Timestep Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'Machine Learning Negative End Time Storage Pre Timestep Test Failed'
+            print *, 'End Time Storage should be returned to 0.00, and Outflow should be 1064957.38'
+            print *, "========================================================================"
+        endif
 
+        ! The subroutine machine_learning_update_post_conditions_modify checks for negative outflow from
+        ! the Machine Learning Model. This cannot be explicitly tested for with inputs to the release
+        ! function because the Pre Timestep and Update Modify subroutines modify the inputs to the Machine
+        ! Learning Model that should prevent a calculation to return a negative outflow.
+
+        if (rv1 .and. rv2) then
+            rv = .true.
+        end if
 
     end function test_machine_learning_boundary_conditions
-
-
-
-
-
-
-
-
 
 end program

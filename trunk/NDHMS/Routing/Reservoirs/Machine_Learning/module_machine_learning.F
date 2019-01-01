@@ -246,10 +246,6 @@ contains
         reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
-print *, 'reservoir_data%state%end_time_storage'
-print *, reservoir_data%state%end_time_storage
-
-
         ! Update input variable
         reservoir_data%input%inflow = inflow
 
@@ -304,11 +300,9 @@ print *, reservoir_data%state%end_time_storage
         class(machine_learning_struct), intent(inout) :: reservoir_data
 
         if (reservoir_data%input%inflow < 0.0) then
-
             write(log_warning,*) "WARNING: Current inflow ", reservoir_data%input%inflow, &
             " cms, has reached below zero for reservoir ", &
             reservoir_data%parameters%lake_number, " at ", reservoir_data%state%current_time, " seconds after model start time."
-
         end if
 
         ! Also have option to set the end_time_storage to the max_storage and change the outflow accordingly.
@@ -410,7 +404,6 @@ print *, reservoir_data%state%end_time_storage
 
         if (reservoir_data%input%inflow < 0.0) then
             reservoir_data%input%inflow = 0.0
-
         end if
 
     end subroutine machine_learning_update_pre_conditions_modify
@@ -421,10 +414,8 @@ print *, reservoir_data%state%end_time_storage
 
         ! Also have option to set the outflow to the max_release.
         if (reservoir_data%output%outflow > reservoir_data%parameters%max_release) then
-
             write(log_warning,*) "Current outflow has exceeded the max outflow for reservoir ", reservoir_data%parameters%lake_number
             write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
-
         end if
 
     end subroutine machine_learning_update_post_conditions_warn
@@ -439,7 +430,6 @@ print *, reservoir_data%state%end_time_storage
             write(log_warning,*) "Machine Learning calculations return a negative outflow for reservoir ", reservoir_data%parameters%lake_number
             write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
             reservoir_data%output%outflow = 0.0
-
         end if
 
         ! The projected_next_time_interval_storage is only calculated as a boundary condition to update the release
@@ -504,7 +494,6 @@ print *, reservoir_data%state%end_time_storage
                     reservoir_data%state%current_year = reservoir_data%state%current_year + 1
                     reservoir_data%state%current_day_of_year = 1
                else
-
                     reservoir_data%state%current_day_of_year = reservoir_data%state%current_day_of_year + 1
                end if
 
@@ -522,12 +511,10 @@ print *, reservoir_data%state%end_time_storage
     function machine_learning_data_info(machine_learning_data) result(rv)
         implicit none
         type (machine_learning_struct) :: machine_learning_data
-        !integer :: rv
         logical :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
 
-        !rv = 0
         rv = .false.
 
         ! Check to see if the machine_learning_state data structure exists
@@ -605,7 +592,6 @@ print *, reservoir_data%state%end_time_storage
             print *, "========================================================================"
 
         end if
-        !rv = 1
 
         flush(6)
     end function machine_learning_data_info
@@ -614,11 +600,9 @@ print *, reservoir_data%state%end_time_storage
     function machine_learning_model_data_info(machine_learning_model_data) result(rv)
         implicit none
         type (machine_learning_model_struct) :: machine_learning_model_data
-        !integer :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
         logical :: rv
-        !rv = 0
         rv = .false.
 
         ! Check to see if the machine_learning_model data structure exists
@@ -632,9 +616,7 @@ print *, reservoir_data%state%end_time_storage
         !end if
         print *, " "
 
-
         data_state(1) = test_machine_learning_model(machine_learning_model_data)
-
 
         if ( all(data_state) ) then
         !if ( all(ptr_state) .and. all(data_state) ) then
@@ -649,7 +631,6 @@ print *, reservoir_data%state%end_time_storage
             print *, "========================================================================"
 
         end if
-        !rv = 1
 
         flush(6)
     end function machine_learning_model_data_info
