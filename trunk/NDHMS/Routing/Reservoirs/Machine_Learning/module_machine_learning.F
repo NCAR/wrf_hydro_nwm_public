@@ -239,6 +239,14 @@ contains
         ! Update the current time
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
+        ! Update input variable
+        reservoir_data%input%inflow = inflow
+
+        ! Update state variable
+        reservoir_data%state%water_elevation = water_elevation
+
+
+
         ! Check for a new day and update x and y for the day of the year (DoY)
         call reservoir_data%timestep_preprocessing()
 
@@ -246,11 +254,11 @@ contains
         reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
-        ! Update input variable
-        reservoir_data%input%inflow = inflow
+print *, 'reservoir_data%state%end_time_storage'
+print *, reservoir_data%state%end_time_storage
 
-        ! Update state variable
-        reservoir_data%state%water_elevation = water_elevation
+
+
 
         call reservoir_data%timestep_pre_conditions_warn()
 
@@ -518,11 +526,13 @@ contains
     function machine_learning_data_info(machine_learning_data) result(rv)
         implicit none
         type (machine_learning_struct) :: machine_learning_data
-        integer :: rv
+        !integer :: rv
+        logical :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
 
-        rv = 0
+        !rv = 0
+        rv = .false.
 
         ! Check to see if the machine_learning_state data structure exists
         print *, "Checking pointer association on data%state "
@@ -589,10 +599,17 @@ contains
 
         if ( all(ptr_state) .and. all(data_state) ) then
             print *, "========================================================================"
-            print *, "All Tests Passed"
+            print *, "All Machine Learning Object Tests Passed"
             print *, "========================================================================"
+            rv = .true.
+
+        else
+            print *, "========================================================================"
+            print *, "Not All Machine Learning Object Tests Passed"
+            print *, "========================================================================"
+
         end if
-        rv = 1
+        !rv = 1
 
         flush(6)
     end function machine_learning_data_info
@@ -601,11 +618,12 @@ contains
     function machine_learning_model_data_info(machine_learning_model_data) result(rv)
         implicit none
         type (machine_learning_model_struct) :: machine_learning_model_data
-        integer :: rv
+        !integer :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
-
-        rv = 0
+        logical :: rv
+        !rv = 0
+        rv = .false.
 
         ! Check to see if the machine_learning_model data structure exists
         print *, "Checking pointer association on model data "
@@ -625,10 +643,17 @@ contains
         if ( all(data_state) ) then
         !if ( all(ptr_state) .and. all(data_state) ) then
             print *, "========================================================================"
-            print *, "All Model Tests Passed"
+            print *, "All Machine Learning Model Tests Passed"
             print *, "========================================================================"
+            rv = .true.
+
+        else
+            print *, "========================================================================"
+            print *, "Not All Machine Learning Model Tests Passed"
+            print *, "========================================================================"
+
         end if
-        rv = 1
+        !rv = 1
 
         flush(6)
     end function machine_learning_model_data_info

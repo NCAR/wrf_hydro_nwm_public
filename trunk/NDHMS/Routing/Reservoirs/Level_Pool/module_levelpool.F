@@ -378,11 +378,13 @@ contains
     function levelpool_data_info(levelpool_data) result(rv)
         implicit none
         type (levelpool_struct) :: levelpool_data
-        integer :: rv
+        !integer :: rv
+        logical :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
 
-        rv = 0
+        !rv = 0
+        rv = .false.
 
         ! Check to see if the levelpool_state data structure exists
         print *, "Checking pointer association on data%state "
@@ -449,10 +451,16 @@ contains
 
         if ( all(ptr_state) .and. all(data_state) ) then
             print *, "========================================================================"
-            print *, "All Tests Passed"
+            print *, "All Level Pool Tests Passed"
             print *, "========================================================================"
+            rv = .true.
+        else
+            print *, "========================================================================"
+            print *, "Not All Level Pool Tests Passed"
+            print *, "========================================================================"
+
         end if
-        rv = 1
+        !rv = 1
 
         flush(6)
 
