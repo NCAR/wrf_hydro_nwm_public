@@ -254,7 +254,7 @@ program reservoir_unit_tests
 
         call machine_learning_reservoir_data%run_release(0.0, &
         !-300.0, 0.0, water_elevation, outflow, 900.0)
-        -111300.0, 0.0, water_elevation, outflow, 900.0)
+        -1111111300.0, 0.0, water_elevation, outflow, 900.0)
 
         print *, 'storage', machine_learning_reservoir_data%state%end_time_storage
 

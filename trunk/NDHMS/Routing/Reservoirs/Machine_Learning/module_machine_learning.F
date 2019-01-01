@@ -239,14 +239,6 @@ contains
         ! Update the current time
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
-        ! Update input variable
-        reservoir_data%input%inflow = inflow
-
-        ! Update state variable
-        reservoir_data%state%water_elevation = water_elevation
-
-
-
         ! Check for a new day and update x and y for the day of the year (DoY)
         call reservoir_data%timestep_preprocessing()
 
@@ -258,7 +250,11 @@ print *, 'reservoir_data%state%end_time_storage'
 print *, reservoir_data%state%end_time_storage
 
 
+        ! Update input variable
+        reservoir_data%input%inflow = inflow
 
+        ! Update state variable
+        reservoir_data%state%water_elevation = water_elevation
 
         call reservoir_data%timestep_pre_conditions_warn()
 
