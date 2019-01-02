@@ -1,7 +1,7 @@
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge
-We as contributors and maintainers of WRF-Hydro pledge to make participation in our software project and community a welcoming and inclusive experience for everyone. This includes acceptance and respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, personal appearance, race, religion, or sexual identity and orientation, as well as any other characteristic protected under applicable US federal or state law.
+We as contributors and maintainers of WRF-Hydro® pledge to make participation in our software project and community a welcoming and inclusive experience for everyone. This includes acceptance and respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, personal appearance, race, religion, or sexual identity and orientation, as well as any other characteristic protected under applicable US federal or state law.
 
 ## Our Standards 
 Examples of behavior that contributes to creating a positive environment include:
@@ -36,7 +36,7 @@ Project administrators have the right and responsibility to remove, edit, or rej
 Project Administrators who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project's leadership and subject to their own institution’s policies and procedures.
 
 ## Enforcement & Reporting
-Instances of unacceptable behavior may be reported by contacting the project team at wrfhydro@ucar.edu. Alternatively, this behavior can be reported to individuals on the WRF-Hydro team, who will then have the responsibility to review and will respond in a way that it deems appropriate to the circumstances, including engaging the UCAR Human Resources and the UCAR Office of Diversity and Inclusion. Another alternative is to use the reporting methods of UCAR/NCAR for this behavior (these options include anonymous reporting methods). The project team will maintain confidentiality with regard to the reporter of an incident. Further details of specific enforcement policies may be posted separately. Retaliation against a person who initiates a complaint or an inquiry about such behaviors is prohibited.
+Instances of unacceptable behavior may be reported by contacting the project team at wrfhydro@ucar.edu. Alternatively, this behavior can be reported to individuals on the WRF-Hydro® team, who will then have the responsibility to review and will respond in a way that it deems appropriate to the circumstances, including engaging the UCAR Human Resources and the UCAR Office of Diversity and Inclusion. Another alternative is to use the reporting methods of UCAR/NCAR for this behavior (these options include anonymous reporting methods). The project team will maintain confidentiality with regard to the reporter of an incident. Further details of specific enforcement policies may be posted separately. Retaliation against a person who initiates a complaint or an inquiry about such behaviors is prohibited.
 
 ## Attribution
 This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4, available at [http://contributor-covenant.org/version/1/4][version]
