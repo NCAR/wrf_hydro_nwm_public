@@ -2,7 +2,7 @@ USE OF THIS SOFTWARE IS SUBJECT TO THE FOLLOWING TERMS AND CONDITIONS:
 
 1. License. Subject to these terms and conditions, University Corporation for Atmospheric Research (UCAR)
 grants you a non-exclusive, royalty-free license to use, create derivative works, publish, distribute,
-disseminate, transfer, modify, revise and copy the WRF-Hydro software, in both object and source code
+disseminate, transfer, modify, revise and copy the WRF-Hydro® software, in both object and source code
 (the "Software"). You shall not sell, license or transfer for a fee the Software, or any work that in any
 manner contains the Software.
 
@@ -60,7 +60,7 @@ Rights Reserved."
 The following notice shall be displayed on any scholarly works associated with, related to or derived from
 the Software: 
 
-"The WRF-Hydro modeling system was developed at the National Center for Atmospheric Research (NCAR) through
+"The WRF-Hydro® modeling system was developed at the National Center for Atmospheric Research (NCAR) through
 grants from the National Aeronautics and Space Administration (NASA) and the National Oceanic and Atmospheric
 Administration (NOAA). NCAR is sponsored by the United States National Science Foundation."
 
