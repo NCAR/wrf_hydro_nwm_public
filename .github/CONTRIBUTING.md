@@ -1,4 +1,4 @@
-# Contributing to WRF-Hydro
+# Contributing to WRF-Hydro®
 All bug reports, bug fixes, code, and documentation contributions are welcome and encouraged.
 However, guidelines need to be established and followed to ensure that community contributions can
 be effectively incorporated.
@@ -32,7 +32,7 @@ Please follow similar guidelines when suggesting new features as you would for r
 specific and detail the added value of your suggested feature.
 
 ### Documentation suggestions
-All technical documentation for the WRF-Hydro model will eventually be formatted as markdown, which
+All technical documentation for the WRF-Hydro® model will eventually be formatted as markdown, which
 will greatly simplify updates and changes in the future. In the meantime, please reference the
 document title, page number and quote the line or section for suggesting changes to the
 documentation.
@@ -44,7 +44,7 @@ unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues 
 requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for a
 thorough guide to collaborating on GitHub.
 
-### WRF-Hydro Fortran code style standards
+### WRF-Hydro® Fortran code style standards
 Please see our Fortran [code style guidelines](CODESTYLE.md)
 
 ### Universal guidelines
@@ -98,12 +98,12 @@ fixes. The proposed feature must be submitted as a GitHub issue and all discussi
 new feature should reside in the issue thread. Additionally, work should not begin on the new
 feature until the issue has been tagged with "Community dev".
 
-Depending on the scope of the new feature, a WRF-Hydro core contributor may suggest you create a
+Depending on the scope of the new feature, a WRF-Hydro® core contributor may suggest you create a
 [branch](https://help.github.com/articles/about-branches/) to hold all development for the new
 feature.
 
 #### Research development
-Larger-scale research development, e.g. model coupling, must be coordinated with a WRF-Hydro team
+Larger-scale research development, e.g. model coupling, must be coordinated with a WRF-Hydro® team
 member prior to beginning work. This type of development may impact other community projects and
 requires more careful governance to help steer the direction of model development and maximize
-harmony among the various NCAR, NOAA, and WRF-Hydro community research efforts.
+harmony among the various NCAR, NOAA, and WRF-Hydro® community research efforts.
