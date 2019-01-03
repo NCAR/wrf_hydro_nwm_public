@@ -5,6 +5,8 @@
 ! reservoir object and not other modules or areas
 ! of the system.
 
+#define days_in_year 365
+#define days_in_leap_year 366
 #define seconds_in_day 86400
 #define pi 3.14159265359
 
@@ -66,8 +68,12 @@ contains
         this%current_time = 0
         this%update_time = 0
         this%new_day_time = seconds_in_day
-        this%x_day_of_year = 0.0
-        this%y_day_of_year = 0.0
+
+
+
+
+
+
 
         print *, 'ml state before open parm'
 
@@ -88,6 +94,17 @@ contains
         this%previous_time_release = release_monthly_average
         this%current_time_storage = storage_monthly_average
         this%end_time_storage = storage_monthly_average
+
+
+
+        if (((mod(this%current_year,4)==0 .and. mod(this%current_year,100)/=0) .or. mod(this%current_year,400)==0) .and. start_month>2) then
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%current_day_of_year / days_in_leap_year) ! leap year after February
+            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%current_day_of_year / days_in_leap_year)
+        else
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%current_day_of_year / days_in_year) ! non leap year or leap year before March
+            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%current_day_of_year / days_in_year)
+        end if
+
 
     end subroutine machine_learning_state_init
 

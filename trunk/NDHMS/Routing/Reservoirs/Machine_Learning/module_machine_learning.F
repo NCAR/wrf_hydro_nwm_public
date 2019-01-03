@@ -277,7 +277,7 @@ real :: current_time_real_print
 
 !REMOVE BELOW OUTPUT WRITES BEFORE PULL REQUEST
         !temp
-        if (reservoir_data%parameters%lake_number == 166758723) then
+        if (reservoir_data%parameters%lake_number == 1326659 ) then
             print *, 'Writing the results into some text files!'
 
             !open (111,file="lakeids.txt",status="unknown")
@@ -287,28 +287,28 @@ real :: current_time_real_print
             current_time_real_print = real(reservoir_data%state%current_time)
 
             open (112,file="current_time.txt",status="unknown")
-            write (112, "(4A15)") "Current_Time"
+            !write (112, "(4A15)") "Current_Time"
              !Write (112, "(I5)") reservoir_data%state%current_time
              Write (112, "(F15.5)") current_time_real_print
 
 
             open (113,file="current_inflow.txt",status="unknown")
-            write (113, "(4A15)") "Current_Inflow"
+            !write (113, "(4A15)") "Current_Inflow"
              Write (113, "(F15.5)") reservoir_data%input%inflow
 
 
             open (115,file="x_doy.txt",status="unknown")
-            write (115, "(4A15)") "X_DOY"
+            !write (115, "(4A15)") "X_DOY"
              Write (115, "(F15.5)") reservoir_data%state%x_day_of_year
 
 
             open (116,file="y_doy.txt",status="unknown")
-            write (116, "(4A15)") "Y_DOY"
+            !write (116, "(4A15)") "Y_DOY"
              Write (116, "(F15.5)") reservoir_data%state%y_day_of_year
 
 
             open (117,file="current_time_storage.txt",status="unknown")
-            write (117, "(4A15)") "Current_Time_Storage"
+            !write (117, "(4A15)") "Current_Time_Storage"
              Write (117, "(F15.5)") reservoir_data%state%current_time_storage
 
 
@@ -316,12 +316,12 @@ real :: current_time_real_print
             !print *, reservoir_data%state%current_time_storage
 
             open (118,file="previous_time_release.txt",status="unknown")
-            write (118, "(4A15)") "Previous_Time_Release"
+            !write (118, "(4A15)") "Previous_Time_Release"
              Write (118, "(F15.5)") reservoir_data%state%previous_time_release
 
 
             open (119,file="outflow.txt",status="unknown")
-            write (119, "(4A15)") "Outflow"
+            !write (119, "(4A15)") "Outflow"
              Write (119, "(F15.5)") reservoir_data%output%outflow
 
         end if
