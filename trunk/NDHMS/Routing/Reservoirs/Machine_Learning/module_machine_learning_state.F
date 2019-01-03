@@ -37,6 +37,7 @@ module module_machine_learning_state
 
         procedure :: init => machine_learning_state_init
         procedure :: destroy => machine_learning_state_destroy
+        procedure :: get_x_and_y_day_of_year => get_x_and_y_day_of_year
 
     end type machine_learning_state_interface
 
@@ -44,7 +45,7 @@ contains
 
             subroutine machine_learning_state_init(this, start_date, restart_flag, lake_number, water_elevation)
 
-    !Machine Learning State Constructor
+    ! Machine Learning State Constructor
     !subroutine machine_learning_state_init(this, machine_learning_parameter_file, start_date, &
     !  restart_flag, lake_number, water_elevation)
         use netcdf
@@ -70,11 +71,6 @@ contains
         this%new_day_time = seconds_in_day
 
 
-
-
-
-
-
         print *, 'ml state before open parm'
 
         !Reservoir Parm NC file
@@ -90,21 +86,11 @@ contains
         call get_current_times(start_date, start_month, this%current_year, this%current_day_of_year)
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "release_monthly_averages", release_monthly_average)
         call read_machine_learning_netcdf_real_2D_parameters(ncid, lake_id_index, start_month, "storage_monthly_averages", storage_monthly_average)
+        call get_x_and_y_day_of_year(this, start_month)
 
         this%previous_time_release = release_monthly_average
         this%current_time_storage = storage_monthly_average
         this%end_time_storage = storage_monthly_average
-
-
-
-        if (((mod(this%current_year,4)==0 .and. mod(this%current_year,100)/=0) .or. mod(this%current_year,400)==0) .and. start_month>2) then
-            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%current_day_of_year / days_in_leap_year) ! leap year after February
-            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%current_day_of_year / days_in_leap_year)
-        else
-            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%current_day_of_year / days_in_year) ! non leap year or leap year before March
-            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%current_day_of_year / days_in_year)
-        end if
-
 
     end subroutine machine_learning_state_init
 
@@ -114,5 +100,22 @@ contains
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being destroyed
 
     end subroutine machine_learning_state_destroy
+
+    ! Calculates the x and y day of year
+    subroutine get_x_and_y_day_of_year(this, start_month)
+        implicit none
+        class(machine_learning_state_interface), intent(inout) :: this ! the type object being destroyed
+        integer, intent(in):: start_month
+
+        if (((mod(this%current_year,4)==0 .and. mod(this%current_year,100)/=0) .or. mod(this%current_year,400)==0) .and. start_month>2) then
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%current_day_of_year / days_in_leap_year) ! leap year after February
+            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%current_day_of_year / days_in_leap_year)
+        else
+            this%x_day_of_year = 0.5 + 0.5 * COS(2 * pi * this%current_day_of_year / days_in_year) ! non leap year or leap year before March
+            this%y_day_of_year = 0.5 + 0.5 * SIN(2 * pi * this%current_day_of_year / days_in_year)
+        end if
+
+    end subroutine get_x_and_y_day_of_year
+
 
 end module module_machine_learning_state

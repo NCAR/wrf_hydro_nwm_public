@@ -103,12 +103,12 @@ program reservoir_unit_tests
         print *, "calling release for machine_learning_struct"
 
         call machine_learning_reservoir_data%run_release(0.0, &
-        192.46272, 0.0, water_elevation, outflow, 86400.0)
+        192.46272, 0.0, water_elevation, outflow, 300.0)
 
         print *, "outflow"
         print *, outflow
 
-        if (outflow == 120.377434) then
+        if (outflow == 120.170197) then
             rv3 = .true.
             print *, "========================================================================"
             print *, 'Machine Learning Release Test Passed'
@@ -116,7 +116,7 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'Machine Learning Release Test Failed'
-            print *, 'Outflow should be 120.377434'
+            print *, 'Outflow should be 120.170197'
             print *, "========================================================================"
         end if
 
@@ -137,7 +137,7 @@ program reservoir_unit_tests
     function test_machine_learning_dates() result(rv)
         implicit none
 
-        logical rv                        ! test result
+        logical rv, rv1, rv2                    ! test result
 
         type (machine_learning_struct) :: machine_learning_reservoir_data
 
@@ -148,6 +148,8 @@ program reservoir_unit_tests
         integer :: timestep_count
 
         rv = .false.
+        rv1 = .false.
+        rv2 = .false.
 
         water_elevation = 0.0
 
@@ -168,9 +170,26 @@ program reservoir_unit_tests
             outflow, 0.0, water_elevation, outflow, 900.0)
         end do
 
+print *, 'outflow test1'
+print *, outflow
+
+
+        if (outflow == 108.639862) then
+            rv1 = .true.
+            print *, "========================================================================"
+            print *, 'Machine Learning Long Term Release Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'Machine Learning Long Term Release Test Failed'
+            print *, 'Outflow should be 108.639862'
+            print *, "========================================================================"
+        endif
+
+
         if (machine_learning_reservoir_data%state%current_day_of_year == 63 .and. &
         machine_learning_reservoir_data%state%current_year == 2018 ) then
-            rv = .true.
+            rv2 = .true.
             print *, "========================================================================"
             print *, 'Machine Learning Dates Test Passed'
             print *, "========================================================================"
@@ -181,6 +200,10 @@ program reservoir_unit_tests
             print *, 'Current Year', machine_learning_reservoir_data%state%current_day_of_year
             print *, "========================================================================"
         endif
+
+        if (rv1 .and. rv2) then
+            rv = .true.
+        end if
 
     end function test_machine_learning_dates
 
@@ -195,7 +218,7 @@ program reservoir_unit_tests
     function test_machine_learning_boundary_conditions() result(rv)
         implicit none
 
-        logical rv, rv1, rv2                       ! test result
+        logical rv, rv1, rv2                     ! test result
 
         type (machine_learning_struct) :: machine_learning_reservoir_data2
 
@@ -221,8 +244,10 @@ program reservoir_unit_tests
             outflow, 0.0, water_elevation, outflow, 900.0)
         end do
 
+
         call machine_learning_reservoir_data2%run_release(0.0, &
         -300.0, 0.0, water_elevation, outflow, 900.0)
+
 
         if (machine_learning_reservoir_data2%input%inflow == 0.00 .and. outflow == 99.3807678) then
             rv1 = .true.
