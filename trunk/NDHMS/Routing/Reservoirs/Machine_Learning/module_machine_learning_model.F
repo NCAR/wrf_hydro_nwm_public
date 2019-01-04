@@ -1,13 +1,17 @@
 ! This module defines and instantiates objects
-! for a machine learning model that will be used
-! by machine learning type reservoirs. These model
-! objects are not sub-objects of machine learning
-! reservoirs but instead independent and match a
-! model ID for a given model to the model that will
-! be used by a reservoir. This module reads in the
-! model parameters from its given NetCDF file and
-! then constructs the model that will be called
-! by a machine learning reservoir's release function.
+! for a trained machine learning (ML) model that will be used
+! by ML-type reservoirs. These model
+! objects are not sub-objects of ML reservoirs
+! but instead independent objects that have 
+! a model ID and an ML-reservoir will point to a correponding model ID. 
+! A number of reservoirs within a hydrologic unit have a model ID in common. 
+! This module also reads in the model parameters from its given NetCDF file and
+! then constructs the model that is called
+! by an ML-reservoir's release function.
+
+!This version of the ML module utilizes a deep neural network (i.e., feed forward backpropagation model). 
+!We have considered the same number of (i.e., three) hidden layers for this version of the module. 
+!This model is also highly dependent on the previous-time releases.
 
 module module_machine_learning_model
 
@@ -35,7 +39,8 @@ module module_machine_learning_model
     type NN_node
         real, allocatable, dimension (:,:) :: link_weights
         real, allocatable, dimension (:,:) :: link_bias
-        integer, dimension (10) :: link_activation_functions ! FIXME, I had a hard time setting this into an allocatable dimension; so I had to fix it to a constant maximum number of layer = 10
+        integer, dimension (10) :: link_activation_functions ! FIXME, I had a hard time setting this into an allocatable dimension;
+		!so I had to fix it to a constant maximum number of layer = 10
     end type NN_node
 
 
@@ -48,7 +53,7 @@ module module_machine_learning_model
         integer, allocatable, dimension (:)  :: number_of_nodes ! is just a function of layer; number of computational nodes (i.e., neurons); first element represents the number of inputs to the model
         real, allocatable, dimension (:)     :: minimum_of_features_reshaped
         real, allocatable, dimension (:)     :: maximum_of_features_reshaped
-        real, dimension  (1000,1) :: nn_sum_matrix ! The sum of matrix calculation(Wx+b) before applying transfer function!
+        real, dimension  (1000,1) :: nn_sum_matrix ! The sum of matrix calculation (WX+b) before applying activation/transfer function!
         real, dimension  (1000,1) :: reshaped_nn_sum_matrix_activated
         real, dimension (1000) :: reshaped_nn_sum_matrix ! a reshaped version of the "nn_sum_matrix"
         real, dimension (1000) :: nn_sum_matrix_activated ! the output of the NN by applying the transfer function on "nn_sum_matrix"
@@ -144,7 +149,9 @@ print *, 'after model parm open'
         allocate(this%number_of_nodes(number_of_layers))
         status = nf90_get_var(ncid, var_id, this%number_of_nodes)
         if(status /= nf90_NoErr) call handle_err(status, "number_of_nodes")
-
+		
+		!Here dimensions of ML model parameters (i.e., weights and biases) derived 
+		!from NetCDF file are reshaped to appropriate dimensions suitable for matrix multiplication.
         reshaped_weights = reshape(weights, (/this%number_of_nodes(2), this%number_of_nodes(3),4/))
         reshaped_weights_1st = reshaped_weights(1:this%number_of_nodes(2),1:this%number_of_nodes(1),1) !(1:90,1:6,1)
         reshaped_weights_2nd = reshaped_weights(:,:,2)
@@ -223,7 +230,8 @@ print *, 'after model parm open'
         model_data%nn_inputs%inflow = inflow
         model_data%nn_inputs%x_day_of_year = x_day_of_year
         model_data%nn_inputs%y_day_of_year = y_day_of_year
-
+		
+		!Inputs are scaled/normalized into the range [0, 1].
         model_data%normalized_nn_inputs%previous_time_release = (model_data%nn_inputs%previous_time_release - model_data%minimum_of_features_reshaped(1))&
         /(model_data%maximum_of_features_reshaped(1) - model_data%minimum_of_features_reshaped(1))
 
@@ -233,8 +241,8 @@ print *, 'after model parm open'
         model_data%normalized_nn_inputs%inflow = (model_data%nn_inputs%inflow - model_data%minimum_of_features_reshaped(3))&
         /(model_data%maximum_of_features_reshaped(3) - model_data%minimum_of_features_reshaped(3))
 
-        model_data%normalized_nn_inputs%x_day_of_year = model_data%nn_inputs%x_day_of_year ! this variable is already
-        model_data%normalized_nn_inputs%y_day_of_year = model_data%nn_inputs%y_day_of_year
+        model_data%normalized_nn_inputs%x_day_of_year = model_data%nn_inputs%x_day_of_year ! this variable is already in the range [0, 1]
+        model_data%normalized_nn_inputs%y_day_of_year = model_data%nn_inputs%y_day_of_year ! this variable is already in the range [0, 1]
 
         ! Here input combination is assigned!
         input_vector = (/model_data%normalized_nn_inputs%previous_time_release, model_data%normalized_nn_inputs%x_day_of_year,&
@@ -247,15 +255,15 @@ print *, 'after model parm open'
             model_data%nn_sum_matrix(:,:) = 0.0
             model_data%reshaped_nn_sum_matrix(:) = 0.0
             model_data%nn_sum_matrix_activated(:)= 0.0
-            do next_layer_nodes = 1, model_data%number_of_nodes(layer_index+1)! nodes;90
+            do next_layer_nodes = 1, model_data%number_of_nodes(layer_index+1)!
                 initial_matrix_sum = 0.0
                 do current_layer_nodes= 1, model_data%number_of_nodes(layer_index)
                     if (layer_index==1) then
-                        initial_matrix_sum = initial_matrix_sum + model_data%model_parameters(layer_index)%link_weights(next_layer_nodes, current_layer_nodes) * reshaped_input_vector(current_layer_nodes, 1) !reshaped_nn_inputs_local(j,1)
+                        initial_matrix_sum = initial_matrix_sum + model_data%model_parameters(layer_index)%link_weights(next_layer_nodes, current_layer_nodes) * reshaped_input_vector(current_layer_nodes, 1) 
                         model_data%nn_sum_matrix(next_layer_nodes, 1) = initial_matrix_sum
                         model_data%nn_sum_matrix(next_layer_nodes, 1) = model_data%nn_sum_matrix(next_layer_nodes, 1) + model_data%model_parameters(layer_index)%link_bias(next_layer_nodes, 1)
                         model_data%reshaped_nn_sum_matrix(next_layer_nodes) = model_data%nn_sum_matrix(next_layer_nodes,1)
-                        if (model_data%model_parameters(layer_index)%link_activation_functions(1)==0) then ! The focus will probably be on
+                        if (model_data%model_parameters(layer_index)%link_activation_functions(1)==0) then 
                             model_data%nn_sum_matrix_activated(next_layer_nodes) = sigmoid(model_data%reshaped_nn_sum_matrix(next_layer_nodes))
                         else if (model_data%model_parameters(layer_index)%link_activation_functions(1)==1) then
                             model_data%nn_sum_matrix_activated(next_layer_nodes) = relu(model_data%reshaped_nn_sum_matrix(next_layer_nodes))
@@ -284,7 +292,7 @@ print *, 'after model parm open'
 
         model_data%normalized_simulated_release = model_data%nn_sum_matrix_activated(1)
 
-        ! Simulated release should be denormalized
+        ! Simulated release are de-normalized/scaled back to the original range. 
 		release = model_data%normalized_simulated_release * (model_data%maximum_release - model_data%minimum_release) + model_data%minimum_release ! first array refers to "Release" values; we could instead introduce it as
 
     end subroutine run_machine_learning_model
