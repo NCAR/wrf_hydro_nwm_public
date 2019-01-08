@@ -57,8 +57,8 @@ contains
         print *, "Checking the values of the machine learning state data structure"
         print *, " "
 
-        print *, "Checking read on current_time_storage"
-        print *, o%current_time_storage
+        print *, "Checking read on previous_time_storage"
+        print *, o%previous_time_storage
         print *, " "
 
         !print *, "Checking read on average_storage_over_past_time_intervals"

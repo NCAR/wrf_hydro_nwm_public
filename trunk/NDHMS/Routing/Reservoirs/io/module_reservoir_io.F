@@ -53,7 +53,7 @@ contains
         character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
 
 
-        real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array, outflow, machine_learning_current_time_storage
+        real, allocatable, dimension(:) :: temp_machine_learning_previous_time_storage_array, outflow, machine_learning_previous_time_storage
 
         real, allocatable, dimension(:) :: temp_reservoir_array
 
@@ -220,18 +220,18 @@ print *, MPI_INFO_NULL
 
         call check(nf90_def_dim(ncid, "lakes", nlakes, dimid_lakes))
         print *, "Created lakes dim"
-            !dd = nf90_def_var(aa,"machine_learning_current_time_storage",ee,1,cc) ! builds okay
+            !dd = nf90_def_var(aa,"machine_learning_previous_time_storage",ee,1,cc) ! builds okay
 
             !iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
 
 
 
-        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
+        !iret = nf90_def_var(ncid, "machine_learning_previous_time_storage", NF_FLOAT, (/dimid_lakes(1)/), varid)
 
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Works but need to verify dimid_lakes
-        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
+        !iret = nf90_def_var(ncid, "machine_learning_previous_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
 
         !iret = nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid)
 
@@ -241,7 +241,7 @@ print *, MPI_INFO_NULL
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        call check(nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid))
+        call check(nf90_def_var(ncid, "machine_learning_previous_time_storage", NF_FLOAT, (/dimid_lakes/), varid))
         print *, "Created machine_learning var"
         call check(nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid))
 
@@ -255,15 +255,15 @@ print *, MPI_INFO_NULL
         print*, 'dimid_lakes'
         print*, dimid_lakes
 
-        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, dimid_lakes, varid)
-        !iret = nf90_def_var(ncid, "machine_learning_current_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
+        !iret = nf90_def_var(ncid, "machine_learning_previous_time_storage", NF_FLOAT, dimid_lakes, varid)
+        !iret = nf90_def_var(ncid, "machine_learning_previous_time_storage", NF_FLOAT, (/dimid_lakes/), varid)
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Builds w/ e set as an integer
-        !iret = nf90_def_var(1, "machine_learning_current_time_storage", 2, 1, e)
+        !iret = nf90_def_var(1, "machine_learning_previous_time_storage", 2, 1, e)
 
         ! Builds now b/c varid set to inout instead of just in
-        !iret = nf90_def_var(1, "machine_learning_current_time_storage", 2, 1, varid)
+        !iret = nf90_def_var(1, "machine_learning_previous_time_storage", 2, 1, varid)
         !!!!!!!!!!!!!!!!!!!!!
 
 
@@ -315,20 +315,20 @@ print *, MPI_INFO_NULL
 
 
 
-        allocate (temp_machine_learning_current_time_storage_array(1))
+        allocate (temp_machine_learning_previous_time_storage_array(1))
 
         allocate (outflow(1))
-        allocate (machine_learning_current_time_storage(1))
+        allocate (machine_learning_previous_time_storage(1))
 
 
         !allocate (outflow(nlakes))
 
         outflow = 0.0
-        machine_learning_current_time_storage = 0.0
+        machine_learning_previous_time_storage = 0.0
 
 
 
-        temp_machine_learning_current_time_storage_array = 0.0
+        temp_machine_learning_previous_time_storage_array = 0.0
 
 
 
@@ -409,7 +409,7 @@ print *, MPI_INFO_NULL
                             !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
 
                             !builds
-                            !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+                            !temp_machine_learning_previous_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
 
                             print *, 'restart setting storage for reservoir at index: ', lake_id
 
@@ -422,32 +422,32 @@ print *, MPI_INFO_NULL
                                 type is (machine_learning_struct)
   !                                  print *, 'reservoir io entered select'
 
-                                    !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = ml%state%current_time_storage
+                                    !temp_machine_learning_previous_time_storage_array(lake_index_for_q_type) = ml%state%previous_time_storage
 
 
-                                    !temp_reservoir_array(4) = ml%state%current_time_storage
+                                    !temp_reservoir_array(4) = ml%state%previous_time_storage
 
-                                    !machine_learning_current_time_storage = ml%state%current_time_storage
+                                    !machine_learning_previous_time_storage = ml%state%previous_time_storage
 
 
 
                                     !!!!!!!!!!!1
-                                    !temp_machine_learning_current_time_storage_array(1) = ml%state%current_time_storage
+                                    !temp_machine_learning_previous_time_storage_array(1) = ml%state%previous_time_storage
 
-                                    machine_learning_current_time_storage(1) = ml%state%current_time_storage
+                                    machine_learning_previous_time_storage(1) = ml%state%previous_time_storage
                                     !!!!!!!
 
-                                    !print *, 'temp_machine_learning_current_time_storage_array'
-                                    !print *, temp_machine_learning_current_time_storage_array
+                                    !print *, 'temp_machine_learning_previous_time_storage_array'
+                                    !print *, temp_machine_learning_previous_time_storage_array
 
 
                                     ! Different approach
-                                    !ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
+                                    !ml%state%previous_time_storage = temp_machine_learning_previous_time_storage_array(lake_index_for_q_type)
 
 
                                     !print *, 'reservoir io select current time storage'
-                                    !print *, ml%state%current_time_storage
-                                    !print *, machine_learning_current_time_storage
+                                    !print *, ml%state%previous_time_storage
+                                    !print *, machine_learning_previous_time_storage
 
 
                                     !print *, 'select outflow'
@@ -456,20 +456,20 @@ print *, MPI_INFO_NULL
                             end select
 
                             !!!!!Works
-                            !call w_rst_crt_nc1_lake(ncid, 1, machine_learning_current_time_storage, lake_id, "machine_learning_current_time_storage", &
+                            !call w_rst_crt_nc1_lake(ncid, 1, machine_learning_previous_time_storage, lake_id, "machine_learning_previous_time_storage", &
                             !lake_index)
 
 
 
-                            !temp_machine_learning_current_time_storage_array(lake_index_for_q_type) = machine_learning_current_time_storage
+                            !temp_machine_learning_previous_time_storage_array(lake_index_for_q_type) = machine_learning_previous_time_storage
 
                             !print *, 'reservoir io current time storage'
-                            !print *, machine_learning_current_time_storage
+                            !print *, machine_learning_previous_time_storage
 
 
 
 
-        !call w_rst_crt_nc1_lake(ncid, 1, temp_machine_learning_current_time_storage_array, lake_id, "machine_learning_current_time_storage", &
+        !call w_rst_crt_nc1_lake(ncid, 1, temp_machine_learning_previous_time_storage_array, lake_id, "machine_learning_previous_time_storage", &
         !       lake_index)
 
 
@@ -486,15 +486,15 @@ print *, MPI_INFO_NULL
 
 
         !!!!!!!!!!!!!!!
-        !call w_rst_crt_nc1_lake(ncid, 1, temp_machine_learning_current_time_storage_array, lake_id, "machine_learning_current_time_storage", &
+        !call w_rst_crt_nc1_lake(ncid, 1, temp_machine_learning_previous_time_storage_array, lake_id, "machine_learning_previous_time_storage", &
         !       lake_index)
 
 
-        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, lake_id, "machine_learning_current_time_storage", &
+        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_previous_time_storage_array, lake_id, "machine_learning_previous_time_storage", &
         !       lake_index)
 
 
-        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, lake_id, "machine_learning_current_time_storage", &
+        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_previous_time_storage_array, lake_id, "machine_learning_previous_time_storage", &
         !       lake_index)
 
 
@@ -550,7 +550,7 @@ print *, MPI_INFO_NULL
 
 
 
-        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_current_time_storage_array, "machine_learning_current_time_storage", &
+        !call w_rst_crt_nc1_lake(ncid, nlakes, temp_machine_learning_previous_time_storage_array, "machine_learning_previous_time_storage", &
         !       lake_index)
 
 
@@ -575,8 +575,8 @@ print *, MPI_INFO_NULL
         call check(nf90_close(ncid))
 
 
-        !print *, 'temp_machine_learning_current_time_storage_array'
-        !print *, temp_machine_learning_current_time_storage_array
+        !print *, 'temp_machine_learning_previous_time_storage_array'
+        !print *, temp_machine_learning_previous_time_storage_array
 
         print *, 'iret'
         print *, iret
@@ -585,7 +585,7 @@ print *, MPI_INFO_NULL
 !end if
 
 
-        if(allocated(temp_machine_learning_current_time_storage_array)) deallocate(temp_machine_learning_current_time_storage_array)
+        if(allocated(temp_machine_learning_previous_time_storage_array)) deallocate(temp_machine_learning_previous_time_storage_array)
 
         if(allocated(temp_reservoir_array)) deallocate(temp_reservoir_array)
 
@@ -624,7 +624,7 @@ print *, MPI_INFO_NULL
         !character(len=64) :: out_file   ! NEED TO verify WHAT THIS LENGTH SHOULD BE
 
 
-        real, allocatable, dimension(:) :: temp_machine_learning_current_time_storage_array
+        real, allocatable, dimension(:) :: temp_machine_learning_previous_time_storage_array
 
 
 
@@ -654,10 +654,10 @@ print *, MPI_INFO_NULL
 
 
 
-        allocate (temp_machine_learning_current_time_storage_array(nlakes))
+        allocate (temp_machine_learning_previous_time_storage_array(nlakes))
 
 
-        temp_machine_learning_current_time_storage_array = 0.0
+        temp_machine_learning_previous_time_storage_array = 0.0
 
 
        !iret = NF90_GET_ATT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts)
@@ -672,11 +672,11 @@ print *, MPI_INFO_NULL
 
 
 
-        call read_rst_crt_nc(ncid, temp_machine_learning_current_time_storage_array, nlakes, "machine_learning_current_time_storage")
+        call read_rst_crt_nc(ncid, temp_machine_learning_previous_time_storage_array, nlakes, "machine_learning_previous_time_storage")
 
 
-        print *, 'temp_machine_learning_current_time_storage_array from read'
-        print *, temp_machine_learning_current_time_storage_array
+        print *, 'temp_machine_learning_previous_time_storage_array from read'
+        print *, temp_machine_learning_previous_time_storage_array
 
 
 
@@ -687,7 +687,7 @@ print *, MPI_INFO_NULL
                 !temp_current_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%reservoir_base_state_struct%current_storage
 
                 !builds
-                !temp_machine_learning_current_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
+                !temp_machine_learning_previous_time_storage_array(lake_index) = rt_domain(did)%reservoirs(lake_index)%ptr%input%inflow
 
                 print *, 'restart getting storage for reservoir at index: ', lake_index_for_q_type
 
@@ -695,7 +695,7 @@ print *, MPI_INFO_NULL
                     type is (machine_learning_struct)
                         print *, 'entered select'
 
-                        ml%state%current_time_storage = temp_machine_learning_current_time_storage_array(lake_index_for_q_type)
+                        ml%state%previous_time_storage = temp_machine_learning_previous_time_storage_array(lake_index_for_q_type)
 
                         ml%state%previous_time_release = outflows(lake_index_for_q_type)
 

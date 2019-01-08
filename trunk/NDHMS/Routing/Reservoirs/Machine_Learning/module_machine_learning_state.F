@@ -21,7 +21,7 @@ module module_machine_learning_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: machine_learning_state_interface
         real    :: water_elevation
-        real*4  :: current_time_storage
+        real*4  :: previous_time_storage
         real    :: end_time_storage
         real    :: previous_time_release
         integer :: time_interval
@@ -89,7 +89,7 @@ contains
         call get_x_and_y_day_of_year(this, start_month)
 
         this%previous_time_release = release_monthly_average
-        this%current_time_storage = storage_monthly_average
+        this%previous_time_storage = storage_monthly_average
         this%end_time_storage = storage_monthly_average
 
     end subroutine machine_learning_state_init

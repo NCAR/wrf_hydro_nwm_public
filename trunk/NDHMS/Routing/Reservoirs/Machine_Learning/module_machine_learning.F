@@ -231,11 +231,6 @@ contains
         real, intent(in)    :: routing_period           ! seconds
         logical             :: leap_year
 
-!!!!!!!!!!!!!
-!REMOVE BELOW BEFORE PULL REQUEST
-real :: current_time_real_print
-!!!!!!!!!!!!!
-
         ! If first call to release
         if (reservoir_data%state%current_time == 0) then
             reservoir_data%state%update_time = int(routing_period)
@@ -248,7 +243,7 @@ real :: current_time_real_print
         call reservoir_data%timestep_preprocessing()
 
         ! Update storage from the most recent model states
-        reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
+        reservoir_data%state%end_time_storage = reservoir_data%state%previous_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
         ! Update input variable
@@ -271,67 +266,13 @@ real :: current_time_real_print
             ! Runs the reservoir's corresponding machine learning model
             call machine_learning_models(reservoir_data%parameters%model_index)%ptr%run_model &
                 (reservoir_data%input%inflow, reservoir_data%state%previous_time_release, &
-                reservoir_data%state%current_time_storage, reservoir_data%state%x_day_of_year, &
+                reservoir_data%state%previous_time_storage, reservoir_data%state%x_day_of_year, &
                 reservoir_data%state%y_day_of_year, reservoir_data%output%outflow)
-
-
-!REMOVE BELOW OUTPUT WRITES BEFORE PULL REQUEST
-        !temp
-        if (reservoir_data%parameters%lake_number == 1326659 ) then
-            print *, 'Writing the results into some text files!'
-
-            !open (111,file="lakeids.txt",status="unknown")
-            !write (111, "(4A15)") "Lake_IDs"
-            ! Write (111, "(F25.10)") reservoir_data%parameters%lake_number
-
-            current_time_real_print = real(reservoir_data%state%current_time)
-
-            open (112,file="current_time.txt",status="unknown")
-            !write (112, "(4A15)") "Current_Time"
-             !Write (112, "(I5)") reservoir_data%state%current_time
-             Write (112, "(F15.5)") current_time_real_print
-
-
-            open (113,file="current_inflow.txt",status="unknown")
-            !write (113, "(4A15)") "Current_Inflow"
-             Write (113, "(F15.5)") reservoir_data%input%inflow
-
-
-            open (115,file="x_doy.txt",status="unknown")
-            !write (115, "(4A15)") "X_DOY"
-             Write (115, "(F15.5)") reservoir_data%state%x_day_of_year
-
-
-            open (116,file="y_doy.txt",status="unknown")
-            !write (116, "(4A15)") "Y_DOY"
-             Write (116, "(F15.5)") reservoir_data%state%y_day_of_year
-
-
-            open (117,file="current_time_storage.txt",status="unknown")
-            !write (117, "(4A15)") "Current_Time_Storage"
-             Write (117, "(F15.5)") reservoir_data%state%current_time_storage
-
-
-            !print *, "Current_Time_Storage"
-            !print *, reservoir_data%state%current_time_storage
-
-            open (118,file="previous_time_release.txt",status="unknown")
-            !write (118, "(4A15)") "Previous_Time_Release"
-             Write (118, "(F15.5)") reservoir_data%state%previous_time_release
-
-
-            open (119,file="outflow.txt",status="unknown")
-            !write (119, "(4A15)") "Outflow"
-             Write (119, "(F15.5)") reservoir_data%output%outflow
-
-        end if
-
-
 
             call reservoir_data%update_post_conditions_modify()
 
             ! This is run to update the end_time_storage with the newly calculated release
-            reservoir_data%state%end_time_storage = reservoir_data%state%current_time_storage &
+            reservoir_data%state%end_time_storage = reservoir_data%state%previous_time_storage &
             + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
             reservoir_data%state%previous_time_release = reservoir_data%output%outflow
@@ -341,10 +282,10 @@ real :: current_time_real_print
 
         end if
 
-        reservoir_data%state%current_time_storage = reservoir_data%state%end_time_storage
+        reservoir_data%state%previous_time_storage = reservoir_data%state%end_time_storage
 
         ! Calculate new water elevation
-        reservoir_data%state%water_elevation = reservoir_data%state%current_time_storage / (reservoir_data%parameters%reservoir_area * 1.0E6)
+        reservoir_data%state%water_elevation = reservoir_data%state%previous_time_storage / (reservoir_data%parameters%reservoir_area * 1.0E6)
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = reservoir_data%state%water_elevation
@@ -426,7 +367,7 @@ real :: current_time_real_print
             " at ", reservoir_data%state%current_time, " seconds after model start time."
             write(log_warning,*) "Current inflow is ", reservoir_data%input%inflow, " cms."
 
-            reservoir_data%output%outflow = (reservoir_data%state%current_time_storage &
+            reservoir_data%output%outflow = (reservoir_data%state%previous_time_storage &
             + reservoir_data%input%inflow * routing_period) / routing_period
 
             reservoir_data%state%end_time_storage = 0.0
@@ -495,12 +436,12 @@ real :: current_time_real_print
         ! and this storage is calculated assuming a constant flow rate over the time interval. If the time interval
         ! is too large relative to the channel routing period, this may not be an appropriate calculation.
 
-        projected_next_time_interval_storage = reservoir_data%state%current_time_storage &
+        projected_next_time_interval_storage = reservoir_data%state%previous_time_storage &
         + (reservoir_data%input%inflow - reservoir_data%output%outflow) * reservoir_data%state%time_interval
 
         if (projected_next_time_interval_storage > reservoir_data%parameters%max_storage) then
 
-            reservoir_data%output%outflow = (reservoir_data%state%current_time_storage - reservoir_data%parameters%max_storage) &
+            reservoir_data%output%outflow = (reservoir_data%state%previous_time_storage - reservoir_data%parameters%max_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
             write(log_warning,*) "Modified release to maintain prevent maximum storage exceedance for reservoir ", reservoir_data%parameters%lake_number
@@ -509,14 +450,14 @@ real :: current_time_real_print
         else if (projected_next_time_interval_storage < reservoir_data%parameters%min_storage .AND. &
                 projected_next_time_interval_storage > 0.0) then
 
-            reservoir_data%output%outflow = (reservoir_data%state%current_time_storage - reservoir_data%parameters%min_storage) &
+            reservoir_data%output%outflow = (reservoir_data%state%previous_time_storage - reservoir_data%parameters%min_storage) &
             / reservoir_data%state%time_interval + reservoir_data%output%outflow
 
             write(log_warning,*) "Modified release to maintain minimum storage for reservoir ", reservoir_data%parameters%lake_number
             write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage <= 0.0) then
-            reservoir_data%output%outflow = reservoir_data%state%current_time_storage / reservoir_data%state%time_interval
+            reservoir_data%output%outflow = reservoir_data%state%previous_time_storage / reservoir_data%state%time_interval
             write(log_warning,*)  "Modified release to conserve mass for reservoir ", reservoir_data%parameters%lake_number
             write(log_warning,*) "at ", reservoir_data%state%current_time, " seconds after model start time."
 
