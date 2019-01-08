@@ -801,7 +801,6 @@ print *, '1.1'
 
        end select
 
-
      else if (rt_domain(did)%q_type(lake_index) == 2.0) then
 
        ! Allocate a single machine learning reservoir

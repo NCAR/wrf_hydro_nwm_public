@@ -39,7 +39,6 @@ mod:
 
 test: mod
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
-	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
 	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
 		module_reservoir_utilities.o \
 		module_reservoir_base.o \
@@ -52,8 +51,7 @@ test: mod
 		Machine_Learning/module_machine_learning_model.o \
 		Machine_Learning/module_machine_learning_tests.o \
 		Machine_Learning/module_machine_learning.o \
-		reservoir_tests.o \
-		hydro_stop.o
+		reservoir_tests.o
 
 
 
