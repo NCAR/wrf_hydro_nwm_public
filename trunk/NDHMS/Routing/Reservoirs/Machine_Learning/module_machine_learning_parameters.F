@@ -57,7 +57,7 @@ contains
 
         print *, 'before open reservoir parm'
 
-        status = nf90_open(path = "ML_RESERVOIR_PARM_str.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
+        status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         !status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
         if (status /= nf90_noerr) call handle_err(status, "ML_RESERVOIR_PARM.nc")
 
@@ -66,11 +66,10 @@ contains
         ! Read relevant parameters from machine learning parameter NetCDF
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
         call get_model_id(ncid, lake_id_index, number_of_unique_ml_models, this%model_id)
-        call get_model_names(ncid, "model_name")
-        !call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
-        !call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "minimum_release", this%min_release)
-        !call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "maximum_storage", this%max_storage)
-        !call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "minimum_storage", this%min_storage)
+        call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "maximum_release", this%max_release)
+        call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "minimum_release", this%min_release)
+        call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "maximum_storage", this%max_storage)
+        call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "minimum_storage", this%min_storage)
 
     end subroutine machine_learning_parameters_init
 

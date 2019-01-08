@@ -112,62 +112,6 @@ contains
     end subroutine read_machine_learning_netcdf_model_ids
 
     ! Read integer one dimension parameter arrays from the machine learning parameters NetCDF
-    subroutine get_model_names(ncid, netcdf_array_name)
-        integer, intent(in) :: ncid
-        character(len=*), intent(in) :: netcdf_array_name
-        !integer, intent(out) :: returned_integer_parameter
-        !character(len=17), allocatable, dimension(:) :: temp_character_array
-        character(len=*), allocatable, dimension(:) :: temp_character_array
-        !integer, allocatable, dimension(:) :: temp_character_array
-        integer :: var_id, number_of_models, number_of_chars, status
-        integer, dimension(nf90_max_var_dims) :: dim_ids
-
-        print *, '1.1'
-
-        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        print *, '1.2'
-
-        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        print *, '1.3'
-
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_models)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        print *, number_of_models
-
-
-
-        print *, '1.4'
-
-        !status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_chars)
-        !if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-        print *, '1.45'
-
-        !print *, number_of_chars
-
-        allocate(temp_character_array(number_of_models))
-        !allocate(temp_character_array(number_of_models, number_of_chars))
-
-        print *, '1.5'
-        status = nf90_get_var(ncid, var_id, temp_character_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
-        print *, 'temp_character_array'
-        print *, temp_character_array
-
-        !returned_integer_parameter = temp_integer_array(lake_id_index)
-
-        if(allocated(temp_character_array)) deallocate(temp_character_array)
-
-    end subroutine get_model_names
-
-
-    ! Read integer one dimension parameter arrays from the machine learning parameters NetCDF
     subroutine read_machine_learning_netcdf_integer_1D_parameters(ncid, lake_id_index, netcdf_array_name, returned_integer_parameter)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
