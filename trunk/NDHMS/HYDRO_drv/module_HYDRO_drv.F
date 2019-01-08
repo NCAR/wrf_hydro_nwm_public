@@ -51,10 +51,6 @@ module module_HYDRO_drv
    use module_UDMAP, only: get_basn_area_nhd
    use netcdf
 
-use module_reservoir_base
-   use module_reservoir_io
-
-
    implicit none
 
 #include <netcdf.inc>
@@ -137,7 +133,7 @@ use module_reservoir_base
       else
 #endif
              call   RESTART_OUT_nc(trim("HYDRO_RST."//nlst_rt(did)%olddate(1:16)   &
-                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)),  did, rt_domain(did)%reservoirs)
+                 //"_DOMAIN"//trim(nlst_rt(did)%hgrid)),  did)
 #ifdef MPP_LAND
       endif
 #endif

@@ -31,11 +31,7 @@ module module_HYDRO_io
    use module_namelist, only: nlst_rt
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d
-   use module_io_utilities
    use netcdf
-
-   use module_reservoir_base
-   use module_reservoir_io
 
    implicit none
 #include <netcdf.inc>
@@ -5771,7 +5767,7 @@ end subroutine mpp_output_chrt
         end subroutine output_lsm
 
 
-   subroutine RESTART_OUT_nc(outFile,did,reservoirs)
+   subroutine RESTART_OUT_nc(outFile,did)
 
 
    implicit none
@@ -5781,19 +5777,10 @@ end subroutine mpp_output_chrt
    character(len=2) :: tmpStr
    character(len=*) outFile
 
-   class (reservoir_base_container), dimension(:), intent(inout):: reservoirs
-
-
     integer :: ncid,irt, dimid_ix, dimid_jx,  &
              dimid_ixrt, dimid_jxrt, varid, &
              dimid_links, dimid_basns, dimid_soil, dimid_lakes
     integer :: iret
-
-
-    logical :: write_reservoir_restart
-
-    write_reservoir_restart = .false.
-
 
 
 #ifdef MPP_LAND
@@ -5815,37 +5802,25 @@ end subroutine mpp_output_chrt
 #endif
 
 
-print *, '1.0'
-
 #ifdef MPP_LAND
        call mpp_land_bcast_int1(iret)
 #endif
 
        if (iret /= 0) then
-        print *, '2.0'
-
           call hydro_stop("In RESTART_OUT_nc() - Problem nf_create")
        endif
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) then
 #endif
-    print *, '3.0'
 
    if( nlst_rt(did)%channel_only       .eq. 0 .and. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
 
-        print *, '4.0'
-
 ! define dimension for variables
           iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
 
-        print *, '5.0'
-
-
 #ifdef MPP_LAND
-print *, '6.0'
-
           iret = nf_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
           iret = nf_def_dim(ncid, "iy", global_ny, dimid_jx)
           iret = nf_def_dim(ncid, "ixrt", global_rt_nx , dimid_ixrt)  !-- make a decimated grid
@@ -5869,8 +5844,6 @@ print *, '6.0'
           iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
        endif
 
-print *, '7.0'
-
        !define variables
        if( nlst_rt(did)%channel_only       .eq. 0 .and. &
             nlst_rt(did)%channelBucket_only .eq. 0         ) then
@@ -5885,7 +5858,6 @@ print *, '7.0'
              iret = nf_def_var(ncid,"smc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
              iret = nf_def_var(ncid,"sh2ox"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           end do
-print *, '8.0'
 
           !iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
           !iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
@@ -5895,7 +5867,6 @@ print *, '8.0'
           iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
 
        end if  ! neither channel_only nor channelBucket_only
-print *, '9.0'
 
    if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       nlst_rt(did)%OVRTSWCRT   .eq. 1 .or. &
@@ -5903,7 +5874,6 @@ print *, '9.0'
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then
-            print *, '10.0'
 
             iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
             iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
@@ -5923,7 +5893,6 @@ print *, '9.0'
       end if  ! neither channel_only nor channelBucket_only
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
-print *, '11.0'
 
 !yw based on Laura request, hlink will do the restart for reach method.
 !         if(nlst_rt(did)%channel_option .eq. 3) &
@@ -5936,30 +5905,11 @@ print *, '11.0'
             iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
-
-
-            ! Old call
-            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, iret, ncid, &
-            !NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
-
-
-            write_reservoir_restart = .true.
-
-
-            print *, 'before call to reservoir write to restart in hydro io'
-
-            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            !nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
-
-            print *, 'after call to reservoir write to restart in hydro io'
-
-
          endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
              nlst_rt(did)%channelBucket_only .eq. 0         ) &
              iret = nf_def_var(ncid,"lake_inflort",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
-print *, '12.0'
 
          !! JLM: who wants these? They can be put back if someone cares.
          !! But just calculate accQLateral locally so the redundant variable isnt held in
@@ -5972,10 +5922,8 @@ print *, '12.0'
          !endif
 
       end if ! CHANRTSWCRT .eq. 1
-print *, '13.0'
 
       if(nlst_rt(did)%GWBASESWCRT.eq.1) then
-print *, '14.0'
 
          if( nlst_rt(did)%channel_only .eq. 0) then
 
@@ -6001,7 +5949,6 @@ print *, '14.0'
       if(nlst_rt(did)%gwBaseSwCRT .eq. 3)then
          iret = nf_def_var(ncid,"HEAD",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
       end if
-print *, '15.0'
 
    end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                    nlst_rt(did)%OVRTSWCRT   .eq. 1 .or. &
@@ -6019,17 +5966,14 @@ print *, '15.0'
 
    !! end definition
    iret = nf_enddef(ncid)
-print *, '16.0'
 
 
 #ifdef MPP_LAND
 endif  ! my_id .eq. io_id
 #endif
-print *, '17.0'
 
 if( nlst_rt(did)%channel_only       .eq. 0 .and. &
      nlst_rt(did)%channelBucket_only .eq. 0         ) then
-print *, '18.0'
 
    call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%stc,"stc")
    call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst_rt(did)%nsoil,rt_domain(did)%smc,"smc")
@@ -6058,12 +6002,10 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%QSTRMVOLRT_ACC, "qstrmvolrt" )
       !AD_CHANGE: Not needed in RESTART
       !call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%retention_depth, "RETDEPRT" )
-print *, '19.0'
 
    end if ! neither channel_only nor channelBucket_only
 
    if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
-print *, '20.0'
 
 
       if(nlst_rt(did)%channel_option .eq. 3) then
@@ -6158,31 +6100,23 @@ print *, '20.0'
 !                  )
 
 
-    print *, 'before hydro_io call to w_rst_crt_nc1_lake'
-print *, '21.0'
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
-!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
-
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
-!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
-
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
-!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
-
-    print *, 'after hydro_io call to w_rst_crt_nc1_lake'
-
-
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
@@ -6229,33 +6163,11 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                nlst_rt(did)%OVRTSWCRT   .eq. 1 .or. &
 !                nlst_rt(did)%GWBASESWCRT .ne. 0       )
 
-print *, '22.0'
 
 #ifdef MPP_LAND
         if(IO_id.eq.my_id) &
 #endif
         iret = nf_close(ncid)
-print *, '23.0'
-
-
-    !if (write_reservoir_restart) then
-
-    !if (.true.) then
-
-            print *, 'end of sub before call to reservoir write to restart in hydro io'
-
-            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            !nlst_rt(did)%olddate, iret, ncid, NF_FLOAT, (/dimid_lakes/), varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
-
-            !call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            !call reservoir_write_to_restart_file2(reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-
-            call reservoir_write_to_restart_file2(rt_domain(did)%reservoirs, rt_domain(did)%q_type, rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-            nlst_rt(did)%olddate, nlst_rt(did)%sincedate, did, iret, ncid, NF_FLOAT, NF_INT, NF_REAL, NF_GLOBAL, nlst_rt(did)%DTCT, rt_domain(did)%his_out_counts, &
-            nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, dimid_lakes, &
-            varid, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index), rt_domain(did)%LAKEIDX, rt_domain(did)%LAKEIDM, rt_domain(did)%nlinksize)
-
-
 
         return
         end subroutine RESTART_OUT_nc
@@ -6557,29 +6469,29 @@ print *, '23.0'
            return
         end subroutine w_rst_nc3
 
-!        subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName &
-!#ifdef MPP_LAND
-!                 ,nodelist     &
-!#endif
-!                  )
-!           implicit none
-!           integer:: ncid,n,varid , iret
-!           character(len=*) varName
-!           real inVar(n)
-!#ifdef MPP_LAND
-!           integer:: nodelist(n)
-!           if(n .eq. 0) return
+        subroutine w_rst_crt_nc1_lake(ncid,n,inVar,varName &
+#ifdef MPP_LAND
+                 ,nodelist     &
+#endif
+                  )
+           implicit none
+           integer:: ncid,n,varid , iret
+           character(len=*) varName
+           real inVar(n)
+#ifdef MPP_LAND
+           integer:: nodelist(n)
+           if(n .eq. 0) return
 
-!           call write_lake_real(inVar,nodelist,n)
- !          if(my_id .eq. IO_id) then
-!#endif
-!              iret = nf_inq_varid(ncid,varName, varid)
-!              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
-!#ifdef MPP_LAND
-!           endif
-!#endif
-!           return
-!        end subroutine w_rst_crt_nc1_lake
+           call write_lake_real(inVar,nodelist,n)
+           if(my_id .eq. IO_id) then
+#endif
+              iret = nf_inq_varid(ncid,varName, varid)
+              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+#ifdef MPP_LAND
+           endif
+#endif
+           return
+        end subroutine w_rst_crt_nc1_lake
 
         subroutine w_rst_crt_reach_real(ncid,inVar,varName &
 #ifdef MPP_LAND
@@ -6740,14 +6652,9 @@ subroutine RESTART_IN_NC(inFile,did)
 
 implicit none
 character(len=*) inFile
-integer :: ierr, iret,ncid, did, ncid_reservoirs
+integer :: ierr, iret,ncid, did
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
-
-
-logical :: read_reservoir_restart
-
-read_reservoir_restart = .false.
 
 
 #ifdef MPP_LAND
@@ -6914,16 +6821,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
-
-
-         call reservoir_read_from_restart_file2(rt_domain(did)%reservoirs, inFile, rt_domain(did)%q_type, &
-         rt_domain(did)%QLAKEI, rt_domain(did)%QLAKEO, rt_domain(did)%RESHT, &
-         iret, ncid_reservoirs, NF_FLOAT, NF_GLOBAL, rt_domain(did)%nlakes, int(rt_domain(did)%lake_index))
-
       endif
-
-
-
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then
@@ -7193,41 +7091,41 @@ end subroutine RESTART_IN_nc
          return
       end subroutine read_rt_nc2
 
-!      subroutine read_rst_crt_nc(ncid,var,n,varStr)
-!         implicit none
-!         integer ::  ireg, ncid, varid, n, iret
-!         real,dimension(n) ::  var
-!         character(len=*) :: varStr
+      subroutine read_rst_crt_nc(ncid,var,n,varStr)
+         implicit none
+         integer ::  ireg, ncid, varid, n, iret
+         real,dimension(n) ::  var
+         character(len=*) :: varStr
 
-!         if( n .le. 0)  return
-!#ifdef MPP_LAND
-!         if(my_id .eq. IO_id) &
-!#endif
-!            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
-!#ifdef MPP_LAND
-!         call mpp_land_bcast_int1(iret)
-!#endif
-!            if (iret /= 0) then
-!#ifdef HYDRO_D
-!               print*, 'variable not found: name = "', trim(varStr)//'"'
-!#endif
-!               return
-!            endif
-!#ifdef HYDRO_D
-!         print*, "read restart variable ", varStr
-!#endif
-!#ifdef MPP_LAND
-!         if(my_id .eq. IO_id) then
-!#endif
-!            iret = nf_get_var_real(ncid, varid, var)
-!#ifdef MPP_LAND
-!         endif
-!         if(n .gt. 0) then
-!             call mpp_land_bcast_real(n,var)
-!         endif
-!#endif
-!         return
-!      end subroutine read_rst_crt_nc
+         if( n .le. 0)  return
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) &
+#endif
+            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+#ifdef MPP_LAND
+         call mpp_land_bcast_int1(iret)
+#endif
+            if (iret /= 0) then
+#ifdef HYDRO_D
+               print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
+               return
+            endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) then
+#endif
+            iret = nf_get_var_real(ncid, varid, var)
+#ifdef MPP_LAND
+         endif
+         if(n .gt. 0) then
+             call mpp_land_bcast_real(n,var)
+         endif
+#endif
+         return
+      end subroutine read_rst_crt_nc
 
       subroutine read_rst_crt_stream_nc(ncid,var_out,n,varStr,gnlinks,map_l2g)
          implicit none
@@ -7476,7 +7374,7 @@ subroutine READ_CHROUTING1( &
      ChSSlp,       Bw,                Tw,                     &
      Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,        ORIFICEC, &
-     ORIFICEA,     ORIFICEE, q_type,   LATLAKE,      LONLAKE,  &
+     ORIFICEA,     ORIFICEE,          LATLAKE,      LONLAKE,  &
      ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
      CH_NETLNK,    CHANXI,            CHANYJ,       CHLAT,    &
      CHLON,        channel_option,    LATVAL,       LONVAL,   &
@@ -7543,7 +7441,6 @@ real, intent(INOUT),  dimension(:)      :: WEIRL
 real, intent(INOUT),  dimension(:)      :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
-real, intent(INOUT),  dimension(:)      :: q_type
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
 real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
@@ -7660,7 +7557,7 @@ if (channel_option .eq. 3) then
           call flush(6)
           call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,WEIRL, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, q_type, LAKEIDM, latlake, lonlake, ELEVLAKE)
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
         else
           open(unit=79,file=trim(route_lake_f), form='formatted',status='old')
           write(6,*) "Before read LAKEPARM from text ", trim(route_lake_f)
@@ -7670,7 +7567,7 @@ if (channel_option .eq. 3) then
           do i=1, NLAKES
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
             WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i), q_type(i)
+            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
           enddo
 5101      continue
           close(79)
@@ -7698,7 +7595,6 @@ if (channel_option .eq. 3) then
       call mpp_land_bcast_real(NLAKES,LATLAKE )
       call mpp_land_bcast_real(NLAKES,LONLAKE )
       call mpp_land_bcast_real(NLAKES,ELEVLAKE)
-      call mpp_land_bcast_real(NLAKES,q_type)
    endif
 #endif
 end if  !! channel_option .eq. 3
@@ -8363,7 +8259,7 @@ subroutine read_routelink(&
      ChSSlp,       Bw,           Tw,       Tw_CC,      &
      n_CC,         LAKEIDA,      HRZAREA,              &
      LAKEMAXH,     WEIRH,        WEIRC,    WEIRL,      &
-     ORIFICEC,     ORIFICEA,     ORIFICEE, q_type, LATLAKE,    &
+     ORIFICEC,     ORIFICEA,     ORIFICEE, LATLAKE,    &
      LONLAKE,      ELEVLAKE,     LAKEIDM,  LAKEIDX,    &
      route_link_f, route_lake_f, ZELEV,    CHLAT,      &
      CHLON,        NLINKSL,      LINKID,   GNLINKSL,   &
@@ -8381,7 +8277,6 @@ integer, intent(INOUT),  dimension(:)      :: LAKEIDA !lake COMid 4all link on f
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
 real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL
 real,    intent(INOUT),  dimension(:)      :: ORIFICEC, ORIFICEA, ORIFICEE
-real,    intent(INOUT),  dimension(:)      :: q_type
 real,    intent(INOUT),  dimension(:)      :: LATLAKE, LONLAKE, ELEVLAKE
 integer, intent(INOUT), dimension(:)       :: LAKEIDM !lake id in LAKEPARM table (.nc or .tbl)
 integer, intent(INOUT),  dimension(:)      :: LAKEIDX !seq index of lakes(1:Nlakes) mapped to COMID
@@ -8405,7 +8300,7 @@ call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
      MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, &
-     ORIFICEA, ORIFICEE, q_type, gages, gageMiss, &
+     ORIFICEA, ORIFICEE, gages, gageMiss, &
      LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
 
 !--- get the lake configuration here.
@@ -8433,7 +8328,6 @@ if(NLAKES .gt. 0) then
    call mpp_land_bcast_real(NLAKES,LATLAKE )
    call mpp_land_bcast_real(NLAKES,LONLAKE )
    call mpp_land_bcast_real(NLAKES,ELEVLAKE)
-   call mpp_land_bcast_real(NLAKES,q_type)
 endif
 #endif
 
@@ -8446,7 +8340,7 @@ end subroutine read_routelink
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, ORIFICEC, &
-                   ORIFICEA, ORIFICEE, q_type, gages, gageMiss,&
+                   ORIFICEA, ORIFICEE, gages, gageMiss,&
                    LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
         implicit none
@@ -8466,7 +8360,7 @@ end subroutine read_routelink
 !NLAKES
         INTEGER, intent(out), dimension(:)  ::  LAKEIDM
         REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, ORIFICEC,WEIRH, &
-                   ORIFICEA, ORIFICEE, q_type, ELEVLAKE
+                   ORIFICEA, ORIFICEE, ELEVLAKE
 !end NLAKES
 
         INTEGER, dimension(GNLINKSL) ::  tmpLAKEIDA, tmpLINKID,  tmpTO_NODE, tmpTYPEL, tmpORDER
@@ -8551,7 +8445,7 @@ end subroutine read_routelink
           if(routeLakeNetcdf) then
              call read_route_lake_netcdf(route_lake_f,HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,    WEIRL, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, q_type, LAKEIDM, latlake, lonlake, ELEVLAKE)
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
           endif
 
 !!- initialize channel  if missing in input
@@ -8607,7 +8501,6 @@ end subroutine read_routelink
            call mpp_land_bcast_real(NLAKES, ORIFICEC)
            call mpp_land_bcast_real(NLAKES, ORIFICEA)
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
-           call mpp_land_bcast_real(NLAKES, q_type)
            call mpp_land_bcast_int(NLAKES, LAKEIDM)
            call mpp_land_bcast_real(NLAKES, ELEVLAKE)
         endif
@@ -8707,7 +8600,7 @@ subroutine MPP_READ_CHROUTING_new(&
      ChSSlp,       Bw,                Tw,             Tw_CC,     &
      n_CC,         HRZAREA,           LAKEMAXH,                  &
      WEIRH,        WEIRC,             WEIRL,          ORIFICEC,  &
-     ORIFICEA,     ORIFICEE,          q_type, LATLAKE,        LONLAKE,   &
+     ORIFICEA,     ORIFICEE,          LATLAKE,        LONLAKE,   &
      ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
      CH_NETLNK,    CHANXI,            CHANYJ,         CHLAT,     &
      CHLON,        channel_option,    LATVAL,         LONVAL,    &
@@ -8748,7 +8641,6 @@ real, intent(INOUT),  dimension(NLAKES)      :: WEIRL
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
-real, intent(INOUT),  dimension(NLAKES)      :: q_type
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw
 real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
@@ -8778,7 +8670,7 @@ call READ_CHROUTING1( &
      ChSSlp,       Bw,                Tw,        Tw_CC,   &
      n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     ORIFICEC,&
-     ORIFICEA,     ORIFICEE,          q_type, LATLAKE,   LONLAKE, &
+     ORIFICEA,     ORIFICEE,          LATLAKE,   LONLAKE, &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
      CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,   &
      CHLON,        channel_option,    LATVAL,    LONVAL,  &
@@ -9079,7 +8971,7 @@ end subroutine read_route_link_netcdf
 !
 subroutine read_route_lake_netcdf(route_lake_file,                         &
                                    HRZAREA,  LAKEMAXH, WEIRH,  WEIRC,    WEIRL,    &
-                                   ORIFICEC, ORIFICEA,  ORIFICEE, q_type, LAKEIDM, &
+                                   ORIFICEC, ORIFICEA,  ORIFICEE, LAKEIDM, &
                                    lakelat, lakelon, ELEVLAKE)
 
 implicit none
@@ -9088,7 +8980,6 @@ integer, dimension(:),   intent(out) :: LAKEIDM
 real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEIRH
 real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
 real,    dimension(:),   intent(out) :: ELEVLAKE
-real,    dimension(:),   intent(out) :: q_type
 
 
 integer :: iRet, ncid, ii, varid
@@ -9116,17 +9007,10 @@ call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_lake_netcdf', .
 call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
-call get_1d_netcdf_real(ncid, 'Q_TYPE', q_type,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
 !remove the alt var. and add initial fractional depth var. LKR/DY
 call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,      'read_route_lake_netcdf', .FALSE.)
-
-
-print *, "after call to get 1d from netcdf line 9017"
-print *, q_type
-
-
 
 iRet = nf90_close(ncId)
 if (iRet /= nf90_noErr) then

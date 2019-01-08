@@ -709,7 +709,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
-             rt_domain(did)%q_type,                                &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -750,8 +749,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
-           rt_domain(did)%ORIFICEE,      rt_domain(did)%q_type,     &
-           rt_domain(did)%LATLAKE,                                  &
+           rt_domain(did)%ORIFICEE,      rt_domain(did)%LATLAKE,    &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
            nlst_rt(did)%route_link_f,    nlst_rt(did)%route_lake_f, &
@@ -1603,7 +1601,7 @@ end if ! end of neither channel_only nor channelBucket_only
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
-   !if(allocated(rt_domain(did)%q_type)) deallocate(rt_domain(did)%q_type)
+   if(allocated(rt_domain(did)%q_type)) deallocate(rt_domain(did)%q_type)
 
 end subroutine LandRT_ini
 

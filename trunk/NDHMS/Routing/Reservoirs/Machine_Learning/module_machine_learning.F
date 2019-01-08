@@ -32,7 +32,6 @@ module module_machine_learning
     use module_machine_learning_model
     use module_reservoir_utilities
     use module_machine_learning_tests
-    use module_io_utilities
 
     implicit none
 

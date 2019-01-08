@@ -35,11 +35,8 @@ mod:
 	#Build the modules
 	make -C Level_Pool
 	make -C Machine_Learning
-	make -C io
 
 
-
-#module_reservoir_io not added below due to build errors
 test: mod
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
@@ -83,4 +80,3 @@ clean:
 
 	make -C Level_Pool clean
 	make -C Machine_Learning clean
-	make -C io clean
