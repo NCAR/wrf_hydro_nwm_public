@@ -926,6 +926,8 @@ endif
 
       cache_block = 256
       num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
+!$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
+!$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
       do j = new_start_j, new_end_j
          do cache_idx = 0, num_blocks - 1
             cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
@@ -943,7 +945,8 @@ endif
             end do
          end do
       end do
-
+!$omp end parallel do
+   
       call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
       call getToInd(rt_domain(did)%LINKID,rt_domain(did)%to_node,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,rt_domain(did)%gtoNode)
