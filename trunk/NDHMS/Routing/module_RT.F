@@ -764,28 +764,11 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
-print *, '----------------------------------------------'
-print *, '----------------------------------------------'
-print *, '----------------------------------------------'
-print *, '----------------------------------------------'
-    print *, 'nlst_rt(did)%machine_learning_parameter_file'
-    print *, nlst_rt(did)%machine_learning_parameter_file
-    print *, nlst_rt(did)%machine_learning_model_1_file
-    print *, nlst_rt(did)%machine_learning_model_2_file
-
-
-print *, '----------------------------------------------'
-print *, '----------------------------------------------'
-print *, '----------------------------------------------'
-print *, '----------------------------------------------'
-
-
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
 
    end do
 
-print *, '1.1'
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
@@ -826,17 +809,14 @@ print *, '1.1'
           type is (machine_learning_struct)
 
                  ! Call to initialize a machine learning type reservoir
-                 !call ml%init(nlst_rt(did)%startdate(1:19), lake_index)
                  call ml%init(rt_domain(did)%RESHT(lake_index), &
                  rt_domain(did)%HRZAREA(lake_index),            &
                  nlst_rt(did)%startdate(1:19),                  &
                  rt_domain(did)%timestep_flag,                  &
-                 rt_domain(did)%LAKEIDM(lake_index))!,            &
-
-
-
-   !nlst_rt(did)%machine_learning_parameter_file,   &
-
+                 rt_domain(did)%LAKEIDM(lake_index),            &
+                 nlst_rt(did)%machine_learning_parameter_file,  &
+                 nlst_rt(did)%machine_learning_model_1_file,    &
+                 nlst_rt(did)%machine_learning_model_2_file     )
 
        end select
 

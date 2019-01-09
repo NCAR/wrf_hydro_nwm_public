@@ -81,11 +81,14 @@ module module_machine_learning_model
 contains
 
     ! Machine Learning Model Constructor
-    subroutine machine_learning_model_init(this, model_number)
+    subroutine machine_learning_model_init(this, model_number, &
+    machine_learning_model_1_file, machine_learning_model_2_file)
         use netcdf
         implicit none
         class(machine_learning_model_struct), intent(inout) :: this ! the type object being initialized
         integer, intent(in) :: model_number
+        character(len=*), intent(in) :: machine_learning_model_1_file
+        character(len=*), intent(in) :: machine_learning_model_2_file
 
         real, allocatable, dimension (:,:)   :: bias ! bias has one dimension less than that for the weights
         real, allocatable, dimension (:,:)   :: weights ! for each layer, there is a two-dimension matrix
@@ -105,24 +108,15 @@ contains
         integer :: ncid, var_id
         integer :: status       ! Status of reading NetCDF
 
-        ! If model_number is 1, then open ACF basin NetCDF. Else if model_number is 2, then open Upper Colorado basin NetCDF
-
-
-print *, 'before model parm'
-
 		if (model_number == 1) then
-			status = nf90_open(path = "ML_MODEL_PARM_ACF.nc", mode = nf90_nowrite, ncid = ncid)               ! open existing NetCDF dataset
-			if (status /= nf90_noerr) call handle_err(status, "ML_MODEL_PARM_ACF.nc")
-
+			status = nf90_open(path = machine_learning_model_1_file, mode = nf90_nowrite, ncid = ncid)
+			if (status /= nf90_noerr) call handle_err(status, "Could not open machine learning model 1 file")
 
 		else if (model_number == 2) then
-			status = nf90_open(path = "ML_MODEL_PARM_CH.nc", mode = nf90_nowrite, ncid = ncid)                ! open existing NetCDF dataset
-			if (status /= nf90_noerr) call handle_err(status, "ML_MODEL_PARM_CH.nc")
+			status = nf90_open(path = machine_learning_model_2_file, mode = nf90_nowrite, ncid = ncid)
+			if (status /= nf90_noerr) call handle_err(status, "Could not open machine learning model 2 file")
 
 		end if
-
-print *, 'after model parm open'
-
 
         this%model_number = model_number
 

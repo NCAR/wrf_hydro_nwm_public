@@ -43,19 +43,17 @@ module module_machine_learning_state
 
 contains
 
-            subroutine machine_learning_state_init(this, start_date, restart_flag, lake_number, water_elevation)
-
     ! Machine Learning State Constructor
-    !subroutine machine_learning_state_init(this, machine_learning_parameter_file, start_date, &
-    !  restart_flag, lake_number, water_elevation)
+    subroutine machine_learning_state_init(this, start_date, restart_flag, lake_number, &
+    machine_learning_parameter_file, water_elevation)
         use netcdf
         implicit none
         class(machine_learning_state_interface), intent(inout) :: this ! the type object being initialized
-        !character(len=256), intent(in) :: machine_learning_parameter_file
         character(len=19), intent(in)   :: start_date
         integer, intent(in)             :: restart_flag             ! signals if NWM is on a restart or not
                                                                     ! 1 is cold start and 99 is restart
         integer, intent(in)             :: lake_number              ! lake number
+        character(len=*), intent(in)  :: machine_learning_parameter_file
         real, intent(inout)             :: water_elevation
         real                            :: release_monthly_average, storage_monthly_average
         integer                         :: ncid, lake_id_index, start_month
@@ -70,15 +68,9 @@ contains
         this%update_time = 0
         this%new_day_time = seconds_in_day
 
-
-        print *, 'ml state before open parm'
-
-        !Reservoir Parm NC file
-        status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        !status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        if (status /= nf90_noerr) call handle_err(status, "ML_RESERVOIR_PARM.nc")
-
-        print *, 'ml state after open parm'
+        ! Open Machine Learning Reservoir Parameter NetCDF file
+        status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open machine learning reservoir parameter file")
 
         ! Read relevant parameters from machine learning parameter NetCDF
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)

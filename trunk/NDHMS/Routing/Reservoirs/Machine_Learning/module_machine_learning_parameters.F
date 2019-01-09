@@ -35,15 +35,13 @@ module module_machine_learning_parameters
 contains
 
     !Machine Learning Parameters Constructor
-
-    !subroutine machine_learning_parameters_init(this, machine_learning_parameter_file, &
-    !    reservoir_area, lake_number, number_of_unique_ml_models)
-    subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, number_of_unique_ml_models)
+    subroutine machine_learning_parameters_init(this, reservoir_area, lake_number, &
+        machine_learning_parameter_file, number_of_unique_ml_models)
         implicit none
         class(machine_learning_parameters_interface), intent(inout) :: this ! the type object being initialized
-        !character(len=256), intent(in) :: machine_learning_parameter_file
         real, intent(in)        :: reservoir_area           ! area of reservoir (km^2)
         integer, intent(in)     :: lake_number              ! lake number
+        character(len=*), intent(in) :: machine_learning_parameter_file
         integer, intent(inout)  :: number_of_unique_ml_models
         integer                 :: ncid, var_id, lake_id_index
         integer                 :: status                   ! status of reading NetCDF
@@ -53,15 +51,9 @@ contains
         this%reservoir_area = reservoir_area
         this%lake_number = lake_number
 
-        ! Machine Learning Reservoir Parm NC file
-
-        print *, 'before open reservoir parm'
-
-        status = nf90_open(path = "ML_RESERVOIR_PARM.nc", mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        !status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)                 ! open existing netCDF dataset
-        if (status /= nf90_noerr) call handle_err(status, "ML_RESERVOIR_PARM.nc")
-
-        print *, 'after open reservoir parm'
+        ! Open Machine Learning Reservoir Parameter NetCDF file
+        status = nf90_open(path = machine_learning_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open machine learning reservoir parameter file")
 
         ! Read relevant parameters from machine learning parameter NetCDF
         call read_machine_learning_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
@@ -72,7 +64,6 @@ contains
         call read_machine_learning_netcdf_real_1D_parameters(ncid, lake_id_index, "minimum_storage", this%min_storage)
 
     end subroutine machine_learning_parameters_init
-
 
     !Machine Learning Parameters Destructor
     subroutine machine_learning_parameters_destroy(this)

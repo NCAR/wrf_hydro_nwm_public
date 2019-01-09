@@ -87,11 +87,11 @@ program reservoir_unit_tests
         rv3 = .false.
 
         print *, "calling init for machine_learning_struct"
-        call machine_learning_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723)
+        call machine_learning_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
 
 
         print *, "calling init for machine_learning_model_struct"
-        call machine_learning_model_data%init(2)
+        call machine_learning_model_data%init(2, "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
 
 
         print *, "testing data in machine_learning_struct"
@@ -158,10 +158,10 @@ program reservoir_unit_tests
         outflow = 120.0
 
         print *, "calling init for machine_learning_struct"
-        call machine_learning_reservoir_data%init(water_elevation, 0.0, "2015-11-29_05:24:22" , 1, 166758723)
+        call machine_learning_reservoir_data%init(water_elevation, 0.0, "2015-11-29_05:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
 
         print *, "calling init for machine_learning_model_struct"
-        call machine_learning_model_data%init(2)
+        call machine_learning_model_data%init(2, "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
 
         print *, '----------------------------------------------------'
         print *, "Paused for a few seconds for multi-year test..."
@@ -235,9 +235,9 @@ print *, outflow
         rv1 = .false.
         rv2 = .false.
 
-        call machine_learning_reservoir_data2%init(water_elevation, 0.0, "2015-11-29_05:24:22" , 1, 166758723)
+        call machine_learning_reservoir_data2%init(water_elevation, 0.0, "2015-11-29_05:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
 
-        call machine_learning_model_data2%init(2)
+        call machine_learning_model_data2%init(2, "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
 
         do timestep_count = 1, 2880
             call machine_learning_reservoir_data2%run_release(0.0, &
