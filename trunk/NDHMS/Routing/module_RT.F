@@ -762,7 +762,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
-    !print *, 'nlst_rt(did)%machine_learning_parameter_file'
+    print *, 'nlst_rt(did)%machine_learning_parameter_file'
     !print *, nlst_rt(did)%machine_learning_parameter_file
 
 
