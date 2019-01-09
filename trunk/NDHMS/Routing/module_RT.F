@@ -774,18 +774,19 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 print *, '1.1'
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
-
+print *, '1.2'
+print *, 'rt_domain(did)%q_type(lake_index) ', rt_domain(did)%q_type(lake_index)
      ! If q_type equals 1 then go to Level Pool, if 2 then go to
      ! Machine Learning, and if 3 then go to Persistence.
      if (rt_domain(did)%q_type(lake_index) == 1.0) then
-
+print *, '1.25'
        ! Allocate a single level pool reservoir
        allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
-
+print *, '1.26'
        ! Dynamically inspects for level pool type reservoir
        select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
           type is (levelpool_struct)
-
+print *, '1.27'
                ! Call to initialize a level pool type reservoir
                call lp%init(                                &
                rt_domain(did)%RESHT(lake_index),            &
@@ -800,15 +801,17 @@ print *, '1.1'
                rt_domain(did)%LAKEIDM(lake_index)           )
 
        end select
-
+print *, '1.28'
      else if (rt_domain(did)%q_type(lake_index) == 2.0) then
-
+print *, '1.29'
        ! Allocate a single machine learning reservoir
        allocate( machine_learning_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+print *, '1.295'
 
        ! Dynamically inspects for machine learning type reservoir
        select type (ml => rt_domain(did)%reservoirs(lake_index)%ptr)
           type is (machine_learning_struct)
+print *, '1.3'
 
                  ! Call to initialize a machine learning type reservoir
                  !call ml%init(nlst_rt(did)%startdate(1:19), lake_index)
