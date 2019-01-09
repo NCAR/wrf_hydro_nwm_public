@@ -764,8 +764,20 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
-    !print *, 'nlst_rt(did)%machine_learning_parameter_file'
-    !print *, nlst_rt(did)%machine_learning_parameter_file
+print *, '----------------------------------------------'
+print *, '----------------------------------------------'
+print *, '----------------------------------------------'
+print *, '----------------------------------------------'
+    print *, 'nlst_rt(did)%machine_learning_parameter_file'
+    print *, nlst_rt(did)%machine_learning_parameter_file
+    print *, nlst_rt(did)%machine_learning_model_1_file
+    print *, nlst_rt(did)%machine_learning_model_2_file
+
+
+print *, '----------------------------------------------'
+print *, '----------------------------------------------'
+print *, '----------------------------------------------'
+print *, '----------------------------------------------'
 
 
    do lake_index = 1, NLAKES_total
