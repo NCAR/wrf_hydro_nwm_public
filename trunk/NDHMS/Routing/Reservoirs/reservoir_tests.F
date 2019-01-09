@@ -13,8 +13,6 @@ program reservoir_unit_tests
     rv3 = .false.
     rv4 = .false.
 
-
-
     rv1 = test_levelpool()
 
     rv2 = test_machine_learning()
@@ -169,9 +167,6 @@ program reservoir_unit_tests
             call machine_learning_reservoir_data%run_release(0.0, &
             outflow, 0.0, water_elevation, outflow, 900.0)
         end do
-
-print *, 'outflow test1'
-print *, outflow
 
 
         if (outflow == 108.639862) then

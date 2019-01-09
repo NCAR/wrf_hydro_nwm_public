@@ -31,7 +31,7 @@ module module_machine_learning
     use module_reservoir_base
     use module_machine_learning_model
     use module_reservoir_utilities
-    use module_machine_learning_tests
+    !use module_machine_learning_tests
 
     implicit none
 
@@ -501,105 +501,105 @@ contains
 
 
     !Testing
-    function machine_learning_data_info(machine_learning_data) result(rv)
-        implicit none
-        type (machine_learning_struct) :: machine_learning_data
-        logical :: rv
-        logical, dimension(1) :: ptr_state
-        logical, dimension(1) :: data_state
+    !function machine_learning_data_info(machine_learning_data) result(rv)
+    !    implicit none
+    !    type (machine_learning_struct) :: machine_learning_data
+    !    logical :: rv
+    !    logical, dimension(1) :: ptr_state
+    !    logical, dimension(1) :: data_state
 
-        rv = .false.
+    !    rv = .false.
 
         ! Check to see if the machine_learning_state data structure exists
-        print *, "Checking pointer association on data%state "
-        if ( associated(machine_learning_data%state) ) then
-            print *, "PASSED"
-            ptr_state(1) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(1) = .false.
-        end if
-        print *, " "
+    !    print *, "Checking pointer association on data%state "
+    !    if ( associated(machine_learning_data%state) ) then
+    !        print *, "PASSED"
+    !        ptr_state(1) = .true.
+    !    else
+    !        print *, "FAILED"
+    !        ptr_state(1) = .false.
+    !    end if
+    !    print *, " "
 
         ! Check to see if the machine_learning_parameters data structure exists
-        print *, "Checking pointer association on data%parameters "
-        if ( associated(machine_learning_data%parameters) ) then
-            print *, "PASSED"
-            ptr_state(2) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(2) = .false.
-        end if
-        print *, " "
+    !    print *, "Checking pointer association on data%parameters "
+    !    if ( associated(machine_learning_data%parameters) ) then
+    !        print *, "PASSED"
+    !        ptr_state(2) = .true.
+    !    else
+    !        print *, "FAILED"
+    !        ptr_state(2) = .false.
+    !    end if
+    !    print *, " "
 
         ! Check to see if the machine_learning_input data structure exists
-        print *, "Checking pointer association on data%input "
-        if ( associated(machine_learning_data%input) ) then
-            print *, "PASSED"
-            ptr_state(3) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(3) = .false.
-        end if
-        print *, " "
+    !    print *, "Checking pointer association on data%input "
+    !    if ( associated(machine_learning_data%input) ) then
+    !        print *, "PASSED"
+    !        ptr_state(3) = .true.
+    !    else
+    !        print *, "FAILED"
+    !        ptr_state(3) = .false.
+    !    end if
+    !    print *, " "
 
         ! Check to see if the machine_learning_output data structure exists
-        print *, "Checking pointer association on data%output "
-        if ( associated(machine_learning_data%output) ) then
-            print *, "PASSED"
-            ptr_state(4) = .true.
-        else
-            print *, "FAILED"
-            ptr_state(4) = .false.
-        end if
-        print *, " "
+    !    print *, "Checking pointer association on data%output "
+    !    if ( associated(machine_learning_data%output) ) then
+    !        print *, "PASSED"
+    !        ptr_state(4) = .true.
+    !    else
+    !        print *, "FAILED"
+    !        ptr_state(4) = .false.
+    !    end if
+    !    print *, " "
 
 
         ! Now check the data members of each substructure
-        if ( ptr_state(1) ) then
-            data_state(1) = test_machine_learning_state(machine_learning_data%state)
-        end if
+    !    if ( ptr_state(1) ) then
+    !        data_state(1) = test_machine_learning_state(machine_learning_data%state)
+    !    end if
 
-        if ( ptr_state(2) ) then
-            data_state(2) = test_machine_learning_parameters(machine_learning_data%parameters)
-        end if
+    !    if ( ptr_state(2) ) then
+    !        data_state(2) = test_machine_learning_parameters(machine_learning_data%parameters)
+    !    end if
 
-        if ( ptr_state(3) ) then
-            data_state(3) = test_input(machine_learning_data%input)
-        end if
+    !    if ( ptr_state(3) ) then
+    !        data_state(3) = test_input(machine_learning_data%input)
+    !    end if
 
-        if ( ptr_state(4) ) then
-            data_state(4) = test_output(machine_learning_data%output)
-        end if
-
-
-        if ( all(ptr_state) .and. all(data_state) ) then
-            print *, "========================================================================"
-            print *, "All Machine Learning Object Tests Passed"
-            print *, "========================================================================"
-            rv = .true.
-
-        else
-            print *, "========================================================================"
-            print *, "Not All Machine Learning Object Tests Passed"
-            print *, "========================================================================"
-
-        end if
-
-        flush(6)
-    end function machine_learning_data_info
+    !    if ( ptr_state(4) ) then
+    !        data_state(4) = test_output(machine_learning_data%output)
+    !    end if
 
 
-    function machine_learning_model_data_info(machine_learning_model_data) result(rv)
-        implicit none
-        type (machine_learning_model_struct) :: machine_learning_model_data
-        logical, dimension(1) :: ptr_state
-        logical, dimension(1) :: data_state
-        logical :: rv
-        rv = .false.
+    !    if ( all(ptr_state) .and. all(data_state) ) then
+    !        print *, "========================================================================"
+    !        print *, "All Machine Learning Object Tests Passed"
+    !        print *, "========================================================================"
+    !        rv = .true.
+
+    !    else
+    !        print *, "========================================================================"
+    !        print *, "Not All Machine Learning Object Tests Passed"
+    !        print *, "========================================================================"
+
+    !    end if
+
+    !    flush(6)
+    !end function machine_learning_data_info
+
+
+    !function machine_learning_model_data_info(machine_learning_model_data) result(rv)
+    !    implicit none
+    !    type (machine_learning_model_struct) :: machine_learning_model_data
+    !    logical, dimension(1) :: ptr_state
+    !    logical, dimension(1) :: data_state
+    !    logical :: rv
+    !    rv = .false.
 
         ! Check to see if the machine_learning_model data structure exists
-        print *, "Checking pointer association on model data "
+    !    print *, "Checking pointer association on model data "
         !if ( associated(machine_learning_model_data) ) then
         !    print *, "PASSED"
         !    ptr_state(1) = .true.
@@ -607,25 +607,25 @@ contains
         !    print *, "FAILED"
         !    ptr_state(1) = .false.
         !end if
-        print *, " "
+    !    print *, " "
 
-        data_state(1) = test_machine_learning_model(machine_learning_model_data)
+    !    data_state(1) = test_machine_learning_model(machine_learning_model_data)
 
-        if ( all(data_state) ) then
+    !    if ( all(data_state) ) then
         !if ( all(ptr_state) .and. all(data_state) ) then
-            print *, "========================================================================"
-            print *, "All Machine Learning Model Tests Passed"
-            print *, "========================================================================"
-            rv = .true.
+    !        print *, "========================================================================"
+    !        print *, "All Machine Learning Model Tests Passed"
+    !        print *, "========================================================================"
+    !        rv = .true.
 
-        else
-            print *, "========================================================================"
-            print *, "Not All Machine Learning Model Tests Passed"
-            print *, "========================================================================"
+    !    else
+    !        print *, "========================================================================"
+    !        print *, "Not All Machine Learning Model Tests Passed"
+    !        print *, "========================================================================"
 
-        end if
+    !    end if
 
-        flush(6)
-    end function machine_learning_model_data_info
+    !    flush(6)
+    !end function machine_learning_model_data_info
 
 end module module_machine_learning
