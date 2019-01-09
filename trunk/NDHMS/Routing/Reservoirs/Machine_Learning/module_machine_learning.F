@@ -328,22 +328,21 @@ contains
         real, intent(in)       :: routing_period
 
         ! Note to user:
-        ! In order to conserve mass, when a reservoir's storage would become 0 or less, the current release
-        ! must be adjusted to avoid releasing water that isn't in the reservoir. To determine conditions
-        ! when this could happen, this function calculates the storage balance for the duration of the current
-        ! timestep (dt) based on current storage condition (at the beginning of the time period), inflow for
-        ! the timestep, and the latest release value valid for the timestep.
+        ! In order to conserve mass, when a reservoir's storage would become 0.0 or less, the release
+        ! must be adjusted to avoid releasing water that is not available in the reservoir. To determine
+        ! conditions when this could happen, this function calculates the projected by the end of the
+        ! timestep (dt) based on the latest known conditions of the storage, inflow, and release values.
 
         ! If the current conditions would cause the storage to become less than or equal to 0.0 cubic meters,
         ! then the outflow/release will be altered to provide the available storage over the timestep
-        ! (given as R = (S + I*dt)/dt ). This will cause storage at the end of the timestep to be 0. From this
-        ! point, the outflow/release is boudnded by the mimimum inflow provided until the next update time when
+        ! (given as R = (S + I*dt)/dt ). This will cause storage at the end of the timestep to be 0.0. From
+        ! this point, the outflow/release is bounded by the inflow provided until the next update time when
         ! the machine learning model will be run again.
 
         ! Therefore, the user's choice of time_interval has a significant impact on this simulated outflow/release
         ! behavior in this edge case.  Release cannot increase again until the next update time occurs. This does,
         ! however, allow the reservoir to fill back up once inflow increases to exceed current outflow/release
-        ! since storage would then become > 0.
+        ! since storage would then become > 0.0.
 
         ! If one wants to allow the release to continue to rise as inflow rises, you can set R = I*dt once storage
         ! has been depleted. This passes on inflow to outflow until an update time occurs, in which case the ML
