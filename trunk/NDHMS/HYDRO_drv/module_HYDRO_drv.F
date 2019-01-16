@@ -53,7 +53,6 @@ module module_HYDRO_drv
    
    implicit none
 
-#include <netcdf.inc>
 
 #ifdef HYDRO_D
   real :: timeOr = 0
@@ -1592,7 +1591,6 @@ end subroutine HYDRO_ini
 
       subroutine lsm_input(did,ix0,jx0,vegtyp0,soltyp0)
          implicit none
-#include <netcdf.inc>
          integer did, leng, ncid, ierr_flg
          parameter(leng=100)
          integer :: i,j, nn
@@ -1661,7 +1659,7 @@ end subroutine HYDRO_ini
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) then
 #endif
-          ierr_flg = nf_open(trim(nlst_rt(did)%hydrotbl_f), NF_NOWRITE, ncid)
+          ierr_flg = nf90_open(trim(nlst_rt(did)%hydrotbl_f), nf90_NOWRITE, ncid)
 #ifdef MPP_LAND
        endif
        call mpp_land_bcast_int1(ierr_flg)
