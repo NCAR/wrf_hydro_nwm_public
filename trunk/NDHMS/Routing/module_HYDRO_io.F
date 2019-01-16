@@ -1434,20 +1434,19 @@ end subroutine get_albedo12m_netcdf
      return
   end subroutine SIMP_GW_IND
 
-!Wei Yu
-  subroutine read_GWBUCKPARM (inFile,numbasns,gnumbasns, basnsInd, &
-                 gw_buck_coeff, gw_buck_exp, z_max, &
-                 z_gwsubbas, bas_id,basns_area)
+  subroutine read_GWBUCKPARM (inFile, numbasns, gnumbasns, basnsInd, &
+                 gw_buck_coeff, gw_buck_exp, gw_buck_loss, &
+                 z_max, z_gwsubbas, bas_id, basns_area)
 ! read GWBUCKPARM file
 
    implicit none
    integer, intent(in) :: gnumbasns, numbasns
-   integer, intent(in),dimension(numbasns)  :: basnsInd
-   real, intent(out),dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max, &
-                 z_gwsubbas, basns_area
-   integer, intent(out),dimension(numbasns) :: bas_id
-   real, dimension(gnumbasns) :: tmp_buck_coeff, tmp_buck_exp, tmp_z_max, &
-                  tmp_z_gwsubbas,  tmp_basns_area
+   integer, intent(in),  dimension(numbasns) :: basnsInd
+   real,    intent(out), dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
+   real,    intent(out), dimension(numbasns) :: z_max, z_gwsubbas, basns_area
+   integer, intent(out), dimension(numbasns) :: bas_id
+   real, dimension(gnumbasns) :: tmp_buck_coeff, tmp_buck_exp, tmp_buck_loss
+   real, dimension(gnumbasns) :: tmp_z_max, tmp_z_gwsubbas,  tmp_basns_area
    integer, dimension(gnumbasns) :: tmp_bas_id
    CHARACTER(len=100)                     :: header 
    CHARACTER(len=1)                       :: jnk
@@ -1467,9 +1466,11 @@ end subroutine get_albedo12m_netcdf
      if(iret .eq. 0 ) then
         print*, "read GWBUCKPARM file as nc format: " , trim(inFile)
         call get_1d_netcdf_int(ncid, "Basin", tmp_bas_id, "read GWBUCKPARM", .true.)
-!        call get_1d_netcdf_int(ncid, "ComID", tmp_bas_id, "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Coeff",tmp_buck_coeff , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Expon",tmp_buck_exp   , "read GWBUCKPARM", .true.)
+        if(nlst_rt(did)%bucket_loss .eq. 1) then
+           call get_1d_netcdf_real(ncid, "Loss",tmp_buck_loss, "read GWBUCKPARM", .true.)
+        endif
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
@@ -1511,6 +1512,9 @@ end subroutine get_albedo12m_netcdf
    if(gnumbasns .gt. 0 ) then
       call mpp_land_bcast_real(gnumbasns,tmp_buck_coeff)
       call mpp_land_bcast_real(gnumbasns,tmp_buck_exp  )
+      if(nlst_rt(did)%bucket_loss .eq. 1) then
+         call mpp_land_bcast_real(gnumbasns,tmp_buck_loss   )
+      endif
       call mpp_land_bcast_real(gnumbasns,tmp_z_max   )
       call mpp_land_bcast_real(gnumbasns,tmp_z_gwsubbas   )
       call mpp_land_bcast_real(gnumbasns,tmp_basns_area   )
@@ -1522,6 +1526,9 @@ end subroutine get_albedo12m_netcdf
        bas = basnsInd(k)
        gw_buck_coeff(k) = tmp_buck_coeff(bas)
        gw_buck_exp(k) = tmp_buck_exp(bas)
+       if(nlst_rt(did)%bucket_loss .eq. 1) then
+          gw_buck_loss(k) = tmp_buck_loss(bas)
+       endif
        z_max(k) = tmp_z_max(bas)
        z_gwsubbas(k) = tmp_z_gwsubbas(bas)
        basns_area(k) = tmp_basns_area(bas)
