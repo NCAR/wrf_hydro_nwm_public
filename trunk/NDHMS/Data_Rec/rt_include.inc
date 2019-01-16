@@ -89,7 +89,10 @@
   INTEGER, allocatable, DIMENSION(:)        :: bas_id
   CHARACTER(len=19)                      :: header
   CHARACTER(len=1)                       :: jnk
-  REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff,gw_buck_exp,z_max  !GW bucket parameters
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff !GW bucket model coefficient
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_exp   !GW bucket model exponent
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_loss  !GW bucket model loss fraction
+  REAL, allocatable, DIMENSION(:)        :: z_max         !Height of GW bucket
 !DJG Switch for Deep Sat GW Init:
   INTEGER                                :: DEEPGWSPIN  !Switch to setup deep GW spinp
 !BF Variables for gw2d
