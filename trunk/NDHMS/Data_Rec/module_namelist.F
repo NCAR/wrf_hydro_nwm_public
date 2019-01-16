@@ -284,6 +284,7 @@ CONTAINS
   call mpp_land_bcast_real1(gwIhShift)
   call mpp_land_bcast_int1(GWBASESWCRT)
   call mpp_land_bcast_int1(GWSOILCPL)
+  call mpp_land_bcast_int1(bucket_loss)
   call mpp_land_bcast_int1(gwChanCondSw)
   call mpp_land_bcast_int1(GwSpinCycles)
   call mpp_land_bcast_int1(GwPreCycles)
@@ -381,6 +382,7 @@ CONTAINS
     nlst%dxrt0 = dxrt
     nlst%AGGFACTRT = AGGFACTRT
     nlst%GWBASESWCRT = GWBASESWCRT
+    nlst%bucket_loss = bucket_loss
     nlst%GWSOILCPL= GWSOILCPL
     nlst%gwChanCondSw = gwChanCondSw
     nlst%gwChanCondConstIn = gwChanCondConstIn
