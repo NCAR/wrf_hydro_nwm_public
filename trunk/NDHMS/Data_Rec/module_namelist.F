@@ -44,7 +44,7 @@ CONTAINS
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-                    UDMP_OPT, io_form_outputs
+                    UDMP_OPT, io_form_outputs, bucket_loss
           real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -121,7 +121,7 @@ CONTAINS
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
                     RTOUT_DOMAIN, output_gw, outlake, &
-                    frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, &
+                    frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
                     io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
       
 #ifdef WRF_HYDRO_NUDGING
@@ -149,6 +149,7 @@ CONTAINS
    TERADJ_SOLAR = 0
    reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.  
    compound_channel = .FALSE.
+   bucket_loss = 0
    
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
@@ -468,6 +469,7 @@ CONTAINS
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
+    write(6,*) " nlst%bucket_loss ", bucket_loss
     write(6,*) " nlst%gwstrmfil ",  gwstrmfil
     write(6,*) " nlst%geo_finegrid_flnm ",  geo_finegrid_flnm
     write(6,*) " nlst%reservoir_data_ingest ", reservoir_data_ingest
@@ -669,6 +671,12 @@ subroutine rt_nlst_check(nlst)
          inquire(file=trim(nlst%route_link_f),exist=fileExists)
          if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_link_f not found.')
       endif
+   endif
+   if( (nlst%bucket_loss .lt. 0 ) .or. (nlst%bucket_loss .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid bucket_loss specified')
+   endif
+   if( (nlst%bucket_loss .eq. 1 ) .and. (nlst%UDMP_OPT .ne. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Bucket loss only available when UDMP=1')
    endif
    if( (nlst%GWBASESWCRT .lt. 0 ) .or. (nlst%GWBASESWCRT .gt. 2) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid GWBASESWCRT specified')
