@@ -1198,8 +1198,9 @@ else
 
          call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
               rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
-              rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
-              rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
+              rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%gw_buck_loss, &
+              rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id, &
+              rt_domain(did)%basns_area)
 
 
 !!! Determine number of stream pixels per GW basin for distribution...
