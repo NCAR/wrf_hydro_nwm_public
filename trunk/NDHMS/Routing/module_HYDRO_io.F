@@ -178,7 +178,7 @@ module module_HYDRO_io
 
             iret = nf90_inquire_dimension(ncid, dimid, len = land_cat)
             if (iret /= 0) then
-               call hydro_stop("In get2d_lsm_vegtyp() - nf90_inq_dimlen:  land_cat problem")
+               call hydro_stop("In get2d_lsm_vegtyp() - nf90_inquire_dimension:  land_cat problem")
             endif
 
 #ifdef MPP_LAND
@@ -225,7 +225,7 @@ module module_HYDRO_io
         
             iret = nf90_inquire_dimension(ncid, dimid, len = ix)
             if (iret /= 0) then
-               call hydro_stop("In get_file_dimension() - nf90_inq_dimlen:  west_east problem")
+               call hydro_stop("In get_file_dimension() - nf90_inquire_dimension:  west_east problem")
             endif
         
             iret = nf90_inq_dimid(ncid, "south_north", dimid)
@@ -235,7 +235,7 @@ module module_HYDRO_io
         
             iret = nf90_inquire_dimension(ncid, dimid, len = jx)
             if (iret /= 0) then
-               call hydro_stop("In get_file_dimension() - nf90_inq_dimlen:  south_north problem")
+               call hydro_stop("In get_file_dimension() - nf90_inquire_dimension:  south_north problem")
             endif
             iret = nf90_close(ncid)
 #ifdef MPP_LAND
@@ -337,7 +337,7 @@ end subroutine get_file_globalatts
 
             iret = nf90_inquire_dimension(ncid, dimid, len = land_cat)
             if (iret /= 0) then
-               call hydro_stop("In get2d_lsm_soltyp() - nf90_inq_dimlen:  soil_cat problem")
+               call hydro_stop("In get2d_lsm_soltyp() - nf90_inquire_dimension:  soil_cat problem")
             endif
 
 #ifdef MPP_LAND
