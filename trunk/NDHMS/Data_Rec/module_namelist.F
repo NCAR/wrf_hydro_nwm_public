@@ -51,6 +51,7 @@ CONTAINS
           character(len=256) :: route_link_f=""
           logical            :: compound_channel
           character(len=256) :: route_lake_f=""
+	  logical	     :: machine_learning
           character(len=256) :: machine_learning_parameter_file=""
           character(len=256) :: machine_learning_model_1_file=""
           character(len=256) :: machine_learning_model_2_file=""
@@ -119,6 +120,7 @@ CONTAINS
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
+		    machine_learning, &
                     machine_learning_parameter_file, &
                     machine_learning_model_1_file, &
                     machine_learning_model_2_file, &
@@ -155,6 +157,7 @@ CONTAINS
    TERADJ_SOLAR = 0
    reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
    compound_channel = .FALSE.
+   machine_learning = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
@@ -251,6 +254,7 @@ CONTAINS
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
   nlst%reservoir_obs_dir = "testDirectory"
+  nlst%machine_learning = machine_learning
   nlst%machine_learning_parameter_file = machine_learning_parameter_file
   nlst%machine_learning_model_1_file = machine_learning_model_1_file
   nlst%machine_learning_model_2_file = machine_learning_model_2_file
@@ -724,34 +728,10 @@ subroutine rt_nlst_check(nlst)
       if(len(trim(nlst%route_lake_f)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a route_lake_f to ouptut and run lakes.')
       endif
-      if(len(trim(nlst%machine_learning_parameter_file)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_parameter_file for &
-         inputs to machine learning type reservoirs.')
-      endif
-      if(len(trim(nlst%machine_learning_model_1_file)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_model_1_file for &
-         inputs to machine learning type reservoirs.')
-      endif
-      if(len(trim(nlst%machine_learning_model_2_file)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_model_2_file for &
-         inputs to machine learning type reservoirs.')
-      endif
    endif
    if(len(trim(nlst%route_lake_f)) .ne. 0) then
       inquire(file=trim(nlst%route_lake_f),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_lake_f not found.')
-   endif
-   if(len(trim(nlst%machine_learning_parameter_file)) .ne. 0) then
-      inquire(file=trim(nlst%machine_learning_parameter_file),exist=fileExists)
-      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_parameter_file not found.')
-   endif
-   if(len(trim(nlst%machine_learning_model_1_file)) .ne. 0) then
-      inquire(file=trim(nlst%machine_learning_model_1_file),exist=fileExists)
-      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_model_1_file not found.')
-   endif
-   if(len(trim(nlst%machine_learning_model_2_file)) .ne. 0) then
-      inquire(file=trim(nlst%machine_learning_model_2_file),exist=fileExists)
-      if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_model_2_file not found.')
    endif
    ! Only allow lakes to be ran with gridded routing or NWM routing
    if(len(trim(nlst%route_lake_f)) .ne. 0) then
@@ -766,6 +746,32 @@ subroutine rt_nlst_check(nlst)
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
    end if
 
+   if(nlst%machine_learning) then
+      if(len(trim(nlst%machine_learning_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_parameter_file for &
+         inputs to machine learning type reservoirs.')
+      endif
+      if(len(trim(nlst%machine_learning_model_1_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_model_1_file for &
+         inputs to machine learning type reservoirs.')
+      endif
+      if(len(trim(nlst%machine_learning_model_2_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a machine_learning_model_2_file for &
+         inputs to machine learning type reservoirs.')
+      endif
+      if(len(trim(nlst%machine_learning_parameter_file)) .ne. 0) then
+        inquire(file=trim(nlst%machine_learning_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_parameter_file not found.')
+      endif
+      if(len(trim(nlst%machine_learning_model_1_file)) .ne. 0) then
+        inquire(file=trim(nlst%machine_learning_model_1_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_model_1_file not found.')
+      endif
+      if(len(trim(nlst%machine_learning_model_2_file)) .ne. 0) then
+        inquire(file=trim(nlst%machine_learning_model_2_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: machine_learning_model_2_file not found.')
+      endif
+    endif
 
 end subroutine rt_nlst_check
 

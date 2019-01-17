@@ -150,6 +150,9 @@ compound_channel = .FALSE.
 ! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
+! If using Machine Learning Reservoirs, set to True. (Default=.FALSE.)
+machine_learning = .FALSE.
+
 ! Specify the Machine Learning Reservoir parameter file
 machine_learning_parameter_file = "./DOMAIN/ML_RESERVOIR_PARM.nc"
 

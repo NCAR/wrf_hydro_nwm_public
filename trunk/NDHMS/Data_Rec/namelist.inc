@@ -41,6 +41,7 @@
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
           character(len=256) :: route_lake_f=""
+          logical	     :: machine_learning
           character(len=256) :: machine_learning_parameter_file=""
           character(len=256) :: machine_learning_model_1_file=""
           character(len=256) :: machine_learning_model_2_file=""
