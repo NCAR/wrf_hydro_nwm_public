@@ -4904,7 +4904,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer :: ierr, myId ! MPI return status, process ID
    integer :: gnbasns
    ! Allocatable arrays to hold output variables. 
-   real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_z_gwsubbas
+   real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_qloss_gwsubbas,g_z_gwsubbas
    integer, allocatable, dimension(:) :: g_basnsInd
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
