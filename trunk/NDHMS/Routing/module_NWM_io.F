@@ -5112,7 +5112,8 @@ subroutine output_gw_NWM(domainId,iGrid)
 
       varOutReal(1,:) = g_qin_gwsubbas
       varOutReal(2,:) = g_qout_gwsubbas
-      varOutReal(3,:) = g_z_gwsubbas
+      varOutReal(3,:) = g_qloss_gwsubbas
+      varOutReal(4,:) = g_z_gwsubbas
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
