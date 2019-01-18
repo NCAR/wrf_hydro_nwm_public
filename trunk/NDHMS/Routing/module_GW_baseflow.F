@@ -95,7 +95,9 @@ contains
 !!!Initialize variables...
    net_perc = 0.
    qout_gwsubbas = 0.
-   qloss_gwsubbas = 0.
+   if (bucket_loss .eq. 1) then
+      qloss_gwsubbas = 0.
+   endif
    z_gwsubbas(1:numbasns) = z_gwsubbas_tmp(1:numbasns)
 
    if(channelBucket_only .eq. 0) then
@@ -241,9 +243,11 @@ contains
 !Adjust level of GW depth in bucket...
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+          z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)
 
-          z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas)+qloss_gwsubbas(bas))*DT/( &
-                       basns_area(bas) )   ! units (meters)	
+          if (bucket_loss .eq. 1) then
+             z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas)+qloss_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)	
+          endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Combine calculated bucket discharge and amount spilled from bucket...
