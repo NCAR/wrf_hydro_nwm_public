@@ -205,7 +205,7 @@ contains
 
                     z_gw_spill = z_gwsubbas(bas) - z_mx(bas)/1000.    ! meters
                     z_gwsubbas(bas) = z_mx(bas)/1000.    ! meters
-
+ 
                else
                       z_gw_spill = 0.
                end if   ! End if for bucket overflow case...
@@ -242,7 +242,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-          z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
+          z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas)+qloss_gwsubbas(bas))*DT/( &
                        basns_area(bas) )   ! units (meters)	
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
