@@ -785,8 +785,10 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               RT_DOMAIN(did)%INFXSRT,       RT_DOMAIN(did)%SOLDRAIN,        &
               rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
               RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
+              RT_DOMAIN(did)%gw_buck_loss,                                  &
               RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
               RT_DOMAIN(did)%qout_gwsubbas, RT_DOMAIN(did)%qin_gwsubbas,    &
+              RT_DOMAIN(did)%qloss_gwsubbas,                                &
               nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         & 
 #ifdef MPP_LAND
               RT_DOMAIN(did)%LNLINKSL,                                      &
@@ -794,7 +796,8 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               RT_DOMAIN(did)%numbasns,                                      &
 #endif
               rt_domain(did)%basns_area,                                    &
-              rt_domain(did)%nhdBuckMask,   nlst_rt(did)%channelBucket_only )
+              rt_domain(did)%nhdBuckMask,   nlst_rt(did)%bucket_loss        &
+              nlst_rt(did)%channelBucket_only )
 
        else
           call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&

@@ -45,12 +45,15 @@ contains
         runoff1x_in,   runoff2x_in,       &
         cellArea,      area_lsm,          &
         c,             ex,                &
+        loss_fraction,                    &
         z_mx,          z_gwsubbas_tmp,    &
         qout_gwsubbas, qin_gwsubbas,      &
+        qloss_gwsubbas,                   &
         GWBASESWCRT,   OVRTSWCRT,         &
         LNLINKSL,                         & 
         basns_area,                       &
-        nhdBuckMask,   channelBucket_only ) 
+        nhdBuckMask,   bucket_loss,       &
+        channelBucket_only ) 
 
    use module_UDMAP, only: LNUMRSL, LUDRSL
 
@@ -63,11 +66,12 @@ contains
    real, dimension(ixrt,jxrt)                            :: runoff2x , runoff1x
    real, intent(in), dimension(ix,jx)                :: runoff1x_in, area_lsm
    real, intent(in)                                  :: cellArea(ixrt,jxrt),DT
-   real, intent(in),dimension(numbasns)              :: C,ex
+   real, intent(in),dimension(numbasns)              :: C,ex,loss_fraction
    real, intent(inout),dimension(numbasns)              :: z_mx
    real, intent(out),dimension(numbasns)             :: qout_gwsubbas
    !! intent inout for channelBucket_only .eq. 1
    real, intent(inout),dimension(numbasns)           :: qin_gwsubbas
+   real, intent(out),dimension(numbasns)             :: qloss_gwsubbas
    real*8                                            :: z_gwsubbas(numbasns)
    real                                              :: qout_max, qout_spill, z_gw_spill
    real, intent(inout),dimension(:)                  :: z_gwsubbas_tmp
@@ -75,7 +79,8 @@ contains
    integer, intent(in)                               :: GWBASESWCRT
    integer, intent(in)                               :: OVRTSWCRT
    real, intent(in), dimension(numbasns)             :: basns_area
-   integer, intent(in)                               :: channelBucket_only   
+   integer, intent(in)                               :: channelBucket_only
+   integer, intent(in)                               :: bucket_loss   
 
    real, dimension(numbasns)                         :: net_perc
    integer, dimension(numbasns)                      :: nhdBuckMask
@@ -90,6 +95,7 @@ contains
 !!!Initialize variables...
    net_perc = 0.
    qout_gwsubbas = 0.
+   qloss_gwsubbas = 0.
    z_gwsubbas(1:numbasns) = z_gwsubbas_tmp(1:numbasns)
 
    if(channelBucket_only .eq. 0) then
@@ -216,6 +222,11 @@ contains
        
 !DJG...Calculation of max bucket outlfow that is limited by total quantity in bucket...
                qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit   (m^3/s)
+               
+               if (bucket_loss .eq. 1) then
+                    qout_gwsubbas(bas) = qout_gwsubbas(bas)*(1-loss_fraction(bas))
+                    qloss_gwsubbas(bas) = qout_gwsubbas(bas)*loss_fraction(bas)
+               endif
 
           elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
 
