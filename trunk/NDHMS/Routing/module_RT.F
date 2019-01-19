@@ -372,7 +372,7 @@ CONTAINS
          rt_domain(did)%ORIFICEC = 0.0
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
-         rt_domain(did)%q_type = 0.0
+         rt_domain(did)%q_type = 1.0
 
      endif
 
@@ -709,6 +709,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
+	     nlst_rt(did)%machine_learning,			   &
              rt_domain(did)%q_type,                                &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -750,7 +751,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
-           rt_domain(did)%ORIFICEE,      rt_domain(did)%q_type,     &
+           rt_domain(did)%ORIFICEE,     			    & 
+	   nlst_rt(did)%machine_learning,			    & 
+	   rt_domain(did)%q_type,     				    &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
