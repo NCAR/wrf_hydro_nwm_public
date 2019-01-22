@@ -54,12 +54,7 @@ def run_tests(config: str,
     hostname = socket.gethostname()
     module_cmd = ''
     if 'cheyenne' in hostname:
-        if compiler.lower() == 'ifort':
-            module_cmd = 'module purge; module load intel/16.0.3 ncarenv/1.2 ncarcompilers/0.4.1 ' \
-                         'mpt/2.15f netcdf/4.4.1;'
-        elif compiler.lower() == 'gfort':
-            module_cmd = 'module purge; module load gnu/7.1.0 ncarenv/1.2 ncarcompilers/0.4.1 ' \
-                         'mpt/2.15 netcdf/4.4.1.1;'
+        module_cmd = 'echo; echo "Using the following modules for testing:" ; module list; echo;'
         if scheduler:
             # reset ncores and nnodes defaults to scheduler defaults
             if ncores == 2:
