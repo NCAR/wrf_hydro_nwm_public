@@ -54,7 +54,7 @@ def run_tests(config: str,
     hostname = socket.gethostname()
     module_cmd = ''
     if 'cheyenne' in hostname:
-        module_cmd = 'echo; Using the following modules for testing: ; module list; echo;'
+        module_cmd = 'echo; echo "Using the following modules for testing:" ; module list; echo;'
         if scheduler:
             # reset ncores and nnodes defaults to scheduler defaults
             if ncores == 2:
