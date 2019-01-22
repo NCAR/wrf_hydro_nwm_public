@@ -1114,6 +1114,14 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       allocate (rt_domain(did)%gw_buck_exp(rt_domain(did)%numbasns))
       allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
+
+      if(nlst_rt(did)%bucket_loss .eq. 1) then
+         allocate(rt_domain(did)%qloss_gwsubbas(rt_domain(did)%numbasns))
+         allocate(rt_domain(did)%gw_buck_loss(rt_domain(did)%numbasns))
+
+         rt_domain(did)%qloss_gwsubbas = 0
+         rt_domain(did)%gw_buck_loss = 0
+      endif
       
       rt_domain(did)%qin_gwsubbas = 0
       rt_domain(did)%z_gwsubbas = 0
