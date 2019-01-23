@@ -1,4 +1,4 @@
-md5sum: 2a062e7d6bc52b263d0e68a53845f87a  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/RouteLink_NWMv2.0.nc
+md5sum: 2adf4200aafb1720110554620c89c7bb  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/RouteLink_NWMv2.0.nc
 ncdump -h: netcdf RouteLink_NWMv2.0 {
 dimensions:
 	feature_id = 2729077 ;
@@ -90,8 +90,8 @@ variables:
 // global attributes:
 		:Convention = "CF-1.6" ;
 		:featureType = "timeSeries" ;
-		:history = "Created Tue Feb 27 14:45:27 2018" ;
-		:processing_notes = "This file was produced Tue Feb 27 14:24:11 2018 by Kevin Sampson (NCAR) and has the following attributes: \n",
+		:history = "Created Wed Nov 07 23:45:44 2018" ;
+		:processing_notes = "This file was produced Wed Nov 07 17:14:48 2018 by Kevin Sampson (NCAR) and has the following attributes: \n",
 			"   This file uses the NHDPlus v21 \"flattened\" geodatabase: NHDPlusV21_National_Flattened.gdb.\n",
 			"   This file excludes reaches in Puerto Rico and Hawaii.\n",
 			"   Routing using Arc-Hydro derived segments for Regions 01a, 02b, 09a, 10i, 10h, 13a, 13b, 13d, 15a, 15b, 17b, 18a.\n",
@@ -102,5 +102,5 @@ variables:
 			"   Gage additions made using: Add_Gage_Association.csv.\n",
 			"   Gage-to-flowline association changes made using: Bad_Gage_Associations.csv.\n",
 			"   Tidal-influenced gages removed using: TidalGageList_20170316.csv.\n",
-			"   Waterbody associations using spatial join with Lake feature class Waterbodies_V2_1km_plus.shp." ;
+			"   Waterbody associations using spatial join with Lake feature class Waterbodies_V2_1km_plus_20181012.shp." ;
 }

@@ -1,21 +1,21 @@
 &NOAHLSM_OFFLINE
 
- HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01.nc"
- INDIR = "./FORCING"
- SPATIAL_FILENAME = "./DOMAIN/soil_properties.nc"
- OUTDIR = "./"
+ HRLDAS_SETUP_FILE = './DOMAIN/wrfinput_d01_1km.nc'
+ INDIR = './forcing'
+ SPATIAL_FILENAME = './DOMAIN/soil_veg_properties_ASM.nc'
+ OUTDIR = './'
 
- START_YEAR  = 2013
- START_MONTH = 09
- START_DAY   = 12
- START_HOUR  = 04
+ START_YEAR  = 2018
+ START_MONTH = 06
+ START_DAY   = 01
+ START_HOUR  = 00
  START_MIN   = 00
 
- RESTART_FILENAME_REQUESTED = "RESTART.2013091204_DOMAIN1"
+ RESTART_FILENAME_REQUESTED = './RESTART/RESTART.2018060100_DOMAIN1'
 
  ! Specification of simulation length in days OR hours
- KDAY = 1
- ! KHOUR = 8
+ !KDAY = 1
+ KHOUR = 28
 
  ! Physics options (see the documentation for details)
  DYNAMIC_VEG_OPTION                = 4
@@ -26,7 +26,7 @@
  FROZEN_SOIL_OPTION                = 1
  SUPERCOOLED_WATER_OPTION          = 1
  RADIATIVE_TRANSFER_OPTION         = 3
- SNOW_ALBEDO_OPTION                = 2
+ SNOW_ALBEDO_OPTION                = 1
  PCP_PARTITION_OPTION              = 1
  TBOT_OPTION                       = 2
  TEMP_TIME_SCHEME_OPTION           = 3
@@ -36,11 +36,10 @@
  ! Timesteps in units of seconds
  FORCING_TIMESTEP = 3600 
  NOAH_TIMESTEP    = 3600 
- OUTPUT_TIMESTEP  = 3600 
+ OUTPUT_TIMESTEP  = 10800
 
  ! Land surface model restart file write frequency
- ! A value of -99999 will output restarts on the first day of the month only.
- RESTART_FREQUENCY_HOURS = 2
+ RESTART_FREQUENCY_HOURS = 4
 
  ! Split output after split_output_count output times.
  SPLIT_OUTPUT_COUNT = 1
@@ -68,6 +67,6 @@
  !                                 4=Idealized, 5=Ideal w/ spec. precip, 
  !                                 6=HRLDAS-hr format w/ spec. precip,
  !                                 7=WRF w/ spec. precip 
- FORC_TYP = 1
+ FORC_TYP = 2
 
 /
