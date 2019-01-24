@@ -3,25 +3,25 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_HRLDAS_HYDRO
 
-! NDHMS  module   
+! NDHMS  module
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
@@ -37,7 +37,7 @@ module module_HRLDAS_HYDRO
     integer :: numg, numl, numc, nump
     INTEGER, PARAMETER :: double=8
     real(kind=double), pointer :: r2p(:,:) , r1p(:)
-     
+
     integer ::  begl, endl, begc, endc, begp, endp
 
     real, allocatable, dimension(:,:) :: vg_test
@@ -110,7 +110,7 @@ CONTAINS
                 !write(60+my_id,*) "before hrldas_RAPID_ini step 1"
                 !call flush(60+my_id)
 
-                call hrldas_RAPID_ini(ntime)    
+                call hrldas_RAPID_ini(ntime)
 
                 call system_clock(count=clock_count_1, count_rate=clock_rate)
 
@@ -124,13 +124,13 @@ CONTAINS
 
                 call mpp_land_sync()
                 call system_clock(count=clock_count_2, count_rate=clock_rate)
-                call hrldas_RAPID_exe(g_runoff,global_nx,global_ny)     
+                call hrldas_RAPID_exe(g_runoff,global_nx,global_ny)
                 call mpp_land_sync()
                 !write(60+my_id,*) "after hrldas_RAPID_exe step 4"
                 !call flush(60+my_id)
 
 #else
-                call hrldas_RAPID_exe(runoff,ii,jj)     
+                call hrldas_RAPID_exe(runoff,ii,jj)
 #endif
 
                 call system_clock(count=clock_count_3, count_rate=clock_rate)
@@ -166,12 +166,12 @@ CONTAINS
            RT_DOMAIN(did)%STC = STC
            RT_DOMAIN(did)%SMC = SMC
            RT_DOMAIN(did)%SH2OX = SH2OX
-           RT_DOMAIN(did)%infxsrt = infxsrt
-           RT_DOMAIN(did)%soldrain = soldrain
+           rt_domain(did)%groundwater%input%infxsrt = infxsrt
+           rt_domain(did)%groundwater%input%soldrain = soldrain
         end if
-           
+
            if(nlst_rt(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
-           
+
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
            call  time_seconds(t1)
@@ -233,19 +233,19 @@ CONTAINS
 
 
 
-        if(.not. RT_DOMAIN(did)%initialized) then  
+        if(.not. RT_DOMAIN(did)%initialized) then
            nlst_rt(did)%dt = dt
            nlst_rt(did)%olddate(1:19) = olddate(1:19)
            nlst_rt(did)%startdate(1:19) = olddate(1:19)
-           
+
            nlst_rt(did)%nsoil = kk
 #ifdef MPP_LAND
            call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
 #endif
            allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
            nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
-           
-           
+
+
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
            if(nlst_rt(did)%sys_cpl .ne. 1) then
@@ -260,10 +260,10 @@ CONTAINS
            if(nlst_rt(did)%rtFlag .eq. 0) return
 !  it  is rapid model.
            return
-        endif ! if(.not. RT_DOMAIN(did)%initialized) then  
+        endif ! if(.not. RT_DOMAIN(did)%initialized) then
 !--------LPR add 2014-06-24---------------------------
 #endif
-   
+
           if (nlst_rt(did)%GWBASESWCRT .eq. 0 &
                .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
                .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
@@ -272,7 +272,7 @@ CONTAINS
           call mpp_land_bcast_real1(nlst_rt(did)%dt)
 #endif
           sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
-          infxsrt = rt_domain(did)%infxsrt
+          infxsrt = rt_domain(did)%groundwater%input%infxsrt
           if(nlst_rt(did)%rst_typ .eq. 1) then
              STC = rt_domain(did)%STC
              SMC = rt_domain(did)%SMC
@@ -284,7 +284,7 @@ CONTAINS
                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
              endif
           endif
-       endif  ! if(.not. RT_DOMAIN(did)%initialized) then  
+       endif  ! if(.not. RT_DOMAIN(did)%initialized) then
 
      end subroutine hrldas_cpl_HYDRO_ini
 
@@ -294,11 +294,11 @@ CONTAINS
        character(len=48) fileout
 !#ifdef NCEP_WCOSS
        character(len=32) diag_prefix
-       integer len, status 
+       integer len, status
 !#endif
 
        if(open_unit_status == 999) return
-       open_unit_status = 999 
+       open_unit_status = 999
 
 #ifdef NCEP_WCOSS
        CALL GET_ENVIRONMENT_VARIABLE('FORT78',diag_prefix, len, status, .true.)
@@ -326,10 +326,10 @@ CONTAINS
        diag_prefix = 'diag_hydro.'
 #endif
 
-#ifdef MPP_LAND  
-       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),my_id    
+#ifdef MPP_LAND
+       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),my_id
 #else
-       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),0    
+       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),0
 #endif
        open(iunit,file=fileout,form="formatted")
      endsubroutine open_print_mpp

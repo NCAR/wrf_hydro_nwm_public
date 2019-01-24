@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_HYDRO_utils
@@ -31,8 +31,8 @@ module module_HYDRO_utils
 
 
   implicit none
-  logical lr_dist_flag    !land routing distance calculated or not. 
-  
+  logical lr_dist_flag    !land routing distance calculated or not.
+
 contains
 
         integer function get2d_real(var_name,out_buff,ix,jx,fileName)
@@ -67,10 +67,10 @@ contains
           get2d_real =  ivar
       end function get2d_real
 
- 
+
 ! this module create the distance dx, dy and diagnoal for routing
 ! 8 direction as the slop:
-! 1: i,j+1  
+! 1: i,j+1
 ! 2: i+1, j+1
 ! 3: i+1, j
 ! 4: i+1, j-1
@@ -78,10 +78,10 @@ contains
 ! 6: i-1, j-1
 ! 7: i-1, j
 ! 8: i-1, j+1
-   real function get_dy(i,j,v,ix,jx)  
+   real function get_dy(i,j,v,ix,jx)
       ! south north
        integer :: i,j,ix,jx
-       real,dimension(ix,jx,9) :: v 
+       real,dimension(ix,jx,9) :: v
        if( v(i,j,1) .le. 0) then
           get_dy = v(i,j,5)
        else if( v(i,j,5) .le. 0) then
@@ -92,10 +92,10 @@ contains
        return
    end function get_dy
 
-   real function get_dx(i,j,v,ix,jx)   
+   real function get_dx(i,j,v,ix,jx)
       ! east-west
        integer :: i,j, ix,jx
-       real,dimension(ix,jx,9) :: v 
+       real,dimension(ix,jx,9) :: v
        if( v(i,j,3) .le. 0) then
           get_dx = v(i,j,7)
        else if( v(i,j,7) .le. 0) then
@@ -120,11 +120,11 @@ contains
      dlat = lat2 -lat1
      dlon = lon2 -lon1
      a = sin(dlat/2)*sin(dlat/2) + cos(lat1)*cos(lat2)*sin(dlon/2)*sin(dlon/2)
-     b1 = sqrt(a) 
-     b2 = sqrt(1-a)  
+     b1 = sqrt(a)
+     b2 = sqrt(1-a)
      c = 2.0*atan2(b1,b2)
      get_ll_d = R*c
-     return 
+     return
 
    end function get_ll_d
 
@@ -140,7 +140,7 @@ contains
      lon2 = lon2_in * pai/180
      r = 6371*1000
      get_ll_d_tmp = acos(sin(lat1)*sin(lat2)+cos(lat1)*cos(lat2)*cos(lon2-lon1))*r
-     return 
+     return
 
    end function get_ll_d_tmp
 
@@ -155,7 +155,7 @@ contains
       real, dimension(global_rt_nx,global_rt_ny):: latrt, lonrt
       real, dimension(global_rt_nx,global_rt_ny,9):: dist
       if(my_id .eq. IO_id) then
- ! read the lat and lon. 
+ ! read the lat and lon.
          iret =  get2d_real("LONGITUDE",lonrt,global_rt_nx,global_rt_ny,&
                      trim(nlst_rt(did)%GEO_FINEGRID_FLNM ))
          iret =  get2d_real("LATITUDE",latrt,global_rt_nx,global_rt_ny,&
@@ -168,7 +168,7 @@ contains
      end do
 #else
       real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt):: latrt, lonrt
- ! read the lat and lon. 
+ ! read the lat and lon.
          iret =  get2d_real("LONGITUDE",lonrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt,&
                      trim(nlst_rt(did)%GEO_FINEGRID_FLNM ))
          iret =  get2d_real("LATITUDE",latrt,rt_domain(did)%ixrt,rt_domain(did)%jxrt,&
@@ -178,14 +178,14 @@ contains
 
    end subroutine get_rt_dxdy_ll
 
-!  get dx and dy of lat and lon   
+!  get dx and dy of lat and lon
    subroutine get_dist_ll(dist,lat,lon,ix,jx)
       implicit none
-      integer:: ix,jx 
+      integer:: ix,jx
       real, dimension(ix,jx,9):: dist
       real, dimension(ix,jx):: lat, lon
-      integer:: i,j 
-      real x,y 
+      integer:: i,j
+      real x,y
       dist = -1
       do j = 1, jx
         do i = 1, ix
@@ -193,25 +193,25 @@ contains
              get_ll_d(lat(i,j), lat(i,j+1), lon(i,j), lon(i,j+1))
           if(j .lt. jx .and. i .lt. ix) dist(i,j,2) =  &
              get_ll_d(lat(i,j), lat(i+1,j+1), lon(i,j), lon(i+1,j+1))
-          if(i .lt. ix) dist(i,j,3) = &    
+          if(i .lt. ix) dist(i,j,3) = &
              get_ll_d(lat(i,j), lat(i+1,j), lon(i,j), lon(i+1,j))
-          if(j .gt. 1 .and. i .lt. ix) dist(i,j,4) = &    
+          if(j .gt. 1 .and. i .lt. ix) dist(i,j,4) = &
              get_ll_d(lat(i,j), lat(i+1,j-1), lon(i,j), lon(i+1,j-1))
-          if(j .gt. 1 ) dist(i,j,5) = &   
+          if(j .gt. 1 ) dist(i,j,5) = &
              get_ll_d(lat(i,j), lat(i,j-1), lon(i,j), lon(i,j-1))
-          if(j .gt. 1 .and. i .gt. 1) dist(i,j,6) = &   
+          if(j .gt. 1 .and. i .gt. 1) dist(i,j,6) = &
              get_ll_d(lat(i,j), lat(i-1,j-1), lon(i,j), lon(i-1,j-1))
-          if(i .gt. 1) dist(i,j,7) = &   
+          if(i .gt. 1) dist(i,j,7) = &
              get_ll_d(lat(i,j), lat(i-1,j), lon(i,j), lon(i-1,j))
-          if(j .lt. jx .and. i .gt. 1) dist(i,j,8) = &   
+          if(j .lt. jx .and. i .gt. 1) dist(i,j,8) = &
              get_ll_d(lat(i,j), lat(i-1,j+1), lon(i,j), lon(i-1,j+1))
         end do
       end do
-      do j = 1, jx 
+      do j = 1, jx
         do i = 1, ix
             if(j.eq.1) then
                y =  get_ll_d(lat(i,j), lat(i,j+1), lon(i,j), lon(i,j+1))
-            else if(j.eq.jx) then 
+            else if(j.eq.jx) then
                y =  get_ll_d(lat(i,j-1), lat(i,j), lon(i,j-1), lon(i,j))
             else
                y =  get_ll_d(lat(i,j-1), lat(i,j+1), lon(i,j-1), lon(i,j+1))/2.0
@@ -224,7 +224,7 @@ contains
             else
                 x =  get_ll_d(lat(i-1,j), lat(i+1,j), lon(i-1,j), lon(i+1,j))/2.0
             endif
-            dist(i,j,9) = x * y 
+            dist(i,j,9) = x * y
         end do
       end do
 #ifdef HYDRO_D
@@ -235,9 +235,9 @@ contains
 !  get dx and dy of map projected
    subroutine get_dxdy_mp(dist,ix,jx,dx,dy)
       implicit none
-      integer:: ix,jx 
+      integer:: ix,jx
       real :: dx,dy
-      integer:: i,j 
+      integer:: i,j
       real :: v1
       ! out variable
       real, dimension(ix,jx,9)::dist
@@ -245,14 +245,14 @@ contains
       v1 = sqrt(dx*dx + dy*dy)
       do j = 1, jx
         do i = 1, ix
-          if(j .lt. jx) dist(i,j,1) = dy 
-          if(j .lt. jx .and. i .lt. ix) dist(i,j,2) = v1 
-          if(i .lt. ix) dist(i,j,3) = dx 
-          if(j .gt. 1 .and. i .lt. ix) dist(i,j,4) = v1 
-          if(j .gt. 1 ) dist(i,j,5) = dy 
-          if(j .gt. 1 .and. i .gt. 1) dist(i,j,6) = v1 
-          if(i .gt. 1) dist(i,j,7) = dx 
-          if(j .lt. jx .and. i .gt. 1) dist(i,j,8) = v1 
+          if(j .lt. jx) dist(i,j,1) = dy
+          if(j .lt. jx .and. i .lt. ix) dist(i,j,2) = v1
+          if(i .lt. ix) dist(i,j,3) = dx
+          if(j .gt. 1 .and. i .lt. ix) dist(i,j,4) = v1
+          if(j .gt. 1 ) dist(i,j,5) = dy
+          if(j .gt. 1 .and. i .gt. 1) dist(i,j,6) = v1
+          if(i .gt. 1) dist(i,j,7) = dx
+          if(j .lt. jx .and. i .gt. 1) dist(i,j,8) = v1
           dist(i,j,9) = dx * dy
         end do
       end do
@@ -266,16 +266,16 @@ contains
 #ifdef MPP_LAND
      integer ix,jx,ixrt,jxrt, k
      real , dimension(global_nx,global_ny):: latitude,longitude
-     real, dimension(global_nx,global_ny,9):: dist 
+     real, dimension(global_nx,global_ny,9):: dist
      if(nlst_rt(did)%dxrt0 .lt. 0) then
            ! lat and lon grid
-          call write_io_real(rt_domain(did)%lat_lsm,latitude) 
-          call write_io_real(rt_domain(did)%lon_lsm,longitude) 
+          call write_io_real(rt_domain(did)%lat_lsm,latitude)
+          call write_io_real(rt_domain(did)%lon_lsm,longitude)
           if(my_id.eq.IO_id) then
                call get_dist_ll(dist,latitude,longitude,  &
                          global_nx,global_ny)
           endif
-       
+
      else
            ! mapp projected grid.
           if(my_id.eq.IO_id) then
@@ -344,44 +344,62 @@ contains
 !     end do
 !#endif
 !   end subroutine get_dist_crt
-   
-   subroutine get_basn_area(did)
-      implicit none
-      integer :: did, ix,jx, k
-      real :: basns_area(rt_domain(did)%gnumbasns)
+
+    subroutine get_basn_area(did)
+        use module_nhd_data
+        implicit none
+        integer :: did, ix,jx, k
+        real :: basns_area(rt_domain(did)%gnumbasns)
+
 #ifdef MPP_LAND
-      integer :: mask(global_nx, global_ny) 
-      real :: dist_lsm(global_nx, global_ny,9) 
+        integer :: mask(global_nx, global_ny)
+        real :: dist_lsm(global_nx, global_ny,9)
 #else
-      integer :: mask(rt_domain(did)%ix, rt_domain(did)%jx)
-      real :: dist_lsm(rt_domain(did)%ix, rt_domain(did)%jx,9) 
+        integer :: mask(rt_domain(did)%ix, rt_domain(did)%jx)
+        real :: dist_lsm(rt_domain(did)%ix, rt_domain(did)%jx,9)
 #endif
 #ifdef MPP_LAND
-      ix = global_nx
-      jx = global_ny
-      call write_IO_int(rt_domain(did)%GWSUBBASMSK,mask) 
-      do k = 1,  9
-         call write_IO_real(rt_domain(did)%dist_lsm(:,:,k),dist_lsm(:,:,k)) 
-      end do
+        ix = global_nx
+        jx = global_ny
+        call write_IO_int(rt_domain(did)%GWSUBBASMSK,mask)
+        do k = 1,  9
+            call write_IO_real(rt_domain(did)%dist_lsm(:,:,k),dist_lsm(:,:,k))
+        end do
 #else
-      ix = rt_domain(did)%ix
-      jx = rt_domain(did)%jx
-      mask = rt_domain(did)%GWSUBBASMSK
-      dist_lsm = rt_domain(did)%dist_lsm
+        ix = rt_domain(did)%ix
+        jx = rt_domain(did)%jx
+        mask = rt_domain(did)%GWSUBBASMSK
+        dist_lsm = rt_domain(did)%dist_lsm
 #endif
 
 #ifdef MPP_LAND
-      if(my_id .eq. IO_id) then
-         call get_area_g(basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
-      end if
-!      call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%basns_area)
+        if(my_id .eq. IO_id) then
+            call get_area_g(basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+        end if
+        !call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%basns_area)
 
-      call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
-           rt_domain(did)%basnsInd, basns_area,rt_domain(did)%basns_area)
+        select type ( gwd => rt_domain(did)%groundwater )
+            class is (nhd_groundwater_struct)
+                call HYDRO_stop("Nhd_groundwater_object passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+            ! FIXME UNCOMMENT when simple groundwater module is done
+            !class is (simple_groundwater_struct)
+            !    call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
+            !    rt_domain(did)%basnsInd, basns_area,gwd%basin%basin_area)
+            class default
+                call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+
+        end select
 #else
-      call get_area_g(rt_domain(did)%basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+        select type ( gwd => rt_domain(did)%groundwater )
+            class is (nhd_groundwater_struct)
+                call HYDRO_stop("Nhd_groundwater_object passed to get_basn_area(). This groundwater type is not valid for this subroutine")
+            ! FIXME UNCOMMENT when simple groundwater module is done
+            !class is (simple_groundwater_struct)
+            !call get_area_g(gwd%basin%basin_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+            class default
+                call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
 #endif
-   end subroutine get_basn_area
+    end subroutine get_basn_area
 
    subroutine get_area_g(basns_area,GWSUBBASMSK, numbasns,ix,jx,dist)
       integer :: i,j, n, ix,jx, numbasns
@@ -401,7 +419,7 @@ contains
       end do
       do i = 1, numbasns
          if(count(i) .gt. 0) then
-             basns_area(i) = basns_area(i) / count(i) 
+             basns_area(i) = basns_area(i) / count(i)
          end if
       end do
    end subroutine get_area_g
@@ -412,6 +430,6 @@ contains
        call get_area_g(rt_domain(did)%node_area,rt_domain(did)%CH_NETLNK, &
          rt_domain(did)%NLINKS,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%properties%distance_to_neighbor)
    end subroutine get_node_area
-    
+
 
 end module module_HYDRO_utils

@@ -92,8 +92,8 @@ CONTAINS
            call decompose_data_real(SMC(:,:,k),RT_DOMAIN(did)%SMC(:,:,k))
            call decompose_data_real(SH2OX(:,:,k),RT_DOMAIN(did)%SH2OX(:,:,k))
         end do
-        call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
-        call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
+        call decompose_data_real(infxsrt,rt_domain(did)%groundwater%input%infxsrt)
+        call decompose_data_real(soldrain,rt_domain(did)%groundwater%input%soldrain)
 	
 	if(nlst_rt(did)%GWBASESWCRT == 3)&
         call decompose_data_real(qsgw,gw2d(did)%qsgw)
@@ -101,8 +101,8 @@ CONTAINS
         RT_DOMAIN(did)%STC = STC
         RT_DOMAIN(did)%SMC = SMC
         RT_DOMAIN(did)%SH2OX = SH2OX
-        RT_DOMAIN(did)%infxsrt = infxsrt
-        RT_DOMAIN(did)%soldrain = soldrain
+        rt_domain(did)%groundwater%input%infxsrt = infxsrt
+        rt_domain(did)%groundwater%input%soldrain = soldrain
         if(nlst_rt(did)%GWBASESWCRT == 3) &
 	  gw2d(did)%qsgw = qsgw
 #endif
@@ -213,8 +213,8 @@ CONTAINS
 #ifdef MPP_LAND
            call mpp_land_bcast_real1(nlst_rt(did)%dt)
            call write_io_real(rt_domain(did)%overland%control%surface_water_head_lsm,sfcheadrt)
-           call write_io_real(rt_domain(did)%infxsrt, infxsrt)
-!          call write_io_real(rt_domain(did)%soldrain,soldrain)
+           call write_io_real(rt_domain(did)%groundwater%input%infxsrt, infxsrt)
+!          call write_io_real(rt_domain(did)%groundwater%input%soldrain,soldrain)
            if(nlst_rt(did)%rst_typ .eq. 1) then
               do k = 1, kk
                  call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))

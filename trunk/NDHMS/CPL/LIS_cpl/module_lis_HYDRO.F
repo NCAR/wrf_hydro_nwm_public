@@ -207,8 +207,8 @@ module module_lis_HYDRO
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
 !       call land_finish() 
 
-        call lis2HYDRO(RT_DOMAIN(did)%infxsrt(:,:),INFXS1RT,size(INFXS1RT),n,ix,jx)
-        call lis2HYDRO(RT_DOMAIN(did)%soldrain(:,:),SOLDRAIN,size(SOLDRAIN),n,ix,jx)
+        call lis2HYDRO(rt_domain(did)%groundwater%input%infxsrt(:,:),INFXS1RT,size(INFXS1RT),n,ix,jx)
+        call lis2HYDRO(rt_domain(did)%groundwater%input%soldrain(:,:),SOLDRAIN,size(SOLDRAIN),n,ix,jx)
         
     
         call HYDRO_exe(did)

@@ -24,12 +24,12 @@ module overland_routing_properties
       ! replaced with surface_slope_x
       !real, allocatable, dimension(:,:) :: soxrt
       ! terrian slope in the x direction (m/m)
-      real, allocatable, dimension(:,:) :: surface_slope_x 
+      real, pointer, dimension(:,:) :: surface_slope_x => null()
 
       ! replaced with surface_slope_y
       !real, allocatable, dimension(:,:) :: soyrt
       ! terrian slope in the y direction (m/m)
-      real, allocatable, dimension(:,:) :: surface_slope_y      
+      real, pointer, dimension(:,:) :: surface_slope_y => null()      
 
       ! reaplaced with roughness
       !real, allocatable, dimension(:,:) :: ovroughrt
@@ -56,17 +56,17 @@ module overland_routing_properties
       !                      |  
       !                      5
       !
-      real, allocatable, dimension(:,:,:) :: water_surface_slope 
+      real, pointer, dimension(:,:,:) :: water_surface_slope => null()
       
       ! replaced with max_water_surface_slope_index
       !integer, allocatable, dimension(:,:,:) :: so8rt_d
       ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
-      integer, allocatable, dimension(:,:,:) :: max_water_surface_slope_index                                   
+      integer, pointer, dimension(:,:,:) :: max_water_surface_slope_index => null()                                  
 
       ! replaced with distance_to_neighbor
       !real, allocatable, dimension(:,:,:) :: dist
       ! centerpoint distance to each neighbor (m)
-      real, allocatable, dimension(:,:,:) :: distance_to_neighbor
+      real, pointer, dimension(:,:,:) :: distance_to_neighbor => null()
       ! PROPOSED
       ! For a regular grid, distance_to_neighbor should be pretty static, right?
       ! neighbors 1,3,5,7 dist = grid_size
@@ -99,7 +99,7 @@ subroutine overland_properties_init(this,ix,jx)
     this%jxrt = jx
 
     ! allocate x slope
-    if ( .not. allocated(this%surface_slope_x) ) then
+    if ( .not. associated(this%surface_slope_x) ) then
         allocate( this%surface_slope_x(ix,jx) )
         this%surface_slope_x = 0.0
     else
@@ -107,7 +107,7 @@ subroutine overland_properties_init(this,ix,jx)
     end if
 
     ! allocate y slope
-    if ( .not. allocated(this%surface_slope_y) ) then
+    if ( .not. associated(this%surface_slope_y) ) then
         allocate( this%surface_slope_y(ix,jx) )
         this%surface_slope_y = 0.0
     else
@@ -115,7 +115,7 @@ subroutine overland_properties_init(this,ix,jx)
     end if
 
     ! allocate 8 directional slope
-    if ( .not. allocated(this%water_surface_slope) ) then
+    if ( .not. associated(this%water_surface_slope) ) then
         allocate( this%water_surface_slope(ix,jx,8) )
         this%water_surface_slope = -999
     else
@@ -123,7 +123,7 @@ subroutine overland_properties_init(this,ix,jx)
     end if
 
     ! allocate slope index
-    if ( .not. allocated(this%max_water_surface_slope_index) ) then
+    if ( .not. associated(this%max_water_surface_slope_index) ) then
         allocate( this%max_water_surface_slope_index(ix,jx,3) )
         this%max_water_surface_slope_index = 0.0
     else
@@ -147,7 +147,7 @@ subroutine overland_properties_init(this,ix,jx)
     end if
 
     ! allocate dist
-    if ( .not. allocated(this%distance_to_neighbor) ) then
+    if ( .not. associated(this%distance_to_neighbor) ) then
         allocate( this%distance_to_neighbor(ix,jx,9) )
         this%distance_to_neighbor = -999
     else
@@ -169,28 +169,28 @@ subroutine overland_properties_destory(this)
     logical :: allocation_error = .false.
 
     ! deallocate x slope
-    if ( allocated(this%surface_slope_x) ) then
+    if ( associated(this%surface_slope_x) ) then
         deallocate( this%surface_slope_x )
     else
         allocation_error = .true.
     end if
 
     ! allocate y slope
-    if ( allocated(this%surface_slope_y) ) then
+    if ( associated(this%surface_slope_y) ) then
         deallocate( this%surface_slope_y )
     else
         allocation_error = .true.
     end if
 
     ! allocate water surface slope
-    if ( allocated(this%water_surface_slope) ) then
+    if ( associated(this%water_surface_slope) ) then
         deallocate( this%water_surface_slope )
     else
         allocation_error = .true.
     end if
 
     ! allocate slope index
-    if ( allocated(this%max_water_surface_slope_index) ) then
+    if ( associated(this%max_water_surface_slope_index) ) then
         deallocate( this%max_water_surface_slope_index )
     else
         allocation_error = .true.
@@ -211,7 +211,7 @@ subroutine overland_properties_destory(this)
     end if
 
     ! allocate dist
-    if ( allocated(this%distance_to_neighbor) ) then
+    if ( associated(this%distance_to_neighbor) ) then
         deallocate( this%distance_to_neighbor )
     else
         allocation_error = .true.

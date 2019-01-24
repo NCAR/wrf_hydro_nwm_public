@@ -2,26 +2,26 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
-! This subrouting includs the data structure and tools used for NHDPlus network mapping.
+! This module includes the data structure and tools used for NHDPlus network mapping.
 module module_UDMAP
 
-use module_namelist, only: nlst_rt
+!use module_namelist, only: nlst_rt
 #ifdef MPP_LAND
 use module_mpp_land, only: my_id, local_startx_rt, local_starty_rt,  &
          local_endx_rt,local_endy_rt, left_id, right_id, down_id, up_id, mpp_collect_1d_int_mem, &
@@ -65,22 +65,26 @@ integer :: gnpid, lnsize
 integer, allocatable, dimension(:) :: bufi,bufj
 
 contains
-    subroutine UDMP_ini(nlinksl,ixrt,jxrt,rtmask, OVRTSWCRT, SUBRTSWCRT,cell_area)
+    ! adding udmap file and routelink_file to parameter list to remove dependency on the name list module
+    subroutine UDMP_ini(nlinksl,ixrt,jxrt,rtmask, OVRTSWCRT, SUBRTSWCRT,cell_area, udmap_file, routelink_file)
 !This is the driver for user defined mapping file funciton application.
         integer :: ixrt, jxrt, OVRTSWCRT, SUBRTSWCRT, nlinksl
         integer, intent(in), dimension(ixrt,jxrt):: rtmask
         integer :: npid    !local variable.
         real,dimension(:,:) :: cell_area
+        character(len=*), intent(in) :: udmap_file
+        character(len=*), intent(in) :: routelink_file
+
         ter_rt_flag = 0
         if(OVRTSWCRT .eq. 1 .or. SUBRTSWCRT .eq. 1) then
             ter_rt_flag = 1
         endif
-        call readUDMP(ixrt,jxrt,npid,nlinksl)
+        call readUDMP(ixrt,jxrt,npid,nlinksl,udmap_file, routelink_file)
         call UDMP2LOCAL(npid,ixrt,jxrt,rtmask, ter_rt_flag)
         call getUDMP_area(cell_area)
     end subroutine UDMP_ini
 
-    subroutine readUDMP(ixrt,jxrt,npid, nlinksl)
+    subroutine readUDMP(ixrt,jxrt,npid, nlinksl, udmap_file, routelink_file)
         implicit none
         integer :: i,j,Ndata, did, Npid, nlinksl, k, m, kk
         integer,allocatable,dimension(:) :: g1bufid, gbufid, linkid ,bufidflag, &
@@ -89,9 +93,11 @@ contains
         integer, allocatable, dimension(:) :: gbufi,gbufj,bufsize
         real*8 , allocatable, dimension(:) :: gbufw
         integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
-        
+        character(len=*), intent(in) :: udmap_file
+        character(len=*), intent(in) :: routelink_file
+
         did = 1
-        call get_dimension(trim(nlst_rt(did)%UDMAP_FILE), ndata, npid) 
+        call get_dimension(trim(udmap_file), ndata, npid)
 
 #ifdef MPP_LAND
         gnpid = npid
@@ -101,16 +107,16 @@ contains
            allocate (nprocs_map(ndata))
            allocate(gbufi(ndata))
            allocate(gbufj(ndata))
-           call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"i_index",gbufi)
-           call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"j_index",gbufj)
+           call get1d_int(trim(udmap_file),"i_index",gbufi)
+           call get1d_int(trim(udmap_file),"j_index",gbufj)
         endif
            call get_nprocs_map(ixrt,jxrt,gbufi,gbufj,nprocs_map,ndata)
 
         if(my_id .eq. io_id) then
-           lnsizes = 0 
+           lnsizes = 0
            do i =1 , ndata
                if(nprocs_map(i) .gt. 0) then
-                  lnsizes(nprocs_map(i)) = lnsizes(nprocs_map(i)) + 1 
+                  lnsizes(nprocs_map(i)) = lnsizes(nprocs_map(i)) + 1
                endif
            enddo
         endif
@@ -118,8 +124,8 @@ contains
 
      if(my_id .eq. io_id ) then
         kk = 0
-        do i = 1, numprocs 
-           kk = kk + lnsizes(i) 
+        do i = 1, numprocs
+           kk = kk + lnsizes(i)
         end do
      end if
 
@@ -137,14 +143,14 @@ contains
 
       if(lnsizes(my_id+1) .gt. 0)  allocate(bufi(lnsizes(my_id+1) ))
       call pack_decomp_int(gbufi, ndata, nprocs_map, lnsizes, istart,bufi)
-      if(my_id .eq. io_id) then 
+      if(my_id .eq. io_id) then
            if(allocated(gbufi))  deallocate(gbufi)
       endif
 
-      
+
       if(lnsizes(my_id+1) .gt. 0) allocate(bufj(lnsizes(my_id+1) ))
       call pack_decomp_int(gbufj, ndata, nprocs_map, lnsizes, istart,bufj)
-      if(my_id .eq. io_id)  then 
+      if(my_id .eq. io_id)  then
          if(allocated(gbufj)) deallocate(gbufj)
       endif
 
@@ -153,9 +159,9 @@ contains
 !      check  polyid and linkid
         allocate(linkid(nlinksl))
         if(my_id .eq. io_id) then
-            call get1d_int(trim(nlst_rt(did)%route_link_f),"link",linkid)
+            call get1d_int(trim(routelink_file),"link",linkid)
             allocate(gbufid(npid))
-            call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"polyid",gbufid)
+            call get1d_int(trim(udmap_file),"polyid",gbufid)
         endif
 #ifdef MPP_LAND
        if(nlinksl .gt. 0) then
@@ -192,38 +198,38 @@ contains
       if(my_id .eq. io_id) then
           allocate(bufsize(npid))
           allocate(g1bufid(ndata))
-          call get1d_int(trim(nlst_rt(did)%UDMAP_FILE),"overlaps",bufsize)
+          call get1d_int(trim(udmap_file),"overlaps",bufsize)
           g1bufid = -999
           i = 1
           do k = 1, npid
                do j = 1, bufsize(k)
                  g1bufid(i) = gbufid(k)
-                 i = i + 1 
+                 i = i + 1
                end do
           enddo
           if(allocated(bufsize))  deallocate(bufsize)
       endif
 
 
-      if(my_id .eq. io_id) then 
+      if(my_id .eq. io_id) then
            if(allocated(gbufid)) deallocate(gbufid)
       endif
 
 
       if(lnsizes(my_id+1) .gt. 0) allocate(bufid(lnsizes(my_id+1) ))
       call pack_decomp_int(g1bufid, ndata, nprocs_map, lnsizes, istart,bufid)
-      if(my_id .eq. io_id) then 
+      if(my_id .eq. io_id) then
             if(allocated(g1bufid)) deallocate(g1bufid)
       endif
 
 
       if(my_id .eq. io_id) then
           allocate(gbufw(ndata))
-          call get1d_real8(trim(nlst_rt(did)%UDMAP_FILE),"regridweight",gbufw)
+          call get1d_real8(trim(udmap_file),"regridweight",gbufw)
       endif
       if(lnsizes(my_id+1) .gt. 0) allocate(bufw(lnsizes(my_id+1) ))
       call pack_decomp_real8(gbufw, ndata, nprocs_map, lnsizes, istart,bufw)
-      if(my_id .eq. io_id) then 
+      if(my_id .eq. io_id) then
           if(allocated(gbufw))     deallocate(gbufw)
       endif
 
@@ -253,12 +259,12 @@ contains
         if(left_id .ge. 0) then
            starti = local_startx_rt  + 1
         else
-           starti = local_startx_rt 
+           starti = local_startx_rt
         endif
         if(down_id .ge. 0) then
            startj = local_starty_rt  + 1
         else
-           startj = local_starty_rt 
+           startj = local_starty_rt
         endif
         if(right_id .ge. 0) then
            endi = local_startx_rt + ix -2
@@ -278,7 +284,7 @@ contains
 #endif
         gridflag = 0
         lndflag = 0
-      
+
 #ifdef MPP_LAND
         k = 0
         do i = 1, lnsize
@@ -293,7 +299,7 @@ contains
                     lndflag(k) = lndflag(k) + 1
                     if(ter_rt_flag .eq. 1) then
                         if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .ge. 0) then
-                             gridflag(k) = gridflag(k) + 1 
+                             gridflag(k) = gridflag(k) + 1
                         endif
                     endif
                  endif
@@ -308,20 +314,20 @@ contains
 
 ! decide how many user defined links on current domain
         kk = k
-        LNUMRSL = 0 
+        LNUMRSL = 0
         do k = 1, lnsize
            if(lndflag(k) .gt. 0) LNUMRSL = LNUMRSL + 1
         enddo
 
 
-        if(LNUMRSL .gt. 0) then 
+        if(LNUMRSL .gt. 0) then
 
                allocate(LUDRSL(LNUMRSL))
                allocate( basns_area(LNUMRSL) )
         else
-! When MPI is performed,for every subdomain in each process, all the links 
-! are listed and if there is no link in the subdomain then it is calling 
-! cleanBuf (memory cleaning purposes), this used to print a warning 
+! When MPI is performed,for every subdomain in each process, all the links
+! are listed and if there is no link in the subdomain then it is calling
+! cleanBuf (memory cleaning purposes), this used to print a warning
 ! that is not necessary for the user to see it, therefore it is been commented out here
 !               write(6,*) "Warning: no routing links found."
                call cleanBuf()
@@ -329,7 +335,7 @@ contains
         endif
 
         kk = 0
-        do k = 1, lnsize 
+        do k = 1, lnsize
            if( bufid(k) .ge. 0 ) then
              if (bufi(k) .ge. starti .and. bufj(k) .ge. startj .and. &
                     bufi(k) .le. endi   .and. bufj(k) .le. endj ) then
@@ -338,7 +344,7 @@ contains
                  else
                        if(bufid(k) .ne. bufid(k-1)) kk = kk + 1
                  endif
-                 LUDRSL(kk)%myid = bufid(k) 
+                 LUDRSL(kk)%myid = bufid(k)
                  LUDRSL(kk)%ngrids = -999
                  if(gridflag(kk) .gt. 0) then
                    LUDRSL(kk)%ngrids = gridflag(kk)
@@ -350,7 +356,7 @@ contains
                    endif
                  endif
 !  define bucket variables
-                 LUDRSL(kk)%ncell = lndflag(kk) 
+                 LUDRSL(kk)%ncell = lndflag(kk)
                  if(.not. allocated(LUDRSL(kk)%cellweight) ) then
                      allocate( LUDRSL(kk)%cellweight(LUDRSL(kk)%ncell))
                      allocate( LUDRSL(kk)%cell_i(LUDRSL(kk)%ncell))
@@ -366,36 +372,36 @@ contains
         kk = 0
         m  = 1
         c  = 1
-        do i = 1, lnsize 
-               if( (bufid(i) .ge. 0)  ) then 
-                   if(bufi(i) .ge. starti .and. bufj(i) .ge. startj .and. &
-                      bufi(i) .le. endi   .and. bufj(i) .le. endj) then
-                      if(kk .eq. 0) then
-                         kk = 1
-                      else
-                         if(bufid(i) .ne. bufid(i-1)) then 
-                             kk = kk + 1
-                             m  = 1
-                             c  = 1
-                         endif
-                      endif
+        do i = 1, lnsize
+            if( (bufid(i) .ge. 0)  ) then
+                if(bufi(i) .ge. starti .and. bufj(i) .ge. startj .and. &
+                        bufi(i) .le. endi   .and. bufj(i) .le. endj) then
+                    if(kk .eq. 0) then
+                        kk = 1
+                    else
+                        if(bufid(i) .ne. bufid(i-1)) then
+                            kk = kk + 1
+                            m  = 1
+                            c  = 1
+                        endif
+                    endif
 
-                      if(LUDRSL(kk)%ngrids .gt. 0) then 
-                          if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .ge. 0) then
-                             LUDRSL(kk)%grid_i(m) = bufi(i) - local_startx_rt+1
-                             LUDRSL(kk)%grid_j(m) = bufj(i) - local_starty_rt+1
-                             LUDRSL(kk)%weight(m) = bufw(i) 
-                             m  = m  + 1
-                          endif
-                      endif
-!! begin define bucket variables
-                          LUDRSL(kk)%cell_i(c) = bufi(i) - local_startx_rt+1
-                          LUDRSL(kk)%cell_j(c) = bufj(i) - local_starty_rt+1
-                          LUDRSL(kk)%cellWeight(c) = bufw(i)
-                          c  = c  + 1
-!! end define bucket variables 
-                   endif
+                    if(LUDRSL(kk)%ngrids .gt. 0) then
+                        if(rtmask(bufi(i)-local_startx_rt+1,bufj(i)-local_starty_rt+1) .ge. 0) then
+                            LUDRSL(kk)%grid_i(m) = bufi(i) - local_startx_rt+1
+                            LUDRSL(kk)%grid_j(m) = bufj(i) - local_starty_rt+1
+                            LUDRSL(kk)%weight(m) = bufw(i)
+                            m  = m  + 1
+                        endif
+                    endif
+                    !! begin define bucket variables
+                    LUDRSL(kk)%cell_i(c) = bufi(i) - local_startx_rt+1
+                    LUDRSL(kk)%cell_j(c) = bufj(i) - local_starty_rt+1
+                    LUDRSL(kk)%cellWeight(c) = bufw(i)
+                    c  = c  + 1
+                    !! end define bucket variables
                 endif
+            endif
         end do
 
         call cleanBuf()
@@ -403,7 +409,7 @@ contains
 #else
         call hydro_stop("FATAL ERROR in UDMP: Sequential not work.")
 #endif
-   
+
     end subroutine UDMP2LOCAL
 
     subroutine cleanBuf()
@@ -426,22 +432,22 @@ contains
                        trim(fileName)
                   call hydro_stop("In get_dimension() - Problem opening mapping file.")
                endif
-        
+
                iret = nf_inq_dimid(ncid, "polyid", dimid)
-        
+
                if (iret /= 0) then
                   print*, "nf_inq_dimid:  polyid"
                   call hydro_stop("In get_dimension() - nf_inq_dimid:  polyid")
                endif
-           
+
                iret = nf_inq_dimlen(ncid, dimid, npid)
-           
+
                iret = nf_inq_dimid(ncid, "data", dimid)
                if (iret /= 0) then
                           print*, "nf_inq_dimid:  data"
                           call hydro_stop("In get_file_dimension() - nf_inq_dimid:  data")
                endif
-        
+
                iret = nf_inq_dimlen(ncid, dimid, ndata)
                iret = nf_close(ncid)
 #ifdef MPP_LAND
@@ -505,22 +511,22 @@ contains
          do k  = 1, LNUMRSL
             if(LUDRSL(k)%ngrids .gt. 0) then
                 do m = 1, LUDRSL(k)%ngrids
-                    LUDRSL(k)%nodeArea(m) = cell_area(LUDRSL(k)%grid_i(m),LUDRSL(k)%grid_j(m)) 
+                    LUDRSL(k)%nodeArea(m) = cell_area(LUDRSL(k)%grid_i(m),LUDRSL(k)%grid_j(m))
                 enddo
             endif
                 do m = 1, LUDRSL(k)%ncell
-                    LUDRSL(k)%cellArea(m) = cell_area(LUDRSL(k)%cell_i(m),LUDRSL(k)%cell_j(m)) 
+                    LUDRSL(k)%cellArea(m) = cell_area(LUDRSL(k)%cell_i(m),LUDRSL(k)%cell_j(m))
                 enddo
-           
-            basns_area(k) = 0 
+
+            basns_area(k) = 0
             do m = 1, LUDRSL(k)%ncell
                     basns_area(k) = basns_area(k) + &
-                          cell_area(LUDRSL(k)%cell_i(m),LUDRSL(k)%cell_j(m)) * LUDRSL(k)%cellWeight(m) 
+                          cell_area(LUDRSL(k)%cell_i(m),LUDRSL(k)%cell_j(m)) * LUDRSL(k)%cellWeight(m)
             enddo
-            
+
          end do
       end subroutine getUDMP_area
-    
+
       subroutine get_basn_area_nhd(inOut)
          implicit none
          real, dimension(:) :: inOut
@@ -531,12 +537,12 @@ contains
          inOut = basns_area
 #endif
 
-      
+
       end subroutine get_basn_area_nhd
 
       subroutine get_nprocs_map(ix,jx,bufi,bufj,nprocs_map,ndata)
           implicit none
-          integer,dimension(:)  :: bufi, bufj,nprocs_map 
+          integer,dimension(:)  :: bufi, bufj,nprocs_map
 !          integer, allocatable, dimension(:) ::  lbufi,lbufj, lmap
           integer  :: ndata, lsize, ix,jx
           integer, dimension(ix,jx) :: mask
@@ -544,12 +550,12 @@ contains
 
         integer :: i,j,k, starti,startj, endi,endj, ii,jj, npid, kk
 #ifdef MPP_LAND
-           
+
           mask = my_id + 1
           if(my_id .eq. IO_id) allocate(gmask(global_rt_nx, global_rt_ny))
 
           call MPP_LAND_COM_INTEGER(mask,IX,JX,99)
-          call write_IO_rt_int(mask, gmask) 
+          call write_IO_rt_int(mask, gmask)
 
           if(my_id .eq. io_id ) then
              nprocs_map = -999

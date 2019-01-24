@@ -127,7 +127,7 @@ CONTAINS
             r1p => clm3%g%l%c%cwf%qflx_surf
             call c2g_1d(begc, endc, begl, endl, begg, endg, r1p(begc:endc), clm_g1d, &
                 'urbanf', 'unity')
-            call clm2ND2d(clm_g1d,nn,RT_DOMAIN(did)%INFXSRT,ix,jx)
+            call clm2ND2d(clm_g1d,nn,rt_domain(did)%groundwater%input%infxsrt,ix,jx)
 
 #ifdef HYDRO_D
             write(6,*) "finish qflx_surf"
@@ -137,7 +137,7 @@ CONTAINS
             r1p => clm3%g%l%c%cwf%qflx_drain  
             call c2g_1d(begc, endc, begl, endl, begg, endg, r1p(begc:endc), clm_g1d, &
                 'urbanf', 'unity')
-            call clm2ND2d(clm_g1d,nn,RT_DOMAIN(did)%SOLDRAIN,ix,jx)
+            call clm2ND2d(clm_g1d,nn,rt_domain(did)%groundwater%input%soldrain,ix,jx)
 
 
 #ifdef HYDRO_D
@@ -147,7 +147,7 @@ CONTAINS
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                      ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
+                      ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
                       RT_DOMAIN(did)%STC)
 
 #ifdef HYDRO_D
@@ -158,7 +158,7 @@ CONTAINS
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%SMC)
 #ifdef HYDRO_D
             write(6,*) "finish h2osoi_vol "
@@ -169,7 +169,7 @@ CONTAINS
             call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d, nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX)
             RT_DOMAIN(did)%SH2OX =  RT_DOMAIN(did)%SH2OX /1000.
  #ifdef HYDRO_D  
@@ -192,7 +192,7 @@ CONTAINS
 
             r2p =>clm3%g%l%c%ces%t_soisno 
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%STC)
             call g2c_2d(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity')
@@ -202,7 +202,7 @@ CONTAINS
 
             r2p => clm3%g%l%c%cws%h2osoi_vol  
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)), &
+                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)), &
                      RT_DOMAIN(did)%SMC)
             call g2c_2d_tmp(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity', 0.01, 10.)
@@ -211,7 +211,7 @@ CONTAINS
 
             r2p => clm3%g%l%c%cws%h2osoi_liq  
             call Toclm3d(clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(RT_DOMAIN(did)%ZSOIL(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX*1000)
             call g2c_2d_tmp(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity',0.01, 10.)
