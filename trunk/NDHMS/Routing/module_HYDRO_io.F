@@ -5907,6 +5907,7 @@ end subroutine mpp_output_chrt
          if(rt_domain(did)%nlakes .gt. 0) then
             iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
+            iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid) 
          endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
@@ -6114,6 +6115,12 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
            )
 
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
+ 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
           call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
@@ -6221,6 +6228,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%cvol
                    write(iunit,ERR=101) rt_domain(did)%resht
                    write(iunit,ERR=101) rt_domain(did)%qlakeo
+                   write(iunit,ERR=101) rt_domain(did)%qlakei
                    write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
@@ -6320,6 +6328,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%cvol
                    read(iunit,ERR=101) rt_domain(did)%resht
                    read(iunit,ERR=101) rt_domain(did)%qlakeo
+                   read(iunit,ERR=101) rt_domain(did)%qlakei
                    read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
                 if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
@@ -6833,6 +6842,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       if(rt_domain(did)%NLAKES .gt. 0) then
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
       endif
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &

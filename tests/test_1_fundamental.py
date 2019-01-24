@@ -19,6 +19,18 @@ from utilities import wait_job, print_diffs
 # Get domain, reference, candidate, and optional output directory from command line arguments
 # Setup a domain
 
+#List variabls to ignore in tests, primarily accumulation variables
+EXCLUDE_VARS = ['ACMELT',
+                'ACSNOW',
+                'SFCRUNOFF',
+                'UDRUNOFF',
+                'ACCPRCP',
+                'ACCECAN',
+                'ACCEDIR',
+                'ACCETRAN',
+                'qstrmvolrt',
+                'reference_time',
+                'lake_inflort']
 # #################################
 # Define tests
 
@@ -193,7 +205,8 @@ def test_ncores_candidate(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_ncores.output,
-                                                       candidate_sim_expected.output)
+                                                       candidate_sim_expected.output,
+                                                       exclude_vars=EXCLUDE_VARS)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -241,6 +254,9 @@ def test_perfrestart_candidate(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
+            key1 = 'hydro_nlist'
+            key2 = 'restart_file'
+            restart_job._hydro_namelist[key1][key2] = str(candidate_hydro_restart_file)
 
     # LSM: Use actual time listed in meta data, not filename or positional list index
     for restart_file in candidate_sim_expected.output.restart_lsm:
@@ -250,6 +266,9 @@ def test_perfrestart_candidate(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_lsm_restart_file = pathlib.Path(restart_file.name)
             candidate_lsm_restart_file.symlink_to(restart_file)
+            key1 = 'noahlsm_offline'
+            key2 = 'restart_filename_requested'
+            restart_job._hrldas_namelist[key1][key2] = str(candidate_lsm_restart_file)
 
     # Nudging: Use actual time listed in meta data, not filename or positional list index
     if candidate_sim_expected.output.restart_nudging is not None:
@@ -259,6 +278,9 @@ def test_perfrestart_candidate(output_dir):
             if restart_time == restart_job.model_start_time:
                 candidate_nudging_restart_file = pathlib.Path(restart_file.name)
                 candidate_nudging_restart_file.symlink_to(restart_file)
+                key1 = 'nudging_nlist'
+                key2 = 'nudginglastobsfile'
+                restart_job._hydro_namelist[key1][key2] = str(candidate_nudging_restart_file)
 
     # Compose and run
     # catch warnings related to missing start and end job times
@@ -279,7 +301,8 @@ def test_perfrestart_candidate(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_restart.output,
-                                                       candidate_sim_expected.output)
+                                                       candidate_sim_expected.output,
+                                                       exclude_vars=EXCLUDE_VARS)
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())

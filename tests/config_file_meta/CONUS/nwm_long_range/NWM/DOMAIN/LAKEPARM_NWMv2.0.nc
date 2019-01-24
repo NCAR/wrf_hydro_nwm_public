@@ -1,19 +1,15 @@
-md5sum: a5fe29ae7dfccd1fc7107a2ea0a6970b  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/LAKEPARM_NWMv2.0.nc
+md5sum: 1a89ca1c404670a62221c879ccf752bb  /glade/work/jamesmcc/domains/private/CONUS/NWM/DOMAIN/LAKEPARM_NWMv2.0.nc
 ncdump -h: netcdf LAKEPARM_NWMv2.0 {
 dimensions:
-	feature_id = 5461 ;
+	feature_id = 5459 ;
 variables:
-	double WeirL(feature_id) ;
-		WeirL:coordinates = "lat lon" ;
-		WeirL:grid_mapping = "crs" ;
-		WeirL:long_name = "Weir length (m)" ;
 	int lake_id(feature_id) ;
 		lake_id:long_name = "Lake ID" ;
 		lake_id:cf_role = "timeseries_id" ;
 		lake_id:coordinates = "lat lon" ;
 		lake_id:grid_mapping = "crs" ;
 	double LkArea(feature_id) ;
-		LkArea:long_name = "Gridded lake area (sq. km)" ;
+		LkArea:long_name = "Lake area (sq. km)" ;
 		LkArea:coordinates = "lat lon" ;
 		LkArea:grid_mapping = "crs" ;
 	double LkMxE(feature_id) ;
@@ -24,6 +20,10 @@ variables:
 		WeirC:long_name = "Weir coefficient" ;
 		WeirC:coordinates = "lat lon" ;
 		WeirC:grid_mapping = "crs" ;
+	double WeirL(feature_id) ;
+		WeirL:long_name = "Weir length (m)" ;
+		WeirL:coordinates = "lat lon" ;
+		WeirL:grid_mapping = "crs" ;
 	double OrificeC(feature_id) ;
 		OrificeC:long_name = "Orifice coefficient" ;
 		OrificeC:coordinates = "lat lon" ;
@@ -78,8 +78,5 @@ variables:
 // global attributes:
 		:Conventions = "CF-1.5" ;
 		:featureType = "timeSeries" ;
-		:history = "Tue Aug  7 10:00:32 2018: ncap2 -s WeirL=WeirL*0+10 LAKEPARM_20180227_v2_lakes_lowres_params.nc LAKEPARM_20180227_v2_lakes_lowres_params_WeirL_10.nc\n",
-			"Created Tue Feb 27 15:18:40 2018" ;
-		:NCO = "4.6.9" ;
-		:nco_openmp_thread_number = 1 ;
+		:history = "Created Mon Nov 05 10:12:48 2018" ;
 }

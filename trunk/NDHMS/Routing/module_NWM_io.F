@@ -1723,8 +1723,9 @@ subroutine output_rt_NWM(domainId,iGrid)
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    integer :: numLev ! This will be 4 for soil moisture, and 1 for all other variables.
    character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
+   real :: scaleFactorReciprocal
+! Establish macro variables to hlep guide this subroutine. 
 
-! Establish macro variables to hlep guide this subroutine.
 #ifdef MPP_LAND
    mppFlag = 1
 #else
@@ -2089,8 +2090,11 @@ subroutine output_rt_NWM(domainId,iGrid)
          numLev = 1
       endif
 
-      if(fileMeta%outFlag(iTmp2) .eq. 1) then
-         !Allocate memory necessary
+      scaleFactorReciprocal = 1/fileMeta%scaleFactor(iTmp2)
+
+      if(fileMeta%outFlag(iTmp2) .eq. 1) then   
+         !Allocate memory necessary 
+
          if(myId .eq. 0) then
             allocate(globalOutComp(RT_DOMAIN(domainId)%g_ixrt,numLev,RT_DOMAIN(domainId)%g_jxrt))
             allocate(globalOutReal(RT_DOMAIN(domainId)%g_ixrt,numLev,RT_DOMAIN(domainId)%g_jxrt))
@@ -2155,7 +2159,7 @@ subroutine output_rt_NWM(domainId,iGrid)
                         localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
                         localRealTmp(iTmp,jTmp) = fileMeta%fillReal(iTmp2)
                      else
-                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))/fileMeta%scaleFactor(iTmp2))
+                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))*scaleFactorReciprocal)
                         localRealTmp(iTmp,jTmp) = varRealTmp
                      endif
                   endif
