@@ -29,10 +29,12 @@ program Noah_hrldas_driver
    use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
 #endif
 
+   use orchestrator_base
 
    implicit none
    integer :: ITIME, NTIME
 
+   call orchestrator%init()
 
    call land_driver_ini(NTIME)
 #ifdef WRF_HYDRO   

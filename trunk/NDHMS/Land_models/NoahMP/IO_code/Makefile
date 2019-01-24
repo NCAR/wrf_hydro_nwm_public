@@ -25,7 +25,7 @@ module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F ../../../HYDRO_drv/
 	-I../phys -I../Utility_routines -I../../../mod $(NETCDFMOD) $(*).f90
 	@echo ""
 
-main_hrldas_driver.o: main_hrldas_driver.F
+main_hrldas_driver.o: ../../../OrchestratorLayer/orchestrator.o main_hrldas_driver.F
 	@echo ""
 	$(RM) $(*).f90
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90

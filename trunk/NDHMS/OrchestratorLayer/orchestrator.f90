@@ -2,9 +2,9 @@ module orchestrator_base
   use io_manager_base
   implicit none
 
-  interface orchestrator_
-     procedure orchestrator_init
-  end interface orchestrator_
+  ! interface orchestrator_
+  !    procedure orchestrator_init
+  ! end interface orchestrator_
   
   type orchestrator_
      
@@ -16,23 +16,25 @@ module orchestrator_base
      !class(SpatialObject_) :: spatial_object
      
    contains
+     
+     procedure, pass(self) :: init => orchestrator_init
 
   end type orchestrator_
 
-  type(orchestrator_) :: orchestrator
+  type(orchestrator_), save :: orchestrator
   
 contains
 
-!We may want routines to access the various components
+  !We may want routines to access the various components
 
-  type(orchestrator_) function orchestrator_init()
-    
+  subroutine orchestrator_init(self)
+    class (orchestrator_) :: self   
     write(*,*) 'In orchestrator constructor'
     
     ! Read configuration and decide how to assemble the various components
     ! Assuming IO_Manager_serial_ selected
-    orchestrator_init%IO_manager = IOManager_()
+    self%IO_manager = IOManager_()
     
-  end function orchestrator_init
+  end subroutine orchestrator_init
 
 end module orchestrator_base
