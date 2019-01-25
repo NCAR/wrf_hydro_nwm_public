@@ -226,8 +226,8 @@ contains
                qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit   (m^3/s)
                
                if (bucket_loss .eq. 1) then
-                    qout_gwsubbas(bas) = qout_gwsubbas(bas)*(1.-loss_fraction(bas))
                     qloss_gwsubbas(bas) = qout_gwsubbas(bas)*loss_fraction(bas)
+                    qout_gwsubbas(bas) = qout_gwsubbas(bas)-qloss_gwsubbas(bas) 
                endif
 
           elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
@@ -243,10 +243,10 @@ contains
 !Adjust level of GW depth in bucket...
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-          z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)
-
           if (bucket_loss .eq. 1) then
              z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas)+qloss_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)	
+          else
+             z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)
           endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
