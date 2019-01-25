@@ -9250,7 +9250,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           endif
           iret = nf_get_var_real(ncid, varid, tmpExp)
 
-          if(nlst)rt(did)%bucket_loss .eq. 1) then
+          if(nlst_rt(did)%bucket_loss .eq. 1) then
                iret = nf_inq_varid(ncid,"Loss",  varid)
                if(iret /= 0) then
                     print * , "could not find Loss from ", infile
