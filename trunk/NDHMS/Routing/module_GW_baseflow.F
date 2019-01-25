@@ -226,7 +226,7 @@ contains
                qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit   (m^3/s)
                
                if (bucket_loss .eq. 1) then
-                    qout_gwsubbas(bas) = qout_gwsubbas(bas)*(1-loss_fraction(bas))
+                    qout_gwsubbas(bas) = qout_gwsubbas(bas)*(1.-loss_fraction(bas))
                     qloss_gwsubbas(bas) = qout_gwsubbas(bas)*loss_fraction(bas)
                endif
 

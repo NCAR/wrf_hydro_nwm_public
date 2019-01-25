@@ -9193,17 +9193,19 @@ end function get_netcdf_dim
 
 ! read the GWBUCKET Parm for NHDPlus
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
-                z_max, z_init, LINKID, nhdBuckMask)
+                gw_buck_loss, z_max, z_init, LINKID, nhdBuckMask)
     implicit none
     integer :: numbasns
     integer, dimension(numbasns) :: LINKID
-    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max, z_init
+    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
+    real, dimension(numbasns) :: z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
     character(len=*) :: infile
 !   define temp array
     integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
     integer, allocatable, dimension(:) :: tmpLinkid
-    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpz_max, tmpz_init
+    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
+    real, allocatable, dimension(:) :: tmpz_max, tmpz_init
     integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
 
 !   get gnid
@@ -9227,6 +9229,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     allocate(tmpLinkid(gnid))
     allocate(tmpCoeff(gnid))
     allocate(tmpExp(gnid))
+    allocate(tmpLoss(gnid))
     allocate(tmpz_max(gnid))
     allocate(tmpz_init(gnid))
 #ifdef MPP_LAND
@@ -9246,6 +9249,15 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf_get_var_real(ncid, varid, tmpExp)
+
+          if(nlst)rt(did)%bucket_loss .eq. 1) then
+               iret = nf_inq_varid(ncid,"Loss",  varid)
+               if(iret /= 0) then
+                    print * , "could not find Loss from ", infile
+                    call hydro_stop("Failed to read BUCKETPARM")
+               endif
+               iret = nf_get_var_real(ncid, varid, tmpLoss)
+          endif
 
           iret = nf_inq_varid(ncid,"Zmax",  varid)
           if(iret /= 0) then
@@ -9272,6 +9284,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        if(gnid .gt. 0) then
           call mpp_land_bcast_real_1d(tmpCoeff)
           call mpp_land_bcast_real_1d(tmpExp)
+          call mpp_land_bcast_real_1d(tmpLoss)
           call mpp_land_bcast_real_1d(tmpz_max)
           call mpp_land_bcast_real_1d(tmpz_init)
           call mpp_land_bcast_int(gnid ,tmpLinkid)
@@ -9289,6 +9302,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 if(LINKID(k) .eq. tmpLinkid(i)) then
                    gw_buck_coeff(k) = tmpCoeff(i)
                    gw_buck_exp(k) = tmpExp(i)
+                   gw_buck_loss(k) = tmpLoss(i)
                    z_max(k) = tmpz_max(i)
                    z_init(k) = tmpz_init(i)
                    nhdBuckMask(k) = 1
@@ -9299,6 +9313,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
+    if(allocated(tmpLoss)) deallocate(tmpLoss)
     if(allocated(tmpz_max)) deallocate(tmpz_max)
     if(allocated(tmpz_init)) deallocate(tmpz_init)
     if(allocated(tmpLinkid)) deallocate(tmpLinkid)

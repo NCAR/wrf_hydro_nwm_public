@@ -796,7 +796,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               RT_DOMAIN(did)%numbasns,                                      &
 #endif
               rt_domain(did)%basns_area,                                    &
-              rt_domain(did)%nhdBuckMask,   nlst_rt(did)%bucket_loss        &
+              rt_domain(did)%nhdBuckMask,   nlst_rt(did)%bucket_loss,       &
               nlst_rt(did)%channelBucket_only )
 
        else
