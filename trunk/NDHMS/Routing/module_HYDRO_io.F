@@ -9284,7 +9284,9 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        if(gnid .gt. 0) then
           call mpp_land_bcast_real_1d(tmpCoeff)
           call mpp_land_bcast_real_1d(tmpExp)
-          call mpp_land_bcast_real_1d(tmpLoss)
+          if(nlst_rt(did)%bucket_loss .eq. 1) then
+             call mpp_land_bcast_real_1d(tmpLoss)
+          endif
           call mpp_land_bcast_real_1d(tmpz_max)
           call mpp_land_bcast_real_1d(tmpz_init)
           call mpp_land_bcast_int(gnid ,tmpLinkid)
@@ -9302,7 +9304,9 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 if(LINKID(k) .eq. tmpLinkid(i)) then
                    gw_buck_coeff(k) = tmpCoeff(i)
                    gw_buck_exp(k) = tmpExp(i)
-                   gw_buck_loss(k) = tmpLoss(i)
+                   if(nlst_rt(did)%bucket_loss .eq. 1) then
+                      gw_buck_loss(k) = tmpLoss(i)
+                   endif
                    z_max(k) = tmpz_max(i)
                    z_init(k) = tmpz_init(i)
                    nhdBuckMask(k) = 1
