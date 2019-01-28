@@ -65,7 +65,9 @@
     },
 
     "nwm_ana": {
-        "hydro_nlist": {},
+        "hydro_nlist": {
+	    "machine_learning": true	
+	},
         "nudging_nlist": {}
     },
 
@@ -76,7 +78,8 @@
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
-            "subrtswcrt": 0
+            "subrtswcrt": 0,
+	    "machine_learning": true
         },
         "nudging_nlist": {
             "maxagepairsbiaspersist": 24,
@@ -97,7 +100,8 @@
     "nwm_channel-only": {
         "hydro_nlist": {
             "output_gw": 0,
-            "lsmout_domain": 0
+            "lsmout_domain": 0,
+	    "machine_learning": true
         },
         "nudging_nlist": {}
     },
