@@ -55,15 +55,6 @@ def run_tests(config: str,
     module_cmd = ''
     if 'cheyenne' in hostname:
         module_cmd = 'echo; echo "Using the following modules for testing:" ; module list; echo;'
-        if scheduler:
-            # reset ncores and nnodes defaults to scheduler defaults
-            if ncores == 2:
-                ncores = 216
-            if nnodes < 6:
-                warnings.warn('CONUS testing should run on a minimum of 6 nodes, setting nnodes '
-                              'to 6')
-                nnodes = 6
-
 
     # HTML report
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
