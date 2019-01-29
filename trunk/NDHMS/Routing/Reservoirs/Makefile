@@ -46,6 +46,10 @@ mod:
 
 	cp *.mod ../../mod
 
+
+	#Build the modules
+	make -C io
+
 #test:
 #	$(COMPILER90) $(F90FLAGS) $(MODFLAG) reservoir_tests.F
 #	$(COMPILER90) $(F90FLAGS) $(MODFLAG) hydro_stop.F
@@ -81,3 +85,5 @@ clean:
 	rm -f *.o
 	rm -f *.mod
 	#rm -f reservoir_tests
+
+	make -C io clean
