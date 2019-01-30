@@ -17,6 +17,12 @@ module module_reservoir_io
 contains
 
 
+    subroutine reservoir_write_to_restart_file
+
+
+    end subroutine reservoir_write_to_restart_file
+
+
 
 
 
