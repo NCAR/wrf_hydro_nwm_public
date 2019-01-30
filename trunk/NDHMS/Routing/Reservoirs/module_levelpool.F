@@ -38,6 +38,9 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
+        procedure :: write_restart => write_levelpool_restart
+        procedure :: read_restart => read_levelpool_restart
+
     end type levelpool_struct
 
 contains
@@ -163,6 +166,17 @@ contains
         water_elevation = reservoir_data%state%water_elevation
 
     end subroutine run_levelpool_release
+
+    subroutine write_levelpool_restart(reservoir_data)
+        implicit none
+        class(levelpool_struct), intent(inout) :: reservoir_data
+    end subroutine write_levelpool_restart
+
+    subroutine read_levelpool_restart(reservoir_data)
+        implicit none
+        class(levelpool_struct), intent(inout) :: reservoir_data
+    end subroutine read_levelpool_restart
+
 
     ! ------------------------------------------------
     !   SUBROUTINE LEVELPOOL

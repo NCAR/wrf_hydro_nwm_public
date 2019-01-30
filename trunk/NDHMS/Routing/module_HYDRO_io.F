@@ -34,6 +34,8 @@ module module_HYDRO_io
    use netcdf
 
    use module_reservoir_io
+   use module_levelpool
+
 
    implicit none
 #include <netcdf.inc>
@@ -5784,6 +5786,7 @@ end subroutine mpp_output_chrt
              dimid_links, dimid_basns, dimid_soil, dimid_lakes
     integer :: iret
 
+    integer :: lake_index, NLAKES_total
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
@@ -6170,6 +6173,26 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
         if(IO_id.eq.my_id) &
 #endif
         iret = nf_close(ncid)
+
+
+        NLAKES_total = rt_domain(did)%NLAKES
+
+        ! For loop to cycle array of pointers to reservoirs
+        do lake_index = 1, NLAKES_total
+
+          ! If q_type equals 1 then go to Level Pool, if 2 then go to
+          ! Machine Learning, and if 3 then go to Persistence.
+          if (rt_domain(did)%q_type(lake_index) == 1.0) then
+
+            ! Dynamically inspects for level pool type reservoir
+            select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+              type is (levelpool_struct)
+
+                call lp%write_restart()
+
+            end select
+          end if
+        end do
 
         return
         end subroutine RESTART_OUT_nc

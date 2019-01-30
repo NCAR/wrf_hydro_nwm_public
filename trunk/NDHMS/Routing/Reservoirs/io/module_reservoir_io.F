@@ -82,14 +82,14 @@ contains
 
        ! Initialize MPI, learn local rank and total number of processors.
        !call MPI_Init(ierr)
-       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
-       call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)
+       !call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+       !call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)
 
 
-        print *, 'p'
-        print *, p
-        print *, 'my_rank'
-        print *, my_rank
+        !print *, 'p'
+        !print *, p
+        !print *, 'my_rank'
+        !print *, my_rank
 
 
 !if (my_rank /= 0) then
@@ -99,8 +99,8 @@ contains
 
         !out_file = "reservoir_rst."//old_date(1:16)//did_string
 
-        out_file = "reservoir_rst."//old_date(1:16)//"_DOMAIN1"
-
+        !out_file = "reservoir_rst."//old_date(1:16)//"_DOMAIN1"
+        out_file = "fs.test.nc"
 
         print *, out_file
 
@@ -150,7 +150,7 @@ print *, MPI_INFO_NULL
 
 
 
-        call check(nf90_create(trim(out_file), NF90_NETCDF4, ncid) )
+        call check(nf90_create(trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL) )
 
 
 
@@ -433,13 +433,14 @@ print *, MPI_INFO_NULL
 
 !if (lake_id == 3) then
 
-!works
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 !        call w_rst_crt_nc1_lake(ncid, 1, outflow, lake_id, "outflows", &
 !               lake_index)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
-
+!w_rst_crt_nc1_lake(ncid,n,inVar,varName,nodelist)!works
+call check(nf90_put_var(ncid, varid, outflow, (/lake_id/), (/1/)))
+!           nf90_put_var(ncid, varid, inVar, (/array_index/), (/1/)
 !end if
 !!!!!!!!!!!!!!1
      !call w_rst_crt_nc1_lake(ncid, nlakes, outflows, 1, "outflows", &

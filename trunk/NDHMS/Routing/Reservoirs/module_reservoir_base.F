@@ -80,6 +80,9 @@ module module_reservoir_base
         ! a sub-type of reservoir.
         procedure (run_release_interface), deferred :: run_release
 
+        procedure (write_restart_interface), deferred :: write_restart
+        procedure (read_restart_interface), deferred :: read_restart
+
     end type
 
     ! Defines a pointer to a reservoir base struct
@@ -103,6 +106,19 @@ module module_reservoir_base
             real, intent(in)    :: routing_period           ! seconds
 
         end subroutine
+
+        subroutine write_restart_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine write_restart_interface
+
+        subroutine read_restart_interface(reservoir_data)
+            import reservoir_base_struct
+            class(reservoir_base_struct), intent(inout) :: reservoir_data
+
+        end subroutine read_restart_interface
+
     end interface
 
 contains
