@@ -23,7 +23,35 @@ contains
     end subroutine reservoir_write_to_restart_file
 
 
+    subroutine create_reservoir_restart_file(current_date, since_date, DTCT, &
+                        number_of_lakes, dimid_lakes, ncid)
 
+        character(len=*), intent(in)   :: current_date, since_date
+        real, intent(in)               :: DTCT
+        integer, intent(in)            :: number_of_lakes
+        integer, intent(out)           :: dimid_lakes, ncid
+
+        character(len=32) :: lake_id_string
+        character(len=64) :: reservoir_name
+        character(len=64) :: out_file
+        integer           :: iret
+
+        ! Construct file name based upon the current date/time
+        out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN1"
+
+        ! Create restart file allowing parallel writes
+        call check(nf90_create( trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL))
+
+        ! Create lake dimension
+        call check(nf90_def_dim(ncid, "lakes", number_of_lakes, dimid_lakes))
+
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", current_date))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", since_date))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "DTCT", DTCT))
+
+        call check(nf90_enddef(ncid))
+
+    end subroutine create_reservoir_restart_file
 
 
 
@@ -587,13 +615,13 @@ call check(nf90_put_var(ncid, varid, outflow, (/lake_id/), (/1/)))
     end subroutine reservoir_read_from_restart_file2
 
 
-   !subroutine check(status)
-   !  integer, intent ( in) :: status
+   subroutine check(status)
+     integer, intent ( in) :: status
 
-   !  if(status /= nf90_noerr) then
-   !    print *, trim(nf90_strerror(status))
-   !    stop 2
-   !  end if
-   !end subroutine check
+     if(status /= nf90_noerr) then
+       print *, trim(nf90_strerror(status))
+       stop 2
+     end if
+   end subroutine check
 
 end module module_reservoir_io

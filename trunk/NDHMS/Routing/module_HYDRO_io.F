@@ -6174,8 +6174,16 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
         iret = nf_close(ncid)
 
+        ! Broadcast olddate (current date/time) across all processors
+        call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
 
         NLAKES_total = rt_domain(did)%NLAKES
+
+
+        call create_reservoir_restart_file(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
+               NLAKES_total, dimid_lakes, ncid)
+
+
 
         ! For loop to cycle array of pointers to reservoirs
         do lake_index = 1, NLAKES_total
