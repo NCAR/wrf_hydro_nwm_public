@@ -6188,7 +6188,9 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
             select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
               type is (levelpool_struct)
 
-                call lp%write_restart()
+                call lp%write_restart(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
+                rt_domain(did)%his_out_counts, nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, &
+                dimid_lakes)
 
             end select
           end if

@@ -20,7 +20,9 @@ module module_levelpool
     use module_levelpool_state
     use module_reservoir_base
     !use module_levelpool_tests
+    use netcdf
     implicit none
+    include 'mpif.h'
 
     ! Extend/derive level pool struct from the abstract base
     ! struct for reservoirs.
@@ -167,9 +169,33 @@ contains
 
     end subroutine run_levelpool_release
 
-    subroutine write_levelpool_restart(reservoir_data)
+    subroutine write_levelpool_restart(reservoir_data, current_date, since_date, DTCT, &
+        his_out_counts, channel_only, channel_bucket_only, dimid_lakes)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
+        character(len=*), intent(in)           :: current_date, since_date
+        real, intent(in)                       :: DTCT
+        integer, intent(in)                    :: his_out_counts, channel_only, channel_bucket_only
+        integer, intent(out)                   :: dimid_lakes
+
+        character(len=32) :: lake_id_string
+        character(len=64) :: reservoir_name
+        character(len=64) :: out_file
+        integer           :: iret, ncid
+
+        ! Construct file name based upon the current date/time
+        out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN1"
+
+        ! Create restart file allowing parallel writes
+        iret = nf90_create( trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
+
+
+
+
+
+
+
+
     end subroutine write_levelpool_restart
 
     subroutine read_levelpool_restart(reservoir_data)
@@ -364,6 +390,17 @@ contains
     ! ----------------------------------------------------------------
     end subroutine LEVELPOOL
     ! ----------------------------------------------------------------
+
+
+    subroutine check(status)
+      integer, intent ( in) :: status
+
+      if(status /= nf90_noerr) then
+        print *, trim(nf90_strerror(status))
+        stop 2
+      end if
+    end subroutine check
+
 
 
     !function levelpool_data_info(levelpool_data) result(rv)

@@ -107,9 +107,14 @@ module module_reservoir_base
 
         end subroutine
 
-        subroutine write_restart_interface(reservoir_data)
+        subroutine write_restart_interface(reservoir_data, current_date, since_date, DTCT, &
+            his_out_counts, channel_only, channel_bucket_only, dimid_lakes)
             import reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
+            character(len=*), intent(in) :: current_date, since_date
+            real, intent(in) :: DTCT
+            integer, intent(in) :: his_out_counts, channel_only, channel_bucket_only
+            integer, intent(out) :: dimid_lakes
 
         end subroutine write_restart_interface
 
