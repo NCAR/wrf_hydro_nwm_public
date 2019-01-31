@@ -6190,7 +6190,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 
                 call lp%write_restart(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
                 rt_domain(did)%his_out_counts, nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, &
-                dimid_lakes)
+                NLAKES_total, dimid_lakes)
 
             end select
           end if

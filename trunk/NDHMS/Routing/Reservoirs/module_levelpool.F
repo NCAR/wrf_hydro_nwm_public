@@ -170,12 +170,13 @@ contains
     end subroutine run_levelpool_release
 
     subroutine write_levelpool_restart(reservoir_data, current_date, since_date, DTCT, &
-        his_out_counts, channel_only, channel_bucket_only, dimid_lakes)
+        his_out_counts, channel_only, channel_bucket_only, number_of_lakes, dimid_lakes)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
         character(len=*), intent(in)           :: current_date, since_date
         real, intent(in)                       :: DTCT
         integer, intent(in)                    :: his_out_counts, channel_only, channel_bucket_only
+        integer, intent(in)                    :: number_of_lakes
         integer, intent(out)                   :: dimid_lakes
 
         character(len=32) :: lake_id_string
@@ -189,7 +190,7 @@ contains
         ! Create restart file allowing parallel writes
         iret = nf90_create( trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 
-
+        ! Create lake dimension
 
 
 

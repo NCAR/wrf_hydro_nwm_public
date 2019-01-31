@@ -638,7 +638,7 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
-integer :: lake_index, NLAKES_total
+integer :: lake_index, NLAKES_total, link_index
 
 real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
 real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
@@ -775,36 +775,40 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    end do
 
-   ! For loop to cycle array of pointers to reservoirs
-   do lake_index = 1, NLAKES_total
+   ! Loop through all links to check if the lake/reservoir is owned by the given processor
+   do link_index = 1, rt_domain(did)%nlinksize
+        lake_index = rt_domain(did)%lakeidx(i)
 
-     ! If q_type equals 1 then go to Level Pool, if 2 then go to
-     ! Machine Learning, and if 3 then go to Persistence.
-     if (rt_domain(did)%q_type(lake_index) == 1) then
+        ! If the given processor owns the lake/reservoir
+        if (lake_index >= 0) then
 
-       ! Allocate a single level pool reservoir
-       allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+            ! If q_type equals 1 then go to Level Pool, if 2 then go to
+            ! Machine Learning, and if 3 then go to Persistence.
+            if (rt_domain(did)%q_type(lake_index) == 1) then
 
-       ! Dynamically inspects for level pool type reservoir
-       select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-          type is (levelpool_struct)
+              ! Allocate a single level pool reservoir
+              allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-               ! Call to initialize a level pool type reservoir
-               call lp%init(                                &
-               rt_domain(did)%RESHT(lake_index),            &
-               rt_domain(did)%HRZAREA(lake_index),          &
-               rt_domain(did)%WEIRH(lake_index),            &
-               rt_domain(did)%WEIRC(lake_index),            &
-               rt_domain(did)%WEIRL(lake_index),            &
-               rt_domain(did)%ORIFICEE(lake_index),         &
-               rt_domain(did)%ORIFICEC(lake_index),         &
-               rt_domain(did)%ORIFICEA(lake_index),         &
-               rt_domain(did)%LAKEMAXH(lake_index),         &
-               rt_domain(did)%LAKEIDM(lake_index)           )
+              ! Dynamically inspects for level pool type reservoir
+              select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+                 type is (levelpool_struct)
 
-       end select
+                      ! Call to initialize a level pool type reservoir
+                      call lp%init(                                &
+                      rt_domain(did)%RESHT(lake_index),            &
+                      rt_domain(did)%HRZAREA(lake_index),          &
+                      rt_domain(did)%WEIRH(lake_index),            &
+                      rt_domain(did)%WEIRC(lake_index),            &
+                      rt_domain(did)%WEIRL(lake_index),            &
+                      rt_domain(did)%ORIFICEE(lake_index),         &
+                      rt_domain(did)%ORIFICEC(lake_index),         &
+                      rt_domain(did)%ORIFICEA(lake_index),         &
+                      rt_domain(did)%LAKEMAXH(lake_index),         &
+                      rt_domain(did)%LAKEIDM(lake_index)           )
 
-     end if
+              end select
+            end if
+        end if
 
    end do
 
