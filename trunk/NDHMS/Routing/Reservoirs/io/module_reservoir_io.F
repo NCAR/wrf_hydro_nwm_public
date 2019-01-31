@@ -24,17 +24,17 @@ contains
 
 
     subroutine create_reservoir_restart_file(current_date, since_date, DTCT, &
-                        number_of_lakes, dimid_lakes, ncid)
+               number_of_lakes, NF_FLOAT, dimid_lakes, ncid)
 
         character(len=*), intent(in)   :: current_date, since_date
         real, intent(in)               :: DTCT
-        integer, intent(in)            :: number_of_lakes
+        integer, intent(in)            :: number_of_lakes, NF_FLOAT
         integer, intent(out)           :: dimid_lakes, ncid
 
         character(len=32) :: lake_id_string
         character(len=64) :: reservoir_name
         character(len=64) :: out_file
-        integer           :: iret
+        integer           :: iret, varid
 
         ! Construct file name based upon the current date/time
         out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN1"
@@ -45,6 +45,10 @@ contains
         ! Create lake dimension
         call check(nf90_def_dim(ncid, "lakes", number_of_lakes, dimid_lakes))
 
+        call check(nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid))
+        call check(nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid))
+        call check(nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid))
+
         call check(nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", current_date))
         call check(nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", since_date))
         call check(nf90_put_att(ncid, NF90_GLOBAL, "DTCT", DTCT))
@@ -52,6 +56,13 @@ contains
         call check(nf90_enddef(ncid))
 
     end subroutine create_reservoir_restart_file
+
+
+    subroutine close_reservoir_restart_file(ncid)
+        integer, intent(in) :: ncid
+        call check(nf90_close(ncid))
+
+    end subroutine close_reservoir_restart_file
 
 
 

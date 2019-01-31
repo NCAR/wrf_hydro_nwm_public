@@ -6181,7 +6181,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 
 
         call create_reservoir_restart_file(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
-               NLAKES_total, dimid_lakes, ncid)
+               NLAKES_total, NF_FLOAT, dimid_lakes, ncid)
 
 
 
@@ -6196,13 +6196,20 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
             select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
               type is (levelpool_struct)
 
-                call lp%write_restart(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
-                rt_domain(did)%his_out_counts, nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, &
-                NLAKES_total, dimid_lakes)
+                !call lp%write_restart(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
+                !rt_domain(did)%his_out_counts, nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, &
+                !NLAKES_total, dimid_lakes)
+
+                call lp%write_restart(ncid, lake_index)
 
             end select
           end if
         end do
+
+
+
+        call close_reservoir_restart_file(ncid)
+
 
         return
         end subroutine RESTART_OUT_nc

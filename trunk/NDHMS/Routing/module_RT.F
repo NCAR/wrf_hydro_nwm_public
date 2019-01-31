@@ -777,7 +777,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    ! Loop through all links to check if the lake/reservoir is owned by the given processor
    do link_index = 1, rt_domain(did)%nlinksize
-        lake_index = rt_domain(did)%lakeidx(i)
+        lake_index = rt_domain(did)%lakeidx(link_index)
 
         ! If the given processor owns the lake/reservoir
         if (lake_index >= 0) then
