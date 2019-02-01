@@ -5845,9 +5845,9 @@ end subroutine mpp_output_chrt
           iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinksl, dimid_links)
        endif
        iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
-       if(rt_domain(did)%nlakes .gt. 0) then
-          iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
-       endif
+       !if(rt_domain(did)%nlakes .gt. 0) then
+       !   iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+       !endif
 
        !define variables
        if( nlst_rt(did)%channel_only       .eq. 0 .and. &
@@ -5906,11 +5906,11 @@ end subroutine mpp_output_chrt
          iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
          if(nlst_rt(did)%channel_option .eq. 3) &
               iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
-         if(rt_domain(did)%nlakes .gt. 0) then
-            iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
-            iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
-            iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
-         endif
+         !if(rt_domain(did)%nlakes .gt. 0) then
+         !   iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
+         !   iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
+         !   iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
+         !endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
              nlst_rt(did)%channelBucket_only .eq. 0         ) &
@@ -6105,23 +6105,23 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                  )
 
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
+!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+!!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
-      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
-#ifdef MPP_LAND
-           ,rt_domain(did)%lake_index  &
-#endif
-           )
+!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
+!#ifdef MPP_LAND
+!           ,rt_domain(did)%lake_index  &
+!#endif
+!           )
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
@@ -6174,16 +6174,15 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
         iret = nf_close(ncid)
 
+if(rt_domain(did)%NLAKES .gt. 0) then
+
         ! Broadcast olddate (current date/time) across all processors
         call mpp_land_bcast_char(19, nlst_rt(did)%olddate)
 
         NLAKES_total = rt_domain(did)%NLAKES
 
-
         call create_reservoir_restart_file(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
-               NLAKES_total, NF_FLOAT, dimid_lakes, ncid)
-
-
+               did, NLAKES_total, NF_FLOAT, dimid_lakes, ncid)
 
         ! For loop to cycle array of pointers to reservoirs
         do lake_index = 1, NLAKES_total
@@ -6196,20 +6195,14 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
             select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
               type is (levelpool_struct)
 
-                !call lp%write_restart(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
-                !rt_domain(did)%his_out_counts, nlst_rt(did)%channel_only, nlst_rt(did)%channelBucket_only, &
-                !NLAKES_total, dimid_lakes)
-
                 call lp%write_restart(ncid, lake_index)
 
             end select
           end if
         end do
 
-
-
         call close_reservoir_restart_file(ncid)
-
+end if
 
         return
         end subroutine RESTART_OUT_nc
@@ -6697,6 +6690,7 @@ character(len=*) inFile
 integer :: ierr, iret,ncid, did
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
+integer :: lake_index, NLAKES_total
 
 
 #ifdef MPP_LAND
@@ -6859,11 +6853,11 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          !endif
       endif
 
-      if(rt_domain(did)%NLAKES .gt. 0) then
-         call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
-         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
-         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
-      endif
+      !if(rt_domain(did)%NLAKES .gt. 0) then
+      !   call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
+      !   call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+      !   call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
+      !endif
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then
@@ -6927,6 +6921,33 @@ if(my_id .eq. IO_id) &
 write(6,*) "end of RESTART_IN"
 call flush(6)
 #endif
+
+if(rt_domain(did)%NLAKES .gt. 0) then
+
+    NLAKES_total = rt_domain(did)%NLAKES
+
+    call open_reservoir_restart_file_for_read(inFile, NF_NOWRITE, ncid)
+
+    ! For loop to cycle array of pointers to reservoirs
+    do lake_index = 1, NLAKES_total
+
+      ! If q_type equals 1 then go to Level Pool, if 2 then go to
+      ! Machine Learning, and if 3 then go to Persistence.
+      if (rt_domain(did)%q_type(lake_index) == 1.0) then
+
+        ! Dynamically inspects for level pool type reservoir
+        select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+          type is (levelpool_struct)
+
+            call lp%read_restart(ncid, lake_index)
+
+        end select
+      end if
+    end do
+
+    call close_reservoir_restart_file(ncid)
+
+end if
 
 return
 end subroutine RESTART_IN_nc

@@ -114,9 +114,10 @@ module module_reservoir_base
 
         end subroutine write_restart_interface
 
-        subroutine read_restart_interface(reservoir_data)
+        subroutine read_restart_interface(reservoir_data, ncid, lake_index)
             import reservoir_base_struct
             class(reservoir_base_struct), intent(inout) :: reservoir_data
+            integer, intent(in)                         :: ncid, lake_index
 
         end subroutine read_restart_interface
 
