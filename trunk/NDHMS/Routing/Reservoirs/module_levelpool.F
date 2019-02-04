@@ -133,11 +133,6 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
-print *, '****************************'
-print *, 'reservoir_data%input%inflow ', reservoir_data%input%inflow
-print *, 'reservoir_data%output%outflow ', reservoir_data%output%outflow
-print *, '****************************'
-
 
         ! Update input variables
         reservoir_data%input%inflow = inflow
@@ -165,7 +160,7 @@ print *, '****************************'
 
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
-        print *, outflow
+
         ! Set current inflow to previous_timestep_inflow
         reservoir_data%input%previous_timestep_inflow = inflow
 
