@@ -184,9 +184,13 @@ print *, '****************************'
         call check(nf90_inq_varid(ncid, "outflows", outflow_varid))
         call check(nf90_inq_varid(ncid, "water_elevations", water_elevation_varid))
 
-        call check(nf90_put_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)))
-        call check(nf90_put_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)))
-        call check(nf90_put_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)))
+        !call check(nf90_put_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)))
+        !call check(nf90_put_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)))
+        !call check(nf90_put_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)))
+
+        call check(nf90_put_var(ncid, inflow_varid, 1.47184))
+        call check(nf90_put_var(ncid, outflow_varid, 1.393811))
+        call check(nf90_put_var(ncid, water_elevation_varid, 156.5983))
 
     end subroutine write_levelpool_restart
 
@@ -203,8 +207,6 @@ print *, '****************************'
         call check(nf90_get_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)))
         call check(nf90_get_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)))
         call check(nf90_get_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)))
-
-
 
     end subroutine read_levelpool_restart
 
