@@ -62,6 +62,7 @@ CONTAINS
        integer :: SOLVEG_INITSWC
        real*8 :: out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
+       !character(len=256)  :: reservoir_restart_file = ""
        character(len=256)  :: hydrotbl_f   = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
@@ -106,7 +107,7 @@ CONTAINS
 #endif
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
-            RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
+            RESTART_FILE, SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
             land_spatial_meta_flnm, &
             out_dt, rst_dt, &

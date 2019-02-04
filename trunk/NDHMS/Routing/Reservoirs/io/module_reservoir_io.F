@@ -1,6 +1,7 @@
 module module_reservoir_io
 
     use module_reservoir_base
+    use module_reservoir_utilities
     use netcdf
     use mpi, only: MPI_INFO_NULL, mpi_comm_world
     implicit none
@@ -27,20 +28,21 @@ contains
         out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN"//did_string
 
         ! Create restart file allowing parallel writes
-        call check(nf90_create( trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL))
+        call check(nf90_create( trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, &
+        info=MPI_INFO_NULL), 'create_reservoir_restart_file')
 
         ! Create lake dimension
-        call check(nf90_def_dim(ncid, "lakes", number_of_lakes, dimid_lakes))
+        call check(nf90_def_dim(ncid, "lakes", number_of_lakes, dimid_lakes), 'create_reservoir_restart_file')
 
-        call check(nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid))
-        call check(nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid))
-        call check(nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid))
+        call check(nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid), 'create_reservoir_restart_file')
+        call check(nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid), 'create_reservoir_restart_file')
+        call check(nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid), 'create_reservoir_restart_file')
 
-        call check(nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", current_date))
-        call check(nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", since_date))
-        call check(nf90_put_att(ncid, NF90_GLOBAL, "DTCT", DTCT))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", current_date), 'create_reservoir_restart_file')
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", since_date), 'create_reservoir_restart_file')
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "DTCT", DTCT), 'create_reservoir_restart_file')
 
-        call check(nf90_enddef(ncid))
+        call check(nf90_enddef(ncid), 'create_reservoir_restart_file')
 
     end subroutine create_reservoir_restart_file
 
@@ -60,25 +62,16 @@ contains
 
         reservoir_restart_file_name = reservoir_file_prefix//time_stamp
 
-        call check(nf90_open(trim(reservoir_restart_file_name), NF_NOWRITE, ncid))
+        call check(nf90_open(trim(reservoir_restart_file_name), NF_NOWRITE, ncid), &
+        "open_reservoir_restart_file_for_read")
 
     end subroutine open_reservoir_restart_file_for_read
 
 
     subroutine close_reservoir_restart_file(ncid)
         integer, intent(in) :: ncid
-        call check(nf90_close(ncid))
+        call check(nf90_close(ncid), 'close_reservoir_restart_file')
 
     end subroutine close_reservoir_restart_file
-
-
-    subroutine check(status)
-     integer, intent ( in) :: status
-
-     if(status /= nf90_noerr) then
-       print *, trim(nf90_strerror(status))
-       stop 2
-     end if
-    end subroutine check
 
 end module module_reservoir_io

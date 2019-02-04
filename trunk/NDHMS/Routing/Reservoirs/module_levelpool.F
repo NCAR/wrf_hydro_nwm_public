@@ -19,6 +19,7 @@ module module_levelpool
     use module_levelpool_parameters
     use module_levelpool_state
     use module_reservoir_base
+    use module_reservoir_utilities
     !use module_levelpool_tests
     use netcdf
     implicit none
@@ -173,15 +174,15 @@ contains
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
         integer, intent(in)                    :: ncid, lake_index
-        integer           :: inflow_varid, outflow_varid, water_elevation_varid
+        integer                                :: inflow_varid, outflow_varid, water_elevation_varid
 
-        call check(nf90_inq_varid(ncid, "inflows", inflow_varid))
-        call check(nf90_inq_varid(ncid, "outflows", outflow_varid))
-        call check(nf90_inq_varid(ncid, "water_elevations", water_elevation_varid))
+        call check(nf90_inq_varid(ncid, "inflows", inflow_varid), 'write_levelpool_restart')
+        call check(nf90_inq_varid(ncid, "outflows", outflow_varid), 'write_levelpool_restart')
+        call check(nf90_inq_varid(ncid, "water_elevations", water_elevation_varid), 'write_levelpool_restart')
 
-        call check(nf90_put_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)))
-        call check(nf90_put_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)))
-        call check(nf90_put_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)))
+        call check(nf90_put_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)), 'write_levelpool_restart')
+        call check(nf90_put_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)), 'write_levelpool_restart')
+        call check(nf90_put_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)), 'write_levelpool_restart')
 
     end subroutine write_levelpool_restart
 
@@ -191,13 +192,13 @@ contains
         integer, intent(in)                    :: ncid, lake_index
         integer           :: inflow_varid, outflow_varid, water_elevation_varid
 
-        call check(nf90_inq_varid(ncid, "inflows", inflow_varid))
-        call check(nf90_inq_varid(ncid, "outflows", outflow_varid))
-        call check(nf90_inq_varid(ncid, "water_elevations", water_elevation_varid))
+        call check(nf90_inq_varid(ncid, "inflows", inflow_varid), 'read_levelpool_restart')
+        call check(nf90_inq_varid(ncid, "outflows", outflow_varid), 'read_levelpool_restart')
+        call check(nf90_inq_varid(ncid, "water_elevations", water_elevation_varid), 'read_levelpool_restart')
 
-        call check(nf90_get_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)))
-        call check(nf90_get_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)))
-        call check(nf90_get_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)))
+        call check(nf90_get_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)), 'read_levelpool_restart')
+        call check(nf90_get_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)), 'read_levelpool_restart')
+        call check(nf90_get_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)), 'read_levelpool_restart')
 
     end subroutine read_levelpool_restart
 
@@ -388,16 +389,6 @@ contains
     ! ----------------------------------------------------------------
     end subroutine LEVELPOOL
     ! ----------------------------------------------------------------
-
-
-    subroutine check(status)
-      integer, intent ( in) :: status
-
-      if(status /= nf90_noerr) then
-        print *, trim(nf90_strerror(status))
-        stop 2
-      end if
-    end subroutine check
 
 
 
