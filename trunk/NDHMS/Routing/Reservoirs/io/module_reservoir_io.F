@@ -37,47 +37,23 @@ contains
         integer           :: iret, varid
         character(len=1) :: did_string
 
-
-        character(len=32) :: current_date1, since_date1
-        integer :: number_of_lakes1
-
-
-
-
-
-
-
-
-
-
-        number_of_lakes1 = 1
-        current_date1 = "2011-08-26_00:00:00"
-        since_date1 = "2010-08-01_00:00:00"
-
-
-
-
-
         write(did_string,'(I1)') did
 
-        out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN"//did_string
-        print *, out_file
-
         ! Construct file name based upon the current date/time
-        !out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN1"
+        out_file = "reservoir_rst."//current_date(1:16)//"_DOMAIN"//did_string
 
         ! Create restart file allowing parallel writes
         call check(nf90_create( trim(out_file), IOR(NF90_NETCDF4, NF90_MPIPOSIX), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL))
 
         ! Create lake dimension
-        call check(nf90_def_dim(ncid, "lakes", number_of_lakes1, dimid_lakes))
+        call check(nf90_def_dim(ncid, "lakes", number_of_lakes, dimid_lakes))
 
         call check(nf90_def_var(ncid, "inflows", NF_FLOAT, (/dimid_lakes/), varid))
         call check(nf90_def_var(ncid, "outflows", NF_FLOAT, (/dimid_lakes/), varid))
         call check(nf90_def_var(ncid, "water_elevations", NF_FLOAT, (/dimid_lakes/), varid))
 
-        call check(nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", current_date1))
-        call check(nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", since_date1))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", current_date))
+        call check(nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", since_date))
         call check(nf90_put_att(ncid, NF90_GLOBAL, "DTCT", DTCT))
 
         call check(nf90_enddef(ncid))
