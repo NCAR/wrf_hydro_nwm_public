@@ -5786,7 +5786,7 @@ end subroutine mpp_output_chrt
              dimid_links, dimid_basns, dimid_soil, dimid_lakes
     integer :: iret
 
-    integer :: lake_index, NLAKES_total
+    integer :: lake_index, link_index, NLAKES_total
 
 #ifdef MPP_LAND
      if(IO_id.eq.my_id) &
@@ -5845,9 +5845,9 @@ end subroutine mpp_output_chrt
           iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinksl, dimid_links)
        endif
        iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
-       !if(rt_domain(did)%nlakes .gt. 0) then
-       !   iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
-       !endif
+       if(rt_domain(did)%nlakes .gt. 0) then
+          iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+       endif
 
        !define variables
        if( nlst_rt(did)%channel_only       .eq. 0 .and. &
@@ -5898,7 +5898,6 @@ end subroutine mpp_output_chrt
       end if  ! neither channel_only nor channelBucket_only
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
-            print *, '101*****************************'
 !yw based on Laura request, hlink will do the restart for reach method.
 !         if(nlst_rt(did)%channel_option .eq. 3) &
          iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
@@ -5907,7 +5906,6 @@ end subroutine mpp_output_chrt
          if(nlst_rt(did)%channel_option .eq. 3) &
               iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
          if(rt_domain(did)%nlakes .gt. 0) then
-            print *, '102***************************'
             iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
             iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
@@ -6186,19 +6184,26 @@ if(rt_domain(did)%NLAKES .gt. 0) then
                did, NLAKES_total, NF_FLOAT, dimid_lakes, ncid)
 
         ! For loop to cycle array of pointers to reservoirs
-        do lake_index = 1, NLAKES_total
+        !do lake_index = 1, NLAKES_total
+        ! For loop to cycle through all links
+        do link_index = 1, rt_domain(did)%nlinksize
+          lake_index = rt_domain(did)%lakeidx(link_index)
+          if (lake_index >= 0) then
 
-          ! If q_type equals 1 then go to Level Pool, if 2 then go to
-          ! Machine Learning, and if 3 then go to Persistence.
-          if (rt_domain(did)%q_type(lake_index) == 1.0) then
+              ! If q_type equals 1 then go to Level Pool, if 2 then go to
+              ! Machine Learning, and if 3 then go to Persistence.
+              if (rt_domain(did)%q_type(lake_index) == 1.0) then
 
-            ! Dynamically inspects for level pool type reservoir
-            select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-              type is (levelpool_struct)
+                ! Dynamically inspects for level pool type reservoir
+                select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+                  type is (levelpool_struct)
 
-                call lp%write_restart(ncid, lake_index)
+                    ! Write variables from Level Pool Reservoir object into reservoir restart file.
+                    call lp%write_restart(ncid, lake_index)
 
-            end select
+                end select
+              end if
+
           end if
         end do
 
@@ -6691,7 +6696,7 @@ character(len=*) inFile, reservoir_restart_file
 integer :: ierr, iret,ncid, did
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
-integer :: lake_index, NLAKES_total
+integer :: lake_index, link_index, NLAKES_total
 real    :: inflow, outflow, water_elevation
 
 
@@ -6924,6 +6929,9 @@ write(6,*) "end of RESTART_IN"
 call flush(6)
 #endif
 
+        print *, 'rt_domain(did)%qlakeo',       rt_domain(did)%qlakeo
+
+
 if(rt_domain(did)%NLAKES .gt. 0) then
 
     NLAKES_total = rt_domain(did)%NLAKES
@@ -6931,30 +6939,49 @@ if(rt_domain(did)%NLAKES .gt. 0) then
     call open_reservoir_restart_file_for_read(inFile, reservoir_restart_file, NF_NOWRITE, ncid)
 
     ! For loop to cycle array of pointers to reservoirs
-    do lake_index = 1, NLAKES_total
+    !do lake_index = 1, NLAKES_total
 
-      ! If q_type equals 1 then go to Level Pool, if 2 then go to
-      ! Machine Learning, and if 3 then go to Persistence.
-      if (rt_domain(did)%q_type(lake_index) == 1.0) then
+    ! For loop to cycle through all links
+    do link_index = 1, rt_domain(did)%nlinksize
+      lake_index = rt_domain(did)%lakeidx(link_index)
+      if (lake_index >= 0) then
 
-        ! Dynamically inspects for level pool type reservoir
-        select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-          type is (levelpool_struct)
+          ! If q_type equals 1 then go to Level Pool, if 2 then go to
+          ! Machine Learning, and if 3 then go to Persistence.
+          if (rt_domain(did)%q_type(lake_index) == 1.0) then
 
-            call lp%read_restart(ncid, lake_index, inflow, outflow, water_elevation)
+            ! Dynamically inspects for level pool type reservoir
+            select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+              type is (levelpool_struct)
 
-        end select
-      end if
+                ! Read variables from reservoir restart file into Level Pool Reservoir object.
+                call lp%read_restart(ncid, lake_index, inflow, outflow, water_elevation)
+
+            end select
+          end if
 
 print *, 'outflow', outflow
 
-      rt_domain(did)%qlakei(lake_index) = inflow
-      rt_domain(did)%qlakeo(lake_index) = outflow
-      rt_domain(did)%resht(lake_index) = water_elevation
+          rt_domain(did)%qlakei(lake_index) = inflow
+          rt_domain(did)%qlakeo(lake_index) = outflow
+          rt_domain(did)%resht(lake_index) = water_elevation
+
+      end if
+
 
     end do
 
     call close_reservoir_restart_file(ncid)
+
+        print *, '2   rt_domain(did)%qlakeo',       rt_domain(did)%qlakeo
+
+
+    call updateLake_grid(rt_domain(did)%qlakei, NLAKES_total, rt_domain(did)%lakeidx)
+    call updateLake_grid(rt_domain(did)%qlakeo, NLAKES_total, rt_domain(did)%lakeidx)
+    call updateLake_grid(rt_domain(did)%resht, NLAKES_total, rt_domain(did)%lakeidx)
+
+        print *, '3   rt_domain(did)%qlakeo',       rt_domain(did)%qlakeo
+
 
 end if
 

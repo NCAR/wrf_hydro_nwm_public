@@ -775,41 +775,35 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    end do
 
-   ! Loop through all links to check if the lake/reservoir is owned by the given processor
-   do link_index = 1, rt_domain(did)%nlinksize
-        lake_index = rt_domain(did)%lakeidx(link_index)
+   ! For loop to cycle array of pointers to reservoirs
+   do lake_index = 1, NLAKES_total
 
-        ! If the given processor owns the lake/reservoir
-        if (lake_index >= 0) then
+        ! If q_type equals 1 then go to Level Pool, if 2 then go to
+        ! Machine Learning, and if 3 then go to Persistence.
+        if (rt_domain(did)%q_type(lake_index) == 1) then
 
-            ! If q_type equals 1 then go to Level Pool, if 2 then go to
-            ! Machine Learning, and if 3 then go to Persistence.
-            if (rt_domain(did)%q_type(lake_index) == 1) then
+          ! Allocate a single level pool reservoir
+          allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-              ! Allocate a single level pool reservoir
-              allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+          ! Dynamically inspects for level pool type reservoir
+          select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+             type is (levelpool_struct)
 
-              ! Dynamically inspects for level pool type reservoir
-              select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-                 type is (levelpool_struct)
+                  ! Call to initialize a level pool type reservoir
+                  call lp%init(                                &
+                  rt_domain(did)%RESHT(lake_index),            &
+                  rt_domain(did)%HRZAREA(lake_index),          &
+                  rt_domain(did)%WEIRH(lake_index),            &
+                  rt_domain(did)%WEIRC(lake_index),            &
+                  rt_domain(did)%WEIRL(lake_index),            &
+                  rt_domain(did)%ORIFICEE(lake_index),         &
+                  rt_domain(did)%ORIFICEC(lake_index),         &
+                  rt_domain(did)%ORIFICEA(lake_index),         &
+                  rt_domain(did)%LAKEMAXH(lake_index),         &
+                  rt_domain(did)%LAKEIDM(lake_index)           )
 
-                      ! Call to initialize a level pool type reservoir
-                      call lp%init(                                &
-                      rt_domain(did)%RESHT(lake_index),            &
-                      rt_domain(did)%HRZAREA(lake_index),          &
-                      rt_domain(did)%WEIRH(lake_index),            &
-                      rt_domain(did)%WEIRC(lake_index),            &
-                      rt_domain(did)%WEIRL(lake_index),            &
-                      rt_domain(did)%ORIFICEE(lake_index),         &
-                      rt_domain(did)%ORIFICEC(lake_index),         &
-                      rt_domain(did)%ORIFICEA(lake_index),         &
-                      rt_domain(did)%LAKEMAXH(lake_index),         &
-                      rt_domain(did)%LAKEIDM(lake_index)           )
-
-              end select
-            end if
+          end select
         end if
-
    end do
 
    !ADCHANGE: Add lake reach output
