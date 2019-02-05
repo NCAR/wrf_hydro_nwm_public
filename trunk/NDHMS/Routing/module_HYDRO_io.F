@@ -5898,7 +5898,7 @@ end subroutine mpp_output_chrt
       end if  ! neither channel_only nor channelBucket_only
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
-
+            print *, '101*****************************'
 !yw based on Laura request, hlink will do the restart for reach method.
 !         if(nlst_rt(did)%channel_option .eq. 3) &
          iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
@@ -5906,11 +5906,12 @@ end subroutine mpp_output_chrt
          iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
          if(nlst_rt(did)%channel_option .eq. 3) &
               iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
-         !if(rt_domain(did)%nlakes .gt. 0) then
-         !   iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
-         !   iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
-         !   iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
-         !endif
+         if(rt_domain(did)%nlakes .gt. 0) then
+            print *, '102***************************'
+            iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
+            iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
+            iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
+         endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
              nlst_rt(did)%channelBucket_only .eq. 0         ) &
@@ -6105,23 +6106,23 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                  )
 
 
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
-!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%resht,"resht" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
-!!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakeo,"qlakeo" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
-!      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
-!#ifdef MPP_LAND
-!           ,rt_domain(did)%lake_index  &
-!#endif
-!           )
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%qlakei,"qlakei" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
           nlst_rt(did)%channelBucket_only .eq. 0         ) &
@@ -6854,11 +6855,11 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          !endif
       endif
 
-      !if(rt_domain(did)%NLAKES .gt. 0) then
-      !   call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
-      !   call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
-      !   call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
-      !endif
+      if(rt_domain(did)%NLAKES .gt. 0) then
+         call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
+         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
+      endif
 
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then

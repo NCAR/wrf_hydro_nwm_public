@@ -22,6 +22,10 @@ LAND_SPATIAL_META_FLNM = "./DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc"
 ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
 RESTART_FILE  = 'HYDRO_RST.2013-09-12_04:00_DOMAIN3'
 
+! Specify the name of the reservoir restart file if starting from restart. If this is commented out,
+! then the reservoir restart file with the matching date and time of the primary restart file will be used by default.
+reservoir_restart_file = 'reservoir_rst.2013-09-12_04:00_DOMAIN3'
+
 !!!! --------------------- MODEL SETUP OPTIONS -------------------- !!!!
 
 ! Specify the domain or nest number identifier...(integer)
