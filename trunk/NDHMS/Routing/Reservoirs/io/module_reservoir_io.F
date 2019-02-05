@@ -46,9 +46,9 @@ contains
 
     end subroutine create_reservoir_restart_file
 
-    subroutine open_reservoir_restart_file_for_read(hydro_restart_file_name, NF_NOWRITE, ncid)
+    subroutine open_reservoir_restart_file_for_read(hydro_restart_file_name, reservoir_restart_file_passed, NF_NOWRITE, ncid)
 
-        character(len=*), intent(in)   :: hydro_restart_file_name
+        character(len=*), intent(in)   :: hydro_restart_file_name, reservoir_restart_file_passed
         integer, intent(in)            :: NF_NOWRITE
         integer, intent(out)           :: ncid
 
@@ -56,11 +56,16 @@ contains
         character(len = 14) :: reservoir_file_prefix
         character(len = 64) :: reservoir_restart_file_name
 
-        read (hydro_restart_file_name(11: ), *) time_stamp
+        if (reservoir_restart_file_passed == '') then
+            read (hydro_restart_file_name(11: ), *) time_stamp
+            reservoir_file_prefix = 'reservoir_rst.'
+            reservoir_restart_file_name = reservoir_file_prefix//time_stamp
+        else
+            reservoir_restart_file_name = reservoir_restart_file_passed
+        end if
 
-        reservoir_file_prefix = 'reservoir_rst.'
+        print *, 'reservoir_restart_file_name', reservoir_restart_file_name
 
-        reservoir_restart_file_name = reservoir_file_prefix//time_stamp
 
         call check(nf90_open(trim(reservoir_restart_file_name), NF_NOWRITE, ncid), &
         "open_reservoir_restart_file_for_read")

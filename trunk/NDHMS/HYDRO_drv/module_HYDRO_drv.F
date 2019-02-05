@@ -543,7 +543,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
          call RESTART_IN_bi(trim(nlst_rt(did)%restart_file), did)
       else
 #endif
-         call RESTART_IN_nc(trim(nlst_rt(did)%restart_file), did)
+         call RESTART_IN_nc(trim(nlst_rt(did)%restart_file), trim(nlst_rt(did)%reservoir_restart_file), did)
 #ifdef MPP_LAND
       endif
 #endif

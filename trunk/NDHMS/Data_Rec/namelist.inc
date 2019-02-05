@@ -6,7 +6,7 @@
        real   :: dt  !! dt is NOAH_TIMESTEP
        integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
        character(len=256)  :: restart_file = ""
-       !character(len=256)  :: reservoir_restart_file = ""
+       character(len=256)  :: reservoir_restart_file = ""
        integer            :: split_output_count
        integer :: igrid
        integer :: rst_bi_in   ! used for parallel io with large restart file.

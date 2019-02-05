@@ -6683,10 +6683,10 @@ end if
    end subroutine read_rst_gwbucket_real
 
 
-subroutine RESTART_IN_NC(inFile,did)
+subroutine RESTART_IN_NC(inFile, reservoir_restart_file, did)
 
 implicit none
-character(len=*) inFile
+character(len=*) inFile, reservoir_restart_file
 integer :: ierr, iret,ncid, did
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
@@ -6927,7 +6927,7 @@ if(rt_domain(did)%NLAKES .gt. 0) then
 
     NLAKES_total = rt_domain(did)%NLAKES
 
-    call open_reservoir_restart_file_for_read(inFile, NF_NOWRITE, ncid)
+    call open_reservoir_restart_file_for_read(inFile, reservoir_restart_file, NF_NOWRITE, ncid)
 
     ! For loop to cycle array of pointers to reservoirs
     do lake_index = 1, NLAKES_total
@@ -6945,10 +6945,11 @@ if(rt_domain(did)%NLAKES .gt. 0) then
         end select
       end if
 
+print *, 'outflow', outflow
+
       rt_domain(did)%qlakei(lake_index) = inflow
       rt_domain(did)%qlakeo(lake_index) = outflow
       rt_domain(did)%resht(lake_index) = water_elevation
-
 
     end do
 

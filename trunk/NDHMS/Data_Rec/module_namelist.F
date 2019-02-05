@@ -62,7 +62,7 @@ CONTAINS
        integer :: SOLVEG_INITSWC
        real*8 :: out_dt, rst_dt
        character(len=256)  :: RESTART_FILE = ""
-       !character(len=256)  :: reservoir_restart_file = ""
+       character(len=256)  :: reservoir_restart_file = ""
        character(len=256)  :: hydrotbl_f   = ""
        logical            :: GwPreDiag, GwSpinUp
        integer            :: split_output_count, order_to_write
@@ -107,7 +107,7 @@ CONTAINS
 #endif
 
        namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
-            RESTART_FILE, SPLIT_OUTPUT_COUNT,IGRID,&
+            RESTART_FILE, reservoir_restart_file, SPLIT_OUTPUT_COUNT,IGRID,&
             geo_static_flnm, &
             land_spatial_meta_flnm, &
             out_dt, rst_dt, &
@@ -232,6 +232,7 @@ CONTAINS
   !  nlst%DT = DT !!JLM: Note that %dt is set in the Land/WRF initialization,
   !               !!JLM: e.g. CPL/NoahMP_cpl/module_hrldas_HYDRO.F:hrldas_cpl_HYDRO_ini
   nlst%RESTART_FILE = RESTART_FILE
+  nlst%reservoir_restart_file = reservoir_restart_file
   nlst%hydrotbl_f = trim(hydrotbl_f)
   nlst%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
   nlst%IGRID = IGRID
@@ -249,6 +250,7 @@ CONTAINS
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
+  call mpp_land_bcast_char(256,nlst%reservoir_restart_file)
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
   call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
 #endif
