@@ -186,19 +186,24 @@ contains
 
     end subroutine write_levelpool_restart
 
-    subroutine read_levelpool_restart(reservoir_data, ncid, lake_index)
+    subroutine read_levelpool_restart(reservoir_data, ncid, lake_index, inflow, outflow, water_elevation)
         implicit none
         class(levelpool_struct), intent(inout) :: reservoir_data
         integer, intent(in)                    :: ncid, lake_index
-        integer           :: inflow_varid, outflow_varid, water_elevation_varid
+        real, intent(out)                      :: inflow, outflow, water_elevation
+        integer                                :: inflow_varid, outflow_varid, water_elevation_varid
 
         call check(nf90_inq_varid(ncid, "inflows", inflow_varid), 'read_levelpool_restart')
         call check(nf90_inq_varid(ncid, "outflows", outflow_varid), 'read_levelpool_restart')
         call check(nf90_inq_varid(ncid, "water_elevations", water_elevation_varid), 'read_levelpool_restart')
 
-        call check(nf90_get_var(ncid, inflow_varid, reservoir_data%input%inflow, (/lake_index/)), 'read_levelpool_restart')
+        call check(nf90_get_var(ncid, inflow_varid, reservoir_data%input%previous_timestep_inflow, (/lake_index/)), 'read_levelpool_restart')
         call check(nf90_get_var(ncid, outflow_varid, reservoir_data%output%outflow, (/lake_index/)), 'read_levelpool_restart')
         call check(nf90_get_var(ncid, water_elevation_varid, reservoir_data%state%water_elevation, (/lake_index/)), 'read_levelpool_restart')
+
+        inflow = reservoir_data%input%previous_timestep_inflow
+        outflow = reservoir_data%output%outflow
+        water_elevation = reservoir_data%state%water_elevation
 
     end subroutine read_levelpool_restart
 

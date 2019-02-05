@@ -6691,6 +6691,7 @@ integer :: ierr, iret,ncid, did
 integer :: channel_only_in, channelBucket_only_in
 integer :: i, j
 integer :: lake_index, NLAKES_total
+real    :: inflow, outflow, water_elevation
 
 
 #ifdef MPP_LAND
@@ -6939,10 +6940,16 @@ if(rt_domain(did)%NLAKES .gt. 0) then
         select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
           type is (levelpool_struct)
 
-            call lp%read_restart(ncid, lake_index)
+            call lp%read_restart(ncid, lake_index, inflow, outflow, water_elevation)
 
         end select
       end if
+
+      rt_domain(did)%qlakei(lake_index) = inflow
+      rt_domain(did)%qlakeo(lake_index) = outflow
+      rt_domain(did)%resht(lake_index) = water_elevation
+
+
     end do
 
     call close_reservoir_restart_file(ncid)
