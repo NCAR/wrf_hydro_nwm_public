@@ -1,0 +1,34 @@
+ ! FERRET v6.96 Script
+ ! >ferret -gif -script ferret_NUOPC_mask.jnl [Grid File]
+ ! Author: Daniel Rosen
+ ! Organization: NESII/CIRES/NOAA
+ ! Email: daniel.rosen@noaa.gov
+ ! Date: 2017-02-27
+
+CANCEL MODE LOGO
+
+SAY *** Generating NUOPC Grid Mask SHADE plots ***
+SAY
+
+! Load grid file and compute output file label
+USE $1
+SET VARIABLE/TITLE="Longitude" lon_center[d=1]
+SET VARIABLE/TITLE="Latitude" lat_center[d=1]
+SET VARIABLE/TITLE="Mask" mask[d=1]
+
+DEFINE SYMBOL gname `"$1"`
+DEFINE SYMBOL fnlen `STRLEN("($gname)")`
+DEFINE SYMBOL ext `STRRINDEX("($gname)",".nc")`
+DEFINE SYMBOL flabel `SUBSTRING("($gname)",1,($ext)-1)`
+
+! Print datasets
+SHOW DATA/BRIEF
+
+SHADE/LEVELS="(-1,5,1)"/\
+KEY=CENTERLAB/TITLE="NUOPC ($flabel) Mask" \
+mask[d=1], lon_center[d=1], lat_center[d=1]; \
+FRAME/FILE=plot_($flabel)_mask.gif
+
+SAY
+
+exit
