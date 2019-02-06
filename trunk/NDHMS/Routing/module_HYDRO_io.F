@@ -6180,11 +6180,10 @@ if(rt_domain(did)%NLAKES .gt. 0) then
 
         NLAKES_total = rt_domain(did)%NLAKES
 
+        ! Create new reservoir restart file
         call create_reservoir_restart_file(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
                did, NLAKES_total, NF_FLOAT, dimid_lakes, ncid)
 
-        ! For loop to cycle array of pointers to reservoirs
-        !do lake_index = 1, NLAKES_total
         ! For loop to cycle through all links
         do link_index = 1, rt_domain(did)%nlinksize
           lake_index = rt_domain(did)%lakeidx(link_index)
@@ -6207,6 +6206,7 @@ if(rt_domain(did)%NLAKES .gt. 0) then
           end if
         end do
 
+        ! Close reservoir restart file.
         call close_reservoir_restart_file(ncid)
 end if
 
@@ -6933,6 +6933,7 @@ if(rt_domain(did)%NLAKES .gt. 0) then
 
     NLAKES_total = rt_domain(did)%NLAKES
 
+    ! Open existing reservoir restart file to read
     call open_reservoir_restart_file_for_read(inFile, reservoir_restart_file, NF_NOWRITE, ncid)
 
     ! For loop to cycle through all links
@@ -6959,9 +6960,10 @@ if(rt_domain(did)%NLAKES .gt. 0) then
           rt_domain(did)%resht(lake_index) = water_elevation
 
       end if
-
-
     end do
+
+    ! Close reservoir restart file.
+    call close_reservoir_restart_file(ncid)
 
     call updateLake_grid(rt_domain(did)%qlakei, NLAKES_total, rt_domain(did)%lakeidx)
     call updateLake_grid(rt_domain(did)%qlakeo, NLAKES_total, rt_domain(did)%lakeidx)
