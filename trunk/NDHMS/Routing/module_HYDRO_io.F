@@ -6929,17 +6929,11 @@ write(6,*) "end of RESTART_IN"
 call flush(6)
 #endif
 
-        print *, 'rt_domain(did)%qlakeo',       rt_domain(did)%qlakeo
-
-
 if(rt_domain(did)%NLAKES .gt. 0) then
 
     NLAKES_total = rt_domain(did)%NLAKES
 
     call open_reservoir_restart_file_for_read(inFile, reservoir_restart_file, NF_NOWRITE, ncid)
-
-    ! For loop to cycle array of pointers to reservoirs
-    !do lake_index = 1, NLAKES_total
 
     ! For loop to cycle through all links
     do link_index = 1, rt_domain(did)%nlinksize
@@ -6960,8 +6954,6 @@ if(rt_domain(did)%NLAKES .gt. 0) then
             end select
           end if
 
-print *, 'outflow', outflow
-
           rt_domain(did)%qlakei(lake_index) = inflow
           rt_domain(did)%qlakeo(lake_index) = outflow
           rt_domain(did)%resht(lake_index) = water_elevation
@@ -6971,17 +6963,9 @@ print *, 'outflow', outflow
 
     end do
 
-    call close_reservoir_restart_file(ncid)
-
-        print *, '2   rt_domain(did)%qlakeo',       rt_domain(did)%qlakeo
-
-
     call updateLake_grid(rt_domain(did)%qlakei, NLAKES_total, rt_domain(did)%lakeidx)
     call updateLake_grid(rt_domain(did)%qlakeo, NLAKES_total, rt_domain(did)%lakeidx)
     call updateLake_grid(rt_domain(did)%resht, NLAKES_total, rt_domain(did)%lakeidx)
-
-        print *, '3   rt_domain(did)%qlakeo',       rt_domain(did)%qlakeo
-
 
 end if
 
