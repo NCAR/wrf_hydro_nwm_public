@@ -64,9 +64,6 @@ contains
             reservoir_restart_file_name = reservoir_restart_file_passed
         end if
 
-        print *, 'reservoir_restart_file_name', reservoir_restart_file_name
-
-
         call check(nf90_open(trim(reservoir_restart_file_name), NF_NOWRITE, ncid), &
         "open_reservoir_restart_file_for_read")
 
