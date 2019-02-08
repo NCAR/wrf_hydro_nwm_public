@@ -44,13 +44,13 @@ contains
 
     !Level Pool Constructor
     subroutine levelpool_struct_init(this, water_elevation,  &
-        reservoir_area, weir_elevation, weir_coeffecient, &
+        lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
-        real, intent(in)    :: reservoir_area            ! area of reservoir (km^2)
+        real, intent(in)    :: lake_area      		 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
         real, intent(in)    :: weir_length               ! weir length (meters)
@@ -88,7 +88,7 @@ contains
                 write(0,*) "Failure to allocate levelpool parameters structure"
             else
                 ! initialize levelpool parameters
-                call this%parameters%init( reservoir_area,  &
+                call this%parameters%init( lake_area,  &
                     weir_elevation, weir_coeffecient, weir_length, &
                     orifice_elevation, orifice_coefficient, &
                     orifice_area, max_depth, lake_number )
@@ -143,7 +143,7 @@ contains
         reservoir_data%input%lateral_inflow,                    &
         routing_period,                                         &
         reservoir_data%state%water_elevation,                   &
-        reservoir_data%parameters%reservoir_area,               &
+        reservoir_data%parameters%lake_area,          		&
         reservoir_data%parameters%weir_elevation,               &
         reservoir_data%parameters%max_depth,                    &
         reservoir_data%parameters%weir_coeffecient,             &

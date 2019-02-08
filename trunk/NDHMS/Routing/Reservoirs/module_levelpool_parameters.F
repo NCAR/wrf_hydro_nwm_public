@@ -12,7 +12,7 @@ module module_levelpool_parameters
     ! Extend/derive level pool parameters from the abstract base
     ! struct for reservoir properties.
     type, extends(reservoir_base_properties_struct) :: levelpool_parameters_interface
-        real :: reservoir_area           ! area of reservoir (km^2)
+        real :: lake_area                ! area of lake (km^2)
         real :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real :: weir_coeffecient         ! weir coefficient
         real :: weir_length              ! weir length (meters)
@@ -32,12 +32,12 @@ module module_levelpool_parameters
 contains
 
     !Level Pool Parameters Constructor
-    subroutine levelpool_parameters_init(this, reservoir_area, &
+    subroutine levelpool_parameters_init(this, lake_area, &
         weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
         orifice_coefficient, orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool_parameters_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(in)    :: reservoir_area           ! area of reservoir (km^2)
+        real, intent(in)    :: lake_area      	        ! area of lake (km^2)
         real, intent(in)    :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient         ! weir coefficient
         real, intent(in)    :: weir_length              ! weir length (meters)
@@ -49,7 +49,7 @@ contains
 
         ! Assign the values passed in to a particular level pool reservoir
         ! parameter object's variables.
-        this%reservoir_area = reservoir_area
+        this%lake_area = lake_area
         this%weir_elevation = weir_elevation
         this%weir_coeffecient = weir_coeffecient
         this%weir_length = weir_length

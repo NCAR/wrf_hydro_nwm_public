@@ -152,7 +152,7 @@
   REAL :: previous_day_inflow
   REAL :: outflow
   REAL :: lateral_inflow
-  REAL :: reservoir_area
+  REAL :: lake_area
   REAL :: weir_elevation
   REAL :: weir_coeffecient
   REAL :: weir_length
