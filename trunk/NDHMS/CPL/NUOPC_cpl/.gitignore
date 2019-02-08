@@ -1,0 +1,5 @@
+*.a
+*.mk
+*.mod
+*.o
+VERSION
