@@ -263,7 +263,7 @@ CONTAINS
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
   call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
-  call mpp_land_bcast_log1(machine_learning)
+  call mpp_land_bcast_log1(nlst%machine_learning)
   call mpp_land_bcast_char(256,nlst%machine_learning_parameter_file )
   call mpp_land_bcast_char(256,nlst%machine_learning_model_1_file )
   call mpp_land_bcast_char(256,nlst%machine_learning_model_2_file )
