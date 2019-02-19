@@ -7,17 +7,17 @@ module orchestrator_base
   ! end interface orchestrator_
   
   type orchestrator_
-     
+
      !class(FluxAggregator_) :: flux_aggregator
      !class(Groundwater_) :: groundwater
      !class(TimeManager_) :: time_manager
      type(IOManager_) :: IO_manager
-     !class(Configuration_) :: configuration
+     type(Configuration_) :: config
      !class(SpatialObject_) :: spatial_object
-     
+
    contains
      
-     procedure, pass(self) :: init => orchestrator_init
+     procedure, public, pass(self) :: init => orchestrator_init
 
   end type orchestrator_
 
