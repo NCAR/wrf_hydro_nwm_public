@@ -1,7 +1,7 @@
 module netcdf_layer_base
   use netcdf
   implicit none
-  include 'mpif.h'
+  include "mpif.h"
   
   type, abstract :: NetCDF_layer_
      procedure (nf90_open), pointer, nopass :: open_file => nf90_open

@@ -32,6 +32,7 @@ contains
     class (orchestrator_) :: self   
     write(*,*) 'In orchestrator constructor'
     
+    call self%config%init()
     ! Read configuration and decide how to assemble the various components
     ! Assuming IO_Manager_serial_ selected
     self%IO_manager = IOManager_()
