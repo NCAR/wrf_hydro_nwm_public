@@ -31,7 +31,9 @@ contains
   subroutine orchestrator_init(self)
     class (orchestrator_) :: self   
     write(*,*) 'In orchestrator constructor'
-    
+
+    self%config = Configuration_()
+
     call self%config%init()
     ! Read configuration and decide how to assemble the various components
     ! Assuming IO_Manager_serial_ selected
