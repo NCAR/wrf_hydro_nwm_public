@@ -7,6 +7,7 @@ include ../macros
 
 OBJS = \
 	orchestrator.o \
+	config.o \
 	io_manager.f90
 
 all:	$(OBJS)
@@ -33,7 +34,7 @@ all:	$(OBJS)
 #
 io_manager.o: ../IO/netcdf_layer.o
 
-orchestrator.o: io_manager.o
+orchestrator.o: io_manager.o config.o
 
 clean:	
 	rm -f *.o *.mod *.stb *~ *.f

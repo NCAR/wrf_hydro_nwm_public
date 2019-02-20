@@ -1,5 +1,6 @@
 module orchestrator_base
   use io_manager_base
+  use config_base
   implicit none
 
   ! interface orchestrator_
