@@ -194,23 +194,23 @@ contains
     noah_lsm_file%output_timestep         = -999
     noah_lsm_file%restart_frequency_hours = -999
 
-    !#ifndef NCEP_WCOSS
+#ifndef NCEP_WCOSS
     open(30, file="namelist.hrldas", form="FORMATTED")
     read(30, NML=NOAHLSM_OFFLINE, iostat=ierr)
-    ! #else
-    !     open(11, form="FORMATTED")
-    !     read(11, NML=NOAHLSM_OFFLINE, iostat=ierr)
-    ! #endif
+#else
+    open(11, form="FORMATTED")
+    read(11, NML=NOAHLSM_OFFLINE, iostat=ierr)
+#endif
 
     if (ierr /= 0) then
        write(*,'(/," ***** ERROR: Problem reading namelist NOAHLSM_OFFLINE",/)')
-       !#ifndef NCEP_WCOSS
+#ifndef NCEP_WCOSS
        rewind(30)
        read(30, NOAHLSM_OFFLINE)
-       ! #else
-       !      rewind(11)
-       !      read(11, NOAHLSM_OFFLINE)
-       ! #endif
+#else
+            rewind(11)
+            read(11, NOAHLSM_OFFLINE)
+#endif
        stop "FATAL ERROR: Problem reading namelist NOAHLSM_OFFLINE"
     endif
 

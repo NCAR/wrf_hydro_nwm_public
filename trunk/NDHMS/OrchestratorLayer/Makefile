@@ -8,7 +8,7 @@ include ../macros
 OBJS = \
 	orchestrator.o \
 	config.o \
-	io_manager.f90
+	io_manager.o
 
 all:	$(OBJS)
 
@@ -23,7 +23,7 @@ all:	$(OBJS)
 .f90.o:
 	@echo "Orchestrator Makefile:"
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f90
+	$(COMPILER90) -fpp -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f90
 #	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
