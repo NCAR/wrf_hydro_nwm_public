@@ -37,8 +37,6 @@ MODULE module_Routing
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool
-   !use module_machine_learning
-   !use module_read_q_type
 
    IMPLICIT NONE
 

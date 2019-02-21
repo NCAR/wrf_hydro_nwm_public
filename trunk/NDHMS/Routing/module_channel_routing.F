@@ -28,7 +28,6 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 
 use module_levelpool
 use module_reservoir_base
-!use module_Routing
 use module_RT_data, only: rt_domain
 
 #endif
