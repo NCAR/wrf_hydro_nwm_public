@@ -763,11 +763,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
-   ! Call subroutine to read text file that stores the reservoir ID/index
-   ! for the reservoir type (q_type) of reservoirs that are not the
-   ! default levelpool type.
-   !call read_q_type(NLAKES_total, rt_domain(did)%q_type)
-
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
 
@@ -776,8 +771,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-     ! If q_type equals 1 then go to Level Pool, if 2 then go to
-     ! Machine Learning, and if 3 then go to Persistence.
+     ! If q_type equals 1, then go to Level Pool
      if (rt_domain(did)%q_type(lake_index) == 1) then
 
        ! Allocate a single level pool reservoir
