@@ -54,6 +54,7 @@ module config_base
    contains
      procedure, nopass :: init => config_init
      procedure, nopass :: noah_lsm => copy_noah_lsm
+     procedure, nopass :: noah_lsm_sync => noah_lsm_sync
   end type Configuration_
 
   type(NOAHLSM_OFFLINE_DT), save :: noah_lsm_file
@@ -66,6 +67,57 @@ contains
     call init_noah_lsm()
     
   end subroutine config_init
+
+  subroutine noah_lsm_sync(mod_noah_lsm)
+    implicit none
+
+    type(NOAHLSM_OFFLINE_DT) :: mod_noah_lsm
+
+    noah_lsm_file%indir = mod_noah_lsm%indir
+    noah_lsm_file%nsoil = mod_noah_lsm%nsoil ! number of soil layers
+    noah_lsm_file%forcing_timestep = mod_noah_lsm%forcing_timestep
+    noah_lsm_file%noah_timestep = mod_noah_lsm%noah_timestep
+    noah_lsm_file%start_year = mod_noah_lsm%start_year
+    noah_lsm_file%start_month = mod_noah_lsm%start_month
+    noah_lsm_file%start_day = mod_noah_lsm%start_day
+    noah_lsm_file%start_hour = mod_noah_lsm%start_hour
+    noah_lsm_file%start_min = mod_noah_lsm%start_min
+    noah_lsm_file%outdir = mod_noah_lsm%outdir
+    noah_lsm_file%restart_filename_requested = mod_noah_lsm%restart_filename_requested
+    noah_lsm_file%restart_frequency_hours = mod_noah_lsm%restart_frequency_hours
+    noah_lsm_file%output_timestep = mod_noah_lsm%output_timestep
+    noah_lsm_file%dynamic_veg_option = mod_noah_lsm%dynamic_veg_option
+    noah_lsm_file%canopy_stomatal_resistance_option = mod_noah_lsm%canopy_stomatal_resistance_option
+    noah_lsm_file%btr_option = mod_noah_lsm%btr_option
+    noah_lsm_file%runoff_option = mod_noah_lsm%runoff_option
+    noah_lsm_file%surface_drag_option = mod_noah_lsm%surface_drag_option
+    noah_lsm_file%supercooled_water_option = mod_noah_lsm%supercooled_water_option
+    noah_lsm_file%frozen_soil_option = mod_noah_lsm%frozen_soil_option
+    noah_lsm_file%radiative_transfer_option = mod_noah_lsm%radiative_transfer_option
+    noah_lsm_file%snow_albedo_option = mod_noah_lsm%snow_albedo_option
+    noah_lsm_file%pcp_partition_option = mod_noah_lsm%pcp_partition_option
+    noah_lsm_file%tbot_option = mod_noah_lsm%tbot_option
+    noah_lsm_file%temp_time_scheme_option = mod_noah_lsm%temp_time_scheme_option
+    noah_lsm_file%glacier_option = mod_noah_lsm%glacier_option
+    noah_lsm_file%surface_resistance_option = mod_noah_lsm%surface_resistance_option
+    noah_lsm_file%split_output_count = mod_noah_lsm%split_output_count
+    noah_lsm_file%khour = mod_noah_lsm%khour
+    noah_lsm_file%kday = mod_noah_lsm%kday
+    noah_lsm_file%zlvl = mod_noah_lsm%zlvl
+    noah_lsm_file%hrldas_setup_file = mod_noah_lsm%hrldas_setup_file
+    noah_lsm_file%mmf_runoff_file = mod_noah_lsm%mmf_runoff_file
+    noah_lsm_file%external_veg_filename_template = mod_noah_lsm%external_veg_filename_template
+    noah_lsm_file%external_lai_filename_template = mod_noah_lsm%external_lai_filename_template
+    noah_lsm_file%xstart = mod_noah_lsm%xstart
+    noah_lsm_file%ystart = mod_noah_lsm%ystart
+    noah_lsm_file%xend = mod_noah_lsm%xend
+    noah_lsm_file%yend = mod_noah_lsm%yend
+    noah_lsm_file%soil_thick_input = mod_noah_lsm%soil_thick_input
+    noah_lsm_file%rst_bi_out = mod_noah_lsm%rst_bi_out
+    noah_lsm_file%rst_bi_in = mod_noah_lsm%rst_bi_in
+    noah_lsm_file%spatial_filename = mod_noah_lsm%spatial_filename
+
+  end subroutine noah_lsm_sync
 
   type(NOAHLSM_OFFLINE_DT) function copy_noah_lsm()
     implicit none

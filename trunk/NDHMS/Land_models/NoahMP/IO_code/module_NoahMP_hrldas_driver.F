@@ -1469,6 +1469,9 @@ endif
 !#endif
 #endif
 
+  ! Synchronize config file
+  call orchestrator%config%noah_lsm_sync(noah_lsm)
+
 end subroutine land_driver_ini
 
 !===============================================================================
