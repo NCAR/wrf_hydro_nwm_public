@@ -1,15 +1,5 @@
-#simple compilation test for modules in reservoir io
 
 include ../../../macros
-
-# Settings for testing with ifort
-FC=ifort
-FFLAGS=-c -free -O3
-
-# Setting for testing with gfortran
-#FC=gfortran
-#FFLAGS=-c --free-form -std=f2003 -O3
-#F90FLAGS :=-std=f2008 $(F90FLAGS)
 
 MODFLAG := -I ../../../MPP -I ../../../mod
 
@@ -26,9 +16,9 @@ mod:
 
 	ar -r ../../../lib/libHYDRO.a module_reservoir_io.o
 
-
 	cp *.mod ../../../mod
+
 clean:
 	rm -f *.o
 	rm -f *.mod
-	#rm -f reservoir_tests
+

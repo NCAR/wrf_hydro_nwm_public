@@ -136,8 +136,8 @@
 #endif
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
+          use netcdf
           implicit none
-#         include "netcdf.inc"
           character(len=*) :: fileName
           integer, intent(in) :: mm,dd
           integer, intent(in) :: idim, jdim, ldim
@@ -154,28 +154,28 @@
       
 !          units = "fraction"
 
-          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+          iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in get_greenfrac: ", trim(fileName)
               call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// & 
                               "Failed to open file.") 
           endif 
             
-          iret = nf_inq_varid(ncid,  trim(name),  varid)
+          iret = nf90_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
              print*, 'name = "', trim(name)//'"'
-             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf90_inq_varid"
              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
-                             "Failed to call nf_inq_varid.")
+                             "Failed to call nf90_inq_varid.")
           endif
       
-          iret = nf_get_var_real(ncid, varid, xtmp)
+          iret = nf90_get_var(ncid, varid, xtmp)
           if (iret /= 0) then
 
              print*, 'name = "', trim(name)//'"'
-             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf90_get_var"
              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
-                             "Faile to call nf_get_var_real")
+                             "Faile to call nf90_get_var")
           endif
       
       
@@ -208,12 +208,12 @@
                 array3(i,j) = array(i,j) + ddfrac * diff(i,j) 
              enddo
           enddo
-          iret=nf_close(ncid)
+          iret=nf90_close(ncid)
       end subroutine get_greenfrac_netcdf
 
         subroutine get_maxgreenfrac_netcdf(fileName, array3, idim, jdim, ldim)
+          use netcdf
           implicit none
-#         include "netcdf.inc"
           character(len=*) :: fileName
           integer, intent(in) :: idim, jdim, ldim
           real, dimension(idim,jdim), intent(out) :: array3
@@ -223,39 +223,39 @@
       
 !          units = "fraction"
 
-          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+          iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in get_maxgreenfrac: ", trim(fileName)
               call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
                               "Failed to open file.") 
           endif 
             
-          iret = nf_inq_varid(ncid,  trim(name),  varid)
+          iret = nf90_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
              print*, 'name = "', trim(name)//'"'
-             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_inq_varid"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf90_inq_varid"
              call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
-                             "Faile to call nf_inq_varid.")
+                             "Faile to call nf90_inq_varid.")
           endif
       
-          iret = nf_get_var_real(ncid, varid, xtmp)
+          iret = nf90_get_var(ncid, varid, xtmp)
           if (iret /= 0) then
 
              print*, 'name = "', trim(name)//'"'
-             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf_get_var_real"
+             print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_maxgreenfrac_netcdf:  nf90_get_var"
              call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
-                             "Failed to call lnf_get_var_real.")
+                             "Failed to call lnf90_get_var.")
           endif
       
           array3 = maxval(xtmp,3)
-          iret=nf_close(ncid)
+          iret=nf90_close(ncid)
       end subroutine get_maxgreenfrac_netcdf
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, &
             snodep,lai, fpar, vegtyp,FNDSNOWH)
       ! read the field from wrfinput or output file
+          use netcdf
           implicit none
-#         include "netcdf.inc"
           character(len=*) fileName
           integer :: ix,jx , nsoil, i, j, k
           integer :: iret, ncid, ierr, varid
@@ -272,7 +272,7 @@
 !yw              0,0,0,0,0,0,0,0,0,0/
 
 
-          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+          iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
               call hydro_stop("In hrldas_drv_HYDRO.F HYDRO_HRLDAS_ini() - "// &
@@ -284,52 +284,52 @@
 #endif
           endif 
 
-           iret = nf_inq_varid(ncid,"VEGFRA",  varid)
+           iret = nf90_inq_varid(ncid,"VEGFRA",  varid)
            if (iret == 0) then 
-              iret = nf_get_var_real(ncid, varid, fpar)
+              iret = nf90_get_var(ncid, varid, fpar)
               if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 1000) ) fpar = fpar/100.
            endif
 
 
-          iret = nf_inq_varid(ncid,"LAI",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, lai)
+          iret = nf90_inq_varid(ncid,"LAI",  varid)
+          if (iret == 0) iret = nf90_get_var(ncid, varid, lai)
 
-          iret = nf_inq_varid(ncid,"SNOWH",  varid)
+          iret = nf90_inq_varid(ncid,"SNOWH",  varid)
           if (iret == 0) then
 #ifdef HYDRO_D
              print*, "read snowh for initialization ...."
 #endif
-             iret = nf_get_var_real(ncid, varid, snodep)
+             iret = nf90_get_var(ncid, varid, snodep)
              FNDSNOWH = .true.
           else
              FNDSNOWH   = .false.
           endif  
 
-          iret = nf_inq_varid(ncid,"SNOW",  varid)
+          iret = nf90_inq_varid(ncid,"SNOW",  varid)
           if (iret == 0) then
 #ifdef HYDRO_D
              print*, "read snow for initialization ...."
 #endif
-             iret = nf_get_var_real(ncid, varid, weasd)
+             iret = nf90_get_var(ncid, varid, weasd)
           endif  
          
           
-          iret = nf_inq_varid(ncid,"TSK",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, t1)
+          iret = nf90_inq_varid(ncid,"TSK",  varid)
+          if (iret == 0) iret = nf90_get_var(ncid, varid, t1)
 
-          iret = nf_inq_varid(ncid,"CANWAT",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, cmc)
+          iret = nf90_inq_varid(ncid,"CANWAT",  varid)
+          if (iret == 0) iret = nf90_get_var(ncid, varid, cmc)
 
-          iret = nf_inq_varid(ncid,"SMOIS",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, smc)
+          iret = nf90_inq_varid(ncid,"SMOIS",  varid)
+          if (iret == 0) iret = nf90_get_var(ncid, varid, smc)
 
-          iret = nf_inq_varid(ncid,"TSLB",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, stc)
+          iret = nf90_inq_varid(ncid,"TSLB",  varid)
+          if (iret == 0) iret = nf90_get_var(ncid, varid, stc)
 
-          iret = nf_inq_varid(ncid,"SH2O",  varid)
-          if (iret == 0) iret = nf_get_var_real(ncid, varid, sh2ox)
+          iret = nf90_inq_varid(ncid,"SH2O",  varid)
+          if (iret == 0) iret = nf90_get_var(ncid, varid, sh2ox)
 
-          iret=nf_close(ncid)
+          iret=nf90_close(ncid)
 
 !yw    added for 
 !yw          where(sh2ox == 0) sh2ox = smc

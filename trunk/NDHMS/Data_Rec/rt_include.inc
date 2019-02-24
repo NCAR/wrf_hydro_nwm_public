@@ -145,23 +145,6 @@
   REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
   ! VARIABLES FOR  RESERVOIRS
-  REAL :: water_elevation
-  REAL :: routing_period
-  REAL :: previous_timestep_inflow
-  REAL :: inflow
-  REAL :: previous_day_inflow
-  REAL :: outflow
-  REAL :: lateral_inflow
-  REAL :: reservoir_area
-  REAL :: weir_elevation
-  REAL :: weir_coeffecient
-  REAL :: weir_length
-  REAL :: orifice_elevation
-  REAL :: orifice_coffecient
-  REAL :: orifice_area
-  REAL :: max_depth
-  INTEGER :: lake_number
-
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file

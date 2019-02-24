@@ -38,7 +38,6 @@ module module_HYDRO_io
 
 
    implicit none
-#include <netcdf.inc>
 
    interface w_rst_crt_reach
       module procedure w_rst_crt_reach_real
@@ -70,7 +69,7 @@ module module_HYDRO_io
 
           get2d_real = -1
 
-          iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+          iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
           if (iret .ne. 0) then
              errMsg = "get2d_real: failed to open the netcdf file: " // trim(fileName)
              print*, trim(errMsg)
@@ -79,9 +78,9 @@ module module_HYDRO_io
              return
           endif
 
-          ivar = nf_inq_varid(ncid,trim(var_name),  varid)
+          ivar = nf90_inq_varid(ncid,trim(var_name),  varid)
           if(ivar .ne. 0) then
-             ivar = nf_inq_varid(ncid,trim(var_name//"_M"),  varid)
+             ivar = nf90_inq_varid(ncid,trim(var_name//"_M"),  varid)
              if(ivar .ne. 0) then
                 errMsg = "WARNING: get2d_real: failed to find the variables: " //      &
                          trim(var_name) // ' and ' // trim(var_name//"_M") // &
@@ -92,7 +91,7 @@ module module_HYDRO_io
              endif
           end if
 
-          iret = nf_get_var_real(ncid, varid, out_buff)
+          iret = nf90_get_var(ncid, varid, out_buff)
           if(iret .ne. 0) then
              errMsg = "WARNING: get2d_real: failed to read the variable: " // &
                       trim(var_name) // ' or ' // trim(var_name//"_M") // &
@@ -102,7 +101,7 @@ module module_HYDRO_io
              return
           endif
 
-          iret = nf_close(ncid)
+          iret = nf90_close(ncid)
           if(iret .ne. 0) then
              errMsg = "WARNING: get2d_real: failed to close the file: " // &
                       trim(fileName)
@@ -169,21 +168,21 @@ module module_HYDRO_io
 #endif
 #endif
                 ! Open the NetCDF file.
-              iret = nf_open(fileName, NF_NOWRITE, ncid)
+              iret = nf90_open(fileName, NF90_NOWRITE, ncid)
               if (iret /= 0) then
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
                  call hydro_stop("In get2d_lsm_vegtyp() - Problem opening geo_static file")
               endif
 
-            iret = nf_inq_dimid(ncid, "land_cat", dimid)
+            iret = nf90_inq_dimid(ncid, "land_cat", dimid)
             if (iret /= 0) then
-              call hydro_stop("In get2d_lsm_vegtyp() - nf_inq_dimid:  land_cat problem ")
+              call hydro_stop("In get2d_lsm_vegtyp() - nf90_inq_dimid:  land_cat problem ")
              endif
 
-            iret = nf_inq_dimlen(ncid, dimid, land_cat)
+            iret = nf90_inquire_dimension(ncid, dimid, len = land_cat)
             if (iret /= 0) then
-               call hydro_stop("In get2d_lsm_vegtyp() - nf_inq_dimlen:  land_cat problem")
+               call hydro_stop("In get2d_lsm_vegtyp() - nf90_inquire_dimension:  land_cat problem")
             endif
 
 #ifdef MPP_LAND
@@ -195,11 +194,11 @@ module module_HYDRO_io
 #else
           call get_landuse_netcdf(ncid, xdum,   units, ix, jx, land_cat)
 #endif
-          iret = nf_close(ncid)
+          iret = nf90_close(ncid)
 
 #else
           call get_landuse_netcdf(ncid, xdum,   units, ix, jx, land_cat)
-          iret = nf_close(ncid)
+          iret = nf90_close(ncid)
 #endif
          out_buff = nint(xdum)
      end subroutine get2d_lsm_vegtyp
@@ -215,34 +214,34 @@ module module_HYDRO_io
             if(my_id .eq. IO_id) then
 #endif
 #endif
-            iret = nf_open(fileName, NF_NOWRITE, ncid)
+            iret = nf90_open(fileName, NF90_NOWRITE, ncid)
             if (iret /= 0) then
                write(*,'("Problem opening geo_static file: ''", A, "''")') &
                     trim(fileName)
                call hydro_stop("In get_file_dimension() - Problem opening geo_static file")
             endif
-
-            iret = nf_inq_dimid(ncid, "west_east", dimid)
-
+        
+            iret = nf90_inq_dimid(ncid, "west_east", dimid)
+        
             if (iret /= 0) then
-               call hydro_stop("In get_file_dimension() - nf_inq_dimid:  west_east problem")
+               call hydro_stop("In get_file_dimension() - nf90_inq_dimid:  west_east problem")
             endif
-
-            iret = nf_inq_dimlen(ncid, dimid, ix)
+        
+            iret = nf90_inquire_dimension(ncid, dimid, len = ix)
             if (iret /= 0) then
-               call hydro_stop("In get_file_dimension() - nf_inq_dimlen:  west_east problem")
+               call hydro_stop("In get_file_dimension() - nf90_inquire_dimension:  west_east problem")
             endif
-
-            iret = nf_inq_dimid(ncid, "south_north", dimid)
+        
+            iret = nf90_inq_dimid(ncid, "south_north", dimid)
             if (iret /= 0) then
-               call hydro_stop("In get_file_dimension() - nf_inq_dimid:  south_north problem.")
+               call hydro_stop("In get_file_dimension() - nf90_inq_dimid:  south_north problem.")
             endif
-
-            iret = nf_inq_dimlen(ncid, dimid, jx)
+        
+            iret = nf90_inquire_dimension(ncid, dimid, len = jx)
             if (iret /= 0) then
-               call hydro_stop("In get_file_dimension() - nf_inq_dimlen:  south_north problem")
+               call hydro_stop("In get_file_dimension() - nf90_inquire_dimension:  south_north problem")
             endif
-            iret = nf_close(ncid)
+            iret = nf90_close(ncid)
 #ifdef MPP_LAND
 #ifndef PARALLELIO
             endif
@@ -264,33 +263,33 @@ if (my_id .eq. IO_id) then
 #endif
 #endif
 
-  iret = nf_open(fileName, nf_nowrite, ncid)
-  if (iret /= NF_NOERR) then
+  iret = nf90_open(fileName, nf90_nowrite, ncid)
+  if (iret /= NF90_NOERR) then
     write(*,'("Problem opening geo file: ''", A, "''")') trim(fileName)
     write(*,*) "Using default (USGS) values for urban and water land use types."
   else
-    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISWATER', istmp)
-    if (iret .eq. NF_NOERR) then
+    iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISWATER', istmp)
+    if (iret .eq. NF90_NOERR) then
       iswater = istmp
     else
       write(*,*) "Using default (USGS) values for water land use types."
       iswater = 16
     endif
-    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISURBAN', istmp)
-    if (iret .eq. NF_NOERR) then
+    iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISURBAN', istmp)
+    if (iret .eq. NF90_NOERR) then
       isurban = istmp
     else
       write(*,*) "Using default (USGS) values for urban land use types."
       isurban = 1
     endif
-    iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISOILWATER', istmp)
-    if (iret .eq. NF_NOERR) then
+    iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISOILWATER', istmp)
+    if (iret .eq. NF90_NOERR) then
       isoilwater = istmp
     else
       write(*,*) "Using default (USGS) values for water soil types."
       isoilwater = 14
     endif
-    iret = nf_close(ncid)
+    iret = nf90_close(ncid)
   endif
 
 #ifdef HYDRO_D
@@ -328,21 +327,21 @@ end subroutine get_file_globalatts
 #endif
 #endif
                 ! Open the NetCDF file.
-            iret = nf_open(fileName, NF_NOWRITE, ncid)
+            iret = nf90_open(fileName, NF90_NOWRITE, ncid)
               if (iret /= 0) then
                  write(*,'("Problem opening geo_static file: ''", A, "''")') &
                       trim(fileName)
                  call hydro_stop("In get2d_lsm_soltyp() - problem to open geo_static file.")
               endif
 
-            iret = nf_inq_dimid(ncid, "soil_cat", dimid)
+            iret = nf90_inq_dimid(ncid, "soil_cat", dimid)
             if (iret /= 0) then
-                call hydro_stop("In get2d_lsm_soltyp() - nf_inq_dimid:  soil_cat problem")
+                call hydro_stop("In get2d_lsm_soltyp() - nf90_inq_dimid:  soil_cat problem")
             endif
 
-            iret = nf_inq_dimlen(ncid, dimid, land_cat)
+            iret = nf90_inquire_dimension(ncid, dimid, len = land_cat)
             if (iret /= 0) then
-               call hydro_stop("In get2d_lsm_soltyp() - nf_inq_dimlen:  soil_cat problem")
+               call hydro_stop("In get2d_lsm_soltyp() - nf90_inquire_dimension:  soil_cat problem")
             endif
 
 #ifdef MPP_LAND
@@ -356,10 +355,10 @@ end subroutine get_file_globalatts
 #else
           call get_soilcat_netcdf(ncid, xdum,   units, ix, jx, land_cat)
 #endif
-          iret = nf_close(ncid)
-#else
+          iret = nf90_close(ncid)
+#else         
           call get_soilcat_netcdf(ncid, xdum,   units, ix, jx, land_cat)
-          iret = nf_close(ncid)
+          iret = nf90_close(ncid)
 #endif
           out_buff = nint(xdum)
      end subroutine get2d_lsm_soltyp
@@ -367,7 +366,6 @@ end subroutine get_file_globalatts
 
   subroutine get_landuse_netcdf(ncid, array, units, idim, jdim, ldim)
     implicit none
-#include <netcdf.inc>
     integer, intent(in) :: ncid
     integer, intent(in) :: idim, jdim, ldim
     real, dimension(idim,jdim), intent(out) :: array
@@ -381,16 +379,16 @@ end subroutine get_file_globalatts
 
     units = ""
 
-!    iret = nf_inq_varid(ncid,  trim(name),  varid)
+!    iret = nf90_inq_varid(ncid,  trim(name),  varid)
 !    if (iret /= 0) then
 !       print*, 'name = "', trim(name)//'"'
-!       call hydro_stop("In get_landuse_netcdf() - nf_inq_varid problem")
+!       call hydro_stop("In get_landuse_netcdf() - nf90_inq_varid problem")
 !    endif
 
-!    iret = nf_get_var_real(ncid, varid, xtp)
+!    iret = nf90_get_var(ncid, varid, xtp)
 !    if (iret /= 0) then
 !       print*, 'name = "', trim(name)//'"'
-!       call hydro_stop("In get_landuse_netcdf() - nf_get_var_real problem")
+!       call hydro_stop("In get_landuse_netcdf() - nf90_get_var problem")
 !    endif
 !
 !    do i = 1, idim
@@ -405,16 +403,16 @@ end subroutine get_file_globalatts
 
 !!! START AD_CHANGE
 ! Using LU_INDEX direct from WPS for consistency with the LSMs
-    iret = nf_inq_varid(ncid,  name,  varid)
+    iret = nf90_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_landuse_netcdf() - nf_inq_varid problem")
+       call hydro_stop("In get_landuse_netcdf() - nf90_inq_varid problem")
     endif
 
-    iret = nf_get_var_real(ncid, varid, array)
+    iret = nf90_get_var(ncid, varid, array)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_landuse_netcdf() - nf_get_var_real problem")
+       call hydro_stop("In get_landuse_netcdf() - nf90_get_var problem")
     endif
 !!! END AD_CHANGE
 
@@ -423,7 +421,6 @@ end subroutine get_file_globalatts
 
   subroutine get_soilcat_netcdf(ncid, array, units, idim, jdim, ldim)
     implicit none
-#include <netcdf.inc>
 
     integer, intent(in) :: ncid
     integer, intent(in) :: idim, jdim, ldim
@@ -439,16 +436,16 @@ end subroutine get_file_globalatts
 !    did = 1
     units = ""
 
-!    iret = nf_inq_varid(ncid,  trim(name),  varid)
+!    iret = nf90_inq_varid(ncid,  trim(name),  varid)
 !    if (iret /= 0) then
 !       print*, 'name = "', trim(name)//'"'
-!       call hydro_stop("In get_soilcat_netcdf() - nf_inq_varid problem")
+!       call hydro_stop("In get_soilcat_netcdf() - nf90_inq_varid problem")
 !    endif
 !
-!    iret = nf_get_var_real(ncid, varid, xtmp)
+!    iret = nf90_get_var(ncid, varid, xtmp)
 !    if (iret /= 0) then
 !       print*, 'name = "', trim(name)//'"'
-!       call hydro_stop("In get_soilcat_netcdf() - nf_get_var_real problem")
+!       call hydro_stop("In get_soilcat_netcdf() - nf90_get_var problem")
 !    endif
 !
 !    do i = 1, idim
@@ -464,16 +461,16 @@ end subroutine get_file_globalatts
 
 !!! START AD_CHANGE
 ! Using SCT_DOM direct from WPS for consistency with the LSMs
-    iret = nf_inq_varid(ncid,  name,  varid)
+    iret = nf90_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_soilcat_netcdf() - nf_inq_varid problem")
+       call hydro_stop("In get_soilcat_netcdf() - nf90_inq_varid problem")
     endif
 
-    iret = nf_get_var_real(ncid, varid, array)
+    iret = nf90_get_var(ncid, varid, array)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_soilcat_netcdf() - nf_get_var_real problem")
+       call hydro_stop("In get_soilcat_netcdf() - nf90_get_var problem")
     endif
  !!! END AD_CHANGE
 
@@ -482,7 +479,6 @@ end subroutine get_file_globalatts
 
 subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
     implicit none
-#include <netcdf.inc>
     integer, intent(in) :: ncid,mm,dd
     integer, intent(in) :: idim, jdim, ldim
     real, dimension(idim,jdim) :: array
@@ -499,16 +495,16 @@ subroutine get_greenfrac_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 
     units = "fraction"
 
-    iret = nf_inq_varid(ncid,  trim(name),  varid)
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_greenfrac_netcdf() - nf_inq_varid problem")
+       call hydro_stop("In get_greenfrac_netcdf() - nf90_inq_varid problem")
     endif
 
-    iret = nf_get_var_real(ncid, varid, xtmp)
+    iret = nf90_get_var(ncid, varid, xtmp)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_greenfrac_netcdf() - nf_get_var_real problem")
+       call hydro_stop("In get_greenfrac_netcdf() - nf90_get_var problem")
     endif
 
 
@@ -548,7 +544,6 @@ end subroutine get_greenfrac_netcdf
 
 subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
     implicit none
-#include <netcdf.inc>
     integer, intent(in) :: ncid,mm,dd
     integer, intent(in) :: idim, jdim, ldim
     real, dimension(idim,jdim) :: array
@@ -566,16 +561,16 @@ subroutine get_albedo12m_netcdf(ncid, array3, units, idim, jdim, ldim,mm,dd)
 
     units = "fraction"
 
-    iret = nf_inq_varid(ncid,  trim(name),  varid)
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_albedo12m_netcdf() - nf_inq_varid problem")
+       call hydro_stop("In get_albedo12m_netcdf() - nf90_inq_varid problem")
     endif
 
-    iret = nf_get_var_real(ncid, varid, xtmp)
+    iret = nf90_get_var(ncid, varid, xtmp)
     if (iret /= 0) then
        print*, 'name = "', trim(name)//'"'
-       call hydro_stop("In get_albedo12m_netcdf() - nf_get_var_real problem")
+       call hydro_stop("In get_albedo12m_netcdf() - nf90_get_var problem")
     endif
 
     if (mm.lt.12) then
@@ -649,7 +644,7 @@ end subroutine get_albedo12m_netcdf
     if (iret /= 0) then
        if (fatal_IF_ERROR) then
           print*, 'name = "', trim(name)//'"'
-          call hydro_stop("In get_2d_netcdf() - nf90_get_var_real problem")
+          call hydro_stop("In get_2d_netcdf() - nf90_get_var problem")
        else
           ierr = iret
           return
@@ -668,7 +663,6 @@ end subroutine get_albedo12m_netcdf
 
       subroutine get_2d_netcdf_cows(var_name,ncid,var, &
             ix,jx,tlevel,fatal_if_error,ierr)
-#include <netcdf.inc>
           character(len=*), intent(in) :: var_name
           integer,intent(in) ::  ncid,ix,jx,tlevel
           real, intent(out):: var(ix,jx)
@@ -681,17 +675,17 @@ end subroutine get_albedo12m_netcdf
           count(1) = ix
           count(2) = jx
           start(4) = tlevel
-      iret = nf_inq_varid(ncid,  var_name,  varid)
+      iret = nf90_inq_varid(ncid,  var_name,  varid)
 
       if (iret /= 0) then
         if (fatal_IF_ERROR) then
-           call hydro_stop("In get_2d_netcdf_cows() - nf_inq_varid problem")
+           call hydro_stop("In get_2d_netcdf_cows() - nf90_inq_varid problem")
         else
           ierr = iret
           return
         endif
       endif
-      iret = nf_get_vara_real(ncid, varid, start,count,var)
+      iret = nf90_get_var(ncid, varid, var, start, count)
 
       return
       end subroutine get_2d_netcdf_cows
@@ -715,7 +709,6 @@ end subroutine get_albedo12m_netcdf
             CH_NETLNK, channel_option, geo_finegrid_flnm, NLINKSL, UDMP_OPT,NLAKES)
 
          implicit none
-#include <netcdf.inc>
         INTEGER                                      :: I,J,channel_option,jj
         INTEGER, INTENT(INOUT)                       :: NLINKS, NLINKSL
         INTEGER, INTENT(IN)                          :: IXRT,JXRT
@@ -1295,7 +1288,6 @@ end subroutine get_albedo12m_netcdf
   subroutine READ_SIMP_GW(IX,JX,IXRT,JXRT,GWSUBBASMSK,gwbasmskfil,&
           gw_strm_msk,numbasns,ch_netrt,AGGFACTRT)
     implicit none
-#include <netcdf.inc>
 
     integer, intent(in)                     :: IX,JX,IXRT,JXRT,AGGFACTRT
     integer, intent(in), dimension(IXRT,JXRT)  :: ch_netrt
@@ -1316,9 +1308,9 @@ end subroutine get_albedo12m_netcdf
         call hydro_stop("Cound not find file : "//trim(gwbasmskfil))
     endif
 
-    iret = nf_open(trim(gwbasmskfil), NF_NOWRITE, ncid)
+    iret = nf90_open(trim(gwbasmskfil), NF90_NOWRITE, ncid)
     if( iret .eq. 0 ) then
-       iret = nf_close(ncid)
+       iret = nf90_close(ncid)
        print*, "read gwbasmskfil as nc format: ", trim(gwbasmskfil)
          allocate(GWSUBBASMSK_tmp(ix,jx))
          call get2d_int("BASIN",GWSUBBASMSK_tmp,ix,jx,trim(gwbasmskfil), .true.)
@@ -1467,7 +1459,7 @@ end subroutine get_albedo12m_netcdf
      if(.not. fexist) then
         call hydro_stop("Cound not find file : "//trim(inFile))
      endif
-     iret = nf_open(trim(inFile), NF_NOWRITE, ncid)
+     iret = nf90_open(trim(inFile), NF90_NOWRITE, ncid)
      if(iret .eq. 0 ) then
         print*, "read GWBUCKPARM file as nc format: " , trim(inFile)
         call get_1d_netcdf_int(ncid, "Basin", tmp_bas_id, "read GWBUCKPARM", .true.)
@@ -1477,10 +1469,10 @@ end subroutine get_albedo12m_netcdf
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
      else
-        !iret = nf_close(ncid)
-        print*, "read GWBUCKPARM file as TBL format : "
+        !iret = nf90_close(ncid)
+        print*, "read GWBUCKPARM file as TBL format : " 
 #ifndef NCEP_WCOSS
 !yw        OPEN(81, FILE='GWBUCKPARM.TBL',FORM='FORMATTED',STATUS='OLD')
         OPEN(81, FILE=trim(inFile),FORM='FORMATTED',STATUS='OLD')
@@ -1538,7 +1530,6 @@ end subroutine get_albedo12m_netcdf
   ! BF read the static input fields needed for the 2D GW scheme
   subroutine readGW2d(ix, jx, hc, ihead, botelv, por, ltype, ihShift)
   implicit none
-#include <netcdf.inc>
   integer, intent(in) :: ix, jx
   real, intent(in) :: ihShift
   integer, dimension(ix,jx), intent(inout)::   ltype
@@ -1695,7 +1686,6 @@ end subroutine get_albedo12m_netcdf
 
 !output the routing variables over routing grid.
     implicit none
-#include <netcdf.inc>
 
     integer,                                  intent(in) :: igrid
 
@@ -1822,7 +1812,7 @@ end subroutine get_albedo12m_netcdf
 #ifdef MPP_LAND
    if(my_id .eq. io_id) then
 #endif
-      iret = nf_open(trim(geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+      iret = nf90_open(trim(geo_finegrid_flnm), NF90_NOWRITE, ncstatic)
 #ifdef MPP_LAND
    endif
    call mpp_land_bcast_int1(iret)
@@ -1843,11 +1833,11 @@ end subroutine get_albedo12m_netcdf
 
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get Latitude (X)
-      iret = NF_INQ_VARID(ncstatic,'x',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, xcoord_d)
+      iret = NF90_INQ_VARID(ncstatic,'x',varid)
+      if(iret .eq. 0) iret = nf90_get_var(ncstatic, varid, xcoord_d)
       ! Get Longitude (Y)
-      iret = NF_INQ_VARID(ncstatic,'y',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, ycoord)
+      iret = NF90_INQ_VARID(ncstatic,'y',varid)
+      if(iret .eq. 0) iret = nf90_get_var(ncstatic, varid, ycoord)
      else
       ycoord_d = 0.
       xcoord_d = 0.
@@ -1868,14 +1858,14 @@ end subroutine get_albedo12m_netcdf
    if (io_config_outputs .le. 0) then
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
-      iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
-      if(iret .eq. 0) iret = NF_GET_ATT_REAL(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
-     end if  !endif hires_georef
-      iret = nf_close(ncstatic)
+      iret = NF90_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
+      if(iret .eq. 0) iret = nf90_get_att(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
+     end if  !endif hires_georef 
+      iret = nf90_close(ncstatic)
    endif
 
 !-- create the fine grid routing file
@@ -1885,187 +1875,187 @@ end subroutine get_albedo12m_netcdf
 #endif
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
        write(6,*) "using large netcdf file for RTOUT_DOMAIN"
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
        write(6,*) "using normal netcdf file for RTOUT_DOMAIN"
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
        if (iret /= 0) then
-         call hydro_stop("In output_rt() - Problem nf_create")
+         call hydro_stop("In output_rt() - Problem nf90_create")
        endif
 
-       iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
-       iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
-       iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
+       iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, dimid_times)
+       iret = nf90_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
+       iret = nf90_def_dim(ncid, "y", jxrtd, dimid_jx)
      if (io_config_outputs .le. 0) then
-       iret = nf_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
+       iret = nf90_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
      endif
 
 !--- define variables
 !     !- time definition, timeObs
-	 iret = nf_def_var(ncid,"time",NF_INT, 1, (/dimid_times/), varid)
-         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
-         iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
+	 iret = nf90_def_var(ncid, "time", NF90_INT, (/dimid_times/), varid)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
+         iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
 
 if (io_config_outputs .le. 0) then
        !- x-coordinate in cartesian system
-        iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
-        iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
-        iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+        iret = nf90_def_var(ncid, "x", NF90_DOUBLE, (/dimid_ix/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'x coordinate of projection')
+        iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_x_coordinate')
+        iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- y-coordinate in cartesian ssystem
-          iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/dimid_jx/), varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
-          iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
-          iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+          iret = nf90_def_var(ncid, "y", NF90_DOUBLE, (/dimid_jx/), varid)
+          iret = nf90_put_att(ncid, varid, 'long_name', 'y coordinate of projection')
+          iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_y_coordinate')
+          iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- LATITUDE
-        iret = nf_def_var(ncid,"LATITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',8,'LATITUDE')
-        iret = nf_put_att_text(ncid,varid,'standard_name',8,'LATITUDE')
-        iret = nf_put_att_text(ncid,varid,'units',5,'deg North')
+        iret = nf90_def_var(ncid, "LATITUDE", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'LATITUDE')
+        iret = nf90_put_att(ncid, varid, 'standard_name', 'LATITUDE')
+        iret = nf90_put_att(ncid, varid, 'units', 'deg North')
 
        !- LONGITUDE
-          iret = nf_def_var(ncid,"LONGITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',9,'LONGITUDE')
-          iret = nf_put_att_text(ncid,varid,'standard_name',9,'LONGITUDE')
-          iret = nf_put_att_text(ncid,varid,'units',5,'deg east')
+          iret = nf90_def_var(ncid, "LONGITUDE", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          iret = nf90_put_att(ncid, varid, 'long_name', 'LONGITUDE')
+          iret = nf90_put_att(ncid, varid, 'standard_name', 'LONGITUDE')
+          iret = nf90_put_att(ncid, varid, 'units', 'deg east')
 
        !-- z-level is soil
-        iret = nf_def_var(ncid,"depth", NF_FLOAT, 1, (/dimid_soil/),varid)
-        iret = nf_put_att_text(ncid,varid,'units',2,'cm')
-        iret = nf_put_att_text(ncid,varid,'long_name',19,'depth of soil layer')
+        iret = nf90_def_var(ncid, "depth", NF90_FLOAT, (/dimid_soil/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'cm')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'depth of soil layer')
 
          do n = 1, NSOIL
              write(strTmp,'(I2)') n
-             iret = nf_def_var(ncid,  "SOIL_M"//trim(strTmp),  NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+             iret = nf90_def_var(ncid, "SOIL_M"//trim(strTmp), NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
          end do
-            iret = nf_put_att_text(ncid,varid,'units',7,'m^3/m^3')
-            iret = nf_put_att_text(ncid,varid,'description',16,'moisture content')
-            iret = nf_put_att_text(ncid,varid,'long_name',26,soilm)
-!           iret = nf_put_att_text(ncid,varid,'coordinates',5,'x y z')
-            iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-            iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+            iret = nf90_put_att(ncid, varid, 'units', 'm^3/m^3')
+            iret = nf90_put_att(ncid, varid, 'description', 'moisture content')
+            iret = nf90_put_att(ncid, varid, 'long_name', soilm)
+!           iret = nf90_put_att(ncid, varid, 'coordinates', 'x y z')
+            iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+            iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-!      iret = nf_def_var(ncid,"ESNOW2D",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+!      iret = nf90_def_var(ncid, "ESNOW2D", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
 
-!       iret = nf_def_var(ncid,"QSUBRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-!       iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
-!       iret = nf_put_att_text(ncid,varid,'long_name',15,'subsurface flow')
-!       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-!       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-!       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+!       iret = nf90_def_var(ncid, "QSUBRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+!       iret = nf90_put_att(ncid, varid, 'units', 'm3 s-1')
+!       iret = nf90_put_att(ncid, varid, 'long_name', 'subsurface flow')
+!       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+!       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+!       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 endif
 
 ! All but long range
 if ( io_config_outputs .ne. 4 ) then
 
-   iret = nf_def_var(ncid,"zwattablrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-   iret = nf_put_att_text(ncid,varid,'units',1,'m')
-   iret = nf_put_att_text(ncid,varid,'long_name',17,'water table depth')
-   iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-   iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-   iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   iret = nf90_def_var(ncid, "zwattablrt", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'm')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'water table depth')
+   iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+   iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-   !iret = nf_def_var(ncid,"Q_SFCFLX_X",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-   !iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
-   !iret = nf_put_att_text(ncid,varid,'long_name',14,'surface flux x')
-   !iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-   !iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-   !iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   !iret = nf90_def_var(ncid, "Q_SFCFLX_X", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   !iret = nf90_put_att(ncid, varid, 'units', 'm3 s-1')
+   !iret = nf90_put_att(ncid, varid, 'long_name', 'surface flux x')
+   !iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+   !iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+   !iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-   !iret = nf_def_var(ncid,"Q_SFCFLX_Y",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-   !iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
-   !iret = nf_put_att_text(ncid,varid,'long_name',14,'surface flux y')
-   !iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-   !iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-   !iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   !iret = nf90_def_var(ncid, "Q_SFCFLX_Y", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   !iret = nf90_put_att(ncid, varid, 'units', 'm3 s-1')
+   !iret = nf90_put_att(ncid, varid, 'long_name', 'surface flux y')
+   !iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+   !iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+   !iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-   iret = nf_def_var(ncid,"sfcheadsubrt",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-   iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-   iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
-   iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-   iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-   iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+   iret = nf90_def_var(ncid, "sfcheadsubrt", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'mm')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'surface head')
+   iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+   iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
 endif
 
-if (io_config_outputs .le. 0) then
-       iret = nf_def_var(ncid,"QSTRMVOLRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',20,'accum channel inflow')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+if (io_config_outputs .le. 0) then 
+       iret = nf90_def_var(ncid, "QSTRMVOLRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'mm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'accum channel inflow')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-!      iret = nf_def_var(ncid,"SOXRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-!      iret = nf_put_att_text(ncid,varid,'units',1,'1')
-!      iret = nf_put_att_text(ncid,varid,'long_name',7,'slope x')
-!      iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-!      iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-!      iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+!      iret = nf90_def_var(ncid, "SOXRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+!      iret = nf90_put_att(ncid, varid, 'units', '1')
+!      iret = nf90_put_att(ncid, varid, 'long_name', 'slope x')
+!      iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+!      iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+!      iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-!      iret = nf_def_var(ncid,"SOYRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-!      iret = nf_put_att_text(ncid,varid,'units',1,'1')
-!      iret = nf_put_att_text(ncid,varid,'long_name',7,'slope 7')
-!      iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-!      iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-!      iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+!      iret = nf90_def_var(ncid, "SOYRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+!      iret = nf90_put_att(ncid, varid, 'units', '1')
+!      iret = nf90_put_att(ncid, varid, 'long_name', 'slope 7')
+!      iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+!      iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+!      iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-!       iret = nf_def_var(ncid,"SUB_RESID",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
+!       iret = nf90_def_var(ncid, "SUB_RESID", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
 
-       iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',70, &
+       iret = nf90_def_var(ncid, "QBDRYRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'mm')
+       iret = nf90_put_att(ncid,varid,'long_name',&
           'accumulated value of the boundary flux, + into domain, - out of domain')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
 !-- place projection information
      if(hires_flag.eq.1) then !if/then hires_georef
-      iret = nf_def_var(ncid,"lambert_conformal_conic",NF_INT,0, 0,varid)
-      iret = nf_put_att_text(ncid,varid,'grid_mapping_name',23,'lambert_conformal_conic')
-      iret = nf_put_att_real(ncid,varid,'longitude_of_central_meridian',NF_FLOAT,1,long_cm)
-      iret = nf_put_att_real(ncid,varid,'latitude_of_projection_origin',NF_FLOAT,1,lat_po)
-      iret = nf_put_att_real(ncid,varid,'false_easting',NF_FLOAT,1,fe)
-      iret = nf_put_att_real(ncid,varid,'false_northing',NF_FLOAT,1,fn)
-      iret = nf_put_att_real(ncid,varid,'standard_parallel',NF_FLOAT,2,sp)
+      iret = nf90_def_var(ncid, "lambert_conformal_conic", NF90_INT, 0, varid)
+      iret = nf90_put_att(ncid, varid, 'grid_mapping_name', 'lambert_conformal_conic')
+      iret = nf90_put_att(ncid, varid, 'longitude_of_central_meridian', long_cm)
+      iret = nf90_put_att(ncid, varid, 'latitude_of_projection_origin', lat_po)
+      iret = nf90_put_att(ncid, varid, 'false_easting', fe)
+      iret = nf90_put_att(ncid, varid, 'false_northing', fn)
+      iret = nf90_put_att(ncid, varid, 'standard_parallel', sp)
      end if   !endif hires_georef
 endif
 
-!      iret = nf_def_var(ncid,"Date",   NF_CHAR,  2, (/dimid_datelen,dimid_times/),     varid)
+!      iret = nf90_def_var(ncid, "Date", NF90_CHAR, (/dimid_datelen,dimid_times/), varid)
 
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(startdate)) = startdate
       convention(1:32) = "CF-1.0"
-      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",6, convention)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-      iret = nf_put_att_int(ncid,NF_GLOBAL,"output_decimation_factor",NF_INT, 1,decimation)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "output_decimation_factor", decimation)
 
-       ! iret = nf_redef(ncid)
-       iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-       ! iret = nf_enddef(ncid)
+       ! iret = nf90_redef(ncid)
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+       ! iret = nf90_enddef(ncid)
 
-      iret = nf_enddef(ncid)
+      iret = nf90_enddef(ncid)
 
 if (io_config_outputs .le. 0) then
 !!-- write latitude and longitude locations
-         iret = nf_inq_varid(ncid,"x", varid)
-         iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
+         iret = nf90_inq_varid(ncid,"x", varid)
+         iret = nf90_put_var(ncid, varid, xcoord_d, (/1/), (/ixrtd/)) !-- 1-d array
 
-         iret = nf_inq_varid(ncid,"y", varid)
-         iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
+         iret = nf90_inq_varid(ncid,"y", varid)
+         iret = nf90_put_var(ncid, varid, ycoord_d, (/1/), (/jxrtd/)) !-- 1-d array
 endif
 
 #ifdef MPP_LAND
     endif
 #endif
 
-iret = nf_inq_varid(ncid,"time", varid)
-iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+iret = nf90_inq_varid(ncid,"time", varid)
+iret = nf90_put_var(ncid, varid, seconds_since, (/1/))
 
 if (io_config_outputs .le. 0) then
 #ifdef MPP_LAND
@@ -2074,8 +2064,8 @@ if (io_config_outputs .le. 0) then
 #else
         xdumd = LATVAL
 #endif
-        iret = nf_inq_varid(ncid,"LATITUDE", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf90_inq_varid(ncid,"LATITUDE", varid)
+        iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
 
 
 #ifdef MPP_LAND
@@ -2087,8 +2077,8 @@ if (io_config_outputs .le. 0) then
 #else
         xdumd = LONVAL
 #endif
-        iret = nf_inq_varid(ncid,"LONGITUDE", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf90_inq_varid(ncid,"LONGITUDE", varid)
+        iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
 
 #ifdef MPP_LAND
     endif
@@ -2104,9 +2094,9 @@ if (io_config_outputs .le. 0) then
         endif
        enddo
 
-       iret = nf_inq_varid(ncid,"depth", varid)
-       iret = nf_put_vara_real(ncid, varid, (/1/), (/nsoil/), asldpth)
-!yw       iret = nf_close(ncstatic)
+       iret = nf90_inq_varid(ncid,"depth", varid)
+       iret = nf90_put_var(ncid, varid, asldpth, (/1/), (/nsoil/))
+!yw       iret = nf90_close(ncstatic)
 #ifdef MPP_LAND
     endif  ! end of my_id .eq. io_id
 #endif
@@ -2127,8 +2117,8 @@ if (io_config_outputs .le. 0) then
     if(my_id .eq. io_id) then
 #endif
           write(strTmp,'(I2)') n
-          iret = nf_inq_varid(ncid,  "SOIL_M"//trim(strTmp), varid)
-          iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+          iret = nf90_inq_varid(ncid,  "SOIL_M"//trim(strTmp), varid)
+          iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 #ifdef MPP_LAND
     endif
 #endif
@@ -2145,8 +2135,8 @@ if ( (io_config_outputs .ge. 0) .and. (io_config_outputs .ne. 4) ) then
 #ifdef MPP_LAND
    if (my_id .eq. io_id) then
 #endif
-      iret = nf_inq_varid(ncid,  "zwattablrt", varid)
-      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+      iret = nf90_inq_varid(ncid,  "zwattablrt", varid)
+      iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 #ifdef MPP_LAND
    endif
 #endif
@@ -2161,8 +2151,8 @@ if (io_config_outputs .le. 0) then
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then
 #endif
-     iret = nf_inq_varid(ncid,  "QBDRYRT", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "QBDRYRT", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 #ifdef MPP_LAND
      endif
 #endif
@@ -2175,8 +2165,8 @@ if (io_config_outputs .le. 0) then
 #ifdef MPP_LAND
     if(my_id .eq. io_id) then
 #endif
-     iret = nf_inq_varid(ncid,  "QSTRMVOLRT", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "QSTRMVOLRT", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 #ifdef MPP_LAND
      endif
 #endif
@@ -2192,8 +2182,8 @@ if ( io_config_outputs .ne. 4 ) then
 #ifdef MPP_LAND
    if (my_id .eq. io_id) then
 #endif
-      iret = nf_inq_varid(ncid,  "sfcheadsubrt", varid)
-      iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+      iret = nf90_inq_varid(ncid,  "sfcheadsubrt", varid)
+      iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 #ifdef MPP_LAND
    endif
 #endif
@@ -2204,10 +2194,10 @@ endif
 #endif
 
 
-!yw      iret = nf_sync(ncid)
+!yw      iret = nf90_sync(ncid)
       if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
       endif
 #ifdef MPP_LAND
      endif
@@ -2238,7 +2228,6 @@ endif
 #endif
 !output the routing variables over routing grid.
     implicit none
-#include <netcdf.inc>
 
     integer,                                  intent(in) :: igrid
     integer,                                  intent(in) :: split_output_count
@@ -2322,7 +2311,7 @@ endif
       write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(geo_finegrid_flnm)
 
 #endif
-      iret = nf_open(trim(geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+      iret = nf90_open(trim(geo_finegrid_flnm), NF90_NOWRITE, ncstatic)
 
       if (iret /= 0) then
 #ifdef HYDRO_D
@@ -2337,11 +2326,11 @@ endif
 
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get Latitude (X)
-      iret = NF_INQ_VARID(ncstatic,'x',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, xcoord)
+      iret = NF90_INQ_VARID(ncstatic,'x',varid)
+      if(iret .eq. 0) iret = nf90_get_var(ncstatic, varid, xcoord)
       ! Get Longitude (Y)
-      iret = NF_INQ_VARID(ncstatic,'y',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, ycoord)
+      iret = NF90_INQ_VARID(ncstatic,'y',varid)
+      if(iret .eq. 0) iret = nf90_get_var(ncstatic, varid, ycoord)
      else
       xcoord_d = 0.
       ycoord_d = 0.
@@ -2365,14 +2354,14 @@ endif
 
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
-      iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
-      if(iret .eq. 0) iret = NF_GET_ATT_REAL(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
-     end if  !endif hires_georef
-      iret = nf_close(ncstatic)
+      iret = NF90_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
+      if(iret .eq. 0) iret = nf90_get_att(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
+     end if  !endif hires_georef 
+      iret = nf90_close(ncstatic)
 
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".GW_SPINUP",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
@@ -2382,119 +2371,119 @@ endif
 
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
        if (iret /= 0) then
-         call hydro_stop("In output_gw_spinup() - Problem nf_create")
+         call hydro_stop("In output_gw_spinup() - Problem nf90_create")
        endif
 
-       iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
-       iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
-       iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
+       iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, dimid_times)
+       iret = nf90_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
+       iret = nf90_def_dim(ncid, "y", jxrtd, dimid_jx)
 
 !--- define variables
        !- time definition, timeObs
-       iret = nf_def_var(ncid,"time",NF_INT, 1, (/dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
+       iret = nf90_def_var(ncid, "time", NF90_INT, (/dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
 
        !- x-coordinate in cartesian system
-       iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
-       iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
-       iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+       iret = nf90_def_var(ncid, "x", NF90_DOUBLE, (/dimid_ix/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'x coordinate of projection')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_x_coordinate')
+       iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- y-coordinate in cartesian ssystem
-       iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/dimid_jx/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
-       iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
-       iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+       iret = nf90_def_var(ncid, "y", NF90_DOUBLE, (/dimid_jx/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'y coordinate of projection')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_y_coordinate')
+       iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- LATITUDE
-       iret = nf_def_var(ncid,"LATITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',8,'LATITUDE')
-       iret = nf_put_att_text(ncid,varid,'standard_name',8,'LATITUDE')
-       iret = nf_put_att_text(ncid,varid,'units',5,'deg North')
+       iret = nf90_def_var(ncid, "LATITUDE", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'LATITUDE')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'LATITUDE')
+       iret = nf90_put_att(ncid, varid, 'units', 'deg North')
 
        !- LONGITUDE
-       iret = nf_def_var(ncid,"LONGITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',9,'LONGITUDE')
-       iret = nf_put_att_text(ncid,varid,'standard_name',9,'LONGITUDE')
-       iret = nf_put_att_text(ncid,varid,'units',5,'deg east')
+       iret = nf90_def_var(ncid, "LONGITUDE", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'LONGITUDE')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'LONGITUDE')
+       iret = nf90_put_att(ncid, varid, 'units', 'deg east')
 
 
-       iret = nf_def_var(ncid,"GwHead",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',1,'m')
-       iret = nf_put_att_text(ncid,varid,'long_name',17,'groundwater head')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "GwHead", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'groundwater head')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-       iret = nf_def_var(ncid,"GwConv",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',12,'groundwater convergence')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
-
-       iret = nf_def_var(ncid,"GwExcess",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',1,'m')
-       iret = nf_put_att_text(ncid,varid,'long_name',17,'surface excess groundwater')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "GwConv", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'mm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'groundwater convergence')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
+       
+       iret = nf90_def_var(ncid, "GwExcess", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'surface excess groundwater')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
 !-- place projection information
      if(hires_flag.eq.1) then !if/then hires_georef
-      iret = nf_def_var(ncid,"lambert_conformal_conic",NF_INT,0, 0,varid)
-      iret = nf_put_att_text(ncid,varid,'grid_mapping_name',23,'lambert_conformal_conic')
-      iret = nf_put_att_real(ncid,varid,'longitude_of_central_meridian',NF_FLOAT,1,long_cm)
-      iret = nf_put_att_real(ncid,varid,'latitude_of_projection_origin',NF_FLOAT,1,lat_po)
-      iret = nf_put_att_real(ncid,varid,'false_easting',NF_FLOAT,1,fe)
-      iret = nf_put_att_real(ncid,varid,'false_northing',NF_FLOAT,1,fn)
-      iret = nf_put_att_real(ncid,varid,'standard_parallel',NF_FLOAT,2,sp)
+      iret = nf90_def_var(ncid, "lambert_conformal_conic", NF90_INT, 0, varid)
+      iret = nf90_put_att(ncid, varid, 'grid_mapping_name', 'lambert_conformal_conic')
+      iret = nf90_put_att(ncid, varid, 'longitude_of_central_meridian', long_cm)
+      iret = nf90_put_att(ncid, varid, 'latitude_of_projection_origin', lat_po)
+      iret = nf90_put_att(ncid, varid, 'false_easting', fe)
+      iret = nf90_put_att(ncid, varid, 'false_northing', fn)
+      iret = nf90_put_att(ncid, varid, 'standard_parallel', sp)
      end if   !endif hires_georef
 
-!      iret = nf_def_var(ncid,"Date",   NF_CHAR,  2, (/dimid_datelen,dimid_times/),     varid)
+!      iret = nf90_def_var(ncid, "Date", NF90_CHAR, (/dimid_datelen,dimid_times/), varid)
 
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(startdate)) = startdate
       convention(1:32) = "CF-1.0"
-      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",6, convention)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-      iret = nf_put_att_int(ncid,NF_GLOBAL,"output_decimation_factor",NF_INT, 1,decimation)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "output_decimation_factor", decimation)
 
-      iret = nf_enddef(ncid)
+      iret = nf90_enddef(ncid)
 
 !!-- write latitude and longitude locations
 !       xdumd = LATVAL
-        iret = nf_inq_varid(ncid,"x", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
-	iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
+        iret = nf90_inq_varid(ncid,"x", varid)
+!       iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
+	iret = nf90_put_var(ncid, varid, xcoord_d, (/1/), (/ixrtd/)) !-- 1-d array
 
 !       xdumd = LONVAL
-        iret = nf_inq_varid(ncid,"y", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
-        iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
+        iret = nf90_inq_varid(ncid,"y", varid)
+!       iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
+        iret = nf90_put_var(ncid, varid, ycoord_d, (/1/), (/jxrtd/)) !-- 1-d array
 
 #ifdef MPP_LAND
         xdumd = gLATVAL
 #else
         xdumd = LATVAL
 #endif
-        iret = nf_inq_varid(ncid,"LATITUDE", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf90_inq_varid(ncid,"LATITUDE", varid)
+        iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
 
 #ifdef MPP_LAND
         xdumd = gLONVAL
 #else
         xdumd = LONVAL
 #endif
-        iret = nf_inq_varid(ncid,"LONGITUDE", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf90_inq_varid(ncid,"LONGITUDE", varid)
+        iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
 
 
     endif
@@ -2502,8 +2491,8 @@ endif
     output_count = output_count + 1
 
 !!-- time
-        iret = nf_inq_varid(ncid,"time", varid)
-        iret = nf_put_vara_int(ncid, varid, (/output_count/), (/1/), seconds_since)
+        iret = nf90_inq_varid(ncid,"time", varid)
+        iret = nf90_put_var(ncid, varid, seconds_since, (/output_count/))
 
 
 #ifdef MPP_LAND
@@ -2512,16 +2501,16 @@ endif
         xdumd = head
 #endif
 
-     iret = nf_inq_varid(ncid,  "GwHead", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "GwHead", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 
 #ifdef MPP_LAND
         xdumd = gConvgw
 #else
         xdumd = convgw
 #endif
-     iret = nf_inq_varid(ncid,  "GwConv", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "GwConv", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 
 
 #ifdef MPP_LAND
@@ -2529,21 +2518,21 @@ endif
 #else
         xdumd = excess
 #endif
-     iret = nf_inq_varid(ncid,  "GwExcess", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-
-
+     iret = nf90_inq_varid(ncid,  "GwExcess", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
+ 
+     
 !!time in seconds since startdate
 
-       iret = nf_redef(ncid)
+       iret = nf90_redef(ncid)
        date19(1:len_trim(date)) = date
-       iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-
-       iret = nf_enddef(ncid)
-      iret = nf_sync(ncid)
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+ 
+       iret = nf90_enddef(ncid)
+      iret = nf90_sync(ncid)
       if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
       endif
 
      if(allocated(xdumd))  deallocate(xdumd)
@@ -2568,7 +2557,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
 !output the routing variables over routing grid.
     implicit none
-#include <netcdf.inc>
 
     integer,                                  intent(in) :: igrid
     integer,                                  intent(in) :: split_output_count
@@ -2667,7 +2655,7 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
       write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(geo_finegrid_flnm)
 
 #endif
-      iret = nf_open(trim(geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+      iret = nf90_open(trim(geo_finegrid_flnm), NF90_NOWRITE, ncstatic)
 
       if (iret /= 0) then
 #ifdef HYDRO_D
@@ -2682,11 +2670,11 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get Latitude (X)
-      iret = NF_INQ_VARID(ncstatic,'x',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, xcoord)
+      iret = NF90_INQ_VARID(ncstatic,'x',varid)
+      if(iret .eq. 0) iret = nf90_get_var(ncstatic, varid, xcoord)
       ! Get Longitude (Y)
-      iret = NF_INQ_VARID(ncstatic,'y',varid)
-      if(iret .eq. 0) iret = NF_GET_VAR_DOUBLE(ncstatic, varid, ycoord)
+      iret = NF90_INQ_VARID(ncstatic,'y',varid)
+      if(iret .eq. 0) iret = nf90_get_var(ncstatic, varid, ycoord)
      else
       xcoord_d = 0.
       ycoord_d = 0.
@@ -2710,14 +2698,14 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
      if(hires_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
-      iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
-      if(iret .eq. 0) iret = NF_GET_ATT_REAL(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
-     end if  !endif hires_georef
-      iret = nf_close(ncstatic)
+      iret = NF90_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
+      if(iret .eq. 0) iret = nf90_get_att(ncstatic, varid, 'longitude_of_central_meridian', long_cm)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'latitude_of_projection_origin', lat_po)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'false_easting', fe)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'false_northing', fn)  !-- read it from the static file
+      iret = nf90_get_att(ncstatic, varid, 'standard_parallel', sp)  !-- read it from the static file
+     end if  !endif hires_georef 
+      iret = nf90_close(ncstatic)
 
 !-- create the fine grid routing file
        write(output_flnm, '(A12,".GW_DOMAIN",I1)') date(1:4)//date(6:7)//date(9:10)//date(12:13)//date(15:16), igrid
@@ -2727,145 +2715,145 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
        if (iret /= 0) then
-         call hydro_stop("In output_gw_spinup() - Problem nf_create")
+         call hydro_stop("In output_gw_spinup() - Problem nf90_create")
        endif
 
-       iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
-       iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
-       iret = nf_def_dim(ncid, "y", jxrtd, dimid_jx)
-       iret = nf_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
+       iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, dimid_times)
+       iret = nf90_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
+       iret = nf90_def_dim(ncid, "y", jxrtd, dimid_jx)
+       iret = nf90_def_dim(ncid, "depth", nsoil, dimid_soil)  !-- 3-d soils
 
 !--- define variables
        !- time definition, timeObs
-       iret = nf_def_var(ncid,"time",NF_INT, 1, (/dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
+       iret = nf90_def_var(ncid, "time", NF90_INT, (/dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
 
        !- x-coordinate in cartesian system
-       iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/dimid_ix/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
-       iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
-       iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+       iret = nf90_def_var(ncid, "x", NF90_DOUBLE, (/dimid_ix/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'x coordinate of projection')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_x_coordinate')
+       iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- y-coordinate in cartesian ssystem
-       iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/dimid_jx/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
-       iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
-       iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+       iret = nf90_def_var(ncid, "y", NF90_DOUBLE, (/dimid_jx/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'y coordinate of projection')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_y_coordinate')
+       iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- LATITUDE
-       iret = nf_def_var(ncid,"LATITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',8,'LATITUDE')
-       iret = nf_put_att_text(ncid,varid,'standard_name',8,'LATITUDE')
-       iret = nf_put_att_text(ncid,varid,'units',5,'deg North')
+       iret = nf90_def_var(ncid, "LATITUDE", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'LATITUDE')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'LATITUDE')
+       iret = nf90_put_att(ncid, varid, 'units', 'deg North')
 
        !- LONGITUDE
-       iret = nf_def_var(ncid,"LONGITUDE",NF_FLOAT, 2, (/dimid_ix,dimid_jx/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',9,'LONGITUDE')
-       iret = nf_put_att_text(ncid,varid,'standard_name',9,'LONGITUDE')
-       iret = nf_put_att_text(ncid,varid,'units',5,'deg east')
+       iret = nf90_def_var(ncid, "LONGITUDE", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'LONGITUDE')
+       iret = nf90_put_att(ncid, varid, 'standard_name', 'LONGITUDE')
+       iret = nf90_put_att(ncid, varid, 'units', 'deg east')
 
        !-- z-level is soil
-       iret = nf_def_var(ncid,"depth", NF_FLOAT, 1, (/dimid_soil/),varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'cm')
-       iret = nf_put_att_text(ncid,varid,'long_name',19,'depth of soil layer')
+       iret = nf90_def_var(ncid, "depth", NF90_FLOAT, (/dimid_soil/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'cm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'depth of soil layer')
 
-       iret = nf_def_var(ncid,  "SOIL_M",  NF_FLOAT, 4, (/dimid_ix,dimid_jx,dimid_soil,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',6,'kg m-2')
-       iret = nf_put_att_text(ncid,varid,'description',16,'moisture content')
-       iret = nf_put_att_text(ncid,varid,'long_name',26,soilm)
-!      iret = nf_put_att_text(ncid,varid,'coordinates',5,'x y z')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "SOIL_M", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_soil,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'kg m-2')
+       iret = nf90_put_att(ncid, varid, 'description', 'moisture content')
+       iret = nf90_put_att(ncid, varid, 'long_name', soilm)
+!      iret = nf90_put_att(ncid, varid, 'coordinates', 'x y z')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-       iret = nf_def_var(ncid,"HEAD",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',1,'m')
-       iret = nf_put_att_text(ncid,varid,'long_name',17,'groundwater head')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "HEAD", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'groundwater head')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-       iret = nf_def_var(ncid,"CONVGW",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',12,'channel flux')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "CONVGW", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'mm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'channel flux')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
+       
+       iret = nf90_def_var(ncid, "GwExcess", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'mm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'surface excess groundwater')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-       iret = nf_def_var(ncid,"GwExcess",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',1,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',17,'surface excess groundwater')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "QSGWRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'mm')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'surface head')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
-       iret = nf_def_var(ncid,"QSGWRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'mm')
-       iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
-
-       iret = nf_def_var(ncid,"QGW_CHANRT",NF_FLOAT, 3, (/dimid_ix,dimid_jx,dimid_times/), varid)
-       iret = nf_put_att_text(ncid,varid,'units',2,'m3 s-1')
-       iret = nf_put_att_text(ncid,varid,'long_name',12,'surface head')
-       iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-       iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-       iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
+       iret = nf90_def_var(ncid, "QGW_CHANRT", NF90_FLOAT, (/dimid_ix,dimid_jx,dimid_times/), varid)
+       iret = nf90_put_att(ncid, varid, 'units', 'm3 s-1')
+       iret = nf90_put_att(ncid, varid, 'long_name', 'surface head')
+       iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+       iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+       iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 !-- place projection information
      if(hires_flag.eq.1) then !if/then hires_georef
-      iret = nf_def_var(ncid,"lambert_conformal_conic",NF_INT,0, 0,varid)
-      iret = nf_put_att_text(ncid,varid,'grid_mapping_name',23,'lambert_conformal_conic')
-      iret = nf_put_att_real(ncid,varid,'longitude_of_central_meridian',NF_FLOAT,1,long_cm)
-      iret = nf_put_att_real(ncid,varid,'latitude_of_projection_origin',NF_FLOAT,1,lat_po)
-      iret = nf_put_att_real(ncid,varid,'false_easting',NF_FLOAT,1,fe)
-      iret = nf_put_att_real(ncid,varid,'false_northing',NF_FLOAT,1,fn)
-      iret = nf_put_att_real(ncid,varid,'standard_parallel',NF_FLOAT,2,sp)
+      iret = nf90_def_var(ncid, "lambert_conformal_conic", NF90_INT, 0, varid)
+      iret = nf90_put_att(ncid, varid, 'grid_mapping_name', 'lambert_conformal_conic')
+      iret = nf90_put_att(ncid, varid, 'longitude_of_central_meridian', long_cm)
+      iret = nf90_put_att(ncid, varid, 'latitude_of_projection_origin', lat_po)
+      iret = nf90_put_att(ncid, varid, 'false_easting', fe)
+      iret = nf90_put_att(ncid, varid, 'false_northing', fn)
+      iret = nf90_put_att(ncid, varid, 'standard_parallel', sp)
      end if   !endif hires_georef
 
-!      iret = nf_def_var(ncid,"Date",   NF_CHAR,  2, (/dimid_datelen,dimid_times/),     varid)
+!      iret = nf90_def_var(ncid, "Date", NF90_CHAR, (/dimid_datelen,dimid_times/), varid)
 
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(startdate)) = startdate
       convention(1:32) = "CF-1.0"
-      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",6, convention)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-      iret = nf_put_att_int(ncid,NF_GLOBAL,"output_decimation_factor",NF_INT, 1,decimation)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "output_decimation_factor", decimation)
 
-      iret = nf_enddef(ncid)
+      iret = nf90_enddef(ncid)
 
 !!-- write latitude and longitude locations
 !       xdumd = LATVAL
-        iret = nf_inq_varid(ncid,"x", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
-	iret = nf_put_vara_double(ncid, varid, (/1/), (/ixrtd/), xcoord_d) !-- 1-d array
+        iret = nf90_inq_varid(ncid,"x", varid)
+!       iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
+	iret = nf90_put_var(ncid, varid, xcoord_d, (/1/), (/ixrtd/)) !-- 1-d array
 
 !       xdumd = LONVAL
-        iret = nf_inq_varid(ncid,"y", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
-        iret = nf_put_vara_double(ncid, varid, (/1/), (/jxrtd/), ycoord_d) !-- 1-d array
+        iret = nf90_inq_varid(ncid,"y", varid)
+!       iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
+        iret = nf90_put_var(ncid, varid, ycoord_d, (/1/), (/jxrtd/)) !-- 1-d array
 
 #ifdef MPP_LAND
         xdumd = gLATVAL
 #else
         xdumd = LATVAL
 #endif
-        iret = nf_inq_varid(ncid,"LATITUDE", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf90_inq_varid(ncid,"LATITUDE", varid)
+        iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
 
 #ifdef MPP_LAND
         xdumd = gLONVAL
 #else
         xdumd = LONVAL
 #endif
-        iret = nf_inq_varid(ncid,"LONGITUDE", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ixrtd,jxrtd/), xdumd)
+        iret = nf90_inq_varid(ncid,"LONGITUDE", varid)
+        iret = nf90_put_var(ncid, varid, xdumd, (/1,1/), (/ixrtd,jxrtd/))
 
        do n = 1,nsoil
         if(n == 1) then
@@ -2875,17 +2863,17 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         endif
        enddo
 
-       iret = nf_inq_varid(ncid,"depth", varid)
-       iret = nf_put_vara_real(ncid, varid, (/1/), (/nsoil/), asldpth)
-!yw       iret = nf_close(ncstatic)
+       iret = nf90_inq_varid(ncid,"depth", varid)
+       iret = nf90_put_var(ncid, varid, asldpth, (/1/), (/nsoil/))
+!yw       iret = nf90_close(ncstatic)
 
     endif
 
     output_count = output_count + 1
 
 !!-- time
-        iret = nf_inq_varid(ncid,"time", varid)
-        iret = nf_put_vara_int(ncid, varid, (/output_count/), (/1/), seconds_since)
+        iret = nf90_inq_varid(ncid,"time", varid)
+        iret = nf90_put_var(ncid, varid, seconds_since, (/output_count/))
 
 !-- 3-d soils
      do n = 1, nsoil
@@ -2910,8 +2898,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 !        jj = jj + 1
 !      enddo
 !       where (vegtyp(:,:) == 16) xdum = -1.E33
-          iret = nf_inq_varid(ncid,  "SOIL_M", varid)
-          iret = nf_put_vara_real(ncid, varid, (/1,1,n,output_count/), (/ixrtd,jxrtd,1,1/), xdumd)
+          iret = nf90_inq_varid(ncid,  "SOIL_M", varid)
+          iret = nf90_put_var(ncid, varid, xdumd, (/1,1,n,output_count/), (/ixrtd,jxrtd,1,1/))
     enddo !-n soils
 
 #ifdef MPP_LAND
@@ -2920,16 +2908,16 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         xdumd = head
 #endif
 
-     iret = nf_inq_varid(ncid,  "HEAD", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "HEAD", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 
 #ifdef MPP_LAND
         xdumd = gConvgw
 #else
         xdumd = convgw
 #endif
-     iret = nf_inq_varid(ncid,  "CONVGW", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "CONVGW", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 
 
 #ifdef MPP_LAND
@@ -2937,8 +2925,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #else
         xdumd = excess
 #endif
-     iret = nf_inq_varid(ncid,  "GwExcess", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
+     iret = nf90_inq_varid(ncid,  "GwExcess", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
 
 
 #ifdef MPP_LAND
@@ -2947,30 +2935,30 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         xdumd = qsgwrt
 #endif
 
-     iret = nf_inq_varid(ncid,  "QSGWRT", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-
+     iret = nf90_inq_varid(ncid,  "QSGWRT", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
+     
 #ifdef MPP_LAND
         xdumd = gQgw_chanrt
 #else
         xdumd = qgw_chanrt
 #endif
 
-     iret = nf_inq_varid(ncid,  "QGW_CHANRT", varid)
-     iret = nf_put_vara_real(ncid, varid, (/1,1,output_count/), (/ixrtd,jxrtd,1/), xdumd)
-
-
+     iret = nf90_inq_varid(ncid,  "QGW_CHANRT", varid)
+     iret = nf90_put_var(ncid, varid, xdumd, (/1,1,output_count/), (/ixrtd,jxrtd,1/))
+     
+     
 !!time in seconds since startdate
 
-       iret = nf_redef(ncid)
+       iret = nf90_redef(ncid)
        date19(1:len_trim(date)) = date
-       iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-
-       iret = nf_enddef(ncid)
-      iret = nf_sync(ncid)
+       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+ 
+       iret = nf90_enddef(ncid)
+      iret = nf90_sync(ncid)
       if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
       endif
 
      if(allocated(xdumd)) deallocate(xdumd)
@@ -3003,7 +2991,6 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         )
 
      implicit none
-#include <netcdf.inc>
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
@@ -3158,21 +3145,21 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
         if (iret /= 0) then
-           call hydro_stop("In output_chrt() - Problem nf_create points")
+           call hydro_stop("In output_chrt() - Problem nf90_create points")
         endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm2), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid2)
+       iret = nf90_create(trim(output_flnm2), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid2)
 #else
-       iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
+       iret = nf90_create(trim(output_flnm2), NF90_CLOBBER, ncid2)
 #endif
         if (iret /= 0) then
-            call hydro_stop("In output_chrt() - Problem nf_create observation")
+            call hydro_stop("In output_chrt() - Problem nf90_create observation")
         endif
 
        do i=1,nlk
@@ -3220,93 +3207,93 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
           endif
        enddo
 
-       iret = nf_def_dim(ncid, "recNum", NF_UNLIMITED, dimdata)  !--for linked list approach
-       iret = nf_def_dim(ncid, "station", nstations, stationdim)
-       iret = nf_def_dim(ncid, "time", 1, timedim)
+       iret = nf90_def_dim(ncid, "recNum", NF90_UNLIMITED, dimdata)  !--for linked list approach
+       iret = nf90_def_dim(ncid, "station", nstations, stationdim)
+       iret = nf90_def_dim(ncid, "time", 1, timedim)
 
 
-       iret = nf_def_dim(ncid2, "recNum", NF_UNLIMITED, dimdataO)  !--for linked list approach
-       iret = nf_def_dim(ncid2, "station", nobs, obsdim)
-       iret = nf_def_dim(ncid2, "time", 1, timedim2)
+       iret = nf90_def_dim(ncid2, "recNum", NF90_UNLIMITED, dimdataO)  !--for linked list approach
+       iret = nf90_def_dim(ncid2, "station", nobs, obsdim)
+       iret = nf90_def_dim(ncid2, "time", 1, timedim2)
 
       !- station location definition all,  lat
-        iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
+        iret = nf90_def_var(ncid, "latitude", NF90_FLOAT, (/stationdim/), varid)
 #ifdef HYDRO_D
        write(6,*) "iret 2.1,  ", iret, stationdim
 #endif
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station latitude')
 #ifdef HYDRO_D
        write(6,*) "iret 2.2", iret
 #endif
-        iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+        iret = nf90_put_att(ncid, varid, 'units', 'degrees_north')
 #ifdef HYDRO_D
        write(6,*) "iret 2.3", iret
 #endif
 
 
       !- station location definition obs,  lat
-        iret = nf_def_var(ncid2,"latitude",NF_FLOAT, 1, (/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',20,'Observation latitude')
-        iret = nf_put_att_text(ncid2,varid,'units',13,'degrees_north')
+        iret = nf90_def_var(ncid2, "latitude", NF90_FLOAT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation latitude')
+        iret = nf90_put_att(ncid2, varid, 'units', 'degrees_north')
 
 
       !- station location definition,  long
-        iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',17,'Station longitude')
-        iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
+        iret = nf90_def_var(ncid, "longitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station longitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'degrees_east')
 
 
       !- station location definition, obs long
-        iret = nf_def_var(ncid2,"longitude",NF_FLOAT, 1, (/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',21,'Observation longitude')
-        iret = nf_put_att_text(ncid2,varid,'units',12,'degrees_east')
+        iret = nf90_def_var(ncid2, "longitude", NF90_FLOAT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation longitude')
+        iret = nf90_put_att(ncid2, varid, 'units', 'degrees_east')
 
 
 !     !-- elevation is ZELEV
-        iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station altitude')
-        iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+        iret = nf90_def_var(ncid, "altitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station altitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'meters')
 
 
 !     !-- elevation is obs ZELEV
-        iret = nf_def_var(ncid2,"altitude",NF_FLOAT, 1, (/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',20,'Observation altitude')
-        iret = nf_put_att_text(ncid2,varid,'units',6,'meters')
+        iret = nf90_def_var(ncid2, "altitude", NF90_FLOAT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation altitude')
+        iret = nf90_put_att(ncid2, varid, 'units', 'meters')
 
 
 !     !--  gage observation
-!       iret = nf_def_var(ncid,"gages",NF_FLOAT, 1, (/stationdim/), varid)
-!       iret = nf_put_att_text(ncid,varid,'long_name',20,'Stream Gage Location')
-!       iret = nf_put_att_text(ncid,varid,'units',4,'none')
+!       iret = nf90_def_var(ncid, "gages", NF90_FLOAT, (/stationdim/), varid)
+!       iret = nf90_put_att(ncid, varid, 'long_name', 'Stream Gage Location')
+!       iret = nf90_put_att(ncid, varid, 'units', 'none')
 
 !-- parent index
-        iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',36,'index of the station for this record')
+        iret = nf90_def_var(ncid, "parent_index", NF90_INT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'index of the station for this record')
 
-        iret = nf_def_var(ncid2,"parent_index",NF_INT,1,(/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',36,'index of the station for this record')
+        iret = nf90_def_var(ncid2, "parent_index", NF90_INT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'index of the station for this record')
 
      !-- prevChild
-        iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',57,'record number of the previous record for the same station')
-!ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "prevChild", NF90_INT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'record number of the previous record for the same station')
+!ywtmp        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
-        iret = nf_def_var(ncid2,"prevChild",NF_INT,1,(/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',57,'record number of the previous record for the same station')
-!ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid2, "prevChild", NF90_INT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'record number of the previous record for the same station')
+!ywtmp        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
 
      !-- lastChild
-        iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
-!ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "lastChild", NF90_INT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'latest report for this station')
+!ywtmp        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
-        iret = nf_def_var(ncid2,"lastChild",NF_INT,1,(/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',30,'latest report for this station')
-!ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid2, "lastChild", NF90_INT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'latest report for this station')
+!ywtmp        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
 
 !     !- flow definition, var
 
@@ -3315,172 +3302,168 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
            !! FLUXES to channel
            if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
               nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
-              iret = nf_def_var(ncid, "qSfcLatRunoff", NF_FLOAT, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
+              iret = nf90_def_var(ncid, "qSfcLatRunoff", NF90_FLOAT, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
               if(nlst_rt(did)%OVRTSWCRT .eq. 1) then              !123456789112345678921234567
-                 iret = nf_put_att_text(ncid,varid,'long_name',27,'runoff from terrain routing')
-              else
-                 iret = nf_put_att_text(ncid,varid,'long_name',6,'runoff')
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'runoff from terrain routing')
+              else 
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'runoff')
               end if
-              iret = nf_def_var(ncid, "qBucket", NF_FLOAT, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
-              !                                                 12345678911234567892
-              iret = nf_put_att_text(ncid,varid,'long_name',19,'flux from gw bucket')
+              iret = nf90_def_var(ncid, "qBucket", NF90_FLOAT, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'flux from gw bucket')
            end if
 
            !! Bucket influx
            if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
-              iret = nf_def_var(ncid, "qBtmVertRunoff", NF_FLOAT, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
-              !                                                 123456789112345678921234567893123456
-              iret = nf_put_att_text(ncid,varid,'long_name',36,'runoff from bottom of soil to bucket')
+              iret = nf90_def_var(ncid, "qBtmVertRunoff", NF90_FLOAT, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'runoff from bottom of soil to bucket')
            end if
 
            !! ACCUMULATIONS
            if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
-                 iret = nf_def_var(ncid, "accSfcLatRunoff", NF_DOUBLE, 1, (/dimdata/), varid)
-                 iret = nf_put_att_text(ncid,varid,'units',7,'meter^3')
+                 iret = nf90_def_var(ncid, "accSfcLatRunoff", NF90_DOUBLE, (/dimdata/), varid)
+                 iret = nf90_put_att(ncid, varid, 'units', 'meter^3')
                  if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
-                    iret = nf_put_att_text(ncid,varid,'long_name',39, &
-                      !                  123456789112345678921234567893123456789
+                    iret = nf90_put_att(ncid,varid,'long_name',&
                                            'ACCUMULATED runoff from terrain routing')
-                 else
-                    iret = nf_put_att_text(ncid,varid,'long_name',28,'ACCUMULATED runoff from land')
+                 else 
+                    iret = nf90_put_att(ncid, varid, 'long_name', 'ACCUMULATED runoff from land')
                  end if
-              iret = nf_def_var(ncid, "accBucket", NF_DOUBLE, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',8,'meter^3')
-              !                                                 12345678911234567892123456789312345
-              iret = nf_put_att_text(ncid,varid,'long_name',33,'ACCUMULATED runoff from gw bucket')
+              iret = nf90_def_var(ncid, "accBucket", NF90_DOUBLE, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'ACCUMULATED runoff from gw bucket')
            endif
         endif
+           
+        iret = nf90_def_var(ncid, "streamflow", NF90_FLOAT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'River Flow')
 
-        iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
-
-        iret = nf_def_var(ncid2, "streamflow", NF_FLOAT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid2,varid,'long_name',10,'River Flow')
+        iret = nf90_def_var(ncid2, "streamflow", NF90_FLOAT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'River Flow')
 
 #ifdef WRF_HYDRO_NUDGING
-        iret = nf_def_var(ncid, "nudge", NF_FLOAT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',32,'Amount of stream flow alteration')
+        iret = nf90_def_var(ncid, "nudge", NF90_FLOAT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Amount of stream flow alteration')
 
-        iret = nf_def_var(ncid2, "nudge", NF_FLOAT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid2,varid,'long_name',32,'Amount of stream flow alteration')
+        iret = nf90_def_var(ncid2, "nudge", NF90_FLOAT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Amount of stream flow alteration')
 #endif
 
 !     !- flow definition, var
-!       iret = nf_def_var(ncid, "pos_streamflow", NF_FLOAT, 1, (/dimdata/), varid)
-!       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-!       iret = nf_put_att_text(ncid,varid,'long_name',14,'abs streamflow')
+!       iret = nf90_def_var(ncid, "pos_streamflow", NF90_FLOAT, (/dimdata/), varid)
+!       iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+!       iret = nf90_put_att(ncid, varid, 'long_name', 'abs streamflow')
 
 !     !- head definition, var
-        iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
-        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
+        iret = nf90_def_var(ncid, "head", NF90_FLOAT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'River Stage')
 
-        iret = nf_def_var(ncid2, "head", NF_FLOAT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
-        iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
+        iret = nf90_def_var(ncid2, "head", NF90_FLOAT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'units', 'meter')
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'River Stage')
 
 !     !- order definition, var
-        iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "order", NF90_INT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Strahler Stream Order')
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
-        iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid2, "order", NF90_INT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Strahler Stream Order')
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
-         iret = NF_DEF_DIM(ncid, "id_len", 11, charid)
+         iret = NF90_DEF_DIM(ncid, "id_len", 11, charid)
          TXDIMS(1) = charid   ! define char-string variable and position dimension first
          TXDIMS(2) = stationdim
-         iret = nf_def_var(ncid,"station_id",NF_CHAR, TDIMS, TXDIMS, varid)
-         iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
+         iret = nf90_def_var(ncid, "station_id", NF90_CHAR, TXDIMS, varid)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'Station id')
 
 
-         iret = NF_DEF_DIM(ncid2, "id_len", 15, charidO)
+         iret = NF90_DEF_DIM(ncid2, "id_len", 15, charidO)
          OTXDIMS(1) = charidO   ! define char-string variable and position dimension first
          OTXDIMS(2) = obsdim
-         iret = nf_def_var(ncid2,"station_id",NF_CHAR, OTDIMS, OTXDIMS, varid)
-         iret = nf_put_att_text(ncid2,varid,'long_name',14,'Observation id')
+         iret = nf90_def_var(ncid2, "station_id", NF90_CHAR, OTXDIMS, varid)
+         iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation id')
 
 
 !     !- time definition, timeObs
-	 iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
-	 iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+	 iret = nf90_def_var(ncid, "time", NF90_INT, (/timedim/), varid)
+	 iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
-	 iret = nf_def_var(ncid2,"time",NF_INT, 1, (/timedim2/), varid)
-         iret = nf_put_att_text(ncid2,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid2,varid,'long_name',17,'valid output time')
+	 iret = nf90_def_var(ncid2, "time", NF90_INT, (/timedim2/), varid)
+         iret = nf90_put_att(ncid2, varid, 'units', sec_valid_date)
+         iret = nf90_put_att(ncid2, varid, 'long_name', 'valid output time')
 
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "Conventions", convention)
 
          convention(1:32) = "Unidata Observation Dataset v1.0"
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "cdm_datatype", "Station")
 
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
 
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
-         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream_order_output",NF_INT,1,order_to_write)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "station_dimension", "station")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "stream_order_output", order_to_write)
 
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "cdm_datatype",7, "Station")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "cdm_datatype", "Station")
 
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
 
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "station_dimension",7, "station")
-         iret = nf_put_att_real(ncid2, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid2, NF_GLOBAL, "stream_order_output",NF_INT,1,order_to_write)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "station_dimension", "station")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "missing_value", -9E15)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "stream_order_output", order_to_write)
 
-         iret = nf_enddef(ncid)
-         iret = nf_enddef(ncid2)
+         iret = nf90_enddef(ncid)
+         iret = nf90_enddef(ncid2)
 
         !-- write latitudes
-         iret = nf_inq_varid(ncid,"latitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chanlat)
+         iret = nf90_inq_varid(ncid,"latitude", varid)
+         iret = nf90_put_var(ncid, varid, chanlat, (/1/), (/nstations/))
 
-         iret = nf_inq_varid(ncid2,"latitude", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/1/), (/nobs/), chanlatO)
+         iret = nf90_inq_varid(ncid2,"latitude", varid)
+         iret = nf90_put_var(ncid2, varid, chanlatO, (/1/), (/nobs/))
 
         !-- write longitudes
-         iret = nf_inq_varid(ncid,"longitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chanlon)
+         iret = nf90_inq_varid(ncid,"longitude", varid)
+         iret = nf90_put_var(ncid, varid, chanlon, (/1/), (/nstations/))
 
-         iret = nf_inq_varid(ncid2,"longitude", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/1/), (/nobs/), chanlonO)
+         iret = nf90_inq_varid(ncid2,"longitude", varid)
+         iret = nf90_put_var(ncid2, varid, chanlonO, (/1/), (/nobs/))
 
         !-- write elevations
-         iret = nf_inq_varid(ncid,"altitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), elevation)
+         iret = nf90_inq_varid(ncid,"altitude", varid)
+         iret = nf90_put_var(ncid, varid, elevation, (/1/), (/nstations/))
 
-         iret = nf_inq_varid(ncid2,"altitude", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/1/), (/nobs/), elevationO)
+         iret = nf90_inq_varid(ncid2,"altitude", varid)
+         iret = nf90_put_var(ncid2, varid, elevationO, (/1/), (/nobs/))
 
       !-- write gage location
-!      iret = nf_inq_varid(ncid,"gages", varid)
-!      iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), STRMFRXSTPTS)
+!      iret = nf90_inq_varid(ncid,"gages", varid)
+!      iret = nf90_put_var(ncid, varid, STRMFRXSTPTS, (/1/), (/nstations/))
 
         !-- write number_of_stations, OPTIONAL
-      !!  iret = nf_inq_varid(ncid,"number_stations", varid)
-      !!  iret = nf_put_var_int(ncid, varid, nstations)
+      !!  iret = nf90_inq_varid(ncid,"number_stations", varid)
+      !!  iret = nf90_put_var_int(ncid, varid, nstations)
 
         !-- write station id's
          do i=1,nstations
@@ -3488,8 +3471,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
           TSTART(2) = i
           TCOUNT(1) = TXLEN
           TCOUNT(2) = 1
-          iret = nf_inq_varid(ncid,"station_id", varid)
-          iret = nf_put_vara_text(ncid, varid, TSTART, TCOUNT, stname(i))
+          iret = nf90_inq_varid(ncid,"station_id", varid)
+          iret = nf90_put_var(ncid, varid, stname(i), TSTART, TCOUNT)
          enddo
 
         !-- write observation id's
@@ -3498,8 +3481,8 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
           OTSTART(2) = i
           OTCOUNT(1) = OTXLEN
           OTCOUNT(2) = 1
-          iret = nf_inq_varid(ncid2,"station_id", varid)
-          iret = nf_put_vara_text(ncid2, varid, OTSTART, OTCOUNT, stnameO(i))
+          iret = nf90_inq_varid(ncid2,"station_id", varid)
+          iret = nf90_put_var(ncid2, varid, stnameO(i), OTSTART, OTCOUNT)
          enddo
 
      endif
@@ -3519,63 +3502,63 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
          start_pos = (cnt+1)+(nstations*(output_count-1))
 
          !!--time in seconds since startdate
-          iret = nf_inq_varid(ncid,"time", varid)
-          iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+          iret = nf90_inq_varid(ncid,"time", varid)
+          iret = nf90_put_var(ncid, varid, seconds_since, (/1/)) 
 
          if(UDMP_OPT .eq. 1) then
             !! FLUXES to channel
              if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
                 nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
-                iret = nf_inq_varid(ncid,"qSfcLatRunoff", varid)
-                iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qSfcLatRunoff(i))
+                iret = nf90_inq_varid(ncid,"qSfcLatRunoff", varid)
+                iret = nf90_put_var(ncid, varid, qSfcLatRunoff(i), (/start_pos/))
 
-                iret = nf_inq_varid(ncid,"qBucket", varid)
-                iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qBucket(i))
+                iret = nf90_inq_varid(ncid,"qBucket", varid)
+                iret = nf90_put_var(ncid, varid, qBucket(i), (/start_pos/))
              end if
 
              !! FLUXES to bucket
              if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
-                iret = nf_inq_varid(ncid,"qBtmVertRunoff", varid)
-                iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qBtmVertRunoff(i))
+                iret = nf90_inq_varid(ncid,"qBtmVertRunoff", varid)
+                iret = nf90_put_var(ncid, varid, qBtmVertRunoff(i), (/start_pos/))
              end if
 
             !! ACCUMULATIONS
              if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
-                iret = nf_inq_varid(ncid,"accSfcLatRunoff", varid)
-                iret = nf_put_vara_double(ncid, varid, (/start_pos/), (/1/), accSfcLatRunoff(i))
-
-                iret = nf_inq_varid(ncid,"accBucket", varid)
-                iret = nf_put_vara_double(ncid, varid, (/start_pos/), (/1/), accBucket(i))
+                iret = nf90_inq_varid(ncid,"accSfcLatRunoff", varid)
+                iret = nf90_put_var(ncid, varid, accSfcLatRunoff(i), (/start_pos/))
+                
+                iret = nf90_inq_varid(ncid,"accBucket", varid)
+                iret = nf90_put_var(ncid, varid, accBucket(i), (/start_pos/))
              end if
           endif
 
-         iret = nf_inq_varid(ncid,"streamflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
+         iret = nf90_inq_varid(ncid,"streamflow", varid)
+         iret = nf90_put_var(ncid, varid, qlink(i,1), (/start_pos/))
 
 #ifdef WRF_HYDRO_NUDGING
-         iret = nf_inq_varid(ncid,"nudge", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), nudge(i))
+         iret = nf90_inq_varid(ncid,"nudge", varid)
+         iret = nf90_put_var(ncid, varid, nudge(i), (/start_pos/))
 #endif
 
-!        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
-!        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
+!        iret = nf90_inq_varid(ncid,"pos_streamflow", varid)
+!        iret = nf90_put_var(ncid, varid, abs(qlink(i,1), (/start_pos/)))
 
-         iret = nf_inq_varid(ncid,"head", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), hlink(i))
+         iret = nf90_inq_varid(ncid,"head", varid)
+         iret = nf90_put_var(ncid, varid, hlink(i), (/start_pos/))
 
-         iret = nf_inq_varid(ncid,"order", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), ORDER(i))
+         iret = nf90_inq_varid(ncid,"order", varid)
+         iret = nf90_put_var(ncid, varid, ORDER(i), (/start_pos/))
 
          !-- station index.. will repeat for every timesstep
-         iret = nf_inq_varid(ncid,"parent_index", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
+         iret = nf90_inq_varid(ncid,"parent_index", varid)
+         iret = nf90_put_var(ncid, varid, cnt, (/start_pos/))
 
           !--record number of previous record for same station
 !obsolete format         prev_pos = cnt+(nstations*(output_count-1))
          prev_pos = cnt+(nobs*(output_count-2))
          if(output_count.ne.1) then !-- only write next set of records
-           iret = nf_inq_varid(ncid,"prevChild", varid)
-           iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
+           iret = nf90_inq_varid(ncid,"prevChild", varid)
+           iret = nf90_put_var(ncid, varid, prev_pos, (/start_pos/))
          endif
          cnt=cnt+1  !--indices are 0 based
          rec_num_of_station(cnt) = start_pos-1  !-- save position for last child, 0-based!!
@@ -3606,39 +3589,39 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 
              !!--time in seconds since startdate
-             iret = nf_inq_varid(ncid2,"time", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/1/), (/1/), seconds_since)
+             iret = nf90_inq_varid(ncid2,"time", varid)
+             iret = nf90_put_var(ncid2, varid, seconds_since, (/1/))
 
-             iret = nf_inq_varid(ncid2,"streamflow", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
+             iret = nf90_inq_varid(ncid2,"streamflow", varid)
+             iret = nf90_put_var(ncid2, varid, qlink(i,1), (/start_posO/))
 
 #ifdef WRF_HYDRO_NUDGING
-             iret = nf_inq_varid(ncid2,"nudge", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), nudge(i))
+             iret = nf90_inq_varid(ncid2,"nudge", varid)
+             iret = nf90_put_var(ncid2, varid, nudge(i), (/start_posO/))
 #endif
 
-             iret = nf_inq_varid(ncid2,"head", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
+             iret = nf90_inq_varid(ncid2,"head", varid)
+             iret = nf90_put_var(ncid2, varid, hlink(i), (/start_posO/))
 
-             iret = nf_inq_varid(ncid,"order", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
+             iret = nf90_inq_varid(ncid,"order", varid)
+             iret = nf90_put_var(ncid2, varid, ORDER(i), (/start_posO/))
 
              !-- station index.. will repeat for every timesstep
-             iret = nf_inq_varid(ncid2,"parent_index", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
+             iret = nf90_inq_varid(ncid2,"parent_index", varid)
+             iret = nf90_put_var(ncid2, varid, cnt, (/start_posO/))
 
              !--record number of previous record for same station
              !obsolete format          prev_posO = cnt+(nobs*(output_count-1))
              prev_posO = cnt+(nobs*(output_count-2))
              if(output_count.ne.1) then !-- only write next set of records
-                iret = nf_inq_varid(ncid2,"prevChild", varid)
-                iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                iret = nf90_inq_varid(ncid2,"prevChild", varid)
+                iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
 
                 !IF block to add -1 to last element of prevChild array to designate end of list...
                 !           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
+                !             iret = nf90_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
                 !           else
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                !             iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
                 !           endif
 
              endif
@@ -3663,36 +3646,36 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
                   strmfrxstpts(i), chlon(i), chlat(i),                        &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
 
-             !!--time in seconds since startdate
-             iret = nf_inq_varid(ncid2,"time", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/1/), (/1/), seconds_since)
+             !!--time in seconds since startdate  
+             iret = nf90_inq_varid(ncid2,"time", varid)
+             iret = nf90_put_var(ncid2, varid, seconds_since, (/1/))
 
-             iret = nf_inq_varid(ncid2,"streamflow", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
+             iret = nf90_inq_varid(ncid2,"streamflow", varid)
+             iret = nf90_put_var(ncid2, varid, qlink(i,1), (/start_posO/))
 
-             iret = nf_inq_varid(ncid2,"head", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
+             iret = nf90_inq_varid(ncid2,"head", varid)
+             iret = nf90_put_var(ncid2, varid, hlink(i), (/start_posO/))
 
-             iret = nf_inq_varid(ncid,"order", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
+             iret = nf90_inq_varid(ncid,"order", varid)
+             iret = nf90_put_var(ncid2, varid, ORDER(i), (/start_posO/))
 
              !-- station index.. will repeat for every timesstep
-             iret = nf_inq_varid(ncid2,"parent_index", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
+             iret = nf90_inq_varid(ncid2,"parent_index", varid)
+             iret = nf90_put_var(ncid2, varid, cnt, (/start_posO/))
 
              !--record number of previous record for same station
              !obsolete format          prev_posO = cnt+(nobs*(output_count-1))
              prev_posO = cnt+(nobs*(output_count-2))
              if(output_count.ne.1) then !-- only write next set of records
-                iret = nf_inq_varid(ncid2,"prevChild", varid)
-                iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                iret = nf90_inq_varid(ncid2,"prevChild", varid)
+                iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
 
                 !IF block to add -1 to last element of prevChild array to designate end of list...
                 !           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
+                !             iret = nf90_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
                 !           else
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
-                !           endif
+                !             iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
+                !           endif 
 
              endif
              cnt=cnt+1  !--indices are 0 based
@@ -3705,31 +3688,31 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
     close(55)
 
       !-- lastChild variable gives the record number of the most recent report for the station
-      iret = nf_inq_varid(ncid,"lastChild", varid)
-      iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), rec_num_of_station)
+      iret = nf90_inq_varid(ncid,"lastChild", varid)
+      iret = nf90_put_var(ncid, varid, rec_num_of_station, (/1/), (/nstations/))
 
       !-- lastChild variable gives the record number of the most recent report for the station
-      iret = nf_inq_varid(ncid2,"lastChild", varid)
-      iret = nf_put_vara_int(ncid2, varid, (/1/), (/nobs/), rec_num_of_stationO)
+      iret = nf90_inq_varid(ncid2,"lastChild", varid)
+      iret = nf90_put_var(ncid2, varid, rec_num_of_stationO, (/1/), (/nobs/))
 
-      iret = nf_redef(ncid)
+      iret = nf90_redef(ncid)
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(date)) = date
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
 
-      iret = nf_redef(ncid2)
-      iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
+      iret = nf90_redef(ncid2)
+      iret = nf90_put_att(ncid2, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
 
-      iret = nf_enddef(ncid)
-      iret = nf_sync(ncid)
+      iret = nf90_enddef(ncid)
+      iret = nf90_sync(ncid)
 
-      iret = nf_enddef(ncid2)
-      iret = nf_sync(ncid2)
+      iret = nf90_enddef(ncid2)
+      iret = nf90_sync(ncid2)
 
       if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
-        iret = nf_close(ncid2)
+        iret = nf90_close(ncid)
+        iret = nf90_close(ncid2)
      endif
 
      deallocate(chanlat)
@@ -3771,7 +3754,6 @@ end subroutine output_chrt
         )
 
      implicit none
-#include <netcdf.inc>
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
@@ -3926,21 +3908,21 @@ end subroutine output_chrt
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
         if (iret /= 0) then
-           call hydro_stop("In output_chrt() - Problem nf_create points")
+           call hydro_stop("In output_chrt() - Problem nf90_create points")
         endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm2), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid2)
+       iret = nf90_create(trim(output_flnm2), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid2)
 #else
-       iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
+       iret = nf90_create(trim(output_flnm2), NF90_CLOBBER, ncid2)
 #endif
         if (iret /= 0) then
-            call hydro_stop("In output_chrt() - Problem nf_create observation")
+            call hydro_stop("In output_chrt() - Problem nf90_create observation")
         endif
 
        do i=1,nlk
@@ -3988,83 +3970,83 @@ end subroutine output_chrt
           endif
        enddo
 
-       iret = nf_def_dim(ncid, "recNum", NF_UNLIMITED, dimdata)  !--for linked list approach
-       iret = nf_def_dim(ncid, "station", nstations, stationdim)
-       iret = nf_def_dim(ncid, "time", 1, timedim)
+       iret = nf90_def_dim(ncid, "recNum", NF90_UNLIMITED, dimdata)  !--for linked list approach
+       iret = nf90_def_dim(ncid, "station", nstations, stationdim)
+       iret = nf90_def_dim(ncid, "time", 1, timedim)
 
 
-       iret = nf_def_dim(ncid2, "recNum", NF_UNLIMITED, dimdataO)  !--for linked list approach
-       iret = nf_def_dim(ncid2, "station", nobs, obsdim)
-       iret = nf_def_dim(ncid2, "time", 1, timedim2)
+       iret = nf90_def_dim(ncid2, "recNum", NF90_UNLIMITED, dimdataO)  !--for linked list approach
+       iret = nf90_def_dim(ncid2, "station", nobs, obsdim)
+       iret = nf90_def_dim(ncid2, "time", 1, timedim2)
 
       !- station location definition all,  lat
-        iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
-        iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+        iret = nf90_def_var(ncid, "latitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station latitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'degrees_north')
 
       !- station location definition obs,  lat
-        iret = nf_def_var(ncid2,"latitude",NF_FLOAT, 1, (/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',20,'Observation latitude')
-        iret = nf_put_att_text(ncid2,varid,'units',13,'degrees_north')
+        iret = nf90_def_var(ncid2, "latitude", NF90_FLOAT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation latitude')
+        iret = nf90_put_att(ncid2, varid, 'units', 'degrees_north')
 
 
       !- station location definition,  long
-        iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',17,'Station longitude')
-        iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
+        iret = nf90_def_var(ncid, "longitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station longitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'degrees_east')
 
 
       !- station location definition, obs long
-        iret = nf_def_var(ncid2,"longitude",NF_FLOAT, 1, (/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',21,'Observation longitude')
-        iret = nf_put_att_text(ncid2,varid,'units',12,'degrees_east')
+        iret = nf90_def_var(ncid2, "longitude", NF90_FLOAT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation longitude')
+        iret = nf90_put_att(ncid2, varid, 'units', 'degrees_east')
 
 
 !     !-- elevation is ZELEV
-        iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station altitude')
-        iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+        iret = nf90_def_var(ncid, "altitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station altitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'meters')
 
 
 !     !-- elevation is obs ZELEV
-        iret = nf_def_var(ncid2,"altitude",NF_FLOAT, 1, (/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',20,'Observation altitude')
-        iret = nf_put_att_text(ncid2,varid,'units',6,'meters')
+        iret = nf90_def_var(ncid2, "altitude", NF90_FLOAT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation altitude')
+        iret = nf90_put_att(ncid2, varid, 'units', 'meters')
 
 
 !     !--  gage observation
-!       iret = nf_def_var(ncid,"gages",NF_FLOAT, 1, (/stationdim/), varid)
-!       iret = nf_put_att_text(ncid,varid,'long_name',20,'Stream Gage Location')
-!       iret = nf_put_att_text(ncid,varid,'units',4,'none')
+!       iret = nf90_def_var(ncid, "gages", NF90_FLOAT, (/stationdim/), varid)
+!       iret = nf90_put_att(ncid, varid, 'long_name', 'Stream Gage Location')
+!       iret = nf90_put_att(ncid, varid, 'units', 'none')
 
 !-- parent index
-        iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',36,'index of the station for this record')
+        iret = nf90_def_var(ncid, "parent_index", NF90_INT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'index of the station for this record')
 
-        iret = nf_def_var(ncid2,"parent_index",NF_INT,1,(/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',36,'index of the station for this record')
+        iret = nf90_def_var(ncid2, "parent_index", NF90_INT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'index of the station for this record')
 
      !-- prevChild
-        iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',57,'record number of the previous record for the same station')
-!ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "prevChild", NF90_INT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'record number of the previous record for the same station')
+!ywtmp        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
-        iret = nf_def_var(ncid2,"prevChild",NF_INT,1,(/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',57,'record number of the previous record for the same station')
-!ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid2, "prevChild", NF90_INT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'record number of the previous record for the same station')
+!ywtmp        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
 
      !-- lastChild
-        iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
-!ywtmp        iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "lastChild", NF90_INT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'latest report for this station')
+!ywtmp        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
-        iret = nf_def_var(ncid2,"lastChild",NF_INT,1,(/obsdim/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',30,'latest report for this station')
-!ywtmp        iret = nf_put_att_int(ncid2,varid,'_FillValue',NF_INT,2,-1)
-        iret = nf_put_att_int(ncid2,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid2, "lastChild", NF90_INT, (/obsdim/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'latest report for this station')
+!ywtmp        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
+        iret = nf90_put_att(ncid2, varid, '_FillValue', -1)
 
 !     !- flow definition, var
 
@@ -4073,172 +4055,168 @@ end subroutine output_chrt
            !! FLUXES to channel
            if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
               nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
-              iret = nf_def_var(ncid, "qSfcLatRunoff", NF_FLOAT, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
+              iret = nf90_def_var(ncid, "qSfcLatRunoff", NF90_FLOAT, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
               if(nlst_rt(did)%OVRTSWCRT .eq. 1) then              !123456789112345678921234567
-                 iret = nf_put_att_text(ncid,varid,'long_name',27,'runoff from terrain routing')
-              else
-                 iret = nf_put_att_text(ncid,varid,'long_name',6,'runoff')
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'runoff from terrain routing')
+              else 
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'runoff')
               end if
-              iret = nf_def_var(ncid, "qBucket", NF_FLOAT, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
-              !                                                 12345678911234567892
-              iret = nf_put_att_text(ncid,varid,'long_name',19,'flux from gw bucket')
+              iret = nf90_def_var(ncid, "qBucket", NF90_FLOAT, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'flux from gw bucket')
            end if
 
            !! Bucket influx
            if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
-              iret = nf_def_var(ncid, "qBtmVertRunoff", NF_FLOAT, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
-              !                                                 123456789112345678921234567893123456
-              iret = nf_put_att_text(ncid,varid,'long_name',36,'runoff from bottom of soil to bucket')
+              iret = nf90_def_var(ncid, "qBtmVertRunoff", NF90_FLOAT, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'runoff from bottom of soil to bucket')
            end if
 
            !! ACCUMULATIONS
            if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
-                 iret = nf_def_var(ncid, "accSfcLatRunoff", NF_DOUBLE, 1, (/dimdata/), varid)
-                 iret = nf_put_att_text(ncid,varid,'units',7,'meter^3')
+                 iret = nf90_def_var(ncid, "accSfcLatRunoff", NF90_DOUBLE, (/dimdata/), varid)
+                 iret = nf90_put_att(ncid, varid, 'units', 'meter^3')
                  if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
-                    iret = nf_put_att_text(ncid,varid,'long_name',39, &
-                      !                  123456789112345678921234567893123456789
+                    iret = nf90_put_att(ncid,varid,'long_name', &
                                            'ACCUMULATED runoff from terrain routing')
-                 else
-                    iret = nf_put_att_text(ncid,varid,'long_name',28,'ACCUMULATED runoff from land')
+                 else 
+                    iret = nf90_put_att(ncid, varid, 'long_name', 'ACCUMULATED runoff from land')
                  end if
-              iret = nf_def_var(ncid, "accBucket", NF_DOUBLE, 1, (/dimdata/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',8,'meter^3')
-              !                                                 12345678911234567892123456789312345
-              iret = nf_put_att_text(ncid,varid,'long_name',33,'ACCUMULATED runoff from gw bucket')
+              iret = nf90_def_var(ncid, "accBucket", NF90_DOUBLE, (/dimdata/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'ACCUMULATED runoff from gw bucket')
            endif
         endif
+           
+        iret = nf90_def_var(ncid, "streamflow", NF90_FLOAT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'River Flow')
 
-        iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
-
-        iret = nf_def_var(ncid2, "streamflow", NF_FLOAT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid2,varid,'long_name',10,'River Flow')
+        iret = nf90_def_var(ncid2, "streamflow", NF90_FLOAT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'River Flow')
 
 #ifdef WRF_HYDRO_NUDGING
-        iret = nf_def_var(ncid, "nudge", NF_FLOAT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',32,'Amount of stream flow alteration')
+        iret = nf90_def_var(ncid, "nudge", NF90_FLOAT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Amount of stream flow alteration')
 
-        iret = nf_def_var(ncid2, "nudge", NF_FLOAT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid2,varid,'long_name',32,'Amount of stream flow alteration')
+        iret = nf90_def_var(ncid2, "nudge", NF90_FLOAT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Amount of stream flow alteration')
 #endif
 
 !     !- flow definition, var
-!       iret = nf_def_var(ncid, "pos_streamflow", NF_FLOAT, 1, (/dimdata/), varid)
-!       iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-!       iret = nf_put_att_text(ncid,varid,'long_name',14,'abs streamflow')
+!       iret = nf90_def_var(ncid, "pos_streamflow", NF90_FLOAT, (/dimdata/), varid)
+!       iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+!       iret = nf90_put_att(ncid, varid, 'long_name', 'abs streamflow')
 
 !     !- head definition, var
-        iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
-        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
+        iret = nf90_def_var(ncid, "head", NF90_FLOAT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'River Stage')
 
-        iret = nf_def_var(ncid2, "head", NF_FLOAT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'units',5,'meter')
-        iret = nf_put_att_text(ncid2,varid,'long_name',11,'River Stage')
+        iret = nf90_def_var(ncid2, "head", NF90_FLOAT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'units', 'meter')
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'River Stage')
 
 !     !- order definition, var
-        iret = nf_def_var(ncid, "order", NF_INT, 1, (/dimdata/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "order", NF90_INT, (/dimdata/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Strahler Stream Order')
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
-        iret = nf_def_var(ncid2, "order", NF_INT, 1, (/dimdataO/), varid)
-        iret = nf_put_att_text(ncid2,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid2, "order", NF90_INT, (/dimdataO/), varid)
+        iret = nf90_put_att(ncid2, varid, 'long_name', 'Strahler Stream Order')
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
-         iret = NF_DEF_DIM(ncid, "id_len", 11, charid)
+         iret = NF90_DEF_DIM(ncid, "id_len", 11, charid)
          TXDIMS(1) = charid   ! define char-string variable and position dimension first
          TXDIMS(2) = stationdim
-         iret = nf_def_var(ncid,"station_id",NF_CHAR, TDIMS, TXDIMS, varid)
-         iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
+         iret = nf90_def_var(ncid, "station_id", NF90_CHAR, TXDIMS, varid)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'Station id')
 
 
-         iret = NF_DEF_DIM(ncid2, "id_len", 15, charidO)
+         iret = NF90_DEF_DIM(ncid2, "id_len", 15, charidO)
          OTXDIMS(1) = charidO   ! define char-string variable and position dimension first
          OTXDIMS(2) = obsdim
-         iret = nf_def_var(ncid2,"station_id",NF_CHAR, OTDIMS, OTXDIMS, varid)
-         iret = nf_put_att_text(ncid2,varid,'long_name',14,'Observation id')
+         iret = nf90_def_var(ncid2, "station_id", NF90_CHAR, OTXDIMS, varid)
+         iret = nf90_put_att(ncid2, varid, 'long_name', 'Observation id')
 
 
 !     !- time definition, timeObs
-	 iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
-	 iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+	 iret = nf90_def_var(ncid, "time", NF90_INT, (/timedim/), varid)
+	 iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
-	 iret = nf_def_var(ncid2,"time",NF_INT, 1, (/timedim2/), varid)
-         iret = nf_put_att_text(ncid2,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid2,varid,'long_name',17,'valid output time')
+	 iret = nf90_def_var(ncid2, "time", NF90_INT, (/timedim2/), varid)
+         iret = nf90_put_att(ncid2, varid, 'units', sec_valid_date)
+         iret = nf90_put_att(ncid2, varid, 'long_name', 'valid output time')
 
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "Conventions", convention)
 
          convention(1:32) = "Unidata Observation Dataset v1.0"
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "cdm_datatype", "Station")
 
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
+         
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "station_dimension", "station")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "stream_order_output", order_to_write)
 
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
-         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream_order_output",NF_INT,1,order_to_write)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "cdm_datatype", "Station")
 
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "cdm_datatype",7, "Station")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
 
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "station_dimension", "station")
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "missing_value", -9E15)
+         iret = nf90_put_att(ncid2, NF90_GLOBAL, "stream_order_output", order_to_write)
 
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid2, NF_GLOBAL, "station_dimension",7, "station")
-         iret = nf_put_att_real(ncid2, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid2, NF_GLOBAL, "stream_order_output",NF_INT,1,order_to_write)
-
-         iret = nf_enddef(ncid)
-         iret = nf_enddef(ncid2)
+         iret = nf90_enddef(ncid)
+         iret = nf90_enddef(ncid2)
 
         !-- write latitudes
-         iret = nf_inq_varid(ncid,"latitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chanlat)
+         iret = nf90_inq_varid(ncid,"latitude", varid)
+         iret = nf90_put_var(ncid, varid, chanlat, (/1/), (/nstations/))
 
-         iret = nf_inq_varid(ncid2,"latitude", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/1/), (/nobs/), chanlatO)
+         iret = nf90_inq_varid(ncid2,"latitude", varid)
+         iret = nf90_put_var(ncid2, varid, chanlatO, (/1/), (/nobs/))
 
         !-- write longitudes
-         iret = nf_inq_varid(ncid,"longitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chanlon)
+         iret = nf90_inq_varid(ncid,"longitude", varid)
+         iret = nf90_put_var(ncid, varid, chanlon, (/1/), (/nstations/))
 
-         iret = nf_inq_varid(ncid2,"longitude", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/1/), (/nobs/), chanlonO)
+         iret = nf90_inq_varid(ncid2,"longitude", varid)
+         iret = nf90_put_var(ncid2, varid, chanlonO, (/1/), (/nobs/))
 
         !-- write elevations
-         iret = nf_inq_varid(ncid,"altitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), elevation)
+         iret = nf90_inq_varid(ncid,"altitude", varid)
+         iret = nf90_put_var(ncid, varid, elevation, (/1/), (/nstations/))
 
-         iret = nf_inq_varid(ncid2,"altitude", varid)
-         iret = nf_put_vara_real(ncid2, varid, (/1/), (/nobs/), elevationO)
+         iret = nf90_inq_varid(ncid2,"altitude", varid)
+         iret = nf90_put_var(ncid2, varid, elevationO, (/1/), (/nobs/))
 
       !-- write gage location
-!      iret = nf_inq_varid(ncid,"gages", varid)
-!      iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), STRMFRXSTPTS)
+!      iret = nf90_inq_varid(ncid,"gages", varid)
+!      iret = nf90_put_var(ncid, varid, STRMFRXSTPTS, (/1/), (/nstations/))
 
         !-- write number_of_stations, OPTIONAL
-      !!  iret = nf_inq_varid(ncid,"number_stations", varid)
-      !!  iret = nf_put_var_int(ncid, varid, nstations)
+      !!  iret = nf90_inq_varid(ncid,"number_stations", varid)
+      !!  iret = nf90_put_var_int(ncid, varid, nstations)
 
         !-- write station id's
          do i=1,nstations
@@ -4246,8 +4224,8 @@ end subroutine output_chrt
           TSTART(2) = i
           TCOUNT(1) = TXLEN
           TCOUNT(2) = 1
-          iret = nf_inq_varid(ncid,"station_id", varid)
-          iret = nf_put_vara_text(ncid, varid, TSTART, TCOUNT, stname(i))
+          iret = nf90_inq_varid(ncid,"station_id", varid)
+          iret = nf90_put_var(ncid, varid, stname(i), TSTART, TCOUNT)
          enddo
 
         !-- write observation id's
@@ -4256,8 +4234,8 @@ end subroutine output_chrt
           OTSTART(2) = i
           OTCOUNT(1) = OTXLEN
           OTCOUNT(2) = 1
-          iret = nf_inq_varid(ncid2,"station_id", varid)
-          iret = nf_put_vara_text(ncid2, varid, OTSTART, OTCOUNT, stnameO(i))
+          iret = nf90_inq_varid(ncid2,"station_id", varid)
+          iret = nf90_put_var(ncid2, varid, stnameO(i), OTSTART, OTCOUNT)
          enddo
 
      endif
@@ -4277,63 +4255,63 @@ end subroutine output_chrt
          start_pos = (cnt+1)+(nstations*(output_count-1))
 
          !!--time in seconds since startdate
-          iret = nf_inq_varid(ncid,"time", varid)
-          iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+          iret = nf90_inq_varid(ncid,"time", varid)
+          iret = nf90_put_var(ncid, varid, seconds_since, (/1/)) 
 
          if(UDMP_OPT .eq. 1) then
             !! FLUXES to channel
              if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
                 nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
-                iret = nf_inq_varid(ncid,"qSfcLatRunoff", varid)
-                iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qSfcLatRunoff(i))
+                iret = nf90_inq_varid(ncid,"qSfcLatRunoff", varid)
+                iret = nf90_put_var(ncid, varid, qSfcLatRunoff(i), (/start_pos/))
 
-                iret = nf_inq_varid(ncid,"qBucket", varid)
-                iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qBucket(i))
+                iret = nf90_inq_varid(ncid,"qBucket", varid)
+                iret = nf90_put_var(ncid, varid, qBucket(i), (/start_pos/))
              end if
 
              !! FLUXES to bucket
              if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
-                iret = nf_inq_varid(ncid,"qBtmVertRunoff", varid)
-                iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qBtmVertRunoff(i))
+                iret = nf90_inq_varid(ncid,"qBtmVertRunoff", varid)
+                iret = nf90_put_var(ncid, varid, qBtmVertRunoff(i), (/start_pos/))
              end if
 
             !! ACCUMULATIONS
              if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
-                iret = nf_inq_varid(ncid,"accSfcLatRunoff", varid)
-                iret = nf_put_vara_double(ncid, varid, (/start_pos/), (/1/), accSfcLatRunoff(i))
-
-                iret = nf_inq_varid(ncid,"accBucket", varid)
-                iret = nf_put_vara_double(ncid, varid, (/start_pos/), (/1/), accBucket(i))
+                iret = nf90_inq_varid(ncid,"accSfcLatRunoff", varid)
+                iret = nf90_put_var(ncid, varid, accSfcLatRunoff(i), (/start_pos/))
+                
+                iret = nf90_inq_varid(ncid,"accBucket", varid)
+                iret = nf90_put_var(ncid, varid, accBucket(i), (/start_pos/))
              end if
           endif
 
-         iret = nf_inq_varid(ncid,"streamflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlink(i,1))
+         iret = nf90_inq_varid(ncid,"streamflow", varid)
+         iret = nf90_put_var(ncid, varid, qlink(i,1), (/start_pos/))
 
 #ifdef WRF_HYDRO_NUDGING
-         iret = nf_inq_varid(ncid,"nudge", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), nudge(i))
+         iret = nf90_inq_varid(ncid,"nudge", varid)
+         iret = nf90_put_var(ncid, varid, nudge(i), (/start_pos/))
 #endif
 
-!        iret = nf_inq_varid(ncid,"pos_streamflow", varid)
-!        iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), abs(qlink(i,1)))
+!        iret = nf90_inq_varid(ncid,"pos_streamflow", varid)
+!        iret = nf90_put_var(ncid, varid, abs(qlink(i,1), (/start_pos/)))
 
-         iret = nf_inq_varid(ncid,"head", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), hlink(i))
+         iret = nf90_inq_varid(ncid,"head", varid)
+         iret = nf90_put_var(ncid, varid, hlink(i), (/start_pos/))
 
-         iret = nf_inq_varid(ncid,"order", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), ORDER(i))
+         iret = nf90_inq_varid(ncid,"order", varid)
+         iret = nf90_put_var(ncid, varid, ORDER(i), (/start_pos/))
 
          !-- station index.. will repeat for every timesstep
-         iret = nf_inq_varid(ncid,"parent_index", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
+         iret = nf90_inq_varid(ncid,"parent_index", varid)
+         iret = nf90_put_var(ncid, varid, cnt, (/start_pos/))
 
           !--record number of previous record for same station
 !obsolete format         prev_pos = cnt+(nstations*(output_count-1))
          prev_pos = cnt+(nobs*(output_count-2))
          if(output_count.ne.1) then !-- only write next set of records
-           iret = nf_inq_varid(ncid,"prevChild", varid)
-           iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
+           iret = nf90_inq_varid(ncid,"prevChild", varid)
+           iret = nf90_put_var(ncid, varid, prev_pos, (/start_pos/))
          endif
          cnt=cnt+1  !--indices are 0 based
          rec_num_of_station(cnt) = start_pos-1  !-- save position for last child, 0-based!!
@@ -4364,39 +4342,39 @@ end subroutine output_chrt
              !yw 117 FORMAT(I8,1X,A10,1X,A8,1x,I7,1X,F10.5,1X,F8.5,1X,F9.3,1x,F12.3,1X,F6.3)
 
              !!--time in seconds since startdate
-             iret = nf_inq_varid(ncid2,"time", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/1/), (/1/), seconds_since)
+             iret = nf90_inq_varid(ncid2,"time", varid)
+             iret = nf90_put_var(ncid2, varid, seconds_since, (/1/))
 
-             iret = nf_inq_varid(ncid2,"streamflow", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
+             iret = nf90_inq_varid(ncid2,"streamflow", varid)
+             iret = nf90_put_var(ncid2, varid, qlink(i,1), (/start_posO/))
 
 #ifdef WRF_HYDRO_NUDGING
-             iret = nf_inq_varid(ncid2,"nudge", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), nudge(i))
+             iret = nf90_inq_varid(ncid2,"nudge", varid)
+             iret = nf90_put_var(ncid2, varid, nudge(i), (/start_posO/))
 #endif
 
-             iret = nf_inq_varid(ncid2,"head", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
+             iret = nf90_inq_varid(ncid2,"head", varid)
+             iret = nf90_put_var(ncid2, varid, hlink(i), (/start_posO/))
 
-             iret = nf_inq_varid(ncid,"order", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
+             iret = nf90_inq_varid(ncid,"order", varid)
+             iret = nf90_put_var(ncid2, varid, ORDER(i), (/start_posO/))
 
              !-- station index.. will repeat for every timesstep
-             iret = nf_inq_varid(ncid2,"parent_index", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
+             iret = nf90_inq_varid(ncid2,"parent_index", varid)
+             iret = nf90_put_var(ncid2, varid, cnt, (/start_posO/))
 
              !--record number of previous record for same station
              !obsolete format          prev_posO = cnt+(nobs*(output_count-1))
              prev_posO = cnt+(nobs*(output_count-2))
              if(output_count.ne.1) then !-- only write next set of records
-                iret = nf_inq_varid(ncid2,"prevChild", varid)
-                iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                iret = nf90_inq_varid(ncid2,"prevChild", varid)
+                iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
 
                 !IF block to add -1 to last element of prevChild array to designate end of list...
                 !           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
+                !             iret = nf90_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
                 !           else
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                !             iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
                 !           endif
 
              endif
@@ -4421,36 +4399,36 @@ end subroutine output_chrt
                   strmfrxstpts(i), chlon(i), chlat(i),                        &
                   qlink(i,1), qlink(i,1)*35.314666711511576, hlink(i)
 
-             !!--time in seconds since startdate
-             iret = nf_inq_varid(ncid2,"time", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/1/), (/1/), seconds_since)
+             !!--time in seconds since startdate  
+             iret = nf90_inq_varid(ncid2,"time", varid)
+             iret = nf90_put_var(ncid2, varid, seconds_since, (/1/))
 
-             iret = nf_inq_varid(ncid2,"streamflow", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), qlink(i,1))
+             iret = nf90_inq_varid(ncid2,"streamflow", varid)
+             iret = nf90_put_var(ncid2, varid, qlink(i,1), (/start_posO/))
 
-             iret = nf_inq_varid(ncid2,"head", varid)
-             iret = nf_put_vara_real(ncid2, varid, (/start_posO/), (/1/), hlink(i))
+             iret = nf90_inq_varid(ncid2,"head", varid)
+             iret = nf90_put_var(ncid2, varid, hlink(i), (/start_posO/))
 
-             iret = nf_inq_varid(ncid,"order", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), ORDER(i))
+             iret = nf90_inq_varid(ncid,"order", varid)
+             iret = nf90_put_var(ncid2, varid, ORDER(i), (/start_posO/))
 
              !-- station index.. will repeat for every timesstep
-             iret = nf_inq_varid(ncid2,"parent_index", varid)
-             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), cnt)
+             iret = nf90_inq_varid(ncid2,"parent_index", varid)
+             iret = nf90_put_var(ncid2, varid, cnt, (/start_posO/))
 
              !--record number of previous record for same station
              !obsolete format          prev_posO = cnt+(nobs*(output_count-1))
              prev_posO = cnt+(nobs*(output_count-2))
              if(output_count.ne.1) then !-- only write next set of records
-                iret = nf_inq_varid(ncid2,"prevChild", varid)
-                iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
+                iret = nf90_inq_varid(ncid2,"prevChild", varid)
+                iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
 
                 !IF block to add -1 to last element of prevChild array to designate end of list...
                 !           if(cnt+1.eq.nobs.AND.output_count.eq.split_output_count) then
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
+                !             iret = nf90_put_vara_int(ncid2, varid, (/start_posO/), (/1/), -1)
                 !           else
-                !             iret = nf_put_vara_int(ncid2, varid, (/start_posO/), (/1/), prev_posO)
-                !           endif
+                !             iret = nf90_put_var(ncid2, varid, prev_posO, (/start_posO/))
+                !           endif 
 
              endif
              cnt=cnt+1  !--indices are 0 based
@@ -4463,31 +4441,31 @@ end subroutine output_chrt
     close(55)
 
       !-- lastChild variable gives the record number of the most recent report for the station
-      iret = nf_inq_varid(ncid,"lastChild", varid)
-      iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), rec_num_of_station)
+      iret = nf90_inq_varid(ncid,"lastChild", varid)
+      iret = nf90_put_var(ncid, varid, rec_num_of_station, (/1/), (/nstations/))
 
       !-- lastChild variable gives the record number of the most recent report for the station
-      iret = nf_inq_varid(ncid2,"lastChild", varid)
-      iret = nf_put_vara_int(ncid2, varid, (/1/), (/nobs/), rec_num_of_stationO)
+      iret = nf90_inq_varid(ncid2,"lastChild", varid)
+      iret = nf90_put_var(ncid2, varid, rec_num_of_stationO, (/1/), (/nobs/))
 
-      iret = nf_redef(ncid)
+      iret = nf90_redef(ncid)
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(date)) = date
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
 
-      iret = nf_redef(ncid2)
-      iret = nf_put_att_text(ncid2, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
+      iret = nf90_redef(ncid2)
+      iret = nf90_put_att(ncid2, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
 
-      iret = nf_enddef(ncid)
-      iret = nf_sync(ncid)
+      iret = nf90_enddef(ncid)
+      iret = nf90_sync(ncid)
 
-      iret = nf_enddef(ncid2)
-      iret = nf_sync(ncid2)
+      iret = nf90_enddef(ncid2)
+      iret = nf90_sync(ncid2)
 
       if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
-        iret = nf_close(ncid2)
+        iret = nf90_close(ncid)
+        iret = nf90_close(ncid2)
      endif
 
      if(allocated(chanlat))  deallocate(chanlat)
@@ -4851,13 +4829,13 @@ end subroutine mpp_output_chrt
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
       if (iret /= 0) then
-          call hydro_stop("In output_lakes() - Problem nf_create")
+          call hydro_stop("In output_lakes() - Problem nf90_create")
       endif
 
       do i=1,NLAKES
@@ -4865,103 +4843,103 @@ end subroutine mpp_output_chrt
          write(stname(i),'(I6)') i
       enddo
 
-      iret = nf_def_dim(ncid, "recNum", NF_UNLIMITED, dimdata)  !--for linked list approach
-      iret = nf_def_dim(ncid, "station", nlakes, stationdim)
-      iret = nf_def_dim(ncid, "time", 1, timedim)
+      iret = nf90_def_dim(ncid, "recNum", NF90_UNLIMITED, dimdata)  !--for linked list approach
+      iret = nf90_def_dim(ncid, "station", nlakes, stationdim)
+      iret = nf90_def_dim(ncid, "time", 1, timedim)
 
 !#ifndef HYDRO_REALTIME
       !- station location definition,  lat
-      iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake latitude')
-      iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+      iret = nf90_def_var(ncid, "latitude", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Lake latitude')
+      iret = nf90_put_att(ncid, varid, 'units', 'degrees_north')
 
       !- station location definition,  long
-      iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake longitude')
-      iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
+      iret = nf90_def_var(ncid, "longitude", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Lake longitude')
+      iret = nf90_put_att(ncid, varid, 'units', 'degrees_east')
 
 !     !-- lake's phyical elevation
-!     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-!     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
-!     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+!     iret = nf90_def_var(ncid, "altitude", NF90_FLOAT, (/stationdim/), varid)
+!     iret = nf90_put_att(ncid, varid, 'long_name', 'Lake altitude')
+!     iret = nf90_put_att(ncid, varid, 'units', 'meters')
 !#endif
 
      !-- parent index
-!     iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/dimdata/), varid)
-!     iret = nf_put_att_text(ncid,varid,'long_name',33,'index of the lake for this record')
+!     iret = nf90_def_var(ncid, "parent_index", NF90_INT, (/dimdata/), varid)
+!     iret = nf90_put_att(ncid, varid, 'long_name', 'index of the lake for this record')
 
      !-- prevChild
-!     iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/dimdata/), varid)
-!     iret = nf_put_att_text(ncid,varid,'long_name',54,'record number of the previous record for the same lake')
-!ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-!     iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!     iret = nf90_def_var(ncid, "prevChild", NF90_INT, (/dimdata/), varid)
+!     iret = nf90_put_att(ncid, varid, 'long_name', 'record number of the previous record for the same lake')
+!ywtmp      iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+!     iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
      !-- lastChild
-!     iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
-!     iret = nf_put_att_text(ncid,varid,'long_name',27,'latest report for this lake')
-!ywtmp      iret = nf_put_att_int(ncid,varid,'_FillValue',NF_INT,2,-1)
-!     iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!     iret = nf90_def_var(ncid, "lastChild", NF90_INT, (/stationdim/), varid)
+!     iret = nf90_put_att(ncid, varid, 'long_name', 'latest report for this lake')
+!ywtmp      iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+!     iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
 !     !- water surface elevation
-      iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-      iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
+      iret = nf90_def_var(ncid, "wse", NF90_FLOAT, (/dimdata/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meters')
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Water Surface Elevation')
 
 !     !- inflow to lake
-      iret = nf_def_var(ncid, "inflow", NF_FLOAT, 1, (/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+      iret = nf90_def_var(ncid, "inflow", NF90_FLOAT, (/dimdata/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
 !     !- outflow to lake
-      iret = nf_def_var(ncid, "outflow", NF_FLOAT, 1, (/dimdata/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+      iret = nf90_def_var(ncid, "outflow", NF90_FLOAT, (/dimdata/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
      !-- station  id
      ! define character-position dimension for strings of max length 6
-         iret = NF_DEF_DIM(ncid, "id_len", 6, charid)
+         iret = NF90_DEF_DIM(ncid, "id_len", 6, charid)
          TXDIMS(1) = charid   ! define char-string variable and position dimension first
          TXDIMS(2) = stationdim
-         iret = nf_def_var(ncid,"station_id",NF_CHAR, TDIMS, TXDIMS, varid)
-         iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
+         iret = nf90_def_var(ncid, "station_id", NF90_CHAR, TXDIMS, varid)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'Station id')
 
 !     !- time definition, timeObs
-         iret = nf_def_var(ncid,"time", NF_INT, 1, (/timedim/), varid)
-         iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-         iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+         iret = nf90_def_var(ncid, "time", NF90_INT, (/timedim/), varid) 
+         iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
+         iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
 !       date19(1:19) = "0000-00-00_00:00:00"
 !       date19(1:len_trim(startdate)) = startdate
-!       iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
+!       iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
 !
         date19(1:19) = "0000-00-00_00:00:00"
         date19(1:len_trim(startdate)) = startdate
         convention(1:32) = "Unidata Observation Dataset v1.0"
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "cdm_datatype", "Station")
 !#ifndef HYDRO_REALTIME
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
 !#endif
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
-!!       iret = nf_put_att_text(ncid, NF_GLOBAL, "observation_dimension",6, "recNum")
-!!        iret = nf_put_att_text(ncid, NF_GLOBAL, "time_coordinate",16,"time_observation")
-        iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-        iret = nf_enddef(ncid)
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "station_dimension", "station")
+!!       iret = nf90_put_att(ncid, NF90_GLOBAL, "observation_dimension", "recNum")
+!!        iret = nf90_put_att(ncid, NF90_GLOBAL, "time_coordinate", "time_observation")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+        iret = nf90_enddef(ncid)
 
 !#ifndef HYDRO_REALTIME
         !-- write latitudes
-        iret = nf_inq_varid(ncid,"latitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LATLAKE)
+        iret = nf90_inq_varid(ncid,"latitude", varid)
+        iret = nf90_put_var(ncid, varid, LATLAKE, (/1/), (/NLAKES/))
 
         !-- write longitudes
-        iret = nf_inq_varid(ncid,"longitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LONLAKE)
+        iret = nf90_inq_varid(ncid,"longitude", varid)
+        iret = nf90_put_var(ncid, varid, LONLAKE, (/1/), (/NLAKES/))
 
         !-- write physical height of lake
-!       iret = nf_inq_varid(ncid,"altitude", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
+!       iret = nf90_inq_varid(ncid,"altitude", varid)
+!       iret = nf90_put_var(ncid, varid, elevlake, (/1/), (/NLAKES/))
 !#endif
 
         !-- write station id's
@@ -4970,14 +4948,14 @@ end subroutine mpp_output_chrt
           TSTART(2) = i
           TCOUNT(1) = TXLEN
           TCOUNT(2) = 1
-          iret = nf_inq_varid(ncid,"station_id", varid)
-          iret = nf_put_vara_text(ncid, varid, TSTART, TCOUNT, stname(i))
+          iret = nf90_inq_varid(ncid,"station_id", varid)
+          iret = nf90_put_var(ncid, varid, stname(i), TSTART, TCOUNT)
          enddo
 
      endif
 
-     iret = nf_inq_varid(ncid,"time", varid)
-     iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+     iret = nf90_inq_varid(ncid,"time", varid)
+     iret = nf90_put_var(ncid, varid, seconds_since, (/1/))
 
      output_count = output_count + 1
 
@@ -4987,27 +4965,27 @@ end subroutine mpp_output_chrt
          start_pos = (cnt+1)+(nlakes*(output_count-1))
 
          !!--time in seconds since startdate
-         iret = nf_inq_varid(ncid,"time_observation", varid)
-         iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), seconds_since)
+         iret = nf90_inq_varid(ncid,"time_observation", varid)
+         iret = nf90_put_var(ncid, varid, seconds_since, (/start_pos/))
 
-         iret = nf_inq_varid(ncid,"wse", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), resht(i))
+         iret = nf90_inq_varid(ncid,"wse", varid)
+         iret = nf90_put_var(ncid, varid, resht(i), (/start_pos/))
 
-         iret = nf_inq_varid(ncid,"inflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlakei(i))
+         iret = nf90_inq_varid(ncid,"inflow", varid)
+         iret = nf90_put_var(ncid, varid, qlakei(i), (/start_pos/))
 
-         iret = nf_inq_varid(ncid,"outflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/start_pos/), (/1/), qlakeo(i))
+         iret = nf90_inq_varid(ncid,"outflow", varid)
+         iret = nf90_put_var(ncid, varid, qlakeo(i), (/start_pos/))
 
          !-- station index.. will repeat for every timesstep
-!        iret = nf_inq_varid(ncid,"parent_index", varid)
-!        iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), cnt)
+!        iret = nf90_inq_varid(ncid,"parent_index", varid)
+!        iret = nf90_put_var(ncid, varid, cnt, (/start_pos/))
 
           !--record number of previous record for same station
 !        prev_pos = cnt+(nlakes*(output_count-1))
 !        if(output_count.ne.1) then !-- only write next set of records
-!          iret = nf_inq_varid(ncid,"prevChild", varid)
-!          iret = nf_put_vara_int(ncid, varid, (/start_pos/), (/1/), prev_pos)
+!          iret = nf90_inq_varid(ncid,"prevChild", varid)
+!          iret = nf90_put_var(ncid, varid, prev_pos, (/start_pos/))
 !        endif
 
          cnt=cnt+1  !--indices are 0 based
@@ -5016,22 +4994,22 @@ end subroutine mpp_output_chrt
     enddo
 
       !-- lastChild variable gives the record number of the most recent report for the station
-      iret = nf_inq_varid(ncid,"lastChild", varid)
-      iret = nf_put_vara_int(ncid, varid, (/1/), (/nlakes/), rec_num_of_lake)
+      iret = nf90_inq_varid(ncid,"lastChild", varid)
+      iret = nf90_put_var(ncid, varid, rec_num_of_lake, (/1/), (/nlakes/))
 
      !-- number of children reported for this station, OPTIONAL
-     !--  iret = nf_inq_varid(ncid,"numChildren", varid)
-     !--  iret = nf_put_vara_int(ncid, varid, (/1/), (/nlakes/), rec_num_of_lake)
+     !--  iret = nf90_inq_varid(ncid,"numChildren", varid)
+     !--  iret = nf90_put_var(ncid, varid, rec_num_of_lake, (/1/), (/nlakes/))
 
-    iret = nf_redef(ncid)
-    iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-    iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-    iret = nf_enddef(ncid)
+    iret = nf90_redef(ncid)
+    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+    iret = nf90_enddef(ncid)
 
-    iret = nf_sync(ncid)
+    iret = nf90_sync(ncid)
      if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
      endif
 
      if(allocated(station_id)) deallocate(station_id)
@@ -5090,120 +5068,120 @@ end subroutine mpp_output_chrt
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
       if (iret /= 0) then
-          print*, "Problem nf_create"
-          call hydro_stop("output_lakes")
-      endif
+          print*, "Problem nf90_create" 
+          call hydro_stop("output_lakes") 
+      endif 
 
-      iret = nf_def_dim(ncid, "station", nlakes, stationdim)
+      iret = nf90_def_dim(ncid, "station", nlakes, stationdim)
 
-      iret = nf_def_dim(ncid, "time", 1, timedim)
+      iret = nf90_def_dim(ncid, "time", 1, timedim)
 
 !#ifndef HYDRO_REALTIME
       !- station location definition,  lat
-      iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake latitude')
-      iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+      iret = nf90_def_var(ncid, "latitude", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Lake latitude')
+      iret = nf90_put_att(ncid, varid, 'units', 'degrees_north')
 !#endif
 
       !- station location definition,  LAKEIDM
-      iret = nf_def_var(ncid,"lake_id",NF_INT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake COMMON ID')
+      iret = nf90_def_var(ncid, "lake_id", NF90_INT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Lake COMMON ID')
 
 !#ifndef HYDRO_REALTIME
       !- station location definition,  long
-      iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',14,'Lake longitude')
-      iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
+      iret = nf90_def_var(ncid, "longitude", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Lake longitude')
+      iret = nf90_put_att(ncid, varid, 'units', 'degrees_east')
 
 !     !-- lake's phyical elevation
-!     iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-!     iret = nf_put_att_text(ncid,varid,'long_name',13,'Lake altitude')
-!     iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+!     iret = nf90_def_var(ncid, "altitude", NF90_FLOAT, (/stationdim/), varid)
+!     iret = nf90_put_att(ncid, varid, 'long_name', 'Lake altitude')
+!     iret = nf90_put_att(ncid, varid, 'units', 'meters')
 !#endif
 
 !     !- water surface elevation
-      iret = nf_def_var(ncid, "wse", NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',6,'meters')
-      iret = nf_put_att_text(ncid,varid,'long_name',23,'Water Surface Elevation')
+      iret = nf90_def_var(ncid, "wse", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meters')
+      iret = nf90_put_att(ncid, varid, 'long_name', 'Water Surface Elevation')
 
 !     !- inflow to lake
-      iret = nf_def_var(ncid, "inflow", NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+      iret = nf90_def_var(ncid, "inflow", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
 !     !- outflow to lake
-      iret = nf_def_var(ncid, "outflow", NF_FLOAT, 1, (/stationdim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+      iret = nf90_def_var(ncid, "outflow", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
       ! Time variable
-      iret = nf_def_var(ncid, "time", NF_INT, 1, (/timeDim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-      iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+      iret = nf90_def_var(ncid, "time", NF90_INT, (/timeDim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
         date19(1:19) = "0000-00-00_00:00:00"
         date19(1:len_trim(startdate)) = startdate
 !#ifndef HYDRO_REALTIME
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
 !#endif
-        iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-        iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-        iret = nf_enddef(ncid)
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+        iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+        iret = nf90_enddef(ncid)
 
-        iret = nf_inq_varid(ncid,"time", varid)
-        iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+        iret = nf90_inq_varid(ncid,"time", varid)
+        iret = nf90_put_var(ncid, varid, seconds_since, (/1/))
 
 !#ifndef HYDRO_REALTIME
         !-- write latitudes
-        iret = nf_inq_varid(ncid,"latitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LATLAKE)
+        iret = nf90_inq_varid(ncid,"latitude", varid)
+        iret = nf90_put_var(ncid, varid, LATLAKE, (/1/), (/NLAKES/))
 
         !-- write longitudes
-        iret = nf_inq_varid(ncid,"longitude", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), LONLAKE)
+        iret = nf90_inq_varid(ncid,"longitude", varid)
+        iret = nf90_put_var(ncid, varid, LONLAKE, (/1/), (/NLAKES/))
 
         !-- write physical height of lake
-!       iret = nf_inq_varid(ncid,"altitude", varid)
-!       iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), elevlake)
+!       iret = nf90_inq_varid(ncid,"altitude", varid)
+!       iret = nf90_put_var(ncid, varid, elevlake, (/1/), (/NLAKES/))
 !#endif
 
         !-- write elevation  of lake
-        iret = nf_inq_varid(ncid,"wse", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), resht   )
+        iret = nf90_inq_varid(ncid,"wse", varid)
+        iret = nf90_put_var(ncid, varid, resht, (/1/), (/NLAKES/))
 
         !-- write elevation  of inflow
-        iret = nf_inq_varid(ncid,"inflow", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), qlakei  )
+        iret = nf90_inq_varid(ncid,"inflow", varid)
+        iret = nf90_put_var(ncid, varid, qlakei, (/1/), (/NLAKES/))
 
         !-- write elevation  of inflow
-        iret = nf_inq_varid(ncid,"outflow", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/NLAKES/), qlakeo  )
+        iret = nf90_inq_varid(ncid,"outflow", varid)
+        iret = nf90_put_var(ncid, varid, qlakeo, (/1/), (/NLAKES/))
 
         !-- write lake id
-        iret = nf_inq_varid(ncid,"lake_id", varid)
-        iret = nf_put_vara_int(ncid, varid, (/1/), (/NLAKES/), LAKEIDM)
+        iret = nf90_inq_varid(ncid,"lake_id", varid)
+        iret = nf90_put_var(ncid, varid, LAKEIDM, (/1/), (/NLAKES/))
 
      endif
 
      output_count = output_count + 1
 
 
-    iret = nf_redef(ncid)
-    iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-    iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-    iret = nf_enddef(ncid)
+    iret = nf90_redef(ncid) 
+    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))    
+    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+    iret = nf90_enddef(ncid)
 
-    iret = nf_sync(ncid)
+    iret = nf90_sync(ncid)
      if (output_count == split_output_count) then
         output_count = 0
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
      endif
 
  end subroutine output_lakes2
@@ -5219,7 +5197,6 @@ end subroutine mpp_output_chrt
    USE module_mpp_land
 
      implicit none
-#include <netcdf.inc>
      integer g_ixrt,g_jxrt
      integer,                                  intent(in) :: igrid
      integer,                                  intent(in) :: split_output_count
@@ -5313,45 +5290,45 @@ end subroutine mpp_output_chrt
 
 !--- define dimension
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
         if (iret /= 0) then
-            call hydro_stop("In output_chrtgrd() - Problem nf_create ")
+            call hydro_stop("In output_chrtgrd() - Problem nf90_create ")
         endif
 
-        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, timedim)
-        iret = nf_def_dim(ncid, "x", ixrt, ixlondim)
-        iret = nf_def_dim(ncid, "y", jxrt, jxlatdim)
+        iret = nf90_def_dim(ncid, "time", NF90_UNLIMITED, timedim)
+        iret = nf90_def_dim(ncid, "x", ixrt, ixlondim)
+        iret = nf90_def_dim(ncid, "y", jxrt, jxlatdim)
 
 !--- define variables
 !     !- time definition, timeObs
 
        !- x-coordinate in cartesian system
-!yw         iret = nf_def_var(ncid,"x",NF_DOUBLE, 1, (/ixlondim/), varid)
-!yw         iret = nf_put_att_text(ncid,varid,'long_name',26,'x coordinate of projection')
-!yw         iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_x_coordinate')
-!yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+!yw         iret = nf90_def_var(ncid, "x", NF90_DOUBLE, (/ixlondim/), varid)
+!yw         iret = nf90_put_att(ncid, varid, 'long_name', 'x coordinate of projection')
+!yw         iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_x_coordinate')
+!yw         iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
        !- y-coordinate in cartesian ssystem
-!yw         iret = nf_def_var(ncid,"y",NF_DOUBLE, 1, (/jxlatdim/), varid)
-!yw         iret = nf_put_att_text(ncid,varid,'long_name',26,'y coordinate of projection')
-!yw         iret = nf_put_att_text(ncid,varid,'standard_name',23,'projection_y_coordinate')
-!yw         iret = nf_put_att_text(ncid,varid,'units',5,'Meter')
+!yw         iret = nf90_def_var(ncid, "y", NF90_DOUBLE, (/jxlatdim/), varid)
+!yw         iret = nf90_put_att(ncid, varid, 'long_name', 'y coordinate of projection')
+!yw         iret = nf90_put_att(ncid, varid, 'standard_name', 'projection_y_coordinate')
+!yw         iret = nf90_put_att(ncid, varid, 'units', 'Meter')
 
 !     !- flow definition, var
-        iret = nf_def_var(ncid,"streamflow",NF_REAL, 3, (/ixlondim,jxlatdim,timedim/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',6,'m3 s-1')
-        iret = nf_put_att_text(ncid,varid,'long_name',15,'water flow rate')
-        iret = nf_put_att_text(ncid,varid,'coordinates',3,'x y')
-        iret = nf_put_att_text(ncid,varid,'grid_mapping',23,'lambert_conformal_conic')
-        iret = nf_put_att_real(ncid,varid,'missing_value',NF_REAL,1,-9E15)
-        iret = nf_def_var(ncid,"index",NF_INT, 2, (/ixlondim,jxlatdim/), varid)
-        iret = nf_def_var(ncid, "time", NF_INT, 1, (/timedim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
-        iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
+        iret = nf90_def_var(ncid, "streamflow", NF90_REAL, (/ixlondim,jxlatdim,timedim/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'm3 s-1')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'water flow rate')
+        iret = nf90_put_att(ncid, varid, 'coordinates', 'x y')
+        iret = nf90_put_att(ncid, varid, 'grid_mapping', 'lambert_conformal_conic')
+        iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
+        iret = nf90_def_var(ncid, "index", NF90_INT, (/ixlondim,jxlatdim/), varid)
+        iret = nf90_def_var(ncid, "time", NF90_INT, (/timedim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
+        iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
 
 
 !-- place prjection information
@@ -5360,15 +5337,15 @@ end subroutine mpp_output_chrt
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(startdate)) = startdate
       convention(1:32) = "CF-1.0"
-      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",6, convention)
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate)) 
 
-      iret = nf_enddef(ncid)
+      iret = nf90_enddef(ncid)
 
-      iret = nf_inq_varid(ncid,"time", varid)
-      iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+      iret = nf90_inq_varid(ncid,"time", varid)
+      iret = nf90_put_var(ncid, varid, seconds_since, (/1/))
 
 !!-- write latitude and longitude locations
 
@@ -5384,13 +5361,13 @@ end subroutine mpp_output_chrt
     enddo
 
 !!time in seconds since startdate
-    iret = nf_inq_varid(ncid,"index", varid)
-    iret = nf_put_vara_int(ncid, varid, (/1,1/), (/ixrt,jxrt/),CH_NETLNK)
+    iret = nf90_inq_varid(ncid,"index", varid)
+    iret = nf90_put_var(ncid, varid, CH_NETLNK, (/1,1/), (/ixrt,jxrt/))
 
-    iret = nf_inq_varid(ncid,"streamflow", varid)
-    iret = nf_put_vara_real(ncid, varid, (/1,1,1/), (/ixrt,jxrt,1/),tmpflow)
+    iret = nf90_inq_varid(ncid,"streamflow", varid)
+    iret = nf90_put_var(ncid, varid, tmpflow, (/1,1,1/), (/ixrt,jxrt,1/))
 
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
 
 
 
@@ -5405,7 +5382,6 @@ end subroutine mpp_output_chrt
 !  forced by RTOUT_DOMAIN files.
 
    implicit none
-#include <netcdf.inc>
    ! in variable
    character(len=*) :: olddate,hgrid,indir,startdate
    character(len=256) :: filename
@@ -5429,7 +5405,7 @@ end subroutine mpp_output_chrt
 
 
 !DJG Open NetCDF file...
-    ierr = nf_open(inflnm, NF_NOWRITE, ncid)
+    ierr = nf90_open(inflnm, NF90_NOWRITE, ncid)
     if (ierr /= 0) then
        write(*,'("READFORC_chan Problem opening netcdf file: ''", A, "''")') trim(inflnm)
        call hydro_stop("In read_chan_forcing() - Problem opening netcdf file")
@@ -5440,7 +5416,7 @@ end subroutine mpp_output_chrt
 !DJG TBC    call get_2d_netcdf("T2D", ncid, t,     units, ixrt, jxrt, .TRUE., ierr)
 !DJG TBC    call get_2d_netcdf("T2D", ncid, t,     units, ixrt, jxrt, .TRUE., ierr)
 
-    ierr = nf_close(ncid)
+    ierr = nf90_close(ncid)
 
  end subroutine read_chan_forcing
 
@@ -5448,7 +5424,6 @@ end subroutine mpp_output_chrt
 
  subroutine get2d_int(var_name,out_buff,ix,jx,fileName, fatalErr)
     implicit none
-#include <netcdf.inc>
     integer :: iret,varid,ncid,ix,jx
     integer out_buff(ix,jx)
     character(len=*), intent(in) :: var_name
@@ -5459,31 +5434,31 @@ end subroutine mpp_output_chrt
 
     fatalErr_local = .false.
     if(present(fatalErr)) fatalErr_local=fatalErr
-
-    iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+    
+    iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
     if (iret .ne. 0) then
        errMsg = "get2d_int: failed to open the netcdf file: " // trim(fileName)
        print*, trim(errMsg)
        if(fatalErr_local) call hydro_stop(trim(errMsg))
     endif
-
-    iret = nf_inq_varid(ncid,trim(var_name),  varid)
+    
+    iret = nf90_inq_varid(ncid,trim(var_name),  varid)
     if(iret .ne. 0) then
        errMsg = "get2d_int: failed to find the variable: " // &
                  trim(var_name) // ' in ' // trim(fileName)
        print*, trim(errMsg)
        if(fatalErr_local) call hydro_stop(errMsg)
     endif
-
-    iret = nf_get_var_int(ncid, varid, out_buff)
+    
+    iret = nf90_get_var(ncid, varid, out_buff)
     if(iret .ne. 0) then
        errMsg = "get2d_int: failed to read the variable: " // &
                 trim(var_name) // " in " //trim(fileName)
        print*,trim(errMsg)
        if(fatalErr_local) call hydro_stop(trim(errMsg))
     endif
-
-    iret = nf_close(ncid)
+    
+    iret = nf90_close(ncid)
     if(iret .ne. 0) then
        errMsg = "get2d_int: failed to close the file: " // &
                 trim(fileName)
@@ -5504,7 +5479,6 @@ end subroutine mpp_output_chrt
          USE module_mpp_land
 
          implicit none
-#include <netcdf.inc>
         INTEGER                                      :: channel_option, did
         INTEGER                                      :: g_IXRT,g_JXRT
         INTEGER, INTENT(INOUT)                       :: NLINKS, GNLINKS,NLINKSL
@@ -5590,7 +5564,6 @@ end subroutine mpp_output_chrt
             route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,channel_option, UDMP_OPT)
 
 
-#include <netcdf.inc>
         INTEGER, INTENT(IN) :: IXRT,JXRT
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
         INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT,CH_LNKRT
@@ -5690,9 +5663,9 @@ end subroutine mpp_output_chrt
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(outFile), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(outFile), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(outFile), NF90_CLOBBER, ncid)
 #endif
 
 #ifdef MPP_LAND
@@ -5700,7 +5673,7 @@ end subroutine mpp_output_chrt
 #endif
 
        if (iret /= 0) then
-          call hydro_stop("In output_lsm() - Problem nf_create")
+          call hydro_stop("In output_lsm() - Problem nf90_create")
        endif
 
 
@@ -5710,15 +5683,15 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
          write(6,*) "output file ", outFile
 #endif
-! define dimension for variables
-          iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
-
+! define dimension for variables 
+          iret = nf90_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
+   
 #ifdef MPP_LAND
-          iret = nf_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
-          iret = nf_def_dim(ncid, "iy", global_ny, dimid_jx)
+          iret = nf90_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
+          iret = nf90_def_dim(ncid, "iy", global_ny, dimid_jx)
 #else
-          iret = nf_def_dim(ncid, "ix", rt_domain(did)%ix, dimid_ix)  !-- make a decimated grid
-          iret = nf_def_dim(ncid, "iy", rt_domain(did)%jx, dimid_jx)
+          iret = nf90_def_dim(ncid, "ix", rt_domain(did)%ix, dimid_ix)  !-- make a decimated grid
+          iret = nf90_def_dim(ncid, "iy", rt_domain(did)%jx, dimid_jx)
 #endif
 
 !define variables
@@ -5728,18 +5701,18 @@ end subroutine mpp_output_chrt
              else
                 write(tmpStr, '(i2)') n
              endif
-             iret = nf_def_var(ncid,"stc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"smc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"sh2ox"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             iret = nf90_def_var(ncid, "stc"//trim(tmpStr), NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+             iret = nf90_def_var(ncid, "smc"//trim(tmpStr), NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+             iret = nf90_def_var(ncid, "sh2ox"//trim(tmpStr), NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
           end do
 
-          !iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          !iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          !iret = nf_def_var(ncid,"smcwlt1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"infxsrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+          !iret = nf90_def_var(ncid, "smcmax1", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          !iret = nf90_def_var(ncid, "smcref1", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          !iret = nf90_def_var(ncid, "smcwlt1", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          iret = nf90_def_var(ncid, "infxsrt", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          iret = nf90_def_var(ncid, "sfcheadrt", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
 
-          iret = nf_enddef(ncid)
+          iret = nf90_enddef(ncid)
 
 #ifdef MPP_LAND
     endif
@@ -5758,7 +5731,7 @@ end subroutine mpp_output_chrt
      if(IO_id.eq.my_id) then
 #endif
 
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
 #ifdef HYDRO_D
         write(6,*) "finish writing outFile : ", outFile
 #endif
@@ -5793,13 +5766,13 @@ end subroutine mpp_output_chrt
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(outFile), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(outFile), ior(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #ifdef HYDRO_D
        write(6,*) "yyywww using large netcdf file definition. "
        call flush(6)
 #endif
 #else
-       iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(outFile), NF90_CLOBBER, ncid)
 #ifdef HYDRO_D
        write(6,*) "yyywww do not use large netcdf file definition. "
        call flush(6)
@@ -5812,7 +5785,7 @@ end subroutine mpp_output_chrt
 #endif
 
        if (iret /= 0) then
-          call hydro_stop("In RESTART_OUT_nc() - Problem nf_create")
+          call hydro_stop("In RESTART_OUT_nc() - Problem nf90_create")
        endif
 
 #ifdef MPP_LAND
@@ -5822,31 +5795,31 @@ end subroutine mpp_output_chrt
    if( nlst_rt(did)%channel_only       .eq. 0 .and. &
        nlst_rt(did)%channelBucket_only .eq. 0         ) then
 
-! define dimension for variables
-          iret = nf_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
-
+! define dimension for variables 
+          iret = nf90_def_dim(ncid, "depth", nlst_rt(did)%nsoil, dimid_soil)  !-- 3-d soils
+   
 #ifdef MPP_LAND
-          iret = nf_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
-          iret = nf_def_dim(ncid, "iy", global_ny, dimid_jx)
-          iret = nf_def_dim(ncid, "ixrt", global_rt_nx , dimid_ixrt)  !-- make a decimated grid
-          iret = nf_def_dim(ncid, "iyrt", global_rt_ny, dimid_jxrt)
+          iret = nf90_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
+          iret = nf90_def_dim(ncid, "iy", global_ny, dimid_jx)
+          iret = nf90_def_dim(ncid, "ixrt", global_rt_nx , dimid_ixrt)  !-- make a decimated grid
+          iret = nf90_def_dim(ncid, "iyrt", global_rt_ny, dimid_jxrt)
 #else
-          iret = nf_def_dim(ncid, "ix", rt_domain(did)%ix, dimid_ix)  !-- make a decimated grid
-          iret = nf_def_dim(ncid, "iy", rt_domain(did)%jx, dimid_jx)
-          iret = nf_def_dim(ncid, "ixrt", rt_domain(did)%ixrt , dimid_ixrt)  !-- make a decimated grid
-          iret = nf_def_dim(ncid, "iyrt", rt_domain(did)%jxrt, dimid_jxrt)
+          iret = nf90_def_dim(ncid, "ix", rt_domain(did)%ix, dimid_ix)  !-- make a decimated grid
+          iret = nf90_def_dim(ncid, "iy", rt_domain(did)%jx, dimid_jx)
+          iret = nf90_def_dim(ncid, "ixrt", rt_domain(did)%ixrt , dimid_ixrt)  !-- make a decimated grid
+          iret = nf90_def_dim(ncid, "iyrt", rt_domain(did)%jxrt, dimid_jxrt)
 #endif
 
        endif ! neither channel_only nor channelBucket_only
 
        if(nlst_rt(did)%channel_option .eq. 3) then
-          iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinks, dimid_links)
+          iret = nf90_def_dim(ncid, "links", rt_domain(did)%gnlinks, dimid_links)
        else
-          iret = nf_def_dim(ncid, "links", rt_domain(did)%gnlinksl, dimid_links)
+          iret = nf90_def_dim(ncid, "links", rt_domain(did)%gnlinksl, dimid_links)
        endif
-       iret = nf_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
+       iret = nf90_def_dim(ncid, "basns", rt_domain(did)%gnumbasns, dimid_basns)
        if(rt_domain(did)%nlakes .gt. 0) then
-          iret = nf_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
+          iret = nf90_def_dim(ncid, "lakes", rt_domain(did)%nlakes, dimid_lakes)
        endif
 
        !define variables
@@ -5859,17 +5832,17 @@ end subroutine mpp_output_chrt
              else
                 write(tmpStr, '(i2)') n
              endif
-             iret = nf_def_var(ncid,"stc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"smc"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-             iret = nf_def_var(ncid,"sh2ox"//trim(tmpStr),NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+             iret = nf90_def_var(ncid, "stc"//trim(tmpStr), NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+             iret = nf90_def_var(ncid, "smc"//trim(tmpStr), NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+             iret = nf90_def_var(ncid, "sh2ox"//trim(tmpStr), NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
           end do
-
-          !iret = nf_def_var(ncid,"smcmax1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          !iret = nf_def_var(ncid,"smcref1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          !iret = nf_def_var(ncid,"smcwlt1",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"infxsrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"soldrain",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
-          iret = nf_def_var(ncid,"sfcheadrt",NF_FLOAT,2,(/dimid_ix,dimid_jx/),varid)
+    
+          !iret = nf90_def_var(ncid, "smcmax1", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          !iret = nf90_def_var(ncid, "smcref1", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          !iret = nf90_def_var(ncid, "smcwlt1", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          iret = nf90_def_var(ncid, "infxsrt", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          iret = nf90_def_var(ncid, "soldrain", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
+          iret = nf90_def_var(ncid, "sfcheadrt", NF90_FLOAT, (/dimid_ix,dimid_jx/), varid)
 
        end if  ! neither channel_only nor channelBucket_only
 
@@ -5880,49 +5853,49 @@ end subroutine mpp_output_chrt
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
            nlst_rt(did)%channelBucket_only .eq. 0         ) then
 
-            iret = nf_def_var(ncid,"QBDRYRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
-            iret = nf_def_var(ncid,"infxswgt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
-            iret = nf_def_var(ncid,"sfcheadsubrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf90_def_var(ncid, "QBDRYRT", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
+            iret = nf90_def_var(ncid, "infxswgt", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
+            iret = nf90_def_var(ncid, "sfcheadsubrt", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
           do n = 1, nlst_rt(did)%nsoil
              if( n .lt. 10) then
                 write(tmpStr, '(i1)') n
              else
                 write(tmpStr, '(i2)') n
              endif
-             iret = nf_def_var(ncid,"sh2owgt"//trim(tmpStr),NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+             iret = nf90_def_var(ncid, "sh2owgt"//trim(tmpStr), NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
           end do
-            iret = nf_def_var(ncid,"qstrmvolrt",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            iret = nf90_def_var(ncid, "qstrmvolrt", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
             !AD_CHANGE: Not needed in RESTART
-            !iret = nf_def_var(ncid,"RETDEPRT",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+            !iret = nf90_def_var(ncid, "RETDEPRT", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
 
       end if  ! neither channel_only nor channelBucket_only
 
       if(nlst_rt(did)%CHANRTSWCRT.eq.1) then
 !yw based on Laura request, hlink will do the restart for reach method.
 !         if(nlst_rt(did)%channel_option .eq. 3) &
-         iret = nf_def_var(ncid,"hlink",NF_FLOAT,1,(/dimid_links/),varid)
-         iret = nf_def_var(ncid,"qlink1",NF_FLOAT,1,(/dimid_links/),varid)
-         iret = nf_def_var(ncid,"qlink2",NF_FLOAT,1,(/dimid_links/),varid)
+         iret = nf90_def_var(ncid, "hlink", NF90_FLOAT, (/dimid_links/), varid)
+         iret = nf90_def_var(ncid, "qlink1", NF90_FLOAT, (/dimid_links/), varid)
+         iret = nf90_def_var(ncid, "qlink2", NF90_FLOAT, (/dimid_links/), varid)
          if(nlst_rt(did)%channel_option .eq. 3) &
-              iret = nf_def_var(ncid,"cvol",NF_FLOAT,1,(/dimid_links/),varid)
+              iret = nf90_def_var(ncid, "cvol", NF90_FLOAT, (/dimid_links/), varid)
          if(rt_domain(did)%nlakes .gt. 0) then
-            iret = nf_def_var(ncid,"resht",NF_FLOAT,1,(/dimid_lakes/),varid)
-            iret = nf_def_var(ncid,"qlakeo",NF_FLOAT,1,(/dimid_lakes/),varid)
-            iret = nf_def_var(ncid,"qlakei",NF_FLOAT,1,(/dimid_lakes/),varid)
+            iret = nf90_def_var(ncid, "resht", NF90_FLOAT, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "qlakeo", NF90_FLOAT, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "qlakei", NF90_FLOAT, (/dimid_lakes/), varid) 
          endif
 
          if( nlst_rt(did)%channel_only       .eq. 0 .and. &
              nlst_rt(did)%channelBucket_only .eq. 0         ) &
-             iret = nf_def_var(ncid,"lake_inflort",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+             iret = nf90_def_var(ncid, "lake_inflort", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
 
          !! JLM: who wants these? They can be put back if someone cares.
          !! But just calculate accQLateral locally so the redundant variable isnt held in
          !! memory with all the other variables
          !if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-         !       iret = nf_def_var(ncid,"accSfcLatRunoff",NF_DOUBLE,1,(/dimid_links/),varid)
-         !       iret = nf_def_var(ncid,"accQLateral", NF_DOUBLE,1,(/dimid_links/),varid)
-         !       iret = nf_def_var(ncid,"qSfcLatRunoff",NF_DOUBLE,1,(/dimid_links/),varid)
-         !       iret = nf_def_var(ncid,"accBucket",   NF_DOUBLE,1,(/dimid_links/),varid)
+         !       iret = nf90_def_var(ncid, "accSfcLatRunoff", NF90_DOUBLE, (/dimid_links/), varid)
+         !       iret = nf90_def_var(ncid, "accQLateral", NF90_DOUBLE, (/dimid_links/), varid)
+         !       iret = nf90_def_var(ncid, "qSfcLatRunoff", NF90_DOUBLE, (/dimid_links/), varid)
+         !       iret = nf90_def_var(ncid, "accBucket", NF90_DOUBLE, (/dimid_links/), varid)
          !endif
 
       end if ! CHANRTSWCRT .eq. 1
@@ -5932,26 +5905,26 @@ end subroutine mpp_output_chrt
          if( nlst_rt(did)%channel_only .eq. 0) then
 
             if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-               iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_links/),varid)
+               iret = nf90_def_var(ncid, "z_gwsubbas", NF90_FLOAT, (/dimid_links/), varid)
             else
-               iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
+               iret = nf90_def_var(ncid, "z_gwsubbas", NF90_FLOAT, (/dimid_basns/), varid)
             endif
 
          end if ! not channel_only : dont use buckets in channel only runs
 
 !yw test bucket model
-!             iret = nf_def_var(ncid,"gwbas_pix_ct",NF_FLOAT,1,(/dimid_basns/),varid)
-!             iret = nf_def_var(ncid,"gw_buck_exp",NF_FLOAT,1,(/dimid_basns/),varid)
-!             iret = nf_def_var(ncid,"z_max",NF_FLOAT,1,(/dimid_basns/),varid)
-!             iret = nf_def_var(ncid,"gw_buck_coeff",NF_FLOAT,1,(/dimid_basns/),varid)
-!             iret = nf_def_var(ncid,"qin_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
-!             iret = nf_def_var(ncid,"qinflowbase",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
-!             iret = nf_def_var(ncid,"qout_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
-      end if ! GWBASESWCRT .eq.1
+!             iret = nf90_def_var(ncid, "gwbas_pix_ct", NF90_FLOAT, (/dimid_basns/), varid)
+!             iret = nf90_def_var(ncid, "gw_buck_exp", NF90_FLOAT, (/dimid_basns/), varid)
+!             iret = nf90_def_var(ncid, "z_max", NF90_FLOAT, (/dimid_basns/), varid)
+!             iret = nf90_def_var(ncid, "gw_buck_coeff", NF90_FLOAT, (/dimid_basns/), varid)
+!             iret = nf90_def_var(ncid, "qin_gwsubbas", NF90_FLOAT, (/dimid_basns/), varid)
+!             iret = nf90_def_var(ncid, "qinflowbase", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
+!             iret = nf90_def_var(ncid, "qout_gwsubbas", NF90_FLOAT, (/dimid_basns/), varid)
+      end if ! GWBASESWCRT .eq.1 
 
       !! What is this option??
       if(nlst_rt(did)%gwBaseSwCRT .eq. 3)then
-         iret = nf_def_var(ncid,"HEAD",NF_FLOAT,2,(/dimid_ixrt,dimid_jxrt/),varid)
+         iret = nf90_def_var(ncid, "HEAD", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
       end if
 
    end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
@@ -5959,17 +5932,15 @@ end subroutine mpp_output_chrt
 !                    nlst_rt(did)%GWBASESWCRT .ne. 0       )
 
    !         put global attribute
-   iret = nf_put_att_int(ncid,NF_GLOBAL,"his_out_counts",NF_INT, 1,rt_domain(did)%his_out_counts)
-   iret = nf_put_att_text(ncid,NF_GLOBAL,"Restart_Time",19,nlst_rt(did)%olddate(1:19))
-   iret = nf_put_att_text(ncid,NF_GLOBAL,"Since_Date",19,nlst_rt(did)%sincedate(1:19))
-   iret = nf_put_att_real(ncid,NF_GLOBAL,"DTCT",NF_REAL, 1,nlst_rt(did)%DTCT)
-   iret = nf_put_att_int(ncid, NF_GLOBAL, "channel_only", NF_INT, 1, &
-        nlst_rt(did)%channel_only)
-   iret = nf_put_att_int(ncid, NF_GLOBAL, "channelBucket_only", NF_INT, 1, &
-        nlst_rt(did)%channelBucket_only)
+   iret = nf90_put_att(ncid, NF90_GLOBAL, "his_out_counts", rt_domain(did)%his_out_counts)
+   iret = nf90_put_att(ncid, NF90_GLOBAL, "Restart_Time", nlst_rt(did)%olddate(1:19))
+   iret = nf90_put_att(ncid, NF90_GLOBAL, "Since_Date", nlst_rt(did)%sincedate(1:19))
+   iret = nf90_put_att(ncid, NF90_GLOBAL, "DTCT", nlst_rt(did)%DTCT)
+   iret = nf90_put_att(ncid, NF90_GLOBAL, "channel_only", nlst_rt(did)%channel_only)
+   iret = nf90_put_att(ncid, NF90_GLOBAL, "channelBucket_only", nlst_rt(did)%channelBucket_only)
 
    !! end definition
-   iret = nf_enddef(ncid)
+   iret = nf90_enddef(ncid)
 
 
 #ifdef MPP_LAND
@@ -6171,7 +6142,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #ifdef MPP_LAND
         if(IO_id.eq.my_id) &
 #endif
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
 
 if(rt_domain(did)%NLAKES .gt. 0) then
 
@@ -6398,18 +6369,18 @@ end if
            endif
            call write_IO_rt_real(inVar,varTmp)
            if(my_id .eq. IO_id) then
-              iret = nf_inq_varid(ncid,varName, varid)
+              iret = nf90_inq_varid(ncid,varName, varid)
               if(iret .eq. 0) then
-                 iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_rt_nx,global_rt_ny/),varTmp)
+                 iret = nf90_put_var(ncid, varid, varTmp, (/1,1/), (/global_rt_nx,global_rt_ny/))
               else
                  write(6,*) "Error: variable not defined in rst file before write: ", varName
               endif
            endif
            if(allocated(varTmp))  deallocate(varTmp)
 #else
-           iret = nf_inq_varid(ncid,varName, varid)
+           iret = nf90_inq_varid(ncid,varName, varid)
            if(iret .eq. 0) then
-              iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar)
+              iret = nf90_put_var(ncid, varid, inVar, (/1,1/), (/ix,jx/))
            else
               write(6,*) "Error : variable not defined in rst file before write: ", varName
            endif
@@ -6435,8 +6406,8 @@ end if
                  else
                     write(tmpStr, '(i2)') k
                  endif
-                 iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-                 iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_rt_nx,global_rt_ny/),varTmp)
+                 iret = nf90_inq_varid(ncid,varName//trim(tmpStr), varid)
+                 iret = nf90_put_var(ncid, varid, varTmp, (/1,1/), (/global_rt_nx,global_rt_ny/))
               endif
            end do
 #else
@@ -6446,9 +6417,9 @@ end if
                  else
                     write(tmpStr, '(i2)') k
                  endif
-              iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-              iret = nf_put_vara_real(ncid, varid, (/1,1/),(/ix,jx/),inVar(:,:,k))
-           end do
+              iret = nf90_inq_varid(ncid,varName//trim(tmpStr), varid)
+              iret = nf90_put_var(ncid, varid, inVar(:,:,k), (/1,1/), (/ix,jx/)) 
+           end do 
 #endif
            return
         end subroutine w_rst_rt_nc3
@@ -6463,12 +6434,12 @@ end if
            real varTmp(global_nx,global_ny)
            call write_IO_real(inVar,varTmp)
            if(my_id .eq. IO_id) then
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_nx,global_ny/),varTmp)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, varTmp, (/1,1/), (/global_nx,global_ny/))
            endif
 #else
-           iret = nf_inq_varid(ncid,varName, varid)
-           iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),invar)
+           iret = nf90_inq_varid(ncid,varName, varid)
+           iret = nf90_put_var(ncid, varid, invar, (/1,1/), (/ix,jx/))
 #endif
 
            return
@@ -6492,8 +6463,8 @@ end if
                  else
                     write(tmpStr, '(i2)') k
                  endif
-                iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-                iret = nf_put_vara_real(ncid, varid, (/1,1/), (/global_nx,global_ny/),varTmp)
+                iret = nf90_inq_varid(ncid,varName//trim(tmpStr), varid)
+                iret = nf90_put_var(ncid, varid, varTmp, (/1,1/), (/global_nx,global_ny/))
               endif
            end do
 #else
@@ -6503,9 +6474,9 @@ end if
                  else
                     write(tmpStr, '(i2)') k
                  endif
-             iret = nf_inq_varid(ncid,varName//trim(tmpStr), varid)
-             iret = nf_put_vara_real(ncid, varid, (/1,1/), (/ix,jx/),inVar(:,:,k))
-           end do
+             iret = nf90_inq_varid(ncid,varName//trim(tmpStr), varid)
+             iret = nf90_put_var(ncid, varid, inVar(:,:,k), (/1,1/), (/ix,jx/))
+           end do 
 #endif
            return
         end subroutine w_rst_nc3
@@ -6526,8 +6497,8 @@ end if
            call write_lake_real(inVar,nodelist,n)
            if(my_id .eq. IO_id) then
 #endif
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 #ifdef MPP_LAND
            endif
 #endif
@@ -6556,14 +6527,14 @@ end if
 
            call ReachLS_write_io(inVar, g_var)
            if(my_id .eq. IO_id) then
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/gnlinksl/),g_var)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, g_var, (/1/), (/gnlinksl/))
            endif
            if(allocated(g_var)) deallocate(g_var)
 #else
-           n = size(inVar,1)
-           iret = nf_inq_varid(ncid,varName, varid)
-           iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+           n = size(inVar,1) 
+           iret = nf90_inq_varid(ncid,varName, varid)
+           iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 #endif
            return
         end subroutine w_rst_crt_reach_real
@@ -6591,14 +6562,14 @@ end if
 
            call ReachLS_write_io(inVar, g_var)
            if(my_id .eq. IO_id) then
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_double(ncid, varid, (/1/), (/gnlinksl/),g_var)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, g_var, (/1/), (/gnlinksl/))
            endif
            if(allocated(g_var)) deallocate(g_var)
 #else
-           n = size(inVar,1)
-           iret = nf_inq_varid(ncid,varName, varid)
-           iret = nf_put_vara_double(ncid, varid, (/1/), (/n/),inVar)
+           n = size(inVar,1) 
+           iret = nf90_inq_varid(ncid,varName, varid)
+           iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 #endif
            return
         end subroutine w_rst_crt_reach_real8
@@ -6619,11 +6590,11 @@ end if
            real g_var(gnlinks)
            call write_chanel_real(inVar,map_l2g,gnlinks,n,g_var)
            if(my_id .eq. IO_id) then
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/gnlinks/),g_var)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, g_var, (/1/), (/gnlinks/))
 #else
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 #endif
 #ifdef MPP_LAND
            endif
@@ -6639,8 +6610,8 @@ end if
 #ifdef MPP_LAND
            if(my_id .eq. IO_id) then
 #endif
-              iret = nf_inq_varid(ncid,varName, varid)
-              iret = nf_put_vara_real(ncid, varid, (/1/), (/n/),inVar)
+              iret = nf90_inq_varid(ncid,varName, varid)
+              iret = nf90_put_var(ncid, varid, inVar, (/1/), (/n/))
 #ifdef MPP_LAND
            endif
 #endif
@@ -6703,8 +6674,8 @@ real    :: inflow, outflow, water_elevation
 #ifdef MPP_LAND
 if(IO_id .eq. my_id) then
 #endif
-!open a netcdf file
-   iret = nf_open(trim(inFile), NF_NOWRITE, ncid)
+!open a netcdf file 
+   iret = nf90_open(trim(inFile), NF90_NOWRITE, ncid)
 #ifdef MPP_LAND
 endif
 call mpp_land_bcast_int1(iret)
@@ -6720,10 +6691,10 @@ if(IO_id .eq. my_id) then
 #endif
 
    !! Dont use a restart from a channel_only run if you're not running channel_only
-   iret = nf_get_att_int(ncid, NF_GLOBAL, "channel_only", channel_only_in)
+   iret = nf90_get_att(ncid, NF90_GLOBAL, "channel_only", channel_only_in)
    if(iret .eq. 0) then !! If channel_only attribute prsent, then proceed with this logic
 
-      iret = nf_get_att_int(ncid, NF_GLOBAL, "channelBucket_only", channelBucket_only_in)
+      iret = nf90_get_att(ncid, NF90_GLOBAL, "channelBucket_only", channelBucket_only_in)
 
       iret=0 ! borrow the variable for our own error flagging
       !! Hierarchy of model restarting ability.
@@ -6765,12 +6736,12 @@ if(IO_id .eq. my_id) then
       end if
    end if
 
-   iret = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts)
-   iret = NF_GET_ATT_REAL(ncid, NF_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
-   iret = nf_get_att_text(ncid,NF_GLOBAL,"Since_Date",nlst_rt(did)%sincedate(1:19))
+   iret = nf90_get_att(ncid, NF90_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+   iret = nf90_get_att(ncid, NF90_GLOBAL, 'DTCT', nlst_rt(did)%DTCT)
+   iret = nf90_get_att(ncid,NF90_GLOBAL,"Since_Date",nlst_rt(did)%sincedate(1:19))
 !   if( nlst_rt(did)%channel_only       .eq. 1 .or. &
 !       nlst_rt(did)%channelBucket_only .eq. 1         ) &
-!       iret = nf_get_att_text(ncid,NF_GLOBAL,"Restart_Time",nlst_rt(did)%olddate(1:19))
+!       iret = nf90_get_att(ncid,NF90_GLOBAL,"Restart_Time",nlst_rt(did)%olddate(1:19))
    if(iret /= 0) nlst_rt(did)%sincedate = nlst_rt(did)%startdate
    if(nlst_rt(did)%DTCT .gt. 0) then
       nlst_rt(did)%DTCT = min(nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH)
@@ -6923,7 +6894,7 @@ end if  !  end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 #ifdef MPP_LAND
 if(my_id .eq. IO_id) &
 #endif
-     iret =  nf_close(ncid)
+     iret =  nf90_close(ncid) 
 #ifdef HYDRO_D
 write(6,*) "end of RESTART_IN"
 call flush(6)
@@ -6996,7 +6967,7 @@ end subroutine RESTART_IN_nc
                  else
                     write(tmpStr, '(i2)') i
                  endif
-           iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
+           iret = nf90_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
 #ifdef MPP_LAND
          endif
          call mpp_land_bcast_int1(iret)
@@ -7012,12 +6983,12 @@ end subroutine RESTART_IN_nc
          print*, "read restart variable ", varStr//trim(tmpStr)
 #endif
 #ifdef MPP_LAND
-         if(my_id .eq. IO_id) &
-            iret = nf_get_var_real(ncid, varid, xtmp)
+         if(my_id .eq. IO_id) & 
+            iret = nf90_get_var(ncid, varid, xtmp)
 
             call decompose_data_real(xtmp(:,:), var(:,:,i))
 #else
-            iret = nf_get_var_real(ncid, varid, var(:,:,i))
+            iret = nf90_get_var(ncid, varid, var(:,:,i))
 #endif
          end do
 
@@ -7033,7 +7004,7 @@ end subroutine RESTART_IN_nc
          real,dimension(global_nx,global_ny) :: xtmp
          if(my_id .eq. IO_id) &
 #endif
-           iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+           iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
 
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
@@ -7049,13 +7020,13 @@ end subroutine RESTART_IN_nc
          print*, "read restart variable ", varStr
 #endif
 #ifdef MPP_LAND
-         if(my_id .eq. IO_id) &
-            iret = nf_get_var_real(ncid, varid, xtmp)
+         if(my_id .eq. IO_id) & 
+            iret = nf90_get_var(ncid, varid, xtmp)
 
          call decompose_data_real(xtmp, var)
 #else
             var = 0.0
-            iret = nf_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
 #endif
          return
       end subroutine read_rst_nc2
@@ -7079,7 +7050,7 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) &
 #endif
-            iret = nf_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr)//trim(tmpStr),  varid)
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
 #endif
@@ -7093,10 +7064,10 @@ end subroutine RESTART_IN_nc
          print*, "read restart variable ", varStr//trim(tmpStr)
 #endif
 #ifdef MPP_LAND
-         iret = nf_get_var_real(ncid, varid, xtmp)
+         iret = nf90_get_var(ncid, varid, xtmp)
             call decompose_RT_real(xtmp(:,:),var(:,:,i),global_rt_nx,global_rt_ny,ix,jx)
 #else
-         iret = nf_get_var_real(ncid, varid, var(:,:,i))
+         iret = nf90_get_var(ncid, varid, var(:,:,i))
 #endif
          end do
          return
@@ -7110,7 +7081,7 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          real,dimension(global_rt_nx,global_rt_ny) :: xtmp
 #endif
-         iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+         iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
 #endif
@@ -7124,11 +7095,11 @@ end subroutine RESTART_IN_nc
          print*, "read restart variable ", varStr
 #endif
 #ifdef MPP_LAND
-         if(my_id .eq. IO_id) &
-             iret = nf_get_var_real(ncid, varid, xtmp)
+         if(my_id .eq. IO_id) &   
+             iret = nf90_get_var(ncid, varid, xtmp)
          call decompose_RT_real(xtmp,var,global_rt_nx,global_rt_ny,ix,jx)
 #else
-            iret = nf_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
 #endif
          return
       end subroutine read_rst_rt_nc2
@@ -7149,7 +7120,7 @@ end subroutine RESTART_IN_nc
          endif
          xtmp = 0.0
 #endif
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
 #endif
@@ -7164,14 +7135,14 @@ end subroutine RESTART_IN_nc
 #endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
-            iret = nf_get_var_real(ncid, varid, xtmp)
+            iret = nf90_get_var(ncid, varid, xtmp)
          endif
          call decompose_RT_real(xtmp,var,global_rt_nx,global_rt_ny,ix,jx)
 
          if(allocated(xtmp)) deallocate(xtmp)
 
 #else
-            iret = nf_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
 #endif
          return
       end subroutine read_rt_nc2
@@ -7186,7 +7157,7 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) &
 #endif
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
 #endif
@@ -7202,7 +7173,7 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
 #endif
-            iret = nf_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
 #ifdef MPP_LAND
          endif
          if(n .gt. 0) then
@@ -7229,7 +7200,7 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) &
 #endif
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
 #ifdef MPP_LAND
          call mpp_land_bcast_int1(iret)
 #endif
@@ -7246,7 +7217,7 @@ end subroutine RESTART_IN_nc
          if(my_id .eq. IO_id) then
 #endif
             var = 0.0
-            iret = nf_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
 #ifdef MPP_LAND
          endif
          if(gnlinks .gt. 0) then
@@ -7296,7 +7267,7 @@ end subroutine RESTART_IN_nc
 
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
          endif
          call mpp_land_bcast_int1(iret)
          if (iret /= 0) then
@@ -7321,7 +7292,7 @@ end subroutine RESTART_IN_nc
 #endif
 
             var = 0.0
-            iret = nf_get_var_real(ncid, varid, var)
+            iret = nf90_get_var(ncid, varid, var)
             !! JLM: need a check here.
 
             iret = nf90_get_att(ncid, varid, 'scale_factor', scale_factor)
@@ -7332,7 +7303,7 @@ end subroutine RESTART_IN_nc
             !! NWM channel-only forcings have to be "decoded"/unshuffled.
             !! As of NWM1.2 the following global attribute is different/identifiable
             !! for files created when io_form_outputs=1,2 (not 0).
-            iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
+            iret = nf90_get_att(ncid, NF90_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
             if((nlst_rt(did)%channel_only .eq. 1 .or. nlst_rt(did)%channelBucket_only .eq. 1) .and. &
                iret .eq. 0) then
                allocate(varTmp(gnlinksl))
@@ -7347,7 +7318,7 @@ end subroutine RESTART_IN_nc
          call ReachLS_decomp(var,   var_out)
          if(allocated(var)) deallocate(var)
 #else
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
            if (iret /= 0) then
 #ifdef HYDRO_D
                print*, 'variable not found: name = "', trim(varStr)//'"'
@@ -7357,8 +7328,8 @@ end subroutine RESTART_IN_nc
             endif
 #ifdef HYDRO_D
          print*, "read restart variable ", varStr
-#endif
-         iret = nf_get_var_real(ncid, varid, var_out)
+#endif   
+         iret = nf90_get_var(ncid, varid, var_out)
          if(allocated(var)) deallocate(var)
 #endif
 
@@ -7394,7 +7365,7 @@ end subroutine RESTART_IN_nc
 #endif
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
          endif
          call mpp_land_bcast_int1(iret)
          if (iret /= 0) then
@@ -7417,10 +7388,10 @@ end subroutine RESTART_IN_nc
 #endif
          if(my_id .eq. IO_id) then
             var = 0.0
-            iret = nf_get_var_real(ncid, varid, var)
-            !! JLM need a check here...
-
-            iret = nf90_get_att(ncid, varid, 'scale_factor', scale_factor)
+            iret = nf90_get_var(ncid, varid, var)
+            !! JLM need a check here... 
+            
+            iret = nf90_get_att(ncid, varid, 'scale_factor', scale_factor)           
             if(iret .eq. 0) var = var * scale_factor
             iret = nf90_get_att(ncid, varid, 'add_offset', add_offset)
             if(iret .eq. 0) var = var + add_offset
@@ -7429,7 +7400,7 @@ end subroutine RESTART_IN_nc
          call ReachLS_decomp(var,   var_out)
          if(allocated(var)) deallocate(var)
 #else
-            iret = nf_inq_varid(ncid,  trim(varStr),  varid)
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
            if (iret /= 0) then
 #ifdef HYDRO_D
                print*, 'variable not found: name = "', trim(varStr)//'"'
@@ -7439,8 +7410,8 @@ end subroutine RESTART_IN_nc
             endif
 #ifdef HYDRO_D
          print*, "read restart variable ", varStr
-#endif
-         iret = nf_get_var_real(ncid, varid, var_out)
+#endif   
+         iret = nf90_get_var(ncid, varid, var_out)
          if(allocated(var)) deallocate(var)
 #endif
          return
@@ -7473,7 +7444,6 @@ subroutine READ_CHROUTING1( &
 #ifdef MPP_LAND
 use module_mpp_land, only:  my_id, io_id
 #endif
-#include <netcdf.inc>
 integer, intent(IN)                          :: IXRT,JXRT, UDMP_OPT
 integer                                      :: CHANRTSWCRT, NLINKS, NLAKES
 real, intent(IN), dimension(IXRT,JXRT)       :: fgDEM
@@ -7634,9 +7604,9 @@ if (channel_option .eq. 3) then
       inquire (file=trim(route_lake_f), exist=fexist)
       if(fexist) then
         ! use netcdf lake file of LAKEPARM.nc
-        iret = nf_open(trim(route_lake_f), NF_NOWRITE, ncid)
+        iret = nf90_open(trim(route_lake_f), NF90_NOWRITE, ncid)
         if( iret .eq. 0 ) then
-          iret = nf_close(ncid)
+          iret = nf90_close(ncid)
           write(6,*) "Before read LAKEPARM from NetCDF ", trim(route_lake_f)
           write(6,*) "NLAKES = ", NLAKES
           call flush(6)
@@ -8903,29 +8873,29 @@ end subroutine MPP_READ_CHROUTING_new
 
         nodes = size(chlon,1)
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create("nodeInfor.nc", IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create("nodeInfor.nc", IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create("nodeInfor.nc", NF_CLOBBER, ncid)
+       iret = nf90_create("nodeInfor.nc", NF90_CLOBBER, ncid)
 #endif
-       iret = nf_def_dim(ncid, "node", nodes, dimid_n)  !-- make a decimated grid
+       iret = nf90_def_dim(ncid, "node", nodes, dimid_n)  !-- make a decimated grid
 !  define the varialbes
-       iret = nf_def_var(ncid,"fromNode",NF_INT,1,(/dimid_n/),varid)
-       iret = nf_def_var(ncid,"toNode",NF_INT,1,(/dimid_n/),varid)
-       iret = nf_def_var(ncid,"chlat",NF_FLOAT,1,(/dimid_n/),varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',13,'node latitude')
-       iret = nf_def_var(ncid,"chlon",NF_FLOAT,1,(/dimid_n/),varid)
-          iret = nf_put_att_text(ncid,varid,'long_name',14,'node longitude')
-       iret = nf_enddef(ncid)
+       iret = nf90_def_var(ncid, "fromNode", NF90_INT, (/dimid_n/), varid)
+       iret = nf90_def_var(ncid, "toNode", NF90_INT, (/dimid_n/), varid)
+       iret = nf90_def_var(ncid, "chlat", NF90_FLOAT, (/dimid_n/), varid)
+          iret = nf90_put_att(ncid, varid, 'long_name', 'node latitude')
+       iret = nf90_def_var(ncid, "chlon", NF90_FLOAT, (/dimid_n/), varid)
+          iret = nf90_put_att(ncid, varid, 'long_name', 'node longitude')
+       iret = nf90_enddef(ncid)
 !write to the file
-           iret = nf_inq_varid(ncid,"fromNode", varid)
-           iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), fromNode)
-           iret = nf_inq_varid(ncid,"toNode", varid)
-           iret = nf_put_vara_int(ncid, varid, (/1/), (/nodes/), toNode)
-           iret = nf_inq_varid(ncid,"chlat", varid)
-           iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlat)
-           iret = nf_inq_varid(ncid,"chlon", varid)
-           iret = nf_put_vara_real(ncid, varid, (/1/), (/nodes/), chlon)
-          iret = nf_close(ncid)
+           iret = nf90_inq_varid(ncid,"fromNode", varid)
+           iret = nf90_put_var(ncid, varid, fromNode, (/1/), (/nodes/))
+           iret = nf90_inq_varid(ncid,"toNode", varid)
+           iret = nf90_put_var(ncid, varid, toNode, (/1/), (/nodes/))
+           iret = nf90_inq_varid(ncid,"chlat", varid)
+           iret = nf90_put_var(ncid, varid, chlat, (/1/), (/nodes/))
+           iret = nf90_inq_varid(ncid,"chlon", varid)
+           iret = nf90_put_var(ncid, varid, chlon, (/1/), (/nodes/))
+          iret = nf90_close(ncid)
     end subroutine outPutChanInfo
 
 
@@ -9288,17 +9258,17 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 #ifdef MPP_LAND
     if(my_id .eq. io_id ) then
 #endif
-       iret = nf_open(trim(infile), NF_NOWRITE, ncid)
+       iret = nf90_open(trim(infile), NF90_NOWRITE, ncid)
 #ifdef MPP_LAND
        if(iret .ne. 0) then
            call hydro_stop("Failed to open GWBUCKET Parameter file.")
        endif
-       iret = nf_inq_dimid(ncid, "BasinDim", dimid)
+       iret = nf90_inq_dimid(ncid, "BasinDim", dimid)
        if (iret /= 0) then
-               !print*, "nf_inq_dimid:  BasinDim"
-               call hydro_stop("Failed read GBUCKETPARM - nf_inq_dimid:  BasinDim")
+               !print*, "nf90_inq_dimid:  BasinDim"
+               call hydro_stop("Failed read GBUCKETPARM - nf90_inq_dimid:  BasinDim")
        endif
-       iret = nf_inq_dimlen(ncid, dimid, gnid)
+       iret = nf90_inquire_dimension(ncid, dimid, len = gnid)
     endif
     call mpp_land_bcast_int1(gnid)
 #endif
@@ -9311,40 +9281,40 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     if(my_id .eq. io_id ) then
 #endif
 !      read the file data.
-          iret = nf_inq_varid(ncid,"Coeff",  varid)
+          iret = nf90_inq_varid(ncid,"Coeff",  varid)
           if(iret /= 0) then
                print * , "could not find Coeff from ", infile
                call hydro_stop("Failed to read BUCKETPARM")
           endif
-          iret = nf_get_var_real(ncid, varid, tmpCoeff)
+          iret = nf90_get_var(ncid, varid, tmpCoeff)
 
-          iret = nf_inq_varid(ncid,"Expon",  varid)
+          iret = nf90_inq_varid(ncid,"Expon",  varid)
           if(iret /= 0) then
                print * , "could not find Expon from ", infile
                call hydro_stop("Failed to read BUCKETPARM")
           endif
-          iret = nf_get_var_real(ncid, varid, tmpExp)
+          iret = nf90_get_var(ncid, varid, tmpExp)
 
-          iret = nf_inq_varid(ncid,"Zmax",  varid)
+          iret = nf90_inq_varid(ncid,"Zmax",  varid)
           if(iret /= 0) then
                print * , "could not find Zmax from ", infile
                call hydro_stop("Failed to read BUCKETPARM")
           endif
-          iret = nf_get_var_real(ncid, varid, tmpz_max)
+          iret = nf90_get_var(ncid, varid, tmpz_max)
 
-          iret = nf_inq_varid(ncid,"Zinit",  varid)
+          iret = nf90_inq_varid(ncid,"Zinit",  varid)
           if(iret /= 0) then
                print * , "could not find Zinit from ", infile
                call hydro_stop("Failed to read BUCKETPARM")
           endif
-          iret = nf_get_var_real(ncid, varid, tmpz_init)
+          iret = nf90_get_var(ncid, varid, tmpz_init)
 
-          iret = nf_inq_varid(ncid, "ComID",  varid)
+          iret = nf90_inq_varid(ncid, "ComID",  varid)
           if(iret /= 0) then
                print * , "could not find ComID from ", infile
                call hydro_stop("Failed to read BUCKETPARM")
           endif
-          iret = nf_get_var_int(ncid, varid, tmpLinkid)
+          iret = nf90_get_var(ncid, varid, tmpLinkid)
 #ifdef MPP_LAND
     endif
        if(gnid .gt. 0) then
@@ -9624,7 +9594,6 @@ end subroutine mpp_output_chrt2
         )
 
      implicit none
-#include <netcdf.inc>
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid,K,channel_option
      integer,                                  intent(in) :: split_output_count
@@ -9724,239 +9693,233 @@ end subroutine mpp_output_chrt2
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
         if (iret /= 0) then
-           print*,  "Problem nf_create points"
-           call hydro_stop("In output_chrt2() - Problem nf_create points.")
+           print*,  "Problem nf90_create points"
+           call hydro_stop("In output_chrt2() - Problem nf90_create points.")
         endif
 
-       iret = nf_def_dim(ncid, "station", nstations, stationdim)
-       iret = nf_def_dim(ncid, "time", 1, timedim)
+       iret = nf90_def_dim(ncid, "station", nstations, stationdim)
+       iret = nf90_def_dim(ncid, "time", 1, timedim)
 
 if (io_config_outputs .le. 0) then
       !- station location definition all,  lat
-        iret = nf_def_var(ncid,"latitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station latitude')
-        iret = nf_put_att_text(ncid,varid,'units',13,'degrees_north')
+        iret = nf90_def_var(ncid, "latitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station latitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'degrees_north')
 
       !- station location definition,  long
-        iret = nf_def_var(ncid,"longitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',17,'Station longitude')
-        iret = nf_put_att_text(ncid,varid,'units',12,'degrees_east')
+        iret = nf90_def_var(ncid, "longitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station longitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'degrees_east')
 
 !     !-- elevation is ZELEV
-        iret = nf_def_var(ncid,"altitude",NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',16,'Station altitude')
-        iret = nf_put_att_text(ncid,varid,'units',6,'meters')
+        iret = nf90_def_var(ncid, "altitude", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station altitude')
+        iret = nf90_put_att(ncid, varid, 'units', 'meters')
 
 !-- parent index
-!        iret = nf_def_var(ncid,"parent_index",NF_INT,1,(/stationdim/), varid)
-!        iret = nf_put_att_text(ncid,varid,'long_name',36,'index of the station for this record')
+!        iret = nf90_def_var(ncid, "parent_index", NF90_INT, (/stationdim/), varid)
+!        iret = nf90_put_att(ncid, varid, 'long_name', 'index of the station for this record')
 
 
      !-- prevChild
-!        iret = nf_def_var(ncid,"prevChild",NF_INT,1,(/stationdim/), varid)
-!        iret = nf_put_att_text(ncid,varid,'long_name',57,'record number of the previous record for the same station')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!        iret = nf90_def_var(ncid, "prevChild", NF90_INT, (/stationdim/), varid)
+!        iret = nf90_put_att(ncid, varid, 'long_name', 'record number of the previous record for the same station')
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
      !-- lastChild
-!        iret = nf_def_var(ncid,"lastChild",NF_INT,1,(/stationdim/), varid)
-!        iret = nf_put_att_text(ncid,varid,'long_name',30,'latest report for this station')
-!        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+!        iret = nf90_def_var(ncid, "lastChild", NF90_INT, (/stationdim/), varid)
+!        iret = nf90_put_att(ncid, varid, 'long_name', 'latest report for this station')
+!        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 endif
 
-        iret = nf_def_var(ncid,"time",NF_INT, 1, (/timedim/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-        iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+        iret = nf90_def_var(ncid, "time", NF90_INT, (/timedim/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
         !- flow definition, var
-        iret = nf_def_var(ncid, "streamflow", NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',10,'River Flow')
+        iret = nf90_def_var(ncid, "streamflow", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'River Flow')
 
 #ifdef WRF_HYDRO_NUDGING
         !- nudge definition
-        iret = nf_def_var(ncid, "nudge", NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-        iret = nf_put_att_text(ncid,varid,'long_name',32,'Amount of stream flow alteration')
+        iret = nf90_def_var(ncid, "nudge", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Amount of stream flow alteration')
 #endif
 
 
 !     !- head definition, var
       if(channel_option .eq. 3) then
-        iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
-        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
+        iret = nf90_def_var(ncid, "head", NF90_FLOAT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'units', 'meter')
+        iret = nf90_put_att(ncid, varid, 'long_name', 'River Stage')
       endif
 !#ifdef HYDRO_REALTIME
 !      if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
-!	iret = nf_def_var(ncid, "head", NF_FLOAT, 1, (/stationdim/), varid)
-!        iret = nf_put_att_text(ncid,varid,'units',5,'meter')
-!        iret = nf_put_att_text(ncid,varid,'long_name',11,'River Stage')
+!	iret = nf90_def_var(ncid, "head", NF90_FLOAT, (/stationdim/), varid)
+!        iret = nf90_put_att(ncid, varid, 'units', 'meter')
+!        iret = nf90_put_att(ncid, varid, 'long_name', 'River Stage')
 !      endif
 !#endif
 
 
 	!-- NEW lateral inflow definition, var
 	if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
-	        iret = nf_def_var(ncid, "q_lateral", NF_FLOAT, 1, (/stationdim/), varid)
-       		iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
-                iret = nf_put_att_text(ncid,varid,'long_name',25,'Runoff into channel reach')
+	        iret = nf90_def_var(ncid, "q_lateral", NF90_FLOAT, (/stationdim/), varid)
+       		iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
+                iret = nf90_put_att(ncid, varid, 'long_name', 'Runoff into channel reach')
 	endif
 
         !-- NEW velocity definition, var
         if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) .and. (io_config_outputs .ne. 4) ) then
-        	iret = nf_def_var(ncid, "velocity", NF_FLOAT, 1, (/stationdim/), varid)
-        	iret = nf_put_att_text(ncid,varid,'units',9,'meter/sec')
-        	iret = nf_put_att_text(ncid,varid,'long_name',14,'River Velocity')
+        	iret = nf90_def_var(ncid, "velocity", NF90_FLOAT, (/stationdim/), varid)
+        	iret = nf90_put_att(ncid, varid, 'units', 'meter/sec')
+        	iret = nf90_put_att(ncid, varid, 'long_name', 'River Velocity')
 	endif
 
 if (io_config_outputs .le. 0) then
 !     !- order definition, var
-        iret = nf_def_var(ncid, "order", NF_INT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',21,'Strahler Stream Order')
-        iret = nf_put_att_int(ncid,varid,'_FillValue',2,-1)
+        iret = nf90_def_var(ncid, "order", NF90_INT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Strahler Stream Order')
+        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 endif
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
-        iret = nf_def_var(ncid, "station_id", NF_INT, 1, (/stationdim/), varid)
-        iret = nf_put_att_text(ncid,varid,'long_name',10,'Station id')
+        iret = nf90_def_var(ncid, "station_id", NF90_INT, (/stationdim/), varid)
+        iret = nf90_put_att(ncid, varid, 'long_name', 'Station id')
 
        !! JLM: Write/define a global attribute of the file as the LSM timestep. Enforce
        !! JLM: force_type=9 only reads these discharges to the channel if the LSM timesteps match.
 
         if(UDMP_OPT .eq. 1 .and. nlst_rt(did)%output_channelBucket_influx .ne. 0) then
            !! channel & channelBucketOnly global atts
-           iret = nf_put_att_int(ncid, NF_GLOBAL,          'OVRTSWCRT', &
-                                 NF_INT, 1,            nlst_rt(1)%OVRTSWCRT )
-           iret = nf_put_att_int(ncid, NF_GLOBAL,      'NOAH_TIMESTEP', &
-                                 NF_INT, 1,        int(nlst_rt(1)%dt)       )
-           iret = nf_put_att_int(ncid, NF_GLOBAL,       "channel_only", &
-                                 NF_INT, 1,       nlst_rt(did)%channel_only )
-           iret = nf_put_att_int(ncid, NF_GLOBAL, "channelBucket_only", &
-                                 NF_INT, 1, nlst_rt(did)%channelBucket_only )
+           iret = nf90_put_att(ncid, NF90_GLOBAL, 'OVRTSWCRT', nlst_rt(1)%OVRTSWCRT )
+           iret = nf90_put_att(ncid, NF90_GLOBAL, 'NOAH_TIMESTEP', int(nlst_rt(1)%dt) )
+           iret = nf90_put_att(ncid, NF90_GLOBAL, "channel_only", nlst_rt(did)%channel_only )
+           iret = nf90_put_att(ncid, NF90_GLOBAL, "channelBucket_only", nlst_rt(did)%channelBucket_only )
 
            !! FLUXES to channel
            if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
               nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
-              iret = nf_def_var(ncid, "qSfcLatRunoff", NF_FLOAT, 1, (/stationdim/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
+              iret = nf90_def_var(ncid, "qSfcLatRunoff", NF90_FLOAT, (/stationdim/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
               if(nlst_rt(did)%OVRTSWCRT .eq. 1) then              !123456789112345678921234567
-                 iret = nf_put_att_text(ncid,varid,'long_name',27,'runoff from terrain routing')
-              else
-                 iret = nf_put_att_text(ncid,varid,'long_name',6,'runoff')
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'runoff from terrain routing')
+              else 
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'runoff')
               end if
-              iret = nf_def_var(ncid, "qBucket", NF_FLOAT, 1, (/stationdim/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
+              iret = nf90_def_var(ncid, "qBucket", NF90_FLOAT, (/stationdim/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
               !                                                 1234567891234567892
-              iret = nf_put_att_text(ncid,varid,'long_name',19,'flux from gw bucket')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'flux from gw bucket')
            end if
 
            !! Bucket influx
            !! In channel_only mode, there are not valie qBtmVertRunoff values
            if(nlst_rt(did)%output_channelBucket_influx .eq. 2 .and. &
               nlst_rt(did)%channel_only                .eq. 0         ) then
-              iret = nf_def_var(ncid, "qBtmVertRunoff", NF_FLOAT, 1, (/stationdim/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',9,'meter^3/s')
-              !                                                 123456789112345678921234567893123456
-              iret = nf_put_att_text(ncid,varid,'long_name',36,'runoff from bottom of soil to bucket')
+              iret = nf90_def_var(ncid, "qBtmVertRunoff", NF90_FLOAT, (/stationdim/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3/s')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'runoff from bottom of soil to bucket')
            endif
 
            !! ACCUMULATIONS
            if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
-              iret = nf_def_var(ncid, "accSfcLatRunoff", NF_DOUBLE, 1, (/stationdim/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',7,'meter^3')
+              iret = nf90_def_var(ncid, "accSfcLatRunoff", NF90_DOUBLE, (/stationdim/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3')
               if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
-                 iret = nf_put_att_text(ncid,varid,'long_name',39, &
-                      !                  123456789112345678921234567893123456789
+                 iret = nf90_put_att(ncid,varid,'long_name',&
                                         'ACCUMULATED runoff from terrain routing')
-              else
-                 iret = nf_put_att_text(ncid,varid,'long_name',28,'ACCUMULATED runoff from land')
+              else 
+                 iret = nf90_put_att(ncid, varid, 'long_name', 'ACCUMULATED runoff from land')
               end if
-
-              iret = nf_def_var(ncid, "accBucket", NF_DOUBLE, 1, (/stationdim/), varid)
-              iret = nf_put_att_text(ncid,varid,'units',8,'meter^3')
-              iret = nf_put_att_text(ncid,varid,'long_name',33,'ACCUMULATED flux from gw bucket')
+              
+              iret = nf90_def_var(ncid, "accBucket", NF90_DOUBLE, (/stationdim/), varid)
+              iret = nf90_put_att(ncid, varid, 'units', 'meter^3')
+              iret = nf90_put_att(ncid, varid, 'long_name', 'ACCUMULATED flux from gw bucket')
            endif
         endif
 
          convention(1:32) = "Unidata Observation Dataset v1.0"
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "Conventions",32, convention)
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "cdm_datatype",7, "Station")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "cdm_datatype", "Station")
 
-if (io_config_outputs .le. 0) then
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_max",4, "90.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lat_min",5, "-90.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_max",5, "180.0")
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "geospatial_lon_min",6, "-180.0")
+if (io_config_outputs .le. 0) then 
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
 endif
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-         iret = nf_put_att_text(ncid, NF_GLOBAL, "station_dimension",7, "station")
-         iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
-         iret = nf_put_att_int(ncid, NF_GLOBAL, "stream_order_output",NF_INT,1,1)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "station_dimension", "station")
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "stream_order_output", 1)
 
         !! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !! END DEF
-         iret = nf_enddef(ncid)
+         iret = nf90_enddef(ncid)
 
-         iret = nf_inq_varid(ncid,"time", varid)
-         iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+         iret = nf90_inq_varid(ncid,"time", varid)
+         iret = nf90_put_var(ncid, varid, seconds_since, (/1/))
 
 if (io_config_outputs .le. 0) then
         !-- write latitudes
-         iret = nf_inq_varid(ncid,"latitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlat)
+         iret = nf90_inq_varid(ncid,"latitude", varid)
+         iret = nf90_put_var(ncid, varid, chlat, (/1/), (/nstations/))
 
         !-- write longitudes
-         iret = nf_inq_varid(ncid,"longitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon)
+         iret = nf90_inq_varid(ncid,"longitude", varid)
+         iret = nf90_put_var(ncid, varid, chlon, (/1/), (/nstations/))
 
         !-- write elevations
-         iret = nf_inq_varid(ncid,"altitude", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), zelev)
+         iret = nf90_inq_varid(ncid,"altitude", varid)
+         iret = nf90_put_var(ncid, varid, zelev, (/1/), (/nstations/))
 
         !-- write order
-         iret = nf_inq_varid(ncid,"order", varid)
-         iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), ORDER)
+         iret = nf90_inq_varid(ncid,"order", varid)
+         iret = nf90_put_var(ncid, varid, ORDER, (/1/), (/nstations/))
 endif
 
         !-- write stream flow
-         iret = nf_inq_varid(ncid,"streamflow", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qlink(:,1))
+         iret = nf90_inq_varid(ncid,"streamflow", varid)
+         iret = nf90_put_var(ncid, varid, qlink(:,1), (/1/), (/nstations/))
 
 #ifdef WRF_HYDRO_NUDGING
         !-- write nudge
-         iret = nf_inq_varid(ncid,"nudge", varid)
-         iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), nudge)
+         iret = nf90_inq_varid(ncid,"nudge", varid)
+         iret = nf90_put_var(ncid, varid, nudge, (/1/), (/nstations/))
 #endif
 
 	!-- write head
      	if(channel_option .eq. 3) then
-           iret = nf_inq_varid(ncid,"head", varid)
-           iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), hlink)
+           iret = nf90_inq_varid(ncid,"head", varid)
+           iret = nf90_put_var(ncid, varid, hlink, (/1/), (/nstations/))
 	endif
 !#ifdef HYDRO_REALTIME
 !	if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
 !	      ! dummy value for now
-!              iret = nf_inq_varid(ncid,"head", varid)
-!              iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
+!              iret = nf90_inq_varid(ncid,"head", varid)
+!              iret = nf90_put_vara_real(ncid, varid, (/1/), (/nstations/), chlon*0.-9999.)
 !        endif
 !#endif
 
         !-- write lateral inflow
 	if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) ) then
-	        iret = nf_inq_varid(ncid,"q_lateral", varid)
-       		iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), QLateral)
+	        iret = nf90_inq_varid(ncid,"q_lateral", varid)
+       		iret = nf90_put_var(ncid, varid, QLateral, (/1/), (/nstations/))
         endif
 
         !-- writelvelocity (dummy value for now)
         if ( (channel_option .ne. 3) .and. (io_config_outputs .ge. 0) .and. (io_config_outputs .ne. 4) ) then
-        	iret = nf_inq_varid(ncid,"velocity", varid)
-         	iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), velocity)
+        	iret = nf90_inq_varid(ncid,"velocity", varid)
+         	iret = nf90_put_var(ncid, varid, velocity, (/1/), (/nstations/))
 	endif
 
        !! JLM: Write/define a global attribute of the file as the LSM timestep. Enforce
@@ -9965,43 +9928,43 @@ endif
              !! FLUXES
              if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
                 nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
-                iret = nf_inq_varid(ncid,"qSfcLatRunoff", varid)
-                iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qSfcLatRunoff)
+                iret = nf90_inq_varid(ncid,"qSfcLatRunoff", varid)
+                iret = nf90_put_var(ncid, varid, qSfcLatRunoff, (/1/), (/nstations/))
 
-                iret = nf_inq_varid(ncid,"qBucket", varid)
-                iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qBucket)
+                iret = nf90_inq_varid(ncid,"qBucket", varid)
+                iret = nf90_put_var(ncid, varid, qBucket, (/1/), (/nstations/))
              end if
 
              !! Bucket model influxes
              if(nlst_rt(did)%output_channelBucket_influx .eq. 2 .and. &
                 nlst_rt(did)%channel_only                .eq. 0         ) then
-                iret = nf_inq_varid(ncid,"qBtmVertRunoff", varid)
-                iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), qBtmVertRunoff)
+                iret = nf90_inq_varid(ncid,"qBtmVertRunoff", varid)
+                iret = nf90_put_var(ncid, varid, qBtmVertRunoff, (/1/), (/nstations/))
              endif
 
             !! ACCUMULATIONS
             if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
-               iret = nf_inq_varid(ncid,"accSfcLatRunoff", varid)
-               iret = nf_put_vara_double(ncid, varid, (/1/), (/nstations/), accSfcLatRunoff)
-
-               iret = nf_inq_varid(ncid,"accBucket", varid)
-               iret = nf_put_vara_double(ncid, varid, (/1/), (/nstations/), accBucket)
+               iret = nf90_inq_varid(ncid,"accSfcLatRunoff", varid)
+               iret = nf90_put_var(ncid, varid, accSfcLatRunoff, (/1/), (/nstations/))
+                  
+               iret = nf90_inq_varid(ncid,"accBucket", varid)
+               iret = nf90_put_var(ncid, varid, accBucket, (/1/), (/nstations/))
             end if
          endif
 
 	!-- write id
-        iret = nf_inq_varid(ncid,"station_id", varid)
-        iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), linkid)
+        iret = nf90_inq_varid(ncid,"station_id", varid)
+        iret = nf90_put_var(ncid, varid, linkid, (/1/), (/nstations/))
 
 
-      iret = nf_redef(ncid)
+      iret = nf90_redef(ncid)
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(date)) = date
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-      iret = nf_enddef(ncid)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+      iret = nf90_enddef(ncid)
 
-      iret = nf_sync(ncid)
-      iret = nf_close(ncid)
+      iret = nf90_sync(ncid)
+      iret = nf90_close(ncid)
 
 #ifdef HYDRO_D
      print *, "Exited Subroutine output_chrt"
@@ -10158,80 +10121,80 @@ end subroutine output_chrt2
 #endif
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
       if (iret /= 0) then
-          print*, "Problem nf_create"
-          call hydro_stop("output_gw_netcdf")
-      endif
+          print*, "Problem nf90_create" 
+          call hydro_stop("output_gw_netcdf") 
+      endif 
 
 !!! Define dimensions
 
         nstations =nbasns
 
-      iret = nf_def_dim(ncid, "basin", nstations, basindim)
+      iret = nf90_def_dim(ncid, "basin", nstations, basindim)
 
-      iret = nf_def_dim(ncid, "time", 1, timedim)
+      iret = nf90_def_dim(ncid, "time", 1, timedim)
 
 !!! Define variables
 
 
       !- gw basin ID
-      iret = nf_def_var(ncid,"gwbas_id",NF_INT, 1, (/basindim/), varid)
-      iret = nf_put_att_text(ncid,varid,'long_name',11,'GW basin ID')
+      iret = nf90_def_var(ncid, "gwbas_id", NF90_INT, (/basindim/), varid)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'GW basin ID')
 
       !- gw inflow
-      iret = nf_def_var(ncid, "gw_inflow", NF_FLOAT, 1, (/basindim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+      iret = nf90_def_var(ncid, "gw_inflow", NF90_FLOAT, (/basindim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
       !- gw outflow
-      iret = nf_def_var(ncid, "gw_outflow", NF_FLOAT, 1, (/basindim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',13,'meter^3 / sec')
+      iret = nf90_def_var(ncid, "gw_outflow", NF90_FLOAT, (/basindim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
       !- depth in gw bucket
-      iret = nf_def_var(ncid, "gw_zlev", NF_FLOAT, 1, (/basindim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',2,'mm')
+      iret = nf90_def_var(ncid, "gw_zlev", NF90_FLOAT, (/basindim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'mm')
 
       ! Time variable
-      iret = nf_def_var(ncid, "time", NF_INT, 1, (/timeDim/), varid)
-      iret = nf_put_att_text(ncid,varid,'units',34,sec_valid_date)
-      iret = nf_put_att_text(ncid,varid,'long_name',17,'valid output time')
+      iret = nf90_def_var(ncid, "time", NF90_INT, (/timeDim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
+      iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
       date19(1:19) = "0000-00-00_00:00:00"
       date19(1:len_trim(startdate)) = startdate
 
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_initialization_time", 19, trim(nlst_rt(1)%startdate))
-      iret = nf_put_att_text(ncid, NF_GLOBAL, "model_output_valid_time", 19, trim(nlst_rt(1)%olddate))
-      iret = nf_put_att_real(ncid, NF_GLOBAL, "missing_value", NF_FLOAT, 1, -9E15)
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst_rt(1)%startdate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst_rt(1)%olddate))
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
 
-      iret = nf_enddef(ncid)
+      iret = nf90_enddef(ncid)
 
 !!! Input variables
 
         !-- write lake id
-        iret = nf_inq_varid(ncid,"gwbas_id", varid)
-        iret = nf_put_vara_int(ncid, varid, (/1/), (/nstations/), gw_id_var)
+        iret = nf90_inq_varid(ncid,"gwbas_id", varid)
+        iret = nf90_put_var(ncid, varid, gw_id_var, (/1/), (/nstations/))
 
         !-- write gw inflow
-        iret = nf_inq_varid(ncid,"gw_inflow", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), gw_in_var  )
+        iret = nf90_inq_varid(ncid,"gw_inflow", varid)
+        iret = nf90_put_var(ncid, varid, gw_in_var, (/1/), (/nstations/))
 
         !-- write elevation  of inflow
-        iret = nf_inq_varid(ncid,"gw_outflow", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), gw_out_var  )
+        iret = nf90_inq_varid(ncid,"gw_outflow", varid)
+        iret = nf90_put_var(ncid, varid, gw_out_var, (/1/), (/nstations/))
 
         !-- write elevation  of inflow
-        iret = nf_inq_varid(ncid,"gw_zlev", varid)
-        iret = nf_put_vara_real(ncid, varid, (/1/), (/nstations/), gw_z_var  )
+        iret = nf90_inq_varid(ncid,"gw_zlev", varid)
+        iret = nf90_put_var(ncid, varid, gw_z_var, (/1/), (/nstations/))
 
         !-- write time variable
-        iret = nf_inq_varid(ncid,"time", varid)
-        iret = nf_put_vara_int(ncid, varid, (/1/), (/1/), seconds_since)
+        iret = nf90_inq_varid(ncid,"time", varid)
+        iret = nf90_put_var(ncid, varid, seconds_since, (/1/))
 
-        iret = nf_close(ncid)
+        iret = nf90_close(ncid)
 
     end subroutine output_gw_netcdf
 
@@ -10847,7 +10810,6 @@ end subroutine output_chrt2
 #endif
 
     implicit none
-#include <netcdf.inc>
 
     integer, dimension(:),  intent(in) :: inLINKID, inTYPEL
     integer, intent(in) :: inNLINKS
@@ -10894,38 +10856,38 @@ end subroutine output_chrt2
 
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
        write(6,*) "using large netcdf file for LAKE TYPES"
-       iret = nf_create(trim(output_flnm), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(output_flnm), ior(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
        write(6,*) "using normal netcdf file for LAKE TYPES"
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
 #endif
 
        if (iret /= 0) then
-          print*,"Lakes: Problem nf_create"
+          print*,"Lakes: Problem nf90_create"
           call hydro_stop("output_lake_types")
        endif
 
-       iret = nf_def_dim(ncid, "link", inNLINKS, linkdim)
+       iret = nf90_def_dim(ncid, "link", inNLINKS, linkdim)
 
        !-- link  id
-       iret = nf_def_var(ncid, "LINKID", NF_INT, 1, (/linkdim/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',10,'Link ID')
+       iret = nf90_def_var(ncid, "LINKID", NF90_INT, (/linkdim/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'Link ID')
 
        !- lake reach type, var
-       iret = nf_def_var(ncid, "TYPEL", NF_INT, 1, (/linkdim/), varid)
-       iret = nf_put_att_text(ncid,varid,'long_name',15,'Lake reach type')
+       iret = nf90_def_var(ncid, "TYPEL", NF90_INT, (/linkdim/), varid)
+       iret = nf90_put_att(ncid, varid, 'long_name', 'Lake reach type')
 
-       iret = nf_enddef(ncid)
+       iret = nf90_enddef(ncid)
 
        !-- write id
-       iret = nf_inq_varid(ncid,"LINKID", varid)
-       iret = nf_put_vara_int(ncid, varid, (/1/), (/inNLINKS/), linkId)
+       iret = nf90_inq_varid(ncid,"LINKID", varid)
+       iret = nf90_put_var(ncid, varid, linkId, (/1/), (/inNLINKS/))
 
        !-- write type
-       iret = nf_inq_varid(ncid,"TYPEL", varid)
-       iret = nf_put_vara_int(ncid, varid, (/1/), (/inNLINKS/), typeL)
+       iret = nf90_inq_varid(ncid,"TYPEL", varid)
+       iret = nf90_put_var(ncid, varid, typeL, (/1/), (/inNLINKS/))
 
-       iret = nf_close(ncid)
+       iret = nf90_close(ncid)
 
 #ifdef MPP_LAND
     endif
@@ -10967,23 +10929,23 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
      if(my_id .eq. IO_id) then
 #endif
 #ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
+       iret = nf90_create(trim(nlst_rt(did)%hydrotbl_f), IOR(NF90_CLOBBER,NF90_64BIT_OFFSET), ncid)
 #else
-       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f), NF_CLOBBER, ncid)
+       iret = nf90_create(trim(nlst_rt(did)%hydrotbl_f), NF90_CLOBBER, ncid)
 #endif
 #ifdef MPP_LAND
      endif
      call mpp_land_bcast_int1(iret)
 #endif
        if (iret /= 0) then
-          call hydro_stop("FATAL ERROR:   - Problem nf_create  in nc of hydrotab_f file")
+          call hydro_stop("FATAL ERROR:   - Problem nf90_create  in nc of hydrotab_f file")
        endif
 
 #ifdef MPP_LAND
      if(my_id .eq. IO_id) then
 #endif
-       iret = nf_def_dim(ncid, "west_east", ix, ixd)  !-- make a decimated grid
-       iret = nf_def_dim(ncid, "south_north", jx, jxd)
+       iret = nf90_def_dim(ncid, "west_east", ix, ixd)  !-- make a decimated grid
+       iret = nf90_def_dim(ncid, "south_north", jx, jxd)
 #ifdef MPP_LAND
      endif
 #endif
@@ -10994,16 +10956,16 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
 #ifdef MPP_LAND
      if(my_id .eq. io_id) then
 #endif
-       iret = nf_def_var(ncid,trim(varName),NF_FLOAT, 2, (/ixd,jxd/), varid)
-       ! iret = nf_put_att_text(ncid,varid,'description',256,trim(descrip))
-       iret = nf_put_att_text(ncid,varid,'description',4,"test")
+       iret = nf90_def_var(ncid, trim(varName), NF90_FLOAT, (/ixd,jxd/), varid)
+       ! iret = nf90_put_att(ncid, varid, 'description', trim(descrip))
+       iret = nf90_put_att(ncid, varid, 'description', "test")
 #ifdef MPP_LAND
      endif
 #endif
    endif  !!! end of count == 1
 
    if (count == 2) then ! write out the variables
-       if(count_flag == 2) iret = nf_enddef(ncid)
+       if(count_flag == 2) iret = nf90_enddef(ncid)
        count_flag = 3
 #ifdef MPP_LAND
      if(my_id .eq. io_id) then
@@ -11017,11 +10979,11 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
 
 #ifdef MPP_LAND
      call write_io_real(varIn,xdump)
-     if(my_id .eq. io_id) iret = nf_inq_varid(ncid,trim(varName), varid)
-     if(my_id .eq. io_id)  iret = nf_put_vara_real(ncid,varid, (/1,1/), (/ix,jx/),xdump)
+     if(my_id .eq. io_id) iret = nf90_inq_varid(ncid,trim(varName), varid)
+     if(my_id .eq. io_id)  iret = nf90_put_var(ncid, varid, xdump, (/1,1/), (/ix,jx/))
 #else
-     iret = nf_inq_varid(ncid,trim(varName), varid)
-     iret = nf_put_vara_real(ncid,varid, (/1,1/), (/ix,jx/),varIn)
+     iret = nf90_inq_varid(ncid,trim(varName), varid)
+     iret = nf90_put_var(ncid, varid, varIn, (/1,1/), (/ix,jx/))
 #endif
 
       deallocate(xdump)
@@ -11031,7 +10993,7 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
 #ifdef MPP_LAND
        if(my_id .eq. io_id ) &
 #endif
-       iret = nf_close(ncid)
+       iret = nf90_close(ncid)
     endif !! end of count == 3
 
 
@@ -11069,20 +11031,20 @@ subroutine read2dlsm(did,file,varName,varOut)
   real,allocatable,dimension(:,:) :: tmpArr
   if(my_id .eq. io_id) then
      allocate(tmpArr(global_nx,global_ny))
-     iret = nf_open(trim(file), NF_NOWRITE, ncid)
+     iret = nf90_open(trim(file), NF90_NOWRITE, ncid)
      call get_2d_netcdf(trim(varName), ncid, tmpArr, units, global_nx, global_ny, &
           .false., ierr)
-     iret = nf_close(ncid)
+     iret = nf90_close(ncid)
   else
      allocate(tmpArr(1,1))
   endif
   call decompose_data_real (tmpArr,varOut)
   deallocate(tmpArr)
 #else
-     iret = nf_open(trim(file), NF_NOWRITE, ncid)
+     iret = nf90_open(trim(file), NF90_NOWRITE, ncid)
      call get_2d_netcdf(trim(varName), ncid, varOut, units, rt_domain(did)%ix, rt_domain(did)%jx, &
           .false., ierr)
-     iret = nf_close(ncid)
+     iret = nf90_close(ncid)
 #endif
 
 end subroutine read2dlsm
@@ -11095,7 +11057,6 @@ use module_mpp_land,only: mpp_land_bcast_int1, my_id, io_id
 use Module_Date_utilities_rt, only: geth_newdate
 use module_namelist, only: nlst_rt
 implicit none
-#include <netcdf.inc>
 integer :: iret, did, len, ncid
 integer :: dtbl
 character :: hgrid
@@ -11121,7 +11082,7 @@ if(my_id .eq. io_id) then
 #ifdef HYDRO_D
    print*, " Channel only input forcing file: ",trim(fileName)
 #endif /* HYDRO_D */
-   iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
+   iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
 endif
 
 call mpp_land_bcast_int1(iret)
@@ -11138,26 +11099,26 @@ if(my_id .eq. io_id) then
 
    !! 1) overland routing v squeegee??
    !!if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
-   iret = nf_get_att_int(ncid, NF_GLOBAL, 'OVRTSWCRT', ovrtswcrt_in)
-   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
+   iret = nf90_get_att(ncid, NF90_GLOBAL, 'OVRTSWCRT', ovrtswcrt_in)
+   if(iret .ne. 0) iret = nf90_get_att(ncid, NF90_GLOBAL, 'dev_OVRTSWCRT', ovrtswcrt_in)
    if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'OVRTSWCRT & dev_OVRTSWCRT not in ' // trim(fileName) )
    if(nlst_rt(1)%ovrtswcrt .ne. ovrtswcrt_in) &
         call hydro_stop('Channel only: OVRTSWCRT or dev_OVRSWCRT in forcing file does not match run config.')
 
    !! 2) NOAH_TIMESTEP same?
-   iret = nf_get_att_int(ncid, NF_GLOBAL, 'NOAH_TIMESTEP', noah_timestep_in)
-   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, 'dev_NOAH_TIMESTEP', noah_timestep_in)
+   iret = nf90_get_att(ncid, NF90_GLOBAL, 'NOAH_TIMESTEP', noah_timestep_in)
+   if(iret .ne. 0) iret = nf90_get_att(ncid, NF90_GLOBAL, 'dev_NOAH_TIMESTEP', noah_timestep_in)
    if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'NOAH_TIMESTEP & dev_NOAH_TIMESTEP not in ' // trim(fileName) )
    if(nlst_rt(1)%dt .ne. noah_timestep_in) &
         call hydro_stop('Channel only: NOAH_TIMESTEP or dev_NOAH_TIMESTEP in forcing file does not match run config.')
 
    !! 3) channel_only or channelBucket_only?
-   iret = nf_get_att_int(ncid, NF_GLOBAL, "channel_only",       channel_only_in)
-   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, "dev_channel_only",       channel_only_in)
+   iret = nf90_get_att(ncid, NF90_GLOBAL, "channel_only",       channel_only_in)
+   if(iret .ne. 0) iret = nf90_get_att(ncid, NF90_GLOBAL, "dev_channel_only",       channel_only_in) 
    if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'channel_only not in ' // trim(fileName) )
-
-   iret = nf_get_att_int(ncid, NF_GLOBAL, "channelBucket_only", channelBucket_only_in)
-   if(iret .ne. 0) iret = nf_get_att_int(ncid, NF_GLOBAL, "dev_channelBucket_only", channel_only_in)
+   
+   iret = nf90_get_att(ncid, NF90_GLOBAL, "channelBucket_only", channelBucket_only_in)
+   if(iret .ne. 0) iret = nf90_get_att(ncid, NF90_GLOBAL, "dev_channelBucket_only", channel_only_in) 
    if(iret .ne. 0) call hydro_stop(attNotInFileMsg // 'channelBucket_only not in ' // trim(fileName) )
    !! See table of fatal combinations on wiki: https://wiki.ucar.edu/display/wrfhydro/Channel+Only
    !! First row: Can it even get to this combination? NO.
@@ -11244,7 +11205,7 @@ if(.FALSE.) then
 end if
 
 if(my_id .eq. io_id) then
-   iret = nf_close(ncid)
+   iret = nf90_close(ncid)
 #ifdef HYDRO_D
    print*, "finish read channel only forcing "
 #endif /* HYDRO_D */

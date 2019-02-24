@@ -28,7 +28,6 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 
 use module_levelpool
 use module_reservoir_base
-!use module_Routing
 use module_RT_data, only: rt_domain
 
 #endif
@@ -510,7 +509,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !   SUBROUTINE drive_CHANNEL
 ! ------------------------------------------------
 ! ------------------------------------------------
-     Subroutine drive_CHANNEL(latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
+     Subroutine drive_CHANNEL(did, latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
        QSUBRT, LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, CH_LNKRT, &
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
@@ -534,7 +533,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 ! -------- DECLARATIONS ------------------------
 
-        INTEGER, INTENT(IN) :: IXRT,JXRT,channel_option
+        INTEGER, INTENT(IN) :: did, IXRT,JXRT,channel_option
         INTEGER, INTENT(IN) :: NLINKS,NLAKES, NLINKSL
         integer, INTENT(INOUT) :: KT   ! flag of cold start (1) or continue run.
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: QSUBRT
@@ -1173,8 +1172,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               ! in whether it uses level pool, machine learning, or persistence.
               ! Inflow, lateral inflow, water elevation, and the routing period
               ! are passed in. Updated outflow and water elevation are returned.
-              ! Domain ID (did) set to 1.
-              call rt_domain(1)%reservoirs(i)%ptr%run_release(QLAKEIP(i), QLAKEI(i), &
+              call rt_domain(did)%reservoirs(i)%ptr%run_release(QLAKEIP(i), QLAKEI(i), &
                    QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)
 
               ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
@@ -1539,7 +1537,7 @@ end subroutine drive_CHANNEL
 !   SUBROUTINE drive_CHANNEL for NHDPLUS
 ! ------------------------------------------------
 
-     subroutine drive_CHANNEL_RSL(UDMP_OPT,KT, IXRT,JXRT,  &
+     subroutine drive_CHANNEL_RSL(did, UDMP_OPT,KT, IXRT,JXRT,  &
         LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
@@ -1579,7 +1577,7 @@ end subroutine drive_CHANNEL
 
 ! -------- DECLARATIONS ------------------------
 
-       integer, intent(IN) :: IXRT,JXRT,channel_option, OVRTSWCRT, SUBRTSWCRT
+       integer, intent(IN) :: did, IXRT,JXRT,channel_option, OVRTSWCRT, SUBRTSWCRT
        integer, intent(IN) :: NLAKES, NLINKSL, nlinks
        integer, intent(INOUT) :: KT   ! flag of cold start (1) or continue run.
        real, intent(IN), dimension(IXRT,JXRT)    :: QSTRMVOLRT
@@ -1898,8 +1896,7 @@ do nt = 1, nsteps
             ! in whether it uses level pool, machine learning, or persistence.
             ! Inflow, lateral inflow, water elevation, and the routing period
             ! are passed in. Updated outflow and water elevation are returned.
-            ! Domain ID (did) set to 1.
-            call rt_domain(1)%reservoirs(lakeid)%ptr%run_release(Qup, Quc, 0.0, &
+            call rt_domain(did)%reservoirs(lakeid)%ptr%run_release(Qup, Quc, 0.0, &
                  RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)
 
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
