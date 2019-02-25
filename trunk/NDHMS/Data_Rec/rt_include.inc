@@ -5,6 +5,10 @@
    type (subsurface_input_interface) :: subsurface_input
    type (subsurface_output_interface) :: subsurface_output
    class (groundwater_base_data_struct), allocatable :: groundwater
+
+   class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
+   integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
+
    INTEGER :: IX, JX
    logical :: initialized
    logical :: restQSTRM
@@ -146,6 +150,7 @@
   REAL,  DIMENSION(50)     :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
   REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
+  ! VARIABLES FOR  RESERVOIRS
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file

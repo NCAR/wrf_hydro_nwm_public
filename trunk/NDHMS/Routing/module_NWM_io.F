@@ -5005,37 +5005,36 @@ subroutine output_gw_NWM(domainId,iGrid)
          allocate(g_basnsInd(1))
       endif
 
-        if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
-            select type (gwd => rt_domain(domainId)%groundwater)
-                type is (nhd_groundwater_struct)
-                    ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
-                    ! reach-based routing has the GW physics initialized the same as with
-                    ! gridded routing.
-                    !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
-                    call ReachLS_write_io(rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
-                    call ReachLS_write_io(rt_domain(domainId)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
-                    !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
-                    call ReachLS_write_io(gwd%state%z_gwsubbas*1000.,g_z_gwsubbas)
-                    call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
-                class default
-                    ! TODO add error for wrong groundwater type
-            end select
-        else
-            select type (gwd => rt_domain(domainId)%groundwater)
-                type is (simple_groundwater_struct)
-                    call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%input%qin_gwsubbas,  &
-                        gwd%basin%basin_index,g_qin_gwsubbas)
-                    call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qout_gwsubbas,  &
-                        gwd%basin%basin_index,g_qout_gwsubbas)
-                    ! TODO update this when simple groundwater module is completed
-                    !call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  &
-                        !                      rt_domain(domainId)%basnsInd,g_z_gwsubbas)
-                    call gw_write_io_int(rt_domain(domainId)%numbasns, gwd%basin%basin_index, &
-                        gwd%basin%basin_index, g_basnsInd)
-                class default
-            end select
-        endif
-
+      if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
+         select type (gwd => rt_domain(domainId)%groundwater)
+         type is (nhd_groundwater_struct)
+            ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
+            ! reach-based routing has the GW physics initialized the same as with
+            ! gridded routing.
+            !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
+            call ReachLS_write_io(rt_domain(domainId)%groundwater%input%qin_gwsubbas/nlst_rt(domainId)%DT,g_qin_gwsubbas)
+            call ReachLS_write_io(rt_domain(domainId)%groundwater%output%qout_gwsubbas,g_qout_gwsubbas)
+            !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
+            call ReachLS_write_io(gwd%state%z_gwsubbas*1000.,g_z_gwsubbas)
+            call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+         class default
+            ! TODO add error for wrong groundwater type
+         end select
+      else
+         select type (gwd => rt_domain(domainId)%groundwater)
+         type is (simple_groundwater_struct)
+            call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%input%qin_gwsubbas,  &
+                 gwd%basin%basin_index,g_qin_gwsubbas)
+            call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qout_gwsubbas,  &
+                 gwd%basin%basin_index,g_qout_gwsubbas)
+            ! TODO update this when simple groundwater module is completed
+            !call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  &
+            !                      rt_domain(domainId)%basnsInd,g_z_gwsubbas)
+            call gw_write_io_int(rt_domain(domainId)%numbasns, gwd%basin%basin_index, &
+                 gwd%basin%basin_index, g_basnsInd)
+         class default
+         end select
+      endif
    else
       allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
