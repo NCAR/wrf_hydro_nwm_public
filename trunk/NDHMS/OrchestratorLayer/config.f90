@@ -62,6 +62,7 @@ module config_base
      procedure, nopass :: init => config_init
      procedure, nopass :: noah_lsm => copy_noah_lsm
      procedure, nopass :: noah_lsm_sync => noah_lsm_sync
+     procedure, nopass :: wrf_hydro => copy_wrf_hydro
   end type Configuration_
 
   type(NOAHLSM_OFFLINE_DT), private, save :: noah_lsm_file
