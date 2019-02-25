@@ -104,7 +104,7 @@ if [[ "$theArgument" == "3" ]] || [[ "$theArgument" == "ifort" ]]; then
         echo "Configured: ifort on Gordon"
 
     elif [[ $HOSTNAME = *shas* ]]; then
-        cp arc/macros.mpp.intel.summit_has macros
+        cp arc/macros.mpp.ifort.summit_has macros
         echo "Configured: ifort on Summit haswell"
 
     else
