@@ -145,15 +145,14 @@ module module_HYDRO_drv
 
    end subroutine HYDRO_rst_out
 
-    subroutine HYDRO_out(did, rstflag)
-
-        implicit none
-        integer did, outflag, rtflag, iniflag
-        integer rstflag
-        character(len=19) out_date
-        integer :: Kt, ounit, i
-        real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
-        real, dimension(RT_DOMAIN(did)%NLINKS) :: vel_out
+   subroutine HYDRO_out(did, rstflag)
+     implicit none
+     integer did, outflag, rtflag, iniflag
+     integer rstflag
+     character(len=19) out_date
+     integer :: Kt, ounit, i
+     real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
+     real, dimension(RT_DOMAIN(did)%NLINKS) :: vel_out
 
         !    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
             !           runoff1x_tmp, runoff2x_tmp, runoff3x_tmp,etax_tmp, &
@@ -161,12 +160,12 @@ module module_HYDRO_drv
             !           ACSNOM_tmp, esnow2d_tmp, drip2d_tmp,dewfall_tmp, fpar_tmp, &
             !           qfx_tmp, prcp_out_tmp, etpndx_tmp
 
-        outflag = -99
+     outflag = -99
 
 #ifdef MPP_LAND
-        if(IO_id .eq. my_id) then
+     if(IO_id .eq. my_id) then
 #endif
-            if(nlst_rt(did)%olddate(1:19) .eq. nlst_rt(did)%startdate(1:19) .and. rt_domain(did)%his_out_counts .eq. 0) then
+        if(nlst_rt(did)%olddate(1:19) .eq. nlst_rt(did)%startdate(1:19) .and. rt_domain(did)%his_out_counts .eq. 0) then
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
                 write(6,*) "output hydrology at time : ",nlst_rt(did)%olddate(1:19), rt_domain(did)%his_out_counts
@@ -253,6 +252,7 @@ module module_HYDRO_drv
                     call output_lsmOut_NWM(did)
                 endif
             endif
+
         endif
         if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                 nlst_rt(did)%OVRTSWCRT          .gt. 0 .or. &
@@ -310,7 +310,6 @@ module module_HYDRO_drv
                 end if
             endif
 
-
             if(nlst_rt(did)%GWBASESWCRT .eq. 3) then
 
                 if(nlst_rt(did)%output_gw  .eq. 1)  &
@@ -330,7 +329,6 @@ module module_HYDRO_drv
 
             endif
             ! BF end gw2d output section
-
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
             write(6,*) "before call output_chrt"
@@ -339,7 +337,6 @@ module module_HYDRO_drv
             write(78,*) "before call output_chrt"
 #endif
 #endif
-
             if (nlst_rt(did)%CHANRTSWCRT.eq.1.or.nlst_rt(did)%CHANRTSWCRT.eq.2) then
 
                 !ADCHANGE: Change values for within lake reaches to NA
@@ -429,7 +426,6 @@ module module_HYDRO_drv
 
                 endif
             endif ! End of checking for io_form_outputs flag value
-
 #ifdef MPP_LAND
             if(nlst_rt(did)%CHRTOUT_GRID  .eq. 1)  then
                 if(nlst_rt(did)%io_form_outputs .eq. 0) then
@@ -753,7 +749,6 @@ end if
            if(allocated(rt_domain(did)%groundwater%input%soldrain)) RT_DOMAIN(did)%groundwater%input%soldrain = 0
            if(allocated(rt_domain(did)%subsurface%state%qsubrt))   RT_DOMAIN(did)%subsurface%state%qsubrt   = 0
 
-
 ! ------------------DEBUG---------------------!
 !   call dump_float_1d_reach(rt_domain(did)%groundwater%input%qin_gwsubbas,"can_end_main_loop_qin_gwsubbas.txt",rt_domain(1)%gnlinks)
 !    call HYDRO_stop("Stoped for debbuging")
@@ -765,7 +760,6 @@ end if
 
 !----------------------------------------------------
 subroutine driveGwBaseflow(did)
-
     implicit none
     integer, intent(in) :: did
 
@@ -898,9 +892,6 @@ subroutine driveGwBaseflow(did)
     !-------------------------------------------------------------------
 end subroutine driveGwBaseflow
 
-
-
-
 !-------------------------------------------
       subroutine driveChannelRouting(did)
 
@@ -917,16 +908,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
      !!! for user defined Reach based Routing method.
 
-    call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
+    call drive_CHANNEL_RSL(did, nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
        RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
        rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
        RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
-       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, &
-       RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
-       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
+       RT_DOMAIN(did)%RESHT, &
+       RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
        RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
        rt_domain(did)%groundwater%output%qinflowbase, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
        RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
@@ -952,7 +942,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
 
 else
 
-    call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
+    call drive_CHANNEL(did, RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst_rt(did)%SUBRTSWCRT, rt_domain(did)%subsurface%state%qsubrt, &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
@@ -965,11 +955,8 @@ else
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &
        RT_DOMAIN(did)%Bw,RT_DOMAIN(did)%Tw,RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
-       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH,&
-       RT_DOMAIN(did)%WEIRH,    &
-       RT_DOMAIN(did)%WEIRC, RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, &
-       RT_DOMAIN(did)%ORIFICEA, &
-       RT_DOMAIN(did)%ORIFICEE, RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
+       RT_DOMAIN(did)%RESHT, &
+       RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
        RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
        RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &
        rt_domain(did)%groundwater%output%qinflowbase, RT_DOMAIN(did)%CHANXI, &
@@ -1165,15 +1152,15 @@ endif
 #endif
                    endif
 
-                    IF ( (rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT) - &
-                          rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT)) .GT. 0.000001 ) THEN
+                   IF ( (rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT) - &
+                        rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT)) .GT. 0.000001 ) THEN
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
                       print *, "SMCMAX exceeded upon aggregation...", &
                            rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),  &
                            rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT)
 #else
-                     write(78,*) "FATAL ERROR: SMCMAX exceeded upon aggregation...", &
+                      write(78,*) "FATAL ERROR: SMCMAX exceeded upon aggregation...", &
                            rt_domain(did)%subsurface%grid_transform%smcrt(IXXRT,JYYRT,KRT),  &
                            rt_domain(did)%subsurface%grid_transform%smcmaxrt(IXXRT,JYYRT,KRT)
 #endif
@@ -1664,7 +1651,6 @@ end subroutine HYDRO_ini
        RT_DOMAIN(did)%SMCAGGRT = 0
        RT_DOMAIN(did)%STCAGGRT = 0
        RT_DOMAIN(did)%SH2OAGGRT = 0
-
 
        rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil) = nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil)
 

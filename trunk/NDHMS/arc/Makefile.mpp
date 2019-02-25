@@ -8,6 +8,7 @@ BASIC:
 	(cd OrchestratorLayer; make -f Makefile)
 	(cd utils     ; make -f Makefile)
 	make -C Routing/Overland
+	make -C Routing/Reservoirs
 	(cd MPP     ; make -f Makefile)
 	make -C Routing/Overland
 	make -C Routing/Subsurface
@@ -21,6 +22,7 @@ clean:
 	(cd utils   ; make -f Makefile clean)
 	make -C Routing/Overland clean
 	make -C Routing/Subsurface clean
+	make -C Routing/Reservoirs clean
 	(cd Data_Rec; make -f Makefile clean)
 	(cd HYDRO_drv; make -f Makefile clean)
 	(cd MPP; make -f Makefile clean)
