@@ -47,6 +47,7 @@ module module_NoahMP_hrldas_driver
    !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
    integer :: HRLDAS_ini_typ
    !integer :: forc_typ, snow_assim
+   integer :: forc_typ
    REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
    real :: etpnd1
    character(len=19) :: forcDate
@@ -71,7 +72,6 @@ module module_NoahMP_hrldas_driver
 
   character(len=9), parameter :: version = "v20150506"
   integer :: LDASIN_VERSION
-  integer :: forc_typ = 0
 !------------------------------------------------------------------------
 ! Begin exact copy of declaration section from driver (substitute allocatable, remove intent)
 !------------------------------------------------------------------------

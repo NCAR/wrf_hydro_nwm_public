@@ -216,6 +216,11 @@ contains
     close(11)
 #endif
 
+    wrf_hydro_file%finemesh = finemesh
+    wrf_hydro_file%finemesh_factor = finemesh_factor
+    wrf_hydro_file%forc_typ = forc_typ
+    wrf_hydro_file%snow_assim = snow_assim
+
   end subroutine init_wrf_hydro
 
   subroutine init_noah_lsm()
