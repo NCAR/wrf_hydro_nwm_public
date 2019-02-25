@@ -45,7 +45,7 @@ module module_NoahMP_hrldas_driver
 #ifdef WRF_HYDRO
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
    !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
-   integer :: forc_typ, snow_assim, HRLDAS_ini_typ
+   integer :: HRLDAS_ini_typ
    !integer :: forc_typ, snow_assim
    REAL,    allocatable, DIMENSION(:,:)   :: etpnd, greenfrac, prcp0
    real :: etpnd1
@@ -54,7 +54,7 @@ module module_NoahMP_hrldas_driver
    !character(len = 256):: GEO_STATIC_FLNM
    real, allocatable, dimension(:) :: zsoil
    integer :: kk
-   integer  :: finemesh, finemesh_factor
+   !integer  :: finemesh, finemesh_factor
  ! INOUT (new accumulator variables for output water balance)
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCPRCP ! accumulated precip [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
@@ -71,7 +71,7 @@ module module_NoahMP_hrldas_driver
 
   character(len=9), parameter :: version = "v20150506"
   integer :: LDASIN_VERSION
-
+  integer :: forc_type = 0
 !------------------------------------------------------------------------
 ! Begin exact copy of declaration section from driver (substitute allocatable, remove intent)
 !------------------------------------------------------------------------
@@ -390,10 +390,7 @@ module module_NoahMP_hrldas_driver
   character(len=1000) :: VARLIST
   integer :: brkflag = 0
   integer :: varind = 1
-  namelist /WRF_HYDRO_OFFLINE/ &
-       !LRK - Remove HRLDAS_ini_typ and GEO_STATIC_FLNM for WRF-Hydro
-       finemesh,finemesh_factor,forc_typ, snow_assim
-       !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
+  type(WRF_HYDRO_OFFLINE_DT) :: wrf_hydro
 #endif
 
   type(NOAHLSM_OFFLINE_DT) :: noah_lsm
@@ -421,22 +418,10 @@ module module_NoahMP_hrldas_driver
 
 
 #ifdef WRF_HYDRO
-#ifndef NCEP_WCOSS
-  read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
-#else
-  read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
-#endif
-  if (ierr /= 0) then
-     write(*,'(/," ***** ERROR: Problem reading namelist WRF_HYDRO_OFFLINE",/)')
-! #ifndef NCEP_WCOSS
-!      rewind(30)
-!      read(30, NOAHLSM_OFFLINE)
-! #else
-!      rewind(11)
-!      read(11, NOAHLSM_OFFLINE)
-! #endif
-     call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
-  endif
+
+    wrf_hydro = orchestrator%config%wrf_hydro()
+
+    forc_typ = wrf_hydro%forc_typ !convenience
 
 #endif
 
@@ -634,19 +619,19 @@ module module_NoahMP_hrldas_driver
 
 #ifdef MPP_LAND
 #ifdef WRF_HYDRO
-    if(finemesh .ne. 0) then
-         noah_lsm%xstart = (wrfits-1)*finemesh_factor + 1
-         noah_lsm%xend = (wrfite-1)*finemesh_factor
-         noah_lsm%ystart = (wrfjts-1)*finemesh_factor + 1
-         noah_lsm%yend = (wrfjte-1)*finemesh_factor
+    if(wrf_hydro%finemesh .ne. 0) then
+         noah_lsm%xstart = (wrfits-1) * wrf_hydro%finemesh_factor + 1
+         noah_lsm%xend = (wrfite-1) * wrf_hydro%finemesh_factor
+         noah_lsm%ystart = (wrfjts-1) * wrf_hydro%finemesh_factor + 1
+         noah_lsm%yend = (wrfjte-1) * wrf_hydro%finemesh_factor
          call CPL_LAND_INIT(noah_lsm%xstart,noah_lsm%xend, noah_lsm%ystart, noah_lsm%yend)
          ix_tmp = noah_lsm%xend - noah_lsm%xstart + 1
          jx_tmp = noah_lsm%yend - noah_lsm%ystart + 1
     else
 #endif
-       call read_dim(noah_lsm%hrldas_setup_file,ix_tmp,jx_tmp)
-       call MPP_LAND_PAR_INI(1,ix_tmp,jx_tmp,1)
-       call getLocalXY(ix_tmp,jx_tmp,noah_lsm%xstart,noah_lsm%ystart,noah_lsm%xend,noah_lsm%yend)
+       call read_dim(noah_lsm%hrldas_setup_file, ix_tmp, jx_tmp)
+       call MPP_LAND_PAR_INI(1, ix_tmp, jx_tmp, 1)
+       call getLocalXY(ix_tmp, jx_tmp,noah_lsm%xstart, noah_lsm%ystart, noah_lsm%xend, noah_lsm%yend)
 #ifdef WRF_HYDRO
     endif
 #endif
@@ -1437,7 +1422,7 @@ endif
         endif
    end do
 
-   if(finemesh .ne. 0 ) then
+   if(wrf_hydro%finemesh .ne. 0 ) then
        if(restart_flag) then
           NTIME_out =  10
        else
@@ -1535,7 +1520,7 @@ end subroutine land_driver_ini
 
 #ifdef WRF_HYDRO
 
-     if(finemesh .ne. 0) goto 991
+     if(wrf_hydro%finemesh .ne. 0) goto 991
 
      if(forc_typ .eq. 0) then
         CALL READFORC_HRLDAS(INFLNM_TEMPLATE, noah_lsm%FORCING_TIMESTEP, OLDDATE,  &
@@ -1544,7 +1529,7 @@ end subroutine land_driver_ini
 	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, VEGFRA, update_veg, LAI, update_lai)
      else
         if(olddate == forcDate) then
-           CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ,snow_assim,olddate,                      &
+           CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ, wrf_hydro%snow_assim, olddate,                      &
                xstart, xend, ystart, yend,    &
                T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
                GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,SNOWH,ITIME,noah_lsm%FORCING_TIMESTEP,prcp0)

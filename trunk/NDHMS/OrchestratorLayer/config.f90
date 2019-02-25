@@ -50,6 +50,13 @@ module config_base
      CHARACTER(LEN = 256) :: spatial_filename
   end type NOAHLSM_OFFLINE_DT
 
+  type WRF_HYDRO_OFFLINE_DT
+     integer  :: finemesh
+     integer  :: finemesh_factor
+     integer  :: forc_typ
+     integer  :: snow_assim
+  end type WRF_HYDRO_OFFLINE_DT
+
   type, public :: Configuration_
    contains
      procedure, nopass :: init => config_init
@@ -57,7 +64,8 @@ module config_base
      procedure, nopass :: noah_lsm_sync => noah_lsm_sync
   end type Configuration_
 
-  type(NOAHLSM_OFFLINE_DT), save :: noah_lsm_file
+  type(NOAHLSM_OFFLINE_DT), private, save :: noah_lsm_file
+  type(WRF_HYDRO_OFFLINE_DT), private, save :: wrf_hydro_file
     
 contains
 
@@ -65,7 +73,8 @@ contains
     implicit none
 
     call init_noah_lsm()
-    
+    call init_wrf_hydro()
+
   end subroutine config_init
 
   subroutine noah_lsm_sync(mod_noah_lsm)
@@ -119,6 +128,16 @@ contains
 
   end subroutine noah_lsm_sync
 
+  type(WRF_HYDRO_OFFLINE_DT) function copy_wrf_hydro()
+    implicit none
+    
+    copy_wrf_hydro%finemesh = wrf_hydro_file%finemesh
+    copy_wrf_hydro%finemesh_factor = wrf_hydro_file%finemesh_factor
+    copy_wrf_hydro%forc_typ = wrf_hydro_file%forc_typ
+    copy_wrf_hydro%snow_assim = wrf_hydro_file%snow_assim
+    
+  end function copy_wrf_hydro
+
   type(NOAHLSM_OFFLINE_DT) function copy_noah_lsm()
     implicit none
 
@@ -167,6 +186,36 @@ contains
     copy_noah_lsm%spatial_filename = noah_lsm_file%spatial_filename
     
   end function copy_noah_lsm
+
+  subroutine init_wrf_hydro()
+    implicit none
+
+    integer  :: ierr
+    integer  :: finemesh, finemesh_factor
+    integer  :: forc_typ, snow_assim
+
+    namelist /WRF_HYDRO_OFFLINE/ &
+         !LRK - Remove HRLDAS_ini_typ and GEO_STATIC_FLNM for WRF-Hydro
+         finemesh,finemesh_factor,forc_typ, snow_assim
+    !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
+
+#ifndef NCEP_WCOSS
+    read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#else
+    read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#endif
+    if (ierr /= 0) then
+       write(*,'(/," ***** ERROR: Problem reading namelist WRF_HYDRO_OFFLINE",/)')
+       call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
+    endif
+
+#ifndef NCEP_WCOSS
+    close(30)
+#else
+    close(11)
+#endif
+
+  end subroutine init_wrf_hydro
 
   subroutine init_noah_lsm()
     implicit none
