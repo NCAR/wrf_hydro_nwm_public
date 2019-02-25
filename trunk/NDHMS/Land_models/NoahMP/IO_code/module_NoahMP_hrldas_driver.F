@@ -71,7 +71,7 @@ module module_NoahMP_hrldas_driver
 
   character(len=9), parameter :: version = "v20150506"
   integer :: LDASIN_VERSION
-  integer :: forc_type = 0
+  integer :: forc_typ = 0
 !------------------------------------------------------------------------
 ! Begin exact copy of declaration section from driver (substitute allocatable, remove intent)
 !------------------------------------------------------------------------
