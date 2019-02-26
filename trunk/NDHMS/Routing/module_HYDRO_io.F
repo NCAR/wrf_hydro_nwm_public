@@ -6153,7 +6153,7 @@ if(rt_domain(did)%NLAKES .gt. 0) then
 
         ! Create new reservoir restart file
         call create_reservoir_restart_file(nlst_rt(did)%olddate, nlst_rt(did)%sincedate, nlst_rt(did)%DTCT, &
-               did, NLAKES_total, NF_FLOAT, dimid_lakes, ncid)
+               did, NLAKES_total, NF90_FLOAT, dimid_lakes, ncid)
 
         ! For loop to cycle through all links
         do link_index = 1, rt_domain(did)%nlinksize
@@ -6905,7 +6905,7 @@ if(rt_domain(did)%NLAKES .gt. 0) then
     NLAKES_total = rt_domain(did)%NLAKES
 
     ! Open existing reservoir restart file to read
-    call open_reservoir_restart_file_for_read(inFile, reservoir_restart_file, NF_NOWRITE, ncid)
+    call open_reservoir_restart_file_for_read(inFile, reservoir_restart_file, NF90_NOWRITE, ncid)
 
     ! For loop to cycle through all links
     do link_index = 1, rt_domain(did)%nlinksize
