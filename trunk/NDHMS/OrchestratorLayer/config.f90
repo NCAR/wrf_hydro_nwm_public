@@ -550,6 +550,12 @@ contains
 
     if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
 
+    !used to be broadcasted with MPI
+    nlst(did)%NSOIL = NSOIL
+
+    allocate(nlst(did)%ZSOIL8(NSOIL))
+    nlst(did)%ZSOIL8 = ZSOIL8
+
     nlst(did)%RESTART_FILE = RESTART_FILE
     nlst(did)%hydrotbl_f = trim(hydrotbl_f)
     nlst(did)%SPLIT_OUTPUT_COUNT = SPLIT_OUTPUT_COUNT
