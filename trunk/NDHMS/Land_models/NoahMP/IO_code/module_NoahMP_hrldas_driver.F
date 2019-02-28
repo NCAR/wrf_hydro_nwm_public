@@ -486,6 +486,7 @@ module module_NoahMP_hrldas_driver
 #endif
         allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
         nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
+        write(*,*) ' Calling HYDRO_ini (which initialiazes nlst_rt), from module_NoahMP_hrldas_driver'
         call HYDRO_ini(ntime,did,ix0=1,jx0=1)
         RT_DOMAIN(did)%initialized = .true.
      endif ! if .not. RT_DOMAIN(did)%initialized
@@ -1365,6 +1366,8 @@ module module_NoahMP_hrldas_driver
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep),          &
          olddate,zsoil(1:NSOIL))
+
+  ! call orchestrator%config%init_nlst(did)
 
 call get_iocflag(1, io_config_outputs)
 

@@ -34,9 +34,9 @@
               STC(:,:,k) = STC_io(:,k,:)
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
-          end do 
+          end do
 
-          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
+          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
 
           do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)

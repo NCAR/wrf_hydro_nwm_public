@@ -56,7 +56,8 @@ CONTAINS
 
     subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT)
         use module_RT_data, only: rt_domain
-        use module_namelist, only: nlst_rt
+        use config_base, nlst_rt_copy => nlst
+        !use module_namelist, only: nlst_rt
         implicit none
         integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
         integer istatus, did, nsizes
@@ -78,7 +79,7 @@ CONTAINS
         call rt_domain(did)%subsurface%init(ixrt, jxrt, nsoil, rt_domain(did)%overland)
 
         ! allocate susurface static data structure
-        call rt_domain(did)%subsurface_static%init(ixrt, jxrt, nsoil, nlst_rt(did)%DT, nlst_rt(did)%rt_option)
+        call rt_domain(did)%subsurface_static%init(ixrt, jxrt, nsoil, nlst_rt_copy(did)%DT, nlst_rt_copy(did)%rt_option)
 
         ! allocate subsurface input structure
         call rt_domain(did)%subsurface_output%init(ixrt, jxrt, rt_domain(did)%overland%control%infiltration_excess)
@@ -86,10 +87,10 @@ CONTAINS
         !allocate subsurface output structure
         call rt_domain(did)%subsurface_input%init(ixrt, jxrt, rt_domain(did)%overland%control%infiltration_excess)
 
-        !     if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
+        !     if( nlst_rt_copy(did)%channel_option .eq. 1  .or. nlst_rt_copy(did)%channel_option .eq. 2 ) then
         !         rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
         !     endif
-        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+        if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
             if(rt_domain(did)%NLINKS .lt. rt_domain(did)%NLINKSL) then
                 rt_domain(did)%NLINKS = rt_domain(did)%NLINKSL
             endif
@@ -123,8 +124,8 @@ CONTAINS
         write(6,*) "  rt_allocate ***** ixrt,jxrt, nsoil", ixrt,jxrt, nsoil
 #endif
 
-        if(nlst_rt(did)%channel_only       .eq. 0 .and. &
-                nlst_rt(did)%channelBucket_only .eq. 0        ) then
+        if(nlst_rt_copy(did)%channel_only       .eq. 0 .and. &
+                nlst_rt_copy(did)%channelBucket_only .eq. 0        ) then
 
             allocate( rt_domain(did)%DSMC   	(NSOIL) )
             rt_domain(did)%dsmc = 0
@@ -137,7 +138,7 @@ CONTAINS
             allocate( rt_domain(did)%SMCAGGRT   	(NSOIL) )
             rt_domain(did)%SMCAGGRT = 0
 
-            if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
                 allocate ( RT_DOMAIN(did)%landRunOff (ixrt,jxrt) )
             endif
 
@@ -301,7 +302,7 @@ CONTAINS
         !! because the bucket area (basns_area) depends on the initialization of the
         !! UDMP code, this is a required variable.
         !! JLM: could these be deallocated under channel_only
-        if(nlst_rt(did)%channel_only       .eq. 0) then
+        if(nlst_rt_copy(did)%channel_only       .eq. 0) then
             !allocate( rt_domain(did)%overland%streams_and_lakes%ch_netrt   	(IXRT,JXRT) ) !moved to overland%streams_and_lakes
             !rt_domain(did)%overland%streams_and_lakes%ch_netrt   	= 0.0                 !moved to overland%streams_and_lakes
             allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
@@ -327,7 +328,7 @@ CONTAINS
             rt_domain(did)%CH_LNKRT_SL = -99
             rt_domain(did)%MAXORDER = -9999
 
-            !tmp  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 3 ) then
+            !tmp  if( nlst_rt_copy(did)%channel_option .eq. 1  .or. nlst_rt_copy(did)%channel_option .eq. 3 ) then
             !tmp       NLINKS = rt_domain(did)%NLINKSL
             !tmp       NLAKES = rt_domain(did)%NLINKSL
             !tmp  endif
@@ -397,23 +398,23 @@ CONTAINS
 !    allocate( rt_domain(did)%ORIFICEE(nsizes) )
 
      if(nsizes .gt. 0) then
-        if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
-           nlst_rt(did)%output_channelBucket_influx .eq. 2      ) then
+        if(nlst_rt_copy(did)%output_channelBucket_influx .eq. 1 .or. &
+           nlst_rt_copy(did)%output_channelBucket_influx .eq. 2      ) then
            allocate( rt_domain(did)%accSfcLatRunoff(1) )
            allocate( rt_domain(did)%accBucket(      1) )
            allocate( rt_domain(did)%qSfcLatRunoff(  nsizes) )
            allocate( rt_domain(did)%qBucket(        nsizes) )
         endif
 
-        if(nlst_rt(did)%output_channelBucket_influx .eq. 1 .or. &
-             nlst_rt(did)%output_channelBucket_influx .eq. 3      ) &
+        if(nlst_rt_copy(did)%output_channelBucket_influx .eq. 1 .or. &
+             nlst_rt_copy(did)%output_channelBucket_influx .eq. 3      ) &
              allocate( rt_domain(did)%qBtmVertRunoff(     1) )
-        if(nlst_rt(did)%output_channelBucket_influx .eq. 2) then
+        if(nlst_rt_copy(did)%output_channelBucket_influx .eq. 2) then
            allocate( rt_domain(did)%qBtmVertRunoff(nsizes) )
            rt_domain(did)%qBtmVertRunoff  = zeroFlt
         endif
         
-        if(nlst_rt(did)%output_channelBucket_influx .eq. 3) then
+        if(nlst_rt_copy(did)%output_channelBucket_influx .eq. 3) then
            allocate( rt_domain(did)%accSfcLatRunoff(nsizes) )
            allocate( rt_domain(did)%accBucket(      nsizes) )
            allocate( rt_domain(did)%qSfcLatRunoff(       1) )
@@ -430,7 +431,7 @@ CONTAINS
 	rt_domain(did)%velocity  = zeroFlt
      endif
 
-  if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
+  if( nlst_rt_copy(did)%channel_option .eq. 1  .or. nlst_rt_copy(did)%channel_option .eq. 2 ) then
        NLINKS = rt_domain(did)%NLINKS
        NLAKES = rt_domain(did)%NLAKES
   endif
@@ -515,7 +516,8 @@ CONTAINS
  end subroutine rt_allocate
 
  subroutine getChanDim(did)
-   use module_namelist, only:  nlst_rt
+!   use module_namelist, only:  nlst_rt
+   use config_base, nlst_rt_copy => nlst
    use module_RT_data, only: rt_domain
    implicit none
 
@@ -531,20 +533,20 @@ CONTAINS
    ixrt = rt_domain(did)%ixrt
    jxrt = rt_domain(did)%jxrt
 
-   if(nlst_rt(did)%rtFlag .eq. 0) return
+   if(nlst_rt_copy(did)%rtFlag .eq. 0) return
 
-   if(nlst_rt(did)%channel_only       .eq. 1 .or. &
-        nlst_rt(did)%channelBucket_only .eq. 1        ) then
+   if(nlst_rt_copy(did)%channel_only       .eq. 1 .or. &
+        nlst_rt_copy(did)%channelBucket_only .eq. 1        ) then
       !! Try to avoid some of the 2-d initialization.
       !! if this is successful, it most likely will not work for gridded channel (opt 3)
 
       if(my_id .eq. io_id) then
-         call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+         call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt_copy(did)%channel_option, nlst_rt_copy(did)%route_link_f)
       end if
       call mpp_land_bcast_int1(rt_domain(did)%NLINKSL)
       
 
-      if(nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
+      if(nlst_rt_copy(did)%channel_option .eq. 1 .or. nlst_rt_copy(did)%channel_option .eq. 2) then
          rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
          
          call ReachLS_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%nlinksl,   &
@@ -553,11 +555,11 @@ CONTAINS
          rt_domain(did)%GNLINKSL = 1
          rt_domain(did)%NLINKSL = 1
       endif
-      if(nlst_rt(did)%UDMP_OPT .eq. 1) &
-           call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+      if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) &
+           call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt_copy(did)%route_lake_f)
       
       call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
-           rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+           rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt_copy(did)%nsoil,nlst_rt_copy(did)%CHANRTSWCRT)
       
       return
       
@@ -567,27 +569,27 @@ CONTAINS
    allocate(CH_NETLNK(ixrt,jxrt))
    allocate(GCH_NETLNK(ixrt,jxrt))
 
-        if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
+        if (nlst_rt_copy(did)%CHANRTSWCRT.eq.1 .or. nlst_rt_copy(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 #ifdef MPP_LAND
             call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
                 GCH_NETLNK, rt_domain(did)%GNLINKS, &
 #else
                 call READ_ROUTEDIM( &
 #endif
-                IXRT, JXRT, nlst_rt(did)%route_chan_f, nlst_rt(did)%route_link_f, &
-                nlst_rt(did)%route_direction_f, &
+                IXRT, JXRT, nlst_rt_copy(did)%route_chan_f, nlst_rt_copy(did)%route_link_f, &
+                nlst_rt_copy(did)%route_direction_f, &
                 rt_domain(did)%NLINKS, &
-                CH_NETLNK, nlst_rt(did)%channel_option, nlst_rt(did)%geo_finegrid_flnm, &
-                rt_domain(did)%NLINKSL, nlst_rt(did)%udmp_opt , rt_domain(did)%nlakes)
+                CH_NETLNK, nlst_rt_copy(did)%channel_option, nlst_rt_copy(did)%geo_finegrid_flnm, &
+                rt_domain(did)%NLINKSL, nlst_rt_copy(did)%udmp_opt , rt_domain(did)%nlakes)
 #ifndef MPP_LAND
-            call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt(did)%channel_option, nlst_rt(did)%route_link_f)
+            call get_NLINKSL(rt_domain(did)%NLINKSL, nlst_rt_copy(did)%channel_option, nlst_rt_copy(did)%route_link_f)
 #endif
 
 #ifdef HYDRO_D
             write(6,*) "before rt_allocate after READ_ROUTEDIM"
 #endif
 
-            if(nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
+            if(nlst_rt_copy(did)%channel_option .eq. 1 .or. nlst_rt_copy(did)%channel_option .eq. 2) then
 
                 rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
 
@@ -609,15 +611,15 @@ CONTAINS
 
         endif
 
-        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
-            call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
+        if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
+            call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt_copy(did)%route_lake_f)
         endif
 
         call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
-            rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+            rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt_copy(did)%nsoil,nlst_rt_copy(did)%CHANRTSWCRT)
 
 
-        if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
+        if (nlst_rt_copy(did)%CHANRTSWCRT.eq.1 .or. nlst_rt_copy(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
             rt_domain(did)%CH_NETLNK = CH_NETLNK
             rt_domain(did)%GCH_NETLNK = GCH_NETLNK
         endif
@@ -630,7 +632,8 @@ CONTAINS
     !===================================================================================================
     subroutine LandRT_ini(did)
       use module_noah_chan_param_init_rt
-      use module_namelist, only:  nlst_rt
+      ! use module_namelist, only:  nlst_rt
+      use config_base, nlst_rt_copy => nlst
       use module_RT_data, only: rt_domain
       use module_gw_gw2d_data, only: gw2d
 #ifdef HYDRO_D
@@ -673,14 +676,14 @@ CONTAINS
       !DJG IF/then to get routing terrain fields if either routing module is
       !DJG   activated
       
-      if(nlst_rt(did)%rtFlag .eq. 0) return
+      if(nlst_rt_copy(did)%rtFlag .eq. 0) return
       
-      if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
-           nlst_rt(did)%OVRTSWCRT   .eq.1 .or. &
-           nlst_rt(did)%GWBASESWCRT .ne. 0) then
+      if (nlst_rt_copy(did)%SUBRTSWCRT  .eq.1 .or. &
+           nlst_rt_copy(did)%OVRTSWCRT   .eq.1 .or. &
+           nlst_rt_copy(did)%GWBASESWCRT .ne. 0) then
          
-         if(nlst_rt(did)%channel_only       .eq. 0 .and. &
-              nlst_rt(did)%channelBucket_only .eq. 0        ) then
+         if(nlst_rt_copy(did)%channel_only       .eq. 0 .and. &
+              nlst_rt_copy(did)%channelBucket_only .eq. 0        ) then
 #ifdef HYDRO_D
             print *, "Terrain routing initialization..."
 #endif
@@ -688,17 +691,17 @@ CONTAINS
             call READ_ROUTING_seq  (  &
                  rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
                  rt_domain(did)%CH_LNKRT, &
-                 rt_domain(did)%LKSATFAC,trim(nlst_rt(did)%route_topo_f),&
-                 nlst_rt(did)%route_chan_f,nlst_rt(did)%geo_finegrid_flnm  ,  &
+                 rt_domain(did)%LKSATFAC,trim(nlst_rt_copy(did)%route_topo_f),&
+                 nlst_rt_copy(did)%route_chan_f,nlst_rt_copy(did)%geo_finegrid_flnm  ,  &
                  rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
-                 nlst_rt(did)%channel_option, nlst_rt(did)%udmp_opt)
+                 nlst_rt_copy(did)%channel_option, nlst_rt_copy(did)%udmp_opt)
 
 
 
             !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
 
 
-            if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
+            if (nlst_rt_copy(did)%CHANRTSWCRT.eq.1 .or. nlst_rt_copy(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 
 #ifdef MPP_LAND
                call MPP_READ_CHROUTING_new(    &
@@ -726,10 +729,10 @@ CONTAINS
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
              rt_domain(did)%CH_NETLNK,    rt_domain(did)%CHANXI,          &
              rt_domain(did)%CHANYJ,       rt_domain(did)%CHLAT,           &
-             rt_domain(did)%CHLON,        nlst_rt(did)%channel_option,    &
+             rt_domain(did)%CHLON,        nlst_rt_copy(did)%channel_option,    &
              rt_domain(did)%latval,       rt_domain(did)%lonval,          &
-             rt_domain(did)%STRMFRXSTPTS, nlst_rt(did)%geo_finegrid_flnm, &
-             nlst_rt(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst_rt(did)%UDMP_OPT   & !! no comma
+             rt_domain(did)%STRMFRXSTPTS, nlst_rt_copy(did)%geo_finegrid_flnm, &
+             nlst_rt_copy(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst_rt_copy(did)%UDMP_OPT   & !! no comma
 #ifdef MPP_LAND
                     ,rt_domain(did)%g_IXRT,      rt_domain(did)%g_JXRT      &
                         ,rt_domain(did)%gnlinks,     rt_domain(did)%GCH_NETLNK  &
@@ -744,8 +747,8 @@ CONTAINS
    end if  !! neither channel_only nor channelBucket_only
 
 
-   if((nlst_rt(did)%CHANRTSWCRT    .eq. 1 .or. nlst_rt(did)%CHANRTSWCRT    .eq. 2) .and. &
-      (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2)        ) then
+   if((nlst_rt_copy(did)%CHANRTSWCRT    .eq. 1 .or. nlst_rt_copy(did)%CHANRTSWCRT    .eq. 2) .and. &
+      (nlst_rt_copy(did)%channel_option .eq. 1 .or. nlst_rt_copy(did)%channel_option .eq. 2)        ) then
       call read_routelink( &
            rt_domain(did)%TO_NODE,       rt_domain(did)%TYPEL,      &
            rt_domain(did)%ORDER,         rt_domain(did)%MAXORDER,   &
@@ -764,7 +767,7 @@ CONTAINS
            rt_domain(did)%ORIFICEE,      rt_domain(did)%LATLAKE,    &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
-           nlst_rt(did)%route_link_f,    nlst_rt(did)%route_lake_f, &
+           nlst_rt_copy(did)%route_link_f,    nlst_rt_copy(did)%route_lake_f, &
            rt_domain(did)%ZELEV,         rt_domain(did)%CHLAT,      &
            rt_domain(did)%CHLON,         rt_domain(did)%NLINKSL,    &
            rt_domain(did)%LINKID,        rt_domain(did)%GNLINKSL,   &
@@ -817,7 +820,7 @@ CONTAINS
    !ADCHANGE: Add lake reach output
 
 #ifdef HYDRO_D
-            if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+            if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
                 call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
             endif
 #endif
@@ -828,7 +831,7 @@ CONTAINS
 #else
             call cpu_time(connCalcTimeEnd)
 #endif
-            if ((nlst_rt(did)%CHANRTSWCRT .eq. 1) .and. (nlst_rt(did)%channel_option .eq. 3)) then
+            if ((nlst_rt_copy(did)%CHANRTSWCRT .eq. 1) .and. (nlst_rt_copy(did)%channel_option .eq. 3)) then
                call output_chan_connectivity(       &
                     rt_domain(did)%CHLAT,     &   !! Channel grid lat
                     rt_domain(did)%CHLON,     &   !! Channel grid lat
@@ -852,17 +855,17 @@ CONTAINS
 
             ! The UDMP_ini effectively sets the nhd gw bucket area (that field is not used from the file)
             !   this may be the only dependence of the nhd_routing on the UDMAPING in channelBucket_only
-            if(nlst_rt(did)%channel_only .eq. 0) then
+            if(nlst_rt_copy(did)%channel_only .eq. 0) then
 
-               if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+               if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
                   ! get NHDPLUS mapping function.
                     !          call UDMP_ini(rt_domain(did)%GNLINKSL,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%CH_LNKRT , &
                   call UDMP_ini( rt_domain(did)%GNLINKSL, rt_domain(did)%ixrt,      &
                        rt_domain(did)%jxrt,     rt_domain(did)%overland%streams_and_lakes%ch_netrt , &
-                       nlst_rt(did)%OVRTSWCRT,  nlst_rt(did)%SUBRTSWCRT,  &
+                       nlst_rt_copy(did)%OVRTSWCRT,  nlst_rt_copy(did)%SUBRTSWCRT,  &
                        rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                       nlst_rt(did)%udmap_file, &
-                       nlst_rt(did)%route_link_f )
+                       nlst_rt_copy(did)%udmap_file, &
+                       nlst_rt_copy(did)%route_link_f )
 #ifdef HYDRO_D
                   write(6,*) "after UDMP_ini "
                   call flush(6)
@@ -871,12 +874,12 @@ CONTAINS
 
             end if ! end not channel_only
 
-            if ( (nlst_rt(did)%CHANRTSWCRT .eq. 1) .and. &
-                 (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) ) then
+            if ( (nlst_rt_copy(did)%CHANRTSWCRT .eq. 1) .and. &
+                 (nlst_rt_copy(did)%channel_option .eq. 1 .or. nlst_rt_copy(did)%channel_option .eq. 2) ) then
 
 #ifdef MPP_LAND
 
-               if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+               if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
                   ! NHDPLUS
                   rt_domain(did)%LNLINKSL = LNUMRSL
                   allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
@@ -981,10 +984,10 @@ CONTAINS
 !!$           end if
 !!$        end do
 
-   endif ! end of if (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2)
+   endif ! end of if (nlst_rt_copy(did)%channel_option .eq. 1 .or. nlst_rt_copy(did)%channel_option .eq. 2)
 
-end if ! end of if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &    nlst_rt(did)%OVRTSWCRT   .eq.1 .or. &
-!            nlst_rt(did)%GWBASESWCRT .ne. 0) then
+end if ! end of if (nlst_rt_copy(did)%SUBRTSWCRT  .eq.1 .or. &    nlst_rt_copy(did)%OVRTSWCRT   .eq.1 .or. &
+!            nlst_rt_copy(did)%GWBASESWCRT .ne. 0) then
 
 
 
@@ -992,8 +995,8 @@ end if ! end of if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &    nlst_rt(did)%OVRTSW
 !yw       allocate(tmp_real(rt_domain(did)%GNLINKS))
 
 
-if(nlst_rt(did)%channel_only       .eq. 0 .and. &
-   nlst_rt(did)%channelBucket_only .eq. 0        ) then
+if(nlst_rt_copy(did)%channel_only       .eq. 0 .and. &
+   nlst_rt_copy(did)%channelBucket_only .eq. 0        ) then
 
    !DJG Temporary hardwire of RETDEPRT,RETDEP_CHAN
    !DJG    will later make this a function of SOLTYP and VEGTYP
@@ -1014,7 +1017,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
          rt_domain(did)%overland%properties%surface_slope_x(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i+1,j))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,3)
          rt_domain(did)%overland%properties%surface_slope_y(i,j)=(rt_domain(did)%ELRT(i,j)-rt_domain(did)%ELRT(i,j+1))/rt_domain(did)%overland%properties%distance_to_neighbor(i,j,1)
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
-         if (nlst_rt(did)%RT_OPTION.eq.2) then
+         if (nlst_rt_copy(did)%RT_OPTION.eq.2) then
             if (rt_domain(did)%overland%properties%surface_slope_x(i,j).gt.rt_domain(did)%overland%properties%surface_slope_y(i,j)) then
                Vmax=rt_domain(did)%overland%properties%surface_slope_x(i,j)
             else
@@ -1101,7 +1104,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
          end if
 
          !DJG Introduce reduction in retention depth as a linear function of terrain slope
-         if (nlst_rt(did)%RT_OPTION.eq.1) then
+         if (nlst_rt_copy(did)%RT_OPTION.eq.1) then
             if (Vmax.gt.0.75) then
                rt_domain(did)%overland%properties%retention_depth(i,j)=0.
             else
@@ -1158,7 +1161,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #endif
         end if ! end of neither channel_only nor channelBucket_only
 
-        if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+        if(nlst_rt_copy(did)%UDMP_OPT .eq. 1) then
            
            ! allocate the ground water object
            allocate( nhd_groundwater_struct :: rt_domain(did)%groundwater)
@@ -1166,7 +1169,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
            !allocate (rt_domain(did)%groundwater%output%qout_gwsubbas (rt_domain(did)%nlinksL))
            !rt_domain(did)%groundwater%output%qout_gwsubbas = 0
            ! use different baseflow for NHDPlus
-           if (nlst_rt(did)%GWBASESWCRT.ge.1) then
+           if (nlst_rt_copy(did)%GWBASESWCRT.ge.1) then
               
               rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
               RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
@@ -1177,13 +1180,13 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                       rt_domain(did)%JX, &
                       rt_domain(did)%IXRT, &
                       rt_domain(did)%JXRT, &
-                      nlst_rt(did)%dt, &
-                      nlst_rt(did)%GWBASESWCRT, &
-                      nlst_rt(did)%OVRTSWCRT, &
+                      nlst_rt_copy(did)%dt, &
+                      nlst_rt_copy(did)%GWBASESWCRT, &
+                      nlst_rt_copy(did)%OVRTSWCRT, &
                       rt_domain(did)%numbasns, &
                       RT_DOMAIN(did)%LNLINKSL, &
-                      nlst_rt(did)%channelBucket_only, &
-                      nlst_rt(did)%AGGFACTRT, &
+                      nlst_rt_copy(did)%channelBucket_only, &
+                      nlst_rt_copy(did)%AGGFACTRT, &
                       rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                       rt_domain(did)%dist_lsm(:,:,9))
 
@@ -1194,13 +1197,13 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                  !      rt_domain(did)%JX, &
                  !      rt_domain(did)%IXRT, &
                  !      rt_domain(did)%JXRT, &
-                 !      nlst_rt(did)%dt, &
-                 !      nlst_rt(did)%GWBASESWCRT, &
-                 !      nlst_rt(did)%OVRTSWCRT, &
+                 !      nlst_rt_copy(did)%dt, &
+                 !      nlst_rt_copy(did)%GWBASESWCRT, &
+                 !      nlst_rt_copy(did)%OVRTSWCRT, &
                  !      rt_domain(did)%numbasns, &
                  !      RT_DOMAIN(did)%LNLINKSL, &
-                 !      nlst_rt(did)%channelBucket_only, &
-                 !      nlst_rt(did)%AGGFACTRT, &
+                 !      nlst_rt_copy(did)%channelBucket_only, &
+                 !      nlst_rt_copy(did)%AGGFACTRT, &
                  !      rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                  !      rt_domain(did)%dist_lsm(:,:,9))
                  
@@ -1208,11 +1211,11 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                  call gwd%set_gwsubbas(0.05)
 
                  ! Needs some adjustments to the Makefile dependecy
-                 ! call gwd%readBucket(trim(nlst_rt(did)%GWBUCKPARM_file), &
+                 ! call gwd%readBucket(trim(nlst_rt_copy(did)%GWBUCKPARM_file), &
                  !      rt_domain(did)%numbasns, &
                  !      rt_domain(did)%LINKID(1:rt_domain(did)%numbasns))
 
-                 call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), &
+                 call readBucket_nhd(trim(nlst_rt_copy(did)%GWBUCKPARM_file), &
                       rt_domain(did)%numbasns, &
                       gwd%properties%gw_buck_coeff, &
                       gwd%properties%gw_buck_exp, &
@@ -1252,7 +1255,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
               !Temporary hardwire...
               !rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
               
-              !call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
+              !call readBucket_nhd(trim(nlst_rt_copy(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
               !    rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
               !    rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
               !    rt_domain(did)%nhdBuckMask )
@@ -1271,8 +1274,8 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
            !---------------------------------------------------------------------
             !DJG  If GW/Baseflow activated...Read in req'd fields...
             !----------------------------------------------------------------------
-           if (nlst_rt(did)%GWBASESWCRT.ge.1) then
-              if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
+           if (nlst_rt_copy(did)%GWBASESWCRT.ge.1) then
+              if (nlst_rt_copy(did)%GWBASESWCRT.eq.1.or.nlst_rt_copy(did)%GWBASESWCRT.eq.2) then
 
 #ifdef HYDRO_D
                  print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
@@ -1288,12 +1291,12 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                          rt_domain(did)%jx, &
                          rt_domain(did)%ixrt, &
                          rt_domain(did)%jxrt, &
-                         nlst_rt(did)%dt, &
-                         nlst_rt(did)%gwbaseswcrt, &
-                         nlst_rt(did)%ovrtswcrt, &
+                         nlst_rt_copy(did)%dt, &
+                         nlst_rt_copy(did)%gwbaseswcrt, &
+                         nlst_rt_copy(did)%ovrtswcrt, &
                          rt_domain(did)%numbasns, &
                          rt_domain(did)%gnumbasns, &
-                         nlst_rt(did)%aggfactrt, &
+                         nlst_rt_copy(did)%aggfactrt, &
                          rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                          rt_domain(did)%dist_lsm(:,:,9))
                     
@@ -1307,8 +1310,8 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                          call READ_SIMP_GW( &
 #endif
                          rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
-                         rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt(did)%gwbasmskfil,&
-                         gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt(did)%AGGFACTRT)
+                         rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst_rt_copy(did)%gwbasmskfil,&
+                         gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst_rt_copy(did)%AGGFACTRT)
                     
                     
                     call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
@@ -1341,7 +1344,7 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
                     !Temporary hardwire...
                     !rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
 
-                    !call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
+                    !call read_GWBUCKPARM(trim(nlst_rt_copy(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
                     !    rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
                     !    rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
                     !    rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
@@ -1385,18 +1388,18 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 #endif
 
          ! BF gw2d model
-      elseif (nlst_rt(did)%GWBASESWCRT.ge.3) then
+      elseif (nlst_rt_copy(did)%GWBASESWCRT.ge.3) then
 
          call readGW2d(gw2d(did)%ix, gw2d(did)%jx,     &
               gw2d(did)%hycond, gw2d(did)%ho, &
               gw2d(did)%bot, gw2d(did)%poros, &
-              gw2d(did)%ltype, nlst_rt(did)%gwIhShift)
+              gw2d(did)%ltype, nlst_rt_copy(did)%gwIhShift)
 
          gw2d(did)%elev = rt_domain(did)%elrt
 
-      end if ! end if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2)
+      end if ! end if (nlst_rt_copy(did)%GWBASESWCRT.eq.1.or.nlst_rt_copy(did)%GWBASESWCRT.eq.2)
 
-   end if ! end if (nlst_rt(did)%GWBASESWCRT.ge.1)
+   end if ! end if (nlst_rt_copy(did)%GWBASESWCRT.ge.1)
 
 !---------------------------------------------------------------------
 !DJG  End if GW/Baseflow activated...
@@ -1409,12 +1412,12 @@ endif   !!! end if block for UDMP_OPT .eq. 1
 !DJG,DNY  If channel routing activated...
 !----------------------------------------------------------------------
 
-if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
+if (nlst_rt_copy(did)%CHANRTSWCRT.eq.1 .or. nlst_rt_copy(did)%CHANRTSWCRT .eq. 2) then
 
    !---------------------------------------------------------------------
    !DJG,DNY  Initalize lake and channel heights, this may be overwritten by RESTART
    !--------------------------------------------------------------------
-   if (nlst_rt(did)%channel_option .eq. 3) then
+   if (nlst_rt_copy(did)%channel_option .eq. 3) then
 #ifdef MPP_LAND
       ! JLM: Currently compound channel does not work for diffusive wave/gridded channel.
       ! This conflict of options is caught in Data_Rec/module_namelist.F
@@ -1428,7 +1431,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
 #endif
             end if
 
-            if (nlst_rt(did)%channel_option .ne. 3) then
+            if (nlst_rt_copy(did)%channel_option .ne. 3) then
 
 #ifdef MPP_LAND
                 if(my_id .eq. io_id) then
@@ -1630,13 +1633,13 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
         end if     ! Endif for channel routing setup
         !-----------------------------------------------------------------------
 
-        if(nlst_rt(did)%channel_only       .eq. 0 .and. &
-                nlst_rt(did)%channelBucket_only .eq. 0        ) then
+        if(nlst_rt_copy(did)%channel_only       .eq. 0 .and. &
+                nlst_rt_copy(did)%channelBucket_only .eq. 0        ) then
 
             ! this initalization done in module_nhd_basin.F
-            !rt_domain(did)%groundwater%aggregation%infxswgt = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+            !rt_domain(did)%groundwater%aggregation%infxswgt = 1./(nlst_rt_copy(did)%AGGFACTRT*nlst_rt_copy(did)%AGGFACTRT)
             rt_domain(did)%SH2OWGT = 1.
-            rt_domain(did)%subsurface%properties%soldeprt = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
+            rt_domain(did)%subsurface%properties%soldeprt = -1.0 * nlst_rt_copy(did)%ZSOIL8(nlst_rt_copy(did)%NSOIL)
             rt_domain(did)%subsurface%state%qsubrt = 0.0
             rt_domain(did)%subsurface%properties%zwattablrt = 0.0
             rt_domain(did)%subsurface%state%qsubbdryrt = 0.0

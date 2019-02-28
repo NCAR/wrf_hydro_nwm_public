@@ -145,6 +145,7 @@ module config_base
   type, public :: Configuration_
    contains
      procedure, nopass :: init => config_init
+     procedure, nopass :: init_nlst => init_namelist_rt_field
      procedure, nopass :: noah_lsm => copy_noah_lsm
      procedure, nopass :: noah_lsm_sync => noah_lsm_sync
      procedure, nopass :: wrf_hydro => copy_wrf_hydro
@@ -163,9 +164,9 @@ contains
 
     integer, parameter :: did = 1
 
-    call init_noah_lsm()
-    call init_wrf_hydro()
-    call init_namelist_rt_field(did)
+    call init_noah_lsm_and_wrf_hydro()
+    !call init_wrf_hydro()
+    !call init_namelist_rt_field(did)
 
   end subroutine config_init
 
@@ -551,10 +552,9 @@ contains
     if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
 
     !used to be broadcasted with MPI
-    nlst(did)%NSOIL = NSOIL
-
-    allocate(nlst(did)%ZSOIL8(NSOIL))
-    nlst(did)%ZSOIL8 = ZSOIL8
+    !nlst(did)%NSOIL = NSOIL
+    !allocate(nlst(did)%ZSOIL8(NSOIL))
+    !nlst(did)%ZSOIL8 = ZSOIL8
 
     nlst(did)%RESTART_FILE = RESTART_FILE
     nlst(did)%hydrotbl_f = trim(hydrotbl_f)
@@ -585,7 +585,6 @@ contains
        endif
     endif
 
-
     if(channel_option .eq. 4) then
        CHANRTSWCRT = 0
        OVRTSWCRT = 0
@@ -608,6 +607,27 @@ contains
     nlst(did)%DTRT_TER   = DTRT_TER
     nlst(did)%DTRT_CH   = DTRT_CH
     nlst(did)%DTCT      = DTRT_CH   ! small time step for grid based channel routing
+
+    ! Some fields haven't been initialized yet (e.g. DT)
+
+    if(nlst(did)%DT .lt. DTRT_CH) then
+          print*, "nlst(did)%DT,  DTRT_CH = ",nlst(did)%DT,  DTRT_CH
+          print*, "reset DTRT_CH=nlst(did)%DT "
+          DTRT_CH=nlst(did)%DT
+    endif
+    if(nlst(did)%DT .lt. DTRT_TER) then
+          print*, "nlst(did)%DT,  DTRT_TER = ",nlst(did)%DT,  DTRT_TER
+          print*, "reset DTRT_TER=nlst(did)%DT "
+          DTRT_TER=nlst(did)%DT
+    endif
+    if(nlst(did)%DT/DTRT_TER .ne. real(int(nlst(did)%DT) / int(DTRT_TER)) ) then
+         print*, "nlst(did)%DT,  DTRT_TER = ",nlst(did)%DT,  DTRT_TER
+         call hydro_stop("module_namelist: DT not a multiple of DTRT_TER")
+    endif
+    if(nlst(did)%DT/DTRT_CH .ne. real(int(nlst(did)%DT) / int(DTRT_CH)) ) then
+         print*, "nlst(did)%DT,  DTRT_CH = ",nlst(did)%DT,  DTRT_CH
+         call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
+    endif
 
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT
@@ -818,7 +838,7 @@ contains
 
   end subroutine init_wrf_hydro
 
-  subroutine init_noah_lsm()
+  subroutine init_noah_lsm_and_wrf_hydro()
     implicit none
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
@@ -864,6 +884,9 @@ contains
      CHARACTER(LEN = 256)                    ::  spatial_filename
      integer :: ierr = 0
 
+    integer  :: finemesh, finemesh_factor
+    integer  :: forc_typ, snow_assim
+
     namelist / NOAHLSM_OFFLINE /    &
          indir, nsoil, soil_thick_input, forcing_timestep, &
          noah_timestep, start_year, start_month, start_day, &
@@ -879,6 +902,9 @@ contains
          spatial_filename, &
          external_veg_filename_template, external_lai_filename_template, &
          xstart, xend, ystart, yend, rst_bi_out, rst_bi_in
+
+    namelist /WRF_HYDRO_OFFLINE/ &
+         finemesh,finemesh_factor,forc_typ, snow_assim
 
     noah_lsm_file%nsoil                   = -999
     noah_lsm_file%soil_thick_input        = -999
@@ -915,6 +941,27 @@ contains
 #endif
        stop "FATAL ERROR: Problem reading namelist NOAHLSM_OFFLINE"
     endif
+
+#ifndef NCEP_WCOSS
+    read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#else
+    read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
+#endif
+    if (ierr /= 0) then
+       write(*,'(/," ***** ERROR: Problem reading namelist WRF_HYDRO_OFFLINE",/)')
+       call hydro_stop (" FATAL ERROR: Problem reading namelist WRF_HYDRO_OFFLINE")
+    endif
+
+#ifndef NCEP_WCOSS
+    close(30)
+#else
+    close(11)
+#endif
+
+    wrf_hydro_file%finemesh = 0!finemesh
+    wrf_hydro_file%finemesh_factor = 0!finemesh_factor
+    wrf_hydro_file%forc_typ = forc_typ
+    wrf_hydro_file%snow_assim = 0!snow_assim
 
     noah_lsm_file%indir = indir 
     noah_lsm_file%nsoil = nsoil ! number of soil layers
@@ -962,6 +1009,6 @@ contains
 
       !dtbl = real(noah_timestep)
 
-  end subroutine init_noah_lsm
+  end subroutine init_noah_lsm_and_wrf_hydro
   
 end module config_base
