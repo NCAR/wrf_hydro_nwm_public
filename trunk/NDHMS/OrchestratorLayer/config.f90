@@ -669,6 +669,7 @@ contains
     nlst(did)%reservoir_obs_dir = 'testDirectory'
 #ifdef WRF_HYDRO_NUDGING
     nlst(did)%nudgingParamFile       = nudgingParamFile
+    write(*,*) 'Nudging param file ',nudgingParamFile
     nlst(did)%netWkReExFile          = netWkReExFile
     nlst(did)%readTimesliceParallel  = readTimesliceParallel
     nlst(did)%temporalPersistence    = temporalPersistence
