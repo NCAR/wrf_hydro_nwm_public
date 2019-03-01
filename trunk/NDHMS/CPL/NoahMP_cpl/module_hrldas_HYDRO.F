@@ -233,13 +233,13 @@ CONTAINS
         did = 1
 
         if(.not. RT_DOMAIN(did)%initialized) then
-           write(*,*) "Copying dt into struct"
+           ! write(*,*) "Copying dt into struct"
            nlst_rt_copy(did)%dt = dt
            nlst_rt_copy(did)%olddate(1:19) = olddate(1:19)
            nlst_rt_copy(did)%startdate(1:19) = olddate(1:19)
 
            nlst_rt_copy(did)%nsoil = kk
-           write(*,*) "Assigning kk to nsoil"
+           !write(*,*) "Assigning kk to nsoil"
 #ifdef MPP_LAND
            call mpp_land_bcast_int1(nlst_rt_copy(did)%nsoil)
 #endif

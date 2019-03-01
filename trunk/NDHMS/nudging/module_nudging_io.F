@@ -21,7 +21,8 @@
 module module_nudging_io
 
 use netcdf
-use module_namelist, only: nlst_rt
+!use module_namelist, only: nlst_rt
+use config_base, nlst_rt_copy => nlst
 use module_RT_data,  only: rt_domain
 
 implicit none
@@ -58,7 +59,7 @@ contains
 ! Input Files:  
 ! Output Files: 
 ! Condition codes: 
-! User controllable options: namelist option for nlst_rt(did)%timeSlicePath
+! User controllable options: namelist option for nlst_rt_copy(did)%timeSlicePath
 ! Notes: 
 
 function find_timeslice_file(date, obsResolution)            
@@ -78,7 +79,7 @@ call flush(6)
 find_timeslice_file=''
 ! is there a file with this name?
 ! note files are not resolved below minutes.
-tmpTimeSlice = trim(nlst_rt(did)%timeSlicePath) // date // "." // &
+tmpTimeSlice = trim(nlst_rt_copy(did)%timeSlicePath) // date // "." // &
                     obsResolution // 'min.usgsTimeSlice.ncdf'
 inquire(FILE=tmpTimeSlice, EXIST=fileExists)
 if (fileExists) find_timeslice_file = trim(tmpTimeSlice)
@@ -107,7 +108,7 @@ end function find_timeslice_file
 ! Input Files:  
 ! Output Files: 
 ! Condition codes: 
-! User controllable options: namelist option for nlst_rt(did)%timeSlicePath
+! User controllable options: namelist option for nlst_rt_copy(did)%timeSlicePath
 ! Notes: 
  
 subroutine read_timeslice_file(  &
@@ -234,7 +235,8 @@ end subroutine read_timeslice_file
 ! Notes: Currently no csv support, but basic code is in place though commented out.
 
 subroutine read_reach_gage_collocation(gageIds)
-use module_namelist, only: nlst_rt
+! use module_namelist, only: nlst_rt
+  use config_base, nlst_rt_copy => nlst
 implicit none
 character(len=15), dimension(:), intent(out) :: gageIds
 !integer, dimension(:), intent(out) :: gageIds
@@ -251,7 +253,7 @@ print*,'Ndg: Starting read_reach_gage_collocation'
 
 varName = 'gages'
 !! is RouteLink file netcdf (*.nc) or csv (*.csv)
-route_link_f   = nlst_rt(did)%route_link_f
+route_link_f   = nlst_rt_copy(did)%route_link_f
 route_link_f_r = adjustr(route_link_f)
 lenRouteLinkFR = len(route_link_f_r)
 routeLinkNetcdf = route_link_f_r( (lenRouteLinkFR-2):lenRouteLinkFR) .eq. '.nc'
@@ -1038,14 +1040,14 @@ if(my_id .eq. io_id) then
    ! jlm: this seems optional, might be nice if output is used for plotting/GIS.
    ! jlm: set did:=1 in nlst_rt
 #ifdef HYDRO_D
-   write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt(did)%geo_finegrid_flnm)
+   write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst_rt_copy(did)%geo_finegrid_flnm)
 #endif
 
-   iret = nf_open(trim(nlst_rt(1)%geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+   iret = nf_open(trim(nlst_rt_copy(1)%geo_finegrid_flnm), NF_NOWRITE, ncstatic)
    
    if (iret /= 0) then
       write(*,'("Problem opening geo_finegrid file: ''", A, "''")') &
-           trim(nlst_rt(1)%geo_finegrid_flnm)
+           trim(nlst_rt_copy(1)%geo_finegrid_flnm)
       write(*,*) "HIRES_OUTPUT will not be georeferenced..."
       projInfo_flag = 0
    else
