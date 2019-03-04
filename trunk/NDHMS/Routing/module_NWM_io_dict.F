@@ -12,8 +12,7 @@
 module module_NWM_io_dict
 
 use module_version, only: get_model_version
-!use module_namelist, only: nlst_rt
-use config_base, nlst_rt_copy => nlst
+use config_base, only: nlst
 
 implicit none
 
@@ -27,7 +26,7 @@ integer, parameter :: numLsmVars = 14
 integer, parameter :: numChObsVars = 1
 integer, parameter :: numGwVars = 3
 integer :: i
-!integer :: nsoil = nlst_rt_copy(1)%nsoil 
+!integer :: nsoil = nlst(1)%nsoil 
 integer :: nsoil
 
 ! Declare public types that will hold metadata
@@ -640,7 +639,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
@@ -783,7 +782,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
 
    ! LDASOUT FILES
 
-   ldasOutDict%numSoilLayers = nlst_rt_copy(1)%nsoil
+   ldasOutDict%numSoilLayers = nlst(1)%nsoil
    
    ldasOutDict%modelNdv = 9.9692099683868690E36
    ldasOutDict%modelNdv2 = -1.E33
@@ -814,7 +813,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')        
@@ -1243,7 +1242,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    integer :: tmpLen
    ! RT_DOMAIN files
 
-   rtDomainDict%numSoilLayers = nlst_rt_copy(1)%nsoil
+   rtDomainDict%numSoilLayers = nlst(1)%nsoil
    
    rtDomainDict%modelNdv = -9.E15
 
@@ -1271,7 +1270,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    ! Pull spatial metadata information about the modeling domain from the
    ! Fulldom file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for hydro grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open Fulldom metadata file. No crs variable or attributes will be created.')
@@ -1471,7 +1470,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
       ! Next get the number of columns on the land grid. This will be used to
       ! calculate the resolution of the routing grid in meters and aggfactor.
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND Spatial Metadata file. Defaulting to missing values.')
          numColLand = -9999
@@ -1492,7 +1491,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
       ! Next get the number of columns on the high-resolution routing grid.
       ! This will be used to calculate the resolution of the routing grid in
       ! meters.
-      iret = nf90_open(trim(nlst_rt_copy(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call nwmCheck(diagFlag,iret,'ERROR: Unable to open Fulldom file')
       else
@@ -1574,7 +1573,7 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
@@ -1702,7 +1701,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    ! Pull spatial metadata information about the modeling domain from the
    ! Fulldom file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for hydro grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open Fulldom file. No crs variable or attributes will be created.')
@@ -1901,7 +1900,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
 
       ! Next get the number of columns on the land grid. This will be used to
       ! calculate the resolution of the routing grid in meters and aggfactor.
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND Spatial Metadata file. Defaulting to missing values.')
          numColLand = -9999
@@ -1922,7 +1921,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
       ! Next get the number of columns on the high-resolution routing grid.
       ! This will be used to calculate the resolution of the routing grid in
       ! meters.
-      iret = nf90_open(trim(nlst_rt_copy(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call nwmCheck(diagFlag,iret,'ERROR: Unable to open Fulldom file')
       else
@@ -1991,7 +1990,7 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    integer :: tmpLen
    !LSMOUT files
 
-   lsmOutDict%numSoilLayers = nlst_rt_copy(1)%nsoil
+   lsmOutDict%numSoilLayers = nlst(1)%nsoil
    
    lsmOutDict%modelNdv = 9.9692099683868690E36
    lsmOutDict%modelNdvInt = -2147483647
@@ -2020,7 +2019,7 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')
@@ -2286,7 +2285,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    ! Pull spatial metadata information about the modeling domain from the land
    ! spatial metadata file. 
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt_copy(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
