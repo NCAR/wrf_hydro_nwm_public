@@ -5,7 +5,7 @@ module config_base
   integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
   !REAL                  ::  DTBL      ! timestep [s]
 
-  type NOAHLSM_OFFLINE_DT
+  type NOAHLSM_OFFLINE_
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
      integer            :: forcing_timestep
@@ -48,17 +48,17 @@ module config_base
      REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
      integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
      CHARACTER(LEN = 256) :: spatial_filename
-  end type NOAHLSM_OFFLINE_DT
+  end type NOAHLSM_OFFLINE_
 
-  type WRF_HYDRO_OFFLINE_DT
+  type WRF_HYDRO_OFFLINE_
      integer  :: finemesh
      integer  :: finemesh_factor
      integer  :: forc_typ
      integer  :: snow_assim
-  end type WRF_HYDRO_OFFLINE_DT
+  end type WRF_HYDRO_OFFLINE_
 
-  TYPE namelist_rt  
-      
+  TYPE namelist_rt_
+
      integer :: nsoil, SOLVEG_INITSWC
      real,allocatable,dimension(:) :: ZSOIL8
      real*8 :: out_dt, rst_dt
@@ -140,7 +140,7 @@ module config_base
 
      procedure, pass(self) :: check => rt_nlst_check
      
-  END TYPE namelist_rt
+  END TYPE namelist_rt_
 
   type, public :: Configuration_
    contains
@@ -153,9 +153,9 @@ module config_base
 
   integer, parameter :: max_domain = 5
 
-  type(NOAHLSM_OFFLINE_DT), private, save :: noah_lsm_file
-  type(WRF_HYDRO_OFFLINE_DT), private, save :: wrf_hydro_file
-  type(namelist_rt), dimension(max_domain), save :: nlst
+  type(NOAHLSM_OFFLINE_), private, save :: noah_lsm_file
+  type(WRF_HYDRO_OFFLINE_), private, save :: wrf_hydro_file
+  type(namelist_rt_), dimension(max_domain), save :: nlst
 
 contains
 
@@ -174,7 +174,7 @@ contains
     ! Subroutine to check namelist options specified by the user.
     implicit none
 
-    class(namelist_rt) self
+    class(namelist_rt_) self
 
     ! Local variables
     logical :: fileExists = .false.
@@ -697,7 +697,7 @@ contains
   subroutine noah_lsm_sync(mod_noah_lsm)
     implicit none
 
-    type(NOAHLSM_OFFLINE_DT) :: mod_noah_lsm
+    type(NOAHLSM_OFFLINE_) :: mod_noah_lsm
 
     noah_lsm_file%indir = mod_noah_lsm%indir
     noah_lsm_file%nsoil = mod_noah_lsm%nsoil ! number of soil layers
@@ -745,7 +745,7 @@ contains
 
   end subroutine noah_lsm_sync
 
-  type(WRF_HYDRO_OFFLINE_DT) function copy_wrf_hydro()
+  type(WRF_HYDRO_OFFLINE_) function copy_wrf_hydro()
     implicit none
     
     copy_wrf_hydro%finemesh = wrf_hydro_file%finemesh
@@ -755,7 +755,7 @@ contains
     
   end function copy_wrf_hydro
 
-  type(NOAHLSM_OFFLINE_DT) function copy_noah_lsm()
+  type(NOAHLSM_OFFLINE_) function copy_noah_lsm()
     implicit none
 
     copy_noah_lsm%indir = noah_lsm_file%indir

@@ -390,10 +390,10 @@ module module_NoahMP_hrldas_driver
   character(len=1000) :: VARLIST
   integer :: brkflag = 0
   integer :: varind = 1
-  type(WRF_HYDRO_OFFLINE_DT) :: wrf_hydro
+  type(WRF_HYDRO_OFFLINE_) :: wrf_hydro
 #endif
 
-  type(NOAHLSM_OFFLINE_DT) :: noah_lsm
+  type(NOAHLSM_OFFLINE_) :: noah_lsm
   integer :: xstart, xend, ystart, yend !courtesy variables
 
   contains
