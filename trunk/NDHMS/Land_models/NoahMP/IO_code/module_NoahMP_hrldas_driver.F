@@ -1364,6 +1364,7 @@ module module_NoahMP_hrldas_driver
    print*, "zsoil/soil_thick_input = ", noah_lsm%soil_thick_input(1:NSOIL)
 #endif
 
+! This function calls hrldas_cpl_HYDRO_ini, which assigns the values of DT, zsoil8 and nsoil in nlst_rt
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep),          &
          olddate,zsoil(1:NSOIL))

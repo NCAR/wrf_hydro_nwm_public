@@ -61,6 +61,7 @@
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
           end do
+          ! This function initializes the DT, NSOIL and ZSOIL8 fields of the nlst_rt data structure
              call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
 
            do k = 1, kk

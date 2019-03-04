@@ -1326,9 +1326,8 @@ call  MPP_LAND_INIT()
 
 
 ! read the namelist
-! the lsm namelist will be read by rtland sequentially again.
-!RECENTLY COMMENTED OUT!call read_rt_nlst(nlst_rt_copy(did) )
 
+! Some field of this structure are already initialized by the CPL component (e.g. DT)
 call orchestrator%config%init_nlst(did)
 
 if(nlst_rt_copy(did)%rtFlag .eq. 0) return
