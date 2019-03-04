@@ -6,9 +6,10 @@
 include ../macros
 
 OBJS = \
-	module_namelist.o \
 	module_RT_data.o \
 	module_gw_gw2d_data.o
+
+	# module_namelist.o \
 
 all:	$(OBJS) 
 
