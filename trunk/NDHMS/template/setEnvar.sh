@@ -9,7 +9,7 @@ export WRF_HYDRO=1
 export HYDRO_D=0
 
 # Run an LSM-only simulation: 0=full WRF-Hydro, 1=LSM-only.
-export LSM_ONLY=1
+export LSM_ONLY=0
 
 # Spatially distributed parameters for NoahMP: 0=Off, 1=On.
 export SPATIAL_SOIL=0
