@@ -36,6 +36,10 @@ if [[ "$WRF_HYDRO" -ne 1 ]]; then
     exit 1
 fi
 
+if [[ "$LSM_ONLY" -eq 1 ]]; then
+    unset WRF_HYDRO
+fi
+
 rm -f  LandModel LandModel_cpl
 cp arc/Makefile.NoahMP Makefile
 cd Land_models/NoahMP
