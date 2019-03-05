@@ -25,7 +25,7 @@
   INTEGER :: MAXORDER !maximum stream order
   integer :: timestep_flag    ! 1 cold start run else continue run
 
-  INTEGER :: GNLINKSL, linklsS, linklsE , nlinksize  !## for reach based channel routing
+  INTEGER :: GNLINKSL, linklsS, linklsE , nlinksize  ! for reach based channel routing
 
   INTEGER :: iswater     !id for water in vegtyp
   INTEGER :: isurban     !id for urban in vegtyp
