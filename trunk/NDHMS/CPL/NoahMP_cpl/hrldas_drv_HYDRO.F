@@ -78,8 +78,7 @@
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing
-         ! use module_namelist, only:nlst_rt
-         use config_base, nlst_rt_copy => nlst
+         use config_base, only: nlst
 
          implicit none
          integer did, ixs,ixe,jxs,jxe
@@ -95,15 +94,14 @@
          did = 1
          call read_hydro_forcing( &
             indir, olddate, &
-            nlst_rt_copy(did)%hgrid,&
+            nlst(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
             lai,fpar,snodep,FORCING_TIMESTEP*1.0,kt, pcp_old)
        end subroutine HYDRO_frocing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate,SHDMAX)
-          ! use module_namelist, only:nlst_rt
-          use config_base, nlst_rt_copy => nlst
+          use config_base, only: nlst
           implicit none
           character(len=*) :: olddate, inFile
           integer :: idim, jdim 
@@ -395,50 +393,46 @@
       end subroutine HYDRO_HRLDAS_ini_mpp
 #endif
       subroutine get_iocflag(did, iocflag) 
-         ! use module_namelist, only:nlst_rt
-         use config_base, nlst_rt_copy => nlst
+         use config_base, only: nlst
          implicit none
          integer :: did, iocflag
-         iocflag = nlst_rt_copy(did)%io_config_outputs
+         iocflag = nlst(did)%io_config_outputs
       end subroutine get_iocflag
 
       subroutine get_t0OutputFlag(did, t0OutputFlag) 
-         ! use module_namelist, only:nlst_rt
-         use config_base, nlst_rt_copy => nlst
+         use config_base, only: nlst
          implicit none
          integer :: did, t0OutputFlag
-         t0OutputFlag = nlst_rt_copy(did)%t0OutputFlag
+         t0OutputFlag = nlst(did)%t0OutputFlag
       end subroutine get_t0OutputFlag
 
 
       subroutine getNameList(varName,pVar)
-          ! use module_namelist, only:nlst_rt
-        use config_base, nlst_rt_copy => nlst
+        use config_base, only: nlst
           implicit none
           integer :: pVar
           integer :: did
           character(len=*) :: varName
           did = 1
           if(varName .eq. "GWSPINCYCLES") then
-               pVar = nlst_rt_copy(did)%gwSpinCycles
+               pVar = nlst(did)%gwSpinCycles
           elseif(varName .eq. "GWBASESWCRT") then
-               pVar = nlst_rt_copy(did)%GWBASESWCRT
+               pVar = nlst(did)%GWBASESWCRT
           elseif(varName .eq. "GWSOILCPL") then
-               pVar = nlst_rt_copy(did)%gwsoilcpl
+               pVar = nlst(did)%gwsoilcpl
           elseif(varName .eq. "channel_only") then
-               pVar = nlst_rt_copy(did)%channel_only
+               pVar = nlst(did)%channel_only
           elseif(varName .eq. "channelBucket_only") then
-               pVar = nlst_rt_copy(did)%channelBucket_only
+               pVar = nlst(did)%channelBucket_only
           elseif(varName .eq. "igrid") then
-               pVar = nlst_rt_copy(did)%igrid
+               pVar = nlst(did)%igrid
           else
                pVar = 0
           endif
      end subroutine getNameList
 
       subroutine updateNameList(varName,pVarIn)
-          ! use module_namelist, only:nlst_rt
-          use config_base, nlst_rt_copy => nlst
+          use config_base, only: nlst
 #ifdef MPP_LAND
           use module_mpp_land, only: mpp_land_bcast_int1
 #endif
@@ -452,13 +446,13 @@
 #ifdef MPP_LAND
              call mpp_land_bcast_int1(pVar)
 #endif
-             nlst_rt_copy(did)%channel_only = pVar
+             nlst(did)%channel_only = pVar
           endif
           if(varName .eq. "channelBucket_only") then
 #ifdef MPP_LAND
              call mpp_land_bcast_int1(pVar)
 #endif
-             nlst_rt_copy(did)%channelBucket_only = pVar
+             nlst(did)%channelBucket_only = pVar
           endif
 
      end subroutine updateNameList

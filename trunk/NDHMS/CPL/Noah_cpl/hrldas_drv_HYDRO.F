@@ -52,8 +52,7 @@
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt,FORCING_TIMESTEP,prcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing, read_hydro_forcing_seq
-         ! use module_namelist, only:nlst_rt
-         use config_base, nlst_rt_copy => nlst
+         use config_base, only: nlst
          implicit none
          integer did, ixs,ixe,jxs,jxe
          integer ix,jx, kt
@@ -69,15 +68,13 @@
 !yw          call read_hydro_forcing( &
          call read_hydro_forcing_seq( &
             indir, olddate, &
-            nlst_rt_copy(did)%hgrid,&
+            nlst(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
             lai,fpar,snodep,FORCING_TIMESTEP*1.0,kt ,prcp_old)
        end subroutine HYDRO_forcing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
-          ! use module_namelist, only:nlst_rt
-          !use config_base, nlst_rt_copy => nlst
           implicit none
           character(len=*) :: olddate, inFile
           integer :: idim, jdim 

@@ -400,8 +400,7 @@ module module_NoahMP_hrldas_driver
 
   subroutine land_driver_ini(NTIME_out,wrfits,wrfite,wrfjts,wrfjte)
      use module_HYDRO_drv, only: HYDRO_ini
-     ! use module_namelist, only: nlst_rt
-     use config_base, nlst_rt_copy => nlst
+     use config_base, only: nlst
      use module_rt_data, only: rt_domain
      use module_hrldas_HYDRO, only: open_print_mpp
      implicit  none
@@ -477,16 +476,16 @@ module module_NoahMP_hrldas_driver
      NTIME_out = NTIME
 
      if(.not. RT_DOMAIN(did)%initialized) then  
-        nlst_rt_copy(did)%dt = real(noah_lsm%noah_timestep)
-        nlst_rt_copy(did)%khour = noah_lsm%khour ! Adding kHOUR to be used in the NWM output routines.
-        nlst_rt_copy(did)%olddate(1:19) = olddate(1:19)
-        nlst_rt_copy(did)%startdate(1:19) = olddate(1:19)
-        nlst_rt_copy(did)%nsoil = -999999
+        nlst(did)%dt = real(noah_lsm%noah_timestep)
+        nlst(did)%khour = noah_lsm%khour ! Adding kHOUR to be used in the NWM output routines.
+        nlst(did)%olddate(1:19) = olddate(1:19)
+        nlst(did)%startdate(1:19) = olddate(1:19)
+        nlst(did)%nsoil = -999999
 #ifdef MPP_LAND
-        call mpp_land_bcast_int1(nlst_rt_copy(did)%nsoil)
+        call mpp_land_bcast_int1(nlst(did)%nsoil)
 #endif
-        allocate(nlst_rt_copy(did)%zsoil8(nlst_rt_copy(did)%nsoil))
-        nlst_rt_copy(did)%zsoil8(1:nlst_rt_copy(did)%nsoil) = zsoil(1:nlst_rt_copy(did)%nsoil)
+        allocate(nlst(did)%zsoil8(nlst(did)%nsoil))
+        nlst(did)%zsoil8(1:nlst(did)%nsoil) = zsoil(1:nlst(did)%nsoil)
         write(*,*) ' Calling HYDRO_ini (which initialiazes nlst_rt), from module_NoahMP_hrldas_driver'
         call HYDRO_ini(ntime,did,ix0=1,jx0=1)
         RT_DOMAIN(did)%initialized = .true.
@@ -1335,7 +1334,7 @@ module module_NoahMP_hrldas_driver
 #endif
 
   ! assinging the KHOUR to be used in the NWM output routing for global metadata
-  nlst_rt_copy(did)%khour = noah_lsm%khour
+  nlst(did)%khour = noah_lsm%khour
 
   call system_clock(count=clock_count_1)   ! Start a timer
 

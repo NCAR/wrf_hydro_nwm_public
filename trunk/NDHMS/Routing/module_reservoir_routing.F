@@ -17,8 +17,7 @@ implicit none
 contains
 
 subroutine read_reservoir_obs(domainId)
-   !use module_namelist, only: nlst_rt
-   use config_base, nlst_rt_copy => nlst
+   use config_base, only: nlst
    use netcdf
 #ifdef MPP_LAND
    use module_mpp_land
@@ -74,7 +73,7 @@ subroutine read_reservoir_obs(domainId)
 
    ! Check to ensure the namelist option for reading in the reservoir discharge data
    ! has been set to 1. If not, return back to the main calling program.
-   if(nlst_rt_copy(domainId)%reservoir_data_ingest .eq. 0) then
+   if(nlst(domainId)%reservoir_data_ingest .eq. 0) then
        ! No reservoir realtime data requested. 
        return
    endif
@@ -97,9 +96,9 @@ subroutine read_reservoir_obs(domainId)
       missingFlag = 0
 
       ! We are on the I/O processor.
-      write(inFlnm,'(A,"/LAKEFILE_DISCHARGE_",A12,".nc")') nlst_rt_copy(domainId)%reservoir_obs_dir,nlst_rt_copy(domainId)%olddate(1:4)//&
-            nlst_rt_copy(domainId)%olddate(6:7)//nlst_rt_copy(domainId)%olddate(9:10)//&
-            nlst_rt_copy(domainId)%olddate(12:13)//nlst_rt_copy(domainId)%olddate(15:16)
+      write(inFlnm,'(A,"/LAKEFILE_DISCHARGE_",A12,".nc")') nlst(domainId)%reservoir_obs_dir,nlst(domainId)%olddate(1:4)//&
+            nlst(domainId)%olddate(6:7)//nlst(domainId)%olddate(9:10)//&
+            nlst(domainId)%olddate(12:13)//nlst(domainId)%olddate(15:16)
 
       ! Check to see if the file exists.
       INQUIRE(FILE=inFlnm,EXIST=file_exists)

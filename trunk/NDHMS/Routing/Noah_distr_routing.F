@@ -863,11 +863,10 @@ end subroutine MPP_seq_land_SO8
 
 subroutine disaggregateDomain_drv(did)
     use module_RT_data, only: rt_domain
-    ! use module_namelist, only: nlst_rt
-    use config_base, nlst_rt_copy => nlst
+    use config_base, only: nlst
     integer :: did
-    call disaggregateDomain( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt_copy(did)%NSOIL,&
-        RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt_copy(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
+    call disaggregateDomain( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst(did)%NSOIL,&
+        RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
         rt_domain(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%groundwater%input%infxsrt, &
         rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
         RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -1208,11 +1207,10 @@ end subroutine disaggregateDomain
 subroutine SubsurfaceRouting_drv(did)
 
     use module_RT_data, only: rt_domain
-    ! use module_namelist, only: nlst_rt
-    use config_base, nlst_rt_copy => nlst
+    use config_base, only: nlst
     implicit none
     integer :: did
-    IF (nlst_rt_copy(did)%SUBRTSWCRT.EQ.1) THEN
+    IF (nlst(did)%SUBRTSWCRT.EQ.1) THEN
         call subsurfaceRouting ( rt_domain(did)%subsurface, &
             rt_domain(did)%subsurface_static, &
             rt_domain(did)%subsurface_input, &
@@ -1226,12 +1224,11 @@ end subroutine SubsurfaceRouting_drv
 
 subroutine OverlandRouting_drv(did)
     use module_RT_data, only: rt_domain
-    ! use module_namelist, only: nlst_rt
-    use config_base, nlst_rt_copy => nlst
+    use config_base, only: nlst
     implicit none
     integer :: did
-    if(nlst_rt_copy(did)%OVRTSWCRT .eq. 1) then
-        !call OverlandRouting (nlst_rt_copy(did)%DT, nlst_rt_copy(did)%DTRT_TER, nlst_rt_copy(did)%rt_option, &
+    if(nlst(did)%OVRTSWCRT .eq. 1) then
+        !call OverlandRouting (nlst(did)%DT, nlst(did)%DTRT_TER, nlst(did)%rt_option, &
             !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mask, &
             !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%overland%properties%roughness, &
             !         rt_domain(did)%overland%properties%surface_slope_x, rt_domain(did)%overland%properties%surface_slope_y, rt_domain(did)%overland%control%surface_water_head_routing,  &
@@ -1244,9 +1241,9 @@ subroutine OverlandRouting_drv(did)
             !         rt_domain(did)%overland%mass_balance%pre_soil_moisture_content,rt_domain(did)%overland%mass_balance%accumulated_change_in_soil_moisture )
         call OverlandRouting( &
             rt_domain(did)%overland, &
-            nlst_rt_copy(did)%DT, &
-            nlst_rt_copy(did)%DTRT_TER, &
-            nlst_rt_copy(did)%rt_option, &
+            nlst(did)%DT, &
+            nlst(did)%DTRT_TER, &
+            nlst(did)%rt_option, &
             rt_domain(did)%ixrt, &
             rt_domain(did)%jxrt, &
             rt_domain(did)%q_sfcflx_x, &
