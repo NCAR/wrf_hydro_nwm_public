@@ -146,15 +146,15 @@ module config_base
    contains
      procedure, nopass :: init => config_init
      procedure, nopass :: init_nlst => init_namelist_rt_field
-     procedure, nopass :: noah_lsm => copy_noah_lsm
-     procedure, nopass :: noah_lsm_sync => noah_lsm_sync
-     procedure, nopass :: wrf_hydro => copy_wrf_hydro
+     !procedure, nopass :: noah_lsm => copy_noah_lsm
+     !procedure, nopass :: noah_lsm_sync => noah_lsm_sync
+     !procedure, nopass :: wrf_hydro => copy_wrf_hydro
   end type Configuration_
 
   integer, parameter :: max_domain = 5
 
-  type(NOAHLSM_OFFLINE_), private, save :: noah_lsm_file
-  type(WRF_HYDRO_OFFLINE_), private, save :: wrf_hydro_file
+  type(NOAHLSM_OFFLINE_), protected, save :: noah_lsm
+  type(WRF_HYDRO_OFFLINE_), protected, save :: wrf_hydro
   type(namelist_rt_), dimension(max_domain), save :: nlst
 
 contains
@@ -699,108 +699,108 @@ contains
 
     type(NOAHLSM_OFFLINE_) :: mod_noah_lsm
 
-    noah_lsm_file%indir = mod_noah_lsm%indir
-    noah_lsm_file%nsoil = mod_noah_lsm%nsoil ! number of soil layers
-    noah_lsm_file%forcing_timestep = mod_noah_lsm%forcing_timestep
-    noah_lsm_file%noah_timestep = mod_noah_lsm%noah_timestep
-    noah_lsm_file%start_year = mod_noah_lsm%start_year
-    noah_lsm_file%start_month = mod_noah_lsm%start_month
-    noah_lsm_file%start_day = mod_noah_lsm%start_day
-    noah_lsm_file%start_hour = mod_noah_lsm%start_hour
-    noah_lsm_file%start_min = mod_noah_lsm%start_min
-    noah_lsm_file%outdir = mod_noah_lsm%outdir
-    noah_lsm_file%restart_filename_requested = mod_noah_lsm%restart_filename_requested
-    noah_lsm_file%restart_frequency_hours = mod_noah_lsm%restart_frequency_hours
-    noah_lsm_file%output_timestep = mod_noah_lsm%output_timestep
-    noah_lsm_file%dynamic_veg_option = mod_noah_lsm%dynamic_veg_option
-    noah_lsm_file%canopy_stomatal_resistance_option = mod_noah_lsm%canopy_stomatal_resistance_option
-    noah_lsm_file%btr_option = mod_noah_lsm%btr_option
-    noah_lsm_file%runoff_option = mod_noah_lsm%runoff_option
-    noah_lsm_file%surface_drag_option = mod_noah_lsm%surface_drag_option
-    noah_lsm_file%supercooled_water_option = mod_noah_lsm%supercooled_water_option
-    noah_lsm_file%frozen_soil_option = mod_noah_lsm%frozen_soil_option
-    noah_lsm_file%radiative_transfer_option = mod_noah_lsm%radiative_transfer_option
-    noah_lsm_file%snow_albedo_option = mod_noah_lsm%snow_albedo_option
-    noah_lsm_file%pcp_partition_option = mod_noah_lsm%pcp_partition_option
-    noah_lsm_file%tbot_option = mod_noah_lsm%tbot_option
-    noah_lsm_file%temp_time_scheme_option = mod_noah_lsm%temp_time_scheme_option
-    noah_lsm_file%glacier_option = mod_noah_lsm%glacier_option
-    noah_lsm_file%surface_resistance_option = mod_noah_lsm%surface_resistance_option
-    noah_lsm_file%split_output_count = mod_noah_lsm%split_output_count
-    noah_lsm_file%khour = mod_noah_lsm%khour
-    noah_lsm_file%kday = mod_noah_lsm%kday
-    noah_lsm_file%zlvl = mod_noah_lsm%zlvl
-    noah_lsm_file%hrldas_setup_file = mod_noah_lsm%hrldas_setup_file
-    noah_lsm_file%mmf_runoff_file = mod_noah_lsm%mmf_runoff_file
-    noah_lsm_file%external_veg_filename_template = mod_noah_lsm%external_veg_filename_template
-    noah_lsm_file%external_lai_filename_template = mod_noah_lsm%external_lai_filename_template
-    noah_lsm_file%xstart = mod_noah_lsm%xstart
-    noah_lsm_file%ystart = mod_noah_lsm%ystart
-    noah_lsm_file%xend = mod_noah_lsm%xend
-    noah_lsm_file%yend = mod_noah_lsm%yend
-    noah_lsm_file%soil_thick_input = mod_noah_lsm%soil_thick_input
-    noah_lsm_file%rst_bi_out = mod_noah_lsm%rst_bi_out
-    noah_lsm_file%rst_bi_in = mod_noah_lsm%rst_bi_in
-    noah_lsm_file%spatial_filename = mod_noah_lsm%spatial_filename
+    noah_lsm%indir = mod_noah_lsm%indir
+    noah_lsm%nsoil = mod_noah_lsm%nsoil ! number of soil layers
+    noah_lsm%forcing_timestep = mod_noah_lsm%forcing_timestep
+    noah_lsm%noah_timestep = mod_noah_lsm%noah_timestep
+    noah_lsm%start_year = mod_noah_lsm%start_year
+    noah_lsm%start_month = mod_noah_lsm%start_month
+    noah_lsm%start_day = mod_noah_lsm%start_day
+    noah_lsm%start_hour = mod_noah_lsm%start_hour
+    noah_lsm%start_min = mod_noah_lsm%start_min
+    noah_lsm%outdir = mod_noah_lsm%outdir
+    noah_lsm%restart_filename_requested = mod_noah_lsm%restart_filename_requested
+    noah_lsm%restart_frequency_hours = mod_noah_lsm%restart_frequency_hours
+    noah_lsm%output_timestep = mod_noah_lsm%output_timestep
+    noah_lsm%dynamic_veg_option = mod_noah_lsm%dynamic_veg_option
+    noah_lsm%canopy_stomatal_resistance_option = mod_noah_lsm%canopy_stomatal_resistance_option
+    noah_lsm%btr_option = mod_noah_lsm%btr_option
+    noah_lsm%runoff_option = mod_noah_lsm%runoff_option
+    noah_lsm%surface_drag_option = mod_noah_lsm%surface_drag_option
+    noah_lsm%supercooled_water_option = mod_noah_lsm%supercooled_water_option
+    noah_lsm%frozen_soil_option = mod_noah_lsm%frozen_soil_option
+    noah_lsm%radiative_transfer_option = mod_noah_lsm%radiative_transfer_option
+    noah_lsm%snow_albedo_option = mod_noah_lsm%snow_albedo_option
+    noah_lsm%pcp_partition_option = mod_noah_lsm%pcp_partition_option
+    noah_lsm%tbot_option = mod_noah_lsm%tbot_option
+    noah_lsm%temp_time_scheme_option = mod_noah_lsm%temp_time_scheme_option
+    noah_lsm%glacier_option = mod_noah_lsm%glacier_option
+    noah_lsm%surface_resistance_option = mod_noah_lsm%surface_resistance_option
+    noah_lsm%split_output_count = mod_noah_lsm%split_output_count
+    noah_lsm%khour = mod_noah_lsm%khour
+    noah_lsm%kday = mod_noah_lsm%kday
+    noah_lsm%zlvl = mod_noah_lsm%zlvl
+    noah_lsm%hrldas_setup_file = mod_noah_lsm%hrldas_setup_file
+    noah_lsm%mmf_runoff_file = mod_noah_lsm%mmf_runoff_file
+    noah_lsm%external_veg_filename_template = mod_noah_lsm%external_veg_filename_template
+    noah_lsm%external_lai_filename_template = mod_noah_lsm%external_lai_filename_template
+    noah_lsm%xstart = mod_noah_lsm%xstart
+    noah_lsm%ystart = mod_noah_lsm%ystart
+    noah_lsm%xend = mod_noah_lsm%xend
+    noah_lsm%yend = mod_noah_lsm%yend
+    noah_lsm%soil_thick_input = mod_noah_lsm%soil_thick_input
+    noah_lsm%rst_bi_out = mod_noah_lsm%rst_bi_out
+    noah_lsm%rst_bi_in = mod_noah_lsm%rst_bi_in
+    noah_lsm%spatial_filename = mod_noah_lsm%spatial_filename
 
   end subroutine noah_lsm_sync
 
   type(WRF_HYDRO_OFFLINE_) function copy_wrf_hydro()
     implicit none
     
-    copy_wrf_hydro%finemesh = wrf_hydro_file%finemesh
-    copy_wrf_hydro%finemesh_factor = wrf_hydro_file%finemesh_factor
-    copy_wrf_hydro%forc_typ = wrf_hydro_file%forc_typ
-    copy_wrf_hydro%snow_assim = wrf_hydro_file%snow_assim
+    copy_wrf_hydro%finemesh = wrf_hydro%finemesh
+    copy_wrf_hydro%finemesh_factor = wrf_hydro%finemesh_factor
+    copy_wrf_hydro%forc_typ = wrf_hydro%forc_typ
+    copy_wrf_hydro%snow_assim = wrf_hydro%snow_assim
     
   end function copy_wrf_hydro
 
   type(NOAHLSM_OFFLINE_) function copy_noah_lsm()
     implicit none
 
-    copy_noah_lsm%indir = noah_lsm_file%indir
-    copy_noah_lsm%nsoil = noah_lsm_file%nsoil ! number of soil layers
-    copy_noah_lsm%forcing_timestep = noah_lsm_file%forcing_timestep
-    copy_noah_lsm%noah_timestep = noah_lsm_file%noah_timestep
-    copy_noah_lsm%start_year = noah_lsm_file%start_year
-    copy_noah_lsm%start_month = noah_lsm_file%start_month
-    copy_noah_lsm%start_day = noah_lsm_file%start_day
-    copy_noah_lsm%start_hour = noah_lsm_file%start_hour
-    copy_noah_lsm%start_min = noah_lsm_file%start_min
-    copy_noah_lsm%outdir = noah_lsm_file%outdir
-    copy_noah_lsm%restart_filename_requested = noah_lsm_file%restart_filename_requested
-    copy_noah_lsm%restart_frequency_hours = noah_lsm_file%restart_frequency_hours
-    copy_noah_lsm%output_timestep = noah_lsm_file%output_timestep
-    copy_noah_lsm%dynamic_veg_option = noah_lsm_file%dynamic_veg_option
-    copy_noah_lsm%canopy_stomatal_resistance_option = noah_lsm_file%canopy_stomatal_resistance_option
-    copy_noah_lsm%btr_option = noah_lsm_file%btr_option
-    copy_noah_lsm%runoff_option = noah_lsm_file%runoff_option
-    copy_noah_lsm%surface_drag_option = noah_lsm_file%surface_drag_option
-    copy_noah_lsm%supercooled_water_option = noah_lsm_file%supercooled_water_option
-    copy_noah_lsm%frozen_soil_option = noah_lsm_file%frozen_soil_option
-    copy_noah_lsm%radiative_transfer_option = noah_lsm_file%radiative_transfer_option
-    copy_noah_lsm%snow_albedo_option = noah_lsm_file%snow_albedo_option
-    copy_noah_lsm%pcp_partition_option = noah_lsm_file%pcp_partition_option
-    copy_noah_lsm%tbot_option = noah_lsm_file%tbot_option
-    copy_noah_lsm%temp_time_scheme_option = noah_lsm_file%temp_time_scheme_option
-    copy_noah_lsm%glacier_option = noah_lsm_file%glacier_option
-    copy_noah_lsm%surface_resistance_option = noah_lsm_file%surface_resistance_option
-    copy_noah_lsm%split_output_count = noah_lsm_file%split_output_count
-    copy_noah_lsm%khour = noah_lsm_file%khour
-    copy_noah_lsm%kday = noah_lsm_file%kday
-    copy_noah_lsm%zlvl = noah_lsm_file%zlvl
-    copy_noah_lsm%hrldas_setup_file = noah_lsm_file%hrldas_setup_file
-    copy_noah_lsm%mmf_runoff_file = noah_lsm_file%mmf_runoff_file
-    copy_noah_lsm%external_veg_filename_template = noah_lsm_file%external_veg_filename_template
-    copy_noah_lsm%external_lai_filename_template = noah_lsm_file%external_lai_filename_template
-    copy_noah_lsm%xstart = noah_lsm_file%xstart
-    copy_noah_lsm%ystart = noah_lsm_file%ystart
-    copy_noah_lsm%xend = noah_lsm_file%xend
-    copy_noah_lsm%yend = noah_lsm_file%yend
-    copy_noah_lsm%soil_thick_input = noah_lsm_file%soil_thick_input
-    copy_noah_lsm%rst_bi_out = noah_lsm_file%rst_bi_out
-    copy_noah_lsm%rst_bi_in = noah_lsm_file%rst_bi_in
-    copy_noah_lsm%spatial_filename = noah_lsm_file%spatial_filename
+    copy_noah_lsm%indir = noah_lsm%indir
+    copy_noah_lsm%nsoil = noah_lsm%nsoil ! number of soil layers
+    copy_noah_lsm%forcing_timestep = noah_lsm%forcing_timestep
+    copy_noah_lsm%noah_timestep = noah_lsm%noah_timestep
+    copy_noah_lsm%start_year = noah_lsm%start_year
+    copy_noah_lsm%start_month = noah_lsm%start_month
+    copy_noah_lsm%start_day = noah_lsm%start_day
+    copy_noah_lsm%start_hour = noah_lsm%start_hour
+    copy_noah_lsm%start_min = noah_lsm%start_min
+    copy_noah_lsm%outdir = noah_lsm%outdir
+    copy_noah_lsm%restart_filename_requested = noah_lsm%restart_filename_requested
+    copy_noah_lsm%restart_frequency_hours = noah_lsm%restart_frequency_hours
+    copy_noah_lsm%output_timestep = noah_lsm%output_timestep
+    copy_noah_lsm%dynamic_veg_option = noah_lsm%dynamic_veg_option
+    copy_noah_lsm%canopy_stomatal_resistance_option = noah_lsm%canopy_stomatal_resistance_option
+    copy_noah_lsm%btr_option = noah_lsm%btr_option
+    copy_noah_lsm%runoff_option = noah_lsm%runoff_option
+    copy_noah_lsm%surface_drag_option = noah_lsm%surface_drag_option
+    copy_noah_lsm%supercooled_water_option = noah_lsm%supercooled_water_option
+    copy_noah_lsm%frozen_soil_option = noah_lsm%frozen_soil_option
+    copy_noah_lsm%radiative_transfer_option = noah_lsm%radiative_transfer_option
+    copy_noah_lsm%snow_albedo_option = noah_lsm%snow_albedo_option
+    copy_noah_lsm%pcp_partition_option = noah_lsm%pcp_partition_option
+    copy_noah_lsm%tbot_option = noah_lsm%tbot_option
+    copy_noah_lsm%temp_time_scheme_option = noah_lsm%temp_time_scheme_option
+    copy_noah_lsm%glacier_option = noah_lsm%glacier_option
+    copy_noah_lsm%surface_resistance_option = noah_lsm%surface_resistance_option
+    copy_noah_lsm%split_output_count = noah_lsm%split_output_count
+    copy_noah_lsm%khour = noah_lsm%khour
+    copy_noah_lsm%kday = noah_lsm%kday
+    copy_noah_lsm%zlvl = noah_lsm%zlvl
+    copy_noah_lsm%hrldas_setup_file = noah_lsm%hrldas_setup_file
+    copy_noah_lsm%mmf_runoff_file = noah_lsm%mmf_runoff_file
+    copy_noah_lsm%external_veg_filename_template = noah_lsm%external_veg_filename_template
+    copy_noah_lsm%external_lai_filename_template = noah_lsm%external_lai_filename_template
+    copy_noah_lsm%xstart = noah_lsm%xstart
+    copy_noah_lsm%ystart = noah_lsm%ystart
+    copy_noah_lsm%xend = noah_lsm%xend
+    copy_noah_lsm%yend = noah_lsm%yend
+    copy_noah_lsm%soil_thick_input = noah_lsm%soil_thick_input
+    copy_noah_lsm%rst_bi_out = noah_lsm%rst_bi_out
+    copy_noah_lsm%rst_bi_in = noah_lsm%rst_bi_in
+    copy_noah_lsm%spatial_filename = noah_lsm%spatial_filename
     
   end function copy_noah_lsm
 
@@ -832,10 +832,10 @@ contains
     close(11)
 #endif
 
-    wrf_hydro_file%finemesh = finemesh
-    wrf_hydro_file%finemesh_factor = finemesh_factor
-    wrf_hydro_file%forc_typ = forc_typ
-    wrf_hydro_file%snow_assim = snow_assim
+    wrf_hydro%finemesh = finemesh
+    wrf_hydro%finemesh_factor = finemesh_factor
+    wrf_hydro%forc_typ = forc_typ
+    wrf_hydro%snow_assim = snow_assim
 
   end subroutine init_wrf_hydro
 
@@ -907,21 +907,21 @@ contains
     namelist /WRF_HYDRO_OFFLINE/ &
          finemesh,finemesh_factor,forc_typ, snow_assim
 
-    noah_lsm_file%nsoil                   = -999
-    noah_lsm_file%soil_thick_input        = -999
+    noah_lsm%nsoil                   = -999
+    noah_lsm%soil_thick_input        = -999
     ! dtbl                             = -999
-    noah_lsm_file%start_year              = -999
-    noah_lsm_file%start_month             = -999
-    noah_lsm_file%start_day               = -999
-    noah_lsm_file%start_hour              = -999
-    noah_lsm_file%start_min               = -999
-    noah_lsm_file%khour                   = -999
-    noah_lsm_file%kday                    = -999
-    noah_lsm_file%zlvl                    = -999
-    noah_lsm_file%forcing_timestep        = -999
-    noah_lsm_file%noah_timestep           = -999
-    noah_lsm_file%output_timestep         = -999
-    noah_lsm_file%restart_frequency_hours = -999
+    noah_lsm%start_year              = -999
+    noah_lsm%start_month             = -999
+    noah_lsm%start_day               = -999
+    noah_lsm%start_hour              = -999
+    noah_lsm%start_min               = -999
+    noah_lsm%khour                   = -999
+    noah_lsm%kday                    = -999
+    noah_lsm%zlvl                    = -999
+    noah_lsm%forcing_timestep        = -999
+    noah_lsm%noah_timestep           = -999
+    noah_lsm%output_timestep         = -999
+    noah_lsm%restart_frequency_hours = -999
 
 #ifndef NCEP_WCOSS
     open(30, file="namelist.hrldas", form="FORMATTED")
@@ -959,54 +959,54 @@ contains
     close(11)
 #endif
 
-    wrf_hydro_file%finemesh = 0!finemesh
-    wrf_hydro_file%finemesh_factor = 0!finemesh_factor
-    wrf_hydro_file%forc_typ = forc_typ
-    wrf_hydro_file%snow_assim = 0!snow_assim
+    wrf_hydro%finemesh = 0!finemesh
+    wrf_hydro%finemesh_factor = 0!finemesh_factor
+    wrf_hydro%forc_typ = forc_typ
+    wrf_hydro%snow_assim = 0!snow_assim
 
-    noah_lsm_file%indir = indir 
-    noah_lsm_file%nsoil = nsoil ! number of soil layers
-    noah_lsm_file%forcing_timestep = forcing_timestep
-    noah_lsm_file%noah_timestep = noah_timestep
-    noah_lsm_file%start_year = start_year
-    noah_lsm_file%start_month = start_month
-    noah_lsm_file%start_day = start_day
-    noah_lsm_file%start_hour = start_hour
-    noah_lsm_file%start_min = start_min
-    noah_lsm_file%outdir = outdir
-    noah_lsm_file%restart_filename_requested = restart_filename_requested
-    noah_lsm_file%restart_frequency_hours = restart_frequency_hours
-    noah_lsm_file%output_timestep = output_timestep
-    noah_lsm_file%dynamic_veg_option = dynamic_veg_option
-    noah_lsm_file%canopy_stomatal_resistance_option = canopy_stomatal_resistance_option
-    noah_lsm_file%btr_option = btr_option
-    noah_lsm_file%runoff_option = runoff_option
-    noah_lsm_file%surface_drag_option = surface_drag_option
-    noah_lsm_file%supercooled_water_option = supercooled_water_option
-    noah_lsm_file%frozen_soil_option = frozen_soil_option
-    noah_lsm_file%radiative_transfer_option = radiative_transfer_option
-    noah_lsm_file%snow_albedo_option = snow_albedo_option
-    noah_lsm_file%pcp_partition_option = pcp_partition_option
-    noah_lsm_file%tbot_option = tbot_option
-    noah_lsm_file%temp_time_scheme_option = temp_time_scheme_option
-    noah_lsm_file%glacier_option = glacier_option
-    noah_lsm_file%surface_resistance_option = surface_resistance_option
-    noah_lsm_file%split_output_count = split_output_count
-    noah_lsm_file%khour = khour
-    noah_lsm_file%kday = kday
-    noah_lsm_file%zlvl = zlvl
-    noah_lsm_file%hrldas_setup_file = hrldas_setup_file
-    noah_lsm_file%mmf_runoff_file = mmf_runoff_file
-    noah_lsm_file%external_veg_filename_template = external_veg_filename_template
-    noah_lsm_file%external_lai_filename_template = external_lai_filename_template
-    noah_lsm_file%xstart = xstart
-    noah_lsm_file%ystart = ystart
-    noah_lsm_file%xend = xend
-    noah_lsm_file%yend = yend
-    noah_lsm_file%soil_thick_input = soil_thick_input
-    noah_lsm_file%rst_bi_out = rst_bi_out
-    noah_lsm_file%rst_bi_in = rst_bi_in
-    noah_lsm_file%spatial_filename = spatial_filename
+    noah_lsm%indir = indir 
+    noah_lsm%nsoil = nsoil ! number of soil layers
+    noah_lsm%forcing_timestep = forcing_timestep
+    noah_lsm%noah_timestep = noah_timestep
+    noah_lsm%start_year = start_year
+    noah_lsm%start_month = start_month
+    noah_lsm%start_day = start_day
+    noah_lsm%start_hour = start_hour
+    noah_lsm%start_min = start_min
+    noah_lsm%outdir = outdir
+    noah_lsm%restart_filename_requested = restart_filename_requested
+    noah_lsm%restart_frequency_hours = restart_frequency_hours
+    noah_lsm%output_timestep = output_timestep
+    noah_lsm%dynamic_veg_option = dynamic_veg_option
+    noah_lsm%canopy_stomatal_resistance_option = canopy_stomatal_resistance_option
+    noah_lsm%btr_option = btr_option
+    noah_lsm%runoff_option = runoff_option
+    noah_lsm%surface_drag_option = surface_drag_option
+    noah_lsm%supercooled_water_option = supercooled_water_option
+    noah_lsm%frozen_soil_option = frozen_soil_option
+    noah_lsm%radiative_transfer_option = radiative_transfer_option
+    noah_lsm%snow_albedo_option = snow_albedo_option
+    noah_lsm%pcp_partition_option = pcp_partition_option
+    noah_lsm%tbot_option = tbot_option
+    noah_lsm%temp_time_scheme_option = temp_time_scheme_option
+    noah_lsm%glacier_option = glacier_option
+    noah_lsm%surface_resistance_option = surface_resistance_option
+    noah_lsm%split_output_count = split_output_count
+    noah_lsm%khour = khour
+    noah_lsm%kday = kday
+    noah_lsm%zlvl = zlvl
+    noah_lsm%hrldas_setup_file = hrldas_setup_file
+    noah_lsm%mmf_runoff_file = mmf_runoff_file
+    noah_lsm%external_veg_filename_template = external_veg_filename_template
+    noah_lsm%external_lai_filename_template = external_lai_filename_template
+    noah_lsm%xstart = xstart
+    noah_lsm%ystart = ystart
+    noah_lsm%xend = xend
+    noah_lsm%yend = yend
+    noah_lsm%soil_thick_input = soil_thick_input
+    noah_lsm%rst_bi_out = rst_bi_out
+    noah_lsm%rst_bi_in = rst_bi_in
+    noah_lsm%spatial_filename = spatial_filename
 
       !dtbl = real(noah_timestep)
 

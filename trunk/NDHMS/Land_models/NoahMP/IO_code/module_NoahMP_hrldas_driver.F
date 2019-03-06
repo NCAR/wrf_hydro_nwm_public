@@ -25,7 +25,7 @@ module module_NoahMP_hrldas_driver
   USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
   USE module_date_utilities
   USE orchestrator_base
-  USE config_base
+  USE config_base, only: wrf_hydro, noah_lsm
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char, mpp_land_sync
   use module_mpp_land, only: check_land, node_info, fatal_error_stop, numprocs
@@ -390,10 +390,10 @@ module module_NoahMP_hrldas_driver
   character(len=1000) :: VARLIST
   integer :: brkflag = 0
   integer :: varind = 1
-  type(WRF_HYDRO_OFFLINE_) :: wrf_hydro
+  !type(WRF_HYDRO_OFFLINE_) :: wrf_hydro
 #endif
 
-  type(NOAHLSM_OFFLINE_) :: noah_lsm
+  ! type(NOAHLSM_OFFLINE_) :: noah_lsm
   integer :: xstart, xend, ystart, yend !courtesy variables
 
   contains
@@ -406,6 +406,7 @@ module module_NoahMP_hrldas_driver
      implicit  none
      integer :: NTIME_out
      integer, parameter :: did = 1
+     integer :: khour
 
     ! initilization for stand alone parallel code.
     integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
@@ -419,7 +420,7 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
 
-    wrf_hydro = orchestrator%config%wrf_hydro()
+    ! wrf_hydro = orchestrator%config%wrf_hydro()
 
     forc_typ = wrf_hydro%forc_typ !convenience
 
@@ -431,7 +432,7 @@ module module_NoahMP_hrldas_driver
   close(11)
 #endif
 
-  noah_lsm = orchestrator%config%noah_lsm()
+  !noah_lsm = orchestrator%config%noah_lsm()
 
   dtbl = real(noah_lsm%noah_timestep)
   num_soil_layers = noah_lsm%nsoil      ! because surface driver uses the long form
@@ -449,7 +450,7 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = noah_lsm%temp_time_scheme_option
   IOPT_GLA = noah_lsm%glacier_option
   IOPT_RSF = noah_lsm%surface_resistance_option
-
+  khour = noah_lsm%khour
   !!----------------------------------------------------------------------------
   !! channel_only
   call updateNameList("channel_only",0)
@@ -461,23 +462,24 @@ module module_NoahMP_hrldas_driver
      write(olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
           noah_lsm%start_year, noah_lsm%start_month, noah_lsm%start_day, noah_lsm%start_hour, noah_lsm%start_min, 0
      forcdate = olddate
-     if ((noah_lsm%khour < 0) .and. (noah_lsm%kday < 0)) then
+     if ((khour < 0) .and. (noah_lsm%kday < 0)) then
         write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
              "Namelist error: Either KHOUR or KDAY must be defined.")')
         stop
-     else if (( noah_lsm%khour < 0 ) .and. (noah_lsm%kday > 0)) then
-        noah_lsm%khour = noah_lsm%kday * 24
-     else if ((noah_lsm%khour > 0) .and. (noah_lsm%kday > 0)) then
+     else if (( khour < 0 ) .and. (noah_lsm%kday > 0)) then
+        write(*, '("WARNING: In land_driver_ini() - KHOUR < 0. DEFINED USING KDAY.")')
+        khour = noah_lsm%kday * 24
+     else if ((khour > 0) .and. (noah_lsm%kday > 0)) then
         write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
         stop
      endif
 
-     NTIME=(noah_lsm%KHOUR)*3600./nint(dtbl)
+     NTIME = khour*3600./nint(dtbl)
      NTIME_out = NTIME
 
      if(.not. RT_DOMAIN(did)%initialized) then  
         nlst(did)%dt = real(noah_lsm%noah_timestep)
-        nlst(did)%khour = noah_lsm%khour ! Adding kHOUR to be used in the NWM output routines.
+        nlst(did)%khour = khour ! Adding kHOUR to be used in the NWM output routines.
         nlst(did)%olddate(1:19) = olddate(1:19)
         nlst(did)%startdate(1:19) = olddate(1:19)
         nlst(did)%nsoil = -999999
@@ -521,7 +523,7 @@ module module_NoahMP_hrldas_driver
           " - NSOIL must be set in the namelist."
   endif
 
-  if ((noah_lsm%khour < 0) .and. (noah_lsm%kday < 0)) then
+  if ((khour < 0) .and. (noah_lsm%kday < 0)) then
 #ifdef HYDRO_D
      write(*, '("FATAL ERROR: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
                 "Namelist error.")')
@@ -530,9 +532,10 @@ module module_NoahMP_hrldas_driver
      write(*, '(" ***** ")')
 #endif
      stop
-  else if (( noah_lsm%khour < 0 ) .and. (noah_lsm%kday > 0)) then
-     noah_lsm%khour = noah_lsm%kday * 24
-  else if ((noah_lsm%khour > 0) .and. (noah_lsm%kday > 0)) then
+  else if (( khour < 0 ) .and. (noah_lsm%kday > 0)) then
+     khour = noah_lsm%kday * 24
+     write(*, '("WARNING: In land_driver_ini() - KHOUR < 0. DEFINED USING KDAY.")')
+  else if ((khour > 0) .and. (noah_lsm%kday > 0)) then
      write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
   else
      ! all is well.  KHOUR defined
@@ -621,13 +624,18 @@ module module_NoahMP_hrldas_driver
 #ifdef MPP_LAND
 #ifdef WRF_HYDRO
     if(wrf_hydro%finemesh .ne. 0) then
-         noah_lsm%xstart = (wrfits-1) * wrf_hydro%finemesh_factor + 1
-         noah_lsm%xend = (wrfite-1) * wrf_hydro%finemesh_factor
-         noah_lsm%ystart = (wrfjts-1) * wrf_hydro%finemesh_factor + 1
-         noah_lsm%yend = (wrfjte-1) * wrf_hydro%finemesh_factor
-         call CPL_LAND_INIT(noah_lsm%xstart,noah_lsm%xend, noah_lsm%ystart, noah_lsm%yend)
-         ix_tmp = noah_lsm%xend - noah_lsm%xstart + 1
-         jx_tmp = noah_lsm%yend - noah_lsm%ystart + 1
+       write(*, '("WARNING: In module_NoahMP_hrldas_driver.F land_driver_ini() - "// &
+            "noah_lsm%x and y start and noah_lsm%x and yend calculated using wrf_hydro%finemesh_factor")')
+       block 
+         integer :: xstart, xend, ystart, yend
+         xstart = (wrfits-1) * wrf_hydro%finemesh_factor + 1
+         xend = (wrfite-1) * wrf_hydro%finemesh_factor
+         ystart = (wrfjts-1) * wrf_hydro%finemesh_factor + 1
+         yend = (wrfjte-1) * wrf_hydro%finemesh_factor
+         call CPL_LAND_INIT(xstart, xend, ystart, yend)
+         ix_tmp = xend - xstart + 1
+         jx_tmp = yend - ystart + 1
+       end block
     else
 #endif
        call read_dim(noah_lsm%hrldas_setup_file, ix_tmp, jx_tmp)
@@ -1114,7 +1122,7 @@ module module_NoahMP_hrldas_driver
       tmpdate = olddate
 #endif
 
-     call find_restart_file(rank, trim(noah_lsm%restart_filename_requested), startdate, noah_lsm%khour, olddate, restart_flnm)
+     call find_restart_file(rank, trim(noah_lsm%restart_filename_requested), startdate, khour, olddate, restart_flnm)
 
      call read_restart(trim(restart_flnm), xstart, xend, xstart, ixfull, jxfull, noah_lsm%nsoil, olddate)
 
@@ -1327,14 +1335,14 @@ module module_NoahMP_hrldas_driver
 
   endif  ! end of restart if block
   
-  NTIME=(noah_lsm%KHOUR)*3600./nint(dtbl)
+  NTIME = khour*3600./nint(dtbl)
 
 #ifdef HYDRO_D
   print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
 #endif
 
   ! assinging the KHOUR to be used in the NWM output routing for global metadata
-  nlst(did)%khour = noah_lsm%khour
+  nlst(did)%khour = khour
 
   call system_clock(count=clock_count_1)   ! Start a timer
 
@@ -1458,9 +1466,6 @@ endif
 !  endif
 !#endif
 #endif
-
-  ! Synchronize config file
-  call orchestrator%config%noah_lsm_sync(noah_lsm)
 
 end subroutine land_driver_ini
 
