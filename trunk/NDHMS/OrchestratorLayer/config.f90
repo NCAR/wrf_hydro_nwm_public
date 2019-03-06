@@ -146,9 +146,6 @@ module config_base
    contains
      procedure, nopass :: init => config_init
      procedure, nopass :: init_nlst => init_namelist_rt_field
-     !procedure, nopass :: noah_lsm => copy_noah_lsm
-     !procedure, nopass :: noah_lsm_sync => noah_lsm_sync
-     !procedure, nopass :: wrf_hydro => copy_wrf_hydro
   end type Configuration_
 
   integer, parameter :: max_domain = 5
@@ -693,116 +690,6 @@ contains
     if(SUBRTSWCRT .eq. 0 .and. OVRTSWCRT .eq. 0 .and. GWBASESWCRT .eq. 0) nlst(did)%rtFlag = 0
 
   end subroutine init_namelist_rt_field
-
-  subroutine noah_lsm_sync(mod_noah_lsm)
-    implicit none
-
-    type(NOAHLSM_OFFLINE_) :: mod_noah_lsm
-
-    noah_lsm%indir = mod_noah_lsm%indir
-    noah_lsm%nsoil = mod_noah_lsm%nsoil ! number of soil layers
-    noah_lsm%forcing_timestep = mod_noah_lsm%forcing_timestep
-    noah_lsm%noah_timestep = mod_noah_lsm%noah_timestep
-    noah_lsm%start_year = mod_noah_lsm%start_year
-    noah_lsm%start_month = mod_noah_lsm%start_month
-    noah_lsm%start_day = mod_noah_lsm%start_day
-    noah_lsm%start_hour = mod_noah_lsm%start_hour
-    noah_lsm%start_min = mod_noah_lsm%start_min
-    noah_lsm%outdir = mod_noah_lsm%outdir
-    noah_lsm%restart_filename_requested = mod_noah_lsm%restart_filename_requested
-    noah_lsm%restart_frequency_hours = mod_noah_lsm%restart_frequency_hours
-    noah_lsm%output_timestep = mod_noah_lsm%output_timestep
-    noah_lsm%dynamic_veg_option = mod_noah_lsm%dynamic_veg_option
-    noah_lsm%canopy_stomatal_resistance_option = mod_noah_lsm%canopy_stomatal_resistance_option
-    noah_lsm%btr_option = mod_noah_lsm%btr_option
-    noah_lsm%runoff_option = mod_noah_lsm%runoff_option
-    noah_lsm%surface_drag_option = mod_noah_lsm%surface_drag_option
-    noah_lsm%supercooled_water_option = mod_noah_lsm%supercooled_water_option
-    noah_lsm%frozen_soil_option = mod_noah_lsm%frozen_soil_option
-    noah_lsm%radiative_transfer_option = mod_noah_lsm%radiative_transfer_option
-    noah_lsm%snow_albedo_option = mod_noah_lsm%snow_albedo_option
-    noah_lsm%pcp_partition_option = mod_noah_lsm%pcp_partition_option
-    noah_lsm%tbot_option = mod_noah_lsm%tbot_option
-    noah_lsm%temp_time_scheme_option = mod_noah_lsm%temp_time_scheme_option
-    noah_lsm%glacier_option = mod_noah_lsm%glacier_option
-    noah_lsm%surface_resistance_option = mod_noah_lsm%surface_resistance_option
-    noah_lsm%split_output_count = mod_noah_lsm%split_output_count
-    noah_lsm%khour = mod_noah_lsm%khour
-    noah_lsm%kday = mod_noah_lsm%kday
-    noah_lsm%zlvl = mod_noah_lsm%zlvl
-    noah_lsm%hrldas_setup_file = mod_noah_lsm%hrldas_setup_file
-    noah_lsm%mmf_runoff_file = mod_noah_lsm%mmf_runoff_file
-    noah_lsm%external_veg_filename_template = mod_noah_lsm%external_veg_filename_template
-    noah_lsm%external_lai_filename_template = mod_noah_lsm%external_lai_filename_template
-    noah_lsm%xstart = mod_noah_lsm%xstart
-    noah_lsm%ystart = mod_noah_lsm%ystart
-    noah_lsm%xend = mod_noah_lsm%xend
-    noah_lsm%yend = mod_noah_lsm%yend
-    noah_lsm%soil_thick_input = mod_noah_lsm%soil_thick_input
-    noah_lsm%rst_bi_out = mod_noah_lsm%rst_bi_out
-    noah_lsm%rst_bi_in = mod_noah_lsm%rst_bi_in
-    noah_lsm%spatial_filename = mod_noah_lsm%spatial_filename
-
-  end subroutine noah_lsm_sync
-
-  type(WRF_HYDRO_OFFLINE_) function copy_wrf_hydro()
-    implicit none
-    
-    copy_wrf_hydro%finemesh = wrf_hydro%finemesh
-    copy_wrf_hydro%finemesh_factor = wrf_hydro%finemesh_factor
-    copy_wrf_hydro%forc_typ = wrf_hydro%forc_typ
-    copy_wrf_hydro%snow_assim = wrf_hydro%snow_assim
-    
-  end function copy_wrf_hydro
-
-  type(NOAHLSM_OFFLINE_) function copy_noah_lsm()
-    implicit none
-
-    copy_noah_lsm%indir = noah_lsm%indir
-    copy_noah_lsm%nsoil = noah_lsm%nsoil ! number of soil layers
-    copy_noah_lsm%forcing_timestep = noah_lsm%forcing_timestep
-    copy_noah_lsm%noah_timestep = noah_lsm%noah_timestep
-    copy_noah_lsm%start_year = noah_lsm%start_year
-    copy_noah_lsm%start_month = noah_lsm%start_month
-    copy_noah_lsm%start_day = noah_lsm%start_day
-    copy_noah_lsm%start_hour = noah_lsm%start_hour
-    copy_noah_lsm%start_min = noah_lsm%start_min
-    copy_noah_lsm%outdir = noah_lsm%outdir
-    copy_noah_lsm%restart_filename_requested = noah_lsm%restart_filename_requested
-    copy_noah_lsm%restart_frequency_hours = noah_lsm%restart_frequency_hours
-    copy_noah_lsm%output_timestep = noah_lsm%output_timestep
-    copy_noah_lsm%dynamic_veg_option = noah_lsm%dynamic_veg_option
-    copy_noah_lsm%canopy_stomatal_resistance_option = noah_lsm%canopy_stomatal_resistance_option
-    copy_noah_lsm%btr_option = noah_lsm%btr_option
-    copy_noah_lsm%runoff_option = noah_lsm%runoff_option
-    copy_noah_lsm%surface_drag_option = noah_lsm%surface_drag_option
-    copy_noah_lsm%supercooled_water_option = noah_lsm%supercooled_water_option
-    copy_noah_lsm%frozen_soil_option = noah_lsm%frozen_soil_option
-    copy_noah_lsm%radiative_transfer_option = noah_lsm%radiative_transfer_option
-    copy_noah_lsm%snow_albedo_option = noah_lsm%snow_albedo_option
-    copy_noah_lsm%pcp_partition_option = noah_lsm%pcp_partition_option
-    copy_noah_lsm%tbot_option = noah_lsm%tbot_option
-    copy_noah_lsm%temp_time_scheme_option = noah_lsm%temp_time_scheme_option
-    copy_noah_lsm%glacier_option = noah_lsm%glacier_option
-    copy_noah_lsm%surface_resistance_option = noah_lsm%surface_resistance_option
-    copy_noah_lsm%split_output_count = noah_lsm%split_output_count
-    copy_noah_lsm%khour = noah_lsm%khour
-    copy_noah_lsm%kday = noah_lsm%kday
-    copy_noah_lsm%zlvl = noah_lsm%zlvl
-    copy_noah_lsm%hrldas_setup_file = noah_lsm%hrldas_setup_file
-    copy_noah_lsm%mmf_runoff_file = noah_lsm%mmf_runoff_file
-    copy_noah_lsm%external_veg_filename_template = noah_lsm%external_veg_filename_template
-    copy_noah_lsm%external_lai_filename_template = noah_lsm%external_lai_filename_template
-    copy_noah_lsm%xstart = noah_lsm%xstart
-    copy_noah_lsm%ystart = noah_lsm%ystart
-    copy_noah_lsm%xend = noah_lsm%xend
-    copy_noah_lsm%yend = noah_lsm%yend
-    copy_noah_lsm%soil_thick_input = noah_lsm%soil_thick_input
-    copy_noah_lsm%rst_bi_out = noah_lsm%rst_bi_out
-    copy_noah_lsm%rst_bi_in = noah_lsm%rst_bi_in
-    copy_noah_lsm%spatial_filename = noah_lsm%spatial_filename
-    
-  end function copy_noah_lsm
 
   subroutine init_wrf_hydro()
     implicit none
