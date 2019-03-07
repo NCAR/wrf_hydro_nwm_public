@@ -1625,7 +1625,6 @@ end subroutine HYDRO_ini
          soltyp = 0
          call get2d_lsm_soltyp(soltyp,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst(did)%geo_static_flnm))
 
-         write(*,*) 'RT_DOMAIN%TERRAIN allocated ', allocated(RT_DOMAIN(did)%TERRAIN)
          call get2d_lsm_real("HGT",RT_DOMAIN(did)%TERRAIN,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst(did)%geo_static_flnm))
 
          call get2d_lsm_real("XLAT",RT_DOMAIN(did)%lat_lsm,RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,trim(nlst(did)%geo_static_flnm))

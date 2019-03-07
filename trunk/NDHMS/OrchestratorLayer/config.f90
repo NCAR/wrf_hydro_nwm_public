@@ -162,8 +162,6 @@ contains
     integer, parameter :: did = 1
 
     call init_noah_lsm_and_wrf_hydro()
-    !call init_wrf_hydro()
-    !call init_namelist_rt_field(did)
 
   end subroutine config_init
 

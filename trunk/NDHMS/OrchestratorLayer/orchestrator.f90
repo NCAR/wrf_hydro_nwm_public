@@ -30,7 +30,6 @@ contains
 
   subroutine orchestrator_init(self)
     class (orchestrator_) :: self   
-    write(*,*) 'In orchestrator constructor'
 
     self%config = Configuration_()
 
