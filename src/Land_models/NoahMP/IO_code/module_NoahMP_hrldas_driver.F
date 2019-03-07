@@ -136,6 +136,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GLW       ! longwave down at surface [W m-2]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  P8W       ! 3D pressure, valid at interface [Pa]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINBL, RAINBL_tmp    ! precipitation entering land model [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWBL    ! snow entering land model [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SR        ! frozen precip ratio entering land model [-]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINCV    ! convective precip forcing [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RAINNCV   ! non-convective precip forcing [mm]
@@ -762,6 +763,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( GLW       (XSTART:XEND,YSTART:YEND) )    ! longwave down at surface [W m-2]
   ALLOCATE ( P8W       (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D pressure, valid at interface [Pa]
   ALLOCATE ( RAINBL    (XSTART:XEND,YSTART:YEND) )    ! total precipitation entering land model [mm]
+  ALLOCATE ( SNOWBL    (XSTART:XEND,YSTART:YEND) )    ! snow entering land model [mm]
   ALLOCATE ( RAINBL_tmp    (XSTART:XEND,YSTART:YEND) )    ! precipitation entering land model [mm]
   ALLOCATE ( SR        (XSTART:XEND,YSTART:YEND) )    ! frozen precip ratio entering land model [-]
   ALLOCATE ( RAINCV    (XSTART:XEND,YSTART:YEND) )    ! convective precip forcing [mm]
@@ -1005,6 +1007,7 @@ module module_NoahMP_hrldas_driver
   GLW        = undefined_real
   P8W        = undefined_real
   RAINBL     = undefined_real
+  SNOWBL     = undefined_real
   RAINBL_tmp = undefined_real
   SR         = undefined_real
   RAINCV     = undefined_real
@@ -1724,8 +1727,10 @@ end subroutine land_driver_ini
      if(forc_typ .eq. 0) then
         CALL READFORC_HRLDAS(INFLNM_TEMPLATE, noah_lsm%FORCING_TIMESTEP, OLDDATE,  &
              XSTART, XEND, YSTART, YEND,                                  &
+       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
-	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, VEGFRA, update_veg, LAI, update_lai)
+	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai)
      else
         if(olddate == forcDate) then
            CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ, wrf_hydro%snow_assim,olddate,                      &
@@ -1743,8 +1748,10 @@ end subroutine land_driver_ini
 #else
      CALL READFORC_HRLDAS(INFLNM_TEMPLATE, noah_lsm%FORCING_TIMESTEP, OLDDATE,  &
           XSTART, XEND, YSTART, YEND,                                  &
+       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
           T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
-	    P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, VEGFRA, update_veg, LAI, update_lai)
+	    P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai)
 #endif
 
 991  continue
@@ -1757,6 +1764,7 @@ end subroutine land_driver_ini
      where(XLAND > 1.5)     GLW        = 0.0
      where(XLAND > 1.5)  SWDOWN        = 0.0
      where(XLAND > 1.5) RAINBL_tmp     = 0.0
+     where(XLAND > 1.5) SNOWBL         = 0.0
 
      QV_CURR(:,1,:) = QV_CURR(:,1,:)/(1.0 - QV_CURR(:,1,:))  ! Assuming input forcing are specific hum.;
                                                              ! WRF wants mixing ratio at driver level
@@ -1766,11 +1774,12 @@ end subroutine land_driver_ini
      V_PHY(:,2,:)   = V_PHY(:,1,:)    !
      QV_CURR(:,2,:) = QV_CURR(:,1,:)  !
      RAINBL = RAINBL_tmp * DTBL       ! RAINBL in WRF is [mm]
+     SNOWBL = SNOWBL * DTBL           ! 
      SR         = 0.0                 ! Will only use component if opt_snf=4
      RAINCV     = 0.0
      RAINNCV    = RAINBL
      RAINSHV    = 0.0
-     SNOWNCV    = 0.0
+     SNOWNCV    = SNOWBL
      GRAUPELNCV = 0.0
      HAILNCV    = 0.0
      DZ8W = 2 * noah_lsm%ZLVL                    ! 2* to be consistent with WRF model level
