@@ -22,9 +22,8 @@
 MODULE MODULE_MPP_LAND
 
   use MODULE_CPL_LAND
-
+  use mpi
   IMPLICIT NONE
-  include "mpif.h"
   !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
   integer, public :: left_id,right_id,up_id,down_id,my_id
   integer, public :: left_right_np,up_down_np ! define total process in two dimensions.
@@ -142,7 +141,7 @@ MODULE MODULE_MPP_LAND
 !    ### initialize the land model logically based on the two D method. 
 !    ### Call this function directly if it is nested with WRF.
     implicit none
-    integer :: ierr
+    integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
      
@@ -151,9 +150,9 @@ MODULE MODULE_MPP_LAND
 
       CALL mpi_initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
-           call MPI_INIT( ierr )  ! stand alone land model.
-      endif
+           call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )  ! stand alone land model.
            HYDRO_COMM_WORLD = MPI_COMM_WORLD
+      endif
            call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
            call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
 !     create 2d logical mapping of the CPU.

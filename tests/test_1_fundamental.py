@@ -254,6 +254,9 @@ def test_perfrestart_candidate(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
+            key1 = 'hydro_nlist'
+            key2 = 'restart_file'
+            restart_job._hydro_namelist[key1][key2] = str(candidate_hydro_restart_file)
 
     # LSM: Use actual time listed in meta data, not filename or positional list index
     for restart_file in candidate_sim_expected.output.restart_lsm:
@@ -263,6 +266,9 @@ def test_perfrestart_candidate(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_lsm_restart_file = pathlib.Path(restart_file.name)
             candidate_lsm_restart_file.symlink_to(restart_file)
+            key1 = 'noahlsm_offline'
+            key2 = 'restart_filename_requested'
+            restart_job._hrldas_namelist[key1][key2] = str(candidate_lsm_restart_file)
 
     # Nudging: Use actual time listed in meta data, not filename or positional list index
     if candidate_sim_expected.output.restart_nudging is not None:
@@ -272,6 +278,9 @@ def test_perfrestart_candidate(output_dir):
             if restart_time == restart_job.model_start_time:
                 candidate_nudging_restart_file = pathlib.Path(restart_file.name)
                 candidate_nudging_restart_file.symlink_to(restart_file)
+                key1 = 'nudging_nlist'
+                key2 = 'nudginglastobsfile'
+                restart_job._hydro_namelist[key1][key2] = str(candidate_nudging_restart_file)
 
     # Compose and run
     # catch warnings related to missing start and end job times
