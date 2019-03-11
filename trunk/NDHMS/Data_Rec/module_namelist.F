@@ -53,6 +53,8 @@ CONTAINS
           character(len=256) :: route_lake_f=""
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
+          logical            :: persistence
+          character(len=256) :: reservoir_timeslice_path = ""
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
@@ -115,8 +117,8 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt_ter,dtrt_ch,dxrt,&
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
-                    route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-                    route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
+                    route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, persistence, &
+                    reservoir_timeslice_path, route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -150,7 +152,8 @@ CONTAINS
    reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
    compound_channel = .FALSE.
    bucket_loss = 0
-   
+   persistence = .FALSE.
+
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
    nudgingParamFile = "DOMAIN/nudgingParams.nc"
@@ -246,11 +249,15 @@ CONTAINS
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
   nlst%reservoir_obs_dir = "testDirectory"
+  nlst%persistence = persistence
+  nlst%reservoir_timeslice_path = reservoir_timeslice_path
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
   call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
+  call mpp_land_bcast_log1(nlst%persistence)
+  call mpp_land_bcast_char(256,nlst%reservoir_timeslice_path)
 #endif
 
   write(nlst%hgrid,'(I1)') igrid
@@ -351,6 +358,7 @@ CONTAINS
     nlst%DTRT_TER   = DTRT_TER
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
+    !nlst%
 
 #ifdef MPP_LAND
   if(my_id .eq. IO_id) then
@@ -468,6 +476,7 @@ CONTAINS
     write(6,*) " nlst%route_link_f ", route_link_f
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
+    write(6,*) " nlst%reservoir_timeslice_path ", reservoir_timeslice_path
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
@@ -735,7 +744,16 @@ subroutine rt_nlst_check(nlst)
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
    end if
 
-
+   if(nlst%persistence) then
+      if(len(trim(nlst%reservoir_timeslice_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
+         reservoir persistence capability.')
+      endif
+      if(len(trim(nlst%reservoir_timeslice_path)) .ne. 0) then
+        inquire(file=trim(nlst%reservoir_timeslice_path),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_timeslice_path not found.')
+      endif
+    end if
 end subroutine rt_nlst_check
 
 end module module_namelist
