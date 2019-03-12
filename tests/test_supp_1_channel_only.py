@@ -127,14 +127,13 @@ def test_run_candidate_channel_only(
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
     job = wrfhydropy.Job(job_id='run_candidate',
                          exe_cmd=exe_command,
-                         restart_freq_hr=24,
+                         restart_freq_hr=6,
                          output_freq_hr=1)
     candidate_sim_copy.add(job)
 
     start_time, end_time = candidate_sim_copy.jobs[0]._solve_model_start_end_times()
     candidate_sim_copy.jobs[0].model_start_time = start_time
     candidate_sim_copy.jobs[0].model_end_time = start_time + dt.timedelta(hours=24)
-    candidate_sim_copy.jobs[0].restart_freq_hr = 6
 
     # Run, catch warnings related to missing start and end job times
     with warnings.catch_warnings():
@@ -174,14 +173,13 @@ def test_run_candidate_channel_only(
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
     job = wrfhydropy.Job(job_id='run_candidate_channel_only',
                          exe_cmd=exe_command,
-                         restart_freq_hr=24,
+                         restart_freq_hr=6,
                          output_freq_hr=1)
     candidate_channel_only_sim_copy.add(job)
 
     start_time, end_time = candidate_channel_only_sim_copy.jobs[0]._solve_model_start_end_times()
     candidate_channel_only_sim_copy.jobs[0].model_start_time = start_time
     candidate_channel_only_sim_copy.jobs[0].model_end_time = start_time + dt.timedelta(hours=24)
-    candidate_channel_only_sim_copy.jobs[0].restart_freq_hr = 6
 
     # Run
     with warnings.catch_warnings():
@@ -286,7 +284,7 @@ def test_ncores_candidate_channel_only(output_dir):
     old_job = candidate_channel_only_sim.jobs[0]
     new_job = wrfhydropy.Job(job_id='ncores_candidate',
                              exe_cmd=old_job._exe_cmd,
-                             restart_freq_hr=24,
+                             restart_freq_hr=6,
                              output_freq_hr=1)
 
     # Remove old job and add new job
@@ -362,9 +360,17 @@ def test_perfrestart_candidate_channel_only(output_dir):
 
     # Get a new start time halfway along the run, make sure the restart frequency accomodates
     restart_job = candidate_channel_only_sim_restart.jobs[0]
+    restart_job.restart_file_time = None
     duration = restart_job.model_end_time - restart_job.model_start_time
     delay_restart_hr = int((duration.total_seconds() / 3600)/2)
-    assert delay_restart_hr % candidate_channel_only_sim.jobs[0].restart_freq_hr == 0, \
+
+    # Want matching restart frequencies for this test...
+    assert \
+        candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == \
+        candidate_channel_only_sim.jobs[0].restart_freq_hr_hrldas, \
+        "Hydro and HRLDAS components do not have the same restart frequencies."
+
+    assert delay_restart_hr % candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == 0, \
         "The restart delay is not a multiple of the restart frequency."
     restart_job.model_start_time = \
         restart_job.model_start_time + dt.timedelta(hours=delay_restart_hr)
