@@ -360,7 +360,6 @@ def test_perfrestart_candidate_channel_only(output_dir):
 
     # Get a new start time halfway along the run, make sure the restart frequency accomodates
     restart_job = candidate_channel_only_sim_restart.jobs[0]
-    restart_job.restart_file_time = None
     duration = restart_job.model_end_time - restart_job.model_start_time
     delay_restart_hr = int((duration.total_seconds() / 3600)/2)
 
