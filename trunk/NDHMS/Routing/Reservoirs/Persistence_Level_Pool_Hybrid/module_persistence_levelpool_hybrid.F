@@ -60,7 +60,8 @@ contains
     subroutine hybrid_struct_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
-        orifice_area, lake_max_water_elevation, lake_number, gage_id)
+        orifice_area, lake_max_water_elevation, lake_number, gage_id, &
+        start_date, timeslice_path, reservoir_gage_ids, number_of_lakes)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -75,6 +76,14 @@ contains
         integer, intent(in) :: lake_number               ! lake number
         integer, intent(in) :: gage_id
         !real, intent(in)    :: gage_discharge
+        character(len=19),  intent(in)                  :: start_date
+        character(len=256), intent(in)                  :: timeslice_path
+        integer,            intent(in), dimension(:)    :: reservoir_gage_ids
+        integer,            intent(in)                  :: number_of_lakes
+
+
+       call read_timeslice_data%init(start_date, &
+            timeslice_path, reservoir_gage_ids, number_of_lakes)
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -166,9 +175,18 @@ contains
 
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
-            !call setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
-            !reservoir_data%parameters%gage_id, gage_discharge)
+print *, 'reservoir_data%parameters%lake_number'
+print *, reservoir_data%parameters%lake_number
 
+            call read_timeslice_data%setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
+            reservoir_data%parameters%gage_id, gage_discharge)
+
+
+print *, 'reservoir_data%parameters%lake_number'
+print *, reservoir_data%parameters%lake_number
+
+            print *, 'gage_discharge'
+            print *, gage_discharge
 
 
             !after update
@@ -176,6 +194,16 @@ contains
                 !Set all P weights to 0
                 print *, 'p'
             end if
+
+
+            reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%state%timeslice_update_time_interval
+
+            print *, 'reservoir_data%state%timeslice_update_time'
+            print *, reservoir_data%state%timeslice_update_time
+
+            print *, 'reservoir_data%state%timeslice_update_time_interval'
+            print *, reservoir_data%state%timeslice_update_time_interval
+
 
         end if
 

@@ -7,7 +7,6 @@
 
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
-   type (read_timslice_data_struct) :: read_timeslice_data
 
    INTEGER :: IX, JX
    logical :: initialized

@@ -31,15 +31,6 @@ module module_read_timeslice_data
     use netcdf
     implicit none
 
-
-    type :: read_timselice_data_container
-        class (read_timselice_data_struct), pointer :: ptr
-    end type
-
-    class(read_timslice_data_container) :: read
-
-
-
     type :: read_timeslice_data_struct
 
         character(len=19)   :: start_date
@@ -57,29 +48,37 @@ module module_read_timeslice_data
         character(len=15),  allocatable, dimension(:) :: gage_id
         real,               allocatable, dimension(:) :: gage_discharge
         real,               allocatable, dimension(:) :: gage_quality
+        logical                                       :: initialized = .FALSE.
+
 
     contains
 
-        procedure :: init => read_timslice_data_struct_init
-        procedure :: destroy => read_timslice_data_struct_destroy
+        procedure :: init => read_timeslice_data_struct_init
+        procedure :: destroy => read_timeslice_data_struct_destroy
         procedure :: setup_read_timeslice => setup_read_timeslice
         procedure :: read_timeslice_file => read_timeslice_file
 
     end type read_timeslice_data_struct
 
+    type (read_timeslice_data_struct) :: read_timeslice_data
+
 contains
 
     ! Timeslice Data Struct Constructor
-    subroutine read_timslice_data_struct_init(this, start_date, timeslice_path, &
+    subroutine read_timeslice_data_struct_init(this, start_date, timeslice_path, &
         reservoir_gage_ids_all, number_of_lakes)
         implicit none
-        class(read_timslice_data_struct), intent(inout) :: this ! object being initialized
+        class(read_timeslice_data_struct), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: timeslice_path
         integer,            intent(in), dimension(:)    :: reservoir_gage_ids_all
         integer,            intent(in)                  :: number_of_lakes
         integer                                         :: lake_index, gage_id_subset_index
         integer                                         :: number_of_reservoir_gages
+
+        if (this%initialized) return
+        this%initialized = .true.
+
 
         this%start_date = start_date
         this%current_date = start_date
@@ -126,30 +125,32 @@ contains
 
         end do
 
-        !call this%setup_read_timeslice()
+        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
+        print *, 'at timeslice init'
+        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
 
-    end subroutine read_timslice_data_struct_init
+    end subroutine read_timeslice_data_struct_init
 
 
     ! Timeslice Data Struct Destructor
-    subroutine read_timslice_data_struct_destroy(this)
+    subroutine read_timeslice_data_struct_destroy(this)
 
         implicit none
-        class(read_timslice_data_struct), intent(inout) :: this ! object being destroyed
+        class(read_timeslice_data_struct), intent(inout) :: this ! object being destroyed
 
-    end subroutine read_timslice_data_struct_destroy
+    end subroutine read_timeslice_data_struct_destroy
 
 
     ! Set up list of timeslice files to read
     subroutine setup_read_timeslice(this, update_interval_seconds, current_reservoir_time_seconds, reservoir_gage_id, reservoir_gage_discharge)
         implicit none
 
-        class(read_timslice_data_struct), intent(inout) :: this
+        class(read_timeslice_data_struct), intent(inout) :: this
         integer, intent(in)  :: update_interval_seconds
         integer, intent(in)  :: current_reservoir_time_seconds
         !integer, intent(in) :: lake_number               ! lake number
         integer, intent(in)  :: reservoir_gage_id
-        integer, intent(out) :: reservoir_gage_discharge
+        real, intent(out)    :: reservoir_gage_discharge
         character(len=256)   :: timeslice_file_name
         character(len=19)    :: old_date, new_date
         character(len=2)     :: observation_resolution_string
@@ -157,10 +158,25 @@ contains
         integer :: observation_minute, observation_resolution_seconds
         logical :: file_exists
 
+print *, 'current_reservoir_time_seconds'
+print *, current_reservoir_time_seconds
+
+print *, 'this%last_update_time_seconds'
+print *, this%last_update_time_seconds
+
+
         if (current_reservoir_time_seconds .ne. this%last_update_time_seconds) then
 
+        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
+        print *, 'at timeslice setup read'
+        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
+
+            ! CAN GET NEW DATE HERE IN RETRO MODE WITH DAILY UPDATE INTERVAL
+            ! BUT CAN'T USE THE SAME CODE FOR FORECAST BECAUSE UPATE INTERVAL IS 1E8
             ! IF FIRST RUN
-            if (this%last_update_time_seconds == -999) then
+            !!!!
+
+            if (this%last_update_time_seconds .ne. -999) then
                 call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
             end if
 
@@ -226,8 +242,8 @@ contains
                     timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
                                     observation_resolution_string // 'min.usgsTimeSlice.ncdf'
 
-                    !print *, 'timeslice_file_name'
-                    !print *, timeslice_file_name
+                    print *, 'timeslice_file_name'
+                    print *, timeslice_file_name
 
                     inquire(FILE = timeslice_file_name, EXIST = file_exists)
                     if (file_exists) then
@@ -259,26 +275,32 @@ contains
             !    this%reservoir_gage_discharges_all(lake_index) = this%reservoir_gage_discharges(reservoir_subset_index)
             !end do
 
-
-            do reservoir_subset_index = 1, this%number_of_reservoir_gages
-                if (this%reservoir_gage_ids_subset(reservoir_subset_index) == reservoir_gage_id) then
-                    reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
-                end if
-            end do
-
-
         end if
+
+
+        do reservoir_subset_index = 1, this%number_of_reservoir_gages
+            if (this%reservoir_gage_ids_subset(reservoir_subset_index) == reservoir_gage_id) then
+                reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
+            end if
+        end do
+
+
 
     end subroutine setup_read_timeslice
 
     ! Read given timeslice file to get gage discharges
     subroutine read_timeslice_file(this, timeslice_file)
         implicit none
-        class(read_timslice_data_struct), intent(inout) :: this
+        class(read_timeslice_data_struct), intent(inout) :: this
         character(len=256), intent(in) :: timeslice_file
         integer*8, allocatable, dimension(:) :: gage_ids_integer_array
         integer :: reservoir_gage_index, timeslice_gage_index, number_of_gages
         integer :: ncid, status
+
+        print *, '!!!!!!!!!!!!!!!!'
+        print *, 'in timeslice file read'
+        print *, '!!!!!!!!!!!!!!!!'
+
 
         ! Open Timeslice NetCDF file
         status = nf90_open(path = trim(timeslice_file), mode = nf90_nowrite, ncid = ncid)

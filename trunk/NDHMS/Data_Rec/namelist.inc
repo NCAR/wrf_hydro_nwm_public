@@ -42,6 +42,7 @@
           character(len=256) :: route_link_f=""
           character(len=256) :: route_lake_f=""
           logical            :: persistence
+          character(len=256) :: persistence_parameter_file=""
           character(len=256) :: reservoir_timeslice_path=""
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""

@@ -52,13 +52,20 @@ contains
         ! state object's variable for water elevation
         this%water_elevation = water_elevation
 
+        ! CHANGE TO THIS
+        !this%previous_time_storage = (water_elevation-OrrificeE) * lake_area * 1.0E6
+
         this%previous_time_storage = water_elevation * lake_area * 1.0E6
         this%end_time_storage = this%previous_time_storage
 
         ! Initialize time variables
         this%weight_update_time_interval = seconds_in_day
         this%weight_update_time = 0
-        this%timeslice_update_time_interval = seconds_in_day
+        !this%timeslice_update_time_interval = seconds_in_day
+        !this%timeslice_update_time_interval = HUGE(0) ! set to this for forecast modes right now
+
+        ! maybe figure a way to set to smthng else below
+        this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
         this%timeslice_update_time = 0
         this%current_time = 0
         !this%update_time = 0

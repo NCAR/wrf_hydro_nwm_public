@@ -785,13 +785,13 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    NLAKES_total = rt_domain(did)%NLAKES
 
    ! If persistence flag set to true
-   if (nlst_rt(did)%persistence) then
+   !if (nlst_rt(did)%persistence) then
 
        ! Initialize and run read_timeslice_data module
-       call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19), &
-            nlst_rt(did)%reservoir_timeslice_path, rt_domain(did)%reservoir_gage_ids, NLAKES_total)
+   !    call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19), &
+   !         nlst_rt(did)%reservoir_timeslice_path, rt_domain(did)%reservoir_gage_ids, NLAKES_total)
 
-   end if
+   !end if
 
 
    do lake_index = 1, NLAKES_total
@@ -848,7 +848,11 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
               rt_domain(did)%ORIFICEA(lake_index),         &
               rt_domain(did)%LAKEMAXH(lake_index),         &
               rt_domain(did)%LAKEIDM(lake_index),          &
-              rt_domain(did)%reservoir_gage_ids(lake_index))
+              rt_domain(did)%reservoir_gage_ids(lake_index),&
+              nlst_rt(did)%startdate(1:19),                &
+              nlst_rt(did)%reservoir_timeslice_path,       &
+              rt_domain(did)%reservoir_gage_ids,           &
+              NLAKES_total                                 )
 
            end select
 

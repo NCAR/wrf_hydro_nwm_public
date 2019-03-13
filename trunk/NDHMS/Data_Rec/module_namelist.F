@@ -54,6 +54,7 @@ CONTAINS
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           logical            :: persistence
+          character(len=256) :: persistence_parameter_file=""
           character(len=256) :: reservoir_timeslice_path = ""
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
@@ -118,7 +119,7 @@ CONTAINS
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, persistence, &
-                    reservoir_timeslice_path, route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
+                    persistence_parameter_file, reservoir_timeslice_path, route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
                     gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -250,6 +251,7 @@ CONTAINS
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
   nlst%reservoir_obs_dir = "testDirectory"
   nlst%persistence = persistence
+  nlst%persistence_parameter_file = persistence_parameter_file
   nlst%reservoir_timeslice_path = reservoir_timeslice_path
 
 #ifdef MPP_LAND
@@ -257,6 +259,7 @@ CONTAINS
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
   call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
   call mpp_land_bcast_log1(nlst%persistence)
+  call mpp_land_bcast_char(256,nlst%persistence_parameter_file )
   call mpp_land_bcast_char(256,nlst%reservoir_timeslice_path)
 #endif
 
@@ -476,6 +479,7 @@ CONTAINS
     write(6,*) " nlst%route_link_f ", route_link_f
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
+    write(6,*) " nlst%persistence_parameter_file ", persistence_parameter_file
     write(6,*) " nlst%reservoir_timeslice_path ", reservoir_timeslice_path
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
@@ -745,9 +749,17 @@ subroutine rt_nlst_check(nlst)
    end if
 
    if(nlst%persistence) then
+      if(len(trim(nlst%persistence_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a persistence_parameter_file for &
+         inputs to machine learning type reservoirs.')
+      endif
       if(len(trim(nlst%reservoir_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
          reservoir persistence capability.')
+      endif
+      if(len(trim(nlst%persistence_parameter_file)) .ne. 0) then
+        inquire(file=trim(nlst%persistence_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: persistence_parameter_file not found.')
       endif
       if(len(trim(nlst%reservoir_timeslice_path)) .ne. 0) then
         inquire(file=trim(nlst%reservoir_timeslice_path),exist=fileExists)
