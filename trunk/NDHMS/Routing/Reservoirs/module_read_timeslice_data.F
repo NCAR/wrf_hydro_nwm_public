@@ -32,12 +32,15 @@ module module_read_timeslice_data
     implicit none
 
 
-    ! PROABALY DON'T NEED
-    !type :: read_timslice_data_container
-    !    class (read_timslice_data_struct), pointer :: ptr
-    !end type
+    type :: read_timselice_data_container
+        class (read_timselice_data_struct), pointer :: ptr
+    end type
 
-    type :: read_timslice_data_struct
+    class(read_timslice_data_container) :: read
+
+
+
+    type :: read_timeslice_data_struct
 
         character(len=19)   :: start_date
         character(len=19)   :: current_date
@@ -62,7 +65,7 @@ module module_read_timeslice_data
         procedure :: setup_read_timeslice => setup_read_timeslice
         procedure :: read_timeslice_file => read_timeslice_file
 
-    end type read_timslice_data_struct
+    end type read_timeslice_data_struct
 
 contains
 
