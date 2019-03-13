@@ -16,6 +16,7 @@ module module_persistence_levelpool_hybrid_parameters
         real    :: max_storage                  ! maximum storage (cubic meters)
         real    :: lake_area                    ! area of reservoir (km^2)
         integer :: lake_number                  ! lake number
+        integer :: gage_id
         real, allocatable, dimension(:) :: persistence_weighted_coefficients
 
     contains
@@ -28,17 +29,20 @@ module module_persistence_levelpool_hybrid_parameters
 contains
 
     ! Hybrid Parameters Constructor
-    subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number)
+    subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, gage_id)
         implicit none
         class(hybrid_parameters_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area                    ! area of lake (km^2)
         real, intent(in)    :: lake_max_water_elevation     ! max water elevation (meters)
         real, intent(in)    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer, intent(in) :: lake_number                  ! lake number
+        integer, intent(in) :: gage_id
 
         this%lake_area = lake_area
 
         this%lake_number = lake_number
+
+        this%gage_id = gage_id
 
         this%min_storage = 0.0
 

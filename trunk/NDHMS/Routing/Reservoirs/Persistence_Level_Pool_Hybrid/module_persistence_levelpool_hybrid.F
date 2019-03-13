@@ -23,12 +23,13 @@ module module_persistence_levelpool_hybrid
     use module_persistence_levelpool_hybrid_state
     use module_levelpool
     use module_reservoir_base
+    use module_read_timeslice_data
     implicit none
 
 
     ! Extend/derive hybrid struct from the abstract base
     ! struct for reservoirs.
-    type, extends(reservoir_base_struct) :: hybrid_struct
+    type, extends(reservoir_base_struct) :: persistence_levelpool_hybrid_struct
 
         ! Define pointers to sub-structs / sub-objects to and
         ! held by a level pool reservoir object.
@@ -51,7 +52,7 @@ module module_persistence_levelpool_hybrid
         procedure :: update_post_conditions_warn => no_op3
         procedure :: update_post_conditions_modify => no_op3
 
-    end type hybrid_struct
+    end type persistence_levelpool_hybrid_struct
 
 contains
 
@@ -59,9 +60,9 @@ contains
     subroutine hybrid_struct_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
-        orifice_area, max_depth, lake_number, gage_discharge)
+        orifice_area, lake_max_water_elevation, lake_number, gage_id)
         implicit none
-        class(hybrid_struct), intent(inout) :: this ! object being initialized
+        class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area      		 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
@@ -70,9 +71,10 @@ contains
         real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
         real, intent(in)    :: orifice_coefficient       ! orifice coefficient
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
-        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
+        real, intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         integer, intent(in) :: lake_number               ! lake number
-        real, intent(in)    :: gage_discharge
+        integer, intent(in) :: gage_id
+        !real, intent(in)    :: gage_discharge
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -102,7 +104,7 @@ contains
                 write(0,*) "Failure to allocate hybrid parameters structure"
             else
                 ! initialize hybrid parameters
-                call this%parameters%init(lake_area, max_depth, orifice_elevation, lake_number)
+                call this%parameters%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, gage_id)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -123,7 +125,7 @@ contains
             ! Initialize level pool reservoir
             call this%state%levelpool_ptr%init(water_elevation, lake_area, &
             weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
-            orifice_coefficient, orifice_area, max_depth, lake_number)
+            orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         end if
 
@@ -133,7 +135,7 @@ contains
     !Level Pool Destructor
     subroutine hybrid_struct_destroy(this)
         implicit none
-        class(hybrid_struct), intent(inout) :: this ! object being destroyed
+        class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being destroyed
     end subroutine hybrid_struct_destroy
 
 
@@ -141,7 +143,7 @@ contains
     subroutine run_hybrid_release(reservoir_data, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(hybrid_struct), intent(inout) :: reservoir_data
+        class(persistence_levelpool_hybrid_struct), intent(inout) :: reservoir_data
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
@@ -149,18 +151,48 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
 
+        real :: gage_discharge
+        real :: levelpool_water_elevation, levelpool_outflow
+        real :: persistence_water_elevation, persistence_outflow
+
+        ! If first call to release
+        if (reservoir_data%state%current_time == 0) then
+            reservoir_data%state%timeslice_update_time = int(routing_period)
+        end if
+
+        ! Update the current time
+        reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
+
+
+        if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
+
+            !call setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
+            !reservoir_data%parameters%gage_id, gage_discharge)
+
+
+
+            !after update
+            if (gage_discharge == -1.0) then
+                !Set all P weights to 0
+                print *, 'p'
+            end if
+
+        end if
+
+
+
     end subroutine run_hybrid_release
 
 
     subroutine no_op3(reservoir_data)
         implicit none
-        class(hybrid_struct), intent(inout) :: reservoir_data
+        class(persistence_levelpool_hybrid_struct), intent(inout) :: reservoir_data
     end subroutine no_op3
 
 
     subroutine no_op4(reservoir_data, routing_period)
         implicit none
-        class(hybrid_struct), intent(inout) :: reservoir_data
+        class(persistence_levelpool_hybrid_struct), intent(inout) :: reservoir_data
         real, intent(in)       :: routing_period
     end subroutine no_op4
 

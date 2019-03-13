@@ -37,6 +37,8 @@ MODULE module_Routing
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool
+   use module_persistence_levelpool_hybrid
+   use module_read_timeslice_data
 
    IMPLICIT NONE
 
@@ -782,6 +784,16 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    NLAKES_total = rt_domain(did)%NLAKES
 
+   ! If persistence flag set to true
+   if (nlst_rt(did)%persistence) then
+
+       ! Initialize and run read_timeslice_data module
+       call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19), &
+            nlst_rt(did)%reservoir_timeslice_path, rt_domain(did)%reservoir_gage_ids, NLAKES_total)
+
+   end if
+
+
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
 
@@ -814,6 +826,31 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                rt_domain(did)%LAKEIDM(lake_index)           )
 
        end select
+
+     else if (rt_domain(did)%q_type(lake_index) == 2.0) then
+
+       ! Allocate a single persistence_levelpool_hybrid reservoir
+       allocate(persistence_levelpool_hybrid_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       ! Dynamically inspects for persistence_levelpool_hybrid type reservoir
+       select type (hybrid => rt_domain(did)%reservoirs(lake_index)%ptr)
+          type is (persistence_levelpool_hybrid_struct)
+
+              ! Call to initialize a persistence type reservoir
+              call hybrid%init(                            &
+              rt_domain(did)%RESHT(lake_index),            &
+              rt_domain(did)%HRZAREA(lake_index),          &
+              rt_domain(did)%WEIRH(lake_index),            &
+              rt_domain(did)%WEIRC(lake_index),            &
+              rt_domain(did)%WEIRL(lake_index),            &
+              rt_domain(did)%ORIFICEE(lake_index),         &
+              rt_domain(did)%ORIFICEC(lake_index),         &
+              rt_domain(did)%ORIFICEA(lake_index),         &
+              rt_domain(did)%LAKEMAXH(lake_index),         &
+              rt_domain(did)%LAKEIDM(lake_index),          &
+              rt_domain(did)%reservoir_gage_ids(lake_index))
+
+           end select
 
      end if
 

@@ -16,13 +16,15 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_read_timeslice_data.F
 
+	ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
 	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
+	ar -r ../../lib/libHYDRO.a module_read_timeslice_data.o
 
 	cp *.mod ../../mod
 
 	#Build the modules
 	make -C Level_Pool
-	#make -C Persistence_Level_Pool_Hybrid
+	make -C Persistence_Level_Pool_Hybrid
 
 
 test:

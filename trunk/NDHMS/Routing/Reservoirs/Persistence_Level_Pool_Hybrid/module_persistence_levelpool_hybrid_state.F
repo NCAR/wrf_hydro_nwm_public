@@ -19,8 +19,11 @@ module module_persistence_levelpool_hybrid_state
         real    :: water_elevation              ! meters AMSL
         real*4  :: previous_time_storage        ! cubic meters
         real*4  :: end_time_storage             ! cubic meters
-        integer :: time_interval
-        integer :: update_time
+        integer :: timeslice_file_offset_seconds
+        integer :: weight_update_time_interval
+        integer :: weight_update_time
+        integer :: timeslice_update_time_interval
+        integer :: timeslice_update_time
         integer :: new_day_time
         integer :: current_time
         integer :: current_day
@@ -53,9 +56,12 @@ contains
         this%end_time_storage = this%previous_time_storage
 
         ! Initialize time variables
-        this%time_interval = seconds_in_day
+        this%weight_update_time_interval = seconds_in_day
+        this%weight_update_time = 0
+        this%timeslice_update_time_interval = seconds_in_day
+        this%timeslice_update_time = 0
         this%current_time = 0
-        this%update_time = 0
+        !this%update_time = 0
         this%current_day = 0
         this%new_day_time = seconds_in_day
         this%levelpool_current_weight = 0.0
