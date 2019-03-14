@@ -104,9 +104,9 @@ contains
 
 
     subroutine modify_for_projected_storage(inflow, previous_time_storage, min_storage, max_storage, &
-        lake_number, current_time, time_interval, update_time, outflow)
+        lake_number, current_time, time_interval, outflow)
         real, intent(in)    :: inflow, previous_time_storage, min_storage, max_storage
-        integer, intent(in) :: lake_number, current_time, time_interval, update_time
+        integer, intent(in) :: lake_number, current_time, time_interval
         real, intent(inout) :: outflow
         real                :: projected_next_time_interval_storage
 

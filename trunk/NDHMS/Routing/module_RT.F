@@ -827,7 +827,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
        end select
 
-     else if (rt_domain(did)%q_type(lake_index) == 2.0) then
+     else if (rt_domain(did)%q_type(lake_index) == 2) then
 
        ! Allocate a single persistence_levelpool_hybrid reservoir
        allocate(persistence_levelpool_hybrid_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)

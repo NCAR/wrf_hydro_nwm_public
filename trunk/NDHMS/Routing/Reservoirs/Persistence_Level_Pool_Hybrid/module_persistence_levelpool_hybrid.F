@@ -68,7 +68,7 @@ contains
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
-        real, intent(in)    :: lake_area      		 ! area of lake (km^2)
+        real, intent(in)    :: lake_area      		     ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
         real, intent(in)    :: weir_length               ! weir length (meters)
@@ -129,7 +129,7 @@ contains
                 write(0,*) "Failure to allocate state parameters structure"
             else
                 ! initialize hybrid state
-                call this%state%init( water_elevation, lake_area )
+                call this%state%init( water_elevation, lake_area, orifice_elevation )
             end if
             this%pointer_allocation_guard = .true.
 
@@ -186,6 +186,10 @@ contains
         ! Update state variables
         reservoir_data%state%water_elevation = water_elevation
 
+print *, 'reservoir_data%state%gage_discharge'
+print *, reservoir_data%state%gage_discharge
+
+
 
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
@@ -204,9 +208,10 @@ print *, reservoir_data%parameters%lake_number
 
 
             !after update
-            if (gage_discharge == -1.0) then
+            if (reservoir_data%state%gage_discharge == -1.0) then
                 !Set all P weights to 0
-                print *, 'p'
+                reservoir_data%parameters%persistence_weighted_coefficients = 0.0
+
             end if
 
 
@@ -215,6 +220,8 @@ print *, reservoir_data%parameters%lake_number
 
             reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
 
+print *, 'reservoir_data%state%persistence_current_weight'
+print *, reservoir_data%state%persistence_current_weight
 
 
             reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%state%weight_update_time_interval - gage_lookback_seconds
@@ -235,7 +242,8 @@ print *, reservoir_data%parameters%lake_number
             reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
 
 
-            if (reservoir_data%state%persistence_weight_index <= max_days_for_weighted_average_forecast) then
+            !if (reservoir_data%state%persistence_weight_index <= max_days_for_weighted_average_forecast) then
+            if (reservoir_data%state%persistence_weight_index <= SIZE(reservoir_data%parameters%persistence_weighted_coefficients)) then
 
                 reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
 
@@ -245,6 +253,9 @@ print *, reservoir_data%parameters%lake_number
             end if
 
 
+print *, 'reservoir_data%state%persistence_current_weight'
+print *, reservoir_data%state%persistence_current_weight
+
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
 
             reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%state%weight_update_time_interval
@@ -252,9 +263,13 @@ print *, reservoir_data%parameters%lake_number
 
         end if
 
+        ! TRACK SEPARATE LP WATER ELEVATION???? OR LET STORAGE CALCS CONTROL WATER ELEVATION???
+
+        !call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
+        !lateral_inflow, levelpool_water_elevation, levelpool_outflow, routing_period)
 
         call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
-        lateral_inflow, levelpool_water_elevation, levelpool_outflow, routing_period)
+        lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
 
 
         persistence_outflow = reservoir_data%state%gage_discharge
@@ -265,6 +280,24 @@ print *, reservoir_data%parameters%lake_number
 
 
 
+        ! Update storage from the most recent model states
+        reservoir_data%state%end_time_storage = reservoir_data%state%previous_time_storage &
+        + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
+
+        !ALSO CALL WARN FOR NEGATIVE INFLOW???
+
+        call modify_for_projected_storage(reservoir_data%input%inflow, &
+        reservoir_data%state%previous_time_storage, reservoir_data%parameters%min_storage, &
+        reservoir_data%parameters%max_storage, reservoir_data%parameters%lake_number, &
+        reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow)
+
+        reservoir_data%state%previous_time_storage = reservoir_data%state%end_time_storage
+
+
+        ! Calculate new water elevation
+        reservoir_data%state%water_elevation = reservoir_data%state%previous_time_storage / (reservoir_data%parameters%lake_area * 1.0E6)
+
+
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
 
@@ -273,6 +306,39 @@ print *, reservoir_data%parameters%lake_number
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = reservoir_data%state%water_elevation
+
+
+print *, 'reservoir_data%state%end_time_storage'
+print *, reservoir_data%state%end_time_storage
+
+print *, 'outflow'
+print *, outflow
+
+        !TEMP
+        if (reservoir_data%parameters%lake_number == 10361596) then
+
+            !print *, 'WRITE PERSISTENCE VALUES'
+
+            open (113,file="current_inflow.txt",status="unknown", access = 'append')
+             Write (113, "(F15.5)") reservoir_data%input%inflow
+
+                        close (113)
+
+
+            open (117,file="current_end_time_storage.txt",status="unknown", access = 'append')
+             Write (117, "(F15.5)") reservoir_data%state%end_time_storage
+
+                        close (117)
+
+
+            open (119,file="current_outflow.txt",status="unknown", access = 'append')
+             Write (119, "(F15.5)") reservoir_data%output%outflow
+
+                        close (119)
+
+
+        end if
+
 
 
 

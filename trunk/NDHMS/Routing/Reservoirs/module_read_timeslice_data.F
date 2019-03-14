@@ -181,6 +181,9 @@ print *, this%last_update_time_seconds
                 call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
             end if
 
+        print *, 'this%current_date'
+        print *, this%current_date
+
             this%last_update_time_seconds = current_reservoir_time_seconds
 
             !NEW TO THIS subroutine
@@ -225,7 +228,7 @@ print *, this%last_update_time_seconds
 
     !!!!
     !TEMP LOGGING
-    open (112,file="gage_discharges.txt",status="unknown")
+    open (112,file="current_all_gage_discharges.txt",status="unknown")
     !!!!!!
             do timeslice_file_index = 1, total_timeslice_time_periods
 
@@ -256,7 +259,7 @@ print *, this%last_update_time_seconds
                     call geth_newdate(new_date, old_date, observation_resolution_seconds)
                     old_date = new_date
 
-                    this%current_lookback_seconds = this%current_lookback_seconds + observation_resolution_seconds
+                    this%current_lookback_seconds = this%current_lookback_seconds - observation_resolution_seconds
 
 
                 else
@@ -281,7 +284,7 @@ print *, this%last_update_time_seconds
 
         do reservoir_subset_index = 1, this%number_of_reservoir_gages
             if (this%reservoir_gage_ids_subset(reservoir_subset_index) == reservoir_gage_id) then
-                gage_lookback_seconds = this%gage_lookback_seconds(reservoir_gage_index)
+                gage_lookback_seconds = this%gage_lookback_seconds(reservoir_subset_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
             end if
         end do
@@ -391,6 +394,9 @@ print *, this%last_update_time_seconds
 
 
                             write (112, "(4A100)") timeslice_file
+
+                            Write (112, "(I20)") this%current_lookback_seconds
+
                             write (112, "(4A25)") "------------"
 
                             !close (112)

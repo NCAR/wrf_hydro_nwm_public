@@ -44,11 +44,13 @@ module module_persistence_levelpool_hybrid_state
 contains
 
     !Hybrid State Constructor
-    subroutine hybrid_state_init(this, water_elevation, lake_area)
+    subroutine hybrid_state_init(this, water_elevation, lake_area, orifice_elevation)
         implicit none
         class(hybrid_state_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in) :: water_elevation        ! meters AMSL
         real, intent(in) :: lake_area              ! area of lake (km^2)
+        real, intent(in) :: orifice_elevation            ! orifice elevation (meters AMSL)
+
 
         ! Assign the water elevation value passed in to a particular hybrid reservoir
         ! state object's variable for water elevation
@@ -56,12 +58,24 @@ contains
 
         this%gage_discharge = 0.0
 
+        !OLD
+        !this%previous_time_storage = water_elevation * lake_area * 1.0E6
 
-        ! CHANGE TO THIS
-        !this%previous_time_storage = (water_elevation-OrrificeE) * lake_area * 1.0E6
+        print *, 'STORAGE INIT'
+print *, 'water_elevation'
+print *, water_elevation
+print *, 'orifice_elevation'
+print *, orifice_elevation
+print *, 'lake_area'
+print *, lake_area
 
-        this%previous_time_storage = water_elevation * lake_area * 1.0E6
+        this%previous_time_storage = (water_elevation - orifice_elevation) * lake_area * 1.0E6
         this%end_time_storage = this%previous_time_storage
+
+print *, 'this%end_time_storage'
+print *, this%end_time_storage
+
+
 
         ! Initialize time variables
         this%weight_update_time_interval = seconds_in_day
