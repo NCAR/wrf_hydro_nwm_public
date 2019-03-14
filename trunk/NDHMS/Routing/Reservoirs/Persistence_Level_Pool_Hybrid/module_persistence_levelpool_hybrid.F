@@ -17,6 +17,8 @@
 ! FIXME: Change value for WCOS
 #define log_warning 6
 
+#define max_days_for_weighted_average_forecast 11
+
 module module_persistence_levelpool_hybrid
 
     use module_persistence_levelpool_hybrid_parameters
@@ -163,7 +165,8 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
 
-        real :: gage_discharge
+        integer :: gage_lookback_seconds
+        !real :: gage_discharge
         real :: levelpool_water_elevation, levelpool_outflow
         real :: persistence_water_elevation, persistence_outflow
 
@@ -176,20 +179,28 @@ contains
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
 
+        ! Update input variables
+        reservoir_data%input%inflow = inflow
+        reservoir_data%input%lateral_inflow = lateral_inflow
+
+        ! Update state variables
+        reservoir_data%state%water_elevation = water_elevation
+
+
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
 print *, 'reservoir_data%parameters%lake_number'
 print *, reservoir_data%parameters%lake_number
 
             call read_timeslice_data%setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
-            reservoir_data%parameters%gage_id, gage_discharge)
+            reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
 
 
 print *, 'reservoir_data%parameters%lake_number'
 print *, reservoir_data%parameters%lake_number
 
-            print *, 'gage_discharge'
-            print *, gage_discharge
+            print *, 'reservoir_data%state%gage_discharge'
+            print *, reservoir_data%state%gage_discharge
 
 
             !after update
@@ -197,6 +208,16 @@ print *, reservoir_data%parameters%lake_number
                 !Set all P weights to 0
                 print *, 'p'
             end if
+
+
+            reservoir_data%state%persistence_weight_index = 1
+
+
+            reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
+
+
+
+            reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%state%weight_update_time_interval - gage_lookback_seconds
 
 
             reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%state%timeslice_update_time_interval
@@ -208,7 +229,51 @@ print *, reservoir_data%parameters%lake_number
             print *, reservoir_data%state%timeslice_update_time_interval
 
 
+
+        else if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
+
+            reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
+
+
+            if (reservoir_data%state%persistence_weight_index <= max_days_for_weighted_average_forecast) then
+
+                reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
+
+            else
+                reservoir_data%state%persistence_current_weight = 0.0
+
+            end if
+
+
+            reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
+
+            reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%state%weight_update_time_interval
+
+
         end if
+
+
+        call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
+        lateral_inflow, levelpool_water_elevation, levelpool_outflow, routing_period)
+
+
+        persistence_outflow = reservoir_data%state%gage_discharge
+
+
+        reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight * persistence_outflow &
+        + reservoir_data%state%levelpool_current_weight * levelpool_outflow
+
+
+
+        ! Update output variable returned from this subroutine
+        outflow = reservoir_data%output%outflow
+
+        ! Set current inflow to previous_timestep_inflow
+        reservoir_data%input%previous_timestep_inflow = inflow
+
+        ! Update water_elevation variable returned from this subroutine
+        water_elevation = reservoir_data%state%water_elevation
+
 
 
 

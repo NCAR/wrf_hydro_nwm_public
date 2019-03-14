@@ -142,7 +142,7 @@ contains
 
 
     ! Set up list of timeslice files to read
-    subroutine setup_read_timeslice(this, update_interval_seconds, current_reservoir_time_seconds, reservoir_gage_id, reservoir_gage_discharge)
+    subroutine setup_read_timeslice(this, update_interval_seconds, current_reservoir_time_seconds, reservoir_gage_id, gage_lookback_seconds, reservoir_gage_discharge)
         implicit none
 
         class(read_timeslice_data_struct), intent(inout) :: this
@@ -150,6 +150,7 @@ contains
         integer, intent(in)  :: current_reservoir_time_seconds
         !integer, intent(in) :: lake_number               ! lake number
         integer, intent(in)  :: reservoir_gage_id
+        integer, intent(out) :: gage_lookback_seconds
         real, intent(out)    :: reservoir_gage_discharge
         character(len=256)   :: timeslice_file_name
         character(len=19)    :: old_date, new_date
@@ -280,6 +281,7 @@ print *, this%last_update_time_seconds
 
         do reservoir_subset_index = 1, this%number_of_reservoir_gages
             if (this%reservoir_gage_ids_subset(reservoir_subset_index) == reservoir_gage_id) then
+                gage_lookback_seconds = this%gage_lookback_seconds(reservoir_gage_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
             end if
         end do
