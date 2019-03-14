@@ -62,9 +62,9 @@ contains
     subroutine hybrid_struct_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
-        orifice_area, lake_max_water_elevation, lake_number, gage_id, &
-        persistence_parameter_file, start_date, timeslice_path, &
-        reservoir_gage_ids, number_of_lakes)
+        orifice_area, lake_max_water_elevation, initial_fractional_depth, &
+        lake_number, gage_id, persistence_parameter_file, start_date, &
+        timeslice_path, reservoir_gage_ids, number_of_lakes)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -76,6 +76,7 @@ contains
         real, intent(in)    :: orifice_coefficient       ! orifice coefficient
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
         real, intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
+        real, intent(in)    :: initial_fractional_depth
         integer, intent(in) :: lake_number               ! lake number
         integer, intent(in) :: gage_id
         !real, intent(in)    :: gage_discharge
@@ -129,7 +130,7 @@ contains
                 write(0,*) "Failure to allocate state parameters structure"
             else
                 ! initialize hybrid state
-                call this%state%init( water_elevation, lake_area, orifice_elevation )
+                call this%state%init(water_elevation, lake_max_water_elevation, lake_area, orifice_elevation, initial_fractional_depth)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -284,6 +285,16 @@ print *, reservoir_data%state%persistence_current_weight
         reservoir_data%state%end_time_storage = reservoir_data%state%previous_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
+
+print *, 'BEFORE MASS BALANCE reservoir_data%state%end_time_storage'
+print *, reservoir_data%state%end_time_storage
+
+print *, 'BEFORE MASS BALANCE outflow'
+print *, outflow
+
+
+
+
         !ALSO CALL WARN FOR NEGATIVE INFLOW???
 
         call modify_for_projected_storage(reservoir_data%input%inflow, &
@@ -338,9 +349,6 @@ print *, outflow
 
 
         end if
-
-
-
 
 
     end subroutine run_hybrid_release

@@ -57,6 +57,14 @@ contains
         !!DOUBLE CHECK THIS??
         this%max_storage = (lake_max_water_elevation - orifice_elevation) * lake_area * 1.0E6
 
+        print *, 'lake_number'
+        print *, lake_number
+
+        print*, 'this%max_storage'
+        print*, this%max_storage
+
+
+
         ! Open Persistence Reservoir Parameter NetCDF file
         status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
