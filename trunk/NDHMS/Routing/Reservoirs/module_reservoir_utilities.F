@@ -200,6 +200,76 @@ contains
     end subroutine read_timeslice_netcdf_real_1D_variables
 
 
+    ! Read lake id from persistence parameters NetCDF and determine the lake_id_index, which
+    ! is the index of the particular reservoir's values in all of the parameter arrays.
+    subroutine read_netcdf_lake_id(ncid, lake_number, netcdf_array_name, lake_id_index)
+        integer, intent(in) :: ncid, lake_number
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: lake_id_index
+        integer, allocatable, dimension(:) :: temp_lake_id_array
+        integer :: var_id, number_of_lakes, status, lake_index
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        allocate(temp_lake_id_array(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_lake_id_array)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        do lake_index = 1, number_of_lakes
+            if (temp_lake_id_array(lake_index) == lake_number) then
+                lake_id_index = lake_index
+            end if
+        end do
+
+
+print *, 'lake_id_index'
+print *, lake_id_index
+
+
+        if(allocated(temp_lake_id_array)) deallocate(temp_lake_id_array)
+
+    end subroutine read_netcdf_lake_id
+
+
+    ! Read real two dimension parameter arrays from the persistence parameters NetCDF
+    subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, netcdf_array_name, var_id, number_of_weights, number_of_lakes)
+        integer, intent(in) :: ncid, lake_id_index
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: var_id, number_of_weights, number_of_lakes
+        integer :: status
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_weights)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+print *, 'number_of_weights'
+print *, number_of_weights
+
+
+        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+print *, 'number_of_lakes'
+print *, number_of_lakes
+
+    end subroutine read_persistence_netcdf_real_2D_parameters
+
+
     ! Handle NetCDF error
     subroutine handle_err(status, variable_error)
         implicit none

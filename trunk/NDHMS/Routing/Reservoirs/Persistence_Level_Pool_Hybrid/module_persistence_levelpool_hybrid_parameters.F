@@ -6,6 +6,8 @@
 ! initialized/instantiated.
 module module_persistence_levelpool_hybrid_parameters
 
+    !use netcdf
+    use module_reservoir_utilities
     use module_reservoir_base
     implicit none
 
@@ -29,7 +31,8 @@ module module_persistence_levelpool_hybrid_parameters
 contains
 
     ! Hybrid Parameters Constructor
-    subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, gage_id)
+    subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
+        gage_id, persistence_parameter_file)
         implicit none
         class(hybrid_parameters_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area                    ! area of lake (km^2)
@@ -37,6 +40,11 @@ contains
         real, intent(in)    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer, intent(in) :: lake_number                  ! lake number
         integer, intent(in) :: gage_id
+        character(len=*), intent(in) :: persistence_parameter_file
+        integer                 :: ncid, var_id, lake_id_index
+        integer                 :: status                   ! status of reading NetCDF
+        real, allocatable, dimension(:,:) :: temp_real_2D_array
+        integer                 :: number_of_weights, number_of_lakes
 
         this%lake_area = lake_area
 
@@ -46,7 +54,37 @@ contains
 
         this%min_storage = 0.0
 
+        !!DOUBLE CHECK THIS??
         this%max_storage = (lake_max_water_elevation - orifice_elevation) * lake_area * 1.0E6
+
+        ! Open Persistence Reservoir Parameter NetCDF file
+        status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
+
+        ! Read relevant parameters from Persistence Parameter NetCDF
+        call read_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
+
+        call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "persistence_coefficients", var_id, number_of_weights, number_of_lakes)
+
+        allocate(this%persistence_weighted_coefficients(number_of_weights))
+
+
+        allocate(temp_real_2D_array(number_of_weights, number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_real_2D_array)
+        if (status /= nf90_noerr) call handle_err(status, "persistence_coefficients")
+
+print *, 'temp_real_2D_array'
+print *, temp_real_2D_array
+
+        this%persistence_weighted_coefficients(:) = temp_real_2D_array(:, lake_id_index)
+
+print *, 'this%persistence_weighted_coefficients'
+print *, this%persistence_weighted_coefficients
+
+
+        if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)
+
 
     end subroutine hybrid_parameters_init
 

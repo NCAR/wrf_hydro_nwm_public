@@ -849,6 +849,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
               rt_domain(did)%LAKEMAXH(lake_index),         &
               rt_domain(did)%LAKEIDM(lake_index),          &
               rt_domain(did)%reservoir_gage_ids(lake_index),&
+              nlst_rt(did)%persistence_parameter_file,      &
               nlst_rt(did)%startdate(1:19),                &
               nlst_rt(did)%reservoir_timeslice_path,       &
               rt_domain(did)%reservoir_gage_ids,           &

@@ -61,7 +61,8 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, lake_number, gage_id, &
-        start_date, timeslice_path, reservoir_gage_ids, number_of_lakes)
+        persistence_parameter_file, start_date, timeslice_path, &
+        reservoir_gage_ids, number_of_lakes)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -76,6 +77,7 @@ contains
         integer, intent(in) :: lake_number               ! lake number
         integer, intent(in) :: gage_id
         !real, intent(in)    :: gage_discharge
+        character(len=*),   intent(in)                  :: persistence_parameter_file
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: timeslice_path
         integer,            intent(in), dimension(:)    :: reservoir_gage_ids
@@ -113,7 +115,8 @@ contains
                 write(0,*) "Failure to allocate hybrid parameters structure"
             else
                 ! initialize hybrid parameters
-                call this%parameters%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, gage_id)
+                call this%parameters%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
+                gage_id, persistence_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 
