@@ -23,7 +23,7 @@
 #define days_in_leap_year 366
 #define timeslice_files_lookback_hours 18
 #define observation_resolution_minutes 15
-#define gage_quality_threshold 0.5
+#define gage_quality_threshold 0.9
 
 module module_read_timeslice_data
 
@@ -340,13 +340,14 @@ print *, this%last_update_time_seconds
         ! First, quality check on the quality flag
         where(this%gage_quality .lt. 0 .or. this%gage_quality .gt. 1) this%gage_quality=0
 
-        ! Currently not using line below that would set quality to 0 if there is a negative
-        ! discharge because there may actually be a deficit in flow, i.e. no flow available
-        ! at all that the transducer has given us a negative pressure.
-        !where(this%gage_discharge .le. 0.000) this%gage_quality=0
+        ! Currently using line below that would set quality to 0 if there is a negative
+        ! discharge but there may actually be a deficit in flow, i.e. no flow available
+        ! at all that the transducer has given us a negative pressure. We do not account
+        ! for that case here but may need to consider this later.
+        where(this%gage_discharge .lt. 0.000) this%gage_quality=0
 
-        ! Currently using line below instead of above line that sets quality to 0 for negative discharge
-        where(this%gage_discharge .le. 0.000) this%gage_discharge = 0.0
+        ! Currently not using line below instead of above line that sets quality to 0 for negative discharge
+        !where(this%gage_discharge .le. 0.000) this%gage_discharge = 0.0
 
         !! peak flow on MS river *2
         !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html

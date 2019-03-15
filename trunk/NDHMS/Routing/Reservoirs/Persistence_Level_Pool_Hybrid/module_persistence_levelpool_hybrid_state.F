@@ -17,8 +17,7 @@ module module_persistence_levelpool_hybrid_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: hybrid_state_interface
         real    :: water_elevation              ! meters AMSL
-        real*4  :: previous_time_storage        ! cubic meters
-        real*4  :: end_time_storage             ! cubic meters
+        real*4  :: current_storage        ! cubic meters
         real    :: gage_discharge
         !integer :: timeslice_file_offset_seconds
         integer :: weight_update_time_interval
@@ -54,12 +53,20 @@ contains
         real, intent(in) :: initial_fractional_depth
 
 
-
         ! Assign the water elevation value passed in to a particular hybrid reservoir
         ! state object's variable for water elevation
         !this%water_elevation = water_elevation
 
+
+        print *, orifice_elevation, " + (( ", lake_max_water_elevation, " - ", orifice_elevation, " ) * ", initial_fractional_depth, ")"
+
+        print *, orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
+
         this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
+
+
+
+
 
 
         this%gage_discharge = 0.0
@@ -81,11 +88,10 @@ print *, 'initial_fractional_depth'
 print *, initial_fractional_depth
 
 
-        this%previous_time_storage = (this%water_elevation - orifice_elevation) * lake_area * 1.0E6
-        this%end_time_storage = this%previous_time_storage
+        this%current_storage = (this%water_elevation - orifice_elevation) * lake_area * 1.0E6
 
-print *, 'this%end_time_storage'
-print *, this%end_time_storage
+print *, 'this%current_storage'
+print *, this%current_storage
 print *, '------------------------------'
 print *, '------------------------------'
 

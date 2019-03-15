@@ -68,6 +68,15 @@ contains
 
 
 
+print *, 'orifice_elevation'
+print *, orifice_elevation
+print *, 'lake_area'
+print *, lake_area
+print *, 'lake_max_water_elevation'
+print *, lake_max_water_elevation
+
+
+
         ! Open Persistence Reservoir Parameter NetCDF file
         status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")

@@ -111,7 +111,7 @@ contains
         real                :: projected_next_time_interval_storage
 
         if (outflow < 0.0) then
-            write(log_warning,*) "Machine Learning calculations return a negative outflow for reservoir ", lake_number
+            write(log_warning,*) "Calculations return a negative outflow for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
             outflow = 0.0
         end if
