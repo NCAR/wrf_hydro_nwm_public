@@ -100,7 +100,6 @@ print *, '------------------------------'
         this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
         this%timeslice_update_time = 0
         this%current_time = 0
-        !this%update_time = 0
         this%current_day = 0
         this%new_day_time = seconds_in_day
         this%persistence_weight_index = 0

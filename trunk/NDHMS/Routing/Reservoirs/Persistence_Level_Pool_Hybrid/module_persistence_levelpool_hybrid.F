@@ -165,11 +165,9 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
-
-        integer :: gage_lookback_seconds
-        !real :: gage_discharge
-        real :: levelpool_water_elevation, levelpool_outflow
-        real :: persistence_water_elevation, persistence_outflow
+        integer             :: gage_lookback_seconds
+        real                :: levelpool_water_elevation, levelpool_outflow
+        real                :: persistence_water_elevation, persistence_outflow
 
         ! If first call to release
         if (reservoir_data%state%current_time == 0) then
@@ -179,7 +177,6 @@ contains
         ! Update the current time
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
-
         ! Update input variables
         reservoir_data%input%inflow = inflow
         reservoir_data%input%lateral_inflow = lateral_inflow
@@ -187,127 +184,92 @@ contains
         ! Update state variables
         reservoir_data%state%water_elevation = water_elevation
 
-print *, 'reservoir_data%state%gage_discharge'
-print *, reservoir_data%state%gage_discharge
-
-
-
+        ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
-print *, 'reservoir_data%parameters%lake_number'
-print *, reservoir_data%parameters%lake_number
-
+            ! Read new timeslice gage discharges
             call read_timeslice_data%setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
             reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
 
-
-print *, 'reservoir_data%parameters%lake_number'
-print *, reservoir_data%parameters%lake_number
-
-            print *, 'reservoir_data%state%gage_discharge'
-            print *, reservoir_data%state%gage_discharge
-
-
-            !after update
+            ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
+            ! as -1.0. All persistence weights are set to 0.0. Therefore, only levelpool calculations will be used.
             if (reservoir_data%state%gage_discharge == -1.0) then
-                !Set all P weights to 0
-                reservoir_data%parameters%persistence_weighted_coefficients = 0.0
 
+                reservoir_data%parameters%persistence_weighted_coefficients = 0.0
             end if
 
-
+            ! Start persistence weight index at 1
             reservoir_data%state%persistence_weight_index = 1
 
-
+            ! Grab first persistence weight at index 1 from array
             reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
 
-print *, 'reservoir_data%state%persistence_current_weight'
-print *, reservoir_data%state%persistence_current_weight
-
-
+            ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
+            ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
             reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%state%weight_update_time_interval - gage_lookback_seconds
 
-
+            ! Set timeslice update time
             reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%state%timeslice_update_time_interval
 
-            print *, 'reservoir_data%state%timeslice_update_time'
-            print *, reservoir_data%state%timeslice_update_time
-
-            print *, 'reservoir_data%state%timeslice_update_time_interval'
-            print *, reservoir_data%state%timeslice_update_time_interval
-
-
-
+        ! If update time to change persistence weights
         else if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
 
             reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
 
-
+            ! Boundary check to not exceed the size of the persistence weights array
             !if (reservoir_data%state%persistence_weight_index <= max_days_for_weighted_average_forecast) then
             if (reservoir_data%state%persistence_weight_index <= SIZE(reservoir_data%parameters%persistence_weighted_coefficients)) then
 
+                ! Grab indexed persistence weight from array
                 reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
 
             else
+                ! If boundary of persistence weights array has been exceeded, then set all persistence weights to 0.0
                 reservoir_data%state%persistence_current_weight = 0.0
 
             end if
 
-
-print *, 'reservoir_data%state%persistence_current_weight'
-print *, reservoir_data%state%persistence_current_weight
-
+            ! Calculate levelpool weight
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
 
+            ! Set next weight update time
             reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%state%weight_update_time_interval
-
 
         end if
 
         ! TRACK SEPARATE LP WATER ELEVATION???? OR LET STORAGE CALCS CONTROL WATER ELEVATION???
-
         !call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
         !lateral_inflow, levelpool_water_elevation, levelpool_outflow, routing_period)
 
+        ! Run levelpool release
         call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
         lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
 
-
+        ! Set persistence outflow to gage discharge
         persistence_outflow = reservoir_data%state%gage_discharge
 
-
+        ! Calculate outflow weighted between persistence and levelpool
         reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight * persistence_outflow &
         + reservoir_data%state%levelpool_current_weight * levelpool_outflow
-
-
 
         ! Update storage from the most recent model states
         reservoir_data%state%end_time_storage = reservoir_data%state%previous_time_storage &
         + reservoir_data%input%inflow * routing_period - reservoir_data%output%outflow * routing_period
 
+        ! Warn if there is a negative inflow
+        call warn_negative_inflow(reservoir_data%input%inflow, reservoir_data%parameters%lake_number, reservoir_data%state%current_time)
 
-print *, 'BEFORE MASS BALANCE reservoir_data%state%end_time_storage'
-print *, reservoir_data%state%end_time_storage
-
-print *, 'BEFORE MASS BALANCE outflow'
-print *, outflow
-
-
-
-
-        !ALSO CALL WARN FOR NEGATIVE INFLOW???
-
+        ! Modify if exceeding storage boundary conditions
         call modify_for_projected_storage(reservoir_data%input%inflow, &
         reservoir_data%state%previous_time_storage, reservoir_data%parameters%min_storage, &
         reservoir_data%parameters%max_storage, reservoir_data%parameters%lake_number, &
         reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow)
 
+        ! Set previous storage to end storage
         reservoir_data%state%previous_time_storage = reservoir_data%state%end_time_storage
 
-
         ! Calculate new water elevation
-        reservoir_data%state%water_elevation = reservoir_data%state%previous_time_storage / (reservoir_data%parameters%lake_area * 1.0E6)
-
+        reservoir_data%state%water_elevation = (reservoir_data%state%previous_time_storage / (reservoir_data%parameters%lake_area * 1.0E6)) + reservoir_data%parameters%orifice_elevation
 
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
@@ -317,39 +279,6 @@ print *, outflow
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = reservoir_data%state%water_elevation
-
-
-print *, 'reservoir_data%state%end_time_storage'
-print *, reservoir_data%state%end_time_storage
-
-print *, 'outflow'
-print *, outflow
-
-        !TEMP
-        if (reservoir_data%parameters%lake_number == 10361596) then
-
-            !print *, 'WRITE PERSISTENCE VALUES'
-
-            open (113,file="current_inflow.txt",status="unknown", access = 'append')
-             Write (113, "(F15.5)") reservoir_data%input%inflow
-
-                        close (113)
-
-
-            open (117,file="current_end_time_storage.txt",status="unknown", access = 'append')
-             Write (117, "(F15.5)") reservoir_data%state%end_time_storage
-
-                        close (117)
-
-
-            open (119,file="current_outflow.txt",status="unknown", access = 'append')
-             Write (119, "(F15.5)") reservoir_data%output%outflow
-
-                        close (119)
-
-
-        end if
-
 
     end subroutine run_hybrid_release
 

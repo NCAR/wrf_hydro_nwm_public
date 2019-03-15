@@ -17,6 +17,7 @@ module module_persistence_levelpool_hybrid_parameters
         real    :: min_storage                  ! minimum storage (cubic meters)
         real    :: max_storage                  ! maximum storage (cubic meters)
         real    :: lake_area                    ! area of reservoir (km^2)
+        real    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer :: lake_number                  ! lake number
         integer :: gage_id
         real, allocatable, dimension(:) :: persistence_weighted_coefficients
@@ -47,6 +48,8 @@ contains
         integer                 :: number_of_weights, number_of_lakes
 
         this%lake_area = lake_area
+
+        this%orifice_elevation = orifice_elevation
 
         this%lake_number = lake_number
 
