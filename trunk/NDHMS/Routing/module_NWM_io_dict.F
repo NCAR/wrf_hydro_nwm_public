@@ -57,7 +57,7 @@ type chrtMeta
    integer*8, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
    real, dimension(numChVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real, dimension(numChVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numChVars) :: validMaxReal ! Valid maximum (before converstion to integer)
    integer*8, dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
@@ -749,16 +749,31 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                   0.0,0.0]
-   chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,500000.0,500000.0,&
-                                  500000.0,500000.0,500000.0,500000.0,500000.0]
+   chrtOutDict%validMaxReal(:) = [500000.0d0, 500000.0d0, 500000.0d0, 500000.0d0, 500000.0d0, &
+                                  21474.836470d0, 21474.836470d0, 2147483.6470d0, 500000.0d0, &
+                                  500000.0d0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChVars
-      chrtOutDict%fillComp(i) = int((chrtOutDict%fillReal(i)+chrtOutDict%addOffset(i))/chrtOutDict%scaleFactor(i))
-      chrtOutDict%missingComp(i) = int((chrtOutDict%missingReal(i)+chrtOutDict%addOffset(i))/chrtOutDict%scaleFactor(i))
-      chrtOutDict%validMinComp(i) = int((chrtOutDict%validMinReal(i)+chrtOutDict%addOffset(i))/chrtOutDict%scaleFactor(i))
-      chrtOutDict%validMaxComp(i) = int((chrtOutDict%validMaxReal(i)+chrtOutDict%addOffset(i))/chrtOutDict%scaleFactor(i))
+
+      chrtOutDict%fillComp(i) = &
+           nint((chrtOutDict%fillReal(i)     + chrtOutDict%addOffset(i)), 8) * &
+           nint(1.0 / chrtOutDict%scaleFactor(i), 8)
+
+      chrtOutDict%missingComp(i) = &
+           nint((chrtOutDict%missingReal(i)  + chrtOutDict%addOffset(i)), 8) * &
+           nint(1.0 / chrtOutDict%scaleFactor(i), 8)
+
+      chrtOutDict%validMinComp(i) = &
+           nint((chrtOutDict%validMinReal(i) + chrtOutDict%addOffset(i)) * &
+                nint(1.0 / chrtOutDict%scaleFactor(i), 8), 8)
+
+      chrtOutDict%validMaxComp(i) = &
+           nint((chrtOutDict%validMaxReal(i) + chrtOutDict%addOffset(i)) * &
+                nint(1.0 / chrtOutDict%scaleFactor(i), 8), 8)
+
    end do
+
 end subroutine initChrtDict
 
 subroutine initLdasDict(ldasOutDict,procId,diagFlag)

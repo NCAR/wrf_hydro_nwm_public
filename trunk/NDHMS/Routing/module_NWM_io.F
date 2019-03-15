@@ -840,7 +840,7 @@ subroutine output_chrt_NWM(domainId)
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
             varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
