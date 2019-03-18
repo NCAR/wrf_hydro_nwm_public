@@ -125,3 +125,38 @@ def test_run_candidate_nwm_output_sim(
     for job in candidate_nwm_output_sim.jobs:
         assert job.exit_status == 0, \
             "Candidate run exited with non-zero status"
+
+
+# regression question
+def test_regression_metadata_nwm_output(output_dir):
+    print("\nQuestion: The NWM output candidate metadata match those of the reference run?\n", end="")
+    print('\n')
+
+    # Check for existence of sim objects
+    candidate_run_file = output_dir / 'nwm_output_candidate' / 'WrfHydroSim_collected.pkl'
+    reference_run_file = output_dir / 'nwm_output_reference' / 'WrfHydroSim_collected.pkl'
+
+    if candidate_run_file.is_file() is False:
+        pytest.skip('Candidate run object not found, skipping test')
+    if reference_run_file.is_file() is False:
+        pytest.skip('Reference run object not found, skipping test')
+
+    # Load run objects
+    candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))
+    reference_run_expected = pickle.load(reference_run_file.open(mode="rb"))
+
+    # Check regression
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(
+            candidate_run_expected.output,
+            reference_run_expected.output
+        )
+
+    # Assert all diff values are 0 and print diff stats if not
+    has_metadata_diffs = any(value != 0 for value in meta_data_diffs.diff_counts.values())
+    if has_metadata_diffs:
+        print_diffs(meta_data_diffs)
+    assert has_metadata_diffs is False, \
+        'NWM output metadata and attributes of candidate run do not match those of the reference run.'
+
