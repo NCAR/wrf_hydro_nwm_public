@@ -3,12 +3,12 @@ import shutil
 import socket
 import subprocess
 import sys
-import warnings
 from argparse import ArgumentParser
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
 from utils.gdrive_download import download_file_from_google_drive
+
 
 def run_tests(config: str,
               compiler: str,
@@ -70,11 +70,15 @@ def run_tests(config: str,
 
     if print_log:
         pytest_cmd += " -s"
+
     # Ignore section: for cleaner tests with less skipps!
+
     # NWM
-    # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
+    # If it is not NWM, ignore channel-only and nwm_output tests.
+    # (This is likely not the right way to do this.)
     if config.lower().find('nwm') < 0:
         pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
+        pytest_cmd += " --ignore=tests/test_supp_2_nwm_output_ana.py "
 
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
@@ -193,7 +197,6 @@ def main():
                         required=False,
                         action='store_true',
                         help='Exit pdb on first failure.')
-
 
     args = parser.parse_args()
 

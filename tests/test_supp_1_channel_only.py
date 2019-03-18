@@ -112,8 +112,6 @@ def test_run_candidate_channel_only(
     candidate_sim_copy = copy.deepcopy(candidate_sim)
     candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
     candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_copy. \
-        base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
 
     ##################
     # re-run candidate at shorter duration since requires hourly outputs

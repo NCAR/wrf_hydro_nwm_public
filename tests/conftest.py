@@ -172,13 +172,16 @@ def candidate_sim(request):
 
     return candidate_sim
 
+
+# Since we want to leverage the NWM compiles (both candidate and reference, ptoentially),
+# we create additional simulation fixtures where we hard-code the alternate configurations,
+# those are "channel-only" and "nwm_output_ana", currently.
 @pytest.fixture(scope="session")
 def candidate_channel_only_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     compiler = request.config.getoption("--compiler")
     candidate_dir = request.config.getoption("--candidate_dir")
-    configuration = request.config.getoption("--config")
     option_suite = request.config.getoption("--option_suite")
     ncores = request.config.getoption("--ncores")
     nnodes = request.config.getoption("--nnodes")
@@ -186,6 +189,8 @@ def candidate_channel_only_sim(request):
     account = request.config.getoption("--account")
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
+
+    configuration = "nwm_channel-only"
 
     candidate_channel_only_sim = _make_sim(
         domain_dir=domain_dir,
@@ -201,9 +206,40 @@ def candidate_channel_only_sim(request):
         queue=queue
     )
 
-    # Channel and bucket mode is forc_typ = 10.
-    candidate_channel_only_sim.base_hrldas_namelist['wrf_hydro_offline']['forc_typ'] = 10
     return candidate_channel_only_sim
+
+
+@pytest.fixture(scope="session")
+def candidate_nwm_output_ana(request):
+
+    domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
+    candidate_dir = request.config.getoption("--candidate_dir")
+    option_suite = request.config.getoption("--option_suite")
+    ncores = request.config.getoption("--ncores")
+    nnodes = request.config.getoption("--nnodes")
+    scheduler = request.config.getoption("--scheduler")
+    account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
+
+    configuration = "nwm_output_ana"
+
+    candidate_nwm_output_ana = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=candidate_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
+
+    return candidate_nwm_output_ana
 
 
 @pytest.fixture(scope="session")
@@ -236,6 +272,42 @@ def reference_sim(request):
     )
 
     return reference_sim
+
+
+# Since we want to leverage the NWM compiles (both candidate and reference, ptoentially),
+# we create additional simulation fixtures where we hard-code the alternate configurations,
+# those are "channel-only" and "nwm_output_ana", currently.
+@pytest.fixture(scope="session")
+def reference_nwm_output_ana(request):
+
+    domain_dir = request.config.getoption("--domain_dir")
+    compiler = request.config.getoption("--compiler")
+    reference_dir = request.config.getoption("--reference_dir")
+    option_suite = request.config.getoption("--option_suite")
+    ncores = request.config.getoption("--ncores")
+    nnodes = request.config.getoption("--nnodes")
+    scheduler = request.config.getoption("--scheduler")
+    account = request.config.getoption("--account")
+    walltime = request.config.getoption("--walltime")
+    queue = request.config.getoption("--queue")
+
+    configuration = "nwm_output_ana"
+
+    reference_nwm_output_ana = _make_sim(
+        domain_dir=domain_dir,
+        compiler=compiler,
+        source_dir=reference_dir,
+        configuration=configuration,
+        option_suite=option_suite,
+        ncores=ncores,
+        nnodes=nnodes,
+        scheduler=scheduler,
+        account=account,
+        walltime=walltime,
+        queue=queue
+    )
+
+    return reference_nwm_output_ana
 
 
 @pytest.fixture(scope="session")

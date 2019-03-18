@@ -96,9 +96,24 @@
 
     "nwm_channel-only": {
         "hydro_nlist": {
+            "lsmout_domain": 0,
             "output_gw": 0,
-            "lsmout_domain": 0
+	    "output_channelbucket_influx": 2
         },
+        "nudging_nlist": {}
+    },
+
+    "nwm_output_ana": {
+        "hydro_nlist": {
+            "chanobs_domain": 0,
+            "chrtout_grid": 0,
+	    "io_config_outputs": 1,
+            "io_form_outputs": 2,
+	    "lsmout_domain": 0,
+	    "output_channelbucket_influx": 2,
+	    "output_gw": 0,
+	    "rst_dt": 60
+	},
         "nudging_nlist": {}
     },
 
