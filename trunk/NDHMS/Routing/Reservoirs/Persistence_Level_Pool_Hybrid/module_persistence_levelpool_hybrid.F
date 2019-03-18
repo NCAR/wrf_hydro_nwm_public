@@ -170,13 +170,17 @@ contains
         real                :: levelpool_water_elevation, levelpool_outflow
         real                :: persistence_water_elevation, persistence_outflow
 
-        ! If first call to release
-        !if (reservoir_data%state%current_time == 0) then
-        !    reservoir_data%state%timeslice_update_time = int(routing_period)
-        !end if
+print *, '--------------------------'
+print *, '--------------------------'
+print *, 'IN RELEASE'
 
-        ! Update the current time
-        !reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
+print *, 'reservoir_data%parameters%lake_number'
+print *, reservoir_data%parameters%lake_number
+
+
+print *, 'reservoir_data%state%gage_discharge'
+print *, reservoir_data%state%gage_discharge
+
 
         ! Update input variables
         reservoir_data%input%inflow = inflow
@@ -198,6 +202,10 @@ contains
         ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
+            print *, 'Timeslice update time'
+            print *, 'reservoir_data%parameters%lake_number'
+            print *, reservoir_data%parameters%lake_number
+
             ! Read new timeslice gage discharges
             call read_timeslice_data%setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
             reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
@@ -217,6 +225,15 @@ contains
                 reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
             end if
 
+print *, 'reservoir_data%state%persistence_weight_index'
+print *, reservoir_data%state%persistence_weight_index
+
+print *, 'reservoir_data%state%persistence_current_weight'
+print *, reservoir_data%state%persistence_current_weight
+
+print *, 'gage_lookback_seconds'
+print *, gage_lookback_seconds
+
             ! Calculate levelpool weight
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
 
@@ -227,10 +244,22 @@ contains
             ! Set timeslice update time
             reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%state%timeslice_update_time_interval
 
+
+print *, 'reservoir_data%state%weight_update_time'
+print *, reservoir_data%state%weight_update_time
+
+print *, 'reservoir_data%state%timeslice_update_time'
+print *, reservoir_data%state%timeslice_update_time
+
         ! If update time to change persistence weights
         else if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
 
+            print *, 'WEIGHT UPDATE'
+
             reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
+
+print *, 'reservoir_data%state%persistence_weight_index'
+print *, reservoir_data%state%persistence_weight_index
 
             ! Boundary check to not exceed the size of the persistence weights array
             if (reservoir_data%state%persistence_weight_index <= SIZE(reservoir_data%parameters%persistence_weighted_coefficients)) then
@@ -244,6 +273,11 @@ contains
 
             end if
 
+
+print *, 'reservoir_data%state%persistence_current_weight'
+print *, reservoir_data%state%persistence_current_weight
+
+
             ! Calculate levelpool weight
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
 
@@ -256,12 +290,22 @@ contains
         call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
         lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
 
+print *, 'levelpool_outflow'
+print *, levelpool_outflow
+
         ! Set persistence outflow to gage discharge
         persistence_outflow = reservoir_data%state%gage_discharge
+
+print *, 'persistence_outflow'
+print *, persistence_outflow
 
         ! Calculate outflow weighted between persistence and levelpool
         reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight * persistence_outflow &
         + reservoir_data%state%levelpool_current_weight * levelpool_outflow
+
+print *, 'reservoir_data%output%outflow before boundary check'
+print *, reservoir_data%output%outflow
+
 
         ! Warn if there is a negative inflow
         call warn_negative_inflow(reservoir_data%input%inflow, reservoir_data%parameters%lake_number, reservoir_data%state%current_time)
@@ -276,12 +320,24 @@ contains
         reservoir_data%state%current_storage = reservoir_data%state%current_storage &
         + (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
 
+print *, 'reservoir_data%state%current_storage'
+print *, reservoir_data%state%current_storage
+
         ! Calculate new water elevation
         reservoir_data%state%water_elevation = (reservoir_data%state%current_storage / (reservoir_data%parameters%lake_area * 1.0E6)) &
         + reservoir_data%parameters%orifice_elevation
 
+print *, 'reservoir_data%state%water_elevation'
+print *, reservoir_data%state%water_elevation
+
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
+
+print *, 'outflow'
+print *, outflow
+print *, '--------------------------'
+print *, '--------------------------'
+
 
         ! Set current inflow to previous_timestep_inflow
         reservoir_data%input%previous_timestep_inflow = inflow
