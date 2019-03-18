@@ -727,7 +727,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                               "Runoff from bottom of soil to bucket",&
                               "Accumulated runoff from terrain routing",&
                               "Accumulated runoff from gw bucket"]
-   chrtOutDict%units(:) = [character(len=64) :: "m3 s-1","m3 s-1","m3 s-1","ms-1",&
+   chrtOutDict%units(:) = [character(len=64) :: "m3 s-1","m3 s-1","m3 s-1","m s-1",&
                                                 "meter","m3 s-1","m3 s-1",&
                                                 "m3","m3","m3"]
    chrtOutDict%coordNames(:) = [character(len=64) :: "latitude longitude","latitude longitude",&
