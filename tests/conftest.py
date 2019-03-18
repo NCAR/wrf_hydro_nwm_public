@@ -210,7 +210,7 @@ def candidate_channel_only_sim(request):
 
 
 @pytest.fixture(scope="session")
-def candidate_nwm_output_ana(request):
+def candidate_nwm_output_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     compiler = request.config.getoption("--compiler")
@@ -223,9 +223,10 @@ def candidate_nwm_output_ana(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
+    # condition to set ana or long-range?
     configuration = "nwm_output_ana"
 
-    candidate_nwm_output_ana = _make_sim(
+    candidate_nwm_output_sim = _make_sim(
         domain_dir=domain_dir,
         compiler=compiler,
         source_dir=candidate_dir,
@@ -239,7 +240,7 @@ def candidate_nwm_output_ana(request):
         queue=queue
     )
 
-    return candidate_nwm_output_ana
+    return candidate_nwm_output_sim
 
 
 @pytest.fixture(scope="session")
@@ -278,7 +279,7 @@ def reference_sim(request):
 # we create additional simulation fixtures where we hard-code the alternate configurations,
 # those are "channel-only" and "nwm_output_ana", currently.
 @pytest.fixture(scope="session")
-def reference_nwm_output_ana(request):
+def reference_nwm_output_sim(request):
 
     domain_dir = request.config.getoption("--domain_dir")
     compiler = request.config.getoption("--compiler")
@@ -291,9 +292,10 @@ def reference_nwm_output_ana(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
+    # condition to set ana or long-range?
     configuration = "nwm_output_ana"
 
-    reference_nwm_output_ana = _make_sim(
+    reference_nwm_output_sim = _make_sim(
         domain_dir=domain_dir,
         compiler=compiler,
         source_dir=reference_dir,
@@ -307,7 +309,7 @@ def reference_nwm_output_ana(request):
         queue=queue
     )
 
-    return reference_nwm_output_ana
+    return reference_nwm_output_sim
 
 
 @pytest.fixture(scope="session")
