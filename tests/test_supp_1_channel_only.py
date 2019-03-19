@@ -103,7 +103,7 @@ def test_run_candidate_channel_only(
         ncores
 ):
 
-    if candidate_sim.model.model_config.lower().find('nwm') < 0:
+    if candidate_sim.model.model_config.lower().find('nwm_ana') < 0:
         pytest.skip('Channel-only test only applicable to nwm_ana config')
 
     print("\nQuestion: The candidate channel-only mode runs successfully?\n", end='')
@@ -117,7 +117,7 @@ def test_run_candidate_channel_only(
     # re-run candidate at shorter duration since requires hourly outputs
 
     # Set run directory and change working directory to run dir for simulation
-    run_dir = output_dir / 'candidate_run_output_for_channel_only'
+    run_dir = output_dir / 'channel_only_candidate_full_model_run'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
@@ -160,13 +160,13 @@ def test_run_candidate_channel_only(
     candidate_channel_only_sim_copy.model = copy.deepcopy(candidate_sim.model)
 
     # Set run directory and go for execution.
-    run_dir = output_dir / 'run_candidate_channel_only'
+    run_dir = output_dir / 'channel_only_candidate_run'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
     # Set the forcing directory
     candidate_channel_only_sim_copy.base_hrldas_namelist['noahlsm_offline']['indir'] = \
-        str(output_dir / 'candidate_run_output_for_channel_only')
+        str(output_dir / 'channel_only_candidate_full_model_run')
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
@@ -213,9 +213,9 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
     # Check for existence of simobjects
     candidate_run_file = \
-        output_dir / 'candidate_run_output_for_channel_only' / 'WrfHydroSim_collected.pkl'
+        output_dir / 'channel_only_candidate_full_model_run' / 'WrfHydroSim_collected.pkl'
     candidate_channel_only_run_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
+        output_dir / 'channel_only_candidate_run' / 'WrfHydroSim_collected.pkl'
 
     if candidate_run_file.is_file() is False:
         pytest.skip('Candidate run object not found, skipping test')
@@ -259,9 +259,9 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 def test_ncores_candidate_channel_only(output_dir):
 
     candidate_channel_only_sim_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
+        output_dir / 'channel_only_candidate_run' / 'WrfHydroSim.pkl'
     candidate_channel_only_collected_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
+        output_dir / 'channel_only_candidate_run' / 'WrfHydroSim_collected.pkl'
 
     if candidate_channel_only_collected_file.is_file() is False:
         pytest.skip('candidate_channel_only collected run object not found, skipping test.')
@@ -277,7 +277,7 @@ def test_ncores_candidate_channel_only(output_dir):
     candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
     candidate_channel_only_sim_ncores. \
         base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
-    run_dir = output_dir / 'ncores_candidate_channel_only'
+    run_dir = output_dir / 'channel_only_candidate_ncores'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
@@ -335,9 +335,9 @@ def test_ncores_candidate_channel_only(output_dir):
 def test_perfrestart_candidate_channel_only(output_dir):
 
     candidate_channel_only_sim_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim.pkl'
+        output_dir / 'channel_only_candidate_run' / 'WrfHydroSim.pkl'
     candidate_channel_only_collected_file = \
-        output_dir / 'run_candidate_channel_only' / 'WrfHydroSim_collected.pkl'
+        output_dir / 'channel_only_candidate_run' / 'WrfHydroSim_collected.pkl'
 
     if candidate_channel_only_collected_file.is_file() is False:
         pytest.skip('candidate_channel_only run object not found, skipping test')
@@ -354,7 +354,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
     candidate_channel_only_sim_restart = copy.deepcopy(candidate_channel_only_sim)
 
     # Set run directory
-    run_dir = output_dir / 'restart_candidate_channel_only'
+    run_dir = output_dir / 'channel_only_candidate_restart'
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 

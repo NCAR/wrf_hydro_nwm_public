@@ -223,8 +223,11 @@ def candidate_nwm_output_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    # condition to set ana or long-range?
-    configuration = "nwm_output_ana"
+    configuration = request.config.getoption("--config")
+    if configuration == 'nwm_long_range':
+        configuration = "nwm_output_long_range"
+    else:
+        configuration = "nwm_output_ana"
 
     candidate_nwm_output_sim = _make_sim(
         domain_dir=domain_dir,
@@ -292,8 +295,11 @@ def reference_nwm_output_sim(request):
     walltime = request.config.getoption("--walltime")
     queue = request.config.getoption("--queue")
 
-    # condition to set ana or long-range?
-    configuration = "nwm_output_ana"
+    configuration = request.config.getoption("--config")
+    if configuration == 'nwm_long_range':
+        configuration = "nwm_output_long_range"
+    else:
+        configuration = "nwm_output_ana"
 
     reference_nwm_output_sim = _make_sim(
         domain_dir=domain_dir,

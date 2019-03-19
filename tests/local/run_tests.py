@@ -73,12 +73,14 @@ def run_tests(config: str,
 
     # Ignore section: for cleaner tests with less skipps!
 
-    # NWM
+    # NWM Supplementals.
     # If it is not NWM, ignore channel-only and nwm_output tests.
     # (This is likely not the right way to do this.)
-    if config.lower().find('nwm') < 0:
+    if config != 'nwm_ana':
         pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
-        pytest_cmd += " --ignore=tests/test_supp_2_nwm_output_ana.py "
+
+    if config.lower().find('nwm') < 0:
+        pytest_cmd += " --ignore=tests/test_supp_2_nwm_output.py "
 
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
