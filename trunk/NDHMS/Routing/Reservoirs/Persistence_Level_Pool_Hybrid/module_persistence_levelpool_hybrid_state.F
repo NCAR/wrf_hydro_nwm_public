@@ -20,9 +20,9 @@ module module_persistence_levelpool_hybrid_state
         real*4  :: current_storage        ! cubic meters
         real    :: gage_discharge
         !integer :: timeslice_file_offset_seconds
-        integer :: weight_update_time_interval
+        !integer :: weight_update_time_interval
         integer :: weight_update_time
-        integer :: timeslice_update_time_interval
+        !integer :: timeslice_update_time_interval
         integer :: timeslice_update_time
         integer :: new_day_time
         integer :: current_time
@@ -58,9 +58,9 @@ contains
         !this%water_elevation = water_elevation
 
 
-        print *, orifice_elevation, " + (( ", lake_max_water_elevation, " - ", orifice_elevation, " ) * ", initial_fractional_depth, ")"
+        !print *, orifice_elevation, " + (( ", lake_max_water_elevation, " - ", orifice_elevation, " ) * ", initial_fractional_depth, ")"
 
-        print *, orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
+        !print *, orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
 
         this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
 
@@ -97,13 +97,13 @@ print *, '------------------------------'
 
 
         ! Initialize time variables
-        this%weight_update_time_interval = seconds_in_day
+        !this%weight_update_time_interval = seconds_in_day
         this%weight_update_time = 0
         !this%timeslice_update_time_interval = seconds_in_day
         !this%timeslice_update_time_interval = HUGE(0) ! set to this for forecast modes right now
 
         ! maybe figure a way to set to smthng else below
-        this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
+        !this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
         this%timeslice_update_time = 0
         this%current_time = 0
         this%current_day = 0

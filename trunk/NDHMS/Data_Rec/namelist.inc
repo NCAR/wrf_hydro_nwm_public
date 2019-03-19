@@ -44,6 +44,8 @@
           logical            :: persistence
           character(len=256) :: persistence_parameter_file=""
           character(len=256) :: reservoir_timeslice_path=""
+          integer            :: reservoir_observation_lookback_hours
+          integer            :: reservoir_observation_update_time_interval_seconds
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""

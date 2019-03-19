@@ -65,7 +65,9 @@ contains
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, gage_id, persistence_parameter_file, start_date, &
-        timeslice_path, reservoir_gage_ids, number_of_lakes)
+        timeslice_path, observation_lookback_hours, &
+        observation_update_time_interval_seconds, reservoir_gage_ids, &
+        number_of_lakes)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -84,6 +86,8 @@ contains
         character(len=*),   intent(in)                  :: persistence_parameter_file
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: timeslice_path
+        integer,            intent(in)                  :: observation_lookback_hours
+        integer,            intent(in)                  :: observation_update_time_interval_seconds
         integer,            intent(in), dimension(:)    :: reservoir_gage_ids
         integer,            intent(in)                  :: number_of_lakes
 
@@ -120,7 +124,7 @@ contains
             else
                 ! initialize hybrid parameters
                 call this%parameters%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
-                gage_id, persistence_parameter_file)
+                gage_id, observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -207,8 +211,8 @@ print *, reservoir_data%state%gage_discharge
             print *, reservoir_data%parameters%lake_number
 
             ! Read new timeslice gage discharges
-            call read_timeslice_data%setup_read_timeslice(reservoir_data%state%timeslice_update_time_interval, reservoir_data%state%current_time, &
-            reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
+            call read_timeslice_data%setup_read_timeslice(reservoir_data%parameters%observation_update_time_interval_seconds, &
+            reservoir_data%state%current_time, reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
@@ -239,10 +243,10 @@ print *, gage_lookback_seconds
 
             ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
             ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
-            reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%state%weight_update_time_interval - gage_lookback_seconds
+            reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%parameters%weight_update_time_interval - gage_lookback_seconds
 
             ! Set timeslice update time
-            reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%state%timeslice_update_time_interval
+            reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%parameters%observation_update_time_interval_seconds
 
 
 print *, 'reservoir_data%state%weight_update_time'
@@ -282,13 +286,23 @@ print *, reservoir_data%state%persistence_current_weight
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
 
             ! Set next weight update time
-            reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%state%weight_update_time_interval
+            reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%parameters%weight_update_time_interval
 
         end if
 
         ! Run levelpool release
         call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
         lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
+
+print *, 'reservoir_data%state%persistence_weight_index'
+print *, reservoir_data%state%persistence_weight_index
+
+print *, 'reservoir_data%state%persistence_current_weight'
+print *, reservoir_data%state%persistence_current_weight
+
+print *, 'gage_lookback_seconds'
+print *, gage_lookback_seconds
+
 
 print *, 'levelpool_outflow'
 print *, levelpool_outflow
@@ -348,6 +362,9 @@ print *, '--------------------------'
         ! Update the current time
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
+
+!ADD LOG FOR WEIGHT UPDATE TIMES
+!!!!!!!!!
 
         !TEMP
         if (reservoir_data%parameters%lake_number == 10361596) then

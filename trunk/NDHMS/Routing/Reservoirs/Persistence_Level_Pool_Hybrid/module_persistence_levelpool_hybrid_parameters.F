@@ -4,6 +4,9 @@
 ! static/unchanging variables that are
 ! set when the given reservoir object is
 ! initialized/instantiated.
+
+#define seconds_in_day 86400
+
 module module_persistence_levelpool_hybrid_parameters
 
     !use netcdf
@@ -20,6 +23,9 @@ module module_persistence_levelpool_hybrid_parameters
         real    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer :: lake_number                  ! lake number
         integer :: gage_id
+        integer :: observation_lookback_hours
+        integer :: observation_update_time_interval_seconds
+        integer :: weight_update_time_interval
         real, allocatable, dimension(:) :: persistence_weighted_coefficients
 
     contains
@@ -33,7 +39,7 @@ contains
 
     ! Hybrid Parameters Constructor
     subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
-        gage_id, persistence_parameter_file)
+        gage_id, observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
         implicit none
         class(hybrid_parameters_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area                    ! area of lake (km^2)
@@ -41,6 +47,8 @@ contains
         real, intent(in)    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer, intent(in) :: lake_number                  ! lake number
         integer, intent(in) :: gage_id
+        integer, intent(in) :: observation_lookback_hours
+        integer, intent(in) :: observation_update_time_interval_seconds
         character(len=*), intent(in) :: persistence_parameter_file
         integer                 :: ncid, var_id, lake_id_index
         integer                 :: status                   ! status of reading NetCDF
@@ -55,13 +63,31 @@ contains
 
         this%gage_id = gage_id
 
+        this%observation_lookback_hours = observation_lookback_hours
+
+        this%observation_update_time_interval_seconds = observation_update_time_interval_seconds
+
+        this%weight_update_time_interval = seconds_in_day
+
         this%min_storage = 0.0
 
         !!DOUBLE CHECK THIS??
         this%max_storage = (lake_max_water_elevation - orifice_elevation) * lake_area * 1.0E6
 
+
+
+        !this%timeslice_update_time_interval = HUGE(0) ! set to this for forecast modes right now
+
+        ! maybe figure a way to set to smthng else below
+        !this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
+
+
         print *, 'lake_number'
         print *, lake_number
+
+
+        print *, 'observation_update_time_interval_seconds'
+        print *, observation_update_time_interval_seconds
 
         print*, 'this%max_storage'
         print*, this%max_storage

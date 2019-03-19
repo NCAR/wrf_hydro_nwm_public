@@ -56,6 +56,8 @@ CONTAINS
           logical            :: persistence
           character(len=256) :: persistence_parameter_file=""
           character(len=256) :: reservoir_timeslice_path = ""
+          integer            :: reservoir_observation_lookback_hours
+          integer            :: reservoir_observation_update_time_interval_seconds
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
@@ -118,9 +120,11 @@ CONTAINS
                     SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt_ter,dtrt_ch,dxrt,&
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
-                    route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, persistence, &
-                    persistence_parameter_file, reservoir_timeslice_path, route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
-                    gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
+                    route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
+                    persistence, persistence_parameter_file, reservoir_timeslice_path, &
+                    reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
+                    route_direction_f,route_order_f, gwbasmskfil, geo_finegrid_flnm, gwstrmfil, &
+                    GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
                     RTOUT_DOMAIN, output_gw, outlake, &
@@ -154,6 +158,9 @@ CONTAINS
    compound_channel = .FALSE.
    bucket_loss = 0
    persistence = .FALSE.
+   reservoir_observation_lookback_hours = 18
+   reservoir_observation_update_time_interval_seconds = 86400
+
 
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
@@ -253,6 +260,18 @@ CONTAINS
   nlst%persistence = persistence
   nlst%persistence_parameter_file = persistence_parameter_file
   nlst%reservoir_timeslice_path = reservoir_timeslice_path
+  nlst%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
+
+  ! If in retrospective mode, set default reservoir_observation_update_time_interval_seconds to one day
+  if ( io_config_outputs .eq. 5 ) then
+    nlst%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
+  else
+    nlst%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
+
+    if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 ) then
+        print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
+    end if
+  end if
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
@@ -261,6 +280,8 @@ CONTAINS
   call mpp_land_bcast_log1(nlst%persistence)
   call mpp_land_bcast_char(256,nlst%persistence_parameter_file )
   call mpp_land_bcast_char(256,nlst%reservoir_timeslice_path)
+  call mpp_land_bcast_int1(nlst%reservoir_observation_lookback_hours)
+  call mpp_land_bcast_int1(nlst%reservoir_observation_update_time_interval_seconds)
 #endif
 
   write(nlst%hgrid,'(I1)') igrid
@@ -481,6 +502,8 @@ CONTAINS
     write(6,*) " nlst%route_lake_f ",route_lake_f
     write(6,*) " nlst%persistence_parameter_file ", persistence_parameter_file
     write(6,*) " nlst%reservoir_timeslice_path ", reservoir_timeslice_path
+    write(6,*) " nlst%reservoir_observation_lookback_hours ", nlst%reservoir_observation_lookback_hours
+    write(6,*) " nlst%reservoir_observation_update_time_interval_seconds ", nlst%reservoir_observation_update_time_interval_seconds
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil

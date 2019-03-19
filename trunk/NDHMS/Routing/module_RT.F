@@ -853,6 +853,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
               nlst_rt(did)%persistence_parameter_file,      &
               nlst_rt(did)%startdate(1:19),                &
               nlst_rt(did)%reservoir_timeslice_path,       &
+              nlst_rt(did)%reservoir_observation_lookback_hours, &
+              nlst_rt(did)%reservoir_observation_update_time_interval_seconds, &
               rt_domain(did)%reservoir_gage_ids,           &
               NLAKES_total                                 )
 
