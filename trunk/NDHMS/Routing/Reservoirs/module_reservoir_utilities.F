@@ -282,7 +282,13 @@ print *, lake_id_index
         status = nf90_get_var(ncid, var_id, temp_gage_id_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
+        print *, 'temp_gage_id_array'
+        print *, temp_gage_id_array
+
         gage_id = temp_gage_id_array(lake_id_index)
+
+        print *, 'gage_id'
+        print *, gage_id
 
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 

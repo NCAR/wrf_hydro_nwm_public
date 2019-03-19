@@ -7353,7 +7353,7 @@ subroutine READ_CHROUTING1( &
      Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,        ORIFICEC, &
      ORIFICEA,     ORIFICEE,          persistence,  q_type,   &
-     reservoir_gage_ids,              LATLAKE,      LONLAKE,  &
+     LATLAKE,      LONLAKE,                                   &
      ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
      CH_NETLNK,    CHANXI,            CHANYJ,       CHLAT,    &
      CHLON,        channel_option,    LATVAL,       LONVAL,   &
@@ -7421,7 +7421,6 @@ real, intent(INOUT),  dimension(:)      :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
 integer, intent(INOUT), dimension(:)    :: q_type
-integer, intent(INOUT), dimension(:)    :: reservoir_gage_ids
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
 real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
@@ -7538,7 +7537,7 @@ if (channel_option .eq. 3) then
           call flush(6)
           call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,WEIRL, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, persistence, q_type, reservoir_gage_ids, &
+                ORIFICEA,  ORIFICEE, persistence, q_type, &
                 LAKEIDM, latlake, lonlake, ELEVLAKE)
         else
           open(unit=79,file=trim(route_lake_f), form='formatted',status='old')
@@ -7549,7 +7548,7 @@ if (channel_option .eq. 3) then
           do i=1, NLAKES
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
             WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i), q_type(i), reservoir_gage_ids(i)
+            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i), q_type(i)
           enddo
 5101      continue
           close(79)
@@ -8241,8 +8240,8 @@ subroutine read_routelink(&
      ChSSlp,       Bw,           Tw,       Tw_CC,      &
      n_CC,         LAKEIDA,      HRZAREA,              &
      LAKEMAXH,     WEIRH,        WEIRC,    WEIRL,      &
-     ORIFICEC,     ORIFICEA,     ORIFICEE, persistence,&
-     q_type,       reservoir_gage_ids,     LATLAKE,    &
+     ORIFICEC,     ORIFICEA,     ORIFICEE,             &
+     persistence,  q_type,                 LATLAKE,    &
      LONLAKE,      ELEVLAKE,     LAKEIDM,  LAKEIDX,    &
      route_link_f, route_lake_f, ZELEV,    CHLAT,      &
      CHLON,        NLINKSL,      LINKID,   GNLINKSL,   &
@@ -8262,7 +8261,6 @@ real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL
 real,    intent(INOUT),  dimension(:)      :: ORIFICEC, ORIFICEA, ORIFICEE
 logical, intent(IN)                        :: persistence
 integer, intent(INOUT),  dimension(:)      :: q_type
-integer, intent(INOUT),  dimension(:)      :: reservoir_gage_ids
 real,    intent(INOUT),  dimension(:)      :: LATLAKE, LONLAKE, ELEVLAKE
 integer, intent(INOUT), dimension(:)       :: LAKEIDM !lake id in LAKEPARM table (.nc or .tbl)
 integer, intent(INOUT),  dimension(:)      :: LAKEIDX !seq index of lakes(1:Nlakes) mapped to COMID
@@ -8286,7 +8284,7 @@ call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
      MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, &
-     ORIFICEA, ORIFICEE, persistence, q_type, reservoir_gage_ids, gages, gageMiss, &
+     ORIFICEA, ORIFICEE, persistence, q_type, gages, gageMiss, &
      LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
 
 !--- get the lake configuration here.
@@ -8326,7 +8324,7 @@ end subroutine read_routelink
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, ORIFICEC, &
-                   ORIFICEA, ORIFICEE, persistence, q_type, reservoir_gage_ids, gages, gageMiss,&
+                   ORIFICEA, ORIFICEE, persistence, q_type, gages, gageMiss,&
                    LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
         implicit none
@@ -8344,7 +8342,7 @@ end subroutine read_routelink
         character(len=15), intent(in) :: gageMiss
 
 !NLAKES
-        INTEGER, intent(out), dimension(:)  ::  LAKEIDM, q_type, reservoir_gage_ids
+        INTEGER, intent(out), dimension(:)  ::  LAKEIDM, q_type
         logical, intent(in)		            ::  persistence
         REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, ORIFICEC,WEIRH, &
                    ORIFICEA, ORIFICEE, ELEVLAKE
@@ -8432,7 +8430,7 @@ end subroutine read_routelink
           if(routeLakeNetcdf) then
              call read_route_lake_netcdf(route_lake_f,HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,    WEIRL, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, persistence, q_type, reservoir_gage_ids, LAKEIDM, latlake, lonlake, ELEVLAKE)
+                ORIFICEA,  ORIFICEE, persistence, q_type, LAKEIDM, latlake, lonlake, ELEVLAKE)
           endif
 
 !!- initialize channel  if missing in input
@@ -8588,7 +8586,7 @@ subroutine MPP_READ_CHROUTING_new(&
      n_CC,         HRZAREA,           LAKEMAXH,                  &
      WEIRH,        WEIRC,             WEIRL,          ORIFICEC,  &
      ORIFICEA,     ORIFICEE,          persistence,    q_type,    &
-     reservoir_gage_ids,              LATLAKE,        LONLAKE,   &
+     LATLAKE,      LONLAKE,                                      &
      ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
      CH_NETLNK,    CHANXI,            CHANYJ,         CHLAT,     &
      CHLON,        channel_option,    LATVAL,         LONVAL,    &
@@ -8631,7 +8629,6 @@ real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 integer, intent(INOUT), dimension(NLAKES)    :: q_type
-integer, intent(INOUT), dimension(NLAKES)    :: reservoir_gage_ids
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw
 real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
@@ -8662,7 +8659,7 @@ call READ_CHROUTING1( &
      n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     ORIFICEC,&
      ORIFICEA,     ORIFICEE,          persistence, q_type,&
-     reservoir_gage_ids,              LATLAKE,   LONLAKE, &
+     LATLAKE,      LONLAKE,                               &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
      CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,   &
      CHLON,        channel_option,    LATVAL,    LONVAL,  &
@@ -8964,8 +8961,7 @@ end subroutine read_route_link_netcdf
 subroutine read_route_lake_netcdf(route_lake_file,                         &
                                    HRZAREA,  LAKEMAXH, WEIRH,  WEIRC,    WEIRL,    &
                                    ORIFICEC, ORIFICEA,  ORIFICEE,  persistence, &
-                                   q_type, reservoir_gage_ids, LAKEIDM, &
-                                   lakelat, lakelon, ELEVLAKE)
+                                   q_type, LAKEIDM, lakelat, lakelon, ELEVLAKE)
 
 implicit none
 character(len=*),        intent(in)  :: route_lake_file
@@ -8975,7 +8971,6 @@ real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEI
 real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
 real,    dimension(:),   intent(out) :: ELEVLAKE
 integer, dimension(:),   intent(out) :: q_type
-integer, dimension(:),   intent(out) :: reservoir_gage_ids
 
 
 integer :: iRet, ncid, ii, varid
@@ -9005,7 +9000,6 @@ call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
 if (persistence) then
    call get_1d_netcdf_int(ncid, 'Q_TYPE', q_type, 'read_route_lake_netcdf', .TRUE.)
-   call get_1d_netcdf_int(ncid, 'gage_id', reservoir_gage_ids, 'read_route_lake_netcdf', .TRUE.)
 end if
 call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)

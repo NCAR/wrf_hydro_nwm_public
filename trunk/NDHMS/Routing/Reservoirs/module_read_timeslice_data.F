@@ -21,7 +21,6 @@
 
 #define days_in_year 365
 #define days_in_leap_year 366
-#define timeslice_files_lookback_hours 18
 #define observation_resolution_minutes 15
 #define gage_quality_threshold 0.9
 
@@ -37,13 +36,12 @@ module module_read_timeslice_data
         character(len=19)   :: current_date
         character(len=256)  :: timeslice_path
         integer :: number_of_reservoir_gages
+        integer :: observation_lookback_hours
         integer :: current_lookback_seconds
         integer :: last_update_time_seconds
         integer, allocatable, dimension(:) :: gage_lookback_seconds
-        integer, allocatable, dimension(:) :: reservoir_gage_ids_subset
-        !integer, allocatable, dimension(:) :: reservoir_lake_index_subset_mapping
+        integer, allocatable, dimension(:) :: reservoir_gage_ids
         real, allocatable, dimension(:)    :: reservoir_gage_discharges
-        !real, allocatable, dimension(:)    :: reservoir_gage_discharges_all
         character(len=256), allocatable, dimension(:) :: timeslice_file_names
         character(len=15),  allocatable, dimension(:) :: gage_id
         real,               allocatable, dimension(:) :: gage_discharge
@@ -66,18 +64,15 @@ contains
 
     ! Timeslice Data Struct Constructor
     subroutine read_timeslice_data_struct_init(this, start_date, timeslice_path, &
-        persistence_parameter_file, number_of_lakes)
+        persistence_parameter_file, observation_lookback_hours)
         implicit none
         class(read_timeslice_data_struct), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: timeslice_path
         character(len=*),   intent(in)                  :: persistence_parameter_file
-        integer,            intent(in)                  :: number_of_lakes
-        integer                                         :: lake_index, gage_id_subset_index
-        integer                                         :: number_of_reservoir_gages
+        integer,            intent(in)                  :: observation_lookback_hours
         integer                                         :: ncid, var_id
         integer                                         :: status  ! status of reading NetCDF
-
 
         if (this%initialized) return
         this%initialized = .true.
@@ -85,11 +80,11 @@ contains
         status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
 
-        call read_persistence_netcdf_gage_ids_all(ncid, "gage_id", var_id, number_of_reservoir_gages)
+        call read_persistence_netcdf_gage_ids_all(ncid, "gage_id", var_id, this%number_of_reservoir_gages)
 
-        allocate (this%reservoir_gage_ids_subset(this%number_of_reservoir_gages))
+        allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
 
-        status = nf90_get_var(ncid, var_id, this%reservoir_gage_ids_subset)
+        status = nf90_get_var(ncid, var_id, this%reservoir_gage_ids)
         if (status /= nf90_noerr) call handle_err(status, "gage_id")
 
         status = nf90_close(ncid)
@@ -99,56 +94,29 @@ contains
         print *, 'at timeslice init'
         print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
 
-        print *, 'this%reservoir_gage_ids_subset'
-        print *, this%reservoir_gage_ids_subset
+        print *, 'this%number_of_reservoir_gages'
+        print *, this%number_of_reservoir_gages
+
+        print *, 'ncid'
+        print *, ncid
+        print *, 'var_id'
+        print *, var_id
+
+        print *, 'this%reservoir_gage_ids'
+        print *, this%reservoir_gage_ids
 
 
         this%start_date = start_date
         this%current_date = start_date
         this%timeslice_path = timeslice_path
+        this%observation_lookback_hours = observation_lookback_hours
 
         !MAKE NOTE ABOUT THIS HAPPENING ON ONLY ONE CORE AT A TIME
         this%last_update_time_seconds = -999
 
-        ! Gage discharge array for all lakes including lakes without gages
-        !allocate(this%reservoir_gage_discharges_all(number_of_lakes))
-
-        ! Set gage discharges of all lakes to default -999.0
-        !this%reservoir_gage_discharges_all = -999.0
-
-        !this%number_of_reservoir_gages = 0
-
-        gage_id_subset_index = 1
-
-        ! Loop through all the lakes determine the total number of reservoir gages to look for
-        !do lake_index = 1, number_of_lakes
-        !    if (reservoir_gage_ids_all(lake_index) > 0) then
-        !        this%number_of_reservoir_gages = this%number_of_reservoir_gages + 1
-        !    end if
-        !end do
-
         ! Allocate subset arrays of only lakes with gages
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
-        !allocate (this%reservoir_gage_ids_subset(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
-        !allocate (this%reservoir_lake_index_subset_mapping(this%number_of_reservoir_gages))
-
-
-        ! Set gage discharges of subset lakes to default -1.0
-        !this%reservoir_gage_discharges = -1.0
-
-        ! Get gage ids to search for in timeslice files
-        !do lake_index = 1, number_of_lakes
-
-        !    if (reservoir_gage_ids_all(lake_index) > 0) then
-        !        this%reservoir_gage_ids_subset(gage_id_subset_index) = reservoir_gage_ids_all(lake_index)
-        !        this%reservoir_lake_index_subset_mapping(gage_id_subset_index) = lake_index
-        !        gage_id_subset_index = gage_id_subset_index + 1
-        !    end if
-
-        !end do
-
-
 
     end subroutine read_timeslice_data_struct_init
 
@@ -169,7 +137,6 @@ contains
         class(read_timeslice_data_struct), intent(inout) :: this
         integer, intent(in)  :: update_interval_seconds
         integer, intent(in)  :: current_reservoir_time_seconds
-        !integer, intent(in) :: lake_number               ! lake number
         integer, intent(in)  :: reservoir_gage_id
         integer, intent(out) :: gage_lookback_seconds
         real, intent(out)    :: reservoir_gage_discharge
@@ -193,11 +160,6 @@ print *, this%last_update_time_seconds
         print *, 'at timeslice setup read'
         print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
 
-            ! CAN GET NEW DATE HERE IN RETRO MODE WITH DAILY UPDATE INTERVAL
-            ! BUT CAN'T USE THE SAME CODE FOR FORECAST BECAUSE UPATE INTERVAL IS 1E8
-            ! IF FIRST RUN
-            !!!!
-
             if (this%last_update_time_seconds .ne. -999) then
                 call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
             end if
@@ -207,7 +169,6 @@ print *, this%last_update_time_seconds
 
             this%last_update_time_seconds = current_reservoir_time_seconds
 
-            !NEW TO THIS subroutine
             ! Set gage discharges of subset lakes to default -1.0
             this%reservoir_gage_discharges = -1.0
 
@@ -215,19 +176,12 @@ print *, this%last_update_time_seconds
             this%current_lookback_seconds = 0
 
 
-            total_timeslice_time_periods = timeslice_files_lookback_hours * (60 / observation_resolution_minutes)
+            total_timeslice_time_periods = this%observation_lookback_hours * (60 / observation_resolution_minutes)
 
             ! Allocate array of all timeslice files to potentially read
             if ( .not. allocated(this%timeslice_file_names) ) then
                 allocate(this%timeslice_file_names(total_timeslice_time_periods))
             end if
-
-!!!!!
-            ! DOUBLE CHECK THIS IF TIME IS OR ROUTING PERIOD
-            !if (current_reservoir_time_seconds > 0) then
-            !    call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
-            !end if
-!!!!
 
             old_date = this%current_date
 
@@ -282,7 +236,6 @@ print *, this%last_update_time_seconds
 
                     this%current_lookback_seconds = this%current_lookback_seconds - observation_resolution_seconds
 
-
                 else
                     exit
                 end if
@@ -293,23 +246,14 @@ print *, this%last_update_time_seconds
     close (112)
     !!!!!!!
 
-
-            ! Map reservoir discharges subset back to array of all reservoir discharges
-            !do reservoir_subset_index = 1, this%number_of_reservoir_gages
-            !    lake_index = this%reservoir_lake_index_subset_mapping(reservoir_subset_index)
-            !    this%reservoir_gage_discharges_all(lake_index) = this%reservoir_gage_discharges(reservoir_subset_index)
-            !end do
-
         end if
 
-
         do reservoir_subset_index = 1, this%number_of_reservoir_gages
-            if (this%reservoir_gage_ids_subset(reservoir_subset_index) == reservoir_gage_id) then
+            if (this%reservoir_gage_ids(reservoir_subset_index) == reservoir_gage_id) then
                 gage_lookback_seconds = this%gage_lookback_seconds(reservoir_subset_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
             end if
         end do
-
 
 
     end subroutine setup_read_timeslice
@@ -376,7 +320,7 @@ print *, this%last_update_time_seconds
         where(this%gage_discharge .ge. 90000.0) this%gage_quality=0
 
         print *, this%number_of_reservoir_gages
-        print *, this%reservoir_gage_ids_subset
+        print *, this%reservoir_gage_ids
         print *, this%reservoir_gage_discharges
 
         print *, 'number_of_gages'
@@ -399,7 +343,7 @@ print *, this%last_update_time_seconds
             if (this%reservoir_gage_discharges(reservoir_gage_index) == -1.0) then
 
                 do timeslice_gage_index = 1, number_of_gages
-                    if (gage_ids_integer_array(timeslice_gage_index) == this%reservoir_gage_ids_subset(reservoir_gage_index)) then
+                    if (gage_ids_integer_array(timeslice_gage_index) == this%reservoir_gage_ids(reservoir_gage_index)) then
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
 
@@ -430,16 +374,6 @@ print *, this%last_update_time_seconds
                 end do
             end if
         end do
-
-
-        ! BELOW SOLEY TEMP FOR LOGGING PURPOSES
-        !do reservoir_gage_index = 1, this%number_of_reservoir_gages
-        !    if (this%reservoir_gage_discharges(reservoir_gage_index) == -1.0) then
-
-
-        !    end if
-        !end do
-
 
     ! Close timeslice NetCDF file
     status = nf90_close(ncid)

@@ -367,7 +367,6 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
-        allocate ( rt_domain(did)%reservoir_gage_ids(NLAKES) ) ! allocate array for reservoir gage ids
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -389,7 +388,6 @@ CONTAINS
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
          rt_domain(did)%q_type = 1
-         rt_domain(did)%reservoir_gage_ids = -1
      endif
 
 
@@ -725,8 +723,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
-             nlst_rt(did)%persistence,                             &
-             rt_domain(did)%q_type,       rt_domain(did)%reservoir_gage_ids, &
+             nlst_rt(did)%persistence,    rt_domain(did)%q_type,   &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -768,9 +765,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst_rt(did)%persistence,    			                &
-           rt_domain(did)%q_type,     				                &
-           rt_domain(did)%reservoir_gage_ids,                       &
+           nlst_rt(did)%persistence,     rt_domain(did)%q_type,     &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
@@ -783,16 +778,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    end if
 
    NLAKES_total = rt_domain(did)%NLAKES
-
-   ! If persistence flag set to true
-   !if (nlst_rt(did)%persistence) then
-
-       ! Initialize and run read_timeslice_data module
-   !    call rt_domain(did)%read_timeslice_data%init(nlst_rt(did)%startdate(1:19), &
-   !         nlst_rt(did)%reservoir_timeslice_path, rt_domain(did)%reservoir_gage_ids, NLAKES_total)
-
-   !end if
-
 
    do lake_index = 1, NLAKES_total
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
@@ -853,8 +838,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
               nlst_rt(did)%startdate(1:19),                &
               nlst_rt(did)%reservoir_timeslice_path,       &
               nlst_rt(did)%reservoir_observation_lookback_hours, &
-              nlst_rt(did)%reservoir_observation_update_time_interval_seconds, &
-              NLAKES_total                                 )
+              nlst_rt(did)%reservoir_observation_update_time_interval_seconds)
 
            end select
 

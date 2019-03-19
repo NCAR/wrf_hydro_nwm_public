@@ -66,7 +66,7 @@ contains
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, persistence_parameter_file, start_date, &
         timeslice_path, observation_lookback_hours, &
-        observation_update_time_interval_seconds, number_of_lakes)
+        observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -85,10 +85,9 @@ contains
         character(len=256), intent(in)                  :: timeslice_path
         integer,            intent(in)                  :: observation_lookback_hours
         integer,            intent(in)                  :: observation_update_time_interval_seconds
-        integer,            intent(in)                  :: number_of_lakes
 
         call read_timeslice_data%init(start_date, &
-            timeslice_path, persistence_parameter_file, number_of_lakes)
+            timeslice_path, persistence_parameter_file, observation_lookback_hours)
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
