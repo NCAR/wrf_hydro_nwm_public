@@ -849,13 +849,11 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
               rt_domain(did)%LAKEMAXH(lake_index),         &
               rt_domain(did)%ELEVLAKE(lake_index),         &
               rt_domain(did)%LAKEIDM(lake_index),          &
-              rt_domain(did)%reservoir_gage_ids(lake_index),&
               nlst_rt(did)%persistence_parameter_file,      &
               nlst_rt(did)%startdate(1:19),                &
               nlst_rt(did)%reservoir_timeslice_path,       &
               nlst_rt(did)%reservoir_observation_lookback_hours, &
               nlst_rt(did)%reservoir_observation_update_time_interval_seconds, &
-              rt_domain(did)%reservoir_gage_ids,           &
               NLAKES_total                                 )
 
            end select

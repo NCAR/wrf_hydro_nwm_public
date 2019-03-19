@@ -39,14 +39,13 @@ contains
 
     ! Hybrid Parameters Constructor
     subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
-        gage_id, observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
+        observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
         implicit none
         class(hybrid_parameters_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area                    ! area of lake (km^2)
         real, intent(in)    :: lake_max_water_elevation     ! max water elevation (meters)
         real, intent(in)    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer, intent(in) :: lake_number                  ! lake number
-        integer, intent(in) :: gage_id
         integer, intent(in) :: observation_lookback_hours
         integer, intent(in) :: observation_update_time_interval_seconds
         character(len=*), intent(in) :: persistence_parameter_file
@@ -61,7 +60,7 @@ contains
 
         this%lake_number = lake_number
 
-        this%gage_id = gage_id
+        !this%gage_id = gage_id
 
         this%observation_lookback_hours = observation_lookback_hours
 
@@ -110,6 +109,13 @@ print *, lake_max_water_elevation
         ! Read relevant parameters from Persistence Parameter NetCDF
         call read_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
 
+        call read_persistence_netcdf_gage_id(ncid, lake_id_index, "gage_id", this%gage_id)
+
+print *, 'lake_id_index'
+print *, lake_id_index
+print *, 'this%gage_id'
+print *, this%gage_id
+
         call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "persistence_coefficients", var_id, number_of_weights, number_of_lakes)
 
         allocate(this%persistence_weighted_coefficients(number_of_weights))
@@ -131,6 +137,8 @@ print *, this%persistence_weighted_coefficients
 
         if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)
 
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
 
     end subroutine hybrid_parameters_init
 

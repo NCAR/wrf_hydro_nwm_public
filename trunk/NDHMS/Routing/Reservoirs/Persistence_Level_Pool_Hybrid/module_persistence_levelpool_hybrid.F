@@ -64,10 +64,9 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, gage_id, persistence_parameter_file, start_date, &
+        lake_number, persistence_parameter_file, start_date, &
         timeslice_path, observation_lookback_hours, &
-        observation_update_time_interval_seconds, reservoir_gage_ids, &
-        number_of_lakes)
+        observation_update_time_interval_seconds, number_of_lakes)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -81,19 +80,15 @@ contains
         real, intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real, intent(in)    :: initial_fractional_depth
         integer, intent(in) :: lake_number               ! lake number
-        integer, intent(in) :: gage_id
-        !real, intent(in)    :: gage_discharge
         character(len=*),   intent(in)                  :: persistence_parameter_file
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: timeslice_path
         integer,            intent(in)                  :: observation_lookback_hours
         integer,            intent(in)                  :: observation_update_time_interval_seconds
-        integer,            intent(in), dimension(:)    :: reservoir_gage_ids
         integer,            intent(in)                  :: number_of_lakes
 
-
-       call read_timeslice_data%init(start_date, &
-            timeslice_path, reservoir_gage_ids, number_of_lakes)
+        call read_timeslice_data%init(start_date, &
+            timeslice_path, persistence_parameter_file, number_of_lakes)
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -124,7 +119,7 @@ contains
             else
                 ! initialize hybrid parameters
                 call this%parameters%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
-                gage_id, observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
+                observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 

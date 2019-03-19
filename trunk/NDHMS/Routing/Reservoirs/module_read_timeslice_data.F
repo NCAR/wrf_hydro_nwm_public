@@ -41,9 +41,9 @@ module module_read_timeslice_data
         integer :: last_update_time_seconds
         integer, allocatable, dimension(:) :: gage_lookback_seconds
         integer, allocatable, dimension(:) :: reservoir_gage_ids_subset
-        integer, allocatable, dimension(:) :: reservoir_lake_index_subset_mapping
+        !integer, allocatable, dimension(:) :: reservoir_lake_index_subset_mapping
         real, allocatable, dimension(:)    :: reservoir_gage_discharges
-        real, allocatable, dimension(:)    :: reservoir_gage_discharges_all
+        !real, allocatable, dimension(:)    :: reservoir_gage_discharges_all
         character(len=256), allocatable, dimension(:) :: timeslice_file_names
         character(len=15),  allocatable, dimension(:) :: gage_id
         real,               allocatable, dimension(:) :: gage_discharge
@@ -66,18 +66,41 @@ contains
 
     ! Timeslice Data Struct Constructor
     subroutine read_timeslice_data_struct_init(this, start_date, timeslice_path, &
-        reservoir_gage_ids_all, number_of_lakes)
+        persistence_parameter_file, number_of_lakes)
         implicit none
         class(read_timeslice_data_struct), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: timeslice_path
-        integer,            intent(in), dimension(:)    :: reservoir_gage_ids_all
+        character(len=*),   intent(in)                  :: persistence_parameter_file
         integer,            intent(in)                  :: number_of_lakes
         integer                                         :: lake_index, gage_id_subset_index
         integer                                         :: number_of_reservoir_gages
+        integer                                         :: ncid, var_id
+        integer                                         :: status  ! status of reading NetCDF
+
 
         if (this%initialized) return
         this%initialized = .true.
+
+        status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
+
+        call read_persistence_netcdf_gage_ids_all(ncid, "gage_id", var_id, number_of_reservoir_gages)
+
+        allocate (this%reservoir_gage_ids_subset(this%number_of_reservoir_gages))
+
+        status = nf90_get_var(ncid, var_id, this%reservoir_gage_ids_subset)
+        if (status /= nf90_noerr) call handle_err(status, "gage_id")
+
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
+
+        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
+        print *, 'at timeslice init'
+        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
+
+        print *, 'this%reservoir_gage_ids_subset'
+        print *, this%reservoir_gage_ids_subset
 
 
         this%start_date = start_date
@@ -88,46 +111,44 @@ contains
         this%last_update_time_seconds = -999
 
         ! Gage discharge array for all lakes including lakes without gages
-        allocate(this%reservoir_gage_discharges_all(number_of_lakes))
+        !allocate(this%reservoir_gage_discharges_all(number_of_lakes))
 
         ! Set gage discharges of all lakes to default -999.0
-        this%reservoir_gage_discharges_all = -999.0
+        !this%reservoir_gage_discharges_all = -999.0
 
-        this%number_of_reservoir_gages = 0
+        !this%number_of_reservoir_gages = 0
 
         gage_id_subset_index = 1
 
         ! Loop through all the lakes determine the total number of reservoir gages to look for
-        do lake_index = 1, number_of_lakes
-            if (reservoir_gage_ids_all(lake_index) > 0) then
-                this%number_of_reservoir_gages = this%number_of_reservoir_gages + 1
-            end if
-        end do
+        !do lake_index = 1, number_of_lakes
+        !    if (reservoir_gage_ids_all(lake_index) > 0) then
+        !        this%number_of_reservoir_gages = this%number_of_reservoir_gages + 1
+        !    end if
+        !end do
 
         ! Allocate subset arrays of only lakes with gages
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
-        allocate (this%reservoir_gage_ids_subset(this%number_of_reservoir_gages))
+        !allocate (this%reservoir_gage_ids_subset(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
-        allocate (this%reservoir_lake_index_subset_mapping(this%number_of_reservoir_gages))
+        !allocate (this%reservoir_lake_index_subset_mapping(this%number_of_reservoir_gages))
 
 
         ! Set gage discharges of subset lakes to default -1.0
         !this%reservoir_gage_discharges = -1.0
 
         ! Get gage ids to search for in timeslice files
-        do lake_index = 1, number_of_lakes
+        !do lake_index = 1, number_of_lakes
 
-            if (reservoir_gage_ids_all(lake_index) > 0) then
-                this%reservoir_gage_ids_subset(gage_id_subset_index) = reservoir_gage_ids_all(lake_index)
-                this%reservoir_lake_index_subset_mapping(gage_id_subset_index) = lake_index
-                gage_id_subset_index = gage_id_subset_index + 1
-            end if
+        !    if (reservoir_gage_ids_all(lake_index) > 0) then
+        !        this%reservoir_gage_ids_subset(gage_id_subset_index) = reservoir_gage_ids_all(lake_index)
+        !        this%reservoir_lake_index_subset_mapping(gage_id_subset_index) = lake_index
+        !        gage_id_subset_index = gage_id_subset_index + 1
+        !    end if
 
-        end do
+        !end do
 
-        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
-        print *, 'at timeslice init'
-        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
+
 
     end subroutine read_timeslice_data_struct_init
 
