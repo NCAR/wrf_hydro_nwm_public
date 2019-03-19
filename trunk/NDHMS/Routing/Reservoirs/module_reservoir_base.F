@@ -80,15 +80,6 @@ module module_reservoir_base
         ! a sub-type of reservoir.
         procedure (run_release_interface), deferred :: run_release
 
-        procedure (reservoir_timestep_pre_conditions_warn_interface), deferred    :: timestep_pre_conditions_warn
-        procedure (reservoir_timestep_pre_conditions_modify_interface), deferred  :: timestep_pre_conditions_modify
-        procedure (reservoir_timestep_post_conditions_warn_interface), deferred   :: timestep_post_conditions_warn
-        procedure (reservoir_timestep_post_conditions_modify_interface), deferred :: timestep_post_conditions_modify
-        procedure (reservoir_update_pre_conditions_warn_interface), deferred      :: update_pre_conditions_warn
-        procedure (reservoir_update_pre_conditions_modify_interface), deferred    :: update_pre_conditions_modify
-        procedure (reservoir_update_post_conditions_warn_interface), deferred     :: update_post_conditions_warn
-        procedure (reservoir_update_post_conditions_modify_interface), deferred   :: update_post_conditions_modify
-
     end type
 
     ! Defines a pointer to a reservoir base struct
@@ -112,62 +103,6 @@ module module_reservoir_base
             real, intent(in)    :: routing_period           ! seconds
 
         end subroutine run_release_interface
-
-        subroutine reservoir_timestep_pre_conditions_warn_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_timestep_pre_conditions_warn_interface
-
-
-        subroutine reservoir_timestep_pre_conditions_modify_interface(reservoir_data, routing_period)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-            real, intent(in)       :: routing_period
-
-        end subroutine reservoir_timestep_pre_conditions_modify_interface
-
-
-        subroutine reservoir_timestep_post_conditions_warn_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_timestep_post_conditions_warn_interface
-
-
-        subroutine reservoir_timestep_post_conditions_modify_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_timestep_post_conditions_modify_interface
-
-
-        subroutine reservoir_update_pre_conditions_warn_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_update_pre_conditions_warn_interface
-
-
-        subroutine reservoir_update_pre_conditions_modify_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_update_pre_conditions_modify_interface
-
-
-        subroutine reservoir_update_post_conditions_warn_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_update_post_conditions_warn_interface
-
-
-        subroutine reservoir_update_post_conditions_modify_interface(reservoir_data)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
-
-        end subroutine reservoir_update_post_conditions_modify_interface
 
     end interface
 

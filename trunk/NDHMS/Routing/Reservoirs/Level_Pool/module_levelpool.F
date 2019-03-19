@@ -39,14 +39,6 @@ module module_levelpool
         procedure :: init => levelpool_struct_init
         procedure :: destroy => levelpool_struct_destroy
         procedure :: run_release => run_levelpool_release
-        procedure :: timestep_pre_conditions_warn => no_op
-        procedure :: timestep_pre_conditions_modify => no_op2
-        procedure :: timestep_post_conditions_warn => no_op
-        procedure :: timestep_post_conditions_modify => no_op
-        procedure :: update_pre_conditions_warn => no_op
-        procedure :: update_pre_conditions_modify => no_op
-        procedure :: update_post_conditions_warn => no_op
-        procedure :: update_post_conditions_modify => no_op
 
     end type levelpool_struct
 
@@ -125,19 +117,6 @@ contains
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being destroyed
     end subroutine levelpool_struct_destroy
-
-
-    subroutine no_op(reservoir_data)
-        implicit none
-        class(levelpool_struct), intent(inout) :: reservoir_data
-    end subroutine no_op
-
-
-    subroutine no_op2(reservoir_data, routing_period)
-        implicit none
-        class(levelpool_struct), intent(inout) :: reservoir_data
-        real, intent(in)       :: routing_period
-    end subroutine no_op2
 
 
     ! Subroutine for running release for a level pool reservoir,

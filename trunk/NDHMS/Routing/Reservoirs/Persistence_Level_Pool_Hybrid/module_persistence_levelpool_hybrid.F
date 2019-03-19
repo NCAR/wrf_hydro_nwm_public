@@ -43,17 +43,6 @@ module module_persistence_levelpool_hybrid
         procedure :: init => hybrid_struct_init
         procedure :: destroy => hybrid_struct_destroy
         procedure :: run_release => run_hybrid_release
-        !These functions don't belong at this level of the interface.  I.e. a model holds a reservoir, and it won't ever need to call timestep_pre_conditions_warn
-        ! I don't know of a good way to try to enforce mass balance checking in each reservoir in this sense.  Remove these and localize them to each
-        ! implementation since they are really only used INTERNALLY to the run_relelase function....
-        procedure :: timestep_pre_conditions_warn => no_op3
-        procedure :: timestep_pre_conditions_modify => no_op4
-        procedure :: timestep_post_conditions_warn => no_op3
-        procedure :: timestep_post_conditions_modify => no_op3
-        procedure :: update_pre_conditions_warn => no_op3
-        procedure :: update_pre_conditions_modify => no_op3
-        procedure :: update_post_conditions_warn => no_op3
-        procedure :: update_post_conditions_modify => no_op3
 
     end type persistence_levelpool_hybrid_struct
 
@@ -380,23 +369,49 @@ print *, '--------------------------'
 
                         close (119)
 
+
+            open (120,file="current_persistence_weight_index.txt",status="unknown", access = 'append')
+             Write (120, "(I20)") reservoir_data%state%persistence_weight_index
+
+                        close (120)
+
+
+            open (121,file="current_persistence_current_weight.txt",status="unknown", access = 'append')
+             Write (121, "(F15.5)") reservoir_data%state%persistence_current_weight
+
+                        close (121)
+
+
+
+            open (122,file="current_weight_update_time.txt",status="unknown", access = 'append')
+             Write (122, "(I20)") reservoir_data%state%weight_update_time
+
+                        close (122)
+
+
+            open (123,file="current_time.txt",status="unknown", access = 'append')
+             Write (123, "(I20)") reservoir_data%state%current_time
+
+                        close (123)
+
+
+            open (123,file="current_gage_lookback_seconds.txt",status="unknown", access = 'append')
+             Write (123, "(I20)") gage_lookback_seconds
+
+                        close (123)
+
+
+            open (124,file="current_timeslice_update_time.txt",status="unknown", access = 'append')
+             Write (124, "(I20)") reservoir_data%state%timeslice_update_time
+
+                        close (124)
+
+
+
         end if
 
 
     end subroutine run_hybrid_release
-
-
-    subroutine no_op3(reservoir_data)
-        implicit none
-        class(persistence_levelpool_hybrid_struct), intent(inout) :: reservoir_data
-    end subroutine no_op3
-
-
-    subroutine no_op4(reservoir_data, routing_period)
-        implicit none
-        class(persistence_levelpool_hybrid_struct), intent(inout) :: reservoir_data
-        real, intent(in)       :: routing_period
-    end subroutine no_op4
 
 
 end module module_persistence_levelpool_hybrid
