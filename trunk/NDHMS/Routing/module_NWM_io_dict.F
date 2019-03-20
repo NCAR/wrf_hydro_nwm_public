@@ -122,7 +122,7 @@ type ldasMeta
    real, dimension(numLdasVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
                                                   ! real to
-                                                  ! integer.
+                                                  ! integer
    real, dimension(numLdasVars)             :: addOffset   ! add_offset values for each variable.
    character (len=128), dimension(numLdasVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLdasVars) :: units ! Units for each variable.
@@ -335,7 +335,7 @@ type chrtGrdMeta
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
                                                 ! variable to convert from 
-                                                ! real to integer.
+                                                ! real to integer
    real, dimension(numChGrdVars) :: addOffset ! add_offset values for each variable.
    character (len=64), dimension(numChGrdVars) :: longName ! longname for each variable
    character (len=64), dimension(numChGrdVars) :: units ! Units for each variable.
@@ -409,7 +409,7 @@ type lsmMeta
    real, dimension(numLsmVars) :: scaleFactor ! scale_factor values used for each
                                                   ! variable to converte from
                                                   ! real to
-                                                  ! integer.
+                                                  ! integer
    real, dimension(numLsmVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numLsmVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLsmVars) :: units ! Units for each variable.
@@ -629,6 +629,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    ! Local variables
    integer :: ftnMeta,iret
    integer :: projVarId
+   real :: one_real = 1.0d0
  
    chrtOutDict%modelNdv = -9.E15
    ! CHRTOUT FILES
@@ -754,16 +755,16 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    do i=1,numChVars
       chrtOutDict%fillComp(i) = &
            nint((chrtOutDict%fillReal(i)     + chrtOutDict%addOffset(i)), 8) * &
-           nint(1.0 / chrtOutDict%scaleFactor(i), 8)
+           nint(one_real / chrtOutDict%scaleFactor(i), 8)
       chrtOutDict%missingComp(i) = &
            nint((chrtOutDict%missingReal(i)  + chrtOutDict%addOffset(i)), 8) * &
-           nint(1.0 / chrtOutDict%scaleFactor(i), 8)
+           nint(one_real / chrtOutDict%scaleFactor(i), 8)
       chrtOutDict%validMinComp(i) = &
            nint((chrtOutDict%validMinReal(i) + chrtOutDict%addOffset(i)) * &
-                nint(1.0 / chrtOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / chrtOutDict%scaleFactor(i), 8), 8)
       chrtOutDict%validMaxComp(i) = &
            nint((chrtOutDict%validMaxReal(i) + chrtOutDict%addOffset(i)) * &
-                nint(1.0 / chrtOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / chrtOutDict%scaleFactor(i), 8), 8)
    end do
 end subroutine initChrtDict
 
@@ -785,6 +786,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
+   real :: one_real = 1.0d0
 
    ! LDASOUT FILES
 
@@ -1219,16 +1221,16 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    do i=1,numLdasVars
       ldasOutDict%fillComp(i) = &
            nint((ldasOutDict%fillReal(i)     + ldasOutDict%addOffset(i)), 8) * &
-           nint(1.0 / ldasOutDict%scaleFactor(i), 8)
+           nint(one_real / ldasOutDict%scaleFactor(i), 8)
       ldasOutDict%missingComp(i) = &
            nint((ldasOutDict%missingReal(i)  + ldasOutDict%addOffset(i)), 8) * &
-           nint(1.0 / ldasOutDict%scaleFactor(i), 8)
+           nint(one_real / ldasOutDict%scaleFactor(i), 8)
       ldasOutDict%validMinComp(i) = &
            nint((ldasOutDict%validMinReal(i) + ldasOutDict%addOffset(i)) * &
-                nint(1.0 / ldasOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / ldasOutDict%scaleFactor(i), 8), 8)
       ldasOutDict%validMaxComp(i) = &
            nint((ldasOutDict%validMaxReal(i) + ldasOutDict%addOffset(i)) * &
-                nint(1.0 / ldasOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / ldasOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initLdasDict
@@ -1252,6 +1254,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
+   real :: one_real = 1.0d0
    ! RT_DOMAIN files
 
    rtDomainDict%modelNdv = -9.E15
@@ -1548,16 +1551,16 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    do i=1,numRtDomainVars
       rtDomainDict%fillComp(i) = &
            nint((rtDomainDict%fillReal(i)     + rtDomainDict%addOffset(i)), 8) * &
-           nint(1.0 / rtDomainDict%scaleFactor(i), 8)
+           nint(one_real / rtDomainDict%scaleFactor(i), 8)
       rtDomainDict%missingComp(i) = &
            nint((rtDomainDict%missingReal(i)  + rtDomainDict%addOffset(i)), 8) * &
-           nint(1.0 / rtDomainDict%scaleFactor(i), 8)
+           nint(one_real / rtDomainDict%scaleFactor(i), 8)
       rtDomainDict%validMinComp(i) = &
            nint((rtDomainDict%validMinReal(i) + rtDomainDict%addOffset(i)) * &
-                nint(1.0 / rtDomainDict%scaleFactor(i), 8), 8)
+                nint(one_real / rtDomainDict%scaleFactor(i), 8), 8)
       rtDomainDict%validMaxComp(i) = &
            nint((rtDomainDict%validMaxReal(i) + rtDomainDict%addOffset(i)) * &
-                nint(1.0 / rtDomainDict%scaleFactor(i), 8), 8)
+                nint(one_real / rtDomainDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initRtDomainDict
@@ -1574,6 +1577,7 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    ! Local variables
    integer :: ftnMeta,iret
    integer :: projVarId
+   real :: one_real = 1.0d0
 
    lakeOutDict%modelNdv = -9.E15
    ! LAKE FILES
@@ -1666,16 +1670,16 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    do i=1,numLakeVars
       lakeOutDict%fillComp(i) = &
            nint((lakeOutDict%fillReal(i)     + lakeOutDict%addOffset(i)), 8) * &
-           nint(1.0 / lakeOutDict%scaleFactor(i), 8)
+           nint(one_real / lakeOutDict%scaleFactor(i), 8)
       lakeOutDict%missingComp(i) = &
            nint((lakeOutDict%missingReal(i)  + lakeOutDict%addOffset(i)), 8) * &
-           nint(1.0 / lakeOutDict%scaleFactor(i), 8)
+           nint(one_real / lakeOutDict%scaleFactor(i), 8)
       lakeOutDict%validMinComp(i) = &
            nint((lakeOutDict%validMinReal(i) + lakeOutDict%addOffset(i)) * &
-                nint(1.0 / lakeOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / lakeOutDict%scaleFactor(i), 8), 8)
       lakeOutDict%validMaxComp(i) = &
            nint((lakeOutDict%validMaxReal(i) + lakeOutDict%addOffset(i)) * &
-                nint(1.0 / lakeOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / lakeOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initLakeDict
@@ -1699,6 +1703,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
+   real :: one_real = 1.0d0
    !CHRTOUT_GRID files
 
    chrtGrdDict%modelNdv = -9.E15
@@ -1990,16 +1995,16 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    do i=1,numChGrdVars
       chrtGrdDict%fillComp(i) = &
            nint((chrtGrdDict%fillReal(i)     + chrtGrdDict%addOffset(i)), 8) * &
-           nint(1.0 / chrtGrdDict%scaleFactor(i), 8)
+           nint(one_real / chrtGrdDict%scaleFactor(i), 8)
       chrtGrdDict%missingComp(i) = &
            nint((chrtGrdDict%missingReal(i)  + chrtGrdDict%addOffset(i)), 8) * &
-           nint(1.0 / chrtGrdDict%scaleFactor(i), 8)
+           nint(one_real / chrtGrdDict%scaleFactor(i), 8)
       chrtGrdDict%validMinComp(i) = &
            nint((chrtGrdDict%validMinReal(i) + chrtGrdDict%addOffset(i)) * &
-                nint(1.0 / chrtGrdDict%scaleFactor(i), 8), 8)
+                nint(one_real / chrtGrdDict%scaleFactor(i), 8), 8)
       chrtGrdDict%validMaxComp(i) = &
            nint((chrtGrdDict%validMaxReal(i) + chrtGrdDict%addOffset(i)) * &
-                nint(1.0 / chrtGrdDict%scaleFactor(i), 8), 8)
+                nint(one_real / chrtGrdDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initChrtGrdDict
@@ -2022,6 +2027,7 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
+   real :: one_real = 1.0d0
    !LSMOUT files
 
    lsmOutDict%modelNdv = 9.9692099683868690E36
@@ -2292,16 +2298,16 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    do i=1,numLsmVars
       lsmOutDict%fillComp(i) = &
            nint((lsmOutDict%fillReal(i)     + lsmOutDict%addOffset(i)), 8) * &
-           nint(1.0 / lsmOutDict%scaleFactor(i), 8)
+           nint(one_real / lsmOutDict%scaleFactor(i), 8)
       lsmOutDict%missingComp(i) = &
            nint((lsmOutDict%missingReal(i)  + lsmOutDict%addOffset(i)), 8) * &
-           nint(1.0 / lsmOutDict%scaleFactor(i), 8)
+           nint(one_real / lsmOutDict%scaleFactor(i), 8)
       lsmOutDict%validMinComp(i) = &
            nint((lsmOutDict%validMinReal(i) + lsmOutDict%addOffset(i)) * &
-                nint(1.0 / lsmOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / lsmOutDict%scaleFactor(i), 8), 8)
       lsmOutDict%validMaxComp(i) = &
            nint((lsmOutDict%validMaxReal(i) + lsmOutDict%addOffset(i)) * &
-                nint(1.0 / lsmOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / lsmOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initLsmOutDict
@@ -2318,6 +2324,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    ! Local variables
    integer :: ftnMeta, iret
    integer :: projVarId
+   real :: one_real = 1.0d0
 
    chObsDict%modelNdv = -9.E15
    !CHANOBS FILES
@@ -2414,16 +2421,16 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    do i=1,numChObsVars
       chObsDict%fillComp(i) = &
            nint((chObsDict%fillReal(i)     + chObsDict%addOffset(i)), 8) * &
-           nint(1.0 / chObsDict%scaleFactor(i), 8)
+           nint(one_real / chObsDict%scaleFactor(i), 8)
       chObsDict%missingComp(i) = &
            nint((chObsDict%missingReal(i)  + chObsDict%addOffset(i)), 8) * &
-           nint(1.0 / chObsDict%scaleFactor(i), 8)
+           nint(one_real / chObsDict%scaleFactor(i), 8)
       chObsDict%validMinComp(i) = &
            nint((chObsDict%validMinReal(i) + chObsDict%addOffset(i)) * &
-                nint(1.0 / chObsDict%scaleFactor(i), 8), 8)
+                nint(one_real / chObsDict%scaleFactor(i), 8), 8)
       chObsDict%validMaxComp(i) = &
            nint((chObsDict%validMaxReal(i) + chObsDict%addOffset(i)) * &
-                nint(1.0 / chObsDict%scaleFactor(i), 8), 8)
+                nint(one_real / chObsDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initChanObsDict
@@ -2432,6 +2439,8 @@ subroutine initGwDict(gwOutDict)
    implicit none
 
    type(gwMeta), intent(inout) :: gwOutDict
+
+   real :: one_real = 1.0d0
 
    gwOutDict%modelNdv = -9.E15
 
@@ -2489,16 +2498,16 @@ subroutine initGwDict(gwOutDict)
    do i=1,numGwVars
       gwOutDict%fillComp(i) = &
            nint((gwOutDict%fillReal(i)     + gwOutDict%addOffset(i)), 8) * &
-           nint(1.0 / gwOutDict%scaleFactor(i), 8)
+           nint(one_real / gwOutDict%scaleFactor(i), 8)
       gwOutDict%missingComp(i) = &
            nint((gwOutDict%missingReal(i)  + gwOutDict%addOffset(i)), 8) * &
-           nint(1.0 / gwOutDict%scaleFactor(i), 8)
+           nint(one_real / gwOutDict%scaleFactor(i), 8)
       gwOutDict%validMinComp(i) = &
            nint((gwOutDict%validMinReal(i) + gwOutDict%addOffset(i)) * &
-                nint(1.0 / gwOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / gwOutDict%scaleFactor(i), 8), 8)
       gwOutDict%validMaxComp(i) = &
            nint((gwOutDict%validMaxReal(i) + gwOutDict%addOffset(i)) * &
-                nint(1.0 / gwOutDict%scaleFactor(i), 8), 8)
+                nint(one_real / gwOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initGwDict
