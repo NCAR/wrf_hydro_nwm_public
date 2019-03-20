@@ -74,6 +74,7 @@ contains
         character(len=256), intent(in)                  :: timeslice_path
         integer,            intent(in)                  :: observation_lookback_hours
         integer,            intent(in)                  :: observation_update_time_interval_seconds
+        character(len=15)                               :: lake_number_string
 
         call read_timeslice_data%init(start_date, &
             timeslice_path, persistence_parameter_file, observation_lookback_hours)
@@ -121,6 +122,17 @@ contains
                 call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
             end if
             this%pointer_allocation_guard = .true.
+
+            ! Call hydro stop if the initial storage is greater than max storage or less than zero.
+            if (this%state%current_storage > this%parameters%max_storage .or. this%state%current_storage < this%parameters%min_storage) then
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("Initial storage exceeds max storage for reservoir " // lake_number_string)
+
+            else if (this%state%current_storage < this%parameters%min_storage) then
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("Initial storage is less than zero for reservoir " // lake_number_string)
+
+            end if
 
             ! Allocate a single level pool reservoir
             allocate(levelpool_struct :: this%state%levelpool_ptr)
