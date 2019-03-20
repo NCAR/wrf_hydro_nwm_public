@@ -263,7 +263,7 @@ CONTAINS
   nlst%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
 
   ! If in retrospective mode, set default reservoir_observation_update_time_interval_seconds to one day
-  if ( io_config_outputs .eq. 5 ) then
+  if ( io_config_outputs .eq. 1 .or. io_config_outputs .eq. 5 ) then
     nlst%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
   else
     nlst%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
@@ -774,7 +774,7 @@ subroutine rt_nlst_check(nlst)
    if(nlst%persistence) then
       if(len(trim(nlst%persistence_parameter_file)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a persistence_parameter_file for &
-         inputs to machine learning type reservoirs.')
+         inputs to persistence type reservoirs.')
       endif
       if(len(trim(nlst%reservoir_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &

@@ -419,6 +419,25 @@ print *, '--------------------------'
                         close (124)
 
 
+            open (125,file="current_water_elevation.txt",status="unknown", access = 'append')
+             Write (125, "(F15.5)") reservoir_data%state%water_elevation
+
+                        close (125)
+
+
+            open (126,file="current_levelpool_outflow.txt",status="unknown", access = 'append')
+             Write (126, "(F15.5)") levelpool_outflow
+
+                        close (126)
+
+
+
+            open (127,file="current_gage_discharge.txt",status="unknown", access = 'append')
+             Write (127, "(F15.5)") reservoir_data%state%gage_discharge
+                        close (127)
+
+
+
 
         end if
 

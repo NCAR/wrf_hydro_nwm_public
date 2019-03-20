@@ -60,8 +60,6 @@ contains
 
         this%lake_number = lake_number
 
-        !this%gage_id = gage_id
-
         this%observation_lookback_hours = observation_lookback_hours
 
         this%observation_update_time_interval_seconds = observation_update_time_interval_seconds
@@ -81,24 +79,24 @@ contains
         !this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
 
 
-        print *, 'lake_number'
-        print *, lake_number
+        !print *, 'lake_number'
+        !print *, lake_number
 
 
-        print *, 'observation_update_time_interval_seconds'
-        print *, observation_update_time_interval_seconds
+!        print *, 'observation_update_time_interval_seconds'
+!        print *, observation_update_time_interval_seconds
 
-        print*, 'this%max_storage'
-        print*, this%max_storage
+!        print*, 'this%max_storage'
+!        print*, this%max_storage
 
 
 
-print *, 'orifice_elevation'
-print *, orifice_elevation
-print *, 'lake_area'
-print *, lake_area
-print *, 'lake_max_water_elevation'
-print *, lake_max_water_elevation
+!print *, 'orifice_elevation'
+!print *, orifice_elevation
+!print *, 'lake_area'
+!print *, lake_area
+!print *, 'lake_max_water_elevation'
+!print *, lake_max_water_elevation
 
 
 
@@ -111,10 +109,10 @@ print *, lake_max_water_elevation
 
         call read_persistence_netcdf_gage_id(ncid, lake_id_index, "gage_id", this%gage_id)
 
-print *, 'lake_id_index'
-print *, lake_id_index
-print *, 'this%gage_id'
-print *, this%gage_id
+!print *, 'lake_id_index'
+!print *, lake_id_index
+!print *, 'this%gage_id'
+!print *, this%gage_id
 
         call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "persistence_coefficients", var_id, number_of_weights, number_of_lakes)
 
@@ -126,13 +124,13 @@ print *, this%gage_id
         status = nf90_get_var(ncid, var_id, temp_real_2D_array)
         if (status /= nf90_noerr) call handle_err(status, "persistence_coefficients")
 
-print *, 'temp_real_2D_array'
-print *, temp_real_2D_array
+!print *, 'temp_real_2D_array'
+!print *, temp_real_2D_array
 
         this%persistence_weighted_coefficients(:) = temp_real_2D_array(:, lake_id_index)
 
-print *, 'this%persistence_weighted_coefficients'
-print *, this%persistence_weighted_coefficients
+!print *, 'this%persistence_weighted_coefficients'
+!print *, this%persistence_weighted_coefficients
 
 
         if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)

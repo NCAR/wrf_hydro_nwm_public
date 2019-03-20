@@ -208,10 +208,10 @@ print *, this%last_update_time_seconds
             do timeslice_file_index = 1, total_timeslice_time_periods
 
                 ! Format the date for timeslice files
-                old_date = old_date(:13) // '_' // old_date(15:16) // '_' // old_date(18:)
+                !old_date = old_date(:13) // '_' // old_date(15:16) // '_' // old_date(18:)
 
                 ! Use below for Timeslice files with colons
-                !old_date = old_date(:13) // ':' // old_date(15:16) // ':' // old_date(18:)
+                old_date = old_date(:13) // ':' // old_date(15:16) // ':' // old_date(18:)
 
                 ! If any gages that still have discharges equal to -1.0, read the previous
                 ! time timeslice file available.
@@ -221,8 +221,8 @@ print *, this%last_update_time_seconds
                     timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
                                     observation_resolution_string // 'min.usgsTimeSlice.ncdf'
 
-                    print *, 'timeslice_file_name'
-                    print *, timeslice_file_name
+                    !print *, 'timeslice_file_name'
+                    !print *, timeslice_file_name
 
                     inquire(FILE = timeslice_file_name, EXIST = file_exists)
                     if (file_exists) then

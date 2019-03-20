@@ -75,25 +75,25 @@ contains
         !this%previous_time_storage = water_elevation * lake_area * 1.0E6
 
 
-        print *, 'STORAGE INIT'
-print *, 'this%water_elevation'
-print *, this%water_elevation
-print *, 'orifice_elevation'
-print *, orifice_elevation
-print *, 'lake_area'
-print *, lake_area
-print *, 'lake_max_water_elevation'
-print *, lake_max_water_elevation
-print *, 'initial_fractional_depth'
-print *, initial_fractional_depth
+!        print *, 'STORAGE INIT'
+!print *, 'this%water_elevation'
+!print *, this%water_elevation
+!print *, 'orifice_elevation'
+!print *, orifice_elevation
+!print *, 'lake_area'
+!print *, lake_area
+!print *, 'lake_max_water_elevation'
+!print *, lake_max_water_elevation
+!print *, 'initial_fractional_depth'
+!print *, initial_fractional_depth
 
 
         this%current_storage = (this%water_elevation - orifice_elevation) * lake_area * 1.0E6
 
-print *, 'this%current_storage'
-print *, this%current_storage
-print *, '------------------------------'
-print *, '------------------------------'
+!print *, 'this%current_storage'
+!print *, this%current_storage
+!print *, '------------------------------'
+!print *, '------------------------------'
 
 
         ! Initialize time variables
