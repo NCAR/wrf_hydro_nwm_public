@@ -36,6 +36,8 @@ public :: lsmMeta ! Public metadata for LSMOUT output.
 public :: chObsMeta ! Public CHANOBS metadata for NWM output.
 public :: gwMeta ! Public groundwater metadata.
 
+real*8 :: one_real = 1.0d0
+
 ! Establish types for each output type
 type chrtMeta
    ! Variable names
@@ -629,7 +631,6 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    ! Local variables
    integer :: ftnMeta,iret
    integer :: projVarId
-   real :: one_real = 1.0d0
  
    chrtOutDict%modelNdv = -9.E15
    ! CHRTOUT FILES
@@ -786,7 +787,6 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
-   real :: one_real = 1.0d0
 
    ! LDASOUT FILES
 
@@ -1254,7 +1254,6 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
-   real :: one_real = 1.0d0
    ! RT_DOMAIN files
 
    rtDomainDict%modelNdv = -9.E15
@@ -1577,7 +1576,6 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    ! Local variables
    integer :: ftnMeta,iret
    integer :: projVarId
-   real :: one_real = 1.0d0
 
    lakeOutDict%modelNdv = -9.E15
    ! LAKE FILES
@@ -1703,7 +1701,6 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
-   real :: one_real = 1.0d0
    !CHRTOUT_GRID files
 
    chrtGrdDict%modelNdv = -9.E15
@@ -2027,7 +2024,6 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
-   real :: one_real = 1.0d0
    !LSMOUT files
 
    lsmOutDict%modelNdv = 9.9692099683868690E36
@@ -2324,7 +2320,6 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    ! Local variables
    integer :: ftnMeta, iret
    integer :: projVarId
-   real :: one_real = 1.0d0
 
    chObsDict%modelNdv = -9.E15
    !CHANOBS FILES
@@ -2440,7 +2435,6 @@ subroutine initGwDict(gwOutDict)
 
    type(gwMeta), intent(inout) :: gwOutDict
 
-   real :: one_real = 1.0d0
 
    gwOutDict%modelNdv = -9.E15
 
