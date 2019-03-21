@@ -240,20 +240,30 @@ def test_perfrestart_candidate(output_dir):
     restart_job = candidate_sim_restart.jobs[0]
     duration = restart_job.model_end_time - restart_job.model_start_time
     delay_restart_hr = int((duration.total_seconds() / 3600)/2)
-    assert delay_restart_hr % candidate_sim_restart.jobs[0].restart_freq_hr == 0, \
-        "The restart delay is not a multiple of the restart frequency."
+
+    # Want matching restart frequencies for this test...
+    assert \
+        candidate_sim_restart.jobs[0].restart_freq_hr_hydro == \
+        candidate_sim_restart.jobs[0].restart_freq_hr_hrldas, \
+        "Hydro and HRLDAS components do not have the same restart frequencies."
+
+    assert delay_restart_hr % candidate_sim_restart.jobs[0].restart_freq_hr_hydro == 0, \
+        "The restart delay is not a multiple of the hydro restart frequency."
     restart_job.model_start_time = \
         restart_job.model_start_time + dt.timedelta(hours=delay_restart_hr)
 
     # Get restart files from previous run and symlink into restart sim dir
     # (Remember that we are in the run/sim dir)
     # Hydro: Use actual time listed in meta data, not filename or positional list index
+    # JLM: seems like these loops can be replaced with a pathlib.Path.glob(), the loop is confusing.
     for restart_file in candidate_sim_expected.output.restart_hydro:
         restart_time = restart_file.open().Restart_Time
         restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
         if restart_time == restart_job.model_start_time:
             candidate_hydro_restart_file = pathlib.Path(restart_file.name)
             candidate_hydro_restart_file.symlink_to(restart_file)
+            restart_job._hydro_namelist['hydro_nlist']['restart_file'] = \
+                str(candidate_hydro_restart_file)
 
     # LSM: Use actual time listed in meta data, not filename or positional list index
     for restart_file in candidate_sim_expected.output.restart_lsm:
@@ -263,6 +273,8 @@ def test_perfrestart_candidate(output_dir):
         if restart_time == restart_job.model_start_time:
             candidate_lsm_restart_file = pathlib.Path(restart_file.name)
             candidate_lsm_restart_file.symlink_to(restart_file)
+            restart_job._hrldas_namelist['noahlsm_offline']['restart_filename_requested'] = \
+                str(candidate_lsm_restart_file)
 
     # Nudging: Use actual time listed in meta data, not filename or positional list index
     if candidate_sim_expected.output.restart_nudging is not None:
@@ -272,6 +284,8 @@ def test_perfrestart_candidate(output_dir):
             if restart_time == restart_job.model_start_time:
                 candidate_nudging_restart_file = pathlib.Path(restart_file.name)
                 candidate_nudging_restart_file.symlink_to(restart_file)
+                restart_job._hydro_namelist['nudging_nlist']['nudginglastobsfile'] = \
+                    str(candidate_nudging_restart_file)
 
     # Compose and run
     # catch warnings related to missing start and end job times
