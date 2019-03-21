@@ -102,7 +102,7 @@ contains
         print *, 'var_id'
         print *, var_id
 
-        print *, 'this%reservoir_gage_ids'
+        print *, ' Reservoir gage ids that belong to reservoirs: this%reservoir_gage_ids'
         print *, this%reservoir_gage_ids
 
 
@@ -326,7 +326,7 @@ print *, this%last_update_time_seconds
         print *, 'number_of_gages'
         print *, number_of_gages
 
-        print *, 'gage_ids_integer_array'
+        print *, 'gage_ids_integer_array from Timeslice file at Timeslice read'
         print *, gage_ids_integer_array
 
         print *, 'this%gage_discharge'

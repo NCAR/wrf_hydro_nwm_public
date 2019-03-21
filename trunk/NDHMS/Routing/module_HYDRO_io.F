@@ -8488,6 +8488,7 @@ end subroutine read_routelink
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
            call mpp_land_bcast_int(NLAKES, LAKEIDM)
            call mpp_land_bcast_real(NLAKES, ELEVLAKE)
+           call mpp_land_bcast_int(NLAKES, q_type)
         endif
 
 
@@ -8736,6 +8737,7 @@ if(NLAKES .gt. 0) then
    call mpp_land_bcast_real(NLAKES,LATLAKE)
    call mpp_land_bcast_real(NLAKES,LONLAKE)
    call mpp_land_bcast_real(NLAKES,ELEVLAKE)
+   call mpp_land_bcast_int(NLAKES, q_type)
 endif
 
 link_location = CH_NETLNK
