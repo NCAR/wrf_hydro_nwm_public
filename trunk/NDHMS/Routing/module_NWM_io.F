@@ -839,8 +839,8 @@ subroutine output_chrt_NWM(domainId)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -1396,8 +1396,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                ! Extract valid range into a 1D array for placement.
                varRange(1) = fileMeta%validMinComp(iTmp)
                varRange(2) = fileMeta%validMaxComp(iTmp)
-               varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-               varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+               varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+               varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
                ! Establish a compression level for the variables. For now we are using a
                ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -1975,8 +1975,8 @@ subroutine output_rt_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement.
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -2142,10 +2142,10 @@ subroutine output_rt_NWM(domainId,iGrid)
 
                   ! Run a quick gross check on values to ensure they aren't outside our
                   ! defined limits.
-                  !if(varRealTmp .lt. fileMeta%validMinReal(iTmp2)) then
+                  !if(varRealTmp .lt. fileMeta%validMinDbl(iTmp2)) then
                   !   varRealTmp = fileMeta%fillReal(iTmp2)
                   !endif
-                  !if(varRealTmp .gt. fileMeta%validMaxReal(iTmp2)) then
+                  !if(varRealTmp .gt. fileMeta%validMaxDbl(iTmp2)) then
                   !   varRealTmp = fileMeta%fillReal(iTmp2)
                   !endif
                   if(varRealTmp .ne. varRealTmp) then
@@ -2706,8 +2706,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -3207,8 +3207,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement.
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are
             ! using a
@@ -3647,8 +3647,8 @@ subroutine output_lsmOut_NWM(domainId)
             call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(iTmp)))
 
             ! Extract valid range into a 1D array for placement.
-            varRange(1) = fileMeta%validMinReal(iTmp)
-            varRange(2) = fileMeta%validMaxReal(iTmp)
+            varRange(1) = fileMeta%validMinDbl(iTmp)
+            varRange(2) = fileMeta%validMaxDbl(iTmp)
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -4691,8 +4691,8 @@ subroutine output_chanObs_NWM(domainId)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are
             ! using a
@@ -5210,8 +5210,8 @@ subroutine output_gw_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = real(fileMeta%validMinReal(iTmp))
-            varRangeReal(2) = real(fileMeta%validMaxReal(iTmp))
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle

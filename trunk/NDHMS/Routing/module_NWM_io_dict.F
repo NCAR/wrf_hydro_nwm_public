@@ -36,7 +36,7 @@ public :: lsmMeta ! Public metadata for LSMOUT output.
 public :: chObsMeta ! Public CHANOBS metadata for NWM output.
 public :: gwMeta ! Public groundwater metadata.
 
-real*8 :: one_real = 1.0d0
+real*8 :: one_dbl = 1.0d0
 
 ! Establish types for each output type
 type chrtMeta
@@ -55,8 +55,8 @@ type chrtMeta
    character (len=64), dimension(numChVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numChVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numChVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numChVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numChVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
@@ -131,8 +131,8 @@ type ldasMeta
    integer, dimension(numLdasVars) :: numLev ! Number of levels for each variable.
    integer*8, dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numLdasVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numLdasVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numLdasVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numLdasVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numLdasVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numLdasVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLdasVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
@@ -204,8 +204,8 @@ type rtDomainMeta
    character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numRtDomainVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numRtDomainVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numRtDomainVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numRtDomainVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numRtDomainVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numRtDomainVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
@@ -274,8 +274,8 @@ type lakeMeta
    character (len=64), dimension(numLakeVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numLakeVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numLakeVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numLakeVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numLakeVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numLakeVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLakeVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
@@ -344,8 +344,8 @@ type chrtGrdMeta
    character (len=64), dimension(numChGrdVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numChGrdVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChGrdVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numChGrdVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numChGrdVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numChGrdVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numChGrdVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numChGrdVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChGrdVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChGrdVars) :: fillReal ! Fill value (before conversion to integer)
@@ -418,8 +418,8 @@ type lsmMeta
    integer, dimension(numLsmVars) :: numLev ! Number of levels for each variable.
    integer*8, dimension(numLsmVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numLsmVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numLsmVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numLsmVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numLsmVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numLsmVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numLsmVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLsmVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLsmVars) :: fillReal ! Fill value (before conversion to integer)
@@ -489,8 +489,8 @@ type chObsMeta
    character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numChObsVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numChObsVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numChObsVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numChObsVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numChObsVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChObsVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChObsVars) :: fillReal ! Fill value (before conversion to integer)
@@ -562,8 +562,8 @@ type gwMeta
    !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable. 
    integer*8, dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
-   real*8, dimension(numGwVars) :: validMinReal ! Valid minimum (before conversion to integer)
-   real*8, dimension(numGwVars) :: validMaxReal ! Valid maximum (before converstion to integer)
+   real*8, dimension(numGwVars) :: validMinDbl ! Valid minimum (before conversion to integer)
+   real*8, dimension(numGwVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
    integer*8, dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numGwVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numGwVars) :: fillReal ! Fill value (before conversion to integer)
@@ -746,9 +746,9 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                               -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0]
-   chrtOutDict%validMaxReal(:) = [50000.0d0, 50000.0d0, 50000.0d0, 50000.0d0, 50000.0d0, &
+   chrtOutDict%validMinDbl(:) = [0.0d0, -50000.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
+                                  0.0d0, 0.0d0]
+   chrtOutDict%validMaxDbl(:) = [50000.0d0, 50000.0d0, 50000.0d0, 50000.0d0, 50000.0d0, &
                                   20000.0d0, 20000.0d0, 20000.0d0, 50000.0d0, &
                                   50000.0d0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
@@ -756,16 +756,16 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    do i=1,numChVars
       chrtOutDict%fillComp(i) = &
            nint((chrtOutDict%fillReal(i)     + chrtOutDict%addOffset(i)), 8) * &
-           nint(one_real / chrtOutDict%scaleFactor(i), 8)
+           nint(one_dbl / chrtOutDict%scaleFactor(i), 8)
       chrtOutDict%missingComp(i) = &
            nint((chrtOutDict%missingReal(i)  + chrtOutDict%addOffset(i)), 8) * &
-           nint(one_real / chrtOutDict%scaleFactor(i), 8)
+           nint(one_dbl / chrtOutDict%scaleFactor(i), 8)
       chrtOutDict%validMinComp(i) = &
-           nint((chrtOutDict%validMinReal(i) + chrtOutDict%addOffset(i)) * &
-                nint(one_real / chrtOutDict%scaleFactor(i), 8), 8)
+           nint((chrtOutDict%validMinDbl(i) + chrtOutDict%addOffset(i)) * &
+                nint(one_dbl / chrtOutDict%scaleFactor(i), 8), 8)
       chrtOutDict%validMaxComp(i) = &
-           nint((chrtOutDict%validMaxReal(i) + chrtOutDict%addOffset(i)) * &
-                nint(one_real / chrtOutDict%scaleFactor(i), 8), 8)
+           nint((chrtOutDict%validMaxDbl(i) + chrtOutDict%addOffset(i)) * &
+                nint(one_dbl / chrtOutDict%scaleFactor(i), 8), 8)
    end do
 end subroutine initChrtDict
 
@@ -1205,32 +1205,45 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   ldasOutDict%validMinReal(:) = [0.0,0.0,0.0,0.0,0.0,-1000.0,-1.0,-1500.0,0.0,0.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-100.0,-100.0,0.0,&
-                                  -100.0,-100.0,0.0,-5.0,-5.0,0.0,0.0,0.0,0.0,-100.0,-100.0,-100.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,&
-                                  -1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,-1500.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,-1000.0,0.0,-100.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0,0.0,0.0,0.0,&
-                                  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1000.0,-5.0,0.0,0.0,0.0,0.0,0.0,0.0]
-   ldasOutDict%validMaxReal(:) = [100.0,100.0,1.0,20.0,20.0,3000.0,1.0,1500.0,100.0,1.0,1500.0,1500.0,1500.0,1500.0,1500.0,100.0,100.0,1.0,100.0,&
-                                  100000.0,100000.0,30000.0,30000.0,10.0,10000.0,10000.0,1.0E+6,1.0E+6,1.0E+6,&
-                                  1.0E+6,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,1500.0,&
-                                  1500.0,1500.0,400.0,400.0,400.0,400.0,400.0,400.0,400.0,400.0,1.0,1.0,100000.0,1.0,100.0,100000.0,100000.0,&
-                                  400.0,1.0,400.0,1.0,100.0,100000.0,100.0,10.0,1.0,100000.0,100000.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,1000.0,1000.0,&
-                                  1000.0,1000.0,5000.0,5000.0,1000.0,1000.0,1000.0,1000.0,1000.0,1.0E+6,30000.0,1.0,1.0,1.0,400.0,1.0,1.0]
+   ldasOutDict%validMinDbl(:) = [ &
+        0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, -1000.0d0, -1.0d0, -1500.0d0, 0.0d0, 0.0d0, &
+        -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -100.0d0, -100.0d0, 0.0d0, &
+        -100.0d0, -100.0d0, 0.0d0, -5.0d0, -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, -100.0d0, &
+        -100.0d0, -100.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, &
+        -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, &
+        -1500.0d0, -1500.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
+        0.0d0, -1000.0d0, 0.0d0, -100.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
+        0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, -5.0d0, -5.0d0, -5.0d0, -5.0d0, -5.0d0, &
+        -5.0d0, -5.0d0, -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
+        0.0d0, 0.0d0, 0.0d0, -1000.0d0, -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0 &
+   ]
+   ldasOutDict%validMaxDbl(:) = [ &
+        100.0d0, 100.0d0, 1.0d0, 20.0d0, 20.0d0, 3000.0d0, 1.0d0, 1500.0d0, 100.0d0, 1.0d0, &
+        1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 100.0d0, 100.0d0, 1.0d0, 100.0d0, &
+        100000.0d0, 100000.0d0, 30000.0d0, 30000.0d0, 10.0d0, 10000.0d0, 10000.0d0, 1.0D+6, &
+        1.0D+6, 1.0D+6, 1.0D+6, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, &
+        1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 400.0d0, &
+        400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, 1.0d0, 1.0d0, 100000.0d0, &
+        1.0d0, 100.0d0, 100000.0d0, 100000.0d0, 400.0d0, 1.0d0, 400.0d0, 1.0d0, 100.0d0, 100000.0d0, &
+        100.0d0, 10.0d0, 1.0d0, 100000.0d0, 100000.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, &
+        5.0d0, 5.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 5000.0d0, 5000.0d0, 1000.0d0, 1000.0d0, &
+        1000.0d0, 1000.0d0, 1000.0d0, 1.0D+6, 30000.0d0, 1.0d0, 1.0d0, 1.0d0, 400.0d0, 1.0d0, 1.0d0 &
+   ]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
       ldasOutDict%fillComp(i) = &
            nint((ldasOutDict%fillReal(i)     + ldasOutDict%addOffset(i)), 8) * &
-           nint(one_real / ldasOutDict%scaleFactor(i), 8)
+           nint(one_dbl / ldasOutDict%scaleFactor(i), 8)
       ldasOutDict%missingComp(i) = &
            nint((ldasOutDict%missingReal(i)  + ldasOutDict%addOffset(i)), 8) * &
-           nint(one_real / ldasOutDict%scaleFactor(i), 8)
+           nint(one_dbl / ldasOutDict%scaleFactor(i), 8)
       ldasOutDict%validMinComp(i) = &
-           nint((ldasOutDict%validMinReal(i) + ldasOutDict%addOffset(i)) * &
-                nint(one_real / ldasOutDict%scaleFactor(i), 8), 8)
+           nint((ldasOutDict%validMinDbl(i) + ldasOutDict%addOffset(i)) * &
+                nint(one_dbl / ldasOutDict%scaleFactor(i), 8), 8)
       ldasOutDict%validMaxComp(i) = &
-           nint((ldasOutDict%validMaxReal(i) + ldasOutDict%addOffset(i)) * &
-                nint(one_real / ldasOutDict%scaleFactor(i), 8), 8)
+           nint((ldasOutDict%validMaxDbl(i) + ldasOutDict%addOffset(i)) * &
+                nint(one_dbl / ldasOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initLdasDict
@@ -1542,24 +1555,24 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    rtDomainDict%timeZeroFlag(:) = [1,1,1,1,1]
    rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,-1000000.0,0.0]
-   rtDomainDict%validMaxReal(:) = [100.0,1000000.0,1000000.0,1000000.0,100.0]
+   rtDomainDict%validMinDbl(:) = [0.0d0, 0.0d0, 0.0d0, -1000000.0d0, 0.0d0]
+   rtDomainDict%validMaxDbl(:) = [100.0d0, 1000000.0d0, 1000000.0d0, 1000000.0d0, 100.0d0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numRtDomainVars
       rtDomainDict%fillComp(i) = &
            nint((rtDomainDict%fillReal(i)     + rtDomainDict%addOffset(i)), 8) * &
-           nint(one_real / rtDomainDict%scaleFactor(i), 8)
+           nint(one_dbl / rtDomainDict%scaleFactor(i), 8)
       rtDomainDict%missingComp(i) = &
            nint((rtDomainDict%missingReal(i)  + rtDomainDict%addOffset(i)), 8) * &
-           nint(one_real / rtDomainDict%scaleFactor(i), 8)
+           nint(one_dbl / rtDomainDict%scaleFactor(i), 8)
       rtDomainDict%validMinComp(i) = &
-           nint((rtDomainDict%validMinReal(i) + rtDomainDict%addOffset(i)) * &
-                nint(one_real / rtDomainDict%scaleFactor(i), 8), 8)
+           nint((rtDomainDict%validMinDbl(i) + rtDomainDict%addOffset(i)) * &
+                nint(one_dbl / rtDomainDict%scaleFactor(i), 8), 8)
       rtDomainDict%validMaxComp(i) = &
-           nint((rtDomainDict%validMaxReal(i) + rtDomainDict%addOffset(i)) * &
-                nint(one_real / rtDomainDict%scaleFactor(i), 8), 8)
+           nint((rtDomainDict%validMaxDbl(i) + rtDomainDict%addOffset(i)) * &
+                nint(one_dbl / rtDomainDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initRtDomainDict
@@ -1660,24 +1673,24 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    lakeOutDict%timeZeroFlag(:) = [1,1]
    lakeOutDict%fillReal(:) = [-9999.0,-9999.0]
    lakeOutDict%missingReal(:) = [-9999.0,-9999.0]
-   lakeOutDict%validMinReal(:) = [-10000.0,-10000.0]
-   lakeOutDict%validMaxreal(:) = [10000.0,10000.0]
+   lakeOutDict%validMinDbl(:) = [-10000.0d0, -10000.0d0]
+   lakeOutDict%validMaxDbl(:) = [10000.0d0, 10000.0d0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLakeVars
       lakeOutDict%fillComp(i) = &
            nint((lakeOutDict%fillReal(i)     + lakeOutDict%addOffset(i)), 8) * &
-           nint(one_real / lakeOutDict%scaleFactor(i), 8)
+           nint(one_dbl / lakeOutDict%scaleFactor(i), 8)
       lakeOutDict%missingComp(i) = &
            nint((lakeOutDict%missingReal(i)  + lakeOutDict%addOffset(i)), 8) * &
-           nint(one_real / lakeOutDict%scaleFactor(i), 8)
+           nint(one_dbl / lakeOutDict%scaleFactor(i), 8)
       lakeOutDict%validMinComp(i) = &
-           nint((lakeOutDict%validMinReal(i) + lakeOutDict%addOffset(i)) * &
-                nint(one_real / lakeOutDict%scaleFactor(i), 8), 8)
+           nint((lakeOutDict%validMinDbl(i) + lakeOutDict%addOffset(i)) * &
+                nint(one_dbl / lakeOutDict%scaleFactor(i), 8), 8)
       lakeOutDict%validMaxComp(i) = &
-           nint((lakeOutDict%validMaxReal(i) + lakeOutDict%addOffset(i)) * &
-                nint(one_real / lakeOutDict%scaleFactor(i), 8), 8)
+           nint((lakeOutDict%validMaxDbl(i) + lakeOutDict%addOffset(i)) * &
+                nint(one_dbl / lakeOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initLakeDict
@@ -1984,24 +1997,24 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    chrtGrdDict%timeZeroFlag(:) = [1]
    chrtGrdDict%missingReal(:) = [-9999.0]
    chrtGrdDict%fillReal(:) = [-9999.0]
-   chrtGrdDict%validMinReal(:) = [0.0]
-   chrtGrdDict%validMaxReal(:) = [50000.0]
+   chrtGrdDict%validMinDbl(:) = [0.0d0]
+   chrtGrdDict%validMaxDbl(:) = [50000.0d0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChGrdVars
       chrtGrdDict%fillComp(i) = &
            nint((chrtGrdDict%fillReal(i)     + chrtGrdDict%addOffset(i)), 8) * &
-           nint(one_real / chrtGrdDict%scaleFactor(i), 8)
+           nint(one_dbl / chrtGrdDict%scaleFactor(i), 8)
       chrtGrdDict%missingComp(i) = &
            nint((chrtGrdDict%missingReal(i)  + chrtGrdDict%addOffset(i)), 8) * &
-           nint(one_real / chrtGrdDict%scaleFactor(i), 8)
+           nint(one_dbl / chrtGrdDict%scaleFactor(i), 8)
       chrtGrdDict%validMinComp(i) = &
-           nint((chrtGrdDict%validMinReal(i) + chrtGrdDict%addOffset(i)) * &
-                nint(one_real / chrtGrdDict%scaleFactor(i), 8), 8)
+           nint((chrtGrdDict%validMinDbl(i) + chrtGrdDict%addOffset(i)) * &
+                nint(one_dbl / chrtGrdDict%scaleFactor(i), 8), 8)
       chrtGrdDict%validMaxComp(i) = &
-           nint((chrtGrdDict%validMaxReal(i) + chrtGrdDict%addOffset(i)) * &
-                nint(one_real / chrtGrdDict%scaleFactor(i), 8), 8)
+           nint((chrtGrdDict%validMaxDbl(i) + chrtGrdDict%addOffset(i)) * &
+                nint(one_dbl / chrtGrdDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initChrtGrdDict
@@ -2285,25 +2298,25 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
                                 -9999.0,-9999.0,-9999.0,-9999.0]
    lsmOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
                              -9999.0,-9999.0,-9999.0,-9999.0]
-   lsmOutDict%validMinReal(:) = [150.0,0.0,0.0,150.0,0.0,0.0,150.0,0.0,0.0,&
-                                 150.0,0.0,0.0,0.0,0.0]
-   lsmOutDict%validMaxReal(:) = [400.0,1.0,1.0,400.0,1.0,1.0,400.0,1.0,1.0,&
-                                 400.0,1.0,1.0,100000.0,100000.0]
+   lsmOutDict%validMinDbl(:) = [150.0d0, 0.0d0, 0.0d0, 150.0d0, 0.0d0, 0.0d0, 150.0d0, 0.0d0, 0.0d0, &
+                                 150.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0]
+   lsmOutDict%validMaxDbl(:) = [400.0d0, 1.0d0, 1.0d0, 400.0d0, 1.0d0, 1.0d0, 400.0d0, 1.0d0, 1.0d0, &
+                                 400.0d0, 1.0d0, 1.0d0, 100000.0d0, 100000.0d0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLsmVars
       lsmOutDict%fillComp(i) = &
            nint((lsmOutDict%fillReal(i)     + lsmOutDict%addOffset(i)), 8) * &
-           nint(one_real / lsmOutDict%scaleFactor(i), 8)
+           nint(one_dbl / lsmOutDict%scaleFactor(i), 8)
       lsmOutDict%missingComp(i) = &
            nint((lsmOutDict%missingReal(i)  + lsmOutDict%addOffset(i)), 8) * &
-           nint(one_real / lsmOutDict%scaleFactor(i), 8)
+           nint(one_dbl / lsmOutDict%scaleFactor(i), 8)
       lsmOutDict%validMinComp(i) = &
-           nint((lsmOutDict%validMinReal(i) + lsmOutDict%addOffset(i)) * &
-                nint(one_real / lsmOutDict%scaleFactor(i), 8), 8)
+           nint((lsmOutDict%validMinDbl(i) + lsmOutDict%addOffset(i)) * &
+                nint(one_dbl / lsmOutDict%scaleFactor(i), 8), 8)
       lsmOutDict%validMaxComp(i) = &
-           nint((lsmOutDict%validMaxReal(i) + lsmOutDict%addOffset(i)) * &
-                nint(one_real / lsmOutDict%scaleFactor(i), 8), 8)
+           nint((lsmOutDict%validMaxDbl(i) + lsmOutDict%addOffset(i)) * &
+                nint(one_dbl / lsmOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initLsmOutDict
@@ -2409,23 +2422,23 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    chObsDict%timeZeroFlag(:) = [1]
    chObsDict%fillReal(:) = [-9999.0]
    chObsDict%missingReal(:) = [-9999.0]
-   chObsDict%validMinReal(:) = [0.0]
-   chObsDict%validMaxReal(:) = [50000.0]
+   chObsDict%validMinDbl(:) = [0.0d0]
+   chObsDict%validMaxDbl(:) = [50000.0d0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChObsVars
       chObsDict%fillComp(i) = &
            nint((chObsDict%fillReal(i)     + chObsDict%addOffset(i)), 8) * &
-           nint(one_real / chObsDict%scaleFactor(i), 8)
+           nint(one_dbl / chObsDict%scaleFactor(i), 8)
       chObsDict%missingComp(i) = &
            nint((chObsDict%missingReal(i)  + chObsDict%addOffset(i)), 8) * &
-           nint(one_real / chObsDict%scaleFactor(i), 8)
+           nint(one_dbl / chObsDict%scaleFactor(i), 8)
       chObsDict%validMinComp(i) = &
-           nint((chObsDict%validMinReal(i) + chObsDict%addOffset(i)) * &
-                nint(one_real / chObsDict%scaleFactor(i), 8), 8)
+           nint((chObsDict%validMinDbl(i) + chObsDict%addOffset(i)) * &
+                nint(one_dbl / chObsDict%scaleFactor(i), 8), 8)
       chObsDict%validMaxComp(i) = &
-           nint((chObsDict%validMaxReal(i) + chObsDict%addOffset(i)) * &
-                nint(one_real / chObsDict%scaleFactor(i), 8), 8)
+           nint((chObsDict%validMaxDbl(i) + chObsDict%addOffset(i)) * &
+                nint(one_dbl / chObsDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initChanObsDict
@@ -2484,24 +2497,24 @@ subroutine initGwDict(gwOutDict)
    gwOutDict%timeZeroFlag(:) = [0,0,1]
    gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0]
    gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0]
-   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0]
-   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0]
+   gwOutDict%validMinDbl(:) = [-10000.0d0, -10000.0d0, -10000.0d0]
+   gwOutDict%validMaxDbl(:) = [10000.0d0, 10000.0d0, 10000.0d0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numGwVars
       gwOutDict%fillComp(i) = &
            nint((gwOutDict%fillReal(i)     + gwOutDict%addOffset(i)), 8) * &
-           nint(one_real / gwOutDict%scaleFactor(i), 8)
+           nint(one_dbl / gwOutDict%scaleFactor(i), 8)
       gwOutDict%missingComp(i) = &
            nint((gwOutDict%missingReal(i)  + gwOutDict%addOffset(i)), 8) * &
-           nint(one_real / gwOutDict%scaleFactor(i), 8)
+           nint(one_dbl / gwOutDict%scaleFactor(i), 8)
       gwOutDict%validMinComp(i) = &
-           nint((gwOutDict%validMinReal(i) + gwOutDict%addOffset(i)) * &
-                nint(one_real / gwOutDict%scaleFactor(i), 8), 8)
+           nint((gwOutDict%validMinDbl(i) + gwOutDict%addOffset(i)) * &
+                nint(one_dbl / gwOutDict%scaleFactor(i), 8), 8)
       gwOutDict%validMaxComp(i) = &
-           nint((gwOutDict%validMaxReal(i) + gwOutDict%addOffset(i)) * &
-                nint(one_real / gwOutDict%scaleFactor(i), 8), 8)
+           nint((gwOutDict%validMaxDbl(i) + gwOutDict%addOffset(i)) * &
+                nint(one_dbl / gwOutDict%scaleFactor(i), 8), 8)
    end do
 
 end subroutine initGwDict
