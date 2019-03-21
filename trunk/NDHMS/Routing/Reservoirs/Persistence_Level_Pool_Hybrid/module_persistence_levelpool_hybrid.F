@@ -93,26 +93,26 @@ contains
 
 write(lake_number_string, "(I15)") lake_number
 
-print *, 'lake_number_string'
-print *, lake_number_string
+!print *, 'lake_number_string'
+!print *, lake_number_string
 
 lake_number_string2 = ADJUSTL(trim(lake_number_string))
 
-print *, 'lake_number_string2'
-print *, lake_number_string2
+!print *, 'lake_number_string2'
+!print *, lake_number_string2
 
 
 !lake_number_string = ADJUSTL(lake_number_string)
 
-print *, 'lake_number'
-print *, lake_number
+!print *, 'lake_number'
+!print *, lake_number
 
 
 filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string2))//"_.csv"
 
 
-print *, 'filename_string'
-print *, filename_string
+!print *, 'filename_string'
+!print *, filename_string
 
 
 
@@ -304,7 +304,7 @@ close(113)
         ! If update time to change persistence weights
         else if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
 
-            print *, 'WEIGHT UPDATE'
+!            print *, 'WEIGHT UPDATE'
 
             reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
 
@@ -418,13 +418,13 @@ close(113)
 
 write(lake_number_string, "(I15)") reservoir_data%parameters%lake_number
 
-print *, 'lake_number_string'
-print *, lake_number_string
+!print *, 'lake_number_string'
+!print *, lake_number_string
 
 lake_number_string2 = ADJUSTL(trim(lake_number_string))
 
-print *, 'lake_number_string2'
-print *, lake_number_string2
+!print *, 'lake_number_string2'
+!print *, lake_number_string2
 
 
 !lake_number_string = ADJUSTL(lake_number_string)
@@ -433,7 +433,7 @@ print *, lake_number_string2
 filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string2))//"_.csv"
 
 
-print *, 'filename_string'
+!print *, 'filename_string'
 
 
 
