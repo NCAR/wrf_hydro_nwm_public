@@ -337,8 +337,8 @@ close(113)
         end if
 
         ! Run levelpool release
-        !call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
-        !lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
+        call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
+        lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
 
 !print *, 'reservoir_data%state%persistence_weight_index'
 !print *, reservoir_data%state%persistence_weight_index
