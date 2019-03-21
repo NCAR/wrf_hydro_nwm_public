@@ -784,34 +784,11 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
    end do
 
-print *, '---------------------------'
-print *, 'IN MODULE RT'
-
-print *, 'nlst_rt(did)%reservoir_timeslice_path'
-print *, nlst_rt(did)%reservoir_timeslice_path
-
-print *, 'nlst_rt(did)%reservoir_observation_lookback_hours'
-print *, nlst_rt(did)%reservoir_observation_lookback_hours
-
-
-print *, 'nlst_rt(did)%reservoir_observation_update_time_interval_seconds'
-print *,  nlst_rt(did)%reservoir_observation_update_time_interval_seconds
-
-
-
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
-print *, '------------------'
-print *, 'MODULE RT INIT FOR LAKE'
-print *, rt_domain(did)%LAKEIDX(lake_index)
-print *, lake_index
-print *, '------------------'
-
 
      ! If q_type equals 1, then go to Level Pool
      if (rt_domain(did)%q_type(lake_index) == 1) then
-
-       print *, 'call LP init'
 
        ! Allocate a single level pool reservoir
        allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
