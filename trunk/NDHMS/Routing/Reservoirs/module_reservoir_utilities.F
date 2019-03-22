@@ -249,11 +249,6 @@ contains
             end if
         end do
 
-
-print *, 'lake_id_index'
-print *, lake_id_index
-
-
         if(allocated(temp_lake_id_array)) deallocate(temp_lake_id_array)
 
     end subroutine read_netcdf_lake_id
@@ -282,13 +277,7 @@ print *, lake_id_index
         status = nf90_get_var(ncid, var_id, temp_gage_id_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        print *, 'temp_gage_id_array'
-        print *, temp_gage_id_array
-
         gage_id = temp_gage_id_array(lake_id_index)
-
-        print *, 'gage_id'
-        print *, gage_id
 
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 
@@ -312,15 +301,8 @@ print *, lake_id_index
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_weights)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
-print *, 'number_of_weights'
-print *, number_of_weights
-
-
         status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
-
-print *, 'number_of_lakes'
-print *, number_of_lakes
 
     end subroutine read_persistence_netcdf_real_2D_parameters
 
