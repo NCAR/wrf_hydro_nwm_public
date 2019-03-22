@@ -5,7 +5,6 @@ import pathlib
 import pickle
 import sys
 import warnings
-
 import pandas as pd
 import pytest
 import wrfhydropy
@@ -13,24 +12,27 @@ import wrfhydropy
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import wait_job, print_diffs
 
-
 # #################################
 # Setup the test with a domain, a candidate, and a reference.
 # Get domain, reference, candidate, and optional output directory from command line arguments
 # Setup a domain
 
 #List variabls to ignore in tests, primarily accumulation variables
-EXCLUDE_VARS = ['ACMELT',
-                'ACSNOW',
-                'SFCRUNOFF',
-                'UDRUNOFF',
-                'ACCPRCP',
-                'ACCECAN',
-                'ACCEDIR',
-                'ACCETRAN',
-                'qstrmvolrt',
-                'reference_time',
-                'lake_inflort']
+EXCLUDE_VARS = [
+    'ACMELT',
+    'ACSNOW',
+    'SFCRUNOFF',
+    'UDRUNOFF',
+    'ACCPRCP',
+    'ACCECAN',
+    'ACCEDIR',
+    'ACCETRAN',
+    'qstrmvolrt',
+    'QSTRMVOLRT',
+    'reference_time',
+    'lake_inflort'
+]
+
 # #################################
 # Define tests
 
@@ -204,9 +206,11 @@ def test_ncores_candidate(output_dir):
     # Check outputs
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_ncores.output,
-                                                       candidate_sim_expected.output,
-                                                       exclude_vars=EXCLUDE_VARS)
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
+            candidate_sim_ncores.output,
+            candidate_sim_expected.output,
+            exclude_vars=EXCLUDE_VARS
+        )
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -305,9 +309,11 @@ def test_perfrestart_candidate(output_dir):
     # Check outputs
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(candidate_sim_restart.output,
-                                                       candidate_sim_expected.output,
-                                                       exclude_vars=EXCLUDE_VARS)
+        diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
+            candidate_sim_restart.output,
+            candidate_sim_expected.output,
+            exclude_vars=EXCLUDE_VARS
+        )
 
     # Assert all diff values are 0 and print diff stats if not
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
