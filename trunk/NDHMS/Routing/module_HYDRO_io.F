@@ -7576,6 +7576,7 @@ if (channel_option .eq. 3) then
       call mpp_land_bcast_real(NLAKES,LATLAKE )
       call mpp_land_bcast_real(NLAKES,LONLAKE )
       call mpp_land_bcast_real(NLAKES,ELEVLAKE)
+      call mpp_land_bcast_int(NLAKES, q_type)
    endif
 #endif
 end if  !! channel_option .eq. 3
@@ -8312,6 +8313,7 @@ if(NLAKES .gt. 0) then
    call mpp_land_bcast_real(NLAKES,LATLAKE )
    call mpp_land_bcast_real(NLAKES,LONLAKE )
    call mpp_land_bcast_real(NLAKES,ELEVLAKE)
+   call mpp_land_bcast_int(NLAKES, q_type)
 endif
 #endif
 
