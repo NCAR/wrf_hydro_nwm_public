@@ -9,7 +9,6 @@
 
 module module_persistence_levelpool_hybrid_parameters
 
-    !use netcdf
     use module_reservoir_utilities
     use module_reservoir_base
     implicit none
@@ -68,7 +67,6 @@ contains
 
         this%min_storage = 0.0
 
-        !!DOUBLE CHECK THIS??
         this%max_storage = (lake_max_water_elevation - orifice_elevation) * lake_area * 1.0E6
 
 

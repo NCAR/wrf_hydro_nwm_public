@@ -169,6 +169,9 @@ close(113)
             end if
             this%pointer_allocation_guard = .true.
 
+            ! Initialize persistence weight index to be out of bounds of the persistence weights array
+            this%state%persistence_weight_index = SIZE(this%parameters%persistence_weighted_coefficients) + 1
+
             ! Call hydro stop if the initial storage is greater than max storage or less than zero.
             if (this%state%current_storage > this%parameters%max_storage .or. this%state%current_storage < this%parameters%min_storage) then
                 write(lake_number_string, "(I15)") lake_number
@@ -220,6 +223,7 @@ close(113)
         character(len=50) :: filename_string
 
 
+
 !print *, '--------------------------'
 !print *, '--------------------------'
 !print *, 'IN RELEASE'
@@ -231,6 +235,7 @@ close(113)
 !print *, 'reservoir_data%state%gage_discharge'
 !print *, reservoir_data%state%gage_discharge
 
+        gage_lookback_seconds = 0
 
         ! Update input variables
         reservoir_data%input%inflow = inflow
@@ -264,9 +269,21 @@ close(113)
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
             ! the weight update logic to set the persistence weight to 0.0. Therefore, only levelpool calculations will be used.
             if (reservoir_data%state%gage_discharge < 0.0) then
-                reservoir_data%state%persistence_weight_index = SIZE(reservoir_data%parameters%persistence_weighted_coefficients) + 1
 
-                reservoir_data%state%persistence_current_weight = 0.0
+                ! If at weight update time, then increment persistence weight index. Otherwise, continue using previous persistence weight index
+                if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
+                    reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
+
+                end if
+
+                ! If out of bounds of array, then set persistence weight to 0.0. Otherwise, set persistence weight from array's indexed value
+                if (reservoir_data%state%persistence_weight_index > SIZE(reservoir_data%parameters%persistence_weighted_coefficients)) then
+                    reservoir_data%state%persistence_current_weight = 0.0
+
+                else
+                    reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
+                end if
+
             else
                 ! Start persistence weight index at 1
                 reservoir_data%state%persistence_weight_index = 1
