@@ -212,10 +212,6 @@ contains
         ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
-            !print *, 'Timeslice update time'
-            !print *, 'reservoir_data%parameters%lake_number'
-            !print *, reservoir_data%parameters%lake_number
-
             ! Read new timeslice gage discharges
             call read_timeslice_data%setup_read_timeslice(reservoir_data%parameters%observation_update_time_interval_seconds, &
             reservoir_data%state%current_time, reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
@@ -227,8 +223,11 @@ contains
 
                 ! If at weight update time, then increment persistence weight index. Otherwise, continue using previous persistence weight index
                 if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
+                    ! Increment weight index
                     reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
 
+                    ! Set next weight update time
+                    reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%parameters%weight_update_time_interval
                 end if
 
                 ! If out of bounds of array, then set persistence weight to 0.0. Otherwise, set persistence weight from array's indexed value
@@ -245,43 +244,24 @@ contains
 
                 ! Grab first persistence weight at index 1 from array
                 reservoir_data%state%persistence_current_weight = reservoir_data%parameters%persistence_weighted_coefficients(reservoir_data%state%persistence_weight_index)
+
+                ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
+                ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
+                reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%parameters%weight_update_time_interval - gage_lookback_seconds
+
             end if
-
-!print *, 'reservoir_data%state%persistence_weight_index'
-!print *, reservoir_data%state%persistence_weight_index
-
-!print *, 'reservoir_data%state%persistence_current_weight'
-!print *, reservoir_data%state%persistence_current_weight
-
-!print *, 'gage_lookback_seconds'
-!print *, gage_lookback_seconds
 
             ! Calculate levelpool weight
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
 
-            ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
-            ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
-            reservoir_data%state%weight_update_time = reservoir_data%state%current_time + reservoir_data%parameters%weight_update_time_interval - gage_lookback_seconds
-
             ! Set timeslice update time
             reservoir_data%state%timeslice_update_time = reservoir_data%state%timeslice_update_time + reservoir_data%parameters%observation_update_time_interval_seconds
-
-
-!print *, 'reservoir_data%state%weight_update_time'
-!print *, reservoir_data%state%weight_update_time
-
-!print *, 'reservoir_data%state%timeslice_update_time'
-!print *, reservoir_data%state%timeslice_update_time
 
         ! If update time to change persistence weights
         else if (reservoir_data%state%current_time >= reservoir_data%state%weight_update_time) then
 
-!            print *, 'WEIGHT UPDATE'
-
+            ! Increment weight index
             reservoir_data%state%persistence_weight_index = reservoir_data%state%persistence_weight_index + 1
-
-!print *, 'reservoir_data%state%persistence_weight_index'
-!print *, reservoir_data%state%persistence_weight_index
 
             ! Boundary check to not exceed the size of the persistence weights array
             if (reservoir_data%state%persistence_weight_index <= SIZE(reservoir_data%parameters%persistence_weighted_coefficients)) then
@@ -294,11 +274,6 @@ contains
                 reservoir_data%state%persistence_current_weight = 0.0
 
             end if
-
-
-!print *, 'reservoir_data%state%persistence_current_weight'
-!print *, reservoir_data%state%persistence_current_weight
-
 
             ! Calculate levelpool weight
             reservoir_data%state%levelpool_current_weight = 1.0 - reservoir_data%state%persistence_current_weight
