@@ -285,7 +285,8 @@ contains
 
 
     ! Read real two dimension parameter arrays from the persistence parameters NetCDF
-    subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, netcdf_array_name, var_id, number_of_weights, number_of_lakes)
+    subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, &
+        netcdf_array_name, var_id, number_of_weights, number_of_lakes)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
         integer, intent(out) :: var_id, number_of_weights, number_of_lakes
@@ -318,6 +319,60 @@ contains
         end if
 
     end subroutine handle_err
+
+
+    ! Create Persistence Levelpool Hybrid Release Function Diagnostic Log CSV File
+    subroutine create_hybrid_diagnostic_log_file(lake_number)
+        integer, intent(in) :: lake_number
+        character(len=15)   :: lake_number_string, lake_number_string_trimmed
+        character(len=50)   :: filename_string
+
+        write(lake_number_string, "(I15)") lake_number
+        lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
+        filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
+
+        open (113, file=filename_string, status="unknown")
+
+        write (113, "(A256)") "Current Time, Timeslice Update Time, Weight Update Time, &
+        Gage Lookback Seconds, Gage ID, Current Persistence Weight Index, &
+        Current Persistence Weight, Inflow, Storage, Water Elevation, Gage Discharge, &
+        Levelpool Outflow, Weighted Outflow"
+
+        close(113)
+
+    end subroutine create_hybrid_diagnostic_log_file
+
+
+    ! Log data to Persistence Levelpool Hybrid Release Function Diagnostic Log CSV File
+    subroutine log_hybrid_diagnostic_data(lake_number, current_time, timeslice_update_time, &
+        weight_update_time, gage_lookback_seconds, gage_id, persistence_weight_index, &
+        persistence_current_weight, inflow, current_storage, water_elevation, gage_discharge, &
+        levelpool_outflow, outflow)
+        integer, intent(in) :: lake_number, current_time, timeslice_update_time
+        integer, intent(in) :: weight_update_time, gage_lookback_seconds, gage_id
+        integer, intent(in) :: persistence_weight_index
+        real,    intent(in) :: persistence_current_weight, inflow, current_storage
+        real,    intent(in) :: water_elevation, gage_discharge, levelpool_outflow, outflow
+        character(len=15)   :: lake_number_string, lake_number_string_trimmed
+        character(len=50)   :: filename_string
+
+        write(lake_number_string, "(I15)") lake_number
+        lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
+        filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
+
+        open (113, file=filename_string, status="unknown", access = 'append')
+
+        write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, F15.5, A1, F15.5, &
+        A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
+        current_time, ',', timeslice_update_time, ',', weight_update_time, ',', &
+        gage_lookback_seconds, ',', gage_id, ',', persistence_weight_index, ',', &
+        persistence_current_weight, ',', inflow, ',', current_storage, ',', &
+        water_elevation, ',', gage_discharge, ',', levelpool_outflow, ',', outflow
+
+        close (113)
+
+    end subroutine log_hybrid_diagnostic_data
+
 
     ! Get a new date given an existing date and time interval
     subroutine geth_newdate (ndate, odate, idt)

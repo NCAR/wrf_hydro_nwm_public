@@ -22,6 +22,7 @@ module module_persistence_levelpool_hybrid
     use module_persistence_levelpool_hybrid_parameters
     use module_persistence_levelpool_hybrid_state
     use module_levelpool
+    use module_reservoir_utilities
     use module_reservoir_base
     use module_read_timeslice_data
     implicit none
@@ -74,53 +75,11 @@ contains
         character(len=256), intent(in)                  :: timeslice_path
         integer,            intent(in)                  :: observation_lookback_hours
         integer,            intent(in)                  :: observation_update_time_interval_seconds
-        character(len=15)                               :: lake_number_string, lake_number_string2
+        character(len=15)                               :: lake_number_string
 
-        character(len=50) :: filename_string
-
-!print *, '--------'
-!print *, 'IN HYBRID INIT FOR LAKE'
-!print *, lake_number
-
-!print *, 'timeslice_path'
-!print *, timeslice_path
-
-!print *, 'observation_lookback_hours'
-!print *, observation_lookback_hours
-
-!print *, 'observation_update_time_interval_seconds'
-!print *, observation_update_time_interval_seconds
-
-write(lake_number_string, "(I15)") lake_number
-
-!print *, 'lake_number_string'
-!print *, lake_number_string
-
-lake_number_string2 = ADJUSTL(trim(lake_number_string))
-
-!print *, 'lake_number_string2'
-!print *, lake_number_string2
-
-
-!lake_number_string = ADJUSTL(lake_number_string)
-
-!print *, 'lake_number'
-!print *, lake_number
-
-
-filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string2))//"_.csv"
-
-
-!print *, 'filename_string'
-!print *, filename_string
-
-
-
-open (113,file=filename_string,status="unknown")
-
-Write (113, "(A256)") "Current Time, Timeslice Update Time, Weight Update Time, Gage Lookback Seconds, Gage ID, Current Persistence Weight Index, Current Persistence Weight, Inflow, Storage, Water Elevation, Gage Discharge, Levelpool Outflow, Weighted Outflow"
-
-close(113)
+        ! Create diagnostic log file
+        ! Uncomment this call only for development/debugging purposes
+        call create_hybrid_diagnostic_log_file(lake_number)
 
         call read_timeslice_data%init(start_date, &
             timeslice_path, persistence_parameter_file, observation_lookback_hours)
@@ -217,10 +176,6 @@ close(113)
         integer             :: gage_lookback_seconds
         real                :: levelpool_water_elevation, levelpool_outflow
         real                :: persistence_water_elevation, persistence_outflow
-
-        !temp
-        character(len=15)                               :: lake_number_string, lake_number_string2
-        character(len=50) :: filename_string
 
 
 
@@ -425,145 +380,14 @@ close(113)
         ! Update the current time
         reservoir_data%state%current_time = reservoir_data%state%current_time + int(routing_period)
 
-
-!ADD LOG FOR WEIGHT UPDATE TIMES
-!!!!!!!!!
-
-
-!write(lake_number_string, "(I6)") reservoir_data%parameters%lake_number
-
-
-write(lake_number_string, "(I15)") reservoir_data%parameters%lake_number
-
-!print *, 'lake_number_string'
-!print *, lake_number_string
-
-lake_number_string2 = ADJUSTL(trim(lake_number_string))
-
-!print *, 'lake_number_string2'
-!print *, lake_number_string2
-
-
-!lake_number_string = ADJUSTL(lake_number_string)
-
-
-filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string2))//"_.csv"
-
-
-!print *, 'filename_string'
-
-
-
-
-open (113,file=filename_string,status="unknown", access = 'append')
-
-!Write (113, "Current Time, Timeslice Update Time, Weight Update Time, Gage Lookback Seconds, Current Persistence Weight Index, Current Persistence Weight, Inflow, Storage, Water Elevation, Gage Discharge, Levelpool Outflow, Weighted Outflow")
-!Write (113, F15.5, ',', F15.5, ',' ...)
-!Write (113, "(F15.5),(F15.5)") reservoir_data%input%inflow, reservoir_data%state%current_storage
-!Write (113, "(A256)") "Current Time, Timeslice Update Time, Weight Update Time, Gage Lookback Seconds, Gage ID, Current Persistence Weight Index, Current Persistence Weight, Inflow, Storage, Water Elevation, Gage Discharge, Levelpool Outflow, Weighted Outflow"
-
-
-!Write (113, "(F15.5, F15.5)") reservoir_data%input%inflow, reservoir_data%state%current_storage
-
-!Write (113, "(F15.5, A1, F15.5)") reservoir_data%input%inflow, ',', reservoir_data%state%current_storage
-
-!Write (113, "(A256)") "Current Time, Timeslice Update Time, Weight Update Time, Gage Lookback Seconds, Gage ID,
-!Current Persistence Weight Index, Current Persistence Weight, Inflow, Storage, Water Elevation, Gage Discharge, Levelpool Outflow, Weighted Outflow"
-
-
-Write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
-reservoir_data%state%current_time, ',', reservoir_data%state%timeslice_update_time, ',', reservoir_data%state%weight_update_time, ',', &
-gage_lookback_seconds, ',', reservoir_data%parameters%gage_id, ',', reservoir_data%state%persistence_weight_index, ',', &
-reservoir_data%state%persistence_current_weight, ',', reservoir_data%input%inflow, ',', reservoir_data%state%current_storage, ',', &
-reservoir_data%state%water_elevation, ',', reservoir_data%state%gage_discharge, ',', levelpool_outflow, ',', &
-reservoir_data%output%outflow
-
-close (113)
-
-
-!reservoir_data%input%inflow, ',', reservoir_data%state%current_storage,
-!(I20)
-
-
-        !TEMP
-        !if (reservoir_data%parameters%lake_number == 10361596) then
-
-            !print *, 'WRITE PERSISTENCE VALUES'
-
-            !open (113,file="current_inflow.txt",status="unknown", access = 'append')
-            ! Write (113, "(F15.5)") reservoir_data%input%inflow
-
-             !           close (113)
-
-            !open (117,file="current_storage.txt",status="unknown", access = 'append')
-            ! Write (117, "(F15.5)") reservoir_data%state%current_storage
-
-            !            close (117)
-
-!            open (119,file="current_outflow.txt",status="unknown", access = 'append')
-!             Write (119, "(F15.5)") reservoir_data%output%outflow
-
- !                       close (119)
-
-!
- !           open (120,file="current_persistence_weight_index.txt",status="unknown", access = 'append')
-  !           Write (120, "(I20)") reservoir_data%state%persistence_weight_index
-
-   !                     close (120)
-
-
-    !        open (121,file="current_persistence_current_weight.txt",status="unknown", access = 'append')
-     !        Write (121, "(F15.5)") reservoir_data%state%persistence_current_weight
-
-      !                  close (121)
-
-
-
-       !     open (122,file="current_weight_update_time.txt",status="unknown", access = 'append')
-        !     Write (122, "(I20)") reservoir_data%state%weight_update_time
-
-         !               close (122)
-
-
- !           open (123,file="current_time.txt",status="unknown", access = 'append')
-  !           Write (123, "(I20)") reservoir_data%state%current_time
-
-   !                     close (123)
-
-
-    !        open (123,file="current_gage_lookback_seconds.txt",status="unknown", access = 'append')
-     !        Write (123, "(I20)") gage_lookback_seconds
-
-      !                  close (123)
-
-
-       !     open (124,file="current_timeslice_update_time.txt",status="unknown", access = 'append')
-        !     Write (124, "(I20)") reservoir_data%state%timeslice_update_time
-
-         !               close (124)
-
-
-          !  open (125,file="current_water_elevation.txt",status="unknown", access = 'append')
-           !  Write (125, "(F15.5)") reservoir_data%state%water_elevation
-
-!                        close (125)
-
-
-!            open (126,file="current_levelpool_outflow.txt",status="unknown", access = 'append')
- !            Write (126, "(F15.5)") levelpool_outflow
-
-  !                      close (126)
-
-
-
-   !         open (127,file="current_gage_discharge.txt",status="unknown", access = 'append')
-    !         Write (127, "(F15.5)") reservoir_data%state%gage_discharge
-     !                   close (127)
-
-
-
-
-        !end if
+        ! Log diagnostic data
+        ! Uncomment this call only for development/debugging purposes
+        call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
+        reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
+        reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
+        reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
+        reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, levelpool_outflow, &
+        reservoir_data%output%outflow)
 
 
     end subroutine run_hybrid_release
