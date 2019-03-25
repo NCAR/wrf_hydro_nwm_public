@@ -1,5 +1,9 @@
    TYPE RT_FIELD
    type (overland_struct) :: overland
+
+   class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
+   integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
+
    INTEGER :: IX, JX
    logical :: initialized
    logical :: restQSTRM
@@ -16,7 +20,7 @@
   REAL                                 :: RETDEP_CHAN  ! Channel retention depth
   INTEGER :: NLINKS  !maximum number of unique links in channel
   INTEGER :: GNLINKS  !maximum number of unique links in channel for parallel computation
-  INTEGER :: NLAKES !number of lakes modeled 
+  INTEGER :: NLAKES !number of lakes modeled
   INTEGER :: NLINKSL !maximum number of links using linked routing
   INTEGER :: MAXORDER !maximum stream order
   integer :: timestep_flag    ! 1 cold start run else continue run
@@ -43,14 +47,14 @@
   INTEGER, allocatable, DIMENSION(:,:)      :: g_LAK_1K
   ! REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT, QSUBBDRYTRT
   REAL :: QSUBBDRYTRT
-  !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT  
+  !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT
   REAL,    allocatable, DIMENSION(:,:)      :: ELRT
   !REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
   INTEGER,    allocatable, DIMENSION(:,:,:) ::  SO8LD_D ! SO8RT_D moved to overland properties module
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax
   REAL   Vmax
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT,LKSATRT  ! SFCHEAD moved to overland control module
-  REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT 
+  REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC  ! SFCHEADSUBRT, INFXSUBRT moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: LKSATFAC
   REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT,ZWATTABLRT,QSUBBDRYRT,SOLDEPRT
@@ -63,7 +67,7 @@
   INTEGER,    allocatable, DIMENSION(:,:)      :: gtoNode
 
 ! temp arrary cwatavail
-  real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT 
+  real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR GW/Baseflow
   INTEGER :: numbasns
@@ -98,7 +102,7 @@
   INTEGER                                :: DEEPGWSPIN  !Switch to setup deep GW spinp
 !BF Variables for gw2d
   integer, allocatable, dimension(:,:)      :: soiltyp, soiltypRT
- 
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG,DNY   VARIABLES FOR CHANNEL ROUTING
 !-- channel params
@@ -126,13 +130,13 @@
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
   REAL, allocatable, DIMENSION(:)      :: MannN      !mannings N
-  REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s) 
+  REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s)
   REAL, allocatable, DIMENSION(:)      :: ChSSlp ! channel side slope
   REAL, allocatable, DIMENSION(:)      :: Bw     ! Bottom width of channel
   REAL, allocatable, DIMENSION(:)      :: Tw     ! top width of channel
   REAL, allocatable, DIMENSION(:)      :: Tw_CC  ! top width of the (CC) compound channel
   REAL, allocatable, DIMENSION(:)      :: n_CC   ! mannings N of (CC) compound channel
-  
+
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING
@@ -144,6 +148,7 @@
   REAL,  DIMENSION(50)     :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
   REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
+  ! VARIABLES FOR  RESERVOIRS
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file
@@ -225,17 +230,17 @@
   !!! define land surface grid variables
       REAL,    allocatable, DIMENSION(:,:,:) :: SMC,STC,SH2OX
       REAL,    allocatable, DIMENSION(:,:)   :: SMCMAX1,SMCWLT1,SMCREF1
-      INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP 
+      INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP
       REAL, allocatable, DIMENSION(:,:)      :: OV_ROUGH2d
       REAL,    allocatable, DIMENSION(:)   :: SLDPTH
 
 !!! define constant/parameter
     real ::   ov_rough(50), ZSOIL(100)
 !  out_counts: couput counts for current run.
-!  his_out_counts: used for channel routing output and  special for restart. 
+!  his_out_counts: used for channel routing output and  special for restart.
 !  his_out_counts = previous run + out_counts
     integer :: out_counts, rst_counts, his_out_counts
-    
+
     REAL,    allocatable, DIMENSION(:,:)   :: lat_lsm, lon_lsm
     REAL,    allocatable, DIMENSION(:,:,:) :: dist_lsm
 

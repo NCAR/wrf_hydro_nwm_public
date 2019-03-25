@@ -3,12 +3,12 @@ import shutil
 import socket
 import subprocess
 import sys
-import warnings
 from argparse import ArgumentParser
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
 from utils.gdrive_download import download_file_from_google_drive
+
 
 def run_tests(config: str,
               compiler: str,
@@ -54,21 +54,7 @@ def run_tests(config: str,
     hostname = socket.gethostname()
     module_cmd = ''
     if 'cheyenne' in hostname:
-        if compiler.lower() == 'ifort':
-            module_cmd = 'module purge; module load intel/16.0.3 ncarenv/1.2 ncarcompilers/0.4.1 ' \
-                         'mpt/2.15f netcdf/4.4.1;'
-        elif compiler.lower() == 'gfort':
-            module_cmd = 'module purge; module load gnu/7.1.0 ncarenv/1.2 ncarcompilers/0.4.1 ' \
-                         'mpt/2.15 netcdf/4.4.1.1;'
-        if scheduler:
-            # reset ncores and nnodes defaults to scheduler defaults
-            if ncores == 2:
-                ncores = 216
-            if nnodes < 6:
-                warnings.warn('CONUS testing should run on a minimum of 6 nodes, setting nnodes '
-                              'to 6')
-                nnodes = 6
-
+        module_cmd = 'echo; echo "Using the following modules for testing:" ; module list; echo;'
 
     # HTML report
     html_report = 'wrfhydro_testing' + '-' + compiler + '-' + config + '.html'
@@ -84,11 +70,17 @@ def run_tests(config: str,
 
     if print_log:
         pytest_cmd += " -s"
+
     # Ignore section: for cleaner tests with less skipps!
-    # NWM
-    # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
-    if config.lower().find('nwm') < 0:
+
+    # NWM Supplementals.
+    # If it is not NWM, ignore channel-only and nwm_output tests.
+    # (This is likely not the right way to do this.)
+    if config != 'nwm_ana':
         pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
+
+    if config.lower().find('nwm') < 0:
+        pytest_cmd += " --ignore=tests/test_supp_2_nwm_output.py "
 
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
@@ -207,7 +199,6 @@ def main():
                         required=False,
                         action='store_true',
                         help='Exit pdb on first failure.')
-
 
     args = parser.parse_args()
 
