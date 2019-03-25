@@ -17,12 +17,10 @@ module module_persistence_levelpool_hybrid_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: hybrid_state_interface
         real    :: water_elevation              ! meters AMSL
-        real*4  :: current_storage        ! cubic meters
-        real    :: gage_discharge
-        !integer :: timeslice_file_offset_seconds
-        !integer :: weight_update_time_interval
+        real*4  :: current_storage              ! cubic meters
+        real    :: gage_discharge               ! cubic meters per second (cms)
+        real    :: persisted_outflow            ! cubic meters per second (cms)
         integer :: weight_update_time
-        !integer :: timeslice_update_time_interval
         integer :: timeslice_update_time
         integer :: new_day_time
         integer :: current_time
@@ -70,6 +68,7 @@ contains
 
 
         this%gage_discharge = 0.0
+        this%persisted_outflow = 0.0
 
         !OLD
         !this%previous_time_storage = water_elevation * lake_area * 1.0E6

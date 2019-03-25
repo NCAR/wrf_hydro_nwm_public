@@ -239,6 +239,10 @@ contains
                 end if
 
             else
+
+                ! Set persisted outflow to gage discharge
+                reservoir_data%state%persisted_outflow = reservoir_data%state%gage_discharge
+
                 ! Start persistence weight index at 1
                 reservoir_data%state%persistence_weight_index = 1
 
@@ -301,14 +305,18 @@ contains
 !print *, levelpool_outflow
 
         ! Set persistence outflow to gage discharge
-        persistence_outflow = reservoir_data%state%gage_discharge
+        !persistence_outflow = reservoir_data%state%gage_discharge
+
+!
+
 
 !print *, 'persistence_outflow'
 !print *, persistence_outflow
 
         ! Calculate outflow weighted between persistence and levelpool
-        reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight * persistence_outflow &
-        + reservoir_data%state%levelpool_current_weight * levelpool_outflow
+        reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight &
+        * reservoir_data%state%persisted_outflow + reservoir_data%state%levelpool_current_weight &
+        * levelpool_outflow
 
 !print *, 'reservoir_data%output%outflow before boundary check'
 !print *, reservoir_data%output%outflow
@@ -361,8 +369,8 @@ contains
         reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
         reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
         reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
-        reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, levelpool_outflow, &
-        reservoir_data%output%outflow)
+        reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
+        levelpool_outflow, reservoir_data%output%outflow)
 
 
     end subroutine run_hybrid_release

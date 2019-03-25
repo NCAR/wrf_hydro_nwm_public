@@ -336,7 +336,7 @@ contains
         write (113, "(A256)") "Current Time, Timeslice Update Time, Weight Update Time, &
         Gage Lookback Seconds, Gage ID, Current Persistence Weight Index, &
         Current Persistence Weight, Inflow, Storage, Water Elevation, Gage Discharge, &
-        Levelpool Outflow, Weighted Outflow"
+        Persisted Outflow, Levelpool Outflow, Weighted Outflow"
 
         close(113)
 
@@ -347,12 +347,13 @@ contains
     subroutine log_hybrid_diagnostic_data(lake_number, current_time, timeslice_update_time, &
         weight_update_time, gage_lookback_seconds, gage_id, persistence_weight_index, &
         persistence_current_weight, inflow, current_storage, water_elevation, gage_discharge, &
-        levelpool_outflow, outflow)
+        persisted_outflow, levelpool_outflow, outflow)
         integer, intent(in) :: lake_number, current_time, timeslice_update_time
         integer, intent(in) :: weight_update_time, gage_lookback_seconds, gage_id
         integer, intent(in) :: persistence_weight_index
         real,    intent(in) :: persistence_current_weight, inflow, current_storage
-        real,    intent(in) :: water_elevation, gage_discharge, levelpool_outflow, outflow
+        real,    intent(in) :: water_elevation, gage_discharge, persisted_outflow
+        real,    intent(in) :: levelpool_outflow, outflow
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
         character(len=50)   :: filename_string
 
@@ -363,11 +364,12 @@ contains
         open (113, file=filename_string, status="unknown", access = 'append')
 
         write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, F15.5, A1, F15.5, &
-        A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
+        A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
         current_time, ',', timeslice_update_time, ',', weight_update_time, ',', &
         gage_lookback_seconds, ',', gage_id, ',', persistence_weight_index, ',', &
         persistence_current_weight, ',', inflow, ',', current_storage, ',', &
-        water_elevation, ',', gage_discharge, ',', levelpool_outflow, ',', outflow
+        water_elevation, ',', gage_discharge, ',', persisted_outflow, ',', levelpool_outflow, &
+        ',', outflow
 
         close (113)
 
