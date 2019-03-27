@@ -1,3 +1,6 @@
+! This module contains a variety of subroutines/functions
+! used by reservoir objects.
+
 ! FIXME: Change value for WCOS
 #define log_warning 6
 
@@ -8,6 +11,7 @@ module module_reservoir_utilities
 
 contains
 
+    ! Checks and warns for boundary conditions of negative inflow
     subroutine warn_negative_inflow(inflow, lake_number, current_time)
         real, intent(in)    :: inflow
         integer, intent(in) :: lake_number, current_time
@@ -21,6 +25,7 @@ contains
     end subroutine warn_negative_inflow
 
 
+    ! Checks and warns for boundary conditions of exceeding max or min storage
     subroutine warn_storage_boundaries(inflow, end_time_storage, min_storage, max_storage, lake_number, current_time)
         real, intent(in)    :: inflow, end_time_storage, min_storage, max_storage
         integer, intent(in) :: lake_number, current_time
@@ -46,6 +51,7 @@ contains
     end subroutine warn_storage_boundaries
 
 
+    ! Checks and modifies for boundary conditions of negative storage
     subroutine modify_negative_storage(inflow, previous_time_storage, routing_period, lake_number, current_time, &
         update_time, end_time_storage, outflow)
         real, intent(in)    :: inflow, previous_time_storage, routing_period
@@ -95,6 +101,7 @@ contains
     end subroutine modify_negative_storage
 
 
+    ! Checks and modifies for boundary conditions of negative inflow
     subroutine modify_negative_inflow(inflow)
         real, intent(inout) :: inflow
 
@@ -103,6 +110,7 @@ contains
     end subroutine modify_negative_inflow
 
 
+    ! Checks and modifies for boundary conditions of negative outflow or exceeding min or max storage
     subroutine modify_for_projected_storage(inflow, previous_time_storage, min_storage, max_storage, &
         lake_number, current_time, time_interval, outflow)
         real, intent(in)    :: inflow, previous_time_storage, min_storage, max_storage
@@ -119,14 +127,13 @@ contains
         ! The projected_next_time_interval_storage is only calculated as a boundary condition to update the release
         ! and this storage is calculated assuming a constant flow rate over the time interval. If the time interval
         ! is too large relative to the channel routing period, this may not be an appropriate calculation.
-
         projected_next_time_interval_storage = previous_time_storage + (inflow - outflow) * time_interval
 
         if (projected_next_time_interval_storage > max_storage) then
 
             outflow = (projected_next_time_interval_storage - max_storage) / time_interval + outflow
 
-            write(log_warning,*) "Modified release to maintain prevent maximum storage exceedance for reservoir ", lake_number
+            write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage < min_storage .AND. projected_next_time_interval_storage > 0.0) then
@@ -200,6 +207,7 @@ contains
     end subroutine read_timeslice_netcdf_real_1D_variables
 
 
+    ! Read all gage ids from persistence parameter NetCDF
     subroutine read_persistence_netcdf_gage_ids_all(ncid, netcdf_array_name, var_id, number_of_gages)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
@@ -254,7 +262,7 @@ contains
     end subroutine read_netcdf_lake_id
 
 
-    ! Read real gage id array from the persistence parameters NetCDF
+    ! Read gage id array from the persistence parameters NetCDF
     subroutine read_persistence_netcdf_gage_id(ncid, lake_id_index, netcdf_array_name, gage_id)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name

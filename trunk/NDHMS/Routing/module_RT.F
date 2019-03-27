@@ -821,7 +821,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
        select type (hybrid => rt_domain(did)%reservoirs(lake_index)%ptr)
           type is (persistence_levelpool_hybrid_struct)
 
-              ! Call to initialize a persistence type reservoir
+              ! Call to initialize a persistence_levelpool_hybrid type reservoir
               call hybrid%init(                            &
               rt_domain(did)%RESHT(lake_index),            &
               rt_domain(did)%HRZAREA(lake_index),          &

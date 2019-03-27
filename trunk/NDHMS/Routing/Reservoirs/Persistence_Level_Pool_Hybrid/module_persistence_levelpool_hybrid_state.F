@@ -20,11 +20,9 @@ module module_persistence_levelpool_hybrid_state
         real*4  :: current_storage              ! cubic meters
         real    :: gage_discharge               ! cubic meters per second (cms)
         real    :: persisted_outflow            ! cubic meters per second (cms)
-        integer :: weight_update_time
-        integer :: timeslice_update_time
-        integer :: new_day_time
-        integer :: current_time
-        integer :: current_day
+        integer :: weight_update_time           ! seconds
+        integer :: timeslice_update_time        ! seconds
+        integer :: current_time                 ! seconds
         integer :: persistence_weight_index
         real    :: levelpool_current_weight
         real    :: persistence_current_weight
@@ -44,73 +42,27 @@ contains
     subroutine hybrid_state_init(this, water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
         implicit none
         class(hybrid_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(in) :: water_elevation        ! meters AMSL
-        real, intent(in) :: lake_area              ! area of lake (km^2)
-        real, intent(in) :: lake_max_water_elevation     ! max water elevation (meters)
-        real, intent(in) :: orifice_elevation      ! orifice elevation (meters AMSL)
-        real, intent(in) :: initial_fractional_depth
+        real, intent(in) :: water_elevation           ! meters AMSL
+        real, intent(in) :: lake_area                 ! area of lake (km^2)
+        real, intent(in) :: lake_max_water_elevation  ! max water elevation (meters)
+        real, intent(in) :: orifice_elevation         ! orifice elevation (meters AMSL)
+        real, intent(in) :: initial_fractional_depth  ! initial fraction water depth
 
-
-        ! Assign the water elevation value passed in to a particular hybrid reservoir
-        ! state object's variable for water elevation
-        !this%water_elevation = water_elevation
-
-
-        !print *, orifice_elevation, " + (( ", lake_max_water_elevation, " - ", orifice_elevation, " ) * ", initial_fractional_depth, ")"
-
-        !print *, orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
-
+        ! Initialize the state water elevation in same manner as in module_RT.F
         this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
 
-
-
-
-
+        this%current_storage = (this%water_elevation - orifice_elevation) * lake_area * 1.0E6
 
         this%gage_discharge = 0.0
         this%persisted_outflow = 0.0
 
-        !OLD
-        !this%previous_time_storage = water_elevation * lake_area * 1.0E6
-
-
-!        print *, 'STORAGE INIT'
-!print *, 'this%water_elevation'
-!print *, this%water_elevation
-!print *, 'orifice_elevation'
-!print *, orifice_elevation
-!print *, 'lake_area'
-!print *, lake_area
-!print *, 'lake_max_water_elevation'
-!print *, lake_max_water_elevation
-!print *, 'initial_fractional_depth'
-!print *, initial_fractional_depth
-
-
-        this%current_storage = (this%water_elevation - orifice_elevation) * lake_area * 1.0E6
-
-!print *, 'this%current_storage'
-!print *, this%current_storage
-!print *, '------------------------------'
-!print *, '------------------------------'
-
-
-        ! Initialize time variables
-        !this%weight_update_time_interval = seconds_in_day
         this%weight_update_time = 0
-        !this%timeslice_update_time_interval = seconds_in_day
-        !this%timeslice_update_time_interval = HUGE(0) ! set to this for forecast modes right now
-
-        ! maybe figure a way to set to smthng else below
-        !this%timeslice_update_time_interval = 1e8 ! set to this for forecast modes right now
         this%timeslice_update_time = 0
         this%current_time = 0
-        this%current_day = 0
-        this%new_day_time = seconds_in_day
+
         this%persistence_weight_index = 0
         this%levelpool_current_weight = 0.0
         this%persistence_current_weight = 0.0
-
 
     end subroutine hybrid_state_init
 

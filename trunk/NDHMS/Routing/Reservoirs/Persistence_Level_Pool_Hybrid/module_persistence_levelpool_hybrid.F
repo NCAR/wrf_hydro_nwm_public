@@ -27,7 +27,6 @@ module module_persistence_levelpool_hybrid
     use module_read_timeslice_data
     implicit none
 
-
     ! Extend/derive hybrid struct from the abstract base
     ! struct for reservoirs.
     type, extends(reservoir_base_struct) :: persistence_levelpool_hybrid_struct
@@ -59,28 +58,29 @@ contains
         observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
-        real, intent(inout) :: water_elevation           ! meters AMSL
-        real, intent(in)    :: lake_area      		     ! area of lake (km^2)
-        real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
-        real, intent(in)    :: weir_coeffecient          ! weir coefficient
-        real, intent(in)    :: weir_length               ! weir length (meters)
-        real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
-        real, intent(in)    :: orifice_coefficient       ! orifice coefficient
-        real, intent(in)    :: orifice_area              ! orifice area (meters^2)
-        real, intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
-        real, intent(in)    :: initial_fractional_depth
-        integer, intent(in) :: lake_number               ! lake number
-        character(len=*),   intent(in)                  :: persistence_parameter_file
-        character(len=19),  intent(in)                  :: start_date
-        character(len=256), intent(in)                  :: timeslice_path
-        integer,            intent(in)                  :: observation_lookback_hours
-        integer,            intent(in)                  :: observation_update_time_interval_seconds
-        character(len=15)                               :: lake_number_string
+        real,    intent(inout) :: water_elevation           ! meters AMSL
+        real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
+        real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
+        real,    intent(in)    :: weir_coeffecient          ! weir coefficient
+        real,    intent(in)    :: weir_length               ! weir length (meters)
+        real,    intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
+        real,    intent(in)    :: orifice_coefficient       ! orifice coefficient
+        real,    intent(in)    :: orifice_area              ! orifice area (meters^2)
+        real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
+        real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
+        integer, intent(in)    :: lake_number               ! lake number
+        character(len=*),   intent(in) :: persistence_parameter_file
+        character(len=19),  intent(in) :: start_date
+        character(len=256), intent(in) :: timeslice_path
+        integer,            intent(in) :: observation_lookback_hours
+        integer,            intent(in) :: observation_update_time_interval_seconds
+        character(len=15)              :: lake_number_string
 
         ! Create diagnostic log file
         ! Uncomment this call only for development/debugging purposes
-        call create_hybrid_diagnostic_log_file(lake_number)
+        !call create_hybrid_diagnostic_log_file(lake_number)
 
+        ! Call to initialize read timeslice data object
         call read_timeslice_data%init(start_date, &
             timeslice_path, persistence_parameter_file, observation_lookback_hours)
 
@@ -173,22 +173,10 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
-        integer             :: gage_lookback_seconds
-        real                :: levelpool_water_elevation, levelpool_outflow
-        real                :: persistence_water_elevation, persistence_outflow
-
-
-
-!print *, '--------------------------'
-!print *, '--------------------------'
-!print *, 'IN RELEASE'
-
-!print *, 'reservoir_data%parameters%lake_number'
-!print *, reservoir_data%parameters%lake_number
-
-
-!print *, 'reservoir_data%state%gage_discharge'
-!print *, reservoir_data%state%gage_discharge
+        real                :: levelpool_outflow        ! cubic meters per second (cms)
+        integer             :: gage_lookback_seconds    ! seconds between current model
+                                                        ! time and the time a gage
+                                                        ! discharge is read
 
         gage_lookback_seconds = 0
 
@@ -230,7 +218,7 @@ contains
                     reservoir_data%state%weight_update_time = reservoir_data%state%weight_update_time + reservoir_data%parameters%weight_update_time_interval
                 end if
 
-                ! If out of bounds of array, then set persistence weight to 0.0. Otherwise, set persistence weight from array's indexed value
+                ! If out of bounds of array, then set persistence weight to 0.0. Otherwise, set persistence weight from array's indexed value.
                 if (reservoir_data%state%persistence_weight_index > SIZE(reservoir_data%parameters%persistence_weighted_coefficients)) then
                     reservoir_data%state%persistence_current_weight = 0.0
 
@@ -291,36 +279,10 @@ contains
         call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
         lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
 
-!print *, 'reservoir_data%state%persistence_weight_index'
-!print *, reservoir_data%state%persistence_weight_index
-
-!print *, 'reservoir_data%state%persistence_current_weight'
-!print *, reservoir_data%state%persistence_current_weight
-
-!print *, 'gage_lookback_seconds'
-!print *, gage_lookback_seconds
-
-
-!print *, 'levelpool_outflow'
-!print *, levelpool_outflow
-
-        ! Set persistence outflow to gage discharge
-        !persistence_outflow = reservoir_data%state%gage_discharge
-
-!
-
-
-!print *, 'persistence_outflow'
-!print *, persistence_outflow
-
         ! Calculate outflow weighted between persistence and levelpool
         reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight &
         * reservoir_data%state%persisted_outflow + reservoir_data%state%levelpool_current_weight &
         * levelpool_outflow
-
-!print *, 'reservoir_data%output%outflow before boundary check'
-!print *, reservoir_data%output%outflow
-
 
         ! Warn if there is a negative inflow
         call warn_negative_inflow(reservoir_data%input%inflow, reservoir_data%parameters%lake_number, reservoir_data%state%current_time)
@@ -335,24 +297,12 @@ contains
         reservoir_data%state%current_storage = reservoir_data%state%current_storage &
         + (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
 
-!print *, 'reservoir_data%state%current_storage'
-!print *, reservoir_data%state%current_storage
-
         ! Calculate new water elevation
         reservoir_data%state%water_elevation = (reservoir_data%state%current_storage / (reservoir_data%parameters%lake_area * 1.0E6)) &
         + reservoir_data%parameters%orifice_elevation
 
-!print *, 'reservoir_data%state%water_elevation'
-!print *, reservoir_data%state%water_elevation
-
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
-
-!print *, 'outflow'
-!print *, outflow
-!print *, '--------------------------'
-!print *, '--------------------------'
-
 
         ! Set current inflow to previous_timestep_inflow
         reservoir_data%input%previous_timestep_inflow = inflow
@@ -365,15 +315,13 @@ contains
 
         ! Log diagnostic data
         ! Uncomment this call only for development/debugging purposes
-        call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
-        reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
-        reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
-        reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
-        reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
-        levelpool_outflow, reservoir_data%output%outflow)
-
+        !call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
+        !reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
+        !reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
+        !reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
+        !reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
+        !levelpool_outflow, reservoir_data%output%outflow)
 
     end subroutine run_hybrid_release
-
 
 end module module_persistence_levelpool_hybrid
