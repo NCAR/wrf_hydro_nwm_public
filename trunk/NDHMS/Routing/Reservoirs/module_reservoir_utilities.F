@@ -124,14 +124,14 @@ contains
 
         if (projected_next_time_interval_storage > max_storage) then
 
-            outflow = (previous_time_storage - max_storage) / time_interval + outflow
+            outflow = (projected_next_time_interval_storage - max_storage) / time_interval + outflow
 
             write(log_warning,*) "Modified release to maintain prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage < min_storage .AND. projected_next_time_interval_storage > 0.0) then
 
-            outflow = (previous_time_storage - min_storage) / time_interval + outflow
+            outflow = (projected_next_time_interval_storage - min_storage) / time_interval + outflow
 
             write(log_warning,*) "Modified release to maintain minimum storage for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."

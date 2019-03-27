@@ -48,7 +48,6 @@ module module_read_timeslice_data
         real,               allocatable, dimension(:) :: gage_quality
         logical                                       :: initialized = .FALSE.
 
-
     contains
 
         procedure :: init => read_timeslice_data_struct_init
@@ -90,28 +89,11 @@ contains
         status = nf90_close(ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
 
-        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
-        print *, 'at timeslice init'
-        print *, '!!!!!!!!!!!!!!!!!!!!!!!!'
-
-        print *, 'this%number_of_reservoir_gages'
-        print *, this%number_of_reservoir_gages
-
-        print *, 'ncid'
-        print *, ncid
-        print *, 'var_id'
-        print *, var_id
-
-        print *, ' Reservoir gage ids that belong to reservoirs: this%reservoir_gage_ids'
-        print *, this%reservoir_gage_ids
-
-
         this%start_date = start_date
         this%current_date = start_date
         this%timeslice_path = timeslice_path
         this%observation_lookback_hours = observation_lookback_hours
 
-        !MAKE NOTE ABOUT THIS HAPPENING ON ONLY ONE CORE AT A TIME
         this%last_update_time_seconds = -999
 
         ! Allocate subset arrays of only lakes with gages
@@ -131,6 +113,7 @@ contains
 
 
     ! Set up list of timeslice files to read
+    ! The timeslices are read only once on each processor at each timeslice update time
     subroutine setup_read_timeslice(this, update_interval_seconds, current_reservoir_time_seconds, reservoir_gage_id, gage_lookback_seconds, reservoir_gage_discharge)
         implicit none
 
@@ -206,9 +189,6 @@ print *, this%last_update_time_seconds
     open (112,file="current_all_gage_discharges.txt",status="unknown")
     !!!!!!
             do timeslice_file_index = 1, total_timeslice_time_periods
-
-                ! Format the date for timeslice files
-                !old_date = old_date(:13) // '_' // old_date(15:16) // '_' // old_date(18:)
 
                 ! Use below for Timeslice files with colons
                 old_date = old_date(:13) // ':' // old_date(15:16) // ':' // old_date(18:)
