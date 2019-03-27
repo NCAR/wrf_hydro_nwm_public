@@ -172,7 +172,7 @@ def main():
 
     parser.add_argument(
         '--exe_cmd',
-        default='mpirun -np {0} ./wrf_hydro.exe',
+        default="'mpirun -np {0} ./wrf_hydro.exe'",
         required=False,
         help='The MPI-dependent model execution command. Default is best guess. '
         'The first/zeroth variable is set to the total number of cores (ncores). The '
