@@ -65,7 +65,9 @@
     },
 
     "nwm_ana": {
-        "hydro_nlist": {},
+        "hydro_nlist": {
+	    "persistence": true
+	},
         "nudging_nlist": {}
     },
 
@@ -76,7 +78,8 @@
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
-            "subrtswcrt": 0
+            "subrtswcrt": 0,
+	    "persistence": true
         },
         "nudging_nlist": {
             "maxagepairsbiaspersist": 24,
@@ -98,7 +101,8 @@
         "hydro_nlist": {
             "lsmout_domain": 0,
             "output_gw": 0,
-            "output_channelbucket_influx": 2
+            "output_channelbucket_influx": 2,
+	    "persistence": true
         },
         "nudging_nlist": {}
     },
