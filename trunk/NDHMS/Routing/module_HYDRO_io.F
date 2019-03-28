@@ -9226,7 +9226,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                     print * , "could not find Loss from ", infile
                     call hydro_stop("Failed to read BUCKETPARM")
                endif
-               iret = nf90_get_var_real(ncid, varid, tmpLoss)
+               iret = nf90_get_var(ncid, varid, tmpLoss)
           endif
 
           iret = nf90_inq_varid(ncid,"Zmax",  varid)
