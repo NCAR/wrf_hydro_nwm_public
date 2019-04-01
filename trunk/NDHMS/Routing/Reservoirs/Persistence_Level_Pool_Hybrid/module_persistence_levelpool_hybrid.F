@@ -25,6 +25,7 @@ module module_persistence_levelpool_hybrid
     use module_reservoir_utilities
     use module_reservoir_base
     use module_read_timeslice_data
+    !use module_persistence_levelpool_hybrid_tests
     implicit none
 
     ! Extend/derive hybrid struct from the abstract base
@@ -323,5 +324,6 @@ contains
         !levelpool_outflow, reservoir_data%output%outflow)
 
     end subroutine run_hybrid_release
+
 
 end module module_persistence_levelpool_hybrid

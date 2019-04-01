@@ -4,9 +4,26 @@ program reservoir_unit_tests
 
     implicit none
 
-    logical :: rv = .false.
+    logical :: rv1, rv2          ! test result
 
-    rv = test_levelpool()
+    rv1 = .false.
+    rv2 = .false.
+
+    rv1 = test_levelpool()
+
+    rv2 = test_persistence_levelpool_hybrid()
+
+    if (rv1 .and. rv2) then
+        print *, "========================================================================"
+        print *, 'All Reservoir Tests Passed'
+        print *, "========================================================================"
+
+    else
+        print *, "========================================================================"
+        print *, 'Not All Reservoir Tests Passed'
+        print *, "========================================================================"
+    end if
+
 
     contains
 
@@ -32,5 +49,76 @@ program reservoir_unit_tests
         call_status = levelpool_data_info(levelpool_reservoir_data)
 
     end function test_levelpool
+
+
+
+    !------------------------------------------------------------------------------!
+    !                              test_levelpool()                                !
+    ! this function verifies that the constructor for the levelpool type correctly !
+    ! initializes all data members                                                 !
+    !------------------------------------------------------------------------------!
+
+    function test_persistence_levelpool_hybrid() result(rv)
+
+        implicit none
+
+        logical rv, rv1, rv2, rv3                        ! test result
+
+        type (persistence_levelpool_hybrid_struct) :: persistence_levelpool_hybrid_reservoir_data
+
+        real :: outflow, water_elevation
+
+        water_elevation = 0.0
+
+        rv = .false.
+        rv1 = .false.
+        rv2 = .false.
+        rv3 = .false.
+
+        print *, "calling init for persistence_levelpool_hybrid_struct"
+        !call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
+
+!MODIFY
+        !call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
+
+
+
+        print *, "testing data in persistence_levelpool_hybrid_struct"
+        rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
+
+
+        !print *, "calling release for persistence_levelpool_hybrid_struct"
+
+        !call persistence_levelpool_hybrid_reservoir_data%run_release(0.0, &
+        !192.46272, 0.0, water_elevation, outflow, 300.0)
+
+        !print *, "outflow"
+        !print *, outflow
+
+        !if (outflow == 120.170197) then
+        !    rv3 = .true.
+        !    print *, "========================================================================"
+        !    print *, 'Persistence Levelpool Hybrid Release Test Passed'
+        !    print *, "========================================================================"
+        !else
+        !    print *, "========================================================================"
+        !    print *, 'Persistence Levelpool Hybrid Release Test Failed'
+        !    print *, 'Outflow should be 120.170197'
+        !    print *, "========================================================================"
+        !end if
+
+
+        !if (rv1 .and. rv2 .and. rv3) then
+        !    rv = .true.
+        !end if
+
+        if (rv1) then
+            rv = .true.
+        end if
+
+
+    end function test_persistence_levelpool_hybrid
+
+
 
 end program

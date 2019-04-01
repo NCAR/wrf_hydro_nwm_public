@@ -320,7 +320,7 @@ contains
     subroutine handle_err(status, variable_error)
         implicit none
         integer, intent (in) :: status
-        character(len=32), intent (in) :: variable_error
+        character (len=*), intent(in) :: variable_error
         if(status /= nf90_noerr) then
             print *, trim(nf90_strerror(status)), ': ', variable_error
             stop "Stopped"
