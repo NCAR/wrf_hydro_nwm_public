@@ -14,9 +14,11 @@ mod:
 	#Build each sub module then build the module that depends on all sub modules
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_persistence_levelpool_hybrid_parameters.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_persistence_levelpool_hybrid_state.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_persistence_levelpool_hybrid_tests.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_persistence_levelpool_hybrid.F
 	ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid_parameters.o
 	ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid_state.o
+	ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid_tests.o
 	ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid.o
 
 	cp *.mod ../../../mod

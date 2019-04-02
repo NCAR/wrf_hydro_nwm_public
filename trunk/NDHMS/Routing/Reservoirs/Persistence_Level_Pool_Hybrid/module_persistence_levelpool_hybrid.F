@@ -25,7 +25,7 @@ module module_persistence_levelpool_hybrid
     use module_reservoir_utilities
     use module_reservoir_base
     use module_read_timeslice_data
-    !use module_persistence_levelpool_hybrid_tests
+    use module_persistence_levelpool_hybrid_tests
     implicit none
 
     ! Extend/derive hybrid struct from the abstract base
@@ -324,6 +324,96 @@ contains
         !levelpool_outflow, reservoir_data%output%outflow)
 
     end subroutine run_hybrid_release
+
+
+    !Testing
+    function persistence_levelpool_hybrid_data_info(hybrid_data) result(rv)
+        implicit none
+        type (persistence_levelpool_hybrid_struct) :: hybrid_data
+        logical :: rv
+        logical, dimension(1) :: ptr_state
+        logical, dimension(1) :: data_state
+
+        rv = .false.
+
+        ! Check to see if the hybrid_state data structure exists
+        print *, "Checking pointer association on data%state "
+        if ( associated(hybrid_data%state) ) then
+            print *, "PASSED"
+            ptr_state(1) = .true.
+       else
+            print *, "FAILED"
+            ptr_state(1) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the hybrid_parameters data structure exists
+        print *, "Checking pointer association on data%parameters "
+        if ( associated(hybrid_data%parameters) ) then
+            print *, "PASSED"
+            ptr_state(2) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(2) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the hybrid_input data structure exists
+        print *, "Checking pointer association on data%input "
+        if ( associated(hybrid_data%input) ) then
+            print *, "PASSED"
+            ptr_state(3) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(3) = .false.
+        end if
+        print *, " "
+
+        ! Check to see if the hybrid_output data structure exists
+        print *, "Checking pointer association on data%output "
+        if ( associated(hybrid_data%output) ) then
+            print *, "PASSED"
+            ptr_state(4) = .true.
+        else
+            print *, "FAILED"
+            ptr_state(4) = .false.
+        end if
+        print *, " "
+
+
+        ! Now check the data members of each substructure
+        if ( ptr_state(1) ) then
+            data_state(1) = test_persistence_levelpool_hybrid_state(hybrid_data%state)
+        end if
+
+        if ( ptr_state(2) ) then
+            data_state(2) = test_persistence_levelpool_hybrid_parameters(hybrid_data%parameters)
+        end if
+
+        if ( ptr_state(3) ) then
+            data_state(3) = test_input_persistence_levelpool_hybrid(hybrid_data%input)
+        end if
+
+        if ( ptr_state(4) ) then
+            data_state(4) = test_output_persistence_levelpool_hybrid(hybrid_data%output)
+        end if
+
+
+        if ( all(ptr_state) .and. all(data_state) ) then
+            print *, "========================================================================"
+            print *, "All Hybrid Object Tests Passed"
+            print *, "========================================================================"
+            rv = .true.
+
+        else
+            print *, "========================================================================"
+            print *, "Not All Hybrid Object Tests Passed"
+            print *, "========================================================================"
+
+        end if
+
+        flush(6)
+    end function persistence_levelpool_hybrid_data_info
 
 
 end module module_persistence_levelpool_hybrid

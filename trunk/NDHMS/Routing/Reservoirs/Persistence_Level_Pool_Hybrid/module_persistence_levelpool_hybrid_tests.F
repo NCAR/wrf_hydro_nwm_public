@@ -6,7 +6,7 @@ module module_persistence_levelpool_hybrid_tests
 contains
 
     ! test to see that each member of the input structure is correctly allocated and readable
-    function test_input(o) result(rv)
+    function test_input_persistence_levelpool_hybrid(o) result(rv)
         type (reservoir_base_input_struct), intent(in) :: o
         logical rv
 
@@ -28,10 +28,10 @@ contains
         print *, o%previous_timestep_inflow
         print *, " "
 
-    end function test_input
+    end function test_input_persistence_levelpool_hybrid
 
     ! test to see that each member of the output structure is correctly allocated and readable
-    function test_output(o) result(rv)
+    function test_output_persistence_levelpool_hybrid(o) result(rv)
         type (reservoir_base_output_struct), intent(in) :: o
         logical rv
 
@@ -45,10 +45,10 @@ contains
         print *, o%outflow
         print *, " "
 
-    end function test_output
+    end function test_output_persistence_levelpool_hybrid
 
     ! test to see that each member of the state structure is correctly allocated and readable
-    function test_hybrid_state(o) result(rv)
+    function test_persistence_levelpool_hybrid_state(o) result(rv)
         type (hybrid_state_interface), intent(in) :: o
         logical rv
 
@@ -99,15 +99,15 @@ contains
         print *, " "
 
         print *, "Checking read on levelpool_ptr"
-        print *, o%levelpool_ptr
+        !print *, o%levelpool_ptr
         print *, " "
 
-    end function test_hybrid_state
+    end function test_persistence_levelpool_hybrid_state
 
 
 
     ! test to see that each member of the parameters structure is correctly allocated and readable
-    function test_hybrid_parameters(o) result(rv)
+    function test_persistence_levelpool_hybrid_parameters(o) result(rv)
         type (hybrid_parameters_interface), intent(in) :: o
         logical rv
 
@@ -157,7 +157,7 @@ contains
         print *, o%persistence_weighted_coefficients
         print *, " "
 
-    end function test_hybrid_parameters
+    end function test_persistence_levelpool_hybrid_parameters
 
 
 end module

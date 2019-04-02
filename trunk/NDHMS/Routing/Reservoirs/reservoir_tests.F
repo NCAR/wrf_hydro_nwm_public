@@ -1,6 +1,8 @@
 program reservoir_unit_tests
-    use module_levelpool_tests
-    use module_levelpool
+    !use module_levelpool_tests
+    !use module_levelpool
+    use module_persistence_levelpool_hybrid_tests
+    use module_persistence_levelpool_hybrid
 
     implicit none
 
@@ -9,7 +11,9 @@ program reservoir_unit_tests
     rv1 = .false.
     rv2 = .false.
 
-    rv1 = test_levelpool()
+    !rv1 = test_levelpool()
+    rv1 = .true.
+
 
     rv2 = test_persistence_levelpool_hybrid()
 
@@ -76,11 +80,9 @@ program reservoir_unit_tests
         rv3 = .false.
 
         print *, "calling init for persistence_levelpool_hybrid_struct"
-        !call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
-
-!MODIFY
-        !call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 0.0, "2017-09-29_17:24:22" , 1, 166758723, "ML_RESERVOIR_PARM.nc", "ML_MODEL_PARM_ACF.nc", "ML_MODEL_PARM_CH.nc")
-
+        call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 123.829002380371, 63.6739971160889 , &
+        0.4, 10.0, 50.3799997965495, 0.1, 1.0, 66.0199966430664, 0.9, 166758723, "hybrid_persistence_levelpool_ACF.nc", &
+        "2010-10-01_07:00:00", ".", 12, 86400)
 
 
         print *, "testing data in persistence_levelpool_hybrid_struct"
@@ -118,6 +120,47 @@ program reservoir_unit_tests
 
 
     end function test_persistence_levelpool_hybrid
+
+
+! stop the job due to the fatal error.
+      subroutine HYDRO_stop(msg)
+#ifdef MPP_LAND
+        use module_mpp_land
+#endif
+        character(len=*) :: msg
+        integer :: ierr
+        ierr = 1
+#ifndef NCEP_WCOSS
+!#ifdef HYDRO_D  !! PLEASE NEVER UNCOMMENT THIS IFDEF, it's just one incredibly useful string.
+      write(6,*) "The job is stopped due to the fatal error. ", trim(msg)
+      call flush(6)
+!#endif
+#else
+     write(*,*) "FATAL ERROR: ", trim(msg)
+     write(78,*) "FATAL ERROR: ", trim(msg)
+      call flush(78)
+      close(78)
+#endif
+#ifdef MPP_LAND
+#ifndef HYDRO_D
+      print*, "---"
+      print*, "FATAL ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
+      print*, ""
+#endif
+
+!        call mpp_land_sync()
+!        write(my_id+90,*) msg
+!        call flush(my_id+90)
+
+         call mpp_land_abort()
+         call MPI_finalize(ierr)
+#else
+         stop "FATAL ERROR: Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
+#endif
+
+     return
+     end  subroutine HYDRO_stop
+
 
 
 

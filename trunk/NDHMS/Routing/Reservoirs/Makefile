@@ -27,10 +27,10 @@ mod:
 	make -C Persistence_Level_Pool_Hybrid
 
 
-test:
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_read_timeslice_data.F
+test: mod
+	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
+	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
+	#$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_read_timeslice_data.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) reservoir_tests.F
 	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
 		module_reservoir_utilities.o \
@@ -40,6 +40,10 @@ test:
 		Level_Pool/module_levelpool_state.o \
 		Level_Pool/module_levelpool_tests.o \
 		Level_Pool/module_levelpool.o \
+		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_parameters.o \
+		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_state.o \
+		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_tests.o \
+		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid.o \
 		reservoir_tests.o
 
 
