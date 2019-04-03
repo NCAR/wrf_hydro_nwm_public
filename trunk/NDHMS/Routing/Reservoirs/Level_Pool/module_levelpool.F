@@ -20,7 +20,6 @@ module module_levelpool
     use module_levelpool_parameters
     use module_levelpool_state
     use module_reservoir_base
-    !use module_levelpool_tests
     implicit none
 
     ! Extend/derive level pool struct from the abstract base
