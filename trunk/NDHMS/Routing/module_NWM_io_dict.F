@@ -2497,7 +2497,7 @@ subroutine initGwDict(gwOutDict)
    !gwOutDict%lonStName = "longitude"
 
    gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','loss','depth']
-   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Loss','Bucket Water Level']
+   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Loss','Bucket Depth']
    gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','m3 s-1','mm']
    !gwOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude','latitude longitude','latitude longitude']
    gwOutDict%scaleFactor(:) = [0.00001,0.00001,0.00001,0.1]
