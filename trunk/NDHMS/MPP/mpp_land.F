@@ -22,9 +22,8 @@
 MODULE MODULE_MPP_LAND
 
   use MODULE_CPL_LAND
-
+  use mpi
   IMPLICIT NONE
-  include "mpif.h"
   !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
   integer, public :: left_id,right_id,up_id,down_id,my_id
   integer, public :: left_right_np,up_down_np ! define total process in two dimensions.

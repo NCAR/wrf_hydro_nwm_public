@@ -1,4 +1,4 @@
-# Contributing to WRF-Hydro
+# Contributing to WRF-Hydro®
 All bug reports, bug fixes, code, and documentation contributions are welcome and encouraged.
 However, guidelines need to be established and followed to ensure that community contributions can
 be effectively incorporated.

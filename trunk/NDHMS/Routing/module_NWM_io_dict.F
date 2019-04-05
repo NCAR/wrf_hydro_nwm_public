@@ -12,6 +12,7 @@
 module module_NWM_io_dict
 
 use module_version, only: get_model_version
+use module_namelist, only: nlst_rt
 
 implicit none
 
@@ -25,6 +26,8 @@ integer, parameter :: numLsmVars = 14
 integer, parameter :: numChObsVars = 1
 integer, parameter :: numGwVars = 3
 integer :: i
+!integer :: nsoil = nlst_rt(1)%nsoil 
+integer :: nsoil
 
 ! Declare public types that will hold metadata
 public :: chrtMeta ! Public CHRTOUT metadata for NWM output.
@@ -115,7 +118,7 @@ type ldasMeta
    character (len=64), dimension(numLdasVars) :: varNames
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
-   integer :: numSoilLayers = 4
+   integer :: numSoilLayers                       ! Fill from Namelist
    integer :: numSpectrumBands = 2
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
@@ -189,7 +192,7 @@ type rtDomainMeta
    ! Variable names
    character (len=64), dimension(numRtDomainVars) :: varNames
    integer :: numVars = numRtDomainVars
-   integer :: numSoilLayers = 4
+   integer :: numSoilLayers                       ! Fill from Namelist
    character (len=512) :: modelOutputType = "terrain_rt"
    character (len=64) :: modelConfigType
 
@@ -403,7 +406,7 @@ type lsmMeta
    character (len=64), dimension(numLsmVars) :: varNames
    integer :: numVars = numLsmVars
    integer :: numSnowLayers = 3
-   integer :: numSoilLayers = 4
+   integer :: numSoilLayers                       ! Fill from Namelist
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
 
@@ -790,6 +793,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
 
    ! LDASOUT FILES
 
+   ldasOutDict%numSoilLayers = nlst_rt(1)%nsoil
+   
    ldasOutDict%modelNdv = 9.9692099683868690E36
    ldasOutDict%modelNdv2 = -1.E33
    ldasOutDict%modelNdv3 = -1.E36
@@ -1269,6 +1274,8 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    integer :: tmpLen
    ! RT_DOMAIN files
 
+   rtDomainDict%numSoilLayers = nlst_rt(1)%nsoil
+   
    rtDomainDict%modelNdv = -9.E15
 
    ! First establish global attributes.
@@ -2039,6 +2046,8 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    integer :: tmpLen
    !LSMOUT files
 
+   lsmOutDict%numSoilLayers = nlst_rt(1)%nsoil
+   
    lsmOutDict%modelNdv = 9.9692099683868690E36
    lsmOutDict%modelNdvInt = -2147483647
 
