@@ -147,7 +147,7 @@ MODULE MODULE_MPP_LAND
     integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
-    
+
     ! left_right_np = ew_numprocs
     ! up_down_np  = sn_numprocs
 
