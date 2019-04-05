@@ -140,9 +140,7 @@ contains
 
         else if (projected_next_time_interval_storage < min_storage .AND. projected_next_time_interval_storage > 0.0) then
 
-            ! This releases only the available water. If the new outflow is subtracted from the existing outflow,
-            ! then the reservoir maintains storage at the last value before dropping below minimum.
-            outflow = (projected_next_time_interval_storage - min_storage) / time_interval
+            outflow = (projected_next_time_interval_storage - min_storage) / time_interval + outflow
 
             write(log_warning,*) "Modified release to maintain minimum storage for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
