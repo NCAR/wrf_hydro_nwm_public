@@ -150,12 +150,14 @@ MODULE MODULE_MPP_LAND
 !     up_down_np  = sn_numprocs
 
       CALL mpi_initialized( mpi_inited, ierr )
-      if ( .NOT. mpi_inited ) then
+      if ( .not. mpi_inited ) then
            call MPI_INIT( ierr )  ! stand alone land model.
       endif
-           HYDRO_COMM_WORLD = MPI_COMM_WORLD
-           call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-           call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+
+      call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
+      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+
 !     create 2d logical mapping of the CPU.
       call log_map2d()
       return

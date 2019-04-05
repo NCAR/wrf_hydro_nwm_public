@@ -147,13 +147,13 @@ def test_run_candidate_channel_only(
     # job_id='test_job'
     wait_job(candidate_sim_copy)
 
+    candidate_sim_copy.collect()
+    candidate_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     # Check job run statuses
     for job in candidate_sim.jobs:
         assert job.exit_status == 0, \
             "Candidate code run (for channel-only reference) exited with non-zero status"
-
-    candidate_sim_copy.collect()
-    candidate_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     #########################
     # Run channel only
@@ -195,13 +195,13 @@ def test_run_candidate_channel_only(
     # job_id='test_job'
     wait_job(candidate_channel_only_sim_copy)
 
+    candidate_channel_only_sim_copy.collect()
+    candidate_channel_only_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     # Check job run statuses
     for job in candidate_channel_only_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Candidate channel-only code run exited with non-zero status"
-
-    candidate_channel_only_sim_copy.collect()
-    candidate_channel_only_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
 
 # Channel-only matches full-model?
@@ -316,12 +316,12 @@ def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
 
     wait_job(candidate_channel_only_sim_ncores)
 
+    candidate_channel_only_sim_ncores.collect()
+    candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     for job in candidate_channel_only_sim_ncores.jobs:
         assert job.exit_status == 0, \
             "Candidate channel-only ncores run exited with non-zero status"
-
-    candidate_channel_only_sim_ncores.collect()
-    candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
     with warnings.catch_warnings():
@@ -417,12 +417,12 @@ def test_perfrestart_candidate_channel_only(output_dir):
 
     wait_job(candidate_channel_only_sim_restart)
 
+    candidate_channel_only_sim_restart.collect()
+    candidate_channel_only_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     for job in candidate_channel_only_sim_restart.jobs:
         assert job.exit_status == 0, \
             "Candidate channel-only ncores run exited with non-zero status"
-    
-    candidate_channel_only_sim_restart.collect()
-    candidate_channel_only_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
     with warnings.catch_warnings():
