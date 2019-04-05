@@ -101,13 +101,13 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
     # job_id='test_job'
     wait_job(candidate_sim_copy)
 
+    candidate_sim_copy.collect()
+    candidate_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     # Check job run statuses
     for job in candidate_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Candidate code run exited with non-zero status"
-        
-    candidate_sim_copy.collect()
-    candidate_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
 
 # Run questions
@@ -144,13 +144,13 @@ def test_run_reference(reference_sim, output_dir, ncores, exe_cmd):
     # job_id='test_job'
     wait_job(reference_sim_copy)
 
+    reference_sim_copy.collect()
+    reference_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     # Check job run statuses
     for job in reference_sim_copy.jobs:
         assert job.exit_status == 0, \
             "Reference code run exited with non-zero status"
-
-    reference_sim_copy.collect()
-    reference_sim_copy.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
 
 def test_ncores_candidate(output_dir, exe_cmd, ncores):
@@ -205,13 +205,13 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
     # job_id='test_job'
     wait_job(candidate_sim_ncores)
 
+    candidate_sim_ncores.collect()
+    candidate_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     # Check job run statuses
     for job in candidate_sim_ncores.jobs:
         assert job.exit_status == 0, \
             "Candidate code run exited with non-zero status"
-    
-    candidate_sim_ncores.collect()
-    candidate_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
     with warnings.catch_warnings():
@@ -316,13 +316,13 @@ def test_perfrestart_candidate(output_dir):
     # Wait to collect until job has finished. All test runs are performed on a single job with
     wait_job(candidate_sim_restart)
 
+    candidate_sim_restart.collect()
+    candidate_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     # Check job run statuses
     for job in candidate_sim_restart.jobs:
         assert job.exit_status == 0, \
             "Candidate restart run exited with non-zero status"
-
-    candidate_sim_restart.collect()
-    candidate_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     # Check outputs
     with warnings.catch_warnings():
