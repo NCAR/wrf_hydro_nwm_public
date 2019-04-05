@@ -137,30 +137,31 @@ MODULE MODULE_MPP_LAND
 
   return 
   end  subroutine log_map2d
-!old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
+
+  !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
   subroutine MPP_LAND_INIT()
 !    ### initialize the land model logically based on the two D method. 
 !    ### Call this function directly if it is nested with WRF.
     implicit none
-    integer :: ierr
+    integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
-     
+    
 !     left_right_np = ew_numprocs
 !     up_down_np  = sn_numprocs
 
-      CALL mpi_initialized( mpi_inited, ierr )
-      if ( .not. mpi_inited ) then
-           call MPI_INIT( ierr )  ! stand alone land model.
-      endif
+    call mpi_initialized( mpi_inited, ierr )
+    if ( .not. mpi_inited ) then
+       call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
+       call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+    endif
+    
+    call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
+    call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
 
-      call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
-      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
-
-!     create 2d logical mapping of the CPU.
-      call log_map2d()
-      return
+    !     create 2d logical mapping of the CPU.
+    call log_map2d()
+    return
   end   subroutine MPP_LAND_INIT
 
 
@@ -2465,15 +2466,15 @@ MODULE MODULE_MPP_LAND
     integer:: ierr, tag
     integer:: my_id,numprocs
     tag=2   
-    call MPI_COMM_RANK(MPI_COMM_WORLD,my_id,ierr)
-    call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD,my_id,ierr)
+    call MPI_COMM_SIZE(HYDRO_COMM_WORLD,numprocs,ierr)
     if(numprocs > 1) then
        if(my_id .eq. fromImage) &
           call mpi_send(vector, size(vector), MPI_REAL, &
-                        toImage, tag, MPI_COMM_WORLD, ierr)
+                        toImage, tag, HYDRO_COMM_WORLD, ierr)
        if(my_id .eq. toImage) &
           call mpi_recv(vector, size(vector), MPI_REAL, &
-                        fromImage, tag, MPI_COMM_WORLD, mpp_status, ierr)
+                        fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
     endif
     end subroutine mpp_comm_1d_real
 
@@ -2485,8 +2486,8 @@ MODULE MODULE_MPP_LAND
     integer:: ierr, tag, totalLength
     integer:: my_id,numprocs
     tag=2
-    call MPI_COMM_RANK(MPI_COMM_WORLD,my_id,ierr)
-    call MPI_COMM_SIZE(MPI_COMM_WORLD,numprocs,ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD,my_id,ierr)
+    call MPI_COMM_SIZE(HYDRO_COMM_WORLD,numprocs,ierr)
     totalLength=len(vector(1))*size(vector,1)
     if(numprocs > 1) then
        if(my_id .eq. fromImage) &
