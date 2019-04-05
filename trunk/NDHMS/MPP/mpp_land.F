@@ -136,28 +136,32 @@ MODULE MODULE_MPP_LAND
 
   return 
   end  subroutine log_map2d
-!old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
+
+
+  !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
   subroutine MPP_LAND_INIT()
-!    ### initialize the land model logically based on the two D method. 
-!    ### Call this function directly if it is nested with WRF.
+    !    ### initialize the land model logically based on the two D method. 
+    !    ### Call this function directly if it is nested with WRF.
     implicit none
     integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
-     
-!     left_right_np = ew_numprocs
-!     up_down_np  = sn_numprocs
 
-      CALL mpi_initialized( mpi_inited, ierr )
-      if ( .NOT. mpi_inited ) then
-           call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )  ! stand alone land model.
-           HYDRO_COMM_WORLD = MPI_COMM_WORLD
-      endif
-           call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-           call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
-!     create 2d logical mapping of the CPU.
-      call log_map2d()
-      return
+    ! left_right_np = ew_numprocs
+    ! up_down_np  = sn_numprocs
+
+    call mpi_initialized( mpi_inited, ierr )
+    if ( .not. mpi_inited ) then
+       call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
+       call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+    endif
+
+    call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
+    call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+
+    !     create 2d logical mapping of the CPU.
+    call log_map2d()
+    return
   end   subroutine MPP_LAND_INIT
 
 
