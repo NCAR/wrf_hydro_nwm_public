@@ -1,6 +1,5 @@
 import pathlib
 import shutil
-
 import pytest
 import wrfhydropy
 
@@ -9,116 +8,142 @@ def pytest_addoption(parser):
 
     # Required args:
 
-    parser.addoption('--domain_dir',
-                     required=True,
-                     action='store',
-                     help='domain directory'
-                     )
+    parser.addoption(
+        '--domain_dir',
+        required=True,
+        action='store',
+        help='domain directory'
+    )
 
-    parser.addoption('--output_dir',
-                     required=True,
-                     action='store',
-                     help='test output directory'
-                     )
+    parser.addoption(
+        '--output_dir',
+        required=True,
+        action='store',
+        help='test output directory'
+    )
 
-    parser.addoption('--candidate_dir',
-                     required=True,
-                     action='store',
-                     help='candidate model directory'
-                     )
+    parser.addoption(
+        '--candidate_dir',
+        required=True,
+        action='store',
+        help='candidate model directory'
+    )
 
-    parser.addoption('--reference_dir',
-                     required=True,
-                     action='store',
-                     help='reference model directory'
-                     )
+    parser.addoption(
+        '--reference_dir',
+        required=True,
+        action='store',
+        help='reference model directory'
+    )
 
-    # Optional args:
-    parser.addoption("--config",
-                     required=True,
-                     action='store',
-                     help=("The configuration to test, "
-                             "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
-                     )
+    parser.addoption(
+        "--config",
+        required=True,
+        action='store',
+        help=("The configuration to test, "
+              "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
+    )
 
     # Optional args
 
-    parser.addoption('--compiler',
-                     default='gfort',
-                     required=False,
-                     action='store',
-                     help='compiler, options are ifort or gfort'
-                     )
+    parser.addoption(
+        '--compiler',
+        default='gfort',
+        required=False,
+        action='store',
+        help='compiler, options are ifort or gfort'
+    )
 
-    parser.addoption("--option_suite",
-                     required=False,
-                     action='store',
-                     help=("An option suite to test on top of the specified configuration,"
-                           "must be one listed in hydro_option_suites.json")
-                     )
+    parser.addoption(
+        "--option_suite",
+        required=False,
+        action='store',
+        help=("An option suite to test on top of the specified configuration,"
+              "must be one listed in hydro_option_suites.json")
+    )
 
-    parser.addoption( '--ncores',
-                      default='2',
-                      required=False,
-                      action='store',
-                      help='Number of cores to use for testing'
-                      )
+    parser.addoption(
+        '--ncores',
+        default='2',
+        required=False,
+        action='store',
+        help='Number of cores to use for testing'
+    )
 
-    parser.addoption('--scheduler',
-                     action='store_true',
-                     help='Use PBS scheduler on cheyenne')
+    parser.addoption(
+        '--scheduler',
+        action='store_true',
+        help='Use PBS scheduler on cheyenne'
+    )
+    
+    parser.addoption(
+        '--nnodes',
+        default='2',
+        required=False,
+        help='Number of nodes to use for testing if running on scheduler'
+    )
 
-    parser.addoption('--nnodes',
-                     default='2',
-                     required=False,
-                     help='Number of nodes to use for testing if running on scheduler')
+    parser.addoption(
+        '--account',
+        default='NRAL0017',
+        required=False,
+        action='store',
+        help='Account number to use if using a scheduler.'
+    )
 
-    parser.addoption('--account',
-                     default='NRAL0017',
-                     required=False,
-                     action='store',
-                     help='Account number to use if using a scheduler.')
+    parser.addoption(
+        '--walltime',
+        default='02:00:00',
+        required=False,
+        action='store',
+        help='Wall clock time for each test run in hh:mm:ss format'
+    )
 
-    parser.addoption('--walltime',
-                     default='02:00:00',
-                     required=False,
-                     action='store',
-                     help='Wall clock time for each test run in hh:mm:ss format')
+    parser.addoption(
+        '--queue',
+        default='regular',
+        required=False,
+        action='store',
+        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+        'premium, or shared'
+    )
 
-    parser.addoption('--queue',
-                     default='regular',
-                     required=False,
-                     action='store',
-                     help='Queue to use if running on NCAR Cheyenne, options are regular, '
-                          'premium, or shared')
+    parser.addoption(
+        '--exe_cmd',
+        default='mpirun -np {0} ./wrf_hydro.exe',
+        required=False,
+        action='store',
+        help='The MPI-dependent model execution command. Default is best guess. '
+        'The first/zeroth variable is set to the total number of cores. The '
+        'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
+    )
 
 
-def _make_sim(domain_dir,
-              compiler,
-              source_dir,
-              configuration,
-              option_suite,
-              ncores,
-              nnodes,
-              scheduler,
-              account,
-              walltime,
-              queue):
+def _make_sim(
+    domain_dir,
+    compiler,
+    source_dir,
+    configuration,
+    option_suite,
+    ncores,
+    nnodes,
+    scheduler,
+    account,
+    walltime,
+    queue
+):
 
-    # model
     model = wrfhydropy.Model(
         compiler=compiler,
         source_dir=source_dir,
         model_config=configuration
     )
 
-    # domain
     domain = wrfhydropy.Domain(
         domain_top_dir=domain_dir,
         domain_config=configuration
     )
 
-    # simulation
     sim = wrfhydropy.Simulation()
     sim.add(model)
     sim.add(domain)
@@ -139,6 +164,11 @@ def _make_sim(domain_dir,
         )
 
     return sim
+
+
+@pytest.fixture(scope="session")
+def exe_cmd(request):
+    return request.config.getoption("--exe_cmd")
 
 
 @pytest.fixture(scope="session")
