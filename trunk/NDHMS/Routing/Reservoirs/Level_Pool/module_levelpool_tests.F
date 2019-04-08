@@ -78,7 +78,7 @@ contains
 
     if ( all(ptr_state) .and. all(data_state) ) then
         print *, "========================================================================"
-        print *, "All Tests Passed"
+        print *, "All Level Pool Tests Passed"
         print *, "========================================================================"
     end if
     rv = 1

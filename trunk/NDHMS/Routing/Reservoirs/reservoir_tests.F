@@ -79,7 +79,7 @@ program reservoir_unit_tests
 
         print *, "calling init for persistence_levelpool_hybrid_struct"
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 123.829002380371, 63.6739971160889 , &
-        0.4, 10.0, 50.3799997965495, 0.1, 1.0, 66.0199966430664, 0.9, 166758723, "hybrid_persistence_levelpool_ACF.nc", &
+        0.4, 10.0, 50.3799997965495, 0.1, 1.0, 66.0199966430664, 0.9, 166758723, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
         "2010-10-01_07:00:00", ".", 12, 86400)
 
 
