@@ -100,7 +100,8 @@ def test_run_candidate_channel_only(
         candidate_sim,
         candidate_channel_only_sim,
         output_dir,
-        ncores
+        ncores,
+        exe_cmd
 ):
 
     if candidate_sim.model.model_config.lower().find('nwm_ana') < 0:
@@ -122,11 +123,13 @@ def test_run_candidate_channel_only(
     os.chdir(str(run_dir))
 
     # Job
-    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_candidate',
-                         exe_cmd=exe_command,
-                         restart_freq_hr=6,
-                         output_freq_hr=1)
+    exe_command = exe_cmd.format(str(ncores))
+    job = wrfhydropy.Job(
+        job_id='run_candidate',
+        exe_cmd=exe_command,
+        restart_freq_hr=6,
+        output_freq_hr=1
+    )
     candidate_sim_copy.add(job)
 
     start_time, end_time = candidate_sim_copy.jobs[0]._solve_model_start_end_times()
@@ -150,7 +153,7 @@ def test_run_candidate_channel_only(
     # Check job run statuses
     for job in candidate_sim.jobs:
         assert job.exit_status == 0, \
-            "Candidate code run exited with non-zero status"
+            "Candidate code run (for channel-only reference) exited with non-zero status"
 
     #########################
     # Run channel only
@@ -168,11 +171,13 @@ def test_run_candidate_channel_only(
         str(output_dir / 'channel_only_candidate_full_model_run')
 
     # Job
-    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
-    job = wrfhydropy.Job(job_id='run_candidate_channel_only',
-                         exe_cmd=exe_command,
-                         restart_freq_hr=6,
-                         output_freq_hr=1)
+    exe_command = exe_cmd.format(str(ncores))
+    job = wrfhydropy.Job(
+        job_id='run_candidate_channel_only',
+        exe_cmd=exe_command,
+        restart_freq_hr=6,
+        output_freq_hr=1
+    )
     candidate_channel_only_sim_copy.add(job)
 
     start_time, end_time = candidate_channel_only_sim_copy.jobs[0]._solve_model_start_end_times()
@@ -254,7 +259,7 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
 
 # Channel-only ncores question
-def test_ncores_candidate_channel_only(output_dir):
+def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
 
     candidate_channel_only_sim_file = \
         output_dir / 'channel_only_candidate_run' / 'WrfHydroSim.pkl'
@@ -280,10 +285,14 @@ def test_ncores_candidate_channel_only(output_dir):
     os.chdir(str(run_dir))
 
     old_job = candidate_channel_only_sim.jobs[0]
-    new_job = wrfhydropy.Job(job_id='ncores_candidate',
-                             exe_cmd=old_job._exe_cmd,
-                             restart_freq_hr=6,
-                             output_freq_hr=1)
+    new_job = wrfhydropy.Job(
+        job_id='ncores_candidate',
+        model_start_time=old_job._model_start_time,
+        model_end_time=old_job._model_end_time,
+        exe_cmd=old_job._exe_cmd,
+        restart_freq_hr=6,
+        output_freq_hr=1
+    )
 
     # Remove old job and add new job
     candidate_channel_only_sim_ncores.jobs.pop(0)
@@ -294,8 +303,7 @@ def test_ncores_candidate_channel_only(output_dir):
         candidate_channel_only_sim_ncores.scheduler.nproc = \
             candidate_channel_only_sim_ncores.scheduler.nproc - 1
     else:
-        orig_exe_cmd = candidate_channel_only_sim_ncores.jobs[0]._exe_cmd
-        orig_exe_cmd = orig_exe_cmd.replace('-np 2', '-np 1')
+        candidate_channel_only_sim_ncores.jobs[0]._exe_cmd = exe_cmd.format(str(int(ncores)-1))
 
     # Recompose into new directory and run
     # catch warnings related to missing start and end job times
@@ -306,12 +314,14 @@ def test_ncores_candidate_channel_only(output_dir):
     print('\nwaiting for job to complete...', end='')
     candidate_channel_only_sim_ncores.run()
 
-    # Wait to collect until job has finished. All test runs are performed on a single job with
-    # job_id='test_job'
     wait_job(candidate_channel_only_sim_ncores)
 
     candidate_channel_only_sim_ncores.collect()
     candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
+    for job in candidate_channel_only_sim_ncores.jobs:
+        assert job.exit_status == 0, \
+            "Candidate channel-only ncores run exited with non-zero status"
 
     # Check outputs
     with warnings.catch_warnings():
@@ -361,7 +371,7 @@ def test_perfrestart_candidate_channel_only(output_dir):
     duration = restart_job.model_end_time - restart_job.model_start_time
     delay_restart_hr = int((duration.total_seconds() / 3600)/2)
 
-     # Want matching restart frequencies for this test...
+    # Want matching restart frequencies for this test...
     assert \
         candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == \
         candidate_channel_only_sim.jobs[0].restart_freq_hr_hrldas, \
@@ -405,11 +415,14 @@ def test_perfrestart_candidate_channel_only(output_dir):
     print('\nwaiting for job to complete...', end='')
     candidate_channel_only_sim_restart.run()
 
-    # Wait to collect until job has finished. All test runs are performed on a single job with
     wait_job(candidate_channel_only_sim_restart)
 
     candidate_channel_only_sim_restart.collect()
     candidate_channel_only_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
+    for job in candidate_channel_only_sim_restart.jobs:
+        assert job.exit_status == 0, \
+            "Candidate channel-only ncores run exited with non-zero status"
 
     # Check outputs
     with warnings.catch_warnings():
