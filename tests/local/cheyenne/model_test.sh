@@ -28,9 +28,12 @@ Options:
         We should try to keep this update along with what is here:
         https://github.com/NCAR/wrf_hydro_nwm_public/wiki/Compiler-requirements-by-version
     --mpi: 
-        [default=impi, <You can try whatever is available in modules>]
+        [default=impi, <You can try whatever is available in modules.>]
+    --exe_cmd:
+        [default=\"mpirun -np \\\$ncores ./wrf_hydro.exe\", <Whatever you need for your mpi.>]
+        See examples for MPT in the shared queue (other MPI distros apparently dont need this).
     --config: 
-        [default=nwm_ana, nwm_long_range, <What ever is available in the .json files for the domain>]
+        [default=nwm_ana, nwm_long_range, <Whatever is available in the .json files for the domain.>]
     ---ncores: 
         default=360
     --nnodes:
@@ -51,28 +54,37 @@ Usage Examples:
 ./model_test.sh -c /path/to/candidate_dir -r /path/to/reference_dir
 
 # A CONUS test of nwm_long_range
-./model_test.sh -c /path/to/candidate_dir -r /path/to/reference_dir \
+./model_test.sh -c /path/to/candidate_dir -r /path/to/reference_dir \\
     --compiler=ifort --mpi=mpt --config=nwm_long_range --ncores=288
 
 # A croton test of all test configurations. Could swap the domain.
-./model_test.sh \
-    -c ~/WRF_Hydro/wrf_hydro_nwm_public \
-    -r ~/WRF_Hydro/.wrf_hydro_nwm_public_REFERENCE \
-    --compiler=ifort --mpi=impi \
-    --config='nwm_ana nwm_long_range gridded reach' \
-    --ncores=6 --queue=share \
+./model_test.sh \\
+    -c ~/WRF_Hydro/wrf_hydro_nwm_public \\
+    -r ~/WRF_Hydro/.wrf_hydro_nwm_public_REFERENCE \\
+    --compiler=ifort --mpi=impi \\
+    --config='nwm_ana nwm_long_range gridded reach' \\
+    --ncores=6 --queue=share \\
     --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
 
-# Non-standard exe cmd example?
+# Non-standard mpi/exe_cmd example. A croton test of nwm_ana configuration.
+# An strenuous exercise in bash escaping.
+./model_test.sh \\
+    -c ~/WRF_Hydro/wrf_hydro_nwm_public \\
+    -r ~/WRF_Hydro/.wrf_hydro_nwm_public_REFERENCE \\
+    --compiler=ifort --mpi=mpt \\
+    --exe_cmd=\"mpiexec_mpt $'\\\$(hostname)' -np \\\$ncores ./wrf_hydro.exe\" \\
+    --config='nwm_ana' \\
+    --ncores=6 --queue=share \\
+    --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
 "
 
 ## Default options
 compiler=ifort
 mpi=impi
+exe_cmd="mpirun -np \$ncores ./wrf_hydro.exe"
 config=nwm_ana
 ncores=360
-function ceiling() { echo "($1 + $2 - 1)/$2" | bc; }
-nnodes=$(ceiling $ncores 36)
+nnodes=to_calculate
 queue=regular
 account=NRAL0017
 walltime=01:00:00
@@ -83,7 +95,7 @@ domain_dir=/glade/work/jamesmcc/domains/private/CONUS
 TEMP=\
 `getopt \
     -o h,c:,r: \
-    --long help,compiler:,mpi:,config:,ncores:,nnodes:,queue:,account:,walltime:,reference_update:,domain_dir: \
+    --long help,compiler:,mpi:,exe_cmd:,config:,ncores:,nnodes:,queue:,account:,walltime:,reference_update:,domain_dir: \
     -n 'Model Testing' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -97,6 +109,7 @@ while true; do
         --reference_update ) reference_update="$2"; shift 2;;
         --compiler ) compiler="$2"; shift 2;;
         --mpi ) mpi="$2"; shift 2;;
+        --exe_cmd ) exe_cmd="$2"; shift 2;;
         --config ) config="$2"; shift 2;;
         --ncores ) ncores="$2"; shift 2;;
         --nnodes ) nnodes="$2"; shift 2;;
@@ -114,6 +127,15 @@ if [ -z $candidate_dir ] | [ -z $reference_dir ]; then
     echo "The candidate_dir and reference_dir arguments are both required but not found. Exiting."
     exit 1
 fi
+
+# Perform any needed substitution/evaluation.
+if [[ "$nnodes" == to_calculate ]]; then
+    function ceiling() { echo "($1 + $2 - 1)/$2" | bc; }
+    nnodes=$(ceiling $ncores 36)
+fi
+
+exe_cmd=`eval "echo $exe_cmd"`
+
 
 #-------------------------------------------------------
 # Modules.
@@ -142,10 +164,8 @@ module list
 
 #-------------------------------------------------------
 # Python Env
-# Need option to install standardized python env.
-# Look in to pipenv some day and a required.txt file or similar
-# pip uninstall -y wrfhydropy
-# pip install wrfhydropy
+deactivate > /dev/null 2>&1
+source /glade/scratch/katelynw/test-env/bin/activate || exit 9
 
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
@@ -183,6 +203,7 @@ run_test_path=$(dirname $script_dir)
 python $run_test_path/run_tests.py \
        --config $config \
        --compiler $compiler \
+       --exe_cmd="'$exe_cmd'" \
        --scheduler \
        --output_dir $output_dir \
        --candidate_dir $candidate_dir \
