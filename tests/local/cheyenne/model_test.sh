@@ -72,10 +72,7 @@ Usage Examples:
     -c ~/WRF_Hydro/wrf_hydro_nwm_public \\
     -r ~/WRF_Hydro/.wrf_hydro_nwm_public_REFERENCE \\
     --compiler=ifort --mpi=mpt \\
-    --exe_cmd=\"export TMPDIR=/glade/scratch/$USER/temp \&\& \\
-                mkdir -p $TMPDIR \&\& \\
-                export MPI_USE_ARRAY=false \&\& \\
-                mpirun $'\\\$(hostname)' -np \\\$ncores ./wrf_hydro.exe\" \\
+    --exe_cmd=\"mpiexec_mpt $'\\\$(hostname)' -np \\\$ncores ./wrf_hydro.exe\" \\
     --config='nwm_ana' \\
     --ncores=6 --queue=share \\
     --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
@@ -167,10 +164,8 @@ module list
 
 #-------------------------------------------------------
 # Python Env
-# Need option to install standardized python env.
-# Look in to pipenv some day and a required.txt file or similar
-# pip uninstall -y wrfhydropy
-# pip install wrfhydropy
+deactivate > /dev/null 2>&1
+source /glade/scratch/katelynw/test-env/bin/activate || exit 9
 
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
