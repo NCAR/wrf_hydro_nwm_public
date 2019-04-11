@@ -5335,6 +5335,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    endif
    deallocate(g_qin_gwsubbas)
    deallocate(g_qout_gwsubbas)
+   deallocate(g_qloss_gwsubbas)
    deallocate(g_z_gwsubbas)
    deallocate(g_basnsInd)
 end subroutine output_gw_NWM
