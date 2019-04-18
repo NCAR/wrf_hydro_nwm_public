@@ -193,7 +193,7 @@ contains
             reservoir_data%state%water_elevation = water_elevation
 
             reservoir_data%state%current_storage = (reservoir_data%state%water_elevation - reservoir_data%parameters%orifice_elevation) * &
-            reservoir_data%parameters%lake_area * 1.0E6
+            reservoir_data%parameters%lake_area
 
         end if
 

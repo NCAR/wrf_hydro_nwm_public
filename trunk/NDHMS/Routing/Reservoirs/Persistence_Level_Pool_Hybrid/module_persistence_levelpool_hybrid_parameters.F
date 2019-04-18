@@ -53,7 +53,7 @@ contains
         integer                      :: number_of_weights, number_of_lakes
         real, allocatable, dimension(:,:) :: temp_real_2D_array
 
-        this%lake_area = lake_area
+        this%lake_area = lake_area * 1.0E6
 
         this%orifice_elevation = orifice_elevation
 
