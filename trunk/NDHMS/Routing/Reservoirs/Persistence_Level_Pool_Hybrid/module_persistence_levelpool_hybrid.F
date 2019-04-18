@@ -298,7 +298,7 @@ contains
         + (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
 
         ! Calculate new water elevation
-        reservoir_data%state%water_elevation = (reservoir_data%state%current_storage / (reservoir_data%parameters%lake_area * 1.0E6)) &
+        reservoir_data%state%water_elevation = (reservoir_data%state%current_storage / (reservoir_data%parameters%lake_area)) &
         + reservoir_data%parameters%orifice_elevation
 
         ! Update output variable returned from this subroutine
