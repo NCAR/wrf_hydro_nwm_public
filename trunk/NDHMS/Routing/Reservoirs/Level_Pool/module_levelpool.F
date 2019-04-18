@@ -322,7 +322,7 @@ contains
        endif
 
        if(H .ge. maxh) then  ! overtop condition
-          discharge = qi1
+          discharge = qi1 - (((maxh - Htmp) * sap) / dt)
           H = maxh
        endif
 

@@ -174,6 +174,7 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         real                :: delta_storage            ! timestep change in storage (cubic meters)
+        real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer             :: gage_lookback_seconds    ! seconds between current model
                                                         ! time and the time a gage
@@ -197,6 +198,8 @@ contains
             reservoir_data%parameters%lake_area
 
         end if
+
+        local_water_elevation = reservoir_data%state%water_elevation
 
         ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
@@ -278,7 +281,7 @@ contains
 
         ! Run levelpool release
         call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
-        lateral_inflow, reservoir_data%state%water_elevation, levelpool_outflow, routing_period)
+        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period)
 
         ! Calculate outflow weighted between persistence and levelpool
         reservoir_data%output%outflow = reservoir_data%state%persistence_current_weight &
