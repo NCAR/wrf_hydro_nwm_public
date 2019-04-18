@@ -78,7 +78,7 @@ contains
 
         ! Create diagnostic log file
         ! Uncomment this call only for development/debugging purposes
-        !call create_hybrid_diagnostic_log_file(lake_number)
+        call create_hybrid_diagnostic_log_file(lake_number)
 
         ! Call to initialize read timeslice data object
         call read_timeslice_data%init(start_date, &
@@ -173,6 +173,7 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        real                :: delta_storage            ! timestep change in storage (cubic meters)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer             :: gage_lookback_seconds    ! seconds between current model
                                                         ! time and the time a gage
@@ -293,13 +294,15 @@ contains
         reservoir_data%parameters%max_storage, reservoir_data%parameters%lake_number, &
         reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow)
 
-        ! Update storage from the most recent model states
-        reservoir_data%state%current_storage = reservoir_data%state%current_storage &
-        + (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
+        ! Calculate change in storage
+        delta_storage = (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
 
-        ! Calculate new water elevation
-        reservoir_data%state%water_elevation = (reservoir_data%state%current_storage / (reservoir_data%parameters%lake_area)) &
-        + reservoir_data%parameters%orifice_elevation
+        ! Update storage from the most recent model states
+        reservoir_data%state%current_storage = reservoir_data%state%current_storage + delta_storage
+
+        ! Calculate new water elevation. Delta storage is used as opposed to calculating from current storage in
+        ! order to minimize floating point error because current storage is a much larger magnitude than water elevation.
+        reservoir_data%state%water_elevation = reservoir_data%state%water_elevation + delta_storage / reservoir_data%parameters%lake_area
 
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
@@ -315,12 +318,12 @@ contains
 
         ! Log diagnostic data
         ! Uncomment this call only for development/debugging purposes
-        !call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
-        !reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
-        !reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
-        !reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
-        !reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
-        !levelpool_outflow, reservoir_data%output%outflow)
+        call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
+        reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
+        reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
+        reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
+        reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
+        levelpool_outflow, reservoir_data%output%outflow)
 
     end subroutine run_hybrid_release
 
