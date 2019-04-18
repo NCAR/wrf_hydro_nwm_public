@@ -268,7 +268,7 @@ CONTAINS
   else
     nlst%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
 
-    if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 ) then
+    if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst%persistence) then
         print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
     end if
   end if
