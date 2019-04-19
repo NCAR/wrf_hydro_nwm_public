@@ -133,7 +133,13 @@ contains
 
             ! This releases only the excess water. If the new outflow is added to the existing outflow,
             ! then the reservoir maintains storage at the last value before exceeding maximum.
-            outflow = (projected_next_time_interval_storage - max_storage) / time_interval
+
+            print *, '-----------------'
+            print *, 'max stroage ', max_storage
+
+            !outflow = (projected_next_time_interval_storage - max_storage) / time_interval + outflow
+            !outflow = (projected_next_time_interval_storage - max_storage) / time_interval
+            outflow = inflow - (max_storage - previous_time_storage) / time_interval
 
             write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
@@ -384,6 +390,51 @@ contains
         close (113)
 
     end subroutine log_hybrid_diagnostic_data
+
+    ! Create Persistence Levelpool Hybrid Release Function Diagnostic Log CSV File
+    subroutine create_levelpool_diagnostic_log_file(lake_number)
+        integer, intent(in) :: lake_number
+        character(len=15)   :: lake_number_string, lake_number_string_trimmed
+        character(len=50)   :: filename_string
+
+
+        write(lake_number_string, "(I15)") lake_number
+        lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
+
+
+        filename_string = "levelpool_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
+
+        open (113, file=filename_string, status="unknown")
+
+        write (113, "(A256)") "Inflow, Water Elevation, Outflow"
+
+        close(113)
+
+    end subroutine create_levelpool_diagnostic_log_file
+
+
+    ! Log data to Persistence Levelpool Hybrid Release Function Diagnostic Log CSV File
+    subroutine log_levelpool_diagnostic_data(lake_number, inflow, water_elevation, outflow)
+        integer, intent(in) :: lake_number
+        real,    intent(in) :: inflow
+        real,    intent(in) :: water_elevation
+        real,    intent(in) :: outflow
+        character(len=15)   :: lake_number_string, lake_number_string_trimmed
+        character(len=50)   :: filename_string
+
+
+        write(lake_number_string, "(I15)") lake_number
+        lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
+        filename_string = "levelpool_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
+
+        open (113, file=filename_string, status="unknown", access = 'append')
+
+        write (113, "(F15.8, A1, F15.8, A1, F15.8)") &
+        inflow, ',', water_elevation, ',', outflow
+
+        close (113)
+
+    end subroutine log_levelpool_diagnostic_data
 
 
     ! Get a new date given an existing date and time interval

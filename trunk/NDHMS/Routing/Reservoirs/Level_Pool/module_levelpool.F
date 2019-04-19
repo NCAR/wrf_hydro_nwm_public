@@ -19,6 +19,7 @@ module module_levelpool
 
     use module_levelpool_parameters
     use module_levelpool_state
+    use module_reservoir_utilities
     use module_reservoir_base
     implicit none
 
@@ -60,6 +61,8 @@ contains
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
+
+        call create_levelpool_diagnostic_log_file(lake_number)
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -164,6 +167,8 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = reservoir_data%state%water_elevation
+
+        call log_levelpool_diagnostic_data(reservoir_data%parameters%lake_number, inflow, water_elevation, outflow)
 
     end subroutine run_levelpool_release
 
@@ -323,6 +328,19 @@ contains
 
        if(H .ge. maxh) then  ! overtop condition
           discharge = qi1 - (((maxh - Htmp) * sap) / dt)
+          !discharge = qi1
+
+          print *, '-------------------------'
+          print *, 'qi1 ', qi1
+          print *, 'maxh ', maxh
+          print *, 'Htmp', Htmp
+          print *, 'H ', H
+          print *, 'sap', sap
+          print *, 'dt', dt
+          print *, 'discharge', discharge
+          print *, '-------------------------'
+
+
           H = maxh
        endif
 

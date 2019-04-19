@@ -201,6 +201,9 @@ contains
 
         local_water_elevation = reservoir_data%state%water_elevation
 
+        print *, 'local_water_elevation'
+        print *, local_water_elevation
+
         ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
@@ -291,11 +294,16 @@ contains
         ! Warn if there is a negative inflow
         call warn_negative_inflow(reservoir_data%input%inflow, reservoir_data%parameters%lake_number, reservoir_data%state%current_time)
 
+        !if (reservoir_data%state%levelpool_current_weight .ne. 1.0) then
+
         ! Modify if exceeding storage boundary conditions
         call modify_for_projected_storage(reservoir_data%input%inflow, &
         reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
         reservoir_data%parameters%max_storage, reservoir_data%parameters%lake_number, &
         reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow)
+
+        !end if
+
 
         ! Calculate change in storage
         delta_storage = (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
